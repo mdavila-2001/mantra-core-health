@@ -11,10 +11,10 @@ import { Validators } from '@angular/forms';
  *
  * Si la política cambia, se cambia acá y en la API, no en cada pantalla.
  */
-export const MIN_CARACTERES_CONTRASENA = 8;
+export const MIN_CHARACTERS_PASSWORD = 8;
 
 /** Lo que lee quien escribe una contraseña demasiado corta. */
-export const MENSAJE_CONTRASENA_CORTA = 'La contraseña necesita al menos 8 caracteres.';
+export const MESSAGE_SHORT_PASSWORD = 'La contraseña necesita al menos 8 caracteres.';
 
 /**
  * Los validadores del control de contraseña.
@@ -24,7 +24,7 @@ export const MENSAJE_CONTRASENA_CORTA = 'La contraseña necesita al menos 8 cara
  * recibe, y compartir la misma instancia entre formularios haría que el estado
  * de uno pudiera alcanzar al otro.
  */
-export const validadoresDeContrasena = [
+export const passwordValidators = [
   Validators.required,
-  Validators.minLength(MIN_CARACTERES_CONTRASENA),
+  Validators.minLength(MIN_CHARACTERS_PASSWORD),
 ] as const;

@@ -1,17 +1,17 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { LogoConsultorio } from './practice-logo';
+import { PracticeLogo } from './practice-logo';
 
 const PNG_1X1 =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
 
 describe('LogoConsultorio', () => {
-  let fixture: ComponentFixture<LogoConsultorio>;
+  let fixture: ComponentFixture<PracticeLogo>;
 
   const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(LogoConsultorio);
+    fixture = TestBed.createComponent(PracticeLogo);
   });
 
   it('sin logo dibuja el marcador «Sin logo» y ninguna imagen', async () => {

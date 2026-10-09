@@ -1,4 +1,4 @@
-import { subtituloProfesional } from './professional-subtitle';
+import { professionalSubtitle } from './professional-subtitle';
 
 /**
  * El guardia de F-25: si esta prueba se pone en rojo es porque una tarjeta de la
@@ -6,12 +6,12 @@ import { subtituloProfesional } from './professional-subtitle';
  */
 describe('subtituloProfesional', () => {
   it('deja pasar un título profesional de verdad', () => {
-    expect(subtituloProfesional('Medicina Familiar', 'Ana Lucía Flores')).toBe('Medicina Familiar');
+    expect(professionalSubtitle('Medicina Familiar', 'Ana Lucía Flores')).toBe('Medicina Familiar');
   });
 
   it('sin título no inventa nada', () => {
-    expect(subtituloProfesional(undefined, 'Ana Lucía Flores')).toBeUndefined();
-    expect(subtituloProfesional('   ', 'Ana Lucía Flores')).toBeUndefined();
+    expect(professionalSubtitle(undefined, 'Ana Lucía Flores')).toBeUndefined();
+    expect(professionalSubtitle('   ', 'Ana Lucía Flores')).toBeUndefined();
   });
 
   // Los tres cruces exactos que la recorrida del 18/08/2026 encontró.
@@ -20,12 +20,12 @@ describe('subtituloProfesional', () => {
     ['Mateo Quiroga Ríos', 'Dr. Andrés Mercado — Cardiología'],
     ['Carla Mendoza Suárez', 'Dr. Rodrigo Paz (caso 15)'],
   ])('%s no muestra «%s»: es el nombre de otro', (nombre, cruzado) => {
-    expect(subtituloProfesional(cruzado, nombre)).toBeUndefined();
+    expect(professionalSubtitle(cruzado, nombre)).toBeUndefined();
   });
 
   it('el nombre de otro de la misma lista se detecta aunque no lleve tratamiento', () => {
     expect(
-      subtituloProfesional('Camila Roca, Medicina Familiar', 'Ana Lucía Flores', [
+      professionalSubtitle('Camila Roca, Medicina Familiar', 'Ana Lucía Flores', [
         'Camila Roca',
         'Ana Lucía Flores',
       ]),
@@ -34,13 +34,13 @@ describe('subtituloProfesional', () => {
 
   it('el tratamiento del propio titular no es un cruce', () => {
     // «Dra. Lucía Salas» en la tarjeta de Lucía Salas es redundante, no falso.
-    expect(subtituloProfesional('Dra. Lucía Salas', 'Dra. Lucía Salas')).toBe('Dra. Lucía Salas');
+    expect(professionalSubtitle('Dra. Lucía Salas', 'Dra. Lucía Salas')).toBe('Dra. Lucía Salas');
   });
 
   it('compara sin tildes ni mayúsculas: «Lucia» y «Lucía» son la misma persona', () => {
-    expect(subtituloProfesional('Dra. Lucia Salas', 'Dra. Lucía Salas')).toBe('Dra. Lucia Salas');
+    expect(professionalSubtitle('Dra. Lucia Salas', 'Dra. Lucía Salas')).toBe('Dra. Lucia Salas');
     expect(
-      subtituloProfesional('CAMILA ROCA — Pediatría', 'Ana Flores', ['Camila Roca']),
+      professionalSubtitle('CAMILA ROCA — Pediatría', 'Ana Flores', ['Camila Roca']),
     ).toBeUndefined();
   });
 });

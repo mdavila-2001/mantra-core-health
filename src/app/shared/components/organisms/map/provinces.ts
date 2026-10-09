@@ -15,7 +15,7 @@ export {
 } from '../../../../core/data-access/geo/bolivia-provinces.client';
 
 /** Si el punto cae dentro del anillo (rayo hacia el este, regla par-impar). */
-function dentroDelAnillo(lng: number, lat: number, anillo: Anillos[number]): boolean {
+function ringWithin(lng: number, lat: number, anillo: Anillos[number]): boolean {
   let adentro = false;
   for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
     const [xi, yi] = anillo[i];
@@ -27,21 +27,21 @@ function dentroDelAnillo(lng: number, lat: number, anillo: Anillos[number]): boo
   return adentro;
 }
 
-function dentroDelPoligono(lng: number, lat: number, anillos: Anillos): boolean {
+function polygonWithin(lng: number, lat: number, anillos: Anillos): boolean {
   const [exterior, ...huecos] = anillos;
   return (
     exterior !== undefined &&
-    dentroDelAnillo(lng, lat, exterior) &&
-    !huecos.some((hueco) => dentroDelAnillo(lng, lat, hueco))
+    ringWithin(lng, lat, exterior) &&
+    !huecos.some((hueco) => ringWithin(lng, lat, hueco))
   );
 }
 
 /** La provincia donde cae el punto, o `null` si cae fuera de Bolivia. */
-export function provinciaEn(provincias: ProvinciasDeBolivia, punto: PuntoGeo): ProvinciaGeo | null {
+export function provinceIn(provincias: ProvinciasDeBolivia, punto: PuntoGeo): ProvinciaGeo | null {
   for (const provincia of provincias.features) {
     const { geometry } = provincia;
     const poligonos = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
-    if (poligonos.some((anillos) => dentroDelPoligono(punto.lng, punto.lat, anillos))) {
+    if (poligonos.some((anillos) => polygonWithin(punto.lng, punto.lat, anillos))) {
       return provincia;
     }
   }

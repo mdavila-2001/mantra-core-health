@@ -2,7 +2,7 @@
   heading="Factura · SIAT simulado"
   [description]="cobro().description + ' · ' + cobro().patientName"
   size="md"
-  [dismissible]="!enviando()"
+  [dismissible]="!sending()"
   (closed)="cerrado.emit()"
 >
   <div class="factura" data-testid="factura-simulada">
@@ -11,14 +11,14 @@
       <span>Se emite contra un SIAT simulado: CUF, códigos y QR son sintéticos y no tienen validez fiscal.</span>
     </p>
 
-    @if (cargandoFactura()) {
+    @if (invoiceLoading()) {
       <p class="factura__secundario" data-testid="factura-cargando">Leyendo la factura…</p>
-    } @else if (factura(); as f) {
+    } @else if (invoice(); as f) {
       <!-- ── La factura emitida ─────────────────────────────────────────── -->
       <section class="factura__resultado" aria-labelledby="factura-numero" data-testid="factura-emitida">
         <h3 id="factura-numero" class="factura__titulo">
           Factura N.º {{ f.invoiceNumber }}
-          <app-chip size="sm" [variant]="tonoDeEstado[f.status]">{{ rotuloDeEstado[f.status] }}</app-chip>
+          <app-chip size="sm" [variant]="statusTone[f.status]">{{ statusLabel[f.status] }}</app-chip>
         </h3>
         <dl class="factura__datos">
           <div>
@@ -35,7 +35,7 @@
           </div>
           <div>
             <dt>Fecha de emisión</dt>
-            <dd>{{ fechaYHora(f.issuedAt) }}</dd>
+            <dd>{{ dateAndTime(f.issuedAt) }}</dd>
           </div>
           <div class="factura__dato-ancho">
             <dt>CUF (SIMULADO)</dt>
@@ -66,23 +66,23 @@
           <p class="factura__rotulo">Total a facturar</p>
           <p class="factura__total" data-testid="factura-total">{{ bs(cobro().total) }}</p>
           <p class="factura__secundario">{{ literal() }}</p>
-          @if (notasDelPlan().length > 0) {
+          @if (planNotes().length > 0) {
             <p class="factura__secundario" data-testid="factura-notas-del-plan">
-              Plan saldado con {{ notasDelPlan().length }} {{ notasDelPlan().length === 1 ? 'nota' : 'notas' }} de venta
-              ({{ notasDelPlan().join(', ') }}). La factura cubre el total del servicio, un renglón por instancia.
+              Plan saldado con {{ planNotes().length }} {{ planNotes().length === 1 ? 'nota' : 'notas' }} de venta
+              ({{ planNotes().join(', ') }}). La factura cubre el total del servicio, un renglón por instancia.
             </p>
           }
         </div>
 
       <app-paginated-form
         class="factura__formulario"
-        [form]="formulario"
+        [form]="form"
         [paginas]="invoicePages()"
         label="Factura simulada"
-        [submitLabel]="pideMedioDePago() ? 'Cobrar y emitir factura' : 'Emitir factura'"
+        [submitLabel]="paymentMeansRequests() ? 'Cobrar y emitir factura' : 'Emitir factura'"
         submitTestId="factura-confirmar"
-        [pending]="enviando()"
-        (enviado)="confirmar()"
+        [pending]="sending()"
+        (enviado)="confirm()"
         data-testid="factura-formulario"
       >
       <ng-template appCampoPersonalizado="methodCode">
@@ -90,46 +90,46 @@
             label="Medio de pago"
             [required]="true"
             hint="Catálogo simulado · se registra el pago y se emite la factura"
-            [errorMessage]="formulario.controls.methodCode.touched && formulario.controls.methodCode.invalid ? 'Elija cómo pagó.' : ''"
+            [errorMessage]="form.controls.methodCode.touched && form.controls.methodCode.invalid ? 'Elija cómo pagó.' : ''"
           >
-            <app-select [formControl]="formulario.controls.methodCode" [options]="opcionesDeMetodo()" placeholder="Elija un medio" />
+            <app-select [formControl]="form.controls.methodCode" [options]="methodOptions()" placeholder="Elija un medio" />
           </app-form-field>
       </ng-template>
       <ng-template appCampoPersonalizado="name">
 <app-form-field
               label="Nombre o razón social"
               [required]="true"
-              [errorMessage]="formulario.controls.name.touched && formulario.controls.name.invalid ? 'Escriba a nombre de quién va la factura.' : ''"
+              [errorMessage]="form.controls.name.touched && form.controls.name.invalid ? 'Escriba a nombre de quién va la factura.' : ''"
             >
-              <app-input [formControl]="formulario.controls.name" autocomplete="off" />
+              <app-input [formControl]="form.controls.name" autocomplete="off" />
             </app-form-field>
       </ng-template>
       <ng-template appCampoPersonalizado="documentTypeCode">
 <app-form-field label="Tipo de documento" [required]="true" hint="Catálogo simulado">
-              <app-select [formControl]="formulario.controls.documentTypeCode" [options]="opcionesDeDocumento()" />
+              <app-select [formControl]="form.controls.documentTypeCode" [options]="documentOptions()" />
             </app-form-field>
       </ng-template>
       <ng-template appCampoPersonalizado="documentNumber">
 <app-form-field
               label="Número de documento"
               [required]="true"
-              [errorMessage]="formulario.controls.documentNumber.touched && formulario.controls.documentNumber.invalid ? 'Hasta 20 caracteres, obligatorio.' : ''"
+              [errorMessage]="form.controls.documentNumber.touched && form.controls.documentNumber.invalid ? 'Hasta 20 caracteres, obligatorio.' : ''"
             >
-              <app-input [formControl]="formulario.controls.documentNumber" autocomplete="off" />
+              <app-input [formControl]="form.controls.documentNumber" autocomplete="off" />
             </app-form-field>
       </ng-template>
       <ng-template appCampoPersonalizado="complement">
-<app-form-field label="Complemento" [errorMessage]="formulario.controls.complement.invalid ? 'Hasta 5 caracteres.' : ''">
-              <app-input [formControl]="formulario.controls.complement" autocomplete="off" />
+<app-form-field label="Complemento" [errorMessage]="form.controls.complement.invalid ? 'Hasta 5 caracteres.' : ''">
+              <app-input [formControl]="form.controls.complement" autocomplete="off" />
             </app-form-field>
       </ng-template>
       <ng-template appCampoPersonalizado="email">
 <app-form-field
               label="Correo para la entrega"
               hint="Sólo queda en la bandeja simulada"
-              [errorMessage]="formulario.controls.email.touched && formulario.controls.email.invalid ? 'No parece un correo.' : ''"
+              [errorMessage]="form.controls.email.touched && form.controls.email.invalid ? 'No parece un correo.' : ''"
             >
-              <app-input [formControl]="formulario.controls.email" type="email" autocomplete="off" />
+              <app-input [formControl]="form.controls.email" type="email" autocomplete="off" />
             </app-form-field>
       </ng-template>
       </app-paginated-form>
@@ -141,9 +141,9 @@
   </div>
 
   <ng-container dialog-actions>
-    @if (factura(); as f) {
-      <button app-button variant="outline" (clicked)="descargarPdf(f)">Descargar PDF (SIMULADO)</button>
-      <button app-button variant="outline" (clicked)="descargarXml(f)">Descargar XML (SIMULADO)</button>
+    @if (invoice(); as f) {
+      <button app-button variant="outline" (clicked)="downloadPdf(f)">Descargar PDF (SIMULADO)</button>
+      <button app-button variant="outline" (clicked)="downloadXml(f)">Descargar XML (SIMULADO)</button>
     }
   </ng-container>
 </app-content-dialog>

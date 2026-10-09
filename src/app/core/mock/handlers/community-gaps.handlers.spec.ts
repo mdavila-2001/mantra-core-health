@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { comentarios, publicaciones, vitrinas } from '../fixtures/community';
+import { commentList, postList, showcases } from '../fixtures/community';
 import { MockRouter, isMockReply, validation, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarComunidad } from './community.handlers';
@@ -50,7 +50,7 @@ describe('GET /community/moderation/decisions/mine', () => {
   registrarComunidad(router);
   const call = caller(router);
 
-  const sanctioned = vitrinas.todos()[4]!;
+  const sanctioned = showcases.todos()[4]!;
   /** La cuenta dueña de la vitrina sancionada: `vitrinaDeSesion` la resuelve por el id. */
   const sanctionedUser: MockUser = { ...buscarUsuario('paciente')!, id: sanctioned.targetId, patientProfileId: sanctioned.targetId };
 
@@ -95,7 +95,7 @@ describe('GET /community/moderation/decisions/mine', () => {
 
   it('límite — un perfil sin sanciones recibe una página vacía, no un error', () => {
     const medica = buscarUsuario('medica')!;
-    const own = vitrinas.todos().find((v) => v.targetId === medica.practitionerProfileId || v.targetId === medica.id)!;
+    const own = showcases.todos().find((v) => v.targetId === medica.practitionerProfileId || v.targetId === medica.id)!;
 
     const page = call<Page>('GET', '/community/moderation/decisions/mine', { query: `profileId=${own.id}`, user: medica });
 
@@ -124,19 +124,19 @@ describe('GET /public/comments/:commentId/replies', () => {
   }
 
   it('correcto — devuelve las respuestas del comentario, sin sesión', () => {
-    const post = publicaciones.todos()[0]!;
-    const root = comentarios.todos().find((c) => c.postId === post.id && c.parentCommentId === null)!;
+    const post = postList.todos()[0]!;
+    const root = commentList.todos().find((c) => c.postId === post.id && c.parentCommentId === null)!;
 
     const page = call<PublicPage>('GET', `/public/comments/${root.id}/replies`, { user: null });
 
     expect(page.status).toBe(200);
     expect(page.body.items.map((item) => item.id)).toEqual(
-      comentarios.filtrar((c) => c.parentCommentId === root.id).map((c) => c.id),
+      commentList.filtrar((c) => c.parentCommentId === root.id).map((c) => c.id),
     );
   });
 
   it('límite — el hilo raíz anuncia cuántas respuestas tiene, y un comentario sin respuestas da página vacía', () => {
-    const post = publicaciones.todos()[0]!;
+    const post = postList.todos()[0]!;
     const roots = call<PublicPage>('GET', `/public/posts/${post.id}/comments`, { user: null }).body.items;
     const withReplies = roots.find((item) => item.replyCount > 0)!;
     const withoutReplies = roots.find((item) => item.replyCount === 0);

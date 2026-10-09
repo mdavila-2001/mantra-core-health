@@ -15,8 +15,8 @@ import {
   type ContentDialogSize,
 } from '../../../shared/components/organisms/content-dialog/content-dialog';
 
-import type { AnfitrionDeEscenario, EscenarioDeComponente } from './scenario.types';
-import { registroDeSalidas } from './exit-log';
+import type { ScenarioHost, ComponentScenario } from './scenario.types';
+import { outputsRecord } from './exit-log';
 
 /* ============================================================================
     Escenarios de `ContentDialog`.
@@ -28,11 +28,11 @@ import { registroDeSalidas } from './exit-log';
     tienen que preguntar en vez de perder lo escrito.
     ========================================================================== */
 
-const CLAVE = 'shared/components/organisms/content-dialog/content-dialog';
-const FUENTE = 'src/app/features/component-stock/scenarios/content-dialog.scenarios.ts';
+const KEY = 'shared/components/organisms/content-dialog/content-dialog';
+const SOURCE = 'src/app/features/component-stock/scenarios/content-dialog.scenarios.ts';
 
-export const VARIANTES_DE_CONTENT_DIALOG = ['descartable', 'con-cambios', 'sm', 'xl'] as const;
-export type VarianteDeContentDialog = (typeof VARIANTES_DE_CONTENT_DIALOG)[number];
+export const CONTENT_DIALOG_VARIANTS = ['descartable', 'con-cambios', 'sm', 'xl'] as const;
+export type ContentDialogVariant = (typeof CONTENT_DIALOG_VARIANTS)[number];
 
 /**
  * Anfitrión de `ContentDialog` para el banco.
@@ -47,30 +47,30 @@ export type VarianteDeContentDialog = (typeof VARIANTES_DE_CONTENT_DIALOG)[numbe
   imports: [AppButton, ContentDialog, FormField, Input],
   template: `
     <button app-button type="button" variant="primary" (clicked)="abrir()">Abrir el modal</button>
-    <p class="escenario__nota">Último cierre: {{ ultimoCierre() }}</p>
+    <p class="escenario__nota">Último cierre: {{ lastClosing() }}</p>
 
-    @if (abierto()) {
+    @if (open()) {
       <app-content-dialog
         heading="Registrar una nota"
         description="Escenario del banco: contenido proyectado y acciones en el pie."
         [size]="size()"
-        [dismissible]="!hayCambios()"
-        (opened)="registro.anotar('opened')"
-        (dismissAttempt)="pedirDescarte()"
-        (closed)="cerrada()"
+        [dismissible]="!hasChanges()"
+        (opened)="record.anotar('opened')"
+        (dismissAttempt)="requestDiscard()"
+        (closed)="closed()"
       >
-        <form class="escenario__cuerpo" (submit)="$event.preventDefault(); guardar()">
+        <form class="escenario__cuerpo" (submit)="$event.preventDefault(); save()">
           <app-form-field label="Título" [required]="true">
-            <app-input [(value)]="titulo" placeholder="Control de presión" />
+            <app-input [(value)]="title" placeholder="Control de presión" />
           </app-form-field>
           <app-form-field label="Nota" hint="Lo que se escriba acá no se guarda en ningún lado.">
-            <app-input [(value)]="nota" placeholder="Escriba algo…" />
+            <app-input [(value)]="note" placeholder="Escriba algo…" />
           </app-form-field>
 
-          @if (preguntandoDescarte()) {
+          @if (discardAsking()) {
             <p class="escenario__descarte" role="alert" data-testid="escenario-descarte">
               Hay cambios sin guardar. ¿Descartarlos?
-              <button app-button type="button" size="sm" variant="danger" (clicked)="descartar()">
+              <button app-button type="button" size="sm" variant="danger" (clicked)="discard()">
                 Descartar
               </button>
               <button
@@ -78,7 +78,7 @@ export type VarianteDeContentDialog = (typeof VARIANTES_DE_CONTENT_DIALOG)[numbe
                 type="button"
                 size="sm"
                 variant="ghost"
-                (clicked)="preguntandoDescarte.set(false)"
+                (clicked)="discardAsking.set(false)"
               >
                 Seguir editando
               </button>
@@ -86,7 +86,7 @@ export type VarianteDeContentDialog = (typeof VARIANTES_DE_CONTENT_DIALOG)[numbe
           }
         </form>
 
-        <button dialog-actions app-button type="button" variant="primary" (clicked)="guardar()">
+        <button dialog-actions app-button type="button" variant="primary" (clicked)="save()">
           Guardar
         </button>
       </app-content-dialog>
@@ -112,24 +112,24 @@ export type VarianteDeContentDialog = (typeof VARIANTES_DE_CONTENT_DIALOG)[numbe
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EscenarioContentDialog implements AnfitrionDeEscenario {
-  readonly variante = input<VarianteDeContentDialog>('descartable');
+export class ScenarioContentDialog implements ScenarioHost {
+  readonly variante = input<ContentDialogVariant>('descartable');
 
-  protected readonly registro = registroDeSalidas();
-  readonly salidas = this.registro.salidas;
+  protected readonly record = outputsRecord();
+  readonly outputs = this.record.salidas;
 
-  protected readonly abierto = signal(true);
-  protected readonly preguntandoDescarte = signal(false);
-  protected readonly ultimoCierre = signal('todavía ninguno');
+  protected readonly open = signal(true);
+  protected readonly discardAsking = signal(false);
+  protected readonly lastClosing = signal('todavía ninguno');
 
   /**
    * El borrador. En `con-cambios` arranca escrito para que haya qué proteger;
    * `linkedSignal` lo vuelve a sembrar si el banco cambia la variante.
    */
-  protected readonly titulo = linkedSignal(() =>
+  protected readonly title = linkedSignal(() =>
     this.variante() === 'con-cambios' ? 'Control de presión' : '',
   );
-  protected readonly nota = linkedSignal(() =>
+  protected readonly note = linkedSignal(() =>
     this.variante() === 'con-cambios' ? '140/90, repetir en una semana.' : '',
   );
 
@@ -147,48 +147,48 @@ export class EscenarioContentDialog implements AnfitrionDeEscenario {
   });
 
   /** Lo que decide si cerrar pregunta: hay algo escrito. */
-  protected readonly hayCambios = computed(() => this.titulo() !== '' || this.nota() !== '');
+  protected readonly hasChanges = computed(() => this.title() !== '' || this.note() !== '');
 
   protected abrir(): void {
-    this.preguntandoDescarte.set(false);
-    this.abierto.set(true);
+    this.discardAsking.set(false);
+    this.open.set(true);
   }
 
-  protected pedirDescarte(): void {
-    this.registro.anotar('dismissAttempt');
-    this.preguntandoDescarte.set(true);
+  protected requestDiscard(): void {
+    this.record.anotar('dismissAttempt');
+    this.discardAsking.set(true);
   }
 
-  protected descartar(): void {
-    this.titulo.set('');
-    this.nota.set('');
-    this.preguntandoDescarte.set(false);
+  protected discard(): void {
+    this.title.set('');
+    this.note.set('');
+    this.discardAsking.set(false);
     // Sin cambios, el siguiente cierre va derecho: se cierra desde acá.
-    this.abierto.set(false);
-    this.registro.anotar('closed', 'tras descartar');
-    this.ultimoCierre.set('descartando los cambios');
+    this.open.set(false);
+    this.record.anotar('closed', 'tras descartar');
+    this.lastClosing.set('descartando los cambios');
   }
 
   /** Es una intención, no un resultado: acá no hay nada que persista. */
-  protected guardar(): void {
-    this.registro.anotar('guardarSolicitado', this.titulo() || '(sin título)');
-    this.ultimoCierre.set('pidiendo guardar');
-    this.titulo.set('');
-    this.nota.set('');
-    this.abierto.set(false);
+  protected save(): void {
+    this.record.anotar('guardarSolicitado', this.title() || '(sin título)');
+    this.lastClosing.set('pidiendo guardar');
+    this.title.set('');
+    this.note.set('');
+    this.open.set(false);
   }
 
-  protected cerrada(): void {
-    this.registro.anotar('closed');
-    this.ultimoCierre.set('por el botón, Escape o el fondo');
-    this.abierto.set(false);
+  protected closed(): void {
+    this.record.anotar('closed');
+    this.lastClosing.set('por el botón, Escape o el fondo');
+    this.open.set(false);
   }
 }
 
-export const ESCENARIOS_DE_CONTENT_DIALOG: readonly EscenarioDeComponente[] = [
+export const CONTENT_DIALOG_SCENARIOS: readonly ComponentScenario[] = [
   {
-    id: `${CLAVE}#descartable`,
-    clave: CLAVE,
+    id: `${KEY}#descartable`,
+    clave: KEY,
     variante: 'descartable',
     titulo: 'Modal con contenido, ancho md',
     seVe: 'Abierto al montar: título, bajada, dos campos proyectados y «Guardar» en el pie. El foco cae en «Cerrar».',
@@ -198,12 +198,12 @@ export const ESCENARIOS_DE_CONTENT_DIALOG: readonly EscenarioDeComponente[] = [
       '«Guardar» → guardarSolicitado (es una intención: nada se persiste).',
     ],
     salidasEsperadas: ['opened', 'closed', 'guardarSolicitado'],
-    host: EscenarioContentDialog,
-    fuente: FUENTE,
+    host: ScenarioContentDialog,
+    fuente: SOURCE,
   },
   {
-    id: `${CLAVE}#con-cambios`,
-    clave: CLAVE,
+    id: `${KEY}#con-cambios`,
+    clave: KEY,
     variante: 'con-cambios',
     titulo: 'Edición con cambios pendientes, ancho lg',
     seVe: 'Abierto con el borrador ya escrito. Escape y el fondo NO cierran: preguntan. Quien pregunta es este anfitrión, no el organismo: con `dismissible` en false `ContentDialog` sólo emite `dismissAttempt` (content-dialog.ts:108-123) y el descarte lo decide el consumidor.',
@@ -213,29 +213,29 @@ export const ESCENARIOS_DE_CONTENT_DIALOG: readonly EscenarioDeComponente[] = [
       'Borrar los dos campos y cerrar → closed de una, porque ya no hay qué descartar.',
     ],
     salidasEsperadas: ['opened', 'dismissAttempt', 'closed', 'guardarSolicitado'],
-    host: EscenarioContentDialog,
-    fuente: FUENTE,
+    host: ScenarioContentDialog,
+    fuente: SOURCE,
   },
   {
-    id: `${CLAVE}#sm`,
-    clave: CLAVE,
+    id: `${KEY}#sm`,
+    clave: KEY,
     variante: 'sm',
     titulo: 'Ancho sm (confirmación breve)',
     seVe: 'El mismo contenido en el panel más angosto. En móvil (390) los cuatro anchos colapsan al mismo modal.',
     interacciones: ['Igual que «descartable».'],
     salidasEsperadas: ['opened', 'closed', 'guardarSolicitado'],
-    host: EscenarioContentDialog,
-    fuente: FUENTE,
+    host: ScenarioContentDialog,
+    fuente: SOURCE,
   },
   {
-    id: `${CLAVE}#xl`,
-    clave: CLAVE,
+    id: `${KEY}#xl`,
+    clave: KEY,
     variante: 'xl',
     titulo: 'Ancho xl (listado con navegación interna)',
     seVe: 'El mismo contenido en el panel más ancho.',
     interacciones: ['Igual que «descartable».'],
     salidasEsperadas: ['opened', 'closed', 'guardarSolicitado'],
-    host: EscenarioContentDialog,
-    fuente: FUENTE,
+    host: ScenarioContentDialog,
+    fuente: SOURCE,
   },
 ];

@@ -1,6 +1,6 @@
 import { uuid } from '../mock-store';
 import { analisisInlasaDe } from './inlasa';
-import { prestacionDeImagen } from './reference-prices';
+import { imageBenefit } from './reference-prices';
 import { CATALOGO_MEDICAMENTOS } from './medication-catalog.generated';
 import { MEDICAMENTOS_LINAME, type MedicamentoLiname } from './liname.generated';
 import { PROFESIONES_COB_2023 } from './professions-cob-2023.generated';
@@ -14,7 +14,7 @@ import { PROFESIONES_COB_2023 } from './professions-cob-2023.generated';
     interno), que es lo que expanden los selectores.
     ========================================================================== */
 
-export interface ConceptoSimulado {
+export interface SimulatedConcept {
   readonly id: string;
   readonly code: string;
   readonly display: string;
@@ -26,13 +26,13 @@ export interface ConceptoSimulado {
    * Lo que el sistema de codificación declara del concepto, por código
    * (`concept_properties.property_code` en el modelo real). Ausente en la
    * mayoría de los conceptos: sólo lo llevan quienes lo declaran con
-   * {@link declararPropiedades}. Espeja `ConceptDetail.properties` de
+   * {@link declareProperties}. Espeja `ConceptDetail.properties` de
    * `core/data-access/terminology/terminology.types.ts`.
    */
   readonly properties?: Readonly<Record<string, unknown>>;
 }
 
-export interface ConjuntoSimulado {
+export interface SimulatedSet {
   readonly id: string;
   readonly internalCode: string;
   readonly name: string;
@@ -40,39 +40,39 @@ export interface ConjuntoSimulado {
   readonly defaultVersionId: string;
 }
 
-const registro = new Map<string, ConceptoSimulado>();
-const conjuntos = new Map<string, ConjuntoSimulado>();
+const record = new Map<string, SimulatedConcept>();
+const sets = new Map<string, SimulatedSet>();
 
 export const CODE_SYSTEM_VERSION_ID = uuid('code-system-version-alovida-1');
 export const CODE_SYSTEM_ID = uuid('code-system-alovida');
 
-function conjunto(internalCode: string, name: string, description: string): ConjuntoSimulado {
-  const c: ConjuntoSimulado = {
+function conjunto(internalCode: string, name: string, description: string): SimulatedSet {
+  const c: SimulatedSet = {
     id: uuid(`value-set-${internalCode}`),
     internalCode,
     name,
     description,
     defaultVersionId: uuid(`value-set-version-${internalCode}`),
   };
-  conjuntos.set(internalCode, c);
+  sets.set(internalCode, c);
   return c;
 }
 
-function definir(
+function define(
   valueSet: string,
   entradas: readonly (readonly [code: string, display: string, definition?: string])[],
   ordinalInicial = 1,
 ): Readonly<Record<string, string>> {
   const ids: Record<string, string> = {};
   entradas.forEach(([code, display, definition], indice) => {
-    const existente = registro.get(code);
+    const existente = record.get(code);
     if (existente !== undefined) {
-      registro.set(code, { ...existente, valueSets: [...existente.valueSets, valueSet] });
+      record.set(code, { ...existente, valueSets: [...existente.valueSets, valueSet] });
       ids[code] = existente.id;
       return;
     }
     const id = uuid(`concept-${code}`);
-    registro.set(code, {
+    record.set(code, {
       id,
       code,
       display,
@@ -95,10 +95,10 @@ function definir(
  * haga falta, una por código"). No lanza si el código no existe: mejor una
  * propiedad que no aparece que romper el arranque del catálogo.
  */
-function declararPropiedades(code: string, propiedades: Readonly<Record<string, unknown>>): void {
-  const existente = registro.get(code);
+function declareProperties(code: string, propiedades: Readonly<Record<string, unknown>>): void {
+  const existente = record.get(code);
   if (existente === undefined) return;
-  registro.set(code, { ...existente, properties: { ...existente.properties, ...propiedades } });
+  record.set(code, { ...existente, properties: { ...existente.properties, ...propiedades } });
 }
 
 /* ---- Bolivia: departamentos, municipios, ocupaciones, empleadores --------- */
@@ -111,7 +111,7 @@ function declararPropiedades(code: string, propiedades: Readonly<Record<string, 
    habia ciudades, que es un campo obligatorio: el registro no se podia
    terminar. */
 conjunto('VS_BO_DEPARTMENT', 'Departamentos de Bolivia', 'Los nueve departamentos.');
-export const DEPARTAMENTO = definir('VS_BO_DEPARTMENT', [
+export const DEPARTMENT = define('VS_BO_DEPARTMENT', [
   ['geo:bo:department:SC', 'Santa Cruz'],
   ['geo:bo:department:LP', 'La Paz'],
   ['geo:bo:department:CB', 'Cochabamba'],
@@ -124,7 +124,7 @@ export const DEPARTAMENTO = definir('VS_BO_DEPARTMENT', [
 ]);
 
 conjunto('VS_BO_MUNICIPALITY', 'Municipios de Bolivia', 'Municipios, agrupados por departamento.');
-export const MUNICIPIO = definir('VS_BO_MUNICIPALITY', [
+export const MUNICIPALITY = define('VS_BO_MUNICIPALITY', [
   ['SC-SCZ', 'Santa Cruz de la Sierra'],
   ['SC-MON', 'Montero'],
   ['SC-WAR', 'Warnes'],
@@ -182,10 +182,10 @@ conjunto(
   'Profesiones (COB-2023)',
   'Clasificación de Ocupaciones de Bolivia 2023, grandes grupos 2 y 3.',
 );
-export const PROFESION = definir('VS_BO_PROFESSION', PROFESIONES_COB_2023);
+export const PROFESSION = define('VS_BO_PROFESSION', PROFESIONES_COB_2023);
 
 conjunto('VS_BO_OCCUPATION', 'Ocupaciones', 'Catálogo normado de ocupaciones.');
-export const OCUPACION = definir('VS_BO_OCCUPATION', [
+export const OCCUPATION = define('VS_BO_OCCUPATION', [
   ['occupation:bo:ABOGADO', 'Abogado / Abogada'],
   ['occupation:bo:ADMINISTRADOR', 'Administrador / Administradora'],
   ['occupation:bo:AGRICULTOR', 'Agricultor / Agricultora'],
@@ -253,7 +253,7 @@ export const OCUPACION = definir('VS_BO_OCCUPATION', [
 ]);
 
 conjunto('VS_BO_EMPLOYER', 'Empleadores', 'Empresas e instituciones registradas.');
-export const EMPLEADOR = definir('VS_BO_EMPLOYER', [
+export const EMPLOYER = define('VS_BO_EMPLOYER', [
   ['employer:bo:YPFB_ANDINA', 'YPFB Andina'],
   ['employer:bo:UAGRM', 'UAGRM (Universidad Autónoma Gabriel René Moreno)'],
   ['employer:bo:CRE', 'CRE (Cooperativa Rural de Electrificación)'],
@@ -288,7 +288,7 @@ export const EMPLEADOR = definir('VS_BO_EMPLOYER', [
    -------------------------------------------------------------------------- */
 
 conjunto('VS_MEDICAL_SPECIALTY', 'Especialidades médicas', 'Especialidades reconocidas.');
-export const ESPECIALIDAD = definir('VS_MEDICAL_SPECIALTY', [
+export const SPECIALTY = define('VS_MEDICAL_SPECIALTY', [
   ['MEDICINA_GENERAL', 'Medicina General', 'Primer contacto y seguimiento.'],
   ['MEDICINA_FAMILIAR', 'Medicina Familiar'],
   ['MEDICINA_INTERNA', 'Medicina Interna', 'Atención integral del adulto.'],
@@ -361,7 +361,7 @@ conjunto(
   'Género administrativo',
   'Género con el que se registra la persona.',
 );
-export const GENERO = definir('VS_ADMINISTRATIVE_GENDER', [
+export const GENDER = define('VS_ADMINISTRATIVE_GENDER', [
   ['GEN-F', 'Femenino'],
   ['GEN-M', 'Masculino'],
   ['GEN-X', 'No binario'],
@@ -369,7 +369,7 @@ export const GENERO = definir('VS_ADMINISTRATIVE_GENDER', [
 ]);
 
 conjunto('VS_BIRTH_SEX', 'Sexo al nacer', 'Sexo asignado al nacer.');
-export const SEXO = definir('VS_BIRTH_SEX', [
+export const SEXO = define('VS_BIRTH_SEX', [
   ['SEX-F', 'Femenino'],
   ['SEX-M', 'Masculino'],
   ['SEX-I', 'Intersexual'],
@@ -381,7 +381,7 @@ conjunto(
   'Parentesco',
   'Relación de una persona con el paciente.',
 );
-export const PARENTESCO = definir('VS_RELATED_PERSON_RELATIONSHIP', [
+export const KINSHIP = define('VS_RELATED_PERSON_RELATIONSHIP', [
   ['RELATIONSHIP_MOTHER', 'Madre'],
   ['RELATIONSHIP_FATHER', 'Padre'],
   ['RELATIONSHIP_SPOUSE', 'Cónyuge'],
@@ -393,7 +393,7 @@ export const PARENTESCO = definir('VS_RELATED_PERSON_RELATIONSHIP', [
 ]);
 
 conjunto('VS_LANGUAGE', 'Idiomas', 'Idiomas de atención.');
-export const IDIOMA = definir('VS_LANGUAGE', [
+export const LANGUAGE = define('VS_LANGUAGE', [
   ['LANG-ES', 'Español'],
   ['LANG-QU', 'Quechua'],
   ['LANG-AY', 'Aymara'],
@@ -402,14 +402,14 @@ export const IDIOMA = definir('VS_LANGUAGE', [
 ]);
 
 conjunto('VS_LANGUAGE_PROFICIENCY', 'Dominio del idioma', 'Nivel de dominio.');
-export const DOMINIO_IDIOMA = definir('VS_LANGUAGE_PROFICIENCY', [
+export const LANGUAGE_DOMAIN = define('VS_LANGUAGE_PROFICIENCY', [
   ['PROF-NATIVO', 'Nativo'],
   ['PROF-AVANZADO', 'Avanzado'],
   ['PROF-BASICO', 'Básico'],
 ]);
 
 conjunto('VS_NATIONALITY', 'Nacionalidad', 'País de nacionalidad.');
-export const NACIONALIDAD = definir('VS_NATIONALITY', [
+export const NATIONALITY = define('VS_NATIONALITY', [
   ['NAT-BO', 'Boliviana'],
   ['NAT-AR', 'Argentina'],
   ['NAT-BR', 'Brasileña'],
@@ -417,7 +417,7 @@ export const NACIONALIDAD = definir('VS_NATIONALITY', [
 ]);
 
 conjunto('VS_BLOOD_GROUP', 'Grupo sanguíneo', 'Grupo ABO.');
-export const GRUPO_ABO = definir('VS_BLOOD_GROUP', [
+export const GROUP_ABO = define('VS_BLOOD_GROUP', [
   ['ABO-O', 'O'],
   ['ABO-A', 'A'],
   ['ABO-B', 'B'],
@@ -425,7 +425,7 @@ export const GRUPO_ABO = definir('VS_BLOOD_GROUP', [
 ]);
 
 conjunto('VS_RH_FACTOR', 'Factor Rh', 'Factor Rh.');
-export const RH = definir('VS_RH_FACTOR', [
+export const RH = define('VS_RH_FACTOR', [
   ['RH-POS', 'Positivo'],
   ['RH-NEG', 'Negativo'],
 ]);
@@ -437,7 +437,7 @@ conjunto(
   'Estados de registro',
   'Estados administrativos de personas y perfiles.',
 );
-export const ESTADO = definir('VS_RECORD_STATUS', [
+export const STATUS = define('VS_RECORD_STATUS', [
   ['ST-ACTIVE', 'Activo'],
   ['ST-INACTIVE', 'Inactivo'],
   ['ST-PENDING', 'Pendiente'],
@@ -469,7 +469,7 @@ export const ESTADO = definir('VS_RECORD_STATUS', [
 /* ---- profesionales ------------------------------------------------------- */
 
 conjunto('VS_PRACTITIONER_CATEGORY', 'Categoría profesional', 'Tipo de profesional sanitario.');
-export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
+export const PROFESSIONAL_CATEGORY = define('VS_PRACTITIONER_CATEGORY', [
   ['PC-MEDICO', 'Médico/a'],
   ['PC-ODONTOLOGO', 'Odontólogo/a'],
   ['PC-ENFERMERO', 'Enfermero/a'],
@@ -489,7 +489,7 @@ conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificacione
  * en castellano existía en el catálogo desde siempre y es la que el cliente de
  * terminología pide con `lang`.
  */
-export const TIPO_CREDENCIAL = definir(
+export const CREDENTIAL_TYPE = define(
   'VS_CREDENTIAL_TYPE',
   [
     ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
@@ -502,7 +502,7 @@ export const TIPO_CREDENCIAL = definir(
 );
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
-export const JURISDICCION = definir('VS_JURISDICTION', [
+export const JURISDICTION = define('VS_JURISDICTION', [
   ['JUR-BO', 'Nacional (Bolivia)'],
   ['JUR-SC', 'Departamental Santa Cruz'],
   ['JUR-LP', 'Departamental La Paz'],
@@ -513,7 +513,7 @@ conjunto(
   'Tipos de vínculo laboral',
   'Cómo se vincula el profesional con una organización.',
 );
-export const TIPO_VINCULO = definir('VS_AFFILIATION_TYPE', [
+export const LINK_TYPE = define('VS_AFFILIATION_TYPE', [
   ['AFF-PLANTA', 'Personal de planta'],
   ['AFF-CONSULTOR', 'Consultor/a'],
   ['AFF-CONSULTORIO', 'Consultorio propio'],
@@ -521,7 +521,7 @@ export const TIPO_VINCULO = definir('VS_AFFILIATION_TYPE', [
 ]);
 
 conjunto('VS_PRACTICE_SCOPE', 'Alcance de práctica', 'Qué habilita la matrícula.');
-export const ALCANCE = definir('VS_PRACTICE_SCOPE', [
+export const ALCANCE = define('VS_PRACTICE_SCOPE', [
   ['SCOPE-GENERAL', 'Práctica general'],
   ['SCOPE-ESPECIALISTA', 'Práctica especializada'],
 ]);
@@ -529,14 +529,14 @@ export const ALCANCE = definir('VS_PRACTICE_SCOPE', [
 /* ---- agenda ------------------------------------------------------------- */
 
 conjunto('VS_APPOINTMENT_CHANNEL', 'Medio de atención', 'Por qué medio ocurre la consulta.');
-export const CANAL = definir('VS_APPOINTMENT_CHANNEL', [
+export const CANAL = define('VS_APPOINTMENT_CHANNEL', [
   ['CH-PRESENCIAL', 'Presencial'],
   ['CH-TELECONSULTA', 'Teleconsulta'],
   ['CH-DOMICILIO', 'A domicilio'],
 ]);
 
 conjunto('VS_ACTIVITY_TYPE', 'Tipos de actividad', 'Qué se agenda en un cupo.');
-export const ACTIVIDAD = definir('VS_ACTIVITY_TYPE', [
+export const ACTIVITY = define('VS_ACTIVITY_TYPE', [
   ['ACT-CONSULTA', 'Consulta médica'],
   ['ACT-CONTROL', 'Control'],
   ['ACT-PROCEDIMIENTO', 'Procedimiento'],
@@ -546,7 +546,7 @@ export const ACTIVIDAD = definir('VS_ACTIVITY_TYPE', [
 ]);
 
 conjunto('VS_EXCEPTION_TYPE', 'Tipos de bloqueo', 'Por qué no se atiende.');
-export const TIPO_BLOQUEO = definir('VS_EXCEPTION_TYPE', [
+export const BLOCK_TYPE = define('VS_EXCEPTION_TYPE', [
   ['EXC-VACACIONES', 'Vacaciones'],
   ['EXC-CONGRESO', 'Congreso'],
   ['EXC-FERIADO', 'Feriado'],
@@ -555,7 +555,7 @@ export const TIPO_BLOQUEO = definir('VS_EXCEPTION_TYPE', [
 ]);
 
 conjunto('VS_APPOINTMENT_TYPE', 'Tipos de cita', 'Cómo se clasifica la cita.');
-export const TIPO_CITA = definir('VS_APPOINTMENT_TYPE', [
+export const APPOINTMENT_TYPE = define('VS_APPOINTMENT_TYPE', [
   ['APT-PRIMERA', 'Primera consulta'],
   ['APT-CONTROL', 'Control'],
   ['APT-URGENCIA', 'Urgencia'],
@@ -563,7 +563,7 @@ export const TIPO_CITA = definir('VS_APPOINTMENT_TYPE', [
 ]);
 
 conjunto('VS_BOOKING_STATUS', 'Estados de reserva', 'Ciclo de vida de una reserva.');
-export const ESTADO_RESERVA = definir('VS_BOOKING_STATUS', [
+export const BOOKING_STATUS = define('VS_BOOKING_STATUS', [
   ['BK-REQUESTED', 'Solicitada'],
   ['BK-CONFIRMED', 'Confirmada'],
   ['BK-CHECKED-IN', 'Paciente llegó'],
@@ -577,7 +577,7 @@ export const ESTADO_RESERVA = definir('VS_BOOKING_STATUS', [
 /* ---- clínica ------------------------------------------------------------- */
 
 conjunto('VS_CONDITION_CLINICAL_STATUS', 'Estado clínico', 'Estado clínico de una condición.');
-export const ESTADO_CONDICION = definir('VS_CONDITION_CLINICAL_STATUS', [
+export const CONDITION_STATUS = define('VS_CONDITION_CLINICAL_STATUS', [
   ['COND_ACTIVE', 'Activa'],
   ['COND_REMISSION', 'En remisión'],
   ['COND_RESOLVED', 'Resuelta'],
@@ -596,7 +596,7 @@ conjunto(
   'Curso clínico del diagnóstico',
   'Si la condición es aguda —con resolución esperada— o crónica —seguimiento continuo—. Eje distinto del estado clínico.',
 );
-export const CURSO_CLINICO = definir('VS_CONDITION_CLINICAL_COURSE', [
+export const CLINICAL_COURSE = define('VS_CONDITION_CLINICAL_COURSE', [
   ['COND_COURSE_ACUTE', 'Aguda'],
   ['COND_COURSE_CHRONIC', 'Crónica'],
   ['COND_COURSE_SUBACUTE', 'Subaguda'],
@@ -609,13 +609,13 @@ conjunto(
   'Categoría del diagnóstico',
   'Si el registro es un diagnóstico del encuentro o un problema de la lista.',
 );
-export const CATEGORIA_CONDICION = definir('VS_CONDITION_CATEGORY', [
+export const CONDITION_CATEGORY = define('VS_CONDITION_CATEGORY', [
   ['COND_DIAGNOSIS', 'Diagnóstico del encuentro'],
   ['COND_PROBLEM', 'Problema de la lista'],
 ]);
 
 conjunto('VS_CONDITION_LATERALITY', 'Lateralidad', 'Lado del cuerpo afectado, cuando aplica.');
-export const LATERALIDAD = definir('VS_CONDITION_LATERALITY', [
+export const LATERALITY = define('VS_CONDITION_LATERALITY', [
   ['COND_LAT_LEFT', 'Izquierda'],
   ['COND_LAT_RIGHT', 'Derecha'],
   ['COND_LAT_BILATERAL', 'Bilateral'],
@@ -628,14 +628,14 @@ export const LATERALIDAD = definir('VS_CONDITION_LATERALITY', [
    front que contra la API real mostraba todo «En estudio». La API no siembra
    el diferencial de HL7, así que el simulador tampoco. */
 conjunto('VS_CONDITION_VERIFICATION', 'Verificación diagnóstica', 'Certeza del diagnóstico.');
-export const VERIFICACION_DX = definir('VS_CONDITION_VERIFICATION', [
+export const VERIFICATION_DX = define('VS_CONDITION_VERIFICATION', [
   ['COND_CONFIRMED', 'Confirmado'],
   ['COND_PROVISIONAL', 'Provisional'],
   ['COND_REFUTED', 'Descartado'],
 ]);
 
 conjunto('VS_SEVERITY', 'Severidad', 'Gravedad de una condición o reacción.');
-export const SEVERIDAD = definir('VS_SEVERITY', [
+export const SEVERITY = define('VS_SEVERITY', [
   ['SEV-MILD', 'Leve'],
   ['SEV-MODERATE', 'Moderada'],
   ['SEV-SEVERE', 'Grave'],
@@ -652,7 +652,7 @@ export const SEVERIDAD = definir('VS_SEVERITY', [
    SNOMED, o el que el equipo clínico apruebe— es P26. */
 
 conjunto('VS_ALLERGY_TYPE', 'Tipo', 'Si es alergia inmunológica o intolerancia.');
-export const TIPO_ALERGIA = definir('VS_ALLERGY_TYPE', [
+export const ALLERGY_TYPE = define('VS_ALLERGY_TYPE', [
   ['ALG_TYPE', 'Alergia'],
   ['ALG_TYPE_INTOLERANCE', 'Intolerancia'],
 ]);
@@ -662,7 +662,7 @@ conjunto(
   'Manifestación',
   'Qué le pasó a la persona. Provisional: ver P26.',
 );
-export const MANIFESTACION = definir('VS_ALLERGY_MANIFESTATION', [
+export const MANIFESTATION = define('VS_ALLERGY_MANIFESTATION', [
   ['ALG_MANIF_URTICARIA', 'Urticaria'],
   ['ALG_MANIF_ANGIOEDEMA', 'Angioedema'],
   ['ALG_MANIF_ANAPHYLAXIS', 'Anafilaxia'],
@@ -678,7 +678,7 @@ conjunto(
   'Sustancia',
   'Alérgenos que no son medicamentos. Los medicamentos salen del vademécum.',
 );
-export const SUSTANCIA_ALERGENO = definir('VS_ALLERGY_SUBSTANCE', [
+export const ALLERGEN_SUBSTANCE = define('VS_ALLERGY_SUBSTANCE', [
   ['ALG_SUB_PEANUT', 'Maní'],
   ['ALG_SUB_SHELLFISH', 'Mariscos'],
   ['ALG_SUB_EGG', 'Huevo'],
@@ -692,20 +692,20 @@ export const SUSTANCIA_ALERGENO = definir('VS_ALLERGY_SUBSTANCE', [
 ]);
 
 conjunto('VS_ALLERGY_CATEGORY', 'Categoría de alergia', 'Qué clase de alérgeno.');
-export const CATEGORIA_ALERGIA = definir('VS_ALLERGY_CATEGORY', [
+export const ALLERGY_CATEGORY = define('VS_ALLERGY_CATEGORY', [
   ['ALG-MEDICATION', 'Medicamento'],
   ['ALG-FOOD', 'Alimento'],
   ['ALG-ENVIRONMENT', 'Ambiental'],
 ]);
 
 conjunto('VS_ALLERGY_CRITICALITY', 'Criticidad', 'Riesgo de la alergia.');
-export const CRITICIDAD = definir('VS_ALLERGY_CRITICALITY', [
+export const CRITICALITY = define('VS_ALLERGY_CRITICALITY', [
   ['CRIT-LOW', 'Baja'],
   ['CRIT-HIGH', 'Alta'],
 ]);
 
 conjunto('VS_ENCOUNTER_CLASS', 'Clase de encuentro', 'Ambulatorio, urgencia, internación.');
-export const CLASE_ENCUENTRO = definir('VS_ENCOUNTER_CLASS', [
+export const ENCOUNTER_CLASS = define('VS_ENCOUNTER_CLASS', [
   ['ENC-AMB', 'Ambulatorio'],
   ['ENC-EMER', 'Urgencia'],
   ['ENC-IMP', 'Internación'],
@@ -713,7 +713,7 @@ export const CLASE_ENCUENTRO = definir('VS_ENCOUNTER_CLASS', [
 ]);
 
 conjunto('VS_ENCOUNTER_STATUS', 'Estado del encuentro', 'Ciclo de vida del encuentro.');
-export const ESTADO_ENCUENTRO = definir('VS_ENCOUNTER_STATUS', [
+export const ENCOUNTER_STATUS = define('VS_ENCOUNTER_STATUS', [
   ['ENCST-PLANNED', 'Planificado'],
   ['ENCST-IN-PROGRESS', 'En curso'],
   ['ENCST-FINISHED', 'Finalizado'],
@@ -721,7 +721,7 @@ export const ESTADO_ENCUENTRO = definir('VS_ENCOUNTER_STATUS', [
 ]);
 
 conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.');
-export const ESTADO_RECETA = definir('VS_MEDICATION_REQUEST_STATUS', [
+export const PRESCRIPTION_STATUS = define('VS_MEDICATION_REQUEST_STATUS', [
   ['RX-ACTIVE', 'Vigente'],
   ['RX-COMPLETED', 'Completada'],
   ['RX-CANCELLED', 'Cancelada'],
@@ -729,7 +729,7 @@ export const ESTADO_RECETA = definir('VS_MEDICATION_REQUEST_STATUS', [
 ]);
 
 conjunto('VS_OBSERVATION_CODE', 'Signos vitales y mediciones', 'Códigos de observación.');
-export const OBSERVACION = definir('VS_OBSERVATION_CODE', [
+export const OBSERVATION = define('VS_OBSERVATION_CODE', [
   ['OBS-BP-SYS', 'Presión arterial sistólica'],
   ['OBS-BP-DIA', 'Presión arterial diastólica'],
   ['OBS-HR', 'Frecuencia cardíaca'],
@@ -751,7 +751,7 @@ export const OBSERVACION = definir('VS_OBSERVATION_CODE', [
    el resto— sigue siendo P26. */
 
 conjunto('VS_OBSERVATION_UNIT', 'Unidad de medida', 'Unidades de una medición clínica.');
-export const UNIDAD_OBSERVACION = definir('VS_OBSERVATION_UNIT', [
+export const OBSERVATION_UNIT = define('VS_OBSERVATION_UNIT', [
   ['OBSU-MMHG', 'mmHg'],
   ['OBSU-BPM', 'latidos por minuto'],
   ['OBSU-CELSIUS', '°C'],
@@ -763,7 +763,7 @@ export const UNIDAD_OBSERVACION = definir('VS_OBSERVATION_UNIT', [
 ]);
 
 conjunto('VS_OBSERVATION_CATEGORY', 'Categoría de observación', 'De dónde sale la medición.');
-export const CATEGORIA_OBSERVACION = definir('VS_OBSERVATION_CATEGORY', [
+export const OBSERVATION_CATEGORY = define('VS_OBSERVATION_CATEGORY', [
   ['OBSC-VITALS', 'Signos vitales'],
   ['OBSC-EXAM', 'Examen físico'],
   ['OBSC-LAB', 'Laboratorio'],
@@ -771,7 +771,7 @@ export const CATEGORIA_OBSERVACION = definir('VS_OBSERVATION_CATEGORY', [
 ]);
 
 conjunto('VS_OBSERVATION_INTERPRETATION', 'Interpretación', 'Cómo se lee el valor.');
-export const INTERPRETACION = definir('VS_OBSERVATION_INTERPRETATION', [
+export const INTERPRETATION = define('VS_OBSERVATION_INTERPRETATION', [
   ['OBSI-NORMAL', 'Dentro de lo esperado'],
   ['OBSI-HIGH', 'Por encima de lo esperado'],
   ['OBSI-LOW', 'Por debajo de lo esperado'],
@@ -779,7 +779,7 @@ export const INTERPRETACION = definir('VS_OBSERVATION_INTERPRETATION', [
 ]);
 
 conjunto('VS_OBSERVATION_PERFORMER_TYPE', 'Tipo de ejecutante', 'Quién tomó la medición.');
-export const TIPO_DE_EJECUTANTE = definir('VS_OBSERVATION_PERFORMER_TYPE', [
+export const PERFORMER_TYPE = define('VS_OBSERVATION_PERFORMER_TYPE', [
   ['OBSP-PRACTITIONER', 'Profesional que atiende'],
   ['OBSP-LAB', 'Laboratorio'],
   ['OBSP-DEVICE', 'Dispositivo'],
@@ -787,14 +787,14 @@ export const TIPO_DE_EJECUTANTE = definir('VS_OBSERVATION_PERFORMER_TYPE', [
 ]);
 
 conjunto('VS_CARE_PLAN_INTENT', 'Intención del plan', 'Qué clase de plan es.');
-export const INTENCION_DEL_PLAN = definir('VS_CARE_PLAN_INTENT', [
+export const PLAN_INTENT = define('VS_CARE_PLAN_INTENT', [
   ['CP-INTENT-PROPOSAL', 'Propuesta'],
   ['CP-INTENT-PLAN', 'Plan'],
   ['CP-INTENT-ORDER', 'Indicación'],
 ]);
 
 conjunto('VS_CARE_PLAN_ACTIVITY', 'Actividad del plan', 'Qué clase de paso es.');
-export const ACTIVIDAD_DEL_PLAN = definir('VS_CARE_PLAN_ACTIVITY', [
+export const PLAN_ACTIVITY = define('VS_CARE_PLAN_ACTIVITY', [
   ['CP-ACT-CONTROL', 'Control clínico'],
   ['CP-ACT-STUDY', 'Estudio o laboratorio'],
   ['CP-ACT-TREATMENT', 'Tratamiento'],
@@ -803,7 +803,7 @@ export const ACTIVIDAD_DEL_PLAN = definir('VS_CARE_PLAN_ACTIVITY', [
 ]);
 
 conjunto('VS_DOCUMENT_CATEGORY', 'Categoría documental', 'Qué clase de papel es.');
-export const CATEGORIA_DOCUMENTAL = definir('VS_DOCUMENT_CATEGORY', [
+export const CATEGORY_DOCUMENTAL = define('VS_DOCUMENT_CATEGORY', [
   ['DOC-CAT-REPORT', 'Informe clínico'],
   ['DOC-CAT-LAB', 'Resultado de laboratorio'],
   ['DOC-CAT-IMAGING', 'Estudio de imagen'],
@@ -814,7 +814,7 @@ export const CATEGORIA_DOCUMENTAL = definir('VS_DOCUMENT_CATEGORY', [
 ]);
 
 conjunto('VS_ROUTE', 'Vía de administración', 'Vía por la que se administra.');
-export const VIA = definir('VS_ROUTE', [
+export const VIA = define('VS_ROUTE', [
   ['ROUTE-ORAL', 'Vía oral'],
   ['ROUTE-IM', 'Intramuscular'],
   ['ROUTE-IV', 'Intravenosa'],
@@ -823,7 +823,7 @@ export const VIA = definir('VS_ROUTE', [
 ]);
 
 conjunto('VS_DOSE_UNIT', 'Unidad de dosis', 'Unidades de dosis.');
-export const UNIDAD = definir('VS_DOSE_UNIT', [
+export const UNIDAD = define('VS_DOSE_UNIT', [
   ['UNIT-MG', 'mg'],
   ['UNIT-ML', 'ml'],
   ['UNIT-TAB', 'comprimido'],
@@ -836,7 +836,7 @@ conjunto(
   'Categoría de orden',
   'Laboratorio, imagen, interconsulta.',
 );
-export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
+export const ORDER_CATEGORY = define('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-LAB', 'Laboratorio'],
   ['SRQ-IMAGING', 'Imagenología'],
   ['SRQ-REFERRAL', 'Interconsulta'],
@@ -845,7 +845,7 @@ export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
 ]);
 
 conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');
-export const PRIORIDAD = definir('VS_PRIORITY', [
+export const PRIORITY = define('VS_PRIORITY', [
   ['PRI-ROUTINE', 'Rutina'],
   ['PRI-URGENT', 'Urgente'],
   ['PRI-STAT', 'Inmediata'],
@@ -853,48 +853,48 @@ export const PRIORIDAD = definir('VS_PRIORITY', [
 
 conjunto('VS_DIAGNOSTIC_STUDY', 'Estudios diagnósticos', 'Estudios de laboratorio e imagen.');
 /** Nombre oficial de INLASA para un estudio de laboratorio (ver `fixtures/inlasa.ts`). */
-const conNombreInlasa = (code: string, rotuloDeImagen?: string): readonly [string, string] => [
+const withNameInlasa = (code: string, rotuloDeImagen?: string): readonly [string, string] => [
   code,
   analisisInlasaDe(code)?.name ?? rotuloDeImagen ?? code,
 ];
 /** Un estudio de imagen con equivalente en FONASA lleva su nombre oficial (`reference-prices.ts`). */
-const conNombreFonasa = (code: string): readonly [string, string] => [
+const withNameFonasa = (code: string): readonly [string, string] => [
   code,
-  prestacionDeImagen(code)?.name ?? code,
+  imageBenefit(code)?.name ?? code,
 ];
-export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
-  conNombreInlasa('STUDY-HEMOGRAMA'),
-  conNombreInlasa('STUDY-GLUCOSA'),
-  conNombreInlasa('STUDY-PERFIL-LIPIDICO'),
-  conNombreInlasa('STUDY-TSH'),
-  conNombreInlasa('STUDY-ORINA'),
-  conNombreFonasa('STUDY-RX-TORAX'),
-  conNombreFonasa('STUDY-ECO-ABD'),
+export const ESTUDIO = define('VS_DIAGNOSTIC_STUDY', [
+  withNameInlasa('STUDY-HEMOGRAMA'),
+  withNameInlasa('STUDY-GLUCOSA'),
+  withNameInlasa('STUDY-PERFIL-LIPIDICO'),
+  withNameInlasa('STUDY-TSH'),
+  withNameInlasa('STUDY-ORINA'),
+  withNameFonasa('STUDY-RX-TORAX'),
+  withNameFonasa('STUDY-ECO-ABD'),
   ['STUDY-ECG', 'Electrocardiograma'],
-  conNombreFonasa('STUDY-RMN-RODILLA'),
-  conNombreFonasa('STUDY-TAC-CRANEO'),
+  withNameFonasa('STUDY-RMN-RODILLA'),
+  withNameFonasa('STUDY-TAC-CRANEO'),
   /* Un catálogo de diez estudios dejaba a cada centro con cinco, o sea siempre
      por debajo del umbral con el que la ficha muestra su buscador y su
      paginador: la sección se veía entera y sus controles no aparecían nunca.
      Un laboratorio real ofrece decenas. */
-  conNombreInlasa('STUDY-CREATININA'),
-  conNombreInlasa('STUDY-UREA'),
-  conNombreInlasa('STUDY-HBA1C'),
-  conNombreInlasa('STUDY-COAGULACION'),
-  conNombreInlasa('STUDY-HEPATICO'),
-  conNombreInlasa('STUDY-COPROLOGICO'),
-  conNombreInlasa('STUDY-CULTIVO'),
-  conNombreInlasa('STUDY-VITAMINA-D'),
-  conNombreFonasa('STUDY-MAMOGRAFIA'),
-  conNombreFonasa('STUDY-ECO-OBSTETRICA'),
-  conNombreFonasa('STUDY-RX-COLUMNA'),
-  conNombreFonasa('STUDY-TAC-ABDOMEN'),
-  conNombreFonasa('STUDY-RMN-CEREBRO'),
+  withNameInlasa('STUDY-CREATININA'),
+  withNameInlasa('STUDY-UREA'),
+  withNameInlasa('STUDY-HBA1C'),
+  withNameInlasa('STUDY-COAGULACION'),
+  withNameInlasa('STUDY-HEPATICO'),
+  withNameInlasa('STUDY-COPROLOGICO'),
+  withNameInlasa('STUDY-CULTIVO'),
+  withNameInlasa('STUDY-VITAMINA-D'),
+  withNameFonasa('STUDY-MAMOGRAFIA'),
+  withNameFonasa('STUDY-ECO-OBSTETRICA'),
+  withNameFonasa('STUDY-RX-COLUMNA'),
+  withNameFonasa('STUDY-TAC-ABDOMEN'),
+  withNameFonasa('STUDY-RMN-CEREBRO'),
   ['STUDY-DENSITOMETRIA', 'Densitometría ósea'],
 ]);
 
 conjunto('VS_IMMUNIZATION', 'Vacunas', 'Vacunas del esquema.');
-export const VACUNA = definir('VS_IMMUNIZATION', [
+export const VACCINE = define('VS_IMMUNIZATION', [
   ['VAC-INFLUENZA', 'Influenza estacional'],
   ['VAC-COVID', 'COVID-19'],
   ['VAC-TETANOS', 'Antitetánica'],
@@ -902,7 +902,7 @@ export const VACUNA = definir('VS_IMMUNIZATION', [
 ]);
 
 conjunto('VS_PROCEDURE', 'Procedimientos', 'Procedimientos clínicos y quirúrgicos.');
-export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
+export const PROCEDIMIENTO = define('VS_PROCEDURE', [
   ['PROC-APENDICECTOMIA', 'Apendicectomía laparoscópica'],
   ['PROC-COLECISTECTOMIA', 'Colecistectomía laparoscópica'],
   ['PROC-ARTROSCOPIA', 'Artroscopia de rodilla'],
@@ -915,7 +915,7 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
 /* ---- diagnósticos (CIE-10 abreviado, también en el glosario) ------------- */
 
 conjunto('VS_CONDITION_CODE', 'Diagnósticos (CIE-10)', 'Códigos de diagnóstico.');
-export const DIAGNOSTICO = definir('VS_CONDITION_CODE', [
+export const DIAGNOSIS = define('VS_CONDITION_CODE', [
   [
     'I10',
     'Hipertensión arterial esencial',
@@ -967,7 +967,7 @@ export const DIAGNOSTICO = definir('VS_CONDITION_CODE', [
 /* ---- medicamentos (vademécum abreviado) ---------------------------------- */
 
 conjunto('VS_MEDICATION', 'Medicamentos', 'Vademécum.');
-export const MEDICAMENTO = definir('VS_MEDICATION', [
+export const MEDICAMENTO = define('VS_MEDICATION', [
   ['MED-ENALAPRIL', 'Enalapril 10 mg comprimidos', 'Inhibidor de la ECA. Antihipertensivo.'],
   ['MED-LOSARTAN', 'Losartán 50 mg comprimidos', 'Antagonista del receptor de angiotensina II.'],
   ['MED-METFORMINA', 'Metformina 850 mg comprimidos', 'Antidiabético oral.'],
@@ -1009,23 +1009,23 @@ export const MEDICAMENTO = definir('VS_MEDICATION', [
  * número en vez de texto) a propósito, para ejercitar el caso inválido de
  * H4.S3.M2 sin inventar un medicamento que no exista en el catálogo.
  */
-declararPropiedades('MED-PARACETAMOL', {
+declareProperties('MED-PARACETAMOL', {
   default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
 });
-declararPropiedades('MED-IBUPROFENO', {
+declareProperties('MED-IBUPROFENO', {
   default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
 });
-declararPropiedades('MED-OMEPRAZOL', {
+declareProperties('MED-OMEPRAZOL', {
   default_frequency: 'Una vez al día — dato sintético de desarrollo, no apto para uso clínico',
 });
-declararPropiedades('MED-AMOXICILINA', {
+declareProperties('MED-AMOXICILINA', {
   default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
 });
-declararPropiedades('MED-METFORMINA', {
+declareProperties('MED-METFORMINA', {
   default_frequency: 'Cada 12 horas — dato sintético de desarrollo, no apto para uso clínico',
 });
 // `value_json` mal formado a propósito (número, no texto): ver el comentario de arriba.
-declararPropiedades('MED-INSULINA-NPH', { default_frequency: 42 });
+declareProperties('MED-INSULINA-NPH', { default_frequency: 42 });
 
 /**
  * La LINAME 2022-2024 (Lista Nacional de Medicamentos Esenciales de Bolivia) en
@@ -1035,36 +1035,36 @@ declararPropiedades('MED-INSULINA-NPH', { default_frequency: 42 });
  * `MED-*` —las recetas de ejemplo los usan—; si la LINAME tiene su ATC, toman
  * de ahí `dose_forms` y `strengths` en vez de duplicarse.
  */
-const ATC_DE_DEMOSTRACION = new Map(
+const DEMONSTRATION_ATC = new Map(
   CATALOGO_MEDICAMENTOS.flatMap((p) =>
     p.medicationCode === null || p.atc[0] === undefined
       ? []
       : [[p.atc[0], p.medicationCode] as const],
   ),
 );
-const propiedadesLiname = (m: MedicamentoLiname) => ({
+const propertiesLiname = (m: MedicamentoLiname) => ({
   dose_forms: m.doseForms,
   strengths: m.strengths,
   liname_presentations: m.presentations,
 });
 for (const m of MEDICAMENTOS_LINAME) {
-  const demostracion = ATC_DE_DEMOSTRACION.get(m.atc);
-  if (demostracion !== undefined) declararPropiedades(demostracion, propiedadesLiname(m));
+  const demostracion = DEMONSTRATION_ATC.get(m.atc);
+  if (demostracion !== undefined) declareProperties(demostracion, propertiesLiname(m));
 }
-export const MEDICAMENTO_LINAME = definir(
+export const MEDICATION_LINAME = define(
   'VS_MEDICATION',
-  MEDICAMENTOS_LINAME.filter((m) => !ATC_DE_DEMOSTRACION.has(m.atc)).map(
+  MEDICAMENTOS_LINAME.filter((m) => !DEMONSTRATION_ATC.has(m.atc)).map(
     (m) => [m.atc, m.name] as const,
   ),
 );
 for (const m of MEDICAMENTOS_LINAME) {
-  if (!ATC_DE_DEMOSTRACION.has(m.atc)) declararPropiedades(m.atc, propiedadesLiname(m));
+  if (!DEMONSTRATION_ATC.has(m.atc)) declareProperties(m.atc, propertiesLiname(m));
 }
 
 /* ---- organizaciones ------------------------------------------------------ */
 
 conjunto('VS_ORGANIZATION_TYPE', 'Tipos de organización', 'Clínica, hospital, laboratorio…');
-export const TIPO_ORGANIZACION = definir('VS_ORGANIZATION_TYPE', [
+export const ORGANIZATION_TYPE = define('VS_ORGANIZATION_TYPE', [
   ['ORG-CLINICA', 'Clínica'],
   ['ORG-HOSPITAL', 'Hospital'],
   ['ORG-LABORATORIO', 'Laboratorio'],
@@ -1083,7 +1083,7 @@ conjunto(
   'Forma societaria',
   'Figura jurídica de la organización, por país.',
 );
-export const TIPO_SOCIETARIO = definir('VS_LEGAL_ENTITY_TYPE', [
+export const CORPORATE_TYPE = define('VS_LEGAL_ENTITY_TYPE', [
   ['UNIPERSONAL', 'Sole proprietorship'],
   ['SRL', 'Limited liability company (S.R.L.)'],
   ['LTDA', 'Limited company (Ltda.)'],
@@ -1108,7 +1108,7 @@ export const TIPO_SOCIETARIO = definir('VS_LEGAL_ENTITY_TYPE', [
 ]);
 
 conjunto('VS_FACILITY', 'Establecimientos de salud', 'Padrón de establecimientos.');
-export const ESTABLECIMIENTO = definir('VS_FACILITY', [
+export const FACILITY = define('VS_FACILITY', [
   ['FAC-OLIVOS', 'Clínica Los Olivos'],
   ['FAC-SANLUCAS', 'Hospital San Lucas'],
   ['FAC-JAPONES', 'Hospital Japonés'],
@@ -1118,7 +1118,7 @@ export const ESTABLECIMIENTO = definir('VS_FACILITY', [
 ]);
 
 conjunto('VS_ROLE', 'Cargos', 'Cargos dentro de una organización.');
-export const CARGO = definir('VS_ROLE', [
+export const CARGO = define('VS_ROLE', [
   ['ROLE-MEDICO', 'Médico/a de planta'],
   ['ROLE-JEFE', 'Jefe/a de servicio'],
   ['ROLE-RESIDENTE', 'Residente'],
@@ -1129,7 +1129,7 @@ export const CARGO = definir('VS_ROLE', [
 /* ---- seguros ------------------------------------------------------------- */
 
 conjunto('VS_CLAIM_STATUS', 'Estado de solicitud de seguro', 'Ciclo de una solicitud.');
-export const ESTADO_SOLICITUD = definir('VS_CLAIM_STATUS', [
+export const REQUEST_STATUS = define('VS_CLAIM_STATUS', [
   ['CLM-SUBMITTED', 'Enviada'],
   ['CLM-IN-REVIEW', 'En revisión'],
   ['CLM-APPROVED', 'Aprobada'],
@@ -1161,7 +1161,7 @@ conjunto(
   'El ciclo de vida de un trámite de identidad.',
 );
 
-export const ESTADO_DE_CASO = definir('VS_IDENTITY_CASE_STATUS', [
+export const CASE_STATUS = define('VS_IDENTITY_CASE_STATUS', [
   ['identity_assurance:CASE_OPEN', 'Case open'],
   ['identity_assurance:CASE_CHECKS_PENDING', 'Case checks pending'],
   ['identity_assurance:CASE_IN_VERIFICATION', 'Case in verification'],
@@ -1187,7 +1187,7 @@ conjunto(
   'Tipo de unidad diagnóstica',
   'Laboratorio clínico o centro de imagenología.',
 );
-export const DIAGNOSTIC_UNIT_TYPE = definir('VS_DIAGNOSTIC_UNIT_TYPE', [
+export const DIAGNOSTIC_UNIT_TYPE = define('VS_DIAGNOSTIC_UNIT_TYPE', [
   ['DU_TYPE_LAB', 'Laboratorio clínico'],
   ['DU_TYPE_IMAGING', 'Centro de imagenología'],
 ]);
@@ -1197,7 +1197,7 @@ conjunto(
   'Modalidad diagnóstica',
   'Las modalidades que un alta puede declarar.',
 );
-export const DIAGNOSTIC_MODALITY = definir('VS_DIAGNOSTIC_MODALITY', [
+export const DIAGNOSTIC_MODALITY = define('VS_DIAGNOSTIC_MODALITY', [
   ['DU_MODALITY_LAB', 'Laboratorio'],
   ['DU_MODALITY_XRAY', 'Rayos X'],
   ['DU_MODALITY_ULTRASOUND', 'Ecografía'],
@@ -1214,7 +1214,7 @@ conjunto(
   'País de la organización',
   'País donde está constituida la organización.',
 );
-export const TENANT_COUNTRY = definir('VS_TENANT_COUNTRY', [['BO', 'Bolivia']]);
+export const TENANT_COUNTRY = define('VS_TENANT_COUNTRY', [['BO', 'Bolivia']]);
 
 // El catálogo `jurisdiction` de la API, con sus dos códigos. No reemplaza a
 // `VS_JURISDICTION` (`JUR-*`), que siguen usando las matrículas sembradas de
@@ -1224,7 +1224,7 @@ conjunto(
   'Jurisdicción',
   'Ámbito territorial de la licencia para operar.',
 );
-export const LICENSE_JURISDICTION = definir('VS_LICENSE_JURISDICTION', [
+export const LICENSE_JURISDICTION = define('VS_LICENSE_JURISDICTION', [
   ['JURISDICTION_NATIONAL', 'Nacional'],
   ['JURISDICTION_SEDES_SANTA_CRUZ', 'SEDES Santa Cruz'],
 ]);
@@ -1234,7 +1234,7 @@ export const LICENSE_JURISDICTION = definir('VS_LICENSE_JURISDICTION', [
    la API. */
 
 conjunto('VS_SPECIMEN_STATUS', 'Estado del espécimen', 'Ciclo de vida de un espécimen.');
-export const SPECIMEN_STATUS = definir('VS_SPECIMEN_STATUS', [
+export const SPECIMEN_STATUS = define('VS_SPECIMEN_STATUS', [
   ['SPEC_COLLECTED', 'Recolectado'],
   ['SPEC_RECEIVED', 'Recibido en el laboratorio'],
   ['SPEC_REJECTED', 'Rechazado'],
@@ -1245,7 +1245,7 @@ conjunto(
   'Estado de la acesión',
   'Ciclo de vida de una acesión de laboratorio.',
 );
-export const ACCESSION_STATUS = definir('VS_ACCESSION_STATUS', [
+export const ACCESSION_STATUS = define('VS_ACCESSION_STATUS', [
   ['ACC_RECEIVED', 'Recibida'],
   ['ACC_IN_PROCESS', 'En proceso'],
   ['ACC_ITEM_RECEIVED', 'Espécimen recibido'],
@@ -1257,14 +1257,14 @@ conjunto(
   'Evento de custodia',
   'Qué pasó con el espécimen en la cadena de custodia.',
 );
-export const CUSTODY_EVENT_TYPE = definir('VS_CUSTODY_EVENT_TYPE', [
+export const CUSTODY_EVENT_TYPE = define('VS_CUSTODY_EVENT_TYPE', [
   ['CUSTODY_RECEPTION', 'Recepción'],
   ['CUSTODY_TRANSFER', 'Traslado'],
   ['CONTAINER_EVT_TRANSFER', 'Traslado del contenedor'],
 ]);
 
 conjunto('VS_CONTAINER_STATUS', 'Estado del contenedor', 'Dónde está el contenedor del espécimen.');
-export const CONTAINER_STATUS = definir('VS_CONTAINER_STATUS', [
+export const CONTAINER_STATUS = define('VS_CONTAINER_STATUS', [
   ['CONTAINER_ACTIVE', 'En uso'],
   ['CONTAINER_IN_TRANSIT', 'En tránsito'],
   ['CONTAINER_STORED', 'Almacenado'],
@@ -1275,7 +1275,7 @@ conjunto(
   'Motivo de rechazo',
   'Por qué el laboratorio rechaza un espécimen.',
 );
-export const SPECIMEN_REJECTION_REASON = definir('VS_SPECIMEN_REJECTION_REASON', [
+export const SPECIMEN_REJECTION_REASON = define('VS_SPECIMEN_REJECTION_REASON', [
   ['REJECTION_QUALITY', 'Calidad insuficiente (hemólisis o volumen)'],
 ]);
 
@@ -1285,7 +1285,7 @@ export const SPECIMEN_REJECTION_REASON = definir('VS_SPECIMEN_REJECTION_REASON',
    para el tubo. El orden es el de la API. */
 
 conjunto('VS_SPECIMEN_TYPE', 'Tipo de espécimen', 'Qué muestra se tomó al paciente.');
-export const SPECIMEN_TYPE = definir('VS_SPECIMEN_TYPE', [
+export const SPECIMEN_TYPE = define('VS_SPECIMEN_TYPE', [
   ['BLDV', 'Sangre venosa'],
   ['SER', 'Suero'],
   ['PLAS', 'Plasma'],
@@ -1304,7 +1304,7 @@ conjunto(
   'Tipo de contenedor',
   'Tubo o frasco en el que viaja la muestra.',
 );
-export const SPECIMEN_CONTAINER_TYPE = definir('VS_SPECIMEN_CONTAINER_TYPE', [
+export const SPECIMEN_CONTAINER_TYPE = define('VS_SPECIMEN_CONTAINER_TYPE', [
   ['TUBE_LAVENDER_EDTA', 'Tubo tapa lila (EDTA)'],
   ['TUBE_GOLD_SST', 'Tubo tapa amarilla (gel separador)'],
   ['TUBE_RED_PLAIN', 'Tubo tapa roja'],
@@ -1326,7 +1326,7 @@ conjunto(
   'Monedas admitidas para los importes de planes y coberturas.',
 );
 
-export const MONEDA_PLAN_SEGURO = definir('VS_INSURANCE_PLAN_CURRENCY', [
+export const CURRENCY_PLAN_INSURANCE = define('VS_INSURANCE_PLAN_CURRENCY', [
   ['BOB', 'Boliviano'],
   ['USD', 'Dólar estadounidense'],
 ]);
@@ -1337,7 +1337,7 @@ conjunto(
   'Categorías administrables de prestaciones cubiertas por un plan.',
 );
 
-export const CATEGORIA_COBERTURA = definir('VS_INSURANCE_BENEFIT_CATEGORY', [
+export const COVERAGE_CATEGORY = define('VS_INSURANCE_BENEFIT_CATEGORY', [
   ['BENEFIT_CATEGORY_GENERAL', 'General'],
   ['BENEFIT_CATEGORY_OUTPATIENT', 'Consulta externa'],
   ['BENEFIT_CATEGORY_EMERGENCY', 'Emergencias'],
@@ -1348,46 +1348,46 @@ export const CATEGORIA_COBERTURA = definir('VS_INSURANCE_BENEFIT_CATEGORY', [
 
 /* ---- consultas ----------------------------------------------------------- */
 
-export function conceptos(): readonly ConceptoSimulado[] {
-  return [...registro.values()];
+export function conceptos(): readonly SimulatedConcept[] {
+  return [...record.values()];
 }
 
-export function conceptoPorId(id: string): ConceptoSimulado | undefined {
-  for (const c of registro.values()) {
+export function conceptById(id: string): SimulatedConcept | undefined {
+  for (const c of record.values()) {
     if (c.id === id) return c;
   }
   return undefined;
 }
 
-export function conceptoPorCodigo(code: string): ConceptoSimulado | undefined {
-  return registro.get(code);
+export function conceptByCode(code: string): SimulatedConcept | undefined {
+  return record.get(code);
 }
 
-export function displayDe(id: string): string {
-  return conceptoPorId(id)?.display ?? id;
+export function displayOf(id: string): string {
+  return conceptById(id)?.display ?? id;
 }
 
-export function conjuntoPorCodigo(internalCode: string): ConjuntoSimulado | undefined {
-  return conjuntos.get(internalCode);
+export function setByCode(internalCode: string): SimulatedSet | undefined {
+  return sets.get(internalCode);
 }
 
-export function conjuntoPorId(id: string): ConjuntoSimulado | undefined {
-  for (const c of conjuntos.values()) {
+export function setById(id: string): SimulatedSet | undefined {
+  for (const c of sets.values()) {
     if (c.id === id || c.defaultVersionId === id) return c;
   }
-  return conjuntos.get(id);
+  return sets.get(id);
 }
 
-export function todosLosConjuntos(): readonly ConjuntoSimulado[] {
-  return [...conjuntos.values()];
+export function allSets(): readonly SimulatedSet[] {
+  return [...sets.values()];
 }
 
-export function miembrosDe(internalCode: string): readonly ConceptoSimulado[] {
+export function membersOf(internalCode: string): readonly SimulatedConcept[] {
   return conceptos().filter((c) => c.valueSets.includes(internalCode));
 }
 
 /** Slug legible para el glosario. */
-export function slugDe(display: string): string {
+export function slugOf(display: string): string {
   return display
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')

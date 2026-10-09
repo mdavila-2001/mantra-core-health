@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { controlDeNombreExtra } from '../../auth/shared-registration/name-fields/person-name';
+import { nameExtraControl } from '../../auth/shared-registration/name-fields/person-name';
 import { AssistedRegistration } from './assisted-registration';
 
 /**
@@ -89,7 +89,7 @@ describe('AssistedRegistration', () => {
     completarFormulario();
     const nombre = fixture.componentInstance['form'].controls.patientName;
     nombre.controls.middleName.setValue('María');
-    nombre.controls.extraNames.push(controlDeNombreExtra());
+    nombre.controls.extraNames.push(nameExtraControl());
     nombre.controls.extraNames.at(0).setValue('Luz');
     enviar();
 

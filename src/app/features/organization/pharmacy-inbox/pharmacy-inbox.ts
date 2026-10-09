@@ -28,29 +28,29 @@ import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { tiempoRelativo } from '../../../shared/date/relative-time';
-import { AlarmaDePedidos } from './order-alarm';
+import { relativeTime } from '../../../shared/date/relative-time';
+import { OrdersAlarm } from './order-alarm';
 import {
-  GRUPOS_DE_BANDEJA,
-  etiquetaDeGrupo,
-  grupoDeBandeja,
-  toBandejaStatusPresentation,
-  type BandejaStatusPresentation,
-  type GrupoDeBandeja,
+  INBOX_GROUPS,
+  groupLabel,
+  inboxGroup,
+  toInboxStatusPresentation,
+  type InboxStatusPresentation,
+  type InboxGroup,
 } from './inbox-status';
 import {
-  RECORTES_DE_CERRADOS,
-  TODAS_LAS_SEDES,
-  cerradoEnElRecorte,
-  etiquetaDeRecorte,
-  recorteDeLaUrl,
-  sedeElegida,
-  sedePorDefecto,
-  sedesDeFarmacias,
-  type RecorteDeCerrados,
-  type SedeDeBandeja,
+  CLOSED_CROPS,
+  SITES_ALL,
+  closedInCrop,
+  cropLabel,
+  urlCrop,
+  chosenSite,
+  siteByDefault,
+  pharmaciesSites,
+  type ClosedCrop,
+  type InboxSite,
 } from './inbox-filters';
-import { entregaEnPantalla, type EntregaEnPantalla } from './delivery-status';
+import { deliveryInScreen, type DeliveryInScreen } from './delivery-status';
 import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
@@ -93,7 +93,7 @@ interface EncabezadoDeCola {
 
 /** Un grupo ya resuelto para la plantilla. */
 interface GrupoResuelto {
-  readonly grupo: GrupoDeBandeja;
+  readonly grupo: InboxGroup;
   /** La etiqueta entera. Es la que nombra la cola para un lector de pantalla. */
   readonly etiqueta: string;
   readonly encabezado: EncabezadoDeCola;
@@ -143,7 +143,7 @@ interface GrupoResuelto {
     Switch,
     ViewStateHost,
   ],
-  providers: [AlarmaDePedidos],
+  providers: [OrdersAlarm],
   templateUrl: './pharmacy-inbox.html',
   styleUrl: './pharmacy-inbox.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -164,21 +164,21 @@ export class PharmacyInbox {
   private cargaEnVuelo: Subscription | null = null;
   private sondeoEnVuelo: Subscription | null = null;
 
-  protected readonly alarma = inject(AlarmaDePedidos);
+  protected readonly alarma = inject(OrdersAlarm);
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly detalleRoute = DETALLE_ROUTE;
 
   protected readonly state = signal<ViewState<readonly PedidoFarmacia[]>>(loading());
 
   /** Las sedes de la organización; vacío mientras cargan o si no hay ninguna. */
-  private readonly sedes = signal<readonly SedeDeBandeja[]>([]);
+  private readonly sedes = signal<readonly InboxSite[]>([]);
 
-  /** La sede que se ve: un id o {@link TODAS_LAS_SEDES}. */
-  protected readonly sedeActual = signal<string>(TODAS_LAS_SEDES);
+  /** La sede que se ve: un id o {@link SITES_ALL}. */
+  protected readonly sedeActual = signal<string>(SITES_ALL);
 
   /** Qué fechas de «Cerrados» se ven; las colas activas muestran todo lo pendiente. */
-  protected readonly recorte = signal<RecorteDeCerrados>(
-    recorteDeLaUrl(this.route.snapshot.queryParamMap.get(PARAM_CERRADOS)),
+  protected readonly recorte = signal<ClosedCrop>(
+    urlCrop(this.route.snapshot.queryParamMap.get(PARAM_CERRADOS)),
   );
 
   /** Si se abrió con una sede adivinada por no haber casa matriz marcada. */
@@ -200,10 +200,10 @@ export class PharmacyInbox {
         sede.nombre +
         (sede.esMatriz ? ' (casa matriz)' : ''),
     }));
-    return [...porSede, { value: TODAS_LAS_SEDES, label: 'Todas las sedes' }];
+    return [...porSede, { value: SITES_ALL, label: 'Todas las sedes' }];
   });
 
-  protected readonly opcionesDeRecorte: readonly SelectOption<string>[] = RECORTES_DE_CERRADOS;
+  protected readonly opcionesDeRecorte: readonly SelectOption<string>[] = CLOSED_CROPS;
 
   /** El «ahora» de los tiempos relativos: avanza con cada tic del sondeo. */
   protected readonly ahora = signal(new Date());
@@ -230,7 +230,7 @@ export class PharmacyInbox {
 
   /** Qué está haciendo el interruptor, dicho en palabras al lado suyo. */
   protected readonly estadoDelSonido = computed(() =>
-    this.alarma.sonidoActivo() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
+    this.alarma.activeSound() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
   );
 
   private readonly lista = computed(() => {
@@ -243,9 +243,9 @@ export class PharmacyInbox {
     const pedidos = this.lista();
     const recorte = this.recorte();
     const ahora = this.ahora();
-    return GRUPOS_DE_BANDEJA.map((grupo) => {
-      const etiqueta = etiquetaDeGrupo(grupo);
-      const delGrupo = pedidos.filter((pedido) => grupoDeBandeja(pedido.estado) === grupo);
+    return INBOX_GROUPS.map((grupo) => {
+      const etiqueta = groupLabel(grupo);
+      const delGrupo = pedidos.filter((pedido) => inboxGroup(pedido.estado) === grupo);
       const esCerrados = grupo === 'CERRADOS';
       return {
         grupo,
@@ -254,9 +254,9 @@ export class PharmacyInbox {
         // Lo pendiente nunca se recorta: un pedido de ayer que sigue esperando
         // sigue en su cola. La fecha sólo acota lo que ya terminó.
         pedidos: esCerrados
-          ? delGrupo.filter((pedido) => cerradoEnElRecorte(pedido.creadoEl, recorte, ahora))
+          ? delGrupo.filter((pedido) => closedInCrop(pedido.creadoEl, recorte, ahora))
           : delGrupo,
-        recorte: esCerrados ? etiquetaDeRecorte(recorte) : null,
+        recorte: esCerrados ? cropLabel(recorte) : null,
       };
     });
   });
@@ -280,7 +280,7 @@ export class PharmacyInbox {
   }
 
   protected cambiarSede(valor: string | null): void {
-    this.sedeActual.set(valor ?? TODAS_LAS_SEDES);
+    this.sedeActual.set(valor ?? SITES_ALL);
     this.sinMatrizMarcada.set(false);
     // Cambiar de vista es acusar recibo: lo que sonaba era de la sede anterior.
     this.destacados.set(new Set());
@@ -291,21 +291,21 @@ export class PharmacyInbox {
 
   /** El recorte es del lado del cliente: no vuelve a pedir nada. */
   protected cambiarRecorte(valor: string | null): void {
-    const recorte = recorteDeLaUrl(valor);
+    const recorte = urlCrop(valor);
     this.recorte.set(recorte);
     this.escribirEnLaUrl({ [PARAM_CERRADOS]: recorte });
   }
 
-  protected presentacionDe(pedido: PedidoFarmacia): BandejaStatusPresentation {
-    return toBandejaStatusPresentation(pedido.estado);
+  protected presentacionDe(pedido: PedidoFarmacia): InboxStatusPresentation {
+    return toInboxStatusPresentation(pedido.estado);
   }
 
   /**
    * Por qué medio se entrega, o `null` en los pedidos que no lo declaran. Sale
    * del contrato, como en el detalle.
    */
-  protected entregaDe(pedido: PedidoFarmacia): EntregaEnPantalla | null {
-    return entregaEnPantalla(pedido);
+  protected entregaDe(pedido: PedidoFarmacia): DeliveryInScreen | null {
+    return deliveryInScreen(pedido);
   }
 
   /**
@@ -336,7 +336,7 @@ export class PharmacyInbox {
    */
   protected descartarAviso(): void {
     this.nuevosSinVer.set(0);
-    this.alarma.acusarRecibo();
+    this.alarma.acknowledgeReceipt();
   }
 
   protected esNuevo(pedido: PedidoFarmacia): boolean {
@@ -366,7 +366,7 @@ export class PharmacyInbox {
 
   /** «hace 5 min», o `null` para caer al formato de fecha de siempre. */
   protected llegadaDe(pedido: PedidoFarmacia): string | null {
-    return tiempoRelativo(pedido.creadoEl, this.ahora());
+    return relativeTime(pedido.creadoEl, this.ahora());
   }
 
   /** La cuenta regresiva discreta de la reserva, sólo mientras espera. */
@@ -396,17 +396,17 @@ export class PharmacyInbox {
         ),
       )
       .subscribe({
-        next: (farmacias) => this.alResolverSedes(sedesDeFarmacias(farmacias)),
+        next: (farmacias) => this.alResolverSedes(pharmaciesSites(farmacias)),
         // Sin sedes la bandeja sigue sirviendo: se ve todo y el selector no sale.
         error: () => this.alResolverSedes([]),
       });
   }
 
-  private alResolverSedes(sedes: readonly SedeDeBandeja[]): void {
+  private alResolverSedes(sedes: readonly InboxSite[]): void {
     this.sedes.set(sedes);
-    const porDefecto = sedePorDefecto(sedes);
-    const elegida = sedeElegida(this.route.snapshot.queryParamMap.get(PARAM_SEDE), sedes);
-    this.sedeActual.set(elegida ?? TODAS_LAS_SEDES);
+    const porDefecto = siteByDefault(sedes);
+    const elegida = chosenSite(this.route.snapshot.queryParamMap.get(PARAM_SEDE), sedes);
+    this.sedeActual.set(elegida ?? SITES_ALL);
     this.sinMatrizMarcada.set(porDefecto.sinMatrizMarcada && elegida === porDefecto.id);
     this.cargar();
   }
@@ -414,7 +414,7 @@ export class PharmacyInbox {
   private pedirPedidos() {
     const sede = this.sedeActual();
     return this.ordersClient.pedidosDeFarmacia({
-      ...(sede === TODAS_LAS_SEDES ? {} : { siteId: sede }),
+      ...(sede === SITES_ALL ? {} : { siteId: sede }),
       limit: LIMITE_DE_PEDIDOS,
     });
   }
@@ -479,7 +479,7 @@ export class PharmacyInbox {
     const sinVer = this.nuevosSinVer() + nuevos.length;
     this.nuevosSinVer.set(sinVer);
     this.avisoDeNuevos.set(`${fraseDeNuevos(sinVer)} a la bandeja.`);
-    this.alarma.notificar(nuevos.length);
+    this.alarma.notify(nuevos.length);
   }
 
   /** Encadena el próximo tic. Nunca hay dos vivos a la vez. */

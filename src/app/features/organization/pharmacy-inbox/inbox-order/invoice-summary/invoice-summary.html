@@ -6,7 +6,7 @@
   <div class="factura__encabezado">
     <h3 id="mostrador-factura-titulo" class="factura__titulo">Factura</h3>
     <!-- Nada de lo que sigue sale de la API todavía: se dice, no se disimula. -->
-    <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+    <app-chip variant="neutral" size="sm">{{ exampleNote }}</app-chip>
   </div>
 
   <dl class="factura__datos">
@@ -21,7 +21,7 @@
     <div class="factura__dato">
       <dt class="factura__etiqueta">Total facturado</dt>
       <dd class="factura__valor cifras-tabulares">
-        {{ factura().total }} {{ moneda(factura().moneda) }}
+        {{ factura().total }} {{ currency(factura().moneda) }}
       </dd>
     </div>
     <div class="factura__dato">

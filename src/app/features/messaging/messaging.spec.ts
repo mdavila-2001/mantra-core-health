@@ -5,7 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../core/messaging/chat-preferences';
+import { ChatPreferences } from '../../core/messaging/chat-preferences';
 
 /**
  * Lo que estas pruebas fijan.
@@ -301,7 +301,7 @@ describe('Messaging', () => {
       conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
     ]);
 
-    TestBed.inject(ChatPreferencias).alternarArchivado('c-1');
+    TestBed.inject(ChatPreferences).toggleArchived('c-1');
     fixture.detectChanges();
 
     expect(todas('conversacion').length).toBe(1);

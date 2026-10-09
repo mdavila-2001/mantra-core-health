@@ -3,12 +3,12 @@ import { join } from 'node:path';
 
 import {
   ATLAS_META,
-  ETIQUETAS_DE_REGION,
+  REGION_LABELS,
   LAMINAS_ANATOMICAS,
   REGIONES_ANATOMICAS,
-  TERMINOS_DE_LAMINA,
+  PLATE_TERMS,
 } from './anatomy-atlas';
-import { CATEGORIAS, ETIQUETAS, TERMINOS } from './glossary';
+import { CATEGORIES, LABELS, TERMS } from './glossary';
 
 /* ============================================================================
     El atlas anatómico del glosario sale de `data/anatomy-atlas/`, y esto
@@ -110,24 +110,24 @@ describe('lo que el atlas NO trae, y no es un olvido', () => {
 
 describe('las láminas dentro del glosario', () => {
   it('están todas, y en la categoría Anatomía', () => {
-    const slugs = new Set(TERMINOS.map((t) => t.slug));
+    const slugs = new Set(TERMS.map((t) => t.slug));
 
-    expect(TERMINOS_DE_LAMINA).toHaveLength(LAMINAS_ANATOMICAS.length);
-    for (const termino of TERMINOS_DE_LAMINA) {
+    expect(PLATE_TERMS).toHaveLength(LAMINAS_ANATOMICAS.length);
+    for (const termino of PLATE_TERMS) {
       expect(slugs.has(termino.slug)).toBe(true);
       expect(termino.categoryKey).toBe('anatomy');
     }
   });
 
   it('la categoría Anatomía existía ya, no se inventó una', () => {
-    expect(CATEGORIAS.some((c) => c.key === 'anatomy')).toBe(true);
+    expect(CATEGORIES.some((c) => c.key === 'anatomy')).toBe(true);
   });
 
   it('cada región es una etiqueta con la que el glosario filtra', () => {
-    const claves = new Set(ETIQUETAS.map((e) => e.key));
+    const claves = new Set(LABELS.map((e) => e.key));
 
-    expect(ETIQUETAS_DE_REGION).toHaveLength(REGIONES_ANATOMICAS.length);
-    for (const etiqueta of ETIQUETAS_DE_REGION) {
+    expect(REGION_LABELS).toHaveLength(REGIONES_ANATOMICAS.length);
+    for (const etiqueta of REGION_LABELS) {
       expect(claves.has(etiqueta.key)).toBe(true);
     }
   });
@@ -135,13 +135,13 @@ describe('las láminas dentro del glosario', () => {
   it('ninguna lámina pisa el slug de un término curado', () => {
     // 69 términos escritos a mano y 548 generados en el mismo espacio de
     // nombres: una colisión haría desaparecer uno de los dos en silencio.
-    const slugs = TERMINOS.map((t) => t.slug);
+    const slugs = TERMS.map((t) => t.slug);
 
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
   it('la ficha dice de dónde salió el título, en castellano', () => {
-    for (const termino of TERMINOS_DE_LAMINA.slice(0, 40)) {
+    for (const termino of PLATE_TERMS.slice(0, 40)) {
       expect(termino.plainSummaryEs).toMatch(/Procedencia del título: /);
       expect(termino.plainSummaryEs).toContain('Netter');
     }

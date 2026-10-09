@@ -40,8 +40,8 @@
     revisa una tabla, no un algoritmo.
     ========================================================================== */
 
-import { clave, distancia, lema, normalizar, tokenizar, tramosNegados, type Token } from './text';
-import type { Sintoma } from './symptoms.data';
+import { key, distance, lemma, normalizar, tokenize, negatedBrackets, type Token } from './text';
+import type { Symptom } from './symptoms.data';
 
 /**
  * Un síntoma reconocido, con de dónde salió.
@@ -50,8 +50,8 @@ import type { Sintoma } from './symptoms.data';
  * sin ellas es imposible entender por qué el motor entendió lo que entendió, y
  * un motor de salud que no se puede auditar no se puede corregir.
  */
-export interface Coincidencia {
-  readonly sintoma: Sintoma;
+export interface Match {
+  readonly sintoma: Symptom;
   /** 0 a 1. Exacta vale 1; por sonido, 0,9; por parecido, menos. */
   readonly confianza: number;
   /** Dónde empieza en el texto normalizado. Ordena los chips. */
@@ -63,13 +63,13 @@ export interface Coincidencia {
 }
 
 /** Lo que el motor entendió de un texto. */
-export interface Analisis {
+export interface Analysis {
   /** Los síntomas corrientes, en orden de aparición. */
-  readonly sintomas: readonly Coincidencia[];
+  readonly sintomas: readonly Match[];
   /** Los de alarma. Vacío es lo normal. */
-  readonly alarmas: readonly Coincidencia[];
+  readonly alarmas: readonly Match[];
   /** Los que el texto nombró para negarlos. No se muestran; se explican. */
-  readonly negados: readonly Coincidencia[];
+  readonly negados: readonly Match[];
 }
 
 /* --- Los números que gobiernan el motor ---------------------------------- */
@@ -82,10 +82,10 @@ export interface Analisis {
  * es lo que deja pasar los adjetivos y las precisiones —«dolor muy fuerte de
  * cabeza», «dolor en la parte de atrás de la cabeza»— sin cruzar de tema.
  */
-const HUECO = 2;
+const GAP = 2;
 
 /** Confianza mínima para creerle a una coincidencia de varias palabras. */
-const UMBRAL = 0.72;
+const THRESHOLD = 0.72;
 
 /**
  * Confianza mínima para una coincidencia de **una sola palabra**.
@@ -95,13 +95,13 @@ const UMBRAL = 0.72;
  * exacta o por cómo suena; por parecido tipográfico sólo si es larga, donde el
  * azar de que dos palabras del vocabulario se parezcan es mucho menor.
  */
-const UMBRAL_UNICO = 0.8;
+const UNIQUE_THRESHOLD = 0.8;
 
 /** Largo mínimo del patrón para admitir parecido tipográfico en una palabra sola. */
-const LARGO_PARA_DIFUSO_UNICO = 6;
+const LONG_FOR_FUZZY_UNIQUE = 6;
 
 /** Confianza mínima para derivar a urgencias. Un error acá no es gratis. */
-const UMBRAL_ALARMA = 0.8;
+const ALARM_THRESHOLD = 0.8;
 
 /**
  * Palabras que pueden sostener **dos** síntomas a la vez.
@@ -111,7 +111,7 @@ const UMBRAL_ALARMA = 0.8;
  * enumerar síntomas colgados de un solo verbo es exactamente cómo habla la
  * gente.
  */
-const COMPARTIDAS: ReadonlySet<string> = new Set([
+const SHARED: ReadonlySet<string> = new Set([
   'ardor',
   'bulto',
   'control',
@@ -133,7 +133,7 @@ const COMPARTIDAS: ReadonlySet<string> = new Set([
  * «Alegría» y «alergia» están a una transposición de distancia y significan
  * cosas opuestas. Son pocos casos, pero el que los sufre ve un disparate.
  */
-const NO_CONFUNDIR: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+const NOT_CONFUSE: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['alegria', new Set(['alergia'])],
   ['alegre', new Set(['alergia'])],
   ['liebre', new Set(['fiebre'])],
@@ -160,16 +160,16 @@ const NO_CONFUNDIR: ReadonlyMap<string, ReadonlySet<string>> = new Map([
  * cabeza» son los dos `dolor cabeza`— y se guarda uno solo. Esa colisión es la
  * que hace que agregar sinónimos a la tabla siga siendo barato.
  */
-interface Patron {
-  readonly sintoma: Sintoma;
+interface Pattern {
+  readonly sintoma: Symptom;
   readonly lemas: readonly string[];
   readonly claves: readonly string[];
   /** De qué frase de la tabla salió. Sólo para depurar. */
   readonly fuente: string;
 }
 
-interface Indice {
-  readonly patrones: readonly Patron[];
+interface Index {
+  readonly patrones: readonly Pattern[];
   readonly porLema: ReadonlyMap<string, readonly number[]>;
   readonly porClave: ReadonlyMap<string, readonly number[]>;
   /** Todo el vocabulario de la tabla, para buscar parecidos. */
@@ -181,28 +181,28 @@ interface Indice {
 }
 
 /** Un índice por tabla. Se arma una vez y se reusa en cada tecla. */
-const INDICES = new WeakMap<readonly Sintoma[], Indice>();
+const INDICES = new WeakMap<readonly Symptom[], Index>();
 
-function indiceDe(tabla: readonly Sintoma[]): Indice {
+function indiceDe(tabla: readonly Symptom[]): Index {
   const cacheado = INDICES.get(tabla);
   if (cacheado !== undefined) {
     return cacheado;
   }
-  const armado = armarIndice(tabla);
+  const armado = assembleIndex(tabla);
   INDICES.set(tabla, armado);
   return armado;
 }
 
-function armarIndice(tabla: readonly Sintoma[]): Indice {
-  const patrones: Patron[] = [];
+function assembleIndex(tabla: readonly Symptom[]): Index {
+  const patrones: Pattern[] = [];
   const vistos = new Set<string>();
   const porLema = new Map<string, number[]>();
   const porClave = new Map<string, number[]>();
   const vocabulario = new Set<string>();
 
   for (const sintoma of tabla) {
-    for (const frase of frasesDe(sintoma)) {
-      const lemas = lemasDe(frase);
+    for (const frase of phrasesOf(sintoma)) {
+      const lemas = lemmasOf(frase);
       if (lemas.length === 0) {
         continue;
       }
@@ -216,13 +216,13 @@ function armarIndice(tabla: readonly Sintoma[]): Indice {
       patrones.push({
         sintoma,
         lemas,
-        claves: lemas.map((palabra) => clave(palabra)),
+        claves: lemas.map((palabra) => key(palabra)),
         fuente: frase,
       });
       for (const palabra of lemas) {
         vocabulario.add(palabra);
-        agregar(porLema, palabra, cual);
-        agregar(porClave, clave(palabra), cual);
+        add(porLema, palabra, cual);
+        add(porClave, key(palabra), cual);
       }
     }
   }
@@ -233,7 +233,7 @@ function armarIndice(tabla: readonly Sintoma[]): Indice {
     porLema,
     porClave,
     vocabulario: palabras,
-    clavesDelVocabulario: palabras.map((palabra) => clave(palabra)),
+    clavesDelVocabulario: palabras.map((palabra) => key(palabra)),
     parecidos: new Map<string, readonly string[]>(),
   };
 }
@@ -247,7 +247,7 @@ function armarIndice(tabla: readonly Sintoma[]): Indice {
  * rodilla», «molestia en la rodilla» y «dolor en las rodillas» era el trabajo
  * que hacía crecer la tabla sin que creciera lo que reconoce.
  */
-function frasesDe(sintoma: Sintoma): readonly string[] {
+function phrasesOf(sintoma: Symptom): readonly string[] {
   const frases = [sintoma.nombre, ...sintoma.sinonimos];
   for (const parte of sintoma.partes ?? []) {
     for (const gatillo of sintoma.gatillos ?? ['dolor', 'molestia']) {
@@ -258,9 +258,9 @@ function frasesDe(sintoma: Sintoma): readonly string[] {
 }
 
 /** Las palabras con contenido de una frase, en lemas y sin repetir. */
-function lemasDe(frase: string): readonly string[] {
+function lemmasOf(frase: string): readonly string[] {
   const lemas: string[] = [];
-  for (const token of tokenizar(normalizar(frase))) {
+  for (const token of tokenize(normalizar(frase))) {
     if (token.contenido && !lemas.includes(token.lema)) {
       lemas.push(token.lema);
     }
@@ -268,7 +268,7 @@ function lemasDe(frase: string): readonly string[] {
   return lemas;
 }
 
-function agregar(mapa: Map<string, number[]>, llave: string, valor: number): void {
+function add(mapa: Map<string, number[]>, llave: string, valor: number): void {
   const previos = mapa.get(llave);
   if (previos === undefined) {
     mapa.set(llave, [valor]);
@@ -287,7 +287,7 @@ function agregar(mapa: Map<string, number[]>, llave: string, valor: number): voi
  * reducir, y por último el parecido a una letra— y sólo las dos últimas pueden
  * equivocarse, así que son las únicas con condiciones de largo.
  */
-function parecido(patron: string, claveDelPatron: string, token: Token): number {
+function similar(patron: string, claveDelPatron: string, token: Token): number {
   if (token.lema === patron) {
     return 1;
   }
@@ -300,14 +300,14 @@ function parecido(patron: string, claveDelPatron: string, token: Token): number 
   if (token.lema.length < 4 || patron.length < 5) {
     return 0;
   }
-  if (NO_CONFUNDIR.get(token.lema)?.has(patron) === true) {
+  if (NOT_CONFUSE.get(token.lema)?.has(patron) === true) {
     return 0;
   }
   const tope = patron.length >= 8 ? 2 : 1;
   // `distancia` devuelve `tope + 1` cuando se pasa del tope: es un centinela,
   // no una distancia. Leerlo como si lo fuera daba por parecidas dos palabras
   // que no se parecen en nada.
-  const cuanto = distancia(token.lema, patron, tope);
+  const cuanto = distance(token.lema, patron, tope);
   let porLetras = 0;
   if (cuanto === 1) {
     porLetras = 0.82;
@@ -323,7 +323,7 @@ function parecido(patron: string, claveDelPatron: string, token: Token): number 
   const porSonido =
     claveDelPatron.length >= 5 &&
     token.clave.length >= 5 &&
-    distancia(token.clave, claveDelPatron, 1) <= 1
+    distance(token.clave, claveDelPatron, 1) <= 1
       ? 0.85
       : 0;
 
@@ -337,15 +337,15 @@ function parecido(patron: string, claveDelPatron: string, token: Token): number 
  * que es el caso raro. El resultado se guarda porque el texto se reanaliza en
  * cada tecla y las palabras se repiten.
  */
-function parecidasA(indice: Indice, palabra: string): readonly string[] {
+function similarA(indice: Index, palabra: string): readonly string[] {
   const cacheado = indice.parecidos.get(palabra);
   if (cacheado !== undefined) {
     return cacheado;
   }
   const encontradas: string[] = [];
   if (palabra.length >= 4) {
-    const prohibidas = NO_CONFUNDIR.get(palabra);
-    const claveBuscada = clave(palabra);
+    const prohibidas = NOT_CONFUSE.get(palabra);
+    const claveBuscada = key(palabra);
     for (let cual = 0; cual < indice.vocabulario.length; cual += 1) {
       const candidata = indice.vocabulario[cual];
       if (candidata.length < 5 || Math.abs(candidata.length - palabra.length) > 2) {
@@ -355,7 +355,7 @@ function parecidasA(indice: Indice, palabra: string): readonly string[] {
         continue;
       }
       const tope = candidata.length >= 8 ? 2 : 1;
-      if (distancia(palabra, candidata, tope) <= tope) {
+      if (distance(palabra, candidata, tope) <= tope) {
         encontradas.push(candidata);
         continue;
       }
@@ -365,7 +365,7 @@ function parecidasA(indice: Indice, palabra: string): readonly string[] {
       if (
         claveBuscada.length >= 5 &&
         claveCandidata.length >= 5 &&
-        distancia(claveBuscada, claveCandidata, 1) <= 1
+        distance(claveBuscada, claveCandidata, 1) <= 1
       ) {
         encontradas.push(candidata);
       }
@@ -383,8 +383,8 @@ function parecidasA(indice: Indice, palabra: string): readonly string[] {
 /* --- El análisis ---------------------------------------------------------- */
 
 /** Una coincidencia todavía sin decidir, con las palabras que la sostienen. */
-interface Candidata {
-  readonly patron: Patron;
+interface Candidate {
+  readonly patron: Pattern;
   readonly confianza: number;
   /** Índices dentro de la lista de palabras con contenido. */
   readonly posiciones: readonly number[];
@@ -403,26 +403,26 @@ interface Candidata {
  *   aislado de los datos, que es lo que permite que el equipo médico cambie la
  *   tabla sin tocar una prueba del motor.
  */
-export function analizar(texto: string, tabla: readonly Sintoma[]): Analisis {
+export function analyze(texto: string, tabla: readonly Symptom[]): Analysis {
   const normalizado = normalizar(texto);
   if (normalizado === '') {
     return { sintomas: [], alarmas: [], negados: [] };
   }
 
   const indice = indiceDe(tabla);
-  const tokens = tokenizar(normalizado);
+  const tokens = tokenize(normalizado);
   const contenido = tokens.filter((token) => token.contenido);
-  const negados = tramosNegados(tokens);
+  const negados = negatedBrackets(tokens);
 
-  const candidatas = mejoresPorSintoma(buscarCandidatas(indice, tokens, contenido, negados));
-  const aceptadas = resolverConflictos(candidatas);
+  const candidatas = bestBySymptom(searchCandidate(indice, tokens, contenido, negados));
+  const aceptadas = resolveConflicts(candidatas);
 
-  const numeros = porNumeros(normalizado, tabla);
+  const numeros = byNumbers(normalizado, tabla);
   const porPalabras = aceptadas
-    .map((candidata) => aCoincidencia(candidata, normalizado))
+    .map((candidata) => aMatch(candidata, normalizado))
     .filter((c) => !numeros.quita.has(c.sintoma.id));
   const yaEstan = new Set(porPalabras.map((coincidencia) => coincidencia.sintoma.id));
-  const coincidencias = sinGenericosDeMas(
+  const coincidencias = moreWithoutGeneric(
     porPalabras
       .concat(numeros.agrega.filter((c) => !yaEstan.has(c.sintoma.id)))
       .sort((a, b) => a.desde - b.desde),
@@ -431,24 +431,24 @@ export function analizar(texto: string, tabla: readonly Sintoma[]): Analisis {
   return {
     sintomas: coincidencias.filter((c) => !c.negado && c.sintoma.alarma !== true),
     alarmas: coincidencias.filter(
-      (c) => !c.negado && c.sintoma.alarma === true && c.confianza >= UMBRAL_ALARMA,
+      (c) => !c.negado && c.sintoma.alarma === true && c.confianza >= ALARM_THRESHOLD,
     ),
     negados: coincidencias.filter((c) => c.negado),
   };
 }
 
 /** Los patrones que vale la pena mirar, y cómo le fue a cada uno. */
-function buscarCandidatas(
-  indice: Indice,
+function searchCandidate(
+  indice: Index,
   tokens: readonly Token[],
   contenido: readonly Token[],
   negados: readonly (readonly [number, number])[],
-): readonly Candidata[] {
+): readonly Candidate[] {
   const aMirar = new Set<number>();
   for (const token of contenido) {
-    sumar(aMirar, indice.porLema.get(token.lema));
-    sumar(aMirar, indice.porClave.get(token.clave));
-    sumar(aMirar, indice.porClave.get(token.claveCruda));
+    sum(aMirar, indice.porLema.get(token.lema));
+    sum(aMirar, indice.porClave.get(token.clave));
+    sum(aMirar, indice.porClave.get(token.claveCruda));
     if (
       indice.porLema.has(token.lema) ||
       indice.porClave.has(token.clave) ||
@@ -456,17 +456,17 @@ function buscarCandidatas(
     ) {
       continue;
     }
-    for (const parecida of parecidasA(indice, token.lema)) {
-      sumar(aMirar, indice.porLema.get(parecida));
+    for (const parecida of similarA(indice, token.lema)) {
+      sum(aMirar, indice.porLema.get(parecida));
     }
   }
 
   // Los patrones comparten lemas: cada uno se compara con el texto una vez.
   // La memoria vive sólo en este análisis; posiciones y negaciones cambian al escribir.
   const matchesByLemma = new Map<string, ReturnType<typeof matchingTokens>>();
-  const candidatas: Candidata[] = [];
+  const candidatas: Candidate[] = [];
   for (const cual of aMirar) {
-    const candidata = evaluar(indice.patrones[cual], tokens, contenido, negados, matchesByLemma);
+    const candidata = evaluate(indice.patrones[cual], tokens, contenido, negados, matchesByLemma);
     if (candidata !== null) {
       candidatas.push(candidata);
     }
@@ -474,7 +474,7 @@ function buscarCandidatas(
   return candidatas;
 }
 
-function sumar(destino: Set<number>, cuales: readonly number[] | undefined): void {
+function sum(destino: Set<number>, cuales: readonly number[] | undefined): void {
   if (cuales === undefined) {
     return;
   }
@@ -486,7 +486,7 @@ function sumar(destino: Set<number>, cuales: readonly number[] | undefined): voi
 /** Coincidencias de un lema, independientes del patrón que lo contiene. */
 function matchingTokens(word: string, phoneticKey: string, tokens: readonly Token[]) {
   return tokens
-    .map((token, position) => ({ donde: position, puntaje: parecido(word, phoneticKey, token) }))
+    .map((token, position) => ({ donde: position, puntaje: similar(word, phoneticKey, token) }))
     .filter((match) => match.puntaje > 0);
 }
 
@@ -497,13 +497,13 @@ function matchingTokens(word: string, phoneticKey: string, tokens: readonly Toke
  * más cerca posible. No hace falta más: los patrones tienen dos o tres palabras
  * y los textos, veinte.
  */
-function evaluar(
-  patron: Patron,
+function evaluate(
+  patron: Pattern,
   tokens: readonly Token[],
   contenido: readonly Token[],
   negados: readonly (readonly [number, number])[],
   matchesByLemma: Map<string, ReturnType<typeof matchingTokens>>,
-): Candidata | null {
+): Candidate | null {
   const apariciones = patron.lemas.map((palabra, cual) => {
     const cached = matchesByLemma.get(palabra);
     if (cached !== undefined) {
@@ -517,7 +517,7 @@ function evaluar(
     return null;
   }
 
-  let mejor: Candidata | null = null;
+  let mejor: Candidate | null = null;
   for (const ancla of apariciones[0]) {
     const elegidas = [{ ...ancla, lema: patron.lemas[0] }];
     let posible = true;
@@ -542,27 +542,27 @@ function evaluar(
     const ordenadas = [...elegidas].sort((a, b) => a.donde - b.donde);
     const primera = ordenadas[0].donde;
     const ultima = ordenadas[ordenadas.length - 1].donde;
-    if (ultima - primera > patron.lemas.length - 1 + HUECO) {
+    if (ultima - primera > patron.lemas.length - 1 + GAP) {
       continue;
     }
     if (contenido[primera].frase !== contenido[ultima].frase) {
       continue;
     }
-    if (!negacionPegada(patron, elegidas)) {
+    if (!pastedNegation(patron, elegidas)) {
       continue;
     }
 
     const suma = elegidas.reduce((total, elegida) => total + elegida.puntaje, 0);
     const hueco = ultima - primera - (patron.lemas.length - 1);
     const confianza = suma / elegidas.length - hueco * 0.04;
-    const minima = patron.lemas.length === 1 ? UMBRAL_UNICO : UMBRAL;
+    const minima = patron.lemas.length === 1 ? UNIQUE_THRESHOLD : THRESHOLD;
     if (confianza < minima) {
       continue;
     }
     if (
       patron.lemas.length === 1 &&
       elegidas[0].puntaje < 0.85 &&
-      patron.lemas[0].length < LARGO_PARA_DIFUSO_UNICO
+      patron.lemas[0].length < LONG_FOR_FUZZY_UNIQUE
     ) {
       continue;
     }
@@ -579,7 +579,7 @@ function evaluar(
       cubiertos,
       desde: contenido[primera].desde,
       hasta: contenido[ultima].hasta,
-      negada: estaNegada(contenido, posiciones, cubiertos, tokens, negados),
+      negada: isNegated(contenido, posiciones, cubiertos, tokens, negados),
     };
   }
 
@@ -596,8 +596,8 @@ function evaluar(
  * «no escucho bien», que es como lo dice la gente. «Pegada» cuenta palabras con contenido: «no me
  * baja la regla» sigue siendo `no` + `bajar`.
  */
-function negacionPegada(
-  patron: Patron,
+function pastedNegation(
+  patron: Pattern,
   elegidas: readonly { readonly donde: number; readonly lema: string }[],
 ): boolean {
   const cual = patron.lemas.indexOf('no');
@@ -617,7 +617,7 @@ function negacionPegada(
  * que se apoya en la propia negación nunca queda negada — sin esa distinción,
  * el síntoma de alarma más frecuente del flujo se apagaría solo.
  */
-function estaNegada(
+function isNegated(
   contenido: readonly Token[],
   posiciones: readonly number[],
   cubiertos: readonly string[],
@@ -633,7 +633,7 @@ function estaNegada(
   // comparte con los demás. «Ya no me duele la cabeza, ahora es la panza»
   // tiene un solo "duele" para los dos, y ese "duele" cae dentro de la
   // negación: mirándolo a él, la panza también quedaba negada.
-  const propios = usados.filter((_, cual) => !COMPARTIDAS.has(cubiertos[cual]));
+  const propios = usados.filter((_, cual) => !SHARED.has(cubiertos[cual]));
   const decisivos = propios.length > 0 ? propios : usados;
 
   // Y las tiene que alcanzar a **todas**: «ronco tanto que mi esposa no
@@ -646,8 +646,8 @@ function estaNegada(
 }
 
 /** Un síntoma se reconoce una vez, por su mejor patrón. */
-function mejoresPorSintoma(candidatas: readonly Candidata[]): readonly Candidata[] {
-  const mejores = new Map<string, Candidata>();
+function bestBySymptom(candidatas: readonly Candidate[]): readonly Candidate[] {
+  const mejores = new Map<string, Candidate>();
   for (const candidata of candidatas) {
     const previa = mejores.get(candidata.patron.sintoma.id);
     if (
@@ -667,10 +667,10 @@ function mejoresPorSintoma(candidatas: readonly Candidata[]): readonly Candidata
  *
  * Gana el más específico: «vomité sangre» es la urgencia, no el vómito; «ataque
  * de pánico» es ansiedad, no una convulsión. Las palabras que ya usó una
- * coincidencia no las puede usar otra —salvo las de {@link COMPARTIDAS}, que
+ * coincidencia no las puede usar otra —salvo las de {@link SHARED}, que
  * son las que la gente encadena: «me duele la cabeza y la garganta».
  */
-function resolverConflictos(candidatas: readonly Candidata[]): readonly Candidata[] {
+function resolveConflicts(candidatas: readonly Candidate[]): readonly Candidate[] {
   const ordenadas = [...candidatas].sort(
     (a, b) =>
       b.patron.lemas.length - a.patron.lemas.length ||
@@ -679,10 +679,10 @@ function resolverConflictos(candidatas: readonly Candidata[]): readonly Candidat
   );
 
   const usadas = new Set<number>();
-  const aceptadas: Candidata[] = [];
+  const aceptadas: Candidate[] = [];
   for (const candidata of ordenadas) {
     const propias = candidata.posiciones.filter(
-      (_, cual) => !COMPARTIDAS.has(candidata.cubiertos[cual]),
+      (_, cual) => !SHARED.has(candidata.cubiertos[cual]),
     );
     if (propias.some((donde) => usadas.has(donde))) {
       continue;
@@ -703,7 +703,7 @@ function resolverConflictos(candidatas: readonly Candidata[]): readonly Candidat
  * agrega nada: la persona ya dijo qué se quiere controlar. Ver `generico` en
  * `symptoms.data.ts`.
  */
-function sinGenericosDeMas(coincidencias: readonly Coincidencia[]): readonly Coincidencia[] {
+function moreWithoutGeneric(coincidencias: readonly Match[]): readonly Match[] {
   const hayConcreto = coincidencias.some(
     (c) => !c.negado && c.sintoma.generico !== true && c.sintoma.alarma !== true,
   );
@@ -713,7 +713,7 @@ function sinGenericosDeMas(coincidencias: readonly Coincidencia[]): readonly Coi
   return coincidencias.filter((c) => c.sintoma.generico !== true);
 }
 
-function aCoincidencia(candidata: Candidata, normalizado: string): Coincidencia {
+function aMatch(candidata: Candidate, normalizado: string): Match {
   return {
     sintoma: candidata.patron.sintoma,
     confianza: Math.min(1, Math.round(candidata.confianza * 100) / 100),
@@ -733,7 +733,7 @@ function aCoincidencia(candidata: Candidata, normalizado: string): Coincidencia 
  * frecuentes de una consulta. Cada regla exige una palabra que le dé contexto:
  * sin eso, «hace 38 días» sería fiebre.
  */
-const REGLAS_NUMERICAS: readonly {
+const NUMERIC_RULES: readonly {
   readonly sintoma: string;
   readonly patron: RegExp;
   readonly vale: (numeros: readonly number[]) => boolean;
@@ -769,18 +769,18 @@ const REGLAS_NUMERICAS: readonly {
   },
 ];
 
-interface LoQueDicenLosNumeros {
+interface NumbersSay {
   /** Lo que el número trae por sí solo. */
-  readonly agrega: readonly Coincidencia[];
+  readonly agrega: readonly Match[];
   /** Lo que el número **desmiente**, aunque la palabra esté escrita. */
   readonly quita: ReadonlySet<string>;
 }
 
-function porNumeros(normalizado: string, tabla: readonly Sintoma[]): LoQueDicenLosNumeros {
-  const agrega: Coincidencia[] = [];
+function byNumbers(normalizado: string, tabla: readonly Symptom[]): NumbersSay {
+  const agrega: Match[] = [];
   const quita = new Set<string>();
 
-  for (const regla of REGLAS_NUMERICAS) {
+  for (const regla of NUMERIC_RULES) {
     const sintoma = tabla.find((fila) => fila.id === regla.sintoma);
     if (sintoma === undefined) {
       continue;
@@ -828,19 +828,19 @@ function porNumeros(normalizado: string, tabla: readonly Sintoma[]): LoQueDicenL
  * Lo que empieza igual pesa más que lo que sólo suena parecido, y una falta de
  * ortografía todavía puntúa: quien escribe «caveza» también tiene que ver algo.
  */
-export function sugerirDe(
+export function suggestOf(
   parcial: string,
-  tabla: readonly Sintoma[],
+  tabla: readonly Symptom[],
   excluidos: ReadonlySet<string>,
   tope: number,
-): readonly Sintoma[] {
+): readonly Symptom[] {
   const texto = normalizar(parcial);
   if (texto.length < 3) {
     return [];
   }
-  const buscadaClave = clave(lema(texto));
+  const buscadaClave = key(lemma(texto));
 
-  const puntuados: { sintoma: Sintoma; puntaje: number }[] = [];
+  const puntuados: { sintoma: Symptom; puntaje: number }[] = [];
   for (const sintoma of tabla) {
     if (excluidos.has(sintoma.id) || sintoma.alarma === true) {
       continue;
@@ -859,9 +859,9 @@ export function sugerirDe(
       for (const palabra of normalizada.split(' ')) {
         if (palabra.startsWith(texto)) {
           puntaje = Math.max(puntaje, 3 + enElNombre);
-        } else if (palabra.length >= 4 && clave(lema(palabra)) === buscadaClave) {
+        } else if (palabra.length >= 4 && key(lemma(palabra)) === buscadaClave) {
           puntaje = Math.max(puntaje, 2);
-        } else if (texto.length >= 5 && palabra.length >= 5 && distancia(palabra, texto, 1) <= 1) {
+        } else if (texto.length >= 5 && palabra.length >= 5 && distance(palabra, texto, 1) <= 1) {
           puntaje = Math.max(puntaje, 1);
         }
       }

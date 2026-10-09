@@ -24,7 +24,7 @@
     ========================================================================== */
 
 /** Una categoría: su código estable y cómo se escribe. */
-export interface CategoriaSimulada {
+export interface SimulatedCategory {
   readonly code: string;
   readonly label: string;
 }
@@ -33,9 +33,9 @@ export interface CategoriaSimulada {
  * Las categorías fijas, las que no dependen de un catálogo que crece.
  *
  * Las de farmacia no están acá: salen de la cadena de cada sucursal, que es
- * una lista que el corpus puede ampliar. Ver {@link categoriaDeCadena}.
+ * una lista que el corpus puede ampliar. Ver {@link chainCategory}.
  */
-export const CATEGORIA = {
+export const CATEGORY = {
   /* ---- organizaciones ---------------------------------------------------- */
   CLINICA_PRIVADA: { code: 'clinica-privada', label: 'Clínica privada' },
   HOSPITAL_PUBLICO: { code: 'hospital-publico', label: 'Hospital público' },
@@ -72,10 +72,10 @@ export const CATEGORIA = {
    * sería afirmar algo que la fuente dice expresamente que no sabe.
    */
   CADENA_SIN_CONFIRMAR: { code: 'cadena-sin-confirmar', label: 'Cadena sin confirmar' },
-} as const satisfies Record<string, CategoriaSimulada>;
+} as const satisfies Record<string, SimulatedCategory>;
 
 /** `Farmacias Chávez` → `cadena-farmacias-chavez`. */
-function codigoDeCadena(nombre: string): string {
+function chainCode(nombre: string): string {
   return `cadena-${nombre
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -99,17 +99,17 @@ function codigoDeCadena(nombre: string): string {
  * Las que no pertenecen a ninguna cadena son `FARMACIA_INDEPENDIENTE`, que en
  * este directorio son quince y no un caso raro.
  */
-export function categoriaDeCadena(
+export function chainCategory(
   nombreDeLaCadena: string | null,
   reconciliada = true,
-): CategoriaSimulada {
+): SimulatedCategory {
   if (nombreDeLaCadena === null || nombreDeLaCadena === '') {
-    return CATEGORIA.FARMACIA_INDEPENDIENTE;
+    return CATEGORY.FARMACIA_INDEPENDIENTE;
   }
   if (!reconciliada) {
-    return CATEGORIA.CADENA_SIN_CONFIRMAR;
+    return CATEGORY.CADENA_SIN_CONFIRMAR;
   }
-  return { code: codigoDeCadena(nombreDeLaCadena), label: nombreDeLaCadena };
+  return { code: chainCode(nombreDeLaCadena), label: nombreDeLaCadena };
 }
 
 /**
@@ -121,7 +121,7 @@ export function categoriaDeCadena(
  * corpus sí declara, y la que no coincide con ninguna queda independiente,
  * que es lo que es hasta que alguien demuestre lo contrario.
  */
-export function cadenaPorNombre(
+export function chainByName(
   nombre: string,
   cadenas: readonly { readonly name: string }[],
 ): string | null {
@@ -147,7 +147,7 @@ export function cadenaPorNombre(
 
 
 /** La categoría fija con ese código, o `null` (las de cadena de farmacia no están acá). */
-export function categoriaPorCodigo(code: string | null): CategoriaSimulada | null {
+export function categoryByCode(code: string | null): SimulatedCategory | null {
   if (code === null) return null;
-  return Object.values(CATEGORIA).find((c) => c.code === code) ?? null;
+  return Object.values(CATEGORY).find((c) => c.code === code) ?? null;
 }

@@ -1,4 +1,4 @@
-import { PROFESIONALES } from './people';
+import { PROFESSIONALS } from './people';
 import { recursos, cupos } from './agenda';
 
 /**
@@ -11,9 +11,9 @@ import { recursos, cupos } from './agenda';
  */
 describe('cobertura de agendas — foto antes de R-03', () => {
   it('cuenta directorio / con recurso / con cupos en ±14 días', () => {
-    const enDirectorio = PROFESIONALES.length;
+    const enDirectorio = PROFESSIONALS.length;
     const idsConRecurso = new Set(recursos.todos().map((r) => r.resourceRefId));
-    const conRecurso = PROFESIONALES.filter((p) => idsConRecurso.has(p.id)).length;
+    const conRecurso = PROFESSIONALS.filter((p) => idsConRecurso.has(p.id)).length;
 
     const hoy = new Date();
     const desde = new Date(hoy);
@@ -34,9 +34,9 @@ describe('cobertura de agendas — foto antes de R-03', () => {
         })
         .filter((id): id is string => id !== undefined),
     );
-    const conCupos = PROFESIONALES.filter((p) => idsConCupoEnVentana.has(p.id)).length;
+    const conCupos = PROFESSIONALS.filter((p) => idsConCupoEnVentana.has(p.id)).length;
 
-    const registrados = PROFESIONALES.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
+    const registrados = PROFESSIONALS.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
     const registradosConEspecialidad = registrados.filter((p) => p.especialidades.length > 0);
 
     const resumen =

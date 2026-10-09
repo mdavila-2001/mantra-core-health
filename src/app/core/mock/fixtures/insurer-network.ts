@@ -1,4 +1,4 @@
-import { DEPARTAMENTO, ESPECIALIDAD, MUNICIPIO } from './concepts';
+import { DEPARTMENT, SPECIALTY, MUNICIPALITY } from './concepts';
 import {
   INSURER_NETWORK_PRACTITIONERS,
   type InsurerNetworkPractitioner,
@@ -204,10 +204,10 @@ function profesionalDeLaRed(p: InsurerNetworkPractitioner, indice: number): Prof
     // Dominio `.mock`: no es su correo y no lo pretende. La fuente no publica ninguno.
     email: `${slug}@red.alovida.mock`,
     phone: telefono === undefined ? '' : `+591 ${telefono}`,
-    especialidades: codigos.map((c) => ESPECIALIDAD[c]!),
+    especialidades: codigos.map((c) => SPECIALTY[c]!),
     ciudad: consultorio.city,
-    municipioId: MUNICIPIO[municipio]!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:SC']!,
+    municipioId: MUNICIPALITY[municipio]!,
+    departamentoId: DEPARTMENT['geo:bo:department:SC']!,
     tenantId: uuid(`tenant-red-${p.id}`),
     organizacion: p.networks.map((r) => r.insurer).join(' · '),
     verified: false,

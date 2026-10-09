@@ -1,4 +1,4 @@
-import { enteroEnLetras, montoLiteral } from './amount-in-words';
+import { integerInLetters, amountLiteral } from './amount-in-words';
 
 describe('monto literal', () => {
   it.each([
@@ -20,17 +20,17 @@ describe('monto literal', () => {
     [1_000_000, 'Un Millón'],
     [2_500_000, 'Dos Millones Quinientos Mil'],
   ])('%i → %s', (n, texto) => {
-    expect(enteroEnLetras(n)).toBe(texto);
+    expect(integerInLetters(n)).toBe(texto);
   });
 
   it('arma la línea «Son: … Bolivianos» con los centavos', () => {
-    expect(montoLiteral('250.00')).toBe('Son: Doscientos Cincuenta 00/100 Bolivianos');
-    expect(montoLiteral('99')).toBe('Son: Noventa y Nueve 00/100 Bolivianos');
-    expect(montoLiteral('12.5')).toBe('Son: Doce 50/100 Bolivianos');
+    expect(amountLiteral('250.00')).toBe('Son: Doscientos Cincuenta 00/100 Bolivianos');
+    expect(amountLiteral('99')).toBe('Son: Noventa y Nueve 00/100 Bolivianos');
+    expect(amountLiteral('12.5')).toBe('Son: Doce 50/100 Bolivianos');
   });
 
   it('rechaza lo que no es un importe', () => {
-    expect(() => montoLiteral('-1')).toThrow();
-    expect(() => enteroEnLetras(1.5)).toThrow();
+    expect(() => amountLiteral('-1')).toThrow();
+    expect(() => integerInLetters(1.5)).toThrow();
   });
 });

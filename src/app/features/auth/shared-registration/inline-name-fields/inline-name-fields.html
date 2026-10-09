@@ -3,13 +3,13 @@
     class="nombres__campo nombres__campo--tercio"
     label="Primer nombre"
     [required]="obligatorio()"
-    [errorMessage]="errorDe('name')"
+    [errorMessage]="errorOf('name')"
   >
     <app-input
       type="text"
       formControlName="name"
       autocomplete="given-name"
-      [hasError]="errorDe('name') !== ''"
+      [hasError]="errorOf('name') !== ''"
       [testId]="prefijoTestId() + '-nombre'"
     />
   </app-form-field>
@@ -31,7 +31,7 @@
     />
   </app-form-field>
 
-  @for (extra of extras(); track extra; let i = $index) {
+  @for (extra of extra(); track extra; let i = $index) {
     <app-form-field class="nombres__campo nombres__campo--tercio" [label]="'Nombre ' + (i + 4)"
       [errorMessage]="extra.invalid && (extra.dirty || extra.touched) ? 'El nombre no puede pasar de 100 caracteres.' : ''">
       <div class="nombres__extra">
@@ -51,7 +51,7 @@
           [attr.aria-label]="'Quitar el nombre ' + (i + 4)"
           [appTooltip]="'Quitar el nombre ' + (i + 4)"
           [attr.data-testid]="prefijoTestId() + '-quitar-nombre-' + i"
-          (clicked)="quitarNombre(i)"
+          (clicked)="removeName(i)"
         >
           <app-nav-icon name="remove" />
         </button>
@@ -66,7 +66,7 @@
       variant="ghost"
       size="sm"
       [attr.data-testid]="prefijoTestId() + '-agregar-nombre'"
-      (clicked)="agregarNombre()"
+      (clicked)="addName()"
     >
       + Agregar otro nombre
     </button>
@@ -76,13 +76,13 @@
     class="nombres__campo nombres__campo--mitad"
     label="Apellido paterno"
     [required]="obligatorio()"
-    [errorMessage]="errorDe('lastName')"
+    [errorMessage]="errorOf('lastName')"
   >
     <app-input
       type="text"
       formControlName="lastName"
       autocomplete="family-name"
-      [hasError]="errorDe('lastName') !== ''"
+      [hasError]="errorOf('lastName') !== ''"
       [testId]="prefijoTestId() + '-apellido-paterno'"
     />
   </app-form-field>

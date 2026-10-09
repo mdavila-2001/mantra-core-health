@@ -40,10 +40,10 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../core/data-access/terminology/bo-municipalities.service';
-import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/city-department';
+import { departmentByCity, normalizePlace } from '../../shared/geo/city-department';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
-import { fotoDeDirectorio, temaDeCentroDiagnostico } from '../../shared/utils/directory-photo';
+import { directoryPhoto, diagnosisCenterTheme } from '../../shared/utils/directory-photo';
 
 /**
  * Un tramo del directorio de laboratorios.
@@ -180,7 +180,7 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
 export class LaboratoryDirectory {
   /** La foto de la tarjeta de una categoría de la portada. */
   protected fotoDe(codigo: string): string {
-    return fotoDeDirectorio(temaDeCentroDiagnostico(codigo), codigo);
+    return directoryPhoto(diagnosisCenterTheme(codigo), codigo);
   }
 
   /**
@@ -236,7 +236,7 @@ export class LaboratoryDirectory {
     })),
   );
 
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /**
    * Si los resultados traen ciudades. Hoy sólo la maqueta las sirve (ver
@@ -257,7 +257,7 @@ export class LaboratoryDirectory {
     const porCiudad = this.porCiudad();
     const departamentos = new Set<string>();
     for (const ciudad of unidad.cities ?? []) {
-      const conceptId = porCiudad.get(normalizarLugar(ciudad));
+      const conceptId = porCiudad.get(normalizePlace(ciudad));
       if (conceptId !== undefined) departamentos.add(conceptId);
     }
     return departamentos;
@@ -579,7 +579,7 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
     title: unit.name,
     link: `/laboratory-directory/${unit.id}`,
     figureText: initials(unit.name),
-    photoUrl: fotoDeDirectorio(temaDeCentroDiagnostico(`${unit.type.code} ${unit.type.display}`), unit.id),
+    photoUrl: directoryPhoto(diagnosisCenterTheme(`${unit.type.code} ${unit.type.display}`), unit.id),
     // La categoría como subtítulo y no como insignia: desde que la portada
     // obliga a elegirla antes de entrar, todas las tarjetas de la lista son de
     // la misma, así que la insignia repetía en cada una la categoría que se

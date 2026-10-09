@@ -1,4 +1,4 @@
-@for (control of controles(); track control; let i = $index) {
+@for (control of controls(); track control; let i = $index) {
   <app-form-field
     [label]="'Nombre ' + (i + 4)"
     [errorMessage]="
@@ -25,7 +25,7 @@
         [attr.aria-label]="'Quitar el nombre ' + (i + 4)"
         [appTooltip]="'Quitar el nombre ' + (i + 4)"
         [attr.data-testid]="prefijoTestId() + '-quitar-nombre-' + i"
-        (clicked)="quitar(i)"
+        (clicked)="remove(i)"
       >
         <app-nav-icon name="remove" />
       </button>
@@ -38,7 +38,7 @@
   variant="ghost"
   size="sm"
   [attr.data-testid]="prefijoTestId() + '-agregar-nombre'"
-  (clicked)="agregar()"
+  (clicked)="add()"
 >
   + Agregar otro nombre
 </button>

@@ -12,7 +12,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
-import { ContabilidadSimple } from '../records/records';
+import { SimpleAccounting } from '../records/records';
 import type {
   BalanceSheet,
   FinancialStatementLine,
@@ -39,16 +39,16 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import {
-  comparar,
-  diasHasta,
+  compare,
+  daysUntil,
   esCero,
-  esNegativo,
-  importeBs,
-  porcentajeDe,
-  ventanasDelDia,
-  ventanasDelMes,
-  ventanasDeLaSemana,
-  type Comparacion,
+  isNegative,
+  amountBs,
+  percentageOf,
+  dayWindows,
+  monthWindows,
+  weekWindows,
+  type Comparison,
 } from './windows';
 
 /* ============================================================================
@@ -64,7 +64,7 @@ import {
     el comportamiento correcto: inventar un nombre llano para una cuenta que no
     conocemos sería peor que mostrar el suyo.
     ========================================================================== */
-const NOMBRE_LLANO: Readonly<Record<string, string>> = {
+const PLAIN_NAME: Readonly<Record<string, string>> = {
   '4.1': 'Consultas',
   '4.2': 'Estudios y procedimientos',
   '4.3': 'Otros ingresos',
@@ -80,14 +80,14 @@ const NOMBRE_LLANO: Readonly<Record<string, string>> = {
  * Las dos líneas que hay que explicar sí o sí, porque no son plata que sale
  * del bolsillo y quien no lleva libros las lee como un cobro sorpresa.
  */
-const ACLARACION: Readonly<Record<string, string>> = {
+const CLARIFICATION: Readonly<Record<string, string>> = {
   '5.5':
     'No sale plata de su cuenta: es lo que sus equipos perdieron de valor este mes por usarlos.',
   '5.6': 'Es sólo el interés del préstamo. La cuota que devuelve el capital no es un gasto.',
 };
 
 /** Una línea de «en qué se te va la plata», lista para dibujar. */
-export interface FilaDeGasto {
+export interface ExpenseRow {
   readonly id: string;
   readonly nombre: string;
   readonly importe: string;
@@ -96,7 +96,7 @@ export interface FilaDeGasto {
 }
 
 /** Una línea de «de dónde viene la plata». */
-export interface FilaDeIngreso {
+export interface IncomeRow {
   readonly id: string;
   readonly nombre: string;
   readonly importe: string;
@@ -104,7 +104,7 @@ export interface FilaDeIngreso {
 }
 
 /** Uno de los tres bloques de arriba: hoy, esta semana, este mes. */
-export interface Tramo {
+export interface Bracket {
   readonly clave: 'hoy' | 'semana' | 'mes';
   readonly rotulo: string;
   readonly aclaracion: string;
@@ -114,12 +114,12 @@ export interface Tramo {
   readonly salio: string;
   /** Lo que quedó: lo declara la API en `netIncome`, acá no se resta nada. */
   readonly quedo: string;
-  readonly comparacion: Comparacion | null;
+  readonly comparacion: Comparison | null;
   readonly destacado: boolean;
 }
 
 /** Una factura pendiente, ya resuelta para pintar. */
-export interface FilaDePartida {
+export interface EntryRow {
   readonly id: string;
   readonly quien: string;
   readonly documento: string;
@@ -210,7 +210,7 @@ interface Dinero {
     AppButton,
     AppButtonLink,
     Card,
-    ContabilidadSimple,
+    SimpleAccounting,
     Chip,
     FormField,
     PageHeader,
@@ -224,7 +224,7 @@ interface Dinero {
   templateUrl: './summary.html',
   styleUrl: './summary.css',
 })
-export class Resumen {
+export class Summary {
   private readonly accounting = inject(AccountingClient);
   private readonly toasts = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
@@ -237,45 +237,45 @@ export class Resumen {
    * abierta cruzando la medianoche, y «hoy» dejaría de coincidir con el
    * encabezado.
    */
-  private readonly hoy = new Date();
+  private readonly today = new Date();
 
-  private readonly recarga = signal(0);
+  private readonly reload = signal(0);
   /** 0 = Resumen (tableros) · 1 = Registros (tablas con su alta). */
-  readonly pestana = signal(0);
-  readonly practicaElegida = signal<string | null>(null);
-  private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
+  readonly tab = signal(0);
+  readonly chosenPractice = signal<string | null>(null);
+  private readonly practices = signal<ViewState<readonly Practice[]>>(loading());
   private readonly dinero = signal<ViewState<Dinero>>(loading());
 
-  readonly estadoDePracticas = this.practicas.asReadonly();
-  readonly estadoDelDinero = this.dinero.asReadonly();
+  readonly practicesStatus = this.practices.asReadonly();
+  readonly dineroStatus = this.dinero.asReadonly();
 
   /** Qué partida se está saldando, para apagar su botón mientras tanto. */
-  readonly saldando = signal<string | null>(null);
+  readonly settling = signal<string | null>(null);
 
-  readonly opcionesDePractica = computed(() => {
-    const estado = this.practicas();
+  readonly practiceOptions = computed(() => {
+    const estado = this.practices();
     return estado.status !== 'ready' ? [] : estado.data.map((p) => ({ value: p.id, label: p.name }));
   });
 
   /** Si hay más de una: con una sola, preguntar cuál es preguntar de más. */
-  readonly hayVariasPracticas = computed(() => this.opcionesDePractica().length > 1);
+  readonly hasSeveralPractices = computed(() => this.practiceOptions().length > 1);
 
-  readonly datos = computed<Dinero | null>(() => {
+  readonly data = computed<Dinero | null>(() => {
     const estado = this.dinero();
     return estado.status === 'ready' ? estado.data : null;
   });
 
   /* ---- 1 · ¿Cuánto hiciste? ------------------------------------------------ */
 
-  readonly tramos = computed<readonly Tramo[]>(() => {
-    const d = this.datos();
+  readonly brackets = computed<readonly Bracket[]>(() => {
+    const d = this.data();
     if (d === null) return [];
-    const dia = ventanasDelDia(this.hoy);
-    const semana = ventanasDeLaSemana(this.hoy);
-    const mes = ventanasDelMes(this.hoy);
+    const dia = dayWindows(this.today);
+    const semana = weekWindows(this.today);
+    const mes = monthWindows(this.today);
     return [
-      this.tramo('hoy', 'Hoy', 'Lo de este día', d.hoy, d.hoyPrevio, dia.rotuloPrevio, false),
-      this.tramo(
+      this.bracket('hoy', 'Hoy', 'Lo de este día', d.hoy, d.hoyPrevio, dia.rotuloPrevio, false),
+      this.bracket(
         'semana',
         'Esta semana',
         'Desde el lunes',
@@ -284,7 +284,7 @@ export class Resumen {
         semana.rotuloPrevio,
         false,
       ),
-      this.tramo(
+      this.bracket(
         'mes',
         'Este mes',
         'Desde el día 1',
@@ -296,15 +296,15 @@ export class Resumen {
     ];
   });
 
-  private tramo(
-    clave: Tramo['clave'],
+  private bracket(
+    clave: Bracket['clave'],
     rotulo: string,
     aclaracion: string,
     actual: IncomeStatement,
     previo: IncomeStatement,
     rotuloPrevio: string,
     destacado: boolean,
-  ): Tramo {
+  ): Bracket {
     return {
       clave,
       rotulo,
@@ -312,38 +312,38 @@ export class Resumen {
       entro: actual.totalRevenue,
       salio: actual.totalExpense,
       quedo: actual.netIncome,
-      comparacion: comparar(actual.totalRevenue, previo.totalRevenue, rotuloPrevio),
+      comparacion: compare(actual.totalRevenue, previo.totalRevenue, rotuloPrevio),
       destacado,
     };
   }
 
   /* ---- 2 · ¿En qué se te va? ----------------------------------------------- */
 
-  readonly gastosDelMes = computed<readonly FilaDeGasto[]>(() => {
-    const d = this.datos();
+  readonly monthExpenses = computed<readonly ExpenseRow[]>(() => {
+    const d = this.data();
     if (d === null) return [];
     return d.mes.expenseItems
       .filter((linea) => !esCero(linea.amount))
       .map((linea) => ({
         id: linea.accountId,
-        nombre: this.nombreDe(linea),
+        nombre: this.nameOf(linea),
         importe: linea.amount,
-        porcentaje: porcentajeDe(linea.amount, d.mes.totalExpense),
-        aclaracion: linea.code === undefined ? null : (ACLARACION[linea.code] ?? null),
+        porcentaje: percentageOf(linea.amount, d.mes.totalExpense),
+        aclaracion: linea.code === undefined ? null : (CLARIFICATION[linea.code] ?? null),
       }))
       .sort((a, b) => Number(b.importe) - Number(a.importe));
   });
 
-  readonly ingresosDelMes = computed<readonly FilaDeIngreso[]>(() => {
-    const d = this.datos();
+  readonly monthIncome = computed<readonly IncomeRow[]>(() => {
+    const d = this.data();
     if (d === null) return [];
     return d.mes.revenueItems
       .filter((linea) => !esCero(linea.amount))
       .map((linea) => ({
         id: linea.accountId,
-        nombre: this.nombreDe(linea),
+        nombre: this.nameOf(linea),
         importe: linea.amount,
-        porcentaje: porcentajeDe(linea.amount, d.mes.totalRevenue),
+        porcentaje: percentageOf(linea.amount, d.mes.totalRevenue),
       }))
       .sort((a, b) => Number(b.importe) - Number(a.importe));
   });
@@ -354,31 +354,31 @@ export class Resumen {
    * Una lista de seis barras dice qué hay; no dice qué mirar. El gasto más
    * grande sí, y es lo único que un médico puede accionar sin abrir un libro.
    */
-  readonly gastoMasGrande = computed(() => this.gastosDelMes()[0] ?? null);
+  readonly expenseLargeMore = computed(() => this.monthExpenses()[0] ?? null);
 
   /* ---- 3 · ¿Quién te debe y a quién le debés? ------------------------------ */
 
-  readonly teDeben = computed<readonly FilaDePartida[]>(() =>
-    this.partidasDe('RECEIVABLE'),
+  readonly teDeben = computed<readonly EntryRow[]>(() =>
+    this.entriesOf('RECEIVABLE'),
   );
 
-  readonly tenesQuePagar = computed<readonly FilaDePartida[]>(() =>
-    this.partidasDe('PAYABLE'),
+  readonly amountToPay = computed<readonly EntryRow[]>(() =>
+    this.entriesOf('PAYABLE'),
   );
 
-  private partidasDe(lado: OpenItem['side']): readonly FilaDePartida[] {
-    const d = this.datos();
+  private entriesOf(lado: OpenItem['side']): readonly EntryRow[] {
+    const d = this.data();
     if (d === null) return [];
     return d.partidas.items
       .filter((p) => p.side === lado)
       .map((p) => {
-        const faltan = diasHasta(p.dueDate, this.hoy);
+        const faltan = daysUntil(p.dueDate, this.today);
         return {
           id: p.id,
           quien: p.partnerName,
           documento: p.documentNumber,
           importe: p.openAmount,
-          ...this.avisoDeVencimiento(faltan),
+          ...this.expiryNotice(faltan),
           urgencia: -faltan,
         };
       })
@@ -391,7 +391,7 @@ export class Resumen {
    * El tono no va solo: el texto dice lo mismo que el color, que es la regla
    * de la casa para no depender de distinguir rojo.
    */
-  private avisoDeVencimiento(faltan: number): { aviso: string; tono: FilaDePartida['tono'] } {
+  private expiryNotice(faltan: number): { aviso: string; tono: EntryRow['tono'] } {
     if (faltan < 0) {
       const dias = Math.abs(faltan);
       return {
@@ -405,13 +405,13 @@ export class Resumen {
   }
 
   /** Cuántas de las que te deben ya están vencidas. */
-  readonly vencidasQueTeDeben = computed(
+  readonly overdueOwedToYou = computed(
     () => this.teDeben().filter((p) => p.tono !== 'neutral').length,
   );
 
   /** Cuántas de las que debés ya están vencidas. */
-  readonly vencidasQueDebes = computed(
-    () => this.tenesQuePagar().filter((p) => p.tono !== 'neutral').length,
+  readonly overdueYouOwe = computed(
+    () => this.amountToPay().filter((p) => p.tono !== 'neutral').length,
   );
 
   /* ---- 4 · ¿Qué tenés y qué debés? ----------------------------------------- */
@@ -423,8 +423,8 @@ export class Resumen {
    * tenés» es una línea que ocupa lugar y no suma nada. El registro completo
    * está en la pantalla de activos y pasivos, a un clic.
    */
-  readonly equiposConValor = computed(() => {
-    const d = this.datos();
+  readonly equipmentWithValue = computed(() => {
+    const d = this.data();
     if (d === null) return [];
     return d.equipos.items
       .filter((a) => a.status === 'ACTIVE' && !esCero(a.netBookValue))
@@ -440,19 +440,19 @@ export class Resumen {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((estado) => {
-        this.practicas.set(estado);
-        if (estado.status === 'ready' && estado.data.length > 0 && this.practicaElegida() === null) {
-          this.practicaElegida.set(estado.data[0]!.id);
+        this.practices.set(estado);
+        if (estado.status === 'ready' && estado.data.length > 0 && this.chosenPractice() === null) {
+          this.chosenPractice.set(estado.data[0]!.id);
         }
       });
 
-    toObservable(computed(() => ({ practiceId: this.practicaElegida(), intento: this.recarga() })))
+    toObservable(computed(() => ({ practiceId: this.chosenPractice(), intento: this.reload() })))
       .pipe(
         switchMap(({ practiceId }) => {
           if (practiceId === null) return of(loading() as ViewState<Dinero>);
-          const dia = ventanasDelDia(this.hoy);
-          const semana = ventanasDeLaSemana(this.hoy);
-          const mes = ventanasDelMes(this.hoy);
+          const dia = dayWindows(this.today);
+          const semana = weekWindows(this.today);
+          const mes = monthWindows(this.today);
           return forkJoin({
             hoy: this.accounting.incomeStatement(practiceId, dia.actual),
             hoyPrevio: this.accounting.incomeStatement(practiceId, dia.previa),
@@ -475,7 +475,7 @@ export class Resumen {
   }
 
   recargar(): void {
-    this.recarga.update((n) => n + 1);
+    this.reload.update((n) => n + 1);
   }
 
   /**
@@ -486,26 +486,26 @@ export class Resumen {
    * cambia porque el lector cambia: «compensar una partida abierta» no es algo
    * que un médico diga nunca.
    */
-  saldar(partida: FilaDePartida, lado: 'cobro' | 'pago'): void {
-    if (this.saldando() !== null) return;
-    this.saldando.set(partida.id);
+  settle(partida: EntryRow, lado: 'cobro' | 'pago'): void {
+    if (this.settling() !== null) return;
+    this.settling.set(partida.id);
     this.accounting
       .clearOpenItems([partida.id])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.saldando.set(null);
+          this.settling.set(null);
           this.toasts.show({
             type: 'success',
             message:
               lado === 'cobro'
-                ? `Cobrado: ${partida.quien} · ${importeBs(partida.importe)}`
-                : `Pagado: ${partida.quien} · ${importeBs(partida.importe)}`,
+                ? `Cobrado: ${partida.quien} · ${amountBs(partida.importe)}`
+                : `Pagado: ${partida.quien} · ${amountBs(partida.importe)}`,
           });
           this.recargar();
         },
         error: (error: unknown) => {
-          this.saldando.set(null);
+          this.settling.set(null);
           this.toasts.show({
             type: 'error',
             message: describeApiFailure(
@@ -520,18 +520,18 @@ export class Resumen {
   }
 
   /** El nombre de una cuenta como lo lee un médico. Ver `NOMBRE_LLANO`. */
-  nombreDe(linea: FinancialStatementLine): string {
-    if (linea.code !== undefined && NOMBRE_LLANO[linea.code] !== undefined) {
-      return NOMBRE_LLANO[linea.code]!;
+  nameOf(linea: FinancialStatementLine): string {
+    if (linea.code !== undefined && PLAIN_NAME[linea.code] !== undefined) {
+      return PLAIN_NAME[linea.code]!;
     }
     return linea.name ?? linea.code ?? 'Sin nombre';
   }
 
-  readonly importe = importeBs;
+  readonly amount = amountBs;
   readonly enCero = esCero;
-  readonly negativo = esNegativo;
+  readonly negative = isNegative;
 
-  claveDePartida(fila: FilaDePartida): string {
+  entryKey(fila: EntryRow): string {
     return fila.id;
   }
 }

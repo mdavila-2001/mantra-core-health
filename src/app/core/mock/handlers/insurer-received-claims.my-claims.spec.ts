@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { MEDICA, PACIENTE } from '../fixtures/people';
+import { MEDICAL, PACIENTE } from '../fixtures/people';
 import { MockRouter, type MockReply } from '../mock-router';
 import { buscarUsuario, TENANT_LABORATORIO, type MockUser } from '../mock-session';
 import { alcanceDeMisSolicitudes, registerInsurerReceivedClaims } from './insurer-received-claims.handlers';
@@ -70,7 +70,7 @@ describe('«Mis solicitudes»: GET /insurance/my-claims', () => {
     expect(body.view).toBe('PRACTITIONER');
     expect(body.items.length).toBeGreaterThan(0);
     for (const s of body.items) {
-      expect(s.practitioner.displayName).toBe(MEDICA.displayName);
+      expect(s.practitioner.displayName).toBe(MEDICAL.displayName);
       expect(s.patientName).not.toBeNull();
     }
   });

@@ -1,5 +1,5 @@
 import { Coleccion, uuid } from '../mock-store';
-import { MEDICA } from './people';
+import { MEDICAL } from './people';
 
 /**
  * Cómo ofrece un profesional un servicio de su catálogo (v4.2.40).
@@ -8,7 +8,7 @@ import { MEDICA } from './people';
  * práctica** y fija nombre y precio; la duración vive acá porque en una misma
  * organización dos médicos hacen el mismo servicio con tiempos distintos.
  */
-export interface OfertaSimulada {
+export interface SimulatedOffer {
   readonly id: string;
   readonly practitionerProfileId: string;
   readonly serviceCatalogId: string;
@@ -31,7 +31,7 @@ export interface OfertaSimulada {
  * declara cómo los ofrece ella. Uno queda sin ofrecer a propósito, para que la
  * pantalla del médico muestre el caso de «todavía no lo declaraste».
  */
-const OFERTAS_DE_LA_MEDICA: readonly (readonly [
+const MEDICAL_OFFERS: readonly (readonly [
   string, number, number, number, number, boolean, boolean, boolean,
 ])[] = [
   // código del catálogo, mín, máx, preparación, limpieza, reservable, requiere aprobación, activa
@@ -42,10 +42,10 @@ const OFERTAS_DE_LA_MEDICA: readonly (readonly [
   ['TELE-CARDIO', 20, 30, 0, 0, true, false, true],
 ];
 
-export const ofertas = new Coleccion<OfertaSimulada>(
-  OFERTAS_DE_LA_MEDICA.map(([code, min, max, prep, limpieza, reservable, aprobacion, activa]) => ({
-    id: uuid(`offering-${MEDICA.id}-${code}`),
-    practitionerProfileId: MEDICA.id,
+export const offers = new Coleccion<SimulatedOffer>(
+  MEDICAL_OFFERS.map(([code, min, max, prep, limpieza, reservable, aprobacion, activa]) => ({
+    id: uuid(`offering-${MEDICAL.id}-${code}`),
+    practitionerProfileId: MEDICAL.id,
     serviceCatalogId: uuid(`service-${code}`),
     minDurationMinutes: min,
     maxDurationMinutes: max,

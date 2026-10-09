@@ -19,7 +19,7 @@
  * Sin `O/0`, `I/1` ni `B/8`: son los pares que se confunden dictados en voz
  * alta y leídos en una pantalla chica.
  */
-const ALFABETO_LEGIBLE = 'ACDEFHJKLMNPRTUVWXY34679';
+const READABLE_ALPHABET = 'ACDEFHJKLMNPRTUVWXY34679';
 
 /**
  * Un código de `largo` caracteres del alfabeto legible.
@@ -28,13 +28,13 @@ const ALFABETO_LEGIBLE = 'ACDEFHJKLMNPRTUVWXY34679';
  *   código de cero caracteres es un error de quien llama, no algo que corregir
  *   en silencio inventando un largo.
  */
-export function generarCodigoLegible(largo: number): string {
+export function generateReadableCode(largo: number): string {
   let codigo = '';
   for (let i = 0; i < largo; i += 1) {
-    codigo += ALFABETO_LEGIBLE[Math.floor(Math.random() * ALFABETO_LEGIBLE.length)];
+    codigo += READABLE_ALPHABET[Math.floor(Math.random() * READABLE_ALPHABET.length)];
   }
   return codigo;
 }
 
 /** Los caracteres que el generador puede emitir. Lo usan los tests. */
-export const CARACTERES_LEGIBLES = ALFABETO_LEGIBLE;
+export const READABLE_CHARACTERS = READABLE_ALPHABET;

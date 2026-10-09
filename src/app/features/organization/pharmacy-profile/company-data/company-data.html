@@ -1,16 +1,16 @@
 <app-view-state-host [state]="state()" (retry)="retry.emit()">
   <div vsh-skeleton><app-skeleton variant="text" [lines]="6" /></div>
 
-  @if (empresa(); as datos) {
+  @if (company(); as datos) {
     <section class="empresa" aria-labelledby="ficha-empresa-titulo">
       <div class="empresa__encabezado">
         <h2 id="ficha-empresa-titulo" class="empresa__titulo">Datos de la empresa</h2>
         <!-- Sobre la maqueta nada de esto sale de la API: se dice, no se disimula. -->
         @if (sampleData()) {
-          <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+          <app-chip variant="neutral" size="sm">{{ exampleNote }}</app-chip>
         }
 
-        @if (sampleData() && !editando()) {
+        @if (sampleData() && !editing()) {
           <!-- «Editar perfil» con el lápiz, igual en todos los perfiles
                (pedido del 30/09/2026). -->
           <button
@@ -19,7 +19,7 @@
             size="sm"
             type="button"
             data-testid="ficha-editar-empresa"
-            (clicked)="editar()"
+            (clicked)="edit()"
           >
             <app-nav-icon name="edit" />
             Editar perfil
@@ -27,7 +27,7 @@
         }
       </div>
 
-      @if (borrador(); as edicion) {
+      @if (draft(); as edicion) {
         <app-alert tone="info" title="Los cambios se ven en pantalla">
           Todavía no hay dónde guardar esta ficha: lo que escriba queda a la vista y se pierde al
           recargar.
@@ -39,21 +39,21 @@
               testId="ficha-razon-social"
               autocomplete="organization"
               [value]="edicion.razonSocial"
-              (valueChange)="fijarRazonSocial($event)"
+              (valueChange)="setLegalName($event)"
             />
           </app-form-field>
 
           <app-form-field
             icon="briefcase"
             label="Tipo de sociedad"
-            [hint]="notaDelTipo"
+            [hint]="typeNote"
             [required]="true"
           >
             <app-select
               placeholder="Elija el tipo de sociedad"
-              [options]="opcionesDeSociedad"
+              [options]="societyOptions"
               [value]="edicion.tipoDeSociedad"
-              (valueChange)="fijarTipoDeSociedad($event)"
+              (valueChange)="societyPinType($event)"
             />
           </app-form-field>
 
@@ -63,7 +63,7 @@
               inputMode="numeric"
               autocomplete="off"
               [value]="edicion.nit"
-              (valueChange)="fijarNit($event)"
+              (valueChange)="pinNit($event)"
             />
           </app-form-field>
 
@@ -72,7 +72,7 @@
               testId="ficha-direccion"
               autocomplete="street-address"
               [value]="edicion.direccionLegal"
-              (valueChange)="fijarDireccion($event)"
+              (valueChange)="pinAddress($event)"
             />
           </app-form-field>
         </div>
@@ -83,7 +83,7 @@
             variant="primary"
             type="button"
             data-testid="ficha-aplicar"
-            (clicked)="aplicar()"
+            (clicked)="apply()"
           >
             Aplicar en la ficha
           </button>
@@ -92,7 +92,7 @@
             variant="ghost"
             type="button"
             data-testid="ficha-descartar"
-            (clicked)="descartar()"
+            (clicked)="discard()"
           >
             Descartar
           </button>
@@ -110,7 +110,7 @@
               {{ datos.tipoDeSociedad ?? (sampleData() ? 'Sin declarar' : 'Sin registrar') }}
             </dd>
             <!-- El porqué de la lista cerrada, también para quien sólo lee. -->
-            <dd class="empresa__nota">{{ notaDelTipo }}</dd>
+            <dd class="empresa__nota">{{ typeNote }}</dd>
           </div>
 
           <div class="empresa__campo">
@@ -148,16 +148,16 @@
           </p>
         }
 
-        @if (editando()) {
+        @if (editing()) {
           <p class="empresa__ayuda">Toque el mapa para mover el punto de la central.</p>
         }
 
         <app-map
           data-testid="ficha-mapa"
           etiqueta="Mapa con el punto de la central, el mismo lugar que dice la dirección de arriba"
-          [pines]="pines()"
+          [pines]="pins()"
           [centro]="punto()"
-          (pointPicked)="marcarPunto($event)"
+          (pointPicked)="markPunto($event)"
         />
       </section>
     </section>

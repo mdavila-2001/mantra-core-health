@@ -1,4 +1,4 @@
-import { ETIQUETAS_DE_REGION, TERMINOS_DE_LAMINA } from './anatomy-atlas';
+import { REGION_LABELS, PLATE_TERMS } from './anatomy-atlas';
 import { uuid } from '../mock-store';
 import {
   CATEGORIAS_DE_GLOSARIO,
@@ -29,22 +29,22 @@ import {
     ========================================================================== */
 
 /** El code system del catálogo curado, espejo de `glossary-curated-es`. */
-export const GLOSARIO_CODE_SYSTEM_VERSION_ID = uuid('code-system-version-glossary-curated-es');
+export const GLOSSARY_CODE_SYSTEM_VERSION_ID = uuid('code-system-version-glossary-curated-es');
 
 /** Un value set del glosario, con su identidad ya derivada. */
-export interface ConjuntoDeGlosario extends EntradaDeTaxonomia {
+export interface GlossarySet extends EntradaDeTaxonomia {
   readonly id: string;
   readonly defaultVersionId: string;
 }
 
 /** Un término del glosario, indexado y con identidad. */
-export interface ConceptoDeGlosario extends TerminoDeGlosario {
+export interface GlossaryConcept extends TerminoDeGlosario {
   readonly id: string;
   /** `GLOSSARY_<SLUG>`, la misma fórmula que `glossary-seed.service.ts`. */
   readonly code: string;
 }
 
-function conConjunto(entrada: EntradaDeTaxonomia): ConjuntoDeGlosario {
+function withSet(entrada: EntradaDeTaxonomia): GlossarySet {
   return {
     ...entrada,
     id: uuid(`value-set-${entrada.internalCode}`),
@@ -53,12 +53,12 @@ function conConjunto(entrada: EntradaDeTaxonomia): ConjuntoDeGlosario {
 }
 
 /** El código FHIR de un término, derivado de su slug — fórmula del backend. */
-function codigoDe(slug: string): string {
+function codeOf(slug: string): string {
   return `GLOSSARY_${slug.toUpperCase().replace(/-/g, '_')}`;
 }
 
 /** Las 12 categorías, en el orden de la grilla (el del catálogo, no alfabético). */
-export const CATEGORIAS: readonly ConjuntoDeGlosario[] = CATEGORIAS_DE_GLOSARIO.map(conConjunto);
+export const CATEGORIES: readonly GlossarySet[] = CATEGORIAS_DE_GLOSARIO.map(withSet);
 
 /** Las 16 etiquetas clínicas. */
 /**
@@ -69,13 +69,13 @@ export const CATEGORIAS: readonly ConjuntoDeGlosario[] = CATEGORIAS_DE_GLOSARIO.
  * generador. Lo que comparten es la forma, que es lo que permite que el
  * glosario las filtre sin enterarse de que vienen de otra parte.
  */
-export const ETIQUETAS: readonly ConjuntoDeGlosario[] = [
+export const LABELS: readonly GlossarySet[] = [
   ...ETIQUETAS_DE_GLOSARIO,
-  ...ETIQUETAS_DE_REGION,
-].map(conConjunto);
+  ...REGION_LABELS,
+].map(withSet);
 
 /** El value set paraguas: todo término es miembro de éste. */
-export const PARAGUAS: ConjuntoDeGlosario = conConjunto(GLOSARIO_TODOS_LOS_TERMINOS);
+export const UMBRELLA: GlossarySet = withSet(GLOSARIO_TODOS_LOS_TERMINOS);
 
 /**
  * Los términos del glosario, ordenados alfabéticamente por su nombre en
@@ -87,60 +87,60 @@ export const PARAGUAS: ConjuntoDeGlosario = conConjunto(GLOSARIO_TODOS_LOS_TERMI
  * clases de término, y por eso la búsqueda, la ficha y el filtro por etiqueta
  * funcionan igual para todos sin una línea de más.
  */
-export const TERMINOS: readonly ConceptoDeGlosario[] = [
+export const TERMS: readonly GlossaryConcept[] = [
   ...TERMINOS_DE_GLOSARIO,
-  ...TERMINOS_DE_LAMINA,
+  ...PLATE_TERMS,
 ]
   .map((termino) => ({
     ...termino,
     id: uuid(`concept-glossary-${termino.slug}`),
-    code: codigoDe(termino.slug),
+    code: codeOf(termino.slug),
   }))
   .sort((a, b) => a.esName.localeCompare(b.esName, 'es'));
 
-/** {@link TERMINOS} con los traducidos adelante; el orden alfabético se conserva dentro de cada grupo. */
-const TERMINOS_EN_CASTELLANO_PRIMERO: readonly ConceptoDeGlosario[] = [
-  ...TERMINOS.filter((t) => t.lang !== 'en'),
-  ...TERMINOS.filter((t) => t.lang === 'en'),
+/** {@link TERMS} con los traducidos adelante; el orden alfabético se conserva dentro de cada grupo. */
+const TERMS_IN_FIRST_SPANISH: readonly GlossaryConcept[] = [
+  ...TERMS.filter((t) => t.lang !== 'en'),
+  ...TERMS.filter((t) => t.lang === 'en'),
 ];
 
-const porId = new Map(TERMINOS.map((t) => [t.id, t]));
-const porSlug = new Map(TERMINOS.map((t) => [t.slug, t]));
-const categoriaPorClave = new Map(CATEGORIAS.map((c) => [c.key, c]));
-const etiquetaPorClave = new Map(ETIQUETAS.map((t) => [t.key, t]));
-const conjuntoPorCodigoInterno = new Map(
-  [PARAGUAS, ...CATEGORIAS, ...ETIQUETAS].map((c) => [c.internalCode, c]),
+const byId = new Map(TERMS.map((t) => [t.id, t]));
+const bySlug = new Map(TERMS.map((t) => [t.slug, t]));
+const categoryByKey = new Map(CATEGORIES.map((c) => [c.key, c]));
+const labelByKey = new Map(LABELS.map((t) => [t.key, t]));
+const setByInternalCode = new Map(
+  [UMBRELLA, ...CATEGORIES, ...LABELS].map((c) => [c.internalCode, c]),
 );
-const conjuntoPorIdentificador = new Map(
-  [PARAGUAS, ...CATEGORIAS, ...ETIQUETAS].flatMap((c) => [
+const setByIdentifier = new Map(
+  [UMBRELLA, ...CATEGORIES, ...LABELS].flatMap((c) => [
     [c.id, c] as const,
     [c.defaultVersionId, c] as const,
   ]),
 );
 
 /** Un término por su identificador de concepto, o `undefined`. */
-export function terminoPorId(id: string): ConceptoDeGlosario | undefined {
-  return porId.get(id);
+export function termById(id: string): GlossaryConcept | undefined {
+  return byId.get(id);
 }
 
 /** Un término por su slug, o `undefined`. */
-export function terminoPorSlug(slug: string): ConceptoDeGlosario | undefined {
-  return porSlug.get(slug);
+export function termBySlug(slug: string): GlossaryConcept | undefined {
+  return bySlug.get(slug);
 }
 
 /** Un value set del glosario por su uuid (o el de su versión), o `undefined`. */
-export function conjuntoDeGlosarioPorId(id: string): ConjuntoDeGlosario | undefined {
-  return conjuntoPorIdentificador.get(id);
+export function glossaryByIdSet(id: string): GlossarySet | undefined {
+  return setByIdentifier.get(id);
 }
 
 /** Un value set del glosario por su código interno, o `undefined`. */
-export function conjuntoDeGlosarioPorCodigo(internalCode: string): ConjuntoDeGlosario | undefined {
-  return conjuntoPorCodigoInterno.get(internalCode);
+export function glossaryByCodeSet(internalCode: string): GlossarySet | undefined {
+  return setByInternalCode.get(internalCode);
 }
 
 /** La categoría de un término. Siempre existe: el generador lo valida. */
-export function categoriaDeTermino(termino: ConceptoDeGlosario): ConjuntoDeGlosario {
-  const categoria = categoriaPorClave.get(termino.categoryKey);
+export function termCategory(termino: GlossaryConcept): GlossarySet {
+  const categoria = categoryByKey.get(termino.categoryKey);
   if (categoria === undefined) {
     throw new Error(`El término «${termino.slug}» declara una categoría inexistente.`);
   }
@@ -148,10 +148,10 @@ export function categoriaDeTermino(termino: ConceptoDeGlosario): ConjuntoDeGlosa
 }
 
 /** Las etiquetas clínicas de un término, en el orden del catálogo. */
-export function etiquetasDeTermino(termino: ConceptoDeGlosario): readonly ConjuntoDeGlosario[] {
+export function termLabels(termino: GlossaryConcept): readonly GlossarySet[] {
   return termino.tagKeys
-    .map((clave) => etiquetaPorClave.get(clave))
-    .filter((etiqueta): etiqueta is ConjuntoDeGlosario => etiqueta !== undefined);
+    .map((clave) => labelByKey.get(clave))
+    .filter((etiqueta): etiqueta is GlossarySet => etiqueta !== undefined);
 }
 
 /**
@@ -162,12 +162,12 @@ export function etiquetasDeTermino(termino: ConceptoDeGlosario): readonly Conjun
  * casi dos mil categorías en inglés a «Enfermedades»: en orden alfabético puro
  * tapaban a las doscientas traducidas, que son las que se leen.
  */
-export function miembrosDeConjunto(conjunto: ConjuntoDeGlosario): readonly ConceptoDeGlosario[] {
-  if (conjunto.internalCode === PARAGUAS.internalCode) return TERMINOS_EN_CASTELLANO_PRIMERO;
+export function setMembers(conjunto: GlossarySet): readonly GlossaryConcept[] {
+  if (conjunto.internalCode === UMBRELLA.internalCode) return TERMS_IN_FIRST_SPANISH;
   if (conjunto.internalCode.startsWith('glossary-category-')) {
-    return TERMINOS_EN_CASTELLANO_PRIMERO.filter((t) => t.categoryKey === conjunto.key);
+    return TERMS_IN_FIRST_SPANISH.filter((t) => t.categoryKey === conjunto.key);
   }
-  return TERMINOS_EN_CASTELLANO_PRIMERO.filter((t) => t.tagKeys.includes(conjunto.key));
+  return TERMS_IN_FIRST_SPANISH.filter((t) => t.tagKeys.includes(conjunto.key));
 }
 
 /**
@@ -177,12 +177,12 @@ export function miembrosDeConjunto(conjunto: ConjuntoDeGlosario): readonly Conce
  * capa ancha de ICD-10-CM llega en inglés (`en`) y la pantalla lo dice en vez
  * de disimularlo.
  */
-export function estaTraducido(termino: Pick<ConceptoDeGlosario, 'lang'>): boolean {
+export function isTranslated(termino: Pick<GlossaryConcept, 'lang'>): boolean {
   return termino.lang !== 'en';
 }
 
 /** Cómo se llama en la ficha el sistema de codificación de un término. */
-const NOMBRE_DE_SISTEMA: Readonly<Record<string, string>> = {
+const SYSTEM_NAME: Readonly<Record<string, string>> = {
   icd10cm: 'ICD-10-CM',
   loinc: 'LOINC',
 };
@@ -195,11 +195,11 @@ const NOMBRE_DE_SISTEMA: Readonly<Record<string, string>> = {
  * ficha lo dice con todas las letras en vez de mostrar un párrafo vacío o,
  * peor, uno inventado. Los dos textos son metadatos, no contenido clínico.
  */
-function textosDe(termino: ConceptoDeGlosario): {
+function textsOf(termino: GlossaryConcept): {
   clinicalDefinition: { text: string; translated: boolean };
   plainSummary: { text: string; translated: boolean };
 } {
-  if (estaTraducido(termino)) {
+  if (isTranslated(termino)) {
     return {
       clinicalDefinition: { text: termino.clinicalDefinitionEs, translated: true },
       plainSummary: { text: termino.plainSummaryEs, translated: true },
@@ -208,7 +208,7 @@ function textosDe(termino: ConceptoDeGlosario): {
   const sistema =
     termino.externalCode === undefined
       ? 'su sistema de codificación'
-      : (NOMBRE_DE_SISTEMA[termino.externalCode.system] ?? termino.externalCode.system);
+      : (SYSTEM_NAME[termino.externalCode.system] ?? termino.externalCode.system);
   const codigo = termino.externalCode === undefined ? '' : ` «${termino.externalCode.code}»`;
   return {
     clinicalDefinition: {
@@ -230,7 +230,7 @@ function textosDe(termino: ConceptoDeGlosario): {
  * las cuatro del NDC. Sólo viajan las que el término tiene — una propiedad
  * ausente es correcta; una vacía confunde a quien la lee.
  */
-function propiedadesDe(termino: ConceptoDeGlosario): Record<string, unknown> {
+function propertiesOf(termino: GlossaryConcept): Record<string, unknown> {
   const propiedades: Record<string, unknown> = {};
   if (termino.drugFacts !== undefined) {
     // Las cuatro propiedades del NDC, sólo en los términos de farmacología:
@@ -265,22 +265,22 @@ function propiedadesDe(termino: ConceptoDeGlosario): Record<string, unknown> {
  * sin él, la tarjeta de «Enfermedades» anunciaba más de dos mil términos
  * cuando casi todos son categorías ICD-10-CM con el título en inglés.
  */
-export function conjuntoEnLinea(conjunto: ConjuntoDeGlosario) {
-  const miembros = miembrosDeConjunto(conjunto);
+export function inlineSet(conjunto: GlossarySet) {
+  const miembros = setMembers(conjunto);
   return {
     id: conjunto.id,
     internalCode: conjunto.internalCode,
     name: conjunto.name,
     defaultVersionId: conjunto.defaultVersionId,
     memberCount: miembros.length,
-    translatedMemberCount: miembros.filter(estaTraducido).length,
+    translatedMemberCount: miembros.filter(isTranslated).length,
   };
 }
 
 /** Una entrada del glosario, como la devuelve la búsqueda de términos. */
-export function terminoEnLinea(termino: ConceptoDeGlosario) {
-  const categoria = categoriaDeTermino(termino);
-  const etiquetas = etiquetasDeTermino(termino);
+export function inlineTerm(termino: GlossaryConcept) {
+  const categoria = termCategory(termino);
+  const etiquetas = termLabels(termino);
   return {
     conceptId: termino.id,
     code: termino.code,
@@ -288,14 +288,14 @@ export function terminoEnLinea(termino: ConceptoDeGlosario) {
     slug: termino.slug,
     // Los curados y las capas en castellano vienen traducidos; la capa ancha
     // de ICD-10-CM llega en inglés y la lista lo marca.
-    translated: estaTraducido(termino),
+    translated: isTranslated(termino),
     category: { internalCode: categoria.internalCode, name: categoria.name },
     // Lo mismo que el backend: la definición breve es el resumen llano.
     shortDefinition: termino.plainSummaryEs,
     tags: etiquetas.map((etiqueta) => etiqueta.name),
     relationsCount: termino.relations.length,
     status: 'active' as const,
-    valueSets: [PARAGUAS, categoria, ...etiquetas].map((conjunto) => ({
+    valueSets: [UMBRELLA, categoria, ...etiquetas].map((conjunto) => ({
       id: conjunto.id,
       internalCode: conjunto.internalCode,
       name: conjunto.name,
@@ -304,10 +304,10 @@ export function terminoEnLinea(termino: ConceptoDeGlosario) {
 }
 
 /** La ficha completa de un término, como la devuelve `GET /terminology/concepts/:id`. */
-export function fichaEnLinea(termino: ConceptoDeGlosario) {
-  const categoria = categoriaDeTermino(termino);
-  const etiquetas = etiquetasDeTermino(termino);
-  const referencia = (conjunto: ConjuntoDeGlosario) => ({
+export function inlineSheet(termino: GlossaryConcept) {
+  const categoria = termCategory(termino);
+  const etiquetas = termLabels(termino);
+  const referencia = (conjunto: GlossarySet) => ({
     valueSetId: conjunto.id,
     internalCode: conjunto.internalCode,
     name: conjunto.name,
@@ -318,9 +318,9 @@ export function fichaEnLinea(termino: ConceptoDeGlosario) {
     code: termino.code,
     display: termino.esName,
     slug: termino.slug,
-    translated: estaTraducido(termino),
-    codeSystemVersionId: GLOSARIO_CODE_SYSTEM_VERSION_ID,
-    valueSets: [PARAGUAS, categoria, ...etiquetas].map((conjunto) => ({
+    translated: isTranslated(termino),
+    codeSystemVersionId: GLOSSARY_CODE_SYSTEM_VERSION_ID,
+    valueSets: [UMBRELLA, categoria, ...etiquetas].map((conjunto) => ({
       id: conjunto.id,
       internalCode: conjunto.internalCode,
       name: conjunto.name,
@@ -341,9 +341,9 @@ export function fichaEnLinea(termino: ConceptoDeGlosario) {
     ],
     category: referencia(categoria),
     tags: etiquetas.map(referencia),
-    ...textosDe(termino),
+    ...textsOf(termino),
     relations: termino.relations.flatMap((relacion) => {
-      const destino = porSlug.get(relacion.targetSlug);
+      const destino = bySlug.get(relacion.targetSlug);
       // El generador ya descarta las huérfanas; esto es la segunda barrera.
       return destino === undefined
         ? []
@@ -356,6 +356,6 @@ export function fichaEnLinea(termino: ConceptoDeGlosario) {
             },
           ];
     }),
-    properties: propiedadesDe(termino),
+    properties: propertiesOf(termino),
   };
 }

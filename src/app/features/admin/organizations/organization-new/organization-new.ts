@@ -30,9 +30,9 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginate-fields';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
 
@@ -112,7 +112,7 @@ const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
   imports: [
     Alert,
     AnnounceOnAppear,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -247,7 +247,7 @@ export class OrganizationNew {
    * son comboboxes con búsqueda contra la API, no controles de texto.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Identificación',
         hint: 'Con qué se la encuentra y cómo se presenta.',

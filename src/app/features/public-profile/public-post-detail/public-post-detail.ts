@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import type { PerfilPublicoResuelto } from '../public-profile.resolver';
-import { inicialesDe } from '@shared/text/initials';
+import { initialsOf } from '@shared/text/initials';
 import { PublicPostCard } from '../public-post-card/public-post-card';
 
 /**
@@ -45,6 +45,6 @@ export class PublicPostDetail {
 
   protected readonly iniciales = computed(() => {
     const perfil = this.perfil();
-    return perfil ? inicialesDe(perfil.displayName) : '';
+    return perfil ? initialsOf(perfil.displayName) : '';
   });
 }

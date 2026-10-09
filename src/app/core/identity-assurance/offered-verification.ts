@@ -24,4 +24,4 @@
  * Borrado, habría que reconstruirlo de memoria — y las tres piezas se
  * reconstruyen distinto.
  */
-export const VERIFICACION_DE_IDENTIDAD_OFRECIDA = false;
+export const OFFERED_IDENTITY_VERIFICATION = false;

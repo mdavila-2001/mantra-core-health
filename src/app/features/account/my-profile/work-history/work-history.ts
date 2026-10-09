@@ -49,7 +49,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/map-pin.types';
+import type { PinMap, PuntoGeo } from '../../../../shared/components/organisms/map/map-pin.types';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import {
@@ -443,7 +443,7 @@ export class WorkHistory implements OnInit {
   protected readonly errorDeSede = computed<string | null>(() => mensajeDe(this.registroDeSede()));
 
   /** El punto marcado, como el único pin del mapa. */
-  protected readonly pinesDeSede = computed<readonly PinMapa[]>(() => {
+  protected readonly pinesDeSede = computed<readonly PinMap[]>(() => {
     const punto = this.puntoDeSede();
     if (punto === null) {
       return [];

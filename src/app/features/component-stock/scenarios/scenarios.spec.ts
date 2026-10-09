@@ -1,11 +1,11 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { EscenarioContentDialog } from './content-dialog.scenarios';
-import { EscenarioDataTable, violacionesDelContratoDeTabla } from './data-table.scenarios';
-import type { AnfitrionDeEscenario, EscenarioDeComponente } from './scenario.types';
-import { ESCENARIOS, escenariosDe } from './scenarios';
-import { EscenarioViewStateHost } from './view-state-host.scenarios';
+import { ScenarioContentDialog } from './content-dialog.scenarios';
+import { ScenarioDataTable, tableContractViolations } from './data-table.scenarios';
+import type { ScenarioHost, ComponentScenario } from './scenario.types';
+import { SCENARIOS, scenariosOf } from './scenarios';
+import { ScenarioViewStateHost } from './view-state-host.scenarios';
 
 /**
  * Lo que un escenario promete, comprobado a través de la misma interfaz que
@@ -21,8 +21,8 @@ const CLAVE_DE_LA_TABLA = 'shared/components/organisms/data-table/data-table';
 const CLAVE_DEL_MODAL = 'shared/components/organisms/content-dialog/content-dialog';
 const CLAVE_DEL_HOST = 'shared/components/organisms/view-state-host/view-state-host';
 
-function montar<T extends AnfitrionDeEscenario>(
-  escenario: EscenarioDeComponente,
+function montar<T extends ScenarioHost>(
+  escenario: ComponentScenario,
 ): ComponentFixture<T> {
   const fixture = TestBed.createComponent(escenario.host as never) as ComponentFixture<T>;
   fixture.componentRef.setInput('variante', escenario.variante);
@@ -34,18 +34,18 @@ function texto(fixture: ComponentFixture<unknown>): string {
   return (fixture.nativeElement as HTMLElement).textContent ?? '';
 }
 
-function salidas(fixture: ComponentFixture<AnfitrionDeEscenario>): readonly string[] {
-  return fixture.componentInstance.salidas().map((s) => s.salida);
+function salidas(fixture: ComponentFixture<ScenarioHost>): readonly string[] {
+  return fixture.componentInstance.outputs().map((s) => s.salida);
 }
 
 describe('el registro de escenarios', () => {
   it('no repite ids: cada escenario es una ficha distinta', () => {
-    const ids = ESCENARIOS.map((e) => e.id);
+    const ids = SCENARIOS.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('cada escenario apunta a la clave de su componente y a su anfitrión', () => {
-    for (const escenario of ESCENARIOS) {
+    for (const escenario of SCENARIOS) {
       expect(escenario.id).toBe(`${escenario.clave}#${escenario.variante}`);
       expect(escenario.fuente).toMatch(/^src\/app\/features\/component-stock\/scenarios\//);
       expect(escenario.seVe.length).toBeGreaterThan(20);
@@ -54,7 +54,7 @@ describe('el registro de escenarios', () => {
   });
 
   it('cubre los tres pilotos y sus diez estados', () => {
-    expect(escenariosDe(CLAVE_DE_LA_TABLA).map((e) => e.variante)).toEqual([
+    expect(scenariosOf(CLAVE_DE_LA_TABLA).map((e) => e.variante)).toEqual([
       'ready',
       'ready-seleccionable',
       'ready-navegable',
@@ -72,14 +72,14 @@ describe('el registro de escenarios', () => {
       'texto-largo',
       'trackby-repetido',
     ]);
-    expect(escenariosDe(CLAVE_DEL_HOST)).toHaveLength(10);
-    expect(escenariosDe(CLAVE_DEL_MODAL).map((e) => e.variante)).toEqual([
+    expect(scenariosOf(CLAVE_DEL_HOST)).toHaveLength(10);
+    expect(scenariosOf(CLAVE_DEL_MODAL).map((e) => e.variante)).toEqual([
       'descartable',
       'con-cambios',
       'sm',
       'xl',
     ]);
-    expect(escenariosDe('shared/components/atoms/button/button')).toEqual([]);
+    expect(scenariosOf('shared/components/atoms/button/button')).toEqual([]);
   });
 });
 
@@ -105,26 +105,26 @@ describe('EscenarioDataTable', () => {
     return boton?.getAttribute('aria-disabled') === 'true';
   }
 
-  const validos = escenariosDe(CLAVE_DE_LA_TABLA).filter((e) => e.nivelDePrueba !== 'invalido');
-  const variante = (v: string): EscenarioDeComponente =>
-    escenariosDe(CLAVE_DE_LA_TABLA).find((e) => e.variante === v)!;
+  const validos = scenariosOf(CLAVE_DE_LA_TABLA).filter((e) => e.nivelDePrueba !== 'invalido');
+  const variante = (v: string): ComponentScenario =>
+    scenariosOf(CLAVE_DE_LA_TABLA).find((e) => e.variante === v)!;
 
   it.each(validos.map((e) => [e.variante, e] as const))(
     'monta la variante «%s» sin fallar y con el contrato cumplido',
     (_variante, escenario) => {
       expect(escenario.verificarContrato?.()).toEqual([]);
-      const fixture = montar<EscenarioDataTable>(escenario);
+      const fixture = montar<ScenarioDataTable>(escenario);
       expect(fixture.componentInstance).toBeTruthy();
     },
   );
 
   it('los tres niveles están: correcto, límite e inválido', () => {
-    const niveles = new Set(escenariosDe(CLAVE_DE_LA_TABLA).map((e) => e.nivelDePrueba));
+    const niveles = new Set(scenariosOf(CLAVE_DE_LA_TABLA).map((e) => e.nivelDePrueba));
     expect([...niveles].sort()).toEqual(['correcto', 'invalido', 'limite']);
   });
 
   it('«cero-filas» es un ready([]) con tabla, sin filas y sin paginación', () => {
-    const fixture = montar<EscenarioDataTable>(variante('cero-filas'));
+    const fixture = montar<ScenarioDataTable>(variante('cero-filas'));
     const raiz = fixture.nativeElement as HTMLElement;
     expect(raiz.querySelector('table')).not.toBeNull();
     expect(filas(fixture)).toHaveLength(0);
@@ -133,20 +133,20 @@ describe('EscenarioDataTable', () => {
   });
 
   it('«una-fila» muestra exactamente una fila y ordenar sigue emitiendo', () => {
-    const fixture = montar<EscenarioDataTable>(variante('una-fila'));
+    const fixture = montar<ScenarioDataTable>(variante('una-fila'));
     expect(filas(fixture)).toHaveLength(1);
     expect(filas(fixture)[0]?.textContent).toContain('Peña');
     expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="tabla-siguiente"]')).toBeNull();
 
     (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="tabla-ordenar"]')?.click();
     fixture.detectChanges();
-    expect(fixture.componentInstance.salidas().map((s) => `${s.salida} ${s.detalle}`)).toEqual([
+    expect(fixture.componentInstance.outputs().map((s) => `${s.salida} ${s.detalle}`)).toEqual([
       'sortChanged apellido asc',
     ]);
   });
 
   it('«texto-largo» lleva el texto entero a la celda y la columna fija', () => {
-    const fixture = montar<EscenarioDataTable>(variante('texto-largo'));
+    const fixture = montar<ScenarioDataTable>(variante('texto-largo'));
     expect(filas(fixture)).toHaveLength(2);
     expect(texto(fixture)).toContain('Fernández de Córdova Villarroel Santa Cruz Arteaga');
     expect(texto(fixture)).toContain('sha256:9f2c4e1b');
@@ -168,7 +168,7 @@ describe('EscenarioDataTable', () => {
     const avisos = vi.spyOn(console, 'warn');
     const errores = vi.spyOn(console, 'error');
     try {
-      const fixture = montar<EscenarioDataTable>(variante('trackby-repetido'));
+      const fixture = montar<ScenarioDataTable>(variante('trackby-repetido'));
       expect(filas(fixture)).toHaveLength(3);
       expect(avisos).not.toHaveBeenCalled();
       expect(errores).not.toHaveBeenCalled();
@@ -179,7 +179,7 @@ describe('EscenarioDataTable', () => {
   });
 
   it('la verificación también ve columnas repetidas o sin cabecera', () => {
-    const violaciones = violacionesDelContratoDeTabla(
+    const violaciones = tableContractViolations(
       [{ id: 'a' }],
       (f: { id: string }) => f.id,
       [
@@ -191,7 +191,7 @@ describe('EscenarioDataTable', () => {
   });
 
   it('«ready» muestra las seis filas con la tabla de verdad y el cursor hacia adelante', () => {
-    const fixture = montar<EscenarioDataTable>(escenariosDe(CLAVE_DE_LA_TABLA)[0]!);
+    const fixture = montar<ScenarioDataTable>(scenariosOf(CLAVE_DE_LA_TABLA)[0]!);
     const raiz = fixture.nativeElement as HTMLElement;
 
     expect(raiz.querySelector('table')).not.toBeNull();
@@ -202,19 +202,19 @@ describe('EscenarioDataTable', () => {
   });
 
   it('ordenar emite el código de la columna y reordena las filas visibles', () => {
-    const fixture = montar<EscenarioDataTable>(escenariosDe(CLAVE_DE_LA_TABLA)[0]!);
+    const fixture = montar<ScenarioDataTable>(scenariosOf(CLAVE_DE_LA_TABLA)[0]!);
     const raiz = fixture.nativeElement as HTMLElement;
 
     raiz.querySelector<HTMLButtonElement>('[data-testid="tabla-ordenar"]')?.click();
     fixture.detectChanges();
 
     expect(salidas(fixture)).toEqual(['sortChanged']);
-    expect(fixture.componentInstance.salidas()[0]?.detalle).toBe('apellido asc');
+    expect(fixture.componentInstance.outputs()[0]?.detalle).toBe('apellido asc');
     expect(filas(fixture)[0]?.textContent).toContain('Mamani');
   });
 
   it('«Siguiente» cambia de página y enciende «Anterior»; «Anterior» vuelve', () => {
-    const fixture = montar<EscenarioDataTable>(escenariosDe(CLAVE_DE_LA_TABLA)[0]!);
+    const fixture = montar<ScenarioDataTable>(scenariosOf(CLAVE_DE_LA_TABLA)[0]!);
     const raiz = fixture.nativeElement as HTMLElement;
 
     raiz.querySelector<HTMLButtonElement>('[data-testid="tabla-siguiente"]')?.click();
@@ -229,23 +229,23 @@ describe('EscenarioDataTable', () => {
 
     expect(filas(fixture)).toHaveLength(6);
     expect(salidas(fixture)).toEqual(['cursorChanged', 'cursorChanged']);
-    expect(fixture.componentInstance.salidas().map((s) => s.detalle)).toEqual([
+    expect(fixture.componentInstance.outputs().map((s) => s.detalle)).toEqual([
       'pag-2',
       'anterior',
     ]);
   });
 
   it('«empty» no dibuja la tabla y ofrece la próxima acción', () => {
-    const escenario = escenariosDe(CLAVE_DE_LA_TABLA).find((e) => e.variante === 'empty')!;
-    const fixture = montar<EscenarioDataTable>(escenario);
+    const escenario = scenariosOf(CLAVE_DE_LA_TABLA).find((e) => e.variante === 'empty')!;
+    const fixture = montar<ScenarioDataTable>(escenario);
 
     expect((fixture.nativeElement as HTMLElement).querySelector('table')).toBeNull();
     expect(texto(fixture)).toContain('Registrar un paciente');
   });
 
   it('«error» muestra el código de soporte y reintentar llega al anfitrión', () => {
-    const escenario = escenariosDe(CLAVE_DE_LA_TABLA).find((e) => e.variante === 'error')!;
-    const fixture = montar<EscenarioDataTable>(escenario);
+    const escenario = scenariosOf(CLAVE_DE_LA_TABLA).find((e) => e.variante === 'error')!;
+    const fixture = montar<ScenarioDataTable>(escenario);
 
     expect(texto(fixture)).toContain('req-7f3a1c9e');
 
@@ -257,8 +257,8 @@ describe('EscenarioDataTable', () => {
   });
 
   it('«stale» expone la antigüedad y actualizar llega al anfitrión', () => {
-    const escenario = escenariosDe(CLAVE_DE_LA_TABLA).find((e) => e.variante === 'stale')!;
-    const fixture = montar<EscenarioDataTable>(escenario);
+    const escenario = scenariosOf(CLAVE_DE_LA_TABLA).find((e) => e.variante === 'stale')!;
+    const fixture = montar<ScenarioDataTable>(escenario);
 
     expect(texto(fixture)).toContain('21/09/2026');
     expect(filas(fixture)).toHaveLength(6);
@@ -271,10 +271,10 @@ describe('EscenarioDataTable', () => {
   });
 
   it('«ready-seleccionable» emite la selección de la página visible', () => {
-    const escenario = escenariosDe(CLAVE_DE_LA_TABLA).find(
+    const escenario = scenariosOf(CLAVE_DE_LA_TABLA).find(
       (e) => e.variante === 'ready-seleccionable',
     )!;
-    const fixture = montar<EscenarioDataTable>(escenario);
+    const fixture = montar<ScenarioDataTable>(escenario);
     const casillas = [
       ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>(
         'input[type="checkbox"]',
@@ -286,7 +286,7 @@ describe('EscenarioDataTable', () => {
     fixture.detectChanges();
 
     expect(salidas(fixture)).toEqual(['selectionChanged']);
-    expect(fixture.componentInstance.salidas()[0]?.detalle).toBe('6 fila(s)');
+    expect(fixture.componentInstance.outputs()[0]?.detalle).toBe('6 fila(s)');
   });
 });
 
@@ -295,10 +295,10 @@ describe('EscenarioContentDialog', () => {
     return (fixture.nativeElement as HTMLElement).querySelector('dialog');
   }
 
-  it.each(escenariosDe(CLAVE_DEL_MODAL).map((e) => [e.variante, e] as const))(
+  it.each(scenariosOf(CLAVE_DEL_MODAL).map((e) => [e.variante, e] as const))(
     'monta la variante «%s» abierta, con el contenido y el pie proyectados',
     async (_variante, escenario) => {
-      const fixture = montar<EscenarioContentDialog>(escenario);
+      const fixture = montar<ScenarioContentDialog>(escenario);
       await fixture.whenStable();
       fixture.detectChanges();
 
@@ -314,7 +314,7 @@ describe('EscenarioContentDialog', () => {
   );
 
   it('«descartable»: cerrar por el botón emite closed y desmonta el modal', async () => {
-    const fixture = montar<EscenarioContentDialog>(escenariosDe(CLAVE_DEL_MODAL)[0]!);
+    const fixture = montar<ScenarioContentDialog>(scenariosOf(CLAVE_DEL_MODAL)[0]!);
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -328,8 +328,8 @@ describe('EscenarioContentDialog', () => {
   });
 
   it('«con-cambios»: Escape pregunta en vez de cerrar; «Descartar» recién cierra', async () => {
-    const escenario = escenariosDe(CLAVE_DEL_MODAL).find((e) => e.variante === 'con-cambios')!;
-    const fixture = montar<EscenarioContentDialog>(escenario);
+    const escenario = scenariosOf(CLAVE_DEL_MODAL).find((e) => e.variante === 'con-cambios')!;
+    const fixture = montar<ScenarioContentDialog>(escenario);
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -351,7 +351,7 @@ describe('EscenarioContentDialog', () => {
   });
 
   it('«Guardar» es una solicitud, no un éxito: se anota como guardarSolicitado', async () => {
-    const fixture = montar<EscenarioContentDialog>(escenariosDe(CLAVE_DEL_MODAL)[0]!);
+    const fixture = montar<ScenarioContentDialog>(scenariosOf(CLAVE_DEL_MODAL)[0]!);
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -383,17 +383,17 @@ describe('EscenarioViewStateHost', () => {
     error: 'req-2b91d4f0',
   };
 
-  it.each(escenariosDe(CLAVE_DEL_HOST).map((e) => [e.variante, e] as const))(
+  it.each(scenariosOf(CLAVE_DEL_HOST).map((e) => [e.variante, e] as const))(
     'la variante «%s» pinta lo que promete',
     (variante, escenario) => {
-      const fixture = montar<EscenarioViewStateHost>(escenario);
+      const fixture = montar<ScenarioViewStateHost>(escenario);
       expect(texto(fixture)).toContain(ESPERADO[variante] ?? '');
     },
   );
 
   it('solo el camino feliz y S7 muestran el contenido proyectado', () => {
-    for (const escenario of escenariosDe(CLAVE_DEL_HOST)) {
-      const fixture = montar<EscenarioViewStateHost>(escenario);
+    for (const escenario of scenariosOf(CLAVE_DEL_HOST)) {
+      const fixture = montar<ScenarioViewStateHost>(escenario);
       const proyectado = (fixture.nativeElement as HTMLElement).querySelector(
         '[data-testid="escenario-contenido"]',
       );
@@ -403,16 +403,16 @@ describe('EscenarioViewStateHost', () => {
   });
 
   it('reintentar y actualizar llegan al anfitrión', () => {
-    const offline = montar<EscenarioViewStateHost>(
-      escenariosDe(CLAVE_DEL_HOST).find((e) => e.variante === 'offline')!,
+    const offline = montar<ScenarioViewStateHost>(
+      scenariosOf(CLAVE_DEL_HOST).find((e) => e.variante === 'offline')!,
     );
     [...(offline.nativeElement as HTMLElement).querySelectorAll('button')]
       .find((b) => b.textContent?.includes('Reintentar'))
       ?.click();
     expect(salidas(offline)).toEqual(['retry']);
 
-    const stale = montar<EscenarioViewStateHost>(
-      escenariosDe(CLAVE_DEL_HOST).find((e) => e.variante === 'stale')!,
+    const stale = montar<ScenarioViewStateHost>(
+      scenariosOf(CLAVE_DEL_HOST).find((e) => e.variante === 'stale')!,
     );
     [...(stale.nativeElement as HTMLElement).querySelectorAll('button')]
       .find((b) => b.textContent?.includes('Actualizar'))

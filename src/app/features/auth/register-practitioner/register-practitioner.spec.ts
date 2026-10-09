@@ -8,11 +8,11 @@ import { vi } from 'vitest';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
-import { ESPECIALIDAD } from '../../../core/mock/fixtures/concepts';
-import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profession/educational-institutions';
+import { SPECIALTY } from '../../../core/mock/fixtures/concepts';
+import { CATALOG_OUTSIDE_INSTITUTION } from '../../../core/profession/educational-institutions';
 import {
-  PAIS_FUERA_DE_CATALOGO,
-  PadronDeUniversidades,
+  CATALOG_OUTSIDE_COUNTRY,
+  UniversitiesRegistry,
 } from '../../../core/profession/university-registry';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
@@ -1344,7 +1344,7 @@ describe('RegisterPractitioner', () => {
       it('cambiar de país se lleva la ciudad propuesta junto con la universidad', () => {
         component.elegirPaisDelTitulo('Bolivia');
         component.elegirUniversidadDelTitulo(UMSS);
-        component.elegirPaisDelTitulo(PAIS_FUERA_DE_CATALOGO);
+        component.elegirPaisDelTitulo(CATALOG_OUTSIDE_COUNTRY);
 
         expect(component.valorDeEstudio('professionalTitleUniversity')).toBe('');
         expect(component.valorDeEstudio('professionalTitleCity')).toBe('');
@@ -1363,7 +1363,7 @@ describe('RegisterPractitioner', () => {
         expect(fila().ciudad).toBe('La Paz');
 
         // Otro país: se van la universidad y la ciudad que ella había puesto.
-        component.elegirEnFila(id, 'pais', PAIS_FUERA_DE_CATALOGO);
+        component.elegirEnFila(id, 'pais', CATALOG_OUTSIDE_COUNTRY);
         expect([fila().universidad, fila().ciudad]).toEqual(['', '']);
 
         // La ciudad sólo puede ser una sede: con varias, se elige entre ellas.
@@ -1853,7 +1853,7 @@ describe('RegisterPractitioner', () => {
       }
 
       it('el país acota la universidad: Bolivia ofrece la lista curada y Argentina la importada', async () => {
-        await TestBed.inject(PadronDeUniversidades).cargar();
+        await TestBed.inject(UniversitiesRegistry).cargar();
         completarProfesional();
         irAlPasoDelTitulo();
 
@@ -1878,7 +1878,7 @@ describe('RegisterPractitioner', () => {
       });
 
       it('elegir del padrón guarda el nombre, y cambiar de país reinicia la universidad', async () => {
-        await TestBed.inject(PadronDeUniversidades).cargar();
+        await TestBed.inject(UniversitiesRegistry).cargar();
         completarProfesional();
         irAlPasoDelTitulo();
 
@@ -2010,7 +2010,7 @@ describe('RegisterPractitioner', () => {
         expect([otra.pais, otra.universidad, otra.paisElegido, otra.universidadElegida]).toEqual([
           '',
           '',
-          PAIS_FUERA_DE_CATALOGO,
+          CATALOG_OUTSIDE_COUNTRY,
           null,
         ]);
         escribirEnCasilla(`registro-pro-titulo-pais-otro-${fila.id}`, 'Cuba');
@@ -2023,7 +2023,7 @@ describe('RegisterPractitioner', () => {
         expect([cubana.pais, cubana.universidad, cubana.universidadElegida]).toEqual([
           'Cuba',
           'Universidad de La Habana',
-          INSTITUCION_FUERA_DE_CATALOGO,
+          CATALOG_OUTSIDE_INSTITUTION,
         ]);
 
         component.submit();
@@ -2760,7 +2760,7 @@ describe('RegisterPractitioner', () => {
   describe('el filtro de especialidades odontológicas', () => {
     it('cada código que nombra existe en el catálogo', () => {
       for (const codigo of ESPECIALIDADES_ODONTOLOGICAS) {
-        expect(ESPECIALIDAD[codigo], codigo).toBeDefined();
+        expect(SPECIALTY[codigo], codigo).toBeDefined();
       }
     });
 
@@ -2768,7 +2768,7 @@ describe('RegisterPractitioner', () => {
       // La otra mitad del corte: si el complemento quedara vacío, el filtro
       // estaría bien escrito y aun así ninguna profesión médica tendría qué
       // ofrecer. Son las 52 restantes de las 63.
-      const medicas = Object.keys(ESPECIALIDAD).filter(
+      const medicas = Object.keys(SPECIALTY).filter(
         (codigo) => !ESPECIALIDADES_ODONTOLOGICAS.has(codigo),
       );
 

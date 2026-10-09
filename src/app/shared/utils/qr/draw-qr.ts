@@ -7,7 +7,7 @@
  * llega a un QR nunca la descarga. Negro sobre blanco siempre: lo escanea un
  * lector de mostrador o una cámara de banca móvil, no el tema de la interfaz.
  */
-export async function dibujarQr(
+export async function drawQr(
   lienzo: HTMLCanvasElement,
   contenido: string,
   lado: number,

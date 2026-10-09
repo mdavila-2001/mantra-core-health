@@ -1,16 +1,16 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { GENTE_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
-import { RepresentanteYGerentes } from './representative-and-managers';
+import { RepresentativeAndManagers } from './representative-and-managers';
 import { loading, ready, unexpectedError } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { GenteDeLaEmpresa } from '../pharmacy-profile.types';
 
 describe('RepresentanteYGerentes', () => {
-  let fixture: ComponentFixture<RepresentanteYGerentes>;
+  let fixture: ComponentFixture<RepresentativeAndManagers>;
 
   function montar(state: ViewState<GenteDeLaEmpresa>): HTMLElement {
-    fixture = TestBed.createComponent(RepresentanteYGerentes);
+    fixture = TestBed.createComponent(RepresentativeAndManagers);
     fixture.componentRef.setInput('state', state);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;

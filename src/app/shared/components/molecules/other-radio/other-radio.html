@@ -29,13 +29,13 @@
   <input
     class="radio-otro__texto"
     type="text"
-    [id]="textoId"
-    [value]="texto()"
+    [id]="textId"
+    [value]="text()"
     [disabled]="isDisabled()"
     [placeholder]="placeholder()"
     [attr.aria-label]="label() + ' escriba su respuesta'"
     autocomplete="off"
-    (input)="escribir($event)"
+    (input)="write($event)"
     data-testid="radio-otro-texto"
   />
 </div>

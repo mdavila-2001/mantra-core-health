@@ -4,7 +4,7 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import type { TarifarioDeLaUnidad } from './medical-laboratory.types';
 
 /** Dónde se espeja lo recordado mientras la pestaña siga abierta. */
-const CLAVE = 'alovida.tarifarios-recordados';
+const KEY = 'alovida.tarifarios-recordados';
 
 /**
  * Los tarifarios que se crearon desde acá y todavía no tienen ningún precio.
@@ -31,45 +31,45 @@ const CLAVE = 'alovida.tarifarios-recordados';
  * exactamente lo que pasaba antes.
  */
 @Injectable({ providedIn: 'root' })
-export class TarifariosRecordados {
-  private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly porUnidad = new Map<string, readonly TarifarioDeLaUnidad[]>();
-  private hidratado = false;
+export class RememberedPriceLists {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly byUnit = new Map<string, readonly TarifarioDeLaUnidad[]>();
+  private hydrated = false;
 
   /** Anota un tarifario recién creado en la unidad donde se creó. */
-  recordar(unitId: string, tarifario: TarifarioDeLaUnidad): void {
-    this.hidratar();
-    const previos = this.porUnidad.get(unitId) ?? [];
+  remember(unitId: string, tarifario: TarifarioDeLaUnidad): void {
+    this.hydrate();
+    const previos = this.byUnit.get(unitId) ?? [];
     // Recordarlo dos veces no lo duplica: es el mismo tarifario del servidor, y
     // la pantalla lo pinta una sola vez.
-    this.porUnidad.set(unitId, [
+    this.byUnit.set(unitId, [
       ...previos.filter((otro) => otro.id !== tarifario.id),
       tarifario,
     ]);
-    this.espejar();
+    this.mirror();
   }
 
   /**
    * Olvida todo lo recordado, en memoria y en la pestaña (TX-31). Lo corre
    * `AuthService.logout` vía `SESSION_CLEANERS`.
    */
-  olvidar(): void {
-    this.porUnidad.clear();
-    this.hidratado = false;
-    if (!this.esNavegador) {
+  forget(): void {
+    this.byUnit.clear();
+    this.hydrated = false;
+    if (!this.isBrowser) {
       return;
     }
     try {
-      sessionStorage.removeItem(CLAVE);
+      sessionStorage.removeItem(KEY);
     } catch {
       // Bloqueado: no hay nada que borrar ni forma de hacerlo.
     }
   }
 
   /** Lo recordado para esa unidad, en el orden en que se fue creando. */
-  deLaUnidad(unitId: string): readonly TarifarioDeLaUnidad[] {
-    this.hidratar();
-    return this.porUnidad.get(unitId) ?? [];
+  unit(unitId: string): readonly TarifarioDeLaUnidad[] {
+    this.hydrate();
+    return this.byUnit.get(unitId) ?? [];
   }
 
   /**
@@ -79,21 +79,21 @@ export class TarifariosRecordados {
    * aplicación, y leer el almacenamiento al arrancar costaría en todas las
    * pantallas que nunca abren esta consola.
    */
-  private hidratar(): void {
-    if (this.hidratado) {
+  private hydrate(): void {
+    if (this.hydrated) {
       return;
     }
-    this.hidratado = true;
-    if (!this.esNavegador) {
+    this.hydrated = true;
+    if (!this.isBrowser) {
       return;
     }
     try {
-      const crudo = sessionStorage.getItem(CLAVE);
+      const crudo = sessionStorage.getItem(KEY);
       if (crudo === null) {
         return;
       }
-      for (const [unitId, tarifarios] of leerRecordados(crudo)) {
-        this.porUnidad.set(unitId, tarifarios);
+      for (const [unitId, tarifarios] of readRemembered(crudo)) {
+        this.byUnit.set(unitId, tarifarios);
       }
     } catch {
       // Sin almacenamiento o con contenido ilegible se sigue en memoria: esto
@@ -102,12 +102,12 @@ export class TarifariosRecordados {
     }
   }
 
-  private espejar(): void {
-    if (!this.esNavegador) {
+  private mirror(): void {
+    if (!this.isBrowser) {
       return;
     }
     try {
-      sessionStorage.setItem(CLAVE, JSON.stringify(Object.fromEntries(this.porUnidad)));
+      sessionStorage.setItem(KEY, JSON.stringify(Object.fromEntries(this.byUnit)));
     } catch {
       // Ídem: lo recordado vive igual en memoria hasta que se recargue.
     }
@@ -122,7 +122,7 @@ export class TarifariosRecordados {
  * navegador abiertas. Lo que no encaja se descarta en vez de llegar a la
  * pantalla como un tarifario a medio hacer.
  */
-function leerRecordados(crudo: string): ReadonlyMap<string, readonly TarifarioDeLaUnidad[]> {
+function readRemembered(crudo: string): ReadonlyMap<string, readonly TarifarioDeLaUnidad[]> {
   const recordados = new Map<string, readonly TarifarioDeLaUnidad[]>();
   const cuerpo: unknown = JSON.parse(crudo);
   if (cuerpo === null || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) {
@@ -132,7 +132,7 @@ function leerRecordados(crudo: string): ReadonlyMap<string, readonly TarifarioDe
     if (!Array.isArray(valor)) {
       continue;
     }
-    const tarifarios = valor.filter(esTarifario);
+    const tarifarios = valor.filter(isPriceList);
     if (tarifarios.length > 0) {
       recordados.set(unitId, tarifarios);
     }
@@ -140,7 +140,7 @@ function leerRecordados(crudo: string): ReadonlyMap<string, readonly TarifarioDe
   return recordados;
 }
 
-function esTarifario(valor: unknown): valor is TarifarioDeLaUnidad {
+function isPriceList(valor: unknown): valor is TarifarioDeLaUnidad {
   if (valor === null || typeof valor !== 'object') {
     return false;
   }

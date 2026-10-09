@@ -49,7 +49,7 @@
     ========================================================================== */
 
 /** Una especialidad candidata, con cuánto pesa para ese síntoma. */
-export interface EspecialidadSugerida {
+export interface SuggestedSpecialty {
   /** El nombre tal como se lee. Se cruza normalizado con el directorio. */
   readonly nombre: string;
   /** 3 = es lo primero que uno pensaría · 1 = también podría ser. */
@@ -57,7 +57,7 @@ export interface EspecialidadSugerida {
 }
 
 /** Un síntoma reconocible y a qué orienta. */
-export interface Sintoma {
+export interface Symptom {
   readonly id: string;
   /** Cómo se lo nombra en el chip. En castellano llano. */
   readonly nombre: string;
@@ -103,7 +103,7 @@ export interface Sintoma {
    * mostrar de más que esconder un síntoma real.
    */
   readonly soloParaSexo?: 'MALE' | 'FEMALE';
-  readonly especialidades: readonly EspecialidadSugerida[];
+  readonly especialidades: readonly SuggestedSpecialty[];
 }
 
 /**
@@ -117,7 +117,7 @@ export interface Sintoma {
  *
  * **Falta la revisión del equipo médico**, igual que la tabla de abajo.
  */
-export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
+export const ALARM_SYMPTOMS: readonly Symptom[] = [
   {
     id: 'dolor-de-pecho',
     nombre: 'dolor de pecho',
@@ -382,7 +382,7 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
  * la forma en que se comparan. Escribirlos así en el dato en vez de
  * normalizarlos en cada búsqueda ahorra recorrer la tabla entera en cada tecla.
  */
-export const SINTOMAS: readonly Sintoma[] = [
+export const SYMPTOMS: readonly Symptom[] = [
   /* --- General ---------------------------------------------------------- */
   {
     id: 'fiebre',

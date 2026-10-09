@@ -42,14 +42,14 @@ import { ViewStateHost } from '@shared/components/organisms/view-state-host/view
 import { formatKpiAmount } from '../../insurance/money-format';
 import { PublicCatalogDetail } from '../public-catalog-detail';
 import {
-  CLAVE_COBERTURA,
-  CLAVE_SEGMENTO,
-  CLAVE_TIPO,
-  criterioDe,
-  filtrarPlanes,
-  filtrosDelCatalogo,
-  hayCriterio,
-  type PlanFiltrado,
+  COVERAGE_KEY,
+  SEGMENT_KEY,
+  TYPE_KEY,
+  criterionOf,
+  filterPlans,
+  catalogFilters,
+  hasCriterion,
+  type FilteredPlan,
 } from './insurer-detail.filters';
 
 /** Los documentos que una cláusula puede exigir, dichos para el paciente. */
@@ -267,15 +267,15 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
   });
 
   /** Sólo los filtros con algo que elegir en el catálogo de esta aseguradora. */
-  protected readonly filtros = computed(() => filtrosDelCatalogo(this.items()));
+  protected readonly filtros = computed(() => catalogFilters(this.items()));
 
-  private readonly criterio = computed(() => criterioDe(this.params(), this.filtros()));
+  private readonly criterio = computed(() => criterionOf(this.params(), this.filtros()));
 
-  protected readonly filtrando = computed(() => hayCriterio(this.criterio()));
+  protected readonly filtrando = computed(() => hasCriterion(this.criterio()));
 
   /** Los planes que pasaron el filtro, cada uno con las cláusulas a la vista. */
-  protected readonly visibles = computed<readonly PlanFiltrado[]>(() =>
-    filtrarPlanes(this.items(), this.criterio()),
+  protected readonly visibles = computed<readonly FilteredPlan[]>(() =>
+    filterPlans(this.items(), this.criterio()),
   );
 
   /**
@@ -290,9 +290,9 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
       relativeTo: this.rutaActual,
       queryParams: {
         [SEARCH_PARAM]: null,
-        [CLAVE_TIPO]: null,
-        [CLAVE_SEGMENTO]: null,
-        [CLAVE_COBERTURA]: null,
+        [TYPE_KEY]: null,
+        [SEGMENT_KEY]: null,
+        [COVERAGE_KEY]: null,
       },
       queryParamsHandling: 'merge',
     });
@@ -302,7 +302,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
 
   /** Página y tamaño de la tabla de cada plan, por id; sin entrada, los de omisión. */
   private readonly paginas = linkedSignal<
-    readonly PlanFiltrado[],
+    readonly FilteredPlan[],
     Readonly<Record<string, { readonly pagina: number; readonly porPagina: number }>>
   >({
     source: this.visibles,
@@ -316,29 +316,29 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
       ),
   });
 
-  protected paginaDe(plan: PlanFiltrado): number {
+  protected paginaDe(plan: FilteredPlan): number {
     const porPagina = this.porPaginaDe(plan);
     const ultima = Math.max(1, Math.ceil(plan.clausulas.length / porPagina));
     return Math.min(ultima, this.paginas()[plan.plan.id]?.pagina ?? 1);
   }
 
-  protected porPaginaDe(plan: PlanFiltrado): number {
+  protected porPaginaDe(plan: FilteredPlan): number {
     return this.paginas()[plan.plan.id]?.porPagina ?? POR_PAGINA;
   }
 
-  protected irAPagina(plan: PlanFiltrado, pagina: number): void {
+  protected irAPagina(plan: FilteredPlan, pagina: number): void {
     this.paginas.update((actual) => ({
       ...actual,
       [plan.plan.id]: { pagina, porPagina: this.porPaginaDe(plan) },
     }));
   }
 
-  protected cambiarPorPagina(plan: PlanFiltrado, porPagina: number): void {
+  protected cambiarPorPagina(plan: FilteredPlan, porPagina: number): void {
     this.paginas.update((actual) => ({ ...actual, [plan.plan.id]: { pagina: 1, porPagina } }));
   }
 
   /** Si la tabla de un plan lleva paginador: sólo si no entra en la página menor. */
-  protected paginada(plan: PlanFiltrado): boolean {
+  protected paginada(plan: FilteredPlan): boolean {
     return plan.clausulas.length > (TAMANOS_DE_PAGINA[0] ?? POR_PAGINA);
   }
 
@@ -370,7 +370,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
   }
 
   /** La página a la vista de las cláusulas del plan, ya filtradas. */
-  protected estadoDeClausulas(plan: PlanFiltrado): ViewState<readonly FilaDeClausula[]> {
+  protected estadoDeClausulas(plan: FilteredPlan): ViewState<readonly FilaDeClausula[]> {
     if (!this.paginada(plan)) return ready(plan.clausulas);
     const porPagina = this.porPaginaDe(plan);
     const desde = (this.paginaDe(plan) - 1) * porPagina;
@@ -378,7 +378,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
   }
 
   /** «Se ven 2 de 12 coberturas», cuando el filtro acotó la tabla del plan. */
-  protected acotadas(plan: PlanFiltrado): string | null {
+  protected acotadas(plan: FilteredPlan): string | null {
     const total = plan.plan.clausulas.length;
     return plan.clausulas.length === total
       ? null

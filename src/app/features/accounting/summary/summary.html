@@ -8,12 +8,12 @@
 
 <!-- La práctica sólo se pregunta si hay más de una. Con una sola, el selector
      es una pregunta cuya respuesta ya sabemos. -->
-@if (hayVariasPracticas()) {
+@if (hasSeveralPractices()) {
   <div class="eleccion">
     <app-form-field icon="building" label="Consultorio" hint="Los números son los de este consultorio">
       <app-select
-        [options]="opcionesDePractica()"
-        [(value)]="practicaElegida"
+        [options]="practiceOptions()"
+        [(value)]="chosenPractice"
         placeholder="Elija un consultorio"
       />
     </app-form-field>
@@ -26,16 +26,16 @@
      deudas, transacciones y cuentas. Estaban en una sola página larga y se
      leían como una masa. El panel inactivo no se renderiza, así que cada
      pestaña sólo lee lo suyo. -->
-<app-tabs class="pestanas" [(selectedIndex)]="pestana">
+<app-tabs class="pestanas" [(selectedIndex)]="tab">
   <app-tab label="Resumen">
-    @if (pestana() === 0) {
+    @if (tab() === 0) {
       <div class="pestana">
-        @if (practicaElegida(); as practica) {
+        @if (chosenPractice(); as practica) {
           <app-simple-accounting class="contabilidad-simple" parte="numeros" [practiceId]="practica" />
         }
 
-        <app-view-state-host [state]="estadoDelDinero()" (retry)="recargar()" (refresh)="recargar()">
-          @if (datos(); as d) {
+        <app-view-state-host [state]="dineroStatus()" (retry)="recargar()" (refresh)="recargar()">
+          @if (data(); as d) {
             <!-- ═══ 1 · ¿Cuánto hiciste? ══════════════════════════════════════════
                  Los tres tramos a la vez y sin tocar nada: era la primera de las
                  cuatro cosas que el propietario pidió ver. -->
@@ -47,7 +47,7 @@
               </p>
 
               <div class="tramos">
-                @for (t of tramos(); track t.clave) {
+                @for (t of brackets(); track t.clave) {
                   <app-card
                     class="tramo"
                     [class.tramo--destacado]="t.destacado"
@@ -58,7 +58,7 @@
                       <span class="tramo__aclaracion">{{ t.aclaracion }}</span>
                     </p>
 
-                    <p class="tramo__cifra">{{ importe(t.entro) }}</p>
+                    <p class="tramo__cifra">{{ amount(t.entro) }}</p>
                     <p class="tramo__pie">entró</p>
 
                     @if (t.comparacion; as c) {
@@ -82,15 +82,15 @@
                     <dl class="tramo__cuentas">
                       <div class="tramo__cuenta">
                         <dt>Se fue en gastos</dt>
-                        <dd>{{ importe(t.salio) }}</dd>
+                        <dd>{{ amount(t.salio) }}</dd>
                       </div>
                       <div class="tramo__cuenta tramo__cuenta--total">
                         <dt>Le quedó</dt>
-                        <dd [class.tramo__negativo]="negativo(t.quedo)">{{ importe(t.quedo) }}</dd>
+                        <dd [class.tramo__negativo]="negative(t.quedo)">{{ amount(t.quedo) }}</dd>
                       </div>
                     </dl>
 
-                    @if (negativo(t.quedo)) {
+                    @if (negative(t.quedo)) {
                       <p class="tramo__alerta">
                         Gastó más de lo que entró. Mire abajo en qué se le fue.
                       </p>
@@ -109,13 +109,13 @@
                 <app-card class="panel" data-testid="panel-gastos">
                   <div class="panel__cabecera">
                     <h3 class="panel__titulo">Gastos del mes</h3>
-                    <p class="panel__total">{{ importe(d.mes.totalExpense) }}</p>
+                    <p class="panel__total">{{ amount(d.mes.totalExpense) }}</p>
                   </div>
 
-                  @if (gastosDelMes().length === 0) {
+                  @if (monthExpenses().length === 0) {
                     <p class="nota">Todavía no hay gastos registrados este mes.</p>
                   } @else {
-                    @if (gastoMasGrande(); as mayor) {
+                    @if (expenseLargeMore(); as mayor) {
                       <p class="panel__lectura">
                         Lo que más le cuesta es <strong>{{ mayor.nombre }}</strong
                         >: se lleva el {{ mayor.porcentaje }}% de sus gastos del mes.
@@ -123,11 +123,11 @@
                     }
 
                     <ul class="barras">
-                      @for (g of gastosDelMes(); track g.id) {
+                      @for (g of monthExpenses(); track g.id) {
                         <li class="barra">
                           <div class="barra__fila">
                             <span class="barra__nombre">{{ g.nombre }}</span>
-                            <span class="barra__importe">{{ importe(g.importe) }}</span>
+                            <span class="barra__importe">{{ amount(g.importe) }}</span>
                             <span class="barra__porcentaje">{{ g.porcentaje }}%</span>
                           </div>
                           <!-- La barra es decoración de un dato que ya está escrito al
@@ -148,18 +148,18 @@
                 <app-card class="panel" data-testid="panel-ingresos">
                   <div class="panel__cabecera">
                     <h3 class="panel__titulo">De dónde vino</h3>
-                    <p class="panel__total">{{ importe(d.mes.totalRevenue) }}</p>
+                    <p class="panel__total">{{ amount(d.mes.totalRevenue) }}</p>
                   </div>
 
-                  @if (ingresosDelMes().length === 0) {
+                  @if (monthIncome().length === 0) {
                     <p class="nota">Todavía no hay ingresos registrados este mes.</p>
                   } @else {
                     <ul class="barras">
-                      @for (i of ingresosDelMes(); track i.id) {
+                      @for (i of monthIncome(); track i.id) {
                         <li class="barra">
                           <div class="barra__fila">
                             <span class="barra__nombre">{{ i.nombre }}</span>
-                            <span class="barra__importe">{{ importe(i.importe) }}</span>
+                            <span class="barra__importe">{{ amount(i.importe) }}</span>
                             <span class="barra__porcentaje">{{ i.porcentaje }}%</span>
                           </div>
                           <div class="barra__pista" aria-hidden="true">
@@ -191,17 +191,17 @@
                 <app-card class="panel panel--cobrar">
                   <div class="panel__cabecera">
                     <h3 class="panel__titulo">Le deben</h3>
-                    <p class="panel__total">{{ importe(d.partidas.totalReceivable) }}</p>
+                    <p class="panel__total">{{ amount(d.partidas.totalReceivable) }}</p>
                   </div>
                   <p class="panel__lectura">
                     @if (teDeben().length === 0) {
                       Nadie le debe nada. Todo cobrado.
-                    } @else if (vencidasQueTeDeben() > 0) {
+                    } @else if (overdueOwedToYou() > 0) {
                       {{ teDeben().length }}
                       {{ teDeben().length === 1 ? 'factura abierta' : 'facturas abiertas' }} ·
                       <strong
-                        >{{ vencidasQueTeDeben() }} ya
-                        {{ vencidasQueTeDeben() === 1 ? 'venció' : 'vencieron' }}</strong
+                        >{{ overdueOwedToYou() }} ya
+                        {{ overdueOwedToYou() === 1 ? 'venció' : 'vencieron' }}</strong
                       >
                     } @else {
                       {{ teDeben().length }}
@@ -219,7 +219,7 @@
                             <span class="pendiente__doc">{{ p.documento }}</span>
                           </div>
                           <div class="pendiente__estado">
-                            <span class="pendiente__importe">{{ importe(p.importe) }}</span>
+                            <span class="pendiente__importe">{{ amount(p.importe) }}</span>
                             <app-chip
                               [variant]="p.tono === 'neutral' ? 'info' : p.tono"
                               size="sm"
@@ -232,8 +232,8 @@
                             variant="outline"
                             size="sm"
                             class="pendiente__accion"
-                            [disabled]="saldando() !== null"
-                            (click)="saldar(p, 'cobro')"
+                            [disabled]="settling() !== null"
+                            (click)="settle(p, 'cobro')"
                           >
                             Ya me pagaron
                           </button>
@@ -246,35 +246,35 @@
                 <app-card class="panel panel--pagar">
                   <div class="panel__cabecera">
                     <h3 class="panel__titulo">Tiene que pagar</h3>
-                    <p class="panel__total">{{ importe(d.partidas.totalPayable) }}</p>
+                    <p class="panel__total">{{ amount(d.partidas.totalPayable) }}</p>
                   </div>
                   <p class="panel__lectura">
-                    @if (tenesQuePagar().length === 0) {
+                    @if (amountToPay().length === 0) {
                       No debe nada. Todo pagado.
-                    } @else if (vencidasQueDebes() > 0) {
-                      {{ tenesQuePagar().length }}
-                      {{ tenesQuePagar().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }} ·
+                    } @else if (overdueYouOwe() > 0) {
+                      {{ amountToPay().length }}
+                      {{ amountToPay().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }} ·
                       <strong
-                        >{{ vencidasQueDebes() }} ya
-                        {{ vencidasQueDebes() === 1 ? 'venció' : 'vencieron' }}</strong
+                        >{{ overdueYouOwe() }} ya
+                        {{ overdueYouOwe() === 1 ? 'venció' : 'vencieron' }}</strong
                       >
                     } @else {
-                      {{ tenesQuePagar().length }}
-                      {{ tenesQuePagar().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }}, ninguna
+                      {{ amountToPay().length }}
+                      {{ amountToPay().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }}, ninguna
                       vencida.
                     }
                   </p>
 
-                  @if (tenesQuePagar().length > 0) {
+                  @if (amountToPay().length > 0) {
                     <ul class="pendientes">
-                      @for (p of tenesQuePagar(); track p.id) {
+                      @for (p of amountToPay(); track p.id) {
                         <li class="pendiente">
                           <div class="pendiente__quien">
                             <span class="pendiente__nombre">{{ p.quien }}</span>
                             <span class="pendiente__doc">{{ p.documento }}</span>
                           </div>
                           <div class="pendiente__estado">
-                            <span class="pendiente__importe">{{ importe(p.importe) }}</span>
+                            <span class="pendiente__importe">{{ amount(p.importe) }}</span>
                             <app-chip
                               [variant]="p.tono === 'neutral' ? 'info' : p.tono"
                               size="sm"
@@ -287,8 +287,8 @@
                             variant="outline"
                             size="sm"
                             class="pendiente__accion"
-                            [disabled]="saldando() !== null"
-                            (click)="saldar(p, 'pago')"
+                            [disabled]="settling() !== null"
+                            (click)="settle(p, 'pago')"
                           >
                             Ya lo pagué
                           </button>
@@ -318,7 +318,7 @@
               <div class="patrimonio">
                 <app-card class="patrimonio__tile">
                   <p class="patrimonio__rotulo">Lo que tiene</p>
-                  <p class="patrimonio__cifra">{{ importe(d.situacion.totalAssets) }}</p>
+                  <p class="patrimonio__cifra">{{ amount(d.situacion.totalAssets) }}</p>
                   <p class="patrimonio__pie">
                     Plata en caja y en el banco, lo que le deben, y sus equipos.
                   </p>
@@ -326,7 +326,7 @@
 
                 <app-card class="patrimonio__tile">
                   <p class="patrimonio__rotulo">Lo que debe</p>
-                  <p class="patrimonio__cifra">{{ importe(d.situacion.totalLiabilities) }}</p>
+                  <p class="patrimonio__cifra">{{ amount(d.situacion.totalLiabilities) }}</p>
                   <p class="patrimonio__pie">Préstamos, proveedores e impuestos por pagar.</p>
                 </app-card>
 
@@ -334,9 +334,9 @@
                   <p class="patrimonio__rotulo">Le queda suyo</p>
                   <p
                     class="patrimonio__cifra"
-                    [class.patrimonio__cifra--negativa]="negativo(d.situacion.totalEquity)"
+                    [class.patrimonio__cifra--negativa]="negative(d.situacion.totalEquity)"
                   >
-                    {{ importe(d.situacion.totalEquity) }}
+                    {{ amount(d.situacion.totalEquity) }}
                   </p>
                   <p class="patrimonio__pie">
                     Lo que quedaría si cobrara todo lo que le deben y pagara todo lo que
@@ -345,23 +345,23 @@
                 </app-card>
               </div>
 
-              @if (equiposConValor().length > 0) {
+              @if (equipmentWithValue().length > 0) {
                 <app-card class="panel">
                   <div class="panel__cabecera">
                     <h3 class="panel__titulo">Sus equipos</h3>
-                    <p class="panel__total">{{ importe(d.equipos.totalNetBookValue) }}</p>
+                    <p class="panel__total">{{ amount(d.equipos.totalNetBookValue) }}</p>
                   </div>
                   <p class="panel__lectura">
                     Lo que valen hoy, ya descontado el uso. Este mes se desgastan
-                    <strong>{{ importe(d.equipos.monthlyCharge) }}</strong> — no sale plata de
+                    <strong>{{ amount(d.equipos.monthlyCharge) }}</strong> — no sale plata de
                     su cuenta, pero es un costo real que ya está contado arriba.
                   </p>
                   <ul class="equipos">
-                    @for (e of equiposConValor(); track e.id) {
+                    @for (e of equipmentWithValue(); track e.id) {
                       <li class="equipo">
                         <span class="equipo__nombre">{{ e.name }}</span>
-                        <span class="equipo__valor">{{ importe(e.netBookValue) }}</span>
-                        <span class="equipo__origen">costó {{ importe(e.acquisitionCost) }}</span>
+                        <span class="equipo__valor">{{ amount(e.netBookValue) }}</span>
+                        <span class="equipo__origen">costó {{ amount(e.acquisitionCost) }}</span>
                       </li>
                     }
                   </ul>
@@ -410,9 +410,9 @@
   </app-tab>
 
   <app-tab label="Registros">
-    @if (pestana() === 1) {
+    @if (tab() === 1) {
       <div class="pestana">
-        @if (practicaElegida(); as practica) {
+        @if (chosenPractice(); as practica) {
           <app-simple-accounting class="contabilidad-simple" parte="registros" [practiceId]="practica" />
         }
       </div>

@@ -22,4 +22,4 @@ import { signal } from '@angular/core';
          existe: el interceptor lo consulta y nada más.
     ========================================================================== */
 
-export const apiRealForzada = signal(false);
+export const forcedRealApi = signal(false);

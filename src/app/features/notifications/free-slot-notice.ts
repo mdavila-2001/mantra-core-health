@@ -24,7 +24,7 @@ import { ToastService } from '@shared/components/molecules/toast/toast.service';
  * sería multiplicar una consulta por cada pestaña abierta para enterarse tarde
  * igual. Ver `PENDIENTES-BACKEND.md` (P21).
  */
-const CADA_MS = 20_000;
+const EACH_MS = 20_000;
 
 /**
  * Cuánto se queda el aviso en pantalla.
@@ -34,10 +34,10 @@ const CADA_MS = 20_000;
  * aviso que se va solo a los cinco segundos convierte una oportunidad en algo
  * que hay que ver de casualidad.
  */
-const NO_SE_VA_SOLO = null;
+const NOT_AUTO_DISMISSED = null;
 
 /** Lo que distingue este aviso de los demás de su categoría. Ver `released-slot.ts`. */
-const CLASE_DE_AVISO = 'SLOT_RELEASED';
+const NOTICE_CLASS = 'SLOT_RELEASED';
 
 /**
  * Vigila la campana y levanta un toast cuando se libera un horario.
@@ -57,9 +57,9 @@ const CLASE_DE_AVISO = 'SLOT_RELEASED';
  * pedirle cada veinte segundos a un servidor que ya sabe cómo empujar.
  */
 @Injectable({ providedIn: 'root' })
-export class AvisoDeHuecoLibre {
+export class FreeGapNotice {
   private readonly auth = inject(AuthService);
-  private readonly notificaciones = inject(NotificationsClient);
+  private readonly notifications = inject(NotificationsClient);
   private readonly toasts = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -70,30 +70,30 @@ export class AvisoDeHuecoLibre {
    * notificación sigue sin leer hasta que alguien la abra, así que «no leída»
    * no alcanza como criterio de novedad.
    */
-  private readonly yaMostrados = new Set<string>();
+  private readonly shownAlready = new Set<string>();
 
-  private reloj: ReturnType<typeof setInterval> | null = null;
+  private clock: ReturnType<typeof setInterval> | null = null;
 
   /** Empieza a vigilar. Llamarlo dos veces no arranca dos relojes. */
-  empezar(): void {
-    if (!environment.mockBackend || this.reloj !== null) return;
-    this.reloj = setInterval(() => this.mirar(), CADA_MS);
-    this.destroyRef.onDestroy(() => this.parar());
-    this.mirar();
+  start(): void {
+    if (!environment.mockBackend || this.clock !== null) return;
+    this.clock = setInterval(() => this.look(), EACH_MS);
+    this.destroyRef.onDestroy(() => this.stop());
+    this.look();
   }
 
-  parar(): void {
-    if (this.reloj === null) return;
-    clearInterval(this.reloj);
-    this.reloj = null;
+  stop(): void {
+    if (this.clock === null) return;
+    clearInterval(this.clock);
+    this.clock = null;
   }
 
-  private mirar(): void {
+  private look(): void {
     // Sin sesión no hay campana que mirar: el anunciador vive en el árbol de la
     // aplicación entera, así que también corre en el login y en lo público.
     if (!this.auth.isAuthenticated()) return;
-    this.notificaciones.listMine({ unread: true, limit: 20 }).subscribe({
-      next: (pagina) => pagina.items.filter(esHuecoLibre).forEach((aviso) => this.mostrar(aviso)),
+    this.notifications.listMine({ unread: true, limit: 20 }).subscribe({
+      next: (pagina) => pagina.items.filter(isFreeGap).forEach((aviso) => this.show(aviso)),
       // Un sondeo que falla no dice nada: es una comodidad de la maqueta, no
       // una lectura que alguien esté esperando. La campana sigue mostrando lo
       // que haya cuando se la abra.
@@ -111,14 +111,14 @@ export class AvisoDeHuecoLibre {
    * uno de ellos inventado acá, sería la clase de duplicado que esta maqueta ya
    * corrigió en los directorios.
    */
-  private mostrar(aviso: InAppNotification): void {
-    if (this.yaMostrados.has(aviso.id)) return;
-    this.yaMostrados.add(aviso.id);
+  private show(aviso: InAppNotification): void {
+    if (this.shownAlready.has(aviso.id)) return;
+    this.shownAlready.add(aviso.id);
     this.toasts.show({
       type: 'info',
       title: aviso.subject ?? 'Se liberó un horario',
       message: aviso.bodyText ?? '',
-      durationMs: NO_SE_VA_SOLO,
+      durationMs: NOT_AUTO_DISMISSED,
     });
   }
 }
@@ -129,11 +129,11 @@ export class AvisoDeHuecoLibre {
  * Mira `payloadJson.kind` y no el asunto: el asunto es prosa, se reescribe, y
  * una condición no se cuelga de una frase.
  */
-function esHuecoLibre(aviso: InAppNotification): boolean {
+function isFreeGap(aviso: InAppNotification): boolean {
   const payload = aviso.payloadJson;
   return (
     typeof payload === 'object' &&
     payload !== null &&
-    (payload as { kind?: unknown }).kind === CLASE_DE_AVISO
+    (payload as { kind?: unknown }).kind === NOTICE_CLASS
   );
 }

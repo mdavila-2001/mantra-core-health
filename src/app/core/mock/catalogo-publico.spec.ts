@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { vitrinas } from './fixtures/community';
+import { showcases } from './fixtures/community';
 import { crearRouterSimulado } from './handlers';
 import { isMockReply, type MockMethod } from './mock-router';
 
@@ -36,8 +36,8 @@ function items(respuesta: unknown): readonly Record<string, unknown>[] {
   return (respuesta as { items: readonly Record<string, unknown>[] }).items;
 }
 
-const CLINICA = vitrinas.filtrar((v) => v.kind === 'ORGANIZATION')[0]!.slug;
-const FARMACIA = vitrinas.filtrar((v) => v.kind === 'PHARMACY')[0]!.slug;
+const CLINICA = showcases.filtrar((v) => v.kind === 'ORGANIZATION')[0]!.slug;
+const FARMACIA = showcases.filtrar((v) => v.kind === 'PHARMACY')[0]!.slug;
 
 describe('el catálogo que publica cada ficha', () => {
   it('una clínica publica sus servicios con código, nombre y precio', async () => {

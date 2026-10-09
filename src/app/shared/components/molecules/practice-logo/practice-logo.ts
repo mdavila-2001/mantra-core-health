@@ -25,7 +25,7 @@ import { ChangeDetectionStrategy, Component, input, linkedSignal } from '@angula
   styleUrl: './practice-logo.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LogoConsultorio {
+export class PracticeLogo {
   /** La imagen como `data:` URL (la CSP no admite otra), o `null` si no hay. */
   readonly src = input<string | null>(null);
   /** Nombre del consultorio o de la organización, para el texto alternativo. Puede venir vacío. */
@@ -40,7 +40,7 @@ export class LogoConsultorio {
    * Una imagen rota no puede dejar un hueco: cae al marcador. `linkedSignal`
    * por el mismo motivo que en `Avatar`: un `src` nuevo merece su oportunidad.
    */
-  protected readonly fallo = linkedSignal({
+  protected readonly failure = linkedSignal({
     source: this.src,
     computation: () => false,
   });
@@ -50,7 +50,7 @@ export class LogoConsultorio {
     return nombre === '' ? this.etiqueta() : `Logo de ${nombre}`;
   }
 
-  protected alFallar(): void {
-    this.fallo.set(true);
+  protected toFail(): void {
+    this.failure.set(true);
   }
 }

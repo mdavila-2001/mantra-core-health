@@ -12,7 +12,7 @@ import {
 import type { OfertaDeFarmacia } from '@core/data-access/public-marketplace/public-marketplace.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
+import type { PinMap, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 
 import { formatDistance, formatMoney } from '../medication-card.mapper';
@@ -132,7 +132,7 @@ export class PharmacyAvailabilityDialog {
     this.visibleOffers().filter(hasCoordinates),
   );
 
-  protected readonly pins = computed<readonly PinMapa[]>(() =>
+  protected readonly pins = computed<readonly PinMap[]>(() =>
     this.mappableOffers().map((offer) => {
       const subtitle = pinSubtitle(offer);
       return {

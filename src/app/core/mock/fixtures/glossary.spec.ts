@@ -2,14 +2,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  CATEGORIAS,
-  TERMINOS,
-  categoriaDeTermino,
-  conjuntoEnLinea,
-  fichaEnLinea,
-  terminoEnLinea,
-  terminoPorSlug,
-  type ConceptoDeGlosario,
+  CATEGORIES,
+  TERMS,
+  termCategory,
+  inlineSet,
+  inlineSheet,
+  inlineTerm,
+  termBySlug,
+  type GlossaryConcept,
 } from './glossary';
 import {
   CONTEO_DE_CAPAS,
@@ -56,8 +56,8 @@ const IDS_DE_SINTOMAS = new Set(
   ].map((m) => m[1]),
 );
 
-const termino = (slug: string): ConceptoDeGlosario => {
-  const encontrado = terminoPorSlug(slug);
+const termino = (slug: string): GlossaryConcept => {
+  const encontrado = termBySlug(slug);
   if (encontrado === undefined) throw new Error(`no existe el término «${slug}»`);
   return encontrado;
 };
@@ -103,17 +103,17 @@ describe('el glosario generado desde el seed y las capas', () => {
   });
 
   it('ningún slug se repite, ni entre capas ni con el atlas', () => {
-    const slugs = TERMINOS.map((t) => t.slug);
+    const slugs = TERMS.map((t) => t.slug);
 
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
   it('todo término tiene una categoría de la taxonomía', () => {
-    const claves = new Set(CATEGORIAS.map((c) => c.key));
+    const claves = new Set(CATEGORIES.map((c) => c.key));
 
-    for (const t of TERMINOS) {
+    for (const t of TERMS) {
       expect(claves.has(t.categoryKey)).toBe(true);
-      expect(() => categoriaDeTermino(t)).not.toThrow();
+      expect(() => termCategory(t)).not.toThrow();
     }
   });
 
@@ -133,7 +133,7 @@ describe('el glosario generado desde el seed y las capas', () => {
   it('toda relación resuelve a un término existente', () => {
     for (const t of TERMINOS_DE_GLOSARIO) {
       for (const relacion of t.relations) {
-        expect(terminoPorSlug(relacion.targetSlug)).toBeDefined();
+        expect(termBySlug(relacion.targetSlug)).toBeDefined();
       }
     }
   });
@@ -150,18 +150,18 @@ describe('el glosario generado desde el seed y las capas', () => {
   });
 
   it('la categoría Enfermedades pasa de 6 términos a cientos', () => {
-    const enfermedades = CATEGORIAS.find((c) => c.key === 'disease');
+    const enfermedades = CATEGORIES.find((c) => c.key === 'disease');
 
     expect(enfermedades).toBeDefined();
-    expect(conjuntoEnLinea(enfermedades!).memberCount).toBeGreaterThan(2000);
+    expect(inlineSet(enfermedades!).memberCount).toBeGreaterThan(2000);
   });
 });
 
 describe('cómo viaja un término de las capas', () => {
   it('una enfermedad nueva en castellano va traducida, con definición, código y marca de revisión', () => {
     const diabetes = termino('diabetes-mellitus-tipo-1');
-    const entrada = terminoEnLinea(diabetes);
-    const ficha = fichaEnLinea(diabetes);
+    const entrada = inlineTerm(diabetes);
+    const ficha = inlineSheet(diabetes);
 
     expect(CURADOS.has('diabetes-mellitus-tipo-1')).toBe(false);
     expect(entrada.translated).toBe(true);
@@ -176,7 +176,7 @@ describe('cómo viaja un término de las capas', () => {
   it('neumonía lleva los síntomas del motor y la radiografía de tórax como prueba', () => {
     // Es el caso que el servicio de IA usa como prueba de aceptación
     // (fiebre + tos + dolor de pecho → neumonía con radiografía de tórax).
-    const ficha = fichaEnLinea(termino('neumonia'));
+    const ficha = inlineSheet(termino('neumonia'));
 
     expect(ficha.properties['external_code']).toBe('J18.9');
     expect(ficha.properties['symptom_ids']).toEqual(
@@ -186,7 +186,7 @@ describe('cómo viaja un término de las capas', () => {
   });
 
   it('un análisis lleva su categoría de orden y su LOINC', () => {
-    const ficha = fichaEnLinea(termino('radiografia-de-torax'));
+    const ficha = inlineSheet(termino('radiografia-de-torax'));
 
     expect(ficha.properties['analysis_category']).toBe('IMAGING');
     expect(ficha.properties['code_system']).toBe('loinc');
@@ -195,8 +195,8 @@ describe('cómo viaja un término de las capas', () => {
 
   it('una categoría ICD-10-CM va sin traducir y sin inventarle definición', () => {
     const colera = termino('icd10cm-a00');
-    const entrada = terminoEnLinea(colera);
-    const ficha = fichaEnLinea(colera);
+    const entrada = inlineTerm(colera);
+    const ficha = inlineSheet(colera);
 
     expect(entrada.translated).toBe(false);
     expect(entrada.display).toBe('Cholera');
@@ -215,7 +215,7 @@ describe('cómo viaja un término de las capas', () => {
     // `asma-bronquial` existe en el seed; la capa de enfermedades le suma el
     // ICD-10-CM y los síntomas del motor, nunca la definición.
     const asma = termino('asma-bronquial');
-    const ficha = fichaEnLinea(asma);
+    const ficha = inlineSheet(asma);
 
     expect(CURADOS.has('asma-bronquial')).toBe(true);
     expect(ficha.properties['external_code']).toBe('J45.909');

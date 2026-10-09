@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { signal, type WritableSignal } from '@angular/core';
 
-import { VitrinaMinima } from './minimal-showcase';
+import { MinShowcase } from './minimal-showcase';
 import { AuthService } from '../../../core/auth/auth.service';
 
 /**
@@ -16,7 +16,7 @@ import { AuthService } from '../../../core/auth/auth.service';
  * URL, y que **sin organización activa no se pide nada**.
  */
 describe('VitrinaMinima', () => {
-  let fixture: ComponentFixture<VitrinaMinima>;
+  let fixture: ComponentFixture<MinShowcase>;
   let http: HttpTestingController;
 
   const tenantId = signal<string | null>('t-1');
@@ -46,7 +46,7 @@ describe('VitrinaMinima', () => {
     (fixture.componentInstance as unknown as Record<string, WritableSignal<T>>)[nombre]!;
 
   const montar = (motivo: 'articulos' | 'grupos' = 'articulos'): void => {
-    fixture = TestBed.createComponent(VitrinaMinima);
+    fixture = TestBed.createComponent(MinShowcase);
     fixture.componentRef.setInput('motivo', motivo);
     fixture.detectChanges();
   };
@@ -56,7 +56,7 @@ describe('VitrinaMinima', () => {
     displayName.set('Dra. Lucía Salas');
 
     await TestBed.configureTestingModule({
-      imports: [VitrinaMinima],
+      imports: [MinShowcase],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -77,12 +77,12 @@ describe('VitrinaMinima', () => {
 
   it('el enlace escrito a mano deja de seguir al nombre', () => {
     montar();
-    interno<(v: string) => void>('alEscribirNombre')('Dra. Lucía Salas');
+    interno<(v: string) => void>('toWriteName')('Dra. Lucía Salas');
 
     // Lo toca a mano…
     señal<string>('slug').set('lucia-cardio');
     // …y el nombre cambia después.
-    interno<(v: string) => void>('alEscribirNombre')('Dra. Lucía Salas Fuentes');
+    interno<(v: string) => void>('toWriteName')('Dra. Lucía Salas Fuentes');
 
     expect(interno<() => string>('slug')()).toBe('lucia-cardio');
   });
@@ -90,7 +90,7 @@ describe('VitrinaMinima', () => {
   it('la crea en PÚBLICO: es lo que el servidor comprueba', () => {
     montar();
 
-    interno<() => void>('crear')();
+    interno<() => void>('create')();
 
     const req = http.expectOne('/community/profiles/me');
     expect(req.request.method).toBe('PUT');
@@ -108,7 +108,7 @@ describe('VitrinaMinima', () => {
     let recibida: { id?: string } | null = null;
     fixture.componentInstance.creada.subscribe((perfil) => (recibida = perfil));
 
-    interno<() => void>('crear')();
+    interno<() => void>('create')();
     http.expectOne('/community/profiles/me').flush(vitrinaCreada);
 
     expect(recibida).toMatchObject({ id: 'pp-1' });
@@ -116,11 +116,11 @@ describe('VitrinaMinima', () => {
 
   it('con foto la sube primero y manda su id en la misma escritura', () => {
     montar();
-    señal<readonly File[]>('foto').set([
+    señal<readonly File[]>('photo').set([
       new File(['x'], 'yo.png', { type: 'image/png' }),
     ]);
 
-    interno<() => void>('crear')();
+    interno<() => void>('create')();
 
     const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
     expect(subida.request.method).toBe('POST');
@@ -133,17 +133,17 @@ describe('VitrinaMinima', () => {
 
   it('si la subida de la foto falla, la vitrina NO se crea', () => {
     montar();
-    señal<readonly File[]>('foto').set([
+    señal<readonly File[]>('photo').set([
       new File(['x'], 'yo.png', { type: 'image/png' }),
     ]);
 
-    interno<() => void>('crear')();
+    interno<() => void>('create')();
     http
       .expectOne((r) => r.url.endsWith('/common/files/upload'))
       .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
 
     expect(http.match('/community/profiles/me')).toHaveLength(0);
-    expect(interno<() => boolean>('guardando')()).toBe(false);
+    expect(interno<() => boolean>('saving')()).toBe(false);
   });
 
   /**
@@ -152,37 +152,37 @@ describe('VitrinaMinima', () => {
    */
   it('para un grupo la foto es obligatoria; para un artículo no', () => {
     montar('grupos');
-    expect(interno<() => boolean>('puedeCrear')()).toBe(false);
+    expect(interno<() => boolean>('canCreate')()).toBe(false);
 
-    señal<readonly File[]>('foto').set([
+    señal<readonly File[]>('photo').set([
       new File(['x'], 'yo.png', { type: 'image/png' }),
     ]);
-    expect(interno<() => boolean>('puedeCrear')()).toBe(true);
+    expect(interno<() => boolean>('canCreate')()).toBe(true);
 
     montar('articulos');
-    expect(interno<() => boolean>('puedeCrear')()).toBe(true);
+    expect(interno<() => boolean>('canCreate')()).toBe(true);
   });
 
   it('un enlace con mayúsculas o espacios no deja crear', () => {
     montar();
     señal<string>('slug').set('Mi Vitrina');
 
-    expect(interno<() => boolean>('slugValido')()).toBe(false);
-    expect(interno<() => boolean>('puedeCrear')()).toBe(false);
+    expect(interno<() => boolean>('validSlug')()).toBe(false);
+    expect(interno<() => boolean>('canCreate')()).toBe(false);
   });
 
   it('sin organización activa no se pide nada', () => {
     tenantId.set(null);
     montar();
 
-    expect(interno<() => boolean>('sinOrganizacion')()).toBe(true);
-    interno<() => void>('crear')();
+    expect(interno<() => boolean>('withoutOrganization')()).toBe(true);
+    interno<() => void>('create')();
     expect(http.match('/community/profiles/me')).toHaveLength(0);
   });
 
   it('el enlace ya tomado se explica, no se repite «pruebe de nuevo»', () => {
     montar();
-    interno<() => void>('crear')();
+    interno<() => void>('create')();
 
     http
       .expectOne('/community/profiles/me')

@@ -7,7 +7,7 @@
     ========================================================================== */
 
 /** Una franja tal como la carga el médico. */
-export interface Franja {
+export interface Band {
   /** El día, ya en palabras: la aritmética no necesita saber su número. */
   readonly dia: string;
   /** Hora de inicio, `HH:MM`. */
@@ -34,7 +34,7 @@ export interface Franja {
 }
 
 /** Un turno concreto, en hora de pared. */
-export interface Turno {
+export interface Slot {
   readonly desde: string;
   readonly hasta: string;
   /**
@@ -49,9 +49,9 @@ export interface Turno {
 }
 
 /** Lo que sale de un día. */
-export interface DiaCalculado {
+export interface CalculatedDay {
   readonly dia: string;
-  readonly turnos: readonly Turno[];
+  readonly turnos: readonly Slot[];
   /** Minutos que sobran al final y no alcanzan para otro turno. */
   readonly resto: number;
   /** Desde qué hora queda libre ese resto, o `null` si no sobra nada. */
@@ -59,8 +59,8 @@ export interface DiaCalculado {
 }
 
 /** El cálculo completo. */
-export interface Calculo {
-  readonly porDia: readonly DiaCalculado[];
+export interface Calculation {
+  readonly porDia: readonly CalculatedDay[];
   readonly total: number;
 }
 
@@ -88,17 +88,17 @@ export interface Calculo {
  * @param franjas - Las franjas activas.
  * @returns Los turnos por día y el total.
  */
-export function calcularTurnos(franjas: readonly Franja[]): Calculo {
-  const porDia = franjas.map((franja) => calcularDia(franja));
+export function calculateSlots(franjas: readonly Band[]): Calculation {
+  const porDia = franjas.map((franja) => calculateDay(franja));
   return {
     porDia,
     total: porDia.reduce((suma, dia) => suma + dia.turnos.length, 0),
   };
 }
 
-function calcularDia(franja: Franja): DiaCalculado {
-  const inicio = enMinutos(franja.desde);
-  const fin = enMinutos(franja.hasta);
+function calculateDay(franja: Band): CalculatedDay {
+  const inicio = inMinutes(franja.desde);
+  const fin = inMinutes(franja.hasta);
 
   // Una franja al revés, vacía o con duración absurda no produce turnos. Es un
   // estado alcanzable mientras se escribe la hora, así que se devuelve vacío en
@@ -112,42 +112,42 @@ function calcularDia(franja: Franja): DiaCalculado {
   const receso = Math.max(0, franja.receso ?? 0);
   const paso = franja.duracion + receso;
 
-  const turnos: Turno[] = [];
+  const turnos: Slot[] = [];
   // Redondeo hacia adelante (propietario, 04/10/2026): todo turno que EMPIEZA
   // dentro de la franja se completa, aunque termine después de la hora de fin
   // —cada hora le cuesta dinero al médico—. El único tope es la franja
   // siguiente del día: el turno estirado no la pisa. Es la misma regla que
   // `generate-slots` en la API.
-  const tope = franja.tope === undefined ? null : enMinutos(franja.tope);
+  const tope = franja.tope === undefined ? null : inMinutes(franja.tope);
   for (let desde = inicio; desde < fin; desde += paso) {
     if (tope !== null && desde + franja.duracion > tope) break;
     turnos.push({
-      desde: enTexto(desde),
-      hasta: enTexto(desde + franja.duracion),
+      desde: inText(desde),
+      hasta: inText(desde + franja.duracion),
       minutos: franja.duracion,
     });
   }
 
   if (turnos.length === 0) {
-    return { dia: franja.dia, turnos: [], resto: fin - inicio, restoDesde: enTexto(inicio) };
+    return { dia: franja.dia, turnos: [], resto: fin - inicio, restoDesde: inText(inicio) };
   }
 
   // El resto se mide desde el FIN del último turno: el aire de los recesos ya
   // está contado adentro del paso, y lo que sobra al final es lo único que el
   // médico podría querer reacomodar. Con el redondeo hacia adelante el último
   // turno puede pasar la hora de fin: ahí no sobra nada.
-  const finUltimo = enMinutos(turnos[turnos.length - 1].hasta) ?? fin;
+  const finUltimo = inMinutes(turnos[turnos.length - 1].hasta) ?? fin;
   const resto = Math.max(0, fin - finUltimo);
   return {
     dia: franja.dia,
     turnos,
     resto,
-    restoDesde: resto === 0 ? null : enTexto(finUltimo),
+    restoDesde: resto === 0 ? null : inText(finUltimo),
   };
 }
 
 /** `09:30` → 570. `null` si no es una hora. */
-function enMinutos(hora: string): number | null {
+function inMinutes(hora: string): number | null {
   const partes = /^(\d{1,2}):(\d{2})/.exec(hora.trim());
   if (partes === null) return null;
   const h = Number(partes[1]);
@@ -157,7 +157,7 @@ function enMinutos(hora: string): number | null {
 }
 
 /** 570 → `09:30`. */
-function enTexto(minutos: number): string {
+function inText(minutos: number): string {
   const h = Math.floor(minutos / 60);
   const m = minutos % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;

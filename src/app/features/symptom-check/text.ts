@@ -34,16 +34,16 @@
     ========================================================================== */
 
 /** Los diacríticos que deja sueltos `normalize('NFD')`. */
-const DIACRITICOS = /[̀-ͯ]/g;
+const DIACRITICS = /[̀-ͯ]/g;
 
 /** Palabras y números. Un número puede llevar decimal: «38.5», «37,8». */
-const PALABRAS = /[a-z]+|\d+(?:[.,]\d+)?/g;
+const WORDS = /[a-z]+|\d+(?:[.,]\d+)?/g;
 
 /** Puntuación que corta una frase de veras: lo de después es otro asunto. */
-const CORTE_DURO = /[.;!?¡¿\n]/;
+const HARD_CUT = /[.;!?¡¿\n]/;
 
 /** Puntuación y conjunciones que separan dos cosas dentro de la misma frase. */
-const CORTE_BLANDO = /[,:]/;
+const SOFT_CUT = /[,:]/;
 
 /**
  * Texto comparable: sin mayúsculas ni tildes, y con los espacios colapsados.
@@ -55,7 +55,7 @@ const CORTE_BLANDO = /[,:]/;
  * cabeza» y eso no debería fallar.
  */
 export function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(DIACRITICOS, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  return texto.normalize('NFD').replace(DIACRITICS, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -72,7 +72,7 @@ export function normalizar(texto: string): string {
  * **Las negaciones no están acá** aunque sean palabras funcionales: «no» y
  * «sin» cambian el sentido de lo que sigue y el motor las necesita enteras.
  */
-export const VACIAS: ReadonlySet<string> = new Set([
+export const EMPTY: ReadonlySet<string> = new Set([
   // Artículos y preposiciones.
   'a',
   'al',
@@ -237,7 +237,7 @@ export const VACIAS: ReadonlySet<string> = new Set([
  * persona escribió justamente lo contrario y el sistema le contesta como si no
  * la hubiera leído.
  */
-export const NEGACIONES: ReadonlySet<string> = new Set([
+export const NEGATIONS: ReadonlySet<string> = new Set([
   'jamas',
   'nada',
   'ni',
@@ -257,7 +257,7 @@ export const NEGACIONES: ReadonlySet<string> = new Set([
  * corte, una sola negación al principio del texto apagaría todo lo que viene
  * detrás.
  */
-const FIN_DE_NEGACION: ReadonlySet<string> = new Set([
+const NEGATION_END: ReadonlySet<string> = new Set([
   'ahora',
   'aunque',
   'excepto',
@@ -277,7 +277,7 @@ const FIN_DE_NEGACION: ReadonlySet<string> = new Set([
  * dolor está, no que falta. Tomar el «no» al pie de la letra ahí borraría
  * justo los casos en que la persona está peor.
  */
-const NEGACIONES_FALSAS: readonly (readonly string[])[] = [
+const FALSE_NEGATIONS: readonly (readonly string[])[] = [
   ['se', 'me'],
   ['se', 'va'],
   ['se', 'quita'],
@@ -303,9 +303,9 @@ const NEGACIONES_FALSAS: readonly (readonly string[])[] = [
 export interface Token {
   /** Tal cual salió del texto normalizado. */
   readonly texto: string;
-  /** La forma comparable: sin plural, sin conjugar. Ver {@link lema}. */
+  /** La forma comparable: sin plural, sin conjugar. Ver {@link lemma}. */
   readonly lema: string;
-  /** Cómo suena. Ver {@link clave}. */
+  /** Cómo suena. Ver {@link key}. */
   readonly clave: string;
   /**
    * Cómo suena **sin reducir**.
@@ -330,7 +330,7 @@ export interface Token {
    * nada y el «no» apagaba las dos cosas.
    */
   readonly corte: boolean;
-  /** Si la palabra dice algo por sí sola. Ver {@link VACIAS}. */
+  /** Si la palabra dice algo por sí sola. Ver {@link EMPTY}. */
   readonly contenido: boolean;
 }
 
@@ -342,61 +342,61 @@ export interface Token {
  * encontrarse dentro de «ataques de pánico» — dos falsos positivos que el
  * motor viejo tenía, y el segundo mandaba a urgencias a alguien con ansiedad.
  */
-const PRONOMBRES_ATONOS: ReadonlySet<string> = new Set(['se', 'me', 'te', 'le', 'lo', 'la', 'nos', 'les']);
+const UNSTRESSED_PRONOUNS: ReadonlySet<string> = new Set(['se', 'me', 'te', 'le', 'lo', 'la', 'nos', 'les']);
 
 /** Si lo anterior es «no», saltando pronombres átonos («no se me …»). */
-function negadoAntes(tokens: readonly Token[]): boolean {
+function negatedBefore(tokens: readonly Token[]): boolean {
   for (let i = tokens.length - 1; i >= 0; i -= 1) {
     if (tokens[i].texto === 'no') {
       return true;
     }
-    if (!PRONOMBRES_ATONOS.has(tokens[i].texto)) {
+    if (!UNSTRESSED_PRONOUNS.has(tokens[i].texto)) {
       return false;
     }
   }
   return false;
 }
 
-const FORMAS_DE_ESTAR: ReadonlySet<string> = new Set(['estoy', 'esta', 'estas', 'estaba', 'estuve', 'ando', 'anda', 'andaba']);
+const BE_FORMS: ReadonlySet<string> = new Set(['estoy', 'esta', 'estas', 'estaba', 'estuve', 'ando', 'anda', 'andaba']);
 
-export function tokenizar(normalizado: string): readonly Token[] {
+export function tokenize(normalizado: string): readonly Token[] {
   const tokens: Token[] = [];
   let frase = 0;
   let anterior = 0;
 
-  PALABRAS.lastIndex = 0;
-  let encontrado = PALABRAS.exec(normalizado);
+  WORDS.lastIndex = 0;
+  let encontrado = WORDS.exec(normalizado);
   while (encontrado !== null) {
     const texto = encontrado[0];
     const desde = encontrado.index;
     // Lo que quedó entre la palabra anterior y ésta decide si cambió la frase.
     const separador = normalizado.slice(anterior, desde);
-    if (CORTE_DURO.test(separador)) {
+    if (HARD_CUT.test(separador)) {
       frase += 1;
     }
     // «para» después de «no» es el verbo parar, no la preposición: «no para de sangrar», «sangro y
     // no para». Como preposición se descarta, y la alarma quedaba en «no» + «sangre» —que también
     // dice «no hay sangre»—.
     // También con pronombres en medio: «no se me para», «no te para».
-    const esVerboParar = texto === 'para' && negadoAntes(tokens);
+    const esVerboParar = texto === 'para' && negatedBefore(tokens);
     // Camba «estar de curso» = tener diarrea (Sanabria Fernández). Sólo en esa construcción: a
     // secas, «curso» es el de inglés.
     const esCursoCamba =
-      texto === 'curso' && tokens.at(-1)?.texto === 'de' && FORMAS_DE_ESTAR.has(tokens.at(-2)?.texto ?? '');
-    const suLema = esVerboParar ? 'parar' : esCursoCamba ? 'cursialera' : lema(texto);
+      texto === 'curso' && tokens.at(-1)?.texto === 'de' && BE_FORMS.has(tokens.at(-2)?.texto ?? '');
+    const suLema = esVerboParar ? 'parar' : esCursoCamba ? 'cursialera' : lemma(texto);
     tokens.push({
       texto,
       lema: suLema,
-      clave: clave(suLema),
-      claveCruda: clave(texto),
+      clave: key(suLema),
+      claveCruda: key(texto),
       desde,
       hasta: desde + texto.length,
       frase,
-      corte: CORTE_DURO.test(separador) || CORTE_BLANDO.test(separador),
-      contenido: esVerboParar || !VACIAS.has(texto),
+      corte: HARD_CUT.test(separador) || SOFT_CUT.test(separador),
+      contenido: esVerboParar || !EMPTY.has(texto),
     });
     anterior = desde + texto.length;
-    encontrado = PALABRAS.exec(normalizado);
+    encontrado = WORDS.exec(normalizado);
   }
 
   return tokens;
@@ -409,19 +409,19 @@ export function tokenizar(normalizado: string): readonly Token[] {
  * que niega: un síntoma que la contiene —«**no** puedo respirar»— no está
  * negado, está dicho, y el motor necesita poder distinguirlo.
  */
-export function tramosNegados(tokens: readonly Token[]): readonly (readonly [number, number])[] {
+export function negatedBrackets(tokens: readonly Token[]): readonly (readonly [number, number])[] {
   const tramos: (readonly [number, number])[] = [];
 
   for (let i = 0; i < tokens.length; i += 1) {
-    if (!NEGACIONES.has(tokens[i].texto)) {
+    if (!NEGATIONS.has(tokens[i].texto)) {
       continue;
     }
-    if (esNegacionFalsa(tokens, i)) {
+    if (isFalseNegation(tokens, i)) {
       continue;
     }
     let hasta = i;
     for (let j = i + 1; j < tokens.length && j <= i + 6; j += 1) {
-      if (tokens[j].corte || FIN_DE_NEGACION.has(tokens[j].texto)) {
+      if (tokens[j].corte || NEGATION_END.has(tokens[j].texto)) {
         break;
       }
       hasta = j;
@@ -432,8 +432,8 @@ export function tramosNegados(tokens: readonly Token[]): readonly (readonly [num
   return tramos;
 }
 
-function esNegacionFalsa(tokens: readonly Token[], desde: number): boolean {
-  return NEGACIONES_FALSAS.some((frase) =>
+function isFalseNegation(tokens: readonly Token[], desde: number): boolean {
+  return FALSE_NEGATIONS.some((frase) =>
     frase.every((palabra, paso) => tokens[desde + 1 + paso]?.texto === palabra),
   );
 }
@@ -455,7 +455,7 @@ function esNegacionFalsa(tokens: readonly Token[], desde: number): boolean {
  * escribir «estomajo» no encontraba nada — la falta de ortografía se comparaba
  * contra una palabra que ya no estaba en ningún lado.
  */
-const IRREGULARES: ReadonlyMap<string, string> = new Map([
+const IRREGULAR: ReadonlyMap<string, string> = new Map([
   // Dolor: la familia más numerosa del dominio.
   ['duele', 'dolor'],
   ['duelen', 'dolor'],
@@ -712,13 +712,13 @@ const IRREGULARES: ReadonlyMap<string, string> = new Map([
  * palabra real**: pretende ser la misma etiqueta a los dos lados de la
  * comparación, que es lo único que un motor de coincidencias necesita.
  */
-export function lema(palabra: string): string {
-  const recordado = MEMORIA_LEMA.get(palabra);
+export function lemma(palabra: string): string {
+  const recordado = LEMMA_MEMORY.get(palabra);
   if (recordado !== undefined) {
     return recordado;
   }
-  const resultado = calcularLema(palabra);
-  recordar(MEMORIA_LEMA, palabra, resultado);
+  const resultado = calculateLemma(palabra);
+  remember(LEMMA_MEMORY, palabra, resultado);
   return resultado;
 }
 
@@ -733,31 +733,31 @@ export function lema(palabra: string): string {
  * Se vacían enteras al llegar al tope: el texto lo escribe una persona, no un
  * diccionario, y una sesión no llega ni cerca.
  */
-const MEMORIA_LEMA = new Map<string, string>();
-const MEMORIA_CLAVE = new Map<string, string>();
-const TOPE_DE_MEMORIA = 4000;
+const LEMMA_MEMORY = new Map<string, string>();
+const KEY_MEMORY = new Map<string, string>();
+const MEMORY_LIMIT = 4000;
 
-function recordar(memoria: Map<string, string>, llave: string, valor: string): void {
-  if (memoria.size >= TOPE_DE_MEMORIA) {
+function remember(memoria: Map<string, string>, llave: string, valor: string): void {
+  if (memoria.size >= MEMORY_LIMIT) {
     memoria.clear();
   }
   memoria.set(llave, valor);
 }
 
-function calcularLema(palabra: string): string {
+function calculateLemma(palabra: string): string {
   if (palabra === '') {
     return '';
   }
   // «doooolor» y «siiii»: el alargamiento es énfasis, no otra palabra.
   let forma = palabra.replace(/(.)\1{2,}/g, '$1');
 
-  const directo = IRREGULARES.get(forma);
+  const directo = IRREGULAR.get(forma);
   if (directo !== undefined) {
     return directo;
   }
 
   forma = singular(forma);
-  const singularizado = IRREGULARES.get(forma);
+  const singularizado = IRREGULAR.get(forma);
   if (singularizado !== undefined) {
     return singularizado;
   }
@@ -766,7 +766,7 @@ function calcularLema(palabra: string): string {
   // su familia, pero «espada» no se convierte en «espado» —que no es nada— y
   // sigue estando a una letra de «espalda», que es lo que alguien quiso
   // escribir.
-  return IRREGULARES.get(masculino(forma)) ?? forma;
+  return IRREGULAR.get(masculine(forma)) ?? forma;
 }
 
 /**
@@ -793,7 +793,7 @@ function singular(palabra: string): string {
  * «Hinchada» y «hinchado» son lo mismo dicho de una pierna o de un tobillo, y
  * la tabla no puede escribir las dos formas de cada palabra.
  */
-function masculino(palabra: string): string {
+function masculine(palabra: string): string {
   if (palabra.length > 4 && (palabra.endsWith('ada') || palabra.endsWith('osa'))) {
     return `${palabra.slice(0, -1)}o`;
   }
@@ -809,17 +809,17 @@ function masculino(palabra: string): string {
  * las tres se vuelven la misma clave y se encuentran sin recurrir a la
  * distancia de edición, que es más cara y admite coincidencias que nadie quiso.
  */
-export function clave(palabra: string): string {
-  const recordada = MEMORIA_CLAVE.get(palabra);
+export function key(palabra: string): string {
+  const recordada = KEY_MEMORY.get(palabra);
   if (recordada !== undefined) {
     return recordada;
   }
-  const resultado = calcularClave(palabra);
-  recordar(MEMORIA_CLAVE, palabra, resultado);
+  const resultado = calculateKey(palabra);
+  remember(KEY_MEMORY, palabra, resultado);
   return resultado;
 }
 
-function calcularClave(palabra: string): string {
+function calculateKey(palabra: string): string {
   let s = palabra.replace(/[^a-z0-9]/g, '');
   if (s === '') {
     return '';
@@ -867,7 +867,7 @@ export function ultimaFrase(texto: string): string {
  * todo el vocabulario, y cortar apenas una fila entera supera el tope evita el
  * grueso del trabajo.
  */
-export function distancia(a: string, b: string, tope: number): number {
+export function distance(a: string, b: string, tope: number): number {
   if (a === b) {
     return 0;
   }

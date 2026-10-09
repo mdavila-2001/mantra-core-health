@@ -1,6 +1,6 @@
-import { SiatSimuladoAdapter } from '../siat-sim/siat-simulated.adapter';
-import { EMISOR_CONSULTORIO, PADRON_SIMULADO } from './simulated-data';
-import { FacturacionSimulada, subtotalDeRenglon, totalDeRenglones, type CobroInicial } from './simulated-invoicing';
+import { SiatSimulatedAdapter } from '../siat-sim/siat-simulated.adapter';
+import { PRACTICE_ISSUER, SIMULATED_REGISTRY } from './simulated-data';
+import { SimulatedInvoicing, lineSubtotal, linesTotal, type InitialCharge } from './simulated-invoicing';
 
 /**
  * El servicio de MANTRA contra el SIAT simulado, sin fixtures de la maqueta:
@@ -8,15 +8,15 @@ import { FacturacionSimulada, subtotalDeRenglon, totalDeRenglones, type CobroIni
  */
 describe('FacturacionSimulada', () => {
   let ahora: Date;
-  let siat: SiatSimuladoAdapter;
-  let facturacion: FacturacionSimulada;
+  let siat: SiatSimulatedAdapter;
+  let facturacion: SimulatedInvoicing;
 
-  function cobro(id: string, pagado: boolean): CobroInicial {
+  function cobro(id: string, pagado: boolean): InitialCharge {
     return {
       id,
       source: 'CONSULTATION',
       sourceRef: `cita-${id}`,
-      issuerId: EMISOR_CONSULTORIO.issuer.id,
+      issuerId: PRACTICE_ISSUER.issuer.id,
       patientProfileId: `paciente-${id}`,
       patientName: 'PACIENTE DE PRUEBA',
       description: 'Consulta',
@@ -35,20 +35,20 @@ describe('FacturacionSimulada', () => {
 
   beforeEach(() => {
     ahora = new Date('2026-09-15T14:00:00.000Z');
-    siat = new SiatSimuladoAdapter({ padron: PADRON_SIMULADO, reloj: () => ahora });
-    facturacion = new FacturacionSimulada({
+    siat = new SiatSimulatedAdapter({ padron: SIMULATED_REGISTRY, reloj: () => ahora });
+    facturacion = new SimulatedInvoicing({
       siat,
-      emisores: [EMISOR_CONSULTORIO],
+      emisores: [PRACTICE_ISSUER],
       cobros: [cobro('a', true), cobro('b', true), cobro('c', false)],
       reloj: () => ahora,
     });
   });
 
   it('calcula subtotales y totales en centavos, sin errores de coma flotante', () => {
-    expect(subtotalDeRenglon('3', '0.10', null)).toBe('0.30');
-    expect(subtotalDeRenglon('2', '12.35', '1.00')).toBe('23.70');
+    expect(lineSubtotal('3', '0.10', null)).toBe('0.30');
+    expect(lineSubtotal('2', '12.35', '1.00')).toBe('23.70');
     expect(
-      totalDeRenglones([
+      linesTotal([
         { productCode: 'x', description: 'x', quantity: '1', unitOfMeasure: 1, unitPrice: '0.10', discount: null, subtotal: '0.10' },
         { productCode: 'y', description: 'y', quantity: '1', unitOfMeasure: 1, unitPrice: '0.20', discount: null, subtotal: '0.20' },
       ]),
@@ -58,17 +58,17 @@ describe('FacturacionSimulada', () => {
   it('pide CUIS y CUFD en la primera emisión y los reutiliza mientras están vigentes', () => {
     const cuis = vi.spyOn(siat, 'solicitudCuis');
     const cufd = vi.spyOn(siat, 'solicitudCufd');
-    facturacion.emitirFactura('a', comprador, 'prueba');
-    facturacion.emitirFactura('b', comprador, 'prueba');
+    facturacion.issueInvoice('a', comprador, 'prueba');
+    facturacion.issueInvoice('b', comprador, 'prueba');
     expect(cuis).toHaveBeenCalledTimes(1);
     expect(cufd).toHaveBeenCalledTimes(1);
   });
 
   it('renueva el CUFD vencido (24 h) sin pedir otro CUIS, y el CUF usa el codigoControl nuevo', () => {
-    const primera = facturacion.emitirFactura('a', comprador, 'prueba');
+    const primera = facturacion.issueInvoice('a', comprador, 'prueba');
     ahora = new Date(ahora.getTime() + 25 * 3_600_000);
     const cuis = vi.spyOn(siat, 'solicitudCuis');
-    const segunda = facturacion.emitirFactura('b', comprador, 'prueba');
+    const segunda = facturacion.issueInvoice('b', comprador, 'prueba');
     expect(cuis).not.toHaveBeenCalled();
     expect(primera.ok && segunda.ok).toBe(true);
     if (primera.ok && segunda.ok) {
@@ -79,31 +79,31 @@ describe('FacturacionSimulada', () => {
   });
 
   it('un cobro sin pago no se factura; se registra el pago y entonces sí', () => {
-    expect(facturacion.emitirFactura('c', comprador, 'prueba')).toEqual(
+    expect(facturacion.issueInvoice('c', comprador, 'prueba')).toEqual(
       expect.objectContaining({ ok: false, error: expect.objectContaining({ code: 'PAYMENT_REQUIRED' }) }),
     );
-    expect(facturacion.registrarPago('c', 3).ok).toBe(true);
-    const r = facturacion.emitirFactura('c', comprador, 'prueba');
+    expect(facturacion.registerPayment('c', 3).ok).toBe(true);
+    const r = facturacion.issueInvoice('c', comprador, 'prueba');
     expect(r.ok && r.value.status).toBe('VALIDATED');
   });
 
   it('el emisor emite en sector 1 (CA-1): el padrón simulado no habilita el 17', () => {
-    const r = facturacion.emitirFactura('a', comprador, 'prueba');
+    const r = facturacion.issueInvoice('a', comprador, 'prueba');
     expect(r.ok && r.value.documentSector).toBe(1);
-    expect(PADRON_SIMULADO.every((c) => c.sectoresHabilitados.includes(1) && !c.sectoresHabilitados.includes(17))).toBe(true);
+    expect(SIMULATED_REGISTRY.every((c) => c.sectoresHabilitados.includes(1) && !c.sectoresHabilitados.includes(17))).toBe(true);
   });
 
   it('después de anular se puede volver a facturar el cobro', () => {
-    const primera = facturacion.emitirFactura('a', comprador, 'prueba');
+    const primera = facturacion.issueInvoice('a', comprador, 'prueba');
     if (!primera.ok) throw new Error('la primera emisión tenía que pasar');
-    expect(facturacion.anular(primera.value.id, 1).ok).toBe(true);
+    expect(facturacion.void(primera.value.id, 1).ok).toBe(true);
     ahora = new Date(ahora.getTime() + 1000);
-    const segunda = facturacion.emitirFactura('a', comprador, 'prueba');
+    const segunda = facturacion.issueInvoice('a', comprador, 'prueba');
     expect(segunda.ok && segunda.value.status).toBe('VALIDATED');
   });
 
   describe('plan de pagos (consulta con reconsultas)', () => {
-    function conPlan(id: string): CobroInicial {
+    function conPlan(id: string): InitialCharge {
       const instancia = (n: number, label: string, monto: string) => ({
         id: `${id}-i${n}`,
         kind: n === 1 ? ('CONSULTATION' as const) : ('FOLLOW_UP' as const),
@@ -124,16 +124,16 @@ describe('FacturacionSimulada', () => {
     }
 
     beforeEach(() => {
-      facturacion = new FacturacionSimulada({
+      facturacion = new SimulatedInvoicing({
         siat,
-        emisores: [EMISOR_CONSULTORIO],
+        emisores: [PRACTICE_ISSUER],
         cobros: [conPlan('p'), cobro('u', false)],
         reloj: () => ahora,
       });
     });
 
     it('los renglones y el total salen de las instancias, no de los del cobro', () => {
-      const c = facturacion.cobro('p')!;
+      const c = facturacion.charge('p')!;
       expect(c.total).toBe('610.00');
       expect(c.lines.map((l) => l.description)).toEqual([
         'Consulta con 2 reconsultas · Consulta inicial',
@@ -144,8 +144,8 @@ describe('FacturacionSimulada', () => {
     });
 
     it('cada pago de una instancia emite una nota de venta correlativa, y no una factura', () => {
-      const a = facturacion.registrarPagoDeInstancia('p', 'p-i1', { methodCode: 1, amount: '250.00' });
-      const b = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 3, amount: '80.00' });
+      const a = facturacion.instanceRegisterPayment('p', 'p-i1', { methodCode: 1, amount: '250.00' });
+      const b = facturacion.instanceRegisterPayment('p', 'p-i2', { methodCode: 3, amount: '80.00' });
       if (!a.ok || !b.ok) throw new Error('los pagos tenían que pasar');
       const [consulta, primera] = b.value.plan!.instances;
       expect(consulta!.salesNotes.map((n) => n.number)).toEqual(['NV-000001']);
@@ -157,8 +157,8 @@ describe('FacturacionSimulada', () => {
     });
 
     it('con saldo, la factura se rechaza con 412 y lo dice', () => {
-      facturacion.registrarPagoDeInstancia('p', 'p-i1', { methodCode: 1, amount: '250.00' });
-      const r = facturacion.emitirFactura('p', comprador, 'prueba');
+      facturacion.instanceRegisterPayment('p', 'p-i1', { methodCode: 1, amount: '250.00' });
+      const r = facturacion.issueInvoice('p', comprador, 'prueba');
       expect(r.ok).toBe(false);
       if (!r.ok) {
         expect(r.error.code).toBe('PAYMENT_REQUIRED');
@@ -167,13 +167,13 @@ describe('FacturacionSimulada', () => {
     });
 
     it('saldado el plan, el cobro tiene su pago por el total y se factura con un renglón por instancia', () => {
-      facturacion.registrarPagoDeInstancia('p', 'p-i1', { methodCode: 1, amount: '250.00' });
-      facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '180.00' });
-      const ultimo = facturacion.registrarPagoDeInstancia('p', 'p-i3', { methodCode: 3, amount: '180.00' });
+      facturacion.instanceRegisterPayment('p', 'p-i1', { methodCode: 1, amount: '250.00' });
+      facturacion.instanceRegisterPayment('p', 'p-i2', { methodCode: 1, amount: '180.00' });
+      const ultimo = facturacion.instanceRegisterPayment('p', 'p-i3', { methodCode: 3, amount: '180.00' });
       if (!ultimo.ok) throw new Error('el último pago tenía que pasar');
       expect(ultimo.value.plan!.complete).toBe(true);
       expect(ultimo.value.payment).toEqual(expect.objectContaining({ amount: '610.00', methodCode: 3 }));
-      const f = facturacion.emitirFactura('p', comprador, 'prueba');
+      const f = facturacion.issueInvoice('p', comprador, 'prueba');
       if (!f.ok) throw new Error('la factura tenía que emitirse');
       expect(f.value.status).toBe('VALIDATED');
       expect(f.value.detalle).toHaveLength(3);
@@ -182,22 +182,22 @@ describe('FacturacionSimulada', () => {
     });
 
     it('no acepta más que el saldo de la instancia, ni montos inválidos, ni una instancia ya pagada', () => {
-      const excedido = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '180.01' });
+      const excedido = facturacion.instanceRegisterPayment('p', 'p-i2', { methodCode: 1, amount: '180.01' });
       expect(!excedido.ok && excedido.error.issues?.map((i) => i.field)).toEqual(['amount']);
-      const cero = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 99, amount: '0' });
+      const cero = facturacion.instanceRegisterPayment('p', 'p-i2', { methodCode: 99, amount: '0' });
       expect(!cero.ok && cero.error.issues?.map((i) => i.field)).toEqual(['methodCode', 'amount']);
-      facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '180.00' });
-      const otraVez = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '1.00' });
+      facturacion.instanceRegisterPayment('p', 'p-i2', { methodCode: 1, amount: '180.00' });
+      const otraVez = facturacion.instanceRegisterPayment('p', 'p-i2', { methodCode: 1, amount: '1.00' });
       expect(!otraVez.ok && otraVez.error.code).toBe('ALREADY_PAID');
-      expect(facturacion.registrarPagoDeInstancia('p', 'no-existe', { methodCode: 1, amount: '1.00' }).ok).toBe(false);
+      expect(facturacion.instanceRegisterPayment('p', 'no-existe', { methodCode: 1, amount: '1.00' }).ok).toBe(false);
     });
 
     it('un servicio con plan no se paga de una vez, y uno sin plan no se paga por instancia', () => {
-      const deUnaVez = facturacion.registrarPago('p', 1);
+      const deUnaVez = facturacion.registerPayment('p', 1);
       expect(!deUnaVez.ok && deUnaVez.error.code).toBe('PLAN_REQUIRED');
-      const porInstancia = facturacion.registrarPagoDeInstancia('u', 'x', { methodCode: 1, amount: '1.00' });
+      const porInstancia = facturacion.instanceRegisterPayment('u', 'x', { methodCode: 1, amount: '1.00' });
       expect(!porInstancia.ok && porInstancia.error.code).toBe('NOT_A_PLAN');
-      expect(facturacion.cobro('u')!.plan).toBeNull();
+      expect(facturacion.charge('u')!.plan).toBeNull();
     });
   });
 });

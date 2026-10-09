@@ -30,7 +30,7 @@
     ========================================================================== */
 
 /** Una zona del cuerpo, con los síntomas que se le preguntan. */
-export interface ZonaDelCuerpo {
+export interface BodyZone {
   readonly id: string;
   /** Cómo se llama en la pastilla. Corto: entra en dos palabras. */
   readonly nombre: string;
@@ -55,7 +55,7 @@ export interface ZonaDelCuerpo {
     Un síntoma puede estar en más de una zona (el hormigueo se siente en la
     mano y en el pie): la zona es por dónde se entra, no una clasificación.
 */
-export const ZONAS_DEL_CUERPO: readonly ZonaDelCuerpo[] = [
+export const BODY_ZONES: readonly BodyZone[] = [
   // ─── La cabeza y la cara ───────────────────────────────────────────────
   {
     id: 'cabeza',

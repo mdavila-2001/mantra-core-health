@@ -30,13 +30,13 @@ import { displayCurrency } from '../../../../../core/money/display-currency';
   styleUrl: './invoice-summary.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ResumenDeFactura {
+export class InvoiceSummary {
 
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
    * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
    */
-  protected moneda(code?: string | null): string {
+  protected currency(code?: string | null): string {
     return displayCurrency(code);
   }
   readonly factura = input.required<FacturaDeEjemplo>();
@@ -44,5 +44,5 @@ export class ResumenDeFactura {
   /** El mostrador pidió el PDF. Quien contiene a este componente resuelve. */
   readonly descargaSolicitada = output<void>();
 
-  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
+  protected readonly exampleNote = NOTA_DE_DATOS_DE_EJEMPLO;
 }

@@ -1,9 +1,9 @@
 import type { RamaDepartamento } from '@core/data-access/terminology/bo-municipalities.service';
 
 import {
-  departamentoPorCiudad,
-  lugarInequivocoPorCiudad,
-  normalizarLugar,
+  departmentByCity,
+  placeUnambiguousByCity,
+  normalizePlace,
 } from './city-department';
 
 const SC = 'geo:bo:department:SC';
@@ -44,22 +44,22 @@ const RAMAS: readonly RamaDepartamento[] = [
 
 describe('lugarInequivocoPorCiudad', () => {
   it('ubica un municipio con su departamento y con el nombre del catálogo', () => {
-    const lugar = lugarInequivocoPorCiudad(RAMAS).get(normalizarLugar('santa cruz de la sierra'));
+    const lugar = placeUnambiguousByCity(RAMAS).get(normalizePlace('santa cruz de la sierra'));
 
     expect(lugar).toEqual({ departamento: SC, municipio: 'Santa Cruz de la Sierra' });
   });
 
   it('no adivina un nombre que el catálogo repite entre departamentos', () => {
     // Asignarlo a uno sería mostrar en Pando lo que está en Santa Cruz, o al revés.
-    expect(lugarInequivocoPorCiudad(RAMAS).has(normalizarLugar('San Pedro'))).toBe(false);
+    expect(placeUnambiguousByCity(RAMAS).has(normalizePlace('San Pedro'))).toBe(false);
   });
 
   it('las tildes y las mayúsculas no separan la misma ciudad', () => {
-    expect(lugarInequivocoPorCiudad(RAMAS).get(normalizarLugar('POTOSI'))?.municipio).toBe('Potosí');
+    expect(placeUnambiguousByCity(RAMAS).get(normalizePlace('POTOSI'))?.municipio).toBe('Potosí');
   });
 
   it('un catálogo vacío no ubica nada', () => {
-    expect(lugarInequivocoPorCiudad([]).size).toBe(0);
+    expect(placeUnambiguousByCity([]).size).toBe(0);
   });
 });
 
@@ -67,6 +67,6 @@ describe('departamentoPorCiudad (la de los directorios ya mergeados)', () => {
   it('no cambió: con un nombre repetido se sigue quedando con el último', () => {
     // Fija que la subtarea 2.3 no alteró clínicas, farmacias ni hospitales.
     // Que esto sea deuda y no un comportamiento deseado está anotado en la ficha.
-    expect(departamentoPorCiudad(RAMAS).get(normalizarLugar('San Pedro'))).toBe(PD);
+    expect(departmentByCity(RAMAS).get(normalizePlace('San Pedro'))).toBe(PD);
   });
 });

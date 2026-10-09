@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTES } from '../fixtures/people';
+import { PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarNotificaciones } from './notifications.handlers';
@@ -18,7 +18,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
   registrarNotificaciones(router);
 
   const titular = buscarUsuario('paciente')!;
-  const JORGE = PACIENTES[1]!;
+  const JORGE = PATIENTS[1]!;
   const jorge: MockUser = {
     ...titular,
     key: 'p-mamani',
@@ -73,7 +73,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
   });
 
   it('el propio CI se rechaza con 422', () => {
-    const propio = PACIENTES[0]!.nationalId;
+    const propio = PATIENTS[0]!.nationalId;
     const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { nationalId: propio }, titular);
     expect(estado(respuesta)).toBe(422);
   });
@@ -118,7 +118,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
       jorge,
     ) as { id: string; requesterDisplayName: string }[];
     expect(deJorge.map((s) => s.id)).toContain(solicitudId);
-    expect(deJorge.find((s) => s.id === solicitudId)!.requesterDisplayName).toBe(PACIENTES[0]!.displayName);
+    expect(deJorge.find((s) => s.id === solicitudId)!.requesterDisplayName).toBe(PATIENTS[0]!.displayName);
 
     const delTitular = call<unknown[]>(
       'GET',

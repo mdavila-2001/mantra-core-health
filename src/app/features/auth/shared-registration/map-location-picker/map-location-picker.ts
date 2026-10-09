@@ -17,10 +17,10 @@ import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../shared/components/organisms/map/map-pin.types';
+import type { PinMap } from '../../../../shared/components/organisms/map/map-pin.types';
 
 /** Un punto en el mapa, tal como lo entrega el navegador. */
-export interface Coordenadas {
+export interface Coordinates {
   readonly lat: number;
   readonly lng: number;
 }
@@ -36,7 +36,7 @@ export interface Coordenadas {
  * encontrar lo que buscaban. Se pasan explícitos para que la extracción no
  * cambie **nada** de lo que ya funcionaba.
  */
-export interface IdsDePrueba {
+export interface TestIds {
   readonly mapa: string;
   readonly confirmada: string;
   readonly avisoGeocodificacion: string;
@@ -71,17 +71,17 @@ const GPS_MAX_AGE_MS = 300_000;
  * inventado: una dirección falsa en una ficha es peor que un campo vacío,
  * porque nadie la vuelve a mirar.
  */
-export const AVISO_SIN_GEOCODIFICACION =
+export const NOTICE_WITHOUT_GEOCODING =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escríbala usted arriba.';
 
 /**
  * Lo que el formulario pone junto al campo de dirección después de vaciarlo
- * porque tocaron el mapa (D-06; ver {@link UbicacionPicker.puntoElegido}).
+ * porque tocaron el mapa (D-06; ver {@link MapLocationPicker.puntoElegido}).
  *
  * Vive acá y no en cada formulario para que las ocho instancias digan lo
  * mismo: el aviso es parte de la regla, no de cada pantalla.
  */
-export const AVISO_REESCRIBIR_DIRECCION = 'Vuelva a escribir la dirección para este punto.';
+export const NOTICE_REWRITE_ADDRESS = 'Vuelva a escribir la dirección para este punto.';
 
 /**
  * Lee una coordenada escrita a mano: acepta coma o punto decimal («-17,7833»
@@ -163,24 +163,24 @@ function formatCoordinate(valor: number): string {
   styleUrl: './map-location-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UbicacionPicker {
-  private readonly documento = inject(DOCUMENT);
+export class MapLocationPicker {
+  private readonly document = inject(DOCUMENT);
 
   /** Si ya se sembró el punto guardado. Ver {@link inicial}. */
-  private sembrado = false;
+  private seeded = false;
 
   constructor() {
     // `effect` y no un valor inicial de la señal: el perfil llega por HTTP y el
     // componente ya está montado cuando aparece.
     effect(() => {
       const guardado = this.inicial();
-      if (this.sembrado || guardado === null) return;
-      this.sembrado = true;
+      if (this.seeded || guardado === null) return;
+      this.seeded = true;
       this.punto.set(guardado);
       // Confirmado de entrada: es un punto que la persona ya dio por bueno
       // alguna vez. Pedirle que lo vuelva a confirmar para no perderlo sería
       // convertir «no toqué el mapa» en «borrá mi ubicación».
-      this.confirmada.set(true);
+      this.confirmed.set(true);
     });
   }
 
@@ -211,7 +211,7 @@ export class UbicacionPicker {
   /** Lo que se le dice sobre el mapa vacío («Tocá el mapa donde queda tu casa»). */
   readonly indicacionMarcar = input('Toque el mapa en el lugar exacto para poner el pin.');
 
-  readonly ids = input.required<IdsDePrueba>();
+  readonly ids = input.required<TestIds>();
 
   /**
    * El punto que la persona ya tenía guardado, si lo tenía.
@@ -225,7 +225,7 @@ export class UbicacionPicker {
    * ubicación, la corre o la quita, un dato que llegue tarde del servidor no
    * puede pisar lo que acaba de hacer.
    */
-  readonly inicial = input<Coordenadas | null>(null);
+  readonly inicial = input<Coordinates | null>(null);
 
   /**
    * El punto confirmado, o `null`.
@@ -234,14 +234,14 @@ export class UbicacionPicker {
    * quitarla—, para que quien lo consume no se quede con un punto que la
    * persona ya descartó.
    */
-  readonly confirmado = output<Coordenadas | null>();
+  readonly confirmado = output<Coordinates | null>();
 
   /**
    * Cada toque sobre el mapa, con el punto donde cayó el pin (D-06).
    *
    * Sale **antes** de confirmar, porque lo que avisa no es «esta es mi
    * dirección» sino «la dirección escrita ya no describe este pin»: el mapa no
-   * se geocodifica (ver {@link AVISO_SIN_GEOCODIFICACION}), así que un texto
+   * se geocodifica (ver {@link NOTICE_WITHOUT_GEOCODING}), así que un texto
    * viejo al lado de un pin nuevo es exactamente lo que confunde. El padre lo
    * escucha para vaciar su campo de dirección y pedir que la vuelvan a escribir.
    *
@@ -258,7 +258,7 @@ export class UbicacionPicker {
    * Si el cliente quisiera que el navegador también vacíe, es agregar la
    * emisión en `usarMiUbicacion` al llegar la posición: una línea.
    */
-  readonly puntoElegido = output<Coordenadas>();
+  readonly puntoElegido = output<Coordinates>();
 
   /**
    * Las coordenadas que la persona compartió, si las compartió.
@@ -267,16 +267,16 @@ export class UbicacionPicker {
    * persona ve es el pin sobre el plano: «-17,7833, -63,1821» no le dice a
    * nadie si el punto está bien, y era exactamente lo que había que confirmar.
    */
-  readonly punto = signal<Coordenadas | null>(null);
+  readonly punto = signal<Coordinates | null>(null);
 
   /** Si se está esperando al navegador ahora mismo. */
-  readonly pidiendo = signal(false);
+  readonly requesting = signal(false);
 
   /** Si la persona ya dio por buena la ubicación del mapa. */
-  readonly confirmada = signal(false);
+  readonly confirmed = signal(false);
 
   /** Si el navegador negó la ubicación, para poder decirlo sin frenar el alta. */
-  readonly rechazado = signal(false);
+  readonly rejected = signal(false);
 
   /**
    * Si la persona pidió el mapa vacío para poner el pin a mano.
@@ -285,10 +285,10 @@ export class UbicacionPicker {
    * abierto de todos modos y tocarlo lo corre. Se apaga al quitar la ubicación,
    * que es volver al principio.
    */
-  readonly marcando = signal(false);
+  readonly marking = signal(false);
 
   /** Si el mapa tiene que estar en pantalla: porque hay pin, o porque se está por poner. */
-  protected readonly mapaAbierto = computed(() => this.punto() !== null || this.marcando());
+  protected readonly openMap = computed(() => this.punto() !== null || this.marking());
 
   /**
    * Si el punto actual lo dio el navegador (y no un toque sobre el plano).
@@ -296,40 +296,40 @@ export class UbicacionPicker {
    * Sólo cambia cómo se llama el pin sin confirmar: «Acá te encontramos» es
    * mentira para un punto que la persona puso a mano.
    */
-  private readonly vieneDelNavegador = signal(false);
+  private readonly fromBrowser = signal(false);
 
-  protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
+  protected readonly noticeWithoutGeocoding = NOTICE_WITHOUT_GEOCODING;
 
   /** Si están a la vista los campos de latitud y longitud. */
-  protected readonly coordenadasAbiertas = signal(false);
+  protected readonly openCoordinates = signal(false);
 
   /** Lo escrito, tal cual: se valida al aplicar, no a cada tecla. */
-  protected readonly latitudEscrita = signal('');
-  protected readonly longitudEscrita = signal('');
+  protected readonly writtenLatitude = signal('');
+  protected readonly writtenLongitude = signal('');
 
   /** El error de cada campo al aplicar, o `''`. */
-  protected readonly errorLatitud = signal('');
-  protected readonly errorLongitud = signal('');
+  protected readonly errorLatitude = signal('');
+  protected readonly errorLongitude = signal('');
 
   /** El id del bloque de campos, para el `aria-controls` de su botón. */
-  protected readonly coordenadasId = nextControlId('location-coordinates');
+  protected readonly coordinatesId = nextControlId('location-coordinates');
 
   /** Lo que se anuncia al mover el pin; vive en una región `role="status"`. */
-  protected readonly anuncio = signal('');
+  protected readonly announcement = signal('');
 
   /**
    * Abre o cierra los campos. Al abrirlos con un pin ya puesto, llegan llenos
    * con su punto: corregir un decimal no obliga a copiar el resto.
    */
-  protected alternarCoordenadas(): void {
-    const abrir = !this.coordenadasAbiertas();
-    this.coordenadasAbiertas.set(abrir);
+  protected toggleCoordinates(): void {
+    const abrir = !this.openCoordinates();
+    this.openCoordinates.set(abrir);
     if (!abrir) return;
     const punto = this.punto();
-    this.latitudEscrita.set(punto === null ? '' : formatCoordinate(punto.lat));
-    this.longitudEscrita.set(punto === null ? '' : formatCoordinate(punto.lng));
-    this.errorLatitud.set('');
-    this.errorLongitud.set('');
+    this.writtenLatitude.set(punto === null ? '' : formatCoordinate(punto.lat));
+    this.writtenLongitude.set(punto === null ? '' : formatCoordinate(punto.lng));
+    this.errorLatitude.set('');
+    this.errorLongitude.set('');
   }
 
   /**
@@ -338,24 +338,24 @@ export class UbicacionPicker {
    * Enter en un campo aplica y **no** envía el formulario de alta que rodea al
    * selector: por eso el `preventDefault`.
    */
-  protected aplicarCoordenadas(evento?: Event): void {
+  protected applyCoordinates(evento?: Event): void {
     evento?.preventDefault();
-    const lat = parseCoordinate(this.latitudEscrita(), 90);
-    const lng = parseCoordinate(this.longitudEscrita(), 180);
-    this.errorLatitud.set(lat === null ? 'Escriba un número entre −90 y 90, por ejemplo −17,7833.' : '');
-    this.errorLongitud.set(
+    const lat = parseCoordinate(this.writtenLatitude(), 90);
+    const lng = parseCoordinate(this.writtenLongitude(), 180);
+    this.errorLatitude.set(lat === null ? 'Escriba un número entre −90 y 90, por ejemplo −17,7833.' : '');
+    this.errorLongitude.set(
       lng === null ? 'Escriba un número entre −180 y 180, por ejemplo −63,1821.' : '',
     );
     if (lat === null || lng === null) return;
-    this.fijarPunto({ lat, lng });
+    this.pinPunto({ lat, lng });
   }
 
-  protected escribirLatitud(valor: string | number | null): void {
-    this.latitudEscrita.set(valor === null ? '' : String(valor));
+  protected writeLatitude(valor: string | number | null): void {
+    this.writtenLatitude.set(valor === null ? '' : String(valor));
   }
 
-  protected escribirLongitud(valor: string | number | null): void {
-    this.longitudEscrita.set(valor === null ? '' : String(valor));
+  protected writeLongitude(valor: string | number | null): void {
+    this.writtenLongitude.set(valor === null ? '' : String(valor));
   }
 
   /**
@@ -364,7 +364,7 @@ export class UbicacionPicker {
    * Vacío mientras no haya punto: el mapa acepta la lista vacía y se queda en
    * su vista por defecto, que es lo que corresponde antes de pedir nada.
    */
-  protected readonly pines = computed<readonly PinMapa[]>(() => {
+  protected readonly pins = computed<readonly PinMap[]>(() => {
     const punto = this.punto();
     if (punto === null) return [];
     return [
@@ -372,9 +372,9 @@ export class UbicacionPicker {
         id: this.pinId(),
         lat: punto.lat,
         lng: punto.lng,
-        titulo: this.confirmada()
+        titulo: this.confirmed()
           ? this.etiquetaConfirmada()
-          : this.vieneDelNavegador()
+          : this.fromBrowser()
             ? 'Acá le encontramos'
             : 'El punto que marcó',
       },
@@ -389,28 +389,28 @@ export class UbicacionPicker {
    * rechazo y el formulario sigue como estaba. La ubicación es una comodidad,
    * no un requisito.
    */
-  usarMiUbicacion(): void {
-    const geo = this.documento.defaultView?.navigator?.geolocation;
+  usarMyLocation(): void {
+    const geo = this.document.defaultView?.navigator?.geolocation;
     if (!geo) {
-      this.rechazado.set(true);
+      this.rejected.set(true);
       return;
     }
 
-    this.pidiendo.set(true);
+    this.requesting.set(true);
     // Volver a pedirla es empezar de nuevo: lo confirmado antes valía para el
     // punto anterior, no para el que está por llegar.
-    this.desconfirmar();
+    this.unconfirm();
     geo.getCurrentPosition(
       (posicion) => {
         this.punto.set({ lat: posicion.coords.latitude, lng: posicion.coords.longitude });
-        this.vieneDelNavegador.set(true);
-        this.marcando.set(false);
-        this.rechazado.set(false);
-        this.pidiendo.set(false);
+        this.fromBrowser.set(true);
+        this.marking.set(false);
+        this.rejected.set(false);
+        this.requesting.set(false);
       },
       () => {
-        this.rechazado.set(true);
-        this.pidiendo.set(false);
+        this.rejected.set(true);
+        this.requesting.set(false);
       },
       { enableHighAccuracy: false, timeout: GPS_TIMEOUT_MS, maximumAge: GPS_MAX_AGE_MS },
     );
@@ -423,9 +423,9 @@ export class UbicacionPicker {
    * no quiere —o no puede— compartir dónde está ahora, que casi nunca es donde
    * vive.
    */
-  marcarEnMapa(): void {
-    this.marcando.set(true);
-    this.rechazado.set(false);
+  markInMap(): void {
+    this.marking.set(true);
+    this.rejected.set(false);
   }
 
   /**
@@ -436,22 +436,22 @@ export class UbicacionPicker {
    * queda **sin confirmar**: la persona que lo movió es la misma que tiene que
    * mirarlo y decir que sí, y el dato anterior ya no vale para el punto nuevo.
    */
-  fijarPunto(punto: Coordenadas): void {
-    this.desconfirmar();
+  pinPunto(punto: Coordinates): void {
+    this.unconfirm();
     const elegido = { lat: punto.lat, lng: punto.lng };
     this.punto.set(elegido);
-    this.vieneDelNavegador.set(false);
-    this.marcando.set(false);
-    this.rechazado.set(false);
+    this.fromBrowser.set(false);
+    this.marking.set(false);
+    this.rejected.set(false);
     // Los campos, si están abiertos, siguen al pin: si lo corrió el teclado o
     // un toque, lo escrito ya no describe dónde quedó.
-    if (this.coordenadasAbiertas()) {
-      this.latitudEscrita.set(formatCoordinate(elegido.lat));
-      this.longitudEscrita.set(formatCoordinate(elegido.lng));
-      this.errorLatitud.set('');
-      this.errorLongitud.set('');
+    if (this.openCoordinates()) {
+      this.writtenLatitude.set(formatCoordinate(elegido.lat));
+      this.writtenLongitude.set(formatCoordinate(elegido.lng));
+      this.errorLatitude.set('');
+      this.errorLongitude.set('');
     }
-    this.anuncio.set(
+    this.announcement.set(
       `Pin en latitud ${formatCoordinate(elegido.lat)}, longitud ${formatCoordinate(elegido.lng)}. Falta confirmarlo.`,
     );
     this.puntoElegido.emit(elegido);
@@ -461,27 +461,27 @@ export class UbicacionPicker {
    * Da por buena la dirección que muestra el mapa.
    *
    * Es lo que convierte un punto capturado en un dato del alta. Lo que **no**
-   * hace es escribir la calle: ver {@link AVISO_SIN_GEOCODIFICACION}.
+   * hace es escribir la calle: ver {@link NOTICE_WITHOUT_GEOCODING}.
    */
-  confirmarDireccionActual(): void {
+  confirmAddressActual(): void {
     const punto = this.punto();
     if (punto === null) return;
-    this.confirmada.set(true);
+    this.confirmed.set(true);
     this.confirmado.emit(punto);
   }
 
   /** Olvida la ubicación capturada, y con ella su confirmación; cierra el mapa. */
-  quitarUbicacion(): void {
+  removeLocation(): void {
     this.punto.set(null);
-    this.marcando.set(false);
-    this.coordenadasAbiertas.set(false);
-    this.anuncio.set('');
-    this.desconfirmar();
+    this.marking.set(false);
+    this.openCoordinates.set(false);
+    this.announcement.set('');
+    this.unconfirm();
   }
 
-  private desconfirmar(): void {
-    if (!this.confirmada()) return;
-    this.confirmada.set(false);
+  private unconfirm(): void {
+    if (!this.confirmed()) return;
+    this.confirmed.set(false);
     this.confirmado.emit(null);
   }
 }

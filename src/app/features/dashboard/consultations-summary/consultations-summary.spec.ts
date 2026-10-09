@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
-import { ConsultasResumen } from './consultations-summary';
+import { SummaryConsultations } from './consultations-summary';
 
 /**
  * "El panel dice la verdad" (C-24, H5) — lo que sólo un componente montado
@@ -44,7 +44,7 @@ function unLunesDeEsteMesA(hora: number, minutos = 0): Date {
 interface CitaCruda {
   readonly id: string;
   readonly desde: Date;
-  readonly estado: string;
+  readonly status: string;
   readonly serviceConceptId?: string;
 }
 
@@ -54,20 +54,20 @@ function wire(cita: CitaCruda): Record<string, unknown> {
     resourceId: 'r-1',
     startAt: cita.desde.toISOString(),
     endAt: new Date(cita.desde.getTime() + 20 * 60_000).toISOString(),
-    statusConceptId: cita.estado,
+    statusConceptId: cita.status,
     serviceConceptId: cita.serviceConceptId ?? 'act-consulta',
   };
 }
 
 describe('ConsultasResumen', () => {
-  let fixture: ComponentFixture<ConsultasResumen>;
-  let component: ConsultasResumen;
+  let fixture: ComponentFixture<SummaryConsultations>;
+  let component: SummaryConsultations;
   let http: HttpTestingController;
   let session: SessionStore;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ConsultasResumen],
+      imports: [SummaryConsultations],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
@@ -82,7 +82,7 @@ describe('ConsultasResumen', () => {
       accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: [TENANT], hpid: PERFIL }),
       refreshToken: 'r-1',
     });
-    fixture = TestBed.createComponent(ConsultasResumen);
+    fixture = TestBed.createComponent(SummaryConsultations);
     component = fixture.componentInstance;
   }
 
@@ -138,32 +138,32 @@ describe('ConsultasResumen', () => {
   }
 
   function estado(): { status: string } {
-    return (component as unknown as { estado: () => { status: string } }).estado();
+    return (component as unknown as { status: () => { status: string } }).status();
   }
 
   function resumenSemana(): { total: number; canceladas: number } {
-    return (component as unknown as { resumenSemana: () => { total: number; canceladas: number } }).resumenSemana();
+    return (component as unknown as { weekSummary: () => { total: number; canceladas: number } }).weekSummary();
   }
 
   function resumenMes(): { total: number; canceladas: number } {
-    return (component as unknown as { resumenMes: () => { total: number; canceladas: number } }).resumenMes();
+    return (component as unknown as { monthSummary: () => { total: number; canceladas: number } }).monthSummary();
   }
 
   function mapaDeCalor(): { celdas: readonly (readonly number[])[]; maximo: number } {
     return (
       component as unknown as {
-        mapaDeCalor: () => { celdas: readonly (readonly number[])[]; maximo: number };
+        heatMap: () => { celdas: readonly (readonly number[])[]; maximo: number };
       }
-    ).mapaDeCalor();
+    ).heatMap();
   }
 
   function otrasAtenciones(): readonly { label: string; total: number }[] {
-    return (component as unknown as { otrasAtenciones: () => readonly { label: string; total: number }[] }).otrasAtenciones();
+    return (component as unknown as { otherVisits: () => readonly { label: string; total: number }[] }).otherVisits();
   }
 
   it('una cuenta sin perfil profesional no pide nada al servidor', () => {
     session.start({ accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: [TENANT] }), refreshToken: 'r-1' });
-    fixture = TestBed.createComponent(ConsultasResumen);
+    fixture = TestBed.createComponent(SummaryConsultations);
     component = fixture.componentInstance;
     fixture.detectChanges();
 
@@ -174,8 +174,8 @@ describe('ConsultasResumen', () => {
     crear();
     responderRecursos();
     responderCitas([
-      { id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA },
-      { id: 'b-2', desde: unLunesDeEsteMesA(10), estado: ESTADO_CANCELADA },
+      { id: 'b-1', desde: unLunesDeEsteMesA(9), status: ESTADO_CONFIRMADA },
+      { id: 'b-2', desde: unLunesDeEsteMesA(10), status: ESTADO_CANCELADA },
     ]);
     responderCatalogoYActividades();
 
@@ -186,12 +186,12 @@ describe('ConsultasResumen', () => {
     crear();
     responderRecursos();
     responderCitas([
-      { id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA },
-      { id: 'b-2', desde: unLunesDeEsteMesA(10), estado: ESTADO_CANCELADA },
+      { id: 'b-1', desde: unLunesDeEsteMesA(9), status: ESTADO_CONFIRMADA },
+      { id: 'b-2', desde: unLunesDeEsteMesA(10), status: ESTADO_CANCELADA },
     ]);
     responderCatalogoYActividades();
 
-    (component as unknown as { incluirCanceladas: { set(v: boolean): void } }).incluirCanceladas.set(true);
+    (component as unknown as { includeCancelled: { set(v: boolean): void } }).includeCancelled.set(true);
     fixture.detectChanges();
 
     expect(resumenMes().total).toBe(2);
@@ -203,7 +203,7 @@ describe('ConsultasResumen', () => {
     // Un lunes del mes cae dentro de "esta semana" sólo si es la semana de
     // hoy; para no acoplar el test al día en que corre, se verifica la
     // propiedad relacional: semana <= mes, siempre.
-    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA }]);
+    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), status: ESTADO_CONFIRMADA }]);
     responderCatalogoYActividades();
 
     expect(resumenSemana().total).toBeLessThanOrEqual(resumenMes().total);
@@ -212,7 +212,7 @@ describe('ConsultasResumen', () => {
   it('el mapa de calor ubica una consulta de las 09:00 del lunes en [lunes][09:00]', () => {
     crear();
     responderRecursos();
-    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA }]);
+    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), status: ESTADO_CONFIRMADA }]);
     responderCatalogoYActividades();
 
     const { celdas } = mapaDeCalor();
@@ -225,7 +225,7 @@ describe('ConsultasResumen', () => {
   it('una consulta cancelada no entra al mapa de calor', () => {
     crear();
     responderRecursos();
-    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CANCELADA }]);
+    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), status: ESTADO_CANCELADA }]);
     responderCatalogoYActividades();
 
     const { celdas, maximo } = mapaDeCalor();
@@ -237,8 +237,8 @@ describe('ConsultasResumen', () => {
     crear();
     responderRecursos();
     responderCitas([
-      { id: 'b-consulta', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA, serviceConceptId: 'act-consulta' },
-      { id: 'b-procedimiento', desde: unLunesDeEsteMesA(10), estado: ESTADO_CONFIRMADA, serviceConceptId: 'act-procedimiento' },
+      { id: 'b-consulta', desde: unLunesDeEsteMesA(9), status: ESTADO_CONFIRMADA, serviceConceptId: 'act-consulta' },
+      { id: 'b-procedimiento', desde: unLunesDeEsteMesA(10), status: ESTADO_CONFIRMADA, serviceConceptId: 'act-procedimiento' },
     ]);
     responderCatalogoYActividades();
 
@@ -281,7 +281,7 @@ describe('ConsultasResumen', () => {
     crear();
     responderDosSedes();
     citasDe('r-1').flush({
-      items: [wire({ id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA })],
+      items: [wire({ id: 'b-1', desde: unLunesDeEsteMesA(9), status: ESTADO_CONFIRMADA })],
       count: 1,
       limit: 500,
       truncated: false,
@@ -329,7 +329,7 @@ describe('ConsultasResumen', () => {
   it('con todas las sedes leídas no hay aviso de sede', () => {
     crear();
     responderRecursos();
-    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA }]);
+    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), status: ESTADO_CONFIRMADA }]);
     responderCatalogoYActividades();
 
     expect(

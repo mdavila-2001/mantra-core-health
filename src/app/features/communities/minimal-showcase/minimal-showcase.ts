@@ -12,10 +12,10 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 
 /** Un enlace de vitrina: minúsculas, números y guiones. Igual que el backend. */
-const SLUG_VALIDO = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const VALID_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** Tope del respaldo, el mismo que el resto de los adjuntos de la plataforma. */
-const MAX_BYTES_DE_FOTO = 5 * 1024 * 1024;
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 
 /**
  * **Crear la vitrina, donde hace falta tenerla.**
@@ -54,7 +54,7 @@ const MAX_BYTES_DE_FOTO = 5 * 1024 * 1024;
   styleUrl: './minimal-showcase.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VitrinaMinima {
+export class MinShowcase {
   private readonly community = inject(CommunityClient);
   private readonly files = inject(FilesClient);
   private readonly auth = inject(AuthService);
@@ -66,15 +66,15 @@ export class VitrinaMinima {
   readonly creada = output<OwnPublicProfile>();
 
   protected readonly displayName = signal(this.auth.displayName() ?? '');
-  protected readonly slug = signal(sugerirEnlace(this.auth.displayName() ?? ''));
-  protected readonly foto = signal<readonly File[]>([]);
-  protected readonly guardando = signal(false);
+  protected readonly slug = signal(suggestLink(this.auth.displayName() ?? ''));
+  protected readonly photo = signal<readonly File[]>([]);
+  protected readonly saving = signal(false);
   protected readonly error = signal('');
 
-  protected readonly maxBytesDeFoto = MAX_BYTES_DE_FOTO;
-  protected readonly formatosDeFoto = 'image/jpeg,image/png,image/webp';
+  protected readonly photoMaxBytes = PHOTO_MAX_BYTES;
+  protected readonly photoFormats = 'image/jpeg,image/png,image/webp';
 
-  protected readonly slugValido = computed(() => SLUG_VALIDO.test(this.slug().trim()));
+  protected readonly validSlug = computed(() => VALID_SLUG.test(this.slug().trim()));
 
   /**
    * Si la foto es obligatoria. Depende de para qué se crea la vitrina.
@@ -87,18 +87,18 @@ export class VitrinaMinima {
    * Para firmar un artículo no hace falta: el servidor no la pide y una firma
    * sin foto sigue siendo una firma.
    */
-  protected readonly fotoObligatoria = computed(() => this.motivo() === 'grupos');
+  protected readonly requiredPhoto = computed(() => this.motivo() === 'grupos');
 
-  protected readonly puedeCrear = computed(
+  protected readonly canCreate = computed(
     () =>
-      this.slugValido() &&
+      this.validSlug() &&
       this.displayName().trim() !== '' &&
-      (!this.fotoObligatoria() || this.foto().length > 0) &&
-      !this.guardando(),
+      (!this.requiredPhoto() || this.photo().length > 0) &&
+      !this.saving(),
   );
 
   /** El enlace tal como va a quedar, para que no haya que imaginárselo. */
-  protected readonly enlace = computed(
+  protected readonly link = computed(
     () => `alovida.app/p/${this.slug().trim() || 'tu-enlace'}`,
   );
 
@@ -106,36 +106,36 @@ export class VitrinaMinima {
    * Sin organización activa no hay vitrina posible: `tenantId` es obligatorio
    * en el contrato. Se dice, en vez de fallar al guardar.
    */
-  protected readonly sinOrganizacion = computed(() => this.auth.activeTenantId() === null);
+  protected readonly withoutOrganization = computed(() => this.auth.activeTenantId() === null);
 
   /** El nombre escrito propone el enlace, mientras nadie lo haya tocado a mano. */
-  protected readonly alEscribirNombre = (valor: string): void => {
-    const anterior = sugerirEnlace(this.displayName());
+  protected readonly toWriteName = (valor: string): void => {
+    const anterior = suggestLink(this.displayName());
     this.displayName.set(valor);
     if (this.slug() === anterior) {
-      this.slug.set(sugerirEnlace(valor));
+      this.slug.set(suggestLink(valor));
     }
   };
 
-  protected crear(): void {
+  protected create(): void {
     const tenantId = this.auth.activeTenantId();
-    if (tenantId === null || !this.puedeCrear()) return;
+    if (tenantId === null || !this.canCreate()) return;
 
-    this.guardando.set(true);
+    this.saving.set(true);
     this.error.set('');
 
-    const foto = this.foto()[0];
+    const foto = this.photo()[0];
     if (foto === undefined) {
-      this.guardarVitrina(tenantId, undefined);
+      this.saveShowcase(tenantId, undefined);
       return;
     }
 
     // `IMAGE`/`NORMAL`: es la foto con la que se firma en público, no un dato
     // clínico. El mismo par que usaba la pantalla de vitrina que se sacó.
     this.files.upload(foto, 'IMAGE', 'NORMAL').subscribe({
-      next: ({ id }) => this.guardarVitrina(tenantId, id),
+      next: ({ id }) => this.saveShowcase(tenantId, id),
       error: () => {
-        this.guardando.set(false);
+        this.saving.set(false);
         this.error.set('No pudimos subir la foto, así que no se creó la vitrina. Pruebe de nuevo.');
       },
     });
@@ -148,7 +148,7 @@ export class VitrinaMinima {
    * «el perfil en público», y una vitrina creada en privado dejaría a quien la
    * acaba de crear con el mismo rechazo de antes y sin entender por qué.
    */
-  private guardarVitrina(tenantId: string, avatarFileId: string | undefined): void {
+  private saveShowcase(tenantId: string, avatarFileId: string | undefined): void {
     this.community
       .upsertOwnProfile({
         tenantId,
@@ -159,11 +159,11 @@ export class VitrinaMinima {
       })
       .subscribe({
         next: (perfil) => {
-          this.guardando.set(false);
+          this.saving.set(false);
           this.creada.emit(perfil);
         },
         error: (fallo: unknown) => {
-          this.guardando.set(false);
+          this.saving.set(false);
           const esConflicto = fallo instanceof HttpErrorResponse && fallo.status === 409;
           this.error.set(
             esConflicto
@@ -182,7 +182,7 @@ export class VitrinaMinima {
  * primera pantalla que ve alguien que sólo quería publicar un artículo le pide
  * inventar una URL.
  */
-function sugerirEnlace(nombre: string): string {
+function suggestLink(nombre: string): string {
   return nombre
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')

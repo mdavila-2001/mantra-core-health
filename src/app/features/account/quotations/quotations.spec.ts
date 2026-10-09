@@ -13,14 +13,14 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PractitionerAvailability } from '../../directory/practitioner-availability/practitioner-availability';
 import type { SearchOrigin } from '../../nearby-places/search-origin-picker/search-origin-picker.types';
-import { Cotizaciones } from './quotations';
-import { CotizacionesFuentes, type BusquedaDeCotizaciones } from './quotations.sources';
-import type { CotizacionResultado, VerticalCotizacion } from './quotations.logic';
+import { Quotations } from './quotations';
+import { QuotationSources, type QuotationsSearch } from './quotations.sources';
+import type { ResultQuotation, VerticalQuotation } from './quotations.logic';
 
 /**
  * «Cotizaciones» del paciente — H3.S2.
  *
- * La fuente es un doble ({@link CotizacionesFuentes} tiene su propio spec con
+ * La fuente es un doble ({@link QuotationSources} tiene su propio spec con
  * las peticiones HTTP): acá se fijan la pantalla y sus estados.
  */
 /** La grilla de horarios tiene su propio spec: acá sólo importa qué recibe. */
@@ -38,14 +38,14 @@ class AgendaDoble {
 }
 
 describe('Cotizaciones', () => {
-  let fixture: ComponentFixture<Cotizaciones>;
+  let fixture: ComponentFixture<Quotations>;
   let buscar: ReturnType<
     typeof vi.fn<
       (
         t: string,
-        v: VerticalCotizacion,
+        v: VerticalQuotation,
         o: SearchOrigin | null,
-      ) => Observable<BusquedaDeCotizaciones>
+      ) => Observable<QuotationsSearch>
     >
   >;
   const getOwnOrders = vi.fn();
@@ -55,7 +55,7 @@ describe('Cotizaciones', () => {
   const confirmar = vi.fn();
   const exito = vi.fn();
 
-  const FARMACIA: CotizacionResultado = {
+  const FARMACIA: ResultQuotation = {
     id: 'farmacia:1',
     vertical: 'MEDICAMENTOS',
     que: 'Paracetamol 500 mg',
@@ -85,7 +85,7 @@ describe('Cotizaciones', () => {
       },
     },
   };
-  const HEMOGRAMA: CotizacionResultado = {
+  const HEMOGRAMA: ResultQuotation = {
     id: 'estudio:u1:e1',
     vertical: 'ANALISIS',
     que: 'Hemograma completo',
@@ -94,7 +94,7 @@ describe('Cotizaciones', () => {
     distanceKm: null,
     reserva: { centroId: 'u1', centro: 'Laboratorio Central', estudio: 'Hemograma completo' },
   };
-  const SIN_PRECIO: CotizacionResultado = {
+  const SIN_PRECIO: ResultQuotation = {
     id: 'estudio:1',
     vertical: 'IMAGENOLOGIA',
     que: 'Tomografía de cráneo',
@@ -104,7 +104,7 @@ describe('Cotizaciones', () => {
     sinPrecio: 'El centro no publicó el precio de este estudio',
     sinDistancia: 'El centro no publica su ubicación en el directorio',
   };
-  const ARANCEL: CotizacionResultado = {
+  const ARANCEL: ResultQuotation = {
     id: 'arancel:1',
     vertical: 'SERVICIOS_MEDICOS',
     que: 'Consulta médica',
@@ -120,8 +120,8 @@ describe('Cotizaciones', () => {
   };
 
   function respuesta(
-    resultados: readonly CotizacionResultado[],
-    fuentesCaidas: BusquedaDeCotizaciones['fuentesCaidas'] = [],
+    resultados: readonly ResultQuotation[],
+    fuentesCaidas: QuotationsSearch['fuentesCaidas'] = [],
   ) {
     return of({ resultados, fuentesCaidas });
   }
@@ -131,7 +131,7 @@ describe('Cotizaciones', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: CotizacionesFuentes, useValue: { buscar } },
+        { provide: QuotationSources, useValue: { search: buscar } },
         {
           provide: AuthService,
           useValue: {
@@ -149,11 +149,11 @@ describe('Cotizaciones', () => {
         { provide: ToastService, useValue: { success: exito } },
       ],
     });
-    TestBed.overrideComponent(Cotizaciones, {
+    TestBed.overrideComponent(Quotations, {
       remove: { imports: [PractitionerAvailability] },
       add: { imports: [AgendaDoble] },
     });
-    fixture = TestBed.createComponent(Cotizaciones);
+    fixture = TestBed.createComponent(Quotations);
     fixture.detectChanges();
     await fixture.whenStable();
   }
@@ -174,11 +174,11 @@ describe('Cotizaciones', () => {
   }
 
   /** Lo que la persona hace desde los controles, sin esperar el debounce del campo. */
-  function componente(): Cotizaciones & {
+  function componente(): Quotations & {
     buscar(t: string): void;
-    cambiarOrden(o: 'PRECIO' | 'CERCANIA' | null): void;
-    cambiarVertical(v: VerticalCotizacion | null): void;
-    origen: { set(o: SearchOrigin | null): void };
+    changeOrder(o: 'PRECIO' | 'CERCANIA' | null): void;
+    changeVertical(v: VerticalQuotation | null): void;
+    origin: { set(o: SearchOrigin | null): void };
   } {
     return fixture.componentInstance as unknown as ReturnType<typeof componente>;
   }
@@ -253,7 +253,7 @@ describe('Cotizaciones', () => {
     buscar.mockReturnValue(respuesta([FARMACIA]));
     await montar();
     componente().buscar('para');
-    componente().cambiarOrden('CERCANIA');
+    componente().changeOrder('CERCANIA');
     await asentar();
 
     const aviso = raiz().querySelector('[data-testid="cotizaciones-sin-ubicacion"]');
@@ -276,7 +276,7 @@ describe('Cotizaciones', () => {
     componente().buscar('para');
     await asentar();
     const origen: SearchOrigin = { source: 'home', lat: -17.78, lng: -63.18 };
-    componente().origen.set(origen);
+    componente().origin.set(origen);
     await asentar();
 
     expect(buscar).toHaveBeenLastCalledWith('para', 'TODAS', origen);
@@ -295,14 +295,14 @@ describe('Cotizaciones', () => {
     buscar.mockReturnValue(respuesta([FARMACIA]));
     await montar();
     componente().buscar('para');
-    componente().cambiarVertical('MEDICAMENTOS');
+    componente().changeVertical('MEDICAMENTOS');
     await asentar();
 
     expect(buscar).toHaveBeenLastCalledWith('para', 'MEDICAMENTOS', null);
   });
 
   it('mientras busca lo anuncia', async () => {
-    buscar.mockReturnValue(new Subject<BusquedaDeCotizaciones>());
+    buscar.mockReturnValue(new Subject<QuotationsSearch>());
     await montar();
     componente().buscar('para');
     await asentar();

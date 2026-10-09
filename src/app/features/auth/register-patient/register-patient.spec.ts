@@ -7,7 +7,7 @@ import { RegisterPatient } from './register-patient';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
 import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
-import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/concepts';
+import { EMPLOYER, OCCUPATION } from '../../../core/mock/fixtures/concepts';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 
 const RESPUESTA = {
@@ -2380,18 +2380,18 @@ describe('RegisterPatient', () => {
      ========================================================================== */
   describe('las salidas escritas a mano existen en el catálogo', () => {
     it('«Otra ocupación» tiene el código que la pantalla busca', () => {
-      expect(OCUPACION[CODIGO_OCUPACION_OTRA], CODIGO_OCUPACION_OTRA).toBeDefined();
+      expect(OCCUPATION[CODIGO_OCUPACION_OTRA], CODIGO_OCUPACION_OTRA).toBeDefined();
     });
 
     it('«Otra empresa» también', () => {
-      expect(EMPLEADOR[CODIGO_EMPRESA_OTRA], CODIGO_EMPRESA_OTRA).toBeDefined();
+      expect(EMPLOYER[CODIGO_EMPRESA_OTRA], CODIGO_EMPRESA_OTRA).toBeDefined();
     });
 
     it('y no son las únicas: quedan opciones de verdad antes de la salida', () => {
       // Si el catálogo fuera sólo «Otra», la lista no ofrecería nada y todo el
       // mundo terminaría escribiendo a mano lo que el catálogo ya tiene.
-      expect(Object.keys(OCUPACION).length).toBeGreaterThan(10);
-      expect(Object.keys(EMPLEADOR).length).toBeGreaterThan(3);
+      expect(Object.keys(OCCUPATION).length).toBeGreaterThan(10);
+      expect(Object.keys(EMPLOYER).length).toBeGreaterThan(3);
     });
   });
 });

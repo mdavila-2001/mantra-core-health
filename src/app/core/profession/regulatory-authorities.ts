@@ -26,25 +26,25 @@
  */
 
 /** Ver `professional-degrees.ts`: `core` no importa tipos de los componentes. */
-interface OpcionDeAutoridad {
+interface AuthorityOption {
   readonly value: string;
   readonly label: string;
 }
 
-export const AUTORIDAD_MINISTERIO = 'Ministerio de Salud y Deportes';
-export const AUTORIDAD_SEDES = 'Servicio Departamental de Salud (SEDES)';
+export const MINISTRY_AUTHORITY = 'Ministerio de Salud y Deportes';
+export const SITES_AUTHORITY = 'Servicio Departamental de Salud (SEDES)';
 
 /** El colegio cuando el título no dice cuál: sin título, o uno sin colegio propio. */
-export const COLEGIO_DE_LA_PROFESION = 'Colegio de la profesión';
+export const PROFESSION_COLLEGE = 'Colegio de la profesión';
 
-export const COLEGIO_MEDICO = 'Colegio Médico de Bolivia';
-export const COLEGIO_ODONTOLOGOS = 'Colegio de Odontólogos de Bolivia';
+export const DOCTOR_COLLEGE = 'Colegio Médico de Bolivia';
+export const DENTISTS_COLLEGE = 'Colegio de Odontólogos de Bolivia';
 
 /** El colegio de cada título de `OPCIONES_TITULO_PROFESIONAL` que tiene uno. */
-const COLEGIO_POR_TITULO: Readonly<Record<string, string>> = {
-  'Médico / Médica': COLEGIO_MEDICO,
-  'Médico especialista / Médica especialista': COLEGIO_MEDICO,
-  'Odontólogo / Odontóloga': COLEGIO_ODONTOLOGOS,
+const COLLEGE_BY_TITLE: Readonly<Record<string, string>> = {
+  'Médico / Médica': DOCTOR_COLLEGE,
+  'Médico especialista / Médica especialista': DOCTOR_COLLEGE,
+  'Odontólogo / Odontóloga': DENTISTS_COLLEGE,
   'Licenciado / Licenciada en Enfermería': 'Colegio de Enfermeras de Bolivia',
   'Licenciado / Licenciada en Bioquímica y Farmacia': 'Colegio de Bioquímica y Farmacia de Bolivia',
   'Licenciado / Licenciada en Nutrición': 'Colegio de Nutricionistas y Dietistas de Bolivia',
@@ -54,25 +54,25 @@ const COLEGIO_POR_TITULO: Readonly<Record<string, string>> = {
   'Licenciado / Licenciada en Trabajo Social': 'Colegio de Trabajadores Sociales de Bolivia',
 };
 
-const COLEGIOS: ReadonlySet<string> = new Set([
-  COLEGIO_DE_LA_PROFESION,
-  ...Object.values(COLEGIO_POR_TITULO),
+const COLLEGES: ReadonlySet<string> = new Set([
+  PROFESSION_COLLEGE,
+  ...Object.values(COLLEGE_BY_TITLE),
 ]);
 
 /**
  * El colegio que corresponde a un título profesional.
  *
  * @param titulo - El título tal como está en la lista cerrada.
- * @returns El nombre del colegio, o {@link COLEGIO_DE_LA_PROFESION} si el título
+ * @returns El nombre del colegio, o {@link PROFESSION_COLLEGE} si el título
  *   no tiene uno conocido.
  */
-export function colegioDelTitulo(titulo: string): string {
-  return COLEGIO_POR_TITULO[titulo] ?? COLEGIO_DE_LA_PROFESION;
+export function titleCollege(titulo: string): string {
+  return COLLEGE_BY_TITLE[titulo] ?? PROFESSION_COLLEGE;
 }
 
 /** Si una autoridad guardada es alguno de los colegios (y no Ministerio o SEDES). */
-export function esColegio(autoridad: string): boolean {
-  return COLEGIOS.has(autoridad);
+export function isCollege(autoridad: string): boolean {
+  return COLLEGES.has(autoridad);
 }
 
 /**
@@ -80,15 +80,15 @@ export function esColegio(autoridad: string): boolean {
  *
  * @param titulo - El título profesional elegido; vacío si todavía no hay.
  */
-export function opcionesAutoridadReguladora(titulo: string): readonly OpcionDeAutoridad[] {
-  const colegio = colegioDelTitulo(titulo);
+export function optionsRegulatoryAuthority(titulo: string): readonly AuthorityOption[] {
+  const colegio = titleCollege(titulo);
   return [
-    { value: AUTORIDAD_MINISTERIO, label: 'Ministerio de Salud' },
-    { value: AUTORIDAD_SEDES, label: 'SEDES (Gobernación)' },
+    { value: MINISTRY_AUTHORITY, label: 'Ministerio de Salud' },
+    { value: SITES_AUTHORITY, label: 'SEDES (Gobernación)' },
     {
       value: colegio,
       label:
-        colegio === COLEGIO_DE_LA_PROFESION
+        colegio === PROFESSION_COLLEGE
           ? 'Colegio de la profesión'
           : `Colegio de la profesión (${colegio})`,
     },

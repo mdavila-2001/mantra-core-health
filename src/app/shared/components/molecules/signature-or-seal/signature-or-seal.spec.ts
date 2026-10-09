@@ -1,16 +1,16 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { FirmaOSello } from './signature-or-seal';
+import { SignatureOrSeal } from './signature-or-seal';
 
 const PNG_1X1 =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
 
 describe('FirmaOSello', () => {
-  let fixture: ComponentFixture<FirmaOSello>;
+  let fixture: ComponentFixture<SignatureOrSeal>;
   const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   function montar(tipo: 'firma' | 'sello', src: string | null = null): void {
-    fixture = TestBed.createComponent(FirmaOSello);
+    fixture = TestBed.createComponent(SignatureOrSeal);
     fixture.componentRef.setInput('tipo', tipo);
     fixture.componentRef.setInput('src', src);
   }

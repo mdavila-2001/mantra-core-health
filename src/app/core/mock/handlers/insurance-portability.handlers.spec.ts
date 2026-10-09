@@ -40,7 +40,7 @@ describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', 
     previousClaims = sessionStorage.getItem(claimsStorageKey);
     sessionStorage.removeItem(claimsStorageKey);
     vi.resetModules();
-    const { PACIENTES } = await import('../fixtures/people');
+    const { PATIENTS: PACIENTES } = await import('../fixtures/people');
     const { buscarUsuario } = await import('../mock-session');
     const { registrarPerfiles } = await import('./profiles.handlers');
     const { registrarSeguros } = await import('./insurance.handlers');

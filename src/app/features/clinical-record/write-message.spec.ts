@@ -9,7 +9,7 @@ import {
   validation,
 } from '../../core/view-state/view-state';
 
-import { mensajeDeEscritura, mensajeDeFalloDeEscritura } from './write-message';
+import { writeMessage, writeFailureMessage } from './write-message';
 
 /**
  * La cola de fallos que comparten los ocho puntos de escritura del expediente.
@@ -29,13 +29,13 @@ describe('mensajeDeFalloDeEscritura', () => {
    * el mensaje lo dice.
    */
   it('la petición que no llega se cuenta', () => {
-    expect(mensajeDeFalloDeEscritura(offline(), textos)).toBe(
+    expect(writeFailureMessage(offline(), textos)).toBe(
       'No pudimos conectarnos. Revise su conexión y reintente.',
     );
   });
 
   it('el 403 con mensaje del servidor usa el del servidor', () => {
-    expect(mensajeDeFalloDeEscritura(forbidden({ message: 'Falta el alcance clinical:write' }), textos)).toBe(
+    expect(writeFailureMessage(forbidden({ message: 'Falta el alcance clinical:write' }), textos)).toBe(
       'Falta el alcance clinical:write',
     );
   });
@@ -46,11 +46,11 @@ describe('mensajeDeFalloDeEscritura', () => {
    * es un mensaje, es un susto. Lo encontró la prueba del bloque de alergias.
    */
   it('el 403 sin detalle cae al texto del bloque, no a un aviso vacío', () => {
-    expect(mensajeDeFalloDeEscritura(forbidden({ message: '' }), textos)).toBe(
+    expect(writeFailureMessage(forbidden({ message: '' }), textos)).toBe(
       'Su rol no permite registrar la alergia.',
     );
     expect(
-      mensajeDeFalloDeEscritura(forbidden({ message: '' }), {
+      writeFailureMessage(forbidden({ message: '' }), {
         ...textos,
         sinPermiso: 'Su rol no permite registrar alergias.',
       }),
@@ -59,10 +59,10 @@ describe('mensajeDeFalloDeEscritura', () => {
 
   /** S6 no confirma que el recurso exista: ni su nombre ni su dueño. */
   it('el 404 no filtra nada del recurso', () => {
-    expect(mensajeDeFalloDeEscritura(notFound(), textos)).toBe(
+    expect(writeFailureMessage(notFound(), textos)).toBe(
       'El expediente ya no existe. Recargue la pantalla.',
     );
-    expect(mensajeDeFalloDeEscritura(notFound(), { ...textos, yaNoExiste: 'La receta ya no existe.' })).toBe(
+    expect(writeFailureMessage(notFound(), { ...textos, yaNoExiste: 'La receta ya no existe.' })).toBe(
       'La receta ya no existe.',
     );
   });
@@ -72,10 +72,10 @@ describe('mensajeDeFalloDeEscritura', () => {
    * quien lo busca en los registros no tienen cómo encontrarse.
    */
   it('el fallo inesperado lleva su identificador de petición', () => {
-    expect(mensajeDeFalloDeEscritura(unexpectedError('req-42', 'Se cayó el índice'), textos)).toBe(
+    expect(writeFailureMessage(unexpectedError('req-42', 'Se cayó el índice'), textos)).toBe(
       'Se cayó el índice (req-42)',
     );
-    expect(mensajeDeFalloDeEscritura(unexpectedError('req-42', ''), textos)).toBe(
+    expect(writeFailureMessage(unexpectedError('req-42', ''), textos)).toBe(
       'Ocurrió un error inesperado. (req-42)',
     );
   });
@@ -86,15 +86,15 @@ describe('mensajeDeFalloDeEscritura', () => {
    */
   it('la validación no la resuelve la cola', () => {
     expect(
-      mensajeDeFalloDeEscritura(validation([{ code: 'VALIDATION', message: 'Falta el código' }]), textos),
+      writeFailureMessage(validation([{ code: 'VALIDATION', message: 'Falta el código' }]), textos),
     ).toBeNull();
   });
 
   /** Lo que no es un fallo no inventa un mensaje de fallo. */
   it('los estados que no son fallo devuelven null', () => {
-    expect(mensajeDeFalloDeEscritura(ready(null), textos)).toBeNull();
-    expect(mensajeDeFalloDeEscritura(loading(), textos)).toBeNull();
-    expect(mensajeDeFalloDeEscritura(stale(null, new Date()), textos)).toBeNull();
+    expect(writeFailureMessage(ready(null), textos)).toBeNull();
+    expect(writeFailureMessage(loading(), textos)).toBeNull();
+    expect(writeFailureMessage(stale(null, new Date()), textos)).toBeNull();
   });
 });
 
@@ -107,7 +107,7 @@ describe('mensajeDeEscritura', () => {
    */
   it('de la validación cuenta el primer problema', () => {
     expect(
-      mensajeDeEscritura(
+      writeMessage(
         validation([
           { code: 'VALIDATION', message: 'Falta el código' },
           { code: 'VALIDATION', message: 'Falta la unidad' },
@@ -119,13 +119,13 @@ describe('mensajeDeEscritura', () => {
 
   /** Una validación sin problemas legibles no deja el aviso en blanco. */
   it('la validación sin detalle cae al genérico', () => {
-    expect(mensajeDeEscritura(validation([]), textos)).toBe('No pudimos registrar la observación.');
+    expect(writeMessage(validation([]), textos)).toBe('No pudimos registrar la observación.');
   });
 
   it('el resto de los fallos los resuelve la cola compartida', () => {
-    expect(mensajeDeEscritura(offline(), textos)).toBe(
+    expect(writeMessage(offline(), textos)).toBe(
       'No pudimos conectarnos. Revise su conexión y reintente.',
     );
-    expect(mensajeDeEscritura(ready(null), textos)).toBeNull();
+    expect(writeMessage(ready(null), textos)).toBeNull();
   });
 });

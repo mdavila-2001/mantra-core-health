@@ -49,31 +49,31 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
 } from '../shared-registration/password-policy';
-import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { AVISO_REESCRIBIR_DIRECCION } from '../shared-registration/map-location-picker/map-location-picker';
+import { NOTICE_REWRITE_ADDRESS } from '../shared-registration/map-location-picker/map-location-picker';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
+  RegistrationHelp,
+  type HelpCard,
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppMap } from '../../../shared/components/organisms/map/map';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
-import type { PinMapa } from '../../../shared/components/organisms/map/map-pin.types';
+import type { PinMap } from '../../../shared/components/organisms/map/map-pin.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
@@ -267,7 +267,7 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * clave la declara la propia página (`PaginaDeFormulario.clave`), así que las
  * dos mitades no se pueden separar de un descuido.
  */
-const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
   document: [
     {
       icono: 'patients',
@@ -445,9 +445,9 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     ReferenceCombobox,
-    RegistroAyuda,
+    RegistrationHelp,
     AppMap,
     FormField,
     AppInput,
@@ -503,7 +503,7 @@ export class RegisterPatient {
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
         nonNullable: true,
-        validators: [...validadoresDeContrasena],
+        validators: [...passwordValidators],
       }),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
@@ -836,7 +836,7 @@ export class RegisterPatient {
    * Vacío mientras no haya punto: el mapa acepta la lista vacía y se queda en
    * su vista por defecto, que es lo que corresponde antes de pedir nada.
    */
-  readonly pinesDomicilio = computed<readonly PinMapa[]>(() => {
+  readonly pinesDomicilio = computed<readonly PinMap[]>(() => {
     const punto = this.gpsDomicilio();
     if (punto === null) return [];
     return [
@@ -892,7 +892,7 @@ export class RegisterPatient {
     () => this.gpsTrabajo() !== null || this.marcandoTrabajo(),
   );
 
-  readonly pinesTrabajo = computed<readonly PinMapa[]>(() => {
+  readonly pinesTrabajo = computed<readonly PinMap[]>(() => {
     const punto = this.gpsTrabajo();
     if (punto === null) return [];
     return [
@@ -939,7 +939,7 @@ export class RegisterPatient {
   readonly trabajoPorReescribir = computed(
     () => this.trabajoVaciadoPorElMapa() && this.trabajoEscrito().trim() === '',
   );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -1051,7 +1051,7 @@ export class RegisterPatient {
    * que quien agregue el campo trece se acuerde de contar.
    */
   readonly paginasPaciente = computed<readonly PaginaDeFormulario[]>(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: '¿Cómo se llama?',
         clave: 'name',
@@ -1352,7 +1352,7 @@ export class RegisterPatient {
             placeholder: 'Su contraseña',
             testId: 'registro-password',
             icono: 'lock',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
         ],
       },
@@ -2123,7 +2123,7 @@ export class RegisterPatient {
   readonly claveVisible = signal('');
 
   /** Las tarjetas del costado: por qué te pedimos lo de ESTE paso. */
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA_PACIENTE[this.claveVisible()] ?? [],
   );
 
@@ -2227,7 +2227,7 @@ export class RegisterPatient {
    * el alta sigue.
    */
   protected cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
         // El `code` viaja por lo mismo que en las empresas: es lo que
@@ -2295,7 +2295,7 @@ export class RegisterPatient {
 
   /** Reintenta la lectura del catálogo de ocupaciones. Ver `reintentarDepartamentos`. */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 

@@ -46,20 +46,20 @@ import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import {
-  ArchivoInvalido,
-  BYTES_MAXIMOS_DEL_ARCHIVO,
-  decodificarCsv,
-  CAMPOS_VACIOS,
-  COLUMNAS_DEL_CSV,
-  FILAS_DE_EJEMPLO,
-  FILAS_MAXIMAS_POR_CARGA,
-  LARGO_MAXIMO_DEL_CODIGO,
-  leerCsv,
-  revisarCarga,
-  revisarProducto,
-  type CamposDelProducto,
-  type CodificacionDelCsv,
-  type FilaRevisada,
+  InvalidFile,
+  FILE_MAX_BYTES,
+  decodeCsv,
+  EMPTY_FIELDS,
+  CSV_COLUMNS,
+  EXAMPLE_ROWS,
+  MAX_ROWS_BY_LOAD,
+  CODE_LONG_MAX,
+  readCsv,
+  reviewLoad,
+  reviewProduct,
+  type ProductFields,
+  type CsvEncoding,
+  type ReviewedRow,
 } from './catalog.rules';
 
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
@@ -168,10 +168,10 @@ export class PharmacyCatalog {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly acciones = ACCIONES_DE_LA_FILA;
-  protected readonly largoDelCodigo = LARGO_MAXIMO_DEL_CODIGO;
-  protected readonly filasMaximas = FILAS_MAXIMAS_POR_CARGA;
-  protected readonly bytesMaximos = BYTES_MAXIMOS_DEL_ARCHIVO;
-  protected readonly columnasDelCsv = COLUMNAS_DEL_CSV;
+  protected readonly largoDelCodigo = CODE_LONG_MAX;
+  protected readonly filasMaximas = MAX_ROWS_BY_LOAD;
+  protected readonly bytesMaximos = FILE_MAX_BYTES;
+  protected readonly columnasDelCsv = CSV_COLUMNS;
 
   /* ─── Qué farmacia ────────────────────────────────────────────────────── */
 
@@ -256,7 +256,7 @@ export class PharmacyCatalog {
 
   /* ─── Nuevo producto ──────────────────────────────────────────────────── */
 
-  protected readonly campos = signal<CamposDelProducto>(CAMPOS_VACIOS);
+  protected readonly campos = signal<ProductFields>(EMPTY_FIELDS);
   protected readonly erroresDelAlta = signal<readonly string[]>([]);
   protected readonly guardando = signal(false);
 
@@ -274,12 +274,12 @@ export class PharmacyCatalog {
   protected readonly analizando = signal(false);
   protected readonly errorDelArchivo = signal<string | null>(null);
   protected readonly columnasIgnoradas = signal<readonly string[]>([]);
-  protected readonly revisadas = signal<readonly FilaRevisada[]>([]);
+  protected readonly revisadas = signal<readonly ReviewedRow[]>([]);
   protected readonly resultados = signal<readonly ResultadoDeFila[]>([]);
   protected readonly detenido = signal(false);
   protected readonly deteniendo = signal(false);
   protected readonly publicando = signal(false);
-  protected readonly codificacion = signal<CodificacionDelCsv>('utf-8');
+  protected readonly codificacion = signal<CsvEncoding>('utf-8');
   /** Un error que no es de la fila (permiso, red, servidor) y cortó la carga. */
   protected readonly fallaGeneral = signal<string | null>(null);
   private publicacion: Subscription | null = null;
@@ -421,7 +421,7 @@ export class PharmacyCatalog {
     this.farmaciaElegida.set(id);
     this.busqueda.set('');
     this.reiniciarImportacion();
-    this.campos.set(CAMPOS_VACIOS);
+    this.campos.set(EMPTY_FIELDS);
     this.erroresDelAlta.set([]);
     if (id !== null) {
       this.recargarProductos();
@@ -533,7 +533,7 @@ export class PharmacyCatalog {
 
   /* ─── Nuevo producto ──────────────────────────────────────────────────── */
 
-  protected fijarCampo(campo: keyof CamposDelProducto, valor: string | number | null): void {
+  protected fijarCampo(campo: keyof ProductFields, valor: string | number | null): void {
     this.campos.update((actuales) => ({ ...actuales, [campo]: valor === null ? '' : String(valor) }));
   }
 
@@ -542,7 +542,7 @@ export class PharmacyCatalog {
     if (pharmacyId === null) {
       return;
     }
-    const revision = revisarProducto(this.campos());
+    const revision = reviewProduct(this.campos());
     if (!revision.valido) {
       this.erroresDelAlta.set(revision.errores);
       return;
@@ -552,7 +552,7 @@ export class PharmacyCatalog {
     this.pharmacy.publishProduct(pharmacyId, revision.borrador).subscribe({
       next: () => {
         this.guardando.set(false);
-        this.campos.set(CAMPOS_VACIOS);
+        this.campos.set(EMPTY_FIELDS);
         this.toasts.success(`«${nombreDelBorrador(revision.borrador)}» ya está en su catálogo.`);
         // La prueba del alta es verla en el listado, releído de la API.
         this.busqueda.set('');
@@ -567,14 +567,14 @@ export class PharmacyCatalog {
   }
 
   protected limpiarFormulario(): void {
-    this.campos.set(CAMPOS_VACIOS);
+    this.campos.set(EMPTY_FIELDS);
     this.erroresDelAlta.set([]);
   }
 
   /* ─── Importación masiva ──────────────────────────────────────────────── */
 
   protected descargarPlantilla(): void {
-    this.csv.download(FILAS_DE_EJEMPLO, columnasDePlantilla(), 'plantilla-catalogo-farmacia.csv');
+    this.csv.download(EXAMPLE_ROWS, columnasDePlantilla(), 'plantilla-catalogo-farmacia.csv');
   }
 
   protected avisarRechazo(rechazos: readonly RejectedFile[]): void {
@@ -604,16 +604,16 @@ export class PharmacyCatalog {
     if (this.farmaciaElegida() !== pharmacyId || this.archivos()[0] !== archivo) {
       return;
     }
-    const { texto, codificacion } = decodificarCsv(bytes);
+    const { texto, codificacion } = decodeCsv(bytes);
     this.codificacion.set(codificacion);
 
-    let lectura: ReturnType<typeof leerCsv>;
+    let lectura: ReturnType<typeof readCsv>;
     try {
-      lectura = leerCsv(texto);
+      lectura = readCsv(texto);
     } catch (error: unknown) {
       this.analizando.set(false);
       this.errorDelArchivo.set(
-        error instanceof ArchivoInvalido ? error.message : 'No se pudo leer el archivo.',
+        error instanceof InvalidFile ? error.message : 'No se pudo leer el archivo.',
       );
       return;
     }
@@ -636,7 +636,7 @@ export class PharmacyCatalog {
         }
         this.analizando.set(false);
         this.columnasIgnoradas.set(lectura.ignoradas);
-        this.revisadas.set(revisarCarga(lectura.filas, codigos));
+        this.revisadas.set(reviewLoad(lectura.filas, codigos));
         this.paso.set('revision');
       });
   }
@@ -756,10 +756,10 @@ export class PharmacyCatalog {
         return fila === undefined ? [] : [{ campos: fila.campos, problema: resultado.mensaje }];
       }),
     ];
-    const columnas: CsvColumn<{ campos: CamposDelProducto; problema: string }>[] = [
-      ...COLUMNAS_DEL_CSV.map((columna) => ({
+    const columnas: CsvColumn<{ campos: ProductFields; problema: string }>[] = [
+      ...CSV_COLUMNS.map((columna) => ({
         header: columna.encabezado,
-        value: (fila: { campos: CamposDelProducto }) => fila.campos[columna.campo],
+        value: (fila: { campos: ProductFields }) => fila.campos[columna.campo],
       })),
       { header: 'problema', value: (fila) => fila.problema },
     ];
@@ -816,15 +816,15 @@ function nombreDelBorrador(borrador: PharmacyProductDraft): string {
   return borrador.brandName ?? borrador.genericName ?? borrador.productCode;
 }
 
-function nombreDeLosCampos(campos: CamposDelProducto): string {
+function nombreDeLosCampos(campos: ProductFields): string {
   return campos.marca.trim() || campos.generico.trim() || '—';
 }
 
 /** Las columnas de la plantilla: el encabezado canónico de cada una. */
-function columnasDePlantilla(): CsvColumn<CamposDelProducto>[] {
-  return COLUMNAS_DEL_CSV.map((columna) => ({
+function columnasDePlantilla(): CsvColumn<ProductFields>[] {
+  return CSV_COLUMNS.map((columna) => ({
     header: columna.encabezado,
-    value: (fila: CamposDelProducto) => fila[columna.campo],
+    value: (fila: ProductFields) => fila[columna.campo],
   }));
 }
 

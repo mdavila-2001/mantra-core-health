@@ -1,15 +1,15 @@
 <app-content-dialog
-  [heading]="titulo()"
+  [heading]="title()"
   description="Las cuentas son también los tipos de sus gastos, activos y deudas."
   size="sm"
-  [dismissible]="!guardando()"
+  [dismissible]="!saving()"
   data-testid="cuenta-dialog"
   (closed)="closed.emit()"
 >
   @if (error(); as mensaje) {
     <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
   }
-  <form class="registros-form" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  <form class="registros-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
     <app-form-field
       label="Nombre"
       [required]="true"
@@ -37,7 +37,7 @@
     >
       <app-select
         formControlName="accountClass"
-        [options]="opcionesDeClase"
+        [options]="classOptions"
         ariaLabel="Clase de la cuenta"
         data-testid="cuenta-clase"
       />
@@ -49,7 +49,7 @@
     app-button
     type="button"
     variant="ghost"
-    [disabled]="guardando()"
+    [disabled]="saving()"
     (clicked)="dialog().close()"
   >
     Cancelar
@@ -58,10 +58,10 @@
     dialog-actions
     app-button
     type="button"
-    [isLoading]="guardando()"
-    [disabled]="guardando()"
+    [isLoading]="saving()"
+    [disabled]="saving()"
     data-testid="cuenta-guardar"
-    (clicked)="guardar()"
+    (clicked)="save()"
   >
     Guardar cuenta
   </button>

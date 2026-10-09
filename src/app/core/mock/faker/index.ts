@@ -22,7 +22,7 @@
     lo clínico lo pone `clinical.ts` eligiendo siempre del catálogo real.
     ========================================================================== */
 
-export { apellido, conSemilla, semillaDe, slugDeNombre } from './seed';
+export { surname as apellido, withSeed as conSemilla, seedOf as semillaDe, nameSlug as slugDeNombre } from './seed';
 
 export {
   ASEGURADORAS,
@@ -57,18 +57,18 @@ export {
 } from './props';
 
 export {
-  CODIGOS_DX,
-  CODIGOS_MED,
-  biografia,
-  diagnosticoId,
-  edadDe,
-  medicamentoId,
-  motivoDeConsulta,
-  posologia,
-  severidadId,
-  signosVitales,
-  textoDeNotaMedica,
-  unidadId,
+  DX_CODES as CODIGOS_DX,
+  MED_CODES as CODIGOS_MED,
+  biography as biografia,
+  diagnosisId as diagnosticoId,
+  ageOf as edadDe,
+  medicationId as medicamentoId,
+  consultationReason as motivoDeConsulta,
+  dosage as posologia,
+  severityId as severidadId,
+  vitalSigns as signosVitales,
+  medicalNoteText as textoDeNotaMedica,
+  unitId as unidadId,
   viaId,
-  type SignoVital,
+  type SignVital as SignoVital,
 } from './clinical';

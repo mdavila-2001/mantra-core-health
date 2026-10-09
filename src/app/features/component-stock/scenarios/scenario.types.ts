@@ -26,7 +26,7 @@ import type { Signal, Type } from '@angular/core';
     ========================================================================== */
 
 /** Una emisión del componente montado, tal como la vio el anfitrión. */
-export interface SalidaRegistrada {
+export interface RegisteredOutput {
   /** El nombre del `output` que emitió. */
   readonly salida: string;
   /** El payload, ya legible: un id, un código de columna, una cuenta. */
@@ -41,16 +41,16 @@ export interface SalidaRegistrada {
  * `variante` la fija el banco con `setInput` antes de montar; `salidas` la lee
  * la pestaña de salidas para mostrar lo que el componente emitió.
  */
-export interface AnfitrionDeEscenario {
+export interface ScenarioHost {
   /** Lo que el componente emitió desde que se montó, en orden de llegada. */
-  readonly salidas: Signal<readonly SalidaRegistrada[]>;
+  readonly outputs: Signal<readonly RegisteredOutput[]>;
 }
 
 /**
  * Un escenario: una variante nombrada de un anfitrión, con lo que hay que
  * esperar ver y lo que hay que poder provocar.
  */
-export interface EscenarioDeComponente {
+export interface ComponentScenario {
   /** `<clave del componente>#<variante>`. Único en el registro. */
   readonly id: string;
   /** La `clave` del componente en el índice generado (ruta sin `src/app/`). */
@@ -65,7 +65,7 @@ export interface EscenarioDeComponente {
   /** Las salidas que el escenario puede producir; las demás no aplican. */
   readonly salidasEsperadas: readonly string[];
   /** El anfitrión que monta el componente canónico con este contrato. */
-  readonly host: Type<AnfitrionDeEscenario>;
+  readonly host: Type<ScenarioHost>;
   /** Dónde está escrito el anfitrión, para leer el contrato completo. */
   readonly fuente: string;
   /**

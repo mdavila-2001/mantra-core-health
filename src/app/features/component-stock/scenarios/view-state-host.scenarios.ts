@@ -15,8 +15,8 @@ import {
 import type { ViewState, ViewStateStatus } from '../../../core/view-state/view-state.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
-import type { AnfitrionDeEscenario, EscenarioDeComponente } from './scenario.types';
-import { registroDeSalidas } from './exit-log';
+import type { ScenarioHost, ComponentScenario } from './scenario.types';
+import { outputsRecord } from './exit-log';
 
 /* ============================================================================
     Escenarios de `ViewStateHost`.
@@ -29,29 +29,29 @@ import { registroDeSalidas } from './exit-log';
     `requestId` en S9.
     ========================================================================== */
 
-const CLAVE = 'shared/components/organisms/view-state-host/view-state-host';
-const FUENTE = 'src/app/features/component-stock/scenarios/view-state-host.scenarios.ts';
+const KEY = 'shared/components/organisms/view-state-host/view-state-host';
+const SOURCE = 'src/app/features/component-stock/scenarios/view-state-host.scenarios.ts';
 
-interface ResumenDeMuestra {
+interface SampleSummary {
   readonly titulo: string;
   readonly detalle: string;
 }
 
-const RESUMEN: ResumenDeMuestra = {
+const SUMMARY: SampleSummary = {
   titulo: 'Ocupación de camas',
   detalle: '18 de 24 camas ocupadas · 3 altas previstas para hoy',
 };
 
-const DATO_DE = new Date('2026-09-21T09:30:00-04:00');
+const DATA_OF = new Date('2026-09-21T09:30:00-04:00');
 
-const ESTADOS: Readonly<Record<ViewStateStatus, ViewState<ResumenDeMuestra>>> = {
+const STATUSES: Readonly<Record<ViewStateStatus, ViewState<SampleSummary>>> = {
   'route-auth-pending': routeAuthPending(),
   loading: loading(),
   empty: empty(
     { label: 'Registrar la primera internación', route: '/clinical-record' },
     'Todavía no hay internaciones en este servicio.',
   ),
-  ready: ready(RESUMEN),
+  ready: ready(SUMMARY),
   validation: validation(
     [
       { field: 'fecha', message: 'La fecha de alta no puede ser anterior al ingreso.' },
@@ -64,25 +64,25 @@ const ESTADOS: Readonly<Record<ViewStateStatus, ViewState<ResumenDeMuestra>>> = 
     nextAction: { label: 'Declarar propósito de uso', route: '/clinical-record/request-access' },
   }),
   'not-found': notFound({ label: 'Volver al panel', route: '/dashboard' }),
-  stale: stale(RESUMEN, DATO_DE),
-  offline: offline(DATO_DE),
+  stale: stale(SUMMARY, DATA_OF),
+  offline: offline(DATA_OF),
   error: unexpectedError('req-2b91d4f0', 'No pudimos leer el resumen del servicio.'),
 };
 
-export const VARIANTES_DE_VIEW_STATE_HOST = Object.keys(ESTADOS) as readonly ViewStateStatus[];
+export const VIEW_STATE_HOST_VARIANTS = Object.keys(STATUSES) as readonly ViewStateStatus[];
 
 @Component({
   selector: 'app-scenario-view-state-host',
   imports: [ViewStateHost],
   template: `
     <app-view-state-host
-      [state]="estado()"
-      (retry)="registro.anotar('retry')"
-      (refresh)="registro.anotar('refresh')"
+      [state]="status()"
+      (retry)="record.anotar('retry')"
+      (refresh)="record.anotar('refresh')"
     >
       <article class="escenario__contenido" data-testid="escenario-contenido">
-        <h2 class="escenario__titulo">{{ resumen.titulo }}</h2>
-        <p class="escenario__detalle">{{ resumen.detalle }}</p>
+        <h2 class="escenario__titulo">{{ summary.titulo }}</h2>
+        <p class="escenario__detalle">{{ summary.detalle }}</p>
       </article>
     </app-view-state-host>
   `,
@@ -103,17 +103,17 @@ export const VARIANTES_DE_VIEW_STATE_HOST = Object.keys(ESTADOS) as readonly Vie
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EscenarioViewStateHost implements AnfitrionDeEscenario {
+export class ScenarioViewStateHost implements ScenarioHost {
   readonly variante = input<ViewStateStatus>('ready');
 
-  protected readonly registro = registroDeSalidas();
-  readonly salidas = this.registro.salidas;
+  protected readonly record = outputsRecord();
+  readonly outputs = this.record.salidas;
 
-  protected readonly resumen = RESUMEN;
-  protected readonly estado = computed(() => ESTADOS[this.variante()]);
+  protected readonly summary = SUMMARY;
+  protected readonly status = computed(() => STATUSES[this.variante()]);
 }
 
-const FICHAS: Readonly<
+const SHEETS: Readonly<
   Record<ViewStateStatus, { titulo: string; seVe: string; salidas: readonly string[] }>
 > = {
   'route-auth-pending': {
@@ -168,18 +168,18 @@ const FICHAS: Readonly<
   },
 };
 
-export const ESCENARIOS_DE_VIEW_STATE_HOST: readonly EscenarioDeComponente[] =
-  VARIANTES_DE_VIEW_STATE_HOST.map((variante) => ({
-    id: `${CLAVE}#${variante}`,
-    clave: CLAVE,
+export const VIEW_STATE_HOST_SCENARIOS: readonly ComponentScenario[] =
+  VIEW_STATE_HOST_VARIANTS.map((variante) => ({
+    id: `${KEY}#${variante}`,
+    clave: KEY,
     variante,
-    titulo: FICHAS[variante].titulo,
-    seVe: FICHAS[variante].seVe,
+    titulo: SHEETS[variante].titulo,
+    seVe: SHEETS[variante].seVe,
     interacciones:
-      FICHAS[variante].salidas.length === 0
+      SHEETS[variante].salidas.length === 0
         ? ['Nada que tocar: el estado no ofrece acciones propias.']
-        : [`Tocar la acción del estado → ${FICHAS[variante].salidas[0]}.`],
-    salidasEsperadas: FICHAS[variante].salidas,
-    host: EscenarioViewStateHost,
-    fuente: FUENTE,
+        : [`Tocar la acción del estado → ${SHEETS[variante].salidas[0]}.`],
+    salidasEsperadas: SHEETS[variante].salidas,
+    host: ScenarioViewStateHost,
+    fuente: SOURCE,
   }));

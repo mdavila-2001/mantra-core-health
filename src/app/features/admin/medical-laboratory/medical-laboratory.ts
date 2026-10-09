@@ -61,7 +61,7 @@ import { FormActions } from '../../../shared/components/organisms/form-actions/f
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import type { TarifarioDeLaUnidad } from './medical-laboratory.types';
-import { TarifariosRecordados } from './remembered-price-lists';
+import { RememberedPriceLists } from './remembered-price-lists';
 import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
@@ -221,7 +221,7 @@ export class MedicalLaboratory {
   private readonly navigation = inject(NavigationService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
-  private readonly recordados = inject(TarifariosRecordados);
+  private readonly recordados = inject(RememberedPriceLists);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -529,7 +529,7 @@ export class MedicalLaboratory {
    *
    * Están en un signal aparte y no en la ficha porque la API no tiene lectura
    * de tarifarios: hasta que uno tenga su primer precio, la ficha no lo
-   * menciona. Lo que hay en el signal sale de {@link TarifariosRecordados},
+   * menciona. Lo que hay en el signal sale de {@link RememberedPriceLists},
    * que es quien los sostiene entre una carga de la pantalla y la siguiente.
    */
   private readonly tarifariosCreados = signal<readonly TarifarioDeLaUnidad[]>([]);
@@ -889,13 +889,13 @@ export class MedicalLaboratory {
         this.limpiarFormularioDeTarifario();
         // La respuesta no devuelve la visibilidad: se recuerda la que se acaba
         // de mandar. Es lo único que se sabe de él hasta que tenga un precio.
-        this.recordados.recordar(detalle.id, {
+        this.recordados.remember(detalle.id, {
           id: creado.id,
           code: creado.code,
           esPublico,
           cantidadDePrecios: 0,
         });
-        this.tarifariosCreados.set(this.recordados.deLaUnidad(detalle.id));
+        this.tarifariosCreados.set(this.recordados.unit(detalle.id));
         this.toasts.success('El tarifario quedó creado.');
       },
       error: (error: unknown) => {
@@ -991,7 +991,7 @@ export class MedicalLaboratory {
     this.ficha.set(loading());
     // Antes de que responda: los que se crearon desde acá y todavía no tienen
     // ningún precio no viajan en la ficha, así que nadie más los va a traer.
-    this.tarifariosCreados.set(this.recordados.deLaUnidad(unitId));
+    this.tarifariosCreados.set(this.recordados.unit(unitId));
     this.client
       .getById(unitId)
       .pipe(catchError((error: unknown) => of({ error })))

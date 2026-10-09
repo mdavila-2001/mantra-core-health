@@ -1,6 +1,6 @@
 import {
-  UNIVERSIDADES_DEL_SISTEMA,
-  UNIVERSIDADES_PRIVADAS,
+  SYSTEM_UNIVERSITIES,
+  PRIVATE_UNIVERSITIES,
 } from '../../../../core/profession/educational-institutions';
 import {
   codigoDeInstitucion,
@@ -169,7 +169,7 @@ describe('practitioner-profile-edit.logic', () => {
     });
 
     it('sólo tres instituciones del catálogo no traen sigla en su etiqueta', () => {
-      const sinSigla = [...UNIVERSIDADES_DEL_SISTEMA, ...UNIVERSIDADES_PRIVADAS]
+      const sinSigla = [...SYSTEM_UNIVERSITIES, ...PRIVATE_UNIVERSITIES]
         .filter((opcion) => codigoDeInstitucion(opcion.value) === null)
         .map((opcion) => opcion.value);
 

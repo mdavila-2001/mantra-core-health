@@ -3,10 +3,10 @@ import { HttpHeaders } from '@angular/common/http';
 import { crearRouterSimulado } from '../handlers';
 import type { MockRequest } from '../mock-router';
 import { recursos } from './agenda';
-import { vitrinas } from './community';
+import { showcases } from './community';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from './fee-schedules.generated';
 import { INSURER_NETWORK_PRACTITIONERS } from './insurer-network.generated';
-import { credencialesDe, licenciasDe, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './people';
+import { credentialsOf, licensesOf, PROFESSIONALS, PROFESSIONALS_REGISTERED_DEMO } from './people';
 
 /* ============================================================================
     Los catálogos de `markdown_convertidos/` que el propietario pidió ver.
@@ -70,19 +70,19 @@ describe('el arancel real en el nomenclador', () => {
 });
 
 describe('los médicos reales de la red de las aseguradoras', () => {
-  const deLaRed = PROFESIONALES.filter((p) => p.origen === 'RED_ASEGURADORA');
+  const deLaRed = PROFESSIONALS.filter((p) => p.origen === 'RED_ASEGURADORA');
 
   it('reemplazan a los generados con faker, todos', () => {
     expect(deLaRed.length).toBe(INSURER_NETWORK_PRACTITIONERS.length);
-    const deLaPlanilla = PROFESIONALES.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
+    const deLaPlanilla = PROFESSIONALS.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
     // Los de demostración (D-H3-PROV-01) son un grupo aparte: ni red ni planilla.
-    const deDemostracion = PROFESIONALES.filter((p) => p.origen === 'DEMO');
-    expect(deDemostracion).toEqual([...PROFESIONALES_DEMO_REGISTRADOS]);
-    expect(PROFESIONALES.length).toBe(15 + deLaRed.length + deLaPlanilla.length + deDemostracion.length);
+    const deDemostracion = PROFESSIONALS.filter((p) => p.origen === 'DEMO');
+    expect(deDemostracion).toEqual([...PROFESSIONALS_REGISTERED_DEMO]);
+    expect(PROFESSIONALS.length).toBe(15 + deLaRed.length + deLaPlanilla.length + deDemostracion.length);
   });
 
   it('aparecen en el directorio público con su aseguradora', () => {
-    const vitrina = vitrinas.todos().find((v) => /Menacho Butron/.test(v.displayName));
+    const vitrina = showcases.todos().find((v) => /Menacho Butron/.test(v.displayName));
     expect(vitrina).toBeDefined();
     expect(vitrina!.headline).toContain('Alianza Seguros');
   });
@@ -91,10 +91,10 @@ describe('los médicos reales de la red de las aseguradoras', () => {
     const ids = new Set(deLaRed.map((p) => p.id));
     expect(recursos.todos().filter((r) => ids.has(r.resourceRefId))).toEqual([]);
 
-    const suyas = vitrinas.todos().filter((v) => ids.has(v.targetId));
+    const suyas = showcases.todos().filter((v) => ids.has(v.targetId));
     expect(suyas.every((v) => v.ratingAverage === null && v.seguidores === 0 && !v.hasPublishedAgenda)).toBe(true);
     expect(deLaRed.every((p) => !p.verified)).toBe(true);
-    expect(deLaRed.flatMap(credencialesDe)).toEqual([]);
-    expect(deLaRed.flatMap(licenciasDe)).toEqual([]);
+    expect(deLaRed.flatMap(credentialsOf)).toEqual([]);
+    expect(deLaRed.flatMap(licensesOf)).toEqual([]);
   });
 });

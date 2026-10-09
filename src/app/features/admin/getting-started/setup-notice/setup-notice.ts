@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { CODIGO_DEL_TENANT_SEMILLA } from '../seed-tenant';
+import { TENANT_SEED_CODE } from '../seed-tenant';
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -60,7 +60,7 @@ export class SetupNotice {
     this.directory.searchTenants({ limit: ORGANIZACIONES_A_MIRAR }).subscribe({
       next: (pagina) => {
         const hayOrganizacion = pagina.items.some(
-          (tenant) => tenant.code !== CODIGO_DEL_TENANT_SEMILLA,
+          (tenant) => tenant.code !== TENANT_SEED_CODE,
         );
         this.pendiente.set(!hayOrganizacion);
       },

@@ -1,11 +1,11 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { MEDICA } from '../fixtures/people';
+import { MEDICAL } from '../fixtures/people';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { uuid } from '../mock-store';
 import { crearRouterSimulado } from './index';
 import { fileContent } from './files.handlers';
-import { activosDeFirmaDe } from './signature-and-seal.handlers';
+import { signatureAssetsOf } from './signature-and-seal.handlers';
 
 /**
  * La firma y el sello médicos del simulador: **imágenes**, no firma electrónica.
@@ -38,7 +38,7 @@ const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
 
 describe('firma y sello en el simulador', () => {
   it('la médica de la maqueta arranca con los dos cargados, y son archivos que existen', () => {
-    const activos = pedir('GET', RUTA, { practitionerProfileId: MEDICA.id }) as {
+    const activos = pedir('GET', RUTA, { practitionerProfileId: MEDICAL.id }) as {
       signatureFileId: string;
       sealFileId: string;
     };
@@ -82,7 +82,7 @@ describe('firma y sello en el simulador', () => {
   it('cada profesional ve sólo lo suyo', () => {
     pedir('PUT', RUTA, { practitionerProfileId: 'hpid-a' }, { signatureFileId: 'solo-de-a' });
 
-    expect(activosDeFirmaDe('hpid-b').signatureFileId).toBeNull();
+    expect(signatureAssetsOf('hpid-b').signatureFileId).toBeNull();
   });
 
   describe('el alta del doctor', () => {
@@ -95,7 +95,7 @@ describe('firma y sello en el simulador', () => {
     it('guarda la firma y el sello que vinieron como imágenes, bajo el perfil recién creado', () => {
       const creado = alta({ signatureImageBase64: PNG, sealImageBase64: PNG });
 
-      const activos = activosDeFirmaDe(creado.practitionerProfileId);
+      const activos = signatureAssetsOf(creado.practitionerProfileId);
       expect(activos.signatureFileId).not.toBeNull();
       expect(activos.sealFileId).not.toBeNull();
       expect(fileContent(activos.signatureFileId!)).toBeDefined();
@@ -104,7 +104,7 @@ describe('firma y sello en el simulador', () => {
     it('con sólo la firma, el sello queda sin cargar', () => {
       const creado = alta({ signatureImageBase64: PNG });
 
-      const activos = activosDeFirmaDe(creado.practitionerProfileId);
+      const activos = signatureAssetsOf(creado.practitionerProfileId);
       expect(activos.signatureFileId).not.toBeNull();
       expect(activos.sealFileId).toBeNull();
     });
@@ -112,7 +112,7 @@ describe('firma y sello en el simulador', () => {
     it('sin ninguna de las dos el alta sigue igual y no crea nada', () => {
       const creado = alta({});
 
-      expect(activosDeFirmaDe(creado.practitionerProfileId)).toEqual({
+      expect(signatureAssetsOf(creado.practitionerProfileId)).toEqual({
         signatureFileId: null,
         sealFileId: null,
       });

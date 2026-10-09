@@ -10,13 +10,13 @@
         class="nombres__campo nombres__campo--tercio"
         label="Primer nombre"
         [required]="obligatorio()"
-        [errorMessage]="errorDe('name')"
+        [errorMessage]="errorOf('name')"
       >
         <app-input
           type="text"
           [formControl]="grupo().controls.name"
           autocomplete="given-name"
-          [hasError]="errorDe('name') !== ''"
+          [hasError]="errorOf('name') !== ''"
           [testId]="prefijoTestId() + '-nombre'"
         />
       </app-form-field>
@@ -58,13 +58,13 @@
         class="nombres__campo nombres__campo--mitad"
         label="Apellido paterno"
         [required]="obligatorio()"
-        [errorMessage]="errorDe('lastName')"
+        [errorMessage]="errorOf('lastName')"
       >
         <app-input
           type="text"
           [formControl]="grupo().controls.lastName"
           autocomplete="family-name"
-          [hasError]="errorDe('lastName') !== ''"
+          [hasError]="errorOf('lastName') !== ''"
           [testId]="prefijoTestId() + '-apellido-paterno'"
         />
       </app-form-field>

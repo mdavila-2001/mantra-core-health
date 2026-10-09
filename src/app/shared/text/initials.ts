@@ -15,7 +15,7 @@
  * entrada cubre «Dr», «Dr.», «DRA», «dra.» y «Dr(a).» —esta última es la forma
  * que compone el propio backend—.
  */
-const TRATAMIENTOS = new Set([
+const TREATMENTS = new Set([
   'dr',
   'dra',
   'dra2',
@@ -33,7 +33,7 @@ const TRATAMIENTOS = new Set([
 ]);
 
 /** `Dr(a).` → `dra`, `Dra.` → `dra`: la forma con la que se compara. */
-function sinAdornos(parte: string): string {
+function withoutAdornments(parte: string): string {
   return parte.replace(/[().,]/g, '').toLowerCase();
 }
 
@@ -48,13 +48,13 @@ function sinAdornos(parte: string): string {
  * Si el nombre es **sólo** un tratamiento —o queda vacío al sacarlo— se cae a
  * las partes con letra: mejor una inicial pobre que un cuadrado en blanco.
  */
-export function inicialesDe(nombre: string): string {
+export function initialsOf(nombre: string): string {
   const partes = nombre.split(/\s+/).filter((parte) => /^[\p{L}(]/u.test(parte));
-  const sinTratamiento = partes.filter((parte) => !TRATAMIENTOS.has(sinAdornos(parte)));
+  const sinTratamiento = partes.filter((parte) => !TREATMENTS.has(withoutAdornments(parte)));
   const elegidas = sinTratamiento.length > 0 ? sinTratamiento : partes;
 
   return elegidas
     .slice(0, 2)
-    .map((parte) => sinAdornos(parte)[0]?.toUpperCase() ?? '')
+    .map((parte) => withoutAdornments(parte)[0]?.toUpperCase() ?? '')
     .join('');
 }

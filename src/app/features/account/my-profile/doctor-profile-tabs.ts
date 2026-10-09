@@ -46,7 +46,7 @@
  * Igual que en el paciente: el índice se comparte con quien edite, y una lista
  * escrita dos veces se desordena en el primer retoque que se haga en una sola.
  */
-export const PESTANAS_DEL_PERFIL_MEDICO = [
+export const DOCTOR_PROFILE_TABS = [
   'Datos personales',
   'Contacto',
   'Facturación',
@@ -57,7 +57,7 @@ export const PESTANAS_DEL_PERFIL_MEDICO = [
 ] as const;
 
 /** Los índices con nombre, para no escribir `4` donde se quiere decir «Credenciales». */
-export const PESTANA_MEDICO = {
+export const DOCTOR_TAB = {
   personales: 0,
   contacto: 1,
   facturacion: 2,
@@ -76,7 +76,7 @@ export const PESTANA_MEDICO = {
  * cuatro botones de guardar, que es justo lo que prohíbe
  * `docs/components/composition-rules.md` §5.
  *
- * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salvo la
+ * Son las de {@link DOCTOR_PROFILE_TABS} en el mismo orden, salvo la
  * última.
  *
  * ## «Actividad» no está, y en la ficha no tiene lápiz
@@ -122,13 +122,13 @@ export const PESTANA_MEDICO = {
  * El orden importa: quien viene de la ficha encuentra las pestañas donde las
  * dejó.
  */
-export const PESTANAS_DEL_EDITOR_MEDICO = [
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.personales],
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.contacto],
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.facturacion],
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo],
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
+export const EDITOR_DOCTOR_TABS = [
+  DOCTOR_PROFILE_TABS[DOCTOR_TAB.personales],
+  DOCTOR_PROFILE_TABS[DOCTOR_TAB.contacto],
+  DOCTOR_PROFILE_TABS[DOCTOR_TAB.facturacion],
+  DOCTOR_PROFILE_TABS[DOCTOR_TAB.dondeAtiendo],
+  DOCTOR_PROFILE_TABS[DOCTOR_TAB.trayectoria],
+  DOCTOR_PROFILE_TABS[DOCTOR_TAB.credenciales],
 ] as const;
 
 /**
@@ -138,7 +138,7 @@ export const PESTANAS_DEL_EDITOR_MEDICO = [
  * eso puede volver a dejar de ser cierto, y entonces el lugar donde arreglarlo
  * es uno solo.
  */
-export const PESTANA_EDITOR = {
+export const TAB_EDITOR = {
   personales: 0,
   contacto: 1,
   facturacion: 2,
@@ -158,36 +158,36 @@ export const PESTANA_EDITOR = {
  * `password` es la única ausencia deliberada — una contraseña no se muestra;
  * se cambia por su propio trámite, y la ficha ofrece ese camino.
  */
-export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
+export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
   /* 1 · ¿Cómo te llamás? */
-  name: PESTANA_MEDICO.personales,
-  lastName: PESTANA_MEDICO.personales,
-  motherLastName: PESTANA_MEDICO.personales,
+  name: DOCTOR_TAB.personales,
+  lastName: DOCTOR_TAB.personales,
+  motherLastName: DOCTOR_TAB.personales,
 
   /* 2 · Tu documento de identidad */
-  nationalId: PESTANA_MEDICO.personales,
-  issuerAdministrativeAreaConceptId: PESTANA_MEDICO.personales,
+  nationalId: DOCTOR_TAB.personales,
+  issuerAdministrativeAreaConceptId: DOCTOR_TAB.personales,
 
   /* 3 · Contanos un poco sobre vos.
      `sexAtBirth` estaba acá y era MENTIRA: se movió a
      `CAMPOS_DEL_ALTA_SIN_PESTANA` el 21/09/2026 con su motivo. Este mapa
      existe justamente para que un campo no apunte a una pestaña donde no
      está, y éste apuntaba a una donde nunca estuvo. */
-  birthDate: PESTANA_MEDICO.personales,
+  birthDate: DOCTOR_TAB.personales,
 
   /* 4 · Cómo te contactamos en privado */
-  mobilePhone: PESTANA_MEDICO.contacto,
-  personalEmail: PESTANA_MEDICO.contacto,
+  mobilePhone: DOCTOR_TAB.contacto,
+  personalEmail: DOCTOR_TAB.contacto,
 
   /* 5 · El contacto de tu trabajo.
      El celular y el fijo pasaron a `CAMPOS_DEL_ALTA_SIN_PESTANA` el 23/09/2026
      (D-03). El correo de trabajo se corrige en «Contacto» desde el 24/09/2026. */
-  email: PESTANA_MEDICO.contacto,
+  email: DOCTOR_TAB.contacto,
 
   /* 6 · ¿Dónde vivís? */
-  municipio: PESTANA_MEDICO.contacto,
-  homeAddressLines: PESTANA_MEDICO.contacto,
-  gpsDomicilio: PESTANA_MEDICO.contacto,
+  municipio: DOCTOR_TAB.contacto,
+  homeAddressLines: DOCTOR_TAB.contacto,
+  gpsDomicilio: DOCTOR_TAB.contacto,
 
   /* 7 · Tu consultorio propio.
      Los cuatro siguen en «Dónde atiendo», y desde el 20/09/2026 el mapa dice
@@ -195,41 +195,41 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
      sólo el mapa de sedes —que enseña el nombre, la dirección y el pin, pero
      no el municipio suelto— y ahora monta además el bloque del consultorio,
      donde los cuatro se ven y se corrigen con su propio control (C-02). */
-  officeName: PESTANA_MEDICO.dondeAtiendo,
-  municipioConsultorio: PESTANA_MEDICO.dondeAtiendo,
-  officeAddressLines: PESTANA_MEDICO.dondeAtiendo,
-  gpsConsultorio: PESTANA_MEDICO.dondeAtiendo,
+  officeName: DOCTOR_TAB.dondeAtiendo,
+  municipioConsultorio: DOCTOR_TAB.dondeAtiendo,
+  officeAddressLines: DOCTOR_TAB.dondeAtiendo,
+  gpsConsultorio: DOCTOR_TAB.dondeAtiendo,
 
   /* 8 · Tu título profesional y foto */
-  profilePhotoBase64: PESTANA_MEDICO.personales,
+  profilePhotoBase64: DOCTOR_TAB.personales,
   /* 13 · Tu firma y tu sello (opcional). Imágenes —no una firma electrónica—
      que el médico carga, cambia y quita desde «Datos personales», en la ficha y
      en el editor. */
-  signatureImageBase64: PESTANA_MEDICO.personales,
-  sealImageBase64: PESTANA_MEDICO.personales,
-  professionalTitle: PESTANA_MEDICO.personales,
+  signatureImageBase64: DOCTOR_TAB.personales,
+  sealImageBase64: DOCTOR_TAB.personales,
+  professionalTitle: DOCTOR_TAB.personales,
   /* Dónde estudió y sus títulos (paso 11) viven en «Credenciales» desde el
      24/09/2026: son estudios, y «Trayectoria» son los cargos. El editor de
      Trayectoria ofrecía el formulario de un título a quien venía a corregir
      un cargo. */
-  professionalTitleEducation: PESTANA_MEDICO.credenciales,
-  professionalTitleNumber: PESTANA_MEDICO.credenciales,
-  professionalTitleUniversity: PESTANA_MEDICO.credenciales,
-  professionalTitleCountry: PESTANA_MEDICO.credenciales,
-  professionalTitleCity: PESTANA_MEDICO.credenciales,
-  professionalTitleFile: PESTANA_MEDICO.credenciales,
+  professionalTitleEducation: DOCTOR_TAB.credenciales,
+  professionalTitleNumber: DOCTOR_TAB.credenciales,
+  professionalTitleUniversity: DOCTOR_TAB.credenciales,
+  professionalTitleCountry: DOCTOR_TAB.credenciales,
+  professionalTitleCity: DOCTOR_TAB.credenciales,
+  professionalTitleFile: DOCTOR_TAB.credenciales,
 
   /* 9 · Tu habilitación para ejercer */
-  licenseNumber: PESTANA_MEDICO.credenciales,
-  sedesLicenseNumber: PESTANA_MEDICO.credenciales,
-  regulatoryAuthority: PESTANA_MEDICO.credenciales,
-  licenseIssueDate: PESTANA_MEDICO.credenciales,
+  licenseNumber: DOCTOR_TAB.credenciales,
+  sedesLicenseNumber: DOCTOR_TAB.credenciales,
+  regulatoryAuthority: DOCTOR_TAB.credenciales,
+  licenseIssueDate: DOCTOR_TAB.credenciales,
 
   /* 10 · Los respaldos de tu habilitación */
-  credentialAttachments: PESTANA_MEDICO.credenciales,
+  credentialAttachments: DOCTOR_TAB.credenciales,
 
   /* 11 · Tus títulos */
-  academicTitles: PESTANA_MEDICO.credenciales,
+  academicTitles: DOCTOR_TAB.credenciales,
 
   /*
    * 12 · Tus especialidades
@@ -241,7 +241,7 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
    * lectura ya las mostraba junto a la identidad desde el 19/09/2026 (C-09);
    * el editor era el único lugar donde seguían separadas de eso mismo.
    */
-  especialidadesExtra: PESTANA_MEDICO.personales,
+  especialidadesExtra: DOCTOR_TAB.personales,
 };
 
 /**
@@ -251,7 +251,7 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
  * de «se decidió no mostrarlo», que es la diferencia entre un defecto y una
  * decisión.
  */
-export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
+export const ENROLLMENT_WITHOUT_TAB_FIELDS: Readonly<Record<string, string>> = {
   password:
     'Una contraseña no se muestra nunca. La ficha ofrece el camino para cambiarla ' +
     '(«Cambiar contraseña»), que es lo único que se puede hacer con ella.',

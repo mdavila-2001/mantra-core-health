@@ -6,7 +6,7 @@ import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from './fee-schedules.gener
 import { ASEGURADORAS_REALES, CLINICAS_REALES, HOSPITALES_REALES } from './institutions.generated';
 import { INSURER_NETWORK_PRACTITIONERS } from './insurer-network.generated';
 import { PHARMACIES_AND_LABS, PRIMARY_CARE_CENTERS } from './markdown-institutions.generated';
-import { PROFESIONALES_DEMO_REGISTRADOS } from './people';
+import { PROFESSIONALS_REGISTERED_DEMO } from './people';
 import { REGISTERED_PATIENTS, REGISTERED_PRACTITIONERS } from './registered-people.generated';
 
 /* ============================================================================
@@ -58,7 +58,7 @@ describe('cada dato de markdown_convertidos sale por el endpoint de su pantalla'
     const guia = await todo<{ profileId: string; displayName: string; professionalTitle: string }>('/profiles/practitioners');
     // Más los 13 de demostración con agenda simulada (D-H3-PROV-01, 23/09/2026).
     expect(guia.length).toBe(
-      15 + INSURER_NETWORK_PRACTITIONERS.length + REGISTERED_PRACTITIONERS.length + PROFESIONALES_DEMO_REGISTRADOS.length,
+      15 + INSURER_NETWORK_PRACTITIONERS.length + REGISTERED_PRACTITIONERS.length + PROFESSIONALS_REGISTERED_DEMO.length,
     );
     const vistos = new Set(guia.map((p) => p.displayName.toUpperCase()));
     for (const p of INSURER_NETWORK_PRACTITIONERS) {

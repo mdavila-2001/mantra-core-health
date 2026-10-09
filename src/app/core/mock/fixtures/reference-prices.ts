@@ -27,10 +27,10 @@ import { TARIFA_INLASA } from './inlasa';
     equivalente queda sin precio: no se adivina uno.
     ========================================================================== */
 
-type Fuente = 'INLASA' | 'FONASA';
+type Source = 'INLASA' | 'FONASA';
 
 /** Prueba del corpus (`test_*`) → análisis de INLASA o prestación de FONASA. */
-export const EQUIVALENCIA_DE_PRUEBA: Readonly<Record<string, readonly [Fuente, string]>> = {
+export const TEST_EQUIVALENCE: Readonly<Record<string, readonly [Source, string]>> = {
   test_000001: ['INLASA', 'LAC-030'], // Hemograma completo (biometría hemática)
   test_000002: ['FONASA', '03-01-038'], // Hemoglobina
   test_000003: ['FONASA', '03-01-036'], // Hematocrito
@@ -285,7 +285,7 @@ export const EQUIVALENCIA_DE_PRUEBA: Readonly<Record<string, readonly [Fuente, s
 };
 
 /** Estudio de imagen de la maqueta (`STUDY-*`) → prestación de FONASA (Grupo 04). */
-export const EQUIVALENCIA_IMAGEN_FONASA: Readonly<Record<string, string>> = {
+export const EQUIVALENCE_IMAGE_FONASA: Readonly<Record<string, string>> = {
   'STUDY-RX-TORAX': '04-01-070', // Radiografía de tórax frontal y lateral
   'STUDY-RX-COLUMNA': '04-01-046', // Radiografía columna lumbar o lumbosacra
   'STUDY-ECO-ABD': '04-04-003', // Ecografía abdominal
@@ -299,48 +299,48 @@ export const EQUIVALENCIA_IMAGEN_FONASA: Readonly<Record<string, string>> = {
 };
 
 /** La tarifa con que se publica un precio de FONASA convertido: el rótulo lo distingue. */
-export const TARIFA_FONASA = 'REFERENCIA_FONASA_2026_BOB';
+export const FEE_FONASA = 'REFERENCIA_FONASA_2026_BOB';
 
 /** Un precio de referencia listo para `prices[]`. */
-export interface PrecioDeReferencia {
+export interface ReferencePrice {
   readonly amount: string;
   readonly scheduleCode: string;
 }
 
-const INLASA_POR_CODIGO = new Map(ANALISIS_INLASA.map((a) => [a.code, a]));
-const FONASA_POR_CODIGO = new Map<string, PrestacionFonasa>(
+const INLASA_BY_CODE = new Map(ANALISIS_INLASA.map((a) => [a.code, a]));
+const FONASA_BY_CODE = new Map<string, PrestacionFonasa>(
   [...FONASA_LABORATORIO, ...FONASA_IMAGEN].map((p) => [p.code, p]),
 );
 
 /** La prestación de FONASA de un estudio de imagen de la maqueta, si la tiene. */
-export function prestacionDeImagen(studyCode: string): PrestacionFonasa | undefined {
-  const codigo = EQUIVALENCIA_IMAGEN_FONASA[studyCode];
-  return codigo === undefined ? undefined : FONASA_POR_CODIGO.get(codigo);
+export function imageBenefit(studyCode: string): PrestacionFonasa | undefined {
+  const codigo = EQUIVALENCE_IMAGE_FONASA[studyCode];
+  return codigo === undefined ? undefined : FONASA_BY_CODE.get(codigo);
 }
 
 /** El precio de referencia de un estudio de imagen, o `null` si no tiene equivalente. */
-export function precioDeImagen(studyCode: string): PrecioDeReferencia | null {
-  const prestacion = prestacionDeImagen(studyCode);
+export function imagePrice(studyCode: string): ReferencePrice | null {
+  const prestacion = imageBenefit(studyCode);
   return prestacion === undefined
     ? null
-    : { amount: prestacion.priceBs, scheduleCode: TARIFA_FONASA };
+    : { amount: prestacion.priceBs, scheduleCode: FEE_FONASA };
 }
 
 /** El precio de referencia de una prueba del corpus, o `null` si no tiene equivalente. */
-export function precioDePrueba(testId: string): PrecioDeReferencia | null {
-  const equivalencia = EQUIVALENCIA_DE_PRUEBA[testId];
+export function testPrice(testId: string): ReferencePrice | null {
+  const equivalencia = TEST_EQUIVALENCE[testId];
   if (equivalencia === undefined) return null;
   const [fuente, codigo] = equivalencia;
   if (fuente === 'INLASA') {
-    const precio = INLASA_POR_CODIGO.get(codigo)?.priceBs;
+    const precio = INLASA_BY_CODE.get(codigo)?.priceBs;
     if (precio == null)
       throw new Error(
         `EQUIVALENCIA_DE_PRUEBA: ${testId} → INLASA ${codigo}, que no existe o no tiene precio.`,
       );
     return { amount: precio, scheduleCode: TARIFA_INLASA };
   }
-  const prestacion = FONASA_POR_CODIGO.get(codigo);
+  const prestacion = FONASA_BY_CODE.get(codigo);
   if (prestacion === undefined)
     throw new Error(`EQUIVALENCIA_DE_PRUEBA: ${testId} → FONASA ${codigo}, que no existe.`);
-  return { amount: prestacion.priceBs, scheduleCode: TARIFA_FONASA };
+  return { amount: prestacion.priceBs, scheduleCode: FEE_FONASA };
 }

@@ -19,12 +19,12 @@ import type { AgendaResource } from '@core/data-access/scheduling/scheduling.typ
  * exactamente la misma pareja de llamadas. La tercera copia es donde una de las
  * tres se queda con el criterio viejo.
  */
-export function miRecursoDeAgenda(
+export function agendaResourceMy(
   scheduling: SchedulingClient,
   tenantId: string,
   practitionerProfileId: string,
 ): Observable<AgendaResource | null> {
-  return misRecursosDeAgenda(scheduling, tenantId, practitionerProfileId).pipe(
+  return agendaResourcesMy(scheduling, tenantId, practitionerProfileId).pipe(
     map((recursos) => recursos[0] ?? null),
   );
 }
@@ -53,7 +53,7 @@ export function miRecursoDeAgenda(
  * El orden es el que devuelve la API, y es estable: sin un criterio explícito,
  * «la primera» al menos no cambia entre dos cargas.
  */
-export function misRecursosDeAgenda(
+export function agendaResourcesMy(
   scheduling: SchedulingClient,
   tenantId: string,
   practitionerProfileId: string,

@@ -2,11 +2,11 @@ import { TestBed } from '@angular/core/testing';
 
 import { facturaDePrueba } from '../order-invoice.spec-fixtures';
 import type { DocumentoDeFactura } from '../order-invoice.types';
-import { HojaDeFactura } from './invoice-sheet';
+import { InvoiceSheet } from './invoice-sheet';
 
 describe('HojaDeFactura', () => {
   function render(documento: DocumentoDeFactura, nota: string | null = null): HTMLElement {
-    const fixture = TestBed.createComponent(HojaDeFactura);
+    const fixture = TestBed.createComponent(InvoiceSheet);
     fixture.componentRef.setInput('documento', documento);
     fixture.componentRef.setInput('nota', nota);
     fixture.detectChanges();

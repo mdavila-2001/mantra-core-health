@@ -19,8 +19,8 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { AccessTree } from './access-tree/access-tree';
-import { AgendaDeHoy } from './today-agenda/today-agenda';
-import { ConsultasResumen } from './consultations-summary/consultations-summary';
+import { TodayAgenda } from './today-agenda/today-agenda';
+import { SummaryConsultations } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -78,9 +78,9 @@ const ROLES_DE_TRABAJO: readonly string[] = [
   selector: 'app-dashboard',
   imports: [
     AccessTree,
-    AgendaDeHoy,
+    TodayAgenda,
     Card,
-    ConsultasResumen,
+    SummaryConsultations,
     Alert,
     AppButtonLink,
     PageHeader,

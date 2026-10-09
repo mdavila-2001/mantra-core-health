@@ -16,7 +16,7 @@ import type { WorkflowStatus } from '../../../core/data-access/accounting/accoun
     ========================================================================== */
 
 /** Cómo se llama cada estado para quien lleva los libros. */
-export const ETIQUETA_DE_ESTADO: Readonly<Record<WorkflowStatus, string>> = {
+export const STATUS_LABEL: Readonly<Record<WorkflowStatus, string>> = {
   DRAFT: 'Borrador',
   AUTO_CLASSIFIED: 'Clasificado',
   PENDING_REVIEW: 'En revisión',
@@ -32,7 +32,7 @@ export const ETIQUETA_DE_ESTADO: Readonly<Record<WorkflowStatus, string>> = {
  * libros». `REVERSED` va en gris y no en rojo — revertir no es un error, es el
  * procedimiento correcto para corregir algo posteado.
  */
-export const TONO_DEL_ESTADO: Readonly<Record<WorkflowStatus, 'info' | 'warning' | 'success' | 'secondary'>> = {
+export const STATUS_TONE: Readonly<Record<WorkflowStatus, 'info' | 'warning' | 'success' | 'secondary'>> = {
   DRAFT: 'secondary',
   AUTO_CLASSIFIED: 'info',
   PENDING_REVIEW: 'warning',
@@ -42,7 +42,7 @@ export const TONO_DEL_ESTADO: Readonly<Record<WorkflowStatus, 'info' | 'warning'
 };
 
 /** La acción que saca a un documento de su estado, si hay alguna. */
-export interface AccionDisponible {
+export interface AvailableAction {
   /** El verbo de la API: es el segmento de la ruta. */
   readonly action: string;
   /** Lo que dice el botón. */
@@ -53,7 +53,7 @@ export interface AccionDisponible {
   readonly principal: boolean;
 }
 
-export const ACCION_DEL_ESTADO: Readonly<Record<WorkflowStatus, AccionDisponible | null>> = {
+export const STATUS_ACTION: Readonly<Record<WorkflowStatus, AvailableAction | null>> = {
   DRAFT: { action: 'classify', rotulo: 'Clasificar', hecho: 'Clasificado', principal: false },
   AUTO_CLASSIFIED: {
     action: 'submit-review',

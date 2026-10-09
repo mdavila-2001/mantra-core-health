@@ -10,4 +10,4 @@
  * recorrido— y una cadena mágica repetida es una cadena que un día se cambia en
  * un solo lado.
  */
-export const CODIGO_DEL_TENANT_SEMILLA = 'DEFAULT';
+export const TENANT_SEED_CODE = 'DEFAULT';

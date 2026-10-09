@@ -1,14 +1,14 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
-import { MEDICA } from '../fixtures/people';
+import { MEDICAL } from '../fixtures/people';
 import { catalogoAdministrable, registrarSeguros } from './insurance.handlers';
-import { vitrinas } from '../fixtures/community';
+import { showcases } from '../fixtures/community';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
 import { uuid } from '../mock-store';
-import { PROFESIONALES } from '../fixtures/people';
+import { PROFESSIONALS } from '../fixtures/people';
 
 interface DetailWire {
   readonly id: string;
@@ -380,7 +380,7 @@ describe('handlers de seguros · aseguradoras de un profesional', () => {
     }) as T;
   }
 
-  const fromNetwork = PROFESIONALES.filter((p) => p.origen === 'RED_ASEGURADORA');
+  const fromNetwork = PROFESSIONALS.filter((p) => p.origen === 'RED_ASEGURADORA');
 
   it('devuelve cada aseguradora de la red con sus planes, por nombre', () => {
     const both = fromNetwork.find((p) => (p.insurerNetworks?.length ?? 0) === 2)!;
@@ -422,7 +422,7 @@ describe('handlers de seguros · aseguradoras de un profesional', () => {
   });
 
   it('un profesional que ninguna aseguradora incluyó en su red devuelve la lista vacía', () => {
-    const outside = PROFESIONALES.find((p) => p.insurerNetworks === undefined)!;
+    const outside = PROFESSIONALS.find((p) => p.insurerNetworks === undefined)!;
 
     expect(get<CarriersWire>(`/practitioners/${outside.id}/insurance-carriers`).items).toEqual([]);
   });
@@ -461,7 +461,7 @@ describe('handlers de seguros · con qué aseguradoras trabaja un profesional', 
   }
 
   it('la médica de la demo trabaja con tres aseguradoras del catálogo', () => {
-    const pagina = redes(MEDICA.id);
+    const pagina = redes(MEDICAL.id);
 
     expect(pagina.count).toBe(3);
     expect(pagina.items.map((red) => red.carrierName)).toEqual([
@@ -526,7 +526,7 @@ describe('handlers de seguros · el mercado de una aseguradora del directorio', 
     }) as Mercado;
   }
 
-  const fichas = vitrinas.todos().filter((vitrina) => vitrina.kind === 'INSURER');
+  const fichas = showcases.todos().filter((vitrina) => vitrina.kind === 'INSURER');
   const planes = (m: Mercado) => m.carrier?.products.flatMap((producto) => producto.plans) ?? [];
 
   it('el directorio tiene las 21 aseguradoras: las dos de la maqueta y las 19 reales', () => {

@@ -1,9 +1,9 @@
 import type { FilaDeClausula, PlanDelMercado } from './insurer-detail';
 import {
-  criterioDe,
-  filtrarPlanes,
-  filtrosDelCatalogo,
-  normalizar,
+  criterionOf,
+  filterPlans,
+  catalogFilters,
+  normalize,
 } from './insurer-detail.filters';
 
 const fila = (id: string, categoria: string, requisitos = ''): FilaDeClausula => ({
@@ -49,54 +49,54 @@ const PLANES = [
 
 describe('filtros de «Productos y planes»', () => {
   it('normaliza acentos, mayúsculas y espacios', () => {
-    expect(normalizar('  Odontología   INFANTIL ')).toBe('odontologia infantil');
+    expect(normalize('  Odontología   INFANTIL ')).toBe('odontologia infantil');
   });
 
   it('ofrece sólo los filtros con dos opciones o más, sacadas del catálogo', () => {
-    const filtros = filtrosDelCatalogo(PLANES);
+    const filtros = catalogFilters(PLANES);
     expect(filtros.map((f) => f.key)).toEqual(['tipo', 'segmento', 'cobertura']);
     expect(filtros[2]!.options.map((o) => o.label)).toEqual([
       'Emergencias',
       'Internación',
       'Maternidad',
     ]);
-    expect(filtrosDelCatalogo([PLANES[0]!]).map((f) => f.key)).toEqual(['cobertura']);
+    expect(catalogFilters([PLANES[0]!]).map((f) => f.key)).toEqual(['cobertura']);
   });
 
   it('un parámetro de un filtro que no se ofrece no filtra', () => {
-    const filtros = filtrosDelCatalogo(PLANES);
-    expect(criterioDe({ tipo: 'Vida' }, filtros).tipo).toBeNull();
-    expect(criterioDe({ tipo: 'Salud' }, filtros).tipo).toBe('Salud');
+    const filtros = catalogFilters(PLANES);
+    expect(criterionOf({ tipo: 'Vida' }, filtros).tipo).toBeNull();
+    expect(criterionOf({ tipo: 'Salud' }, filtros).tipo).toBe('Salud');
   });
 
   it('el término en el plan deja todas sus cláusulas; en una cláusula, sólo ésa', () => {
-    const filtros = filtrosDelCatalogo(PLANES);
-    const porNombre = filtrarPlanes(PLANES, criterioDe({ q: 'integral' }, filtros));
+    const filtros = catalogFilters(PLANES);
+    const porNombre = filterPlans(PLANES, criterionOf({ q: 'integral' }, filtros));
     expect(porNombre.map((p) => [p.plan.id, p.clausulas.length])).toEqual([['p1', 2]]);
 
-    const porCobertura = filtrarPlanes(PLANES, criterioDe({ q: 'maternidad' }, filtros));
+    const porCobertura = filterPlans(PLANES, criterionOf({ q: 'maternidad' }, filtros));
     expect(porCobertura.map((p) => [p.plan.id, p.clausulas.map((c) => c.id)])).toEqual([
       ['p1', ['b']],
     ]);
 
-    const porExclusion = filtrarPlanes(PLANES, criterioDe({ q: 'estetica' }, filtros));
+    const porExclusion = filterPlans(PLANES, criterionOf({ q: 'estetica' }, filtros));
     expect(porExclusion.map((p) => p.plan.id)).toEqual(['p1']);
   });
 
   it('los filtros se combinan entre sí y con el buscador', () => {
-    const filtros = filtrosDelCatalogo(PLANES);
-    const empresasSalud = filtrarPlanes(
+    const filtros = catalogFilters(PLANES);
+    const empresasSalud = filterPlans(
       PLANES,
-      criterioDe({ tipo: 'Salud', segmento: 'Empresas' }, filtros),
+      criterionOf({ tipo: 'Salud', segmento: 'Empresas' }, filtros),
     );
     expect(empresasSalud.map((p) => p.plan.id)).toEqual(['p2']);
 
-    const internacion = filtrarPlanes(PLANES, criterioDe({ cobertura: 'Internación' }, filtros));
+    const internacion = filterPlans(PLANES, criterionOf({ cobertura: 'Internación' }, filtros));
     expect(internacion.map((p) => [p.plan.id, p.clausulas.length])).toEqual([
       ['p1', 1],
       ['p2', 1],
     ]);
 
-    expect(filtrarPlanes(PLANES, criterioDe({ q: 'veterinaria' }, filtros))).toEqual([]);
+    expect(filterPlans(PLANES, criterionOf({ q: 'veterinaria' }, filtros))).toEqual([]);
   });
 });

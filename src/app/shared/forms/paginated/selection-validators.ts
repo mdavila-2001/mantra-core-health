@@ -16,7 +16,7 @@ import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/fo
  *
  * Los mensajes los traduce `mensajeDeError`.
  */
-export function validadorDeSeleccion(
+export function selectionValidator(
   minimo: number | undefined,
   maximo: number | undefined,
 ): ValidatorFn {
@@ -59,17 +59,17 @@ export function validadorDeSeleccion(
  * Un control vacío no falla por «una por columna» —no hay nada repetido— pero
  * sí por «cada fila», que es justamente lo que exige.
  */
-export function validadorDeCuadricula(
+export function gridValidator(
   filas: readonly string[],
   opciones: { readonly requerirCadaFila: boolean; readonly unaPorColumna: boolean },
 ): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const valor = comoRespuestaDeCuadricula(control.value);
+    const valor = gridResponseAs(control.value);
 
     if (opciones.unaPorColumna) {
       const vistas = new Set<string>();
       for (const fila of filas) {
-        for (const columna of columnasDe(valor[fila])) {
+        for (const columna of columnsOf(valor[fila])) {
           if (vistas.has(columna)) {
             return { gridColumnRepeated: { column: columna } };
           }
@@ -79,7 +79,7 @@ export function validadorDeCuadricula(
     }
 
     if (opciones.requerirCadaFila) {
-      const faltan = filas.filter((fila) => columnasDe(valor[fila]).length === 0);
+      const faltan = filas.filter((fila) => columnsOf(valor[fila]).length === 0);
       if (faltan.length > 0) {
         return { gridRowMissing: { missing: faltan.length, total: filas.length } };
       }
@@ -90,13 +90,13 @@ export function validadorDeCuadricula(
 }
 
 /** Lo respondido en una fila, siempre como lista. */
-function columnasDe(respuesta: unknown): readonly string[] {
+function columnsOf(respuesta: unknown): readonly string[] {
   if (typeof respuesta === 'string' && respuesta !== '') return [respuesta];
   return Array.isArray(respuesta) ? (respuesta as readonly string[]) : [];
 }
 
 /** Tolera el `''` con el que nace un `FormControl` sin valor inicial. */
-function comoRespuestaDeCuadricula(valor: unknown): Record<string, unknown> {
+function gridResponseAs(valor: unknown): Record<string, unknown> {
   if (valor === null || typeof valor !== 'object' || Array.isArray(valor)) {
     return {};
   }

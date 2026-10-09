@@ -21,9 +21,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore } from '../../../../core/messaging/chat.store';
 import { MessageTemplates } from '../../../../core/messaging/message-templates';
-import { SelectorEmojis } from './emoji-picker';
+import { EmojiPicker } from './emoji-picker';
 import { StickerPicker } from './sticker-picker/sticker-picker';
-import { Grabador } from './recorder';
+import { Recorder } from './recorder';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
 
 /** Lo más grande que se deja adjuntar. Más que esto no sube por el móvil. */
@@ -55,8 +55,8 @@ const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
     FilePreview,
     FileDropTarget,
     FormsModule,
-    Grabador,
-    SelectorEmojis,
+    Recorder,
+    EmojiPicker,
     StickerPicker,
   ],
   templateUrl: './composer.html',

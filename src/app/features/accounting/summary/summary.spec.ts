@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '../../../core/data-access/api';
 import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { Resumen } from './summary';
+import { Summary } from './summary';
 
 /* ============================================================================
     El resumen llano de Contabilidad.
@@ -33,11 +33,11 @@ import { Resumen } from './summary';
 const BASE = 'http://api.test';
 
 function montar(): {
-  fixture: ReturnType<typeof TestBed.createComponent<Resumen>>;
+  fixture: ReturnType<typeof TestBed.createComponent<Summary>>;
   http: HttpTestingController;
 } {
   TestBed.configureTestingModule({
-    imports: [Resumen],
+    imports: [Summary],
     providers: [
       provideZonelessChangeDetection(),
       provideHttpClient(),
@@ -60,7 +60,7 @@ function montar(): {
       },
     ],
   });
-  const fixture = TestBed.createComponent(Resumen);
+  const fixture = TestBed.createComponent(Summary);
   fixture.detectChanges();
   return { fixture, http: TestBed.inject(HttpTestingController) };
 }
@@ -195,9 +195,9 @@ describe('Resumen contable', () => {
       ]);
       fixture.detectChanges();
 
-      const tramos = (fixture.componentInstance as unknown as { tramos: () => readonly {
+      const tramos = (fixture.componentInstance as unknown as { brackets: () => readonly {
         clave: string; entro: string; salio: string; quedo: string;
-      }[] }).tramos();
+      }[] }).brackets();
 
       expect(tramos.map((t) => t.clave)).toEqual(['hoy', 'semana', 'mes']);
       expect(tramos.map((t) => t.entro)).toEqual(['1450.00', '8880.00', '14220.00']);
@@ -219,9 +219,9 @@ describe('Resumen contable', () => {
       ]);
       fixture.detectChanges();
 
-      const tramos = (fixture.componentInstance as unknown as { tramos: () => readonly {
+      const tramos = (fixture.componentInstance as unknown as { brackets: () => readonly {
         comparacion: { direccion: string; porcentaje: number } | null;
-      }[] }).tramos();
+      }[] }).brackets();
 
       expect(tramos[0]?.comparacion).toMatchObject({ direccion: 'baja', porcentaje: 20 });
       expect(tramos[1]?.comparacion).toMatchObject({ direccion: 'sube', porcentaje: 20 });
@@ -252,9 +252,9 @@ describe('Resumen contable', () => {
       ]);
       fixture.detectChanges();
 
-      const gastos = (fixture.componentInstance as unknown as { gastosDelMes: () => readonly {
+      const gastos = (fixture.componentInstance as unknown as { monthExpenses: () => readonly {
         nombre: string; porcentaje: number; aclaracion: string | null;
-      }[] }).gastosDelMes();
+      }[] }).monthExpenses();
 
       expect(gastos.map((g) => g.nombre)).toEqual([
         'Desgaste de los equipos',
@@ -291,8 +291,8 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(
-        (fixture.componentInstance as unknown as { gastosDelMes: () => readonly unknown[] })
-          .gastosDelMes(),
+        (fixture.componentInstance as unknown as { monthExpenses: () => readonly unknown[] })
+          .monthExpenses(),
       ).toHaveLength(1);
     });
   });
@@ -348,11 +348,11 @@ describe('Resumen contable', () => {
       const { fixture } = montarConCartera();
       const c = fixture.componentInstance as unknown as {
         teDeben: () => readonly { quien: string; aviso: string; tono: string }[];
-        tenesQuePagar: () => readonly { quien: string; aviso: string; tono: string }[];
+        amountToPay: () => readonly { quien: string; aviso: string; tono: string }[];
       };
 
       expect(c.teDeben().map((p) => p.quien)).toEqual(['Seguros Andina', 'Nacional Vida']);
-      expect(c.tenesQuePagar().map((p) => p.quien)).toEqual(['Droguería Boliviana']);
+      expect(c.amountToPay().map((p) => p.quien)).toEqual(['Droguería Boliviana']);
     });
 
     it('el aviso dice en texto lo mismo que el color dice en color', () => {
@@ -361,23 +361,23 @@ describe('Resumen contable', () => {
       const { fixture } = montarConCartera();
       const c = fixture.componentInstance as unknown as {
         teDeben: () => readonly { aviso: string; tono: string }[];
-        tenesQuePagar: () => readonly { aviso: string; tono: string }[];
+        amountToPay: () => readonly { aviso: string; tono: string }[];
       };
 
       expect(c.teDeben()[0]).toMatchObject({ aviso: 'Venció hace 45 días', tono: 'error' });
       expect(c.teDeben()[1]).toMatchObject({ aviso: 'Vence en 8 días', tono: 'neutral' });
       // Un día de atraso no es lo mismo que cuarenta y cinco: avisa, no alarma.
-      expect(c.tenesQuePagar()[0]).toMatchObject({ aviso: 'Venció hace 1 día', tono: 'warning' });
+      expect(c.amountToPay()[0]).toMatchObject({ aviso: 'Venció hace 1 día', tono: 'warning' });
     });
 
     it('cuenta cuántas ya vencieron, que es el número accionable', () => {
       const { fixture } = montarConCartera();
       const c = fixture.componentInstance as unknown as {
-        vencidasQueTeDeben: () => number;
-        vencidasQueDebes: () => number;
+        overdueOwedToYou: () => number;
+        overdueYouOwe: () => number;
       };
-      expect(c.vencidasQueTeDeben()).toBe(1);
-      expect(c.vencidasQueDebes()).toBe(1);
+      expect(c.overdueOwedToYou()).toBe(1);
+      expect(c.overdueYouOwe()).toBe(1);
     });
 
     it('«Ya me pagaron» compensa la partida y vuelve a leer el tablero', () => {
@@ -386,10 +386,10 @@ describe('Resumen contable', () => {
       const { fixture, http } = montarConCartera();
       const c = fixture.componentInstance as unknown as {
         teDeben: () => readonly { id: string }[];
-        saldar: (p: unknown, lado: 'cobro' | 'pago') => void;
+        settle: (p: unknown, lado: 'cobro' | 'pago') => void;
       };
 
-      c.saldar(c.teDeben()[0], 'cobro');
+      c.settle(c.teDeben()[0], 'cobro');
 
       const compensacion = http.expectOne(`${BASE}/accounting/clearing-documents`);
       expect(compensacion.request.method).toBe('POST');
@@ -408,11 +408,11 @@ describe('Resumen contable', () => {
       const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
       const c = fixture.componentInstance as unknown as {
         teDeben: () => readonly { id: string; quien: string }[];
-        saldar: (p: unknown, lado: 'cobro' | 'pago') => void;
-        saldando: () => string | null;
+        settle: (p: unknown, lado: 'cobro' | 'pago') => void;
+        settling: () => string | null;
       };
 
-      c.saldar(c.teDeben()[0], 'cobro');
+      c.settle(c.teDeben()[0], 'cobro');
       http
         .expectOne(`${BASE}/accounting/clearing-documents`)
         .flush(
@@ -425,7 +425,7 @@ describe('Resumen contable', () => {
         message: 'No se pudo registrar el cobro de Seguros Andina. Intente de nuevo. (Código de soporte: corr-cobro)',
       });
       // El botón vuelve a estar disponible y el tablero sigue como estaba.
-      expect(c.saldando()).toBeNull();
+      expect(c.settling()).toBeNull();
       expect(http.match((r) => r.url === `${BASE}/accounting/open-items`)).toHaveLength(0);
     });
 
@@ -433,11 +433,11 @@ describe('Resumen contable', () => {
       const { fixture, http } = montarConCartera();
       const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
       const c = fixture.componentInstance as unknown as {
-        tenesQuePagar: () => readonly { id: string }[];
-        saldar: (p: unknown, lado: 'cobro' | 'pago') => void;
+        amountToPay: () => readonly { id: string }[];
+        settle: (p: unknown, lado: 'cobro' | 'pago') => void;
       };
 
-      c.saldar(c.tenesQuePagar()[0], 'pago');
+      c.settle(c.amountToPay()[0], 'pago');
       http
         .expectOne(`${BASE}/accounting/clearing-documents`)
         .flush(
@@ -471,8 +471,8 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       const equipos = (
-        fixture.componentInstance as unknown as { equiposConValor: () => readonly { name: string }[] }
-      ).equiposConValor();
+        fixture.componentInstance as unknown as { equipmentWithValue: () => readonly { name: string }[] }
+      ).equipmentWithValue();
 
       // Un renglón en cero en «lo que tenés» ocupa lugar y no dice nada. El
       // registro completo está en la pantalla de activos y pasivos.
@@ -485,8 +485,8 @@ describe('Resumen contable', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       expect(
-        (fixture.componentInstance as unknown as { hayVariasPracticas: () => boolean })
-          .hayVariasPracticas(),
+        (fixture.componentInstance as unknown as { hasSeveralPractices: () => boolean })
+          .hasSeveralPractices(),
       ).toBe(false);
     });
   });
@@ -525,7 +525,7 @@ describe('Resumen contable', () => {
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      fixture.componentInstance.pestana.set(1);
+      fixture.componentInstance.tab.set(1);
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;

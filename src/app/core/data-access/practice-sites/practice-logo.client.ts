@@ -19,19 +19,19 @@ import type { PracticeSite } from './practice-sites.types';
  *
  * ## Contrato que ya no cambia
  *
- * - {@link LogoDelConsultorioClient.obtenerUrl} — el logo como `data:` URL, o
+ * - {@link PracticeLogoClient.getUrl} — el logo como `data:` URL, o
  *   `null` si no hay o no se pudo leer. **Nunca falla**: un logo que no carga
  *   no puede romper una ficha ni un PDF.
- * - {@link LogoDelConsultorioClient.subir} — sube el archivo y devuelve su id.
+ * - {@link PracticeLogoClient.upload} — sube el archivo y devuelve su id.
  *   No lo asocia a nada todavía.
- * - {@link LogoDelConsultorioClient.guardar} — asocia (o quita, con `null`) el
+ * - {@link PracticeLogoClient.save} — asocia (o quita, con `null`) el
  *   archivo ya subido.
  *
  * `data:` y no una URL de archivo porque la CSP es `img-src 'self' data:`
  * (ver `FilesClient.imageDataUrl`).
  */
 @Injectable({ providedIn: 'root' })
-export class LogoDelConsultorioClient {
+export class PracticeLogoClient {
   private readonly sites = inject(PracticeSitesClient);
   private readonly files = inject(FilesClient);
 
@@ -42,8 +42,8 @@ export class LogoDelConsultorioClient {
    * @returns La imagen, o `null` si no hay logo, no hay consultorio propio o la
    * lectura falló.
    */
-  obtenerUrl(practitionerProfileId: string): Observable<string | null> {
-    return this.sedePropia(practitionerProfileId).pipe(
+  getUrl(practitionerProfileId: string): Observable<string | null> {
+    return this.ownSite(practitionerProfileId).pipe(
       switchMap((sede) =>
         sede?.logoFileId
           ? this.files.imageDataUrl(sede.logoFileId).pipe(map((url): string | null => url))
@@ -59,7 +59,7 @@ export class LogoDelConsultorioClient {
    *
    * @returns El id del archivo recién subido.
    */
-  subir(archivo: File): Observable<string> {
+  upload(archivo: File): Observable<string> {
     return this.files.upload(archivo, 'IMAGE', 'NORMAL').pipe(map((subido) => subido.id));
   }
 
@@ -69,11 +69,11 @@ export class LogoDelConsultorioClient {
    * Sin consultorio propio no hay dónde guardarlo: termina sin hacer nada en
    * vez de inventar un error, porque el resto del perfil se guardó igual.
    *
-   * @param fileId - El archivo que devolvió {@link LogoDelConsultorioClient.subir},
+   * @param fileId - El archivo que devolvió {@link PracticeLogoClient.upload},
    * o `null` para quitar el logo.
    */
-  guardar(practitionerProfileId: string, fileId: string | null): Observable<void> {
-    return this.sedePropia(practitionerProfileId).pipe(
+  save(practitionerProfileId: string, fileId: string | null): Observable<void> {
+    return this.ownSite(practitionerProfileId).pipe(
       switchMap((sede) =>
         sede === undefined
           ? of(undefined)
@@ -82,7 +82,7 @@ export class LogoDelConsultorioClient {
     );
   }
 
-  private sedePropia(practitionerProfileId: string): Observable<PracticeSite | undefined> {
+  private ownSite(practitionerProfileId: string): Observable<PracticeSite | undefined> {
     return this.sites
       .listSitesOfPractitioner(practitionerProfileId)
       .pipe(map((pagina) => pagina.items.find((sede) => sede.isOwnSite === true)));

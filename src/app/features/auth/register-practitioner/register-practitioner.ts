@@ -1,7 +1,7 @@
 import { environment } from '../../../../environments/environment';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
-import { FirmaOSello } from '../../../shared/components/molecules/signature-or-seal/signature-or-seal';
+import { SignatureOrSeal } from '../../../shared/components/molecules/signature-or-seal/signature-or-seal';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -45,39 +45,39 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
+  RegistrationHelp,
+  type HelpCard,
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
-import { unirNombres } from '../../../core/profession/additional-names';
+import { joinNames } from '../../../core/profession/additional-names';
 import {
-  COLEGIO_DE_LA_PROFESION,
-  colegioDelTitulo,
-  esColegio,
-  opcionesAutoridadReguladora,
+  PROFESSION_COLLEGE,
+  titleCollege,
+  isCollege,
+  optionsRegulatoryAuthority,
 } from '../../../core/profession/regulatory-authorities';
 import {
-  OPCIONES_TITULO_PROFESIONAL,
-  filtroDeSaludDelTitulo,
+  PROFESSIONAL_TITLE_OPTIONS,
+  titleHealthFilter,
 } from '../../../core/profession/professional-degrees';
-import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profession/educational-institutions';
+import { CATALOG_OUTSIDE_INSTITUTION } from '../../../core/profession/educational-institutions';
 import {
-  PAIS_FUERA_DE_CATALOGO,
-  PadronDeUniversidades,
-  ciudadAlElegirUniversidad,
-  eleccionDesdeTexto,
-  type FiltroDeSalud,
+  CATALOG_OUTSIDE_COUNTRY,
+  UniversitiesRegistry,
+  cityToChooseUniversity,
+  choiceFromText,
+  type HealthFilter,
 } from '../../../core/profession/university-registry';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
@@ -85,10 +85,10 @@ import {
   SUPPORT_FILE_FORMATS,
 } from '../shared-registration/doctor-credentials';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
 } from '../shared-registration/password-policy';
-import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
@@ -335,12 +335,12 @@ interface TituloDeclarado {
   readonly ciudad: string;
   /**
    * Qué opción del desplegable de país está marcada: el nombre, el centinela
-   * {@link PAIS_FUERA_DE_CATALOGO} —que destapa la casilla escrita— o nada.
+   * {@link CATALOG_OUTSIDE_COUNTRY} —que destapa la casilla escrita— o nada.
    * Va aparte de `pais` porque con «Otro país…» elegido y nada escrito todavía,
    * `pais` es vacío y el desplegable tiene que seguir en «Otro».
    */
   readonly paisElegido: string | null;
-  /** Lo mismo para la universidad, con {@link INSTITUCION_FUERA_DE_CATALOGO}. */
+  /** Lo mismo para la universidad, con {@link CATALOG_OUTSIDE_INSTITUTION}. */
   readonly universidadElegida: string | null;
   /** El nombre del archivo elegido, o `null` si todavía no adjuntó ninguno. */
   readonly archivo: string | null;
@@ -353,7 +353,7 @@ interface TituloDeclarado {
  *
  * Es la pregunta que más veces vuelve, así que va escrita una sola vez acá:
  *
- * - **País.** Desplegable, poblado por {@link PadronDeUniversidades}: Bolivia
+ * - **País.** Desplegable, poblado por {@link UniversitiesRegistry}: Bolivia
  *   primero y 199 países más, con «Otro país…» que destapa una casilla escrita.
  *   Lo pidió el propietario el 02/10/2026 («deben ser select, poblados con
  *   datos, como árbol para filtrar por país»). Se guarda el **nombre**: la
@@ -430,7 +430,7 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * clave la declara la propia página (`PaginaDeFormulario.clave`), así que las
  * dos mitades no se pueden separar de un descuido.
  */
-const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
   name: [
     {
       icono: 'people',
@@ -614,21 +614,21 @@ function sinTildes(texto: string): string {
   imports: [
     FileDropTarget,
     FileInput,
-    FirmaOSello,
+    SignatureOrSeal,
     RouterLink,
     AppButton,
     NavIcon,
     Tooltip,
     LocationPicker,
-    UbicacionPicker,
+    MapLocationPicker,
     Link,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     ReferenceCombobox,
-    RegistroAyuda,
+    RegistrationHelp,
     FormField,
     AppInput,
     Select,
@@ -657,7 +657,7 @@ export class RegisterPractitioner {
 
   private cargarProfesiones(): void {
     this.catalogoProfesionesCaido.set(false);
-    this.catalogoDeProfesiones.listar().subscribe({
+    this.catalogoDeProfesiones.list().subscribe({
       next: (opciones) =>
         this.profesiones.set(
           opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
@@ -668,7 +668,7 @@ export class RegisterPractitioner {
 
   /** Vuelve a pedir el catálogo de profesiones después de un fallo. */
   reintentarProfesiones(): void {
-    this.catalogoDeProfesiones.olvidar();
+    this.catalogoDeProfesiones.forget();
     this.cargarProfesiones();
   }
 
@@ -1007,7 +1007,7 @@ export class RegisterPractitioner {
     }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
     // Documento de identidad boliviano. Obligatorio en el alta de profesional:
     // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
@@ -1136,8 +1136,8 @@ export class RegisterPractitioner {
    */
   protected readonly topeDeUniversidad = 200;
 
-  protected readonly paisFueraDeCatalogo = PAIS_FUERA_DE_CATALOGO;
-  protected readonly institucionFueraDeCatalogo = INSTITUCION_FUERA_DE_CATALOGO;
+  protected readonly paisFueraDeCatalogo = CATALOG_OUTSIDE_COUNTRY;
+  protected readonly institucionFueraDeCatalogo = CATALOG_OUTSIDE_INSTITUTION;
 
   protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
   /** Los títulos académicos usan la pre-carga existente, que acepta sólo PDF. */
@@ -1290,23 +1290,23 @@ export class RegisterPractitioner {
     valor: string,
   ): TituloDeclarado {
     const escrito = { ...titulo, [campo]: valor };
-    if (campo === 'pais' && titulo.paisElegido !== PAIS_FUERA_DE_CATALOGO) {
+    if (campo === 'pais' && titulo.paisElegido !== CATALOG_OUTSIDE_COUNTRY) {
       return {
         ...escrito,
-        paisElegido: eleccionDesdeTexto(
+        paisElegido: choiceFromText(
           valor,
-          (pais) => this.padron.esPaisDelCatalogo(pais),
-          PAIS_FUERA_DE_CATALOGO,
+          (pais) => this.padron.isCatalogCountry(pais),
+          CATALOG_OUTSIDE_COUNTRY,
         ),
       };
     }
-    if (campo === 'universidad' && titulo.universidadElegida !== INSTITUCION_FUERA_DE_CATALOGO) {
+    if (campo === 'universidad' && titulo.universidadElegida !== CATALOG_OUTSIDE_INSTITUTION) {
       return {
         ...escrito,
-        universidadElegida: eleccionDesdeTexto(
+        universidadElegida: choiceFromText(
           valor,
-          (universidad) => this.padron.esUniversidadDe(titulo.pais, universidad),
-          INSTITUCION_FUERA_DE_CATALOGO,
+          (universidad) => this.padron.isUniversityOf(titulo.pais, universidad),
+          CATALOG_OUTSIDE_INSTITUTION,
         ),
       };
     }
@@ -1350,9 +1350,9 @@ export class RegisterPractitioner {
     return {
       ...titulo,
       ...universidad,
-      ciudad: ciudadAlElegirUniversidad(
+      ciudad: cityToChooseUniversity(
         titulo.ciudad,
-        this.padron.ciudadesDe(titulo.pais, universidad.universidad),
+        this.padron.citiesOf(titulo.pais, universidad.universidad),
       ),
     };
   }
@@ -1362,13 +1362,13 @@ export class RegisterPractitioner {
    * profesión» puede ser cualquier carrera; diplomados, maestrías y doctorados
    * se cargan en un alta de salud y se acotan a las casas que dictan salud.
    */
-  private filtroDeFila(titulo: TituloDeclarado): FiltroDeSalud {
+  private filtroDeFila(titulo: TituloDeclarado): HealthFilter {
     return titulo.tipo === 'UNIVERSITARIO' ? null : 'salud';
   }
 
   /** Las ciudades que puede tener una fila: las sedes de su universidad. */
   ciudadesDeFila(titulo: TituloDeclarado): readonly SelectOption<string>[] {
-    return opcionesDeCiudad(this.padron.ciudadesDe(titulo.pais, titulo.universidad));
+    return opcionesDeCiudad(this.padron.citiesOf(titulo.pais, titulo.universidad));
   }
 
   /** Elige la ciudad de una fila, que sólo puede ser una de las sedes. */
@@ -1395,7 +1395,7 @@ export class RegisterPractitioner {
   private paisElegido(eleccion: string | null): Pick<TituloDeclarado, 'pais' | 'paisElegido'> {
     return {
       paisElegido: eleccion,
-      pais: eleccion === null || eleccion === PAIS_FUERA_DE_CATALOGO ? '' : eleccion,
+      pais: eleccion === null || eleccion === CATALOG_OUTSIDE_COUNTRY ? '' : eleccion,
     };
   }
 
@@ -1405,13 +1405,13 @@ export class RegisterPractitioner {
   ): Pick<TituloDeclarado, 'universidad' | 'universidadElegida'> {
     return {
       universidadElegida: eleccion,
-      universidad: eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
+      universidad: eleccion === null || eleccion === CATALOG_OUTSIDE_INSTITUTION ? '' : eleccion,
     };
   }
 
   /** Las opciones de universidad de una fila: las del país que eligió. */
   opcionesDeUniversidadDeFila(titulo: TituloDeclarado): readonly SelectOption<string>[] {
-    return this.padron.opcionesDeUniversidad(titulo.pais, this.filtroDeFila(titulo));
+    return this.padron.universityOptions(titulo.pais, this.filtroDeFila(titulo));
   }
 
   /**
@@ -1600,10 +1600,10 @@ export class RegisterPractitioner {
    * se guarda para sí el estado intermedio —capturado y sin confirmar— y avisa
    * en pantalla que ese no se guarda. Acá no hace falta volver a preguntarlo.
    */
-  readonly gpsDomicilio = signal<Coordenadas | null>(null);
+  readonly gpsDomicilio = signal<Coordinates | null>(null);
 
   /** Ubicación laboral, confirmada por separado del domicilio y de sus sedes. */
-  readonly gpsTrabajo = signal<Coordenadas | null>(null);
+  readonly gpsTrabajo = signal<Coordinates | null>(null);
 
   /**
    * La localidad del consultorio propio.
@@ -1615,10 +1615,10 @@ export class RegisterPractitioner {
   readonly municipioConsultorio = signal<string | null>(null);
 
   /** El punto del consultorio, ya confirmado sobre el mapa. */
-  readonly gpsConsultorio = signal<Coordenadas | null>(null);
+  readonly gpsConsultorio = signal<Coordinates | null>(null);
 
   /** Los identificadores de prueba del bloque de ubicación del consultorio. */
-  protected readonly idsUbicacionConsultorio: IdsDePrueba = {
+  protected readonly idsUbicacionConsultorio: TestIds = {
     mapa: 'registration-practitioner-office-map',
     confirmada: 'registration-practitioner-office-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-office-geocoding-notice',
@@ -1629,7 +1629,7 @@ export class RegisterPractitioner {
   };
 
   /** Los identificadores de prueba del bloque de ubicación del domicilio. */
-  protected readonly idsUbicacionDomicilio: IdsDePrueba = {
+  protected readonly idsUbicacionDomicilio: TestIds = {
     mapa: 'registration-practitioner-home-map',
     confirmada: 'registration-practitioner-home-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-home-geocoding-notice',
@@ -1640,7 +1640,7 @@ export class RegisterPractitioner {
   };
 
   /** Identificadores de prueba del mapa para la dirección laboral. */
-  protected readonly idsUbicacionTrabajo: IdsDePrueba = {
+  protected readonly idsUbicacionTrabajo: TestIds = {
     mapa: 'registration-practitioner-work-map',
     confirmada: 'registration-practitioner-work-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-work-geocoding-notice',
@@ -1744,15 +1744,15 @@ export class RegisterPractitioner {
 
   /**
    * El padrón país → universidades. Bolivia está siempre; el resto se pide en el
-   * constructor y llega por su propio trozo. Ver {@link PadronDeUniversidades}.
+   * constructor y llega por su propio trozo. Ver {@link UniversitiesRegistry}.
    */
-  private readonly padron = inject(PadronDeUniversidades);
+  private readonly padron = inject(UniversitiesRegistry);
 
   /** Las opciones del desplegable de país, iguales en el título y en las filas. */
-  protected readonly opcionesDePais = this.padron.opcionesDePais;
+  protected readonly opcionesDePais = this.padron.countryOptions;
 
   /** Si el padrón importado todavía viene, para decirlo debajo del campo. */
-  protected readonly padronCargando = computed(() => this.padron.estado() === 'cargando');
+  protected readonly padronCargando = computed(() => this.padron.status() === 'cargando');
 
   /**
    * Qué opción del desplegable de país del título principal está marcada.
@@ -1765,10 +1765,10 @@ export class RegisterPractitioner {
   protected readonly universidadDelTituloElegida = signal<string | null>(null);
 
   protected readonly paisDelTituloEsOtro = computed(
-    () => this.paisDelTituloElegido() === PAIS_FUERA_DE_CATALOGO,
+    () => this.paisDelTituloElegido() === CATALOG_OUTSIDE_COUNTRY,
   );
   protected readonly universidadDelTituloEsOtra = computed(
-    () => this.universidadDelTituloElegida() === INSTITUCION_FUERA_DE_CATALOGO,
+    () => this.universidadDelTituloElegida() === CATALOG_OUTSIDE_INSTITUTION,
   );
 
   /** El país del título principal como texto, espejado desde el control. */
@@ -1780,9 +1780,9 @@ export class RegisterPractitioner {
    * universidad acotada a él.
    */
   protected readonly opcionesDeUniversidadDelTitulo = computed(() =>
-    this.padron.opcionesDeUniversidad(
+    this.padron.universityOptions(
       this.paisDelTituloTexto(),
-      filtroDeSaludDelTitulo(this.tituloProfesionalTexto() ?? ''),
+      titleHealthFilter(this.tituloProfesionalTexto() ?? ''),
     ),
   );
 
@@ -1801,7 +1801,7 @@ export class RegisterPractitioner {
   /** Las ciudades del título principal: las sedes de la universidad elegida. */
   protected readonly ciudadesDelTitulo = computed(() =>
     opcionesDeCiudad(
-      this.padron.ciudadesDe(this.paisDelTituloTexto(), this.universidadDelTituloTexto()),
+      this.padron.citiesOf(this.paisDelTituloTexto(), this.universidadDelTituloTexto()),
     ),
   );
 
@@ -1836,25 +1836,25 @@ export class RegisterPractitioner {
     }
     if (key === 'professionalTitleCountry') {
       this.paisDelTituloTexto.set(texto);
-      if (this.paisDelTituloElegido() !== PAIS_FUERA_DE_CATALOGO) {
+      if (this.paisDelTituloElegido() !== CATALOG_OUTSIDE_COUNTRY) {
         this.paisDelTituloElegido.set(
-          eleccionDesdeTexto(
+          choiceFromText(
             texto,
-            (pais) => this.padron.esPaisDelCatalogo(pais),
-            PAIS_FUERA_DE_CATALOGO,
+            (pais) => this.padron.isCatalogCountry(pais),
+            CATALOG_OUTSIDE_COUNTRY,
           ),
         );
       }
     }
     if (
       key === 'professionalTitleUniversity' &&
-      this.universidadDelTituloElegida() !== INSTITUCION_FUERA_DE_CATALOGO
+      this.universidadDelTituloElegida() !== CATALOG_OUTSIDE_INSTITUTION
     ) {
       this.universidadDelTituloElegida.set(
-        eleccionDesdeTexto(
+        choiceFromText(
           texto,
-          (universidad) => this.padron.esUniversidadDe(this.paisDelTituloTexto(), universidad),
-          INSTITUCION_FUERA_DE_CATALOGO,
+          (universidad) => this.padron.isUniversityOf(this.paisDelTituloTexto(), universidad),
+          CATALOG_OUTSIDE_INSTITUTION,
         ),
       );
     }
@@ -1865,7 +1865,7 @@ export class RegisterPractitioner {
    * reinicia la universidad, por lo mismo que en {@link elegirEnFila}.
    */
   elegirPaisDelTitulo(eleccion: string | null): void {
-    const pais = eleccion === null || eleccion === PAIS_FUERA_DE_CATALOGO ? '' : eleccion;
+    const pais = eleccion === null || eleccion === CATALOG_OUTSIDE_COUNTRY ? '' : eleccion;
     const cambiaDePais = pais !== this.paisDelTituloTexto();
     // Antes de mover el país: la ciudad propuesta se reconoce por la
     // universidad que estaba elegida **en el país anterior**.
@@ -1888,11 +1888,11 @@ export class RegisterPractitioner {
     const { professionalTitleUniversity, professionalTitleCity } = this.formProfesional.controls;
     const pais = this.paisDelTituloTexto();
     const universidad =
-      eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion;
+      eleccion === null || eleccion === CATALOG_OUTSIDE_INSTITUTION ? '' : eleccion;
     professionalTitleCity.setValue(
-      ciudadAlElegirUniversidad(
+      cityToChooseUniversity(
         professionalTitleCity.value,
-        this.padron.ciudadesDe(pais, universidad),
+        this.padron.citiesOf(pais, universidad),
       ),
     );
     this.universidadDelTituloElegida.set(eleccion);
@@ -1917,7 +1917,7 @@ export class RegisterPractitioner {
    */
   private nombresAdicionales(): string {
     const raw = this.formProfesional.getRawValue();
-    return unirNombres([raw.middleName, raw.thirdName, ...this.nombresExtra()]);
+    return joinNames([raw.middleName, raw.thirdName, ...this.nombresExtra()]);
   }
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
@@ -1972,8 +1972,8 @@ export class RegisterPractitioner {
     // consulta al servidor para filtrar doce opciones agrega latencia y un
     // estado de error donde no hacía falta ninguno.
     return busqueda === ''
-      ? OPCIONES_TITULO_PROFESIONAL
-      : OPCIONES_TITULO_PROFESIONAL.filter((opcion) =>
+      ? PROFESSIONAL_TITLE_OPTIONS
+      : PROFESSIONAL_TITLE_OPTIONS.filter((opcion) =>
           opcion.label.toLowerCase().includes(busqueda),
         );
   });
@@ -1981,7 +1981,7 @@ export class RegisterPractitioner {
   /** La opción elegida, para que el rótulo vuelva al regresar a este paso. */
   readonly tituloProfesionalSeleccionado = computed<ReferenceOption | null>(() => {
     const valor = this.tituloProfesionalElegido();
-    return OPCIONES_TITULO_PROFESIONAL.find((opcion) => opcion.value === valor) ?? null;
+    return PROFESSIONAL_TITLE_OPTIONS.find((opcion) => opcion.value === valor) ?? null;
   });
 
   /**
@@ -2081,7 +2081,7 @@ export class RegisterPractitioner {
     // lo que el padrón real trae en esa casilla —y lo que la gente cargaba— es
     // el número del SEDES, que además es una habilitación y no un título.
 
-    return paginarCampos([
+    return paginateFields([
       {
         titulo: '¿Cómo se llama?',
         clave: 'name',
@@ -2466,7 +2466,7 @@ export class RegisterPractitioner {
             label: 'Autoridad que la emitió (opcional)',
             hint: 'El Ministerio de Salud, el SEDES de su gobernación o el colegio de su profesión.',
             control: 'select',
-            options: opcionesAutoridadReguladora(titulo),
+            options: optionsRegulatoryAuthority(titulo),
             placeholder: 'Sin especificar',
             testId: 'registro-pro-autoridad',
             icono: 'building',
@@ -2567,7 +2567,7 @@ export class RegisterPractitioner {
             placeholder: 'Su contraseña',
             testId: 'registro-pro-password',
             icono: 'lock',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
         ],
       },
@@ -2640,7 +2640,7 @@ export class RegisterPractitioner {
   readonly claveVisible = signal('');
 
   /** Las tarjetas del costado: por qué te pedimos lo de ESTE paso. */
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA_PROFESIONAL[this.claveVisible()] ?? [],
   );
 
@@ -2705,12 +2705,12 @@ export class RegisterPractitioner {
       // lleva el nombre del colegio de ese título. Vacía, se llena sólo si el
       // título tiene colegio conocido; un colegio ya elegido se cambia por el
       // del título nuevo. Ministerio o SEDES, elegidos a mano, no se tocan.
-      const colegio = colegioDelTitulo(valor);
+      const colegio = titleCollege(valor);
       const actual = autoridad.value;
       const cambiar =
         actual === ''
-          ? colegio !== COLEGIO_DE_LA_PROFESION
-          : esColegio(actual) && actual !== colegio;
+          ? colegio !== PROFESSION_COLLEGE
+          : isCollege(actual) && actual !== colegio;
       if (cambiar) {
         autoridad.setValue(colegio);
       }

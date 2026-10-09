@@ -1,4 +1,4 @@
-import { paginarCampos } from './paginate-fields';
+import { paginateFields } from './paginate-fields';
 import { MAX_CAMPOS_POR_PAGINA, type CampoDeFormulario } from './paginated-form.types';
 
 /**
@@ -25,7 +25,7 @@ describe('paginarCampos', () => {
     // 13 es el alta de paciente, que es el caso que originó todo esto.
     for (const cuantos of [1, 3, 4, 5, 8, 9, 13, 40]) {
       it(`con ${cuantos} campos, ninguna página pasa de ${MAX_CAMPOS_POR_PAGINA}`, () => {
-        const paginas = paginarCampos(campos(cuantos));
+        const paginas = paginateFields(campos(cuantos));
 
         expect(paginas.length).toBeGreaterThan(0);
         for (const pagina of paginas) {
@@ -40,7 +40,7 @@ describe('paginarCampos', () => {
     it('no pierde ni duplica ningún campo al partir', () => {
       const originales = campos(13);
 
-      const repartidos = paginarCampos(originales).flatMap((pagina) => pagina.campos);
+      const repartidos = paginateFields(originales).flatMap((pagina) => pagina.campos);
 
       // El orden importa tanto como la cuenta: un formulario que pregunta la
       // contraseña antes que el nombre está roto aunque no falte nada.
@@ -50,7 +50,7 @@ describe('paginarCampos', () => {
 
   describe('las secciones', () => {
     it('respeta los cortes que trae el formulario, aunque quepan juntos', () => {
-      const paginas = paginarCampos([
+      const paginas = paginateFields([
         { titulo: 'Identidad', campos: campos(2) },
         { titulo: 'Acceso', campos: campos(2) },
       ]);
@@ -61,7 +61,7 @@ describe('paginarCampos', () => {
     });
 
     it('una sección larga se parte conservando su nombre', () => {
-      const paginas = paginarCampos([{ titulo: 'Datos de contacto', campos: campos(6) }]);
+      const paginas = paginateFields([{ titulo: 'Datos de contacto', campos: campos(6) }]);
 
       expect(paginas.map((pagina) => pagina.titulo)).toEqual([
         'Datos de contacto (1 de 2)',
@@ -70,14 +70,14 @@ describe('paginarCampos', () => {
     });
 
     it('una sección que cabe entera no se numera', () => {
-      const [pagina] = paginarCampos([{ titulo: 'Identidad', campos: campos(4) }]);
+      const [pagina] = paginateFields([{ titulo: 'Identidad', campos: campos(4) }]);
 
       // «(1 de 1)» sería ruido: no hay nada de qué distinguirla.
       expect(pagina.titulo).toBe('Identidad');
     });
 
     it('la ayuda de la sección viaja a todas sus páginas', () => {
-      const paginas = paginarCampos([
+      const paginas = paginateFields([
         { titulo: 'Habilitación', hint: 'Tal como figura en su matrícula.', campos: campos(5) },
       ]);
 
@@ -90,7 +90,7 @@ describe('paginarCampos', () => {
     });
 
     it('una sección vacía no produce página', () => {
-      const paginas = paginarCampos([
+      const paginas = paginateFields([
         { titulo: 'Identidad', campos: campos(2) },
         { titulo: 'Sin nada', campos: [] },
       ]);
@@ -101,7 +101,7 @@ describe('paginarCampos', () => {
 
   describe('la presentación', () => {
     it('conserva la disposición de la sección en cada página', () => {
-      const paginas = paginarCampos([
+      const paginas = paginateFields([
         { titulo: 'Identidad', disposicion: 'dos-columnas', campos: campos(5) },
       ]);
 
@@ -114,11 +114,11 @@ describe('paginarCampos', () => {
 
   describe('los bordes', () => {
     it('sin campos no hay páginas', () => {
-      expect(paginarCampos([])).toEqual([]);
+      expect(paginateFields([])).toEqual([]);
     });
 
     it('una lista suelta de campos toma el título que se le dé', () => {
-      const [pagina] = paginarCampos(campos(2), { tituloPorDefecto: 'Sus datos' });
+      const [pagina] = paginateFields(campos(2), { tituloPorDefecto: 'Sus datos' });
 
       expect(pagina.titulo).toBe('Sus datos');
     });
@@ -133,7 +133,7 @@ describe('paginarCampos', () => {
       showWhen: { key: `p${de}`, equals: true },
     });
 
-    const paginas = paginarCampos([
+    const paginas = paginateFields([
       principal(1), cual(1), cual(1 + 0.5),
       principal(2), principal(3), principal(4), cual(4),
       principal(5),

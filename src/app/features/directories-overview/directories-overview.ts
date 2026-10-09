@@ -41,7 +41,7 @@ import {
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { aTarjeta, rutaDeFicha } from '../alovida/buscar/public-result.mapper';
-import { fotoDeVertical } from '../../shared/utils/directory-photo';
+import { verticalPhoto } from '../../shared/utils/directory-photo';
 import { groupUnits } from '../laboratory-directory/laboratory-directory';
 
 /** Rótulo del bloque de `navigation.subgroups.ts` del que salen los nodos. */
@@ -162,7 +162,7 @@ export class DirectoriesOverview {
   });
 
   protected readonly routeOf = routeOf;
-  protected readonly fotoDe = fotoDeVertical;
+  protected readonly fotoDe = verticalPhoto;
 
   /** Los nodos que se dibujan: todos, o sólo el elegido en el desplegable. */
   protected readonly nodosVisibles = computed<readonly AppSection[]>(() => {

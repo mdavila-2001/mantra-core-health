@@ -8,7 +8,7 @@
     @if (readOnly()) {
       <!-- De lectura no hay próxima acción que ofrecer acá: cargar un papel
            todavía no se guarda en ningún lado. -->
-      @if (vacio(); as noLicenses) {
+      @if (empty(); as noLicenses) {
         <app-empty-state
           variant="empty"
           data-testid="profile-licenses-empty"
@@ -16,7 +16,7 @@
           [description]="noLicenses.message ?? ''"
         />
       }
-    } @else if (vacio(); as sinPapeles) {
+    } @else if (empty(); as sinPapeles) {
       <app-empty-state
         variant="empty"
         title="Todavía no hay papeles en la carpeta"
@@ -43,21 +43,21 @@
       <h2 id="ficha-papeles-titulo" class="papeles__titulo">Carpeta legal</h2>
       <!-- Sobre la maqueta nada de esto sale de la API: se dice, no se disimula. -->
       @if (!readOnly()) {
-        <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+        <app-chip variant="neutral" size="sm">{{ exampleNote }}</app-chip>
       }
 
       <!-- Con los seis papeles cargados no hay nada que agregar: el botón no
            se ofrece en vez de ofrecerse y no hacer nada. De lectura, tampoco. -->
-      @if (!readOnly() && puedeAgregar()) {
+      @if (!readOnly() && canAdd()) {
         <button
           app-button
           variant="secondary"
           size="sm"
           type="button"
           data-testid="ficha-agregar-documento"
-          (clicked)="altaAbierta() ? cerrarAlta() : abrirAlta()"
+          (clicked)="openEnrollment() ? closeEnrollment() : abrirAlta()"
         >
-          {{ altaAbierta() ? 'Cancelar' : 'Agregar documento' }}
+          {{ openEnrollment() ? 'Cancelar' : 'Agregar documento' }}
         </button>
       }
     </div>
@@ -75,7 +75,7 @@
     <ng-container [ngTemplateOutlet]="formularioDeAlta" />
 
     <ul class="papeles__lista" data-testid="ficha-documentos">
-      @for (fila of filas(); track fila.documento.clave) {
+      @for (fila of rows(); track fila.documento.clave) {
         <li class="papeles__fila">
           <div class="papeles__cabecera">
             <h3 class="papeles__nombre">{{ fila.documento.nombre }}</h3>
@@ -132,7 +132,7 @@
                 type="button"
                 [attr.data-testid]="'ficha-descargar-' + fila.documento.clave"
                 [attr.aria-label]="'Descargar ' + fila.documento.nombre"
-                (clicked)="avisarDescarga(fila)"
+                (clicked)="notifyDownload(fila)"
               >
                 Descargar
               </button>
@@ -143,18 +143,18 @@
                 type="button"
                 [attr.data-testid]="'ficha-reemplazar-' + fila.documento.clave"
                 [attr.aria-label]="
-                  (filaEnReemplazo() === fila.documento.clave
+                  (rowInReplacement() === fila.documento.clave
                     ? 'Cancelar el reemplazo de '
                     : 'Reemplazar ') + fila.documento.nombre
                 "
-                (clicked)="alternarReemplazo(fila.documento.clave)"
+                (clicked)="toggleReplacement(fila.documento.clave)"
               >
-                {{ filaEnReemplazo() === fila.documento.clave ? 'Cancelar' : 'Reemplazar' }}
+                {{ rowInReplacement() === fila.documento.clave ? 'Cancelar' : 'Reemplazar' }}
               </button>
             </div>
           }
 
-          @if (filaEnReemplazo() === fila.documento.clave) {
+          @if (rowInReplacement() === fila.documento.clave) {
             <app-form-field
               icon="folder"
               label="Nuevo archivo"
@@ -165,10 +165,10 @@
                    y el segundo se descarta sin decir nada: el control sólo
                    avisa de lo que rechaza por tipo o por tamaño. -->
               <app-file-input
-                [accept]="aceptaPdf"
+                [accept]="acceptsPdf"
                 [maxSizeBytes]="maxBytes"
-                (filesChange)="tomarArchivo(fila.documento.clave, $event)"
-                (rejected)="avisarRechazos($event)"
+                (filesChange)="takeFile(fila.documento.clave, $event)"
+                (rejected)="notifyRejections($event)"
               />
             </app-form-field>
           }
@@ -181,7 +181,7 @@
 <!-- El alta de un papel que todavía no está: se usa desde la carpeta vacía y
      desde la carpeta con papeles, y por eso vive una sola vez acá. -->
 <ng-template #formularioDeAlta>
-  @if (altaAbierta()) {
+  @if (openEnrollment()) {
     <div class="papeles__alta" data-testid="ficha-alta-documento">
       <app-form-field
         icon="clipboard"
@@ -190,9 +190,9 @@
       >
         <app-select
           placeholder="Elija el documento"
-          [options]="papelesQueFaltan()"
-          [value]="papelElegido()"
-          (valueChange)="elegirPapel($event)"
+          [options]="missingPapers()"
+          [value]="chosenPaper()"
+          (valueChange)="choosePaper($event)"
         />
       </app-form-field>
 
@@ -204,11 +204,11 @@
         <!-- Sin `multiple`, como en el reemplazo: al soltar dos PDF entra el
              primero y el segundo se descarta sin avisar. -->
         <app-file-input
-          [accept]="aceptaPdf"
+          [accept]="acceptsPdf"
           [maxSizeBytes]="maxBytes"
-          [disabled]="papelElegido() === null"
-          (filesChange)="agregarPapel($event)"
-          (rejected)="avisarRechazos($event)"
+          [disabled]="chosenPaper() === null"
+          (filesChange)="addPaper($event)"
+          (rejected)="notifyRejections($event)"
         />
       </app-form-field>
 
@@ -224,7 +224,7 @@
           size="sm"
           type="button"
           data-testid="ficha-cancelar-alta"
-          (clicked)="cerrarAlta()"
+          (clicked)="closeEnrollment()"
         >
           Cancelar
         </button>

@@ -24,9 +24,9 @@ import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   errorMessageOf,
   objetoJson,
@@ -73,7 +73,7 @@ const ENDPOINTS = [
     AnnounceOnAppear,
     AppButton,
     DiscoveredKeysEditor,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
   ],
@@ -143,7 +143,7 @@ export class ProtocolConfigForm {
    * existía para dibujarlos— en vez de escribirlos uno por uno: son la misma
    * pregunta cinco veces, y el motor los parte en dos páginas.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Qué se configura',
       hint: 'El proveedor y el entorno al que aplica.',

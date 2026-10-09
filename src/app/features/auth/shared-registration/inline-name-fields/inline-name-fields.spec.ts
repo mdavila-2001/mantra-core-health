@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { CamposDeNombreEnLinea } from './inline-name-fields';
-import { grupoDeNombre, nombreCompleto } from '../name-fields/person-name';
+import { InlineNameFields } from './inline-name-fields';
+import { nameGroup, completeName } from '../name-fields/person-name';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CamposDeNombreEnLinea],
+  imports: [InlineNameFields],
   template: `<app-inline-name-fields [grupo]="grupo" [obligatorio]="true" prefijoTestId="t" />`,
 })
 class Anfitrion {
-  readonly grupo = grupoDeNombre(true);
+  readonly grupo = nameGroup(true);
 }
 
 describe('CamposDeNombreEnLinea', () => {
@@ -68,7 +68,7 @@ describe('CamposDeNombreEnLinea', () => {
     grupo.patchValue({ name: ' Ana ', thirdName: 'Sofía', lastName: 'Rojas', motherLastName: 'Vega' });
     grupo.controls.extraNames.at(1).setValue('Beatriz');
 
-    expect(nombreCompleto(grupo.getRawValue())).toBe('Ana Sofía Beatriz Rojas Vega');
+    expect(completeName(grupo.getRawValue())).toBe('Ana Sofía Beatriz Rojas Vega');
   });
 
   it('un nombre completo de más de 200 caracteres invalida el grupo', () => {
@@ -78,7 +78,7 @@ describe('CamposDeNombreEnLinea', () => {
   });
 
   it('con `obligatorio` falso el grupo vacío es válido (las gerencias)', () => {
-    expect(grupoDeNombre(false).valid).toBe(true);
-    expect(grupoDeNombre(true).valid).toBe(false);
+    expect(nameGroup(false).valid).toBe(true);
+    expect(nameGroup(true).valid).toBe(false);
   });
 });

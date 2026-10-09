@@ -1,5 +1,5 @@
-import type { AreaDeSalud } from './educational-institutions';
-import type { FiltroDeSalud } from './university-registry';
+import type { HealthArea } from './educational-institutions';
+import type { HealthFilter } from './university-registry';
 
 /**
  * La forma de una opción, declarada **acá** y no importada de
@@ -9,7 +9,7 @@ import type { FiltroDeSalud } from './university-registry';
  * TypeScript compara por estructura, así que esta lista sigue siendo un
  * `SelectOption<string>[]` válido para quien la reciba.
  */
-interface OpcionDeTitulo {
+interface TitleOption {
   readonly value: string;
   readonly label: string;
 }
@@ -38,7 +38,7 @@ interface OpcionDeTitulo {
  * que lo que viaja es la etiqueta. El día que exista el concepto, esto pasa a
  * ser un mapeo y las dos pantallas lo heredan juntas.
  */
-export const OPCIONES_TITULO_PROFESIONAL: readonly OpcionDeTitulo[] = [
+export const PROFESSIONAL_TITLE_OPTIONS: readonly TitleOption[] = [
   { value: 'Médico / Médica', label: 'Médico / Médica' },
   {
     value: 'Médico especialista / Médica especialista',
@@ -83,8 +83,8 @@ export const OPCIONES_TITULO_PROFESIONAL: readonly OpcionDeTitulo[] = [
  * Pisarlos al abrir la pantalla sería cambiar un dato del perfil sin que nadie
  * lo pidiera.
  */
-export function esTituloDeLaLista(titulo: string): boolean {
-  return OPCIONES_TITULO_PROFESIONAL.some((opcion) => opcion.value === titulo);
+export function isListedTitle(titulo: string): boolean {
+  return PROFESSIONAL_TITLE_OPTIONS.some((opcion) => opcion.value === titulo);
 }
 
 /**
@@ -95,7 +95,7 @@ export function esTituloDeLaLista(titulo: string): boolean {
  * El técnico en radiología cae en «Tecnología Médica», que es como lo dictan
  * las universidades bolivianas relevadas.
  */
-const AREA_POR_TITULO: Readonly<Record<string, AreaDeSalud>> = {
+const AREA_BY_TITLE: Readonly<Record<string, HealthArea>> = {
   'Médico / Médica': 'Medicina',
   'Médico especialista / Médica especialista': 'Medicina',
   'Odontólogo / Odontóloga': 'Odontología',
@@ -115,6 +115,6 @@ const AREA_POR_TITULO: Readonly<Record<string, AreaDeSalud>> = {
  * la lista la conoce, o «alguna de salud» si es un título escrito antes de la
  * lista cerrada.
  */
-export function filtroDeSaludDelTitulo(titulo: string): FiltroDeSalud {
-  return AREA_POR_TITULO[titulo.trim()] ?? 'salud';
+export function titleHealthFilter(titulo: string): HealthFilter {
+  return AREA_BY_TITLE[titulo.trim()] ?? 'salud';
 }

@@ -1,4 +1,4 @@
-import { avatarDeConQuien, conQuien } from './conversation-label';
+import { conversationAvatar, conversationLabel } from './conversation-label';
 import type { ConversationListItem } from '../data-access/community/community.types';
 
 function conversacion(peers: ConversationListItem['peers']): ConversationListItem {
@@ -12,11 +12,11 @@ function conversacion(peers: ConversationListItem['peers']): ConversationListIte
 
 describe('conQuien', () => {
   it('sin ningún nombre resuelto dice «Conversación», no el uuid', () => {
-    expect(conQuien(conversacion([{ profileId: 'p-1' }]))).toBe('Conversación');
+    expect(conversationLabel(conversacion([{ profileId: 'p-1' }]))).toBe('Conversación');
   });
 
   it('con un nombre lo usa', () => {
-    expect(conQuien(conversacion([{ profileId: 'p-1', displayName: 'Andrea Peña' }]))).toBe(
+    expect(conversationLabel(conversacion([{ profileId: 'p-1', displayName: 'Andrea Peña' }]))).toBe(
       'Andrea Peña',
     );
   });
@@ -24,18 +24,18 @@ describe('conQuien', () => {
 
 describe('avatarDeConQuien', () => {
   it('en una directa usa el avatar del único peer', () => {
-    const url = avatarDeConQuien(
+    const url = conversationAvatar(
       conversacion([{ profileId: 'p-1', avatarUrl: '/public/media/f-1' }]),
     );
     expect(url).toBe('/public/media/f-1');
   });
 
   it('sin avatar cargado da null, no undefined ni cadena vacía', () => {
-    expect(avatarDeConQuien(conversacion([{ profileId: 'p-1' }]))).toBeNull();
+    expect(conversationAvatar(conversacion([{ profileId: 'p-1' }]))).toBeNull();
   });
 
   it('en un grupo no elige la cara de nadie', () => {
-    const url = avatarDeConQuien(
+    const url = conversationAvatar(
       conversacion([
         { profileId: 'p-1', avatarUrl: '/public/media/f-1' },
         { profileId: 'p-2', avatarUrl: '/public/media/f-2' },

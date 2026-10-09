@@ -4,10 +4,10 @@ import { join } from 'node:path';
 import { PHARMACIES_AND_LABS, PRIMARY_CARE_CENTERS } from './markdown-institutions.generated';
 
 import {
-  ASEGURADORAS_DE_SALUD,
-  SEMILLAS_DE_INSTITUCIONES,
-  institucionPorSlug,
-  ubicacionAproximada,
+  HEALTH_INSURERS,
+  INSTITUTIONS_SEEDS,
+  institutionBySlug,
+  approximateLocation,
 } from './institutions';
 import {
   ASEGURADORAS_REALES,
@@ -40,7 +40,7 @@ describe('las instituciones de salud reales portadas al simulador', () => {
     expect(ASEGURADORAS_REALES).toHaveLength(counts['insurers']!);
     // Más las 7 farmacias y los 464 centros de primer nivel de
     // `markdown_convertidos/` (ver `markdown-institutions.generated.ts`).
-    expect(SEMILLAS_DE_INSTITUCIONES).toHaveLength(
+    expect(INSTITUTIONS_SEEDS).toHaveLength(
       counts['clinics']! +
         counts['hospitals']! +
         counts['insurers']! +
@@ -50,14 +50,14 @@ describe('las instituciones de salud reales portadas al simulador', () => {
   });
 
   it('no deja dos instituciones con el mismo enlace', () => {
-    const slugs = SEMILLAS_DE_INSTITUCIONES.map((s) => s.slug);
+    const slugs = INSTITUTIONS_SEEDS.map((s) => s.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
-    expect(institucionPorSlug(slugs[0]!)?.slug).toBe(slugs[0]);
-    expect(institucionPorSlug('no-existe')).toBeUndefined();
+    expect(institutionBySlug(slugs[0]!)?.slug).toBe(slugs[0]);
+    expect(institutionBySlug('no-existe')).toBeUndefined();
   });
 
   it('le da un punto en el mapa a todas', () => {
-    for (const semilla of SEMILLAS_DE_INSTITUCIONES) {
+    for (const semilla of INSTITUTIONS_SEEDS) {
       // Bolivia va de ~9,7° a ~22,9° de latitud sur y de ~57,5° a ~69,7° oeste.
       expect(semilla.lat).toBeGreaterThan(-23);
       expect(semilla.lat).toBeLessThan(-9);
@@ -69,17 +69,17 @@ describe('las instituciones de salud reales portadas al simulador', () => {
   it('dice cuándo el punto es el centro de la ciudad y no la dirección', () => {
     // Mandar a alguien a una dirección que no es, en salud, es peor que no
     // dibujar el mapa. La ficha necesita poder avisarlo.
-    expect(ubicacionAproximada('ciudad')).toBe(true);
-    expect(ubicacionAproximada('via')).toBe(false);
-    expect(ubicacionAproximada('direccion')).toBe(false);
-    expect(SEMILLAS_DE_INSTITUCIONES.some((s) => ubicacionAproximada(s.precision))).toBe(true);
+    expect(approximateLocation('ciudad')).toBe(true);
+    expect(approximateLocation('via')).toBe(false);
+    expect(approximateLocation('direccion')).toBe(false);
+    expect(INSTITUTIONS_SEEDS.some((s) => approximateLocation(s.precision))).toBe(true);
   });
 
   /* ---- lo que no se inventa --------------------------------------------- */
 
   it('no le fabrica opiniones ni sello de verificado a nadie', () => {
     // `verified` es «lo verificó la plataforma». Salen de una planilla.
-    for (const semilla of SEMILLAS_DE_INSTITUCIONES) {
+    for (const semilla of INSTITUTIONS_SEEDS) {
       expect(semilla.verified).toBe(false);
     }
   });
@@ -90,7 +90,7 @@ describe('las instituciones de salud reales portadas al simulador', () => {
     for (const clinica of sinRazonSocial) {
       expect(clinica.legalName).toBeNull();
       // Y su biografía no se la inventa: dice lo genérico y verdadero.
-      const semilla = SEMILLAS_DE_INSTITUCIONES.find((s) => s.displayName === clinica.name)!;
+      const semilla = INSTITUTIONS_SEEDS.find((s) => s.displayName === clinica.name)!;
       expect(semilla.biography).not.toContain('null');
       expect(semilla.biography).not.toContain('undefined');
     }
@@ -98,9 +98,9 @@ describe('las instituciones de salud reales portadas al simulador', () => {
 
   it('separa las aseguradoras de salud de las patrimoniales', () => {
     // Poner «Seguros Illimani» en un directorio médico sería falso.
-    expect(ASEGURADORAS_DE_SALUD.length).toBeGreaterThan(0);
-    expect(ASEGURADORAS_DE_SALUD.length).toBeLessThan(ASEGURADORAS_REALES.length);
-    for (const aseguradora of ASEGURADORAS_DE_SALUD) {
+    expect(HEALTH_INSURERS.length).toBeGreaterThan(0);
+    expect(HEALTH_INSURERS.length).toBeLessThan(ASEGURADORAS_REALES.length);
+    for (const aseguradora of HEALTH_INSURERS) {
       expect(aseguradora.branch).toBe('personas');
       expect(aseguradora.coversHealth).toBe(true);
     }
@@ -108,17 +108,17 @@ describe('las instituciones de salud reales portadas al simulador', () => {
     for (const aseguradora of generales) {
       // Por su clave y no por el nombre: BISA y Fortaleza tienen el mismo
       // nombre en los dos ramos, y buscar por nombre devolvía la de salud.
-      const semilla = SEMILLAS_DE_INSTITUCIONES.find((s) => s.clave === `institucion-${aseguradora.id}`)!;
+      const semilla = INSTITUTIONS_SEEDS.find((s) => s.clave === `institucion-${aseguradora.id}`)!;
       expect(semilla.headline).toContain('no cubre salud');
     }
   });
 
   it('trae los 464 centros de primer nivel, cada uno con su aviso de ubicación', () => {
     // Antes quedaban afuera; el propietario pidió todos los datos (18/09/2026).
-    const primerNivel = SEMILLAS_DE_INSTITUCIONES.filter((s) => s.headline.startsWith('Centro de salud de primer nivel'));
+    const primerNivel = INSTITUTIONS_SEEDS.filter((s) => s.headline.startsWith('Centro de salud de primer nivel'));
     expect(primerNivel).toHaveLength(464);
     for (const centro of primerNivel) {
-      expect(ubicacionAproximada(centro.precision)).toBe(true);
+      expect(approximateLocation(centro.precision)).toBe(true);
       expect(centro.biography).toContain('Ubicación aproximada');
     }
   });
@@ -132,13 +132,13 @@ describe('las instituciones de salud reales portadas al simulador', () => {
   /* ---- la categoría con la que el directorio acota ----------------------- */
 
   it('cada institución declara su categoría, y sale del sector y no del nombre', () => {
-    for (const semilla of SEMILLAS_DE_INSTITUCIONES) {
+    for (const semilla of INSTITUTIONS_SEEDS) {
       expect(semilla.categoria.code).not.toBe('');
       expect(semilla.categoria.label).not.toBe('');
     }
 
     const categoriaDe = (nombre: string): string | undefined =>
-      SEMILLAS_DE_INSTITUCIONES.find((s) => s.displayName.includes(nombre))?.categoria.code;
+      INSTITUTIONS_SEEDS.find((s) => s.displayName.includes(nombre))?.categoria.code;
 
     // Una caja de la seguridad social no es un hospital público: la planilla
     // lo declara en `sector`, y el chip lo repite con esas palabras.
@@ -152,7 +152,7 @@ describe('las instituciones de salud reales portadas al simulador', () => {
     const sinSalud = ASEGURADORAS_REALES.find((a) => !a.coversHealth);
     expect(sinSalud).toBeDefined();
     expect(
-      SEMILLAS_DE_INSTITUCIONES.filter((s) => s.kind === 'INSURER').every((s) =>
+      INSTITUTIONS_SEEDS.filter((s) => s.kind === 'INSURER').every((s) =>
         ['seguro-de-salud', 'seguros-generales'].includes(s.categoria.code),
       ),
     ).toBe(true);
@@ -164,7 +164,7 @@ describe('las instituciones de salud reales portadas al simulador', () => {
   });
 
   it('usa los nombres reales y no los inventados que reemplaza', () => {
-    const nombres = SEMILLAS_DE_INSTITUCIONES.map((s) => s.displayName).join(' | ');
+    const nombres = INSTITUTIONS_SEEDS.map((s) => s.displayName).join(' | ');
     // Con el nombre completo: hay un centro de primer nivel real llamado
     // «Los Olivos», y ése sí va.
     for (const inventado of ['Clínica Los Olivos', 'Hospital San Lucas', 'Clínica Nueva Esperanza']) {

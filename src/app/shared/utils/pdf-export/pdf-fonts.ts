@@ -22,10 +22,10 @@
  */
 
 /** Dónde se sirven los TTF. La misma carpeta que las fuentes de pantalla. */
-export const RUTA_DE_TIPOGRAFIAS = '/alovida/tipografias/';
+export const TYPEFACES_PATH = '/alovida/tipografias/';
 
 /** Qué archivo cubre cada papel tipográfico. */
-export const ARCHIVOS_DE_FUENTES = {
+export const FONT_FILES = {
   /** Títulos, rótulos, cabeceras y versalitas: lo que se destaca. */
   titulos: 'poppins-600.ttf',
   /** Cuerpo, datos, tablas y pie: lo que se lee. */
@@ -33,30 +33,30 @@ export const ARCHIVOS_DE_FUENTES = {
 } as const;
 
 /** Una fuente lista para `jsPDF`: su archivo y sus bytes en base64. */
-export interface PdfFuente {
+export interface PdfFont {
   readonly archivo: string;
   readonly base64: string;
 }
 
 /** Las dos fuentes del papel, siempre juntas. */
-export interface PdfFuentes {
-  readonly titulos: PdfFuente;
-  readonly cuerpo: PdfFuente;
+export interface PdfFonts {
+  readonly titulos: PdfFont;
+  readonly cuerpo: PdfFont;
 }
 
 /** Cómo se bajan los bytes de un archivo. Sustituible en pruebas. */
-export type BajarArchivo = (url: string) => Promise<ArrayBuffer | null>;
+export type DownloadFile = (url: string) => Promise<ArrayBuffer | null>;
 
-let fuentesVigentes: PdfFuentes | null = null;
+let currentFonts: PdfFonts | null = null;
 
 /** Deja las fuentes listas para todos los documentos, o las quita con `null`. */
-export function establecerFuentesDeDocumentos(fuentes: PdfFuentes | null): void {
-  fuentesVigentes = fuentes;
+export function setDocumentFonts(fuentes: PdfFonts | null): void {
+  currentFonts = fuentes;
 }
 
 /** Las fuentes con que salen los documentos, o `null` si el papel va en Helvetica. */
-export function fuentesDeDocumentos(): PdfFuentes | null {
-  return fuentesVigentes;
+export function documentFonts(): PdfFonts | null {
+  return currentFonts;
 }
 
 /**
@@ -68,14 +68,14 @@ export function fuentesDeDocumentos(): PdfFuentes | null {
  * @param bajar - Cómo obtener los bytes de un archivo; por omisión, `fetch`.
  * @returns Las dos fuentes listas, o `null`.
  */
-export async function prepararFuentes(bajar: BajarArchivo = bajarConFetch): Promise<PdfFuentes | null> {
+export async function prepareFonts(bajar: DownloadFile = downloadWithFetch): Promise<PdfFonts | null> {
   if (typeof window === 'undefined') {
     return null;
   }
   try {
     const [titulos, cuerpo] = await Promise.all([
-      fuenteDesde(ARCHIVOS_DE_FUENTES.titulos, bajar),
-      fuenteDesde(ARCHIVOS_DE_FUENTES.cuerpo, bajar),
+      fontFrom(FONT_FILES.titulos, bajar),
+      fontFrom(FONT_FILES.cuerpo, bajar),
     ]);
     if (titulos === null || cuerpo === null) {
       return null;
@@ -86,15 +86,15 @@ export async function prepararFuentes(bajar: BajarArchivo = bajarConFetch): Prom
   }
 }
 
-async function fuenteDesde(archivo: string, bajar: BajarArchivo): Promise<PdfFuente | null> {
-  const bytes = await bajar(`${RUTA_DE_TIPOGRAFIAS}${archivo}`);
+async function fontFrom(archivo: string, bajar: DownloadFile): Promise<PdfFont | null> {
+  const bytes = await bajar(`${TYPEFACES_PATH}${archivo}`);
   if (bytes === null || bytes.byteLength === 0) {
     return null;
   }
   return { archivo, base64: aBase64(bytes) };
 }
 
-async function bajarConFetch(url: string): Promise<ArrayBuffer | null> {
+async function downloadWithFetch(url: string): Promise<ArrayBuffer | null> {
   if (typeof fetch === 'undefined') {
     return null;
   }
@@ -103,14 +103,14 @@ async function bajarConFetch(url: string): Promise<ArrayBuffer | null> {
 }
 
 /** Tramos de 32 KB: `String.fromCharCode(...bytes)` con 400 KB desborda la pila. */
-const TRAMO = 0x8000;
+const BRACKET = 0x8000;
 
 /** Los bytes en base64, que es el único formato en que `jsPDF` acepta una fuente. */
 export function aBase64(bytes: ArrayBuffer): string {
   const vista = new Uint8Array(bytes);
   let binario = '';
-  for (let desde = 0; desde < vista.length; desde += TRAMO) {
-    binario += String.fromCharCode(...vista.subarray(desde, desde + TRAMO));
+  for (let desde = 0; desde < vista.length; desde += BRACKET) {
+    binario += String.fromCharCode(...vista.subarray(desde, desde + BRACKET));
   }
   return btoa(binario);
 }

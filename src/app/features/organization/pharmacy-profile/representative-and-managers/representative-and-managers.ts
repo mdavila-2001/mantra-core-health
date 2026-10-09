@@ -6,7 +6,7 @@ import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton'
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { dataOf } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { FichaDeContacto } from './contact-sheet/contact-sheet';
+import { ContactSheet } from './contact-sheet/contact-sheet';
 import { NOTA_DE_DATOS_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
 import type { GenteDeLaEmpresa } from '../pharmacy-profile.types';
 
@@ -22,12 +22,12 @@ import type { GenteDeLaEmpresa } from '../pharmacy-profile.types';
  */
 @Component({
   selector: 'app-representative-and-managers',
-  imports: [AppButton, Chip, FichaDeContacto, Skeleton, ViewStateHost],
+  imports: [AppButton, Chip, ContactSheet, Skeleton, ViewStateHost],
   templateUrl: './representative-and-managers.html',
   styleUrl: './representative-and-managers.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RepresentanteYGerentes {
+export class RepresentativeAndManagers {
   readonly state = input.required<ViewState<GenteDeLaEmpresa>>();
 
   /** La persona pidió reintentar; el dueño de los datos decide qué hacer. */
@@ -42,7 +42,7 @@ export class RepresentanteYGerentes {
    */
   readonly readOnly = input(false);
 
-  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
+  protected readonly exampleNote = NOTA_DE_DATOS_DE_EJEMPLO;
 
-  protected readonly gente = computed(() => dataOf(this.state()));
+  protected readonly people = computed(() => dataOf(this.state()));
 }

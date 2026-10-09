@@ -18,7 +18,7 @@
 
 import { sha256HexBytes } from '../sha256';
 
-export interface ArchivoEmpaquetado {
+export interface PackagedFile {
   /** El gzip en base64, como viaja en `archivo`. */
   readonly archivo: string;
   /** SHA-256 hexadecimal del gzip (no del XML). */
@@ -26,7 +26,7 @@ export interface ArchivoEmpaquetado {
   readonly bytesComprimidos: number;
 }
 
-export class ErrorDeEmpaquetado extends Error {
+export class PackagingError extends Error {
   constructor(
     readonly motivo: 'BASE64' | 'GZIP' | 'HASH',
     detalle: string,
@@ -38,7 +38,7 @@ export class ErrorDeEmpaquetado extends Error {
 
 // ---- CRC-32 (IEEE 802.3), el que exige el trailer gzip ----------------------
 
-const TABLA_CRC = (() => {
+const TABLE_CRC = (() => {
   const tabla = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
     let c = n;
@@ -50,63 +50,63 @@ const TABLA_CRC = (() => {
 
 export function crc32(datos: Uint8Array): number {
   let crc = 0xffffffff;
-  for (const byte of datos) crc = TABLA_CRC[(crc ^ byte) & 0xff]! ^ (crc >>> 8);
+  for (const byte of datos) crc = TABLE_CRC[(crc ^ byte) & 0xff]! ^ (crc >>> 8);
   return (crc ^ 0xffffffff) >>> 0;
 }
 
 // ---- gzip con bloques stored -------------------------------------------------
 
-const MAXIMO_POR_BLOQUE = 0xffff;
+const MAX_PER_BLOCK = 0xffff;
 
-function escribirU32LE(destino: number[], valor: number): void {
+function writeU32Le(destino: number[], valor: number): void {
   destino.push(valor & 0xff, (valor >>> 8) & 0xff, (valor >>> 16) & 0xff, (valor >>> 24) & 0xff);
 }
 
 /** gzip válido (RFC 1952) con deflate de bloques stored (RFC 1951 §3.2.4). */
-export function gzipSinCompresion(datos: Uint8Array): Uint8Array {
+export function gzipWithoutCompression(datos: Uint8Array): Uint8Array {
   // ID1 ID2 CM=8 (deflate) FLG=0 MTIME=0 XFL=0 OS=255 (desconocido).
   const salida: number[] = [0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0x00, 0xff];
   let offset = 0;
   do {
-    const largo = Math.min(MAXIMO_POR_BLOQUE, datos.length - offset);
+    const largo = Math.min(MAX_PER_BLOCK, datos.length - offset);
     const final = offset + largo >= datos.length;
     // BFINAL en el bit 0, BTYPE=00; el resto del byte es relleno hasta alinear.
     salida.push(final ? 0x01 : 0x00, largo & 0xff, largo >>> 8, ~largo & 0xff, (~largo >>> 8) & 0xff);
     for (let i = 0; i < largo; i++) salida.push(datos[offset + i]!);
     offset += largo;
   } while (offset < datos.length);
-  escribirU32LE(salida, crc32(datos));
-  escribirU32LE(salida, datos.length >>> 0);
+  writeU32Le(salida, crc32(datos));
+  writeU32Le(salida, datos.length >>> 0);
   return Uint8Array.from(salida);
 }
 
 /** Abre un gzip de bloques stored y verifica CRC-32 y tamaño. */
-export function gunzipSinCompresion(gzip: Uint8Array): Uint8Array {
+export function gunzipWithoutCompression(gzip: Uint8Array): Uint8Array {
   if (gzip.length < 18 || gzip[0] !== 0x1f || gzip[1] !== 0x8b || gzip[2] !== 0x08) {
-    throw new ErrorDeEmpaquetado('GZIP', 'no es un gzip deflate');
+    throw new PackagingError('GZIP', 'no es un gzip deflate');
   }
-  if (gzip[3] !== 0x00) throw new ErrorDeEmpaquetado('GZIP', 'cabecera gzip con campos opcionales no soportados');
+  if (gzip[3] !== 0x00) throw new PackagingError('GZIP', 'cabecera gzip con campos opcionales no soportados');
   const bytes: number[] = [];
   let i = 10;
   for (;;) {
     const cabeceraBloque = gzip[i];
-    if (cabeceraBloque === undefined) throw new ErrorDeEmpaquetado('GZIP', 'datos truncados');
+    if (cabeceraBloque === undefined) throw new PackagingError('GZIP', 'datos truncados');
     if (((cabeceraBloque >>> 1) & 0b11) !== 0) {
-      throw new ErrorDeEmpaquetado('GZIP', 'el simulador sólo abre bloques stored (sin compresión)');
+      throw new PackagingError('GZIP', 'el simulador sólo abre bloques stored (sin compresión)');
     }
     const largo = gzip[i + 1]! | (gzip[i + 2]! << 8);
     const complemento = gzip[i + 3]! | (gzip[i + 4]! << 8);
-    if ((largo ^ 0xffff) !== complemento) throw new ErrorDeEmpaquetado('GZIP', 'LEN/NLEN inconsistentes');
+    if ((largo ^ 0xffff) !== complemento) throw new PackagingError('GZIP', 'LEN/NLEN inconsistentes');
     i += 5;
-    if (i + largo > gzip.length - 8) throw new ErrorDeEmpaquetado('GZIP', 'datos truncados');
+    if (i + largo > gzip.length - 8) throw new PackagingError('GZIP', 'datos truncados');
     for (let k = 0; k < largo; k++) bytes.push(gzip[i + k]!);
     i += largo;
     if (cabeceraBloque & 1) break;
   }
   const datos = Uint8Array.from(bytes);
   const leerU32 = (p: number) => (gzip[p]! | (gzip[p + 1]! << 8) | (gzip[p + 2]! << 16) | (gzip[p + 3]! << 24)) >>> 0;
-  if (leerU32(i) !== crc32(datos)) throw new ErrorDeEmpaquetado('GZIP', 'CRC-32 no coincide');
-  if (leerU32(i + 4) !== datos.length >>> 0) throw new ErrorDeEmpaquetado('GZIP', 'ISIZE no coincide');
+  if (leerU32(i) !== crc32(datos)) throw new PackagingError('GZIP', 'CRC-32 no coincide');
+  if (leerU32(i + 4) !== datos.length >>> 0) throw new PackagingError('GZIP', 'ISIZE no coincide');
   return datos;
 }
 
@@ -118,9 +118,9 @@ export function aBase64(bytes: Uint8Array): string {
   return btoa(binario);
 }
 
-export function desdeBase64(texto: string): Uint8Array {
+export function fromBase64(texto: string): Uint8Array {
   if (!/^[A-Za-z0-9+/]*={0,2}$/.test(texto) || texto.length % 4 !== 0) {
-    throw new ErrorDeEmpaquetado('BASE64', 'no es base64 válido');
+    throw new PackagingError('BASE64', 'no es base64 válido');
   }
   const binario = atob(texto);
   return Uint8Array.from(binario, (c) => c.charCodeAt(0));
@@ -128,16 +128,16 @@ export function desdeBase64(texto: string): Uint8Array {
 
 // ---- el paquete completo -----------------------------------------------------
 
-export function empaquetarXml(xml: string): ArchivoEmpaquetado {
-  const gzip = gzipSinCompresion(new TextEncoder().encode(xml));
+export function packageXml(xml: string): PackagedFile {
+  const gzip = gzipWithoutCompression(new TextEncoder().encode(xml));
   return { archivo: aBase64(gzip), hashArchivo: sha256HexBytes(gzip), bytesComprimidos: gzip.length };
 }
 
 /** El XML de un `archivo`, comprobando antes el `hashArchivo`. */
-export function desempaquetarArchivo(archivo: string, hashArchivo: string): string {
-  const gzip = desdeBase64(archivo);
+export function unpackageFile(archivo: string, hashArchivo: string): string {
+  const gzip = fromBase64(archivo);
   if (sha256HexBytes(gzip) !== hashArchivo.toLowerCase()) {
-    throw new ErrorDeEmpaquetado('HASH', 'hashArchivo no es el SHA-256 del archivo comprimido');
+    throw new PackagingError('HASH', 'hashArchivo no es el SHA-256 del archivo comprimido');
   }
-  return new TextDecoder('utf-8', { fatal: true }).decode(gunzipSinCompresion(gzip));
+  return new TextDecoder('utf-8', { fatal: true }).decode(gunzipWithoutCompression(gzip));
 }

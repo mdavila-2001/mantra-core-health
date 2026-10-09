@@ -1,5 +1,5 @@
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import type { CampoDeFormulario, PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { DatePipe } from '@angular/common';
 import {
@@ -146,7 +146,7 @@ function twoDecimalsValidator(control: AbstractControl): ValidationErrors | null
  */
 @Component({
   selector: 'app-insurance-campaigns',
-  imports: [PaginatedForm, CampoPersonalizado,
+  imports: [PaginatedForm, CustomField,
     Alert,
     AnnounceOnAppear,
     AppButton,

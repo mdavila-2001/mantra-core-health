@@ -39,15 +39,15 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { importeBs } from '../summary/windows';
-import { CuentaDialog } from './account-dialog';
-import { motivoDelError } from './errors';
-import { RegistroDialog } from './record-dialog';
-import { diaLegible, NOMBRE_DE_CLASE, rotuloDeCuenta, TEXTOS } from './records.format';
-import { TransaccionDialog } from './transaction-dialog';
+import { amountBs } from '../summary/windows';
+import { AccountDialog } from './account-dialog';
+import { errorReason } from './errors';
+import { RecordDialog } from './record-dialog';
+import { readableDay, CLASS_NAME, accountLabel, TEXTS } from './records.format';
+import { TransactionDialog } from './transaction-dialog';
 
 /** Una fila de la tabla de gastos, activos o deudas, ya en palabras. */
-interface FilaDeRegistro {
+interface RecordRow {
   readonly id: string;
   readonly fecha: string;
   readonly tipo: string;
@@ -56,7 +56,7 @@ interface FilaDeRegistro {
   readonly registro: SimpleRecord;
 }
 
-interface FilaDeTransaccion {
+interface TransactionRow {
   readonly id: string;
   readonly fecha: string;
   readonly descripcion: string;
@@ -66,7 +66,7 @@ interface FilaDeTransaccion {
   readonly transaccion: SimpleTransaction;
 }
 
-interface FilaDeCuenta {
+interface AccountRow {
   readonly id: string;
   readonly codigo: string;
   readonly nombre: string;
@@ -75,7 +75,7 @@ interface FilaDeCuenta {
   readonly cuenta: SimpleAccount;
 }
 
-type Celda<Fila> = TemplateRef<{ $implicit: Fila }>;
+type Cell<Fila> = TemplateRef<{ $implicit: Fila }>;
 
 /** Qué modal está abierto, con lo que necesita. */
 type Modal =
@@ -83,20 +83,20 @@ type Modal =
   | { readonly tipo: 'transaccion'; readonly transaccion: SimpleTransaction | null }
   | { readonly tipo: 'cuenta'; readonly cuenta: SimpleAccount | null };
 
-/** Ver {@link ContabilidadSimple.parte}. */
-export type ParteDeLaContabilidad = 'todo' | 'numeros' | 'registros';
+/** Ver {@link SimpleAccounting.parte}. */
+export type AccountingPart = 'todo' | 'numeros' | 'registros';
 
-const PERIODOS: readonly SegmentedOption<SummaryPeriod>[] = [
+const PERIODS: readonly SegmentedOption<SummaryPeriod>[] = [
   { value: 'month', label: 'Este mes' },
   { value: 'year', label: 'Este año' },
 ];
 
-const ACCIONES: readonly RowAction[] = [
+const ACTIONS: readonly RowAction[] = [
   { code: 'editar', label: 'Editar', icon: 'edit' },
   { code: 'borrar', label: 'Borrar', icon: 'remove', destructive: true },
 ];
 
-const SIN_BORRAR: readonly RowAction[] = [{ code: 'editar', label: 'Editar', icon: 'edit' }];
+const WITHOUT_DELETE: readonly RowAction[] = [{ code: 'editar', label: 'Editar', icon: 'edit' }];
 
 const KINDS: readonly RecordKind[] = ['EXPENSE', 'ASSET', 'DEBT'];
 
@@ -124,22 +124,22 @@ const KINDS: readonly RecordKind[] = ['EXPENSE', 'ASSET', 'DEBT'];
   imports: [
     AppButton,
     Card,
-    CuentaDialog,
+    AccountDialog,
     DataTable,
-    RegistroDialog,
+    RecordDialog,
     RowActions,
     SectionHeading,
     SegmentedControl,
     Tab,
     Tabs,
-    TransaccionDialog,
+    TransactionDialog,
     ViewStateHost,
   ],
   templateUrl: './records.html',
   styleUrl: './records.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ContabilidadSimple {
+export class SimpleAccounting {
   /** La práctica cuyos números y registros se muestran. */
   readonly practiceId = input.required<string>();
 
@@ -152,45 +152,45 @@ export class ContabilidadSimple {
    * Cada instancia sólo lee lo que pinta. `todo` es el comportamiento de
    * antes de la separación.
    */
-  readonly parte = input<ParteDeLaContabilidad>('todo');
+  readonly parte = input<AccountingPart>('todo');
 
-  private readonly contabilidad = inject(SimpleAccountingClient);
-  private readonly dialogos = inject(DialogService);
-  private readonly avisos = inject(ToastService);
+  private readonly accounting = inject(SimpleAccountingClient);
+  private readonly dialogs = inject(DialogService);
+  private readonly notices = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly periodos = PERIODOS;
-  protected readonly periodo = signal<SummaryPeriod>('month');
-  protected readonly pestana = signal(0);
-  protected readonly textos = TEXTOS;
+  protected readonly periods = PERIODS;
+  protected readonly period = signal<SummaryPeriod>('month');
+  protected readonly tab = signal(0);
+  protected readonly texts = TEXTS;
   protected readonly kinds = KINDS;
   protected readonly modal = signal<Modal | null>(null);
 
-  protected readonly resumen = signal<ViewState<PractitionerSummary>>(loading());
-  protected readonly cuentas = signal<ViewState<readonly SimpleAccount[]>>(loading());
-  protected readonly registros = signal<
+  protected readonly summary = signal<ViewState<PractitionerSummary>>(loading());
+  protected readonly accounts = signal<ViewState<readonly SimpleAccount[]>>(loading());
+  protected readonly records = signal<
     Readonly<Record<RecordKind, ViewState<readonly SimpleRecord[]>>>
   >({
     EXPENSE: loading(),
     ASSET: loading(),
     DEBT: loading(),
   });
-  protected readonly transacciones = signal<ViewState<readonly SimpleTransaction[]>>(loading());
+  protected readonly transactions = signal<ViewState<readonly SimpleTransaction[]>>(loading());
 
-  protected readonly numeros = computed(() => dataOf(this.resumen()));
-  protected readonly listaDeCuentas = computed(() => dataOf(this.cuentas()) ?? []);
-  private readonly cuentaPorId = computed(
-    () => new Map(this.listaDeCuentas().map((cuenta) => [cuenta.id, cuenta] as const)),
+  protected readonly numbers = computed(() => dataOf(this.summary()));
+  protected readonly accountsList = computed(() => dataOf(this.accounts()) ?? []);
+  private readonly accountById = computed(
+    () => new Map(this.accountsList().map((cuenta) => [cuenta.id, cuenta] as const)),
   );
 
   /* ---- las celdas de acciones, una por tabla ---------------------------- */
 
-  private readonly accionesDeRegistro = viewChild<Celda<FilaDeRegistro>>('accionesDeRegistro');
+  private readonly accionesDeRegistro = viewChild<Cell<RecordRow>>('accionesDeRegistro');
   private readonly accionesDeTransaccion =
-    viewChild<Celda<FilaDeTransaccion>>('accionesDeTransaccion');
-  private readonly accionesDeCuenta = viewChild<Celda<FilaDeCuenta>>('accionesDeCuenta');
+    viewChild<Cell<TransactionRow>>('accionesDeTransaccion');
+  private readonly accionesDeCuenta = viewChild<Cell<AccountRow>>('accionesDeCuenta');
 
-  protected readonly columnasDeRegistro = computed<readonly ColumnDef<FilaDeRegistro>[]>(() => [
+  protected readonly recordColumns = computed<readonly ColumnDef<RecordRow>[]>(() => [
     { key: 'fecha', header: 'Fecha', priority: 2 },
     { key: 'tipo', header: 'Tipo', priority: 1 },
     { key: 'descripcion', header: 'Descripción', priority: 1 },
@@ -198,7 +198,7 @@ export class ContabilidadSimple {
     { key: 'acciones', header: 'Acciones', priority: 1, cell: this.accionesDeRegistro() },
   ]);
 
-  protected readonly columnasDeTransaccion = computed<readonly ColumnDef<FilaDeTransaccion>[]>(
+  protected readonly transactionColumns = computed<readonly ColumnDef<TransactionRow>[]>(
     () => [
       { key: 'fecha', header: 'Fecha', priority: 2 },
       { key: 'descripcion', header: 'Descripción', priority: 1 },
@@ -209,7 +209,7 @@ export class ContabilidadSimple {
     ],
   );
 
-  protected readonly columnasDeCuenta = computed<readonly ColumnDef<FilaDeCuenta>[]>(() => [
+  protected readonly accountColumns = computed<readonly ColumnDef<AccountRow>[]>(() => [
     { key: 'codigo', header: 'Código', priority: 2 },
     { key: 'nombre', header: 'Nombre', priority: 1 },
     { key: 'clase', header: 'Clase', priority: 1 },
@@ -217,186 +217,186 @@ export class ContabilidadSimple {
     { key: 'acciones', header: 'Acciones', priority: 1, cell: this.accionesDeCuenta() },
   ]);
 
-  protected readonly porId = (fila: { readonly id: string }): string => fila.id;
+  protected readonly byId = (fila: { readonly id: string }): string => fila.id;
 
   /* ---- las filas, ya en palabras ---------------------------------------- */
 
-  private nombreDeCuenta(id: string): string {
-    const cuenta = this.cuentaPorId().get(id);
-    return cuenta === undefined ? 'Cuenta borrada' : rotuloDeCuenta(cuenta);
+  private accountName(id: string): string {
+    const cuenta = this.accountById().get(id);
+    return cuenta === undefined ? 'Cuenta borrada' : accountLabel(cuenta);
   }
 
-  protected filasDe(kind: RecordKind): ViewState<readonly FilaDeRegistro[]> {
-    return mapear(this.registros()[kind], (registro) => ({
+  protected rowsOf(kind: RecordKind): ViewState<readonly RecordRow[]> {
+    return map(this.records()[kind], (registro) => ({
       id: registro.id,
-      fecha: diaLegible(registro.date),
-      tipo: this.nombreDeCuenta(registro.accountId),
+      fecha: readableDay(registro.date),
+      tipo: this.accountName(registro.accountId),
       descripcion: registro.description,
-      monto: sinCortes(importeBs(registro.amount)),
+      monto: sinCortes(amountBs(registro.amount)),
       registro,
     }));
   }
 
-  protected readonly filasDeTransacciones = computed(() =>
-    mapear(this.transacciones(), (transaccion) => ({
+  protected readonly transactionsRows = computed(() =>
+    map(this.transactions(), (transaccion) => ({
       id: transaccion.id,
-      fecha: diaLegible(transaccion.date),
+      fecha: readableDay(transaccion.date),
       descripcion: transaccion.description,
-      debe: this.nombreDeCuenta(transaccion.debitAccountId),
-      haber: this.nombreDeCuenta(transaccion.creditAccountId),
-      monto: sinCortes(importeBs(transaccion.amount)),
+      debe: this.accountName(transaccion.debitAccountId),
+      haber: this.accountName(transaccion.creditAccountId),
+      monto: sinCortes(amountBs(transaccion.amount)),
       transaccion,
     })),
   );
 
-  protected readonly filasDeCuentas = computed(() =>
-    mapear(this.cuentas(), (cuenta) => ({
+  protected readonly accountsRows = computed(() =>
+    map(this.accounts(), (cuenta) => ({
       id: cuenta.id,
       codigo: cuenta.code,
       nombre: cuenta.name,
-      clase: NOMBRE_DE_CLASE[cuenta.accountClass],
+      clase: CLASS_NAME[cuenta.accountClass],
       origen: cuenta.seeded ? 'General' : 'Suya',
       cuenta,
     })),
   );
 
   /** Cuántos hay de cada cosa, para el rótulo de la pestaña. */
-  protected cuantos(estado: ViewState<readonly unknown[]>): string {
+  protected count(estado: ViewState<readonly unknown[]>): string {
     const datos = dataOf(estado);
     return datos === null ? '' : ` (${datos.length})`;
   }
 
-  protected accionesDe(cuenta: SimpleAccount): readonly RowAction[] {
-    return cuenta.seeded ? SIN_BORRAR : ACCIONES;
+  protected actionsOf(cuenta: SimpleAccount): readonly RowAction[] {
+    return cuenta.seeded ? WITHOUT_DELETE : ACTIONS;
   }
 
-  protected readonly acciones = ACCIONES;
-  protected readonly importe = importeBs;
+  protected readonly actions = ACTIONS;
+  protected readonly amount = amountBs;
 
   constructor() {
     // Cada vez que cambia la práctica elegida, se vuelve a leer todo.
     effect(() => {
       this.practiceId();
-      untracked(() => this.cargarTodo());
+      untracked(() => this.loadAll());
     });
   }
 
   /* ---- lecturas ---------------------------------------------------------- */
 
-  private cargarTodo(): void {
+  private loadAll(): void {
     const parte = this.parte();
-    if (parte !== 'registros') this.cargarResumen();
+    if (parte !== 'registros') this.loadSummary();
     if (parte === 'numeros') return;
-    this.cargarCuentas();
-    for (const kind of KINDS) this.cargarRegistros(kind);
-    this.cargarTransacciones();
+    this.loadAccounts();
+    for (const kind of KINDS) this.loadRecords(kind);
+    this.loadTransactions();
   }
 
-  protected elegirPeriodo(periodo: SummaryPeriod): void {
-    this.periodo.set(periodo);
-    this.cargarResumen();
+  protected choosePeriod(periodo: SummaryPeriod): void {
+    this.period.set(periodo);
+    this.loadSummary();
   }
 
-  protected cargarResumen(): void {
-    this.resumen.set(loading());
-    this.contabilidad
-      .summary(this.practiceId(), this.periodo())
+  protected loadSummary(): void {
+    this.summary.set(loading());
+    this.accounting
+      .summary(this.practiceId(), this.period())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (datos) => this.resumen.set(ready(datos)),
-        error: (error: unknown) => this.resumen.set(errorToViewState<PractitionerSummary>(error)),
+        next: (datos) => this.summary.set(ready(datos)),
+        error: (error: unknown) => this.summary.set(errorToViewState<PractitionerSummary>(error)),
       });
   }
 
-  protected cargarCuentas(): void {
-    this.contabilidad
+  protected loadAccounts(): void {
+    this.accounting
       .listAccounts(this.practiceId())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (cuentas) => this.cuentas.set(ready(cuentas)),
+        next: (cuentas) => this.accounts.set(ready(cuentas)),
         error: (error: unknown) =>
-          this.cuentas.set(errorToViewState<readonly SimpleAccount[]>(error)),
+          this.accounts.set(errorToViewState<readonly SimpleAccount[]>(error)),
       });
   }
 
-  protected cargarRegistros(kind: RecordKind): void {
-    this.contabilidad
+  protected loadRecords(kind: RecordKind): void {
+    this.accounting
       .listRecords(this.practiceId(), kind)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (registros) =>
-          this.registros.update((todos) => ({ ...todos, [kind]: ready(registros) })),
+          this.records.update((todos) => ({ ...todos, [kind]: ready(registros) })),
         error: (error: unknown) =>
-          this.registros.update((todos) => ({
+          this.records.update((todos) => ({
             ...todos,
             [kind]: errorToViewState<readonly SimpleRecord[]>(error),
           })),
       });
   }
 
-  protected cargarTransacciones(): void {
-    this.contabilidad
+  protected loadTransactions(): void {
+    this.accounting
       .listTransactions(this.practiceId())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (transacciones) => this.transacciones.set(ready(transacciones)),
+        next: (transacciones) => this.transactions.set(ready(transacciones)),
         error: (error: unknown) =>
-          this.transacciones.set(errorToViewState<readonly SimpleTransaction[]>(error)),
+          this.transactions.set(errorToViewState<readonly SimpleTransaction[]>(error)),
       });
   }
 
   /* ---- altas y ediciones ------------------------------------------------- */
 
-  protected nuevoRegistro(kind: RecordKind): void {
+  protected newRecord(kind: RecordKind): void {
     this.modal.set({ tipo: 'registro', kind, registro: null });
   }
 
-  protected accionDeRegistro(fila: FilaDeRegistro, accion: string): void {
+  protected recordAction(fila: RecordRow, accion: string): void {
     if (accion === 'editar') {
       this.modal.set({ tipo: 'registro', kind: fila.registro.kind, registro: fila.registro });
       return;
     }
-    void this.borrar(
-      `Borrar ${TEXTOS[fila.registro.kind].conArticulo}`,
+    void this.delete(
+      `Borrar ${TEXTS[fila.registro.kind].conArticulo}`,
       `«${fila.descripcion}», ${fila.monto}. No se puede deshacer.`,
-      () => this.contabilidad.deleteRecord(fila.id),
-      () => this.cargarRegistros(fila.registro.kind),
+      () => this.accounting.deleteRecord(fila.id),
+      () => this.loadRecords(fila.registro.kind),
     );
   }
 
-  protected accionDeTransaccion(fila: FilaDeTransaccion, accion: string): void {
+  protected transactionAction(fila: TransactionRow, accion: string): void {
     if (accion === 'editar') {
       this.modal.set({ tipo: 'transaccion', transaccion: fila.transaccion });
       return;
     }
-    void this.borrar(
+    void this.delete(
       'Borrar la transacción',
       `«${fila.descripcion}», ${fila.monto}. No se puede deshacer.`,
-      () => this.contabilidad.deleteTransaction(fila.id),
-      () => this.cargarTransacciones(),
+      () => this.accounting.deleteTransaction(fila.id),
+      () => this.loadTransactions(),
     );
   }
 
-  protected accionDeCuenta(fila: FilaDeCuenta, accion: string): void {
+  protected accountAction(fila: AccountRow, accion: string): void {
     if (accion === 'editar') {
       this.modal.set({ tipo: 'cuenta', cuenta: fila.cuenta });
       return;
     }
-    void this.borrar(
+    void this.delete(
       'Borrar la cuenta',
       `«${fila.nombre}». Sólo se puede si ningún registro la usa.`,
-      () => this.contabilidad.deleteAccount(fila.id),
-      () => this.cargarCuentas(),
+      () => this.accounting.deleteAccount(fila.id),
+      () => this.loadAccounts(),
     );
   }
 
-  private async borrar(
+  private async delete(
     titulo: string,
     mensaje: string,
     pedido: () => ReturnType<SimpleAccountingClient['deleteRecord']>,
     despues: () => void,
   ): Promise<void> {
-    const confirmado = await this.dialogos.confirm({
+    const confirmado = await this.dialogs.confirm({
       title: titulo,
       message: mensaje,
       confirmLabel: 'Borrar',
@@ -407,28 +407,28 @@ export class ContabilidadSimple {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.avisos.success('Se borró.', titulo.replace('Borrar', 'Borrado:'));
+          this.notices.success('Se borró.', titulo.replace('Borrar', 'Borrado:'));
           despues();
         },
-        error: (error: unknown) => this.avisos.error(motivoDelError(error), 'No se pudo borrar'),
+        error: (error: unknown) => this.notices.error(errorReason(error), 'No se pudo borrar'),
       });
   }
 
   /* ---- al guardar un modal ------------------------------------------------ */
 
-  protected registroGuardado(registro: SimpleRecord): void {
-    this.avisos.success(TEXTOS[registro.kind].guardado, 'Guardado');
-    this.cargarRegistros(registro.kind);
+  protected savedRecord(registro: SimpleRecord): void {
+    this.notices.success(TEXTS[registro.kind].guardado, 'Guardado');
+    this.loadRecords(registro.kind);
   }
 
-  protected transaccionGuardada(): void {
-    this.avisos.success('La transacción quedó guardada.', 'Guardado');
-    this.cargarTransacciones();
+  protected savedTransaction(): void {
+    this.notices.success('La transacción quedó guardada.', 'Guardado');
+    this.loadTransactions();
   }
 
-  protected cuentaGuardada(): void {
-    this.avisos.success('La cuenta quedó guardada.', 'Guardado');
-    this.cargarCuentas();
+  protected savedAccount(): void {
+    this.notices.success('La cuenta quedó guardada.', 'Guardado');
+    this.loadAccounts();
     // Un nombre cambiado se ve también en las tablas que la usan: ya las
     // traduce `nombreDeCuenta` desde la lista de cuentas recién leída.
   }
@@ -440,7 +440,7 @@ function sinCortes(importe: string): string {
 }
 
 /** Aplica `fn` a los datos de un estado listo; los demás estados pasan igual. */
-function mapear<T, U>(
+function map<T, U>(
   estado: ViewState<readonly T[]>,
   fn: (fila: T) => U,
 ): ViewState<readonly U[]> {

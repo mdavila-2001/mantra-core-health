@@ -1,11 +1,11 @@
 import { fechaHoraParaCuf, generarCuf } from './cuf';
-import { empaquetarXml } from './packaging';
-import { ESQUEMA_COMPRA_VENTA } from './siat-schema';
-import { construirXmlFactura, type FacturaXml } from './invoice-xml';
+import { packageXml } from './packaging';
+import { PURCHASE_SALE_SCHEMA } from './siat-schema';
+import { buildInvoiceXml, type InvoiceXml } from './invoice-xml';
 import type { ContextoFiscal, RespuestaRecepcion, SolicitudRecepcionFactura } from './fiscal-provider.port';
-import { horaDeBolivia, SiatSimuladoAdapter, type ContribuyenteSimulado } from './siat-simulated.adapter';
+import { boliviaTime, SiatSimulatedAdapter, type SimulatedTaxpayer } from './siat-simulated.adapter';
 
-const CONTRIBUYENTE: ContribuyenteSimulado = {
+const CONTRIBUYENTE: SimulatedTaxpayer = {
   nit: '9990000011',
   razonSocial: 'CONTRIBUYENTE DE PRUEBA (SIMULADO)',
   codigoSistema: 'SIM-PRUEBA',
@@ -29,21 +29,21 @@ function codigos(respuesta: RespuestaRecepcion): number[] {
 
 describe('SiatSimuladoAdapter', () => {
   let ahora: Date;
-  let siat: SiatSimuladoAdapter;
+  let siat: SiatSimulatedAdapter;
   let cuis: string;
   let cufd: { codigo: string; codigoControl: string };
 
   beforeEach(() => {
     ahora = new Date('2026-09-15T14:00:00.000Z');
-    siat = new SiatSimuladoAdapter({ padron: [CONTRIBUYENTE], reloj: () => ahora });
+    siat = new SiatSimulatedAdapter({ padron: [CONTRIBUYENTE], reloj: () => ahora });
     cuis = siat.solicitudCuis(CONTEXTO).codigo!;
     const r = siat.solicitudCufd({ ...CONTEXTO, cuis });
     cufd = { codigo: r.codigo!, codigoControl: r.codigoControl! };
   });
 
   /** Una factura coherente de un renglón: 2 × 50,00 − 0 = 100,00. */
-  function factura(numeroFactura: number, cambios: Partial<Record<string, string | number | null>> = {}): FacturaXml {
-    const fechaEmision = horaDeBolivia(ahora);
+  function factura(numeroFactura: number, cambios: Partial<Record<string, string | number | null>> = {}): InvoiceXml {
+    const fechaEmision = boliviaTime(ahora);
     const cuf = generarCuf(
       {
         nit: CONTRIBUYENTE.nit,
@@ -111,7 +111,7 @@ describe('SiatSimuladoAdapter', () => {
   }
 
   function solicitud(xml: string, cambios: Partial<SolicitudRecepcionFactura> = {}): SolicitudRecepcionFactura {
-    const paquete = empaquetarXml(xml);
+    const paquete = packageXml(xml);
     return {
       ...CONTEXTO,
       cuis,
@@ -120,19 +120,19 @@ describe('SiatSimuladoAdapter', () => {
       codigoEmision: 1,
       tipoFacturaDocumento: 1,
       archivo: paquete.archivo,
-      fechaEnvio: horaDeBolivia(ahora),
+      fechaEnvio: boliviaTime(ahora),
       hashArchivo: paquete.hashArchivo,
       ...cambios,
     };
   }
 
-  function enviar(f: FacturaXml, cambios: Partial<SolicitudRecepcionFactura> = {}): RespuestaRecepcion {
-    return siat.recepcionFactura(solicitud(construirXmlFactura(ESQUEMA_COMPRA_VENTA, f), cambios));
+  function enviar(f: InvoiceXml, cambios: Partial<SolicitudRecepcionFactura> = {}): RespuestaRecepcion {
+    return siat.recepcionFactura(solicitud(buildInvoiceXml(PURCHASE_SALE_SCHEMA, f), cambios));
   }
 
   describe('CUIS y CUFD', () => {
     it('el CUIS vale 365 días y un segundo pedido vigente responde 980', () => {
-      const otro = new SiatSimuladoAdapter({ padron: [CONTRIBUYENTE], reloj: () => ahora });
+      const otro = new SiatSimulatedAdapter({ padron: [CONTRIBUYENTE], reloj: () => ahora });
       const primero = otro.solicitudCuis(CONTEXTO);
       expect(primero.transaccion).toBe(true);
       expect(new Date(primero.fechaVigencia!).getTime() - ahora.getTime()).toBe(365 * 86_400_000);
@@ -180,7 +180,7 @@ describe('SiatSimuladoAdapter', () => {
 
     it('hash que no corresponde al gzip → RECHAZADA (902) con 920', () => {
       const r = siat.recepcionFactura({
-        ...solicitud(construirXmlFactura(ESQUEMA_COMPRA_VENTA, factura(1))),
+        ...solicitud(buildInvoiceXml(PURCHASE_SALE_SCHEMA, factura(1))),
         hashArchivo: 'a'.repeat(64),
       });
       expect(r.codigoEstado).toBe(902);
@@ -189,7 +189,7 @@ describe('SiatSimuladoAdapter', () => {
     });
 
     it('XML que no cumple el esquema → 902 con 939', () => {
-      const xml = construirXmlFactura(ESQUEMA_COMPRA_VENTA, factura(1)).replace('<municipio>Santa Cruz</municipio>', '');
+      const xml = buildInvoiceXml(PURCHASE_SALE_SCHEMA, factura(1)).replace('<municipio>Santa Cruz</municipio>', '');
       expect(codigos(siat.recepcionFactura(solicitud(xml)))).toEqual([939]);
     });
 
@@ -202,7 +202,7 @@ describe('SiatSimuladoAdapter', () => {
 
     it('montos incoherentes → 1018 (subtotal), 1013 (total), 1058 (sujeto a IVA)', () => {
       const f = factura(1, { montoTotal: '90.00', montoTotalSujetoIva: '80.00', montoTotalMoneda: '90.00' });
-      const conSubtotalMalo: FacturaXml = { ...f, detalle: [{ ...f.detalle[0]!, subTotal: '99.00' }] };
+      const conSubtotalMalo: InvoiceXml = { ...f, detalle: [{ ...f.detalle[0]!, subTotal: '99.00' }] };
       expect(codigos(enviar(conSubtotalMalo))).toEqual(expect.arrayContaining([1018, 1013, 1058]));
     });
 
@@ -229,7 +229,7 @@ describe('SiatSimuladoAdapter', () => {
     });
 
     it('la directiva de simulación fuerza una rama con un código del catálogo, marcado como forzado', () => {
-      const xml = construirXmlFactura(ESQUEMA_COMPRA_VENTA, factura(1));
+      const xml = buildInvoiceXml(PURCHASE_SALE_SCHEMA, factura(1));
       const rechazo = siat.recepcionFactura(solicitud(xml), { forzarMensaje: 1013 });
       expect(rechazo.codigoEstado).toBe(902);
       expect(rechazo.mensajesList).toEqual([expect.objectContaining({ codigo: 1013, forzadoPorSimulacion: true })]);
@@ -238,7 +238,7 @@ describe('SiatSimuladoAdapter', () => {
     });
 
     it('un código fuera del catálogo del simulador no se fuerza', () => {
-      const r = siat.recepcionFactura(solicitud(construirXmlFactura(ESQUEMA_COMPRA_VENTA, factura(1))), { forzarMensaje: 4242 });
+      const r = siat.recepcionFactura(solicitud(buildInvoiceXml(PURCHASE_SALE_SCHEMA, factura(1))), { forzarMensaje: 4242 });
       expect(r.codigoEstado).toBe(908);
     });
   });

@@ -12,8 +12,8 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/invoicing-availability';
-import { CobrosDelPaciente } from './patient-charges/patient-charges';
+import { SIMULATED_AVAILABLE_INVOICING } from '../../../billing/invoicing-availability';
+import { PatientCharges } from './patient-charges/patient-charges';
 
 /**
  * Cuántos pagos se muestran. Lo que quede afuera se dice, no se calla.
@@ -77,7 +77,7 @@ export interface PagosDelPaciente {
  * ## Con la facturación simulada, cobra y factura
  *
  * Si la facturación simulada está disponible (FACT-SIAT-MOCK, ver
- * {@link FACTURACION_SIMULADA_DISPONIBLE}), el bloque delega en
+ * {@link SIMULATED_AVAILABLE_INVOICING}), el bloque delega en
  * `app-patient-charges`: los servicios de la persona con su plan de pagos
  * —nota de venta por cada pago mientras haya saldo— y el modal de la factura
  * contra el SIAT simulado. En ese caso **no** se lee Contabilidad.
@@ -104,7 +104,7 @@ export interface PagosDelPaciente {
  */
 @Component({
   selector: 'app-payments-block',
-  imports: [Alert, AppButton, Badge, CobrosDelPaciente, DatePipe],
+  imports: [Alert, AppButton, Badge, PatientCharges, DatePipe],
   templateUrl: './payments-block.html',
   styleUrl: './payments-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -115,7 +115,7 @@ export class PaymentsBlock {
   readonly patientProfileId = input.required<string>();
 
   /** Con la facturación simulada, «Pagos» cobra y factura; sin ella, lista lo asentado. */
-  protected readonly facturacionSimulada = inject(FACTURACION_SIMULADA_DISPONIBLE)();
+  protected readonly facturacionSimulada = inject(SIMULATED_AVAILABLE_INVOICING)();
 
   /** Reintento manual: cambiarlo vuelve a disparar la lectura. */
   private readonly intento = signal(0);

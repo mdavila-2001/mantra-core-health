@@ -1,7 +1,7 @@
-import { ESCENARIOS_DE_CONTENT_DIALOG } from './content-dialog.scenarios';
-import { ESCENARIOS_DE_DATA_TABLE } from './data-table.scenarios';
-import type { EscenarioDeComponente } from './scenario.types';
-import { ESCENARIOS_DE_VIEW_STATE_HOST } from './view-state-host.scenarios';
+import { CONTENT_DIALOG_SCENARIOS } from './content-dialog.scenarios';
+import { DATA_TABLE_SCENARIOS } from './data-table.scenarios';
+import type { ComponentScenario } from './scenario.types';
+import { VIEW_STATE_HOST_SCENARIOS } from './view-state-host.scenarios';
 
 /* ============================================================================
     El registro de escenarios: qué componentes del índice generado tienen un
@@ -16,23 +16,23 @@ import { ESCENARIOS_DE_VIEW_STATE_HOST } from './view-state-host.scenarios';
     es lo mismo que «montado con un contrato válido».
     ========================================================================== */
 
-export const ESCENARIOS: readonly EscenarioDeComponente[] = [
-  ...ESCENARIOS_DE_DATA_TABLE,
-  ...ESCENARIOS_DE_CONTENT_DIALOG,
-  ...ESCENARIOS_DE_VIEW_STATE_HOST,
+export const SCENARIOS: readonly ComponentScenario[] = [
+  ...DATA_TABLE_SCENARIOS,
+  ...CONTENT_DIALOG_SCENARIOS,
+  ...VIEW_STATE_HOST_SCENARIOS,
 ];
 
-const POR_CLAVE = new Map<string, EscenarioDeComponente[]>();
-for (const escenario of ESCENARIOS) {
-  const lista = POR_CLAVE.get(escenario.clave) ?? [];
+const BY_KEY = new Map<string, ComponentScenario[]>();
+for (const escenario of SCENARIOS) {
+  const lista = BY_KEY.get(escenario.clave) ?? [];
   lista.push(escenario);
-  POR_CLAVE.set(escenario.clave, lista);
+  BY_KEY.set(escenario.clave, lista);
 }
 
 /** Los escenarios de un componente, en el orden en que se declararon. */
-export function escenariosDe(clave: string): readonly EscenarioDeComponente[] {
-  return POR_CLAVE.get(clave) ?? [];
+export function scenariosOf(clave: string): readonly ComponentScenario[] {
+  return BY_KEY.get(clave) ?? [];
 }
 
 /** Cuántos componentes del índice tienen al menos un escenario. */
-export const CLAVES_CON_ESCENARIO: ReadonlySet<string> = new Set(POR_CLAVE.keys());
+export const KEYS_WITH_SCENARIO: ReadonlySet<string> = new Set(BY_KEY.keys());

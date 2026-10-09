@@ -53,7 +53,7 @@ import { RadioGroup } from '../radio-group/radio-group';
     '[class.is-disabled]': 'isDisabled()',
   },
 })
-export class RadioOtro {
+export class OtherRadio {
   private readonly group: RadioGroup<unknown> = inject(RadioGroup);
 
   /** Los valores de la lista: cualquier otro valor del grupo es «Otro». */
@@ -63,15 +63,15 @@ export class RadioOtro {
   readonly disabled = input<boolean>(false);
 
   protected readonly inputId = nextControlId('radio');
-  protected readonly textoId = nextControlId('radio-otro-texto');
+  protected readonly textId = nextControlId('radio-otro-texto');
 
   /** Apretada sin texto todavía. Ver la nota de arriba. */
-  private readonly activo = signal(false);
+  private readonly active = signal(false);
 
-  protected readonly texto = signal('');
+  protected readonly text = signal('');
 
   /** El valor del grupo, cuando es texto libre; `undefined` si es de la lista. */
-  private readonly textoLibre = computed<string | undefined>(() => {
+  private readonly freeText = computed<string | undefined>(() => {
     const valor = this.group.value();
     return typeof valor === 'string' && valor !== '' && !this.valores().includes(valor)
       ? valor
@@ -79,7 +79,7 @@ export class RadioOtro {
   });
 
   protected readonly checked = computed(
-    () => this.textoLibre() !== undefined || this.activo(),
+    () => this.freeText() !== undefined || this.active(),
   );
 
   protected readonly isDisabled = computed(() => this.disabled() || this.group.isDisabled());
@@ -89,14 +89,14 @@ export class RadioOtro {
   constructor() {
     effect(() => {
       const valor = this.group.value();
-      const libre = this.textoLibre();
+      const libre = this.freeText();
       if (libre !== undefined) {
         // Un valor guardado con texto libre vuelve con el renglón escrito.
-        this.texto.set(libre);
-        this.activo.set(true);
+        this.text.set(libre);
+        this.active.set(true);
       } else if (valor !== null && valor !== '') {
         // Eligieron una de la lista: «Otro» se apaga solo.
-        this.activo.set(false);
+        this.active.set(false);
       }
     });
   }
@@ -105,18 +105,18 @@ export class RadioOtro {
     if (this.isDisabled()) {
       return;
     }
-    this.activo.set(true);
-    this.group.select(this.texto().trim());
+    this.active.set(true);
+    this.group.select(this.text().trim());
   }
 
-  protected escribir(evento: Event): void {
+  protected write(evento: Event): void {
     if (this.isDisabled()) {
       return;
     }
-    this.texto.set((evento.target as HTMLInputElement).value);
+    this.text.set((evento.target as HTMLInputElement).value);
     // Escribir ya es elegir: nadie escribe en el renglón de «Otro» para dejar
     // marcada otra opción.
-    this.activo.set(true);
-    this.group.select(this.texto().trim());
+    this.active.set(true);
+    this.group.select(this.text().trim());
   }
 }

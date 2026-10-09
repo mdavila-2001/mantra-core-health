@@ -16,7 +16,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   errorMessageOf,
   objetoJson,
@@ -71,7 +71,7 @@ export class CollectionRunFinish {
    * después, y en las demás es una nota suelta.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué corrida',
         hint: 'Una corrida se cierra una sola vez: es un log, no un estado que va y vuelve.',

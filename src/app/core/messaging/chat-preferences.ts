@@ -2,13 +2,13 @@ import { DOCUMENT, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 
 /** Dónde se guarda lo que la persona marcó, en este navegador. */
-const CLAVE = 'alovida.chat-preferencias';
+const KEY = 'alovida.chat-preferencias';
 
 /** Cuántos emojis recientes se recuerdan. */
-const TOPE_DE_RECIENTES = 24;
+const RECENT_LIMIT = 24;
 
 /** Lo que se guarda, tal cual va al almacenamiento. */
-interface PreferenciasGuardadas {
+interface SavedPreferences {
   readonly favoritos?: readonly string[];
   readonly archivados?: readonly string[];
   readonly emojis?: readonly string[];
@@ -37,31 +37,31 @@ interface PreferenciasGuardadas {
  * correcta: el servidor no sabe de quién es la sesión que va a hidratar.
  */
 @Injectable({ providedIn: 'root' })
-export class ChatPreferencias {
+export class ChatPreferences {
   private readonly document = inject(DOCUMENT);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  private readonly guardado = this.leer();
+  private readonly saved = this.read();
 
-  readonly favoritos = signal<ReadonlySet<string>>(
-    new Set(this.guardado.favoritos ?? []),
+  readonly favorites = signal<ReadonlySet<string>>(
+    new Set(this.saved.favoritos ?? []),
   );
-  readonly archivados = signal<ReadonlySet<string>>(
-    new Set(this.guardado.archivados ?? []),
+  readonly archived = signal<ReadonlySet<string>>(
+    new Set(this.saved.archivados ?? []),
   );
-  readonly emojisRecientes = signal<readonly string[]>(this.guardado.emojis ?? []);
+  readonly recentEmojis = signal<readonly string[]>(this.saved.emojis ?? []);
 
-  esFavorito(conversationId: string): boolean {
-    return this.favoritos().has(conversationId);
+  isFavorite(conversationId: string): boolean {
+    return this.favorites().has(conversationId);
   }
 
-  estaArchivado(conversationId: string): boolean {
-    return this.archivados().has(conversationId);
+  isArchived(conversationId: string): boolean {
+    return this.archived().has(conversationId);
   }
 
-  alternarFavorito(conversationId: string): void {
-    this.favoritos.update((actual) => alternar(actual, conversationId));
-    this.persistir();
+  toggleFavorite(conversationId: string): void {
+    this.favorites.update((actual) => toggle(actual, conversationId));
+    this.persist();
   }
 
   /**
@@ -69,35 +69,35 @@ export class ChatPreferencias {
    * opuestas de decir cuánto importa una conversación, y una fila que está en
    * las dos listas a la vez no se entiende en ninguna.
    */
-  alternarArchivado(conversationId: string): void {
-    const estaba = this.estaArchivado(conversationId);
-    this.archivados.update((actual) => alternar(actual, conversationId));
-    if (!estaba && this.esFavorito(conversationId)) {
-      this.favoritos.update((actual) => alternar(actual, conversationId));
+  toggleArchived(conversationId: string): void {
+    const estaba = this.isArchived(conversationId);
+    this.archived.update((actual) => toggle(actual, conversationId));
+    if (!estaba && this.isFavorite(conversationId)) {
+      this.favorites.update((actual) => toggle(actual, conversationId));
     }
-    this.persistir();
+    this.persist();
   }
 
   /** Recuerda un emoji recién usado, al frente y sin repetir. */
-  recordarEmoji(emoji: string): void {
-    this.emojisRecientes.update((lista) =>
-      [emoji, ...lista.filter((e) => e !== emoji)].slice(0, TOPE_DE_RECIENTES),
+  rememberEmoji(emoji: string): void {
+    this.recentEmojis.update((lista) =>
+      [emoji, ...lista.filter((e) => e !== emoji)].slice(0, RECENT_LIMIT),
     );
-    this.persistir();
+    this.persist();
   }
 
-  private persistir(): void {
+  private persist(): void {
     if (!this.isBrowser) {
       return;
     }
-    const contenido: PreferenciasGuardadas = {
-      favoritos: [...this.favoritos()],
-      archivados: [...this.archivados()],
-      emojis: [...this.emojisRecientes()],
+    const contenido: SavedPreferences = {
+      favoritos: [...this.favorites()],
+      archivados: [...this.archived()],
+      emojis: [...this.recentEmojis()],
     };
     try {
       this.document.defaultView?.localStorage.setItem(
-        CLAVE,
+        KEY,
         JSON.stringify(contenido),
       );
     } catch {
@@ -106,12 +106,12 @@ export class ChatPreferencias {
     }
   }
 
-  private leer(): PreferenciasGuardadas {
+  private read(): SavedPreferences {
     if (!this.isBrowser) {
       return {};
     }
     try {
-      const crudo = this.document.defaultView?.localStorage.getItem(CLAVE);
+      const crudo = this.document.defaultView?.localStorage.getItem(KEY);
       if (crudo === null || crudo === undefined) {
         return {};
       }
@@ -119,11 +119,11 @@ export class ChatPreferencias {
       if (typeof guardado !== 'object' || guardado === null) {
         return {};
       }
-      const { favoritos, archivados, emojis } = guardado as PreferenciasGuardadas;
+      const { favoritos, archivados, emojis } = guardado as SavedPreferences;
       return {
-        favoritos: soloTextos(favoritos),
-        archivados: soloTextos(archivados),
-        emojis: soloTextos(emojis),
+        favoritos: onlyTexts(favoritos),
+        archivados: onlyTexts(archivados),
+        emojis: onlyTexts(emojis),
       };
     } catch {
       // Un valor corrupto no puede dejar a nadie sin bandeja.
@@ -132,7 +132,7 @@ export class ChatPreferencias {
   }
 }
 
-function alternar(actual: ReadonlySet<string>, id: string): ReadonlySet<string> {
+function toggle(actual: ReadonlySet<string>, id: string): ReadonlySet<string> {
   const copia = new Set(actual);
   if (!copia.delete(id)) {
     copia.add(id);
@@ -140,7 +140,7 @@ function alternar(actual: ReadonlySet<string>, id: string): ReadonlySet<string> 
   return copia;
 }
 
-function soloTextos(valor: unknown): readonly string[] {
+function onlyTexts(valor: unknown): readonly string[] {
   return Array.isArray(valor)
     ? valor.filter((item): item is string => typeof item === 'string')
     : [];

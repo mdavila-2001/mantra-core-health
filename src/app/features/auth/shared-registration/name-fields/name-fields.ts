@@ -1,6 +1,6 @@
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/custom-field';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginate-fields';
+import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import type { CampoDeFormulario } from '../../../../shared/forms/paginated/paginated-form.types';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -8,9 +8,9 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { mensajeDeError } from '../../../../shared/forms/paginated/error-message';
-import { type GrupoDeNombre } from './person-name';
+import { type NameGroup } from './person-name';
 
-import { NombresExtra } from './extra-names';
+import { ExtraNames } from './extra-names';
 
 /**
  * Los campos del nombre de una persona: primer, segundo y tercer nombre, tantos
@@ -24,19 +24,19 @@ import { NombresExtra } from './extra-names';
   selector: 'app-name-fields',
   imports: [
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     ReactiveFormsModule,
     AppInput,
     FormField,
-    NombresExtra,
+    ExtraNames,
   ],
   templateUrl: './name-fields.html',
   styleUrl: './name-fields.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CamposDeNombre {
+export class NameFields {
   /** El grupo que gobierna estos campos (ver `grupoDeNombre`). */
-  readonly grupo = input.required<GrupoDeNombre>();
+  readonly grupo = input.required<NameGroup>();
 
   /** Prefijo de los `data-testid`: `<prefijo>-nombre`, `-segundo-nombre`, … */
   readonly prefijoTestId = input.required<string>();
@@ -46,13 +46,13 @@ export class CamposDeNombre {
 
   protected readonly namePages = computed(() => {
     const field = (key: string): CampoDeFormulario => ({ key, label: '', control: 'custom' });
-    return paginarCampos([
+    return paginateFields([
       { titulo: 'Nombres', campos: ['name', 'middleName', 'thirdName', 'extraNames'].map(field) },
       { titulo: 'Apellidos', campos: ['lastName', 'motherLastName'].map(field) },
     ]);
   });
 
-  protected errorDe(clave: 'name' | 'lastName'): string {
+  protected errorOf(clave: 'name' | 'lastName'): string {
     const esNombre = clave === 'name';
     const propio = mensajeDeError(this.grupo().controls[clave], {
       label: esNombre ? 'Primer nombre' : 'Apellido paterno',

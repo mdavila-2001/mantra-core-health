@@ -37,10 +37,10 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { ROTULO_DE_ESTADO, TONO_DE_ESTADO, estadoDeCobro } from '../billing-summary';
-import { bs, centavos, fechaCorta, mensajeDeError, tieneFacturaVigente } from '../on-screen-charges';
-import { descargarNotaDeVenta } from '../sales-note';
+import { bs, cents, shortDate, errorMessage, hasCurrentInvoice } from '../on-screen-charges';
+import { saleDownloadNote } from '../sales-note';
 
-type Celda = TemplateRef<{ $implicit: SimulatedPlanInstance }>;
+type Cell = TemplateRef<{ $implicit: SimulatedPlanInstance }>;
 
 const DECIMAL = /^\d+(\.\d{1,2})?$/;
 
@@ -74,7 +74,7 @@ const DECIMAL = /^\d+(\.\d{1,2})?$/;
   styleUrl: './payment-plan.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PlanDePagos {
+export class PaymentsPlan {
   private readonly client = inject(BillingSimulatedClient);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
@@ -94,25 +94,25 @@ export class PlanDePagos {
   readonly facturar = output<void>();
 
   protected readonly plan = computed(() => this.cobro().plan);
-  protected readonly filas = computed(() => ready(this.plan()?.instances ?? []));
-  protected readonly vigente = computed(() => tieneFacturaVigente(this.cobro()));
-  protected readonly estado = computed(() => estadoDeCobro(this.cobro()));
-  protected readonly rotuloDeEstado = ROTULO_DE_ESTADO;
-  protected readonly tonoDeEstado = TONO_DE_ESTADO;
+  protected readonly rows = computed(() => ready(this.plan()?.instances ?? []));
+  protected readonly current = computed(() => hasCurrentInvoice(this.cobro()));
+  protected readonly status = computed(() => estadoDeCobro(this.cobro()));
+  protected readonly statusLabel = ROTULO_DE_ESTADO;
+  protected readonly statusTone = TONO_DE_ESTADO;
   protected readonly bs = bs;
-  protected readonly fecha = fechaCorta;
+  protected readonly date = shortDate;
 
   /** La instancia cuyo pago se está cargando, o `null` con el formulario cerrado. */
-  protected readonly pagando = signal<SimulatedPlanInstance | null>(null);
+  protected readonly paying = signal<SimulatedPlanInstance | null>(null);
   /**
    * La última nota emitida, dicha en el propio plan: el aviso flotante queda
    * debajo del fondo del modal (capa superior del `<dialog>`) y no se lee.
    */
-  protected readonly ultimaNota = signal<string | null>(null);
-  protected readonly enviando = signal(false);
+  protected readonly ultimaNote = signal<string | null>(null);
+  protected readonly sending = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly formulario = new FormGroup({
+  protected readonly form = new FormGroup({
     methodCode: new FormControl<number | null>(null, Validators.required),
     amount: new FormControl('', {
       nonNullable: true,
@@ -120,14 +120,14 @@ export class PlanDePagos {
     }),
   });
 
-  private readonly itemCell = viewChild<Celda>('itemCell');
-  private readonly esperadoCell = viewChild<Celda>('esperadoCell');
-  private readonly pagadoCell = viewChild<Celda>('pagadoCell');
-  private readonly comprobanteCell = viewChild<Celda>('comprobanteCell');
-  private readonly accionCell = viewChild<Celda>('accionCell');
+  private readonly itemCell = viewChild<Cell>('itemCell');
+  private readonly esperadoCell = viewChild<Cell>('esperadoCell');
+  private readonly pagadoCell = viewChild<Cell>('pagadoCell');
+  private readonly comprobanteCell = viewChild<Cell>('comprobanteCell');
+  private readonly accionCell = viewChild<Cell>('accionCell');
   private readonly tituloDelPago = viewChild<ElementRef<HTMLElement>>('tituloDelPago');
 
-  protected readonly columnas = computed<readonly ColumnDef<SimulatedPlanInstance>[]>(() => [
+  protected readonly columns = computed<readonly ColumnDef<SimulatedPlanInstance>[]>(() => [
     { key: 'item', header: 'Ítem', priority: 1, cell: this.itemCell() },
     // Con poca caja (`fitContainer`: teléfono, o el modal a 1024 px) los
     // importes se pliegan al detalle de la fila y viajan en la primera celda
@@ -138,64 +138,64 @@ export class PlanDePagos {
     { key: 'action', header: 'Acción', priority: 1, sticky: 'end', cell: this.accionCell() },
   ]);
 
-  protected readonly porId = (fila: SimulatedPlanInstance): string => fila.id;
-  protected readonly nombreDeFila = (fila: SimulatedPlanInstance): string => fila.label;
+  protected readonly byId = (fila: SimulatedPlanInstance): string => fila.id;
+  protected readonly rowName = (fila: SimulatedPlanInstance): string => fila.label;
 
   /**
    * Lo que está mal en el monto, dicho antes de enviarlo: más que el saldo, o
    * cero. Se borra al volver a escribir.
    */
-  protected readonly errorDeMonto = signal<string | null>(null);
+  protected readonly amountError = signal<string | null>(null);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly avisoDeNota = viewChild<ElementRef<HTMLElement>>('avisoDeNota');
   private readonly cierre = viewChild<ElementRef<HTMLElement>>('cierre');
-  private readonly cobroId = computed(() => this.cobro().id);
+  private readonly chargeId = computed(() => this.cobro().id);
   /**
    * El último pago saldó el plan: el cierre todavía no existe (en la consulta
    * el padre relee antes de pasar el cobro nuevo), así que el foco se le da
    * cuando aparece. Sin esto caía en el aviso, que el cierre reemplaza.
    */
-  protected readonly enfocarCierre = signal(false);
+  protected readonly focusClosing = signal(false);
 
   constructor() {
-    this.formulario.controls.amount.valueChanges
+    this.form.controls.amount.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe(() => this.errorDeMonto.set(null));
+      .subscribe(() => this.amountError.set(null));
     // Otro cobro, otro plan: en /billing el mismo componente pasa de un cobro
     // a otro sin recrearse, y un formulario abierto habría pagado una
     // instancia del plan anterior contra el cobro nuevo.
     effect(() => {
       const cierre = this.cierre();
-      if (cierre !== undefined && untracked(this.enfocarCierre)) {
-        this.enfocarCierre.set(false);
+      if (cierre !== undefined && untracked(this.focusClosing)) {
+        this.focusClosing.set(false);
         cierre.nativeElement.focus();
       }
     });
     effect(() => {
-      this.cobroId();
+      this.chargeId();
       untracked(() => {
-        this.pagando.set(null);
-        this.ultimaNota.set(null);
+        this.paying.set(null);
+        this.ultimaNote.set(null);
         this.error.set(null);
-        this.errorDeMonto.set(null);
+        this.amountError.set(null);
       });
     });
   }
 
-  protected abrirPago(instancia: SimulatedPlanInstance): void {
+  protected openPayment(instancia: SimulatedPlanInstance): void {
     this.error.set(null);
-    this.ultimaNota.set(null);
-    this.pagando.set(instancia);
-    this.formulario.reset({ methodCode: this.metodos()[0]?.value ?? null, amount: instancia.balance });
-    this.errorDeMonto.set(null);
+    this.ultimaNote.set(null);
+    this.paying.set(instancia);
+    this.form.reset({ methodCode: this.metodos()[0]?.value ?? null, amount: instancia.balance });
+    this.amountError.set(null);
     // El formulario es un `@if`: el título existe después del render.
     afterNextRender(() => this.tituloDelPago()?.nativeElement.focus(), { injector: this.injector });
   }
 
-  protected cancelarPago(): void {
-    const instancia = this.pagando();
-    this.pagando.set(null);
+  protected cancelPayment(): void {
+    const instancia = this.paying();
+    this.paying.set(null);
     this.error.set(null);
     // El foco vuelve al «Registrar pago» de la fila que abrió el formulario.
     afterNextRender(
@@ -209,52 +209,52 @@ export class PlanDePagos {
     );
   }
 
-  protected registrarPago(): void {
-    const instancia = this.pagando();
+  protected registerPayment(): void {
+    const instancia = this.paying();
     if (instancia === null) return;
-    const { methodCode, amount } = this.formulario.getRawValue();
+    const { methodCode, amount } = this.form.getRawValue();
     const valido = DECIMAL.test(amount.trim());
-    if (valido && centavos(amount) > centavos(instancia.balance)) {
-      this.errorDeMonto.set('No puede superar el saldo de la instancia.');
-    } else if (valido && centavos(amount) <= 0) {
-      this.errorDeMonto.set('Tiene que ser mayor que cero.');
+    if (valido && cents(amount) > cents(instancia.balance)) {
+      this.amountError.set('No puede superar el saldo de la instancia.');
+    } else if (valido && cents(amount) <= 0) {
+      this.amountError.set('Tiene que ser mayor que cero.');
     }
-    if (this.formulario.invalid || methodCode === null || this.errorDeMonto() !== null) {
-      this.formulario.markAllAsTouched();
+    if (this.form.invalid || methodCode === null || this.amountError() !== null) {
+      this.form.markAllAsTouched();
       return;
     }
-    this.enviando.set(true);
+    this.sending.set(true);
     this.error.set(null);
     this.client
       .registerInstancePayment(this.cobro().id, instancia.id, { methodCode, amount: amount.trim() })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (cobro) => {
-          this.enviando.set(false);
-          this.pagando.set(null);
+          this.sending.set(false);
+          this.paying.set(null);
           const nota = cobro.plan?.instances.find((i) => i.id === instancia.id)?.salesNotes.at(-1);
           const aviso = cobro.plan?.complete
             ? `Nota de venta ${nota?.number ?? ''} por ${bs(nota?.amount ?? '0')} emitida. El plan quedó saldado: ya se puede facturar.`
             : `Nota de venta ${nota?.number ?? ''} por ${bs(nota?.amount ?? '0')} emitida. No es una factura: la factura se emite al saldar el plan.`;
-          this.ultimaNota.set(aviso);
+          this.ultimaNote.set(aviso);
           this.toast.success(aviso, 'Pago registrado (SIMULADO)');
           // El formulario (y el botón con el foco) se fue: el foco pasa al
           // aviso o, si el plan quedó saldado, al cierre en cuanto exista.
           if (cobro.plan?.complete) {
-            this.enfocarCierre.set(true);
+            this.focusClosing.set(true);
           } else {
             afterNextRender(() => this.avisoDeNota()?.nativeElement.focus(), { injector: this.injector });
           }
           this.actualizado.emit(cobro);
         },
         error: (error: unknown) => {
-          this.enviando.set(false);
-          this.error.set(mensajeDeError(error, 'No se pudo registrar el pago en el simulador.'));
+          this.sending.set(false);
+          this.error.set(errorMessage(error, 'No se pudo registrar el pago en el simulador.'));
         },
       });
   }
 
-  protected descargar(instancia: SimulatedPlanInstance, nota: SimulatedSalesNote): void {
-    descargarNotaDeVenta(this.cobro(), instancia, nota, this.emisor());
+  protected download(instancia: SimulatedPlanInstance, nota: SimulatedSalesNote): void {
+    saleDownloadNote(this.cobro(), instancia, nota, this.emisor());
   }
 }

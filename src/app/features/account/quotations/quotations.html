@@ -2,7 +2,7 @@
   <app-page-header
     title="Cotizaciones"
     [subtitle]="
-      esMaqueta
+      isMockup
         ? 'Compare dónde conseguirlo y cuánto cuesta. En esta maqueta, los precios de farmacias y de estudios son de ejemplo; el arancel de referencia es el real.'
         : 'Compare dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, se lo decimos: no lo inventamos.'
     "
@@ -15,8 +15,8 @@
       <app-search-field
         data-testid="cotizaciones-busqueda"
         placeholder="Paracetamol, hemograma, consulta…"
-        [value]="termino()"
-        [loading]="buscando()"
+        [value]="term()"
+        [loading]="searching()"
         (searched)="buscar($event)"
       />
     </app-form-field>
@@ -25,9 +25,9 @@
       <app-form-field label="Vertical" class="cotizaciones__campo">
         <app-select
           data-testid="cotizaciones-vertical"
-          [options]="opcionesDeVertical"
+          [options]="verticalOptions"
           [value]="vertical()"
-          (valueChange)="cambiarVertical($event)"
+          (valueChange)="changeVertical($event)"
         />
       </app-form-field>
     }
@@ -35,9 +35,9 @@
     <app-form-field label="Ordenar por" class="cotizaciones__campo">
       <app-select
         data-testid="cotizaciones-orden"
-        [options]="opcionesDeOrden"
-        [value]="orden()"
-        (valueChange)="cambiarOrden($event)"
+        [options]="orderOptions"
+        [value]="order()"
+        (valueChange)="changeOrder($event)"
       />
     </app-form-field>
 
@@ -45,14 +45,14 @@
          (casa / trabajo / ubicación actual). Cambiarlo recalcula. -->
     <div class="cotizaciones__origen" data-testid="cotizaciones-origen">
       <app-search-origin-picker
-        [places]="lugaresGuardados()"
-        [origin]="origen()"
-        (originChange)="origen.set($event)"
+        [places]="savedPlaces()"
+        [origin]="origin()"
+        (originChange)="origin.set($event)"
       />
     </div>
   </section>
 
-  @if (!terminoValido()) {
+  @if (!validTerm()) {
     <app-empty-state
       data-testid="cotizaciones-sin-termino"
       title="Escriba qué quiere cotizar"
@@ -62,7 +62,7 @@
           : 'Un medicamento, un análisis, un estudio de imagen o una consulta. Buscamos en las farmacias, los centros de diagnóstico y el arancel de referencia.'
       "
     />
-  } @else if (faltaOrigen()) {
+  } @else if (originMissing()) {
     <app-empty-state
       data-testid="cotizaciones-sin-ubicacion"
       title="Elija desde dónde medir la distancia"
@@ -73,7 +73,7 @@
         empty-actions
         type="button"
         variant="secondary"
-        (clicked)="ordenarPorPrecio()"
+        (clicked)="sortByPrice()"
       >
         <svg
           viewBox="0 0 24 24"
@@ -91,14 +91,14 @@
       </button>
     </app-empty-state>
   } @else {
-    @if (fuentesCaidas() !== '') {
+    @if (downSources() !== '') {
       <app-alert
         tone="warning"
         title="Una parte no respondió"
         data-testid="cotizaciones-fuente-caida"
       >
-        No pudimos consultar: {{ fuentesCaidas() }}. Le mostramos el resto.
-        <button app-button type="button" size="sm" variant="secondary" (clicked)="reintentar()">
+        No pudimos consultar: {{ downSources() }}. Le mostramos el resto.
+        <button app-button type="button" size="sm" variant="secondary" (clicked)="retry()">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -116,13 +116,13 @@
       </app-alert>
     }
 
-    @if (sinResultados()) {
+    @if (withoutResults()) {
       <app-empty-state
         data-testid="cotizaciones-sin-resultados"
         title="No encontramos cotizaciones"
         [description]="
           'Nada coincide con «' +
-          termino() +
+          term() +
           '»' +
           (vertical() === 'TODAS' ? '' : ' en esta vertical') +
           '. Pruebe con el nombre genérico o con otra palabra.'
@@ -133,7 +133,7 @@
           empty-actions
           type="button"
           variant="secondary"
-          (clicked)="limpiarBusqueda()"
+          (clicked)="clearSearch()"
         >
           <svg
             viewBox="0 0 24 24"
@@ -154,18 +154,18 @@
 
     <!-- Alto máximo y scroll vertical, sin scroll lateral (ADR-0015); la
          paginación es en cliente porque la lista ya está entera en memoria. -->
-    @if (buscando()) {
+    @if (searching()) {
       <p class="cotizaciones__buscando" role="status">Buscando cotizaciones…</p>
     }
 
-    @if (!sinResultados()) {
+    @if (!withoutResults()) {
       <!-- En pantalla angosta los resultados son tarjetas: una tabla de cuatro
            columnas en 390 px partía cada fila en ~290 px de alto (R3-01). La
            tabla se queda para los estados que no son «con filas» —carga, error—
            que resuelve su host, y para 780 px en adelante. -->
-      @if (hayFilas()) {
+      @if (hasRows()) {
         <ul class="cotizaciones__tarjetas" aria-label="Cotizaciones encontradas">
-          @for (fila of resultadosPaginados(); track fila.id) {
+          @for (fila of paginatedResults(); track fila.id) {
             <li class="cotizaciones__tarjeta" data-testid="cotizaciones-tarjeta">
               <span class="cotizaciones__que">{{ fila.que }}</span>
               <span class="cotizaciones__donde">{{ fila.donde }}</span>
@@ -173,18 +173,18 @@
                 <span
                   class="cotizaciones__precio"
                   [class.cotizaciones__precio--no-publicado]="fila.price === null"
-                  [attr.title]="procedenciaDe(fila)"
-                  >{{ precioDe(fila) }}</span
+                  [attr.title]="provenanceOf(fila)"
+                  >{{ priceOf(fila) }}</span
                 >
                 <span
                   class="cotizaciones__distancia"
                   [class.cotizaciones__distancia--sin]="fila.distanceKm === null"
-                  >{{ distanciaDe(fila)
+                  >{{ distanceOf(fila)
                   }}{{ fila.distanceKm === null ? '' : ' en línea recta' }}</span
                 >
               </p>
-              <span class="cotizaciones__procedencia">{{ procedenciaDe(fila) }}</span>
-              <span class="cotizaciones__vertical">{{ etiquetaDeVertical(fila) }}</span>
+              <span class="cotizaciones__procedencia">{{ provenanceOf(fila) }}</span>
+              <span class="cotizaciones__vertical">{{ verticalLabel(fila) }}</span>
               @if (fila.advertencia) {
                 <span class="cotizaciones__advertencia">{{ fila.advertencia }}</span>
               }
@@ -197,22 +197,22 @@
       }
 
       <app-data-table
-        [class.cotizaciones__tabla--con-filas]="hayFilas()"
+        [class.cotizaciones__tabla--con-filas]="hasRows()"
         data-testid="cotizaciones-resultados"
-        [state]="estadoTabla()"
-        [columns]="columnas()"
-        [trackBy]="porId"
-        [rowLabel]="nombreAccesible"
+        [state]="tableStatus()"
+        [columns]="columns()"
+        [trackBy]="byId"
+        [rowLabel]="accessibleName"
         caption="Cotizaciones encontradas"
         maxHeight="560px"
-        (retry)="reintentar()"
+        (retry)="retry()"
       />
 
-      @if (resultados().length > 0) {
+      @if (results().length > 0) {
         <app-pagination
-          [totalItems]="resultados().length"
-          [(page)]="pagina"
-          [(pageSize)]="tamanoPagina"
+          [totalItems]="results().length"
+          [(page)]="page"
+          [(pageSize)]="pageSize"
         />
       }
     }
@@ -224,8 +224,8 @@
   <span class="cotizaciones__donde">{{ fila.donde }}</span>
   <!-- La procedencia del precio va acá, en la columna ancha, y no debajo del
        importe: en 390 px la columna Precio la partía en seis renglones. -->
-  <span class="cotizaciones__procedencia">{{ procedenciaDe(fila) }}</span>
-  <span class="cotizaciones__vertical">{{ etiquetaDeVertical(fila) }}</span>
+  <span class="cotizaciones__procedencia">{{ provenanceOf(fila) }}</span>
+  <span class="cotizaciones__vertical">{{ verticalLabel(fila) }}</span>
   @if (fila.advertencia) {
     <span class="cotizaciones__advertencia">{{ fila.advertencia }}</span>
   }
@@ -238,9 +238,9 @@
   <span
     class="cotizaciones__precio"
     [class.cotizaciones__precio--no-publicado]="fila.price === null"
-    [attr.title]="procedenciaDe(fila)"
+    [attr.title]="provenanceOf(fila)"
   >
-    {{ precioDe(fila) }}
+    {{ priceOf(fila) }}
   </span>
 </ng-template>
 
@@ -249,7 +249,7 @@
     class="cotizaciones__distancia"
     [class.cotizaciones__distancia--sin]="fila.distanceKm === null"
   >
-    {{ distanciaDe(fila) }}
+    {{ distanceOf(fila) }}
   </span>
 </ng-template>
 
@@ -265,7 +265,7 @@
         variant="primary"
         data-testid="cotizaciones-agregar-carrito"
         [attr.aria-label]="'Agregar al carrito: ' + fila.que + ' en ' + fila.donde"
-        (clicked)="agregarAlCarrito(fila)"
+        (clicked)="addToCart(fila)"
       >
         <svg
           viewBox="0 0 24 24"
@@ -282,12 +282,12 @@
         </svg>
         Agregar al carrito
       </button>
-      @if (estaEnElCarrito(fila)) {
+      @if (isInCart(fila)) {
         <a
           app-link
           class="cotizaciones__accion"
           data-testid="cotizaciones-ver-carrito"
-          [routerLink]="rutaDelCarrito"
+          [routerLink]="cartPath"
         >
           En su carrito · Ver carrito
         </a>
@@ -338,20 +338,20 @@
   }
 </ng-template>
 
-@if (reservaAbierta(); as reserva) {
+@if (openBooking(); as reserva) {
   <app-content-dialog
     size="lg"
     [heading]="'Reservar ' + reserva.estudio"
     [description]="
       reserva.centro + '. Elija un horario; en el paso siguiente confirma la reserva.'
     "
-    (closed)="cerrarReserva()"
+    (closed)="closeBooking()"
   >
     <div data-testid="cotizaciones-agenda-centro">
       <app-practitioner-availability
         [practitionerProfileId]="reserva.centroId"
-        [tenantId]="tenantActivo()"
-        [resourceRefTypes]="tablasDeCentro"
+        [tenantId]="activeTenant()"
+        [resourceRefTypes]="centerTables"
         [motivo]="'Estudio: ' + reserva.estudio"
         sinAgenda="Este centro todavía no publicó horarios. Vuelva a mirar más adelante."
       />

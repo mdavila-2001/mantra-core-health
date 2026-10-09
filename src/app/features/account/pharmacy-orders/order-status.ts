@@ -12,7 +12,7 @@ import type {
 } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 
 /** Cómo se muestra el estado de un pedido: tono, palabra y frase. */
-export interface PedidoStatusPresentation {
+export interface OrderStatusPresentation {
   readonly tone: BadgeVariant;
   readonly label: string;
   /** La frase del detalle: qué significa este estado para la persona. */
@@ -27,7 +27,7 @@ export interface PedidoStatusPresentation {
  * pantalla. Cuando Marcelo publique el value set real, la clave sigue siendo
  * el código y esta tabla no se entera de los UUID.
  */
-const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, PedidoStatusPresentation>> =
+const PRESENTATION_BY_STATUS: Readonly<Record<EstadoDePedido, OrderStatusPresentation>> =
   Object.freeze({
     ENVIADO: {
       tone: 'info',
@@ -84,8 +84,8 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, PedidoStatusPrese
   });
 
 /** Cómo mostrar un estado. Jamás lanza: la tabla cubre el contrato entero. */
-export function toPedidoStatusPresentation(estado: EstadoDePedido): PedidoStatusPresentation {
-  return PRESENTACION_POR_ESTADO[estado];
+export function toOrderStatusPresentation(estado: EstadoDePedido): OrderStatusPresentation {
+  return PRESENTATION_BY_STATUS[estado];
 }
 
 /**
@@ -96,10 +96,10 @@ export function toPedidoStatusPresentation(estado: EstadoDePedido): PedidoStatus
  *
  * `pagado` sale del pedido por omisión; el detalle lo pasa explícito.
  */
-export function presentacionDePedido(
+export function orderPresentation(
   pedido: PedidoFarmacia,
   pagado: boolean = estaPagado(pedido),
-): PedidoStatusPresentation {
+): OrderStatusPresentation {
   if (
     pedido.estado === 'RETIRADO' &&
     (pedido.modalidad === 'DOMICILIO' || pedido.modalidad === 'TRABAJO')
@@ -113,18 +113,18 @@ export function presentacionDePedido(
       descripcion: 'Su pedido le espera en el mostrador. Ya está pagado: solo presente su código.',
     };
   }
-  return toPedidoStatusPresentation(pedido.estado);
+  return toOrderStatusPresentation(pedido.estado);
 }
 
-const ETIQUETA_DE_MODALIDAD: Readonly<Record<ModalidadDeEntrega, string>> = Object.freeze({
+const MODALITY_LABEL: Readonly<Record<ModalidadDeEntrega, string>> = Object.freeze({
   RETIRO: 'Retiro en la farmacia',
   DOMICILIO: 'Envío a domicilio',
   TRABAJO: 'Envío a su trabajo',
 });
 
 /** La modalidad en palabras de mostrador — el código jamás se pinta. */
-export function etiquetaDeModalidad(modalidad: ModalidadDeEntrega | null): string {
-  return modalidad === null ? 'Modalidad no registrada' : ETIQUETA_DE_MODALIDAD[modalidad];
+export function modalityLabel(modalidad: ModalidadDeEntrega | null): string {
+  return modalidad === null ? 'Modalidad no registrada' : MODALITY_LABEL[modalidad];
 }
 
 /**
@@ -132,7 +132,7 @@ export function etiquetaDeModalidad(modalidad: ModalidadDeEntrega | null): strin
  * sin un pago registrado: sin pago no hay badge. Son las mismas palabras que
  * el resumen de `order-payment`.
  */
-export function etiquetaDeMedioDePago(pago: PagoDelPedido | null): string | null {
+export function paymentMeansLabel(pago: PagoDelPedido | null): string | null {
   if (pago?.estado !== 'PAGADO') {
     return null;
   }
@@ -151,7 +151,7 @@ export function etiquetaDeMedioDePago(pago: PagoDelPedido | null): string | null
  * admite saltos, así que dar por cumplido un paso por su posición en la fila
  * sería inventar un hecho.
  */
-interface PasoDelRecorrido {
+interface TourStep {
   /** Estados del contrato que ponen a este paso como el actual. */
   readonly estados: readonly EstadoDePedido[];
   readonly label: string;
@@ -198,7 +198,7 @@ interface PasoDelRecorrido {
  * `CANCELADO`) devuelven vacío: un final anticipado se cuenta con un aviso y
  * sus salidas, no con una línea de progreso que insinúa que sigue.
  */
-export function pasosDeLaLineaDeTiempo(
+export function timelineSteps(
   pedido: PedidoFarmacia,
   pagado: boolean = estaPagado(pedido),
 ): readonly StepperStep[] {
@@ -213,7 +213,7 @@ export function pasosDeLaLineaDeTiempo(
   // modalidad declarada: el contrato admite `deliveryMode: null` en pedidos
   // anteriores a v4.2.1, y «no declarada» no es «es un envío».
   const esEnvio = pedido.modalidad === 'DOMICILIO' || pedido.modalidad === 'TRABAJO';
-  const recorrido: readonly PasoDelRecorrido[] = [
+  const recorrido: readonly TourStep[] = [
     { estados: ['ENVIADO'], label: 'Enviado', pasadoDemostrable: true },
     // Como «en camino», el pago no es un estado del contrato: viaja aparte.
     ...(pagado

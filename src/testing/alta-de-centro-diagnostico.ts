@@ -1,7 +1,7 @@
 import { HttpEventType } from '@angular/common/http';
 import type { HttpTestingController } from '@angular/common/http/testing';
 
-import { CODIGOS_DE_DIAGNOSTICO } from '../app/features/auth/shared-registration/diagnostic-center-enrollment';
+import { DIAGNOSIS_CODES } from '../app/features/auth/shared-registration/diagnostic-center-enrollment';
 
 /**
  * Apoyo de las pruebas de las dos altas públicas de diagnóstico (laboratorio e
@@ -16,15 +16,15 @@ import { CODIGOS_DE_DIAGNOSTICO } from '../app/features/auth/shared-registration
 /** Los códigos que cada catálogo publica, por su campo destino. */
 export const CATALOGOS_PUBLICADOS: Readonly<Record<string, readonly string[]>> = {
   'diagnostic_units.diagnostic_units.diagnostic_unit_type_concept_id': [
-    CODIGOS_DE_DIAGNOSTICO.laboratorio,
-    CODIGOS_DE_DIAGNOSTICO.imagenes,
+    DIAGNOSIS_CODES.laboratorio,
+    DIAGNOSIS_CODES.imagenes,
   ],
   'diagnostic_units.diagnostic_study_offerings.modality_concept_id': Object.values(
-    CODIGOS_DE_DIAGNOSTICO.modalidades,
+    DIAGNOSIS_CODES.modalidades,
   ),
-  'directory.tenants.country_concept_id': [CODIGOS_DE_DIAGNOSTICO.pais],
+  'directory.tenants.country_concept_id': [DIAGNOSIS_CODES.pais],
   'profiles.jurisdiction_authorizations.jurisdiction_concept_id': [
-    CODIGOS_DE_DIAGNOSTICO.jurisdiccionNacional,
+    DIAGNOSIS_CODES.jurisdiccionNacional,
     'JURISDICTION_SEDES_SANTA_CRUZ',
   ],
 };

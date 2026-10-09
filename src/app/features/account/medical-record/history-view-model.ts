@@ -21,9 +21,9 @@ import type {
 } from '../../../shared/components/organisms/encounter-timeline/encounter-timeline.types';
 import type { Tone } from '../../../shared/components/tone/tone.types';
 import type {
-  DiagnosticoDeLaHistoria,
-  LineaDeAtencion,
-  SeccionesNuevasDeLaHistoria,
+  HistoryDiagnosis,
+  CareLinea,
+  HistoryNewSections,
 } from '../../../shared/utils/clinical-pdf/history-with-encounters';
 import {
   CODIGO_ACTIVA,
@@ -557,7 +557,7 @@ function recetaDeLaLinea(
 export function seccionesNuevasDeLaHistoria(
   bloques: readonly BloqueDeDiagnosticos[],
   atenciones: readonly EncounterInHistory[],
-): SeccionesNuevasDeLaHistoria {
+): HistoryNewSections {
   return {
     diagnosticos: {
       enEstudio: filasDelBloque(bloques, 'en-estudio'),
@@ -571,7 +571,7 @@ export function seccionesNuevasDeLaHistoria(
 function filasDelBloque(
   bloques: readonly BloqueDeDiagnosticos[],
   estado: HistoryDiagnosisGroup,
-): readonly DiagnosticoDeLaHistoria[] {
+): readonly HistoryDiagnosis[] {
   const bloque = bloques.find((candidato) => candidato.estado === estado);
   return (bloque?.filas ?? []).map((fila) => ({
     nombre: fila.nombre,
@@ -597,7 +597,7 @@ function detalleDeLaFila(fila: DiagnosticoVisible): string | null {
  * orden del relato— porque el organismo la aplica de puertas adentro y el papel
  * no puede leerle el DOM.
  */
-function lineaDeAtencion(atencion: EncounterInHistory): LineaDeAtencion {
+function lineaDeAtencion(atencion: EncounterInHistory): CareLinea {
   const hechos = [
     ...atencion.notas.map((nota, indice) => ({
       titulo: nota.rotulo,

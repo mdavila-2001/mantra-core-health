@@ -109,7 +109,7 @@ export class LocationPicker {
    * departamento no: sin esto, el mapa se apagaría solo en cuanto se lo pulsa y
    * el select de ciudad no llegaría a aparecer nunca.
    */
-  private readonly departamentoManual = signal<string | null>(null);
+  private readonly departmentManual = signal<string | null>(null);
 
   /**
    * El departamento vigente: el del municipio elegido, si lo hay; el pulsado en
@@ -119,7 +119,7 @@ export class LocationPicker {
    * un municipio ya elegido, el mapa tiene que mostrarlo marcado aunque nadie
    * haya vuelto a tocarlo.
    */
-  protected readonly departamentoElegido = computed<string | null>(() => {
+  protected readonly chosenDepartment = computed<string | null>(() => {
     const municipio = this.value();
     if (municipio !== null) {
       const rama = this.ramas().find((r) =>
@@ -127,11 +127,11 @@ export class LocationPicker {
       );
       if (rama !== undefined) return rama.conceptId;
     }
-    return this.departamentoManual();
+    return this.departmentManual();
   });
 
   /** Los departamentos, tal como los quiere el mapa. */
-  protected readonly departamentos = computed<readonly DepartamentoElegible[]>(() =>
+  protected readonly departments = computed<readonly DepartamentoElegible[]>(() =>
     this.ramas().map((rama) => ({
       conceptId: rama.conceptId,
       sigla: rama.sigla,
@@ -145,7 +145,7 @@ export class LocationPicker {
    * códigos legados como `SC-SCZ`— el nombre, que el mapa busca dentro del
    * departamento.
    */
-  protected readonly municipioEnMapa = computed<string | null>(() => {
+  protected readonly municipalityInMap = computed<string | null>(() => {
     const elegido = this.value();
     if (elegido === null) return null;
     for (const rama of this.ramas()) {
@@ -163,8 +163,8 @@ export class LocationPicker {
    * Sin departamento la lista es vacía y el select no se dibuja: 340 opciones
    * planas es exactamente lo que este control existe para evitar.
    */
-  protected readonly municipios = computed<readonly SelectOption<string>[]>(() => {
-    const departamento = this.departamentoElegido();
+  protected readonly municipalities = computed<readonly SelectOption<string>[]>(() => {
+    const departamento = this.chosenDepartment();
     if (departamento === null) return [];
     const rama = this.ramas().find((r) => r.conceptId === departamento);
     if (rama === undefined) return [];
@@ -178,9 +178,9 @@ export class LocationPicker {
    * miente: parece que no se eligió nada cuando en realidad hay un municipio de
    * otro departamento a punto de viajar.
    */
-  protected elegirDepartamento(conceptId: string | null): void {
+  protected chooseDepartment(conceptId: string | null): void {
     if (this.readonly()) return;
-    this.departamentoManual.set(conceptId);
+    this.departmentManual.set(conceptId);
     const municipio = this.value();
     if (municipio === null) return;
     const rama = this.ramas().find((r) => r.conceptId === conceptId);
@@ -188,7 +188,7 @@ export class LocationPicker {
     if (!sigue) this.value.set(null);
   }
 
-  protected elegirMunicipio(conceptId: string | null): void {
+  protected chooseMunicipality(conceptId: string | null): void {
     if (this.readonly()) return;
     this.value.set(conceptId);
   }

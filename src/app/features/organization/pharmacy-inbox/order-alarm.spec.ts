@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 
-import { AlarmaDePedidos, SONIDO_STORAGE_KEY } from './order-alarm';
+import { OrdersAlarm, SOUND_STORAGE_KEY } from './order-alarm';
 
 /**
  * La alarma de la bandeja (FAR-I3): el sonido respeta el interruptor y su
@@ -37,9 +37,9 @@ describe('AlarmaDePedidos', () => {
   let almacen: Storage;
   let almacenOriginal: PropertyDescriptor | undefined;
 
-  function crear(): AlarmaDePedidos {
-    TestBed.configureTestingModule({ providers: [AlarmaDePedidos] });
-    return TestBed.inject(AlarmaDePedidos);
+  function crear(): OrdersAlarm {
+    TestBed.configureTestingModule({ providers: [OrdersAlarm] });
+    return TestBed.inject(OrdersAlarm);
   }
 
   function ocultarPestana(oculta: boolean): void {
@@ -68,25 +68,25 @@ describe('AlarmaDePedidos', () => {
 
   it('nace con el sonido encendido: la alarma es la razón de ser de la bandeja', () => {
     const alarma = crear();
-    expect(alarma.sonidoActivo()).toBe(true);
+    expect(alarma.activeSound()).toBe(true);
 
-    alarma.notificar(1);
+    alarma.notify(1);
     expect(reproducir).toHaveBeenCalledTimes(1);
   });
 
   it('el interruptor apaga el díng-dóng y la preferencia sobrevive', () => {
     const alarma = crear();
-    alarma.alternarSonido();
-    expect(alarma.sonidoActivo()).toBe(false);
-    expect(almacen.getItem(SONIDO_STORAGE_KEY)).toBe('off');
+    alarma.toggleSound();
+    expect(alarma.activeSound()).toBe(false);
+    expect(almacen.getItem(SOUND_STORAGE_KEY)).toBe('off');
 
-    alarma.notificar(3);
+    alarma.notify(3);
     expect(reproducir).not.toHaveBeenCalled();
   });
 
   it('con la preferencia guardada en off, arranca apagada', () => {
-    almacen.setItem(SONIDO_STORAGE_KEY, 'off');
-    expect(crear().sonidoActivo()).toBe(false);
+    almacen.setItem(SOUND_STORAGE_KEY, 'off');
+    expect(crear().activeSound()).toBe(false);
   });
 
   it('con la pestaña oculta el título lleva el contador; descartar lo devuelve', () => {
@@ -95,10 +95,10 @@ describe('AlarmaDePedidos', () => {
     titulo.setTitle('AloVida - Pedidos de farmacia');
     ocultarPestana(true);
 
-    alarma.notificar(2);
+    alarma.notify(2);
     expect(titulo.getTitle()).toBe('(2) Pedidos nuevos — AloVida');
 
-    alarma.descartar();
+    alarma.discard();
     expect(titulo.getTitle()).toBe('AloVida - Pedidos de farmacia');
   });
 
@@ -107,7 +107,7 @@ describe('AlarmaDePedidos', () => {
     const titulo = TestBed.inject(Title);
     titulo.setTitle('AloVida - Pedidos de farmacia');
 
-    alarma.notificar(2);
+    alarma.notify(2);
     expect(titulo.getTitle()).toBe('AloVida - Pedidos de farmacia');
   });
 
@@ -116,7 +116,7 @@ describe('AlarmaDePedidos', () => {
     const titulo = TestBed.inject(Title);
     titulo.setTitle('AloVida - Pedidos de farmacia');
     ocultarPestana(true);
-    alarma.notificar(5);
+    alarma.notify(5);
 
     ocultarPestana(false);
     document.dispatchEvent(new Event('visibilitychange'));
@@ -125,7 +125,7 @@ describe('AlarmaDePedidos', () => {
 
   it('cero pedidos nuevos no disparan nada', () => {
     const alarma = crear();
-    alarma.notificar(0);
+    alarma.notify(0);
     expect(reproducir).not.toHaveBeenCalled();
   });
 
@@ -137,12 +137,12 @@ describe('AlarmaDePedidos', () => {
 
     // Por el canal de la demo cada pedido llega en su propio aviso: el
     // contador tiene que ser el acumulado sin ver, no el tamaño del lote.
-    alarma.notificar(1);
-    alarma.notificar(1);
+    alarma.notify(1);
+    alarma.notify(1);
     expect(titulo.getTitle()).toBe('(2) Pedidos nuevos — AloVida');
 
-    alarma.descartar();
-    alarma.notificar(1);
+    alarma.discard();
+    alarma.notify(1);
     expect(titulo.getTitle()).toBe('(1) Pedidos nuevos — AloVida');
   });
 
@@ -153,7 +153,7 @@ describe('AlarmaDePedidos', () => {
       const titulo = TestBed.inject(Title);
       titulo.setTitle('AloVida - Pedidos de farmacia');
       ocultarPestana(true);
-      alarma.notificar(1);
+      alarma.notify(1);
       expect(titulo.getTitle()).toBe('(1) Pedidos nuevos — AloVida');
 
       // La cadencia del parpadeo (PARPADEO_MS de la alarma).
@@ -171,7 +171,7 @@ describe('AlarmaDePedidos', () => {
 
     it('vuelve a sonar sola mientras nadie toma el pedido', () => {
       const alarma = crear();
-      alarma.notificar(1);
+      alarma.notify(1);
       expect(reproducir).toHaveBeenCalledTimes(1);
 
       vi.advanceTimersByTime(20_000);
@@ -182,8 +182,8 @@ describe('AlarmaDePedidos', () => {
 
     it('acusar recibo la calla: es lo único que la detiene', () => {
       const alarma = crear();
-      alarma.notificar(1);
-      alarma.acusarRecibo();
+      alarma.notify(1);
+      alarma.acknowledgeReceipt();
 
       vi.advanceTimersByTime(20_000 * 5);
       expect(reproducir).toHaveBeenCalledTimes(1);
@@ -194,32 +194,32 @@ describe('AlarmaDePedidos', () => {
       // pedido quedara sin tomar y sin avisar — el modo exacto de perderlo.
       const alarma = crear();
       ocultarPestana(true);
-      alarma.notificar(1);
+      alarma.notify(1);
 
       ocultarPestana(false);
       document.dispatchEvent(new Event('visibilitychange'));
 
       vi.advanceTimersByTime(20_000);
       expect(reproducir).toHaveBeenCalledTimes(2);
-      alarma.acusarRecibo();
+      alarma.acknowledgeReceipt();
     });
 
     it('un pedido nuevo reinicia la cuenta: es un motivo nuevo para insistir', () => {
       const alarma = crear();
-      alarma.notificar(1);
+      alarma.notify(1);
       vi.advanceTimersByTime(20_000 * 14);
       expect(reproducir).toHaveBeenCalledTimes(15);
 
       // Llega otro: vuelve a arrancar de cero en vez de rendirse en el 15.
-      alarma.notificar(1);
+      alarma.notify(1);
       vi.advanceTimersByTime(20_000 * 3);
       expect(reproducir).toHaveBeenCalledTimes(19);
-      alarma.acusarRecibo();
+      alarma.acknowledgeReceipt();
     });
 
     it('se rinde tras quince repeticiones: un local vacío no necesita ruido toda la noche', () => {
       const alarma = crear();
-      alarma.notificar(1);
+      alarma.notify(1);
 
       vi.advanceTimersByTime(20_000 * 40);
       // 1 del aviso + 15 repeticiones, y ni una más.
@@ -230,8 +230,8 @@ describe('AlarmaDePedidos', () => {
       // Si no, quien lo apaga sigue escuchando el díng-dóng veinte segundos
       // más y concluye que el interruptor no anda.
       const alarma = crear();
-      alarma.notificar(1);
-      alarma.alternarSonido();
+      alarma.notify(1);
+      alarma.toggleSound();
 
       vi.advanceTimersByTime(20_000 * 3);
       expect(reproducir).toHaveBeenCalledTimes(1);
@@ -239,8 +239,8 @@ describe('AlarmaDePedidos', () => {
 
     it('con el sonido apagado no arranca ninguna insistencia', () => {
       const alarma = crear();
-      alarma.alternarSonido();
-      alarma.notificar(1);
+      alarma.toggleSound();
+      alarma.notify(1);
 
       vi.advanceTimersByTime(20_000 * 3);
       expect(reproducir).not.toHaveBeenCalled();

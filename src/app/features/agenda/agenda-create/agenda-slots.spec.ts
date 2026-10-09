@@ -1,4 +1,4 @@
-import { calcularTurnos } from './agenda-slots';
+import { calculateSlots } from './agenda-slots';
 
 /**
  * La aritmética de la vista previa — MAC-3.
@@ -15,7 +15,7 @@ describe('calcularTurnos', () => {
   }
 
   it('divide una franja exacta sin dejar resto', () => {
-    const r = calcularTurnos([franja('09:00', '13:00', 30)]);
+    const r = calculateSlots([franja('09:00', '13:00', 30)]);
 
     expect(r.total).toBe(8);
     expect(r.porDia[0].resto).toBe(0);
@@ -33,7 +33,7 @@ describe('calcularTurnos', () => {
   it('completa el último turno aunque pase la hora de fin, igual que el backend', () => {
     // 420 minutos / 90 = 4,67: antes salían 4 y se perdía la última hora.
     // Ahora el quinto empieza 15:00 —dentro de la franja— y se completa.
-    const r = calcularTurnos([franja('09:00', '16:00', 90)]);
+    const r = calculateSlots([franja('09:00', '16:00', 90)]);
 
     expect(r.total).toBe(5);
     expect(r.porDia[0].turnos[4]).toEqual({ desde: '15:00', hasta: '16:30', minutos: 90 });
@@ -44,14 +44,14 @@ describe('calcularTurnos', () => {
   it('el turno completado no pisa la franja siguiente del día (el tope)', () => {
     // Mañana 08:00–10:00 de 45' con la tarde desde las 10:00: el tercero
     // (09:30–10:15) pisaría la tarde, así que no sale.
-    const r = calcularTurnos([{ ...franja('08:00', '10:00', 45), tope: '10:00' }]);
+    const r = calculateSlots([{ ...franja('08:00', '10:00', 45), tope: '10:00' }]);
 
     expect(r.total).toBe(2);
     expect(r.porDia[0].turnos.map((t) => t.hasta)).toEqual(['08:45', '09:30']);
   });
 
   it('suma los días y los conserva por separado', () => {
-    const r = calcularTurnos([
+    const r = calculateSlots([
       franja('09:00', '13:00', 30, 'lunes'),
       franja('14:00', '18:00', 60, 'jueves'),
     ]);
@@ -66,24 +66,24 @@ describe('calcularTurnos', () => {
   it('una franja al revés no produce turnos ni revienta', () => {
     // Alcanzable mientras se escribe la hora: el formulario ya la marca
     // inválida, la vista previa sólo tiene que no mentir ni romperse.
-    const r = calcularTurnos([franja('18:00', '09:00', 30)]);
+    const r = calculateSlots([franja('18:00', '09:00', 30)]);
 
     expect(r.total).toBe(0);
     expect(r.porDia[0].turnos).toEqual([]);
   });
 
   it('una hora ilegible no produce turnos', () => {
-    expect(calcularTurnos([franja('', '13:00', 30)]).total).toBe(0);
-    expect(calcularTurnos([franja('99:99', '13:00', 30)]).total).toBe(0);
+    expect(calculateSlots([franja('', '13:00', 30)]).total).toBe(0);
+    expect(calculateSlots([franja('99:99', '13:00', 30)]).total).toBe(0);
   });
 
   it('una duración de cero o negativa no divide por cero', () => {
-    expect(calcularTurnos([franja('09:00', '13:00', 0)]).total).toBe(0);
-    expect(calcularTurnos([franja('09:00', '13:00', -30)]).total).toBe(0);
+    expect(calculateSlots([franja('09:00', '13:00', 0)]).total).toBe(0);
+    expect(calculateSlots([franja('09:00', '13:00', -30)]).total).toBe(0);
   });
 
   it('una franja más corta que la duración da un turno, completo', () => {
-    const r = calcularTurnos([franja('09:00', '09:20', 30)]);
+    const r = calculateSlots([franja('09:00', '09:20', 30)]);
 
     expect(r.total).toBe(1);
     expect(r.porDia[0].turnos[0]).toEqual({ desde: '09:00', hasta: '09:30', minutos: 30 });
@@ -91,11 +91,11 @@ describe('calcularTurnos', () => {
   });
 
   it('sin franjas el total es cero', () => {
-    expect(calcularTurnos([])).toEqual({ porDia: [], total: 0 });
+    expect(calculateSlots([])).toEqual({ porDia: [], total: 0 });
   });
 
   it('acepta la hora con segundos, como la manda el contrato', () => {
-    expect(calcularTurnos([franja('09:00:00', '11:00:00', 60)]).total).toBe(2);
+    expect(calculateSlots([franja('09:00:00', '11:00:00', 60)]).total).toBe(2);
   });
 
   /**
@@ -112,8 +112,8 @@ describe('calcularTurnos', () => {
     }
 
     it('receso 0 ≡ receso ausente ≡ hoy', () => {
-      const hoy = calcularTurnos([franja('09:00', '16:00', 90)]);
-      const cero = calcularTurnos([conReceso('09:00', '16:00', 90, 0)]);
+      const hoy = calculateSlots([franja('09:00', '16:00', 90)]);
+      const cero = calculateSlots([conReceso('09:00', '16:00', 90, 0)]);
 
       expect(cero).toEqual(hoy);
     });
@@ -121,7 +121,7 @@ describe('calcularTurnos', () => {
     it('el paso es duración + receso y los turnos miden su duración real', () => {
       // El caso del prompt: 9:00–12:00, consulta 20, respiro 10 → seis turnos
       // que empiezan cada media hora pero duran veinte minutos.
-      const r = calcularTurnos([conReceso('09:00', '12:00', 20, 10)]);
+      const r = calculateSlots([conReceso('09:00', '12:00', 20, 10)]);
 
       expect(r.total).toBe(6);
       expect(r.porDia[0].turnos[0]).toEqual({ desde: '09:00', hasta: '09:20', minutos: 20 });
@@ -132,12 +132,12 @@ describe('calcularTurnos', () => {
     it('todo turno que empieza dentro de la franja se completa, con respiro o sin él', () => {
       // 9:00–10:00, consulta 30, respiro 15: el segundo empieza 9:45 —dentro—
       // y se completa hasta 10:15. El tercero empezaría 10:30: ya fuera.
-      expect(calcularTurnos([conReceso('09:00', '10:00', 30, 15)]).total).toBe(2);
-      expect(calcularTurnos([conReceso('09:00', '10:15', 30, 15)]).total).toBe(2);
+      expect(calculateSlots([conReceso('09:00', '10:00', 30, 15)]).total).toBe(2);
+      expect(calculateSlots([conReceso('09:00', '10:15', 30, 15)]).total).toBe(2);
     });
 
     it('con receso, una franja corta igual da su turno completo', () => {
-      const r = calcularTurnos([conReceso('09:00', '09:20', 30, 10)]);
+      const r = calculateSlots([conReceso('09:00', '09:20', 30, 10)]);
 
       expect(r.total).toBe(1);
       expect(r.porDia[0].resto).toBe(0);
@@ -146,7 +146,7 @@ describe('calcularTurnos', () => {
     it('el resto se mide desde el fin del último turno, no desde su respiro', () => {
       // 9:00–11:00, consulta 45, respiro 15: entran 9:00–9:45 y 10:00–10:45.
       // Sobra desde las 10:45 —el fin de la consulta—, quince minutos.
-      const r = calcularTurnos([conReceso('09:00', '11:00', 45, 15)]);
+      const r = calculateSlots([conReceso('09:00', '11:00', 45, 15)]);
 
       expect(r.total).toBe(2);
       expect(r.porDia[0].resto).toBe(15);
@@ -156,8 +156,8 @@ describe('calcularTurnos', () => {
     it('un receso negativo se trata como 0, no revienta ni superpone turnos', () => {
       // Alcanzable mientras se tipea. Con receso negativo el paso sería menor
       // que la duración y los turnos se pisarían entre sí.
-      const conNegativo = calcularTurnos([conReceso('09:00', '13:00', 30, -10)]);
-      const sinReceso = calcularTurnos([franja('09:00', '13:00', 30)]);
+      const conNegativo = calculateSlots([conReceso('09:00', '13:00', 30, -10)]);
+      const sinReceso = calculateSlots([franja('09:00', '13:00', 30)]);
 
       expect(conNegativo).toEqual(sinReceso);
     });

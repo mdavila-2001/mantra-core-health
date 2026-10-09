@@ -7,7 +7,7 @@ import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { mensajeDeError } from '../../../../shared/forms/paginated/error-message';
-import { controlDeNombreExtra, type GrupoDeNombre } from '../name-fields/person-name';
+import { nameExtraControl, type NameGroup } from '../name-fields/person-name';
 
 /**
  * Los campos del nombre de una persona, todos en la misma página: primer,
@@ -30,9 +30,9 @@ import { controlDeNombreExtra, type GrupoDeNombre } from '../name-fields/person-
   styleUrl: './inline-name-fields.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CamposDeNombreEnLinea {
+export class InlineNameFields {
   /** El grupo que gobierna estos campos (ver `grupoDeNombre`). */
-  readonly grupo = input.required<GrupoDeNombre>();
+  readonly grupo = input.required<NameGroup>();
 
   /** Prefijo de los `data-testid`: `<prefijo>-nombre`, `-segundo-nombre`, … */
   readonly prefijoTestId = input.required<string>();
@@ -43,22 +43,22 @@ export class CamposDeNombreEnLinea {
   /** Un cambio en el `FormArray` no avisa a `OnPush`: este contador sí. */
   private readonly version = signal(0);
 
-  protected readonly extras = computed(() => {
+  protected readonly extra = computed(() => {
     this.version();
     return this.grupo().controls.extraNames.controls;
   });
 
-  protected agregarNombre(): void {
-    this.grupo().controls.extraNames.push(controlDeNombreExtra());
+  protected addName(): void {
+    this.grupo().controls.extraNames.push(nameExtraControl());
     this.version.update((v) => v + 1);
   }
 
-  protected quitarNombre(indice: number): void {
+  protected removeName(indice: number): void {
     this.grupo().controls.extraNames.removeAt(indice);
     this.version.update((v) => v + 1);
   }
 
-  protected errorDe(clave: 'name' | 'lastName'): string {
+  protected errorOf(clave: 'name' | 'lastName'): string {
     const esNombre = clave === 'name';
     const propio = mensajeDeError(this.grupo().controls[clave], {
       label: esNombre ? 'Primer nombre' : 'Apellido paterno',

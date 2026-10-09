@@ -45,27 +45,27 @@ import { PractitionerAvailability } from '../../directory/practitioner-availabil
 import { SearchOriginPicker } from '../../nearby-places/search-origin-picker/search-origin-picker';
 import { PHARMACY_CART_ROUTE } from '../pharmacy/pharmacy.routes';
 import type { SearchOrigin } from '../../nearby-places/search-origin-picker/search-origin-picker.types';
-import { CotizacionesFuentes, type BusquedaDeCotizaciones } from './quotations.sources';
+import { QuotationSources, type QuotationsSearch } from './quotations.sources';
 import {
-  filtrarResultados,
-  normalizarCotizacion,
-  ordenarResultados,
-  type CotizacionResultado,
-  type OrdenCotizacion,
-  type ReservaDeCotizacion,
-  type VerticalCotizacion,
+  filterResults,
+  normalizeQuotation,
+  sortResults,
+  type ResultQuotation,
+  type QuotationOrder,
+  type QuotationBooking,
+  type VerticalQuotation,
 } from './quotations.logic';
 
 /**
  * La tabla del recurso agendable que apunta a un centro de diagnóstico. La
  * agenda de un laboratorio es un recurso más, como la de un profesional.
  */
-const TABLA_DE_CENTRO_DIAGNOSTICO = 'diagnostic_units';
+const DIAGNOSIS_CENTER_TABLE = 'diagnostic_units';
 
 /** Letras mínimas para buscar: con una sola, cualquier catálogo coincide entero. */
-const LETRAS_MINIMAS = 2;
+const MIN_LETTERS = 2;
 
-const ETIQUETA_DE_VERTICAL: Readonly<Record<Exclude<VerticalCotizacion, 'TODAS'>, string>> = {
+const VERTICAL_LABEL: Readonly<Record<Exclude<VerticalQuotation, 'TODAS'>, string>> = {
   MEDICAMENTOS: 'Medicamentos',
   ANALISIS: 'Análisis',
   IMAGENOLOGIA: 'Imagenología',
@@ -73,9 +73,9 @@ const ETIQUETA_DE_VERTICAL: Readonly<Record<Exclude<VerticalCotizacion, 'TODAS'>
 };
 
 /** Lo que la búsqueda en curso le pide a las fuentes. */
-interface Consulta {
+interface Consultation {
   readonly termino: string;
-  readonly vertical: VerticalCotizacion;
+  readonly vertical: VerticalQuotation;
   readonly origen: SearchOrigin | null;
   readonly intento: number;
 }
@@ -86,7 +86,7 @@ interface Consulta {
  *
  * ## De dónde sale cada fila
  *
- * De {@link CotizacionesFuentes}, que compone lo que ya existe —farmacias,
+ * De {@link QuotationSources}, que compone lo que ya existe —farmacias,
  * catálogo diagnóstico y arancel de referencia— sin un número escrito en el
  * código. Lo que la fuente no publica se dice («Precio no publicado», «No
  * aplica: es un arancel de referencia»), nunca se completa.
@@ -123,23 +123,23 @@ interface Consulta {
   styleUrl: './quotations.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Cotizaciones {
-  private readonly fuentes = inject(CotizacionesFuentes);
+export class Quotations {
+  private readonly sources = inject(QuotationSources);
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfilesClient);
   private readonly cart = inject(CartStore);
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
 
-  protected readonly rutaDelCarrito = PHARMACY_CART_ROUTE;
-  protected readonly tablasDeCentro: readonly string[] = [TABLA_DE_CENTRO_DIAGNOSTICO];
-  protected readonly tenantActivo = this.auth.activeTenantId;
+  protected readonly cartPath = PHARMACY_CART_ROUTE;
+  protected readonly centerTables: readonly string[] = [DIAGNOSIS_CENTER_TABLE];
+  protected readonly activeTenant = this.auth.activeTenantId;
 
   /** El estudio cuya agenda está abierta en el diálogo, o `null`. */
-  protected readonly reservaAbierta = signal<ReservaDeCotizacion | null>(null);
+  protected readonly openBooking = signal<QuotationBooking | null>(null);
 
   /** Los productos del carrito vigente, por sede: la fila dice «En tu carrito». */
-  private readonly enElCarrito = computed<ReadonlySet<string>>(() => {
+  private readonly inCart = computed<ReadonlySet<string>>(() => {
     const carrito = this.cart.cart();
     return new Set(
       carrito === null
@@ -152,7 +152,7 @@ export class Cotizaciones {
    * Con el backend simulado los precios de farmacia y de estudios son de
    * ejemplo: se dice arriba de todo, no sólo fila por fila (R2-02).
    */
-  protected readonly esMaqueta = environment.mockBackend;
+  protected readonly isMockup = environment.mockBackend;
 
   /**
    * `true` cuando esta pantalla vive **dentro** de «Farmacia», como una de
@@ -167,17 +167,17 @@ export class Cotizaciones {
    * fija en `MEDICAMENTOS` — el comparador de las cuatro verticales sigue
    * siendo su propio destino, sin tocar.
    */
-  readonly fixedVertical = input<Exclude<VerticalCotizacion, 'TODAS'> | null>(null);
+  readonly fixedVertical = input<Exclude<VerticalQuotation, 'TODAS'> | null>(null);
 
-  protected readonly termino = signal('');
-  protected readonly vertical = signal<VerticalCotizacion>(this.fixedVertical() ?? 'TODAS');
-  protected readonly orden = signal<OrdenCotizacion>('PRECIO');
-  protected readonly origen = signal<SearchOrigin | null>(null);
-  protected readonly pagina = signal(1);
-  protected readonly tamanoPagina = signal(10);
-  private readonly intento = signal(0);
+  protected readonly term = signal('');
+  protected readonly vertical = signal<VerticalQuotation>(this.fixedVertical() ?? 'TODAS');
+  protected readonly order = signal<QuotationOrder>('PRECIO');
+  protected readonly origin = signal<SearchOrigin | null>(null);
+  protected readonly page = signal(1);
+  protected readonly pageSize = signal(10);
+  private readonly attempt = signal(0);
 
-  protected readonly opcionesDeVertical: readonly SelectOption<VerticalCotizacion>[] = [
+  protected readonly verticalOptions: readonly SelectOption<VerticalQuotation>[] = [
     { value: 'TODAS', label: 'Todas' },
     { value: 'MEDICAMENTOS', label: 'Medicamentos' },
     { value: 'ANALISIS', label: 'Análisis' },
@@ -185,13 +185,13 @@ export class Cotizaciones {
     { value: 'SERVICIOS_MEDICOS', label: 'Servicios médicos' },
   ];
 
-  protected readonly opcionesDeOrden: readonly SelectOption<OrdenCotizacion>[] = [
+  protected readonly orderOptions: readonly SelectOption<QuotationOrder>[] = [
     { value: 'PRECIO', label: 'Precio' },
     { value: 'CERCANIA', label: 'Cercanía' },
   ];
 
   /** Los lugares que el paciente ya declaró; mismo criterio que «Lugares cercanos». */
-  protected readonly lugaresGuardados = toSignal(
+  protected readonly savedPlaces = toSignal(
     toObservable(this.auth.patientProfileId).pipe(
       switchMap((perfil): Observable<SavedPlaces | null> =>
         perfil === null
@@ -205,102 +205,102 @@ export class Cotizaciones {
     { initialValue: null },
   );
 
-  protected readonly terminoValido = computed(
-    () => normalizarCotizacion(this.termino()).length >= LETRAS_MINIMAS,
+  protected readonly validTerm = computed(
+    () => normalizeQuotation(this.term()).length >= MIN_LETTERS,
   );
 
   /** Ordenar por cercanía sin origen no ordena nada: es su propio estado. */
-  protected readonly faltaOrigen = computed(
-    () => this.orden() === 'CERCANIA' && this.origen() === null,
+  protected readonly originMissing = computed(
+    () => this.order() === 'CERCANIA' && this.origin() === null,
   );
 
   /**
    * La lectura. El origen entra en la consulta porque la distancia de las
    * farmacias la calcula la API desde ahí: cambiarlo recalcula (H3.S2.M2).
    */
-  private readonly busqueda = toSignal(
+  private readonly search = toSignal(
     toObservable(
-      computed<Consulta>(() => ({
-        termino: this.termino(),
+      computed<Consultation>(() => ({
+        termino: this.term(),
         vertical: this.vertical(),
-        origen: this.origen(),
-        intento: this.intento(),
+        origen: this.origin(),
+        intento: this.attempt(),
       })),
     ).pipe(
-      switchMap((consulta): Observable<ViewState<BusquedaDeCotizaciones>> => {
-        if (normalizarCotizacion(consulta.termino).length < LETRAS_MINIMAS) {
-          return of(ready<BusquedaDeCotizaciones>({ resultados: [], fuentesCaidas: [] }));
+      switchMap((consulta): Observable<ViewState<QuotationsSearch>> => {
+        if (normalizeQuotation(consulta.termino).length < MIN_LETTERS) {
+          return of(ready<QuotationsSearch>({ resultados: [], fuentesCaidas: [] }));
         }
-        return this.fuentes.buscar(consulta.termino, consulta.vertical, consulta.origen).pipe(
+        return this.sources.search(consulta.termino, consulta.vertical, consulta.origen).pipe(
           map((resultado) => ready(resultado)),
-          catchError((error: unknown) => of(errorToViewState<BusquedaDeCotizaciones>(error))),
+          catchError((error: unknown) => of(errorToViewState<QuotationsSearch>(error))),
           startWith(loading()),
         );
       }),
     ),
-    { initialValue: loading() as ViewState<BusquedaDeCotizaciones> },
+    { initialValue: loading() as ViewState<QuotationsSearch> },
   );
 
   /** Hay una lectura en vuelo: se anuncia con `role="status"` además del esqueleto. */
-  protected readonly buscando = computed(() => this.busqueda().status === 'loading');
+  protected readonly searching = computed(() => this.search().status === 'loading');
 
   /** Las filas, filtradas por vertical (la fuente ya filtró por término) y ordenadas. */
-  protected readonly resultados = computed<readonly CotizacionResultado[]>(() => {
-    const actual = this.busqueda();
+  protected readonly results = computed<readonly ResultQuotation[]>(() => {
+    const actual = this.search();
     if (actual.status !== 'ready') {
       return [];
     }
-    return ordenarResultados(
-      filtrarResultados(actual.data.resultados, '', this.vertical()),
-      this.orden(),
-      this.origen() !== null,
+    return sortResults(
+      filterResults(actual.data.resultados, '', this.vertical()),
+      this.order(),
+      this.origin() !== null,
     );
   });
 
   /** Hay filas para mostrar: en angosto se pintan como tarjetas. */
-  protected readonly hayFilas = computed(
-    () => this.busqueda().status === 'ready' && this.resultados().length > 0,
+  protected readonly hasRows = computed(
+    () => this.search().status === 'ready' && this.results().length > 0,
   );
 
   /** La búsqueda volvió bien y no encontró nada: S2, con su propio vacío. */
-  protected readonly sinResultados = computed(
-    () => this.busqueda().status === 'ready' && this.resultados().length === 0,
+  protected readonly withoutResults = computed(
+    () => this.search().status === 'ready' && this.results().length === 0,
   );
 
-  protected readonly fuentesCaidas = computed<string>(() => {
-    const actual = this.busqueda();
+  protected readonly downSources = computed<string>(() => {
+    const actual = this.search();
     return actual.status === 'ready'
-      ? actual.data.fuentesCaidas.map((una) => ETIQUETA_DE_VERTICAL[una]).join(', ')
+      ? actual.data.fuentesCaidas.map((una) => VERTICAL_LABEL[una]).join(', ')
       : '';
   });
 
-  protected readonly resultadosPaginados = computed(() => {
-    const inicio = (this.pagina() - 1) * this.tamanoPagina();
-    return this.resultados().slice(inicio, inicio + this.tamanoPagina());
+  protected readonly paginatedResults = computed(() => {
+    const inicio = (this.page() - 1) * this.pageSize();
+    return this.results().slice(inicio, inicio + this.pageSize());
   });
 
   /** El estado que pinta la tabla: el de la lectura, con «vacío» propio. */
-  protected readonly estadoTabla = computed<ViewState<readonly CotizacionResultado[]>>(() => {
-    const actual = this.busqueda();
+  protected readonly tableStatus = computed<ViewState<readonly ResultQuotation[]>>(() => {
+    const actual = this.search();
     if (actual.status !== 'ready') {
-      return actual as ViewState<readonly CotizacionResultado[]>;
+      return actual as ViewState<readonly ResultQuotation[]>;
     }
     // Sin resultados no es «colección vacía» (S1) sino «la búsqueda no
     // encontró» (S2, ADR-0005): lo pinta la pantalla con su propio vacío, no
     // el genérico del host («Todavía no hay nada acá»).
-    return this.resultados().length === 0
+    return this.results().length === 0
       ? empty({ label: 'Pruebe con otra palabra' }, 'No encontramos cotizaciones.')
-      : ready(this.resultadosPaginados());
+      : ready(this.paginatedResults());
   });
 
   private readonly celdaQue =
-    viewChild.required<TemplateRef<{ $implicit: CotizacionResultado }>>('celdaQue');
+    viewChild.required<TemplateRef<{ $implicit: ResultQuotation }>>('celdaQue');
   private readonly celdaPrecio =
-    viewChild.required<TemplateRef<{ $implicit: CotizacionResultado }>>('celdaPrecio');
+    viewChild.required<TemplateRef<{ $implicit: ResultQuotation }>>('celdaPrecio');
   private readonly celdaDistancia =
-    viewChild.required<TemplateRef<{ $implicit: CotizacionResultado }>>('celdaDistancia');
+    viewChild.required<TemplateRef<{ $implicit: ResultQuotation }>>('celdaDistancia');
   private readonly celdaAccion =
-    viewChild.required<TemplateRef<{ $implicit: CotizacionResultado }>>('celdaAccion');
+    viewChild.required<TemplateRef<{ $implicit: ResultQuotation }>>('celdaAccion');
 
   /**
    * Qué (y dónde), precio, distancia y acción (H3.S2.M3).
@@ -310,7 +310,7 @@ export class Cotizaciones {
    * «▼» sin rótulo. El dónde va dentro de la celda del qué para que en 390 px
    * entren las cuatro columnas.
    */
-  protected readonly columnas = computed<readonly ColumnDef<CotizacionResultado>[]>(() => [
+  protected readonly columns = computed<readonly ColumnDef<ResultQuotation>[]>(() => [
     { key: 'que', header: 'Qué y dónde', priority: 1, cell: this.celdaQue() },
     { key: 'price', header: 'Precio', priority: 1, align: 'end', cell: this.celdaPrecio() },
     {
@@ -323,15 +323,15 @@ export class Cotizaciones {
     { key: 'accion', header: 'Acción', priority: 1, cell: this.celdaAccion() },
   ]);
 
-  protected readonly porId = (fila: CotizacionResultado): string => fila.id;
-  protected readonly nombreAccesible = (fila: CotizacionResultado): string =>
+  protected readonly byId = (fila: ResultQuotation): string => fila.id;
+  protected readonly accessibleName = (fila: ResultQuotation): string =>
     `${fila.que}, ${fila.donde}`;
 
-  protected etiquetaDeVertical(fila: CotizacionResultado): string {
-    return ETIQUETA_DE_VERTICAL[fila.vertical];
+  protected verticalLabel(fila: ResultQuotation): string {
+    return VERTICAL_LABEL[fila.vertical];
   }
 
-  protected precioDe(fila: CotizacionResultado): string {
+  protected priceOf(fila: ResultQuotation): string {
     if (fila.price === null) {
       return 'Precio no publicado';
     }
@@ -346,16 +346,16 @@ export class Cotizaciones {
     return `${importe}\u00A0${fila.price.currency}`;
   }
 
-  protected procedenciaDe(fila: CotizacionResultado): string {
+  protected provenanceOf(fila: ResultQuotation): string {
     return fila.price === null
       ? (fila.sinPrecio ?? 'Precio no publicado por la fuente')
       : fila.price.source;
   }
 
-  protected distanciaDe(fila: CotizacionResultado): string {
+  protected distanceOf(fila: ResultQuotation): string {
     // Sin origen la API de farmacias no calcula distancia: la falta es del
     // origen, no de la sede, y decirlo así es lo que deja saber qué hacer.
-    if (fila.distanceKm === null && fila.vertical === 'MEDICAMENTOS' && this.origen() === null) {
+    if (fila.distanceKm === null && fila.vertical === 'MEDICAMENTOS' && this.origin() === null) {
       return 'Elija desde dónde medir';
     }
     return fila.distanceKm === null
@@ -363,11 +363,11 @@ export class Cotizaciones {
       : `${fila.distanceKm.toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
   }
 
-  protected estaEnElCarrito(fila: CotizacionResultado): boolean {
+  protected isInCart(fila: ResultQuotation): boolean {
     const carrito = fila.carrito;
     return (
       carrito !== undefined &&
-      this.enElCarrito().has(`${carrito.sede.siteId}:${carrito.linea.productId}`)
+      this.inCart().has(`${carrito.sede.siteId}:${carrito.linea.productId}`)
     );
   }
 
@@ -377,7 +377,7 @@ export class Cotizaciones {
    * Un carrito es de una sola sede: si ya hay uno de otra, el store devuelve
    * `conflict` **sin cambiar nada** y decide la persona.
    */
-  protected async agregarAlCarrito(fila: CotizacionResultado): Promise<void> {
+  protected async addToCart(fila: ResultQuotation): Promise<void> {
     const carrito = fila.carrito;
     if (carrito === undefined) {
       return;
@@ -406,40 +406,40 @@ export class Cotizaciones {
   }
 
   /** Abre la agenda del centro para elegir el horario del estudio. */
-  protected abrirReserva(fila: CotizacionResultado): void {
+  protected abrirReserva(fila: ResultQuotation): void {
     if (fila.reserva !== undefined) {
-      this.reservaAbierta.set(fila.reserva);
+      this.openBooking.set(fila.reserva);
     }
   }
 
-  protected cerrarReserva(): void {
-    this.reservaAbierta.set(null);
+  protected closeBooking(): void {
+    this.openBooking.set(null);
   }
 
   protected buscar(termino: string): void {
-    this.termino.set(termino);
-    this.pagina.set(1);
+    this.term.set(termino);
+    this.page.set(1);
   }
 
-  protected cambiarVertical(vertical: VerticalCotizacion | null): void {
+  protected changeVertical(vertical: VerticalQuotation | null): void {
     this.vertical.set(vertical ?? 'TODAS');
-    this.pagina.set(1);
+    this.page.set(1);
   }
 
-  protected cambiarOrden(orden: OrdenCotizacion | null): void {
-    this.orden.set(orden ?? 'PRECIO');
-    this.pagina.set(1);
+  protected changeOrder(orden: QuotationOrder | null): void {
+    this.order.set(orden ?? 'PRECIO');
+    this.page.set(1);
   }
 
-  protected ordenarPorPrecio(): void {
-    this.cambiarOrden('PRECIO');
+  protected sortByPrice(): void {
+    this.changeOrder('PRECIO');
   }
 
-  protected limpiarBusqueda(): void {
+  protected clearSearch(): void {
     this.buscar('');
   }
 
-  protected reintentar(): void {
-    this.intento.update((n) => n + 1);
+  protected retry(): void {
+    this.attempt.update((n) => n + 1);
   }
 }

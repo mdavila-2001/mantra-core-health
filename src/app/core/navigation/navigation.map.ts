@@ -1,4 +1,4 @@
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../identity-assurance/offered-verification';
+import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
 import type { AppSection } from './navigation.types';
 
@@ -1484,7 +1484,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Fuera del menú mientras el producto no ofrezca la verificación: ver
     // `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. La sección sigue entera —la ruta,
     // la pantalla y la salida del 403—, lo único que pierde es el renglón.
-    ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
+    ...(OFFERED_IDENTITY_VERIFICATION ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
     availability: 'disponible',
     summary: 'Valide su identidad o su matrícula, y siga el estado de sus trámites.',
     module: 'M27 identity_assurance',

@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
 import { etiquetasDeRoles } from '../../core/auth/role-labels';
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../core/identity-assurance/offered-verification';
+import { OFFERED_IDENTITY_VERIFICATION } from '../../core/identity-assurance/offered-verification';
 import { rolesAlcanzan } from '../../core/navigation/navigation.types';
 import {
   BrowserPermissionsService,
@@ -116,7 +116,7 @@ export class Settings {
   );
 
   /** La verificación de identidad sólo se ofrece si el producto la ofrece. */
-  protected readonly verificationOffered = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+  protected readonly verificationOffered = OFFERED_IDENTITY_VERIFICATION;
 
   protected useSystemTheme(): void {
     this.theme.useSystemTheme();

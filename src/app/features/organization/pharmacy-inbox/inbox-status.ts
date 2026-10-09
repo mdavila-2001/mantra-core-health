@@ -17,14 +17,14 @@ import type {
  * todavía»). Mismo criterio: el código del contrato es la identidad y jamás
  * llega a la pantalla.
  */
-export interface BandejaStatusPresentation {
+export interface InboxStatusPresentation {
   readonly tone: BadgeVariant;
   readonly label: string;
   /** Qué significa este estado para el mostrador, y qué toca hacer. */
   readonly descripcion: string;
 }
 
-const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, BandejaStatusPresentation>> =
+const PRESENTATION_BY_STATUS: Readonly<Record<EstadoDePedido, InboxStatusPresentation>> =
   Object.freeze({
     ENVIADO: {
       tone: 'info',
@@ -90,7 +90,7 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, BandejaStatusPres
  * Se aparta **sólo lo que cambia**: el resto del mapa vale igual para las dos
  * entregas, y el texto de retiro no se toca ni una coma.
  */
-const DESCRIPCION_SI_SALE_POR_REPARTO: Readonly<Partial<Record<EstadoDePedido, string>>> =
+const DESCRIPTION_IF_SALE_BY_DISTRIBUTION: Readonly<Partial<Record<EstadoDePedido, string>>> =
   Object.freeze({
     // Los dos estados que `puedePrepararse` habilita, y en los que el detalle
     // ofrece «Marcar listo para retirar» sólo si el pedido se retira.
@@ -110,15 +110,15 @@ const DESCRIPCION_SI_SALE_POR_REPARTO: Readonly<Partial<Record<EstadoDePedido, s
  * de siempre. El detalle, que sí muestra la frase y las acciones, la pasa
  * para que las dos digan lo mismo.
  */
-export function toBandejaStatusPresentation(
+export function toInboxStatusPresentation(
   estado: EstadoDePedido,
   modalidad: ModalidadDeEntrega | null = null,
-): BandejaStatusPresentation {
-  const presentacion = PRESENTACION_POR_ESTADO[estado];
+): InboxStatusPresentation {
+  const presentacion = PRESENTATION_BY_STATUS[estado];
   if (modalidad === null || modalidad === 'RETIRO') {
     return presentacion;
   }
-  const descripcion = DESCRIPCION_SI_SALE_POR_REPARTO[estado];
+  const descripcion = DESCRIPTION_IF_SALE_BY_DISTRIBUTION[estado];
   return descripcion === undefined ? presentacion : { ...presentacion, descripcion };
 }
 
@@ -127,7 +127,7 @@ export function toBandejaStatusPresentation(
  * cada uno, de lo que corre contra el reloj (los nuevos arriba y destacados) a
  * lo que ya terminó.
  */
-export const GRUPOS_DE_BANDEJA = [
+export const INBOX_GROUPS = [
   'NUEVOS',
   'EN_REVISION',
   'ESPERANDO_PACIENTE',
@@ -136,9 +136,9 @@ export const GRUPOS_DE_BANDEJA = [
   'CERRADOS',
 ] as const;
 
-export type GrupoDeBandeja = (typeof GRUPOS_DE_BANDEJA)[number];
+export type InboxGroup = (typeof INBOX_GROUPS)[number];
 
-const ETIQUETA_DE_GRUPO: Readonly<Record<GrupoDeBandeja, string>> = Object.freeze({
+const GROUP_LABEL: Readonly<Record<InboxGroup, string>> = Object.freeze({
   NUEVOS: 'Nuevos',
   EN_REVISION: 'En revisión',
   ESPERANDO_PACIENTE: 'Esperando al paciente',
@@ -147,11 +147,11 @@ const ETIQUETA_DE_GRUPO: Readonly<Record<GrupoDeBandeja, string>> = Object.freez
   CERRADOS: 'Cerrados',
 });
 
-export function etiquetaDeGrupo(grupo: GrupoDeBandeja): string {
-  return ETIQUETA_DE_GRUPO[grupo];
+export function groupLabel(grupo: InboxGroup): string {
+  return GROUP_LABEL[grupo];
 }
 
-const GRUPO_POR_ESTADO: Readonly<Record<EstadoDePedido, GrupoDeBandeja>> = Object.freeze({
+const GROUP_BY_STATUS: Readonly<Record<EstadoDePedido, InboxGroup>> = Object.freeze({
   ENVIADO: 'NUEVOS',
   EN_REVISION: 'EN_REVISION',
   ACEPTACION_PENDIENTE: 'ESPERANDO_PACIENTE',
@@ -165,6 +165,6 @@ const GRUPO_POR_ESTADO: Readonly<Record<EstadoDePedido, GrupoDeBandeja>> = Objec
 });
 
 /** En qué grupo de la bandeja cae un pedido según su estado. */
-export function grupoDeBandeja(estado: EstadoDePedido): GrupoDeBandeja {
-  return GRUPO_POR_ESTADO[estado];
+export function inboxGroup(estado: EstadoDePedido): InboxGroup {
+  return GROUP_BY_STATUS[estado];
 }

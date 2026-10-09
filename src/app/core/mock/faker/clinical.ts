@@ -1,6 +1,6 @@
 import type { fakerES } from '@faker-js/faker';
 
-import { DIAGNOSTICO, MEDICAMENTO, OBSERVACION, SEVERIDAD, UNIDAD, VIA } from '../fixtures/concepts';
+import { DIAGNOSIS, MEDICAMENTO, OBSERVATION, SEVERITY, UNIDAD, VIA } from '../fixtures/concepts';
 
 /* ============================================================================
     Datos clínicos plausibles.
@@ -21,31 +21,31 @@ import { DIAGNOSTICO, MEDICAMENTO, OBSERVACION, SEVERIDAD, UNIDAD, VIA } from '.
 type Faker = typeof fakerES;
 
 /** Los códigos del catálogo, en el orden en que se declararon. */
-export const CODIGOS_DX = Object.keys(DIAGNOSTICO);
-export const CODIGOS_MED = Object.keys(MEDICAMENTO);
+export const DX_CODES = Object.keys(DIAGNOSIS);
+export const MED_CODES = Object.keys(MEDICAMENTO);
 
-export function diagnosticoId(f: Faker): string {
-  return DIAGNOSTICO[f.helpers.arrayElement(CODIGOS_DX)]!;
+export function diagnosisId(f: Faker): string {
+  return DIAGNOSIS[f.helpers.arrayElement(DX_CODES)]!;
 }
 
-export function medicamentoId(f: Faker): string {
-  return MEDICAMENTO[f.helpers.arrayElement(CODIGOS_MED)]!;
+export function medicationId(f: Faker): string {
+  return MEDICAMENTO[f.helpers.arrayElement(MED_CODES)]!;
 }
 
 export function viaId(f: Faker): string {
   return VIA[f.helpers.arrayElement(Object.keys(VIA))]!;
 }
 
-export function unidadId(f: Faker): string {
+export function unitId(f: Faker): string {
   return UNIDAD[f.helpers.arrayElement(Object.keys(UNIDAD))]!;
 }
 
-export function severidadId(f: Faker): string {
-  return SEVERIDAD[f.helpers.arrayElement(Object.keys(SEVERIDAD))]!;
+export function severityId(f: Faker): string {
+  return SEVERITY[f.helpers.arrayElement(Object.keys(SEVERITY))]!;
 }
 
 /** Edad en años a partir de una fecha de nacimiento `YYYY-MM-DD`. */
-export function edadDe(fechaNacimiento: string): number {
+export function ageOf(fechaNacimiento: string): number {
   const nacimiento = new Date(fechaNacimiento);
   const ahora = new Date();
   let edad = ahora.getFullYear() - nacimiento.getFullYear();
@@ -54,7 +54,7 @@ export function edadDe(fechaNacimiento: string): number {
   return Math.max(0, edad);
 }
 
-export interface SignoVital {
+export interface SignVital {
   readonly observationConceptId: string;
   readonly value: string;
   readonly unitConceptId: string;
@@ -67,7 +67,7 @@ export interface SignoVital {
  * del tramo de edad es lo que separa una demostración de una tabla de relleno:
  * las pantallas de expediente pintan curvas y percentiles con esto.
  */
-export function signosVitales(f: Faker, edad: number): readonly SignoVital[] {
+export function vitalSigns(f: Faker, edad: number): readonly SignVital[] {
   const bebe = edad < 2;
   const nino = edad < 12;
   const mayor = edad >= 65;
@@ -98,19 +98,19 @@ export function signosVitales(f: Faker, edad: number): readonly SignoVital[] {
   const imc = peso / (talla / 100) ** 2;
 
   return [
-    { observationConceptId: OBSERVACION['OBS-BP-SYS']!, value: String(sistolica), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVACION['OBS-BP-DIA']!, value: String(diastolica), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVACION['OBS-HR']!, value: String(pulso), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-BP-SYS']!, value: String(sistolica), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-BP-DIA']!, value: String(diastolica), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-HR']!, value: String(pulso), unitConceptId: UNIDAD['UNIT-MG']! },
     {
-      observationConceptId: OBSERVACION['OBS-TEMP']!,
+      observationConceptId: OBSERVATION['OBS-TEMP']!,
       value: f.number.float({ min: 36, max: 37.8, fractionDigits: 1 }).toFixed(1),
       unitConceptId: UNIDAD['UNIT-MG']!,
     },
-    { observationConceptId: OBSERVACION['OBS-WEIGHT']!, value: peso.toFixed(1), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVACION['OBS-HEIGHT']!, value: String(talla), unitConceptId: UNIDAD['UNIT-MG']! },
-    { observationConceptId: OBSERVACION['OBS-BMI']!, value: imc.toFixed(1), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-WEIGHT']!, value: peso.toFixed(1), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-HEIGHT']!, value: String(talla), unitConceptId: UNIDAD['UNIT-MG']! },
+    { observationConceptId: OBSERVATION['OBS-BMI']!, value: imc.toFixed(1), unitConceptId: UNIDAD['UNIT-MG']! },
     {
-      observationConceptId: OBSERVACION['OBS-SPO2']!,
+      observationConceptId: OBSERVATION['OBS-SPO2']!,
       value: String(f.number.int({ min: 93, max: 99 })),
       unitConceptId: UNIDAD['UNIT-MG']!,
     },
@@ -118,14 +118,14 @@ export function signosVitales(f: Faker, edad: number): readonly SignoVital[] {
 }
 
 /** Posología escrita como la escribe quien receta. */
-export function posologia(f: Faker): string {
+export function dosage(f: Faker): string {
   const cada = f.helpers.arrayElement([6, 8, 12, 24]);
   const dias = f.helpers.arrayElement([3, 5, 7, 10, 14, 30]);
   const cantidad = f.helpers.arrayElement(['1 comprimido', '2 comprimidos', '5 ml', '10 ml', '1 aplicación']);
   return `${cantidad} cada ${cada} horas por ${dias} días`;
 }
 
-const MOTIVOS = [
+const REASONS = [
   'Control de rutina',
   'Dolor abdominal de tres días',
   'Cefalea persistente',
@@ -142,11 +142,11 @@ const MOTIVOS = [
   'Dificultad para dormir',
 ] as const;
 
-export function motivoDeConsulta(f: Faker): string {
-  return f.helpers.arrayElement(MOTIVOS);
+export function consultationReason(f: Faker): string {
+  return f.helpers.arrayElement(REASONS);
 }
 
-const TEXTOS_DE_NOTA = [
+const NOTE_TEXTS = [
   'Paciente refiere mejoría desde la última consulta. Se mantiene el tratamiento.',
   'Persisten los síntomas. Se ajusta la dosis y se solicita control en dos semanas.',
   'Buena adherencia al tratamiento. Signos vitales dentro de parámetros.',
@@ -156,11 +156,11 @@ const TEXTOS_DE_NOTA = [
   'Cuadro en resolución. Se indica reposo relativo y control si empeora.',
 ] as const;
 
-export function textoDeNotaMedica(f: Faker): string {
-  return f.helpers.arrayElement(TEXTOS_DE_NOTA);
+export function medicalNoteText(f: Faker): string {
+  return f.helpers.arrayElement(NOTE_TEXTS);
 }
 
-const FORMACION = [
+const TRAINING = [
   'la Universidad Mayor de San Andrés',
   'la Universidad Autónoma Gabriel René Moreno',
   'la Universidad Mayor de San Simón',
@@ -168,7 +168,7 @@ const FORMACION = [
   'el Hospital de Clínicas de La Paz',
 ] as const;
 
-const AMPLIACION = [
+const EXTENSION = [
   'con formación complementaria en el Instituto Nacional de Cardiología de México',
   'con estancia en el Hospital Italiano de Buenos Aires',
   'con posgrado en la Universidad de Chile',
@@ -176,7 +176,7 @@ const AMPLIACION = [
   'y actualización permanente en congresos de la especialidad',
 ] as const;
 
-const INTERESES = [
+const INTERESTS = [
   'la prevención y la educación del paciente',
   'el seguimiento de enfermedades crónicas',
   'la atención de pacientes adultos mayores',
@@ -192,9 +192,9 @@ const INTERESES = [
  * en una ficha pública se ve como lo que es. Se compone de piezas escritas en
  * castellano —años, formación, interés clínico— porque estas fichas se leen.
  */
-export function biografia(f: Faker, titulo: string, anios: number): string {
+export function biography(f: Faker, titulo: string, anios: number): string {
   return (
-    `${titulo} con ${anios} años de experiencia. Formación en ${f.helpers.arrayElement(FORMACION)}, ` +
-    `${f.helpers.arrayElement(AMPLIACION)}. Especial interés en ${f.helpers.arrayElement(INTERESES)}.`
+    `${titulo} con ${anios} años de experiencia. Formación en ${f.helpers.arrayElement(TRAINING)}, ` +
+    `${f.helpers.arrayElement(EXTENSION)}. Especial interés en ${f.helpers.arrayElement(INTERESTS)}.`
   );
 }

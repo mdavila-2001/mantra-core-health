@@ -27,7 +27,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import { misRecursosDeAgenda } from '../my-resource';
+import { agendaResourcesMy } from '../my-resource';
 import {
   BlockForm,
   type BloqueoEnEdicion,
@@ -250,7 +250,7 @@ export class Blocks {
     }
 
     this.estado.set(loading());
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+    agendaResourcesMy(this.scheduling, tenantId, perfil).subscribe({
       next: (recursos) => {
         const recurso = recursos[0];
         if (recurso === undefined) {

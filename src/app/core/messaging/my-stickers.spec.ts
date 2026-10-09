@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { MisStickers, TOPE_DE_STICKER_BYTES } from './my-stickers';
+import { MyStickers, STICKER_BYTES_LIMIT } from './my-stickers';
 import { reaccionesConMia } from './chat.store';
 
 const archivo = (tipo: string, bytes = 10, nombre = 'a.png'): File =>
@@ -14,39 +14,39 @@ describe('MisStickers', () => {
 
   it('acepta PNG, WEBP, GIF y JPG livianos', () => {
     for (const tipo of ['image/png', 'image/webp', 'image/gif', 'image/jpeg']) {
-      expect(MisStickers.rechazo(archivo(tipo))).toBeNull();
+      expect(MyStickers.rejection(archivo(tipo))).toBeNull();
     }
   });
 
   it('rechaza lo que no es imagen y lo que pesa más de 1 MB', () => {
-    expect(MisStickers.rechazo(archivo('application/pdf'))).toContain('PNG');
-    expect(MisStickers.rechazo(archivo('image/gif', TOPE_DE_STICKER_BYTES + 1))).toContain('1 MB');
+    expect(MyStickers.rejection(archivo('application/pdf'))).toContain('PNG');
+    expect(MyStickers.rejection(archivo('image/gif', STICKER_BYTES_LIMIT + 1))).toContain('1 MB');
   });
 
   it('guarda el sticker, lo deja en la lista y lo puede volver a armar como archivo', async () => {
-    const servicio = TestBed.inject(MisStickers);
-    const guardado = await servicio.guardar(archivo('image/gif', 20, 'hola.gif'));
+    const servicio = TestBed.inject(MyStickers);
+    const guardado = await servicio.save(archivo('image/gif', 20, 'hola.gif'));
 
     expect(guardado).toBe(true);
-    expect(servicio.lista().length).toBe(1);
-    const otra = MisStickers.archivoDe(servicio.lista()[0]);
+    expect(servicio.list().length).toBe(1);
+    const otra = MyStickers.fileOf(servicio.list()[0]);
     expect(otra?.type).toBe('image/gif');
     expect(otra?.size).toBe(20);
   });
 
   it('el mismo archivo dos veces no ocupa dos lugares', async () => {
-    const servicio = TestBed.inject(MisStickers);
-    await servicio.guardar(archivo('image/png', 20));
-    await servicio.guardar(archivo('image/png', 20));
+    const servicio = TestBed.inject(MyStickers);
+    await servicio.save(archivo('image/png', 20));
+    await servicio.save(archivo('image/png', 20));
 
-    expect(servicio.lista().length).toBe(1);
+    expect(servicio.list().length).toBe(1);
   });
 
   it('uno demasiado pesado para guardar igual se puede mandar, pero no queda en «Míos»', async () => {
-    const servicio = TestBed.inject(MisStickers);
+    const servicio = TestBed.inject(MyStickers);
 
-    expect(await servicio.guardar(archivo('image/gif', 500 * 1024))).toBe(false);
-    expect(servicio.lista().length).toBe(0);
+    expect(await servicio.save(archivo('image/gif', 500 * 1024))).toBe(false);
+    expect(servicio.list().length).toBe(0);
   });
 
   it('sobrevive a recargar y descarta basura del almacenamiento', () => {
@@ -57,7 +57,7 @@ describe('MisStickers', () => {
         { id: 'b', nombre: 'b', tipo: 'image/png', url: 'javascript:alert(1)' },
       ]),
     );
-    expect(TestBed.inject(MisStickers).lista().map((s) => s.id)).toEqual(['a']);
+    expect(TestBed.inject(MyStickers).list().map((s) => s.id)).toEqual(['a']);
   });
 });
 

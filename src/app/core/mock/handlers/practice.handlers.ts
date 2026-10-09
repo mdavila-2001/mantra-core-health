@@ -1,8 +1,8 @@
 import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULTORIO, SITIO_OLIVOS, SITIO_SANLUCAS } from '../fixtures/agenda';
-import { CARGO, ESPECIALIDAD, ESTABLECIMIENTO, ESTADO, PROCEDIMIENTO, displayDe } from '../fixtures/concepts';
+import { CARGO, SPECIALTY, FACILITY, STATUS, PROCEDIMIENTO, displayOf } from '../fixtures/concepts';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
-import { MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/people';
+import { MEDICAL, PROFESSIONALS, professionalById } from '../fixtures/people';
 import { noContent, notFound, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
@@ -15,9 +15,9 @@ const TIPO_PRACTICA = { CLINIC: uuid('concept-practice-type-clinic'), HOSPITAL: 
 
 /** La práctica sirve a tres clientes con formas distintas: se devuelven todos los campos que alguno espera. */
 export const PRACTICAS = [
-  { id: PRACTICE_OLIVOS, code: 'OLIVOS', name: 'Clínica Los Olivos', status: 'ACTIVE', typeConceptId: TIPO_PRACTICA.CLINIC, statusConceptId: ESTADO['ST-ACTIVE']!, currencyConceptId: uuid('concept-currency-bob'), timeZone: 'America/La_Paz' },
-  { id: PRACTICE_SANLUCAS, code: 'SANLUCAS', name: 'Hospital San Lucas', status: 'ACTIVE', typeConceptId: TIPO_PRACTICA.HOSPITAL, statusConceptId: ESTADO['ST-ACTIVE']!, currencyConceptId: uuid('concept-currency-bob'), timeZone: 'America/La_Paz' },
-  { id: PRACTICE_CONSULTORIO, code: 'ROJAS', name: 'Consultorio Dra. Rojas', status: 'ACTIVE', typeConceptId: TIPO_PRACTICA.OFFICE, statusConceptId: ESTADO['ST-ACTIVE']!, currencyConceptId: uuid('concept-currency-bob'), timeZone: 'America/La_Paz' },
+  { id: PRACTICE_OLIVOS, code: 'OLIVOS', name: 'Clínica Los Olivos', status: 'ACTIVE', typeConceptId: TIPO_PRACTICA.CLINIC, statusConceptId: STATUS['ST-ACTIVE']!, currencyConceptId: uuid('concept-currency-bob'), timeZone: 'America/La_Paz' },
+  { id: PRACTICE_SANLUCAS, code: 'SANLUCAS', name: 'Hospital San Lucas', status: 'ACTIVE', typeConceptId: TIPO_PRACTICA.HOSPITAL, statusConceptId: STATUS['ST-ACTIVE']!, currencyConceptId: uuid('concept-currency-bob'), timeZone: 'America/La_Paz' },
+  { id: PRACTICE_CONSULTORIO, code: 'ROJAS', name: 'Consultorio Dra. Rojas', status: 'ACTIVE', typeConceptId: TIPO_PRACTICA.OFFICE, statusConceptId: STATUS['ST-ACTIVE']!, currencyConceptId: uuid('concept-currency-bob'), timeZone: 'America/La_Paz' },
 ];
 
 interface ServicioSimulado {
@@ -213,22 +213,22 @@ function conceptoDeVinculacion(estado: string): string {
 }
 
 const vinculaciones = new Coleccion<VinculacionSimulada>([
-  { id: uuid('ra-olivos'), practiceId: PRACTICE_OLIVOS, practiceName: 'Clínica Los Olivos', practiceType: 'Clínica', practiceSiteId: SITIO_OLIVOS.id, roleConceptId: CARGO['ROLE-JEFE']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'ACTIVE', isPrimary: true, validFrom: isoDia(-900), validTo: null, createdAt: iso(-900), avatarUrl: avatarSvg('Clínica Los Olivos', '#0f766e'), practitionerProfileId: MEDICA.id },
-  { id: uuid('ra-sanlucas'), practiceId: PRACTICE_SANLUCAS, practiceName: 'Hospital San Lucas', practiceType: 'Hospital', practiceSiteId: SITIO_SANLUCAS.id, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'PENDING', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-4), avatarUrl: avatarSvg('Hospital San Lucas', '#7c3aed'), practitionerProfileId: MEDICA.id },
-  { id: uuid('ra-japones'), practiceId: uuid('practice-japones'), practiceName: 'Hospital Japonés', practiceType: 'Hospital', practiceSiteId: null, roleConceptId: CARGO['ROLE-RESIDENTE']!, specialtyConceptId: null, status: 'ENDED', isPrimary: false, validFrom: isoDia(-3000), validTo: isoDia(-1500), createdAt: iso(-3000), avatarUrl: null, practitionerProfileId: MEDICA.id },
-  { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICA.id },
+  { id: uuid('ra-olivos'), practiceId: PRACTICE_OLIVOS, practiceName: 'Clínica Los Olivos', practiceType: 'Clínica', practiceSiteId: SITIO_OLIVOS.id, roleConceptId: CARGO['ROLE-JEFE']!, specialtyConceptId: SPECIALTY['CARDIOLOGIA']!, status: 'ACTIVE', isPrimary: true, validFrom: isoDia(-900), validTo: null, createdAt: iso(-900), avatarUrl: avatarSvg('Clínica Los Olivos', '#0f766e'), practitionerProfileId: MEDICAL.id },
+  { id: uuid('ra-sanlucas'), practiceId: PRACTICE_SANLUCAS, practiceName: 'Hospital San Lucas', practiceType: 'Hospital', practiceSiteId: SITIO_SANLUCAS.id, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: SPECIALTY['CARDIOLOGIA']!, status: 'PENDING', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-4), avatarUrl: avatarSvg('Hospital San Lucas', '#7c3aed'), practitionerProfileId: MEDICAL.id },
+  { id: uuid('ra-japones'), practiceId: uuid('practice-japones'), practiceName: 'Hospital Japonés', practiceType: 'Hospital', practiceSiteId: null, roleConceptId: CARGO['ROLE-RESIDENTE']!, specialtyConceptId: null, status: 'ENDED', isPrimary: false, validFrom: isoDia(-3000), validTo: isoDia(-1500), createdAt: iso(-3000), avatarUrl: null, practitionerProfileId: MEDICAL.id },
+  { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: SPECIALTY['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICAL.id },
 ]);
 
 const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; bankQrFileId: string | null; logoFileId: string | null }>([
   // Sólo el consultorio propio arranca con QR bancario cargado: las otras tres
   // sedes quedan sin él para que el aviso en ámbar —«todavía no configuraste
   // ninguno»— se vea en la misma lista que el estado ya resuelto.
-  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: uuid('file-qr-consultorio'), logoFileId: uuid('file-logo-consultorio') },
-  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null, logoFileId: null },
+  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: uuid('file-qr-consultorio'), logoFileId: uuid('file-logo-consultorio') },
+  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: null, logoFileId: null },
   // Dos sedes más para la médica: con cuatro, «Dónde atiende» de su ficha
   // pública pasa de una página y se puede ver el paginado funcionando.
-  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null, logoFileId: null },
-  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null, logoFileId: null },
+  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: null, logoFileId: null },
+  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: null, logoFileId: null },
 ]);
 
 /**
@@ -256,7 +256,7 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
 
   // Quien no cargó ninguna atiende donde su organización: es lo que el padrón
   // sabe de él, y decir «no atiende en ningún lado» sería falso.
-  const p = profesionalPorId(practitionerProfileId);
+  const p = professionalById(practitionerProfileId);
   if (p === undefined) return [];
   const deLaOrganizacion = p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS;
   return [
@@ -385,7 +385,7 @@ export function registrarPracticas(router: MockRouter): void {
       validTo: null,
       createdAt: ahora(),
       avatarUrl: null,
-      practitionerProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
+      practitionerProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
     });
     return { status: 201, body: { id: nueva.id, practiceId: nueva.practiceId, practitionerProfileId: nueva.practitionerProfileId, status: nueva.status, createdAt: nueva.createdAt } };
   });
@@ -413,7 +413,7 @@ export function registrarPracticas(router: MockRouter): void {
       latitude: datos.address?.latitude ?? null,
       longitude: datos.address?.longitude ?? null,
       status: 'ACTIVE',
-      practitionerProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
+      practitionerProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
       // Un consultorio recién creado no tiene con qué cobrar todavía: el QR se
       // carga después, desde su propia fila.
       bankQrFileId: null,
@@ -498,10 +498,10 @@ export function registrarPracticas(router: MockRouter): void {
       ...(esHospital ? [{ id: uuid('site-sanlucas-norte'), code: 'SANLUCAS-N', name: 'Hospital San Lucas · Anexo Norte', type: concepto('BRANCH', 'Sucursal'), physicalType: concepto('BUILDING', 'Edificio'), operationalStatus: concepto('OPERATIONAL', 'Operativa'), status: concepto('ACTIVE', 'Activa'), timeZone: 'America/La_Paz', branchId: null, clinicalUnitCount: 2, careSpaceCount: 6 }] : []),
     ];
     const unidades = [
-      { code: 'CARDIO', name: 'Cardiología', esp: ESPECIALIDAD['CARDIOLOGIA']! },
-      { code: 'MEDINT', name: 'Medicina interna', esp: ESPECIALIDAD['MEDICINA_INTERNA']! },
-      { code: 'PEDIA', name: 'Pediatría', esp: ESPECIALIDAD['PEDIATRIA']! },
-      ...(esHospital ? [{ code: 'URG', name: 'Urgencias', esp: ESPECIALIDAD['MEDICINA_GENERAL']! }, { code: 'QX', name: 'Quirófanos', esp: ESPECIALIDAD['ANESTESIOLOGIA']! }, { code: 'GINE', name: 'Maternidad', esp: ESPECIALIDAD['GINECOLOGIA_OBSTETRICIA']! }] : []),
+      { code: 'CARDIO', name: 'Cardiología', esp: SPECIALTY['CARDIOLOGIA']! },
+      { code: 'MEDINT', name: 'Medicina interna', esp: SPECIALTY['MEDICINA_INTERNA']! },
+      { code: 'PEDIA', name: 'Pediatría', esp: SPECIALTY['PEDIATRIA']! },
+      ...(esHospital ? [{ code: 'URG', name: 'Urgencias', esp: SPECIALTY['MEDICINA_GENERAL']! }, { code: 'QX', name: 'Quirófanos', esp: SPECIALTY['ANESTESIOLOGIA']! }, { code: 'GINE', name: 'Maternidad', esp: SPECIALTY['GINECOLOGIA_OBSTETRICIA']! }] : []),
     ].map((u, i) => ({
       id: uuid(`unit-${practica.code}-${u.code}`),
       siteId: sitio.id,
@@ -509,7 +509,7 @@ export function registrarPracticas(router: MockRouter): void {
       code: u.code,
       name: u.name,
       type: concepto('DEPARTMENT', 'Departamento'),
-      specialty: concepto(u.code, displayDe(u.esp)),
+      specialty: concepto(u.code, displayOf(u.esp)),
       serviceMode: concepto(i % 2 === 0 ? 'OUTPATIENT' : 'INPATIENT', i % 2 === 0 ? 'Ambulatorio' : 'Internación'),
       status: concepto('ACTIVE', 'Activa'),
     }));
@@ -517,7 +517,7 @@ export function registrarPracticas(router: MockRouter): void {
       { id: uuid(`space-${u.id}-1`), siteId: sitio.id, clinicalUnitId: u.id, parentSpaceId: null, code: `${u.code}-C1`, name: `Consultorio ${i + 1}`, type: concepto('ROOM', 'Consultorio'), capacity: 1, operationalStatus: concepto('OPERATIONAL', 'Operativo'), status: concepto('ACTIVE', 'Activo') },
       { id: uuid(`space-${u.id}-2`), siteId: sitio.id, clinicalUnitId: u.id, parentSpaceId: null, code: `${u.code}-C2`, name: `Consultorio ${i + 1}B`, type: concepto('ROOM', 'Consultorio'), capacity: 1, operationalStatus: concepto(i === 2 ? 'MAINTENANCE' : 'OPERATIONAL', i === 2 ? 'En mantenimiento' : 'Operativo'), status: concepto('ACTIVE', 'Activo') },
     ]);
-    const personal = PROFESIONALES.filter((p) => (esHospital ? p.organizacion === 'Hospital San Lucas' : p.organizacion === 'Clínica Los Olivos')).map((p, i) => ({
+    const personal = PROFESSIONALS.filter((p) => (esHospital ? p.organizacion === 'Hospital San Lucas' : p.organizacion === 'Clínica Los Olivos')).map((p, i) => ({
       id: uuid(`staff-${practica.code}-${p.id}`),
       practitionerProfileId: p.id,
       practitionerName: p.displayName,
@@ -525,7 +525,7 @@ export function registrarPracticas(router: MockRouter): void {
       clinicalUnitId: unidades[i % unidades.length]!.id,
       healthcareServiceId: null,
       role: concepto(i === 0 ? 'HEAD' : 'STAFF', i === 0 ? 'Jefe/a de servicio' : 'Médico/a de planta'),
-      specialty: p.especialidades[0] === undefined ? null : concepto('SP', displayDe(p.especialidades[0])),
+      specialty: p.especialidades[0] === undefined ? null : concepto('SP', displayOf(p.especialidades[0])),
       isPrimary: i === 0,
       validFrom: isoDia(-900 + i * 30),
       validTo: null,
@@ -571,7 +571,7 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   // Establecimientos vinculables usan el padrón: mismo catálogo que `linkable-organizations`.
-  void ESTABLECIMIENTO;
+  void FACILITY;
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */

@@ -8,7 +8,7 @@ import type { PdfLogo } from './pdf-logo';
  * criptografía. Cada imagen ya viene lista para `jsPDF` (PNG o JPEG, con sus
  * proporciones); {@link prepararLogo} es quien la deja así.
  */
-export interface PdfFirma {
+export interface PdfSignature {
   /** El nombre del médico, tal como se imprime bajo la línea. */
   readonly nombre: string;
   /** El número de matrícula, o `null` si no hay ninguna vigente cargada. */
@@ -27,12 +27,12 @@ export interface PdfFirma {
  * el papel** —un paciente que baja su comprobante—, y entonces el documento no
  * lleva bloque de firma. Se limpia al cerrar sesión o cambiar de profesional.
  */
-let firmaVigente: PdfFirma | null = null;
+let currentSignature: PdfSignature | null = null;
 
-export function establecerFirmaDeDocumentos(firma: PdfFirma | null): void {
-  firmaVigente = firma;
+export function setDocumentSignature(firma: PdfSignature | null): void {
+  currentSignature = firma;
 }
 
-export function firmaDeDocumentos(): PdfFirma | null {
-  return firmaVigente;
+export function documentSignature(): PdfSignature | null {
+  return currentSignature;
 }

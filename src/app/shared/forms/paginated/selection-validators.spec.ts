@@ -1,7 +1,7 @@
 import { FormControl } from '@angular/forms';
 
 import { mensajeDeError } from './error-message';
-import { validadorDeCuadricula, validadorDeSeleccion } from './selection-validators';
+import { gridValidator, selectionValidator } from './selection-validators';
 
 /**
  * Los topes de un campo de varias respuestas, y cómo se dicen.
@@ -13,7 +13,7 @@ import { validadorDeCuadricula, validadorDeSeleccion } from './selection-validat
  */
 describe('validadorDeSeleccion', () => {
   function control(valor: unknown, minimo?: number, maximo?: number): FormControl {
-    const c = new FormControl(valor, validadorDeSeleccion(minimo, maximo));
+    const c = new FormControl(valor, selectionValidator(minimo, maximo));
     c.markAsTouched();
     return c;
   }
@@ -75,7 +75,7 @@ describe('validadorDeCuadricula', () => {
   ) {
     const c = new FormControl(
       valor,
-      validadorDeCuadricula(FILAS, {
+      gridValidator(FILAS, {
         requerirCadaFila: opciones.requerirCadaFila ?? false,
         unaPorColumna: opciones.unaPorColumna ?? false,
       }),

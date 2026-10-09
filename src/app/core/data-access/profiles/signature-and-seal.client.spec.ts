@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
 import { FilesClient } from '../files/files.client';
-import { FirmaYSelloClient } from './signature-and-seal.client';
+import { SignatureAndSealClient } from './signature-and-seal.client';
 
 const RUTA = '/profiles/practitioners/me/signature-assets';
 
@@ -14,7 +14,7 @@ const RUTA = '/profiles/practitioners/me/signature-assets';
  */
 describe('FirmaYSelloClient', () => {
   const archivos = { imageDataUrl: vi.fn(), upload: vi.fn() };
-  let cliente: FirmaYSelloClient;
+  let cliente: SignatureAndSealClient;
   let http: HttpTestingController;
 
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe('FirmaYSelloClient', () => {
         { provide: FilesClient, useValue: archivos },
       ],
     });
-    cliente = TestBed.inject(FirmaYSelloClient);
+    cliente = TestBed.inject(SignatureAndSealClient);
     http = TestBed.inject(HttpTestingController);
   });
 
@@ -37,7 +37,7 @@ describe('FirmaYSelloClient', () => {
   describe('obtener', () => {
     it('lee las dos imágenes y las devuelve como data URL', () => {
       let resultado: unknown = null;
-      cliente.obtener().subscribe((r) => (resultado = r));
+      cliente.get().subscribe((r) => (resultado = r));
       http.expectOne(RUTA).flush({ signatureFileId: 'f1', sealFileId: 's1' });
 
       expect(resultado).toEqual({
@@ -48,7 +48,7 @@ describe('FirmaYSelloClient', () => {
 
     it('si una de las dos no está cargada, esa viene en null y la otra sí', () => {
       let resultado: unknown = null;
-      cliente.obtener().subscribe((r) => (resultado = r));
+      cliente.get().subscribe((r) => (resultado = r));
       http.expectOne(RUTA).flush({ signatureFileId: 'f1', sealFileId: null });
 
       expect(resultado).toEqual({ firmaUrl: 'data:image/png;base64,f1', selloUrl: null });
@@ -58,7 +58,7 @@ describe('FirmaYSelloClient', () => {
     it('si falla la lectura devuelve «nada cargado» y no rompe', () => {
       let resultado: unknown = null;
       let error: unknown = null;
-      cliente.obtener().subscribe({ next: (r) => (resultado = r), error: (e) => (error = e) });
+      cliente.get().subscribe({ next: (r) => (resultado = r), error: (e) => (error = e) });
       http.expectOne(RUTA).flush('boom', { status: 500, statusText: 'x' });
 
       expect(error).toBeNull();
@@ -70,7 +70,7 @@ describe('FirmaYSelloClient', () => {
         id === 'f1' ? throwError(() => new Error('403')) : of('data:image/png;base64,ok'),
       );
       let resultado: unknown = null;
-      cliente.obtener().subscribe((r) => (resultado = r));
+      cliente.get().subscribe((r) => (resultado = r));
       http.expectOne(RUTA).flush({ signatureFileId: 'f1', sealFileId: 's1' });
 
       expect(resultado).toEqual({ firmaUrl: null, selloUrl: 'data:image/png;base64,ok' });
@@ -81,7 +81,7 @@ describe('FirmaYSelloClient', () => {
     it('sube como imagen de sensibilidad normal y devuelve sólo el id', () => {
       const archivo = new File(['x'], 'firma.png', { type: 'image/png' });
       let id = '';
-      cliente.subir(archivo).subscribe((valor) => (id = valor));
+      cliente.upload(archivo).subscribe((valor) => (id = valor));
 
       expect(archivos.upload).toHaveBeenCalledWith(archivo, 'IMAGE', 'NORMAL');
       expect(id).toBe('file-nuevo');
@@ -90,7 +90,7 @@ describe('FirmaYSelloClient', () => {
 
   describe('guardar', () => {
     it('manda sólo lo que cambió: una clave ausente deja lo que había', () => {
-      cliente.guardar({ firmaFileId: 'f2' }).subscribe();
+      cliente.save({ firmaFileId: 'f2' }).subscribe();
 
       const req = http.expectOne(RUTA);
       expect(req.request.method).toBe('PUT');
@@ -99,7 +99,7 @@ describe('FirmaYSelloClient', () => {
     });
 
     it('con null quita esa imagen', () => {
-      cliente.guardar({ selloFileId: null }).subscribe();
+      cliente.save({ selloFileId: null }).subscribe();
 
       const req = http.expectOne(RUTA);
       expect(req.request.body).toEqual({ sealFileId: null });
@@ -107,7 +107,7 @@ describe('FirmaYSelloClient', () => {
     });
 
     it('puede cambiar las dos a la vez', () => {
-      cliente.guardar({ firmaFileId: 'f2', selloFileId: 's2' }).subscribe();
+      cliente.save({ firmaFileId: 'f2', selloFileId: 's2' }).subscribe();
 
       const req = http.expectOne(RUTA);
       expect(req.request.body).toEqual({ signatureFileId: 'f2', sealFileId: 's2' });

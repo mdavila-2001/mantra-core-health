@@ -14,8 +14,8 @@
     real y se descubre cuando alguien intenta llamar.
     ========================================================================== */
 
-/** Los códigos ISO que este campo dibuja. Cerrado: ver {@link PaisTelefono}. */
-export const ISO_PAISES = [
+/** Los códigos ISO que este campo dibuja. Cerrado: ver {@link PhoneCountry}. */
+export const ISO_COUNTRIES = [
   'BO',
   'AR',
   'BR',
@@ -31,11 +31,11 @@ export const ISO_PAISES = [
   'MX',
 ] as const;
 
-export type IsoPais = (typeof ISO_PAISES)[number];
+export type IsoCountry = (typeof ISO_COUNTRIES)[number];
 
 /** Un país, tal como el campo necesita conocerlo para componer el número. */
-export interface PaisTelefono {
-  readonly iso: IsoPais;
+export interface PhoneCountry {
+  readonly iso: IsoCountry;
 
   /** Como se lee en el desplegable. En español, que es el idioma del producto. */
   readonly nombre: string;
@@ -63,7 +63,7 @@ export interface PaisTelefono {
  * la región. No se ordena alfabéticamente porque eso pondría a Argentina antes
  * que a Bolivia en un producto boliviano.
  */
-export const PAISES_TELEFONO: readonly PaisTelefono[] = [
+export const PHONE_COUNTRIES: readonly PhoneCountry[] = [
   { iso: 'BO', nombre: 'Bolivia', prefijo: '+591', digitos: 8, grupos: [4, 4] },
   { iso: 'AR', nombre: 'Argentina', prefijo: '+54', digitos: 10, grupos: [3, 3, 4] },
   { iso: 'BR', nombre: 'Brasil', prefijo: '+55', digitos: 11, grupos: [2, 5, 4] },
@@ -80,7 +80,7 @@ export const PAISES_TELEFONO: readonly PaisTelefono[] = [
 ];
 
 /** Bolivia: el país por defecto, y el que se asume cuando no hay prefijo. */
-export const PAIS_POR_DEFECTO: PaisTelefono = PAISES_TELEFONO[0];
+export const COUNTRY_BY_DEFAULT: PhoneCountry = PHONE_COUNTRIES[0];
 
 /**
  * Los prefijos ordenados de más largo a más corto.
@@ -91,7 +91,7 @@ export const PAIS_POR_DEFECTO: PaisTelefono = PAISES_TELEFONO[0];
  * dígitos al reformatearlo. De largo a corto, gana siempre la coincidencia más
  * específica, que es la correcta.
  */
-const PREFIJOS_POR_ESPECIFICIDAD: readonly PaisTelefono[] = [...PAISES_TELEFONO].sort(
+const PREFIXES_BY_SPECIFICITY: readonly PhoneCountry[] = [...PHONE_COUNTRIES].sort(
   (a, b) => b.prefijo.length - a.prefijo.length,
 );
 
@@ -103,15 +103,15 @@ const PREFIJOS_POR_ESPECIFICIDAD: readonly PaisTelefono[] = [...PAISES_TELEFONO]
  * dígitos que no caben. Sin prefijo reconocible se asume Bolivia, que es de
  * donde viene el número que alguien escribió sin pensar en el país.
  */
-export function paisDelNumero(valor: string): PaisTelefono {
+export function numberCountry(valor: string): PhoneCountry {
   const digitos = valor.replace(/\D/g, '');
   if (digitos === '') {
-    return PAIS_POR_DEFECTO;
+    return COUNTRY_BY_DEFAULT;
   }
-  const encontrado = PREFIJOS_POR_ESPECIFICIDAD.find((pais) =>
+  const encontrado = PREFIXES_BY_SPECIFICITY.find((pais) =>
     digitos.startsWith(pais.prefijo.slice(1)),
   );
-  return encontrado ?? PAIS_POR_DEFECTO;
+  return encontrado ?? COUNTRY_BY_DEFAULT;
 }
 
 /**
@@ -124,7 +124,7 @@ export function paisDelNumero(valor: string): PaisTelefono {
  * de ocho —no hay nada que quitar— y `+591 70012345` son once para un país de
  * ocho, que es la señal de que los tres primeros son el país.
  */
-export function nacionalDelNumero(valor: string, pais: PaisTelefono): string {
+export function numberNational(valor: string, pais: PhoneCountry): string {
   const digitos = valor.replace(/\D/g, '');
   const sinMas = pais.prefijo.slice(1);
   const sobran = digitos.length > pais.digitos;
@@ -147,11 +147,11 @@ export function nacionalDelNumero(valor: string, pais: PaisTelefono): string {
  * corresponde. Ver `PhoneInput`: con el campo vacío se guarda cadena vacía y no
  * un prefijo suelto, justamente para que esto pueda distinguirlos.
  */
-export function esTelefonoCompleto(valor: string): boolean {
+export function isCompletePhone(valor: string): boolean {
   if (valor === '') {
     return true;
   }
-  return PAISES_TELEFONO.some((pais) => {
+  return PHONE_COUNTRIES.some((pais) => {
     const digitos = valor.startsWith(`${pais.prefijo} `)
       ? valor.slice(pais.prefijo.length + 1)
       : null;
@@ -160,7 +160,7 @@ export function esTelefonoCompleto(valor: string): boolean {
 }
 
 /** `70012345` + `[4,4]` -> `7001 2345`. Ayuda de lectura, no dato. */
-export function agrupar(digitos: string, grupos: readonly number[]): string {
+export function group(digitos: string, grupos: readonly number[]): string {
   const partes: string[] = [];
   let resto = digitos;
   for (const largo of grupos) {
@@ -177,8 +177,8 @@ export function agrupar(digitos: string, grupos: readonly number[]): string {
 }
 
 /** El marcador del campo para un país: su propio número de ejemplo, agrupado. */
-export function ejemploDe(pais: PaisTelefono): string {
-  const ejemplos: Record<IsoPais, string> = {
+export function exampleOf(pais: PhoneCountry): string {
+  const ejemplos: Record<IsoCountry, string> = {
     BO: '70012345',
     AR: '1134567890',
     BR: '11912345678',
@@ -193,5 +193,5 @@ export function ejemploDe(pais: PaisTelefono): string {
     US: '2025550123',
     MX: '5512345678',
   };
-  return agrupar(ejemplos[pais.iso], pais.grupos);
+  return group(ejemplos[pais.iso], pais.grupos);
 }

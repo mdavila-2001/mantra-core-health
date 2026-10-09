@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
-import { CotizacionesFuentes } from './quotations.sources';
+import { QuotationSources } from './quotations.sources';
 
 /**
  * Las fuentes de Cotizaciones — H3.S1.M4 / H3.S2.M6.
@@ -13,14 +13,14 @@ import { CotizacionesFuentes } from './quotations.sources';
  * respuesta con su procedencia, y que lo no publicado queda en `null`.
  */
 describe('CotizacionesFuentes', () => {
-  let fuentes: CotizacionesFuentes;
+  let fuentes: QuotationSources;
   let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
-    fuentes = TestBed.inject(CotizacionesFuentes);
+    fuentes = TestBed.inject(QuotationSources);
     http = TestBed.inject(HttpTestingController);
   });
 
@@ -68,7 +68,7 @@ describe('CotizacionesFuentes', () => {
 
   it('medicamentos: busca productos y pide su disponibilidad con el origen', async () => {
     const resultado = firstValueFrom(
-      fuentes.buscar('paracetamol', 'MEDICAMENTOS', { source: 'home', lat: -17.8, lng: -63.2 }),
+      fuentes.search('paracetamol', 'MEDICAMENTOS', { source: 'home', lat: -17.8, lng: -63.2 }),
     );
 
     const productos = http.expectOne((r) => r.url === '/pharmacy/products');
@@ -131,7 +131,7 @@ describe('CotizacionesFuentes', () => {
   });
 
   it('medicamentos con receta: sin carrito, con el camino de la receta', async () => {
-    const resultado = firstValueFrom(fuentes.buscar('amoxicilina', 'MEDICAMENTOS', null));
+    const resultado = firstValueFrom(fuentes.search('amoxicilina', 'MEDICAMENTOS', null));
     http
       .expectOne((r) => r.url === '/pharmacy/products')
       .flush({ items: [{ id: 'p1', requiresPrescription: true }], limit: 20, truncated: false });
@@ -153,7 +153,7 @@ describe('CotizacionesFuentes', () => {
   });
 
   it('medicamentos sin productos no pide disponibilidad', async () => {
-    const resultado = firstValueFrom(fuentes.buscar('nada', 'MEDICAMENTOS', null));
+    const resultado = firstValueFrom(fuentes.search('nada', 'MEDICAMENTOS', null));
     http
       .expectOne((r) => r.url === '/pharmacy/products')
       .flush({ items: [], limit: 20, truncated: false });
@@ -163,7 +163,7 @@ describe('CotizacionesFuentes', () => {
   });
 
   it('análisis: abre los laboratorios y toma el tarifario del estudio que coincide', async () => {
-    const resultado = firstValueFrom(fuentes.buscar('hemograma', 'ANALISIS', null));
+    const resultado = firstValueFrom(fuentes.search('hemograma', 'ANALISIS', null));
 
     const centros = http.expectOne((r) => r.url === '/diagnostic-units/search');
     expect(centros.request.params.get('kind')).toBe('LABORATORY');
@@ -232,7 +232,7 @@ describe('CotizacionesFuentes', () => {
   });
 
   it('servicios médicos: el arancel de referencia en su unidad, sin convertir', async () => {
-    const resultado = firstValueFrom(fuentes.buscar('consulta', 'SERVICIOS_MEDICOS', null));
+    const resultado = firstValueFrom(fuentes.search('consulta', 'SERVICIOS_MEDICOS', null));
 
     const arancel = http.expectOne((r) => r.url === '/billing/service-catalog/procedures');
     expect(arancel.request.params.get('q')).toBe('consulta');
@@ -279,7 +279,7 @@ describe('CotizacionesFuentes', () => {
   });
 
   it('con «Todas» consulta las cuatro en paralelo y una caída no tira las otras', async () => {
-    const resultado = firstValueFrom(fuentes.buscar('consulta', 'TODAS', null));
+    const resultado = firstValueFrom(fuentes.search('consulta', 'TODAS', null));
 
     http
       .expectOne((r) => r.url === '/pharmacy/products')
@@ -300,7 +300,7 @@ describe('CotizacionesFuentes', () => {
   });
 
   it('si ninguna fuente responde, es un error', async () => {
-    const resultado = firstValueFrom(fuentes.buscar('x', 'TODAS', null));
+    const resultado = firstValueFrom(fuentes.search('x', 'TODAS', null));
     const caida = { status: 503, statusText: 'Service Unavailable' };
     http.expectOne((r) => r.url === '/pharmacy/products').flush({}, caida);
     for (const pedido of http.match((r) => r.url === '/diagnostic-units/search')) {

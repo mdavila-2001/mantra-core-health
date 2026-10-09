@@ -14,7 +14,7 @@
     ========================================================================== */
 
 /** Estados de una recepción, anulación o reversión (catálogo oficial). */
-export const ESTADO_SIAT = {
+export const SIAT_STATUS = {
   RECEPCION_PENDIENTE: 901,
   RECEPCION_RECHAZADA: 902,
   RECEPCION_PROCESADA: 903,
@@ -26,9 +26,9 @@ export const ESTADO_SIAT = {
   REVERSION_ANULACION_RECHAZADA: 909,
 } as const;
 
-export type CodigoEstadoSiat = (typeof ESTADO_SIAT)[keyof typeof ESTADO_SIAT];
+export type SiatStatusCode = (typeof SIAT_STATUS)[keyof typeof SIAT_STATUS];
 
-export const DESCRIPCION_ESTADO_SIAT: Readonly<Record<CodigoEstadoSiat, string>> = {
+export const SIAT_STATUS_DESCRIPTION: Readonly<Record<SiatStatusCode, string>> = {
   901: 'Recepción Pendiente',
   902: 'Recepción Rechazada',
   903: 'Recepción Procesada',
@@ -41,7 +41,7 @@ export const DESCRIPCION_ESTADO_SIAT: Readonly<Record<CodigoEstadoSiat, string>>
 };
 
 /** Mensajes (errores y advertencias) que el simulador sabe producir. */
-export const MENSAJE_SIAT = {
+export const SIAT_MESSAGE = {
   CUIS_INVALIDO: 913,
   CUFD_INVALIDO: 914,
   TIPO_FACTURA_DOCUMENTO_INVALIDO: 915,
@@ -78,9 +78,9 @@ export const MENSAJE_SIAT = {
   ADVERTENCIA_NIT_DEL_CLIENTE_NO_VALIDO: 2005,
 } as const;
 
-export type CodigoMensajeSiat = (typeof MENSAJE_SIAT)[keyof typeof MENSAJE_SIAT];
+export type SiatMessageCode = (typeof SIAT_MESSAGE)[keyof typeof SIAT_MESSAGE];
 
-export const DESCRIPCION_MENSAJE_SIAT: Readonly<Record<CodigoMensajeSiat, string>> = {
+export const SIAT_MESSAGE_DESCRIPTION: Readonly<Record<SiatMessageCode, string>> = {
   913: 'Código Único De Inicio De Sistema (Cuis) Invalido',
   914: 'Código Único De Facturación Diaria (Cufd) Invalido',
   915: 'El Parámetro Tipo Factura Documento Es Invalido',
@@ -122,15 +122,15 @@ export const DESCRIPCION_MENSAJE_SIAT: Readonly<Record<CodigoMensajeSiat, string
  * catálogo oficial son las que empiezan con «Advertencia:»; se listan una por
  * una en vez de deducirlas por rango.
  */
-const ADVERTENCIAS: ReadonlySet<number> = new Set<number>([
-  MENSAJE_SIAT.ADVERTENCIA_CORRELATIVIDAD,
-  MENSAJE_SIAT.ADVERTENCIA_NIT_DEL_CLIENTE_NO_VALIDO,
+const WARNINGS: ReadonlySet<number> = new Set<number>([
+  SIAT_MESSAGE.ADVERTENCIA_CORRELATIVIDAD,
+  SIAT_MESSAGE.ADVERTENCIA_NIT_DEL_CLIENTE_NO_VALIDO,
 ]);
 
-export function esAdvertencia(codigo: number): boolean {
-  return ADVERTENCIAS.has(codigo);
+export function isWarning(codigo: number): boolean {
+  return WARNINGS.has(codigo);
 }
 
-export function esCodigoDeMensajeConocido(codigo: number): codigo is CodigoMensajeSiat {
-  return Object.prototype.hasOwnProperty.call(DESCRIPCION_MENSAJE_SIAT, codigo);
+export function isKnownMessageCode(codigo: number): codigo is SiatMessageCode {
+  return Object.prototype.hasOwnProperty.call(SIAT_MESSAGE_DESCRIPTION, codigo);
 }

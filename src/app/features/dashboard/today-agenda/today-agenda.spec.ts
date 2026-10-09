@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
-import { AgendaDeHoy, type CifrasDeHoy, type CitaDeHoy, type TramoDeLaJornada } from './today-agenda';
+import { TodayAgenda, type TodayFigures, type TodayAppointment, type WorkdayBracket } from './today-agenda';
 
 /**
  * «Lo que toca hoy» — las reglas que sólo esta pantalla fija.
@@ -67,7 +67,7 @@ interface CitaCruda {
   readonly id: string;
   readonly desde: Date;
   readonly hasta: Date;
-  readonly estado: string;
+  readonly status: string;
   readonly paciente?: string;
   readonly motivo?: string;
 }
@@ -78,21 +78,21 @@ function wire(cita: CitaCruda): Record<string, unknown> {
     resourceId: 'r-1',
     startAt: cita.desde.toISOString(),
     endAt: cita.hasta.toISOString(),
-    statusConceptId: cita.estado,
+    statusConceptId: cita.status,
     patientName: cita.paciente ?? 'Paciente de prueba',
     reasonText: cita.motivo ?? 'Control',
   };
 }
 
 describe('AgendaDeHoy', () => {
-  let fixture: ComponentFixture<AgendaDeHoy>;
-  let component: AgendaDeHoy;
+  let fixture: ComponentFixture<TodayAgenda>;
+  let component: TodayAgenda;
   let http: HttpTestingController;
   let session: SessionStore;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AgendaDeHoy],
+      imports: [TodayAgenda],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
@@ -108,7 +108,7 @@ describe('AgendaDeHoy', () => {
       accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: [TENANT], hpid: PERFIL, ...claims }),
       refreshToken: 'r-1',
     });
-    fixture = TestBed.createComponent(AgendaDeHoy);
+    fixture = TestBed.createComponent(TodayAgenda);
     component = fixture.componentInstance;
   }
 
@@ -192,33 +192,33 @@ describe('AgendaDeHoy', () => {
   function estado(): { status: string; nextAction?: { label: string; route?: string } } {
     return (
       component as unknown as {
-        estado: () => { status: string; nextAction?: { label: string; route?: string } };
+        status: () => { status: string; nextAction?: { label: string; route?: string } };
       }
-    ).estado();
+    ).status();
   }
 
-  function citas(): readonly CitaDeHoy[] {
-    return (component as unknown as { citas: () => readonly CitaDeHoy[] }).citas();
+  function citas(): readonly TodayAppointment[] {
+    return (component as unknown as { appointments: () => readonly TodayAppointment[] }).appointments();
   }
 
-  function destacada(): CitaDeHoy | null {
-    return (component as unknown as { destacada: () => CitaDeHoy | null }).destacada();
+  function destacada(): TodayAppointment | null {
+    return (component as unknown as { highlighted: () => TodayAppointment | null }).highlighted();
   }
 
-  function siguientes(): readonly CitaDeHoy[] {
-    return (component as unknown as { siguientes: () => readonly CitaDeHoy[] }).siguientes();
+  function siguientes(): readonly TodayAppointment[] {
+    return (component as unknown as { next: () => readonly TodayAppointment[] }).next();
   }
 
-  function cifras(): CifrasDeHoy {
-    return (component as unknown as { cifras: () => CifrasDeHoy }).cifras();
+  function cifras(): TodayFigures {
+    return (component as unknown as { figures: () => TodayFigures }).figures();
   }
 
-  function tramos(): readonly TramoDeLaJornada[] {
-    return (component as unknown as { tramos: () => readonly TramoDeLaJornada[] }).tramos();
+  function tramos(): readonly WorkdayBracket[] {
+    return (component as unknown as { brackets: () => readonly WorkdayBracket[] }).brackets();
   }
 
   function fijarReloj(hora: number, minutos = 0): void {
-    (component as unknown as { ahora: { set: (d: Date) => void } }).ahora.set(
+    (component as unknown as { now: { set: (d: Date) => void } }).now.set(
       hoyALas(hora, minutos),
     );
     fixture.detectChanges();
@@ -233,10 +233,10 @@ describe('AgendaDeHoy', () => {
     // La tarde del consultorio va primero en la respuesta y segunda en la
     // pantalla: el orden lo pone la hora, no el orden de las lecturas.
     responderCitas('r-1', [
-      { id: 'b-manana', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+      { id: 'b-manana', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.confirmada },
     ]);
     responderCitas('r-2', [
-      { id: 'b-tarde', desde: hoyALas(16), hasta: hoyALas(16, 20), estado: ESTADO.confirmada },
+      { id: 'b-tarde', desde: hoyALas(16), hasta: hoyALas(16, 20), status: ESTADO.confirmada },
     ]);
     responderCatalogo();
 
@@ -247,7 +247,7 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: 'Clínica' }, { id: 'r-2', sede: 'Consultorio' });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.confirmada },
     ]);
     http
       .expectOne(
@@ -336,9 +336,9 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-curso', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.enCurso },
-      { id: 'b-llego', desde: hoyALas(9, 30), hasta: hoyALas(10), estado: ESTADO.llego },
-      { id: 'b-proxima', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada },
+      { id: 'b-curso', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.enCurso },
+      { id: 'b-llego', desde: hoyALas(9, 30), hasta: hoyALas(10), status: ESTADO.llego },
+      { id: 'b-proxima', desde: hoyALas(10), hasta: hoyALas(10, 30), status: ESTADO.confirmada },
     ]);
     responderCatalogo();
     fijarReloj(9, 15);
@@ -352,8 +352,8 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-pasada', desde: hoyALas(8), hasta: hoyALas(8, 30), estado: ESTADO.atendida },
-      { id: 'b-proxima', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada },
+      { id: 'b-pasada', desde: hoyALas(8), hasta: hoyALas(8, 30), status: ESTADO.atendida },
+      { id: 'b-proxima', desde: hoyALas(10), hasta: hoyALas(10, 30), status: ESTADO.confirmada },
     ]);
     responderCatalogo();
     fijarReloj(9);
@@ -365,14 +365,14 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(8, 30), estado: ESTADO.atendida },
+      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(8, 30), status: ESTADO.atendida },
     ]);
     responderCatalogo();
     fijarReloj(20);
 
     expect(destacada()).toBeNull();
     expect(
-      (component as unknown as { jornadaTerminada: () => boolean }).jornadaTerminada(),
+      (component as unknown as { finishedWorkday: () => boolean }).finishedWorkday(),
     ).toBe(true);
     // El estado sigue siendo `ready`: hubo jornada. S3 diría que no hay nada.
     expect(estado().status).toBe('ready');
@@ -386,8 +386,8 @@ describe('AgendaDeHoy', () => {
     // Dos agendas, pero hoy sólo se pisa una: repetir «Clínica» en cada fila no
     // informa de nada.
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
-      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada },
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.confirmada },
+      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), status: ESTADO.confirmada },
     ]);
     responderCitas('r-2', []);
     responderCatalogo();
@@ -399,10 +399,10 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: 'Clínica' }, { id: 'r-2', sede: 'Consultorio' });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.confirmada },
     ]);
     responderCitas('r-2', [
-      { id: 'b-2', desde: hoyALas(16), hasta: hoyALas(16, 20), estado: ESTADO.confirmada },
+      { id: 'b-2', desde: hoyALas(16), hasta: hoyALas(16, 20), status: ESTADO.confirmada },
     ]);
     responderCatalogo();
 
@@ -450,8 +450,8 @@ describe('AgendaDeHoy', () => {
     // punto que cierra la última: de 09:00 a 12:00, tres horas. Una consulta de
     // 09:00 a 10:00 es un tercio del ancho y arranca pegada al borde.
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(10), estado: ESTADO.confirmada },
-      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(11, 30), estado: ESTADO.confirmada },
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(10), status: ESTADO.confirmada },
+      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(11, 30), status: ESTADO.confirmada },
     ]);
     responderCatalogo();
 
@@ -471,14 +471,14 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(9), estado: ESTADO.confirmada },
-      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(12), estado: ESTADO.confirmada },
+      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(9), status: ESTADO.confirmada },
+      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(12), status: ESTADO.confirmada },
     ]);
     responderCatalogo();
 
     const hasta = (
-      component as unknown as { hastaLasHoras: () => Date }
-    ).hastaLasHoras();
+      component as unknown as { untilHours: () => Date }
+    ).untilHours();
     expect(hasta.getHours()).toBe(12);
     expect(hasta.getMinutes()).toBe(0);
   });
@@ -487,13 +487,13 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(9), estado: ESTADO.confirmada },
-      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(12), estado: ESTADO.confirmada },
+      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(9), status: ESTADO.confirmada },
+      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(12), status: ESTADO.confirmada },
     ]);
     responderCatalogo();
 
     const marca = () =>
-      (component as unknown as { marcaDeAhora: () => number | null }).marcaDeAhora();
+      (component as unknown as { nowMark: () => number | null }).nowMark();
 
     fijarReloj(10);
     expect(marca()).toBeCloseTo(50, 5);
@@ -512,11 +512,11 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(8, 30), estado: ESTADO.atendida },
-      { id: 'b-2', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.enCurso },
-      { id: 'b-3', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.llego },
-      { id: 'b-4', desde: hoyALas(11), hasta: hoyALas(11, 30), estado: ESTADO.confirmada },
-      { id: 'b-5', desde: hoyALas(12), hasta: hoyALas(12, 30), estado: ESTADO.solicitada },
+      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(8, 30), status: ESTADO.atendida },
+      { id: 'b-2', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.enCurso },
+      { id: 'b-3', desde: hoyALas(10), hasta: hoyALas(10, 30), status: ESTADO.llego },
+      { id: 'b-4', desde: hoyALas(11), hasta: hoyALas(11, 30), status: ESTADO.confirmada },
+      { id: 'b-5', desde: hoyALas(12), hasta: hoyALas(12, 30), status: ESTADO.solicitada },
     ]);
     responderCatalogo();
     fijarReloj(9, 15);
@@ -535,7 +535,7 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.confirmada },
     ]);
     for (const pedido of http.match((request) => request.url.endsWith('/terminology/concepts'))) {
       pedido.flush(null, { status: 503, statusText: 'Service Unavailable' });
@@ -553,8 +553,8 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.enCurso, paciente: 'Ana Pérez' },
-      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada, paciente: 'Luis Rojas' },
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.enCurso, paciente: 'Ana Pérez' },
+      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), status: ESTADO.confirmada, paciente: 'Luis Rojas' },
     ]);
     responderCatalogo();
     fijarReloj(9, 15);
@@ -573,8 +573,8 @@ describe('AgendaDeHoy', () => {
     crear();
     responderRecursos({ id: 'r-1', sede: null });
     responderCitas('r-1', [
-      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.enCurso, paciente: 'Ana Pérez' },
-      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada, paciente: 'Luis Rojas' },
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), status: ESTADO.enCurso, paciente: 'Ana Pérez' },
+      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), status: ESTADO.confirmada, paciente: 'Luis Rojas' },
     ]);
     responderCatalogo();
     fijarReloj(9, 15);

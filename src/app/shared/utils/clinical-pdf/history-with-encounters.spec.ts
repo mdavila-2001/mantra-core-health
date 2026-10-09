@@ -1,5 +1,5 @@
-import { bloquesDeHistoriaConEncuentros } from './history-with-encounters';
-import type { SeccionesNuevasDeLaHistoria } from './history-with-encounters';
+import { historyWithEncountersBlocks } from './history-with-encounters';
+import type { HistoryNewSections } from './history-with-encounters';
 import type { DocumentoDeHistoria } from './clinical-pdf.types';
 
 /**
@@ -38,12 +38,12 @@ const HISTORIA_VACIA: DocumentoDeHistoria = {
   resultados: [],
 };
 
-const NADA: SeccionesNuevasDeLaHistoria = {
+const NADA: HistoryNewSections = {
   diagnosticos: { enEstudio: [], activas: [], historicos: [] },
   lineas: [],
 };
 
-const TRES_DIAGNOSTICOS: SeccionesNuevasDeLaHistoria = {
+const TRES_DIAGNOSTICOS: HistoryNewSections = {
   diagnosticos: {
     enEstudio: [{ nombre: 'Dislipidemia', certeza: 'Provisional', detalle: null }],
     activas: [
@@ -70,7 +70,7 @@ const TRES_DIAGNOSTICOS: SeccionesNuevasDeLaHistoria = {
 
 describe('bloquesDeHistoriaConEncuentros', () => {
   it('imprime los tres bloques de diagnósticos aunque no haya ninguno', () => {
-    const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, NADA));
+    const texto = textoDe(historyWithEncountersBlocks(HISTORIA_VACIA, NADA));
 
     expect(texto).toContain('Diagnósticos por estado');
     expect(texto).toContain('En estudio');
@@ -79,7 +79,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
   });
 
   it('dice con palabras que un bloque está vacío', () => {
-    const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, NADA));
+    const texto = textoDe(historyWithEncountersBlocks(HISTORIA_VACIA, NADA));
 
     expect(texto).toContain('Sin diagnósticos en estudio.');
     expect(texto).toContain('Sin enfermedades activas registradas.');
@@ -88,7 +88,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
   });
 
   it('imprime cada diagnóstico con su certeza y su detalle', () => {
-    const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
+    const texto = textoDe(historyWithEncountersBlocks(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
 
     expect(texto).toContain('Hipertensión (Confirmado) — activa hasta el 24/11/2026');
     expect(texto).toContain('Dislipidemia (Provisional) — —');
@@ -101,7 +101,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
    * dentro del tramo de «Enfermedades activas».
    */
   it('un diagnóstico descartado no cae en el tramo de las enfermedades activas', () => {
-    const bloques = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS);
+    const bloques = historyWithEncountersBlocks(HISTORIA_VACIA, TRES_DIAGNOSTICOS);
     const indices = bloques.map((bloque) => bloque.text);
 
     const activas = indices.indexOf('Enfermedades activas');
@@ -114,7 +114,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
   });
 
   it('imprime la línea de cada atención con su estado y sus hechos, en orden', () => {
-    const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
+    const texto = textoDe(historyWithEncountersBlocks(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
 
     expect(texto).toContain('Línea de cada atención');
     expect(texto).toContain('Dolor de garganta · 1 de marzo de 2026');
@@ -127,7 +127,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
 
   it('una atención sin nada registrado lo dice en vez de quedar en blanco', () => {
     const texto = textoDe(
-      bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, {
+      historyWithEncountersBlocks(HISTORIA_VACIA, {
         ...NADA,
         lineas: [{ titulo: 'Control · 2 de marzo de 2026', sello: 'En curso', hechos: [] }],
       }),
@@ -138,7 +138,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
 
   /** El pie fecha el documento: nada se imprime después de esa línea. */
   it('las secciones nuevas van antes del pie del documento', () => {
-    const bloques = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS);
+    const bloques = historyWithEncountersBlocks(HISTORIA_VACIA, TRES_DIAGNOSTICOS);
 
     expect(bloques.at(-1)?.kind).toBe('caption');
     expect(bloques.at(-1)?.text).toContain('Documento generado el');
@@ -146,7 +146,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
 
   /** Y las cinco secciones de siempre siguen en pie: esto agrega, no reemplaza. */
   it('conserva las cinco secciones originales de la historia', () => {
-    const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, NADA));
+    const texto = textoDe(historyWithEncountersBlocks(HISTORIA_VACIA, NADA));
 
     expect(texto).toContain('Atenciones');
     expect(texto).toContain('Recetas');
@@ -156,7 +156,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
   });
 
   it('ningún identificador interno llega al papel', () => {
-    const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
+    const texto = textoDe(historyWithEncountersBlocks(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
 
     expect(texto).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
   });

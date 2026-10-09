@@ -26,15 +26,15 @@ import {
   toBookingStatusPresentation,
   type BookingStatusPresentation,
 } from '../../booking-status';
-import { pacienteDeLaCita } from '../appointment-detail';
+import { appointmentPatient } from '../appointment-detail';
 import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import {
-  claveDelDia,
-  DIAS_DE_LA_SEMANA,
-  fechaLarga,
-  fechasDeLaGrilla,
-  medianoche,
+  dayKey,
+  WEEK_DAYS,
+  longDate,
+  gridDates,
+  midnight,
 } from '../../../../shared/date/month-calendar';
 
 export type { BloqueoDelMes } from '../calendar-view.types';
@@ -181,7 +181,7 @@ export class MonthView implements OnDestroy {
   /** Si la lectura de las citas falló: el globo no puede decir «sin citas». */
   readonly bookingsFailed = input(false);
 
-  protected readonly encabezados = DIAS_DE_LA_SEMANA;
+  protected readonly encabezados = WEEK_DAYS;
 
   protected readonly titulo = computed(() =>
     this.mes().toLocaleDateString('es-BO', { month: 'long', year: 'numeric' }),
@@ -190,13 +190,13 @@ export class MonthView implements OnDestroy {
   /** Las seis semanas, con el estado de cada día ya resuelto. */
   protected readonly semanas = computed<readonly (readonly CeldaDelMes[])[]>(() => {
     const porDia = this.cuposPorDia();
-    const hoy = claveDelDia(new Date());
-    const desdeHoy = medianoche(new Date()).getTime();
+    const hoy = dayKey(new Date());
+    const desdeHoy = midnight(new Date()).getTime();
     const mesActual = this.mes();
 
-    return fechasDeLaGrilla(mesActual).map((semana) =>
+    return gridDates(mesActual).map((semana) =>
       semana.map((fecha) => {
-        const clave = claveDelDia(fecha);
+        const clave = dayKey(fecha);
         const cuenta = porDia.get(clave) ?? { total: 0, reservados: 0 };
         const bloqueos = this.bloqueosDe(fecha);
         const bloqueo = bloqueos[0] ?? null;
@@ -232,7 +232,7 @@ export class MonthView implements OnDestroy {
   private readonly cuposPorDia = computed(() => {
     const porDia = new Map<string, { total: number; reservados: number }>();
     for (const cupo of this.cupos()) {
-      const clave = claveDelDia(cupo.startAt);
+      const clave = dayKey(cupo.startAt);
       const actual = porDia.get(clave) ?? { total: 0, reservados: 0 };
       porDia.set(clave, {
         total: actual.total + cupo.capacity,
@@ -254,7 +254,7 @@ export class MonthView implements OnDestroy {
     const porDia = new Map<string, Franja[]>();
     const ordenados = [...this.cupos()].sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
     for (const cupo of ordenados) {
-      const clave = claveDelDia(cupo.startAt);
+      const clave = dayKey(cupo.startAt);
       const franjas = porDia.get(clave) ?? [];
       const ultima = franjas.at(-1);
       if (ultima !== undefined && cupo.startAt.getTime() <= ultima.hasta.getTime()) {
@@ -414,7 +414,7 @@ export class MonthView implements OnDestroy {
    * de la semana, donde no hay lugar; el globo tiene scroll.
    */
   private bookingRowsOf(fecha: Date): readonly DayDetailRow[] {
-    const inicio = medianoche(fecha).getTime();
+    const inicio = midnight(fecha).getTime();
     const fin = inicio + UN_DIA_MS;
     return this.citas()
       .filter((cita) => {
@@ -429,7 +429,7 @@ export class MonthView implements OnDestroy {
             ? hora(cita.startAt as Date)
             : `${hora(cita.startAt as Date)}–${hora(cita.endAt)}`,
         // Mismas palabras que el día y la semana: sin nombre no se inventa uno.
-        primary: pacienteDeLaCita(cita),
+        primary: appointmentPatient(cita),
         secondary: null,
         // C-08 · el chip sale del mapa único de `booking-status.ts`, no de una
         // lista nueva y no del `display` inglés del catálogo.
@@ -446,7 +446,7 @@ export class MonthView implements OnDestroy {
    * pero no se ofrece, y listarlo diría lo contrario.
    */
   private availableRowsOf(fecha: Date): readonly DayDetailRow[] {
-    const inicio = medianoche(fecha).getTime();
+    const inicio = midnight(fecha).getTime();
     const fin = inicio + UN_DIA_MS;
     const ahora = Date.now();
     const bloqueos = this.bloqueosDe(fecha);
@@ -500,7 +500,7 @@ export class MonthView implements OnDestroy {
 
   /** Los bloqueos que tocan esa fecha, en orden. */
   private bloqueosDe(fecha: Date): readonly BloqueoDelMes[] {
-    const inicio = medianoche(fecha).getTime();
+    const inicio = midnight(fecha).getTime();
     const fin = inicio + UN_DIA_MS;
     return this.bloqueos()
       .filter((b) => b.desde.getTime() < fin && b.hasta.getTime() > inicio)
@@ -647,7 +647,7 @@ function resumenDelDia(
   franjas: readonly Franja[],
   bloqueos: readonly BloqueoDelMes[],
 ): DaySummary {
-  const inicio = medianoche(fecha).getTime();
+  const inicio = midnight(fecha).getTime();
   const fin = inicio + UN_DIA_MS;
   const blocks = bloqueos.map((bloqueo) => {
     const desde = Math.max(bloqueo.desde.getTime(), inicio);
@@ -660,7 +660,7 @@ function resumenDelDia(
     return `Bloqueado ${cuando}${motivo}.`;
   });
   return {
-    title: fechaLarga(fecha),
+    title: longDate(fecha),
     hours: franjas.length === 0 ? 'No atiende.' : `Atiende ${listaDeFranjas(franjas)}.`,
     blocks,
   };
@@ -712,7 +712,7 @@ function etiquetaDeLaCelda(
   disponibles: number | null,
   motivo: string | null,
 ): string {
-  const cuando = fechaLarga(fecha);
+  const cuando = longDate(fecha);
   switch (estado) {
     case 'sin-agenda':
       return `${cuando}: no atiende`;

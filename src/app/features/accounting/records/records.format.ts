@@ -6,7 +6,7 @@ import type {
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 
 /** Cómo se dice cada clase de cuenta, para el doctor y no para el contador. */
-export const NOMBRE_DE_CLASE: Readonly<Record<AccountClass, string>> = {
+export const CLASS_NAME: Readonly<Record<AccountClass, string>> = {
   ASSET: 'Activo',
   LIABILITY: 'Deuda',
   EQUITY: 'Capital',
@@ -14,12 +14,12 @@ export const NOMBRE_DE_CLASE: Readonly<Record<AccountClass, string>> = {
   EXPENSE: 'Gasto',
 };
 
-export const OPCIONES_DE_CLASE: readonly SelectOption<AccountClass>[] = (
+export const CLASS_OPTIONS: readonly SelectOption<AccountClass>[] = (
   ['EXPENSE', 'ASSET', 'LIABILITY', 'INCOME', 'EQUITY'] as const
-).map((clase) => ({ value: clase, label: NOMBRE_DE_CLASE[clase] }));
+).map((clase) => ({ value: clase, label: CLASS_NAME[clase] }));
 
 /** Lo que cambia entre gasto, activo y deuda: los rótulos. El resto es igual. */
-export interface TextosDelRegistro {
+export interface RecordTexts {
   readonly singular: string;
   /** Con su artículo: «la deuda», no «el deuda». */
   readonly conArticulo: string;
@@ -32,7 +32,7 @@ export interface TextosDelRegistro {
   readonly monto: string;
 }
 
-export const TEXTOS: Readonly<Record<RecordKind, TextosDelRegistro>> = {
+export const TEXTS: Readonly<Record<RecordKind, RecordTexts>> = {
   EXPENSE: {
     singular: 'gasto',
     conArticulo: 'el gasto',
@@ -66,39 +66,39 @@ export const TEXTOS: Readonly<Record<RecordKind, TextosDelRegistro>> = {
 };
 
 /** `YYYY-MM-DD` de una fecha local, sin pasar por UTC. */
-export function aDia(fecha: Date): string {
+export function toDay(fecha: Date): string {
   const dos = (n: number) => String(n).padStart(2, '0');
   return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
 }
 
 /** La fecha local de un `YYYY-MM-DD`. */
-export function deDia(dia: string): Date {
+export function fromDay(dia: string): Date {
   const [anio, mes, dd] = dia.split('-').map(Number);
   return new Date(anio!, (mes ?? 1) - 1, dd ?? 1);
 }
 
 /** `28/09/2026`. */
-export function diaLegible(dia: string): string {
+export function readableDay(dia: string): string {
   const [anio, mes, dd] = dia.split('-');
   return `${dd}/${mes}/${anio}`;
 }
 
 /** «5.3 · Insumos médicos», como se elige y como se lee en la tabla. */
-export function rotuloDeCuenta(cuenta: SimpleAccount): string {
+export function accountLabel(cuenta: SimpleAccount): string {
   return `${cuenta.code} · ${cuenta.name}`;
 }
 
-export function opcionesDeCuentas(
+export function accountsOptions(
   cuentas: readonly SimpleAccount[],
   clase: AccountClass | null = null,
 ): readonly SelectOption<string>[] {
   return cuentas
     .filter((cuenta) => clase === null || cuenta.accountClass === clase)
-    .map((cuenta) => ({ value: cuenta.id, label: rotuloDeCuenta(cuenta) }));
+    .map((cuenta) => ({ value: cuenta.id, label: accountLabel(cuenta) }));
 }
 
 /** Un monto escrito por una persona: `1.250,50`, `1250.5` o `1250` → `'1250.50'`. */
-export function montoNormalizado(escrito: string): string | null {
+export function normalizedAmount(escrito: string): string | null {
   const limpio = escrito.trim().replace(/\s/gu, '');
   if (limpio === '') return null;
   // Con coma decimal (es-BO): los puntos son de miles.
@@ -109,6 +109,6 @@ export function montoNormalizado(escrito: string): string | null {
 }
 
 /** `'1250.50'` → `'1250,50'`, para volver a mostrarlo en el campo al editar. */
-export function montoEditable(monto: string): string {
+export function editableAmount(monto: string): string {
   return monto.replace('.', ',');
 }

@@ -2,9 +2,9 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { SITIO_CONSULTORIO } from './fixtures/agenda';
 import { sedesDe } from './handlers/practice.handlers';
-import { TIPO_CREDENCIAL } from './fixtures/concepts';
-import { credencialesDe, especialidadesDe, licenciasDe, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './fixtures/people';
-import { ESPECIALIDAD } from './fixtures/concepts';
+import { CREDENTIAL_TYPE } from './fixtures/concepts';
+import { credentialsOf, specialtiesOf, licensesOf, PACIENTE, PATIENTS, PROFESSIONALS, PROFESSIONALS_REGISTERED_DEMO } from './fixtures/people';
+import { SPECIALTY } from './fixtures/concepts';
 import {
   cupos,
   plantillas,
@@ -16,7 +16,7 @@ import {
   SITIO_OLIVOS,
   ZONA_HORARIA_POR_OMISION,
 } from './fixtures/agenda';
-import { publicaciones, vitrinas } from './fixtures/community';
+import { postList, showcases } from './fixtures/community';
 import { crearRouterSimulado } from './handlers';
 import { isMockReply, type MockMethod, type MockRequest } from './mock-router';
 import {
@@ -46,14 +46,14 @@ const router = crearRouterSimulado();
 /** Un valor plausible para cada parámetro de ruta, según su nombre. */
 function valorDe(nombre: string, patron: string): string {
   if (nombre === 'code') return patron.includes('value-sets') ? 'VS_MEDICAL_SPECIALTY' : 'demo';
-  if (nombre === 'slug') return vitrinas.todos()[0]!.slug;
+  if (nombre === 'slug') return showcases.todos()[0]!.slug;
   if (nombre === 'target') return 'profiles.persons.sex_at_birth_concept_id';
   if (/patient/i.test(nombre) || patron.includes('/patients/')) return PACIENTE.id;
-  if (/practitioner/i.test(nombre) || patron.includes('/practitioners/')) return PROFESIONALES[0]!.id;
+  if (/practitioner/i.test(nombre) || patron.includes('/practitioners/')) return PROFESSIONALS[0]!.id;
   if (patron.includes('/bookings/')) return reservas.todos()[0]!.id;
-  if (patron.includes('/posts/')) return publicaciones.todos()[0]!.id;
-  if (patron.includes('/community/profiles/')) return vitrinas.todos()[0]!.id;
-  return PACIENTES[1]!.id;
+  if (patron.includes('/posts/')) return postList.todos()[0]!.id;
+  if (patron.includes('/community/profiles/')) return showcases.todos()[0]!.id;
+  return PATIENTS[1]!.id;
 }
 
 function peticion(method: MockMethod, patron: string, user: MockUser | null): MockRequest {
@@ -207,7 +207,7 @@ describe('backend simulado', () => {
 
     expect(respuesta.options).toEqual(
       opcionesCanonicas.map(([code, display], ordinal) => ({
-        conceptId: TIPO_CREDENCIAL[code]!,
+        conceptId: CREDENTIAL_TYPE[code]!,
         code,
         display,
         ordinal,
@@ -262,7 +262,7 @@ describe('backend simulado', () => {
     ========================================================================== */
 describe('las agendas de los profesionales de demostración', () => {
   const DIA = 24 * 60 * 60 * 1000;
-  const demos = PROFESIONALES.filter((p) => p.origen === 'DEMO');
+  const demos = PROFESSIONALS.filter((p) => p.origen === 'DEMO');
   const sedes = new Set(Object.values(SEDES_DEMO).map((s) => s.site.id));
 
   function recursosDe(profileId: string) {
@@ -283,8 +283,8 @@ describe('las agendas de los profesionales de demostración', () => {
 
   it('son 13, al final del padrón, con semillas propias y nombres que dicen «demo»', () => {
     expect(demos.length).toBe(13);
-    expect(demos).toEqual([...PROFESIONALES_DEMO_REGISTRADOS]);
-    expect(PROFESIONALES.slice(-13)).toEqual(demos);
+    expect(demos).toEqual([...PROFESSIONALS_REGISTERED_DEMO]);
+    expect(PROFESSIONALS.slice(-13)).toEqual(demos);
     demos.forEach((p, i) => {
       const numero = String(i + 1).padStart(2, '0');
       expect(p.displayName).toBe(`Profesional demo ${numero}`);
@@ -294,7 +294,7 @@ describe('las agendas de los profesionales de demostración', () => {
   });
 
   it('su especialidad sale del catálogo y no están verificados ni puntuados', () => {
-    const catalogo = new Set(Object.values(ESPECIALIDAD));
+    const catalogo = new Set(Object.values(SPECIALTY));
     for (const p of demos) {
       expect(p.especialidades.length, p.id).toBe(1);
       expect(catalogo.has(p.especialidades[0]!), p.id).toBe(true);
@@ -306,9 +306,9 @@ describe('las agendas de los profesionales de demostración', () => {
 
   it('no tienen credenciales, matrícula ni especialidad certificada: no hay título que fingir', () => {
     for (const p of demos) {
-      expect(credencialesDe(p), p.id).toEqual([]);
-      expect(licenciasDe(p), p.id).toEqual([]);
-      expect(especialidadesDe(p).some((e) => e.boardCertified), p.id).toBe(false);
+      expect(credentialsOf(p), p.id).toEqual([]);
+      expect(licensesOf(p), p.id).toEqual([]);
+      expect(specialtiesOf(p).some((e) => e.boardCertified), p.id).toBe(false);
     }
   });
 
@@ -352,13 +352,13 @@ describe('las agendas de los profesionales de demostración', () => {
   });
 
   it('las personas de la planilla del propietario no tienen agenda: la planilla no dice dónde atienden', () => {
-    const deLaPlanilla = PROFESIONALES.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
+    const deLaPlanilla = PROFESSIONALS.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
     expect(deLaPlanilla.length).toBe(13);
     for (const p of deLaPlanilla) expect(recursosDe(p.id), p.id).toEqual([]);
   });
 
   it('el médico escrito sin especialidad sigue sin agenda: no hay nada que reservarle', () => {
-    const sinEspecialidad = PROFESIONALES.filter((p) => p.origen === undefined && p.especialidades.length === 0);
+    const sinEspecialidad = PROFESSIONALS.filter((p) => p.origen === undefined && p.especialidades.length === 0);
     expect(sinEspecialidad.length).toBeGreaterThan(0);
     for (const p of sinEspecialidad) {
       expect(recursosDe(p.id), p.id).toEqual([]);
@@ -383,7 +383,7 @@ describe('las agendas de los profesionales de demostración', () => {
     ========================================================================== */
 describe('el logo del consultorio en la maqueta', () => {
   it('el consultorio sembrado trae logo; las sedes de otras organizaciones, no', () => {
-    const sedes = sedesDe(PROFESIONALES[0]!.id);
+    const sedes = sedesDe(PROFESSIONALS[0]!.id);
     const sembrado = sedes.find((sede) => sede.id === SITIO_CONSULTORIO.id);
     const deOtros = sedes.filter((sede) => !sede.isOwnSite);
 

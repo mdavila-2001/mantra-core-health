@@ -1,8 +1,8 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { SelectorEmojis } from './emoji-picker';
+import { EmojiPicker } from './emoji-picker';
 import { GRUPOS_DE_EMOJIS } from './emoji-catalog.generated';
-import { ChatPreferencias } from '../../../../core/messaging/chat-preferences';
+import { ChatPreferences } from '../../../../core/messaging/chat-preferences';
 
 /**
  * Lo que estas pruebas fijan.
@@ -14,7 +14,7 @@ import { ChatPreferencias } from '../../../../core/messaging/chat-preferences';
  * sólo podía decir «Insertar 💉».
  */
 describe('SelectorEmojis', () => {
-  let fixture: ComponentFixture<SelectorEmojis>;
+  let fixture: ComponentFixture<EmojiPicker>;
 
   const emojis = (): HTMLElement[] =>
     Array.from(
@@ -31,10 +31,10 @@ describe('SelectorEmojis', () => {
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [SelectorEmojis] });
+    TestBed.configureTestingModule({ imports: [EmojiPicker] });
     // Sin recientes: la pestaña de recientes no existe hasta que se usa una.
-    TestBed.inject(ChatPreferencias).emojisRecientes.set([]);
-    fixture = TestBed.createComponent(SelectorEmojis);
+    TestBed.inject(ChatPreferences).recentEmojis.set([]);
+    fixture = TestBed.createComponent(EmojiPicker);
     fixture.detectChanges();
   });
 
@@ -103,7 +103,7 @@ describe('SelectorEmojis', () => {
   });
 
   it('elegir uno lo emite y lo recuerda', () => {
-    const preferencias = TestBed.inject(ChatPreferencias);
+    const preferencias = TestBed.inject(ChatPreferences);
     let elegido = '';
     fixture.componentInstance.elegido.subscribe((emoji) => (elegido = emoji));
 
@@ -111,7 +111,7 @@ describe('SelectorEmojis', () => {
     emojis()[0]?.click();
 
     expect(elegido).toBe('💉');
-    expect(preferencias.emojisRecientes()).toContain('💉');
+    expect(preferencias.recentEmojis()).toContain('💉');
   });
 
   it('no recorta el resultado a una sola pantalla ni lo deja sin tope', () => {

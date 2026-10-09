@@ -5,7 +5,7 @@
  * TypeScript compara por estructura, así que esto sigue sirviendo tal cual a un
  * `app-select`.
  */
-export interface OpcionDeInstitucion {
+export interface InstitutionOption {
   readonly value: string;
   readonly label: string;
   /** Los separadores de grupo: se ven, no se eligen. */
@@ -19,10 +19,10 @@ export interface OpcionDeInstitucion {
   readonly sedes?: readonly string[];
   /**
    * Qué carreras de grado del área de salud dicta, con los rótulos de
-   * {@link AreaDeSalud}. Vacío: ninguna. Es lo que acota las universidades de un
+   * {@link HealthArea}. Vacío: ninguna. Es lo que acota las universidades de un
    * título de salud (la UPSA entra por Psicología aunque no tenga Medicina).
    */
-  readonly areasDeSalud?: readonly AreaDeSalud[];
+  readonly areasDeSalud?: readonly HealthArea[];
   /** De dónde salen `sedes` y `areasDeSalud`: la página oficial consultada. */
   readonly fuentes?: readonly string[];
   /** `false` si algún dato no se pudo confirmar en la fuente oficial. */
@@ -37,7 +37,7 @@ export interface OpcionDeInstitucion {
  * laboratorio clínico, imagenología y afines cuando la casa de estudios los
  * dicta bajo ese nombre.
  */
-export type AreaDeSalud =
+export type HealthArea =
   | 'Medicina'
   | 'Odontología'
   | 'Enfermería'
@@ -57,7 +57,7 @@ export type AreaDeSalud =
  * como constante y no como texto suelto para que nadie lo compare contra una
  * cadena tecleada dos veces distinto.
  */
-export const INSTITUCION_FUERA_DE_CATALOGO = '__otra__';
+export const CATALOG_OUTSIDE_INSTITUTION = '__otra__';
 
 /**
  * Las universidades del **Sistema de la Universidad Boliviana** (CEUB): las
@@ -67,7 +67,7 @@ export const INSTITUCION_FUERA_DE_CATALOGO = '__otra__';
  * Son las que emiten título con validez nacional automática, y por eso van
  * primero: es el caso mayoritario de quien se registra acá.
  */
-export const UNIVERSIDADES_DEL_SISTEMA: readonly OpcionDeInstitucion[] = [
+export const SYSTEM_UNIVERSITIES: readonly InstitutionOption[] = [
   {
     value: 'Universidad Mayor de San Andrés',
     label: 'Universidad Mayor de San Andrés (UMSA) — La Paz',
@@ -297,10 +297,10 @@ export const UNIVERSIDADES_DEL_SISTEMA: readonly OpcionDeInstitucion[] = [
  * bajo autorización del Ministerio de Educación.
  *
  * La lista es la de uso corriente en Bolivia, **no** un padrón importado: ver
- * la nota de {@link OPCIONES_INSTITUCION_EDUCATIVA} sobre de dónde sale y qué
+ * la nota de {@link OPTIONS_EDUCATIONAL_INSTITUTION} sobre de dónde sale y qué
  * la reemplaza.
  */
-export const UNIVERSIDADES_PRIVADAS: readonly OpcionDeInstitucion[] = [
+export const PRIVATE_UNIVERSITIES: readonly InstitutionOption[] = [
   {
     value: 'Universidad Privada Boliviana',
     label: 'Universidad Privada Boliviana (UPB)',
@@ -554,14 +554,14 @@ export const UNIVERSIDADES_PRIVADAS: readonly OpcionDeInstitucion[] = [
  * `<select>` plano sin `<optgroup>`: se ven, no se eligen, y su valor nunca
  * llega a emitirse.
  */
-export const OPCIONES_INSTITUCION_EDUCATIVA: readonly OpcionDeInstitucion[] = [
+export const OPTIONS_EDUCATIONAL_INSTITUTION: readonly InstitutionOption[] = [
   { value: '__grupo-sistema__', label: '— Sistema de la Universidad Boliviana —', disabled: true },
-  ...UNIVERSIDADES_DEL_SISTEMA,
+  ...SYSTEM_UNIVERSITIES,
   { value: '__grupo-privadas__', label: '— Universidades privadas autorizadas —', disabled: true },
-  ...UNIVERSIDADES_PRIVADAS,
+  ...PRIVATE_UNIVERSITIES,
   { value: '__grupo-otra__', label: '— Otra —', disabled: true },
   {
-    value: INSTITUCION_FUERA_DE_CATALOGO,
+    value: CATALOG_OUTSIDE_INSTITUTION,
     label: 'Otra institución o estudié en el exterior…',
   },
 ];
@@ -574,9 +574,9 @@ export const OPCIONES_INSTITUCION_EDUCATIVA: readonly OpcionDeInstitucion[] = [
  * `esTituloDeLaLista`—: los muestra tal cual y deja elegir del catálogo cuando
  * la persona quiera.
  */
-export function esInstitucionDelCatalogo(institucion: string): boolean {
+export function isCatalogInstitution(institucion: string): boolean {
   return (
-    UNIVERSIDADES_DEL_SISTEMA.some((opcion) => opcion.value === institucion) ||
-    UNIVERSIDADES_PRIVADAS.some((opcion) => opcion.value === institucion)
+    SYSTEM_UNIVERSITIES.some((opcion) => opcion.value === institucion) ||
+    PRIVATE_UNIVERSITIES.some((opcion) => opcion.value === institucion)
   );
 }

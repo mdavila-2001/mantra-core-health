@@ -17,16 +17,16 @@ import { uuid } from '../mock-store';
  */
 
 /** El texto del que sale cada identificador. La semilla es la identidad. */
-export const SEMILLAS_DE_PEDIDO = {
+export const ORDER_SEEDS = {
   conSeguro: 'pharmacy-order-7',
   conDelivery: 'pharmacy-order-8',
 } as const;
 
 /** Un pedido de una persona con cobertura: lo aprobado y lo no aprobado. */
-export const ID_PEDIDO_CON_SEGURO = uuid(SEMILLAS_DE_PEDIDO.conSeguro);
+export const ID_ORDER_WITH_INSURANCE = uuid(ORDER_SEEDS.conSeguro);
 
 /** Un pedido que sale a domicilio en vez de esperar en el mostrador. */
-export const ID_PEDIDO_CON_DELIVERY = uuid(SEMILLAS_DE_PEDIDO.conDelivery);
+export const ID_ORDER_WITH_DELIVERY = uuid(ORDER_SEEDS.conDelivery);
 
 /**
  * La dirección guardada del pedido que sale a domicilio. La declara el backend

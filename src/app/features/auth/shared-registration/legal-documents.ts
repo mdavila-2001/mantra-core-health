@@ -17,7 +17,7 @@ import type { CampoDeFormulario } from '../../../shared/forms/paginated/paginate
     ========================================================================== */
 
 /** Los nombres canónicos con los que viaja cada documento en el contrato (`legalDocuments`). */
-export type ClaveDeDocumentoLegal =
+export type DocumentLegalKey =
   | 'constitutionFileId'
   | 'taxIdentifierFileId'
   | 'commerceRegistryFileId'
@@ -25,12 +25,12 @@ export type ClaveDeDocumentoLegal =
   | 'healthAuthorityCertificateFileId';
 
 /** El mensaje que ve la persona cuando intenta avanzar sin un documento obligatorio. */
-export const MENSAJE_DOCUMENTO_OBLIGATORIO = 'Este documento es obligatorio para continuar';
+export const MESSAGE_REQUIRED_DOCUMENT = 'Este documento es obligatorio para continuar';
 
 /** Rol canónico ↔ clave del contrato ↔ el sufijo de su `data-testid`, en el orden del registro de procesos. */
-export const DOCUMENTOS_LEGALES_DEL_REGISTRO: readonly {
+export const RECORD_LEGAL_DOCUMENTS: readonly {
   readonly role: LegalDocumentRole;
-  readonly key: ClaveDeDocumentoLegal;
+  readonly key: DocumentLegalKey;
   readonly testId: string;
 }[] = [
   { role: 'CONSTITUTION_DOC', key: 'constitutionFileId', testId: 'constitution' },
@@ -61,22 +61,22 @@ export const DOCUMENTOS_LEGALES_DEL_REGISTRO: readonly {
  * forma en la que ya lo exigía el alta de aseguradora.
  * @returns Los cinco campos, en el orden del registro de procesos.
  */
-export function camposDeDocumentosLegales(
+export function legalDocumentsFields(
   countryIso: string,
   lang: UiLanguage = uiLanguage(),
   required = true,
 ): readonly CampoDeFormulario[] {
-  return DOCUMENTOS_LEGALES_DEL_REGISTRO.map(({ role, key }, indice) => {
+  return RECORD_LEGAL_DOCUMENTS.map(({ role, key }, indice) => {
     const texto = legalDocumentText(role, countryIso, lang);
     return {
       key,
       label: required ? texto.label : `${texto.label} (opcional)`,
       hint: texto.hint,
       control: 'custom' as const,
-      ...(required ? { required: true, mensajeDeError: MENSAJE_DOCUMENTO_OBLIGATORIO } : {}),
+      ...(required ? { required: true, mensajeDeError: MESSAGE_REQUIRED_DOCUMENT } : {}),
       // El último va a ancho completo: con 5 campos en grilla de a 2, uno
       // solo a media fila quedaría sin par.
-      ancho: indice === DOCUMENTOS_LEGALES_DEL_REGISTRO.length - 1 ? 'completo' : 'mitad',
+      ancho: indice === RECORD_LEGAL_DOCUMENTS.length - 1 ? 'completo' : 'mitad',
     };
   });
 }
@@ -84,33 +84,33 @@ export function camposDeDocumentosLegales(
 /**
  * El poder notariado del representante legal (subtarea 1.4).
  *
- * Va aparte de {@link DOCUMENTOS_LEGALES_DEL_REGISTRO} — que `documentos-legales.spec.ts`
+ * Va aparte de {@link RECORD_LEGAL_DOCUMENTS} — que `documentos-legales.spec.ts`
  * fija en cinco, en ese orden— y no se le suma como sexto elemento: la clave de
  * este documento (`powerOfAttorneyFileId`) no pertenece al bloque `legalDocuments`
  * de la organización, sino a `legalRepresentative`. El rótulo ya está traducido
  * en el diccionario desde la subtarea 1.2 («Reservado para el hito 1.4»).
  */
-export const CLAVE_PODER_NOTARIADO = 'powerOfAttorneyFileId' as const;
+export const KEY_NOTARIZED_POWER = 'powerOfAttorneyFileId' as const;
 
 /** Las claves de documento que puede manejar un `<app-dropzone-pdf>` en este alta. */
-export type ClaveDeDocumentoDelAlta = ClaveDeDocumentoLegal | typeof CLAVE_PODER_NOTARIADO;
+export type EnrollmentDocumentKey = DocumentLegalKey | typeof KEY_NOTARIZED_POWER;
 
 /**
  * El campo `custom` del poder notariado, mismo patrón que los cinco de la
- * empresa. `required` con el mismo criterio que {@link camposDeDocumentosLegales}.
+ * empresa. `required` con el mismo criterio que {@link legalDocumentsFields}.
  */
-export function campoDelPoderNotariado(
+export function notarizedPowerField(
   countryIso: string,
   lang: UiLanguage = uiLanguage(),
   required = true,
 ): CampoDeFormulario {
   const texto = legalDocumentText('POWER_OF_ATTORNEY_DOC', countryIso, lang);
   return {
-    key: CLAVE_PODER_NOTARIADO,
+    key: KEY_NOTARIZED_POWER,
     label: required ? texto.label : `${texto.label} (opcional)`,
     hint: texto.hint,
     control: 'custom' as const,
     ancho: 'completo' as const,
-    ...(required ? { required: true, mensajeDeError: MENSAJE_DOCUMENTO_OBLIGATORIO } : {}),
+    ...(required ? { required: true, mensajeDeError: MESSAGE_REQUIRED_DOCUMENT } : {}),
   };
 }

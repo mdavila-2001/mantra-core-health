@@ -11,7 +11,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { WorkHistory } from '../work-history/work-history';
 
-import { PESTANAS_DEL_EDITOR_MEDICO } from '../doctor-profile-tabs';
+import { EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
 
 /**
@@ -2994,7 +2994,7 @@ describe('PractitionerProfileEdit', () => {
     const pestanas = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]'),
     ).map((boton) => boton.textContent?.trim() ?? '');
-    expect(pestanas).toEqual([...PESTANAS_DEL_EDITOR_MEDICO]);
+    expect(pestanas).toEqual([...EDITOR_DOCTOR_TABS]);
     expect(pestanas).not.toContain('Actividad');
     expect(fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]')).toBeNull();
   });
@@ -3341,7 +3341,7 @@ describe('PractitionerProfileEdit', () => {
       );
       expect(señal<number>('pestana')()).toBe(2);
       expect(ultimoAviso()?.message).toBe(
-        `Revise los campos marcados en «${PESTANAS_DEL_EDITOR_MEDICO[2]}» y vuelva a guardar.`,
+        `Revise los campos marcados en «${EDITOR_DOCTOR_TABS[2]}» y vuelva a guardar.`,
       );
     });
 
@@ -3647,7 +3647,7 @@ describe('PractitionerProfileEdit', () => {
 
     interface Imagen {
       visible(): string | null;
-      cambio: string | null | undefined;
+      change: string | null | undefined;
       error(): string;
     }
     const firma = (): Imagen => interno<Imagen>('firma');
@@ -3690,8 +3690,8 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
       await esperar(() => firma().visible());
 
-      expect(firma().cambio).toBe('file-firma');
-      expect(sello().cambio).toBeUndefined();
+      expect(firma().change).toBe('file-firma');
+      expect(sello().change).toBeUndefined();
       http.expectNone((r) => r.method === 'PUT');
       http.expectNone('/profiles/practitioners/me');
     });
@@ -3709,7 +3709,7 @@ describe('PractitionerProfileEdit', () => {
       expect(put.request.method).toBe('PUT');
       expect(put.request.body).toEqual({ signatureFileId: 'file-firma' });
       put.flush({ signatureFileId: 'file-firma', sealFileId: null });
-      expect(firma().cambio).toBeUndefined();
+      expect(firma().change).toBeUndefined();
     });
 
     it('firma y sello elegidos juntos viajan en un solo PUT', async () => {
@@ -3734,7 +3734,7 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/common/files/s1/content').flush(new Blob([bytes()], { type: 'image/png' }));
       await esperar(() => firma().visible() && sello().visible());
 
-      (componente as unknown as { sello: { quitar(): void } }).sello.quitar();
+      (componente as unknown as { sello: { remove(): void } }).sello.remove();
       expect(sello().visible()).toBeNull();
       interno<() => void>('guardarPresentacion')();
 
@@ -3752,7 +3752,7 @@ describe('PractitionerProfileEdit', () => {
       interno<() => void>('cancelarEdicion')();
 
       expect(firma().visible()).toBeNull();
-      expect(firma().cambio).toBeUndefined();
+      expect(firma().change).toBeUndefined();
       interno<() => void>('guardarPresentacion')();
       http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
     });
@@ -3775,7 +3775,7 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/common/files/upload').flush('boom', { status: 500, statusText: 'x' });
 
       expect(firma().error()).toContain('No se pudo subir la firma');
-      expect(firma().cambio).toBeUndefined();
+      expect(firma().change).toBeUndefined();
     });
 
     it('el logo y la firma guardan cada uno por su ruta cuando cambian a la vez', async () => {

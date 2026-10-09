@@ -8,15 +8,15 @@
   <div class="numeros__cabecera">
     <app-section-heading icono="chart" titulo="Su práctica en tres números" id="titulo-numeros" />
     <app-segmented-control
-      [options]="periodos"
-      [value]="periodo()"
+      [options]="periods"
+      [value]="period()"
       ariaLabel="Período de los números"
-      (valueChange)="elegirPeriodo($event)"
+      (valueChange)="choosePeriod($event)"
     />
   </div>
 
-  <app-view-state-host [state]="resumen()" (retry)="cargarResumen()">
-    @if (numeros(); as n) {
+  <app-view-state-host [state]="summary()" (retry)="loadSummary()">
+    @if (numbers(); as n) {
       <div class="numeros__fila" data-testid="contabilidad-numeros">
         <app-card variant="outlined" class="numero" data-testid="numero-pacientes">
           <p class="numero__rotulo">Pacientes atendidos</p>
@@ -28,12 +28,12 @@
         </app-card>
         <app-card variant="elevated" class="numero numero--destacado" data-testid="numero-cobrado">
           <p class="numero__rotulo">Cobró</p>
-          <p class="numero__cifra">{{ importe(n.collected) }}</p>
+          <p class="numero__cifra">{{ amount(n.collected) }}</p>
           <p class="numero__pie">consultas pagadas del período</p>
         </app-card>
         <app-card variant="outlined" class="numero" data-testid="numero-aseguradoras">
           <p class="numero__rotulo">Espera de las aseguradoras</p>
-          <p class="numero__cifra">{{ importe(n.expectedFromInsurers) }}</p>
+          <p class="numero__cifra">{{ amount(n.expectedFromInsurers) }}</p>
           <p class="numero__pie">
             a hoy, en {{ n.pendingClaims }}
             {{ n.pendingClaims === 1 ? 'solicitud pendiente' : 'solicitudes pendientes' }}
@@ -52,12 +52,12 @@
 @if (parte() !== 'numeros') {
 <app-card variant="outlined" padding="lg" class="registros" data-testid="contabilidad-registros">
   <app-section-heading card-header icono="billing" titulo="Sus registros" />
-  <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+  <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
     @for (kind of kinds; track kind) {
       <app-tab
         [label]="
           (kind === 'EXPENSE' ? 'Gastos' : kind === 'ASSET' ? 'Activos' : 'Deudas') +
-          cuantos(registros()[kind])
+          count(records()[kind])
         "
       >
         <div class="registros__panel">
@@ -66,24 +66,24 @@
               app-button
               type="button"
               [attr.data-testid]="'nuevo-' + kind"
-              (clicked)="nuevoRegistro(kind)"
+              (clicked)="newRecord(kind)"
             >
-              {{ textos[kind].nuevo }}
+              {{ texts[kind].nuevo }}
             </button>
           </div>
           <app-data-table
-            [state]="filasDe(kind)"
-            [columns]="columnasDeRegistro()"
-            [trackBy]="porId"
-            [caption]="textos[kind].tipo"
-            (retry)="cargarRegistros(kind)"
+            [state]="rowsOf(kind)"
+            [columns]="recordColumns()"
+            [trackBy]="byId"
+            [caption]="texts[kind].tipo"
+            (retry)="loadRecords(kind)"
             [attr.data-testid]="'tabla-' + kind"
           />
         </div>
       </app-tab>
     }
 
-    <app-tab [label]="'Transacciones' + cuantos(transacciones())">
+    <app-tab [label]="'Transacciones' + count(transactions())">
       <div class="registros__panel">
         <div class="registros__barra">
           <button
@@ -96,17 +96,17 @@
           </button>
         </div>
         <app-data-table
-          [state]="filasDeTransacciones()"
-          [columns]="columnasDeTransaccion()"
-          [trackBy]="porId"
+          [state]="transactionsRows()"
+          [columns]="transactionColumns()"
+          [trackBy]="byId"
           caption="Transacciones: debe y haber"
-          (retry)="cargarTransacciones()"
+          (retry)="loadTransactions()"
           data-testid="tabla-transacciones"
         />
       </div>
     </app-tab>
 
-    <app-tab [label]="'Cuentas' + cuantos(cuentas())">
+    <app-tab [label]="'Cuentas' + count(accounts())">
       <div class="registros__panel">
         <div class="registros__barra">
           <p class="registros__nota">
@@ -122,11 +122,11 @@
           </button>
         </div>
         <app-data-table
-          [state]="filasDeCuentas()"
-          [columns]="columnasDeCuenta()"
-          [trackBy]="porId"
+          [state]="accountsRows()"
+          [columns]="accountColumns()"
+          [trackBy]="byId"
           caption="Cuentas"
-          (retry)="cargarCuentas()"
+          (retry)="loadAccounts()"
           data-testid="tabla-cuentas"
         />
       </div>
@@ -138,23 +138,23 @@
 <!-- Las celdas de acciones: la tabla las instancia por fila. -->
 <ng-template #accionesDeRegistro let-fila>
   <app-row-actions
-    [actions]="acciones"
+    [actions]="actions"
     [fila]="fila.descripcion"
-    (actionSelected)="accionDeRegistro(fila, $event)"
+    (actionSelected)="recordAction(fila, $event)"
   />
 </ng-template>
 <ng-template #accionesDeTransaccion let-fila>
   <app-row-actions
-    [actions]="acciones"
+    [actions]="actions"
     [fila]="fila.descripcion"
-    (actionSelected)="accionDeTransaccion(fila, $event)"
+    (actionSelected)="transactionAction(fila, $event)"
   />
 </ng-template>
 <ng-template #accionesDeCuenta let-fila>
   <app-row-actions
-    [actions]="accionesDe(fila.cuenta)"
+    [actions]="actionsOf(fila.cuenta)"
     [fila]="fila.nombre"
-    (actionSelected)="accionDeCuenta(fila, $event)"
+    (actionSelected)="accountAction(fila, $event)"
   />
 </ng-template>
 
@@ -166,9 +166,9 @@
           [practiceId]="practiceId()"
           [kind]="abierto.kind"
           [registro]="abierto.registro"
-          [cuentas]="listaDeCuentas()"
-          (saved)="registroGuardado($event)"
-          (cuentaCreada)="cargarCuentas()"
+          [cuentas]="accountsList()"
+          (saved)="savedRecord($event)"
+          (cuentaCreada)="loadAccounts()"
           (closed)="modal.set(null)"
         />
       }
@@ -178,8 +178,8 @@
         <app-transaction-dialog
           [practiceId]="practiceId()"
           [transaccion]="abierto.transaccion"
-          [cuentas]="listaDeCuentas()"
-          (saved)="transaccionGuardada()"
+          [cuentas]="accountsList()"
+          (saved)="savedTransaction()"
           (closed)="modal.set(null)"
         />
       }
@@ -189,7 +189,7 @@
         <app-account-dialog
           [practiceId]="practiceId()"
           [cuenta]="abierto.cuenta"
-          (saved)="cuentaGuardada()"
+          (saved)="savedAccount()"
           (closed)="modal.set(null)"
         />
       }

@@ -35,23 +35,23 @@ export {
     ========================================================================== */
 
 /** Tope del código de producto (SKU), igual que `productCode` en el DTO. */
-export const LARGO_MAXIMO_DEL_CODIGO = 100;
+export const CODE_LONG_MAX = 100;
 /** Tope de marca y genérico. */
-export const LARGO_MAXIMO_DEL_NOMBRE = 300;
+export const NAME_LONG_MAX = 300;
 /** Tope de concentración y presentación. */
-export const LARGO_MAXIMO_DEL_DETALLE = 200;
+export const DETAIL_LONG_MAX = 200;
 
 /** Cuántas filas admite una carga. Cada fila es un `POST`, en serie. */
-export const FILAS_MAXIMAS_POR_CARGA = 500;
+export const MAX_ROWS_BY_LOAD = 500;
 /** Tamaño máximo del archivo: 500 filas de catálogo no llegan ni a 100 kB. */
-export const BYTES_MAXIMOS_DEL_ARCHIVO = 1024 * 1024;
+export const FILE_MAX_BYTES = 1024 * 1024;
 /** Tope de la descripción para el paciente. */
-export const LARGO_MAXIMO_DE_LA_DESCRIPCION = 2000;
+export const DESCRIPTION_LONG_MAX = 2000;
 /** Precio máximo aceptado, en bolivianos: atrapa un separador de miles de más. */
-export const PRECIO_MAXIMO = 1_000_000;
+export const MAX_PRICE = 1_000_000;
 
 /** Las categorías de la vitrina: las del mockup del cliente. */
-export const CATEGORIAS = [
+export const CATEGORIES = [
   'Medicamentos',
   'Dermocosmética',
   'Cuidado personal',
@@ -64,9 +64,9 @@ export const CATEGORIAS = [
  * Lo que se carga de un producto, como texto tal cual se escribió.
  *
  * Es la forma común del formulario y de una fila del CSV: las dos terminan en
- * {@link revisarProducto}, que decide si hay un alta válida.
+ * {@link reviewProduct}, que decide si hay un alta válida.
  */
-export interface CamposDelProducto {
+export interface ProductFields {
   readonly codigo: string;
   readonly marca: string;
   readonly generico: string;
@@ -80,7 +80,7 @@ export interface CamposDelProducto {
   /** Precio de venta en bolivianos, con punto o coma decimal. */
   readonly precio: string;
   /**
-   * Una de las categorías permitidas —por defecto {@link CATEGORIAS}; la
+   * Una de las categorías permitidas —por defecto {@link CATEGORIES}; la
    * importación pasa las de la farmacia—, sin importar mayúsculas ni tildes.
    */
   readonly categoria: string;
@@ -92,7 +92,7 @@ export interface CamposDelProducto {
   readonly disponible: string;
 }
 
-export const CAMPOS_VACIOS: CamposDelProducto = {
+export const EMPTY_FIELDS: ProductFields = {
   codigo: '',
   marca: '',
   generico: '',
@@ -112,21 +112,21 @@ export const CAMPOS_VACIOS: CamposDelProducto = {
  * nombre, concentración, presentación y receta son del registro oficial: el
  * formulario no los pide y la revisión no los exige ni los manda.
  */
-export interface VinculoConElCatalogo {
+export interface LinkWithCatalog {
   readonly catalogProductId: string;
   /** Código de la presentación elegida (CN, CUM…), si el producto tiene varias. */
   readonly presentationCode?: string;
 }
 
 /** El resultado de revisar un producto: el alta lista, o por qué no. */
-export type RevisionDelProducto =
+export type ProductReview =
   | { readonly valido: true; readonly borrador: PharmacyProductDraft }
   | { readonly valido: false; readonly errores: readonly string[] };
 
 /** Letra o número, seguido de letras, números, punto, guion, guion bajo o barra. */
-const FORMA_DEL_CODIGO = /^[\p{L}\p{N}][\p{L}\p{N}._\-/]*$/u;
+const CODE_SHAPE = /^[\p{L}\p{N}][\p{L}\p{N}._\-/]*$/u;
 
-const SI = new Set(['si', 'sí', 's', 'true', '1', 'x', 'yes']);
+const YES = new Set(['si', 'sí', 's', 'true', '1', 'x', 'yes']);
 const NO = new Set(['no', 'n', 'false', '0']);
 
 /**
@@ -135,11 +135,11 @@ const NO = new Set(['no', 'n', 'false', '0']);
  * Devuelve **todos** los problemas de una vez: cortar en el primero obliga a
  * corregir y reintentar tantas veces como errores haya.
  */
-export function revisarProducto(
-  campos: CamposDelProducto,
-  categoriasPermitidas: readonly string[] = CATEGORIAS,
-  vinculo?: VinculoConElCatalogo,
-): RevisionDelProducto {
+export function reviewProduct(
+  campos: ProductFields,
+  categoriasPermitidas: readonly string[] = CATEGORIES,
+  vinculo?: LinkWithCatalog,
+): ProductReview {
   const errores: string[] = [];
   const codigo = campos.codigo.trim();
   const marca = campos.marca.trim();
@@ -151,42 +151,42 @@ export function revisarProducto(
 
   if (codigo === '') {
     errores.push('Falta el código del producto.');
-  } else if (codigo.length > LARGO_MAXIMO_DEL_CODIGO) {
-    errores.push(`El código no puede pasar de ${LARGO_MAXIMO_DEL_CODIGO} caracteres.`);
-  } else if (!FORMA_DEL_CODIGO.test(codigo)) {
+  } else if (codigo.length > CODE_LONG_MAX) {
+    errores.push(`El código no puede pasar de ${CODE_LONG_MAX} caracteres.`);
+  } else if (!CODE_SHAPE.test(codigo)) {
     errores.push(
       'El código empieza con letra o número y sólo lleva letras, números, punto, guion o barra.',
     );
   }
 
   // Con vínculo al catálogo esto lo trae el registro oficial: ni se pide ni se revisa.
-  const receta = vinculo === undefined ? siONo(campos.receta) : null;
+  const receta = vinculo === undefined ? yesOrNo(campos.receta) : null;
   if (vinculo === undefined) {
     if (marca === '' && generico === '') {
       errores.push('Ponga la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
     }
-    if (marca.length > LARGO_MAXIMO_DEL_NOMBRE) {
-      errores.push(`La marca no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
+    if (marca.length > NAME_LONG_MAX) {
+      errores.push(`La marca no puede pasar de ${NAME_LONG_MAX} caracteres.`);
     }
-    if (generico.length > LARGO_MAXIMO_DEL_NOMBRE) {
-      errores.push(`El nombre genérico no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
+    if (generico.length > NAME_LONG_MAX) {
+      errores.push(`El nombre genérico no puede pasar de ${NAME_LONG_MAX} caracteres.`);
     }
-    if (concentracion.length > LARGO_MAXIMO_DEL_DETALLE) {
-      errores.push(`La concentración no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
+    if (concentracion.length > DETAIL_LONG_MAX) {
+      errores.push(`La concentración no puede pasar de ${DETAIL_LONG_MAX} caracteres.`);
     }
-    if (presentacion.length > LARGO_MAXIMO_DEL_DETALLE) {
-      errores.push(`La presentación no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
+    if (presentacion.length > DETAIL_LONG_MAX) {
+      errores.push(`La presentación no puede pasar de ${DETAIL_LONG_MAX} caracteres.`);
     }
     if (receta === 'invalido') {
       errores.push('«Receta» se responde con sí o no.');
     }
   }
-  const cadenaDeFrio = siONo(campos.cadenaDeFrio);
+  const cadenaDeFrio = yesOrNo(campos.cadenaDeFrio);
   if (cadenaDeFrio === 'invalido') {
     errores.push('«Cadena de frío» se responde con sí o no.');
   }
 
-  if (codigoDeBarras !== '' && !esGtinValido(codigoDeBarras)) {
+  if (codigoDeBarras !== '' && !isValidGtin(codigoDeBarras)) {
     errores.push(
       'El código de barras tiene que ser un GTIN de 8, 12, 13 o 14 dígitos con su dígito verificador.',
     );
@@ -195,10 +195,10 @@ export function revisarProducto(
   const precio = parsePrice(campos.precio);
   if (precio === 'invalido') {
     errores.push(
-      `El precio va en bolivianos, mayor que 0 y hasta ${PRECIO_MAXIMO.toLocaleString('es-BO')}, con punto o coma y hasta dos decimales (sin separador de miles).`,
+      `El precio va en bolivianos, mayor que 0 y hasta ${MAX_PRICE.toLocaleString('es-BO')}, con punto o coma y hasta dos decimales (sin separador de miles).`,
     );
   }
-  const categoria = categoriaDe(campos.categoria, categoriasPermitidas);
+  const categoria = categoryOf(campos.categoria, categoriasPermitidas);
   if (categoria === 'invalido') {
     errores.push(
       categoriasPermitidas.length === 0
@@ -206,10 +206,10 @@ export function revisarProducto(
         : `La categoría tiene que ser una de estas: ${categoriasPermitidas.join(', ')}.`,
     );
   }
-  if (descripcion.length > LARGO_MAXIMO_DE_LA_DESCRIPCION) {
-    errores.push(`La descripción no puede pasar de ${LARGO_MAXIMO_DE_LA_DESCRIPCION} caracteres.`);
+  if (descripcion.length > DESCRIPTION_LONG_MAX) {
+    errores.push(`La descripción no puede pasar de ${DESCRIPTION_LONG_MAX} caracteres.`);
   }
-  const disponible = disponibilidadDe(campos.disponible);
+  const disponible = availabilityOf(campos.disponible);
   if (disponible === 'invalido') {
     errores.push('«Disponible» se responde con sí, no, «agotado» o la cantidad que tiene.');
   }
@@ -263,7 +263,7 @@ export function revisarProducto(
  *   planilla con la columna de precio en blanco no tiene que borrarle el
  *   precio a 300 productos.
  */
-export function cambiosDelBorrador(
+export function draftChanges(
   borrador: PharmacyProductDraft,
   completo: boolean,
   delCatalogo = false,
@@ -303,24 +303,24 @@ export function parsePrice(texto: string): number | null | 'invalido' {
     return 'invalido';
   }
   const numero = Number(limpio.replace(',', '.'));
-  return numero > 0 && numero <= PRECIO_MAXIMO ? numero : 'invalido';
+  return numero > 0 && numero <= MAX_PRICE ? numero : 'invalido';
 }
 
 /** La categoría con su grafía canónica, o `null` si no se puso. */
-function categoriaDe(
+function categoryOf(
   texto: string,
   permitidas: readonly string[],
 ): string | null | 'invalido' {
-  const limpio = sinTildes(texto.trim());
+  const limpio = withoutAccents(texto.trim());
   if (limpio === '') {
     return null;
   }
-  return permitidas.find((categoria) => sinTildes(categoria) === limpio) ?? 'invalido';
+  return permitidas.find((categoria) => withoutAccents(categoria) === limpio) ?? 'invalido';
 }
 
 /** Si la farmacia lo tiene hoy. Vacío = sí. */
-function disponibilidadDe(texto: string): boolean | 'invalido' {
-  const limpio = sinTildes(texto.trim());
+function availabilityOf(texto: string): boolean | 'invalido' {
+  const limpio = withoutAccents(texto.trim());
   if (limpio === '' || limpio === 'disponible' || limpio === 'en stock' || limpio === 'con stock') {
     return true;
   }
@@ -330,21 +330,21 @@ function disponibilidadDe(texto: string): boolean | 'invalido' {
   if (/^\d+$/.test(limpio)) {
     return Number(limpio) > 0;
   }
-  const respuesta = siONo(limpio);
+  const respuesta = yesOrNo(limpio);
   return respuesta === null || respuesta === 'invalido' ? 'invalido' : respuesta;
 }
 
-export function sinTildes(texto: string): string {
+export function withoutAccents(texto: string): string {
   return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 /** `null` = no se declaró; así el backend guarda «sin dato» y no un «no» inventado. */
-function siONo(texto: string): boolean | null | 'invalido' {
+function yesOrNo(texto: string): boolean | null | 'invalido' {
   const limpio = texto.trim().toLowerCase();
   if (limpio === '') {
     return null;
   }
-  if (SI.has(limpio)) {
+  if (YES.has(limpio)) {
     return true;
   }
   return NO.has(limpio) ? false : 'invalido';
@@ -356,7 +356,7 @@ function siONo(texto: string): boolean | null | 'invalido' {
  * El dígito verificador atrapa el error más común al tipear un código de
  * barras: un número cambiado o dos transpuestos.
  */
-export function esGtinValido(texto: string): boolean {
+export function isValidGtin(texto: string): boolean {
   if (!/^\d+$/.test(texto) || ![8, 12, 13, 14].includes(texto.length)) {
     return false;
   }
@@ -372,16 +372,16 @@ export function esGtinValido(texto: string): boolean {
 /* ─── El CSV ──────────────────────────────────────────────────────────────── */
 
 /** Una columna del CSV: su encabezado canónico y a qué campo va. */
-interface ColumnaDelCsv {
+interface CsvColumn {
   readonly encabezado: string;
-  readonly campo: keyof CamposDelProducto;
+  readonly campo: keyof ProductFields;
   /** Otras formas de llamarla que se aceptan, ya normalizadas. */
   readonly alias: readonly string[];
   readonly descripcion: string;
 }
 
 /** Las columnas, en el orden de la plantilla. */
-export const COLUMNAS_DEL_CSV: readonly ColumnaDelCsv[] = [
+export const CSV_COLUMNS: readonly CsvColumn[] = [
   {
     encabezado: 'codigo',
     campo: 'codigo',
@@ -440,7 +440,7 @@ export const COLUMNAS_DEL_CSV: readonly ColumnaDelCsv[] = [
     encabezado: 'categoria',
     campo: 'categoria',
     alias: ['rubro', 'category'],
-    descripcion: CATEGORIAS.join(' · '),
+    descripcion: CATEGORIES.join(' · '),
   },
   {
     encabezado: 'descripcion',
@@ -457,13 +457,13 @@ export const COLUMNAS_DEL_CSV: readonly ColumnaDelCsv[] = [
 ];
 
 /** Una fila del archivo, ya llevada a los campos del producto. */
-export interface FilaDelCsv {
+export interface CsvRow {
   /**
    * La línea del archivo donde empieza la fila, contando el encabezado como
    * la 1: es el número que la persona ve a la izquierda en su planilla.
    */
   readonly numero: number;
-  readonly campos: CamposDelProducto;
+  readonly campos: ProductFields;
   /** La fila no tiene la forma del encabezado; se rechaza sola, no el archivo. */
   readonly errorDeForma?: string;
 }
@@ -471,14 +471,14 @@ export interface FilaDelCsv {
 /**
  * A qué campo del producto fue a parar cada encabezado del archivo.
  *
- * Es el mapeo que {@link leerCsv} ya calculaba por dentro (encabezado o alias);
+ * Es el mapeo que {@link readCsv} ya calculaba por dentro (encabezado o alias);
  * se expone para que la pantalla de importación lo muestre en vez de esconderlo.
  */
 export interface CsvColumnMapping {
   /** El encabezado tal como venía escrito en el archivo (sin espacios a los lados). */
   readonly header: string;
   /** El campo del producto al que se asignó, o `null` si la columna se ignora. */
-  readonly field: keyof CamposDelProducto | null;
+  readonly field: keyof ProductFields | null;
   /** El encabezado de la plantilla de ese campo; `null` si se ignora. */
   readonly canonicalHeader: string | null;
   /** Si coincidió con el encabezado de la plantilla o con uno de sus alias. */
@@ -486,8 +486,8 @@ export interface CsvColumnMapping {
 }
 
 /** Lo que se sacó del archivo. */
-export interface LecturaDelCsv {
-  readonly filas: readonly FilaDelCsv[];
+export interface CsvReading {
+  readonly filas: readonly CsvRow[];
   /** Encabezados que no corresponden a ninguna columna: se avisan y se ignoran. */
   readonly ignoradas: readonly string[];
   /** Una entrada por columna del archivo, en su orden, con el campo asignado. */
@@ -507,9 +507,9 @@ export interface LecturaDelCsv {
  *
  * Lanza {@link ArchivoInvalido} con un mensaje para la persona si el archivo no
  * se puede usar en absoluto; los problemas de una fila puntual no lanzan: los
- * cuenta {@link revisarCarga}.
+ * cuenta {@link reviewLoad}.
  */
-export function leerCsv(contenido: string): LecturaDelCsv {
+export function readCsv(contenido: string): CsvReading {
   const texto = contenido.replace(/^\uFEFF/, '');
   if (texto.trim() === '') {
     throw new ArchivoInvalido('El archivo está vacío.');
@@ -532,7 +532,7 @@ export function leerCsv(contenido: string): LecturaDelCsv {
     throw new ArchivoInvalido('Hay dos columnas con el mismo encabezado.');
   }
 
-  const destino = nombres.map((nombre) => columnaPorNombre(nombre)?.campo ?? null);
+  const destino = nombres.map((nombre) => columnByName(nombre)?.campo ?? null);
   if (!destino.includes('codigo')) {
     throw new ArchivoInvalido(
       'Falta la columna «codigo». Descargue la plantilla para ver los encabezados.',
@@ -545,19 +545,19 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   if (datos.length === 0) {
     throw new ArchivoInvalido('El archivo tiene encabezado pero ningún producto.');
   }
-  if (datos.length > FILAS_MAXIMAS_POR_CARGA) {
+  if (datos.length > MAX_ROWS_BY_LOAD) {
     throw new ArchivoInvalido(
-      `El archivo tiene ${datos.length} productos y el tope por carga es ${FILAS_MAXIMAS_POR_CARGA}. Divídalo en varios archivos.`,
+      `El archivo tiene ${datos.length} productos y el tope por carga es ${MAX_ROWS_BY_LOAD}. Divídalo en varios archivos.`,
     );
   }
 
-  const filas = datos.map(({ linea, celdas: crudas }): FilaDelCsv => {
+  const filas = datos.map(({ linea, celdas: crudas }): CsvRow => {
     // Las celdas vacías de más al final son el mismo resto que en el encabezado.
     const celdas = [...crudas];
     while (celdas.length > nombres.length && celdas[celdas.length - 1]!.trim() === '') {
       celdas.pop();
     }
-    const campos: Record<keyof CamposDelProducto, string> = { ...CAMPOS_VACIOS };
+    const campos: Record<keyof ProductFields, string> = { ...EMPTY_FIELDS };
     destino.forEach((campo, j) => {
       if (campo !== null) {
         campos[campo] = sinApostrofoDeFormula(celdas[j] ?? '');
@@ -575,7 +575,7 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   });
 
   const columns = encabezado.map((crudo, j): CsvColumnMapping => {
-    const columna = columnaPorNombre(nombres[j]!);
+    const columna = columnByName(nombres[j]!);
     return {
       header: crudo.trim(),
       field: columna?.campo ?? null,
@@ -591,8 +591,8 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   };
 }
 
-function columnaPorNombre(nombre: string): ColumnaDelCsv | undefined {
-  return COLUMNAS_DEL_CSV.find(
+function columnByName(nombre: string): CsvColumn | undefined {
+  return CSV_COLUMNS.find(
     (columna) => columna.encabezado === nombre || columna.alias.includes(nombre),
   );
 }
@@ -600,7 +600,7 @@ function columnaPorNombre(nombre: string): ColumnaDelCsv | undefined {
 /* ─── La revisión de la carga ─────────────────────────────────────────────── */
 
 /** Por qué una fila no se va a mandar. */
-export type MotivoDeRechazo =
+export type RejectionReason =
   | 'INVALIDA'
   | 'REPETIDA_EN_EL_ARCHIVO'
   | 'YA_EN_EL_CATALOGO'
@@ -611,13 +611,13 @@ export type MotivoDeRechazo =
  * catálogo: crear los nuevos y actualizar los que ya están, sólo crear (los
  * existentes se rechazan) o sólo actualizar (los nuevos se rechazan).
  */
-export type ModoDeCarga = 'CREAR_Y_ACTUALIZAR' | 'SOLO_CREAR' | 'SOLO_ACTUALIZAR';
+export type LoadMode = 'CREAR_Y_ACTUALIZAR' | 'SOLO_CREAR' | 'SOLO_ACTUALIZAR';
 
 /** Una fila revisada: lista para mandar, o con sus motivos. */
-export type FilaRevisada =
+export type ReviewedRow =
   | {
       readonly numero: number;
-      readonly campos: CamposDelProducto;
+      readonly campos: ProductFields;
       readonly lista: true;
       readonly borrador: PharmacyProductDraft;
       /** Alta nueva, o cambios a un producto que ya existe. */
@@ -627,9 +627,9 @@ export type FilaRevisada =
     }
   | {
       readonly numero: number;
-      readonly campos: CamposDelProducto;
+      readonly campos: ProductFields;
       readonly lista: false;
-      readonly motivo: MotivoDeRechazo;
+      readonly motivo: RejectionReason;
       readonly errores: readonly string[];
     };
 
@@ -645,14 +645,14 @@ export type FilaRevisada =
  * - **Un código que no está en el catálogo se crea** (en `CREAR_Y_ACTUALIZAR` y
  *   `SOLO_CREAR`), o se rechaza (en `SOLO_ACTUALIZAR`).
  * - La categoría se valida contra `categoriasPermitidas` (las de la farmacia
- *   que importa; por defecto las de {@link CATEGORIAS}).
+ *   que importa; por defecto las de {@link CATEGORIES}).
  */
-export function revisarCarga(
-  filas: readonly FilaDelCsv[],
+export function reviewLoad(
+  filas: readonly CsvRow[],
   catalogo: ReadonlyMap<string, string>,
-  modo: ModoDeCarga = 'CREAR_Y_ACTUALIZAR',
-  categoriasPermitidas: readonly string[] = CATEGORIAS,
-): FilaRevisada[] {
+  modo: LoadMode = 'CREAR_Y_ACTUALIZAR',
+  categoriasPermitidas: readonly string[] = CATEGORIES,
+): ReviewedRow[] {
   const vecesPorCodigo = new Map<string, number>();
   for (const fila of filas) {
     const codigo = fila.campos.codigo.trim();
@@ -661,7 +661,7 @@ export function revisarCarga(
     }
   }
 
-  return filas.map((fila): FilaRevisada => {
+  return filas.map((fila): ReviewedRow => {
     if (fila.errorDeForma !== undefined) {
       return {
         numero: fila.numero,
@@ -671,7 +671,7 @@ export function revisarCarga(
         errores: [fila.errorDeForma],
       };
     }
-    const revision = revisarProducto(fila.campos, categoriasPermitidas);
+    const revision = reviewProduct(fila.campos, categoriasPermitidas);
     if (!revision.valido) {
       return { ...fila, lista: false, motivo: 'INVALIDA', errores: revision.errores };
     }
@@ -708,7 +708,7 @@ export function revisarCarga(
 }
 
 /** Cómo se le llama a cada campo del producto cuando se le habla a la persona. */
-export const ETIQUETAS_DE_CAMPO: Readonly<Record<keyof CamposDelProducto, string>> = {
+export const FIELD_LABELS: Readonly<Record<keyof ProductFields, string>> = {
   codigo: 'Código interno (SKU)',
   marca: 'Marca o nombre comercial',
   generico: 'Nombre genérico',
@@ -724,7 +724,7 @@ export const ETIQUETAS_DE_CAMPO: Readonly<Record<keyof CamposDelProducto, string
 };
 
 /** Tres filas de ejemplo para la plantilla: una con cada caso típico. */
-export const FILAS_DE_EJEMPLO: readonly CamposDelProducto[] = [
+export const EXAMPLE_ROWS: readonly ProductFields[] = [
   {
     codigo: 'PAR-500-20',
     marca: 'Paracetamol Ejemplo',

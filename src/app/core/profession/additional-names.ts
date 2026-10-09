@@ -30,7 +30,7 @@
  * @param nombres - Segundo, tercero y los que se hayan agregado, en orden.
  * @returns Los no vacíos separados por un espacio; cadena vacía si no hay.
  */
-export function unirNombres(nombres: readonly string[]): string {
+export function joinNames(nombres: readonly string[]): string {
   return nombres
     .map((nombre) => nombre.trim())
     .filter((nombre) => nombre !== '')
@@ -40,7 +40,7 @@ export function unirNombres(nombres: readonly string[]): string {
 /**
  * Parte lo guardado en `middleName` en las casillas del formulario.
  *
- * El inverso exacto de {@link unirNombres}: el primer trozo es el segundo
+ * El inverso exacto de {@link joinNames}: el primer trozo es el segundo
  * nombre, el segundo el tercero, y el resto —si lo hay— son las casillas
  * agregadas. Alguien con un solo nombre adicional abre el formulario con la
  * casilla del tercero vacía, no con una casilla extra vacía de más.
@@ -48,7 +48,7 @@ export function unirNombres(nombres: readonly string[]): string {
  * @param middleName - Lo que devolvió el perfil, o `undefined` si no declaró.
  * @returns El segundo, el tercero y las casillas extra.
  */
-export function separarNombres(middleName: string | undefined): {
+export function splitNames(middleName: string | undefined): {
   readonly segundo: string;
   readonly tercero: string;
   readonly extra: readonly string[];

@@ -8,7 +8,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { NotificationsClient } from '../../core/data-access/notifications/notifications.client';
 import type { InAppNotificationPage } from '../../core/data-access/notifications/notifications.types';
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
-import { AvisoDeHuecoLibre } from './free-slot-notice';
+import { FreeGapNotice } from './free-slot-notice';
 
 /**
  * Lo que se fija: **el toast llega una sola vez, y sólo por lo que es**.
@@ -51,7 +51,7 @@ describe('AvisoDeHuecoLibre', () => {
   const originalMockBackend = environment.mockBackend;
   beforeEach(() => Object.assign(environment, { mockBackend: true }));
   afterEach(() => Object.assign(environment, { mockBackend: originalMockBackend }));
-  let servicio: AvisoDeHuecoLibre;
+  let servicio: FreeGapNotice;
   let toasts: ToastService;
   let listMine: ReturnType<typeof vi.fn>;
 
@@ -65,20 +65,20 @@ describe('AvisoDeHuecoLibre', () => {
         { provide: AuthService, useValue: { isAuthenticated: () => autenticado } },
       ],
     });
-    servicio = TestBed.inject(AvisoDeHuecoLibre);
+    servicio = TestBed.inject(FreeGapNotice);
     toasts = TestBed.inject(ToastService);
     vi.spyOn(toasts, 'show');
   }
 
   afterEach(() => {
-    servicio.parar();
+    servicio.stop();
     vi.useRealTimers();
   });
 
   it('levanta el toast cuando llega un hueco libre', () => {
     montar(true);
 
-    servicio.empezar();
+    servicio.start();
 
     expect(toasts.show).toHaveBeenCalledTimes(1);
     expect(vi.mocked(toasts.show).mock.calls[0]![0]).toMatchObject({
@@ -92,7 +92,7 @@ describe('AvisoDeHuecoLibre', () => {
   it('no levanta nada por una notificación que no es de huecos', () => {
     montar(true, of(pagina([OTRA])));
 
-    servicio.empezar();
+    servicio.start();
 
     expect(toasts.show).not.toHaveBeenCalled();
   });
@@ -101,7 +101,7 @@ describe('AvisoDeHuecoLibre', () => {
     vi.useFakeTimers();
     montar(true);
 
-    servicio.empezar();
+    servicio.start();
     vi.advanceTimersByTime(60_000);
 
     // Tres vueltas del reloj, un solo toast.
@@ -112,7 +112,7 @@ describe('AvisoDeHuecoLibre', () => {
   it('sin sesión no pregunta nada', () => {
     montar(false);
 
-    servicio.empezar();
+    servicio.start();
 
     expect(listMine).not.toHaveBeenCalled();
   });
@@ -122,7 +122,7 @@ describe('AvisoDeHuecoLibre', () => {
     // esperando: la campana sigue mostrando lo que haya cuando se la abra.
     montar(true, throwError(() => new Error('sin red')));
 
-    expect(() => servicio.empezar()).not.toThrow();
+    expect(() => servicio.start()).not.toThrow();
     expect(toasts.show).not.toHaveBeenCalled();
   });
 
@@ -130,8 +130,8 @@ describe('AvisoDeHuecoLibre', () => {
     vi.useFakeTimers();
     montar(true, of(pagina([])));
 
-    servicio.empezar();
-    servicio.empezar();
+    servicio.start();
+    servicio.start();
     const trasArrancar = listMine.mock.calls.length;
     vi.advanceTimersByTime(20_000);
 
@@ -141,7 +141,7 @@ describe('AvisoDeHuecoLibre', () => {
   it('con API real no inicia sondeo ni fabrica avisos', () => {
     Object.assign(environment, { mockBackend: false });
     montar(true);
-    servicio.empezar();
+    servicio.start();
     expect(listMine).not.toHaveBeenCalled();
     expect(toasts.show).not.toHaveBeenCalled();
   });

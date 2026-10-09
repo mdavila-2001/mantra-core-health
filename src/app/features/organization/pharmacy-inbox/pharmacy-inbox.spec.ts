@@ -12,27 +12,27 @@ import { pharmacyOrderDtoFixture } from '../../../core/data-access/pharmacy-orde
 import type { PharmacyOrderDto } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
 import type { PharmacySiteRead } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { FARMACIA_DETALLE } from '../../../core/data-access/pharmacy/pharmacy.fixtures';
-import { ID_PEDIDO_CON_DELIVERY } from '../../../core/mock/fixtures/pharmacy-orders';
-import { AlarmaDePedidos } from './order-alarm';
+import { ID_ORDER_WITH_DELIVERY } from '../../../core/mock/fixtures/pharmacy-orders';
+import { OrdersAlarm } from './order-alarm';
 import { PharmacyInbox } from './pharmacy-inbox';
 
 describe('PharmacyInbox with the tenant API list', () => {
   let http: HttpTestingController;
   let alarm: {
-    sonidoActivo: ReturnType<typeof signal<boolean>>;
-    alternarSonido: ReturnType<typeof vi.fn>;
-    notificar: ReturnType<typeof vi.fn>;
-    descartar: ReturnType<typeof vi.fn>;
-    acusarRecibo: ReturnType<typeof vi.fn>;
+    activeSound: ReturnType<typeof signal<boolean>>;
+    toggleSound: ReturnType<typeof vi.fn>;
+    notify: ReturnType<typeof vi.fn>;
+    discard: ReturnType<typeof vi.fn>;
+    acknowledgeReceipt: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     alarm = {
-      sonidoActivo: signal(true),
-      alternarSonido: vi.fn(),
-      notificar: vi.fn(),
-      descartar: vi.fn(),
-      acusarRecibo: vi.fn(),
+      activeSound: signal(true),
+      toggleSound: vi.fn(),
+      notify: vi.fn(),
+      discard: vi.fn(),
+      acknowledgeReceipt: vi.fn(),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -52,7 +52,7 @@ describe('PharmacyInbox with the tenant API list', () => {
       ],
     });
     TestBed.overrideComponent(PharmacyInbox, {
-      set: { providers: [{ provide: AlarmaDePedidos, useValue: alarm }] },
+      set: { providers: [{ provide: OrdersAlarm, useValue: alarm }] },
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -135,14 +135,14 @@ describe('PharmacyInbox with the tenant API list', () => {
     vi.useFakeTimers();
     const initial = pharmacyOrderDtoFixture();
     const fixture = mount([initial]);
-    expect(alarm.notificar).not.toHaveBeenCalled();
+    expect(alarm.notify).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(20_000);
     const added = pharmacyOrderDtoFixture({ id: '00000000-0000-4000-8000-000000000009' });
     pedidosRequest().flush({ items: [initial, added], count: 2 });
     fixture.detectChanges();
 
-    expect(alarm.notificar).toHaveBeenCalledWith(1);
+    expect(alarm.notify).toHaveBeenCalledWith(1);
     expect(text(fixture)).toContain('Llegó un pedido nuevo');
     fixture.destroy();
   });
@@ -326,7 +326,7 @@ describe('PharmacyInbox with the tenant API list', () => {
   it('un pedido a domicilio se ve como delivery por lo que dice el contrato, sin rótulo de maqueta', () => {
     const fixture = mount([
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' },
       }),
     ]);
@@ -346,7 +346,7 @@ describe('PharmacyInbox with the tenant API list', () => {
       root.querySelector('[data-testid="bandeja-estado-sonido"]')?.textContent?.trim() ?? '';
 
     expect(etiqueta()).toBe('Aviso sonoro activado');
-    alarm.sonidoActivo.set(false);
+    alarm.activeSound.set(false);
     fixture.detectChanges();
     expect(etiqueta()).toBe('Aviso sonoro silenciado');
     fixture.destroy();
@@ -449,7 +449,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     });
     fixture.detectChanges();
 
-    expect(alarm.notificar).not.toHaveBeenCalled();
+    expect(alarm.notify).not.toHaveBeenCalled();
     fixture.destroy();
   });
 

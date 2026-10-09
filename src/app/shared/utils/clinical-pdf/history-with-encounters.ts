@@ -26,7 +26,7 @@ import type { DocumentoDeHistoria } from './clinical-pdf.types';
     ========================================================================== */
 
 /** Un diagnóstico, tal como lo imprime la historia. */
-export interface DiagnosticoDeLaHistoria {
+export interface HistoryDiagnosis {
   /** «Hipertensión». */
   readonly nombre: string;
   /** «Confirmado», del catálogo. */
@@ -36,14 +36,14 @@ export interface DiagnosticoDeLaHistoria {
 }
 
 /** Los tres bloques de la pestaña «Diagnósticos», en el papel. */
-export interface DiagnosticosDeLaHistoria {
-  readonly enEstudio: readonly DiagnosticoDeLaHistoria[];
-  readonly activas: readonly DiagnosticoDeLaHistoria[];
-  readonly historicos: readonly DiagnosticoDeLaHistoria[];
+export interface HistoryDiagnoses {
+  readonly enEstudio: readonly HistoryDiagnosis[];
+  readonly activas: readonly HistoryDiagnosis[];
+  readonly historicos: readonly HistoryDiagnosis[];
 }
 
 /** Un hecho de la línea de una atención: «Receta: Losartán — por Hipertensión». */
-export interface HechoDeLaAtencion {
+export interface CareFact {
   readonly titulo: string;
   readonly detalle: string | null;
   /** Cuándo pasó, ya en palabras. `null` si el registro no lo declara. */
@@ -51,17 +51,17 @@ export interface HechoDeLaAtencion {
 }
 
 /** La línea de una atención, en el papel. */
-export interface LineaDeAtencion {
+export interface CareLinea {
   /** «Dolor de garganta · 1 de marzo de 2026». */
   readonly titulo: string;
   readonly sello: string;
-  readonly hechos: readonly HechoDeLaAtencion[];
+  readonly hechos: readonly CareFact[];
 }
 
 /** Lo que C6 agrega al documento de la historia. */
-export interface SeccionesNuevasDeLaHistoria {
-  readonly diagnosticos: DiagnosticosDeLaHistoria;
-  readonly lineas: readonly LineaDeAtencion[];
+export interface HistoryNewSections {
+  readonly diagnosticos: HistoryDiagnoses;
+  readonly lineas: readonly CareLinea[];
 }
 
 /**
@@ -74,27 +74,27 @@ export interface SeccionesNuevasDeLaHistoria {
  * único que `bloquesDeHistoria` pone al final) en vez de por un índice fijo,
  * que se rompería en cuanto aquélla agregara una sección.
  */
-export function bloquesDeHistoriaConEncuentros(
+export function historyWithEncountersBlocks(
   historia: DocumentoDeHistoria,
-  nuevas: SeccionesNuevasDeLaHistoria,
+  nuevas: HistoryNewSections,
 ): readonly PdfBlock[] {
   const base = bloquesDeHistoria(historia);
   const corte = base.at(-1)?.kind === 'caption' ? base.length - 1 : base.length;
 
   return [
     ...base.slice(0, corte),
-    ...bloquesDeDiagnosticos(nuevas.diagnosticos),
-    ...bloquesDeLasLineas(nuevas.lineas),
+    ...diagnosesBlocks(nuevas.diagnosticos),
+    ...linesBlocks(nuevas.lineas),
     ...base.slice(corte),
   ];
 }
 
 /** Arma el PDF de la historia con las secciones de C6. */
-export function buildHistoriaConEncuentrosPdf(
+export function buildHistoryWithEncountersPdf(
   historia: DocumentoDeHistoria,
-  nuevas: SeccionesNuevasDeLaHistoria,
+  nuevas: HistoryNewSections,
 ) {
-  return buildBlocksPdf(bloquesDeHistoriaConEncuentros(historia, nuevas), {
+  return buildBlocksPdf(historyWithEncountersBlocks(historia, nuevas), {
     title: 'Historia clínica',
     kind: 'Historia clínica',
     subtitle: bajada(historia.paciente.nombre),
@@ -107,12 +107,12 @@ export function buildHistoriaConEncuentrosPdf(
  * Mismo nombre de archivo que la descarga de siempre —`historia-perez-…`—:
  * es el mismo documento con dos secciones más, no otro papel.
  */
-export function descargarHistoriaConEncuentros(
+export function downloadHistoryWithEncounters(
   historia: DocumentoDeHistoria,
-  nuevas: SeccionesNuevasDeLaHistoria,
+  nuevas: HistoryNewSections,
 ): void {
-  buildHistoriaConEncuentrosPdf(historia, nuevas).save(
-    nombreDeLaHistoria(historia.paciente.nombre, new Date()),
+  buildHistoryWithEncountersPdf(historia, nuevas).save(
+    historyName(historia.paciente.nombre, new Date()),
   );
 }
 
@@ -125,22 +125,22 @@ export function descargarHistoriaConEncuentros(
  * saber si no tiene diagnósticos de ese tipo o si el sistema no los trajo. En
  * un documento clínico eso no es lo mismo, y por eso cada uno dice su vacío.
  */
-export function bloquesDeDiagnosticos(diagnosticos: DiagnosticosDeLaHistoria): readonly PdfBlock[] {
+export function diagnosesBlocks(diagnosticos: HistoryDiagnoses): readonly PdfBlock[] {
   return [
     { kind: 'heading', text: 'Diagnósticos por estado', level: 2 },
-    ...grupoDeDiagnosticos('En estudio', diagnosticos.enEstudio, 'Sin diagnósticos en estudio.'),
-    ...grupoDeDiagnosticos(
+    ...diagnosesGroup('En estudio', diagnosticos.enEstudio, 'Sin diagnósticos en estudio.'),
+    ...diagnosesGroup(
       'Enfermedades activas',
       diagnosticos.activas,
       'Sin enfermedades activas registradas.',
     ),
-    ...grupoDeDiagnosticos('Históricos', diagnosticos.historicos, 'Sin diagnósticos históricos.'),
+    ...diagnosesGroup('Históricos', diagnosticos.historicos, 'Sin diagnósticos históricos.'),
   ];
 }
 
-function grupoDeDiagnosticos(
+function diagnosesGroup(
   titulo: string,
-  filas: readonly DiagnosticoDeLaHistoria[],
+  filas: readonly HistoryDiagnosis[],
   vacio: string,
 ): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [{ kind: 'heading', text: titulo, level: 3 }];
@@ -173,7 +173,7 @@ function grupoDeDiagnosticos(
  * dibuja—; el papel no reordena nada, porque dos versiones del mismo hecho
  * clínico en distinto orden es exactamente lo que no puede pasar.
  */
-export function bloquesDeLasLineas(lineas: readonly LineaDeAtencion[]): readonly PdfBlock[] {
+export function linesBlocks(lineas: readonly CareLinea[]): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [{ kind: 'heading', text: 'Línea de cada atención', level: 2 }];
 
   if (lineas.length === 0) {
@@ -196,7 +196,7 @@ export function bloquesDeLasLineas(lineas: readonly LineaDeAtencion[]): readonly
 }
 
 /** «Receta: Losartán — por Hipertensión (1 de marzo de 2026)». */
-function frase(hecho: HechoDeLaAtencion): string {
+function frase(hecho: CareFact): string {
   const conDetalle = hecho.detalle === null ? hecho.titulo : `${hecho.titulo} — ${hecho.detalle}`;
   return hecho.cuando === null ? conDetalle : `${conDetalle} (${hecho.cuando})`;
 }
@@ -204,12 +204,12 @@ function frase(hecho: HechoDeLaAtencion): string {
 /* ---- membrete y nombre de archivo ---------------------------------------- */
 
 /** La fecha sola, como la imprime el resto de los documentos clínicos. */
-const DIA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
+const DAY = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
 
 /** La bajada del membrete: de quién es el papel y de cuándo. */
 function bajada(nombre: string): string | undefined {
   const quien = nombre.trim();
-  const cuando = DIA.format(new Date());
+  const cuando = DAY.format(new Date());
   return quien === '' ? cuando : `${quien} · ${cuando}`;
 }
 
@@ -220,7 +220,7 @@ function bajada(nombre: string): string | undefined {
  * su carpeta de descargas y un identificador no le dice nada. Misma regla que
  * `nombreLegible` de `clinical-pdf.ts`, que es privada de aquel archivo.
  */
-function nombreDeLaHistoria(nombre: string, fecha: Date): string {
+function historyName(nombre: string, fecha: Date): string {
   const dia = [
     fecha.getFullYear(),
     String(fecha.getMonth() + 1).padStart(2, '0'),

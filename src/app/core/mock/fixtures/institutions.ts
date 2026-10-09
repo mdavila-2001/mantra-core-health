@@ -1,9 +1,9 @@
 import { uuid } from '../mock-store';
 import {
-  cadenaPorNombre,
-  CATEGORIA,
-  categoriaDeCadena,
-  type CategoriaSimulada,
+  chainByName,
+  CATEGORY,
+  chainCategory,
+  type SimulatedCategory,
 } from './public-categories';
 import { CADENAS_DEL_CORPUS } from './bolivia-central-axis.generated';
 import {
@@ -46,7 +46,7 @@ import {
     ========================================================================== */
 
 /** Una institución lista para el directorio público. */
-export interface SemillaDeInstitucion {
+export interface InstitutionSeed {
   readonly clave: string;
   readonly kind: 'ORGANIZATION' | 'INSURER' | 'PHARMACY';
   readonly tenantId: string;
@@ -70,20 +70,20 @@ export interface SemillaDeInstitucion {
    * el titular que esta misma función acaba de escribir. Ver
    * `public-categories.ts`.
    */
-  readonly categoria: CategoriaSimulada;
+  readonly categoria: SimulatedCategory;
 }
 
 /** Si el punto es el centro de la ciudad o del municipio y no la dirección publicada. */
-export function ubicacionAproximada(precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision): boolean {
+export function approximateLocation(precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision): boolean {
   return precision === 'ciudad' || precision === 'municipio';
 }
 
 /** La frase que avisa que el punto del mapa no es la puerta del lugar. */
-function avisoDeUbicacion(precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision, lugar: string): string {
-  return ubicacionAproximada(precision) ? ` Ubicación aproximada en el mapa: centro de ${lugar}.` : '';
+function locationNotice(precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision, lugar: string): string {
+  return approximateLocation(precision) ? ` Ubicación aproximada en el mapa: centro de ${lugar}.` : '';
 }
 
-function slugDe(nombre: string): string {
+function slugOf(nombre: string): string {
   return nombre
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -93,7 +93,7 @@ function slugDe(nombre: string): string {
 }
 
 /** El titular de un hospital: qué es y, si lo declara, en qué red está. */
-function titularDeHospital(hospital: HospitalReal): string {
+function hospitalHolder(hospital: HospitalReal): string {
   const que = {
     hospital_tercer_nivel: 'Hospital de tercer nivel',
     hospital_segundo_nivel: 'Hospital de segundo nivel',
@@ -103,14 +103,14 @@ function titularDeHospital(hospital: HospitalReal): string {
 }
 
 /** El titular de una aseguradora: el ramo que declara su propia planilla. */
-function titularDeAseguradora(aseguradora: AseguradoraReal): string {
+function insurerHolder(aseguradora: AseguradoraReal): string {
   return aseguradora.coversHealth
     ? 'Aseguradora de personas · cubre salud'
     : 'Seguros generales y fianzas · no cubre salud';
 }
 
 /** La biografía de una clínica: sólo lo que la planilla declara. */
-function biografiaDeClinica(legalName: string | null, taxId: string | null): string {
+function clinicalBiography(legalName: string | null, taxId: string | null): string {
   const partes: string[] = [];
   if (legalName !== null) partes.push(legalName);
   if (taxId !== null) partes.push(`NIT ${taxId}`);
@@ -119,16 +119,16 @@ function biografiaDeClinica(legalName: string | null, taxId: string | null): str
     : `${partes.join(' · ')}.`;
 }
 
-export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
+export const INSTITUTIONS_SEEDS: readonly InstitutionSeed[] = [
   ...CLINICAS_REALES.map((clinica) => ({
     clave: `institucion-${clinica.id}`,
     kind: 'ORGANIZATION' as const,
     tenantId: uuid(`tenant-${clinica.id}`),
     targetId: uuid(`organization-${clinica.id}`),
-    slug: slugDe(clinica.name),
+    slug: slugOf(clinica.name),
     displayName: clinica.name,
     headline: `Clínica privada · ${clinica.city}`,
-    biography: biografiaDeClinica(clinica.legalName, clinica.taxId),
+    biography: clinicalBiography(clinica.legalName, clinica.taxId),
     city: clinica.city,
     address: clinica.address ?? '',
     lat: clinica.lat,
@@ -138,16 +138,16 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#0f766e',
     precision: clinica.precision,
-    categoria: CATEGORIA.CLINICA_PRIVADA,
+    categoria: CATEGORY.CLINICA_PRIVADA,
   })),
   ...HOSPITALES_REALES.map((hospital) => ({
     clave: `institucion-${hospital.id}`,
     kind: 'ORGANIZATION' as const,
     tenantId: uuid(`tenant-${hospital.id}`),
     targetId: uuid(`organization-${hospital.id}`),
-    slug: slugDe(hospital.name),
+    slug: slugOf(hospital.name),
     displayName: hospital.name,
-    headline: titularDeHospital(hospital),
+    headline: hospitalHolder(hospital),
     biography:
       hospital.sector === 'seguridad_social'
         ? 'Caja de salud de la seguridad social de corto plazo.'
@@ -164,8 +164,8 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
        es no entra — que es justo lo que alguien necesita saber antes de ir. */
     categoria:
       hospital.sector === 'seguridad_social'
-        ? CATEGORIA.CAJA_DE_SALUD
-        : CATEGORIA.HOSPITAL_PUBLICO,
+        ? CATEGORY.CAJA_DE_SALUD
+        : CATEGORY.HOSPITAL_PUBLICO,
   })),
   ...ASEGURADORAS_REALES.map((aseguradora) => ({
     clave: `institucion-${aseguradora.id}`,
@@ -175,9 +175,9 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     // BISA y Fortaleza figuran en los dos ramos con la misma razón social: con
     // el nombre solo, las dos fichas compartían enlace y una tapaba a la otra.
     // Las de salud conservan el enlace de siempre; las generales llevan el ramo.
-    slug: aseguradora.coversHealth ? slugDe(aseguradora.name) : `${slugDe(aseguradora.name)}-generales-y-fianzas`,
+    slug: aseguradora.coversHealth ? slugOf(aseguradora.name) : `${slugOf(aseguradora.name)}-generales-y-fianzas`,
     displayName: aseguradora.shortName ?? aseguradora.name,
-    headline: titularDeAseguradora(aseguradora),
+    headline: insurerHolder(aseguradora),
     biography:
       aseguradora.taxId === null
         ? aseguradora.name
@@ -190,8 +190,8 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     color: '#b45309',
     precision: aseguradora.precision,
     categoria: aseguradora.coversHealth
-      ? CATEGORIA.SEGURO_DE_SALUD
-      : CATEGORIA.SEGUROS_GENERALES,
+      ? CATEGORY.SEGURO_DE_SALUD
+      : CATEGORY.SEGUROS_GENERALES,
   })),
   /* Las farmacias de la planilla del propietario. La planilla no trae su
      dirección, así que el punto es el centro de la ciudad y la ficha lo dice. */
@@ -200,13 +200,13 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     kind: 'PHARMACY' as const,
     tenantId: uuid(`tenant-${farmacia.id}`),
     targetId: uuid(`organization-${farmacia.id}`),
-    slug: slugDe(farmacia.name),
+    slug: slugOf(farmacia.name),
     displayName: farmacia.name,
     headline: `Farmacia · ${farmacia.city}`,
     biography:
       [farmacia.legalName, farmacia.taxId === null ? null : `NIT ${farmacia.taxId}`].filter((x) => x !== null).join(' · ') +
       '.' +
-      avisoDeUbicacion(farmacia.precision, farmacia.city),
+      locationNotice(farmacia.precision, farmacia.city),
     city: farmacia.city,
     address: farmacia.address ?? '',
     lat: farmacia.lat,
@@ -214,7 +214,7 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#16a34a',
     precision: farmacia.precision,
-    categoria: categoriaDeCadena(cadenaPorNombre(farmacia.name, CADENAS_DEL_CORPUS)),
+    categoria: chainCategory(chainByName(farmacia.name, CADENAS_DEL_CORPUS)),
   })),
   /* Los 464 centros de salud de primer nivel de Santa Cruz. Antes quedaban
      afuera «para no llenar el directorio»; el propietario los quiere todos.
@@ -228,7 +228,7 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     slug: centro.id,
     displayName: centro.name,
     headline: `Centro de salud de primer nivel · ${centro.municipality}`,
-    biography: `Establecimiento público de primer nivel del municipio de ${centro.municipality}, ${centro.department}.${avisoDeUbicacion(centro.precision, centro.municipality)}`,
+    biography: `Establecimiento público de primer nivel del municipio de ${centro.municipality}, ${centro.department}.${locationNotice(centro.precision, centro.municipality)}`,
     city: centro.municipality,
     address: centro.address ?? '',
     lat: centro.lat,
@@ -236,16 +236,16 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#1d4ed8',
     precision: centro.precision,
-    categoria: CATEGORIA.CENTRO_DE_PRIMER_NIVEL,
+    categoria: CATEGORY.CENTRO_DE_PRIMER_NIVEL,
   })),
 ];
 
-const porSlug = new Map(SEMILLAS_DE_INSTITUCIONES.map((s) => [s.slug, s]));
+const bySlug = new Map(INSTITUTIONS_SEEDS.map((s) => [s.slug, s]));
 
 /** Una institución por su slug, o `undefined`. */
-export function institucionPorSlug(slug: string): SemillaDeInstitucion | undefined {
-  return porSlug.get(slug);
+export function institutionBySlug(slug: string): InstitutionSeed | undefined {
+  return bySlug.get(slug);
 }
 
 /** Las aseguradoras que **sí** cubren salud, que son las que importan acá. */
-export const ASEGURADORAS_DE_SALUD = ASEGURADORAS_REALES.filter((a) => a.coversHealth);
+export const HEALTH_INSURERS = ASEGURADORAS_REALES.filter((a) => a.coversHealth);

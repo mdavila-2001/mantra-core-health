@@ -1,13 +1,13 @@
 <app-view-state-host [state]="state()" (retry)="retry.emit()">
   <div vsh-skeleton><app-skeleton variant="text" [lines]="6" /></div>
 
-  @if (gente(); as datos) {
+  @if (people(); as datos) {
     <section class="gente" aria-labelledby="ficha-gente-titulo">
       <div class="gente__encabezado">
         <h2 id="ficha-gente-titulo" class="gente__titulo">Quién responde por la empresa</h2>
         <!-- Sobre la maqueta nada de esto sale de la API: se dice, no se disimula. -->
         @if (!readOnly()) {
-          <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+          <app-chip variant="neutral" size="sm">{{ exampleNote }}</app-chip>
         }
       </div>
 

@@ -8,13 +8,13 @@ import { PractitionerActivity } from './practitioner-activity/practitioner-activ
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
 import { ResidenceReadonly } from './residence-readonly/residence-readonly';
 import { AppMap } from '../../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../../shared/components/organisms/map/map-pin.types';
+import type { PinMap } from '../../../../../shared/components/organisms/map/map-pin.types';
 import { CredentialsPanel } from './credentials-panel/credentials-panel';
 import {
-  PESTANAS_DEL_EDITOR_MEDICO,
-  PESTANAS_DEL_PERFIL_MEDICO,
-  PESTANA_EDITOR,
-  PESTANA_MEDICO,
+  EDITOR_DOCTOR_TABS,
+  DOCTOR_PROFILE_TABS,
+  TAB_EDITOR,
+  DOCTOR_TAB,
 } from '../../doctor-profile-tabs';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
@@ -23,8 +23,8 @@ import { AppButtonLink } from '../../../../../shared/components/atoms/button/but
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../../shared/components/molecules/card/card';
-import { FirmaOSello } from '../../../../../shared/components/molecules/signature-or-seal/signature-or-seal';
-import { LogoConsultorio } from '../../../../../shared/components/molecules/practice-logo/practice-logo';
+import { SignatureOrSeal } from '../../../../../shared/components/molecules/signature-or-seal/signature-or-seal';
+import { PracticeLogo } from '../../../../../shared/components/molecules/practice-logo/practice-logo';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
@@ -99,8 +99,8 @@ interface FilaCredencial {
     Card,
     Chip,
     DatePipe,
-    LogoConsultorio,
-    FirmaOSello,
+    PracticeLogo,
+    SignatureOrSeal,
     NavIcon,
     RouterLink,
     SpecialtyBadge,
@@ -128,7 +128,7 @@ export class PractitionerProfileView {
    * Es un `computed` y no un arreglo literal en la plantilla: uno nuevo en
    * cada detección de cambios haría redibujar el mapa.
    */
-  protected readonly pinesDomicilio = computed<readonly PinMapa[]>(() => {
+  protected readonly pinesDomicilio = computed<readonly PinMap[]>(() => {
     const datos = this.perfil().datosPersonales;
     const punto = datos?.ubicacionDomicilio;
     if (!datos || !punto) return [];
@@ -244,7 +244,7 @@ export class PractitionerProfileView {
    * La ficha ajena —la Guía— conserva sus dos de siempre, declaradas en la
    * plantilla: son otra pregunta, la de quien mira a un colega.
    */
-  protected readonly pestanas = PESTANAS_DEL_PERFIL_MEDICO;
+  protected readonly pestanas = DOCTOR_PROFILE_TABS;
 
   /**
    * Las pestañas que de verdad se dibujan, en el orden en que se dibujan.
@@ -256,9 +256,9 @@ export class PractitionerProfileView {
    */
   protected readonly pestanasVisibles = computed<readonly string[]>(() =>
     this.perfil().facturacion
-      ? PESTANAS_DEL_PERFIL_MEDICO
-      : PESTANAS_DEL_PERFIL_MEDICO.filter(
-          (pestana) => pestana !== PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.facturacion],
+      ? DOCTOR_PROFILE_TABS
+      : DOCTOR_PROFILE_TABS.filter(
+          (pestana) => pestana !== DOCTOR_PROFILE_TABS[DOCTOR_TAB.facturacion],
         ),
   );
 
@@ -318,9 +318,9 @@ export class PractitionerProfileView {
   protected readonly pestanaDeEdicion = computed<number | null>(() => {
     const abierta = this.pestanaVisibleSeleccionada();
     if (abierta === undefined) {
-      return PESTANA_EDITOR.personales;
+      return TAB_EDITOR.personales;
     }
-    const indice = PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta);
+    const indice = EDITOR_DOCTOR_TABS.findIndex((p) => p === abierta);
     return indice >= 0 ? indice : null;
   });
 

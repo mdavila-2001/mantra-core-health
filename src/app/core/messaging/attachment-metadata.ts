@@ -24,7 +24,7 @@
    ========================================================================== */
 
 /** Lo que el hilo puede decir de un adjunto sin preguntarle a nadie. */
-export interface MetadatosDeAdjunto {
+export interface AttachmentMetadata {
   /** Tipo MIME real, en minúsculas. Vacío si el contenido no lo declaró. */
   readonly mimeType: string;
   /** Tamaño exacto en bytes, calculado sobre el base64. */
@@ -32,7 +32,7 @@ export interface MetadatosDeAdjunto {
 }
 
 /** Cómo se llama un tipo en una burbuja. Lo que no está acá se muestra crudo. */
-const NOMBRE_DEL_TIPO: Readonly<Record<string, string>> = {
+const TYPE_NAME: Readonly<Record<string, string>> = {
   'application/pdf': 'PDF',
   'image/jpeg': 'Imagen JPEG',
   'image/png': 'Imagen PNG',
@@ -51,12 +51,12 @@ const NOMBRE_DEL_TIPO: Readonly<Record<string, string>> = {
  * vista previa local, un `data:` sin base64, un base64 de longitud imposible—
  * devuelve `null`: quien llama no muestra metadata en vez de mostrar una
  * inventada. No valida carácter por carácter el base64 de un archivo de varios
- * megas; si el contenido estuviera corrupto, lo nota {@link archivoDeDataUrl}.
+ * megas; si el contenido estuviera corrupto, lo nota {@link dataUrlFile}.
  *
  * @param url - El `data:` URL que tiene el hilo.
  * @returns Tipo y tamaño, o `null` si no se pueden leer con certeza.
  */
-export function metadatosDeDataUrl(url: string | null | undefined): MetadatosDeAdjunto | null {
+export function dataUrlMetadata(url: string | null | undefined): AttachmentMetadata | null {
   if (typeof url !== 'string' || !url.startsWith('data:')) return null;
   const coma = url.indexOf(',');
   if (coma < 0) return null;
@@ -78,7 +78,7 @@ export function metadatosDeDataUrl(url: string | null | undefined): MetadatosDeA
 }
 
 /** `true` si el adjunto es un PDF: el único documento que el hilo previsualiza. */
-export function esPdf(metadatos: MetadatosDeAdjunto | null): boolean {
+export function esPdf(metadatos: AttachmentMetadata | null): boolean {
   return metadatos?.mimeType === 'application/pdf';
 }
 
@@ -86,9 +86,9 @@ export function esPdf(metadatos: MetadatosDeAdjunto | null): boolean {
  * El tipo en palabras. Vacío pasa a «Tipo desconocido»; lo que no está en la
  * tabla se muestra por su MIME, que es honesto aunque sea feo.
  */
-export function nombreDelTipo(mimeType: string): string {
+export function typeName(mimeType: string): string {
   if (mimeType === '') return 'Tipo desconocido';
-  return NOMBRE_DEL_TIPO[mimeType] ?? mimeType;
+  return TYPE_NAME[mimeType] ?? mimeType;
 }
 
 /**
@@ -101,8 +101,8 @@ export function nombreDelTipo(mimeType: string): string {
  * @param nombre - Con qué nombre presentarlo.
  * @returns El archivo, o `null` si el contenido no se puede decodificar.
  */
-export function archivoDeDataUrl(url: string | null | undefined, nombre: string): File | null {
-  const metadatos = metadatosDeDataUrl(url);
+export function dataUrlFile(url: string | null | undefined, nombre: string): File | null {
+  const metadatos = dataUrlMetadata(url);
   if (metadatos === null || typeof atob !== 'function') return null;
   try {
     const binario = atob((url as string).slice((url as string).indexOf(',') + 1));

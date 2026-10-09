@@ -6,7 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { MedicalLaboratory } from './medical-laboratory';
-import { TarifariosRecordados } from './remembered-price-lists';
+import { RememberedPriceLists } from './remembered-price-lists';
 
 /**
  * Consola de administración del laboratorio (CARRIL 16) contra
@@ -712,7 +712,7 @@ describe('MedicalLaboratory', () => {
   });
 
   it('un tarifario recordado sigue estando al volver a cargar la ficha', () => {
-    TestBed.inject(TarifariosRecordados).recordar('unit-1', {
+    TestBed.inject(RememberedPriceLists).remember('unit-1', {
       id: 'sch-7',
       code: 'TARIFA-QA-2026',
       esPublico: true,

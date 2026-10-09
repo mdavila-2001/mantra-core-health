@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PROFESIONALES } from '../fixtures/people';
+import { PROFESSIONALS } from '../fixtures/people';
 import { MockRouter, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registerInsurerReceivedClaims } from './insurer-received-claims.handlers';
@@ -62,7 +62,7 @@ describe('handler de solicitudes recibidas por la aseguradora', () => {
 
   it('no le atribuye ninguna prestación a un médico real de la red ni a un registrado', () => {
     const reales = new Set(
-      PROFESIONALES.filter((p) => p.origen === 'RED_ASEGURADORA' || p.origen === 'USUARIO_PROPIETARIO').map(
+      PROFESSIONALS.filter((p) => p.origen === 'RED_ASEGURADORA' || p.origen === 'USUARIO_PROPIETARIO').map(
         (p) => p.id,
       ),
     );

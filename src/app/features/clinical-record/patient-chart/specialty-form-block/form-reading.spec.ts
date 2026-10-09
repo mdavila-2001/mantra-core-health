@@ -1,6 +1,6 @@
 import type { ChartTemplate } from '../../../../core/data-access/chart-templates/chart-templates.types';
 import type { FormInstanceDetail } from '../../../../core/data-access/forms/forms.types';
-import { plantillaPorCobertura } from './form-reading';
+import { templateByCoverage } from './form-reading';
 
 function plantilla(id: string, campos: readonly string[]): ChartTemplate {
   return {
@@ -25,24 +25,24 @@ describe('plantillaPorCobertura', () => {
   it('con sólo los campos base, gana la ficha más chica que los contiene', () => {
     // Antes ganaba la primera con más coincidencias: la cardiológica, que
     // trae esos mismos campos y más, se llevaba la anamnesis.
-    expect(plantillaPorCobertura(respuesta(['motivo', 'antecedentes']), [cardiologica, anamnesis])).toBe(
+    expect(templateByCoverage(respuesta(['motivo', 'antecedentes']), [cardiologica, anamnesis])).toBe(
       anamnesis,
     );
   });
 
   it('un campo propio de una ficha la delata', () => {
-    expect(plantillaPorCobertura(respuesta(['motivo', 'soplo']), [anamnesis, cardiologica])).toBe(
+    expect(templateByCoverage(respuesta(['motivo', 'soplo']), [anamnesis, cardiologica])).toBe(
       cardiologica,
     );
   });
 
   it('si ninguna los contiene a todos, la que más contiene', () => {
-    expect(plantillaPorCobertura(respuesta(['motivo', 'soplo', 'ajeno']), [anamnesis, cardiologica])).toBe(
+    expect(templateByCoverage(respuesta(['motivo', 'soplo', 'ajeno']), [anamnesis, cardiologica])).toBe(
       cardiologica,
     );
   });
 
   it('sin coincidencias no inventa una plantilla', () => {
-    expect(plantillaPorCobertura(respuesta(['ajeno']), [anamnesis, cardiologica])).toBeNull();
+    expect(templateByCoverage(respuesta(['ajeno']), [anamnesis, cardiologica])).toBeNull();
   });
 });

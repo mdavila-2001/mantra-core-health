@@ -14,7 +14,7 @@ import type { BadgeVariant } from '../../../../shared/components/atoms/badge/bad
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_PEDIDOS_ROUTE } from '../../pharmacy-orders/pharmacy-orders.routes';
-import { presentacionDePedido } from '../../pharmacy-orders/order-status';
+import { orderPresentation } from '../../pharmacy-orders/order-status';
 import { PHARMACY_ROUTE } from '../pharmacy.routes';
 
 /** Cuántos pedidos entran en el bloque: es un recordatorio, no un listado. */
@@ -106,7 +106,7 @@ function ultimos(pedidos: readonly PedidoFarmacia[]): readonly PedidoVisible[] {
     .sort((a, b) => b.creadoEl.getTime() - a.creadoEl.getTime())
     .slice(0, CUANTOS)
     .map((pedido) => {
-      const presentacion = presentacionDePedido(pedido);
+      const presentacion = orderPresentation(pedido);
       return {
         id: pedido.id,
         farmacia: pedido.farmacia,

@@ -22,7 +22,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record/medical-record.routes';
-import { etiquetaDeModalidad, toPedidoStatusPresentation } from './order-status';
+import { modalityLabel, toOrderStatusPresentation } from './order-status';
 import { displayCurrency } from '../../../core/money/display-currency';
 
 /**
@@ -111,10 +111,10 @@ export class PharmacyOrders {
   }
 
   protected estadoDe(pedido: PedidoFarmacia) {
-    return toPedidoStatusPresentation(pedido.estado);
+    return toOrderStatusPresentation(pedido.estado);
   }
 
   protected modalidadDe(pedido: PedidoFarmacia): string {
-    return etiquetaDeModalidad(pedido.modalidad);
+    return modalityLabel(pedido.modalidad);
   }
 }

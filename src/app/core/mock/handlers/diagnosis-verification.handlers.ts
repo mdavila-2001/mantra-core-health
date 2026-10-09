@@ -1,13 +1,13 @@
 import {
-  condiciones,
-  notas,
-  ordenes,
-  type CondicionSimulada,
-  type EvidenciaSimulada,
-  type VerificacionSimulada,
+  conditionList,
+  noteList,
+  orderList,
+  type SimulatedCondition,
+  type SimulatedEvidence,
+  type SimulatedVerification,
 } from '../fixtures/clinic';
-import { CURSO_CLINICO, ESTADO_CONDICION, VERIFICACION_DX } from '../fixtures/concepts';
-import { MEDICA } from '../fixtures/people';
+import { CLINICAL_COURSE, CONDITION_STATUS, VERIFICATION_DX } from '../fixtures/concepts';
+import { MEDICAL } from '../fixtures/people';
 import { conflict, notFound, validation, type MockRouter } from '../mock-router';
 import { ahora, cuerpo } from '../mock-store';
 import { informes } from './diagnostics.handlers';
@@ -50,7 +50,7 @@ function texto(valor: unknown): string | undefined {
 function resolverEvidencia(
   crudo: unknown,
   patientProfileId: string,
-): { readonly evidencia: EvidenciaSimulada | null } | { readonly problema: string } {
+): { readonly evidencia: SimulatedEvidence | null } | { readonly problema: string } {
   if (crudo === undefined || crudo === null) return { evidencia: null };
   if (typeof crudo !== 'object' || Array.isArray(crudo)) {
     return { problema: 'La evidencia no tiene la forma esperada.' };
@@ -59,7 +59,7 @@ function resolverEvidencia(
 
   if (kind === 'NOTE') {
     const nota =
-      typeof noteId === 'string' ? notas.todos().find((n) => n.noteId === noteId) : undefined;
+      typeof noteId === 'string' ? noteList.todos().find((n) => n.noteId === noteId) : undefined;
     if (nota === undefined || nota.patientProfileId !== patientProfileId) {
       return { problema: 'La nota indicada no existe o no es de esta persona.' };
     }
@@ -83,7 +83,7 @@ function resolverEvidencia(
     }
     const ordenId =
       typeof serviceRequestId === 'string' ? serviceRequestId : informe?.serviceRequestId;
-    const orden = ordenId === undefined ? undefined : ordenes.get(ordenId);
+    const orden = ordenId === undefined ? undefined : orderList.get(ordenId);
     if (orden === undefined || orden.patientProfileId !== patientProfileId) {
       return { problema: 'La orden indicada no existe o no es de esta persona.' };
     }
@@ -101,9 +101,9 @@ function resolverEvidencia(
 
 export function registerDiagnosisVerification(router: MockRouter): void {
   router.post('/clinical/conditions/:id/verification', (request) => {
-    const condicion = condiciones.get(request.params['id']!);
+    const condicion = conditionList.get(request.params['id']!);
     if (condicion === undefined) return notFound('Diagnóstico no encontrado');
-    if (condicion.verificationStatusConceptId !== VERIFICACION_DX['COND_PROVISIONAL']) {
+    if (condicion.verificationStatusConceptId !== VERIFICATION_DX['COND_PROVISIONAL']) {
       return conflict(
         'Este diagnóstico ya no está en estudio: sólo un presuntivo se confirma o se rechaza.',
       );
@@ -136,25 +136,25 @@ export function registerDiagnosisVerification(router: MockRouter): void {
     }
 
     const decidedAt = ahora();
-    const verification: VerificacionSimulada = {
+    const verification: SimulatedVerification = {
       outcome,
       decidedAt,
-      decidedByProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
+      decidedByProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
       reasonText: motivo === '' ? null : motivo,
       basedOn: resuelta.evidencia,
     };
 
-    let cambios: Partial<CondicionSimulada>;
+    let cambios: Partial<SimulatedCondition>;
     if (outcome === 'REFUTED') {
       // Rechazado es terminal y cierra la condición: no hay enfermedad que seguir.
       cambios = {
-        verificationStatusConceptId: VERIFICACION_DX['COND_REFUTED']!,
+        verificationStatusConceptId: VERIFICATION_DX['COND_REFUTED']!,
         resolvedAt: decidedAt,
         verification,
       };
     } else {
       const curso = texto(datos.clinicalCourseConceptId);
-      const cronica = curso === CURSO_CLINICO['COND_COURSE_CHRONIC'];
+      const cronica = curso === CLINICAL_COURSE['COND_COURSE_CHRONIC'];
       const fin = texto(datos.expectedResolutionAt) ?? condicion.expectedResolutionAt;
       if (!cronica && fin === undefined) {
         return validation(
@@ -163,8 +163,8 @@ export function registerDiagnosisVerification(router: MockRouter): void {
         );
       }
       cambios = {
-        verificationStatusConceptId: VERIFICACION_DX['COND_CONFIRMED']!,
-        clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
+        verificationStatusConceptId: VERIFICATION_DX['COND_CONFIRMED']!,
+        clinicalStatusConceptId: CONDITION_STATUS['COND_ACTIVE']!,
         onsetAt: texto(datos.onsetAt) ?? condicion.onsetAt,
         ...(curso === undefined ? {} : { clinicalCourseConceptId: curso }),
         // Una crónica no resuelve: el fin esperado se va aunque el alta lo trajera.
@@ -173,7 +173,7 @@ export function registerDiagnosisVerification(router: MockRouter): void {
       };
     }
 
-    const actualizada = condiciones.actualizar(condicion.id, cambios)!;
+    const actualizada = conditionList.actualizar(condicion.id, cambios)!;
     // La misma forma que `GET /clinical/patients/:id/summary`: sin la clave interna.
     const { patientProfileId: _paciente, ...publica } = actualizada;
     return publica;

@@ -6,7 +6,7 @@ import type { TerminologyClient } from '@core/data-access/terminology/terminolog
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
 
 import { AWAITING_RESPONSE_CODES, sufijoDeCodigo } from '../booking-status';
-import { misRecursosDeAgenda } from '../my-resource';
+import { agendaResourcesMy } from '../my-resource';
 
 /** Cuántas semanas hacia adelante se juntan las solicitudes y los turnos. */
 export const SERVICE_BOOKINGS_WEEKS = 8;
@@ -55,7 +55,7 @@ export function loadServiceBookings(
 ): Observable<ServiceBookings> {
   const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const to = new Date(from.getTime() + SERVICE_BOOKINGS_WEEKS * 7 * ONE_DAY_MS);
-  return misRecursosDeAgenda(scheduling, tenantId, practitionerProfileId).pipe(
+  return agendaResourcesMy(scheduling, tenantId, practitionerProfileId).pipe(
     switchMap((resources) =>
       resources.length === 0
         ? of<readonly Booking[]>([])

@@ -19,7 +19,7 @@ import type {
  * sólo acá. Un motivo que la API no reconoció llega como `null` y se dice de la
  * forma más neutra posible, sin adivinar.
  */
-const ETIQUETAS: Readonly<Record<MotivoDePuntos, string>> = {
+const LABELS: Readonly<Record<MotivoDePuntos, string>> = {
   REASON_SIGNUP: 'Bienvenida',
   REASON_EVENT: 'Actividad en la app',
   REASON_REDEMPTION: 'Canje',
@@ -28,8 +28,8 @@ const ETIQUETAS: Readonly<Record<MotivoDePuntos, string>> = {
   REASON_MANUAL: 'Ajuste',
 };
 
-export function etiquetaDeMotivo(motivo: MotivoDePuntos | null): string {
-  return motivo === null ? 'Movimiento' : ETIQUETAS[motivo];
+export function reasonLabel(motivo: MotivoDePuntos | null): string {
+  return motivo === null ? 'Movimiento' : LABELS[motivo];
 }
 
 /**
@@ -42,7 +42,7 @@ export function etiquetaDeMotivo(motivo: MotivoDePuntos | null): string {
  * comería. Y no hace falta, porque el badge dice «Puntos vencidos» con todas
  * las letras, que es más claro que un color.
  */
-export function tonoDeMovimiento(
+export function movementTone(
   direccion: DireccionDePuntos | null,
 ): 'success' | 'secondary' {
   return direccion === 'POINTS_EARN' ? 'success' : 'secondary';
@@ -56,7 +56,7 @@ export function tonoDeMovimiento(
  * en el texto. Un ajuste no lleva signo: la dirección del catálogo no dice
  * hacia dónde movió, y ponerle uno sería inventarlo.
  */
-export function signoDe(direccion: DireccionDePuntos | null): string {
+export function signOf(direccion: DireccionDePuntos | null): string {
   if (direccion === 'POINTS_EARN') {
     return '+';
   }
@@ -74,15 +74,15 @@ export function signoDe(direccion: DireccionDePuntos | null): string {
  * anuncio para lector de pantalla— y tres copias es garantía de que una quede
  * mal.
  */
-export function puntosEnPalabras(puntos: string): string {
-  return `${puntos} ${unidadDePuntos(puntos)}`;
+export function pointsInWords(puntos: string): string {
+  return `${puntos} ${pointsUnit(puntos)}`;
 }
 
 /**
  * Sólo el sustantivo, para cuando la cifra va destacada aparte y no puede
  * viajar dentro del mismo nodo de texto.
  */
-export function unidadDePuntos(puntos: string): string {
+export function pointsUnit(puntos: string): string {
   return puntos.trim() === '1' ? 'punto' : 'puntos';
 }
 
@@ -92,20 +92,20 @@ export function unidadDePuntos(puntos: string): string {
  * «+45 puntos» dicho por un lector puede sonar ambiguo; esto lo dice con
  * palabras, que es lo que se escucha bien.
  */
-export function movimientoEnPalabras(
+export function movementInWords(
   direccion: DireccionDePuntos | null,
   puntos: string,
   motivo: MotivoDePuntos | null,
 ): string {
-  const cola = etiquetaDeMotivo(motivo).toLowerCase();
+  const cola = reasonLabel(motivo).toLowerCase();
   if (direccion === 'POINTS_EARN') {
-    return `Sumó ${puntosEnPalabras(puntos)} — ${cola}`;
+    return `Sumó ${pointsInWords(puntos)} — ${cola}`;
   }
   if (direccion === 'POINTS_REDEEM' || direccion === 'POINTS_EXPIRE') {
-    return `Restó ${puntosEnPalabras(puntos)} — ${cola}`;
+    return `Restó ${pointsInWords(puntos)} — ${cola}`;
   }
   // Sin dirección conocida no se afirma el sentido del movimiento.
-  return `Movimiento de ${puntosEnPalabras(puntos)} — ${cola}`;
+  return `Movimiento de ${pointsInWords(puntos)} — ${cola}`;
 }
 
 /**
@@ -117,6 +117,6 @@ export function movimientoEnPalabras(
  * dicen los puntos, para que el chip de «Mis puntos» y la tarjeta de promoción
  * de T-E7 («Puntos x2») salgan del mismo lugar y no de dos copias.
  */
-export function etiquetaDeMultiplicador(factor: string): string {
+export function multiplierLabel(factor: string): string {
   return `x${factor.trim()}`;
 }

@@ -15,7 +15,7 @@ import type {
 import type { ContextoDelDocumento } from './from-summary';
 
 /** Lo que hace falta saber de la sesión para encabezar un papel. */
-export interface SesionQueFirma {
+export interface SignatureSession {
   /** El nombre del paciente, tal como lo pudo leer la pantalla. */
   readonly paciente: string;
 
@@ -44,12 +44,12 @@ export interface SesionQueFirma {
  * motor no imprime la línea— en vez de viajar vacíos: un renglón «Matrícula:»
  * sin número afirma que no tiene, que es distinto de no haberla podido leer.
  */
-export function contextoDeLaSesion(sesion: SesionQueFirma): ContextoDelDocumento {
-  const matricula = matriculaDe(sesion.perfilPropio);
-  const organizacion = organizacionDe(sesion.tenantId, sesion.tenantName);
+export function sessionContext(sesion: SignatureSession): ContextoDelDocumento {
+  const matricula = licenseOf(sesion.perfilPropio);
+  const organizacion = organizationOf(sesion.tenantId, sesion.tenantName);
   return {
     paciente: sesion.paciente,
-    profesional: profesionalDe(sesion),
+    profesional: professionalOf(sesion),
     ...(matricula === undefined ? {} : { matricula }),
     ...(organizacion === undefined ? {} : { organizacion }),
   };
@@ -67,7 +67,7 @@ export function contextoDeLaSesion(sesion: SesionQueFirma): ContextoDelDocumento
  * leído: son la misma persona, y el papel no puede quedarse sin firma porque el
  * emisor del token haya omitido un claim cosmético.
  */
-function profesionalDe(sesion: SesionQueFirma): string {
+function professionalOf(sesion: SignatureSession): string {
   if (sesion.practitionerProfileId === null) {
     return '';
   }
@@ -94,11 +94,11 @@ function profesionalDe(sesion: SesionQueFirma): string {
  * devuelve; elegir por jurisdicción exigiría saber dónde se está atendiendo, y
  * eso el documento no lo sabe.
  */
-function matriculaDe(perfil: OwnPractitionerProfile | null): string | undefined {
+function licenseOf(perfil: OwnPractitionerProfile | null): string | undefined {
   const licencias = perfil?.licenses ?? [];
   const ahora = Date.now();
   const vigente = licencias.find((licencia: PractitionerLicense) =>
-    vigenciaCubre(licencia.validFrom, licencia.validTo, ahora),
+    coversValidity(licencia.validFrom, licencia.validTo, ahora),
   );
   const numero = (vigente?.licenseNumber ?? '').trim();
   return numero === '' ? undefined : numero;
@@ -112,7 +112,7 @@ function matriculaDe(perfil: OwnPractitionerProfile | null): string | undefined 
  * token no trae el nombre: en pantalla es feo, pero en un documento clínico es
  * un uuid impreso donde debería decir de dónde salió la receta.
  */
-function organizacionDe(
+function organizationOf(
   tenantId: string | null,
   tenantName: (id: string) => string,
 ): string | undefined {
@@ -131,7 +131,7 @@ function organizacionDe(
  * ventanas. Mirar sólo el final trataría como habilitada a una credencial que
  * todavía no entró en vigencia.
  */
-function vigenciaCubre(
+function coversValidity(
   desde: Date | undefined,
   hasta: Date | undefined,
   instante: number,

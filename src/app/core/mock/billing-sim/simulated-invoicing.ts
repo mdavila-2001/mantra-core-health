@@ -41,12 +41,12 @@ import type {
 } from '../../data-access/billing-simulated/billing-simulated.types';
 import { Coleccion } from '../mock-store';
 import { sha256Hex } from '../sha256';
-import { CATALOGOS_SIMULADOS, existeEnCatalogo } from '../siat-sim/simulated-catalogs';
-import { DESCRIPCION_MENSAJE_SIAT, ESTADO_SIAT, MENSAJE_SIAT, esAdvertencia } from '../siat-sim/siat-codes';
+import { SIMULATED_CATALOGS, existsInCatalog } from '../siat-sim/simulated-catalogs';
+import { SIAT_MESSAGE_DESCRIPTION, SIAT_STATUS, SIAT_MESSAGE, isWarning } from '../siat-sim/siat-codes';
 import { fechaHoraParaCuf, generarCuf } from '../siat-sim/cuf';
-import { empaquetarXml } from '../siat-sim/packaging';
-import { ESQUEMA_COMPRA_VENTA } from '../siat-sim/siat-schema';
-import { construirXmlFactura, type FilaXml } from '../siat-sim/invoice-xml';
+import { packageXml } from '../siat-sim/packaging';
+import { PURCHASE_SALE_SCHEMA } from '../siat-sim/siat-schema';
+import { buildInvoiceXml, type RowXml } from '../siat-sim/invoice-xml';
 import type {
   ContextoFiscal,
   FiscalProviderPort,
@@ -68,7 +68,7 @@ export interface EmisorSimulado {
 }
 
 /** Un cobro tal como nace: sin pago ni factura. */
-export interface CobroInicial {
+export interface InitialCharge {
   readonly id: string;
   readonly source: ChargeSource;
   readonly sourceRef: string;
@@ -88,11 +88,11 @@ export interface CobroInicial {
    * consulta con su serie de reconsultas). Con plan, los renglones del cobro
    * salen de sus instancias: los que traiga el cobro se ignoran.
    */
-  readonly plan?: PlanDeCobro | null;
+  readonly plan?: ChargePlan | null;
 }
 
 /** Una instancia del plan como se guarda: los importes derivados se calculan al leer. */
-export interface InstanciaDePlan {
+export interface PlanInstance {
   readonly id: string;
   readonly kind: PlanInstanceKind;
   readonly label: string;
@@ -102,32 +102,32 @@ export interface InstanciaDePlan {
   readonly salesNotes: readonly SimulatedSalesNote[];
 }
 
-export interface PlanDeCobro {
+export interface ChargePlan {
   readonly serviceCode: string;
   readonly serviceName: string;
-  readonly instances: readonly InstanciaDePlan[];
+  readonly instances: readonly PlanInstance[];
 }
 
-interface CobroGuardado extends CobroInicial {
+interface SavedCharge extends InitialCharge {
   readonly total: string;
 }
 
-interface FacturaGuardada extends SimulatedInvoice {
+interface SavedInvoice extends SimulatedInvoice {
   /** 908 u 904, para volver ahí después de revertir una anulación. */
   readonly statusAtReception: SimulatedInvoiceStatus;
 }
 
-interface Credenciales extends SimulatedFiscalCredentials {
+interface Credentials extends SimulatedFiscalCredentials {
   readonly id: string;
   readonly codigoControl: string | null;
 }
 
-interface Contador {
+interface Counter {
   readonly id: string;
   readonly ultimo: number;
 }
 
-export type CodigoDeError =
+export type ErrorCode =
   | 'NOT_FOUND'
   | 'ALREADY_PAID'
   | 'PAYMENT_REQUIRED'
@@ -139,18 +139,18 @@ export type CodigoDeError =
   /** Se pidió pagar una instancia de un servicio que no tiene plan. */
   | 'NOT_A_PLAN';
 
-export interface ErrorDeFacturacion {
-  readonly code: CodigoDeError;
+export interface InvoicingError {
+  readonly code: ErrorCode;
   readonly message: string;
   readonly issues?: readonly { readonly field: string; readonly problem: string }[];
 }
 
-export type Resultado<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: ErrorDeFacturacion };
+export type Result<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: InvoicingError };
 
-export interface OpcionesFacturacion {
+export interface InvoicingOptions {
   readonly siat: FiscalProviderPort;
   readonly emisores: readonly EmisorSimulado[];
-  readonly cobros: readonly CobroInicial[];
+  readonly cobros: readonly InitialCharge[];
   readonly reloj?: () => Date;
   readonly clavePersistencia?: string;
 }
@@ -158,20 +158,20 @@ export interface OpcionesFacturacion {
 // ---- utilidades -------------------------------------------------------------------
 
 const DECIMAL = /^\d+(\.\d{1,2})?$/;
-const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Mensajes del catálogo oficial que la directiva de simulación puede forzar. */
-const MENSAJES_FORZABLES = [
-  MENSAJE_SIAT.MONTO_TOTAL_ERRONEO,
-  MENSAJE_SIAT.SUBTOTAL_ERRONEO,
-  MENSAJE_SIAT.MONTO_TOTAL_SUJETO_IVA_ERRONEO,
-  MENSAJE_SIAT.CUF_INVALIDO,
-  MENSAJE_SIAT.CUFD_NO_VIGENTE,
-  MENSAJE_SIAT.ADVERTENCIA_CORRELATIVIDAD,
-  MENSAJE_SIAT.ADVERTENCIA_NIT_DEL_CLIENTE_NO_VALIDO,
+const FORCEABLE_MESSAGES = [
+  SIAT_MESSAGE.MONTO_TOTAL_ERRONEO,
+  SIAT_MESSAGE.SUBTOTAL_ERRONEO,
+  SIAT_MESSAGE.MONTO_TOTAL_SUJETO_IVA_ERRONEO,
+  SIAT_MESSAGE.CUF_INVALIDO,
+  SIAT_MESSAGE.CUFD_NO_VIGENTE,
+  SIAT_MESSAGE.ADVERTENCIA_CORRELATIVIDAD,
+  SIAT_MESSAGE.ADVERTENCIA_NIT_DEL_CLIENTE_NO_VALIDO,
 ] as const;
 
-function centavos(valor: string | null | undefined): number {
+function cents(valor: string | null | undefined): number {
   if (valor === null || valor === undefined || valor === '') return 0;
   const [entero, decimales = ''] = valor.split('.');
   return Number(entero) * 100 + Number(decimales.padEnd(2, '0').slice(0, 2));
@@ -184,109 +184,109 @@ function importe(centavosTotales: number): string {
 }
 
 /** Subtotal de un renglón: cantidad × precio − descuento, en centavos. */
-export function subtotalDeRenglon(cantidad: string, precioUnitario: string, descuento: string | null): string {
-  return importe(Math.round((centavos(cantidad) * centavos(precioUnitario)) / 100) - centavos(descuento));
+export function lineSubtotal(cantidad: string, precioUnitario: string, descuento: string | null): string {
+  return importe(Math.round((cents(cantidad) * cents(precioUnitario)) / 100) - cents(descuento));
 }
 
-export function totalDeRenglones(lineas: readonly ChargeLine[]): string {
-  return importe(lineas.reduce((suma, l) => suma + centavos(l.subtotal), 0));
+export function linesTotal(lineas: readonly ChargeLine[]): string {
+  return importe(lineas.reduce((suma, l) => suma + cents(l.subtotal), 0));
 }
 
 /** Unidad de medida 58 del SIAT, «unidad servicio»: la de consultas y reconsultas. */
-const UNIDAD_SERVICIO = 58;
+const SERVICE_UNIT = 58;
 
 /** Los renglones de un cobro con plan: uno por instancia, al monto esperado. */
-export function renglonesDelPlan(plan: PlanDeCobro): ChargeLine[] {
+export function planLines(plan: ChargePlan): ChargeLine[] {
   return plan.instances.map((i) => ({
     productCode: plan.serviceCode,
     description: `${plan.serviceName} · ${i.label}`,
     quantity: '1',
-    unitOfMeasure: UNIDAD_SERVICIO,
+    unitOfMeasure: SERVICE_UNIT,
     unitPrice: i.expectedAmount,
     discount: null,
-    subtotal: subtotalDeRenglon('1', i.expectedAmount, null),
+    subtotal: lineSubtotal('1', i.expectedAmount, null),
   }));
 }
 
-function pagadoDeInstancia(instancia: InstanciaDePlan): number {
-  return instancia.salesNotes.reduce((suma, n) => suma + centavos(n.amount), 0);
+function instancePaid(instancia: PlanInstance): number {
+  return instancia.salesNotes.reduce((suma, n) => suma + cents(n.amount), 0);
 }
 
-function planSaldado(plan: PlanDeCobro): boolean {
-  return plan.instances.every((i) => pagadoDeInstancia(i) >= centavos(i.expectedAmount));
+function settledPlan(plan: ChargePlan): boolean {
+  return plan.instances.every((i) => instancePaid(i) >= cents(i.expectedAmount));
 }
 
 /** El número de una nota de venta, `NV-000042` → 42. */
-function numeroDeNota(nota: SimulatedSalesNote): number {
+function noteNumber(nota: SimulatedSalesNote): number {
   return Number(nota.number.replace(/^NV-/, '')) || 0;
 }
 
-function estadoDeRespuesta(codigoEstado: number): SimulatedInvoiceStatus {
-  if (codigoEstado === ESTADO_SIAT.RECEPCION_VALIDADA) return 'VALIDATED';
-  if (codigoEstado === ESTADO_SIAT.RECEPCION_OBSERVADA) return 'OBSERVED';
+function responseStatus(codigoEstado: number): SimulatedInvoiceStatus {
+  if (codigoEstado === SIAT_STATUS.RECEPCION_VALIDADA) return 'VALIDATED';
+  if (codigoEstado === SIAT_STATUS.RECEPCION_OBSERVADA) return 'OBSERVED';
   return 'REJECTED';
 }
 
-function error<T>(code: CodigoDeError, message: string, issues?: ErrorDeFacturacion['issues']): Resultado<T> {
+function error<T>(code: ErrorCode, message: string, issues?: InvoicingError['issues']): Result<T> {
   return { ok: false, error: { code, message, ...(issues === undefined ? {} : { issues }) } };
 }
 
-function mensajesComoTexto(mensajes: readonly MensajeServicio[]): string {
+function textAsMessages(mensajes: readonly MensajeServicio[]): string {
   return mensajes.map((m) => `${m.codigo} ${m.descripcion}`).join('; ');
 }
 
 // ---- el servicio -------------------------------------------------------------------
 
-export class FacturacionSimulada {
+export class SimulatedInvoicing {
   private readonly siat: FiscalProviderPort;
-  private readonly emisores: ReadonlyMap<string, EmisorSimulado>;
-  private readonly reloj: () => Date;
-  private readonly cobros: Coleccion<CobroGuardado>;
-  private readonly facturas = new Coleccion<FacturaGuardada>();
-  private readonly credenciales = new Coleccion<Credenciales>();
-  private readonly contadores = new Coleccion<Contador>();
-  private readonly bandeja = new Coleccion<SimulatedOutboxEntry>();
+  private readonly issuers: ReadonlyMap<string, EmisorSimulado>;
+  private readonly clock: () => Date;
+  private readonly charges: Coleccion<SavedCharge>;
+  private readonly invoices = new Coleccion<SavedInvoice>();
+  private readonly credentials = new Coleccion<Credentials>();
+  private readonly counters = new Coleccion<Counter>();
+  private readonly inbox = new Coleccion<SimulatedOutboxEntry>();
 
-  constructor(opciones: OpcionesFacturacion) {
+  constructor(opciones: InvoicingOptions) {
     this.siat = opciones.siat;
-    this.emisores = new Map(opciones.emisores.map((e) => [e.issuer.id, e]));
-    this.reloj = opciones.reloj ?? (() => new Date());
-    this.cobros = new Coleccion<CobroGuardado>(opciones.cobros.map((c) => this.normalizar(c)));
+    this.issuers = new Map(opciones.emisores.map((e) => [e.issuer.id, e]));
+    this.clock = opciones.reloj ?? (() => new Date());
+    this.charges = new Coleccion<SavedCharge>(opciones.cobros.map((c) => this.normalize(c)));
     const clave = opciones.clavePersistencia;
     if (clave !== undefined) {
-      this.cobros.persistirEn(`${clave}.cobros`);
-      this.facturas.persistirEn(`${clave}.facturas`);
-      this.credenciales.persistirEn(`${clave}.credenciales`);
-      this.contadores.persistirEn(`${clave}.contadores`);
-      this.bandeja.persistirEn(`${clave}.bandeja`);
+      this.charges.persistirEn(`${clave}.cobros`);
+      this.invoices.persistirEn(`${clave}.facturas`);
+      this.credentials.persistirEn(`${clave}.credenciales`);
+      this.counters.persistirEn(`${clave}.contadores`);
+      this.inbox.persistirEn(`${clave}.bandeja`);
     }
   }
 
   // ---- lecturas ------------------------------------------------------------------
 
-  listarCobros(): SimulatedCharge[] {
-    return this.cobros
+  listCharges(): SimulatedCharge[] {
+    return this.charges
       .todos()
       .sort((a, b) => (b.payment?.paidAt ?? b.createdAt).localeCompare(a.payment?.paidAt ?? a.createdAt))
-      .map((c) => this.aCobro(c));
+      .map((c) => this.aCharge(c));
   }
 
-  cobro(id: string): SimulatedCharge | null {
-    const guardado = this.cobros.get(id);
-    return guardado === undefined ? null : this.aCobro(guardado);
+  charge(id: string): SimulatedCharge | null {
+    const guardado = this.charges.get(id);
+    return guardado === undefined ? null : this.aCharge(guardado);
   }
 
-  factura(id: string): SimulatedInvoice | null {
-    const guardada = this.facturas.get(id);
-    return guardada === undefined ? null : this.aFactura(guardada);
+  invoice(id: string): SimulatedInvoice | null {
+    const guardada = this.invoices.get(id);
+    return guardada === undefined ? null : this.toInvoice(guardada);
   }
 
-  bandejaDeSalida(): SimulatedOutboxEntry[] {
-    return this.bandeja.todos().sort((a, b) => b.queuedAt.localeCompare(a.queuedAt));
+  outputInbox(): SimulatedOutboxEntry[] {
+    return this.inbox.todos().sort((a, b) => b.queuedAt.localeCompare(a.queuedAt));
   }
 
-  catalogos(): SimulatedCatalogs {
-    const c = CATALOGOS_SIMULADOS;
+  catalogs(): SimulatedCatalogs {
+    const c = SIMULATED_CATALOGS;
     const sinFuente = (e: { codigo: number; descripcion: string; origen: 'EJEMPLO_OFICIAL' | 'SIMULADO' }) => ({
       codigo: e.codigo,
       descripcion: e.descripcion,
@@ -296,24 +296,24 @@ export class FacturacionSimulada {
       paymentMethods: c.metodosDePago.map(sinFuente),
       identityDocumentTypes: c.tiposDeDocumentoDeIdentidad.map(sinFuente),
       annulmentReasons: c.motivosDeAnulacion.map(sinFuente),
-      forceableMessages: MENSAJES_FORZABLES.map((codigo) => ({
+      forceableMessages: FORCEABLE_MESSAGES.map((codigo) => ({
         codigo,
-        descripcion: DESCRIPCION_MENSAJE_SIAT[codigo],
-        advertencia: esAdvertencia(codigo),
+        descripcion: SIAT_MESSAGE_DESCRIPTION[codigo],
+        advertencia: isWarning(codigo),
       })),
       simulated: true,
     };
   }
 
-  estadoFiscal(): SimulatedFiscalStatus {
-    const primero = [...this.emisores.values()][0];
+  statusFiscal(): SimulatedFiscalStatus {
+    const primero = [...this.issuers.values()][0];
     return {
       environment: 'SIMULADO',
       modality: 2,
-      serverTime: primero === undefined ? '' : this.siat.sincronizarFechaHora(this.contexto(primero)).fechaHora,
-      issuers: [...this.emisores.values()].map((e) => e.issuer),
-      credentials: [...this.emisores.values()].map((e) => {
-        const c = this.credenciales.get(e.issuer.id);
+      serverTime: primero === undefined ? '' : this.siat.sincronizarFechaHora(this.context(primero)).fechaHora,
+      issuers: [...this.issuers.values()].map((e) => e.issuer),
+      credentials: [...this.issuers.values()].map((e) => {
+        const c = this.credentials.get(e.issuer.id);
         return {
           issuerId: e.issuer.id,
           cuis: c?.cuis ?? null,
@@ -328,27 +328,27 @@ export class FacturacionSimulada {
 
   // ---- pago ------------------------------------------------------------------------
 
-  registrarPago(cobroId: string, methodCode: number): Resultado<SimulatedCharge> {
-    const cobro = this.cobros.get(cobroId);
+  registerPayment(cobroId: string, methodCode: number): Result<SimulatedCharge> {
+    const cobro = this.charges.get(cobroId);
     if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
     if (cobro.payment !== null) return error('ALREADY_PAID', 'El cobro ya está pagado');
     if (cobro.plan) {
       return error('PLAN_REQUIRED', 'El servicio tiene plan de pagos: se paga instancia por instancia, con nota de venta');
     }
-    const metodo = CATALOGOS_SIMULADOS.metodosDePago.find((m) => m.codigo === methodCode);
+    const metodo = SIMULATED_CATALOGS.metodosDePago.find((m) => m.codigo === methodCode);
     if (metodo === undefined) {
       return error('INVALID_INPUT', 'Método de pago inválido', [{ field: 'methodCode', problem: 'no está en el catálogo simulado' }]);
     }
     const payment: SimulatedPayment = {
-      id: `pago-${sha256Hex(`${cobroId}|${this.reloj().getTime()}`).slice(0, 16)}`,
+      id: `pago-${sha256Hex(`${cobroId}|${this.clock().getTime()}`).slice(0, 16)}`,
       methodCode,
       methodLabel: metodo.descripcion,
       amount: cobro.total,
       currency: 'BOB',
-      paidAt: this.reloj().toISOString(),
+      paidAt: this.clock().toISOString(),
       simulated: true,
     };
-    return { ok: true, value: this.aCobro(this.cobros.actualizar(cobroId, { payment })!) };
+    return { ok: true, value: this.aCharge(this.charges.actualizar(cobroId, { payment })!) };
   }
 
   /**
@@ -357,12 +357,12 @@ export class FacturacionSimulada {
    * cuando el plan queda saldado. Con este pago saldado, el cobro recibe su
    * `payment` y pasa a poder facturarse.
    */
-  registrarPagoDeInstancia(
+  instanceRegisterPayment(
     cobroId: string,
     instanciaId: string,
     entrada: { readonly methodCode: number; readonly amount: string },
-  ): Resultado<SimulatedCharge> {
-    const cobro = this.cobros.get(cobroId);
+  ): Result<SimulatedCharge> {
+    const cobro = this.charges.get(cobroId);
     if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
     const plan = cobro.plan;
     if (!plan) return error('NOT_A_PLAN', 'El servicio es de una sola instancia: se cobra y se factura de una vez');
@@ -370,47 +370,47 @@ export class FacturacionSimulada {
     if (instancia === undefined) return error('NOT_FOUND', 'La instancia no es de este plan');
 
     const problemas: { field: string; problem: string }[] = [];
-    const metodo = CATALOGOS_SIMULADOS.metodosDePago.find((m) => m.codigo === Number(entrada?.methodCode));
+    const metodo = SIMULATED_CATALOGS.metodosDePago.find((m) => m.codigo === Number(entrada?.methodCode));
     if (metodo === undefined) problemas.push({ field: 'methodCode', problem: 'no está en el catálogo simulado' });
     const monto = String(entrada?.amount ?? '').trim();
-    const saldo = centavos(instancia.expectedAmount) - pagadoDeInstancia(instancia);
+    const saldo = cents(instancia.expectedAmount) - instancePaid(instancia);
     if (saldo <= 0) {
       return error('ALREADY_PAID', `«${instancia.label}» ya está pagada`);
     }
-    if (!DECIMAL.test(monto) || centavos(monto) <= 0) {
+    if (!DECIMAL.test(monto) || cents(monto) <= 0) {
       problemas.push({ field: 'amount', problem: 'decimal mayor que cero con hasta 2 decimales' });
-    } else if (centavos(monto) > saldo) {
+    } else if (cents(monto) > saldo) {
       problemas.push({ field: 'amount', problem: `no puede superar el saldo de la instancia (${importe(saldo)})` });
     }
     if (problemas.length > 0 || metodo === undefined) return error('INVALID_INPUT', 'Pago inválido', problemas);
 
-    const ahora = this.reloj().toISOString();
-    const numero = this.ultimaNotaDeVenta(cobro.issuerId) + 1;
+    const ahora = this.clock().toISOString();
+    const numero = this.saleUltimaNote(cobro.issuerId) + 1;
     const nota: SimulatedSalesNote = {
       id: `nota-${sha256Hex(`${cobroId}|${instanciaId}|${numero}|${ahora}`).slice(0, 16)}`,
       number: `NV-${String(numero).padStart(6, '0')}`,
       instanceId: instanciaId,
-      amount: importe(centavos(monto)),
+      amount: importe(cents(monto)),
       methodCode: metodo.codigo,
       methodLabel: metodo.descripcion,
       issuedAt: ahora,
       simulated: true,
     };
-    const siguiente: PlanDeCobro = {
+    const siguiente: ChargePlan = {
       ...plan,
       instances: plan.instances.map((i) => (i.id === instanciaId ? { ...i, salesNotes: [...i.salesNotes, nota] } : i)),
     };
-    const actualizado = this.cobros.actualizar(cobroId, {
+    const actualizado = this.charges.actualizar(cobroId, {
       plan: siguiente,
-      payment: planSaldado(siguiente) ? this.pagoDelPlan(cobro, nota) : null,
+      payment: settledPlan(siguiente) ? this.planPayment(cobro, nota) : null,
     })!;
-    return { ok: true, value: this.aCobro(actualizado) };
+    return { ok: true, value: this.aCharge(actualizado) };
   }
 
   // ---- emisión -----------------------------------------------------------------------
 
-  emitirFactura(cobroId: string, entrada: IssueInvoiceInput, usuario: string): Resultado<SimulatedInvoice> {
-    const cobro = this.cobros.get(cobroId);
+  issueInvoice(cobroId: string, entrada: IssueInvoiceInput, usuario: string): Result<SimulatedInvoice> {
+    const cobro = this.charges.get(cobroId);
     if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
     if (cobro.payment === null) {
       return error(
@@ -420,20 +420,20 @@ export class FacturacionSimulada {
           : 'El cobro todavía no está pagado',
       );
     }
-    const vigente = this.facturaVigente(cobroId);
+    const vigente = this.currentInvoice(cobroId);
     if (vigente !== null) return error('ALREADY_INVOICED', `El cobro ya tiene la factura ${vigente.invoiceNumber} vigente`);
 
-    const problemas = this.problemasDeEntrada(entrada, cobro.total);
+    const problemas = this.entryProblems(entrada, cobro.total);
     if (problemas.length > 0) return error('INVALID_INPUT', 'Datos de facturación inválidos', problemas);
 
-    const emisor = this.emisores.get(cobro.issuerId)!;
-    const credenciales = this.asegurarCredenciales(emisor);
+    const emisor = this.issuers.get(cobro.issuerId)!;
+    const credenciales = this.ensureCredentials(emisor);
     if (!credenciales.ok) return credenciales;
     const { cuis, cufd, codigoControl } = credenciales.value;
 
-    const contexto = this.contexto(emisor);
+    const contexto = this.context(emisor);
     const fechaEmision = this.siat.sincronizarFechaHora(contexto).fechaHora;
-    const numeroFactura = (this.contadores.get(emisor.issuer.id)?.ultimo ?? 0) + 1;
+    const numeroFactura = (this.counters.get(emisor.issuer.id)?.ultimo ?? 0) + 1;
     const sector = emisor.issuer.documentSector;
     const cuf = generarCuf(
       {
@@ -451,8 +451,8 @@ export class FacturacionSimulada {
     );
 
     const descuentoAdicional = entrada.additionalDiscount === undefined || entrada.additionalDiscount === null || entrada.additionalDiscount === '' ? null : entrada.additionalDiscount;
-    const montoTotal = importe(centavos(cobro.total) - centavos(descuentoAdicional));
-    const cabecera = this.cabecera(emisor, cobro, entrada.buyer, {
+    const montoTotal = importe(cents(cobro.total) - cents(descuentoAdicional));
+    const cabecera = this.header(emisor, cobro, entrada.buyer, {
       numeroFactura,
       cuf,
       cufd,
@@ -461,9 +461,9 @@ export class FacturacionSimulada {
       descuentoAdicional,
       usuario,
     });
-    const detalle = cobro.lines.map((l) => this.renglon(emisor, l));
-    const xml = construirXmlFactura(ESQUEMA_COMPRA_VENTA, { cabecera, detalle });
-    const paquete = empaquetarXml(xml);
+    const detalle = cobro.lines.map((l) => this.line(emisor, l));
+    const xml = buildInvoiceXml(PURCHASE_SALE_SCHEMA, { cabecera, detalle });
+    const paquete = packageXml(xml);
 
     const solicitud: SolicitudRecepcion = {
       ...contexto,
@@ -478,20 +478,20 @@ export class FacturacionSimulada {
       { ...solicitud, archivo: paquete.archivo, hashArchivo: paquete.hashArchivo, fechaEnvio: fechaEmision },
       forzar === undefined ? undefined : { forzarMensaje: forzar },
     );
-    const status = estadoDeRespuesta(respuesta.codigoEstado);
-    if (status !== 'REJECTED') this.contadores.agregar({ id: emisor.issuer.id, ultimo: numeroFactura });
+    const status = responseStatus(respuesta.codigoEstado);
+    if (status !== 'REJECTED') this.counters.agregar({ id: emisor.issuer.id, ultimo: numeroFactura });
 
-    const ahora = this.reloj().toISOString();
+    const ahora = this.clock().toISOString();
     const events: InvoiceEvent[] = [
-      { kind: 'PAYMENT_REGISTERED', at: cobro.payment.paidAt, siatStatusCode: null, detail: this.detalleDelPago(cobro) },
+      { kind: 'PAYMENT_REGISTERED', at: cobro.payment.paidAt, siatStatusCode: null, detail: this.paymentDetail(cobro) },
       { kind: 'INVOICE_BUILT', at: ahora, siatStatusCode: null, detail: `Factura N.º ${numeroFactura} · sector ${sector} · CUF generado` },
       { kind: 'SENT_TO_SIAT', at: ahora, siatStatusCode: null, detail: `XML gzip ${paquete.bytesComprimidos} bytes · SHA-256 ${paquete.hashArchivo.slice(0, 12)}…` },
-      this.eventoDeRespuesta('SIAT_RESPONSE', respuesta, ahora),
+      this.responseEvent('SIAT_RESPONSE', respuesta, ahora),
     ];
-    const guardada: FacturaGuardada = {
+    const guardada: SavedInvoice = {
       // Con el ordinal: un reintento tras un rechazo puede repetir el CUF
       // (mismo número, mismo instante) y no debe pisar el registro rechazado.
-      id: `factura-${sha256Hex(`${cuf}|${this.facturas.tamano}`).slice(0, 16)}`,
+      id: `factura-${sha256Hex(`${cuf}|${this.invoices.tamano}`).slice(0, 16)}`,
       chargeId: cobro.id,
       issuer: emisor.issuer,
       documentSector: sector,
@@ -507,29 +507,29 @@ export class FacturacionSimulada {
       compressedBytes: paquete.bytesComprimidos,
       status,
       statusAtReception: status,
-      siatResponse: this.aRespuesta(respuesta),
+      siatResponse: this.aResponse(respuesta),
       events,
       simulated: true,
     };
-    this.facturas.agregar(guardada);
-    return { ok: true, value: this.aFactura(guardada) };
+    this.invoices.agregar(guardada);
+    return { ok: true, value: this.toInvoice(guardada) };
   }
 
   // ---- anulación y reversión ---------------------------------------------------------
 
-  anular(facturaId: string, reasonCode: number): Resultado<SimulatedInvoice> {
-    return this.operarSobreFactura(facturaId, (base, factura) => {
+  void(facturaId: string, reasonCode: number): Result<SimulatedInvoice> {
+    return this.operateOnInvoice(facturaId, (base, factura) => {
       const respuesta = this.siat.anulacionFactura({ ...base, cuf: factura.cuf, codigoMotivo: reasonCode });
-      const status: SimulatedInvoiceStatus = respuesta.codigoEstado === ESTADO_SIAT.ANULACION_CONFIRMADA ? 'ANNULLED' : factura.status;
+      const status: SimulatedInvoiceStatus = respuesta.codigoEstado === SIAT_STATUS.ANULACION_CONFIRMADA ? 'ANNULLED' : factura.status;
       return { respuesta, status, kind: 'ANNULMENT' as const };
     });
   }
 
-  revertirAnulacion(facturaId: string): Resultado<SimulatedInvoice> {
-    return this.operarSobreFactura(facturaId, (base, factura) => {
+  revertVoiding(facturaId: string): Result<SimulatedInvoice> {
+    return this.operateOnInvoice(facturaId, (base, factura) => {
       const respuesta = this.siat.reversionAnulacionFactura({ ...base, cuf: factura.cuf });
       const status: SimulatedInvoiceStatus =
-        respuesta.codigoEstado === ESTADO_SIAT.REVERSION_ANULACION_CONFIRMADA ? factura.statusAtReception : factura.status;
+        respuesta.codigoEstado === SIAT_STATUS.REVERSION_ANULACION_CONFIRMADA ? factura.statusAtReception : factura.status;
       return { respuesta, status, kind: 'ANNULMENT_REVERSAL' as const };
     });
   }
@@ -537,16 +537,16 @@ export class FacturacionSimulada {
   // ---- entrega -------------------------------------------------------------------------
 
   /** Encola el «envío» del XML y la representación gráfica. **No envía nada.** */
-  encolarCorreo(facturaId: string, to: string): Resultado<SimulatedOutboxEntry> {
-    const factura = this.facturas.get(facturaId);
+  enqueueEmail(facturaId: string, to: string): Result<SimulatedOutboxEntry> {
+    const factura = this.invoices.get(facturaId);
     if (factura === undefined) return error('NOT_FOUND', 'La factura no existe');
-    if (!CORREO.test(to)) return error('INVALID_INPUT', 'Correo inválido', [{ field: 'to', problem: 'no es un correo' }]);
+    if (!EMAIL.test(to)) return error('INVALID_INPUT', 'Correo inválido', [{ field: 'to', problem: 'no es un correo' }]);
     if (factura.status === 'REJECTED') {
       return error('INVALID_INPUT', 'Una factura rechazada no se entrega', [{ field: 'invoiceId', problem: 'rechazada' }]);
     }
-    const ahora = this.reloj().toISOString();
+    const ahora = this.clock().toISOString();
     const entrada: SimulatedOutboxEntry = {
-      id: `correo-${sha256Hex(`${facturaId}|${to}|${ahora}|${this.bandeja.tamano}`).slice(0, 16)}`,
+      id: `correo-${sha256Hex(`${facturaId}|${to}|${ahora}|${this.inbox.tamano}`).slice(0, 16)}`,
       invoiceId: facturaId,
       to,
       attachments: [`factura-${factura.invoiceNumber}-SIMULADA.xml`, `factura-${factura.invoiceNumber}-SIMULADA.pdf`],
@@ -554,8 +554,8 @@ export class FacturacionSimulada {
       queuedAt: ahora,
       simulated: true,
     };
-    this.bandeja.agregar(entrada);
-    this.facturas.actualizar(facturaId, {
+    this.inbox.agregar(entrada);
+    this.invoices.actualizar(facturaId, {
       events: [...factura.events, { kind: 'EMAIL_QUEUED', at: ahora, siatStatusCode: null, detail: `A ${to} · bandeja simulada, no se envía` }],
     });
     return { ok: true, value: entrada };
@@ -564,23 +564,23 @@ export class FacturacionSimulada {
   // ---- privados ----------------------------------------------------------------------
 
   /** Con plan, los renglones salen de las instancias, y un plan saldado ya trae su pago. */
-  private normalizar(c: CobroInicial): CobroGuardado {
-    if (!c.plan) return { ...c, plan: null, total: totalDeRenglones(c.lines) };
-    const lines = renglonesDelPlan(c.plan);
-    const base: CobroGuardado = { ...c, lines, total: totalDeRenglones(lines) };
-    if (base.payment !== null || !planSaldado(c.plan)) return base;
+  private normalize(c: InitialCharge): SavedCharge {
+    if (!c.plan) return { ...c, plan: null, total: linesTotal(c.lines) };
+    const lines = planLines(c.plan);
+    const base: SavedCharge = { ...c, lines, total: linesTotal(lines) };
+    if (base.payment !== null || !settledPlan(c.plan)) return base;
     const ultima = c.plan.instances
       .flatMap((i) => i.salesNotes)
       .sort((a, b) => a.issuedAt.localeCompare(b.issuedAt))
       .at(-1);
-    return ultima === undefined ? base : { ...base, payment: this.pagoDelPlan(base, ultima) };
+    return ultima === undefined ? base : { ...base, payment: this.planPayment(base, ultima) };
   }
 
   /**
    * El pago de un plan saldado, para que la factura se emita igual que la de
    * un cobro de una sola vez: por el total, con el medio del último pago.
    */
-  private pagoDelPlan(cobro: CobroGuardado, ultima: SimulatedSalesNote): SimulatedPayment {
+  private planPayment(cobro: SavedCharge, ultima: SimulatedSalesNote): SimulatedPayment {
     return {
       id: `pago-${sha256Hex(`${cobro.id}|plan|${ultima.id}`).slice(0, 16)}`,
       methodCode: ultima.methodCode,
@@ -592,7 +592,7 @@ export class FacturacionSimulada {
     };
   }
 
-  private detalleDelPago(cobro: CobroGuardado): string {
+  private paymentDetail(cobro: SavedCharge): string {
     const pago = cobro.payment!;
     if (!cobro.plan) return `${pago.methodLabel} · Bs ${pago.amount}`;
     const notas = cobro.plan.instances.flatMap((i) => i.salesNotes).map((n) => n.number);
@@ -600,16 +600,16 @@ export class FacturacionSimulada {
   }
 
   /** El correlativo de notas de venta es por emisor, como el de facturas. */
-  private ultimaNotaDeVenta(issuerId: string): number {
-    return this.cobros
+  private saleUltimaNote(issuerId: string): number {
+    return this.charges
       .filtrar((c) => c.issuerId === issuerId)
       .flatMap((c) => c.plan?.instances.flatMap((i) => i.salesNotes) ?? [])
-      .reduce((mayor, n) => Math.max(mayor, numeroDeNota(n)), 0);
+      .reduce((mayor, n) => Math.max(mayor, noteNumber(n)), 0);
   }
 
-  private aPlan(plan: PlanDeCobro): SimulatedPaymentPlan {
+  private aPlan(plan: ChargePlan): SimulatedPaymentPlan {
     const instances = plan.instances.map((i, indice): SimulatedPlanInstance => {
-      const pagado = pagadoDeInstancia(i);
+      const pagado = instancePaid(i);
       return {
         id: i.id,
         sequence: indice + 1,
@@ -617,14 +617,14 @@ export class FacturacionSimulada {
         label: i.label,
         expectedAmount: i.expectedAmount,
         paidAmount: importe(pagado),
-        balance: importe(Math.max(centavos(i.expectedAmount) - pagado, 0)),
+        balance: importe(Math.max(cents(i.expectedAmount) - pagado, 0)),
         bookingId: i.bookingId,
         scheduledAt: i.scheduledAt,
         salesNotes: [...i.salesNotes].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)),
       };
     });
-    const esperado = plan.instances.reduce((s, i) => s + centavos(i.expectedAmount), 0);
-    const pagado = plan.instances.reduce((s, i) => s + pagadoDeInstancia(i), 0);
+    const esperado = plan.instances.reduce((s, i) => s + cents(i.expectedAmount), 0);
+    const pagado = plan.instances.reduce((s, i) => s + instancePaid(i), 0);
     return {
       serviceCode: plan.serviceCode,
       serviceName: plan.serviceName,
@@ -632,11 +632,11 @@ export class FacturacionSimulada {
       expectedTotal: importe(esperado),
       paidTotal: importe(pagado),
       balance: importe(Math.max(esperado - pagado, 0)),
-      complete: planSaldado(plan),
+      complete: settledPlan(plan),
     };
   }
 
-  private contexto(emisor: EmisorSimulado): ContextoFiscal {
+  private context(emisor: EmisorSimulado): ContextoFiscal {
     return {
       nit: emisor.issuer.nit,
       codigoSistema: emisor.codigoSistema,
@@ -646,24 +646,24 @@ export class FacturacionSimulada {
     };
   }
 
-  private facturaVigente(cobroId: string): FacturaGuardada | null {
-    return this.facturas.filtrar((f) => f.chargeId === cobroId && (f.status === 'VALIDATED' || f.status === 'OBSERVED'))[0] ?? null;
+  private currentInvoice(cobroId: string): SavedInvoice | null {
+    return this.invoices.filtrar((f) => f.chargeId === cobroId && (f.status === 'VALIDATED' || f.status === 'OBSERVED'))[0] ?? null;
   }
 
-  private ultimaFactura(cobroId: string): FacturaGuardada | null {
+  private ultimaInvoice(cobroId: string): SavedInvoice | null {
     return (
-      this.facturas
+      this.invoices
         .filtrar((f) => f.chargeId === cobroId)
         .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt))[0] ?? null
     );
   }
 
-  private problemasDeEntrada(entrada: IssueInvoiceInput, total: string): { field: string; problem: string }[] {
+  private entryProblems(entrada: IssueInvoiceInput, total: string): { field: string; problem: string }[] {
     const problemas: { field: string; problem: string }[] = [];
     const comprador: Partial<BuyerInput> = entrada?.buyer ?? {};
     const nombre = (comprador.name ?? '').trim();
     if (nombre.length < 1 || nombre.length > 500) problemas.push({ field: 'buyer.name', problem: 'entre 1 y 500 caracteres' });
-    if (!existeEnCatalogo(CATALOGOS_SIMULADOS.tiposDeDocumentoDeIdentidad, Number(comprador.documentTypeCode))) {
+    if (!existsInCatalog(SIMULATED_CATALOGS.tiposDeDocumentoDeIdentidad, Number(comprador.documentTypeCode))) {
       problemas.push({ field: 'buyer.documentTypeCode', problem: 'no está en el catálogo simulado' });
     }
     const documento = (comprador.documentNumber ?? '').trim();
@@ -671,21 +671,21 @@ export class FacturacionSimulada {
     const complemento = comprador.complement ?? null;
     if (complemento !== null && complemento.length > 5) problemas.push({ field: 'buyer.complement', problem: 'hasta 5 caracteres' });
     const correo = comprador.email ?? null;
-    if (correo !== null && correo !== '' && !CORREO.test(correo)) problemas.push({ field: 'buyer.email', problem: 'no es un correo' });
+    if (correo !== null && correo !== '' && !EMAIL.test(correo)) problemas.push({ field: 'buyer.email', problem: 'no es un correo' });
     const descuento = entrada?.additionalDiscount ?? null;
     if (descuento !== null && descuento !== '') {
       if (!DECIMAL.test(descuento)) problemas.push({ field: 'additionalDiscount', problem: 'decimal no negativo con hasta 2 decimales' });
-      else if (centavos(descuento) >= centavos(total)) problemas.push({ field: 'additionalDiscount', problem: 'tiene que ser menor que el total' });
+      else if (cents(descuento) >= cents(total)) problemas.push({ field: 'additionalDiscount', problem: 'tiene que ser menor que el total' });
     }
     return problemas;
   }
 
   /** CUIS y CUFD vigentes; los pide al proveedor si faltan o vencieron. */
-  private asegurarCredenciales(emisor: EmisorSimulado): Resultado<{ cuis: string; cufd: string; codigoControl: string }> {
-    const ahora = this.reloj();
+  private ensureCredentials(emisor: EmisorSimulado): Result<{ cuis: string; cufd: string; codigoControl: string }> {
+    const ahora = this.clock();
     const id = emisor.issuer.id;
-    const contexto = this.contexto(emisor);
-    let actual: Credenciales = this.credenciales.get(id) ?? {
+    const contexto = this.context(emisor);
+    let actual: Credentials = this.credentials.get(id) ?? {
       id,
       issuerId: id,
       cuis: null,
@@ -697,24 +697,24 @@ export class FacturacionSimulada {
     if (actual.cuis === null || actual.cuisValidUntil === null || new Date(actual.cuisValidUntil) <= ahora) {
       const r = this.siat.solicitudCuis(contexto);
       if (!r.transaccion || r.codigo === null) {
-        return error('FISCAL_CREDENTIALS', `No se obtuvo el CUIS simulado: ${mensajesComoTexto(r.mensajesList)}`);
+        return error('FISCAL_CREDENTIALS', `No se obtuvo el CUIS simulado: ${textAsMessages(r.mensajesList)}`);
       }
       actual = { ...actual, cuis: r.codigo, cuisValidUntil: r.fechaVigencia, cufd: null, cufdValidUntil: null, codigoControl: null };
     }
     if (actual.cufd === null || actual.cufdValidUntil === null || actual.codigoControl === null || new Date(actual.cufdValidUntil) <= ahora) {
       const r = this.siat.solicitudCufd({ ...contexto, cuis: actual.cuis! });
       if (!r.transaccion || r.codigo === null || r.codigoControl === null) {
-        return error('FISCAL_CREDENTIALS', `No se obtuvo el CUFD simulado: ${mensajesComoTexto(r.mensajesList)}`);
+        return error('FISCAL_CREDENTIALS', `No se obtuvo el CUFD simulado: ${textAsMessages(r.mensajesList)}`);
       }
       actual = { ...actual, cufd: r.codigo, cufdValidUntil: r.fechaVigencia, codigoControl: r.codigoControl };
     }
-    this.credenciales.agregar(actual);
+    this.credentials.agregar(actual);
     return { ok: true, value: { cuis: actual.cuis!, cufd: actual.cufd!, codigoControl: actual.codigoControl! } };
   }
 
-  private cabecera(
+  private header(
     emisor: EmisorSimulado,
-    cobro: CobroGuardado,
+    cobro: SavedCharge,
     comprador: BuyerInput,
     datos: {
       numeroFactura: number;
@@ -725,8 +725,8 @@ export class FacturacionSimulada {
       descuentoAdicional: string | null;
       usuario: string;
     },
-  ): FilaXml {
-    const leyendas = CATALOGOS_SIMULADOS.leyendas;
+  ): RowXml {
+    const leyendas = SIMULATED_CATALOGS.leyendas;
     const leyenda = leyendas[datos.numeroFactura % leyendas.length]!.descripcionLeyenda;
     const complemento = comprador.complement === undefined || comprador.complement === '' ? null : comprador.complement;
     return {
@@ -763,7 +763,7 @@ export class FacturacionSimulada {
     };
   }
 
-  private renglon(emisor: EmisorSimulado, linea: ChargeLine): FilaXml {
+  private line(emisor: EmisorSimulado, linea: ChargeLine): RowXml {
     return {
       actividadEconomica: emisor.actividadEconomica,
       codigoProductoSin: emisor.codigoProductoSin,
@@ -779,20 +779,20 @@ export class FacturacionSimulada {
     };
   }
 
-  private operarSobreFactura(
+  private operateOnInvoice(
     facturaId: string,
     operacion: (
       base: SolicitudRecepcion,
-      factura: FacturaGuardada,
+      factura: SavedInvoice,
     ) => { respuesta: RespuestaRecepcion; status: SimulatedInvoiceStatus; kind: 'ANNULMENT' | 'ANNULMENT_REVERSAL' },
-  ): Resultado<SimulatedInvoice> {
-    const factura = this.facturas.get(facturaId);
+  ): Result<SimulatedInvoice> {
+    const factura = this.invoices.get(facturaId);
     if (factura === undefined) return error('NOT_FOUND', 'La factura no existe');
-    const emisor = this.emisores.get(factura.issuer.id)!;
-    const credenciales = this.asegurarCredenciales(emisor);
+    const emisor = this.issuers.get(factura.issuer.id)!;
+    const credenciales = this.ensureCredentials(emisor);
     if (!credenciales.ok) return credenciales;
     const base: SolicitudRecepcion = {
-      ...this.contexto(emisor),
+      ...this.context(emisor),
       cuis: credenciales.value.cuis,
       cufd: credenciales.value.cufd,
       codigoDocumentoSector: factura.documentSector,
@@ -800,16 +800,16 @@ export class FacturacionSimulada {
       tipoFacturaDocumento: 1,
     };
     const { respuesta, status, kind } = operacion(base, factura);
-    const ahora = this.reloj().toISOString();
-    const actualizada = this.facturas.actualizar(facturaId, {
+    const ahora = this.clock().toISOString();
+    const actualizada = this.invoices.actualizar(facturaId, {
       status,
-      siatResponse: this.aRespuesta(respuesta),
-      events: [...factura.events, this.eventoDeRespuesta(kind, respuesta, ahora)],
+      siatResponse: this.aResponse(respuesta),
+      events: [...factura.events, this.responseEvent(kind, respuesta, ahora)],
     })!;
-    return { ok: true, value: this.aFactura(actualizada) };
+    return { ok: true, value: this.toInvoice(actualizada) };
   }
 
-  private eventoDeRespuesta(kind: InvoiceEvent['kind'], respuesta: RespuestaRecepcion, at: string): InvoiceEvent {
+  private responseEvent(kind: InvoiceEvent['kind'], respuesta: RespuestaRecepcion, at: string): InvoiceEvent {
     const mensajes = respuesta.mensajesList.map((m) => `${m.codigo}${m.forzadoPorSimulacion ? ' (forzado)' : ''}`).join(', ');
     return {
       kind,
@@ -819,7 +819,7 @@ export class FacturacionSimulada {
     };
   }
 
-  private aRespuesta(r: RespuestaRecepcion): SiatResponse {
+  private aResponse(r: RespuestaRecepcion): SiatResponse {
     return {
       transaccion: r.transaccion,
       codigoEstado: r.codigoEstado,
@@ -835,12 +835,12 @@ export class FacturacionSimulada {
     };
   }
 
-  private aFactura(f: FacturaGuardada): SimulatedInvoice {
+  private toInvoice(f: SavedInvoice): SimulatedInvoice {
     const { statusAtReception: _omitido, ...publica } = f;
     return publica;
   }
 
-  private aResumen(f: FacturaGuardada): SimulatedInvoiceSummary {
+  private toSummary(f: SavedInvoice): SimulatedInvoiceSummary {
     return {
       id: f.id,
       invoiceNumber: f.invoiceNumber,
@@ -853,8 +853,8 @@ export class FacturacionSimulada {
     };
   }
 
-  private aCobro(c: CobroGuardado): SimulatedCharge {
-    const ultima = this.ultimaFactura(c.id);
+  private aCharge(c: SavedCharge): SimulatedCharge {
+    const ultima = this.ultimaInvoice(c.id);
     return {
       id: c.id,
       source: c.source,
@@ -870,7 +870,7 @@ export class FacturacionSimulada {
       createdAt: c.createdAt,
       payment: c.payment,
       suggestedBuyer: c.suggestedBuyer,
-      latestInvoice: ultima === null ? null : this.aResumen(ultima),
+      latestInvoice: ultima === null ? null : this.toSummary(ultima),
       plan: c.plan ? this.aPlan(c.plan) : null,
       simulated: true,
     };

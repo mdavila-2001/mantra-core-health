@@ -27,7 +27,7 @@ import { SystemContextClient } from '../../../core/data-access/system-context/sy
  * estable del concepto. Sin el catálogo no se puede armar un cuerpo válido: el
  * envío se frena y lo dice, en vez de mandar un alta que la API rechaza.
  */
-const DESTINOS = {
+const DESTINATIONS = {
   tipoDeUnidad: 'diagnostic_units.diagnostic_units.diagnostic_unit_type_concept_id',
   modalidad: 'diagnostic_units.diagnostic_study_offerings.modality_concept_id',
   pais: 'directory.tenants.country_concept_id',
@@ -35,7 +35,7 @@ const DESTINOS = {
 } as const;
 
 /** Los códigos de concepto que el alta usa, tal como los declara la API. */
-export const CODIGOS_DE_DIAGNOSTICO = {
+export const DIAGNOSIS_CODES = {
   laboratorio: 'DU_TYPE_LAB',
   imagenes: 'DU_TYPE_IMAGING',
   pais: 'BO',
@@ -52,7 +52,7 @@ export const CODIGOS_DE_DIAGNOSTICO = {
 } as const;
 
 /** Código de concepto → id, por cada catálogo que el alta usa. */
-export interface CatalogosDeDiagnostico {
+export interface DiagnosisCatalogs {
   readonly tipoDeUnidad: ReadonlyMap<string, string>;
   readonly modalidad: ReadonlyMap<string, string>;
   readonly pais: ReadonlyMap<string, string>;
@@ -60,7 +60,7 @@ export interface CatalogosDeDiagnostico {
 }
 
 /** El catálogo no trajo un código que el alta necesita. */
-export class CatalogoIncompleto extends Error {
+export class IncompleteCatalog extends Error {
   constructor(readonly codigo: string) {
     super(`El catálogo no incluye ${codigo}`);
     this.name = 'CatalogoIncompleto';
@@ -68,11 +68,11 @@ export class CatalogoIncompleto extends Error {
 }
 
 /** Lo que dice la pantalla cuando el catálogo no sirve. Un solo texto para las dos altas. */
-export const AVISO_CATALOGO_DE_DIAGNOSTICO =
+export const DIAGNOSIS_CATALOG_NOTICE =
   'No pudimos cargar los catálogos del alta. Revise su conexión y vuelva a enviar.';
 
 /** Lo que dice la pantalla cuando una subida no pudo confirmarse. */
-export const AVISO_SUBIDA_SIN_CONFIRMAR = 'No pudimos confirmar la carga del PDF. Vuelva a intentarlo.';
+export const NOTICE_UPLOAD_WITHOUT_CONFIRM = 'No pudimos confirmar la carga del PDF. Vuelva a intentarlo.';
 
 /**
  * Los pasos comunes de las dos altas públicas de diagnóstico: leer el catálogo y
@@ -86,17 +86,17 @@ export const AVISO_SUBIDA_SIN_CONFIRMAR = 'No pudimos confirmar la carga del PDF
  * dentro de su transacción y un archivo que ya tiene dueño respondería 422—.
  */
 @Injectable({ providedIn: 'root' })
-export class AltaDeCentroDiagnostico {
+export class DiagnosisCenterEnrollment {
   private readonly iam = inject(IamClient);
-  private readonly contexto = inject(SystemContextClient);
+  private readonly context = inject(SystemContextClient);
 
   /** El `fileId` de cada archivo ya subido. Sobrevive a un reintento del envío. */
-  private readonly subidos = new WeakMap<File, string>();
+  private readonly uploaded = new WeakMap<File, string>();
 
   /** Lee los cuatro catálogos. Un fallo de cualquiera corta con su error. */
-  catalogos(): Observable<CatalogosDeDiagnostico> {
+  catalogs(): Observable<DiagnosisCatalogs> {
     const porCodigo = (destino: string) =>
-      this.contexto
+      this.context
         .dynamicEnum(destino)
         .pipe(
           map(
@@ -105,23 +105,23 @@ export class AltaDeCentroDiagnostico {
           ),
         );
     return forkJoin({
-      tipoDeUnidad: porCodigo(DESTINOS.tipoDeUnidad),
-      modalidad: porCodigo(DESTINOS.modalidad),
-      pais: porCodigo(DESTINOS.pais),
-      jurisdiccion: porCodigo(DESTINOS.jurisdiccion),
+      tipoDeUnidad: porCodigo(DESTINATIONS.tipoDeUnidad),
+      modalidad: porCodigo(DESTINATIONS.modalidad),
+      pais: porCodigo(DESTINATIONS.pais),
+      jurisdiccion: porCodigo(DESTINATIONS.jurisdiccion),
     });
   }
 
   /**
    * El id del concepto con ese código, o `CatalogoIncompleto`.
    *
-   * @param catalogo - Uno de los mapas de {@link CatalogosDeDiagnostico}.
+   * @param catalogo - Uno de los mapas de {@link DiagnosisCatalogs}.
    * @param codigo - El código estable del concepto.
    */
-  static concepto(catalogo: ReadonlyMap<string, string>, codigo: string): string {
+  static concept(catalogo: ReadonlyMap<string, string>, codigo: string): string {
     const id = catalogo.get(codigo);
     if (id === undefined) {
-      throw new CatalogoIncompleto(codigo);
+      throw new IncompleteCatalog(codigo);
     }
     return id;
   }
@@ -131,7 +131,7 @@ export class AltaDeCentroDiagnostico {
    *
    * Las claves sin archivo se omiten del resultado.
    */
-  subirDocumentos<K extends string>(
+  uploadDocuments<K extends string>(
     archivos: Readonly<Partial<Record<K, File | undefined>>>,
   ): Observable<Partial<Record<K, string>>> {
     const pendientes = (Object.entries(archivos) as [K, File | undefined][]).filter(
@@ -139,7 +139,7 @@ export class AltaDeCentroDiagnostico {
     );
     return from(pendientes).pipe(
       concatMap(([clave, archivo]) => {
-        const yaSubido = this.subidos.get(archivo);
+        const yaSubido = this.uploaded.get(archivo);
         if (yaSubido !== undefined) {
           return of([clave, yaSubido] as const);
         }
@@ -151,12 +151,12 @@ export class AltaDeCentroDiagnostico {
           map((respuesta) => {
             const fileId = respuesta.body?.fileId?.trim();
             if (fileId === undefined || fileId === '') {
-              throw new Error(AVISO_SUBIDA_SIN_CONFIRMAR);
+              throw new Error(NOTICE_UPLOAD_WITHOUT_CONFIRM);
             }
-            this.subidos.set(archivo, fileId);
+            this.uploaded.set(archivo, fileId);
             return [clave, fileId] as const;
           }),
-          throwIfEmpty(() => new Error(AVISO_SUBIDA_SIN_CONFIRMAR)),
+          throwIfEmpty(() => new Error(NOTICE_UPLOAD_WITHOUT_CONFIRM)),
         );
       }),
       toArray(),

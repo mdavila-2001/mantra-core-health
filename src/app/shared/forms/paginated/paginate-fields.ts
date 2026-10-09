@@ -29,15 +29,15 @@ import {
  *
  * Una sección que cabe entera no lleva numeración: «(1 de 1)» sería ruido.
  */
-export function paginarCampos(
+export function paginateFields(
   entrada: readonly CampoDeFormulario[] | readonly SeccionDeFormulario[],
   opciones: { readonly tituloPorDefecto?: string } = {},
 ): readonly PaginaDeFormulario[] {
-  const secciones = esListaDeSecciones(entrada)
+  const secciones = isSectionList(entrada)
     ? entrada
     : [{ titulo: opciones.tituloPorDefecto ?? '', campos: entrada }];
 
-  return secciones.flatMap((seccion) => paginarSeccion(seccion));
+  return secciones.flatMap((seccion) => paginateSection(seccion));
 }
 
 /**
@@ -47,8 +47,8 @@ export function paginarCampos(
  * más en la barra de avance que no pide nada, y quien la viera pensaría que
  * algo no cargó.
  */
-function paginarSeccion(seccion: SeccionDeFormulario): readonly PaginaDeFormulario[] {
-  const trozos = partirEnTrozos(seccion.campos, MAX_CAMPOS_POR_PAGINA, esPreguntaPrincipal);
+function paginateSection(seccion: SeccionDeFormulario): readonly PaginaDeFormulario[] {
+  const trozos = splitInChunks(seccion.campos, MAX_CAMPOS_POR_PAGINA, isMainQuestion);
   const total = trozos.length;
 
   return trozos.map((campos, indice) => ({
@@ -78,7 +78,7 @@ function paginarSeccion(seccion: SeccionDeFormulario): readonly PaginaDeFormular
  * detalle de un dolor que ya no estaba a la vista. Mientras está cerrado no
  * ocupa lugar en pantalla, así que la página sigue mostrando cuatro.
  */
-function partirEnTrozos<T>(
+function splitInChunks<T>(
   items: readonly T[],
   tamano: number,
   cuenta: (item: T) => boolean = () => true,
@@ -100,7 +100,7 @@ function partirEnTrozos<T>(
 }
 
 /** Si un campo cuenta para el tope de la página: los condicionales no. */
-export function esPreguntaPrincipal(campo: CampoDeFormulario): boolean {
+export function isMainQuestion(campo: CampoDeFormulario): boolean {
   return campo.showWhen === undefined;
 }
 
@@ -111,7 +111,7 @@ export function esPreguntaPrincipal(campo: CampoDeFormulario): boolean {
  * sólo una sección tiene campos dentro. Con la lista vacía da igual la rama —no
  * hay nada que paginar—, y se elige la de campos para no inventar una sección.
  */
-function esListaDeSecciones(
+function isSectionList(
   entrada: readonly CampoDeFormulario[] | readonly SeccionDeFormulario[],
 ): entrada is readonly SeccionDeFormulario[] {
   return entrada.length > 0 && 'campos' in entrada[0];

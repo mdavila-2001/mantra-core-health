@@ -8,7 +8,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PatientProfileEdit } from './patient-profile-edit';
-import { UbicacionPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
+import { MapLocationPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 
 /**
  * Editar los datos propios del paciente.
@@ -578,11 +578,11 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
       const raiz = fixture.nativeElement as HTMLElement;
       const [domicilio, trabajo] = fixture.debugElement
-        .queryAll(By.directive(UbicacionPicker))
-        .map((el) => el.componentInstance as UbicacionPicker);
+        .queryAll(By.directive(MapLocationPicker))
+        .map((el) => el.componentInstance as MapLocationPicker);
       expect(señal<string>('domicilio')()).toBe('Av. Banzer 3er anillo');
 
-      domicilio.fijarPunto({ lat: -17.79, lng: -63.19 });
+      domicilio.pinPunto({ lat: -17.79, lng: -63.19 });
       fixture.detectChanges();
 
       expect(señal<string>('domicilio')()).toBe('');
@@ -598,7 +598,7 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
       expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')).toBeNull();
 
-      trabajo.fijarPunto({ lat: -17.8, lng: -63.2 });
+      trabajo.pinPunto({ lat: -17.8, lng: -63.2 });
       fixture.detectChanges();
       expect(señal<string>('direccionTrabajo')()).toBe('');
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).not.toBeNull();

@@ -1,17 +1,17 @@
 <app-content-dialog
-  [heading]="titulo()"
+  [heading]="title()"
   size="md"
-  [dismissible]="!guardando()"
+  [dismissible]="!saving()"
   data-testid="registro-dialog"
   (closed)="closed.emit()"
 >
   @if (error(); as mensaje) {
     <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
   }
-  <form class="registros-form" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  <form class="registros-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
     <div class="registros-form__tipo">
       <app-form-field
-        [label]="textos().tipo"
+        [label]="texts().tipo"
         [required]="true"
         [errorMessage]="
           form.controls.accountId.touched && form.controls.accountId.invalid ? 'Elija el tipo.' : ''
@@ -19,9 +19,9 @@
       >
         <app-select
           formControlName="accountId"
-          [options]="opcionesDeTipo()"
+          [options]="typeOptions()"
           placeholder="Elija el tipo"
-          [ariaLabel]="textos().tipo"
+          [ariaLabel]="texts().tipo"
           data-testid="registro-tipo"
         />
       </app-form-field>
@@ -33,15 +33,15 @@
         size="sm"
         class="registros-form__nueva-cuenta"
         data-testid="registro-nueva-cuenta"
-        [disabled]="guardando()"
-        (clicked)="creandoCuenta.set(true)"
+        [disabled]="saving()"
+        (clicked)="accountCreating.set(true)"
       >
         Nueva cuenta
       </button>
     </div>
 
     <app-form-field
-      [label]="textos().descripcion"
+      [label]="texts().descripcion"
       [required]="true"
       [errorMessage]="
         form.controls.description.touched && form.controls.description.invalid
@@ -52,7 +52,7 @@
       <app-input
         formControlName="description"
         autocomplete="off"
-        [placeholder]="textos().ejemploDescripcion"
+        [placeholder]="texts().ejemploDescripcion"
         testId="registro-descripcion"
       />
     </app-form-field>
@@ -61,20 +61,20 @@
       <app-form-field
         label="Fecha"
         [required]="true"
-        [errorMessage]="fechaTocada() && fecha() === null ? 'Elija la fecha.' : ''"
+        [errorMessage]="touchedDate() && date() === null ? 'Elija la fecha.' : ''"
       >
         <app-date-picker
-          [value]="fecha()"
-          (valueChange)="fecha.set($event)"
+          [value]="date()"
+          (valueChange)="date.set($event)"
           data-testid="registro-fecha"
         />
       </app-form-field>
       <app-form-field
-        [label]="textos().monto"
+        [label]="texts().monto"
         [required]="true"
         hint="En bolivianos."
         [errorMessage]="
-          montoInvalido() ? 'Escriba un monto mayor a cero, con hasta dos decimales.' : ''
+          invalidAmount() ? 'Escriba un monto mayor a cero, con hasta dos decimales.' : ''
         "
       >
         <app-input
@@ -92,7 +92,7 @@
     app-button
     type="button"
     variant="ghost"
-    [disabled]="guardando()"
+    [disabled]="saving()"
     (clicked)="dialog().close()"
   >
     Cancelar
@@ -101,20 +101,20 @@
     dialog-actions
     app-button
     type="button"
-    [isLoading]="guardando()"
-    [disabled]="guardando()"
+    [isLoading]="saving()"
+    [disabled]="saving()"
     data-testid="registro-guardar"
-    (clicked)="guardar()"
+    (clicked)="save()"
   >
     Guardar
   </button>
 </app-content-dialog>
 
-@if (creandoCuenta()) {
+@if (accountCreating()) {
   <app-account-dialog
     [practiceId]="practiceId()"
-    [claseFija]="clase()"
-    (saved)="alCrearCuenta($event)"
-    (closed)="creandoCuenta.set(false)"
+    [claseFija]="class()"
+    (saved)="toCreateAccount($event)"
+    (closed)="accountCreating.set(false)"
   />
 }
