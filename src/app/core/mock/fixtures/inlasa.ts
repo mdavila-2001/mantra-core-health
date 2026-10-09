@@ -1,4 +1,4 @@
-import { ANALISIS_INLASA, type AnalisisInlasa } from './inlasa-aranceles.generated';
+import { ANALISIS_INLASA, type AnalisisInlasa } from './inlasa-tariffs.generated';
 
 /* ============================================================================
     Equivalencia entre los estudios de laboratorio de la maqueta

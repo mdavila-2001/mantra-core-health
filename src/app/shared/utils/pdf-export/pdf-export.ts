@@ -25,8 +25,8 @@ import {
   RITMO,
   TIPOGRAFIA,
 } from './pdf-theme';
-import { firmaDeDocumentos, type PdfFirma } from './pdf-firma';
-import { fuentesDeDocumentos, type PdfFuentes } from './pdf-fuentes';
+import { documentSignature, type PdfSignature } from './pdf-signature';
+import { documentFonts, type PdfFonts } from './pdf-fonts';
 import { contenerLogo, logoDeDocumentos, type PdfLogo } from './pdf-logo';
 
 /**
@@ -94,7 +94,7 @@ export interface PdfExportOptions {
    * firma**. Sin imágenes el bloque sale igual, con la línea de firma vacía.
    * Son imágenes, **no una firma electrónica**.
    */
-  readonly firma?: PdfFirma | null;
+  readonly firma?: PdfSignature | null;
 }
 
 /**
@@ -311,7 +311,7 @@ interface Hoja {
   /** El logo del consultorio ya resuelto, o `null`. Se decide una vez por documento. */
   readonly logo: PdfLogo | null;
   /** La firma del pie, ya resuelta, o `null` si el documento no lleva bloque. */
-  readonly firma: PdfFirma | null;
+  readonly firma: PdfSignature | null;
   /** Con qué familia se escribe cada estilo, ya registrada en el documento. */
   readonly fuentes: FuentesDeLaHoja;
   /** Dónde va la próxima línea. Lo único que se mueve. */
@@ -339,7 +339,7 @@ const FUENTES_DE_RESPALDO: FuentesDeLaHoja = {
  * se registran bajo el estilo `normal` de su familia porque cada archivo es un
  * solo peso. Si las fuentes no están cargadas, todo va en Helvetica.
  */
-function registrarFuentes(doc: jsPDF, fuentes: PdfFuentes | null): FuentesDeLaHoja {
+function registrarFuentes(doc: jsPDF, fuentes: PdfFonts | null): FuentesDeLaHoja {
   if (fuentes === null) {
     return FUENTES_DE_RESPALDO;
   }
@@ -377,8 +377,8 @@ function abrirHoja(doc: jsPDF, opciones: PdfExportOptions): Hoja {
     fondo: alto - MARGEN_INFERIOR_PT,
     inicio: INICIO_DE_CONTENIDO_PT,
     logo: opciones.logo === undefined ? logoDeDocumentos() : opciones.logo,
-    firma: opciones.firma === undefined ? firmaDeDocumentos() : opciones.firma,
-    fuentes: registrarFuentes(doc, fuentesDeDocumentos()),
+    firma: opciones.firma === undefined ? documentSignature() : opciones.firma,
+    fuentes: registrarFuentes(doc, documentFonts()),
     y: 0,
   };
 

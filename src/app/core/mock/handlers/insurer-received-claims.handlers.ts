@@ -1,5 +1,5 @@
-import { conceptoPorId } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from '../fixtures/personas';
+import { conceptById } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from '../fixtures/people';
 import { conflict, forbidden, notFound, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_LABORATORIO, type MockUser } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, uuid } from '../mock-store';
@@ -31,7 +31,7 @@ const SOLICITUDES_SEMBRADAS = 180;
 const TOPE_DE_SOLICITUDES = 500;
 
 /** Pacientes escritos + los primeros generados; los registrados quedan fuera. */
-const PACIENTES_ELEGIBLES = PACIENTES.slice(0, 60);
+const PACIENTES_ELEGIBLES = PATIENTS.slice(0, 60);
 
 const BOB = { code: 'BOB', display: 'Boliviano' };
 const money = (amount: string) => ({ amount, currency: BOB });
@@ -180,12 +180,12 @@ function elegir<T>(lista: readonly T[], r: () => number): T {
 }
 
 function medicosElegibles(): readonly ProfesionalSimulado[] {
-  return PROFESIONALES.filter((p) => p.origen === undefined || p.origen === 'DEMO');
+  return PROFESSIONALS.filter((p) => p.origen === undefined || p.origen === 'DEMO');
 }
 
 function especialidadDe(medico: ProfesionalSimulado): string | null {
   const id = medico.especialidades[0];
-  return id === undefined ? null : (conceptoPorId(id)?.display ?? null);
+  return id === undefined ? null : (conceptById(id)?.display ?? null);
 }
 
 function sembrar() {
@@ -281,8 +281,8 @@ function solicitudesDeLaDemo(aseguradora: string) {
         patientCode: PACIENTE.patientCode,
         memberIdentifier: `AF-${PACIENTE.patientCode.slice(4)}`,
       },
-      practitioner: { id: MEDICA.id, displayName: MEDICA.displayName, specialty: especialidadDe(MEDICA) },
-      providerName: MEDICA.organizacion,
+      practitioner: { id: MEDICAL.id, displayName: MEDICAL.displayName, specialty: especialidadDe(MEDICAL) },
+      providerName: MEDICAL.organizacion,
       service: { code: caso.code, display: caso.display },
       additionalServiceCount: 0,
       billedTotal: money(caso.total),

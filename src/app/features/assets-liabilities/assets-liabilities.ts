@@ -26,7 +26,7 @@ import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf } from '../../shared/forms/form-support';
 
 /**
@@ -163,7 +163,7 @@ export class AssetsLiabilities {
    * Las dos últimas sólo se entienden con las cuentas ya elegidas.
    */
   protected readonly paginasDeActivo = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué se compró',
         campos: [
@@ -374,7 +374,7 @@ export class AssetsLiabilities {
    * plan de cuotas.
    */
   protected readonly paginasDePasivo = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué se debe',
         campos: [

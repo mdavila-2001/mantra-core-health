@@ -7,7 +7,7 @@
 <app-view-state-host [state]="state()" (retry)="cargar()">
   @if (documento(); as papel) {
     <div class="factura-pagina">
-      <app-hoja-de-factura [documento]="papel" [nota]="nota" />
+      <app-invoice-sheet [documento]="papel" [nota]="nota" />
 
       <div class="factura-pagina__acciones">
         <button app-button variant="primary" size="sm" type="button" data-testid="factura-descargar"

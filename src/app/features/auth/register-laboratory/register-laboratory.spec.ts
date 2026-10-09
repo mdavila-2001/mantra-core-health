@@ -5,14 +5,14 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
 import { lastValueFrom, of } from 'rxjs';
 import type {
   PdfUploader,
   UploadedDocument,
 } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
-import type { ClaveDeDocumentoDelAlta } from '../registro-compartido/documentos-legales';
-import { AltaDeCentroDiagnostico } from '../registro-compartido/alta-de-centro-diagnostico';
+import type { EnrollmentDocumentKey } from '../shared-registration/legal-documents';
+import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
 
 /**
@@ -80,7 +80,7 @@ describe('RegisterLaboratory', () => {
         provideHttpClientTesting(),
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         provideRouter([]),
-        { provide: AltaDeCentroDiagnostico, useValue: { catalogos: () => of(CATALOGOS_DE_PRUEBA) } },
+        { provide: DiagnosisCenterEnrollment, useValue: { catalogs: () => of(CATALOGOS_DE_PRUEBA) } },
       ],
     }).compileComponents();
 
@@ -554,8 +554,8 @@ describe('RegisterLaboratory', () => {
     }
 
     function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
-      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
+      const mapa = fixture.debugElement.query(By.directive(MapLocationPicker));
+      (mapa.componentInstance as MapLocationPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
       fixture.detectChanges();
     }
 
@@ -606,7 +606,7 @@ describe('RegisterLaboratory', () => {
   // D2 replaces mandatory papers in the older test branch. Upload and retry
   // remain covered through the shared pre-upload contract used by this screen.
   describe('document uploads with optional D2 registration', () => {
-    const documentKeys: readonly ClaveDeDocumentoDelAlta[] = [
+    const documentKeys: readonly EnrollmentDocumentKey[] = [
       'constitutionFileId',
       'taxIdentifierFileId',
       'commerceRegistryFileId',
@@ -618,8 +618,8 @@ describe('RegisterLaboratory', () => {
     function uploads() {
       return component as unknown as {
         subirDocumento: PdfUploader;
-        recordarDocumento(key: ClaveDeDocumentoDelAlta, document: UploadedDocument): void;
-        documentoInicialDe(key: ClaveDeDocumentoDelAlta): UploadedDocument | null;
+        recordarDocumento(key: EnrollmentDocumentKey, document: UploadedDocument): void;
+        documentoInicialDe(key: EnrollmentDocumentKey): UploadedDocument | null;
       };
     }
 

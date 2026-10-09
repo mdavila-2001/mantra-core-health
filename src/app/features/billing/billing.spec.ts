@@ -6,13 +6,13 @@ import { provideRouter } from '@angular/router';
 
 import { API_BASE_URL } from '../../core/data-access/api';
 import type { SimulatedCharge } from '../../core/data-access/billing-simulated/billing-simulated.types';
-import type { FacturacionSimulada } from '../../core/mock/billing-sim/facturacion-simulada';
-import { apiRealForzada } from '../../core/mock/modo-api';
+import type { SimulatedInvoicing } from '../../core/mock/billing-sim/simulated-invoicing';
+import { forcedRealApi } from '../../core/mock/api-mode';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { Billing } from './billing';
 import { motorDePrueba } from './billing.spec-fixtures';
 import { resumenDeCobros } from './billing-summary';
-import { FACTURACION_SIMULADA_DISPONIBLE } from './facturacion-disponible';
+import { SIMULATED_AVAILABLE_INVOICING } from './invoicing-availability';
 
 /**
  * La pantalla contra respuestas del **mismo motor** que atiende la maqueta:
@@ -21,7 +21,7 @@ import { FACTURACION_SIMULADA_DISPONIBLE } from './facturacion-disponible';
 describe('Billing · facturación contra el SIAT SIMULADO', () => {
   let fixture: ComponentFixture<Billing>;
   let http: HttpTestingController;
-  let motor: FacturacionSimulada;
+  let motor: SimulatedInvoicing;
 
   function montar(disponible: boolean): void {
     TestBed.configureTestingModule({
@@ -31,7 +31,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '' },
-        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => disponible },
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => disponible },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -41,18 +41,18 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
   }
 
   function responderLectura(): void {
-    const cobros = motor.listarCobros();
+    const cobros = motor.listCharges();
     http.expectOne('/billing/simulated/charges').flush({ items: cobros, count: cobros.length, simulated: true });
-    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogos());
-    http.expectOne('/billing/simulated/status').flush(motor.estadoFiscal());
-    http.expectOne('/billing/simulated/outbox').flush({ items: motor.bandejaDeSalida(), count: 0, simulated: true });
+    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogs());
+    http.expectOne('/billing/simulated/status').flush(motor.statusFiscal());
+    http.expectOne('/billing/simulated/outbox').flush({ items: motor.outputInbox(), count: 0, simulated: true });
     fixture.detectChanges();
   }
 
   function responderRefresco(): void {
-    const cobros = motor.listarCobros();
+    const cobros = motor.listCharges();
     http.expectOne('/billing/simulated/charges').flush({ items: cobros, count: cobros.length, simulated: true });
-    http.expectOne('/billing/simulated/status').flush(motor.estadoFiscal());
+    http.expectOne('/billing/simulated/status').flush(motor.statusFiscal());
     fixture.detectChanges();
   }
 
@@ -73,7 +73,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     };
 
     afterEach(() => {
-      apiRealForzada.set(false);
+      forcedRealApi.set(false);
       Object.assign(environment, originalEnvironment);
     });
 
@@ -81,9 +81,9 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
       Object.assign(environment, { mockBackend: true, billingSiatDemo: true });
       TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
       http = TestBed.inject(HttpTestingController);
-      const disponible = TestBed.inject(FACTURACION_SIMULADA_DISPONIBLE);
+      const disponible = TestBed.inject(SIMULATED_AVAILABLE_INVOICING);
       expect(disponible()).toBe(true);
-      apiRealForzada.set(true);
+      forcedRealApi.set(true);
       expect(disponible()).toBe(false);
     });
   });
@@ -98,7 +98,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
   it('muestra el aviso SIMULADO, el estado fiscal, las cifras y una fila por cobro', () => {
     montar(true);
     responderLectura();
-    const cobros = motor.listarCobros();
+    const cobros = motor.listCharges();
     const resumen = resumenDeCobros(cobros);
     expect(el('aviso-simulado')?.textContent).toContain('no emite facturas reales');
     expect(el('estado-fiscal')?.textContent).toContain('SIMULADO');
@@ -112,7 +112,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     responderLectura();
     fixture.componentInstance.origen.set('PHARMACY');
     fixture.detectChanges();
-    const deFarmacia = motor.listarCobros().filter((c) => c.source === 'PHARMACY');
+    const deFarmacia = motor.listCharges().filter((c) => c.source === 'PHARMACY');
     expect(fixture.nativeElement.querySelectorAll('[data-testid="fila-de-cobro"]').length).toBe(deFarmacia.length);
     expect(el('monto-cobrado')?.textContent).toContain(resumenDeCobros(deFarmacia).montoCobrado);
   });
@@ -129,7 +129,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     componente.registrarPago(pendiente);
     const req = http.expectOne(`/billing/simulated/charges/${pendiente.id}/payment`);
     expect(req.request.body).toEqual({ methodCode: 1 });
-    const r = motor.registrarPago(pendiente.id, 1);
+    const r = motor.registerPayment(pendiente.id, 1);
     req.flush(r.ok ? r.value : null);
     fixture.detectChanges();
     expect(el('pago-registrado')?.textContent).toContain('SIMULADO');
@@ -152,9 +152,9 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
 
     // Saldado en el motor, el mismo cobro ya ofrece su formulario de factura.
     for (const i of conPlan.plan!.instances.filter((x) => x.balance !== '0.00')) {
-      motor.registrarPagoDeInstancia(conPlan.id, i.id, { methodCode: 1, amount: i.balance });
+      motor.instanceRegisterPayment(conPlan.id, i.id, { methodCode: 1, amount: i.balance });
     }
-    componente['reemplazarCobro'](motor.cobro(conPlan.id)!);
+    componente['reemplazarCobro'](motor.charge(conPlan.id)!);
     fixture.detectChanges();
     expect(el('plan-saldado')).not.toBeNull();
     expect(el('pago-registrado')).not.toBeNull();
@@ -175,7 +175,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     const req = http.expectOne(`/billing/simulated/charges/${pagado.id}/invoices`);
     expect(req.request.body.buyer.name).toBe(pagado.suggestedBuyer.name);
     expect(req.request.body.simulation).toBeUndefined();
-    const r = motor.emitirFactura(pagado.id, req.request.body, 'prueba');
+    const r = motor.issueInvoice(pagado.id, req.request.body, 'prueba');
     req.flush(r.ok ? r.value : null);
     responderRefresco();
     expect(el('factura')?.textContent).toContain('Validada (SIMULADO)');
@@ -195,7 +195,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     componente.confirmarFacturacion(pagado);
     const req = http.expectOne(`/billing/simulated/charges/${pagado.id}/invoices`);
     expect(req.request.body.simulation).toEqual({ forceMessageCode: 1013 });
-    const r = motor.emitirFactura(pagado.id, req.request.body, 'prueba');
+    const r = motor.issueInvoice(pagado.id, req.request.body, 'prueba');
     req.flush(r.ok ? r.value : null);
     responderRefresco();
     expect(el('respuesta-siat')?.textContent).toContain('902');
@@ -213,14 +213,14 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     componente.formularioDeFactura.patchValue({ documentNumber: '1234567' });
     componente.confirmarFacturacion(pagado);
     const emitir = http.expectOne(`/billing/simulated/charges/${pagado.id}/invoices`);
-    const emitida = motor.emitirFactura(pagado.id, emitir.request.body, 'prueba');
+    const emitida = motor.issueInvoice(pagado.id, emitir.request.body, 'prueba');
     emitir.flush(emitida.ok ? emitida.value : null);
     responderRefresco();
     const factura = componente.factura()!;
     componente.formularioDeAnulacion.setValue({ reasonCode: 1 });
     componente.anular(factura);
     const anular = http.expectOne(`/billing/simulated/invoices/${factura.id}/annulment`);
-    const anulada = motor.anular(factura.id, 1);
+    const anulada = motor.void(factura.id, 1);
     anular.flush(anulada.ok ? anulada.value : null);
     responderRefresco();
     expect(el('factura')?.textContent).toContain('Anulada (SIMULADO)');
@@ -301,7 +301,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     it('el botón «Ver» dice qué cobro abre', () => {
       montar(true);
       responderLectura();
-      const primero = motor.listarCobros()[0]!;
+      const primero = motor.listCharges()[0]!;
       expect(botonVer(0).getAttribute('aria-label')).toBe(`Ver ${primero.description} de ${primero.patientName}`);
     });
   });

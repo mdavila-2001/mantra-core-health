@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
-import { calcularTurnos } from '../agenda-create/agenda-turnos';
+import { calculateSlots } from '../agenda-create/agenda-slots';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -40,7 +40,7 @@ import {
 } from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
 import type { VisitRequest } from '../../../core/data-access/pharma-lab/pharma-lab.types';
 import { toVisitStatusPresentation } from '../../pharma-lab/visit-status';
-import { detalleDeLaCita } from './detalle-de-la-cita';
+import { appointmentDetail } from './appointment-detail';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
@@ -56,7 +56,7 @@ import { FactList } from '../../../shared/components/molecules/fact-list/fact-li
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
+import { monthFirstDay, sumMonths } from '../../../shared/date/month-calendar';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import { aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
 import {
@@ -65,7 +65,7 @@ import {
   type PedidoDeAccion,
   type RatoTocado,
 } from './day-view/day-view';
-import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
+import { DayCard, type DayGap } from './day-card/day-card';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
@@ -232,7 +232,7 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
     Tooltip,
     DayView,
     MonthView,
-    TarjetaDelDia,
+    DayCard,
     WeekView,
     ScheduleGrid,
     ContentDialog,
@@ -455,7 +455,7 @@ export class MyAgenda implements OnInit {
   protected readonly solapa = signal<'patron' | 'mes'>('patron');
 
   /** El mes visible; siempre su día 1. */
-  protected readonly mesVisible = signal(primerDiaDelMes(new Date()));
+  protected readonly mesVisible = signal(monthFirstDay(new Date()));
 
   /**
    * Qué se mira en el calendario: el día, la semana o el mes — «un botón para
@@ -489,7 +489,7 @@ export class MyAgenda implements OnInit {
   protected showMonth(): void {
     this.calendarView.set('month');
     this.ratoParaCrear.set(null);
-    const mes = primerDiaDelMes(this.diaDeReferencia());
+    const mes = monthFirstDay(this.diaDeReferencia());
     if (mes.getTime() !== this.mesVisible().getTime()) {
       this.cambiarMes(mes);
     }
@@ -501,7 +501,7 @@ export class MyAgenda implements OnInit {
    */
   protected openDay(fecha: Date): void {
     this.calendarView.set('day');
-    const mes = primerDiaDelMes(fecha);
+    const mes = monthFirstDay(fecha);
     if (mes.getTime() !== this.mesVisible().getTime()) {
       this.mesVisible.set(mes);
       this.cargarMes();
@@ -526,7 +526,7 @@ export class MyAgenda implements OnInit {
       nueva.getFullYear() !== mes.getFullYear() ||
       finDeSemana.getMonth() !== mes.getMonth();
     if (cruza) {
-      this.mesVisible.set(primerDiaDelMes(nueva));
+      this.mesVisible.set(monthFirstDay(nueva));
       this.cargarMes();
     }
   }
@@ -1249,7 +1249,7 @@ export class MyAgenda implements OnInit {
 
     const base = this.mesVisible();
     const desde = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 7);
-    const finDeMes = sumarMeses(base, 1);
+    const finDeMes = sumMonths(base, 1);
     const hasta = new Date(finDeMes.getFullYear(), finDeMes.getMonth(), finDeMes.getDate() + 7);
     this.cargandoMes.set(true);
 
@@ -1335,7 +1335,7 @@ export class MyAgenda implements OnInit {
    * de guardar — con lo que la pantalla ya sabe, sin viaje extra. El servidor
    * cruza además las otras sedes al guardar: esto es aviso temprano, no regla.
    */
-  protected readonly ratosTomadosDelDia = computed<readonly RatoDelDia[]>(() => {
+  protected readonly ratosTomadosDelDia = computed<readonly DayGap[]>(() => {
     const porSlot = new Map(this.citasDelDia().map((c) => [c.bookableSlotId, c]));
     const deCitas = this.cuposDelDia()
       .filter((cupo) => porSlot.has(cupo.id))
@@ -1410,7 +1410,7 @@ export class MyAgenda implements OnInit {
     this.diaAbierto.set(nuevo);
 
     if (nuevo.getMonth() !== actual.getMonth() || nuevo.getFullYear() !== actual.getFullYear()) {
-      this.mesVisible.set(primerDiaDelMes(nuevo));
+      this.mesVisible.set(monthFirstDay(nuevo));
       this.cargarMes();
     }
     this.cargarDia(nuevo);
@@ -1480,7 +1480,7 @@ export class MyAgenda implements OnInit {
       title: 'Detalle de la cita',
       message:
         cuando === undefined ? SIN_DATO : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
-      details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
+      details: [...appointmentDetail(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
     });
@@ -1512,7 +1512,7 @@ export class MyAgenda implements OnInit {
         cita.startAt === undefined
           ? SIN_DATO
           : formatDate(cita.startAt, "EEEE d 'de' MMMM", this.idioma),
-      hechos: detalleDeLaCita(cita, estado, this.idioma).map((par) => ({
+      hechos: appointmentDetail(cita, estado, this.idioma).map((par) => ({
         etiqueta: par.label,
         valor: par.value,
       })),
@@ -1566,7 +1566,7 @@ export class MyAgenda implements OnInit {
 
   /** El total de turnos por semana de un histórico, para el resumen del modal. */
   protected totalTurnosDe(plantilla: PublishedTemplate): number {
-    return calcularTurnos(
+    return calculateSlots(
       plantilla.rules.map((regla) => ({
         dia: NOMBRE_DEL_DIA[regla.dayOfWeek] ?? `Día ${regla.dayOfWeek}`,
         desde: regla.startTime.slice(0, 5),
@@ -1823,7 +1823,7 @@ export class MyAgenda implements OnInit {
 
     // El mes se fija antes de leerlo: si no, se pediría el mes de hoy y en
     // seguida el del día pedido, y la primera respuesta no serviría de nada.
-    if (yaAbierto === null) this.mesVisible.set(primerDiaDelMes(dia));
+    if (yaAbierto === null) this.mesVisible.set(monthFirstDay(dia));
     this.cargarMes();
     this.openDay(dia);
     if (vista === 'week') this.showWeek();

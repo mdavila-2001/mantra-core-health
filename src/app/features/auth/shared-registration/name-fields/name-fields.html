@@ -1,0 +1,85 @@
+<div class="nombres">
+  <app-paginated-form
+    [form]="grupo()"
+    [paginas]="namePages()"
+    label="Nombre de la persona"
+    [embedded]="true"
+  >
+    <ng-template appCampoPersonalizado="name">
+      <app-form-field
+        class="nombres__campo nombres__campo--tercio"
+        label="Primer nombre"
+        [required]="obligatorio()"
+        [errorMessage]="errorOf('name')"
+      >
+        <app-input
+          type="text"
+          [formControl]="grupo().controls.name"
+          autocomplete="given-name"
+          [hasError]="errorOf('name') !== ''"
+          [testId]="prefijoTestId() + '-nombre'"
+        />
+      </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="middleName">
+      <app-form-field
+        class="nombres__campo nombres__campo--tercio"
+        label="Segundo nombre (opcional)"
+      >
+        <app-input
+          type="text"
+          [formControl]="grupo().controls.middleName"
+          autocomplete="additional-name"
+          [testId]="prefijoTestId() + '-segundo-nombre'"
+        />
+      </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="thirdName">
+      <app-form-field
+        class="nombres__campo nombres__campo--tercio"
+        label="Tercer nombre (opcional)"
+      >
+        <app-input
+          type="text"
+          [formControl]="grupo().controls.thirdName"
+          [testId]="prefijoTestId() + '-tercer-nombre'"
+        />
+      </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="extraNames">
+      <app-extra-names
+        [nombres]="grupo().controls.extraNames"
+        [prefijoTestId]="prefijoTestId()"
+      />
+    </ng-template>
+
+    <ng-template appCampoPersonalizado="lastName">
+      <app-form-field
+        class="nombres__campo nombres__campo--mitad"
+        label="Apellido paterno"
+        [required]="obligatorio()"
+        [errorMessage]="errorOf('lastName')"
+      >
+        <app-input
+          type="text"
+          [formControl]="grupo().controls.lastName"
+          autocomplete="family-name"
+          [hasError]="errorOf('lastName') !== ''"
+          [testId]="prefijoTestId() + '-apellido-paterno'"
+        />
+      </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="motherLastName">
+      <app-form-field
+        class="nombres__campo nombres__campo--mitad"
+        label="Apellido materno (opcional)"
+      >
+        <app-input
+          type="text"
+          [formControl]="grupo().controls.motherLastName"
+          [testId]="prefijoTestId() + '-apellido-materno'"
+        />
+      </app-form-field>
+    </ng-template>
+  </app-paginated-form>
+</div>

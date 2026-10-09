@@ -17,7 +17,7 @@ import { ChartTemplatesClient } from '../../../../core/data-access/chart-templat
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeFailureMessage } from '../../write-message';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
 import { AdditionalFields, entradasDelTexto } from '../additional-fields/additional-fields';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
@@ -39,8 +39,8 @@ import type {
   FormInstanceDetail,
 } from '../../../../core/data-access/forms/forms.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { especialidadVigente } from '../../../../core/data-access/profiles/especialidad-vigente';
-import { camposOcultos } from '../../../../shared/forms/paginated/visibilidad-condicional';
+import { currentSpecialty } from '../../../../core/data-access/profiles/current-specialty';
+import { hiddenFields } from '../../../../shared/forms/paginated/conditional-visibility';
 import { CheckboxGroup } from '../../../../shared/components/molecules/checkbox-group/checkbox-group';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -67,11 +67,11 @@ import {
 } from '../../../../shared/utils/clinical-pdf/clinical-pdf';
 import { Odontogram } from '../odontogram/odontogram';
 import {
-  camposDe,
-  plantillaPorCobertura,
-  respuestasDe,
-  type RespuestaVisible,
-} from './lectura-de-formulario';
+  fieldsOf,
+  templateByCoverage,
+  responsesOf,
+  type ResponseVisible,
+} from './form-reading';
 import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';
@@ -706,7 +706,7 @@ export class SpecialtyFormBlock {
   private resolverEspecialidad(): void {
     this.profiles.getOwnPractitionerProfile().subscribe({
       next: (perfil) => {
-        this.especialidad.set(especialidadVigente(perfil.specialties));
+        this.especialidad.set(currentSpecialty(perfil.specialties));
         // El catálogo puede haber llegado primero y haber preseleccionado su
         // única ficha. Si era de otra especialidad, se corrige al resolver el
         // perfil; una elección manual permanece intacta.
@@ -948,7 +948,7 @@ export class SpecialtyFormBlock {
   /** Todos los campos conocidos por las plantillas, para ponerle nombre a cada valor. */
   private readonly camposConocidos = computed<ReadonlyMap<string, ChartTemplateField>>(() => {
     const state = this.plantillas();
-    return camposDe(state.status === 'ready' ? state.data : []);
+    return fieldsOf(state.status === 'ready' ? state.data : []);
   });
 
   /**
@@ -962,7 +962,7 @@ export class SpecialtyFormBlock {
     const detalle = this.formularioRespondido();
     const state = this.plantillas();
     if (detalle === null || state.status !== 'ready') return null;
-    return plantillaPorCobertura(detalle, state.data);
+    return templateByCoverage(detalle, state.data);
   });
 
   protected readonly tituloDeLaRespuesta = computed(
@@ -978,10 +978,10 @@ export class SpecialtyFormBlock {
     return Number.isNaN(fecha.getTime()) ? null : FORMATO_FECHA.format(fecha);
   });
 
-  protected readonly respuestasVisibles = computed<readonly RespuestaVisible[]>(() => {
+  protected readonly respuestasVisibles = computed<readonly ResponseVisible[]>(() => {
     const detalle = this.formularioRespondido();
     if (detalle === null) return [];
-    return respuestasDe(detalle, this.camposConocidos());
+    return responsesOf(detalle, this.camposConocidos());
   });
 
   /** Descarga el formulario respondido con el motor PDF compartido. */
@@ -1100,7 +1100,7 @@ export class SpecialtyFormBlock {
     const plantilla = this.plantillaElegida();
     if (plantilla === null) return new Set();
     const valores = this.valores();
-    return camposOcultos(
+    return hiddenFields(
       plantilla.fields.map((campo) => ({
         key: campo.fieldId,
         ...(campo.showWhen === undefined
@@ -1524,7 +1524,7 @@ export class SpecialtyFormBlock {
     const motivo =
       estado.status === 'validation'
         ? estado.issues.map((issue) => issue.message).join(' ')
-        : (mensajeDeFalloDeEscritura(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
+        : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
     const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
     this.toasts.error(mensaje, tituloDelFallo);
     return [

@@ -3,7 +3,7 @@ import type {
   SpendingConceptDto,
   SpendingMovementDto,
 } from '../../data-access/patient-spending/patient-spending.dto';
-import { semillaDe } from '../faker/semilla';
+import { seedOf } from '../faker/seed';
 import { preconditionFailed, validation, type MockRouter } from '../mock-router';
 import {
   TENANT_ASEGURADORA,
@@ -106,7 +106,7 @@ function draftsForMonth(
   monthIndex: number,
   baseYear: number,
 ): readonly MovementDraft[] {
-  const random = seededRandom(semillaDe(`${patientProfileId}:${year}-${monthIndex + 1}`));
+  const random = seededRandom(seedOf(`${patientProfileId}:${year}-${monthIndex + 1}`));
   const lastDay = daysInMonth(year, monthIndex);
   const day = (): number => 1 + Math.floor(random() * lastDay);
   const growth = 1 + YEARLY_GROWTH * (year - baseYear);

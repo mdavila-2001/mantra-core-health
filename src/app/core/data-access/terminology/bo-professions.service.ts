@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { CatalogoDeConjunto } from './catalogo-de-conjunto';
+import { ValueSetCatalog } from './value-set-catalog';
 
 /**
  * El código interno del catálogo de profesiones: la Clasificación de
@@ -15,6 +15,6 @@ export const CODIGO_CATALOGO_PROFESIONES = 'VS_BO_PROFESSION';
  * 04/10/2026).
  */
 @Injectable({ providedIn: 'root' })
-export class BoProfessionsCatalog extends CatalogoDeConjunto {
-  protected readonly codigo = CODIGO_CATALOGO_PROFESIONES;
+export class BoProfessionsCatalog extends ValueSetCatalog {
+  protected readonly code = CODIGO_CATALOGO_PROFESIONES;
 }

@@ -242,8 +242,8 @@ let buildPdfDocument: typeof import('./pdf-export').buildPdfDocument;
 let buildBlocksPdf: typeof import('./pdf-export').buildBlocksPdf;
 let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
 let establecerLogoDeDocumentos: typeof import('./pdf-logo').establecerLogoDeDocumentos;
-let establecerFirmaDeDocumentos: typeof import('./pdf-firma').establecerFirmaDeDocumentos;
-let establecerFuentesDeDocumentos: typeof import('./pdf-fuentes').establecerFuentesDeDocumentos;
+let establecerFirmaDeDocumentos: typeof import('./pdf-signature').setDocumentSignature;
+let establecerFuentesDeDocumentos: typeof import('./pdf-fonts').setDocumentFonts;
 
 /** Un elemento con encabezado, párrafo y una tabla de dos filas. */
 function elementoDeEjemplo(): HTMLElement {
@@ -301,8 +301,8 @@ beforeEach(async () => {
   vi.resetModules();
   ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf } = await import('./pdf-export'));
   ({ establecerLogoDeDocumentos } = await import('./pdf-logo'));
-  ({ establecerFirmaDeDocumentos } = await import('./pdf-firma'));
-  ({ establecerFuentesDeDocumentos } = await import('./pdf-fuentes'));
+  ({ setDocumentSignature: establecerFirmaDeDocumentos } = await import('./pdf-signature'));
+  ({ setDocumentFonts: establecerFuentesDeDocumentos } = await import('./pdf-fonts'));
   establecerFirmaDeDocumentos(null);
   establecerFuentesDeDocumentos(null);
   DocumentoFalso.fallarAlDibujarImagenes = false;

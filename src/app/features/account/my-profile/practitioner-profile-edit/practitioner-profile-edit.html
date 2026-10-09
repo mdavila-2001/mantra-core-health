@@ -40,7 +40,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo">
-                <app-logo-consultorio data-testid="edicion-logo-vista" [src]="logoVisible()" />
+                <app-practice-logo data-testid="edicion-logo-vista" [src]="logoVisible()" />
 
                 <div class="edicion__logo-acciones">
                   <app-file-input
@@ -240,7 +240,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-firma">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="firma"
                   data-testid="edicion-firma-vista"
                   [src]="firma.visible()"
@@ -250,13 +250,13 @@
                   <app-file-input
                     data-testid="edicion-firma-archivo"
                     testId="edicion-firma-archivo"
-                    [files]="firma.archivos()"
+                    [files]="firma.files()"
                     (filesChange)="alElegirFirma($event)"
-                    (rejected)="firma.rechazar($event)"
+                    (rejected)="firma.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="firma.subiendo()"
+                    [disabled]="firma.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="firma.visible() ? 'Cambiar firma' : 'Subir firma'"
@@ -269,12 +269,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-firma-quitar"
-                      (clicked)="firma.quitar()"
+                      (clicked)="firma.remove()"
                     >
                       Quitar firma
                     </button>
                   }
-                  @if (firma.subiendo()) {
+                  @if (firma.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo firma…</p>
                   }
                   @if (firma.error()) {
@@ -286,7 +286,7 @@
               </div>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-sello">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="sello"
                   data-testid="edicion-sello-vista"
                   [src]="sello.visible()"
@@ -296,13 +296,13 @@
                   <app-file-input
                     data-testid="edicion-sello-archivo"
                     testId="edicion-sello-archivo"
-                    [files]="sello.archivos()"
+                    [files]="sello.files()"
                     (filesChange)="alElegirSello($event)"
-                    (rejected)="sello.rechazar($event)"
+                    (rejected)="sello.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="sello.subiendo()"
+                    [disabled]="sello.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="sello.visible() ? 'Cambiar sello' : 'Subir sello'"
@@ -315,12 +315,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-sello-quitar"
-                      (clicked)="sello.quitar()"
+                      (clicked)="sello.remove()"
                     >
                       Quitar sello
                     </button>
                   }
-                  @if (sello.subiendo()) {
+                  @if (sello.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo sello…</p>
                   }
                   @if (sello.error()) {
@@ -656,7 +656,7 @@
                      mover el pin, confirmar y quitar. Abre con lo último que la
                      persona dejó, no siempre con lo guardado: ver
                      `gpsDomicilioInicial`. -->
-                <app-ubicacion-picker
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
                   etiquetaConfirmada="Su domicilio"
@@ -685,7 +685,7 @@
                   />
                 </app-form-field>
 
-                <app-ubicacion-picker
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
                   etiquetaConfirmada="Su lugar de trabajo"
@@ -1010,8 +1010,8 @@
             guardandoIdiomas() ||
             cancelandoEdicion() ||
             subiendoLogo() ||
-            firma.subiendo() ||
-            sello.subiendo()
+            firma.uploading() ||
+            sello.uploading()
           "
           (submitted)="guardarPresentacion()"
           (cancelled)="cancelarEdicion()"
@@ -1525,7 +1525,7 @@
 
       <!-- Tres autoridades y no diez (propietario, 13/09/2026). El
            colegio sale del título profesional: ver
-           `core/profesion/autoridades-reguladoras.ts`. -->
+           `core/profession/regulatory-authorities.ts`. -->
       <app-form-field
         label="Autoridad que la emitió"
         [errorMessage]="errorDelServidor('regulatoryAuthority')"

@@ -1,0 +1,126 @@
+<app-card variant="outlined" padding="lg" class="panel__bloque--ancho" data-testid="panel-consultas-resumen">
+  <h2 class="consultas-resumen__titulo">
+    Sus consultas
+    <span
+      class="consultas-resumen__ayuda"
+      tabindex="0"
+      aria-label="Más información sobre este reporte"
+      appTooltip="Cuenta lo que ya leyó su agenda este mes: no es un dato que exista fuera de la maqueta todavía."
+    >
+      ⓘ
+    </span>
+  </h2>
+
+  <!-- Una sede que no respondió no tumba el resumen, pero sus consultas faltan
+       en las cifras: el aviso lo dice en vez de dejar un total incompleto. -->
+  @if (sitesWithoutLoad().length > 0) {
+    <app-alert
+      tone="error"
+      title="Parte de sus consultas no se pudo cargar"
+      class="consultas-resumen__aviso"
+      data-testid="consultas-resumen-sedes-sin-cargar"
+    >
+      Las cifras pueden estar incompletas.
+      <ul class="consultas-resumen__sedes-sin-cargar">
+        @for (aviso of sitesWithoutLoad(); track aviso) {
+          <li>{{ aviso }}</li>
+        }
+      </ul>
+      <div alert-actions>
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="consultas-resumen-reintentar-sedes"
+          (clicked)="retry()"
+        >
+          Volver a cargar
+        </button>
+      </div>
+    </app-alert>
+  }
+
+  <app-view-state-host [state]="status()" (retry)="retry()">
+    <div vsh-skeleton class="consultas-resumen__skeleton"></div>
+
+    <div class="consultas-resumen">
+      <div class="consultas-resumen__toggle">
+        <app-switch [(checked)]="includeCancelled" ariaLabel="Incluir las consultas canceladas" />
+        <span>Incluir canceladas</span>
+      </div>
+
+      <div class="consultas-resumen__cifras">
+        <div class="consultas-resumen__cifra" data-testid="consultas-resumen-semana">
+          <span class="consultas-resumen__numero">{{ weekSummary().total }}</span>
+          <span class="consultas-resumen__etiqueta">esta semana</span>
+        </div>
+        <div class="consultas-resumen__cifra" data-testid="consultas-resumen-mes">
+          <span class="consultas-resumen__numero">{{ monthSummary().total }}</span>
+          <span class="consultas-resumen__etiqueta">este mes</span>
+        </div>
+        <div class="consultas-resumen__cifra" data-testid="consultas-resumen-canceladas">
+          <app-status-seal variant="rejected" [label]="monthCancelled() + ' canceladas'" />
+          <span class="consultas-resumen__etiqueta">este mes</span>
+        </div>
+      </div>
+
+      @if (otherVisits().length > 0) {
+        <div class="consultas-resumen__otras" data-testid="consultas-resumen-otras-atenciones">
+          <h3 class="consultas-resumen__subtitulo">Otras atenciones</h3>
+          <ul class="consultas-resumen__lista-otras">
+            @for (actividad of otherVisits(); track actividad.label) {
+              <li>
+                <app-chip [variant]="actividad.tone">{{ actividad.label }} · {{ actividad.total }}</app-chip>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="consultas-resumen__calor">
+        <h3 class="consultas-resumen__subtitulo">
+          Cuándo se concentra su mes
+          <span
+            class="consultas-resumen__ayuda"
+            tabindex="0"
+            aria-label="Más información sobre el mapa de calor"
+            appTooltip="Cada celda muestra cuántas consultas tuvo en esa hora y ese día. El color acompaña; el número siempre está."
+          >
+            ⓘ
+          </span>
+        </h3>
+        <div class="consultas-resumen__tabla-scroll">
+          <table class="consultas-resumen__tabla">
+            <caption class="sr-only">
+              Cantidad de consultas por día de la semana y hora, este mes.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                @for (hora of heatMap().celdas[0]; track $index) {
+                  <th scope="col">{{ timeLabel($index + 6) }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (fila of heatMap().celdas; track $index; let dia = $index) {
+                <tr>
+                  <th scope="row">{{ dayLabel(dia) }}</th>
+                  @for (valor of fila; track $index; let hora = $index) {
+                    <td
+                      [attr.data-intensidad]="intensity(valor, heatMap().maximo)"
+                      [attr.aria-label]="cellAriaLabel(dia, hora, valor)"
+                    >
+                      {{ valor === 0 ? "–" : valor }}
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </app-view-state-host>
+</app-card>

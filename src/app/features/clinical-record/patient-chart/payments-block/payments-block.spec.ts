@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/facturacion-disponible';
+import { SIMULATED_AVAILABLE_INVOICING } from '../../../billing/invoicing-availability';
 import { PaymentsBlock } from './payments-block';
 
 /**
@@ -61,7 +61,7 @@ describe('PaymentsBlock', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => false },
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => false },
       ],
     });
 
@@ -140,7 +140,7 @@ describe('PaymentsBlock con la facturación simulada', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => true },
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => true },
       ],
     });
     const http = TestBed.inject(HttpTestingController);
@@ -148,7 +148,7 @@ describe('PaymentsBlock con la facturación simulada', () => {
     fixture.componentRef.setInput('patientProfileId', 'p-1');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('app-cobros-del-paciente')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-patient-charges')).not.toBeNull();
     http.expectNone('/practices');
     http.expectNone((r) => r.url === '/accounting/practitioner/paid-consultations');
     const cobros = http.expectOne((r) => r.url.endsWith('/billing/simulated/charges'));

@@ -1,5 +1,5 @@
-import { ESTADO } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
+import { STATUS } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE } from '../fixtures/people';
 import { notFound, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, cuerpo, iso, nuevoId, uuid } from '../mock-store';
@@ -124,49 +124,49 @@ export function registrarModulosAdministrativos(router: MockRouter): void {
   });
   router.post('/health-context/agents', (request) => {
     const datos = cuerpo<{ code: string }>(request);
-    return { status: 201, body: { id: nuevoId('agent'), code: datos.code ?? 'AGENT', statusConceptId: ESTADO['ST-ACTIVE']! } };
+    return { status: 201, body: { id: nuevoId('agent'), code: datos.code ?? 'AGENT', statusConceptId: STATUS['ST-ACTIVE']! } };
   });
   router.post('/health-context/sources', (request) => {
     const datos = cuerpo<{ code: string }>(request);
-    return { status: 201, body: { id: nuevoId('source'), code: datos.code ?? 'SRC', statusConceptId: ESTADO['ST-ACTIVE']! } };
+    return { status: 201, body: { id: nuevoId('source'), code: datos.code ?? 'SRC', statusConceptId: STATUS['ST-ACTIVE']! } };
   });
   router.post('/health-context/schedules', (request) => {
     const datos = cuerpo<{ agentId: string; nextRunAt?: string }>(request);
-    return { status: 201, body: { id: nuevoId('schedule'), agentId: datos.agentId ?? '', statusConceptId: ESTADO['ST-ACTIVE']!, nextRunAt: datos.nextRunAt ?? iso(1, 3) } };
+    return { status: 201, body: { id: nuevoId('schedule'), agentId: datos.agentId ?? '', statusConceptId: STATUS['ST-ACTIVE']!, nextRunAt: datos.nextRunAt ?? iso(1, 3) } };
   });
   router.post('/health-context/contexts', (request) => {
     const datos = cuerpo<{ contextKey: string }>(request);
-    return { status: 201, body: { id: nuevoId('context'), contextKey: datos.contextKey ?? 'ctx', statusConceptId: ESTADO['ST-DRAFT']! } };
+    return { status: 201, body: { id: nuevoId('context'), contextKey: datos.contextKey ?? 'ctx', statusConceptId: STATUS['ST-DRAFT']! } };
   });
   router.post('/health-context/contexts/:id/versions', (request) => {
     const datos = cuerpo<{ facts?: { evidence?: unknown[] }[] }>(request);
     const hechos = datos.facts ?? [];
-    return { status: 201, body: { id: nuevoId('context-version'), versionNumber: 1, statusConceptId: ESTADO['ST-DRAFT']!, contentHash: `sha256:${Date.now().toString(16).padStart(16, '0')}`, factIds: hechos.map(() => nuevoId('fact')), evidenceCount: hechos.reduce((s, f) => s + (f.evidence?.length ?? 0), 0) } };
+    return { status: 201, body: { id: nuevoId('context-version'), versionNumber: 1, statusConceptId: STATUS['ST-DRAFT']!, contentHash: `sha256:${Date.now().toString(16).padStart(16, '0')}`, factIds: hechos.map(() => nuevoId('fact')), evidenceCount: hechos.reduce((s, f) => s + (f.evidence?.length ?? 0), 0) } };
   });
   router.post('/health-context/versions/:id/quality-reviews', (request) => {
     const datos = cuerpo<{ outcome?: 'APPROVED' | 'REJECTED' }>(request);
-    return { status: 201, body: { id: nuevoId('review'), contextVersionId: request.params['id'], versionStatusConceptId: datos.outcome === 'REJECTED' ? ESTADO['ST-REJECTED']! : ESTADO['ST-VERIFIED']! } };
+    return { status: 201, body: { id: nuevoId('review'), contextVersionId: request.params['id'], versionStatusConceptId: datos.outcome === 'REJECTED' ? STATUS['ST-REJECTED']! : STATUS['ST-VERIFIED']! } };
   });
-  router.post('/health-context/versions/:id/publish', ({ params }) => ({ id: params['id'], versionNumber: 4, statusConceptId: ESTADO['ST-PUBLISHED']!, countryHealthContextId: uuid('context-BO-EPIDEMIOLOGY-dengue-alert'), supersededVersionId: uuid('context-version-dengue-alert-3') }));
-  router.post('/health-context/versions/:id/supersede', ({ params }) => ({ id: params['id'], statusConceptId: ESTADO['ST-ARCHIVED']!, contextStatusConceptId: ESTADO['ST-ACTIVE']!, currentVersionId: uuid('context-version-dengue-alert-3') }));
+  router.post('/health-context/versions/:id/publish', ({ params }) => ({ id: params['id'], versionNumber: 4, statusConceptId: STATUS['ST-PUBLISHED']!, countryHealthContextId: uuid('context-BO-EPIDEMIOLOGY-dengue-alert'), supersededVersionId: uuid('context-version-dengue-alert-3') }));
+  router.post('/health-context/versions/:id/supersede', ({ params }) => ({ id: params['id'], statusConceptId: STATUS['ST-ARCHIVED']!, contextStatusConceptId: STATUS['ST-ACTIVE']!, currentVersionId: uuid('context-version-dengue-alert-3') }));
   router.post('/health-context/collection-runs', (request) => {
     const datos = cuerpo<{ idempotencyKey?: string }>(request);
-    return { status: 201, body: { id: uuid(`run-${datos.idempotencyKey ?? Date.now()}`), statusConceptId: ESTADO['ST-IN-PROGRESS']!, duplicate: false } };
+    return { status: 201, body: { id: uuid(`run-${datos.idempotencyKey ?? Date.now()}`), statusConceptId: STATUS['ST-IN-PROGRESS']!, duplicate: false } };
   });
   router.post('/health-context/collection-runs/:id/observations', (request) => {
     const datos = cuerpo<{ status?: string }>(request);
-    return { status: 201, body: { id: nuevoId('observation'), statusConceptId: datos.status === 'REJECTED' ? ESTADO['ST-REJECTED']! : ESTADO['ST-ACTIVE']!, duplicate: false } };
+    return { status: 201, body: { id: nuevoId('observation'), statusConceptId: datos.status === 'REJECTED' ? STATUS['ST-REJECTED']! : STATUS['ST-ACTIVE']!, duplicate: false } };
   });
   router.post('/health-context/collection-runs/:id/finish', (request) => {
     const datos = cuerpo<{ outcome?: string }>(request);
-    return { id: request.params['id'], statusConceptId: datos.outcome === 'FAILED' ? ESTADO['ST-REJECTED']! : ESTADO['ST-COMPLETED']!, observationsRead: '12', observationsAccepted: datos.outcome === 'FAILED' ? '0' : '11', observationsRejected: datos.outcome === 'FAILED' ? '12' : '1', sourceCount: 3 };
+    return { id: request.params['id'], statusConceptId: datos.outcome === 'FAILED' ? STATUS['ST-REJECTED']! : STATUS['ST-COMPLETED']!, observationsRead: '12', observationsAccepted: datos.outcome === 'FAILED' ? '0' : '11', observationsRejected: datos.outcome === 'FAILED' ? '12' : '1', sourceCount: 3 };
   });
 
   /* ---- proveedores de identidad federada ----------------------------------- */
 
   router.post('/auth-providers/identity-providers', (request) => {
     const datos = cuerpo<{ code: string; isGlobal?: boolean }>(request);
-    return { status: 201, body: { id: nuevoId('idp'), code: datos.code ?? 'IDP', stateConceptId: ESTADO['ST-ACTIVE']!, isGlobal: datos.isGlobal ?? false } };
+    return { status: 201, body: { id: nuevoId('idp'), code: datos.code ?? 'IDP', stateConceptId: STATUS['ST-ACTIVE']!, isGlobal: datos.isGlobal ?? false } };
   });
   router.post('/auth-providers/identity-providers/:id/protocol-configs', (request) => {
     const datos = cuerpo<{ discoveredKeys?: unknown[] }>(request);
@@ -174,7 +174,7 @@ export function registrarModulosAdministrativos(router: MockRouter): void {
   });
   router.post('/auth-providers/identity-providers/:id/signing-keys', (request) => {
     const datos = cuerpo<{ keyId: string }>(request);
-    return { status: 201, body: { id: nuevoId('signing-key'), keyId: datos.keyId ?? 'kid', stateConceptId: ESTADO['ST-ACTIVE']! } };
+    return { status: 201, body: { id: nuevoId('signing-key'), keyId: datos.keyId ?? 'kid', stateConceptId: STATUS['ST-ACTIVE']! } };
   });
   router.post('/auth-providers/identity-providers/:id/signing-keys/rotate', (request) => {
     const datos = cuerpo<{ keyId: string; graceHours?: number }>(request);
@@ -195,12 +195,12 @@ export function registrarModulosAdministrativos(router: MockRouter): void {
   router.post('/auth-providers/identity-providers/by-code/:code/authorize', () => ({ status: 201, body: { attemptId: nuevoId('attempt'), state: `st-${Date.now().toString(36)}`, nonce: `n-${Date.now().toString(36)}`, authorizeUrl: 'https://idp.mock/authorize', pkceRequired: true } }));
   router.post('/auth-providers/identity-providers/by-code/:code/callback', (request) => {
     const datos = cuerpo<{ userId?: string }>(request);
-    return { outcomeConceptId: uuid('concept-federated-outcome-success'), provisioned: datos.userId === undefined, attemptId: nuevoId('attempt'), federatedIdentityId: nuevoId('federated-identity'), userId: datos.userId ?? MEDICA.userId };
+    return { outcomeConceptId: uuid('concept-federated-outcome-success'), provisioned: datos.userId === undefined, attemptId: nuevoId('attempt'), federatedIdentityId: nuevoId('federated-identity'), userId: datos.userId ?? MEDICAL.userId };
   });
   router.post('/auth-providers/account-link-requests', (request) => {
     const datos = cuerpo<{ expiresInMinutes?: number }>(request);
-    return { status: 201, body: { id: nuevoId('link-request'), linkToken: `lt-${Date.now().toString(36)}`, expiresAt: new Date(Date.now() + (datos.expiresInMinutes ?? 30) * 60_000).toISOString(), statusConceptId: ESTADO['ST-PENDING']! } };
+    return { status: 201, body: { id: nuevoId('link-request'), linkToken: `lt-${Date.now().toString(36)}`, expiresAt: new Date(Date.now() + (datos.expiresInMinutes ?? 30) * 60_000).toISOString(), statusConceptId: STATUS['ST-PENDING']! } };
   });
-  router.post('/auth-providers/account-link-requests/complete', () => ({ requestId: nuevoId('link-request'), federatedIdentityId: nuevoId('federated-identity'), userId: MEDICA.userId, statusConceptId: ESTADO['ST-LINKED']! }));
-  router.post('/auth-providers/federated-identities/:id/unlink', ({ params }) => ({ id: params['id'], stateConceptId: ESTADO['ST-UNLINKED']!, attemptId: nuevoId('attempt') }));
+  router.post('/auth-providers/account-link-requests/complete', () => ({ requestId: nuevoId('link-request'), federatedIdentityId: nuevoId('federated-identity'), userId: MEDICAL.userId, statusConceptId: STATUS['ST-LINKED']! }));
+  router.post('/auth-providers/federated-identities/:id/unlink', ({ params }) => ({ id: params['id'], stateConceptId: STATUS['ST-UNLINKED']!, attemptId: nuevoId('attempt') }));
 }

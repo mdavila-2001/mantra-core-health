@@ -1,7 +1,7 @@
-import { encuentros } from './clinica';
-import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
-import { ofertas } from './servicios-ofrecidos';
+import { encounterList } from './clinic';
+import { ACTIVITY, CANAL, STATUS, BOOKING_STATUS, BLOCK_TYPE, APPOINTMENT_TYPE } from './concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from './people';
+import { offers } from './offered-services';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
@@ -123,7 +123,7 @@ export const PRACTICE_OLIVOS = uuid('practice-olivos');
 export const PRACTICE_SANLUCAS = uuid('practice-sanlucas');
 export const PRACTICE_CONSULTORIO = uuid('practice-consultorio-rojas');
 export const POLITICA_ESTANDAR = uuid('booking-policy-estandar');
-export const RECURSO_TIPO_PROFESIONAL = ESTADO['ST-ACTIVE']!;
+export const RECURSO_TIPO_PROFESIONAL = STATUS['ST-ACTIVE']!;
 
 export const SITIO_OLIVOS = { id: uuid('site-olivos-central'), name: 'Clínica Los Olivos · Sede Central', code: 'OLIVOS-C', addressText: 'Av. Banzer, 3.º anillo, Santa Cruz de la Sierra', timeZone: 'America/La_Paz' };
 export const SITIO_SANLUCAS = { id: uuid('site-sanlucas'), name: 'Hospital San Lucas', code: 'SANLUCAS', addressText: 'Av. San Martín N.º 1400, Santa Cruz de la Sierra', timeZone: 'America/La_Paz' };
@@ -172,7 +172,7 @@ export function recursoDeDemo(
     tenantId: p.tenantId,
     timeZone: sede.site?.timeZone ?? ZONA_HORARIA_POR_OMISION,
     capacity: 1,
-    stateConceptId: ESTADO['ST-ACTIVE']!,
+    stateConceptId: STATUS['ST-ACTIVE']!,
     site: sede.site,
   };
 }
@@ -181,7 +181,7 @@ export const recursos = new Coleccion<RecursoSimulado>([
   // Los médicos de la red de las aseguradoras no tienen agenda: nadie publicó
   // sus horarios, y fabricárselos sería ofrecer turnos que no existen. Y un
   // médico escrito sin especialidad tampoco: no hay nada que reservarle.
-  ...PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
+  ...PROFESSIONALS.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
     const principal: RecursoSimulado = {
       id: recursoDe(p),
       name: `Agenda de ${p.displayName}`,
@@ -198,7 +198,7 @@ export const recursos = new Coleccion<RecursoSimulado>([
       tenantId: p.tenantId,
       timeZone: 'America/La_Paz',
       capacity: 1,
-      stateConceptId: ESTADO['ST-ACTIVE']!,
+      stateConceptId: STATUS['ST-ACTIVE']!,
       site: p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS,
     };
     if (i !== 0) return [principal];
@@ -218,21 +218,21 @@ export const recursos = new Coleccion<RecursoSimulado>([
   // índices de arriba —y con ellos la alternancia mañana/tarde de sus
   // plantillas— no se mueven. Las personas de la planilla del propietario no
   // tienen agenda: la planilla no dice dónde atienden (D-H3-PROV-01).
-  ...PROFESIONALES.filter((p) => p.origen === 'DEMO').map((p) => recursoDeDemo(p)),
+  ...PROFESSIONALS.filter((p) => p.origen === 'DEMO').map((p) => recursoDeDemo(p)),
 ]);
 
-export const RECURSO_MEDICA = recursoDe(MEDICA);
-export const RECURSO_CONSULTORIO_MEDICA = uuid(`resource-consultorio-${MEDICA.id}`);
+export const RECURSO_MEDICA = recursoDe(MEDICAL);
+export const RECURSO_CONSULTORIO_MEDICA = uuid(`resource-consultorio-${MEDICAL.id}`);
 
 /**
  * El tipo de cita de una **reconsulta** (C4).
  *
  * Se deriva acá y no se lee de `TIPO_CITA` porque `VS_APPOINTMENT_TYPE` todavía
- * no la declara: `conceptos.ts` tiene `APT-PRIMERA`, `APT-CONTROL` y
+ * no la declara: `concepts.ts` tiene `APT-PRIMERA`, `APT-CONTROL` y
  * `APT-URGENCIA`, y ese archivo es de C0, que no publicó.
  *
  * El id que sale de acá es **exactamente** el que produciría `definir()` allá
- * —misma semilla `concept-<código>`, `conceptos.ts:69—`, así que el día que la
+ * —misma semilla `concept-<código>`, `concepts.ts:69—`, así que el día que la
  * entrada exista el identificador coincide y no hay nada que migrar. Lo único
  * que falta hasta entonces es la etiqueta del catálogo, y por eso la pantalla
  * escribe «Reconsulta» literal en vez de buscarla: un uuid crudo en la agenda
@@ -269,7 +269,7 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     slotMinutes: 30,
     validFrom: isoDia(-60),
     bookingPolicyId: POLITICA_ESTANDAR,
-    statusConceptId: ESTADO['ST-PUBLISHED']!,
+    statusConceptId: STATUS['ST-PUBLISHED']!,
   },
   {
     // Martes y jueves por la tarde la médica sólo hace estudios (v4.2.40): sin
@@ -282,7 +282,7 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     slotMinutes: 30,
     validFrom: isoDia(-30),
     bookingPolicyId: POLITICA_ESTANDAR,
-    statusConceptId: ESTADO['ST-PUBLISHED']!,
+    statusConceptId: STATUS['ST-PUBLISHED']!,
   },
   {
     id: uuid('template-medica-tarde'),
@@ -300,7 +300,7 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     slotMinutes: 20,
     validFrom: isoDia(-30),
     bookingPolicyId: POLITICA_ESTANDAR,
-    statusConceptId: ESTADO['ST-PUBLISHED']!,
+    statusConceptId: STATUS['ST-PUBLISHED']!,
   },
   {
     id: uuid('template-medica-retirada'),
@@ -312,7 +312,7 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     validFrom: isoDia(-200),
     validTo: isoDia(-61),
     bookingPolicyId: POLITICA_ESTANDAR,
-    statusConceptId: ESTADO['ST-ARCHIVED']!,
+    statusConceptId: STATUS['ST-ARCHIVED']!,
   },
   ...recursos
     .todos()
@@ -326,7 +326,7 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
       slotMinutes: 30,
       validFrom: isoDia(-90),
       bookingPolicyId: POLITICA_ESTANDAR,
-      statusConceptId: ESTADO['ST-PUBLISHED']!,
+      statusConceptId: STATUS['ST-PUBLISHED']!,
     })),
 ]);
 
@@ -337,7 +337,7 @@ function generarCupos(): CupoSimulado[] {
 }
 
 /** Los cupos de ±21 días que abre una plantilla, con la actividad que atiende. */
-function cuposDePlantilla(plantilla: PlantillaSimulada, servicio: string = ACTIVIDAD['ACT-CONSULTA']!): CupoSimulado[] {
+function cuposDePlantilla(plantilla: PlantillaSimulada, servicio: string = ACTIVITY['ACT-CONSULTA']!): CupoSimulado[] {
   const cupos: CupoSimulado[] = [];
   for (let dia = -21; dia <= 21; dia++) {
     const d = fecha(dia, 0);
@@ -363,7 +363,7 @@ function cuposDePlantilla(plantilla: PlantillaSimulada, servicio: string = ACTIV
         endAt: fin.toISOString(),
         capacity: regla.capacityPerSlot ?? 1,
         remainingCapacity: regla.capacityPerSlot ?? 1,
-        statusConceptId: ESTADO['ST-ACTIVE']!,
+        statusConceptId: STATUS['ST-ACTIVE']!,
         serviceConceptId: servicio,
       });
     }
@@ -418,7 +418,7 @@ export function abrirAgendaDeCentro(centro: CentroConAgenda): void {
     tenantId: centro.tenantId,
     timeZone: centro.site?.timeZone ?? ZONA_HORARIA_POR_OMISION,
     capacity: esLaboratorio ? 3 : 1,
-    stateConceptId: ESTADO['ST-ACTIVE']!,
+    stateConceptId: STATUS['ST-ACTIVE']!,
     site: centro.site,
   });
   const plantilla: PlantillaSimulada = {
@@ -432,10 +432,10 @@ export function abrirAgendaDeCentro(centro: CentroConAgenda): void {
     slotMinutes: esLaboratorio ? 15 : 30,
     validFrom: isoDia(-90),
     bookingPolicyId: POLITICA_ESTANDAR,
-    statusConceptId: ESTADO['ST-PUBLISHED']!,
+    statusConceptId: STATUS['ST-PUBLISHED']!,
   };
   if (!plantillas.has(plantilla.id)) plantillas.agregar(plantilla);
-  for (const cupo of cuposDePlantilla(plantilla, ACTIVIDAD['ACT-EXAMEN']!)) {
+  for (const cupo of cuposDePlantilla(plantilla, ACTIVITY['ACT-EXAMEN']!)) {
     if (!cupos.has(cupo.id)) cupos.agregar(cupo);
   }
 }
@@ -459,21 +459,21 @@ const MOTIVOS = [
  * La tipología de actividad de una reserva generada, determinista (C-24 /
  * hallazgo D5 post-#559): antes las tres asignaciones de `serviceConceptId`
  * de este archivo eran `ACT-CONSULTA` fijo, así que "otras atenciones" del
- * panel (`consultas-resumen.ts`) nunca tenía nada que clasificar — la lógica
+ * panel (`consultations-summary.ts`) nunca tenía nada que clasificar — la lógica
  * era correcta, faltaba el dato. La teleconsulta se deduce del canal, que ya
  * la distingue; procedimientos y exámenes salen con una cadencia fija sobre
  * el índice, para que la cifra del panel se pueda contar a mano dos veces y
  * dé lo mismo.
  */
 function servicioDe(indice: number, canal: string): string {
-  if (canal === CANAL['CH-TELECONSULTA']) return ACTIVIDAD['ACT-TELECONSULTA']!;
-  if (indice % 11 === 5) return ACTIVIDAD['ACT-PROCEDIMIENTO']!;
-  if (indice % 13 === 7) return ACTIVIDAD['ACT-EXAMEN']!;
-  return ACTIVIDAD['ACT-CONSULTA']!;
+  if (canal === CANAL['CH-TELECONSULTA']) return ACTIVITY['ACT-TELECONSULTA']!;
+  if (indice % 11 === 5) return ACTIVITY['ACT-PROCEDIMIENTO']!;
+  if (indice % 13 === 7) return ACTIVITY['ACT-EXAMEN']!;
+  return ACTIVITY['ACT-CONSULTA']!;
 }
 
-function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO_RESERVA, extra: Partial<ReservaSimulada> = {}): ReservaSimulada {
-  const paciente = PACIENTES[indice % PACIENTES.length]!;
+function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof BOOKING_STATUS, extra: Partial<ReservaSimulada> = {}): ReservaSimulada {
+  const paciente = PATIENTS[indice % PATIENTS.length]!;
   const confirmada = ['BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS', 'BK-COMPLETED'].includes(estado);
   const canal = indice % 3 === 0 ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!;
   return {
@@ -482,10 +482,10 @@ function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO
     resourceId: cupo.resourceId,
     bookableSlotId: cupo.id,
     appointmentId: confirmada ? uuid(`appointment-${cupo.id}`) : null,
-    typeConceptId: indice % 4 === 0 ? TIPO_CITA['APT-PRIMERA']! : TIPO_CITA['APT-CONTROL']!,
+    typeConceptId: indice % 4 === 0 ? APPOINTMENT_TYPE['APT-PRIMERA']! : APPOINTMENT_TYPE['APT-CONTROL']!,
     startAt: cupo.startAt,
     endAt: cupo.endAt,
-    statusConceptId: ESTADO_RESERVA[estado]!,
+    statusConceptId: BOOKING_STATUS[estado]!,
     serviceConceptId: servicioDe(indice, canal),
     bookingChannelConceptId: canal,
     confirmedAt: confirmada ? masMinutos(cupo.startAt, -60 * 24 * 2) : null,
@@ -498,7 +498,7 @@ function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO
     delayNotice: null,
     paymentState:
       estado === 'BK-COMPLETED'
-        ? { state: indice % 2 === 0 ? 'PAID' : 'PARTIALLY_PAID', label: indice % 2 === 0 ? 'Pagada' : 'Pago parcial', conceptId: ESTADO['ST-COMPLETED']!, insuranceUsed: paciente.aseguradora !== undefined, markedByUserId: MEDICA.userId, markedAt: masMinutos(cupo.endAt, 5) }
+        ? { state: indice % 2 === 0 ? 'PAID' : 'PARTIALLY_PAID', label: indice % 2 === 0 ? 'Pagada' : 'Pago parcial', conceptId: STATUS['ST-COMPLETED']!, insuranceUsed: paciente.aseguradora !== undefined, markedByUserId: MEDICAL.userId, markedAt: masMinutos(cupo.endAt, 5) }
         : null,
     followUpOf: null,
     createdAt: masMinutos(cupo.startAt, -60 * 24 * 5),
@@ -527,7 +527,7 @@ function generarReservas(): ReservaSimulada[] {
       i++;
       continue;
     }
-    let estado: keyof typeof ESTADO_RESERVA;
+    let estado: keyof typeof BOOKING_STATUS;
     if (esHoy) {
       const orden = cuposMedica.filter((c) => new Date(c.startAt).toDateString() === new Date().toDateString()).indexOf(cupo);
       estado = (['BK-COMPLETED', 'BK-COMPLETED', 'BK-IN-PROGRESS', 'BK-CHECKED-IN', 'BK-CONFIRMED', 'BK-CONFIRMED', 'BK-REQUESTED', 'BK-CONFIRMED'] as const)[orden % 8]!;
@@ -538,10 +538,10 @@ function generarReservas(): ReservaSimulada[] {
     }
     const extra: { -readonly [K in keyof ReservaSimulada]?: ReservaSimulada[K] } = {};
     if (estado === 'BK-CANCELLED') {
-      extra.statusReason = { reasonText: 'El paciente avisó que viajaba', actorKind: 'PATIENT', toStateConceptId: ESTADO_RESERVA['BK-CANCELLED']!, changedAt: masMinutos(cupo.startAt, -60 * 24) };
+      extra.statusReason = { reasonText: 'El paciente avisó que viajaba', actorKind: 'PATIENT', toStateConceptId: BOOKING_STATUS['BK-CANCELLED']!, changedAt: masMinutos(cupo.startAt, -60 * 24) };
     }
     if (estado === 'BK-NO-SHOW') {
-      extra.statusReason = { reasonText: 'No se presentó ni avisó', actorKind: 'PROVIDER', toStateConceptId: ESTADO_RESERVA['BK-NO-SHOW']!, changedAt: masMinutos(cupo.endAt, 15) };
+      extra.statusReason = { reasonText: 'No se presentó ni avisó', actorKind: 'PROVIDER', toStateConceptId: BOOKING_STATUS['BK-NO-SHOW']!, changedAt: masMinutos(cupo.endAt, 15) };
     }
     if (!esPasado && i % 7 === 3) {
       extra.rescheduledFrom = masMinutos(cupo.startAt, -60 * 24 * 3);
@@ -553,7 +553,7 @@ function generarReservas(): ReservaSimulada[] {
     i++;
   }
   // La paciente principal tiene turnos con otros profesionales también.
-  const otros = PROFESIONALES.slice(1, 5);
+  const otros = PROFESSIONALS.slice(1, 5);
   otros.forEach((p, k) => {
     const cupo = cupos
       .todos()
@@ -603,7 +603,7 @@ function reservasDeServicios(): ReservaSimulada[] {
   }
 
   return pedidos.flatMap((pedido, k) => {
-    const oferta = ofertas.get(uuid(`offering-${MEDICA.id}-${pedido.codigo}`));
+    const oferta = offers.get(uuid(`offering-${MEDICAL.id}-${pedido.codigo}`));
     const tarde = tardes[pedido.dia];
     if (oferta === undefined || tarde === undefined) return [];
     const inicio = new Date(tarde.getFullYear(), tarde.getMonth(), tarde.getDate(), pedido.hora, pedido.minuto);
@@ -616,15 +616,15 @@ function reservasDeServicios(): ReservaSimulada[] {
       endAt: fin.toISOString(),
       capacity: 1,
       remainingCapacity: 0,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       serviceConceptId: null,
       serviceOfferingId: oferta.id,
       heldUntil: null,
     });
     return [
       reserva(k + 1, cupo, pedido.estado, {
-        typeConceptId: ACTIVIDAD['ACT-PROCEDIMIENTO']!,
-        serviceConceptId: ACTIVIDAD['ACT-PROCEDIMIENTO']!,
+        typeConceptId: ACTIVITY['ACT-PROCEDIMIENTO']!,
+        serviceConceptId: ACTIVITY['ACT-PROCEDIMIENTO']!,
         reasonText: pedido.motivo,
         serviceOfferingId: oferta.id,
         service: {
@@ -645,7 +645,7 @@ function reservasDeServicios(): ReservaSimulada[] {
 
    Nace **nueve minutos antes de ahora** y con su reserva confirmada, así que
    cruza los diez minutos de gracia alrededor de un minuto después de abrir la
-   aplicación. Ahí la regla de `horario-liberado.ts` lo da por libre y el aviso
+   aplicación. Ahí la regla de `released-slot.ts` lo da por libre y el aviso
    *llega* mientras alguien está mirando — que es lo que había que poder
    mostrar. Si naciera ya vencido, la notificación estaría desde el primer
    render y no se vería llegar nada.
@@ -659,7 +659,7 @@ function reservasDeServicios(): ReservaSimulada[] {
 
 const CUPO_POR_LIBERARSE = uuid('slot-a-punto-de-liberarse');
 
-/* Los mismos diez minutos que `horario-liberado.ts`, declarados acá y no
+/* Los mismos diez minutos que `released-slot.ts`, declarados acá y no
    importados de allá: aquel archivo lee este fixture, y traerlo de vuelta
    cerraría un ciclo de importación —lo que `check-architecture` prohíbe—. Una
    prueba comprueba que los dos números coinciden. */
@@ -675,8 +675,8 @@ function sembrarCupoPorLiberarse(): void {
     endAt: masMinutos(inicio, 30),
     capacity: 1,
     remainingCapacity: 0,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
   });
   const cupo = cupos.get(CUPO_POR_LIBERARSE);
   if (cupo === undefined) return;
@@ -713,7 +713,7 @@ const UN_DIA = 24 * 60 * 60 * 1000;
  */
 function encuentroDeOrigen(): string | null {
   return (
-    encuentros
+    encounterList
       .todos()
       .filter((e) => e.patientProfileId === PACIENTE.id)
       .filter((e) => e.endAt !== null)
@@ -726,7 +726,7 @@ function sembrarReconsulta(): void {
     .todos()
     .filter((r) => r.patientProfileId === PACIENTE.id)
     .filter((r) => r.resourceId === RECURSO_MEDICA || r.resourceId === RECURSO_CONSULTORIO_MEDICA)
-    .filter((r) => r.statusConceptId === ESTADO_RESERVA['BK-COMPLETED'])
+    .filter((r) => r.statusConceptId === BOOKING_STATUS['BK-COMPLETED'])
     .filter((r) => new Date(r.startAt).getTime() < Date.now())
     .sort((a, b) => b.startAt.localeCompare(a.startAt))[0];
   if (origen === undefined) return;
@@ -745,7 +745,7 @@ function sembrarReconsulta(): void {
   const destino = cupos
     .todos()
     .filter((c) => c.resourceId === RECURSO_MEDICA)
-    .filter((c) => c.remainingCapacity > 0 && c.statusConceptId === ESTADO['ST-ACTIVE'])
+    .filter((c) => c.remainingCapacity > 0 && c.statusConceptId === STATUS['ST-ACTIVE'])
     .filter((c) => new Date(c.startAt).getTime() > desde)
     .sort((a, b) => a.startAt.localeCompare(b.startAt))[0];
   if (destino === undefined) return;
@@ -770,7 +770,7 @@ function sembrarReconsulta(): void {
       // pantalla. Así que la reconsulta se cuelga de un encuentro **real** de la
       // misma paciente, y como el origen de arriba, se **busca**: el más
       // reciente ya cerrado. Fijarlo por índice o derivar su id por convención
-      // de texto lo ataría a cómo `clinica.ts` genera los suyos hoy.
+      // de texto lo ataría a cómo `clinic.ts` genera los suyos hoy.
       followUpOf: { bookingId: origen.id, encounterId: encuentroDeOrigen() },
       createdAt: ahora(),
     }),
@@ -786,7 +786,7 @@ export const bloqueos = new Coleccion<BloqueoSimulado>([
   {
     id: uuid('exception-vacaciones'),
     resourceId: RECURSO_MEDICA,
-    exceptionTypeConceptId: TIPO_BLOQUEO['EXC-VACACIONES']!,
+    exceptionTypeConceptId: BLOCK_TYPE['EXC-VACACIONES']!,
     exceptionType: 'VACATION',
     startAt: iso(28, 0),
     endAt: iso(35, 23, 59),
@@ -797,7 +797,7 @@ export const bloqueos = new Coleccion<BloqueoSimulado>([
   {
     id: uuid('exception-congreso'),
     resourceId: RECURSO_MEDICA,
-    exceptionTypeConceptId: TIPO_BLOQUEO['EXC-CONGRESO']!,
+    exceptionTypeConceptId: BLOCK_TYPE['EXC-CONGRESO']!,
     exceptionType: 'CONFERENCE',
     startAt: iso(9, 8),
     endAt: iso(10, 18),
@@ -808,7 +808,7 @@ export const bloqueos = new Coleccion<BloqueoSimulado>([
   {
     id: uuid('exception-pasada'),
     resourceId: RECURSO_MEDICA,
-    exceptionTypeConceptId: TIPO_BLOQUEO['EXC-PERSONAL']!,
+    exceptionTypeConceptId: BLOCK_TYPE['EXC-PERSONAL']!,
     exceptionType: 'ERRAND',
     startAt: iso(-6, 10),
     endAt: iso(-6, 12),
@@ -819,7 +819,7 @@ export const bloqueos = new Coleccion<BloqueoSimulado>([
   {
     id: uuid('exception-extra'),
     resourceId: RECURSO_CONSULTORIO_MEDICA,
-    exceptionTypeConceptId: TIPO_BLOQUEO['EXC-CIRUGIA']!,
+    exceptionTypeConceptId: BLOCK_TYPE['EXC-CIRUGIA']!,
     exceptionType: 'EXTRA',
     startAt: iso(3, 19),
     endAt: iso(3, 21),
@@ -843,12 +843,12 @@ export const listaDeEspera = new Coleccion<{
   {
     id: uuid('waitlist-1'),
     patientProfileId: PACIENTE.id,
-    resourceId: recursoDe(PROFESIONALES[6]!),
-    resourceLabel: `Agenda de ${PROFESIONALES[6]!.displayName}`,
+    resourceId: recursoDe(PROFESSIONALS[6]!),
+    resourceLabel: `Agenda de ${PROFESSIONALS[6]!.displayName}`,
     desiredFrom: iso(1, 8),
     desiredTo: iso(14, 18),
     priority: 2,
-    statusConceptId: ESTADO['ST-PENDING']!,
+    statusConceptId: STATUS['ST-PENDING']!,
     createdAt: iso(-2, 11),
   },
 ]);
@@ -869,7 +869,7 @@ listaDeEspera.persistirEn('mock.agenda.listaDeEspera');
 function sincronizarCapacidadConReservas(): void {
   const ocupados = new Map<string, number>();
   for (const r of reservas.todos()) {
-    if (r.statusConceptId === ESTADO_RESERVA['BK-CANCELLED'] || r.statusConceptId === ESTADO_RESERVA['BK-REJECTED']) continue;
+    if (r.statusConceptId === BOOKING_STATUS['BK-CANCELLED'] || r.statusConceptId === BOOKING_STATUS['BK-REJECTED']) continue;
     ocupados.set(r.bookableSlotId, (ocupados.get(r.bookableSlotId) ?? 0) + 1);
   }
   for (const cupo of cupos.todos()) {

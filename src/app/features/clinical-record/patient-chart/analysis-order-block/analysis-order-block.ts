@@ -39,7 +39,7 @@ import { ConceptSelect } from '../../../../shared/components/molecules/concept-s
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeFailureMessage } from '../../write-message';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 
@@ -363,7 +363,7 @@ export class AnalysisOrderBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, { accion: 'pedir estudios', sinPermiso: 'Su rol no permite pedir estudios.' });
+    return writeFailureMessage(state, { accion: 'pedir estudios', sinPermiso: 'Su rol no permite pedir estudios.' });
   });
 
   /**

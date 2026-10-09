@@ -72,7 +72,7 @@
   transition: transform var(--dur-fast) var(--ease-standard);
 }
 
-/* La bandera vive dentro de `app-pais-bandera`, así que su propia hoja está
+/* La bandera vive dentro de `app-country-flag`, así que su propia hoja está
    encapsulada aparte: la regla del átomo la alcanza igual —`::ng-deep` atraviesa
    la encapsulación— y hay que devolverle la proporción desde acá. */
 :host ::ng-deep .pais .bandera {

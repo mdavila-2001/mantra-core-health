@@ -532,14 +532,14 @@ for (const componente of indice) {
  * se saben en el banco, en ejecución, y el banco las completa.
  *
  *   descubierto     está en el índice (siempre true acá: es la fuente)
- *   escenario       hay un anfitrión escrito a mano en component-stock/escenarios
+ *   escenario       hay un anfitrión escrito a mano en component-stock/scenarios
  *   visual          hay capturas versionadas de sus escenarios (#569)
  *   bloqueado       algo externo impide acreditarlo solo, con el motivo
  */
-const ESCENARIOS_DIR = join(SRC_ROOT, 'app/features/component-stock/escenarios');
+const SCENARIOS_DIR = join(SRC_ROOT, 'app/features/component-stock/scenarios');
 const escenarioPorClave = new Map();
-for (const file of walk(ESCENARIOS_DIR, ['.ts']).filter((f) => f.endsWith('.escenarios.ts'))) {
-  const clave = /^const CLAVE = '([^']+)'/m.exec(read(file))?.[1];
+for (const file of walk(SCENARIOS_DIR, ['.ts']).filter((f) => f.endsWith('.scenarios.ts'))) {
+  const clave = /^const (?:KEY|CLAVE) = '([^']+)'/m.exec(read(file))?.[1];
   if (clave !== undefined) escenarioPorClave.set(clave, repoPath(file));
 }
 

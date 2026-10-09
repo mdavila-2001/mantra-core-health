@@ -38,7 +38,7 @@ const DESTINO = join(
   'core',
   'mock',
   'fixtures',
-  'fichas-estandar.generated.ts',
+  'standard-sheets.generated.ts',
 );
 
 const fichas = [];

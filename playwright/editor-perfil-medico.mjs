@@ -166,7 +166,7 @@ async function main() {
   /* ── 3 · Teléfonos: bandera + número ───────────────────────────────── */
   for (const id of ['edicion-celular-personal', 'edicion-celular-trabajo', 'edicion-fijo-trabajo']) {
     const pais = pagina.getByTestId(`${id}-pais`);
-    ok(`«${id}» tiene selector de país con bandera`, (await pais.count()) === 1 && (await pais.locator('app-pais-bandera').count()) === 1);
+    ok(`«${id}» tiene selector de país con bandera`, (await pais.count()) === 1 && (await pais.locator('app-country-flag').count()) === 1);
   }
   await pagina.getByTestId('edicion-celular-personal').scrollIntoViewIfNeeded().catch(() => {});
   await capturar('03-contacto-telefonos');

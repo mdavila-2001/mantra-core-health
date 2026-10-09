@@ -36,15 +36,15 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { Stepper } from '../../../../shared/components/molecules/stepper/stepper';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { drawQr } from '../../../../shared/utils/qr/draw-qr';
 import { facturaDelPedido } from '../order-invoice/order-invoice.fixtures';
-import { TuFactura } from '../order-invoice/tu-factura/tu-factura';
+import { YourInvoice } from '../order-invoice/your-invoice/your-invoice';
 import {
-  etiquetaDeMedioDePago,
-  etiquetaDeModalidad,
-  pasosDeLaLineaDeTiempo,
-  presentacionDePedido,
-} from '../pedido-status';
+  paymentMeansLabel,
+  modalityLabel,
+  timelineSteps,
+  orderPresentation,
+} from '../order-status';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
@@ -126,7 +126,7 @@ interface AvisoDelPedido {
     PageHeader,
     RouterLink,
     Stepper,
-    TuFactura,
+    YourInvoice,
     ViewStateHost,
   ],
   templateUrl: './order-detail.html',
@@ -175,21 +175,21 @@ export class OrderDetail {
   });
 
   protected readonly medioDePago = computed(() =>
-    etiquetaDeMedioDePago(this.pedido()?.pago ?? null),
+    paymentMeansLabel(this.pedido()?.pago ?? null),
   );
 
   protected readonly presentacion = computed(() => {
     const pedido = this.pedido();
     // Por pedido y no por estado: con envío, el cierre se dice «Entregado».
-    return pedido === null ? null : presentacionDePedido(pedido, this.pagado());
+    return pedido === null ? null : orderPresentation(pedido, this.pagado());
   });
   protected readonly pasos = computed(() => {
     const pedido = this.pedido();
-    return pedido === null ? [] : pasosDeLaLineaDeTiempo(pedido, this.pagado());
+    return pedido === null ? [] : timelineSteps(pedido, this.pagado());
   });
   protected readonly modalidad = computed(() => {
     const pedido = this.pedido();
-    return pedido === null ? '' : etiquetaDeModalidad(pedido.modalidad);
+    return pedido === null ? '' : modalityLabel(pedido.modalidad);
   });
 
   /** La factura del pedido, o `null`: sin factura, el bloque lo dice. */
@@ -271,7 +271,7 @@ export class OrderDetail {
       if (!this.esBrowser || lienzo === undefined || codigo === null) {
         return;
       }
-      dibujarQr(lienzo.nativeElement, codigo, LADO_DEL_QR).catch(() =>
+      drawQr(lienzo.nativeElement, codigo, LADO_DEL_QR).catch(() =>
         this.qrDisponible.set(false),
       );
     });

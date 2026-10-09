@@ -102,8 +102,8 @@ function normalizar(texto: string): string {
   ],
   templateUrl: './laboratory-detail.html',
   styleUrls: [
-    '../../../shared/styles/rejilla-de-tarjetas.css',
-    '../../../shared/styles/ficha-publica.css',
+    '../../../shared/styles/card-grid.css',
+    '../../../shared/styles/public-sheet.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

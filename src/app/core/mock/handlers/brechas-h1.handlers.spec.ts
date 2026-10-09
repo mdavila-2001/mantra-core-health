@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTE } from '../fixtures/personas';
+import { PACIENTE } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarArchivos } from './files.handlers';

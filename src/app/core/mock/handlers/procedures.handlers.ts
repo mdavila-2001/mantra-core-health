@@ -1,5 +1,5 @@
-import { ESTADO, PROCEDIMIENTO, SEVERIDAD } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
+import { STATUS, PROCEDIMIENTO, SEVERITY } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS } from '../fixtures/people';
 import { notFound, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, texto, uuid } from '../mock-store';
 
@@ -28,8 +28,8 @@ interface CasoSimulado {
   readonly equipo: { id: string; practitionerProfileId: string; teamRoleConceptId: string; statusConceptId: string }[];
 }
 
-const CIRUJANO = PROFESIONALES[4]!;
-const ANESTESISTA = PROFESIONALES[13]!;
+const CIRUJANO = PROFESSIONALS[4]!;
+const ANESTESISTA = PROFESSIONALS[13]!;
 
 function caso(indice: number, paciente: string, dias: number, hora: number, estado: keyof typeof ESTADO_CASO, procedimiento: string, cirujano = CIRUJANO.id): CasoSimulado {
   const id = uuid(`surgical-case-${indice}`);
@@ -46,19 +46,19 @@ function caso(indice: number, paciente: string, dias: number, hora: number, esta
     equipo: [
       { id: uuid(`team-${id}-1`), practitionerProfileId: cirujano, teamRoleConceptId: ROL_EQUIPO.CIRUJANO, statusConceptId: ESTADO_MIEMBRO.ACEPTADO },
       { id: uuid(`team-${id}-2`), practitionerProfileId: ANESTESISTA.id, teamRoleConceptId: ROL_EQUIPO.ANESTESISTA, statusConceptId: estado === 'PENDIENTE_EQUIPO' ? ESTADO_MIEMBRO.INVITADO : ESTADO_MIEMBRO.ACEPTADO },
-      { id: uuid(`team-${id}-3`), practitionerProfileId: MEDICA.id, teamRoleConceptId: ROL_EQUIPO.AYUDANTE, statusConceptId: estado === 'PENDIENTE_EQUIPO' ? ESTADO_MIEMBRO.INVITADO : ESTADO_MIEMBRO.ACEPTADO },
+      { id: uuid(`team-${id}-3`), practitionerProfileId: MEDICAL.id, teamRoleConceptId: ROL_EQUIPO.AYUDANTE, statusConceptId: estado === 'PENDIENTE_EQUIPO' ? ESTADO_MIEMBRO.INVITADO : ESTADO_MIEMBRO.ACEPTADO },
     ],
   };
 }
 
 const casos = new Coleccion<CasoSimulado>([
-  caso(1, PACIENTES[9]!.id, -40, 8, 'COMPLETADO', PROCEDIMIENTO['PROC-ARTROSCOPIA']!),
-  caso(2, PACIENTES[5]!.id, -12, 10, 'COMPLETADO', PROCEDIMIENTO['PROC-COLECISTECTOMIA']!, PROFESIONALES[10]!.id),
-  caso(3, PACIENTE.id, -95, 9, 'COMPLETADO', PROCEDIMIENTO['PROC-APENDICECTOMIA']!, PROFESIONALES[10]!.id),
-  caso(4, PACIENTES[7]!.id, 3, 8, 'PROGRAMADO', PROCEDIMIENTO['PROC-INFILTRACION']!),
-  caso(5, PACIENTES[3]!.id, 6, 11, 'PENDIENTE_EQUIPO', PROCEDIMIENTO['PROC-ARTROSCOPIA']!),
-  caso(6, PACIENTES[2]!.id, 0, 14, 'EN_CURSO', PROCEDIMIENTO['PROC-CESAREA']!, PROFESIONALES[2]!.id),
-  caso(7, PACIENTES[10]!.id, -5, 8, 'CANCELADO', PROCEDIMIENTO['PROC-ENDOSCOPIA']!, PROFESIONALES[10]!.id),
+  caso(1, PATIENTS[9]!.id, -40, 8, 'COMPLETADO', PROCEDIMIENTO['PROC-ARTROSCOPIA']!),
+  caso(2, PATIENTS[5]!.id, -12, 10, 'COMPLETADO', PROCEDIMIENTO['PROC-COLECISTECTOMIA']!, PROFESSIONALS[10]!.id),
+  caso(3, PACIENTE.id, -95, 9, 'COMPLETADO', PROCEDIMIENTO['PROC-APENDICECTOMIA']!, PROFESSIONALS[10]!.id),
+  caso(4, PATIENTS[7]!.id, 3, 8, 'PROGRAMADO', PROCEDIMIENTO['PROC-INFILTRACION']!),
+  caso(5, PATIENTS[3]!.id, 6, 11, 'PENDIENTE_EQUIPO', PROCEDIMIENTO['PROC-ARTROSCOPIA']!),
+  caso(6, PATIENTS[2]!.id, 0, 14, 'EN_CURSO', PROCEDIMIENTO['PROC-CESAREA']!, PROFESSIONALS[2]!.id),
+  caso(7, PATIENTS[10]!.id, -5, 8, 'CANCELADO', PROCEDIMIENTO['PROC-ENDOSCOPIA']!, PROFESSIONALS[10]!.id),
 ]);
 
 function vista(c: CasoSimulado) {
@@ -70,15 +70,15 @@ const dentales = new Coleccion<{ id: string; patientProfileId: string; procedure
     [
       [PACIENTE.id, 'DENT-LIMPIEZA', 'Profilaxis dental', -120, '16', 'Limpieza semestral sin hallazgos.'],
       [PACIENTE.id, 'DENT-OBTURACION', 'Obturación con resina', -60, '36', 'Caries oclusal en primer molar inferior izquierdo.'],
-      [PACIENTES[3]!.id, 'DENT-SELLANTE', 'Sellante de fosas y fisuras', -30, '26', 'Prevención en molar permanente.'],
-      [PACIENTES[8]!.id, 'DENT-ENDODONCIA', 'Endodoncia', -10, '11', 'Pulpitis irreversible; conducto único.'],
+      [PATIENTS[3]!.id, 'DENT-SELLANTE', 'Sellante de fosas y fisuras', -30, '26', 'Prevención en molar permanente.'],
+      [PATIENTS[8]!.id, 'DENT-ENDODONCIA', 'Endodoncia', -10, '11', 'Pulpitis irreversible; conducto único.'],
     ] as const
   ).map(([pac, code, display, dias, diente, nota], i) => ({
     id: uuid(`dental-${i}`),
     patientProfileId: pac,
     procedureCodeConceptId: uuid(`concept-${code}`),
-    statusConceptId: ESTADO['ST-COMPLETED']!,
-    performerProfileId: PROFESIONALES[8]!.id,
+    statusConceptId: STATUS['ST-COMPLETED']!,
+    performerProfileId: PROFESSIONALS[8]!.id,
     encounterId: null as string | null,
     noteText: `${display}. ${nota}`,
     performedAt: iso(dias, 10),
@@ -127,14 +127,14 @@ export function registrarProcedimientos(router: MockRouter): void {
       team: c.equipo,
       operativeSteps: completado
         ? [
-            { id: uuid(`step-${c.id}-1`), stepNumber: 1, stepCodeConceptId: uuid('concept-step-anesthesia'), description: 'Inducción anestésica', performedByProfileId: ANESTESISTA.id, bodySiteConceptId: null, lateralityConceptId: null, statusConceptId: ESTADO['ST-COMPLETED']!, startedAt: c.scheduledStartAt, endedAt: iso(0, 0) < c.scheduledStartAt ? null : c.scheduledStartAt },
-            { id: uuid(`step-${c.id}-2`), stepNumber: 2, stepCodeConceptId: c.procedimiento, description: 'Tiempo quirúrgico principal', performedByProfileId: c.primarySurgeonProfileId, bodySiteConceptId: SITIO.RODILLA, lateralityConceptId: LATERALIDAD.DER, statusConceptId: ESTADO['ST-COMPLETED']!, startedAt: c.scheduledStartAt, endedAt: c.scheduledEndAt },
-            { id: uuid(`step-${c.id}-3`), stepNumber: 3, stepCodeConceptId: uuid('concept-step-closure'), description: 'Cierre y curación', performedByProfileId: MEDICA.id, bodySiteConceptId: null, lateralityConceptId: null, statusConceptId: ESTADO['ST-COMPLETED']!, startedAt: c.scheduledEndAt, endedAt: c.scheduledEndAt },
+            { id: uuid(`step-${c.id}-1`), stepNumber: 1, stepCodeConceptId: uuid('concept-step-anesthesia'), description: 'Inducción anestésica', performedByProfileId: ANESTESISTA.id, bodySiteConceptId: null, lateralityConceptId: null, statusConceptId: STATUS['ST-COMPLETED']!, startedAt: c.scheduledStartAt, endedAt: iso(0, 0) < c.scheduledStartAt ? null : c.scheduledStartAt },
+            { id: uuid(`step-${c.id}-2`), stepNumber: 2, stepCodeConceptId: c.procedimiento, description: 'Tiempo quirúrgico principal', performedByProfileId: c.primarySurgeonProfileId, bodySiteConceptId: SITIO.RODILLA, lateralityConceptId: LATERALIDAD.DER, statusConceptId: STATUS['ST-COMPLETED']!, startedAt: c.scheduledStartAt, endedAt: c.scheduledEndAt },
+            { id: uuid(`step-${c.id}-3`), stepNumber: 3, stepCodeConceptId: uuid('concept-step-closure'), description: 'Cierre y curación', performedByProfileId: MEDICAL.id, bodySiteConceptId: null, lateralityConceptId: null, statusConceptId: STATUS['ST-COMPLETED']!, startedAt: c.scheduledEndAt, endedAt: c.scheduledEndAt },
           ]
         : [],
-      findings: completado ? [{ id: uuid(`finding-${c.id}`), operativeStepId: uuid(`step-${c.id}-2`), findingCodeConceptId: uuid('concept-finding-lesion'), findingText: 'Lesión compatible con el diagnóstico preoperatorio; sin complicaciones.', bodySiteConceptId: SITIO.RODILLA, lateralityConceptId: LATERALIDAD.DER, severityConceptId: SEVERIDAD['SEV-MILD']!, recordedByProfileId: c.primarySurgeonProfileId, recordedAt: c.scheduledEndAt }] : [],
-      implants: completado && c.procedimiento === PROCEDIMIENTO['PROC-ARTROSCOPIA'] ? [{ id: uuid(`implant-${c.id}`), procedureId: c.id, implantDeviceId: uuid('device-anchor'), implantRoleConceptId: uuid('concept-implant-role-fixation'), bodySiteConceptId: SITIO.RODILLA, lateralityConceptId: LATERALIDAD.DER, implantedAt: c.scheduledEndAt, explantedAt: null, statusConceptId: ESTADO['ST-ACTIVE']!, identifiers: [{ id: uuid(`udi-${c.id}`), identifierTypeConceptId: uuid('concept-identifier-udi'), identifierValue: '(01)00889842048306(17)280131(10)L2405', issuingSystem: 'GS1', lotNumber: 'L2405', serialNumber: null, expirationDate: '2028-01-31' }] }] : [],
-      operativeReports: completado ? [{ id: uuid(`report-${c.id}`), reportVersion: 1, statusConceptId: ESTADO['ST-COMPLETED']!, signedAt: c.scheduledEndAt }] : [],
+      findings: completado ? [{ id: uuid(`finding-${c.id}`), operativeStepId: uuid(`step-${c.id}-2`), findingCodeConceptId: uuid('concept-finding-lesion'), findingText: 'Lesión compatible con el diagnóstico preoperatorio; sin complicaciones.', bodySiteConceptId: SITIO.RODILLA, lateralityConceptId: LATERALIDAD.DER, severityConceptId: SEVERITY['SEV-MILD']!, recordedByProfileId: c.primarySurgeonProfileId, recordedAt: c.scheduledEndAt }] : [],
+      implants: completado && c.procedimiento === PROCEDIMIENTO['PROC-ARTROSCOPIA'] ? [{ id: uuid(`implant-${c.id}`), procedureId: c.id, implantDeviceId: uuid('device-anchor'), implantRoleConceptId: uuid('concept-implant-role-fixation'), bodySiteConceptId: SITIO.RODILLA, lateralityConceptId: LATERALIDAD.DER, implantedAt: c.scheduledEndAt, explantedAt: null, statusConceptId: STATUS['ST-ACTIVE']!, identifiers: [{ id: uuid(`udi-${c.id}`), identifierTypeConceptId: uuid('concept-identifier-udi'), identifierValue: '(01)00889842048306(17)280131(10)L2405', issuingSystem: 'GS1', lotNumber: 'L2405', serialNumber: null, expirationDate: '2028-01-31' }] }] : [],
+      operativeReports: completado ? [{ id: uuid(`report-${c.id}`), reportVersion: 1, statusConceptId: STATUS['ST-COMPLETED']!, signedAt: c.scheduledEndAt }] : [],
     };
   });
 
@@ -177,8 +177,8 @@ export function registrarProcedimientos(router: MockRouter): void {
       id: nuevoId('dental'),
       patientProfileId: datos.patientProfileId ?? '',
       procedureCodeConceptId: datos.procedureCodeConceptId ?? '',
-      statusConceptId: ESTADO['ST-COMPLETED']!,
-      performerProfileId: datos.performerProfileId ?? request.user?.practitionerProfileId ?? MEDICA.id,
+      statusConceptId: STATUS['ST-COMPLETED']!,
+      performerProfileId: datos.performerProfileId ?? request.user?.practitionerProfileId ?? MEDICAL.id,
       encounterId: datos.encounterId ?? null,
       noteText: datos.noteText ?? '',
       performedAt: datos.performedAt ?? ahora(),

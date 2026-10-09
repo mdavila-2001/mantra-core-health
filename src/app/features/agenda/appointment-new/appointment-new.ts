@@ -41,7 +41,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { agendaResourcesMy } from '../my-resource';
 
 /**
  * Duraciones ofrecidas, en minutos.
@@ -532,7 +532,7 @@ export class AppointmentNew {
 
   /** Reintento explícito del catálogo de ocupaciones tras un fallo. */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 
@@ -557,7 +557,7 @@ export class AppointmentNew {
   }
 
   private cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoDeOcupacionesCaido.set(false);
         // El `code` viaja además del identificador: es lo que reconoce a la
@@ -813,7 +813,7 @@ export class AppointmentNew {
       return;
     }
 
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+    agendaResourcesMy(this.scheduling, tenantId, perfil).subscribe({
       next: (recursos) => {
         this.cargandoAgendas.set(false);
         this.agendas.set(recursos);

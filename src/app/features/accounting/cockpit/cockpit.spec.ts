@@ -8,7 +8,7 @@ import { API_BASE_URL } from '../../../core/data-access/api';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Cockpit } from './cockpit';
-import { ACCION_DEL_ESTADO, ETIQUETA_DE_ESTADO, TONO_DEL_ESTADO } from './flujo-del-documento';
+import { STATUS_ACTION, STATUS_LABEL, STATUS_TONE } from './document-flow';
 
 /* ============================================================================
     El cockpit contable.
@@ -274,20 +274,20 @@ describe('Cockpit contable', () => {
     // Revertido es terminal: el documento espejo ya existe y no hay nada que
     // hacerle. Ofrecer un botón ahí sería prometer una llamada que la API
     // rechaza con 422.
-    expect(ACCION_DEL_ESTADO.REVERSED).toBeNull();
+    expect(STATUS_ACTION.REVERSED).toBeNull();
   });
 
   it('cada estado del flujo ofrece UNA sola acción, la que el backend acepta', () => {
     // La máquina no admite saltos: de borrador no se postea, se clasifica.
-    expect(ACCION_DEL_ESTADO.DRAFT?.action).toBe('classify');
-    expect(ACCION_DEL_ESTADO.AUTO_CLASSIFIED?.action).toBe('submit-review');
-    expect(ACCION_DEL_ESTADO.PENDING_REVIEW?.action).toBe('approve');
-    expect(ACCION_DEL_ESTADO.APPROVED?.action).toBe('post');
-    expect(ACCION_DEL_ESTADO.POSTED?.action).toBe('reverse');
+    expect(STATUS_ACTION.DRAFT?.action).toBe('classify');
+    expect(STATUS_ACTION.AUTO_CLASSIFIED?.action).toBe('submit-review');
+    expect(STATUS_ACTION.PENDING_REVIEW?.action).toBe('approve');
+    expect(STATUS_ACTION.APPROVED?.action).toBe('post');
+    expect(STATUS_ACTION.POSTED?.action).toBe('reverse');
   });
 
   it('postear es la única acción principal: es la única que toca el mayor', () => {
-    const principales = Object.values(ACCION_DEL_ESTADO)
+    const principales = Object.values(STATUS_ACTION)
       .filter((a) => a !== null)
       .filter((a) => a.principal);
 
@@ -297,7 +297,7 @@ describe('Cockpit contable', () => {
   it('sólo el posteado se pinta en verde', () => {
     // Un estado intermedio en verde diría «ya está» sobre algo que todavía no
     // existe para los libros.
-    const verdes = Object.entries(TONO_DEL_ESTADO)
+    const verdes = Object.entries(STATUS_TONE)
       .filter(([, tono]) => tono === 'success')
       .map(([estado]) => estado);
 
@@ -307,8 +307,8 @@ describe('Cockpit contable', () => {
   it('los seis estados tienen nombre en castellano', () => {
     // Si un estado llega sin traducir, la bandeja muestra `AUTO_CLASSIFIED` a
     // quien lleva los libros.
-    expect(Object.values(ETIQUETA_DE_ESTADO).every((e) => /^[A-ZÁÉÍÓÚÑ]/.test(e))).toBe(true);
-    expect(Object.keys(ETIQUETA_DE_ESTADO).length).toBe(6);
+    expect(Object.values(STATUS_LABEL).every((e) => /^[A-ZÁÉÍÓÚÑ]/.test(e))).toBe(true);
+    expect(Object.keys(STATUS_LABEL).length).toBe(6);
   });
 
   it('formatea el importe sin convertirlo a número', () => {

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 
 import {
   empty,
@@ -22,7 +22,7 @@ import type {
 import { FilterBar } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import type { FilterDef } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { AppMap } from '../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap } from '../../../shared/components/organisms/map/map-pin.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { Header } from '../../../shared/components/organisms/header/header';
@@ -246,7 +246,7 @@ export class OrganismsGallery {
 
   // Los ids son los códigos que la pantalla real pinta en las tarjetas (A/B/C):
   // en el mapa jamás viaja un uuid.
-  protected readonly pinesDemo: readonly PinMapa[] = [
+  protected readonly pinesDemo: readonly PinMap[] = [
     {
       id: 'A',
       codigo: 'A',
@@ -349,7 +349,7 @@ export class OrganismsGallery {
     }),
   });
 
-  protected readonly paginasDemo = paginarCampos([
+  protected readonly paginasDemo = paginateFields([
     {
       titulo: 'Identidad',
       hint: 'Como figura en su documento.',

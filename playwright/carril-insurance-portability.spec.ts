@@ -86,7 +86,7 @@ async function abrirDialogo(page: Page): Promise<void> {
   await expect(page.getByTestId('content-dialog-title')).toContainText(TITULO_DEL_DIALOGO);
 }
 
-/** Un paciente del padrón con cuenta propia (índice 1 de `personas.ts`). */
+/** Un paciente del padrón con cuenta propia (índice 1 de `people.ts`). */
 const DEPENDIENTE = { documento: '5009871', nombre: 'Jorge Luis Mamani Choque' };
 
 /** Entra con un CI, borrando antes la sesión anterior (vive en `localStorage`). */

@@ -16,7 +16,7 @@
        (`PUT /community/profiles/me`). Se crea acá, con lo mínimo, y sin
        devolver la configuración al perfil — de donde el propietario la mandó
        sacar el 2026-09-10. Ver `docs/progress/BLOCKERS.md`. -->
-  <app-vitrina-minima
+  <app-minimal-showcase
     class="grupos__vitrina"
     motivo="grupos"
     (creada)="alCrearLaVitrina($event)"
@@ -98,7 +98,7 @@
           Para crear un grupo <strong>público</strong> necesita su perfil público completo: nombre
           visible, foto y el perfil en público.
         </p>
-        <app-vitrina-minima
+        <app-minimal-showcase
           class="grupos__vitrina"
           motivo="grupos"
           (creada)="alCrearLaVitrina($event)"

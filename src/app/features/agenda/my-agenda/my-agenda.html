@@ -234,7 +234,7 @@
                      esa franja ya puesta. -->
                 @if (ratoParaCrear(); as rato) {
                   @if (recurso(); as elRecurso) {
-                    <app-tarjeta-del-dia
+                    <app-day-card
                       [dia]="dia"
                       [resourceId]="elRecurso.id"
                       [desdeInicial]="rato.desde"

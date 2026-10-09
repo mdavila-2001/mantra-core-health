@@ -1,6 +1,6 @@
 import { reservas, recursos } from '../fixtures/agenda';
-import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
-import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
+import { affiliationList, MEDICAL, PROFESSIONALS, professionalById } from '../fixtures/people';
 import {
   conflict,
   forbidden,
@@ -73,9 +73,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'ROJAS',
     legalName: 'Consultorio Dra. Valeria Rojas Mendoza',
     tradeName: 'Mi consultorio',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-CLINICA']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: null,
     createdAt: iso(-700),
     timeZone: 'America/La_Paz',
@@ -85,9 +85,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'OLIVOS',
     legalName: 'Clínica Los Olivos S.R.L.',
     tradeName: 'Clínica Los Olivos',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-CLINICA']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: null,
     createdAt: iso(-900),
     timeZone: 'America/La_Paz',
@@ -97,9 +97,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'SANLUCAS',
     legalName: 'Fundación Hospital San Lucas',
     tradeName: 'Hospital San Lucas',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-HOSPITAL']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-HOSPITAL']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: null,
     createdAt: iso(-800),
     timeZone: 'America/La_Paz',
@@ -109,9 +109,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'FARVIDA',
     legalName: 'Farmacia Vida S.A.',
     tradeName: 'Farmacia Vida',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-FARMACIA']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-FARMACIA']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: null,
     createdAt: iso(-400),
     timeZone: 'America/La_Paz',
@@ -121,9 +121,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'LABCEN',
     legalName: 'Laboratorio Central Ltda.',
     tradeName: 'Laboratorio Central',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-LABORATORIO']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-LABORATORIO']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: null,
     createdAt: iso(-350),
     timeZone: 'America/La_Paz',
@@ -133,9 +133,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'ANDINA',
     legalName: 'Seguros Andina S.A.',
     tradeName: 'Seguros Andina',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-ASEGURADORA']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-ASEGURADORA']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: null,
     createdAt: iso(-300),
     timeZone: 'America/La_Paz',
@@ -145,9 +145,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'ALOVIDA',
     legalName: 'AloVida Plataforma S.R.L.',
     tradeName: 'AloVida',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-CLINICA']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: null,
     createdAt: iso(-1000),
     timeZone: 'America/La_Paz',
@@ -157,9 +157,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'OLIVOS-N',
     legalName: 'Clínica Los Olivos · Norte',
     tradeName: 'Los Olivos Norte',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-CLINICA']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     parentTenantId: TENANT_CLINICA,
     createdAt: iso(-200),
     timeZone: 'America/La_Paz',
@@ -169,9 +169,9 @@ const tenants = new Coleccion<TenantSimulado>([
     code: 'CLINUEVA',
     legalName: 'Clínica Nueva Esperanza S.R.L.',
     tradeName: 'Clínica Nueva Esperanza',
-    tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!,
-    statusConceptId: ESTADO['ST-PENDING']!,
-    verificationStatusConceptId: ESTADO['ST-PENDING']!,
+    tenantTypeConceptId: ORGANIZATION_TYPE['ORG-CLINICA']!,
+    statusConceptId: STATUS['ST-PENDING']!,
+    verificationStatusConceptId: STATUS['ST-PENDING']!,
     parentTenantId: null,
     createdAt: iso(-3),
     timeZone: 'America/La_Paz',
@@ -200,7 +200,7 @@ const sucursales = new Coleccion<{
     code: 'CENTRAL',
     name: 'Sede Central',
     branchTypeConceptId: TIPO_SUCURSAL.CLINIC,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     timeZone: 'America/La_Paz',
     createdAt: iso(-900),
   },
@@ -210,7 +210,7 @@ const sucursales = new Coleccion<{
     code: 'EQUIP',
     name: 'Consultorios Equipetrol',
     branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     timeZone: 'America/La_Paz',
     createdAt: iso(-400),
   },
@@ -220,7 +220,7 @@ const sucursales = new Coleccion<{
     code: 'CENTRAL',
     name: 'Hospital central',
     branchTypeConceptId: TIPO_SUCURSAL.CLINIC,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     timeZone: 'America/La_Paz',
     createdAt: iso(-800),
   },
@@ -230,7 +230,7 @@ const sucursales = new Coleccion<{
     code: 'NORTE',
     name: 'Anexo Norte',
     branchTypeConceptId: TIPO_SUCURSAL.CLINIC,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     timeZone: 'America/La_Paz',
     createdAt: iso(-300),
   },
@@ -253,7 +253,7 @@ const membresias = new Coleccion<{
     tenantId: TENANT_CLINICA,
     userId: MOCK_USERS[2]!.id,
     tenantRoleConceptId: ROL_TENANT.OWNER,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
     primaryBranchId: uuid('branch-olivos-central'),
     startDate: isoDia(-900),
@@ -263,21 +263,21 @@ const membresias = new Coleccion<{
   {
     id: uuid('membership-medica-olivos'),
     tenantId: TENANT_CLINICA,
-    userId: MEDICA.userId,
+    userId: MEDICAL.userId,
     tenantRoleConceptId: ROL_TENANT.ADMIN,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
     primaryBranchId: uuid('branch-olivos-central'),
     startDate: isoDia(-800),
     endDate: null,
     createdAt: iso(-800),
   },
-  ...PROFESIONALES.slice(1, 8).map((p, i) => ({
+  ...PROFESSIONALS.slice(1, 8).map((p, i) => ({
     id: uuid(`membership-${p.id}`),
     tenantId: p.tenantId,
     userId: p.userId,
     tenantRoleConceptId: ROL_TENANT.STAFF,
-    statusConceptId: i === 5 ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
+    statusConceptId: i === 5 ? STATUS['ST-INACTIVE']! : STATUS['ST-ACTIVE']!,
     accessScopeConceptId: i % 2 === 0 ? ALCANCE_ACCESO.ALL_TENANT : ALCANCE_ACCESO.BRANCH,
     primaryBranchId:
       p.tenantId === TENANT_CLINICA
@@ -290,9 +290,9 @@ const membresias = new Coleccion<{
   {
     id: uuid('membership-medica-sanlucas'),
     tenantId: TENANT_HOSPITAL,
-    userId: MEDICA.userId,
+    userId: MEDICAL.userId,
     tenantRoleConceptId: ROL_TENANT.STAFF,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     accessScopeConceptId: ALCANCE_ACCESO.BRANCH,
     primaryBranchId: uuid('branch-sanlucas-central'),
     startDate: isoDia(-300),
@@ -304,7 +304,7 @@ const membresias = new Coleccion<{
     tenantId: TENANT_ASEGURADORA,
     userId: IDS.aseguradora.userId,
     tenantRoleConceptId: ROL_TENANT.OWNER,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
     primaryBranchId: null,
     startDate: isoDia(-300),
@@ -316,7 +316,7 @@ const membresias = new Coleccion<{
     tenantId: TENANT_ASEGURADORA,
     userId: IDS.aseguradoraStaff.userId,
     tenantRoleConceptId: ROL_TENANT.STAFF,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
     primaryBranchId: null,
     startDate: isoDia(-120),
@@ -330,7 +330,7 @@ const membresias = new Coleccion<{
     tenantId: TENANT_FARMACIA,
     userId: IDS.farmacia.userId,
     tenantRoleConceptId: ROL_TENANT.OWNER,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
     primaryBranchId: null,
     startDate: isoDia(-200),
@@ -342,7 +342,7 @@ const membresias = new Coleccion<{
     tenantId: TENANT_LABORATORIO,
     userId: IDS.laboratorio.userId,
     tenantRoleConceptId: ROL_TENANT.OWNER,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
     primaryBranchId: null,
     startDate: isoDia(-200),
@@ -364,7 +364,7 @@ const asignaciones = new Coleccion<{
     membershipId: uuid('membership-medica-olivos'),
     branchId: uuid('branch-olivos-central'),
     localRoleConceptId: CARGO['ROLE-JEFE']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     createdAt: iso(-800),
   },
   {
@@ -372,7 +372,7 @@ const asignaciones = new Coleccion<{
     membershipId: uuid('membership-medica-olivos'),
     branchId: uuid('branch-olivos-equipetrol'),
     localRoleConceptId: CARGO['ROLE-MEDICO']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     createdAt: iso(-400),
   },
 ]);
@@ -389,7 +389,7 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
           (m) =>
             m.tenantId === t.id &&
             m.userId === user.id &&
-            m.statusConceptId === ESTADO['ST-ACTIVE'],
+            m.statusConceptId === STATUS['ST-ACTIVE'],
         )[0];
   const esPlataforma = user?.roles.includes('SECURITY_ADMIN') || user?.roles.includes('SUPERADMIN');
   const esAdmin =
@@ -402,7 +402,7 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
     myRoleConceptId:
       membresia?.tenantRoleConceptId ?? (esAdmin ? ROL_TENANT.ADMIN : ROL_TENANT.STAFF),
     canAdminister: esAdmin ?? false,
-    isVerified: t.verificationStatusConceptId === ESTADO['ST-VERIFIED'],
+    isVerified: t.verificationStatusConceptId === STATUS['ST-VERIFIED'],
     ...(t.id === TENANT_ASEGURADORA
       ? {
           payer: {
@@ -446,14 +446,14 @@ export function registrarDirectorio(router: MockRouter): void {
       tradeName: datos.tradeName ?? datos.legalName ?? 'Organización nueva',
       tenantTypeConceptId:
         datos.tenantType === 'PAYER'
-          ? TIPO_ORGANIZACION['ORG-ASEGURADORA']!
+          ? ORGANIZATION_TYPE['ORG-ASEGURADORA']!
           : datos.tenantType === 'PHARMACY'
-            ? TIPO_ORGANIZACION['ORG-FARMACIA']!
+            ? ORGANIZATION_TYPE['ORG-FARMACIA']!
             : datos.tenantType === 'HOSPITAL'
-              ? TIPO_ORGANIZACION['ORG-HOSPITAL']!
-              : TIPO_ORGANIZACION['ORG-CLINICA']!,
-      statusConceptId: ESTADO['ST-PENDING']!,
-      verificationStatusConceptId: ESTADO['ST-PENDING']!,
+              ? ORGANIZATION_TYPE['ORG-HOSPITAL']!
+              : ORGANIZATION_TYPE['ORG-CLINICA']!,
+      statusConceptId: STATUS['ST-PENDING']!,
+      verificationStatusConceptId: STATUS['ST-PENDING']!,
       parentTenantId: null,
       createdAt: ahora(),
       timeZone: datos.timeZone ?? 'America/La_Paz',
@@ -476,8 +476,8 @@ export function registrarDirectorio(router: MockRouter): void {
     const t = tenants.get(request.params['id']!);
     if (t === undefined) return notFound('Organización no encontrada');
     tenants.actualizar(t.id, {
-      statusConceptId: ESTADO['ST-ACTIVE']!,
-      verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
+      verificationStatusConceptId: STATUS['ST-VERIFIED']!,
     });
     return {
       id: t.id,
@@ -556,9 +556,9 @@ export function registrarDirectorio(router: MockRouter): void {
       code: datos.code ?? 'HIJO',
       legalName: datos.legalName ?? 'Organización hija',
       tradeName: datos.legalName ?? 'Organización hija',
-      tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
-      verificationStatusConceptId: ESTADO['ST-PENDING']!,
+      tenantTypeConceptId: ORGANIZATION_TYPE['ORG-CLINICA']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
+      verificationStatusConceptId: STATUS['ST-PENDING']!,
       parentTenantId: request.params['id']!,
       createdAt: ahora(),
       timeZone: 'America/La_Paz',
@@ -609,7 +609,7 @@ export function registrarDirectorio(router: MockRouter): void {
       code: datos.code ?? 'SUC',
       name: datos.name ?? 'Sucursal',
       branchTypeConceptId: TIPO_SUCURSAL[datos.branchType ?? 'CLINIC'],
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       timeZone: datos.timeZone ?? 'America/La_Paz',
       createdAt: ahora(),
       ...(datos.latitude === undefined ? {} : { latitude: datos.latitude }),
@@ -675,7 +675,7 @@ export function registrarDirectorio(router: MockRouter): void {
       tenantId: request.params['id']!,
       userId: datos.userId ?? '',
       tenantRoleConceptId: ROL_TENANT[datos.role ?? 'STAFF'],
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       accessScopeConceptId: ALCANCE_ACCESO[datos.accessScope ?? 'ALL_TENANT'],
       primaryBranchId: datos.primaryBranchId ?? null,
       startDate: isoDia(0),
@@ -700,7 +700,7 @@ export function registrarDirectorio(router: MockRouter): void {
       membershipId: request.params['membershipId']!,
       branchId: datos.branchId ?? '',
       localRoleConceptId: datos.localRoleConceptId ?? CARGO['ROLE-MEDICO']!,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       createdAt: ahora(),
     });
     const { membershipId: _m, ...resto } = nueva;
@@ -709,14 +709,14 @@ export function registrarDirectorio(router: MockRouter): void {
 
   router.get('/tenants/:id/practitioner-requests', ({ params }) => {
     const nombre = TENANT_NAMES[params['id']!] ?? '';
-    return afiliaciones
+    return affiliationList
       .filtrar((a) => a.organizationName === nombre && a.statusKind === 'pendiente')
       .concat(
         params['id'] === TENANT_CLINICA
           ? [
               {
                 id: uuid('req-pendiente-1'),
-                practitionerProfileId: PROFESIONALES[13]!.id,
+                practitionerProfileId: PROFESSIONALS[13]!.id,
                 organizationName: nombre,
                 roleTitle: 'Médico de planta',
                 practiceSiteId: null,
@@ -731,7 +731,7 @@ export function registrarDirectorio(router: MockRouter): void {
               },
               {
                 id: uuid('req-pendiente-2'),
-                practitionerProfileId: PROFESIONALES[14]!.id,
+                practitionerProfileId: PROFESSIONALS[14]!.id,
                 organizationName: nombre,
                 roleTitle: 'Residente',
                 practiceSiteId: null,
@@ -748,7 +748,7 @@ export function registrarDirectorio(router: MockRouter): void {
           : [],
       )
       .map((a) => {
-        const p = profesionalPorId(a.practitionerProfileId);
+        const p = professionalById(a.practitionerProfileId);
         return {
           id: a.id,
           practitionerProfileId: a.practitionerProfileId,
@@ -758,14 +758,14 @@ export function registrarDirectorio(router: MockRouter): void {
           roleTitle: a.roleTitle ?? 'Profesional',
           practiceSiteId: a.practiceSiteId,
           startDate: a.startDate,
-          statusConceptId: ESTADO['ST-PENDING']!,
+          statusConceptId: STATUS['ST-PENDING']!,
           createdAt: a.createdAt,
         };
       });
   });
 
   router.post('/tenants/:id/practitioner-requests/:affiliationId/approve', ({ params }) => {
-    afiliaciones.actualizar(params['affiliationId']!, {
+    affiliationList.actualizar(params['affiliationId']!, {
       status: 'APPROVED',
       statusKind: 'aprobado',
     });
@@ -774,7 +774,7 @@ export function registrarDirectorio(router: MockRouter): void {
 
   router.post('/tenants/:id/practitioner-requests/:affiliationId/reject', (request) => {
     const datos = cuerpo<{ reason?: string; reasonText?: string }>(request);
-    afiliaciones.actualizar(request.params['affiliationId']!, {
+    affiliationList.actualizar(request.params['affiliationId']!, {
       status: 'REJECTED',
       statusKind: 'rechazado',
       decisionReasonText: datos.reasonText ?? datos.reason ?? null,

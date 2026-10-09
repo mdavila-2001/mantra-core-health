@@ -15,10 +15,10 @@ import {
   titleOf,
 } from './core/navigation/navigation.types';
 import {
-  indiceDePestana,
-  PESTANA,
-  PESTANAS_DEL_PERFIL,
-} from './features/account/my-profile/pestanas-del-perfil';
+  tabIndex,
+  TAB,
+  PROFILE_TABS,
+} from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
@@ -727,10 +727,10 @@ describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
   }
 
   it('la clave de la redirección es la pestaña «Mis puntos» de la ficha', () => {
-    const indice = indiceDePestana(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
+    const indice = tabIndex(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
 
-    expect(indice).toBe(PESTANA.puntos);
-    expect(PESTANAS_DEL_PERFIL[indice ?? -1]).toBe('Mis puntos');
+    expect(indice).toBe(TAB.puntos);
+    expect(PROFILE_TABS[indice ?? -1]).toBe('Mis puntos');
   });
 
   it('`/my-account/loyalty` termina en `/my-account?pestana=puntos`', async () => {

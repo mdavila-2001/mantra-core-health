@@ -1,5 +1,5 @@
 import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
-import { comprobanteDesdePedido } from './from-pedido';
+import { receiptFromOrder } from './from-order';
 import { bloquesDeComprobante } from './receipt-pdf';
 import type { DocumentoDeComprobante } from './receipt-pdf.types';
 
@@ -75,7 +75,7 @@ const pedido = (extra: Partial<PedidoFarmacia> = {}): PedidoFarmacia => ({
 
 describe('comprobanteDesdePedido', () => {
   it('proyecta el pago del mostrador con las líneas cobradas y el total', () => {
-    const papel = comprobanteDesdePedido(pedido());
+    const papel = receiptFromOrder(pedido());
 
     expect(papel).not.toBeNull();
     expect(papel?.medioDePago).toBe('Pagado en mostrador');
@@ -93,7 +93,7 @@ describe('comprobanteDesdePedido', () => {
   });
 
   it('el pago del QR de la demo se dice sin vueltas', () => {
-    const papel = comprobanteDesdePedido(
+    const papel = receiptFromOrder(
       pedido({
         pago: {
           estado: 'PAGADO',
@@ -110,14 +110,14 @@ describe('comprobanteDesdePedido', () => {
   it('el papel imprime el total CONGELADO al pagar, no el total vivo del pedido', () => {
     // La farmacia propuso un genérico DESPUÉS del pago y el total vivo bajó:
     // lo cobrado fue 111.00 y eso es lo único que el papel puede decir.
-    const papel = comprobanteDesdePedido(pedido({ totalEstimado: '24.00' }));
+    const papel = receiptFromOrder(pedido({ totalEstimado: '24.00' }));
     expect(papel?.total).toBe('111.00');
   });
 
   it('sin pago registrado no hay comprobante', () => {
-    expect(comprobanteDesdePedido(pedido({ pago: null }))).toBeNull();
+    expect(receiptFromOrder(pedido({ pago: null }))).toBeNull();
     expect(
-      comprobanteDesdePedido(
+      receiptFromOrder(
         pedido({
           pago: { estado: 'PENDIENTE', origen: null, pagadoEl: null, total: null, moneda: null },
         }),
@@ -126,7 +126,7 @@ describe('comprobanteDesdePedido', () => {
   });
 
   it('un renglón sin precio publicado no inventa importe — el vacío tampoco', () => {
-    const papel = comprobanteDesdePedido(
+    const papel = receiptFromOrder(
       pedido({
         lineas: [
           {

@@ -35,7 +35,7 @@ const ADMIN_MOCK: Actor = {
   nombre: 'Administración (maqueta)',
 };
 
-// `PACIENTES_ESCRITOS` en `fixtures/personas.ts` numera con
+// `PACIENTES_ESCRITOS` en `fixtures/people.ts` numera con
 // `String(5000000 + indice * 9871)`: PACIENTE es el índice 0, «5000000» —no
 // «3000000», que es el rango de los profesionales (`indice * 12345`).
 const DOCUMENTO_PACIENTE = '5000000';

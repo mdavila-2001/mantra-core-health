@@ -14,7 +14,7 @@ import { concatMap, map, of } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 
 import { ChartTemplatesClient } from '../../core/data-access/chart-templates/chart-templates.client';
-import { especialidadVigente } from '../../core/data-access/profiles/especialidad-vigente';
+import { currentSpecialty } from '../../core/data-access/profiles/current-specialty';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type {
   ChartTemplate,
@@ -54,16 +54,16 @@ import {
 } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
 import {
-  validadorDeCuadricula,
-  validadorDeSeleccion,
-} from '../../shared/forms/paginated/validadores-de-seleccion';
+  gridValidator,
+  selectionValidator,
+} from '../../shared/forms/paginated/selection-validators';
 import { FORM_TEMPLATE_PDF_DOWNLOADER } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 /**
@@ -170,7 +170,7 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
   // `form-builder.css` son los ajustes de esta pantalla sobre esa base. Al
   // revés, `.rejilla` le ganaría por posición a `.catalogo__rejilla` —misma
   // especificidad— y el ancho de columna de acá no se aplicaría.
-  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './form-builder.css'],
+  styleUrls: ['../../shared/styles/card-grid.css', './form-builder.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormBuilder {
@@ -234,7 +234,7 @@ export class FormBuilder {
    */
   private resolverEspecialidadPropia(): void {
     this.profiles.getOwnPractitionerProfile().subscribe({
-      next: (perfil) => this.especialidadPropia.set(especialidadVigente(perfil.specialties)),
+      next: (perfil) => this.especialidadPropia.set(currentSpecialty(perfil.specialties)),
       error: () => this.especialidadPropia.set(null),
     });
   }
@@ -1126,7 +1126,7 @@ export class FormBuilder {
       else secciones.push({ titulo, campos: [aCampoDelMotor(campo)] });
     }
 
-    return paginarCampos(secciones, { tituloPorDefecto: plantilla.name });
+    return paginateFields(secciones, { tituloPorDefecto: plantilla.name });
   });
 
   /**
@@ -1163,7 +1163,7 @@ export class FormBuilder {
           tope !== undefined &&
           (tope.min !== undefined || tope.max !== undefined)
         ) {
-          validadores.push(validadorDeSeleccion(tope.min, tope.max));
+          validadores.push(selectionValidator(tope.min, tope.max));
         }
         // Las dos restricciones de una cuadrícula. Van en la previa por lo
         // mismo que los topes: es lo que la hace **responder** igual que el
@@ -1171,7 +1171,7 @@ export class FormBuilder {
         const cuadricula = campo.control === 'grid-radio' || campo.control === 'grid-checkboxes';
         if (cuadricula && tope !== undefined && (tope.requerirCadaFila || tope.unaPorColumna)) {
           validadores.push(
-            validadorDeCuadricula((campo.rows ?? []).map((fila) => fila.value), {
+            gridValidator((campo.rows ?? []).map((fila) => fila.value), {
               requerirCadaFila: tope.requerirCadaFila,
               unaPorColumna: tope.unaPorColumna,
             }),

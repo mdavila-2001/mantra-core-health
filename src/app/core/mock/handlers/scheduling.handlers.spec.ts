@@ -8,8 +8,8 @@ import {
   reservas,
   type ReservaSimulada,
 } from '../fixtures/agenda';
-import { ESTADO_RESERVA } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
+import { BOOKING_STATUS } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -258,7 +258,7 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
     const candidata = reservas
       .todos()
       .filter((r) => r.resourceId === RECURSO_MEDICA)
-      .filter((r) => r.statusConceptId === ESTADO_RESERVA['BK-COMPLETED'])
+      .filter((r) => r.statusConceptId === BOOKING_STATUS['BK-COMPLETED'])
       .filter((r) => new Date(r.startAt).getTime() < Date.now())
       .find((r) => !ocupados.has(r.id));
     if (candidata === undefined) {
@@ -298,7 +298,7 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
       const origen = fixture.reservas.get(sembrada!.followUpOf!.bookingId);
       expect(origen, 'la cita de origen tiene que existir').toBeDefined();
       expect(origen!.patientProfileId).toBe(sembrada!.patientProfileId);
-      expect(origen!.statusConceptId).toBe(ESTADO_RESERVA['BK-COMPLETED']);
+      expect(origen!.statusConceptId).toBe(BOOKING_STATUS['BK-COMPLETED']);
       expect(new Date(origen!.startAt).getTime()).toBeLessThan(Date.now());
     } finally {
       if (guardadas === null) sessionStorage.removeItem('mock.agenda.reservas');
@@ -313,7 +313,7 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
 
     expect(status).toBe(201);
     const creada = reservas.get(body.bookingId)!;
-    expect(creada.statusConceptId).toBe(ESTADO_RESERVA['BK-CONFIRMED']);
+    expect(creada.statusConceptId).toBe(BOOKING_STATUS['BK-CONFIRMED']);
     expect(creada.typeConceptId).toBe(TIPO_CITA_RECONSULTA);
     expect(creada.followUpOf).toEqual({ bookingId: origen.id, encounterId: null });
     expect(creada.reasonText).toBe(`Reconsulta: ${origen.reasonText}`);
@@ -365,7 +365,7 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
 
   it('403 — la agenda no es del profesional de la sesión', () => {
     const origen = origenLibre();
-    const ajena = recursos.todos().find((r) => r.resourceRefId !== MEDICA.id)!;
+    const ajena = recursos.todos().find((r) => r.resourceRefId !== MEDICAL.id)!;
 
     const { status } = agendarReconsulta(origen, { resourceId: ajena.id });
 
@@ -403,7 +403,7 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
   });
 
   it('una cita directa SIN followUpOf se sigue creando como antes, y sin 403', () => {
-    const ajena = recursos.todos().find((r) => r.resourceRefId !== MEDICA.id)!;
+    const ajena = recursos.todos().find((r) => r.resourceRefId !== MEDICAL.id)!;
 
     const { status, body } = pedir<{ bookingId: string }>(
       'POST',

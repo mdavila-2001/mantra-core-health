@@ -28,9 +28,9 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
-import { inicialesDe } from '../../../shared/text/iniciales';
-import { fotoDeDirectorio } from '../../../shared/utils/foto-de-directorio';
-import { subtituloProfesional } from '../subtitulo-profesional';
+import { initialsOf } from '../../../shared/text/initials';
+import { directoryPhoto } from '../../../shared/utils/directory-photo';
+import { professionalSubtitle } from '../professional-subtitle';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
 interface TarjetaDeEspecialidad {
@@ -154,7 +154,7 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
   selector: 'app-practitioners-directory',
   imports: [DirectoryPage],
   templateUrl: './practitioners-directory.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', './practitioners-directory.css'],
+  styleUrls: ['../../../shared/styles/card-grid.css', './practitioners-directory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
@@ -594,7 +594,7 @@ function toResultado(
   // escrito a mano sólo cuando no declaró ninguna.
   const subtitulo =
     especialidadesDe(fila, etiquetas, elegida) ??
-    subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
+    professionalSubtitle(fila.professionalTitle, nombre, nombresDeOtros);
   // El subtítulo del profesional —«Cardióloga · Clínica Los Olivos»— NO va en
   // `meta`: es qué es esta persona, no un dato de contexto, y en el gris de
   // 13 px se leía igual que la lista de sedes de abajo. Va en `subtitle`, que
@@ -645,8 +645,8 @@ function toResultado(
       link: `/directory/${fila.profileId}`,
       fragment: ANCLA_HORARIOS,
     },
-    figureText: inicialesDe(nombre),
-    photoUrl: fotoDeDirectorio('medico', fila.profileId),
+    figureText: initialsOf(nombre),
+    photoUrl: directoryPhoto('medico', fila.profileId),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
     meta,
     seals: sellos,

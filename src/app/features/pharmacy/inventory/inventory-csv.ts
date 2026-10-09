@@ -5,8 +5,8 @@ import type {
 import {
   ArchivoInvalido,
   leerTablaCsv,
-  sinTildes,
-} from '../catalog-rules/catalogo.reglas';
+  withoutAccents,
+} from '../catalog-rules/catalog.rules';
 import { productName, productStatus } from '../products/product-view';
 
 /** Tope de existencias y de umbral: el mismo del servidor. */
@@ -198,7 +198,7 @@ function wholeNumber(text: string): number | null | 'invalid' {
 
 /** Hay / no hay en cualquiera de sus grafías; `null` si la celda está vacía. */
 function availability(text: string): boolean | null | 'invalid' {
-  const clean = sinTildes(text.trim());
+  const clean = withoutAccents(text.trim());
   if (clean === '') {
     return null;
   }

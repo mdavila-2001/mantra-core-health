@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import type { OwnPublicProfile } from '@core/data-access/community/community.types';
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
-import { inicialesDe } from '@shared/text/iniciales';
+import { initialsOf } from '@shared/text/initials';
 
 /**
  * La versión mini del perfil propio, en la columna derecha de la red social.
@@ -46,7 +46,7 @@ export class FeedPerfilMini {
     () => this.perfil()?.displayName ?? this.nombreDeSesion(),
   );
 
-  protected readonly iniciales = computed(() => inicialesDe(this.nombre()));
+  protected readonly iniciales = computed(() => initialsOf(this.nombre()));
 
   protected readonly foto = computed(() => this.detalle()?.avatarUrl ?? null);
 

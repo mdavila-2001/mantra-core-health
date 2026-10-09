@@ -28,7 +28,7 @@ import { AttachmentUploader } from '../../../../shared/components/organisms/atta
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { writeMessage } from '../../write-message';
 
 /** El alérgeno. Los medicamentos salen del vademécum; el resto, de este set. */
 export const TARGET_SUSTANCIA = 'clinical.allergy_intolerances.substance_concept_id';
@@ -216,7 +216,7 @@ export class AllergyBlock implements DraftBlock {
    * `mensajeDeEscritura`, una sola vez para todos los bloques del expediente.
    */
   protected readonly errorDeLaAlergia = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), {
+    writeMessage(this.registro(), {
       accion: 'registrar la alergia',
       sinPermiso: 'Su rol no permite registrar alergias.',
     }),

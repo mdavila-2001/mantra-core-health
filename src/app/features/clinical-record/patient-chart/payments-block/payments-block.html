@@ -1,11 +1,11 @@
 <!-- ─── Pagos de la persona ─────────────────────────────────────────────────
-     Con la facturación simulada, cobra y factura (`app-cobros-del-paciente`).
+     Con la facturación simulada, cobra y factura (`app-patient-charges`).
      Sin ella, sólo lectura: lo que ya pagó, con su comprobante. No usa
      `app-view-state-host` por lo mismo que los demás bloques de la ficha —el
      anfitrión resuelve los nueve estados de una lectura que ocupa la pantalla
      entera, y esto vive dentro de un modal—, así que cada estado se dice acá. -->
 @if (facturacionSimulada) {
-  <app-cobros-del-paciente [patientProfileId]="patientProfileId()" />
+  <app-patient-charges [patientProfileId]="patientProfileId()" />
 } @else {
   <section class="pagos" aria-labelledby="pagos-titulo">
     <h2 id="pagos-titulo" class="sr-only">Pagos de la persona</h2>

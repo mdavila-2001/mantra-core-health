@@ -1,10 +1,10 @@
-import { DirectorioOficial, NOMBRE_DE_FUENTE, type ClaseOficial, type FichaOficial } from '../directorio-oficial';
-import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
-import { categoriaPorCodigo } from '../fixtures/categorias-publicas';
-import { CATALOGO_MEDICAMENTOS } from '../fixtures/catalogo-medicamentos.generated';
-import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
-import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
-import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { OfficialDirectory, SOURCE_NAME, type OfficialClass, type OfficialSheet } from '../official-directory';
+import { PRECISION_LABEL, CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
+import { categoryByCode } from '../fixtures/public-categories';
+import { CATALOGO_MEDICAMENTOS } from '../fixtures/medication-catalog.generated';
+import { commentList, CONCEPT, postList, reviewList, showcaseBySlug, showcases, type SimulatedShowcase } from '../fixtures/community';
+import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
+import { affiliationList, PROFESSIONALS, professionalById } from '../fixtures/people';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
 import { notFound, type MockRouter } from '../mock-router';
 import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-store';
@@ -16,7 +16,7 @@ import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-stor
 
 type ClasePublica = 'PRACTITIONER' | 'ORGANIZATION' | 'PHARMACY' | 'DIAGNOSTIC_UNIT' | 'INSURER';
 
-function resultado(v: VitrinaSimulada) {
+function resultado(v: SimulatedShowcase) {
   return {
     kind: v.kind as ClasePublica,
     slug: v.slug,
@@ -34,13 +34,13 @@ function resultado(v: VitrinaSimulada) {
     nextAvailableDate: v.hasPublishedAgenda ? isoDia(1 + (v.seguidores % 5)) : null,
     /* La categoría con la que el directorio acota dentro del vertical. La
        declara cada semilla; acá no se deduce de nada. Ver
-       `fixtures/categorias-publicas.ts`. */
+       `fixtures/public-categories.ts`. */
     category: v.categoria,
   };
 }
 
 /** Una ficha del directorio oficial con la forma de un resultado del buscador. */
-function resultadoOficial(f: FichaOficial, kind: ClaseOficial) {
+function resultadoOficial(f: OfficialSheet, kind: OfficialClass) {
   return {
     kind: kind as ClasePublica,
     slug: f.slug,
@@ -57,14 +57,14 @@ function resultadoOficial(f: FichaOficial, kind: ClaseOficial) {
     location: f.lat === null || f.lng === null ? null : { lat: f.lat, lng: f.lng },
     hasPublishedAgenda: false,
     nextAvailableDate: null,
-    category: categoriaPorCodigo(f.category),
+    category: categoryByCode(f.category),
   };
 }
 
 /** La ficha de detalle de una entrada del directorio oficial: lo que la fuente declara, y nada más. */
-function fichaOficial(f: FichaOficial & { readonly kind: ClaseOficial }) {
+function fichaOficial(f: OfficialSheet & { readonly kind: OfficialClass }) {
   const datos = [
-    `Fuente: ${NOMBRE_DE_FUENTE[f.source]}.`,
+    `Fuente: ${SOURCE_NAME[f.source]}.`,
     f.license === undefined ? null : `Resolución de habilitación de AGEMED: ${f.license}.`,
     f.officialCode === undefined ? null : `Código RUES: ${f.officialCode}.`,
     f.phone === null ? null : `Teléfono publicado por la fuente: ${f.phone}.`,
@@ -94,20 +94,20 @@ function fichaOficial(f: FichaOficial & { readonly kind: ClaseOficial }) {
 }
 
 /** Los verticales que el directorio oficial cubre. */
-const CLASES_OFICIALES: readonly ClaseOficial[] = ['PHARMACY', 'ORGANIZATION', 'DIAGNOSTIC_UNIT'];
+const CLASES_OFICIALES: readonly OfficialClass[] = ['PHARMACY', 'ORGANIZATION', 'DIAGNOSTIC_UNIT'];
 
-function actor(v: VitrinaSimulada) {
+function actor(v: SimulatedShowcase) {
   return { slug: v.slug, displayName: v.displayName, headline: v.headline, avatarUrl: v.avatarUrl, kind: (v.kind === 'PATIENT' ? 'PRACTITIONER' : v.kind) as ClasePublica };
 }
 
-function resumenDePost(p: (typeof publicaciones extends { todos(): (infer T)[] } ? T : never)) {
+function resumenDePost(p: (typeof postList extends { todos(): (infer T)[] } ? T : never)) {
   return {
     id: p.id,
     bodyText: p.bodyText,
     publishedAt: p.publishedAt,
     mediaUrls: p.mediaUrls,
     reactionCount: Object.values(p.reacciones).reduce((s, n) => s + n, 0),
-    commentCount: comentarios.filtrar((c) => c.postId === p.id).length,
+    commentCount: commentList.filtrar((c) => c.postId === p.id).length,
   };
 }
 
@@ -116,8 +116,8 @@ function paginaPublica<T>(items: readonly T[], query: URLSearchParams, limite = 
   return { items: pagina.items, nextCursor: pagina.nextCursor, totalHint: pagina.count, generatedAt: ahora() };
 }
 
-function publicas(): VitrinaSimulada[] {
-  return vitrinas.filtrar((v) => v.kind !== 'PATIENT' && v.visibility === 'PUBLIC');
+function publicas(): SimulatedShowcase[] {
+  return showcases.filtrar((v) => v.kind !== 'PATIENT' && v.visibility === 'PUBLIC');
 }
 
 function distanciaKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
@@ -147,7 +147,7 @@ const GRUPO_ATC: Readonly<Record<string, string>> = {
 /**
  * El ATC nivel 5 de cada medicamento del vademécum, tal como lo traen sus
  * registros sanitarios en el catálogo universal (CIMA/INVIMA,
- * `catalogo-medicamentos.generated.ts`). Antes era un prefijo con el índice
+ * `medication-catalog.generated.ts`). Antes era un prefijo con el índice
  * pegado («C0900», «A1002»): códigos que no existen.
  */
 function atcDe(code: string): string {
@@ -167,7 +167,7 @@ function atcDe(code: string): string {
  * publica el suyo.
  */
 const MEDICAMENTOS_VITRINA = Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
-  const display = displayDe(conceptId);
+  const display = displayOf(conceptId);
   const generico = display.split(' ')[0]!;
   const atcCode = atcDe(code);
   const precio = 8 + i * 4.5;
@@ -234,7 +234,7 @@ function productosDeFarmacia(slug: string) {
    ficha pública de cada una: se cruzan por slug, porque la ficha ES la
    sucursal. */
 
-const SUCURSAL_POR_SLUG = new Map(FARMACIAS_DEL_CORPUS.map((f) => [f.slug, f]));
+const SUCURSAL_POR_SLUG = new Map(CORPUS_PHARMACIES.map((f) => [f.slug, f]));
 
 interface SucursalPublica {
   /** La sede, como la API: la clave de la sucursal, porque el slug puede repetirse. */
@@ -267,7 +267,7 @@ interface SucursalPublica {
  * sucursales» de «la lectura falló», que no es lo mismo.
  */
 /** La única sede de una farmacia del directorio oficial: la de la lista de AGEMED. */
-function sucursalOficial(f: FichaOficial): SucursalPublica {
+function sucursalOficial(f: OfficialSheet): SucursalPublica {
   return {
     id: uuid(`sede-oficial-${f.id}`),
     slug: f.slug,
@@ -283,7 +283,7 @@ function sucursalOficial(f: FichaOficial): SucursalPublica {
   };
 }
 
-function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
+function sucursalesDe(vitrina: SimulatedShowcase): readonly SucursalPublica[] {
   const propia = SUCURSAL_POR_SLUG.get(vitrina.slug);
   if (propia === undefined) {
     return [
@@ -303,7 +303,7 @@ function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
     ];
   }
 
-  return FARMACIAS_DEL_CORPUS.filter((f) => f.chainId === propia.chainId)
+  return CORPUS_PHARMACIES.filter((f) => f.chainId === propia.chainId)
     .map((f) => ({
       id: f.siteId,
       slug: f.slug,
@@ -314,7 +314,7 @@ function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
       phone: f.phone,
       openingHours: f.openingHours,
       location: { lat: f.lat, lng: f.lng },
-      locationAccuracy: ETIQUETA_DE_PRECISION[f.locationPrecision],
+      locationAccuracy: PRECISION_LABEL[f.locationPrecision],
       isCurrent: f.slug === vitrina.slug,
     }))
     .sort(
@@ -394,13 +394,13 @@ function disponibilidadDe(
   };
 }
 
-export function registrarPublico(router: MockRouter, directorio: DirectorioOficial = new DirectorioOficial()): void {
+export function registrarPublico(router: MockRouter, directorio: OfficialDirectory = new OfficialDirectory()): void {
   router.get('/public/posts', ({ query }) => {
-    const items = publicaciones
+    const items = postList
       .todos()
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .map((p) => {
-        const autor = vitrinas.get(p.authorPublicProfileId)!;
+        const autor = showcases.get(p.authorPublicProfileId)!;
         return {
           ...resumenDePost(p),
           authorSlug: autor.slug,
@@ -420,9 +420,9 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
     const verified = query.get('verified') === 'true';
     const items = publicas()
       .filter((v) => clases === null || clases.includes(v.kind as ClasePublica))
-      .filter((v) => contiene(v.displayName, q) || contiene(v.headline, q) || v.specialties.some((s) => contiene(displayDe(s), q)))
+      .filter((v) => contiene(v.displayName, q) || contiene(v.headline, q) || v.specialties.some((s) => contiene(displayOf(s), q)))
       .filter((v) => contiene(v.city, city))
-      .filter((v) => specialty === null || v.specialties.includes(specialty) || v.specialties.some((s) => contiene(displayDe(s), specialty)))
+      .filter((v) => specialty === null || v.specialties.includes(specialty) || v.specialties.some((s) => contiene(displayOf(s), specialty)))
       .filter((v) => !verified || v.verified)
       .map(resultado);
     // El directorio oficial suma después de las fichas de la comunidad: no está
@@ -432,7 +432,7 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
       const yaEstan = new Set(items.map((i) => i.slug));
       for (const clase of CLASES_OFICIALES) {
         if (clases !== null && !clases.includes(clase as ClasePublica)) continue;
-        for (const f of await directorio.de(clase)) {
+        for (const f of await directorio.of(clase)) {
           if (yaEstan.has(f.slug) || !(contiene(f.name, q) || contiene(f.headline, q)) || !contiene(f.city, city)) continue;
           oficiales.push(resultadoOficial(f, clase));
         }
@@ -489,7 +489,7 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
     const oficiales = [];
     for (const clase of CLASES_OFICIALES) {
       if (kind !== null && kind !== clase) continue;
-      for (const f of await directorio.de(clase)) {
+      for (const f of await directorio.of(clase)) {
         if (f.lat === null || f.lng === null || yaEstan.has(f.slug)) continue;
         oficiales.push({ ...resultadoOficial(f, clase), distanceKm: distanciaKm(lat, lng, f.lat, f.lng), location: { lat: f.lat, lng: f.lng } });
       }
@@ -502,13 +502,13 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
   });
 
   router.get('/public/profiles/:prefix/:slug', async ({ params }) => {
-    const v = vitrinaPorSlug(params['slug']!);
+    const v = showcaseBySlug(params['slug']!);
     if (v === undefined) {
-      const oficial = await directorio.porSlug(params['slug']!);
+      const oficial = await directorio.bySlug(params['slug']!);
       return oficial === undefined ? notFound('Ficha no encontrada') : fichaOficial(oficial);
     }
     if (v.kind === 'PATIENT') return notFound('Ficha no encontrada');
-    const profesional = v.kind === 'PRACTITIONER' ? profesionalPorId(v.targetId) : undefined;
+    const profesional = v.kind === 'PRACTITIONER' ? professionalById(v.targetId) : undefined;
     return {
       kind: v.kind as ClasePublica,
       slug: v.slug,
@@ -521,11 +521,11 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
       city: v.city,
       address: v.address === '' ? null : v.address,
       location: { lat: v.lat, lng: v.lng },
-      specialties: v.specialties.map(displayDe),
+      specialties: v.specialties.map(displayOf),
       trajectory:
         profesional === undefined
           ? []
-          : afiliaciones
+          : affiliationList
               .filtrar((a) => a.practitionerProfileId === profesional.id)
               .map((a) => ({ organizationName: a.organizationName, roleTitle: a.roleTitle ?? 'Profesional', departmentText: null, startDate: a.startDate, endDate: a.endDate })),
       // Los lugares donde atiende (P16). `city`/`address` de arriba siguen
@@ -546,7 +546,7 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
       ratingAverage: v.ratingAverage,
       ratingCount: v.ratingCount,
       acceptsReviews: v.acceptsReviews,
-      posts: publicaciones
+      posts: postList
         .filtrar((p) => p.authorPublicProfileId === v.id)
         .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
         .map(resumenDePost),
@@ -560,18 +560,18 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
      `/public/profiles/:prefijo/:slug/…` por lo mismo que los servicios. */
 
   router.get('/public/profiles/:prefix/:slug/reviews', async ({ params, query }) => {
-    const v = vitrinaPorSlug(params['slug']!);
-    if (v === undefined && (await directorio.porSlug(params['slug']!)) !== undefined) {
+    const v = showcaseBySlug(params['slug']!);
+    if (v === undefined && (await directorio.bySlug(params['slug']!)) !== undefined) {
       // Una ficha del directorio oficial todavía no tiene opiniones.
       return paginaPublica([], query);
     }
     if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
-    const items = resenas
+    const items = reviewList
       .filtrar((r) => r.targetPublicProfileId === v.id)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .map((r) => {
-        const anonima = r.reviewerDisplayModeConceptId === CONCEPTO.reviewDisplayAnon;
-        const conFicha = vitrinas.get(r.reviewerProfileId);
+        const anonima = r.reviewerDisplayModeConceptId === CONCEPT.reviewDisplayAnon;
+        const conFicha = showcases.get(r.reviewerProfileId);
         const publica = conFicha !== undefined && conFicha.kind !== 'PATIENT' && conFicha.visibility === 'PUBLIC';
         const respuesta = r.responses[0];
         return {
@@ -600,16 +600,16 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
      de desarrollo enruta comparando el comienzo de la ruta. */
 
   router.get('/public/profiles/o/:slug/services', async ({ params, query }) => {
-    const v = vitrinaPorSlug(params['slug']!);
+    const v = showcaseBySlug(params['slug']!);
     // Una ficha del directorio oficial no publica servicios: lista vacía, no 404.
-    if (v === undefined && (await directorio.porSlug(params['slug']!))?.kind === 'ORGANIZATION') return paginaPublica([], query, 50);
+    if (v === undefined && (await directorio.bySlug(params['slug']!))?.kind === 'ORGANIZATION') return paginaPublica([], query, 50);
     if (v === undefined || v.kind !== 'ORGANIZATION') return notFound('Ficha no encontrada');
     return paginaPublica(serviciosPublicadosDe(v.slug), query, 50);
   });
 
   router.get('/public/profiles/f/:slug/products', async ({ params, query }) => {
-    const v = vitrinaPorSlug(params['slug']!);
-    if (v === undefined && (await directorio.porSlug(params['slug']!))?.kind === 'PHARMACY') return paginaPublica([], query, 50);
+    const v = showcaseBySlug(params['slug']!);
+    if (v === undefined && (await directorio.bySlug(params['slug']!))?.kind === 'PHARMACY') return paginaPublica([], query, 50);
     if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
     return paginaPublica(productosDeFarmacia(v.slug), query, 50);
   });
@@ -621,10 +621,10 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
      en él es una sola y se devuelve sola. */
 
   router.get('/public/profiles/f/:slug/branches', async ({ params, query }) => {
-    const v = vitrinaPorSlug(params['slug']!);
+    const v = showcaseBySlug(params['slug']!);
     if (v === undefined) {
       // La farmacia de AGEMED es una sola sede: la que figura en la lista.
-      const oficial = await directorio.porSlug(params['slug']!);
+      const oficial = await directorio.bySlug(params['slug']!);
       if (oficial?.kind === 'PHARMACY') return paginaPublica([sucursalOficial(oficial)], query, 50);
     }
     if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
@@ -632,9 +632,9 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
   });
 
   router.get('/public/profiles/f/:slug/branch-availability', async ({ params, query }) => {
-    const v = vitrinaPorSlug(params['slug']!);
+    const v = showcaseBySlug(params['slug']!);
     // Sin catálogo publicado no hay disponibilidad que calcular.
-    if (v === undefined && (await directorio.porSlug(params['slug']!))?.kind === 'PHARMACY') return { items: [], count: 0, generatedAt: ahora() };
+    if (v === undefined && (await directorio.bySlug(params['slug']!))?.kind === 'PHARMACY') return { items: [], count: 0, generatedAt: ahora() };
     if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
 
     const renglones = (texto(query, 'items') ?? '')
@@ -659,49 +659,49 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
   });
 
   const reaccionesDe = ({ params, query }: { params: Readonly<Record<string, string>>; query: URLSearchParams }) => {
-    const p = publicaciones.get(params['id']!);
+    const p = postList.get(params['id']!);
     if (p === undefined) return notFound();
     const actores = publicas().slice(0, 8);
-    const items = Object.entries(p.reacciones).flatMap(([tipo, n]) => actores.slice(0, Math.min(n, 3)).map((v) => ({ ...actor(v), reactionType: tipo as keyof typeof CONCEPTO.reaction })));
+    const items = Object.entries(p.reacciones).flatMap(([tipo, n]) => actores.slice(0, Math.min(n, 3)).map((v) => ({ ...actor(v), reactionType: tipo as keyof typeof CONCEPT.reaction })));
     return paginaPublica(items, query);
   };
   router.get('/public/posts/:id/reactions', reaccionesDe);
 
-  const toPublicComment = (c: ReturnType<typeof comentarios.todos>[number]) => {
-    const author = vitrinas.get(c.authorProfileId);
+  const toPublicComment = (c: ReturnType<typeof commentList.todos>[number]) => {
+    const author = showcases.get(c.authorProfileId);
     return {
       id: c.id,
       bodyText: c.bodyText,
       createdAt: c.createdAt,
-      replyCount: comentarios.filtrar((r) => r.parentCommentId === c.id).length,
+      replyCount: commentList.filtrar((r) => r.parentCommentId === c.id).length,
       author: author === undefined ? { slug: 'anonimo', displayName: 'Usuario', headline: null, avatarUrl: null, kind: 'PRACTITIONER' as const } : actor(author),
       media: c.mediaUrl === undefined ? [] : [{ url: c.mediaUrl, kind: 'IMAGE' as const, altText: null }],
     };
   };
   router.get('/public/posts/:id/comments', ({ params, query }) =>
-    paginaPublica(comentarios.filtrar((c) => c.postId === params['id'] && c.parentCommentId === null).map(toPublicComment), query),
+    paginaPublica(commentList.filtrar((c) => c.postId === params['id'] && c.parentCommentId === null).map(toPublicComment), query),
   );
   // «Ver N respuestas» (AC-01-12): la ruta corta de la API
   // (`community-public.controller.ts`), sin el post en el camino. El mock la
   // tenía anidada bajo `/public/posts/:id/comments/…`, una ruta que la API no
   // declara, así que el cliente recibía 501 y el hilo no se abría.
   router.get('/public/comments/:commentId/replies', ({ params, query }) => {
-    const parent = comentarios.get(params['commentId']!);
+    const parent = commentList.get(params['commentId']!);
     if (parent === undefined) return notFound('Comentario no encontrado');
-    return paginaPublica(comentarios.filtrar((c) => c.parentCommentId === parent.id).map(toPublicComment), query);
+    return paginaPublica(commentList.filtrar((c) => c.parentCommentId === parent.id).map(toPublicComment), query);
   });
 
   router.get('/public/directory', ({ query }) => {
     const city = texto(query, 'city');
     const specialty = texto(query, 'specialty');
-    const records = PROFESIONALES.filter((p) => p.especialidades.length > 0)
+    const records = PROFESSIONALS.filter((p) => p.especialidades.length > 0)
       .filter((p) => contiene(p.ciudad, city))
-      .filter((p) => specialty === null || p.especialidades.some((s) => contiene(displayDe(s), specialty)))
+      .filter((p) => specialty === null || p.especialidades.some((s) => contiene(displayOf(s), specialty)))
       .map((p) => ({
         practitionerProfileId: p.id,
         displayName: p.displayName,
         professionalTitle: p.professionalTitle,
-        specialties: p.especialidades.map(displayDe),
+        specialties: p.especialidades.map(displayOf),
         city: p.ciudad,
         organization: p.organizacion,
         verified: p.verified,
@@ -728,7 +728,7 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
     if (m === undefined) return notFound('Medicamento no encontrado');
     const lat = Number(query.get('lat') ?? -17.78);
     const lng = Number(query.get('lng') ?? -63.18);
-    const farmacias = vitrinas.filtrar((v) => v.kind === 'PHARMACY');
+    const farmacias = showcases.filtrar((v) => v.kind === 'PHARMACY');
     const { code: _c, ...medication } = m;
     return {
       medication,
