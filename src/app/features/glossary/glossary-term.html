@@ -119,6 +119,15 @@
         </div>
 
         <app-tabs class="termino__pestanas" [(selectedIndex)]="pestana">
+          @if (articulo(); as articulo) {
+            <app-tab label="Artículo">
+              <app-glossary-article
+                [articulo]="articulo"
+                [termino]="termino.display"
+                [sinonimos]="nombresAlternativos()"
+              />
+            </app-tab>
+          } @else {
           <app-tab label="Definición">
             <h2 class="termino__subtitulo">Qué significa</h2>
             @if (definicion() !== '') {
@@ -179,6 +188,7 @@
               </ul>
             }
           </app-tab>
+          }
 
           @if (cima(); as ficha) {
             <!-- Ficha técnica de CIMA (AEMPS). Las secciones se muestran

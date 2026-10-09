@@ -1,10 +1,11 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { expand, forkJoin, map, of, reduce, type Observable } from 'rxjs';
+import { catchError, expand, forkJoin, map, of, reduce, throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type { ConNulos } from '../wire';
+import type { GlossaryArticle } from './glossary-article.types';
 import type {
   CodeSystemListItem,
   CodeSystemVersionListItem,
@@ -403,6 +404,24 @@ export class TerminologyClient {
       this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
       { params: new HttpParams().set('lang', IDIOMA_DEL_CATALOGO) },
     );
+  }
+
+  /**
+   * El artículo enciclopédico de un término (TAREA-41 §12.3), o `null` si el
+   * término no tiene: un término sin artículo es el caso normal, no un error.
+   * Cualquier otro fallo sí se propaga.
+   *
+   * @param conceptId - Término a leer.
+   * @returns El artículo, o `null` si no existe.
+   */
+  readGlossaryArticle(conceptId: string): Observable<GlossaryArticle | null> {
+    return this.http
+      .get<GlossaryArticle>(this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}/article`))
+      .pipe(
+        catchError((error: unknown) =>
+          error instanceof HttpErrorResponse && error.status === 404 ? of(null) : throwError(() => error),
+        ),
+      );
   }
 
   /**
