@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { SPECIMEN_CONTAINER_TYPE, SPECIMEN_STATUS, SPECIMEN_TYPE } from '../fixtures/conceptos';
-import { pacientePorId } from '../fixtures/personas';
+import { SPECIMEN_CONTAINER_TYPE, SPECIMEN_STATUS, SPECIMEN_TYPE } from '../fixtures/concepts';
+import { pacientePorId } from '../fixtures/people';
 import { MockRouter, isMockReply, validation, type MockMethod } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_TYPES, buscarUsuario, type MockUser } from '../mock-session';
 import { registrarDiagnostico } from './diagnostics.handlers';

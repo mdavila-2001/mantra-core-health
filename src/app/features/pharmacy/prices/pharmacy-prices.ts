@@ -34,7 +34,7 @@ import type {
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
-import { PRECIO_MAXIMO, parsePrice } from '../catalog-rules/catalogo.reglas';
+import { PRECIO_MAXIMO, parsePrice } from '../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope } from '../pharmacy-scope';
 import { productName, productStatus } from '../products/product-view';

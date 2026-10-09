@@ -28,9 +28,9 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
-import { inicialesDe } from '../../../shared/text/iniciales';
-import { fotoDeDirectorio } from '../../../shared/utils/foto-de-directorio';
-import { subtituloProfesional } from '../subtitulo-profesional';
+import { inicialesDe } from '../../../shared/text/initials';
+import { fotoDeDirectorio } from '../../../shared/utils/directory-photo';
+import { subtituloProfesional } from '../professional-subtitle';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
 interface TarjetaDeEspecialidad {
@@ -154,7 +154,7 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
   selector: 'app-practitioners-directory',
   imports: [DirectoryPage],
   templateUrl: './practitioners-directory.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', './practitioners-directory.css'],
+  styleUrls: ['../../../shared/styles/card-grid.css', './practitioners-directory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {

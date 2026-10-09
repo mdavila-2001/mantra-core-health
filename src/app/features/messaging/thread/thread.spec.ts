@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 
 import { Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
+import { ChatPreferencias } from '../../../core/messaging/chat-preferences';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 
 /**

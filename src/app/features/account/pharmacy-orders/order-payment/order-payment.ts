@@ -21,7 +21,7 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { dibujarQr } from '../../../../shared/utils/qr/draw-qr';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 

@@ -10,7 +10,7 @@ import type {
   PharmacyProductSearchPage,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
-import type { CamposDelProducto, ModoDeCarga } from '../catalog-rules/catalogo.reglas';
+import type { CamposDelProducto, ModoDeCarga } from '../catalog-rules/catalog.rules';
 import { PharmacyImport } from './pharmacy-import';
 
 /**

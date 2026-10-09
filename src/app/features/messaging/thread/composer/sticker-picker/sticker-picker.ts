@@ -4,7 +4,7 @@ import {
   MisStickers,
   TIPOS_DE_STICKER,
   type MiSticker,
-} from '../../../../../core/messaging/mis-stickers';
+} from '../../../../../core/messaging/my-stickers';
 import {
   PACK_DE_STICKERS,
   type Sticker,

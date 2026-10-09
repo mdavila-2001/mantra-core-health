@@ -20,7 +20,7 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../../shared/forms/paginated/paginate-fields';
 import { SENSITIVITY_OPTIONS, errorDeApi } from '../../platform/platform-labels';
 
 /** Campos de texto de la ficha de una tabla. */

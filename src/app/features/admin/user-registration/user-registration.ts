@@ -10,7 +10,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 

@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { map, switchMap } from 'rxjs';
 
-import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/logo-de-organizacion.client';
+import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/organization-logo.client';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -18,7 +18,7 @@ import {
   FileInput,
   type RejectedFile,
 } from '../../../shared/components/molecules/file-input/file-input';
-import { LogoConsultorio } from '../../../shared/components/molecules/logo-consultorio/logo-consultorio';
+import { LogoConsultorio } from '../../../shared/components/molecules/practice-logo/practice-logo';
 
 /** Formatos que acepta el logo: lo que `upload-policy` admite como imagen. */
 const FORMATOS_DEL_LOGO = 'image/png,image/jpeg,image/webp';

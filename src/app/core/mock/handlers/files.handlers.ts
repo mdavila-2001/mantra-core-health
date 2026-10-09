@@ -1,6 +1,6 @@
-import { vitrinas } from '../fixtures/comunidad';
-import { ESTADO } from '../fixtures/conceptos';
-import { PACIENTES, PROFESIONALES } from '../fixtures/personas';
+import { vitrinas } from '../fixtures/community';
+import { ESTADO } from '../fixtures/concepts';
+import { PACIENTES, PROFESIONALES } from '../fixtures/people';
 import { forbidden, noContent, reply, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, firmaSvg, imagenSvg, iso, logoSvg, nuevoId, qrSvg, selloSvg, texto, uuid } from '../mock-store';
 
@@ -86,7 +86,7 @@ const archivos = new Coleccion<ArchivoSimulado>([
   })),
   // El diploma y el carnet del colegio de cada profesional: son lo que baja
   // «Descargar» en las tablas de «Configurar tu perfil». Los ids se calculan con
-  // la misma semilla que `credencialesDe`/`licenciasDe` en `personas.ts`, así que
+  // la misma semilla que `credencialesDe`/`licenciasDe` en `people.ts`, así que
   // la fila de la tabla y el archivo no pueden separarse.
   // Los médicos de la red no tienen diploma ni carnet: `credencialesDe` no los declara.
   ...PROFESIONALES.filter((p) => p.origen === undefined).flatMap((p) => [
@@ -126,7 +126,7 @@ const archivos = new Coleccion<ArchivoSimulado>([
      el backend, esta fila y su gemela en `practice.handlers.ts` se borran: las
      pantallas y el PDF sólo hablan con `LogoDelConsultorioClient`. */
   /* SIMULADOR de la firma y el sello de la médica (imágenes, no firma
-     electrónica). Ver `firma-y-sello.handlers.ts`. */
+     electrónica). Ver `signature-and-seal.handlers.ts`. */
   { id: uuid('file-firma-medica'), currentVersionId: uuid('v-file-firma-medica'), originalName: 'firma-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: firmaSvg() },
   { id: uuid('file-sello-medica'), currentVersionId: uuid('v-file-sello-medica'), originalName: 'sello-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: selloSvg('Dra. V. Rojas', '1000') },
   { id: uuid('file-logo-consultorio'), currentVersionId: uuid('v-file-logo-consultorio'), originalName: 'logo-consultorio-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: logoSvg('Consultorio Rojas', 'Cardiología · Santa Cruz') },

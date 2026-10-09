@@ -15,8 +15,8 @@ import {
 import type { ComprobanteDeCanje } from '../../../../core/data-access/loyalty/loyalty.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
-import { puntosEnPalabras } from '../punto-motivo';
+import { dibujarQr } from '../../../../shared/utils/qr/draw-qr';
+import { puntosEnPalabras } from '../point-reason';
 
 /** Lado del QR de canje: el mismo tamaño legible que el de pago y el de retiro. */
 const LADO_DEL_QR = 176;

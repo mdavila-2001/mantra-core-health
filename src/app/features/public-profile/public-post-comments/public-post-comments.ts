@@ -48,7 +48,7 @@ import {
   type PublicComment,
   type PublicSocialActor,
 } from '@core/data-access/public-directory/public-directory.types';
-import { inicialesDe } from '@shared/text/iniciales';
+import { inicialesDe } from '@shared/text/initials';
 
 type EstadoHilo = 'carga' | 'datos' | 'vacio' | 'error';
 

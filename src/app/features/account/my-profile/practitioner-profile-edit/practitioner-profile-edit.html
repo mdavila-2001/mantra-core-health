@@ -40,7 +40,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo">
-                <app-logo-consultorio data-testid="edicion-logo-vista" [src]="logoVisible()" />
+                <app-practice-logo data-testid="edicion-logo-vista" [src]="logoVisible()" />
 
                 <div class="edicion__logo-acciones">
                   <app-file-input
@@ -240,7 +240,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-firma">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="firma"
                   data-testid="edicion-firma-vista"
                   [src]="firma.visible()"
@@ -286,7 +286,7 @@
               </div>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-sello">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="sello"
                   data-testid="edicion-sello-vista"
                   [src]="sello.visible()"
@@ -656,7 +656,7 @@
                      mover el pin, confirmar y quitar. Abre con lo último que la
                      persona dejó, no siempre con lo guardado: ver
                      `gpsDomicilioInicial`. -->
-                <app-ubicacion-picker
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
                   etiquetaConfirmada="Su domicilio"
@@ -685,7 +685,7 @@
                   />
                 </app-form-field>
 
-                <app-ubicacion-picker
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
                   etiquetaConfirmada="Su lugar de trabajo"
@@ -1525,7 +1525,7 @@
 
       <!-- Tres autoridades y no diez (propietario, 13/09/2026). El
            colegio sale del título profesional: ver
-           `core/profesion/autoridades-reguladoras.ts`. -->
+           `core/profession/regulatory-authorities.ts`. -->
       <app-form-field
         label="Autoridad que la emitió"
         [errorMessage]="errorDelServidor('regulatoryAuthority')"

@@ -26,7 +26,7 @@ import {
   toBookingStatusPresentation,
   type BookingStatusPresentation,
 } from '../../booking-status';
-import { pacienteDeLaCita } from '../detalle-de-la-cita';
+import { pacienteDeLaCita } from '../appointment-detail';
 import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import {
@@ -35,7 +35,7 @@ import {
   fechaLarga,
   fechasDeLaGrilla,
   medianoche,
-} from '../../../../shared/date/calendario-mes';
+} from '../../../../shared/date/month-calendar';
 
 export type { BloqueoDelMes } from '../calendar-view.types';
 

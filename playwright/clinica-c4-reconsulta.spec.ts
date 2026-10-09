@@ -11,7 +11,7 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  * interceptor de `src/app/core/mock/` contesta todo. Por eso se entra con
  * {@link entrarAlSimulador} y con las cuentas del propio simulador
  * (`medica@alovida.mock`, `paciente@alovida.mock`, personas **sintéticas**
- * declaradas en `core/mock/fixtures/personas.ts`), no con los actores de
+ * declaradas en `core/mock/fixtures/people.ts`), no con los actores de
  * `support/actores.ts`, que crean cuentas de verdad y necesitan Docker.
  *
  * ## Qué se ejercita

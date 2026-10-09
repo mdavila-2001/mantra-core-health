@@ -38,42 +38,42 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
-import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
+import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+} from '../shared-registration/password-policy';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { AVISO_REESCRIBIR_DIRECCION } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { AVISO_REESCRIBIR_DIRECCION } from '../shared-registration/map-location-picker/map-location-picker';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import {
   RegistroAyuda,
   type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppMap } from '../../../shared/components/organisms/map/map';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
-import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa } from '../../../shared/components/organisms/map/map-pin.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
@@ -257,7 +257,7 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * a intromisión. Eso es de lo que más hace abandonar un registro.
  *
  * Va **al costado** y no dentro del formulario: no alarga la página, no compite
- * con los campos y se lee sólo si hace falta. Ver `app-registro-ayuda`.
+ * con los campos y se lee sólo si hace falta. Ver `app-registration-help`.
  *
  * ## Por qué es un mapa por clave y no una lista
  *
@@ -407,8 +407,8 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * una con campos extra —el paciente entra con su documento y el correo le es
  * opcional; el profesional entra con su correo y sin habilitación comprobable
  * no hay alta—, así que lo único que compartían de verdad era el cascarón. Hoy
- * eso es CSS (`../registro-compartido/registro.css`) y un organismo
- * (`app-registro-ayuda`), y el alta de profesional es `register-practitioner`,
+ * eso es CSS (`../shared-registration/registration.css`) y un organismo
+ * (`app-registration-help`), y el alta de profesional es `register-practitioner`,
  * con su propia ruta.
  *
  * ## Por qué va por el motor
@@ -453,7 +453,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AppInput,
   ],
   templateUrl: './register-patient.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-patient.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-patient.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
@@ -918,7 +918,7 @@ export class RegisterPatient {
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
    *
-   * Es la misma regla que `app-ubicacion-picker` avisa con `puntoElegido`,
+   * Es la misma regla que `app-map-location-picker` avisa con `puntoElegido`,
    * aplicada a las dos copias en línea de esta pantalla: tocar el mapa deja
    * «Línea de dirección 1» en blanco y lo dice al lado. El aviso acompaña al
    * campo vacío, no a la persona: en cuanto vuelve a escribir, se va solo.

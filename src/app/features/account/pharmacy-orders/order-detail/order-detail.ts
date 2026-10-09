@@ -36,15 +36,15 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { Stepper } from '../../../../shared/components/molecules/stepper/stepper';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { dibujarQr } from '../../../../shared/utils/qr/draw-qr';
 import { facturaDelPedido } from '../order-invoice/order-invoice.fixtures';
-import { TuFactura } from '../order-invoice/tu-factura/tu-factura';
+import { TuFactura } from '../order-invoice/your-invoice/your-invoice';
 import {
   etiquetaDeMedioDePago,
   etiquetaDeModalidad,
   pasosDeLaLineaDeTiempo,
   presentacionDePedido,
-} from '../pedido-status';
+} from '../order-status';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 

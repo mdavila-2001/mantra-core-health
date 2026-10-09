@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { comentarios, publicaciones, vitrinas } from '../fixtures/comunidad';
+import { comentarios, publicaciones, vitrinas } from '../fixtures/community';
 import { MockRouter, isMockReply, validation, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarComunidad } from './community.handlers';

@@ -12,7 +12,7 @@ import {
 import type { OfertaDeFarmacia } from '@core/data-access/public-marketplace/public-marketplace.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 
 import { formatDistance, formatMoney } from '../medication-card.mapper';

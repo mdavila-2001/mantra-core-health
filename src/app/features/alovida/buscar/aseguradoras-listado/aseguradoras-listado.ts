@@ -9,7 +9,7 @@ import { PublicDirectoryClient } from '@core/data-access/public-directory/public
 import { BusquedaPublica } from '@core/data-access/public-directory/public-search.store';
 import { CardDetailPanel } from '@shared/components/molecules/card-detail-panel/card-detail-panel';
 import { DepartmentMap } from '@shared/components/organisms/department-map/department-map';
-import { FiltroTerritorial } from '@shared/geo/filtro-territorial';
+import { FiltroTerritorial } from '@shared/geo/territorial-filter';
 
 import { CentroCard } from '../centro-card/centro-card';
 import { toInsurerCard, type InsurerCard } from './insurer-card.mapper';
@@ -46,7 +46,7 @@ import { toInsurerCard, type InsurerCard } from './insurer-card.mapper';
   selector: 'app-alovida-buscar-aseguradoras-listado',
   imports: [CardDetailPanel, CentroCard, DepartmentMap, RouterLink],
   templateUrl: './aseguradoras-listado.html',
-  styleUrls: ['../centro-card/centro-grid.css', '../../../public-directories/mapa-directorio.css'],
+  styleUrls: ['../centro-card/centro-grid.css', '../../../public-directories/directory-map.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarAseguradorasListado {

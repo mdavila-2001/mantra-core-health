@@ -1,10 +1,10 @@
-import { DirectorioOficial, NOMBRE_DE_FUENTE, type ClaseOficial, type FichaOficial } from '../directorio-oficial';
-import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
-import { categoriaPorCodigo } from '../fixtures/categorias-publicas';
-import { CATALOGO_MEDICAMENTOS } from '../fixtures/catalogo-medicamentos.generated';
-import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
-import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
-import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { DirectorioOficial, NOMBRE_DE_FUENTE, type ClaseOficial, type FichaOficial } from '../official-directory';
+import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-central-axis';
+import { categoriaPorCodigo } from '../fixtures/public-categories';
+import { CATALOGO_MEDICAMENTOS } from '../fixtures/medication-catalog.generated';
+import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/community';
+import { MEDICAMENTO, displayDe } from '../fixtures/concepts';
+import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/people';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
 import { notFound, type MockRouter } from '../mock-router';
 import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-store';
@@ -34,7 +34,7 @@ function resultado(v: VitrinaSimulada) {
     nextAvailableDate: v.hasPublishedAgenda ? isoDia(1 + (v.seguidores % 5)) : null,
     /* La categoría con la que el directorio acota dentro del vertical. La
        declara cada semilla; acá no se deduce de nada. Ver
-       `fixtures/categorias-publicas.ts`. */
+       `fixtures/public-categories.ts`. */
     category: v.categoria,
   };
 }
@@ -147,7 +147,7 @@ const GRUPO_ATC: Readonly<Record<string, string>> = {
 /**
  * El ATC nivel 5 de cada medicamento del vademécum, tal como lo traen sus
  * registros sanitarios en el catálogo universal (CIMA/INVIMA,
- * `catalogo-medicamentos.generated.ts`). Antes era un prefijo con el índice
+ * `medication-catalog.generated.ts`). Antes era un prefijo con el índice
  * pegado («C0900», «A1002»): códigos que no existen.
  */
 function atcDe(code: string): string {

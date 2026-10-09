@@ -2,7 +2,7 @@ import type {
   PortabilityExportFormat,
   PortabilityExportInput,
 } from '../../data-access/insurance/insurance-portability.types';
-import { PACIENTE, pacientePorId } from '../fixtures/personas';
+import { PACIENTE, pacientePorId } from '../fixtures/people';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 import { sha256Hex } from '../sha256';

@@ -6,7 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { AltaDeCentroDiagnostico } from '../registro-compartido/alta-de-centro-diagnostico';
+import { AltaDeCentroDiagnostico } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterPharmacy } from './register-pharmacy';
 
 /** La forma que espera `IamClient.registerPharmacyOrganization`, según lo arma el cliente. */

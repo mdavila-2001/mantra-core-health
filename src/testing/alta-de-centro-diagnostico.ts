@@ -1,7 +1,7 @@
 import { HttpEventType } from '@angular/common/http';
 import type { HttpTestingController } from '@angular/common/http/testing';
 
-import { CODIGOS_DE_DIAGNOSTICO } from '../app/features/auth/registro-compartido/alta-de-centro-diagnostico';
+import { CODIGOS_DE_DIAGNOSTICO } from '../app/features/auth/shared-registration/diagnostic-center-enrollment';
 
 /**
  * Apoyo de las pruebas de las dos altas públicas de diagnóstico (laboratorio e

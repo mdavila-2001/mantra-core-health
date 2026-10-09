@@ -523,7 +523,7 @@
 <!-- «Más reacciones»: el catálogo de emojis entero, para reaccionar. -->
 @if (reaccionandoA(); as objetivo) {
   <app-content-dialog heading="Reaccionar" size="md" data-testid="thread-reaction-dialog" (closed)="cerrarReacciones()">
-    <app-selector-emojis (elegido)="reaccionar(objetivo, $event)" />
+    <app-emoji-picker (elegido)="reaccionar(objetivo, $event)" />
   </app-content-dialog>
 }
 

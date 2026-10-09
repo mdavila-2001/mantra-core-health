@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PARENTESCO } from '../fixtures/conceptos';
-import { PACIENTES } from '../fixtures/personas';
+import { PARENTESCO } from '../fixtures/concepts';
+import { PACIENTES } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarNotificaciones } from './notifications.handlers';

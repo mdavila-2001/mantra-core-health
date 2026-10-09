@@ -26,7 +26,7 @@ import type { ColorRgb } from './alovida-mark';
  * versalitas— e Inter para lo que se lee —cuerpo, datos, tablas, pie—. El
  * reparto es por **estilo**: todo lo que el motor escribe en negrita es un
  * título o un rótulo y va en Poppins; todo lo normal es lectura y va en Inter.
- * Cuando las fuentes no se pudieron cargar (ver `pdf-fuentes.ts`), las dos caen
+ * Cuando las fuentes no se pudieron cargar (ver `pdf-fonts.ts`), las dos caen
  * a Helvetica.
  */
 export const FAMILIAS = {

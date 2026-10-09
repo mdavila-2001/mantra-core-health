@@ -31,7 +31,7 @@ import type {
   SustantivoDelDirectorio,
 } from '@shared/components/organisms/directory-page/directory-page.types';
 import { SEARCH_PARAM, type FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/city-department';
 
 import { promocionesDeEjemplo, type Promocion } from './promotions.fixtures';
 
@@ -120,7 +120,7 @@ const FECHA = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'short' 
   selector: 'app-promotions',
   imports: [AppButton, DepartmentMap, DirectoryPage],
   templateUrl: './promotions.html',
-  styleUrl: '../../public-directories/mapa-directorio.css',
+  styleUrl: '../../public-directories/directory-map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Promotions {

@@ -2,9 +2,9 @@ import type {
   SimulatedCharge,
   SimulatedInvoice,
 } from '../../core/data-access/billing-simulated/billing-simulated.types';
-import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../../core/mock/billing-sim/datos-simulados';
-import { FacturacionSimulada } from '../../core/mock/billing-sim/facturacion-simulada';
-import { SiatSimuladoAdapter } from '../../core/mock/siat-sim/siat-simulado.adapter';
+import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../../core/mock/billing-sim/simulated-data';
+import { FacturacionSimulada } from '../../core/mock/billing-sim/simulated-invoicing';
+import { SiatSimuladoAdapter } from '../../core/mock/siat-sim/siat-simulated.adapter';
 
 /**
  * Datos de prueba de la pantalla, producidos por el **mismo motor** que

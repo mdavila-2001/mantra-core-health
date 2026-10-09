@@ -1,5 +1,5 @@
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../shared/components/organisms/paginated-form/custom-field';
 import type { PaginaDeFormulario } from '../../shared/forms/paginated/paginated-form.types';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DOCUMENT } from '@angular/common';
@@ -54,10 +54,10 @@ import {
   type FiltroDeEstado,
   type FiltroDeOrigen,
 } from './billing-summary';
-import { FACTURACION_SIMULADA_DISPONIBLE } from './facturacion-disponible';
-import { montoLiteral } from './monto-literal';
-import { PlanDePagos } from './plan-de-pagos/plan-de-pagos';
-import { descargarRepresentacionGrafica, descargarXml } from './representacion-grafica';
+import { FACTURACION_SIMULADA_DISPONIBLE } from './invoicing-availability';
+import { montoLiteral } from './amount-in-words';
+import { PlanDePagos } from './payment-plan/payment-plan';
+import { descargarRepresentacionGrafica, descargarXml } from './graphic-representation';
 
 type Operacion = 'pago' | 'factura' | 'anulacion' | 'reversion' | 'correo' | 'pdf';
 

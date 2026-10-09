@@ -24,11 +24,11 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CamposDeNombreEnLinea } from '../../auth/registro-compartido/campos-de-nombre-en-linea/campos-de-nombre-en-linea';
-import { grupoDeNombre } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { CamposDeNombreEnLinea } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
+import { grupoDeNombre } from '../../auth/shared-registration/name-fields/person-name';
+import { unirNombres } from '../../../core/profession/additional-names';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Largos que exige `AssistedRegistrationDto` en el backend. */

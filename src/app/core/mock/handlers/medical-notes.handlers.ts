@@ -3,9 +3,9 @@ import {
   NOTA_TIPO_EVOLUCION,
   type FilaDeNotaSimulada,
   type NotaSimulada,
-} from '../fixtures/clinica';
-import { ESTADO } from '../fixtures/conceptos';
-import { MEDICA } from '../fixtures/personas';
+} from '../fixtures/clinic';
+import { ESTADO } from '../fixtures/concepts';
+import { MEDICA } from '../fixtures/people';
 import {
   conflict,
   forbidden,

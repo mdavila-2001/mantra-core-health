@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
-import { calcularTurnos } from '../agenda-create/agenda-turnos';
+import { calcularTurnos } from '../agenda-create/agenda-slots';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -40,7 +40,7 @@ import {
 } from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
 import type { VisitRequest } from '../../../core/data-access/pharma-lab/pharma-lab.types';
 import { toVisitStatusPresentation } from '../../pharma-lab/visit-status';
-import { detalleDeLaCita } from './detalle-de-la-cita';
+import { detalleDeLaCita } from './appointment-detail';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
@@ -56,7 +56,7 @@ import { FactList } from '../../../shared/components/molecules/fact-list/fact-li
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
+import { primerDiaDelMes, sumarMeses } from '../../../shared/date/month-calendar';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import { aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
 import {
@@ -65,7 +65,7 @@ import {
   type PedidoDeAccion,
   type RatoTocado,
 } from './day-view/day-view';
-import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
+import { TarjetaDelDia, type RatoDelDia } from './day-card/day-card';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';

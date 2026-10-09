@@ -40,10 +40,10 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../core/data-access/terminology/bo-municipalities.service';
-import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/departamento-de-ciudad';
+import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/city-department';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
-import { fotoDeDirectorio, temaDeCentroDiagnostico } from '../../shared/utils/foto-de-directorio';
+import { fotoDeDirectorio, temaDeCentroDiagnostico } from '../../shared/utils/directory-photo';
 
 /**
  * Un tramo del directorio de laboratorios.
@@ -172,8 +172,8 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
   templateUrl: './laboratory-directory.html',
   // El mapa comparte la hoja de clínicas y farmacias: es el mismo filtro.
   styleUrls: [
-    '../../shared/styles/rejilla-de-tarjetas.css',
-    '../public-directories/mapa-directorio.css',
+    '../../shared/styles/card-grid.css',
+    '../public-directories/directory-map.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

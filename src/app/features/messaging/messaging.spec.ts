@@ -5,7 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
+import { ChatPreferencias } from '../../core/messaging/chat-preferences';
 
 /**
  * Lo que estas pruebas fijan.

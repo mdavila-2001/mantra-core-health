@@ -24,7 +24,7 @@ import type {
   DiagnosticoDeLaHistoria,
   LineaDeAtencion,
   SeccionesNuevasDeLaHistoria,
-} from '../../../shared/utils/clinical-pdf/historia-con-encuentros';
+} from '../../../shared/utils/clinical-pdf/history-with-encounters';
 import {
   CODIGO_ACTIVA,
   CODIGO_CONFIRMADO,

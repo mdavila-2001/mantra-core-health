@@ -1,8 +1,8 @@
 import { avatarSvg, imagenSvg, iso, isoDia } from '../mock-store';
 
-import { conSemilla } from './semilla';
+import { conSemilla } from './seed';
 import * as bo from './bolivia';
-import * as cl from './clinico';
+import * as cl from './clinical';
 
 /* ============================================================================
     Valores de prueba para las entradas de un componente.
@@ -20,7 +20,7 @@ import * as cl from './clinico';
          no sabe pintar.
       3. **Por el tipo base.** `string`, `number`, `boolean`, `T[]`.
 
-    Todo sale sembrado (ver `semilla.ts`): la misma ficha abierta dos veces se
+    Todo sale sembrado (ver `seed.ts`): la misma ficha abierta dos veces se
     ve igual, y el botón «otros datos» cambia la semilla a propósito.
     ========================================================================== */
 

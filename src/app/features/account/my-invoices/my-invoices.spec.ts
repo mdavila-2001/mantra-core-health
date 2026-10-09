@@ -9,7 +9,7 @@ import type {
   MyInvoicesView,
 } from '@core/data-access/billing-simulated/billing-simulated.types';
 
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/invoicing-availability';
 import { MyInvoices } from './my-invoices';
 
 /**

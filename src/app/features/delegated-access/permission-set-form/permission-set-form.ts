@@ -24,9 +24,9 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe } from '../../../shared/forms/form-support';
 import { SetItemsEditor } from '../set-items-editor/set-items-editor';
 

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import type { OwnPublicProfile } from '@core/data-access/community/community.types';
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
-import { inicialesDe } from '@shared/text/iniciales';
+import { inicialesDe } from '@shared/text/initials';
 
 /**
  * La versión mini del perfil propio, en la columna derecha de la red social.

@@ -1,5 +1,5 @@
-import { ESTADO } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
+import { ESTADO } from '../fixtures/concepts';
+import { MEDICA, PACIENTE } from '../fixtures/people';
 import { notFound, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, cuerpo, iso, nuevoId, uuid } from '../mock-store';

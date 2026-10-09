@@ -3,10 +3,10 @@ import { HttpHeaders } from '@angular/common/http';
 import { crearRouterSimulado } from '../handlers';
 import type { MockRequest } from '../mock-router';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from './fee-schedules.generated';
-import { ASEGURADORAS_REALES, CLINICAS_REALES, HOSPITALES_REALES } from './instituciones.generated';
+import { ASEGURADORAS_REALES, CLINICAS_REALES, HOSPITALES_REALES } from './institutions.generated';
 import { INSURER_NETWORK_PRACTITIONERS } from './insurer-network.generated';
 import { PHARMACIES_AND_LABS, PRIMARY_CARE_CENTERS } from './markdown-institutions.generated';
-import { PROFESIONALES_DEMO_REGISTRADOS } from './personas';
+import { PROFESIONALES_DEMO_REGISTRADOS } from './people';
 import { REGISTERED_PATIENTS, REGISTERED_PRACTITIONERS } from './registered-people.generated';
 
 /* ============================================================================

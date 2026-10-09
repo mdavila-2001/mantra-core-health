@@ -19,8 +19,8 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { AccessTree } from './access-tree/access-tree';
-import { AgendaDeHoy } from './agenda-de-hoy/agenda-de-hoy';
-import { ConsultasResumen } from './consultas-resumen/consultas-resumen';
+import { AgendaDeHoy } from './today-agenda/today-agenda';
+import { ConsultasResumen } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -58,7 +58,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
  *
  * Lo que quedó responde tres preguntas, en este orden:
  *
- * 1. **¿Qué toca hoy?** — `app-agenda-de-hoy`: la jornada de quien atiende, con
+ * 1. **¿Qué toca hoy?** — `app-today-agenda`: la jornada de quien atiende, con
  *    su forma, lo que pasa ahora y salida a la agenda completa.
  * 2. **¿A dónde puedo ir?** — las secciones que los roles de la sesión
  *    habilitan, repartidas por zonas. Es la misma lista que arma el menú

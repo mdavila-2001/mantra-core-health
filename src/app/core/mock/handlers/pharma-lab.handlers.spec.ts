@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { crearRouterSimulado } from './index';
-import { PACIENTE, PACIENTES } from '../fixtures/personas';
+import { PACIENTE, PACIENTES } from '../fixtures/people';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 

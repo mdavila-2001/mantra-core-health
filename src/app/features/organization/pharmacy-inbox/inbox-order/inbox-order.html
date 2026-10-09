@@ -330,7 +330,7 @@
       }
       <!-- ─── La factura, cuando el pedido ya salió ──────────────────────── -->
       @if (factura(); as comprobante) {
-        <app-resumen-de-factura
+        <app-invoice-summary
           [factura]="comprobante"
           (descargaSolicitada)="avisarDescargaDeFactura()"
         />

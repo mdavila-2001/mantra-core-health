@@ -4,16 +4,16 @@ import {
   LABORATORIOS_DEL_CORPUS,
   NOMBRE_DE_CATEGORIA,
   pruebaDelCorpus,
-} from '../fixtures/bolivia-eje-central';
+} from '../fixtures/bolivia-central-axis';
 import { pdfMinimo } from './files.handlers';
 import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agenda';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
-import { ordenes } from '../fixtures/clinica';
+import { ordenes } from '../fixtures/clinic';
 import { analisisInlasaDe, TARIFA_INLASA } from '../fixtures/inlasa';
-import { ANALISIS_INLASA } from '../fixtures/inlasa-aranceles.generated';
-import { precioDeImagen, precioDePrueba, prestacionDeImagen, type PrecioDeReferencia } from '../fixtures/precios-de-referencia';
-import { vitrinas } from '../fixtures/comunidad';
+import { ANALISIS_INLASA } from '../fixtures/inlasa-tariffs.generated';
+import { precioDeImagen, precioDePrueba, prestacionDeImagen, type PrecioDeReferencia } from '../fixtures/reference-prices';
+import { vitrinas } from '../fixtures/community';
 import {
   ACCESSION_STATUS,
   CATEGORIA_ORDEN,
@@ -26,8 +26,8 @@ import {
   SPECIMEN_STATUS,
   SPECIMEN_TYPE,
   displayDe,
-} from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, pacientePorId, profesionalPorId } from '../fixtures/personas';
+} from '../fixtures/concepts';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, pacientePorId, profesionalPorId } from '../fixtures/people';
 import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
@@ -566,7 +566,7 @@ function estudiosDelCorpus(u: UnidadSimulada) {
         requiresMedicalOrder: null,
         // El corpus no publica precios: el estudio lleva el de referencia de
         // INLASA o, si INLASA no la hace, el de FONASA convertido a Bs
-        // (`precios-de-referencia.ts`); sin equivalente, viaja sin tarifa.
+        // (`reference-prices.ts`); sin equivalente, viaja sin tarifa.
         prices: preciosDeReferencia(precioDePrueba(testId), sitio.id),
         conceptId: uuid(`corpus-test-${testId}`),
         specimens: prueba.specimens,
@@ -626,7 +626,7 @@ function precioMinimoDe(u: UnidadSimulada): number | null {
   return precios.length === 0 ? null : Math.min(...precios);
 }
 
-/** Id del INLASA en el corpus del eje central (`bolivia-eje-central.generated.ts`). */
+/** Id del INLASA en el corpus del eje central (`bolivia-central-axis.generated.ts`). */
 const CORPUS_INLASA = 'lab_inlasa';
 
 /**

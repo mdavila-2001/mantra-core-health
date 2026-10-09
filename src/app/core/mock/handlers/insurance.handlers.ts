@@ -1,8 +1,8 @@
-import { CORREDORES_CON_PERFIL, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
-import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/instituciones.generated';
-import { conceptoPorId } from '../fixtures/conceptos';
+import { CORREDORES_CON_PERFIL, vitrinas, type VitrinaSimulada } from '../fixtures/community';
+import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/institutions.generated';
+import { conceptoPorId } from '../fixtures/concepts';
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
-import { MEDICA, PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/personas';
+import { MEDICA, PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
 import { procedimientoPorConceptId } from './practice.handlers';

@@ -1,8 +1,8 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { ordenes, type OrdenSimulada } from '../fixtures/clinica';
-import { ESTADO, ESTUDIO } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, profesionalPorId } from '../fixtures/personas';
+import { ordenes, type OrdenSimulada } from '../fixtures/clinic';
+import { ESTADO, ESTUDIO } from '../fixtures/concepts';
+import { MEDICA, PACIENTE, profesionalPorId } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarDiagnostico } from './diagnostics.handlers';

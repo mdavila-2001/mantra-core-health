@@ -310,7 +310,7 @@ export interface PractitionerRegistration {
    * Latitud del domicilio, confirmada sobre el mapa.
    *
    * Viaja **con** {@link homeLongitude} o no viaja: media coordenada no ubica
-   * nada. Sólo se manda lo confirmado — ver `app-ubicacion-picker`.
+   * nada. Sólo se manda lo confirmado — ver `app-map-location-picker`.
    */
   readonly homeLatitude?: number;
 

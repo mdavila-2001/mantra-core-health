@@ -3,12 +3,12 @@
  * las capas de `data/glossary/` y el atlas anatómico— como filas de shard.
  *
  * Lo compila y corre `scripts/glossary-seed.mjs` con esbuild: así la semilla
- * sale de **los mismos** módulos que el simulador usaba (`glosario.ts`,
- * `anatomia.ts`, `anatomia-atlas.ts`), sin copiar su lógica y sin tocar su
+ * sale de **los mismos** módulos que el simulador usaba (`glossary.ts`,
+ * `anatomy.ts`, `anatomy-atlas.ts`), sin copiar su lógica y sin tocar su
  * contenido. Escribe el JSON por la salida estándar.
  */
-import { CATEGORIAS, ETIQUETAS, TERMINOS } from '../../src/app/core/mock/fixtures/glosario';
-import { ENTRADAS, fichaAnatomicaEnLinea, entradaEnLinea } from '../../src/app/core/mock/fixtures/anatomia';
+import { CATEGORIAS, ETIQUETAS, TERMINOS } from '../../src/app/core/mock/fixtures/glossary';
+import { ENTRADAS, fichaAnatomicaEnLinea, entradaEnLinea } from '../../src/app/core/mock/fixtures/anatomy';
 
 const filas: Record<string, unknown>[] = [];
 
@@ -61,7 +61,7 @@ for (const entrada of ENTRADAS) {
     lang: 'es',
     esName: entrada.name,
     enDisplay: entrada.name,
-    // Textos tal como los arma `anatomia.ts`: la definición es la del TIPO y
+    // Textos tal como los arma `anatomy.ts`: la definición es la del TIPO y
     // lo dice dentro del propio texto; la ubicación es lo que el Atlas publica.
     definition: ficha.clinicalDefinition.text,
     plainSummaryEs: entradaEnLinea(entrada).shortDefinition,

@@ -17,7 +17,7 @@ import { ChartTemplatesClient } from '../../../../core/data-access/chart-templat
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeFalloDeEscritura } from '../../write-message';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
 import { AdditionalFields, entradasDelTexto } from '../additional-fields/additional-fields';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
@@ -39,8 +39,8 @@ import type {
   FormInstanceDetail,
 } from '../../../../core/data-access/forms/forms.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { especialidadVigente } from '../../../../core/data-access/profiles/especialidad-vigente';
-import { camposOcultos } from '../../../../shared/forms/paginated/visibilidad-condicional';
+import { especialidadVigente } from '../../../../core/data-access/profiles/current-specialty';
+import { camposOcultos } from '../../../../shared/forms/paginated/conditional-visibility';
 import { CheckboxGroup } from '../../../../shared/components/molecules/checkbox-group/checkbox-group';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -71,7 +71,7 @@ import {
   plantillaPorCobertura,
   respuestasDe,
   type RespuestaVisible,
-} from './lectura-de-formulario';
+} from './form-reading';
 import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';

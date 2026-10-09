@@ -80,7 +80,7 @@ export interface FilaConCiudad {
  * entrega al store.
  *
  * Es una interfaz y no la clase porque la implementación,
- * `shared/geo/filtro-territorial.ts`, habla con el catálogo de municipios y con
+ * `shared/geo/territorial-filter.ts`, habla con el catálogo de municipios y con
  * el router, y `core` no depende de `shared`. Al store le basta con saber qué
  * está elegido y cómo recortar.
  */

@@ -43,7 +43,7 @@ import { StatusSeal } from '../../../shared/components/organisms/status-seal/sta
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { downloadPrescriptionPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
-import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
+import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/session-signature';
 import {
   recetaDesdeResumen,
   type ContextoDelDocumento,
@@ -55,8 +55,8 @@ import {
   MOTIVO_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record.routes';
-import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { loRegistradoEnElEncuentro, type LoRegistrado } from './lo-registrado';
+import { mensajeDeFalloDeEscritura } from '../write-message';
+import { loRegistradoEnElEncuentro, type LoRegistrado } from './recorded-items';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
 import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
@@ -73,7 +73,7 @@ import {
   QUOTATION_NEW_ROUTE,
   QUOTATION_PATIENT_QUERY_PARAM,
 } from '../../quotations/quotations.routes';
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/invoicing-availability';
 import { PaymentPlanPanel } from './payment-plan-panel/payment-plan-panel';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */

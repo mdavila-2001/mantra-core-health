@@ -1,5 +1,5 @@
-import { conceptoPorId, ESPECIALIDAD, MUNICIPIO, OBSERVACION, OCUPACION } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from '../fixtures/personas';
+import { conceptoPorId, ESPECIALIDAD, MUNICIPIO, OBSERVACION, OCUPACION } from '../fixtures/concepts';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from '../fixtures/people';
 import { IDS } from '../mock-session';
 
 import * as fk from './index';
@@ -89,7 +89,7 @@ describe('faker del backend simulado', () => {
     });
 
     it('los índices que otros fixtures usan siguen apuntando a los mismos', () => {
-      // `agenda.ts` usa PROFESIONALES[6] y .slice(1, 5); `clinica.ts`, los
+      // `agenda.ts` usa PROFESIONALES[6] y .slice(1, 5); `clinic.ts`, los
       // primeros seis. Si el generador se colara delante, las agendas y las
       // recetas cambiarían de dueño sin que nada fallara.
       expect(PROFESIONALES[6]!.slug).toBe('daniel-aguilar');

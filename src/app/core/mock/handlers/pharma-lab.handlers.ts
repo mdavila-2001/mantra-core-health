@@ -1,5 +1,5 @@
-import { conceptos, ESPECIALIDAD, ESTADO } from '../fixtures/conceptos';
-import { MEDICA, PROFESIONALES } from '../fixtures/personas';
+import { conceptos, ESPECIALIDAD, ESTADO } from '../fixtures/concepts';
+import { MEDICA, PROFESIONALES } from '../fixtures/people';
 import { notFound, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { IDS, TENANT_FARMACIA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';

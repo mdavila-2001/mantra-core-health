@@ -1,6 +1,6 @@
-import { ESTUDIO, displayDe } from '../fixtures/conceptos';
+import { ESTUDIO, displayDe } from '../fixtures/concepts';
 import { precioInlasaDe } from '../fixtures/inlasa';
-import { PROFESIONALES, pacientePorId } from '../fixtures/personas';
+import { PROFESIONALES, pacientePorId } from '../fixtures/people';
 import {
   conflict,
   forbidden,

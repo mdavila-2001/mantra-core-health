@@ -1,8 +1,8 @@
 import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULTORIO, SITIO_OLIVOS, SITIO_SANLUCAS } from '../fixtures/agenda';
-import { CARGO, ESPECIALIDAD, ESTABLECIMIENTO, ESTADO, PROCEDIMIENTO, displayDe } from '../fixtures/conceptos';
+import { CARGO, ESPECIALIDAD, ESTABLECIMIENTO, ESTADO, PROCEDIMIENTO, displayDe } from '../fixtures/concepts';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
-import { MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/people';
 import { noContent, notFound, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 

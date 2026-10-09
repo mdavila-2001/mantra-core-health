@@ -17,8 +17,8 @@
     ========================================================================== */
 
 import type { SearchResultItem } from '@shared/components/molecules';
-import { inicialesDe } from '@shared/text/iniciales';
-import { fotoDeDirectorio, temaDeCentroDiagnostico } from '@shared/utils/foto-de-directorio';
+import { inicialesDe } from '@shared/text/initials';
+import { fotoDeDirectorio, temaDeCentroDiagnostico } from '@shared/utils/directory-photo';
 
 import type { CentroAtributo, CentroTarjeta } from './centro-card/centro-card.types';
 import {
@@ -30,7 +30,7 @@ import {
 // Se reexporta porque las pantallas del buscador la importan de acá desde el
 // carril P4. La implementación se mudó a `shared/text` al descubrirse que el
 // directorio de médicos tenía una copia que no descartaba el tratamiento.
-export { inicialesDe } from '@shared/text/iniciales';
+export { inicialesDe } from '@shared/text/initials';
 
 /** Cómo se rotula cada vertical en la insignia junto al nombre. */
 const ROTULO_POR_TIPO: Readonly<Record<PublicResultKind, string>> = {

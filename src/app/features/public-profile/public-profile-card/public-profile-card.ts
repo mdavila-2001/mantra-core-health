@@ -12,7 +12,7 @@ import {
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa } from '@shared/components/organisms/map/map-pin.types';
 import { PublicPostCard } from '../public-post-card/public-post-card';
 import { PublicProfilePager } from '../public-profile-pager/public-profile-pager';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@core/data-access/public-directory/public-directory.types';
 import { AuthService } from '@core/auth/auth.service';
 import { RateEncounterDialog } from '../rate-encounter-dialog/rate-encounter-dialog';
-import { inicialesDe } from '@shared/text/iniciales';
+import { inicialesDe } from '@shared/text/initials';
 
 /** Cuántas publicaciones se ven por página en la ficha. */
 export const PUBLICACIONES_POR_PAGINA = 3;

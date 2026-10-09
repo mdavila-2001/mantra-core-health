@@ -20,9 +20,9 @@ import {
   type MensajeSimulado,
   type PublicacionSimulada,
   type VitrinaSimulada,
-} from '../fixtures/comunidad';
-import { encuentros } from '../fixtures/clinica';
-import { ESTADO } from '../fixtures/conceptos';
+} from '../fixtures/community';
+import { encuentros } from '../fixtures/clinic';
+import { ESTADO } from '../fixtures/concepts';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma

@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 
 import { AppMap } from '../../../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa } from '../../../../../../shared/components/organisms/map/map-pin.types';
 import type { SedeVisible } from '../practitioner-profile-view.types';
 
 /**

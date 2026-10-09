@@ -3,7 +3,7 @@ import type {
   SpendingConceptDto,
   SpendingMovementDto,
 } from '../../data-access/patient-spending/patient-spending.dto';
-import { semillaDe } from '../faker/semilla';
+import { semillaDe } from '../faker/seed';
 import { preconditionFailed, validation, type MockRouter } from '../mock-router';
 import {
   TENANT_ASEGURADORA,

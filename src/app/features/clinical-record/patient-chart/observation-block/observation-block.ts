@@ -29,7 +29,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeEscritura } from '../../write-message';
 
 /** Qué se midió. Es lo único obligatorio del formulario, y lo dice el DTO. */
 export const TARGET_MEDICION = 'clinical.observations.code_concept_id';

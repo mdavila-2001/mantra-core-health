@@ -39,7 +39,7 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeFalloDeEscritura } from '../../write-message';
 
 /** Hasta cuánto puede decir el motivo. Es el tope del contrato (§3.4). */
 export const MAX_MOTIVO = 500;

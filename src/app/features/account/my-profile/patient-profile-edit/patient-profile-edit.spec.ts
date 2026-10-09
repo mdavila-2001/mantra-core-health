@@ -9,7 +9,7 @@ import { provideRouter, Router } from '@angular/router';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { CODIGO_OCUPACION_OTRA } from '../../../../core/data-access/terminology/bo-occupations.service';
 import { PatientProfileEdit } from './patient-profile-edit';
-import { UbicacionPicker } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import { UbicacionPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 
 /**
  * Editar los datos propios del paciente.
@@ -626,7 +626,7 @@ describe('PatientProfileEdit', () => {
       abrirPestana(pestanaDe('perfil-domicilio'));
       fixture.detectChanges();
 
-      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll('app-ubicacion-picker');
+      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll('app-map-location-picker');
       expect(mapas).toHaveLength(2);
     });
 

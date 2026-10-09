@@ -2,15 +2,15 @@ import { effect, inject, Injectable, InjectionToken, untracked } from '@angular/
 import { catchError, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
-import { FirmaYSelloClient } from '../data-access/profiles/firma-y-sello.client';
+import { FirmaYSelloClient } from '../data-access/profiles/signature-and-seal.client';
 import { ProfilesClient } from '../data-access/profiles/profiles.client';
-import { LogoDelConsultorioClient } from '../data-access/practice-sites/logo-del-consultorio.client';
-import { establecerFirmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-firma';
+import { LogoDelConsultorioClient } from '../data-access/practice-sites/practice-logo.client';
+import { establecerFirmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-signature';
 import {
   establecerFuentesDeDocumentos,
   prepararFuentes,
   type PdfFuentes,
-} from '../../shared/utils/pdf-export/pdf-fuentes';
+} from '../../shared/utils/pdf-export/pdf-fonts';
 import {
   establecerLogoDeDocumentos,
   prepararLogo,

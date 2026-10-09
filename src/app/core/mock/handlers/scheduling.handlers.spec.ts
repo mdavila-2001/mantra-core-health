@@ -8,8 +8,8 @@ import {
   reservas,
   type ReservaSimulada,
 } from '../fixtures/agenda';
-import { ESTADO_RESERVA } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
+import { ESTADO_RESERVA } from '../fixtures/concepts';
+import { MEDICA, PACIENTE } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 

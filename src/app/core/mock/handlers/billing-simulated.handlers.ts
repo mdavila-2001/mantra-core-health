@@ -26,9 +26,9 @@ import type {
   RegisterPaymentInput,
   SimulatedCharge,
 } from '../../data-access/billing-simulated/billing-simulated.types';
-import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../billing-sim/datos-simulados';
-import { PACIENTE } from '../fixtures/personas';
-import { FacturacionSimulada, type ErrorDeFacturacion, type Resultado } from '../billing-sim/facturacion-simulada';
+import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../billing-sim/simulated-data';
+import { PACIENTE } from '../fixtures/people';
+import { FacturacionSimulada, type ErrorDeFacturacion, type Resultado } from '../billing-sim/simulated-invoicing';
 import {
   conflict,
   forbidden,
@@ -44,7 +44,7 @@ import {
 } from '../mock-router';
 import { TENANT_FARMACIA, type MockUser } from '../mock-session';
 import { cuerpo } from '../mock-store';
-import { SiatSimuladoAdapter } from '../siat-sim/siat-simulado.adapter';
+import { SiatSimuladoAdapter } from '../siat-sim/siat-simulated.adapter';
 
 export const ROLES_DE_FACTURACION: readonly string[] = ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'SUPERADMIN'];
 

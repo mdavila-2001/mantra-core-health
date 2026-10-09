@@ -22,7 +22,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record/medical-record.routes';
-import { etiquetaDeModalidad, toPedidoStatusPresentation } from './pedido-status';
+import { etiquetaDeModalidad, toPedidoStatusPresentation } from './order-status';
 import { displayCurrency } from '../../../core/money/display-currency';
 
 /**
@@ -30,7 +30,7 @@ import { displayCurrency } from '../../../core/money/display-currency';
  * envío al retiro.
  *
  * La lista dice el estado **en palabras y con el tono del sistema**
- * (`pedido-status.ts`); el recorrido completo —línea de tiempo, decisión de
+ * (`order-status.ts`); el recorrido completo —línea de tiempo, decisión de
  * sustitución, código de retiro— vive en el detalle. Los datos salen del
  * cliente contract-first de `core/data-access/pharmacy-orders/`, que hasta
  * FAR-E1 es un mock en memoria: la pantalla no sabe ni le importa.

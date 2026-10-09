@@ -1,5 +1,5 @@
 import type { Condition } from '../../core/data-access/clinical/clinical.types';
-import { ESTADO_CONDICION, VERIFICACION_DX } from '../../core/mock/fixtures/conceptos';
+import { ESTADO_CONDICION, VERIFICACION_DX } from '../../core/mock/fixtures/concepts';
 import {
   CODIGO_ACTIVA,
   CODIGO_CONFIRMADO,

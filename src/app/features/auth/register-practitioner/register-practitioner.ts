@@ -1,7 +1,7 @@
 import { environment } from '../../../../environments/environment';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
-import { FirmaOSello } from '../../../shared/components/molecules/firma-o-sello/firma-o-sello';
+import { FirmaOSello } from '../../../shared/components/molecules/signature-or-seal/signature-or-seal';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -29,7 +29,7 @@ import type {
   PractitionerRegistration,
   UploadedRegistrationDocument,
 } from '../../../core/data-access/iam/iam.types';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -45,50 +45,50 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
   RegistroAyuda,
   type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
+import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { unirNombres } from '../../../core/profession/additional-names';
 import {
   COLEGIO_DE_LA_PROFESION,
   colegioDelTitulo,
   esColegio,
   opcionesAutoridadReguladora,
-} from '../../../core/profesion/autoridades-reguladoras';
+} from '../../../core/profession/regulatory-authorities';
 import {
   OPCIONES_TITULO_PROFESIONAL,
   filtroDeSaludDelTitulo,
-} from '../../../core/profesion/titulos-profesionales';
-import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituciones-educativas';
+} from '../../../core/profession/professional-degrees';
+import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profession/educational-institutions';
 import {
   PAIS_FUERA_DE_CATALOGO,
   PadronDeUniversidades,
   ciudadAlElegirUniversidad,
   eleccionDesdeTexto,
   type FiltroDeSalud,
-} from '../../../core/profesion/padron-de-universidades';
+} from '../../../core/profession/university-registry';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
-} from '../registro-compartido/credenciales-del-medico';
+} from '../shared-registration/doctor-credentials';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+} from '../shared-registration/password-policy';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
@@ -201,7 +201,7 @@ const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
  * catálogo no está disponible»—. Es el mismo que ya usa el alta de profesional
  * para `specialtyConceptIds`, y es copiable tal cual.
  */
-// La lista vive en `core/profesion/autoridades-reguladoras.ts` desde el 13/09/2026:
+// La lista vive en `core/profession/regulatory-authorities.ts` desde el 13/09/2026:
 // son tres —Ministerio de Salud, SEDES y el colegio de la profesión— y el editor
 // del perfil ofrece las mismas. Lo de arriba sigue valiendo para ella.
 
@@ -362,7 +362,7 @@ interface TituloDeclarado {
  *   viaja. Cuando lo reciba, es un mapeo nombre → concepto, no otra pantalla.
  * - **Universidad.** Desplegable **acotado al país elegido** —es el árbol—, con
  *   «Otra institución…» para la que falte. Bolivia usa la lista curada de
- *   `instituciones-educativas.ts`; el resto, el padrón importado. Viaja como
+ *   `educational-institutions.ts`; el resto, el padrón importado. Viaja como
  *   `issuingInstitutionText`, que sigue siendo texto: el valor de cada opción
  *   es el nombre, así que al backend le llega lo mismo que antes.
  * - **Ciudad.** Texto, **propuesto por la universidad**: al elegir una del
@@ -420,7 +420,7 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * lo que más hace abandonar un registro.
  *
  * Va **al costado** y no dentro del formulario: no alarga la página, no compite
- * con los campos y se lee sólo si hace falta. Ver `app-registro-ayuda`.
+ * con los campos y se lee sólo si hace falta. Ver `app-registration-help`.
  *
  * ## Por qué es un mapa por clave y no una lista
  *
@@ -566,8 +566,8 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * opcional; el profesional entra con su correo y sin habilitación comprobable
  * no hay alta—, así que la única cosa que compartían de verdad era el cascarón:
  * la tarjeta, el membrete, el pie y la columna de ayuda. Eso es CSS
- * (`../registro-compartido/registro.css`) y un organismo
- * (`app-registro-ayuda`), no una clase en común.
+ * (`../shared-registration/registration.css`) y un organismo
+ * (`app-registration-help`), no una clase en común.
  *
  * ## Por qué va por el motor
  *
@@ -635,7 +635,7 @@ function sinTildes(texto: string): string {
     Avatar,
   ],
   templateUrl: './register-practitioner.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-practitioner.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-practitioner.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPractitioner {
@@ -1599,7 +1599,7 @@ export class RegisterPractitioner {
   /**
    * El punto del domicilio, ya confirmado sobre el mapa.
    *
-   * Lo emite `app-ubicacion-picker` y llega **sólo confirmado**: el componente
+   * Lo emite `app-map-location-picker` y llega **sólo confirmado**: el componente
    * se guarda para sí el estado intermedio —capturado y sin confirmar— y avisa
    * en pantalla que ese no se guarda. Acá no hace falta volver a preguntarlo.
    */
@@ -3135,7 +3135,7 @@ export class RegisterPractitioner {
       // La calle y el punto del domicilio (AC-05-8).
       //
       // El punto viaja sólo si se confirmó sobre el mapa: `gpsDomicilio` es lo
-      // que emite `app-ubicacion-picker`, y ese sólo emite lo confirmado.
+      // que emite `app-map-location-picker`, y ese sólo emite lo confirmado.
       ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
       ...(gpsDomicilio === null
         ? {}

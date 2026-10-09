@@ -1,5 +1,5 @@
-import { ESTADO_DE_CASO } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
+import { ESTADO_DE_CASO } from '../fixtures/concepts';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/people';
 import { notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';

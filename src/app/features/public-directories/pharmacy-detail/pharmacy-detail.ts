@@ -36,7 +36,7 @@ import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '@shared/components/molecules/section-heading/section-heading';
 import { distanciaEnLineaRectaKm } from '@shared/components/organisms/map/geo';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa } from '@shared/components/organisms/map/map-pin.types';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
@@ -132,7 +132,7 @@ function normalizar(texto: string): string {
     ViewStateHost,
   ],
   templateUrl: './pharmacy-detail.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../../../shared/styles/ficha-publica.css'],
+  styleUrls: ['../../../shared/styles/card-grid.css', '../../../shared/styles/public-sheet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {

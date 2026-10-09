@@ -1,4 +1,4 @@
-import { DEPARTAMENTO, ESPECIALIDAD, MUNICIPIO, OCUPACION } from './conceptos';
+import { DEPARTAMENTO, ESPECIALIDAD, MUNICIPIO, OCUPACION } from './concepts';
 import type { PacienteSimulado, ProfesionalSimulado } from './people.types';
 import {
   REGISTERED_PATIENTS,

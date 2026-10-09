@@ -1,4 +1,4 @@
-import { ESTADO_RESERVA } from './conceptos';
+import { ESTADO_RESERVA } from './concepts';
 
 /**
  * Las reservas de la maqueta sobreviven a F5 (`sessionStorage`) y los cupos se

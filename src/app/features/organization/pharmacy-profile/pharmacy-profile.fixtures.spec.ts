@@ -5,7 +5,7 @@ import {
   NOTA_DE_DATOS_DE_EJEMPLO,
 } from './pharmacy-profile.fixtures';
 import { PAPELES_DEL_REGISTRO, TIPOS_DE_SOCIEDAD } from './pharmacy-profile.types';
-import { varianteDeVencimiento } from '../../../shared/utils/vencimiento/vencimiento';
+import { varianteDeVencimiento } from '../../../shared/utils/expiry/expiry';
 
 /**
  * Lo que se le exige a un dato de ejemplo: que sea coherente consigo mismo, que

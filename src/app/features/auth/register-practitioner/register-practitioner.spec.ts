@@ -8,12 +8,12 @@ import { vi } from 'vitest';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
-import { ESPECIALIDAD } from '../../../core/mock/fixtures/conceptos';
-import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituciones-educativas';
+import { ESPECIALIDAD } from '../../../core/mock/fixtures/concepts';
+import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profession/educational-institutions';
 import {
   PAIS_FUERA_DE_CATALOGO,
   PadronDeUniversidades,
-} from '../../../core/profesion/padron-de-universidades';
+} from '../../../core/profession/university-registry';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';

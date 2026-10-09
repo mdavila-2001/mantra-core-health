@@ -11,7 +11,7 @@ import type {
   PharmacyBranchRegistration,
   PharmacyOrganizationRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import {
@@ -20,7 +20,7 @@ import {
   CODIGOS_DE_DIAGNOSTICO,
   CatalogoIncompleto,
   type CatalogosDeDiagnostico,
-} from '../registro-compartido/alta-de-centro-diagnostico';
+} from '../shared-registration/diagnostic-center-enrollment';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -40,35 +40,35 @@ import { telefonoCompleto } from '../../../shared/components/molecules/phone-inp
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
 import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
   RegistroAyuda,
   type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+} from '../../../shared/components/organisms/registration-help/registration-help';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   campoDelPoderNotariado,
   camposDeDocumentosLegales,
   DOCUMENTOS_LEGALES_DEL_REGISTRO,
   type ClaveDeDocumentoDelAlta,
-} from '../registro-compartido/documentos-legales';
-import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+} from '../shared-registration/legal-documents';
+import { CamposDeNombre } from '../shared-registration/name-fields/name-fields';
 import {
   grupoDeNombre,
   nombreCompleto,
-} from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+} from '../shared-registration/name-fields/person-name';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
+} from '../shared-registration/password-policy';
 import {
   AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+} from '../shared-registration/map-location-picker/map-location-picker';
 
 /* ============================================================================
     Alta de farmacia — Módulo Farmacia §1 del registro de procesos
@@ -85,10 +85,10 @@ import {
 /**
  * Los ocho tipos societarios que el punto 1.1.1 del registro de procesos
  * pide elegir de una lista cerrada, restringidos a los ocho de Bolivia del
- * diccionario `VS_LEGAL_ENTITY_TYPE` (`core/mock/fixtures/conceptos.ts`) —
+ * diccionario `VS_LEGAL_ENTITY_TYPE` (`core/mock/fixtures/concepts.ts`) —
  * el registro de procesos de farmacia no contempla otro país. Se duplican
  * acá y no se importan de `RegisterLaboratory`: el carril de farmacia no
- * toca el laboratorio más allá de lo que ya vive en `registro-compartido/`
+ * toca el laboratorio más allá de lo que ya vive en `shared-registration/`
  * (ver `README.md` del carril, §5).
  */
 const TIPOS_DE_SOCIEDAD: readonly SelectOption<string>[] = [
@@ -282,7 +282,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     CamposDeNombre,
   ],
   templateUrl: './register-pharmacy.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-pharmacy.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-pharmacy.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPharmacy {
@@ -474,7 +474,7 @@ export class RegisterPharmacy {
         icon: 'shield' as const,
         campos: [
           {
-            // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+            // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
             // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
             key: 'legalRepName',
             label: '',

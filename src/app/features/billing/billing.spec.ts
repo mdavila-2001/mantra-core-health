@@ -6,13 +6,13 @@ import { provideRouter } from '@angular/router';
 
 import { API_BASE_URL } from '../../core/data-access/api';
 import type { SimulatedCharge } from '../../core/data-access/billing-simulated/billing-simulated.types';
-import type { FacturacionSimulada } from '../../core/mock/billing-sim/facturacion-simulada';
-import { apiRealForzada } from '../../core/mock/modo-api';
+import type { FacturacionSimulada } from '../../core/mock/billing-sim/simulated-invoicing';
+import { apiRealForzada } from '../../core/mock/api-mode';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { Billing } from './billing';
 import { motorDePrueba } from './billing.spec-fixtures';
 import { resumenDeCobros } from './billing-summary';
-import { FACTURACION_SIMULADA_DISPONIBLE } from './facturacion-disponible';
+import { FACTURACION_SIMULADA_DISPONIBLE } from './invoicing-availability';
 
 /**
  * La pantalla contra respuestas del **mismo motor** que atiende la maqueta:

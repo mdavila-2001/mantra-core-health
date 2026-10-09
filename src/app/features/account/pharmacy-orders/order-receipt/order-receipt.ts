@@ -27,7 +27,7 @@ import { AppButtonLink } from '../../../../shared/components/atoms/button/button
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { comprobanteDesdePedido } from '../../../../shared/utils/receipt-pdf/from-pedido';
+import { comprobanteDesdePedido } from '../../../../shared/utils/receipt-pdf/from-order';
 import { downloadReceiptPdf } from '../../../../shared/utils/receipt-pdf/receipt-pdf';
 import { displayCurrency } from '../../../../core/money/display-currency';
 

@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTE } from './fixtures/personas';
+import { PACIENTE } from './fixtures/people';
 import { crearRouterSimulado } from './handlers';
 import type { MockMethod, MockRequest } from './mock-router';
 import { emitirAccessToken, MOCK_USERS } from './mock-session';

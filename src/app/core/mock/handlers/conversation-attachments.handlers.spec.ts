@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { mensajes, VITRINA_MEDICA, VITRINA_PACIENTE } from '../fixtures/comunidad';
+import { mensajes, VITRINA_MEDICA, VITRINA_PACIENTE } from '../fixtures/community';
 import { MockRouter, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';

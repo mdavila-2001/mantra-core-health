@@ -4,7 +4,7 @@ import { crearRouterSimulado } from './index';
 import { buscarUsuario, TENANT_FARMACIA } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { uuid } from '../mock-store';
-import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
+import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pharmacy-orders';
 
 /**
  * H3.S2 (carril A, 2026-09-25) — coherencia del mock de farmacia: el precio

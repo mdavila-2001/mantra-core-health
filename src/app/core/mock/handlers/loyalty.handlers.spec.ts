@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTES } from '../fixtures/personas';
+import { PACIENTES } from '../fixtures/people';
 import { MockRouter, isMockReply, preconditionFailed, validation, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registerLoyalty } from './loyalty.handlers';

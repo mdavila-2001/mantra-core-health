@@ -6,7 +6,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
-import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
+import { PESTANAS_DEL_PERFIL_MEDICO } from '../../doctor-profile-tabs';
 import { PractitionerProfileView } from './practitioner-profile-view';
 import type {
   AfiliacionVisible,

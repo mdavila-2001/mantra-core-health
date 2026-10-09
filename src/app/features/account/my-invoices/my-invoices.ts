@@ -36,9 +36,9 @@ import { FilterBar, type FilterDef } from '../../../shared/components/organisms/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ROTULO_DE_ESTADO, ROTULO_DE_ORIGEN, TONO_DE_ESTADO } from '../../billing/billing-summary';
-import { bs, fechaYHora, mensajeDeError } from '../../billing/cobros-en-pantalla';
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
-import { descargarRepresentacionGrafica, descargarXml } from '../../billing/representacion-grafica';
+import { bs, fechaYHora, mensajeDeError } from '../../billing/on-screen-charges';
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/invoicing-availability';
+import { descargarRepresentacionGrafica, descargarXml } from '../../billing/graphic-representation';
 
 const TAMANO_INICIAL = 10;
 

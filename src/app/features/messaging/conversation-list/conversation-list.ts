@@ -10,10 +10,10 @@ import {
 import { RouterLink } from '@angular/router';
 
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { avatarDeConQuien, conQuien } from '../../../core/messaging/con-quien';
-import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
+import { avatarDeConQuien, conQuien } from '../../../core/messaging/conversation-label';
+import { ChatPreferencias } from '../../../core/messaging/chat-preferences';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
-import { horaDeChat } from '../../../shared/date/hora-de-chat';
+import { horaDeChat } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 
 /** Lo que la fila le pide a la pantalla que haga. */

@@ -12,8 +12,8 @@ import { pharmacyOrderDtoFixture } from '../../../core/data-access/pharmacy-orde
 import type { PharmacyOrderDto } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
 import type { PharmacySiteRead } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { FARMACIA_DETALLE } from '../../../core/data-access/pharmacy/pharmacy.fixtures';
-import { ID_PEDIDO_CON_DELIVERY } from '../../../core/mock/fixtures/pedidos-de-farmacia';
-import { AlarmaDePedidos } from './alarma-de-pedidos';
+import { ID_PEDIDO_CON_DELIVERY } from '../../../core/mock/fixtures/pharmacy-orders';
+import { AlarmaDePedidos } from './order-alarm';
 import { PharmacyInbox } from './pharmacy-inbox';
 
 describe('PharmacyInbox with the tenant API list', () => {

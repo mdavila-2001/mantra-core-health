@@ -7,9 +7,9 @@ import { provideRouter, Router } from '@angular/router';
 import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { UbicacionPicker } from '../shared-registration/map-location-picker/map-location-picker';
 import { RegisterOrganization } from './register-organization';
-import { controlDeNombreExtra } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+import { controlDeNombreExtra } from '../shared-registration/name-fields/person-name';
 
 const RESPUESTA = {
   tenantId: 't-1',
@@ -733,7 +733,7 @@ describe('RegisterOrganization', () => {
         '[data-testid="registro-organizacion-direccion"]',
       );
       const siguiente = campo.closest('app-form-field')?.nextElementSibling;
-      expect(siguiente?.querySelector('app-ubicacion-picker')).not.toBeNull();
+      expect(siguiente?.querySelector('app-map-location-picker')).not.toBeNull();
     });
 
     it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
@@ -1175,7 +1175,7 @@ describe('RegisterOrganization', () => {
       avanzarHasta('Representante legal (1 de 2)');
 
       const grilla: HTMLElement = fixture.nativeElement.querySelector(
-        'app-campos-de-nombre-en-linea .nombres',
+        'app-inline-name-fields .nombres',
       );
       expect(grilla).not.toBeNull();
       expect(grilla.querySelectorAll('.nombres__campo--tercio').length).toBe(3);

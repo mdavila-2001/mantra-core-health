@@ -1,6 +1,6 @@
 /**
  * Trae el catálogo de análisis clínicos de INLASA a la maqueta:
- * `src/app/core/mock/fixtures/inlasa-aranceles.generated.ts`.
+ * `src/app/core/mock/fixtures/inlasa-tariffs.generated.ts`.
  *
  * La fuente es `ndjson/inlasa-aranceles.ndjson`, que emite el importador de la
  * API (`tools/terminology-import/import-inlasa.mjs`) desde el «Listado de
@@ -18,7 +18,7 @@ const RAIZ = process.cwd();
 const ORIGEN = resolve(process.argv[2] ?? process.env.GLOSSARY_DATA_BUILD ?? join(RAIZ, '..', 'glossary-data-build'));
 const ENTRADA = join(ORIGEN, 'ndjson', 'inlasa-aranceles.ndjson');
 const META = join(ORIGEN, 'ndjson', 'inlasa-aranceles.meta.json');
-const SALIDA = join(RAIZ, 'src', 'app', 'core', 'mock', 'fixtures', 'inlasa-aranceles.generated.ts');
+const SALIDA = join(RAIZ, 'src', 'app', 'core', 'mock', 'fixtures', 'inlasa-tariffs.generated.ts');
 
 const filas = readFileSync(ENTRADA, 'utf8')
   .split('\n')

@@ -15,8 +15,8 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
 import { ChatStore, SIN_NOMBRE } from '../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
-import { conQuien } from '../../core/messaging/con-quien';
+import { ChatPreferencias } from '../../core/messaging/chat-preferences';
+import { conQuien } from '../../core/messaging/conversation-label';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Avatar } from '../../shared/components/atoms/avatar/avatar';

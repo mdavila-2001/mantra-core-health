@@ -31,10 +31,10 @@ import { SAMPLE_DATA_ENABLED } from '../../../core/mock/sample-data';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { AVISO_DE_VENCIMIENTO_DIAS } from '../../../shared/utils/vencimiento/vencimiento';
-import { DatosDeLaEmpresa } from './datos-de-la-empresa/datos-de-la-empresa';
-import { DocumentosLegales } from './documentos-legales/documentos-legales';
-import { RepresentanteYGerentes } from './representante-y-gerentes/representante-y-gerentes';
+import { AVISO_DE_VENCIMIENTO_DIAS } from '../../../shared/utils/expiry/expiry';
+import { DatosDeLaEmpresa } from './company-data/company-data';
+import { DocumentosLegales } from './legal-documents/legal-documents';
+import { RepresentanteYGerentes } from './representative-and-managers/representative-and-managers';
 import {
   DOCUMENTOS_DE_EJEMPLO,
   EMPRESA_DE_EJEMPLO,

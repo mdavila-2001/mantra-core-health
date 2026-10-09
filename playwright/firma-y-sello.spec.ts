@@ -229,7 +229,7 @@ test('el alta del doctor ofrece la firma y el sello como paso opcional y se pued
   await pngDe(page, 'sello', sello);
   await page.getByTestId('registro-pro-firma-input').setInputFiles(firma);
   await page.getByTestId('registro-pro-sello-input').setInputFiles(sello);
-  await expect(page.locator('app-firma-o-sello img')).toHaveCount(2);
+  await expect(page.locator('app-signature-or-seal img')).toHaveCount(2);
   await page.screenshot({ path: join(EVIDENCIA, 'alta-paso-firma-y-sello-cargados.png') });
 
   // Un formato que no es imagen se rechaza con su motivo.

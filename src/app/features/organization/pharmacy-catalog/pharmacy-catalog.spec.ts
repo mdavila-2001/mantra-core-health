@@ -9,8 +9,8 @@ import type {
   PharmacyProductSearchPage,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
-import type { CamposDelProducto } from './catalogo.reglas';
-import { CAMPOS_VACIOS } from './catalogo.reglas';
+import type { CamposDelProducto } from './catalog.rules';
+import { CAMPOS_VACIOS } from './catalog.rules';
 import { PharmacyCatalog } from './pharmacy-catalog';
 
 /**

@@ -7,7 +7,7 @@
     una capa de fondo que se dibuja con `grid` y pseudo-elementos, no un canvas
     ni una librería de grafos.
 
-    La rejilla y la tarjeta salen de `shared/styles/rejilla-de-tarjetas.css`,
+    La rejilla y la tarjeta salen de `shared/styles/card-grid.css`,
     la misma hoja que pinta la portada de cada uno de los directorios que esta
     pantalla presenta.
 

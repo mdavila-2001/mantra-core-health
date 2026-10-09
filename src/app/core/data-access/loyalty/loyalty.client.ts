@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { catchError, map, throwError, type Observable } from 'rxjs';
 
 import { readApiError } from '../../http/api-error';
-import { generarCodigoLegible } from '../../codigo-legible/codigo-legible';
+import { generarCodigoLegible } from '../../readable-code/readable-code';
 import { API_BASE_URL, apiUrl } from '../api';
 import {
   canjeDesdeDto,

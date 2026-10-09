@@ -5,14 +5,14 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { UbicacionPicker } from '../shared-registration/map-location-picker/map-location-picker';
 import { lastValueFrom, of } from 'rxjs';
 import type {
   PdfUploader,
   UploadedDocument,
 } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
-import type { ClaveDeDocumentoDelAlta } from '../registro-compartido/documentos-legales';
-import { AltaDeCentroDiagnostico } from '../registro-compartido/alta-de-centro-diagnostico';
+import type { ClaveDeDocumentoDelAlta } from '../shared-registration/legal-documents';
+import { AltaDeCentroDiagnostico } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
 
 /**

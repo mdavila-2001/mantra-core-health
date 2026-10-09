@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
-import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/logo-de-organizacion.client';
+import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/organization-logo.client';
 import { PharmacyProfile } from '../pharmacy-profile/pharmacy-profile';
 import { OrganizationProfile } from './organization-profile';
 

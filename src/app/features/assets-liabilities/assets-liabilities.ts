@@ -26,7 +26,7 @@ import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf } from '../../shared/forms/form-support';
 
 /**

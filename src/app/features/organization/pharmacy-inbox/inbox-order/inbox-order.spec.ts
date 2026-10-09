@@ -13,7 +13,7 @@ import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-ord
 import {
   ID_PEDIDO_CON_DELIVERY,
   ID_PEDIDO_CON_SEGURO,
-} from '../../../../core/mock/fixtures/pedidos-de-farmacia';
+} from '../../../../core/mock/fixtures/pharmacy-orders';
 import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -610,7 +610,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     );
     // Va justo antes de la salida: el pie de la pantalla sigue siendo la bandeja.
     expect(
-      factura?.closest('app-resumen-de-factura')?.nextElementSibling?.textContent?.trim(),
+      factura?.closest('app-invoice-summary')?.nextElementSibling?.textContent?.trim(),
     ).toBe('Volver a la bandeja');
   });
 

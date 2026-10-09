@@ -1,17 +1,17 @@
-import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/catalogo-medicamentos.generated';
-import { FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
+import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/medication-catalog.generated';
+import { FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-central-axis';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
-import { vitrinas } from '../fixtures/comunidad';
-import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
-import { recetas } from '../fixtures/clinica';
-import { PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
+import { vitrinas } from '../fixtures/community';
+import { MEDICAMENTO, displayDe } from '../fixtures/concepts';
+import { recetas } from '../fixtures/clinic';
+import { PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/people';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
 // un solo lugar, porque la pantalla también los usa.
 import {
   DELIVERY_ORDER_ADDRESS,
   ID_PEDIDO_CON_DELIVERY,
   ID_PEDIDO_CON_SEGURO,
-} from '../fixtures/pedidos-de-farmacia';
+} from '../fixtures/pharmacy-orders';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_TYPES } from '../mock-session';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';

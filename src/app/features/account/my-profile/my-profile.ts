@@ -24,7 +24,7 @@ import {
   errorToViewState,
   IDENTITY_VERIFICATION_ROUTE,
 } from '../../../core/http/error-to-view-state';
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assurance/verificacion-ofrecida';
+import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assurance/offered-verification';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
@@ -48,10 +48,10 @@ import {
 } from '../../identity-verification/case-status';
 import { Loyalty } from '../loyalty/loyalty';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
-import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
+import { indiceDePestana, PESTANAS_DEL_PERFIL } from './profile-tabs';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 import { ResidenceReadonly } from './practitioner-profile/practitioner-profile-view/residence-readonly/residence-readonly';
-import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/map-pin.types';
 
 /** Lo que se dice cuando la ficha completa no llegó y la API no explicó por qué. */
 const FICHA_INCOMPLETA =

@@ -1,6 +1,6 @@
 import { reservas } from '../fixtures/agenda';
-import { ESTADO } from '../fixtures/conceptos';
-import { PACIENTE } from '../fixtures/personas';
+import { ESTADO } from '../fixtures/concepts';
+import { PACIENTE } from '../fixtures/people';
 import { notFound, type MockRouter } from '../mock-router';
 import { plantillasVigentes } from './clinical.handlers';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';

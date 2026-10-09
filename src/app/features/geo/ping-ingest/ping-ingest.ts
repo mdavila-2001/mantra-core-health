@@ -20,9 +20,9 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, NUMBER_STRING_PATTERN, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /** El `@ArrayMaxSize` del DTO. El editor avisa mucho antes, pero el techo es este. */

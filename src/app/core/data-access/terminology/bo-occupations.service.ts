@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { CatalogoDeConjunto } from './catalogo-de-conjunto';
+import { CatalogoDeConjunto } from './value-set-catalog';
 import type { ValueSetOption } from './terminology.types';
 
 /**

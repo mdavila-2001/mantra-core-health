@@ -41,7 +41,7 @@ import {
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { aTarjeta, rutaDeFicha } from '../alovida/buscar/public-result.mapper';
-import { fotoDeVertical } from '../../shared/utils/foto-de-directorio';
+import { fotoDeVertical } from '../../shared/utils/directory-photo';
 import { groupUnits } from '../laboratory-directory/laboratory-directory';
 
 /** Rótulo del bloque de `navigation.subgroups.ts` del que salen los nodos. */
@@ -130,7 +130,7 @@ type Buscador = (termino: string) => Observable<readonly SearchResultItem[]>;
   templateUrl: './directories-overview.html',
   // La hoja compartida va **primera**: lo de abajo son los ajustes de esta
   // pantalla sobre esa base, y Angular concatena en este orden.
-  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './directories-overview.css'],
+  styleUrls: ['../../shared/styles/card-grid.css', './directories-overview.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DirectoriesOverview {

@@ -1,6 +1,6 @@
 import type { fakerES } from '@faker-js/faker';
 
-import { DEPARTAMENTO, MUNICIPIO } from '../fixtures/conceptos';
+import { DEPARTAMENTO, MUNICIPIO } from '../fixtures/concepts';
 
 /* ============================================================================
     Lo boliviano, que `faker` no trae.
@@ -9,7 +9,7 @@ import { DEPARTAMENTO, MUNICIPIO } from '../fixtures/conceptos';
     teléfonos y sus calles. Nada de eso pasa por paciente en Santa Cruz. Este
     módulo es la capa que sí: cédulas con extensión departamental, NIT,
     celulares +591, municipios reales tomados del **mismo catálogo** que usa la
-    aplicación (`fixtures/conceptos.ts`), y direcciones con las avenidas que
+    aplicación (`fixtures/concepts.ts`), y direcciones con las avenidas que
     existen.
 
     Regla que se hereda de `demo-presets.ts` y que aquí también manda: nada de

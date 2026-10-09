@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
 import { etiquetasDeRoles } from '../../core/auth/role-labels';
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../core/identity-assurance/verificacion-ofrecida';
+import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../core/identity-assurance/offered-verification';
 import { rolesAlcanzan } from '../../core/navigation/navigation.types';
 import {
   BrowserPermissionsService,

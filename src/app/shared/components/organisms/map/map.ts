@@ -21,8 +21,8 @@ import {
 import type * as Leaflet from 'leaflet';
 
 import { nextControlId } from '@shared/forms/form-control.context';
-import type { PinMapa, PuntoGeo } from './pin-mapa.types';
-import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinciaEn } from './provincias';
+import type { PinMapa, PuntoGeo } from './map-pin.types';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinciaEn } from './provinces';
 
 /**
  * Mosaicos del servidor comunitario de OpenStreetMap, sin clave de API.
@@ -431,7 +431,7 @@ export class AppMap implements OnDestroy {
     panel.style.pointerEvents = 'none';
 
     // `L.geoJSON` pide el tipo de `@types/geojson`; el nuestro es el mismo
-    // contrato escrito en `provincias.ts`, sin depender de ese paquete.
+    // contrato escrito en `provinces.ts`, sin depender de ese paquete.
     L.geoJSON(provincias as unknown as Parameters<typeof L.geoJSON>[0], {
       pane: PANEL_DE_PROVINCIAS,
       interactive: false,

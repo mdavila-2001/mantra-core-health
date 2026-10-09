@@ -21,8 +21,8 @@ import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs'
 import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-url';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { PdfBrandingService } from '../../../../core/pdf-branding/pdf-branding.service';
-import { FirmaYSelloClient } from '../../../../core/data-access/profiles/firma-y-sello.client';
-import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
+import { FirmaYSelloClient } from '../../../../core/data-access/profiles/signature-and-seal.client';
+import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/practice-logo.client';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { BIRTH_SEX_OPTIONS } from '../../../../core/data-access/iam/birth-sex.options';
@@ -30,11 +30,11 @@ import type { BirthSexCode } from '../../../../core/data-access/iam/iam.types';
 import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
-import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import { LocationPicker } from '../../../auth/shared-registration/location-picker/location-picker';
 import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
-} from '../../../auth/registro-compartido/credenciales-del-medico';
+} from '../../../auth/shared-registration/doctor-credentials';
 import { LanguagesCatalog } from '../../../../core/data-access/terminology/languages.service';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
@@ -44,7 +44,7 @@ import type {
   OwnPractitionerProfile,
   PractitionerLanguage,
 } from '../../../../core/data-access/profiles/profiles.types';
-import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profesion/insurance-billing-frequency';
+import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profession/insurance-billing-frequency';
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
@@ -68,8 +68,8 @@ import {
   FileInput,
   type RejectedFile,
 } from '../../../../shared/components/molecules/file-input/file-input';
-import { FirmaOSello } from '../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
-import { LogoConsultorio } from '../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
+import { FirmaOSello } from '../../../../shared/components/molecules/signature-or-seal/signature-or-seal';
+import { LogoConsultorio } from '../../../../shared/components/molecules/practice-logo/practice-logo';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../../shared/components/molecules/row-actions/row-actions';
@@ -78,21 +78,21 @@ import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { separarNombres, unirNombres } from '../../../../core/profesion/nombres-adicionales';
-import { opcionesAutoridadReguladora } from '../../../../core/profesion/autoridades-reguladoras';
+import { separarNombres, unirNombres } from '../../../../core/profession/additional-names';
+import { opcionesAutoridadReguladora } from '../../../../core/profession/regulatory-authorities';
 import {
   INSTITUCION_FUERA_DE_CATALOGO,
   esInstitucionDelCatalogo,
-} from '../../../../core/profesion/instituciones-educativas';
+} from '../../../../core/profession/educational-institutions';
 import {
   OPCIONES_TITULO_PROFESIONAL,
   esTituloDeLaLista,
-} from '../../../../core/profesion/titulos-profesionales';
+} from '../../../../core/profession/professional-degrees';
 import {
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
-} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import {
@@ -109,8 +109,8 @@ import {
   EstadoDeImagen,
   FORMATOS_DE_IMAGEN_DE_FIRMA,
   MAX_BYTES_DE_IMAGEN_DE_FIRMA,
-} from './estado-de-imagen';
-import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
+} from './image-status';
+import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../doctor-profile-tabs';
 import { WorkHistory } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
@@ -125,7 +125,7 @@ import {
   OPCIONES_DE_INSTITUCION_CON_SIGLA,
   ciudadesDeInstitucion,
 } from './practitioner-profile-edit.logic';
-import { ciudadAlElegirUniversidad } from '../../../../core/profesion/padron-de-universidades';
+import { ciudadAlElegirUniversidad } from '../../../../core/profession/university-registry';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
@@ -1187,7 +1187,7 @@ export class PractitionerProfileEdit {
   protected readonly nuevoNumeroCredencial = signal('');
   /* -- Institución, como lista y no como texto ---------------------------
      Pedido del propietario (13/09/2026). El catálogo y el porqué de la salida
-     a mano viven en `core/profesion/instituciones-educativas.ts`; acá sólo se
+     a mano viven en `core/profession/educational-institutions.ts`; acá sólo se
      decide cuál de los dos campos responde. */
 
   /** Con la sigla adelante, para que se lea aunque el desplegable cerrado recorte el nombre. */

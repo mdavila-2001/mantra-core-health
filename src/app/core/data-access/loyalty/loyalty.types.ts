@@ -26,7 +26,7 @@ export const NOMBRE_PROGRAMA_PUNTOS = 'Puntos AloVida';
  *
  * Son los **códigos reales del catálogo** que publica la API
  * (`promotions:points-direction:*`), no un value set provisional del front.
- * Jamás se muestran: la etiqueta en castellano vive en `punto-motivo.ts`.
+ * Jamás se muestran: la etiqueta en castellano vive en `point-reason.ts`.
  */
 export const DIRECCIONES_DE_PUNTOS = [
   'POINTS_EARN',

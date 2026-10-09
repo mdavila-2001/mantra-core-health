@@ -44,7 +44,7 @@ import {
   type PublicPostReaction,
 } from '@core/data-access/public-directory/public-directory.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
-import { inicialesDe } from '@shared/text/iniciales';
+import { inicialesDe } from '@shared/text/initials';
 
 /** Los cuatro estados del M34, con los nombres que ya usa la superficie pública. */
 type EstadoLista = 'carga' | 'datos' | 'vacio' | 'error';

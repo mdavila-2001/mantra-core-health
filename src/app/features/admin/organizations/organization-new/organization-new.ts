@@ -30,9 +30,9 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
 

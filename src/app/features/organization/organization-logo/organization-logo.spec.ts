@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
-import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/logo-de-organizacion.client';
+import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/organization-logo.client';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { OrganizationLogo } from './organization-logo';
 

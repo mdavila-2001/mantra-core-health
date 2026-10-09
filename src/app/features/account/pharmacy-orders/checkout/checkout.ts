@@ -45,7 +45,7 @@ import { Stepper } from '../../../../shared/components/molecules/stepper/stepper
 import type { StepperStep } from '../../../../shared/components/molecules/stepper/stepper.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { dibujarQr } from '../../../../shared/utils/qr/draw-qr';
 import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
 import { NOTA_DE_DATOS_DE_EJEMPLO } from '../new-order/new-order.fixtures';
 import { CLAVE_DEL_TRASPASO, type TraspasoDeLaReceta } from '../new-order/new-order.handoff';

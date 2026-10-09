@@ -47,7 +47,7 @@ import { StatusSeal } from '../../../../shared/components/organisms/status-seal/
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeFalloDeEscritura } from '../../write-message';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 

@@ -4,7 +4,7 @@ import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/p
 import {
   ID_PEDIDO_CON_DELIVERY,
   ID_PEDIDO_CON_SEGURO,
-} from '../../../core/mock/fixtures/pedidos-de-farmacia';
+} from '../../../core/mock/fixtures/pharmacy-orders';
 import {
   PEDIDO_CON_DELIVERY,
   PEDIDO_CON_SEGURO,

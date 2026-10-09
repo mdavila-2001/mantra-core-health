@@ -1,5 +1,5 @@
-import { ESTADO, PROCEDIMIENTO, SEVERIDAD } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
+import { ESTADO, PROCEDIMIENTO, SEVERIDAD } from '../fixtures/concepts';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/people';
 import { notFound, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, texto, uuid } from '../mock-store';
 

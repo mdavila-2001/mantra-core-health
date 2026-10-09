@@ -5,9 +5,9 @@ import {
   type CondicionSimulada,
   type EvidenciaSimulada,
   type VerificacionSimulada,
-} from '../fixtures/clinica';
-import { CURSO_CLINICO, ESTADO_CONDICION, VERIFICACION_DX } from '../fixtures/conceptos';
-import { MEDICA } from '../fixtures/personas';
+} from '../fixtures/clinic';
+import { CURSO_CLINICO, ESTADO_CONDICION, VERIFICACION_DX } from '../fixtures/concepts';
+import { MEDICA } from '../fixtures/people';
 import { conflict, notFound, validation, type MockRouter } from '../mock-router';
 import { ahora, cuerpo } from '../mock-store';
 import { informes } from './diagnostics.handlers';

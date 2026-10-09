@@ -3,10 +3,10 @@ import { HttpHeaders } from '@angular/common/http';
 import { crearRouterSimulado } from '../handlers';
 import type { MockRequest } from '../mock-router';
 import { recursos } from './agenda';
-import { vitrinas } from './comunidad';
+import { vitrinas } from './community';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from './fee-schedules.generated';
 import { INSURER_NETWORK_PRACTITIONERS } from './insurer-network.generated';
-import { credencialesDe, licenciasDe, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './personas';
+import { credencialesDe, licenciasDe, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './people';
 
 /* ============================================================================
     Los catálogos de `markdown_convertidos/` que el propietario pidió ver.

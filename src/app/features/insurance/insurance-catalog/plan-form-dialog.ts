@@ -1,5 +1,5 @@
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   ChangeDetectionStrategy,

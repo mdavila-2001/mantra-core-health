@@ -10,8 +10,8 @@
 
 import type { TarjetaDeMedicamento } from '@core/data-access/public-marketplace/public-marketplace.types';
 import type { CardDetailRow } from '@shared/components/molecules/card-detail-panel/card-detail-panel.types';
-import { inicialesDe } from '@shared/text/iniciales';
-import { fotoDeDirectorio } from '@shared/utils/foto-de-directorio';
+import { inicialesDe } from '@shared/text/initials';
+import { fotoDeDirectorio } from '@shared/utils/directory-photo';
 
 import type { CentroAtributo, CentroTarjeta } from '../centro-card/centro-card.types';
 import { addRow } from '../centro-card/directory-card.mapper';

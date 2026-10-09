@@ -10,7 +10,7 @@ import {
   MEDICAMENTO,
   TIPO_CITA,
   VERIFICACION_DX,
-} from '../fixtures/conceptos';
+} from '../fixtures/concepts';
 import { valorDeTexto } from '../../data-access/terminology/terminology.types';
 import { AlmacenDeGlosario, ArchivoAusente, type LectorDeArchivos } from '../glossary-shards';
 import { MockRouter, type MockMethod } from '../mock-router';

@@ -7,7 +7,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { Cotizaciones } from '../cotizaciones/cotizaciones';
+import { Cotizaciones } from '../quotations/quotations';
 import { PharmacyOrders } from '../pharmacy-orders/pharmacy-orders';
 import { PharmacyShop } from './pharmacy-shop/pharmacy-shop';
 

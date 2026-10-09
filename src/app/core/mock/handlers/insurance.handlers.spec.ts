@@ -1,14 +1,14 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
-import { MEDICA } from '../fixtures/personas';
+import { MEDICA } from '../fixtures/people';
 import { catalogoAdministrable, registrarSeguros } from './insurance.handlers';
-import { vitrinas } from '../fixtures/comunidad';
+import { vitrinas } from '../fixtures/community';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
 import { uuid } from '../mock-store';
-import { PROFESIONALES } from '../fixtures/personas';
+import { PROFESIONALES } from '../fixtures/people';
 
 interface DetailWire {
   readonly id: string;

@@ -62,7 +62,7 @@ const DESTINO = join(
   'core',
   'mock',
   'fixtures',
-  'glosario.generated.ts',
+  'glossary.generated.ts',
 );
 
 const { categorias, etiquetas, paraguas, terminos } = await leerSeed();
@@ -357,7 +357,7 @@ export interface TerminoDeGlosario {
   readonly externalCode?: CodigoExterno;
   /** Idioma del nombre y las definiciones. Ausente equivale a \`es\`. */
   readonly lang?: 'es' | 'en';
-  /** Ids de \`symptom-check/sintomas.datos.ts\` que orientan a este término. */
+  /** Ids de \`symptom-check/symptoms.data.ts\` que orientan a este término. */
   readonly symptomIds?: readonly string[];
   /** Cómo se pide como orden (\`SRQ-LAB\`, \`SRQ-IMAGING\`, \`SRQ-OTHER\`); sólo en análisis. */
   readonly analysisCategory?: 'LAB' | 'IMAGING' | 'OTHER';

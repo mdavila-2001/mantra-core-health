@@ -1,5 +1,5 @@
-import { encuentros } from '../fixtures/clinica';
-import { PACIENTE } from '../fixtures/personas';
+import { encuentros } from '../fixtures/clinic';
+import { PACIENTE } from '../fixtures/people';
 import { forbidden, notFound, preconditionFailed, unauthorized, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';

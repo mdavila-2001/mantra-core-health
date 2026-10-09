@@ -22,9 +22,9 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
 import type { AgendaResource, FranjaModo } from '@core/data-access/scheduling/scheduling.types';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { misRecursosDeAgenda } from '../my-resource';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
-import { calcularTurnos, type Calculo, type DiaCalculado } from './agenda-turnos';
+import { calcularTurnos, type Calculo, type DiaCalculado } from './agenda-slots';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';

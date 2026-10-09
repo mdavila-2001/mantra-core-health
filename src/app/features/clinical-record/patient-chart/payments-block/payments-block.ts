@@ -12,8 +12,8 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/facturacion-disponible';
-import { CobrosDelPaciente } from './cobros-del-paciente/cobros-del-paciente';
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/invoicing-availability';
+import { CobrosDelPaciente } from './patient-charges/patient-charges';
 
 /**
  * Cuántos pagos se muestran. Lo que quede afuera se dice, no se calla.
@@ -78,7 +78,7 @@ export interface PagosDelPaciente {
  *
  * Si la facturación simulada está disponible (FACT-SIAT-MOCK, ver
  * {@link FACTURACION_SIMULADA_DISPONIBLE}), el bloque delega en
- * `app-cobros-del-paciente`: los servicios de la persona con su plan de pagos
+ * `app-patient-charges`: los servicios de la persona con su plan de pagos
  * —nota de venta por cada pago mientras haya saldo— y el modal de la factura
  * contra el SIAT simulado. En ese caso **no** se lee Contabilidad.
  *
