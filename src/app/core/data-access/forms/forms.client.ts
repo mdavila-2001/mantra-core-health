@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
@@ -16,6 +16,12 @@ import type {
   MyFormInstanceList,
   OpenFormInstanceInput,
 } from './forms.types';
+import {
+  FIELD_DEFINITION_SIMULATOR_EXTENSIONS,
+  FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS,
+  fieldDefinitionExtensionsFeature,
+} from './forms.types';
+import { droppedSimulatorExtensions, unavailableInApiError, withSimulatorExtensions } from '../simulator-only';
 
 /**
  * Cliente de `forms`: el ciclo de vida de una instancia de formulario dinámico
@@ -126,8 +132,13 @@ export class FormsClient {
    * escondería cuál de las dos falló.
    */
   createFieldDefinition(input: CreateFieldDefinitionInput): Observable<string> {
+    const url = this.url('/forms/field-definitions');
+    const sinGuardar = droppedSimulatorExtensions(input, FIELD_DEFINITION_SIMULATOR_EXTENSIONS);
+    if (sinGuardar.length > 0) {
+      return throwError(() => unavailableInApiError(fieldDefinitionExtensionsFeature(sinGuardar), url));
+    }
     return this.http
-      .post<{ id: string }>(this.url('/forms/field-definitions'), input)
+      .post<{ id: string }>(url, withSimulatorExtensions(input, FIELD_DEFINITION_SIMULATOR_EXTENSIONS))
       .pipe(map((res) => res.id));
   }
 
@@ -159,11 +170,13 @@ export class FormsClient {
     fieldId: string,
     cambios: UpdateFieldDefinitionInput,
   ): Observable<void> {
+    const url = this.url(`/forms/field-definitions/${encodeURIComponent(fieldId)}`);
+    const sinGuardar = droppedSimulatorExtensions(cambios, FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS);
+    if (sinGuardar.length > 0) {
+      return throwError(() => unavailableInApiError(fieldDefinitionExtensionsFeature(sinGuardar), url));
+    }
     return this.http
-      .patch<unknown>(
-        this.url(`/forms/field-definitions/${encodeURIComponent(fieldId)}`),
-        cambios,
-      )
+      .patch<unknown>(url, withSimulatorExtensions(cambios, FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS))
       .pipe(map(() => undefined));
   }
 

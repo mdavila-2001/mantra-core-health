@@ -37,6 +37,14 @@ También entran por número de documento (`4567890`, `7654321`, `1112223`,
 
 - `mock-router.ts`: tabla `(método, patrón)` → manejador; gana el patrón con
   más segmentos literales. Ayudas `notFound`, `conflict`, `validation`, etc.
+- `contract/`: la maqueta valida cada cuerpo de escritura **como la API**
+  (`forbidNonWhitelisted`): una clave que el DTO no declara o un obligatorio
+  que falta es un 400 con el cuerpo de `validationFailed`, antes de llegar al
+  manejador. El catálogo (`api-contract.generated.ts`) sale del `openapi.json`
+  de la API en `origin/dev` con `node scripts/gen-mock-contract.mjs <ruta>`; lo
+  que la maqueta acepta de más («pendiente de backend») se registra en
+  `simulator-extensions.ts`, con las mismas listas que usa el cliente para
+  **no** mandarlo a la API real (`core/data-access/simulator-only.ts`).
 - `mock-store.ts`: `uuid(semilla)` determinista, fechas relativas a hoy,
   paginación por cursor, `Coleccion` en memoria (las escrituras persisten
   mientras dure la pestaña) e imágenes SVG como `data:` URL.

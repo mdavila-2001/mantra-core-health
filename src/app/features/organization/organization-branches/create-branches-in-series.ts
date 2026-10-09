@@ -1,7 +1,11 @@
 import { catchError, concatMap, from, map, of, toArray, type Observable } from 'rxjs';
 
 import type { DirectoryClient } from '../../../core/data-access/directory/directory.client';
-import type { NewBranch } from '../../../core/data-access/directory/directory.types';
+import {
+  BRANCH_SIMULATOR_EXTENSIONS,
+  type NewBranch,
+} from '../../../core/data-access/directory/directory.types';
+import { droppedSimulatorExtensions } from '../../../core/data-access/simulator-only';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import {
   branchCodeFromName,
@@ -18,7 +22,17 @@ export interface BranchRejection {
 export interface BranchBatchResult {
   readonly created: number;
   readonly rejected: readonly BranchRejection[];
+  /**
+   * El aviso de lo que el archivo traía y la API real todavía no guarda
+   * (descripción y enlace de mapa, P54), o `null` si no se perdió nada.
+   */
+  readonly unsavedNotice: string | null;
 }
+
+const UNSAVED_BRANCH_FIELD_LABELS: Readonly<Record<string, string>> = {
+  description: 'la descripción',
+  locationUrl: 'el enlace de ubicación',
+};
 
 /**
  * Crea las sucursales de un lote **una por una**, en su orden.
@@ -43,6 +57,11 @@ export function createBranchesInSeries(
     taken.add(code);
     return { name: draft.name, branch: newBranchFrom(draft, code) };
   });
+  const unsaved = new Set(
+    requests.flatMap(({ branch }) =>
+      droppedSimulatorExtensions(branch, BRANCH_SIMULATOR_EXTENSIONS),
+    ),
+  );
   return from(requests).pipe(
     concatMap(({ name, branch }) =>
       directory.createBranch(tenantId, branch).pipe(
@@ -55,9 +74,21 @@ export function createBranchesInSeries(
       const rejected = results.flatMap(({ name, reason }) =>
         reason === null ? [] : [{ name, reason }],
       );
-      return { created: results.length - rejected.length, rejected };
+      return {
+        created: results.length - rejected.length,
+        rejected,
+        unsavedNotice: unsavedNoticeOf(unsaved),
+      };
     }),
   );
+}
+
+function unsavedNoticeOf(fields: ReadonlySet<string>): string | null {
+  if (fields.size === 0) return null;
+  const labels = [...fields]
+    .map((field) => UNSAVED_BRANCH_FIELD_LABELS[field] ?? field)
+    .join(' y ');
+  return `Las sucursales se crearon sin ${labels}: el servidor todavía no guarda esos datos.`;
 }
 
 /** El cuerpo de `POST /tenants/{id}/branches` para una fila del archivo. */

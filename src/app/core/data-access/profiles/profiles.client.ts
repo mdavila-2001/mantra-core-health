@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type { BirthSexCode } from '../iam/iam.types';
@@ -54,6 +54,16 @@ import type {
   PractitionerOnboarding,
   LinkableOrganizationPage,
 } from './profiles.types';
+import {
+  PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
+  PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
+  practitionerProfileExtensionsLabel,
+} from './profiles.types';
+import {
+  droppedSimulatorExtensions,
+  unavailableInApiError,
+  withSimulatorExtensions,
+} from '../simulator-only';
 
 /** Las mismas respuestas, con las fechas como viajan: texto. */
 type Wire<T> = { readonly [K in keyof T]: T[K] extends Date ? string : T[K] };
@@ -161,7 +171,13 @@ export class ProfilesClient {
     if (query.cursor !== undefined) filters['cursor'] = query.cursor;
     if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    return this.http.post<RespuestaPagina>(this.url('/profiles/patients/search'), filters).pipe(
+    const url = this.url('/profiles/patients/search');
+    if (droppedSimulatorExtensions(filters, PATIENT_SEARCH_SIMULATOR_EXTENSIONS).length > 0) {
+      return throwError(() =>
+        unavailableInApiError('Filtrar pacientes por grupo sanguíneo, factor Rh o idioma', url),
+      );
+    }
+    return this.http.post<RespuestaPagina>(url, filters).pipe(
       map((body) => ({
         ...body,
         items: body.items.map(toPatientListItem),
@@ -602,16 +618,26 @@ export class ProfilesClient {
          títulos. `[]` quita el último. Hasta el 02/10/2026 el perfil los leía
          (`OwnPractitionerProfile.languages`) y nadie los escribía.
 
-         CONTRATO NO VERIFICADO CONTRA LA API REAL (02/10/2026): el repo no
-         trae el DTO del `PATCH` y sólo el simulador demostró la persistencia.
-         Si el backend lo rechaza, llega como violación sobre `languages` y el
-         editor lo muestra en su bloque; si lo ignora en silencio, la recarga
-         lo delata. Queda anotado en `docs/progress/BLOCKERS.md`. */
+         VERIFICADO CONTRA EL DTO (09/10/2026, informe B C13):
+         `UpdateOwnPractitionerProfileDto` de `origin/dev` NO declara
+         `languages` ni `insuranceBillingFrequency`, y valida con
+         `forbidNonWhitelisted`. Son extensiones de la maqueta
+         (`PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS`): contra la API real no
+         viajan, y si el `PATCH` no tenía otra cosa el error nombra qué falta. */
       readonly languages: readonly PractitionerLanguage[];
     }>,
   ): Observable<OwnPractitionerProfile> {
+    const url = this.url('/profiles/practitioners/me');
+    const cuerpo = withSimulatorExtensions(cambios, PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS);
+    // Si no queda nada que mandar, el cambio era sólo de extensiones —también
+    // `languages: []`, que es «quitar todos»—: se dice, no se manda un vacío.
+    if (Object.keys(cuerpo).length === 0 && Object.keys(cambios).length > 0) {
+      return throwError(() =>
+        unavailableInApiError(practitionerProfileExtensionsLabel(Object.keys(cambios)), url),
+      );
+    }
     return this.http
-      .patch<ConNulos<WireOwnPractitioner>>(this.url('/profiles/practitioners/me'), cambios)
+      .patch<ConNulos<WireOwnPractitioner>>(url, cuerpo)
       .pipe(map((body) => this.traducirPerfilPropio(body)));
   }
 

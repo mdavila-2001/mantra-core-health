@@ -31,6 +31,8 @@ import type {
   TenantSearchQuery,
   VerifyTenantConfirmation,
 } from './directory.types';
+import { BRANCH_SIMULATOR_EXTENSIONS } from './directory.types';
+import { withSimulatorExtensions } from '../simulator-only';
 
 /**
  * Cliente de `directory`: organizaciones de la plataforma y lo que hay dentro
@@ -139,7 +141,7 @@ export class DirectoryClient {
     return this.http
       .post<ConNulos<WireBranchListItem>>(
         this.url(`/tenants/${tenantId}/branches`),
-        stripUndefined(branch),
+        withSimulatorExtensions(stripUndefined(branch), BRANCH_SIMULATOR_EXTENSIONS),
         { headers: deLaOrganizacion(tenantId) },
       )
       .pipe(map(toBranchListItem));
