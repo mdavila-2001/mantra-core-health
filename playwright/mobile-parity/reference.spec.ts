@@ -44,7 +44,8 @@ const baseURL = process.env['ALOVIDA_WEB_BASE_URL'];
 function leerFicha(): TaskCard {
   if (!taskId) throw new Error('ALOVIDA_TASK_ID es obligatorio: la referencia web pertenece a una microtarea');
   if (!cardPath || !existsSync(cardPath)) throw new Error(`ALOVIDA_TASK_CARD no apunta a una ficha legible (${cardPath ?? 'vacío'})`);
-  const card = JSON.parse(readFileSync(cardPath, 'utf8')) as TaskCard;
+  // Windows PowerShell 5.1 escribe UTF-8 con BOM: se quita antes de parsear.
+  const card = JSON.parse(readFileSync(cardPath, 'utf8').replace(/^﻿/, '')) as TaskCard;
   if (card.taskId !== taskId) throw new Error(`La ficha es de ${card.taskId}, no de ${taskId}`);
   if (!card.webRoute) throw new Error(`La ficha de ${taskId} no declara webRoute`);
   return card;
