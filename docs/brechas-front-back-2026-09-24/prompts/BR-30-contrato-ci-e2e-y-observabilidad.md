@@ -53,7 +53,7 @@ repite en cada reinicio. Y los documentos de estado siguen diciendo «nada está
   artículos consume 21.
 - **Docs (CV-21):** `ESTADO-FRONTEND.md:12` «la API: nada está simulado» contra
   `environment.ts:65` `mockBackend: true`; `ROUTE_HEALTH_MATRIX.md` (15/08) y
-  `INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` (12/09) desactualizados; `yarn pw:rutas` existe
+  `docs/progress/archive/INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` (12/09) desactualizados; `yarn pw:rutas` existe
   (`package.json:38`).
 - **Geo (CV-25):** `app.routes.ts:270,1801-1846`: 11 pantallas de rastreo, geocercas y viajes,
   construidas para delivery, que está **fuera de alcance**.
@@ -182,7 +182,7 @@ flowchart TD
   uso no-delivery escrito (CV-25); las rutas siguen existiendo detrás de `canMatch`.
 - `[MODIFICAR]` `ESTADO-FRONTEND.md` (fechado como histórico y con el estado vigente: maqueta vs
   API, recorrido del paciente), `ROUTE_HEALTH_MATRIX.md` regenerado con `corepack yarn pw:rutas`
-  midiendo contenido, `INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` con el propósito central (CV-21).
+  midiendo contenido, `docs/progress/archive/INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` con el propósito central (CV-21).
 
 **Modelo (sólo AG-44 residuo 2)**
 - `[CREAR]` `Mantra Core Health Context/modules/diagram_67_data_catalog.puml` y el de
