@@ -862,8 +862,11 @@ export interface DirectMessagePage {
  */
 export interface NewConversation {
   readonly participantProfileIds: readonly string[];
-  readonly conversationType?: 'DIRECT' | 'GROUP';
-  readonly groupId?: string;
+  /**
+   * Sólo `'DIRECT'`: es lo único que declara `CreateConversationDto`. El chat
+   * de un grupo no se abre por acá, y una clave de más es un 400 de la API.
+   */
+  readonly conversationType?: 'DIRECT';
 }
 
 /** Un mensaje a enviar. */
