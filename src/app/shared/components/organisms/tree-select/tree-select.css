@@ -122,7 +122,7 @@
      y los botones quedan siempre a la vista. */
   max-height: calc(100vh - 2 * var(--sp-4));
   overflow: hidden;
-  animation: tree-dialog-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: tree-dialog-appear var(--dur-base) var(--pulse-ease);
 }
 
 @media (prefers-reduced-motion: reduce) {

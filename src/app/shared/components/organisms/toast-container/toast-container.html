@@ -10,11 +10,11 @@
      más cerca de la esquina. -->
 <div class="toast-region" role="status" aria-live="polite" data-testid="avisos-region">
   @for (toast of notices(); track toast.id) {
-    <app-toast [toast]="toast" (dismissed)="dismiss($event)" />
+    <app-toast [toast]="toast" animate.leave="toast-leaving" (dismissed)="dismiss($event)" />
   }
 </div>
 <div class="toast-region" role="alert" aria-live="assertive" data-testid="avisos-region-errores">
   @for (toast of errors(); track toast.id) {
-    <app-toast [toast]="toast" (dismissed)="dismiss($event)" />
+    <app-toast [toast]="toast" animate.leave="toast-leaving" (dismissed)="dismiss($event)" />
   }
 </div>

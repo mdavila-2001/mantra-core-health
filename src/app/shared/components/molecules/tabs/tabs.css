@@ -141,7 +141,7 @@
     border-radius: var(--r-full);
     background: var(--brand-primary);
     transform: scaleX(0);
-    transition: transform var(--dur-fast) var(--ease-standard);
+    transition: transform var(--dur-base) var(--pulse-ease);
 }
 
 .tabs__tab.is-selected {
@@ -293,4 +293,11 @@
 :host(.tabs--vertical) .tabs__panels {
     flex: 1;
     min-width: 0;
+}
+
+/* Pulsación (pulse.md §7): la pestaña se tiñe al pulsarla, antes de que el
+   panel cambie, para que el clic se sienta recibido. */
+.tabs__tab:active:not(:disabled) {
+    background: var(--pulse-press-tint);
+    transition-duration: 0s;
 }

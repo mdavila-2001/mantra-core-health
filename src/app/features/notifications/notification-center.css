@@ -126,7 +126,7 @@ button.avisos__item:focus-visible {
 
 .avisos__detalle {
   color: var(--text-secondary, var(--tinta-2));
-  font-size: 0.9rem;
+  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
 
@@ -136,7 +136,7 @@ button.avisos__item:focus-visible {
   align-items: center;
   gap: 0.4rem;
   color: var(--text-muted, var(--tinta-3));
-  font-size: 0.8rem;
+  font-size: var(--fs-caption);
 }
 
 .avisos__categoria {

@@ -14,6 +14,7 @@ import { AppButton } from '../../atoms/button/button';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { FormField } from '../form-field/form-field';
 import { nextControlId } from '@shared/forms/form-control.context';
+import { playExitAnimation } from '@shared/motion/exit-animation';
 import {
   DEFAULT_CANCEL_LABEL,
   DEFAULT_CONFIRM_LABEL,
@@ -99,12 +100,28 @@ export class Dialog {
     afterNextRender(() => this.showModal());
   }
 
-  /** Cierra devolviendo el resultado. Lo llama el servicio y los botones. */
+  /** Ya se está yendo: un `Escape` durante la salida no resuelve dos veces. */
+  private cerrando = false;
+
+  /**
+   * Cierra devolviendo el resultado. Lo llama el servicio y los botones.
+   *
+   * Primero se va (pulse.md §7) y recién después se cierra y resuelve: el
+   * servicio desmonta el componente al recibir el resultado, así que
+   * resolver antes cortaría la salida a la mitad.
+   */
   close(confirmed: boolean): void {
-    this.closeNative();
-    this.resolved.emit({
+    if (this.cerrando) {
+      return;
+    }
+    this.cerrando = true;
+    const resultado: DialogResult = {
       confirmed,
       ...(confirmed && this.reasonConfig() !== null ? { reason: this.reason().trim() } : {}),
+    };
+    playExitAnimation(this.dialogRef().nativeElement, 'pulse-leaving', () => {
+      this.closeNative();
+      this.resolved.emit(resultado);
     });
   }
 

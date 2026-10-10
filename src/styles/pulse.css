@@ -157,3 +157,123 @@
         transform: none;
     }
 }
+
+/* ============================================================================
+    PULSE · INTERACCIÓN — cuarta idea: RESPUESTA.
+
+    Lo que se toca contesta, y contesta IGUAL en toda la aplicación. Antes cada
+    componente elegía su curva y su duración (había 0,18 s, 150 ms, 70 ms,
+    `ease`, `ease-out`… para el mismo gesto), así que la misma acción se sentía
+    distinta según la pantalla. Esta sección fija el idioma común:
+
+      APUNTAR   el estado de hover llega con `--dur-fast`, sólo con puntero fino.
+      PULSAR    hunde la pieza al instante (sin transición de bajada) y la
+                devuelve con `--ease-spring`: el eco físico del dedo.
+      APARECER  una superficie flotante entra con `--dur-base` + `--pulse-ease`.
+      IRSE      sale con `--pulse-dur-exit` + `--pulse-ease-exit`: más corta que
+                la entrada, acelerando. Lo que se va no se hace esperar.
+
+    Guía: docs/design-system/pulse.md §7.
+   ========================================================================== */
+
+:root {
+    /* La salida: más corta que la entrada (`--dur-base`) y acelerando, porque
+       lo que se va ya no tiene nada que decir. */
+    --pulse-dur-exit: 140ms;
+    --pulse-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+    /* Cuánto se hunde lo pulsado. Una pieza chica (botón, chip, número de
+       página) usa `--pulse-press-scale`; una grande (fila, tarjeta) apenas
+       baja, porque escalar 1000 px un 3 % son 30 px de salto. */
+    --pulse-press-scale: 0.97;
+
+    /* Capa de estado: el tinte que pone el hover y el que pone la pulsación,
+       derivados del petróleo de la marca. En vez de un gris por componente. */
+    --pulse-hover-tint: color-mix(in srgb, var(--brand-primary) 7%, transparent);
+    --pulse-press-tint: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+}
+
+/* ── Base de todo lo pulsable ───────────────────────────────────────────────
+   `:where()` tiene especificidad cero: cualquier regla de un componente le
+   gana. Esto no le pone aspecto a nada; sólo hace que, cuando un componente
+   cambia el color de algo al apuntarlo, el cambio LLEGUE en vez de saltar.
+   Son las 448 `<button>` sueltas y los enlaces de la aplicación que nunca
+   declararon su transición. */
+:where(button, a[href], summary, [role='button'], [role='tab'], [role='menuitem'], [role='option']) {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease-standard);
+}
+
+/* ── Utilidades de respuesta ────────────────────────────────────────────────*/
+
+/* Pieza chica pulsable sin componente propio (un botón de ícono a mano, una
+   miniatura): hover con capa de estado y pulsación con resorte. */
+.pulse-tap {
+    transition:
+        background-color var(--dur-fast) var(--ease-standard),
+        color var(--dur-fast) var(--ease-standard),
+        transform var(--dur-base) var(--ease-spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .pulse-tap:hover {
+        background-color: var(--pulse-hover-tint);
+    }
+}
+
+.pulse-tap:active {
+    background-color: var(--pulse-press-tint);
+    transform: scale(var(--pulse-press-scale));
+    transition-duration: var(--dur-fast), var(--dur-fast), 0s;
+}
+
+/* Una superficie que se va. La pone `playExitAnimation()` (shared/motion) en
+   la superficie; el componente decide QUÉ pieza se anima con
+   `.pulse-leaving .su-panel { animation: pulse-leave … }`. */
+@keyframes pulse-leave {
+    to {
+        opacity: 0;
+        transform: translateY(4px) scale(0.985);
+    }
+}
+
+@keyframes pulse-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+/* Una superficie flotante que nace de su ancla (menú, calendario): crece desde
+   el borde por donde se abrió, no desde el centro. */
+@keyframes pulse-pop {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.97);
+    }
+}
+
+/* Cambio de página de una lista: el contenido nuevo llega desde el lado hacia
+   el que se avanzó. Dos nombres idénticos por sentido para que el navegador
+   vuelva a correr la animación en dos avances seguidos (cambiar el nombre es
+   lo que la reinicia). Sólo opacidad y desplazamiento: las cifras de una fila
+   no se deforman. */
+@keyframes pulse-page-next-a { from { opacity: 0; transform: translateX(12px); } }
+@keyframes pulse-page-next-b { from { opacity: 0; transform: translateX(12px); } }
+@keyframes pulse-page-prev-a { from { opacity: 0; transform: translateX(-12px); } }
+@keyframes pulse-page-prev-b { from { opacity: 0; transform: translateX(-12px); } }
+
+[data-page-turn='next-a'] { animation: pulse-page-next-a var(--dur-base) var(--pulse-ease); }
+[data-page-turn='next-b'] { animation: pulse-page-next-b var(--dur-base) var(--pulse-ease); }
+[data-page-turn='prev-a'] { animation: pulse-page-prev-a var(--dur-base) var(--pulse-ease); }
+[data-page-turn='prev-b'] { animation: pulse-page-prev-b var(--dur-base) var(--pulse-ease); }
+
+@media (prefers-reduced-motion: reduce) {
+    .pulse-tap:active {
+        transform: none;
+    }
+
+    [data-page-turn] {
+        animation: none;
+    }
+}

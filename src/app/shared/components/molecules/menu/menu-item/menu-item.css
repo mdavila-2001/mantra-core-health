@@ -25,6 +25,12 @@
     background: var(--bg-inset);
 }
 
+/* Pulsación (pulse.md §7): el ítem elegido se tiñe al instante. */
+:host(:active:not(.menu-item--disabled)) {
+    background: var(--pulse-press-tint);
+    transition-duration: 0s;
+}
+
 :host(.menu-item--destructive) {
     color: var(--st-error-fg);
 }

@@ -72,7 +72,7 @@
 .grilla__dia--vacio .grilla__dia-numero {
   inline-size: 1.75rem;
   block-size: 1.75rem;
-  font-size: 1rem;
+  font-size: var(--fs-body-lg);
 }
 
 /* ---- la cabecera ------------------------------------------------------------ */
@@ -108,7 +108,7 @@
 }
 
 .grilla__dia-nombre {
-  font-size: 11px;
+  font-size: var(--fs-overline);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -285,7 +285,7 @@
 }
 
 .grilla__bloque-detalle {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   opacity: 0.85;
   overflow-wrap: anywhere;
 }

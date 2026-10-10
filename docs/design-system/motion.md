@@ -107,6 +107,9 @@ Pulse añade `clip-path` y `box-shadow` a la paleta de la regla 1 (sólo
 en contenido clínico) **no se modifica**: Pulse anima el continente y el
 estado, jamás la cifra.
 
+La salida de una superficie flotante usa `--pulse-dur-exit` (140 ms), por
+debajo de la entrada: la regla 2 no se toca (`pulse.md` §7).
+
 Deuda conocida: el reloj de la cinta de «Hoy» (`cinta-pulso`) sigue siendo un
 bucle infinito, anterior a Pulse.
 

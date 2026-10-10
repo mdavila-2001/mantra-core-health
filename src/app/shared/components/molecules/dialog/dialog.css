@@ -55,16 +55,38 @@
   margin-top: var(--sp-6);
 }
 
-/* Entrada corta; la regla global de prefers-reduced-motion la vuelve
-   instantánea, que para un modal es exactamente lo correcto. */
+/* Entrada y salida (pulse.md §7). Entra con `--dur-base` y se posa sin
+   rebote; se va en `--pulse-dur-exit`, más corta y acelerando. La salida la
+   dispara `playExitAnimation()` desde `Dialog.close()` poniendo
+   `.pulse-leaving` en el `<dialog>`: sin ella el panel desaparecía de golpe.
+   La regla global de prefers-reduced-motion deja ambas instantáneas, que para
+   un modal es exactamente lo correcto. */
 .dialog[open] .dialog__panel {
-  animation: dialog-in var(--dur-fast) var(--ease-standard);
+  animation: dialog-in var(--dur-base) var(--pulse-ease);
+}
+
+.dialog[open]::backdrop {
+  animation: dialog-backdrop-in var(--dur-base) var(--ease-out);
+}
+
+.dialog.pulse-leaving .dialog__panel {
+  animation: pulse-leave var(--pulse-dur-exit) var(--pulse-ease-exit) forwards;
+}
+
+.dialog.pulse-leaving::backdrop {
+  animation: pulse-fade-out var(--pulse-dur-exit) var(--pulse-ease-exit) forwards;
 }
 
 @keyframes dialog-in {
   from {
     opacity: 0;
-    transform: translateY(var(--sp-2));
+    transform: translateY(var(--sp-2)) scale(0.98);
+  }
+}
+
+@keyframes dialog-backdrop-in {
+  from {
+    opacity: 0;
   }
 }
 

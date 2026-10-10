@@ -65,7 +65,7 @@
         </tr>
       </thead>
 
-      <tbody>
+      <tbody [attr.data-page-turn]="pageTurn()">
         @for (row of rows(); track rowKey(row); let indice = $index) {
           <tr
             class="data-table__row"

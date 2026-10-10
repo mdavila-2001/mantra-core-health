@@ -610,7 +610,7 @@
 .ahora {
   cursor: pointer;
   transition:
-    border-color var(--dur-fast) ease,
+    border-color var(--dur-fast) var(--ease-standard),
     box-shadow var(--dur-base) var(--pulse-ease),
     transform var(--dur-base) var(--pulse-ease);
 }

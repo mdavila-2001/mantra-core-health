@@ -100,7 +100,7 @@
 .doctor__titular,
 .doctor__resenas {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   line-height: 16px;
   color: var(--tinta-2);
 }

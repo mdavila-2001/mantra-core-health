@@ -140,7 +140,7 @@
 }
 
 :host {
-    animation: toast-in 0.18s ease-out;
+    animation: toast-in var(--dur-base) var(--pulse-ease);
 }
 
 @keyframes toast-fade-in {
