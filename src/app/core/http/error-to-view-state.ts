@@ -42,7 +42,7 @@ export const IDENTITY_VERIFICATION_ROUTE = '/my-account/identity';
  */
 export function errorToViewState<T>(error: unknown): ViewState<T> {
   if (!(error instanceof HttpErrorResponse)) {
-    return unexpectedError('sin-id', 'Ocurrió un error inesperado.');
+    return unexpectedError('sin-id', 'No pudimos completar la acción. Intente de nuevo en unos segundos.');
   }
 
   // Estado 0 es «la petición no llegó»: sin conexión, DNS caído o CORS. Nunca

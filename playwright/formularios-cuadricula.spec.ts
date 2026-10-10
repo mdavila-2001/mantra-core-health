@@ -76,7 +76,7 @@ async function responderLaPagina(page: Page): Promise<void> {
   const textos = pagina.locator('input[type="text"]:not([disabled]), textarea:not([disabled])');
   for (let i = 0; i < (await textos.count()); i += 1) {
     const campo = textos.nth(i);
-    if ((await campo.inputValue()) === '') await campo.fill('Sin datos');
+    if ((await campo.inputValue()) === '') await campo.fill('Todavía sin registros');
   }
 
   const numeros = pagina.locator('input[type="number"]:not([disabled])');

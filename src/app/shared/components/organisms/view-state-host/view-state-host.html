@@ -156,7 +156,7 @@
     @if (errorState(); as fallo) {
       <ng-content select="[vsh-error]">
         <app-alert tone="error" title="Algo salió mal">
-          {{ fallo.message ?? 'Ocurrió un error inesperado. Si el problema persiste, repórtelo con este código.' }}
+          {{ fallo.message ?? 'No pudimos completar la acción. Intente de nuevo en unos segundos. Si el problema persiste, repórtelo con este código.' }}
           <p class="view-state-host__request-id">
             Código de soporte:
             <code class="tabular-nums">{{ fallo.requestId }}</code>

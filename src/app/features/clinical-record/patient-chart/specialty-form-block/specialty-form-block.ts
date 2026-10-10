@@ -603,7 +603,7 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos traerlas.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });
@@ -806,7 +806,7 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos revisarlo.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });
@@ -853,7 +853,7 @@ export class SpecialtyFormBlock {
           'No pudimos leer las notas de esta consulta.'
         );
       case 'error':
-        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
       default:
         return 'No pudimos leer las notas de esta consulta.';
     }
@@ -1389,7 +1389,7 @@ export class SpecialtyFormBlock {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });

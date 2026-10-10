@@ -507,7 +507,7 @@ export class InsuranceCampaigns {
       case 'offline':
         return 'No pudimos conectarnos. Revise su conexión y reintente.';
       case 'error':
-        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
       default:
         return 'No se pudo completar la operación.';
     }

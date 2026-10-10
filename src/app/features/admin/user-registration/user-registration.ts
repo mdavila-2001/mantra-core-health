@@ -128,7 +128,7 @@ export class UserRegistration {
     if (state.status === 'error') {
       // El identificador es lo único que conecta este fallo con los registros
       // del servidor: va siempre, aunque el mensaje sea genérico.
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });

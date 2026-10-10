@@ -77,7 +77,7 @@ export class AuthProvidersHome {
       descripcion: 'El intento se inicia con state y nonce; todo desenlace queda registrado.',
       operaciones: [
         { label: 'Iniciar login federado', route: `${BASE}/login/start` },
-        { label: 'Procesar callback', route: `${BASE}/login/callback` },
+        { label: 'Completar ingreso con proveedor', route: `${BASE}/login/callback` },
       ],
     },
     {
