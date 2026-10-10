@@ -1178,10 +1178,12 @@ export class CommunityClient {
    * @returns El identificador de la conversación.
    */
   createConversation(datos: NewConversation): Observable<{ readonly id: string }> {
-    return this.http.post<{ readonly id: string }>(
-      this.url('/community/conversations'),
-      datos,
-    );
+    // El cuerpo se arma clave por clave con lo que declara
+    // `CreateConversationDto`: la API rechaza con 400 cualquier clave de más.
+    return this.http.post<{ readonly id: string }>(this.url('/community/conversations'), {
+      participantProfileIds: [...datos.participantProfileIds],
+      ...(datos.conversationType === undefined ? {} : { conversationType: datos.conversationType }),
+    });
   }
 
   /**
