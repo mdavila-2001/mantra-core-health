@@ -577,7 +577,7 @@ describe('MedicalRecord', () => {
 
     expect(dataUrl).toMatch(/^data:application\/pdf;base64,/);
     expect(fileName).toBe('receta-m-1.pdf');
-    expect(toasts.success).toHaveBeenCalledWith('Descarga iniciada exitosamente', 'Receta oficial');
+    expect(toasts.success).toHaveBeenCalledWith('Su receta se está descargando.', 'Receta oficial');
   });
 
   it('si la API falla, avisa el error y el botón vuelve a estar disponible', async () => {

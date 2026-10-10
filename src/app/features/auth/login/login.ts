@@ -126,7 +126,7 @@ export class Login {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message ?? 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message ?? 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });

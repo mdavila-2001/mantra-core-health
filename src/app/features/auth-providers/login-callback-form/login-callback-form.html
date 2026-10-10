@@ -1,5 +1,5 @@
 <app-page-header
-  title="Procesar callback del proveedor"
+  title="Completar el ingreso con el proveedor"
   subtitle="La vuelta del login federado: todo desenlace queda registrado, incluso el rechazo."
   [breadcrumbs]="breadcrumbs()"
 />
@@ -54,7 +54,7 @@
       }
     </dl>
 
-    <button app-button variant="primary" (clicked)="otroCallback()">Procesar otro callback</button>
+    <button app-button variant="primary" (clicked)="otroCallback()">Probar otro ingreso</button>
   </div>
 } @else {
   @if (errorMessage(); as mensaje) {
@@ -64,8 +64,8 @@
   <app-paginated-form
   [paginas]="paginas"
   [form]="form"
-  label="Procesar callback del proveedor"
-  submitLabel="Procesar callback"
+  label="Completar el ingreso con el proveedor"
+  submitLabel="Completar ingreso"
   [pending]="isSubmitting()"
   (enviado)="submit()"
 />

@@ -341,7 +341,7 @@ export class RegisterPharmacy {
     const state = this.state();
     if (state.status === 'validation') return state.issues[0]?.message ?? null;
     if (state.status === 'offline') return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    if (state.status === 'error') return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    if (state.status === 'error') return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     return null;
   });
 

@@ -285,7 +285,7 @@ function mensajeDeError(error: unknown): string {
     return state.issues.map((issue) => issue.message).join(' ') || 'La asignación fue rechazada.';
   }
   if (state.status === 'error') {
-    return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
   }
-  return 'Ocurrió un error inesperado.';
+  return 'No pudimos completar la acción. Intente de nuevo en unos segundos.';
 }

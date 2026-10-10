@@ -62,7 +62,7 @@ export function mensajeDeFalloDeEscritura(
     case 'error':
       // El identificador de petición es obligatorio en S9: sin él, quien
       // reporta el problema y quien lo busca en los registros no se encuentran.
-      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
+      return `${estado.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${estado.requestId})`;
     default:
       // `ready`, `loading` y los demás no son fallos. `stale` y `empty` no
       // aplican a una escritura: no hay dato viejo que refrescar ni lista

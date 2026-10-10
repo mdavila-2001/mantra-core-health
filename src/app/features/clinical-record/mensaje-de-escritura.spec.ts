@@ -76,7 +76,7 @@ describe('mensajeDeFalloDeEscritura', () => {
       'Se cayó el índice (req-42)',
     );
     expect(mensajeDeFalloDeEscritura(unexpectedError('req-42', ''), textos)).toBe(
-      'Ocurrió un error inesperado. (req-42)',
+      'No pudimos completar la acción. Intente de nuevo en unos segundos. (req-42)',
     );
   });
 
