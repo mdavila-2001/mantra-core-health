@@ -24,12 +24,21 @@
     transition:
         box-shadow var(--dur-fast) var(--ease-standard),
         border-color var(--dur-fast) var(--ease-standard),
-        transform var(--dur-fast) var(--ease-standard);
+        transform var(--dur-base) var(--pulse-ease);
 }
 
-:host(:hover) {
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-md);
+@media (hover: hover) and (pointer: fine) {
+    :host(:hover) {
+        border-color: var(--border-strong);
+        box-shadow: var(--pulse-lift);
+        transform: translateY(var(--pulse-lift-distance));
+    }
+}
+
+:host(:active) {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(0) scale(0.995);
+    transition-duration: var(--dur-fast);
 }
 
 /* El anillo va en el HOST y no en el enlace: el enlace se estiró sobre toda la

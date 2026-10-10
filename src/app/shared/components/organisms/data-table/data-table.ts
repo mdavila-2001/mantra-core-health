@@ -8,6 +8,7 @@ import {
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 
@@ -342,9 +343,34 @@ export class DataTable<Row> {
     });
   }
 
+  /**
+   * Hacia dónde se pidió la página, mientras se espera que llegue. Cuando las
+   * filas nuevas aterrizan, se convierte en {@link pageTurn}.
+   */
+  private pendingTurn: 'next' | 'prev' | null = null;
+
+  /**
+   * El giro de página que anima el `<tbody>` (pulse.md §7): las filas nuevas
+   * entran desde el lado hacia el que se avanzó. Alterna `-a`/`-b` porque es
+   * el cambio de nombre lo que hace que el navegador repita la animación.
+   */
+  protected readonly pageTurn = signal<string | null>(null);
+
+  private readonly landPageTurn = effect(() => {
+    const filas = this.rows();
+    const sentido = untracked(() => (filas.length > 0 ? this.pendingTurn : null));
+    if (sentido === null) {
+      return;
+    }
+    this.pendingTurn = null;
+    const previo = untracked(this.pageTurn);
+    this.pageTurn.set(previo === `${sentido}-a` ? `${sentido}-b` : `${sentido}-a`);
+  });
+
   protected goPrevious(): void {
     const cursor = this.cursor().prevCursor;
     if (cursor) {
+      this.pendingTurn = 'prev';
       this.cursorChanged.emit(cursor);
     }
   }
@@ -352,6 +378,7 @@ export class DataTable<Row> {
   protected goNext(): void {
     const cursor = this.cursor().nextCursor;
     if (cursor) {
+      this.pendingTurn = 'next';
       this.cursorChanged.emit(cursor);
     }
   }

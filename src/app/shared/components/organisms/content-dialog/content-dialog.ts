@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
+import { playExitAnimation } from '@shared/motion/exit-animation';
 import { AppButton } from '../../atoms/button/button';
 
 /** Los cuatro anchos de referencia del panel. Ver {@link ContentDialog.size}. */
@@ -225,12 +226,20 @@ export class ContentDialog implements OnDestroy {
     });
   }
 
+  /**
+   * Primero la salida (pulse.md §7), después el cierre de verdad: quien
+   * escucha `closed` suele quitar el modal con un `@if`, y eso cortaría la
+   * animación a la mitad. `cerrado` se marca antes para que un segundo gesto
+   * durante la salida no la repita.
+   */
   private doClose(): void {
     this.cerrado = true;
-    this.closeNative();
-    this.unlockScroll();
-    this.returnFocus();
-    this.closed.emit();
+    playExitAnimation(this.dialogRef().nativeElement, 'pulse-leaving', () => {
+      this.closeNative();
+      this.unlockScroll();
+      this.returnFocus();
+      this.closed.emit();
+    });
   }
 
   /**

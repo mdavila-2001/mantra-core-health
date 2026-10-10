@@ -183,7 +183,7 @@
   gap: var(--sp-3);
   max-height: calc(100vh - 2 * var(--sp-4));
   overflow-y: auto;
-  animation: dialog-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: dialog-appear var(--dur-base) var(--pulse-ease);
 }
 
 @media (prefers-reduced-motion: reduce) {

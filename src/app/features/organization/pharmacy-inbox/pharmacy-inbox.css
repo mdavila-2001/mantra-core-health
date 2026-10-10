@@ -196,7 +196,7 @@ app-alert {
 .bandeja__tarjeta--nueva {
   border-color: var(--st-info-bd);
   background: var(--st-info-bg);
-  animation: bandeja-pulso 1.2s ease-in-out 3;
+  animation: bandeja-pulso 1.2s var(--ease-standard) 3;
 }
 
 .bandeja__fila {

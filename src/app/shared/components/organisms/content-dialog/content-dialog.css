@@ -21,7 +21,7 @@
       la de tarjeta: un modal no es una tarjeta más de la página.
     - **El encabezado y el pie se quedan quietos** y el cuerpo se recorre entre
       los dos, con su barra de desplazamiento fina y sus sombras de corte.
-    - **Entra desde abajo y con escala**, apenas: 0,18 s. Lo justo para que se
+    - **Entra desde abajo y con escala**, apenas: `--dur-base`. Lo justo para que se
       lea de dónde salió. Con `prefers-reduced-motion` la regla global lo
       vuelve instantáneo, que para un modal es exactamente lo correcto.
     ========================================================================== */
@@ -46,7 +46,7 @@
 }
 
 .content-dialog[open]::backdrop {
-    animation: content-dialog-backdrop-in 0.18s ease both;
+    animation: content-dialog-backdrop-in var(--dur-base) var(--ease-out) both;
 }
 
 .content-dialog__panel {
@@ -260,7 +260,17 @@
 /* Entrada corta; la regla global de `prefers-reduced-motion` la vuelve
    instantánea, que para un modal es exactamente lo correcto. */
 .content-dialog[open] .content-dialog__panel {
-    animation: content-dialog-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: content-dialog-in var(--dur-base) var(--pulse-ease);
+}
+
+/* La salida (pulse.md §7): la dispara `playExitAnimation()` desde
+   `doClose()`. Más corta que la entrada y acelerando. */
+.content-dialog.pulse-leaving .content-dialog__panel {
+    animation: pulse-leave var(--pulse-dur-exit) var(--pulse-ease-exit) forwards;
+}
+
+.content-dialog.pulse-leaving::backdrop {
+    animation: pulse-fade-out var(--pulse-dur-exit) var(--pulse-ease-exit) forwards;
 }
 
 @keyframes content-dialog-in {

@@ -28,7 +28,7 @@
   transition:
     background var(--dur-fast) var(--ease-standard),
     color var(--dur-fast) var(--ease-standard),
-    transform var(--dur-fast) var(--ease-spring),
+    transform var(--dur-base) var(--ease-spring),
     box-shadow var(--dur-base) var(--ease-standard);
   white-space: nowrap;
   position: relative;
@@ -39,18 +39,24 @@
 
 /* Se levanta apenas y proyecta sombra: dice «esto responde» antes del clic.
    1 px es a propósito — más que eso, en una fila de botones, se lee como que
-   algo se desacomodó. */
-:host(:hover) {
-  background: var(--_btn-bg-hover);
-  color: var(--_btn-fg-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+   algo se desacomodó.
+   Sólo con puntero fino: en táctil el hover se queda pegado después del toque
+   y el botón parecería seguir levantado (pulse.md §7). */
+@media (hover: hover) and (pointer: fine) {
+  :host(:hover) {
+    background: var(--_btn-bg-hover);
+    color: var(--_btn-fg-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 /* Y se hunde al presionar. La vuelta usa `--ease-spring`, que sobrepasa un
    poco: es lo que hace que el botón se sienta físico en vez de conmutado. */
 :host(:active) {
-  transform: translateY(1px);
+  background: var(--_btn-bg-hover);
+  color: var(--_btn-fg-hover);
+  transform: translateY(1px) scale(0.985);
   box-shadow: none;
   /* Bajar sin esperar: el eco del dedo tiene que ser inmediato. */
   transition-duration: var(--dur-fast), var(--dur-fast), 0s, var(--dur-fast);

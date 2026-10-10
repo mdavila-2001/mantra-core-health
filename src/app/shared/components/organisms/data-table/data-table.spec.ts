@@ -337,6 +337,57 @@ describe('DataTable', () => {
       await fixture.whenStable();
       expect(host.cursores).toEqual(['cur-sig', 'cur-ant']);
     });
+
+    describe('giro de página (pulse.md §7)', () => {
+      const OTRAS: readonly Paciente[] = [
+        { id: 'p-3', apellido: 'Rojas', documento: '1102938', obraSocial: 'Particular' },
+      ];
+
+      function giro(): string | null {
+        return root().querySelector('tbody')?.getAttribute('data-page-turn') ?? null;
+      }
+
+      it('al abrir la tabla no gira: sólo se anima lo que se pidió', () => {
+        expect(giro()).toBeNull();
+      });
+
+      it('gira hacia el sentido pedido recién cuando llegan las filas nuevas', async () => {
+        host.cursor.set({ nextCursor: 'cur-sig' });
+        await fixture.whenStable();
+
+        botonPorTexto('Siguiente')?.click();
+        await fixture.whenStable();
+        expect(giro()).toBeNull();
+
+        host.state.set(ready(OTRAS));
+        await fixture.whenStable();
+        expect(giro()).toBe('next-a');
+      });
+
+      it('dos avances seguidos cambian de nombre, para que la animación se repita', async () => {
+        host.cursor.set({ prevCursor: 'cur-ant', nextCursor: 'cur-sig' });
+        await fixture.whenStable();
+
+        botonPorTexto('Siguiente')?.click();
+        host.state.set(ready(OTRAS));
+        await fixture.whenStable();
+        botonPorTexto('Siguiente')?.click();
+        host.state.set(ready(FILAS));
+        await fixture.whenStable();
+        expect(giro()).toBe('next-b');
+
+        botonPorTexto('Anterior')?.click();
+        host.state.set(ready(OTRAS));
+        await fixture.whenStable();
+        expect(giro()).toBe('prev-a');
+      });
+
+      it('refrescar los datos sin cambiar de página no gira', async () => {
+        host.state.set(ready(OTRAS));
+        await fixture.whenStable();
+        expect(giro()).toBeNull();
+      });
+    });
   });
 
   describe('selección', () => {

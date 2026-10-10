@@ -20,7 +20,7 @@
 .comentarios__rotulo {
   margin: var(--e2) 0;
   color: var(--tinta-2);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   line-height: 16px;
   font-weight: 600;
   text-transform: uppercase;
@@ -63,7 +63,7 @@
   justify-content: center;
   background: var(--sup-inset);
   color: var(--tinta-2);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 
@@ -92,7 +92,7 @@ a.comentario__autor:hover {
 
 .comentario__fecha {
   color: var(--tinta-3);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   line-height: 16px;
 }
 
