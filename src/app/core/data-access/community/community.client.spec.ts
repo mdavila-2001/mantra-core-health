@@ -74,6 +74,19 @@ describe('CommunityClient', () => {
    * `undefined` viaja como clave declarada y la petición vuelve con 400. Es el
    * defecto más fácil de introducir y el más difícil de ver en una captura.
    */
+  it('createConversation manda sólo lo que declara CreateConversationDto', () => {
+    // Informe B: una clave de más es un 400 de la API. El tipo ya no admite
+    // `groupId`, y el objeto se copia clave por clave por si llega algo más.
+    const datos = { participantProfileIds: ['p-1', 'p-2'], groupId: 'g-1' } as unknown as Parameters<
+      CommunityClient['createConversation']
+    >[0];
+    client.createConversation(datos).subscribe();
+
+    const req = http.expectOne('/community/conversations');
+    expect(req.request.body).toEqual({ participantProfileIds: ['p-1', 'p-2'] });
+    req.flush({ id: 'c-1' });
+  });
+
   it('listProfilePosts no manda cursor, limit ni actor cuando no vinieron', () => {
     client.listProfilePosts('p-1').subscribe();
 
