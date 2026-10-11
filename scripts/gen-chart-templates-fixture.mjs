@@ -3,7 +3,7 @@
  *
  * ## Por qué existe
  *
- * El backend siembra **43 formularios** con procedencia documentada
+ * El backend siembra formularios con procedencia documentada
  * (`mantra-core-health-api/src/common/seed/data/clinical-forms/`), y el
  * simulador servía **cuatro escritos a mano** con códigos que ni siquiera
  * coincidían. Para una doctora de medicina general, de neurología o de

@@ -300,9 +300,9 @@ tocó**; lo describe en
 
 `design-tokens.types.ts` declara `SPACING_STEPS` con 11 escalones y
 `RADIUS_NAMES` con 8 nombres, incluido `signature`. `styles.css` los define todos.
-No hay deriva de **valores** — hay una prueba que la vigila. Lo que sí falta es la
-comprobación inversa: un token declarado en CSS y ausente en TypeScript pasaría
-sin aviso. Registrado como brecha `MEDIUM`.
+No hay deriva de **valores** — hay una prueba que la vigila. La comprobación
+inversa quedó cerrada al incorporar la escala `--heat-*` al catálogo tipado; el
+spec de tokens compara ahora CSS y TypeScript en ambos sentidos.
 
 ### D5 · El OpenAPI del backend no es alcanzable desde este repositorio
 
