@@ -287,6 +287,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    path: 'psychological-help',
+    label: 'Ayuda psicológica',
+    group: 'General',
+    icon: 'heart',
+    roles: ['PATIENT'],
+    exclusiveRoles: true,
+    availability: 'disponible',
+    summary: 'Apoyo emocional, videos de la OPS y acceso a psicólogos y psiquiatras.',
+    module: 'M-mental-health-support',
+  },
+  {
     // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
     // este archivo: sin ella la pantalla queda huérfana —el invariante de
     // `app.routes.spec` exige que toda pantalla cuelgue de una sección— y

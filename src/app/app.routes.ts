@@ -92,6 +92,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
+  'psychological-help': () =>
+    import('./features/psychological-help/psychological-help').then((m) => m.PsychologicalHelp),
   'laboratory-directory': () =>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,
