@@ -1,5 +1,5 @@
 <app-page-header
-  title="Configurar su perfil"
+  title="Editar perfil"
   subtitle="Su presentación, sus especialidades y sus matrículas."
   [breadcrumbs]="breadcrumbs()"
 />
@@ -26,8 +26,6 @@
         >
           <!-- ─── Datos personales ──────────────────────────────────────── -->
           <app-tab [label]="pestanas[0]">
-            <p class="edicion__nota">Cómo le ven las personas que consultan su perfil.</p>
-
             <!-- El logo del consultorio: se carga y se cambia SÓLO desde acá. La misma
                  caja que ve la ficha (en «Datos personales» y, de lectura, en
                  «Facturación»); es lo que sale en el membrete de cada PDF. Sin

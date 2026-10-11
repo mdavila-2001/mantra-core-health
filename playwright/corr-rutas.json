@@ -233,7 +233,7 @@
     },
     {
       "ruta": "/my-account/preview",
-      "nombre": "vitrina-borrada",
+      "nombre": "preview-no-existe",
       "esperado": "no-encontrado"
     },
     {
