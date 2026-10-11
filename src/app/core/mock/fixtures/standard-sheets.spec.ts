@@ -59,9 +59,8 @@ describe('las fichas clínicas estándar del simulador', () => {
    * dos verdes, sobre tres árboles distintos y sin que este archivo ni
    * `standard-sheets.generated.ts` cambiaran. En subconjunto no se reproduce
    * —ni los ocho specs de `core/mock` juntos, ni los pares con los sospechosos
-   * obvios—. El catálogo llega con **seis códigos de más**; el fixture siempre
-   * tiene los 43 que hay en el backend, porque la prueba de arriba lo comprueba
-   * contra el disco y ésa nunca falló.
+   * obvios—. El catálogo llega con **seis códigos de más**; la prueba de arriba
+   * comprueba el fixture contra la fuente del backend.
    *
    * La causa raíz **está sin localizar**. El único sitio que muta el array es
    * `PLANTILLAS_DE_EXPEDIENTE.push(nueva)` en `POST /charts/templates`

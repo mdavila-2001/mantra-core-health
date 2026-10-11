@@ -10,21 +10,26 @@ que el sistema necesita y vigila.
 | Familia | Cantidad | Prefijo | Cambia con el tema |
 |---|---:|---|---|
 | Rampas de color | 11 × 10 = **110** | `--c-<familia>-<50…900>` | No |
-| Superficies | 4 | `--bg-*` | **Sí** |
+| Superficies | 6 | `--bg-*` | **Sí** |
 | Texto | 4 | `--text-*` | **Sí** |
 | Marca | 6 | `--brand-*` | **Sí** |
 | Bordes | 2 | `--border-*` | **Sí** |
 | Estados | 4 × 3 = **12** | `--st-<estado>-<bg\|fg\|bd>` | **Sí** |
 | Tonos de marca | 2 × 3 = **6** | `--st-<primary\|secondary>-*` | **Sí** |
+| Escala de intensidad | 4 × 2 = **8** | `--heat-<1…4>-<bg\|fg>` | **Sí** |
 | Efectos | 4 | `--shadow-*`, `--focus-ring` | **Sí** |
+| Capas | 8 | `--z-*` | No |
+| Duraciones | 3 | `--dur-*` | No |
+| Curvas | 3 | `--ease-*` | No |
 | Espaciado | 11 | `--sp-*` | No |
 | Radios | 8 | `--r-*` | No |
 | Puntos de quiebre | 3 | `--bp-*` | No |
-| Familias tipográficas | 2 | `--font-*` | No |
+| Familias tipográficas | 3 | `--font-*` | No |
 | Tamaños de tipografía | 9 | `--fs-*` | No |
 | Interlineados | 7 | `--lh-*` | No |
+| Alias de compatibilidad | 7 | `--surface-*`, `--text-*`, `--border-*`, `--accent` | **Sí** |
 
-**188 tokens.** `DESIGN_TOKENS` los enumera en tiempo de ejecución.
+**220 tokens.** `DESIGN_TOKENS` los enumera en tiempo de ejecución.
 
 Los PDF del sistema toman de acá sus colores y sus dos familias tipográficas,
 copiados en RGB y TTF porque `jsPDF` no lee CSS; cómo y con qué prueba de
@@ -110,17 +115,12 @@ duplicación gobernada.
 yarn test   # entre las 804, están las que comparan CSS ↔ TS
 ```
 
-## El hueco de la comprobación
+## Verificación en los dos sentidos
 
-La verificación es **en un solo sentido**: cada token declarado en TypeScript se
-comprueba contra CSS.
-
-**Un token declarado solo en CSS y ausente en TypeScript pasaría sin aviso.** No
-rompe nada —el CSS funciona igual— pero el catálogo tipado dejaría de ser
-completo, y quien busque el token por autocompletado no lo encontraría.
-
-Registrado como brecha `MEDIUM` (D4) en
-[la auditoría de estructura](../reports/graphify-audit.md#d4--el-sistema-de-diseño-se-declara-en-dos-escalones-distintos).
+`design-tokens.types.spec.ts` compara el catálogo completo con `src/styles.css`:
+ningún nombre del TypeScript puede faltar en CSS, y ningún custom property de
+CSS puede quedar fuera del catálogo tipado. La escala de intensidad (`--heat-*`)
+se incorporó para cerrar esa deriva.
 
 ## `DESIGN_TOKENS`
 
@@ -131,16 +131,13 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([…]);
 > *«Existe para que la deriva CSS ↔ TS sea detectable, **no para iterarlo en la
 > UI**.»*
 
-La advertencia importa: pintar 188 tokens en una pantalla no es documentación, es
+La advertencia importa: pintar 220 tokens en una pantalla no es documentación, es
 un volcado. La vitrina exhibe los que tienen significado, no todos.
 
 ## Tokens que **no** existen
 
 | Token esperable | Estado |
 |---|---|
-| Duraciones de transición (`--duration-*`) | No existen. Los tiempos están en los CSS de cada componente |
-| Curvas de aceleración (`--ease-*`) | No existen |
-| Índices de apilamiento (`--z-*`) | No existen. Cada capa fija el suyo |
 | Anchos de contenedor (`--container-*`) | No existen |
 | Grosores de borde (`--bw-*`) | No existen |
 | Tokens específicos de componente | No existen, y es correcto: se componen desde los semánticos |
