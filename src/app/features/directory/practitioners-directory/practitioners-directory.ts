@@ -184,6 +184,17 @@ export class PractitionersDirectory {
     { initialValue: null },
   );
 
+  /** Búsqueda inicial en URL, para que los enlaces de ayuda abran el filtro ya aplicado. */
+  private readonly busquedaEnUrl = toSignal(
+    this.route.queryParams.pipe(
+      map((params) => {
+        const valor = params[SEARCH_PARAM];
+        return typeof valor === 'string' ? valor : '';
+      }),
+    ),
+    { initialValue: '' },
+  );
+
   /** El recuento por especialidad: lo que dibuja la portada. */
   protected readonly recuento = signal<ViewState<readonly TarjetaDeEspecialidad[]>>(loading());
 
@@ -317,6 +328,10 @@ export class PractitionersDirectory {
     // cambio del parámetro es una pantalla distinta y una lectura distinta.
     // El recuento alimenta el filtro de especialidad: se pide una vez.
     this.cargarRecuento();
+    effect(() => {
+      const busqueda = this.busquedaEnUrl();
+      untracked(() => this.filtro.set(busqueda));
+    });
     effect(() => {
       const elegida = this.especialidadEnUrl();
       untracked(() => this.cargarLista(elegida));
