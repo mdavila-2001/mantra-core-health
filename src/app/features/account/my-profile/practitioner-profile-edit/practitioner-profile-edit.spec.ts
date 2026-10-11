@@ -3336,6 +3336,15 @@ describe('PractitionerProfileEdit', () => {
   /* ---- el logo del consultorio (pestaña «Facturación») ---------------------- */
 
   describe('el logo del consultorio', () => {
+    it('conserva el logo de PDF sin presentar el editor como vista pública', () => {
+      const fixture = montarConVista();
+
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Cómo le ven las personas que consultan su perfil',
+      );
+      expect(fixture.nativeElement.querySelector('[data-testid="edicion-logo"]')).not.toBeNull();
+    });
+
     const PROPIA = { id: 'site-1', isOwnSite: true, logoFileId: null };
     const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
 
