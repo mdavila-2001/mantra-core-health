@@ -26,11 +26,12 @@ describe('security-headers', () => {
     expect(policy).toContain("frame-ancestors 'none'");
   });
 
-  it('el visor de resultados enmarca sólo URL de objeto locales, nunca un tercero', () => {
+  it('enmarca URL locales y los videos de YouTube sin cookies, no otros terceros', () => {
     const policy = contentSecurityPolicy();
-    expect(policy).toContain("frame-src 'self' blob:");
+    expect(policy).toContain("frame-src 'self' blob: https://www.youtube-nocookie.com");
     expect(policy).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
-    expect(policy).not.toMatch(/frame-src[^;]*https?:/);
+    expect(policy).not.toContain('https://www.youtube.com');
+    expect(policy).not.toContain('https://player.vimeo.com');
   });
 
   describe('hashes de scripts en línea', () => {
@@ -144,7 +145,7 @@ describe('security-headers', () => {
       const directiva = csp.split('; ').find((d) => d.startsWith('img-src '));
 
       expect(directiva).toBe(
-        "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es",
+        "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es https://i.ytimg.com",
       );
       for (const host of ['https://upload.wikimedia.org', 'https://thumb.wikimedia.org', 'https://cima.aemps.es']) {
         const otras = csp.split('; ').filter((d) => !d.startsWith('img-src '));
