@@ -467,7 +467,7 @@ export class AnalysisOrderBlock {
    * {@link confirmRepeat}, que arman la decisión cada uno por su lado.
    */
   private submitOrder(decision?: {
-    readonly previousDiagnosticReportId: string;
+    readonly previousDiagnosticReportId?: string;
     readonly reusePreviousReport?: true;
     readonly duplicateOverrideReason?: string;
   }): void {
@@ -565,7 +565,7 @@ export class AnalysisOrderBlock {
   /** El diálogo de antiduplicación pidió reutilizar el informe previo. */
   protected confirmReuse(): void {
     const previousDiagnosticReportId = this.duplicateCheck()?.previousStudy?.reportId;
-    if (previousDiagnosticReportId === undefined) {
+    if (previousDiagnosticReportId == null) {
       return;
     }
     this.submitOrder({ previousDiagnosticReportId, reusePreviousReport: true });
@@ -573,11 +573,16 @@ export class AnalysisOrderBlock {
 
   /** El diálogo de antiduplicación pidió repetir el estudio, con justificación. */
   protected confirmRepeat(duplicateOverrideReason: string): void {
-    const previousDiagnosticReportId = this.duplicateCheck()?.previousStudy?.reportId;
-    if (previousDiagnosticReportId === undefined) {
+    const previo = this.duplicateCheck()?.previousStudy;
+    if (previo === undefined) {
       return;
     }
-    this.submitOrder({ previousDiagnosticReportId, duplicateOverrideReason });
+    // Repetir sobre una orden activa sin informe: no hay informe que enlazar,
+    // sólo la justificación.
+    this.submitOrder({
+      ...(previo.reportId == null ? {} : { previousDiagnosticReportId: previo.reportId }),
+      duplicateOverrideReason,
+    });
   }
 
   /** Se cerró el diálogo de antiduplicación sin decidir: no se pide nada. */

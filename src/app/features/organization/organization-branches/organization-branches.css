@@ -56,3 +56,16 @@
   display: grid;
   gap: var(--sp-4);
 }
+
+/* Dos columnas desde el ancho del diálogo mediano: nombre y código van lado a
+   lado; la descripción y el enlace ocupan el ancho completo. */
+@media (min-width: 640px) {
+  .branches__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .branches__form > app-alert,
+  .branches__form > .branches__wide {
+    grid-column: 1 / -1;
+  }
+}

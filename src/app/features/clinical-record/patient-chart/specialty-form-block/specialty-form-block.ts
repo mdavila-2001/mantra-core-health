@@ -1460,6 +1460,7 @@ export class SpecialtyFormBlock {
             codeConceptId: diagnostico,
             encounterId,
             noteText: `Del formulario «${plantilla.name}»`,
+            verificationStatus: 'PROVISIONAL',
           }),
       });
     }

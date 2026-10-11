@@ -1,3 +1,4 @@
+import { displayCurrency } from '../../../../core/money/display-currency';
 import { booleanAttribute, ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -78,7 +79,7 @@ export class ProductResults {
     // Espacio duro: el importe no se separa de su moneda al partir el renglón.
     return fila.currency === null
       ? fila.unitAmount
-      : `${fila.unitAmount}\u00A0${fila.currency}`;
+      : `${fila.unitAmount}\u00A0${displayCurrency(fila.currency)}`;
   }
 
   /** «1,2 km», o por qué no hay distancia. */

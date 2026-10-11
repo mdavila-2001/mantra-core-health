@@ -12,9 +12,17 @@ export const ANALYSIS_CATEGORIES = ['LAB', 'IMAGING', 'OTHER'] as const;
 export type AnalysisCategory = (typeof ANALYSIS_CATEGORIES)[number];
 
 /** El código del `categoryConceptId` que corresponde a laboratorio, en el catálogo. */
-const CODIGO_LABORATORIO = 'SRQ-LAB';
-/** El código que corresponde a imagenología. */
-const CODIGO_IMAGENOLOGIA = 'SRQ-IMAGING';
+const CODIGOS_LABORATORIO: readonly string[] = [
+  'SRQ-LAB',
+  // Los que siembra la API real (módulos `clinical` y `diagnostics`).
+  'clinical:SERVICE_REQUEST_CATEGORY_LAB',
+];
+/** Los códigos que corresponden a imagenología. */
+const CODIGOS_IMAGENOLOGIA: readonly string[] = [
+  'SRQ-IMAGING',
+  'diagnostics:SERVICE_REQUEST_CATEGORY_IMAGING',
+  'clinical:SERVICE_REQUEST_CATEGORY_IMAGING',
+];
 
 /**
  * Deriva el tipo desde el **código** del concepto de categoría, no desde su
@@ -24,10 +32,10 @@ const CODIGO_IMAGENOLOGIA = 'SRQ-IMAGING';
  * suposición sobre el nombre del estudio.
  */
 export function categoriaDeAnalisis(codigoDeCategoria: string | undefined): AnalysisCategory {
-  if (codigoDeCategoria === CODIGO_LABORATORIO) {
+  if (codigoDeCategoria !== undefined && CODIGOS_LABORATORIO.includes(codigoDeCategoria)) {
     return 'LAB';
   }
-  if (codigoDeCategoria === CODIGO_IMAGENOLOGIA) {
+  if (codigoDeCategoria !== undefined && CODIGOS_IMAGENOLOGIA.includes(codigoDeCategoria)) {
     return 'IMAGING';
   }
   return 'OTHER';

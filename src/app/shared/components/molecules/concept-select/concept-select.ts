@@ -106,7 +106,7 @@ export class ConceptSelect {
     { value: '', label: this.placeholder() },
     ...this.opcionesCrudas().map((opcion) => ({
       value: this.valueField() === 'code' ? opcion.code : opcion.conceptId,
-      label: this.labels()[opcion.code] ?? opcion.display,
+      label: this.labels()[opcion.code] ?? opcion.displayEs ?? opcion.display,
     })),
   ]);
 

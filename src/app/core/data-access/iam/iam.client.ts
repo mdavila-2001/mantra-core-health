@@ -422,6 +422,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        taxIdentifier: registration.taxIdentifier,
         legalEntityType: registration.legalEntityType,
         tenantType: 'PHARMACY',
         countryConceptId: registration.countryConceptId,

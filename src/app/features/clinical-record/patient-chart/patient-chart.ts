@@ -2249,6 +2249,9 @@ function conceptosDe({ resumen, chart }: Expediente): readonly string[] {
     ...resumen.conditions.flatMap((fila) => [
       fila.codeConceptId,
       fila.categoryConceptId,
+      // Sin la certeza, `diagnosisStateOf` no puede distinguir confirmado de
+      // presuntivo y todo diagnóstico sale «En estudio».
+      fila.verificationStatusConceptId,
       fila.clinicalStatusConceptId,
       fila.severityConceptId,
     ]),

@@ -30,6 +30,9 @@ export interface DiagnosticUnitSite {
   readonly role: DiagnosticConcept;
   readonly sampleCollectionAvailable: boolean | null;
   readonly imagingAvailable: boolean | null;
+  /** Coordenadas WGS84 de la sede; `null` si la API no las tiene. Opcionales: el doble de la maqueta no las trae. */
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
 }
 
 export interface DiagnosticEquipment {

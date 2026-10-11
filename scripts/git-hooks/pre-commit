@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# alovida-pre-commit-anti-indice-ajeno
+# ALOVIDA · pre-commit: bloquea un commit que publicaría un índice ajeno o desfasado.
+# Portado de ATLAS (_herramientas/git-hooks/pre-commit).
+#
+# Por qué: varias sesiones de Claude comparten el mismo árbol y el MISMO índice de git
+# (los worktrees comparten además .git/hooks y la config). Un `git add <mi archivo> && git commit`
+# publica TAMBIÉN lo que otra sesión dejó preparado, en versiones viejas (pasó el 19/09/2026:
+# c0409e8e arrastró 13 archivos de otra sesión).
+#
+# Bloquea:
+#   1. Un archivo preparado cuya versión en el índice NO es la del disco (típico `MM`).
+#   2. Un borrado preparado de un archivo que sigue existiendo en disco (`D ` + `??`).
+# No bloquea: `git commit -- <rutas>` ni `git commit -a` (git arma el índice desde el disco).
+# Preparación parcial deliberada (`git add -p`): ALOVIDA_ALLOW_PARTIAL_STAGING=1 git commit ...
+#
+# Encadena con el hook previo si el instalador lo guardó como `pre-commit.encadenado`.
+aqui="$(cd "$(dirname "$0")" && pwd)"
+
+if [ "${ALOVIDA_ALLOW_PARTIAL_STAGING:-}" != "1" ]; then
+  problemas=()
+  while IFS=$'\t' read -r estado ruta; do
+    [ -z "$ruta" ] && continue
+    case "$estado" in
+      D) [ -e "$ruta" ] && problemas+=("borrado preparado de un archivo que EXISTE en disco: $ruta") ;;
+      A|M)
+        if [ -e "$ruta" ] && ! git diff --quiet -- "$ruta" 2>/dev/null; then
+          problemas+=("la versión preparada NO es la del disco: $ruta")
+        fi
+        ;;
+    esac
+  done < <(git diff --cached --name-status --no-renames)
+
+  if [ ${#problemas[@]} -gt 0 ]; then
+    {
+      echo "ALOVIDA pre-commit: el índice no refleja lo que hay en disco. Probablemente es de otra sesión o está desfasado."
+      printf '   - %s\n' "${problemas[@]}"
+      echo ""
+      echo "   Commitea SOLO lo tuyo:   git commit -m \"...\" -- <tus rutas>"
+      echo "   Ver qué hay preparado:   git diff --cached --stat"
+      echo "   Preparación parcial deliberada: ALOVIDA_ALLOW_PARTIAL_STAGING=1 git commit ..."
+    } >&2
+    exit 1
+  fi
+fi
+
+if [ -x "$aqui/pre-commit.encadenado" ]; then
+  exec "$aqui/pre-commit.encadenado" "$@"
+fi
+exit 0

@@ -193,6 +193,17 @@ export interface Environment {
   readonly billingSiatDemo: boolean;
 
   /**
+   * La API REAL publica `/billing/simulated/*` (cobro real de la consulta +
+   * factura SIAT simulada; módulo billing de la API, parche v434).
+   *
+   * No fabrica nada en el navegador —por eso no es `billingSiatDemo`—: es el
+   * contrato del backend. Encendida, la facturación y «Mis facturas» hablan con
+   * la API aunque no haya `mockBackend`. Apagada en los despliegues cuya API
+   * todavía no trae las rutas.
+   */
+  readonly billingSimulatedApi: boolean;
+
+  /**
    * Registra las pantallas portadas de la bóveda que pintan **datos de
    * ejemplo** (`features/alovida/`: filas escritas a mano, una identidad de
    * mentira en el marco, botones que no llaman a nadie).

@@ -648,6 +648,39 @@
     [ngTemplateOutlet]="celdaAccionesCita"
     [ngTemplateOutletContext]="{ $implicit: citaDelDia(booking), inline: inline ?? false }"
   />
+  <!-- Estado del pago en las vistas Día / Semana / Mes: la tabla de Consultas
+       que lo traía se retiró (C-07) y sin esto el médico no podía marcarlo.
+       En la tarjeta del día, el MISMO control de la celda de pago (insignia +
+       menú). En el detalle de la semana —un modal, donde el desplegable no
+       funciona— las opciones van a la vista. -->
+  @if (citaDelDia(booking); as cita) {
+    @if (cita.admitePago && puedeAtender()) {
+      @if (inline) {
+        <div class="agenda__pago agenda__pago--detalle" data-testid="agenda-pago-detalle">
+          @if (cita.pago) {
+            <app-badge [variant]="cita.pago.state === 'PAID' ? 'success' : 'warning'">{{ cita.pago.label }}</app-badge>
+          } @else {
+            <span class="agenda__sin-pago">Pago sin registrar</span>
+          }
+          @for (opcion of estadosDePago; track opcion.code) {
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              [attr.data-testid]="'agenda-pago-' + opcion.code"
+              [disabled]="cita.pago?.state === opcion.code || operando() === cita.id"
+              (clicked)="marcarPago(cita, opcion.code)"
+            >
+              <app-nav-icon [name]="opcion.icon" />
+              {{ opcion.label }}
+            </button>
+          }
+        </div>
+      } @else {
+        <ng-container [ngTemplateOutlet]="celdaPago" [ngTemplateOutletContext]="{ $implicit: cita }" />
+      }
+    }
+  }
 </ng-template>
 
 <ng-template #celdaReservar let-cupo>

@@ -1,3 +1,4 @@
+import { displayCurrency } from '../../../../core/money/display-currency';
 import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -50,7 +51,7 @@ export class StoreResults {
     }
     return sede.currency === null
       ? `desde ${sede.fromAmount}`
-      : `desde ${sede.fromAmount}\u00A0${sede.currency}`;
+      : `desde ${sede.fromAmount}\u00A0${displayCurrency(sede.currency)}`;
   }
 
   protected distanciaDe(sede: StoreHit): string {

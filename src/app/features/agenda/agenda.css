@@ -390,3 +390,9 @@
     margin-inline-start: var(--sp-2);
   }
 }
+
+/* Detalle de la semana (modal): las opciones de pago a la vista, que pueden bajar de renglón. */
+.agenda__pago--detalle {
+  flex-wrap: wrap;
+  white-space: normal;
+}

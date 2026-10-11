@@ -77,6 +77,8 @@ describe('PaymentsBlock', () => {
   function responder(facturas: readonly Record<string, unknown>[]): void {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([PRACTICA]);
+    // Sin vinculaciones propias se cae a la primera práctica de la lista.
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush({ items: facturas, count: facturas.length });
@@ -104,6 +106,8 @@ describe('PaymentsBlock', () => {
   it('un 403 no se lee como «no pagó nada»', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([PRACTICA]);
+    // Sin vinculaciones propias se cae a la primera práctica de la lista.
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush(
@@ -118,6 +122,7 @@ describe('PaymentsBlock', () => {
   it('sin prácticas lo dice, y no pide los pagos', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     fixture.detectChanges();
 
     expect(interno<() => boolean>('sinPractica')()).toBe(true);
@@ -150,6 +155,7 @@ describe('PaymentsBlock con la facturación simulada', () => {
 
     expect(fixture.nativeElement.querySelector('app-patient-charges')).not.toBeNull();
     http.expectNone('/practices');
+    http.expectNone('/practitioners/me/role-assignments');
     http.expectNone((r) => r.url === '/accounting/practitioner/paid-consultations');
     const cobros = http.expectOne((r) => r.url.endsWith('/billing/simulated/charges'));
     expect(cobros.request.params.get('patientProfileId')).toBe('p-1');

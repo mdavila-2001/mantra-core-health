@@ -31,8 +31,6 @@ import type {
   TenantSearchQuery,
   VerifyTenantConfirmation,
 } from './directory.types';
-import { BRANCH_SIMULATOR_EXTENSIONS } from './directory.types';
-import { simulatorOnly, withSimulatorExtensions } from '../simulator-only';
 
 /**
  * Cliente de `directory`: organizaciones de la plataforma y lo que hay dentro
@@ -141,7 +139,7 @@ export class DirectoryClient {
     return this.http
       .post<ConNulos<WireBranchListItem>>(
         this.url(`/tenants/${tenantId}/branches`),
-        withSimulatorExtensions(stripUndefined(branch), BRANCH_SIMULATOR_EXTENSIONS),
+        stripUndefined(branch),
         { headers: deLaOrganizacion(tenantId) },
       )
       .pipe(map(toBranchListItem));
@@ -151,8 +149,7 @@ export class DirectoryClient {
    * `PATCH /tenants/{id}/branches/{branchId}` — edita el nombre, la
    * descripción y la ubicación de una sucursal.
    *
-   * **Sólo existe en el simulador** (P54): la API real no publica edición de
-   * sucursales. `null` borra el dato; una clave ausente lo deja como está.
+   * La API la publica desde el 11/10/2026 (P54). `null` borra el dato; una clave ausente lo deja como está.
    */
   updateBranch(
     tenantId: string,
@@ -160,11 +157,11 @@ export class DirectoryClient {
     changes: BranchChanges,
   ): Observable<BranchListItem> {
     const url = this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`);
-    return simulatorOnly('Editar una sucursal', url, () =>
-      this.http.patch<ConNulos<WireBranchListItem>>(url, stripUndefined(changes), {
+    return this.http
+      .patch<ConNulos<WireBranchListItem>>(url, stripUndefined(changes), {
         headers: deLaOrganizacion(tenantId),
-      }),
-    ).pipe(map(toBranchListItem));
+      })
+      .pipe(map(toBranchListItem));
   }
 
   /**

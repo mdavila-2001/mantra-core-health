@@ -6,7 +6,13 @@ import { forcedRealApi } from '../../core/mock/api-mode';
 /**
  * Si la pantalla de facturación puede hablar con el motor fiscal SIMULADO.
  *
- * Tres condiciones, todas necesarias (FACT-SIAT-MOCK):
+ * Hay dos fuentes de `/billing/simulated/*`:
+ *
+ * - **la API real** (`billingSimulatedApi`): cobro real de la consulta y
+ *   factura SIAT simulada respaldados por el módulo billing. No necesita
+ *   backend simulado en el navegador;
+ * - **el backend simulado del front**, con tres condiciones, todas necesarias
+ *   (FACT-SIAT-MOCK):
  * - `billingSiatDemo`: la demo está encendida en este despliegue;
  * - `mockBackend`: hay backend simulado que responda `/billing/simulated/*`;
  * - `!apiRealForzada()`: nadie desvió las peticiones a la API real desde el
@@ -18,5 +24,6 @@ import { forcedRealApi } from '../../core/mock/api-mode';
  */
 export const SIMULATED_AVAILABLE_INVOICING = new InjectionToken<() => boolean>('FACTURACION_SIMULADA_DISPONIBLE', {
   providedIn: 'root',
-  factory: () => () => environment.billingSiatDemo && environment.mockBackend && !forcedRealApi(),
+  factory: () => () =>
+    environment.billingSimulatedApi || (environment.billingSiatDemo && environment.mockBackend && !forcedRealApi()),
 });
