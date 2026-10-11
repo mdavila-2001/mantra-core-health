@@ -299,9 +299,9 @@ export class NewOrder {
         medicamento: alternativa?.nombre ?? linea.medicamento,
         presentacion: alternativa?.presentacion ?? linea.presentacion,
         cantidad: eleccion.cantidad,
-        cantidadRecetada:
-          deEjemplo?.cantidadRecetada ??
-          (this.sinReceta ? Math.max(linea.cantidad, CANTIDAD_MAXIMA_SIN_RECETA) : linea.cantidad),
+        cantidadRecetada: this.sinReceta
+          ? Math.max(deEjemplo?.cantidadRecetada ?? 0, linea.cantidad, CANTIDAD_MAXIMA_SIN_RECETA)
+          : (deEjemplo?.cantidadRecetada ?? linea.cantidad),
         precioDeLista: alternativa?.precio ?? this.precioNormalizado(linea.precio),
         alternativa,
         alternativas,
