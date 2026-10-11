@@ -448,6 +448,11 @@ export class DiagnosticOrders {
     // Conservada del refactor UX previo (2026-09-13): no la retira el pedido
     // de esta noche, y quitarla sería perder una capacidad ya entregada sin
     // que nadie lo haya pedido (ver ambigüedad registrada en PLAN.md).
+    acciones.push({
+      code: 'cotizar',
+      label: 'Comparar precio y distancia',
+      icon: 'billing',
+    });
     acciones.push({ code: 'reservar', label: 'Reservar hora en un laboratorio', icon: 'calendar' });
     return acciones;
   }
@@ -480,6 +485,14 @@ export class DiagnosticOrders {
             fragment: fila.reportId,
           });
         }
+        return;
+      case 'cotizar':
+        void this.router.navigate(['/my-account/cotizaciones'], {
+          queryParams: {
+            q: fila.studyLabel,
+            vertical: fila.type === 'IMAGING' ? 'IMAGENOLOGIA' : 'ANALISIS',
+          },
+        });
         return;
       case 'reservar':
         void this.router.navigate(['/my-account/appointments'], {
