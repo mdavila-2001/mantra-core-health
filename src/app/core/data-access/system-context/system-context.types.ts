@@ -40,6 +40,11 @@ export interface DynamicEnumOption {
    * mostrar un uuid o dejar la opción sin nombre.
    */
   readonly display: string;
+  /**
+   * Nombre en castellano (designación `ES` preferida del concepto), si el
+   * catálogo lo tiene. Un selector lo prefiere a `display`.
+   */
+  readonly displayEs?: string;
   /** Orden en el que se ofrecen. El backend ya las manda ordenadas. */
   readonly ordinal: number;
   /** Si el modelo lo sugiere como valor por defecto. */

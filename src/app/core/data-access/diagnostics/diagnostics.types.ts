@@ -161,7 +161,8 @@ export interface DuplicateStudyCheck {
 
 /** El estudio previo que satisface (o casi satisface) el pedido nuevo. */
 export interface PreviousStudy {
-  readonly reportId: string;
+  /** Ausente cuando lo que consta es una orden activa que todavía no tiene informe. */
+  readonly reportId?: string;
   readonly serviceRequestId?: string;
   readonly studyName: string;
   readonly providerName: string;
