@@ -84,9 +84,12 @@ RUN yarn install --immutable
 
 COPY . .
 
-# Vacío por defecto = rutas relativas = mismo origen. Ver la nota de arriba.
+# La API usa rutas relativas por defecto; el AI Service se define aparte y
+# queda público en el paquete del navegador. Ninguna de las dos variables lleva secretos.
 ARG PUBLIC_API_BASE_URL=""
 ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
+ARG PUBLIC_AI_BASE_URL="/ai"
+ENV PUBLIC_AI_BASE_URL=$PUBLIC_AI_BASE_URL
 
 # `yarn build` encadena `env:generate`, que además estampa versión y commit en
 # el paquete. El commit sale de Git, y por eso `.git` tiene que estar en el

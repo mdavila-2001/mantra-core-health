@@ -43,6 +43,8 @@ export interface SecurityHeadersOptions {
    * otro, y viene de `PUBLIC_API_BASE_URL`.
    */
   readonly apiBaseUrl?: string;
+  /** Raíz del servicio de IA cuando vive en otro dominio. */
+  readonly aiBaseUrl?: string;
   /**
    * Hashes `sha256-…` de los scripts en línea que hay que autorizar.
    *
@@ -215,6 +217,10 @@ function originOf(url: string | undefined): string | null {
  */
 export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): string {
   const apiOrigin = originOf(options.apiBaseUrl);
+  const aiOrigin = originOf(options.aiBaseUrl);
+  const connectOrigins = [apiOrigin, aiOrigin].filter(
+    (origin, index, origins): origin is string => origin !== null && origins.indexOf(origin) === index,
+  );
   const scriptHashes = options.inlineScriptHashes ?? [];
   const upgrade = options.upgradeInsecureRequests ?? true;
 
@@ -246,7 +252,7 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // navegador, como los mosaicos del mapa; copiarlas al propio almacén sería
     // redistribuirlas, que es otra decisión (de licencia) y no de esta política.
     "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es https://i.ytimg.com",
-    `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
+    `connect-src 'self'${connectOrigins.length === 0 ? '' : ` ${connectOrigins.join(' ')}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     // El visor de resultados usa blob: y la ayuda psicológica incrusta videos
