@@ -134,7 +134,7 @@ acción — y con la columna que más importa: **si cambia el producto**.
 | **M-19** | Rendimiento | Presupuesto inicial 18,95 kB sobre el aviso | Diferir `auth/`, o subir el umbral. **Decidir** | Sí |
 | **M-20** | Pruebas | Sin regresión visual | Playwright (misma dependencia que E2E) | Sí |
 | **M-21** | Pruebas | Sin accesibilidad automatizada | `axe-core` en pruebas de componente | Sí |
-| **M-22** | Diseño | Un token declarado solo en CSS pasaría sin aviso (D4) | Comprobación inversa | No |
+| **M-22** | Diseño | Un token declarado solo en CSS pasaría sin aviso (D4) | Comprobación inversa en `design-tokens.types.spec.ts` | Sí |
 
 ## LOW
 
