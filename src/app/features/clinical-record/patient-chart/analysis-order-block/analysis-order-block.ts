@@ -565,7 +565,7 @@ export class AnalysisOrderBlock {
   /** El diálogo de antiduplicación pidió reutilizar el informe previo. */
   protected confirmReuse(): void {
     const previousDiagnosticReportId = this.duplicateCheck()?.previousStudy?.reportId;
-    if (previousDiagnosticReportId === undefined) {
+    if (previousDiagnosticReportId == null) {
       return;
     }
     this.submitOrder({ previousDiagnosticReportId, reusePreviousReport: true });
@@ -580,7 +580,7 @@ export class AnalysisOrderBlock {
     // Repetir sobre una orden activa sin informe: no hay informe que enlazar,
     // sólo la justificación.
     this.submitOrder({
-      ...(previo.reportId === undefined ? {} : { previousDiagnosticReportId: previo.reportId }),
+      ...(previo.reportId == null ? {} : { previousDiagnosticReportId: previo.reportId }),
       duplicateOverrideReason,
     });
   }
