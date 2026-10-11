@@ -14,11 +14,10 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
+import { Select } from '../../atoms/select/select';
 import { type DatePickerMode, MAX_DEFAULT_YEAR } from './date-picker.types';
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../../forms/form-control.context';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '../../../forms/form-control.context';
+import { NoFieldContext } from '../../../forms/no-field-context.directive';
 
 export interface CalendarDay {
   readonly date: Date;
@@ -236,10 +235,7 @@ function dayTime(date: Date): number {
  * Primera celda utilizable a partir de la preferida: el foco nunca queda sobre
  * una celda fuera de rango, que no se puede elegir ni enfocar.
  */
-function usableCell(
-  cells: readonly { readonly isDisabled: boolean }[],
-  preferred: number,
-): number {
+function usableCell(cells: readonly { readonly isDisabled: boolean }[], preferred: number): number {
   const clamped = Math.min(Math.max(preferred, 0), cells.length - 1);
   if (!cells[clamped].isDisabled) {
     return clamped;
@@ -258,7 +254,7 @@ function usableCell(
 @Component({
   selector: 'app-date-picker',
   standalone: true,
-  imports: [AppButton],
+  imports: [AppButton, NoFieldContext, Select],
   templateUrl: './date-picker.html',
   styleUrl: './date-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -333,10 +329,16 @@ export class DatePicker {
 
   protected readonly monthNames = buildMonthNames();
   protected readonly weekDayNames = buildWeekDayNames();
-  protected readonly hourOptions = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
+  protected readonly hourOptions = Array.from({ length: HOURS_PER_DAY }, (_, h) => ({
+    value: h,
+    label: `${String(h).padStart(2, '0')} h`,
+  }));
   protected readonly minuteOptions = Array.from(
     { length: MINUTES_PER_HOUR / MINUTE_STEP },
-    (_, index) => index * MINUTE_STEP,
+    (_, i) => ({
+      value: i * MINUTE_STEP,
+      label: `${String(i * MINUTE_STEP).padStart(2, '0')} min`,
+    }),
   );
 
   private readonly ownId = nextControlId('date');
@@ -469,15 +471,13 @@ export class DatePicker {
 
     const firstWeekday = (new Date(year, month, 1).getDay() + 6) % DAYS_PER_WEEK;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const totalCells =
-      Math.ceil((firstWeekday + daysInMonth) / DAYS_PER_WEEK) * DAYS_PER_WEEK;
+    const totalCells = Math.ceil((firstWeekday + daysInMonth) / DAYS_PER_WEEK) * DAYS_PER_WEEK;
 
     return Array.from({ length: totalCells }, (_, cell) => {
       const date = new Date(year, month, cell - firstWeekday + 1);
       const cellTime = dayTime(date);
       const isDisabled =
-        (minTime !== null && cellTime < minTime) ||
-        (maxTime !== null && cellTime > maxTime);
+        (minTime !== null && cellTime < minTime) || (maxTime !== null && cellTime > maxTime);
 
       return {
         date,
@@ -1555,9 +1555,8 @@ export class DatePicker {
   }
 
   private focusActiveCell(): void {
-    const cells = this.dialog()?.nativeElement.querySelectorAll<HTMLButtonElement>(
-      '.calendar-unit-btn',
-    );
+    const cells =
+      this.dialog()?.nativeElement.querySelectorAll<HTMLButtonElement>('.calendar-unit-btn');
     const cell = cells?.[this.activeCell()];
     if (cell && !cell.disabled) {
       cell.focus();
@@ -1569,12 +1568,12 @@ export class DatePicker {
     afterNextRender(move, { injector: this.injector });
   }
 
-  protected updateHours(event: Event): void {
-    this.patchDraftTime(Number((event.target as HTMLSelectElement).value), null);
+  protected updateHours(hours: number | null): void {
+    if (hours !== null) this.patchDraftTime(hours, null);
   }
 
-  protected updateMinutes(event: Event): void {
-    this.patchDraftTime(null, Number((event.target as HTMLSelectElement).value));
+  protected updateMinutes(minutes: number | null): void {
+    if (minutes !== null) this.patchDraftTime(null, minutes);
   }
 
   protected handleDialogKeydown(event: KeyboardEvent): void {
@@ -1630,4 +1629,3 @@ export class DatePicker {
     }
   }
 }
-

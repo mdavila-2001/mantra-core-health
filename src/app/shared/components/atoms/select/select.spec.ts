@@ -229,6 +229,19 @@ describe('Select', () => {
       expect(document.activeElement).toBe(boton(fixture));
     });
 
+    it('el teclado del modal no sube: dentro de otro diálogo, Escape no lo cierra', async () => {
+      const fixture = crear<string>([{ value: 'a', label: 'A' }]);
+      await fixture.whenStable();
+      const deAfuera = vi.fn();
+      fixture.nativeElement.addEventListener('keydown', deAfuera);
+      await abrir(fixture);
+
+      await tecla(fixture, 'Escape');
+
+      expect(dialogo(fixture)).toBeNull();
+      expect(deAfuera).not.toHaveBeenCalled();
+    });
+
     it('con el teclado: flecha abajo y Enter eligen la siguiente', async () => {
       const fixture = crear<string>(
         [

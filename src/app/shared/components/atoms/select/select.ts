@@ -287,6 +287,9 @@ export class Select<T> implements ControlValueAccessor {
   }
 
   protected handleDialogKeydown(event: KeyboardEvent): void {
+    // El teclado de este modal es suyo: dentro de otro diálogo (la hora del
+    // calendario), un Escape que subiera cerraría también al de afuera.
+    event.stopPropagation();
     const last = this.visible().length - 1;
     switch (event.key) {
       case 'Escape':

@@ -410,14 +410,9 @@
   gap: var(--sp-1);
 }
 
+/* El marco lo pone `app-select`; aquí sólo el ancho de cada mitad. */
 .time-select {
-  background-color: var(--bg-surface-alt);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-xs);
-  padding: 4px var(--sp-2);
-  font-family: var(--font-body);
-  font-size: var(--fs-caption);
-  color: var(--text-primary);
+  width: 7.5rem;
 }
 
 .time-separator {
