@@ -17,6 +17,7 @@ import {
 import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { chooseSelectOption, selectOptionLabels } from '../../../../../testing/select';
 import { InboxOrder } from './inbox-order';
 
 /** Lo que el contrato devuelve para un pedido que sale a domicilio. */
@@ -222,14 +223,14 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     });
     harness.detectChanges();
 
-    const select = element<HTMLSelectElement>('[data-testid="mostrador-sustituto-0"] select');
+    const select = element<HTMLElement>('[data-testid="mostrador-sustituto-0"]');
     expect(select).not.toBeNull();
-    expect(select?.options).toHaveLength(2);
+    // Antes eran dos `<option>`: el placeholder oculto y el único sustituto.
+    const sustitutos = await selectOptionLabels(harness.fixture, select!);
+    expect(sustitutos).toHaveLength(1);
+    expect(sustitutos.join(' ')).not.toContain('Amoxicilina original');
     expect(text()).not.toContain('Amoxicilina original');
-    if (select !== null) {
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
-    }
+    await chooseSelectOption(harness.fixture, select!, 0);
     harness.detectChanges();
     click('mostrador-confirmar');
 

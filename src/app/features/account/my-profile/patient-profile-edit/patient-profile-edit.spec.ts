@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
+import { getDebugNode, type WritableSignal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -9,6 +9,8 @@ import { provideRouter, Router } from '@angular/router';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { CODIGO_OCUPACION_OTRA } from '../../../../core/data-access/terminology/bo-occupations.service';
 import { PatientProfileEdit } from './patient-profile-edit';
+import type { Select } from '../../../../shared/components/atoms/select/select';
+import { selectOptionLabels } from '../../../../../testing/select';
 import { MapLocationPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 
 /**
@@ -238,17 +240,27 @@ describe('PatientProfileEdit', () => {
     return 0;
   }
 
-  /** El `<select>` real de un campo, que vive dentro del átomo. */
-  function desplegable(testId: string): HTMLSelectElement | null {
+  /** El `app-select` de un campo, en su pestaña. */
+  function desplegable(testId: string): HTMLElement | null {
     abrirPestana(pestanaDe(testId));
-    return (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
-      `[data-testid="${testId}"] select`,
+    const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      `[data-testid="${testId}"]`,
     );
+    return campo?.matches('app-select') ? campo : (campo?.querySelector('app-select') ?? null);
   }
 
-  /** Las etiquetas que ofrece un desplegable, marcador incluido. */
-  function opcionesDe(testId: string): readonly string[] {
-    return [...(desplegable(testId)?.options ?? [])].map((opcion) => opcion.text.trim());
+  /**
+   * Las etiquetas que ofrece un desplegable, marcador incluido. El marcador ya
+   * no es una fila de la lista: es lo que el campo muestra sin elección, y sale
+   * de su `placeholder`.
+   */
+  async function opcionesDe(testId: string): Promise<readonly string[]> {
+    const host = desplegable(testId);
+    if (host === null) {
+      return [];
+    }
+    const marcador = (getDebugNode(host)?.componentInstance as Select<unknown>).placeholder();
+    return [marcador, ...(await selectOptionLabels(fixture, host))];
   }
 
   /** El `<input>` real del teléfono, que vive dentro de `app-phone-input`. */
@@ -1157,10 +1169,10 @@ describe('PatientProfileEdit', () => {
    * Dos opciones, las del alta. Ofrecer más acá dejaría corregir los datos con
    * un valor que el alta no admite, y esa diferencia no la explica nada.
    */
-  it('el sexo se ofrece con las dos opciones del alta', () => {
+  it('el sexo se ofrece con las dos opciones del alta', async () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
+    expect(await opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
   });
 
   /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */
