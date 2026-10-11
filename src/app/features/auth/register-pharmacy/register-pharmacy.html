@@ -130,6 +130,21 @@
                  y su propia confirmación. -->
             <ng-template appCampoPersonalizado="sucursales">
               <div class="farmacia-sucursales">
+                @if (avisoDeSucursalesIncompletas(); as aviso) {
+                  <!-- Antes estas sucursales se descartaban al enviar sin decir
+                       nada. Se nombran acá, apenas aparecen, y cada tarjeta marca
+                       qué le falta. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="warning"
+                    title="Sucursales sin ubicar"
+                    data-testid="registro-farmacia-sucursales-incompletas"
+                  >
+                    {{ aviso }}
+                  </app-alert>
+                }
                 @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
                   <section class="farmacia-sucursal">
                     <header class="farmacia-sucursal__cabecera">
@@ -187,7 +202,7 @@
                       </app-alert>
                     }
 
-                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. El enlace de Google Maps u OpenStreetMap.">
+                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Pegue el enlace de Google Maps u OpenStreetMap con el punto, o márquelo en el mapa de abajo. Sin punto la sucursal no se registra.">
                       <app-input
                         type="url"
                         [testId]="'registro-farmacia-' + sucursal.id + '-url-ubicacion'"

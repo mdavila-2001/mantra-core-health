@@ -39,7 +39,10 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
-import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
+import {
+  coordinatesFromMapUrl,
+  type BranchDraft,
+} from '../../../shared/utils/branch-import/branch-import';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
@@ -749,7 +752,16 @@ export class RegisterPharmacy {
   }
 
   escribirUrlDeSucursal(id: string, url: string | number | null): void {
-    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+    const enlace = url === null ? '' : String(url).trim();
+    // Pegar el enlace es una de las dos maneras de ubicar la sucursal: si trae el
+    // punto escrito, es el punto (y el pin lo muestra); si ya había uno marcado
+    // a mano, ése se respeta.
+    const punto = enlace === '' ? null : coordinatesFromMapUrl(enlace);
+    const yaUbicada = (this.sucursales().find((sucursal) => sucursal.id === id)?.gps ?? null) !== null;
+    this.actualizarSucursal(id, {
+      urlUbicacion: enlace,
+      ...(punto === null || yaUbicada ? {} : { gps: { lat: punto.latitude, lng: punto.longitude } }),
+    });
   }
 
   /* --- carga en lote ------------------------------------------------------ */
@@ -786,6 +798,39 @@ export class RegisterPharmacy {
     });
     this.sucursales.update((lista) => [...lista, ...nuevas]);
   }
+
+  /**
+   * Las sucursales que no se podrían registrar: sin punto en el mapa o sin
+   * nombre. La API exige las dos cosas, y antes se descartaban EN SILENCIO al
+   * enviar —una sucursal del CSV sin punto desaparecía del alta sin avisar—.
+   * Ahora se dicen por su nombre y el envío espera a que se completen o se quiten.
+   */
+  readonly sucursalesIncompletas = computed(() =>
+    this.sucursales().flatMap((sucursal, indice) => {
+      const faltaNombre = sucursal.nombre.trim() === '';
+      const faltaPunto = sucursal.gps === null;
+      return faltaNombre || faltaPunto
+        ? [
+            {
+              id: sucursal.id,
+              rotulo: faltaNombre ? `Sucursal ${indice + 1} (sin nombre)` : sucursal.nombre.trim(),
+              faltaNombre,
+              faltaPunto,
+            },
+          ]
+        : [];
+    }),
+  );
+
+  /** El aviso para el banner y para el envío: cuáles y qué les falta. */
+  readonly avisoDeSucursalesIncompletas = computed<string | null>(() => {
+    const lista = this.sucursalesIncompletas();
+    if (lista.length === 0) return null;
+    const nombres = lista.map((s) => `«${s.rotulo}»`).join(', ');
+    return lista.length === 1
+      ? `Una sucursal no se puede registrar todavía: ${nombres}. Márquela en el mapa, pegue el enlace de su ubicación (o complete el nombre), o quítela.`
+      : `${lista.length} sucursales no se pueden registrar todavía: ${nombres}. Márquelas en el mapa, pegue el enlace de su ubicación (o complete el nombre), o quítelas.`;
+  });
 
   fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
     this.actualizarSucursal(id, { gps });
@@ -834,6 +879,12 @@ export class RegisterPharmacy {
     if (this.isSubmitting()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const aviso = this.avisoDeSucursalesIncompletas();
+    if (aviso !== null) {
+      this.state.set(validation([{ field: 'sucursales', message: aviso }]));
       return;
     }
 
