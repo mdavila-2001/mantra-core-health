@@ -18,7 +18,7 @@ import {
   listaDeTextos,
   valorDeTexto,
 } from '../../../../core/data-access/terminology/terminology.types';
-import { describeApiFailure } from '../../../../core/http/api-failure';
+import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -586,6 +586,9 @@ export class MedicationBlock implements DraftBlock {
    */
   private readonly falloAlPrescribir = signal(false);
 
+  /** Errores de validación enviados por la API, indexados por campo del DTO. */
+  protected readonly erroresDeCampo = signal<Readonly<Record<string, string>>>({});
+
   /**
    * La revisión de interacciones que **no se pudo hacer**, o `null`.
    *
@@ -818,6 +821,7 @@ export class MedicationBlock implements DraftBlock {
    */
   protected onMedicamentoElegido(opcion: ReferenceOption | null): void {
     this.medicamentoElegido.set(opcion);
+    this.erroresDeCampo.set({});
     this.limpiarPosologia();
 
     // Una sugerencia pertenece al medicamento que la publicó. Al cambiar de
@@ -1011,6 +1015,7 @@ export class MedicationBlock implements DraftBlock {
     this.registro.set(loading());
     this.recetaSinFirma.set(null);
     this.falloAlPrescribir.set(false);
+    this.erroresDeCampo.set({});
 
     this.clinical
       .createMedicationRequest({
@@ -1045,6 +1050,7 @@ export class MedicationBlock implements DraftBlock {
         next: (creada) => {
           this.registrando.set(false);
           this.registro.set(ready(null));
+          this.erroresDeCampo.set({});
           this.limpiar();
           // Adjuntar exige que la receta ya exista, así que el panel sólo puede
           // ofrecerse acá. No se cierra solo: elegir los archivos lleva su
@@ -1055,9 +1061,9 @@ export class MedicationBlock implements DraftBlock {
         },
         error: (error: unknown) => {
           this.registrando.set(false);
-          // El 422 del alta sólo puede venir de la indicación: es la única
-          // precondición que este cuerpo puede romper. Se marca para que el
-          // aviso apunte al campo y no a «algo salió mal».
+          this.erroresDeCampo.set(fieldErrorsOf(error));
+          // Distingue la precondición de indicación de otros errores 422; los
+          // errores de campos se anclan aparte con `fieldErrorsOf`.
           this.falloAlPrescribir.set(indicacion !== null);
           this.registro.set(errorToViewState<null>(error));
         },

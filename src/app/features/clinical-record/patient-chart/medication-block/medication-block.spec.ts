@@ -254,6 +254,41 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
+  it('ancla el 422 estructurado de la API al campo Medicamento', async () => {
+    responderCatalogo();
+    señal<string>('medicamento').set('med-amoxi');
+    await interno<() => Promise<void>>('recetar')();
+
+    http.expectOne('/clinical/medication-requests').flush(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación.',
+        timestamp: '',
+        path: '/clinical/medication-requests',
+        correlationId: 'corr-receta-validation',
+        details: {
+          fields: [
+            {
+              field: 'medicationConceptId',
+              constraints: ['isNotEmpty'],
+              messages: ['Elija un medicamento del catálogo.'],
+            },
+          ],
+        },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    fixture.detectChanges();
+
+    const campo = [...fixture.nativeElement.querySelectorAll('app-form-field')].find((element) =>
+      element.textContent?.includes('Medicamento'),
+    );
+    expect(campo?.querySelector('.form-field-error')?.textContent).toContain(
+      'Elija un medicamento del catálogo.',
+    );
+    expect(campo?.querySelector('input')?.getAttribute('aria-invalid')).toBe('true');
+  });
+
   it('sin diagnóstico elegido la clave no viaja: la receta sintomática es legítima', async () => {
     responderCatalogo();
 
