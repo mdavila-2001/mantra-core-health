@@ -26,6 +26,17 @@ export const CODIGO_REMISION = 'COND_REMISSION';
 /** Curso clínico: la condición no tiene resolución esperada, se sigue de por vida. */
 export const CODIGO_CURSO_CRONICO = 'COND_COURSE_CHRONIC';
 
+/**
+ * El catálogo real publica estos conceptos con el prefijo del módulo y la clave
+ * completa (`clinical:CONDITION_CONFIRMED`), mientras que las constantes de
+ * arriba (y el simulador) usan la forma corta (`COND_CONFIRMED`). Se comparan
+ * normalizadas: sin esto, contra la API real todo diagnóstico —también el
+ * confirmado— se veía «En estudio».
+ */
+export function normalizarCodigoDx(codigo: string | undefined): string | undefined {
+  return codigo?.replace(/^clinical:CONDITION_/, 'COND_');
+}
+
 export type DiagnosisState = 'IN_STUDY' | 'ACTIVE' | 'HISTORIC' | 'REFUTED';
 
 export const DIAGNOSIS_STATES: readonly DiagnosisState[] = [
@@ -57,16 +68,18 @@ export function diagnosisStateOf(
   codes: { confirmed: string; refuted: string; active: string },
   now = new Date(),
 ): DiagnosisState {
-  if (condition.verificationStatusConceptId === codes.refuted) {
+  const verificacion = normalizarCodigoDx(condition.verificationStatusConceptId);
+  const estadoClinico = normalizarCodigoDx(condition.clinicalStatusConceptId);
+  if (verificacion === normalizarCodigoDx(codes.refuted)) {
     return 'REFUTED';
   }
-  if (condition.verificationStatusConceptId !== codes.confirmed) {
+  if (verificacion !== normalizarCodigoDx(codes.confirmed)) {
     return 'IN_STUDY';
   }
   const isCurrent =
     condition.expectedResolutionAt === undefined ||
     condition.expectedResolutionAt.getTime() >= now.getTime();
-  return condition.clinicalStatusConceptId === codes.active &&
+  return estadoClinico === normalizarCodigoDx(codes.active) &&
     condition.resolvedAt === undefined &&
     isCurrent
     ? 'ACTIVE'
@@ -75,10 +88,10 @@ export function diagnosisStateOf(
 
 /** La condición se sigue de por vida: no hay «hasta» que mostrar. */
 export function esCronica(condicion: Condition, codigo: ResolverCodigo): boolean {
-  return codigo(condicion.clinicalCourseConceptId) === CODIGO_CURSO_CRONICO;
+  return normalizarCodigoDx(codigo(condicion.clinicalCourseConceptId)) === CODIGO_CURSO_CRONICO;
 }
 
 /** La condición está declarada activa por el catálogo. */
 export function estaActiva(condicion: Condition, codigo: ResolverCodigo): boolean {
-  return codigo(condicion.clinicalStatusConceptId) === CODIGO_ACTIVA;
+  return normalizarCodigoDx(codigo(condicion.clinicalStatusConceptId)) === CODIGO_ACTIVA;
 }

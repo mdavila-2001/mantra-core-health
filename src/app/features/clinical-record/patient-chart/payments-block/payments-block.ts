@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { of, type Observable } from 'rxjs';
+import { forkJoin, of, type Observable } from 'rxjs';
 import { catchError, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
 import { AccountingClient } from '../../../../core/data-access/accounting/accounting.client';
+import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PaidConsultation } from '../../../../core/data-access/accounting/accounting.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
@@ -111,6 +112,7 @@ export interface PagosDelPaciente {
 })
 export class PaymentsBlock {
   private readonly libros = inject(AccountingClient);
+  private readonly sitios = inject(PracticeSitesClient);
 
   readonly patientProfileId = input.required<string>();
 
@@ -130,9 +132,18 @@ export class PaymentsBlock {
       // Con la facturación simulada la lectura es otra: Contabilidad no se pide.
       filter(() => !this.facturacionSimulada),
       switchMap(({ paciente }): Observable<ViewState<PagosDelPaciente>> =>
-        this.libros.listPractices().pipe(
-          switchMap((practicas): Observable<ViewState<PagosDelPaciente>> => {
-            const practica = practicas[0];
+        forkJoin([
+          this.libros.listPractices(),
+          // `GET /practices` trae TODAS las prácticas de la organización y la
+          // caja que importa es la del profesional: la primera de la lista
+          // puede ser de otro y la API responde 422 «sin vinculación activa».
+          // Sus vinculaciones propias fallan en silencio: sin ellas se cae a
+          // la primera, que es lo que había.
+          this.sitios.listMyRoleAssignments().pipe(catchError(() => of([]))),
+        ]).pipe(
+          switchMap(([practicas, vinculos]): Observable<ViewState<PagosDelPaciente>> => {
+            const propias = new Set(vinculos.map((v) => v.practiceId));
+            const practica = practicas.find((p) => propias.has(p.id)) ?? practicas[0];
             // Sin práctica no hay caja: no es un error ni una lista vacía de
             // pagos, así que la vista lo dice con sus propias palabras.
             if (practica === undefined) {
