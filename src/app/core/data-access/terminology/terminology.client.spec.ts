@@ -412,6 +412,15 @@ describe('TerminologyClient', () => {
     });
   });
 
+  it('readGlossaryArticle usa la ruta pública glossary-article y devuelve el documento', () => {
+    let received: unknown;
+    client.readGlossaryArticle('c-A').subscribe((article) => (received = article));
+
+    const body = { conceptRef: { code: 'I10' }, sections: [] };
+    http.expectOne('/terminology/concepts/c-A/glossary-article').flush(body);
+    expect(received).toEqual(body);
+  });
+
   it('readGlossaryTerm deja pasar la categoría, las etiquetas y las relaciones tipadas sin tocarlas', () => {
     let ficha: GlossaryTermDetail | undefined;
     client.readGlossaryTerm('c-A').subscribe((f) => (ficha = f));

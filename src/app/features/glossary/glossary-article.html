@@ -1,0 +1,187 @@
+<div class="articulo" data-testid="articulo-enciclopedico">
+  @if (secciones().length > 0) {
+    <nav class="articulo__indice" aria-label="Índice del artículo">
+      <p class="articulo__indice-titulo">En este artículo</p>
+      <ol>
+        @for (item of secciones(); track item.ancla) {
+          <li>
+            <button type="button" class="articulo__indice-enlace" (click)="irA(item.ancla)">
+              {{ item.entradaDelIndice }}
+            </button>
+          </li>
+        }
+        @if (imagenes().length > 0) {
+          <li>
+            <button type="button" class="articulo__indice-enlace" (click)="irA('articulo-imagenes')">
+              Imágenes
+            </button>
+          </li>
+        }
+        @if (hechos().length > 0) {
+          <li>
+            <button type="button" class="articulo__indice-enlace" (click)="irA('articulo-datos')">
+              Datos
+            </button>
+          </li>
+        }
+        @if (referencias().length > 0) {
+          <li>
+            <button type="button" class="articulo__indice-enlace" (click)="irA('articulo-referencias')">
+              Referencias
+            </button>
+          </li>
+        }
+      </ol>
+    </nav>
+  }
+
+  <div class="articulo__cuerpo">
+    @if (sinonimos().length > 0) {
+      <p class="articulo__sinonimos">También se le dice: {{ sinonimos().join(', ') }}.</p>
+    }
+
+    @for (item of secciones(); track item.ancla) {
+      <section class="articulo__seccion" [attr.aria-labelledby]="item.ancla">
+        <h2 class="articulo__titulo" [id]="item.ancla" tabindex="-1">{{ item.titulo }}</h2>
+        @if (item.encabezadoDeLaFuente; as encabezado) {
+          <p class="articulo__encabezado-fuente">En la fuente: «{{ encabezado }}»</p>
+        }
+
+        @if (item.extracto; as motivo) {
+          <app-alert tone="info" title="Extracto" class="articulo__aviso">{{ motivo }}</app-alert>
+        }
+        @if (item.sinTraduccion) {
+          <p class="articulo__sin-traducir" role="note">
+            Texto en inglés: sin traducción oficial.
+          </p>
+        }
+
+        @for (bloque of item.bloques; track $index) {
+          @switch (bloque.tipo) {
+            @case ('lista') {
+              <ul class="articulo__lista">
+                @for (elemento of bloque.elementos; track $index) {
+                  <li>{{ elemento }}</li>
+                }
+              </ul>
+            }
+            @case ('tabla') {
+              <div class="articulo__tabla-marco" tabindex="0" role="group" [attr.aria-label]="item.titulo">
+                <table class="articulo__tabla">
+                  <tbody>
+                    @for (fila of bloque.filas; track $index) {
+                      <tr>
+                        @for (celda of fila; track $index) {
+                          <td>{{ celda }}</td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            @default {
+              <p class="articulo__parrafo" [attr.lang]="item.seccion.lang">{{ bloque.texto }}</p>
+            }
+          }
+        }
+
+        <p class="articulo__cita" data-testid="articulo-cita">
+          Fuente:
+          @if (enlaceSeguro(item.seccion.sourceUrl); as url) {
+            <a [href]="url" target="_blank" rel="noopener noreferrer">{{
+              nombreDeFuente(item.seccion.source)
+            }}</a>
+          } @else {
+            {{ nombreDeFuente(item.seccion.source) }}
+          }
+          · {{ item.seccion.license }} · consultado el {{ fechaLegible(item.seccion.retrievedAt) }}
+        </p>
+      </section>
+    }
+
+    @if (imagenes().length > 0) {
+      <section class="articulo__seccion" aria-labelledby="articulo-imagenes">
+        <h2 class="articulo__titulo" id="articulo-imagenes" tabindex="-1">Imágenes</h2>
+        <ul class="articulo__galeria">
+          @for (imagen of imagenes(); track imagen.url; let i = $index) {
+            <li>
+              <figure class="articulo__figura">
+                <button
+                  type="button"
+                  class="articulo__miniatura"
+                  (click)="ampliada.set(i)"
+                  [attr.aria-label]="'Ampliar la imagen: ' + imagen.altText"
+                >
+                  <img [src]="imagen.thumbUrl" [alt]="imagen.altText" loading="lazy" decoding="async" />
+                </button>
+                <figcaption class="articulo__pie">
+                  @if (imagen.caption !== '') {
+                    <span class="articulo__leyenda">{{ imagen.caption }}</span>
+                  }
+                  <span>
+                    {{ imagen.author }} ·
+                    <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{
+                      imagen.license
+                    }}</a>
+                    ·
+                    <a [href]="imagen.sourcePage" target="_blank" rel="noopener noreferrer"
+                      >página de origen</a
+                    >
+                  </span>
+                </figcaption>
+              </figure>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (hechos().length > 0) {
+      <section class="articulo__seccion" aria-labelledby="articulo-datos">
+        <h2 class="articulo__titulo" id="articulo-datos" tabindex="-1">Datos</h2>
+        <app-fact-list [hechos]="hechos()" />
+        <p class="articulo__cita">
+          Fuente:
+          @for (fuente of fuentesDeDatos(); track fuente.url; let ultimo = $last) {
+            @if (enlaceSeguro(fuente.url); as url) {
+              <a [href]="url" target="_blank" rel="noopener noreferrer">{{ fuente.nombre }}</a>
+            } @else {
+              {{ fuente.nombre }}
+            }
+            @if (!ultimo) {
+              ·
+            }
+          }
+        </p>
+      </section>
+    }
+
+    @if (referencias().length > 0) {
+      <section class="articulo__seccion" aria-labelledby="articulo-referencias">
+        <h2 class="articulo__titulo" id="articulo-referencias" tabindex="-1">Referencias</h2>
+        <ul class="articulo__referencias">
+          @for (ref of referencias(); track ref.url) {
+            <li>
+              <a [href]="ref.url" target="_blank" rel="noopener noreferrer">{{ ref.title }}</a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+</div>
+
+@if (imagenAmpliada(); as imagen) {
+  <app-content-dialog [heading]="termino()" size="xl" closeLabel="Cerrar" (closed)="ampliada.set(null)">
+    <figure class="articulo__ampliada">
+      <img [src]="imagen.url" [alt]="imagen.altText" />
+      <figcaption class="articulo__pie">
+        {{ imagen.author }} ·
+        <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+        ·
+        <a [href]="imagen.sourcePage" target="_blank" rel="noopener noreferrer">página de origen</a>
+      </figcaption>
+    </figure>
+  </app-content-dialog>
+}
