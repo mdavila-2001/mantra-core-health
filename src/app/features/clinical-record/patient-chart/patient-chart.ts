@@ -22,13 +22,10 @@ import { ChartTemplatesClient } from '../../../core/data-access/chart-templates/
 import type { ChartTemplate } from '../../../core/data-access/chart-templates/chart-templates.types';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
-import type { DiagnosticOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
 import { ProceduresClient } from '../../../core/data-access/procedures/procedures.client';
-import type {
-  DentalCatalog,
-  DentalProcedure,
-} from '../../../core/data-access/procedures/procedures.types';
+import type { DentalCatalog } from '../../../core/data-access/procedures/procedures.types';
+import { describirDentales, describirEstudios } from './encounter-descriptions';
 import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import type {
   CarePlan,
@@ -2278,53 +2275,4 @@ function conceptosDe({ resumen, chart }: Expediente): readonly string[] {
     ...chart.carePlans.flatMap((fila) => [fila.statusConceptId, fila.intentConceptId]),
     ...chart.documents.flatMap((fila) => [fila.categoryConceptId, fila.statusConceptId]),
   ].filter((id): id is string => id !== undefined);
-}
-
-/** Los procedimientos odontológicos de un encuentro, en palabras. */
-function describirDentales(
-  dentales: readonly DentalProcedure[] | null,
-  catalogo: DentalCatalog | null,
-): string {
-  if (dentales === null) {
-    return 'No se pudo leer el histórico odontológico';
-  }
-  if (dentales.length === 0) {
-    return 'Sin procedimientos odontológicos en este encuentro';
-  }
-  const nombres = new Map(
-    [
-      ...(catalogo?.procedureCodes ?? []),
-      ...(catalogo?.teeth ?? []),
-      ...(catalogo?.quadrants ?? []),
-    ].map((entrada) => [entrada.conceptId, entrada.display]),
-  );
-  return dentales
-    .map((d) => {
-      const nombre = nombres.get(d.procedureCodeConceptId) ?? 'Procedimiento odontológico';
-      const sitios = d.sites
-        .map((sitio) => nombres.get(sitio.bodySiteConceptId) ?? sitio.description)
-        .filter((sitio): sitio is string => sitio !== undefined && sitio !== '');
-      return sitios.length === 0 ? nombre : `${nombre} (${sitios.join(', ')})`;
-    })
-    .join(', ');
-}
-
-/** Los estudios de laboratorio e imagen pedidos en un encuentro, en palabras. */
-function describirEstudios(
-  estudios: readonly DiagnosticOrder[] | null,
-  etiquetas: ConceptLabels,
-): string {
-  if (estudios === null) {
-    return 'No se pudieron leer los estudios';
-  }
-  if (estudios.length === 0) {
-    return 'Sin estudios pedidos en este encuentro';
-  }
-  return estudios
-    .map((o) => {
-      const nombre = etiquetas.get(o.codeConceptId)?.display ?? 'Estudio';
-      const estado = etiquetas.get(o.statusConceptId)?.display;
-      return estado === undefined ? nombre : `${nombre} (${estado})`;
-    })
-    .join(', ');
 }

@@ -83,6 +83,8 @@ import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './ag
 import { MyAgenda } from './my-agenda/my-agenda';
 import { ServicesSchedule } from './services-schedule/services-schedule';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
+import { AgendaWindowNav } from './window-nav/window-nav';
+import { rangoDeVentana } from './window-nav/window-range';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -529,6 +531,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots
     Tabs,
     Textarea,
     Tooltip,
+    AgendaWindowNav,
     MyAgenda,
     ServicesSchedule,
     WalkInForm,
@@ -839,19 +842,13 @@ export class Agenda {
    * 2026». Va al pie de la lista junto a los controles que la mueven, para que
    * «Siguiente» diga a dónde llevó.
    */
-  protected readonly rangoDeVentana = computed(() => {
-    const dias = VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7;
-    const desde = this.fechaBase();
-    const hasta = new Date(desde);
-    hasta.setDate(hasta.getDate() + dias - 1);
-    const fin = formatDate(hasta, 'd MMM y', this.idioma);
-    if (dias === 1) return formatDate(desde, 'EEEE d MMM y', this.idioma);
-    const inicio =
-      desde.getMonth() === hasta.getMonth() && desde.getFullYear() === hasta.getFullYear()
-        ? formatDate(desde, 'd', this.idioma)
-        : formatDate(desde, desde.getFullYear() === hasta.getFullYear() ? 'd MMM' : 'd MMM y', this.idioma);
-    return `${inicio} – ${fin}`;
-  });
+  protected readonly rangoDeVentana = computed(() =>
+    rangoDeVentana(
+      this.fechaBase(),
+      VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7,
+      this.idioma,
+    ),
+  );
 
   /** Si la ventana es la de hoy, o si se navegó a otra (ALV-024). */
   protected readonly enVentanaDeHoy = computed(() => {
