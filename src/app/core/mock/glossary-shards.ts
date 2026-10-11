@@ -1,5 +1,6 @@
 import { ArchivoAusente, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
 export { ArchivoAusente, leerConFetch, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
+import type { GlossaryArticle } from '../data-access/terminology/glossary-article.types';
 import { uuid } from './mock-store';
 
 /* ============================================================================
@@ -292,6 +293,21 @@ export class AlmacenDeGlosario {
           plainSummaryEs: fila.plainSummaryEs,
           lang: fila.lang,
         };
+  }
+
+  /** El artículo del término, buscando primero el corpus completo y luego la semilla. */
+  async articulo(id: string): Promise<GlossaryArticle | null> {
+    const shard = `mock/articles/${id.slice(0, 2).toLowerCase()}.json`;
+    for (const base of RAICES_DEL_GLOSARIO) {
+      try {
+        const bucket = await this.leer(`${base}/${shard}`) as Record<string, GlossaryArticle>;
+        const article = bucket[id];
+        if (article !== undefined) return article;
+      } catch (error: unknown) {
+        if (!(error instanceof ArchivoAusente)) throw error;
+      }
+    }
+    return null;
   }
 
   /**

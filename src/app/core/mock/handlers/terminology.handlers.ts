@@ -382,6 +382,15 @@ export function registrarTerminologia(
     return { items, count: items.length, limit };
   });
 
+  router.get('/terminology/concepts/:id/glossary-article', async ({ params }) => {
+    try {
+      const article = await glosario.articulo(params['id']!);
+      return article ?? notFound('El término no tiene artículo');
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
   router.get('/terminology/concepts/:id', async ({ params }) => {
     const c = conceptById(params['id']!);
     if (c === undefined) {
