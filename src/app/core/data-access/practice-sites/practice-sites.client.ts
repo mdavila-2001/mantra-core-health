@@ -154,6 +154,14 @@ export class PracticeSitesClient {
     );
   }
 
+  /** Guarda o elimina el teléfono del profesional en una sede vinculada. */
+  setSiteContactPhone(siteId: string, contactPhone: string | null): Observable<PracticeSite> {
+    return this.http.put<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/contact-phone`),
+      { contactPhone },
+    );
+  }
+
   /**
    * `PUT /practitioners/me/sites/:siteId/logo` — el logo del consultorio.
    *

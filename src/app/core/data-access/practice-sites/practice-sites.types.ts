@@ -28,6 +28,8 @@ export interface PracticeSite {
   readonly latitude: number | null;
   readonly longitude: number | null;
   readonly status: string;
+  /** Contacto de este profesional en esta sede; independiente del teléfono general. */
+  readonly contactPhone?: string | null;
   /**
    * Si es **su** consultorio —su práctica personal— y no la sede de otro.
    *
@@ -104,6 +106,7 @@ export interface NewOwnSiteAddress {
  */
 export interface NewOwnSite {
   readonly name: string;
+  readonly contactPhone?: string;
   /** Zona horaria IANA. Por defecto la de La Paz. */
   readonly timeZone?: string;
   readonly address?: NewOwnSiteAddress;

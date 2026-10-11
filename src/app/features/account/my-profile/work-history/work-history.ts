@@ -57,6 +57,13 @@ import {
 } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
 
+const SITE_PHONE_PATTERN = /^[+]?[0-9 ()-]{6,}$/;
+
+function telefonoDeSedeValido(value: string): boolean {
+  const trimmed = value.trim();
+  return trimmed === '' || (trimmed.length <= 40 && SITE_PHONE_PATTERN.test(trimmed));
+}
+
 /**
  * **Historial laboral** del profesional — punto 9 del reclamo del cliente —
  * y, desde ALV-005, **dónde atiende hoy**.
@@ -375,6 +382,10 @@ export class WorkHistory implements OnInit {
   protected readonly altaDeSedeAbierta = signal(false);
 
   protected readonly nombreDeSedeNueva = signal('');
+  protected readonly telefonoDeSedeNueva = signal('');
+  protected readonly telefonoDeSedeNuevaValido = computed(() =>
+    telefonoDeSedeValido(this.telefonoDeSedeNueva()),
+  );
   protected readonly direccionDeSede = signal('');
   protected readonly ciudadDeSede = signal('');
   /** Municipio elegido en el mapa de Bolivia (concept id), o `null`. */
@@ -552,6 +563,49 @@ export class WorkHistory implements OnInit {
    */
   protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
 
+  /** Editor del contacto particular del profesional en una sede. */
+  protected readonly sedeConTelefonoAbierto = signal<PracticeSite | null>(null);
+  protected readonly telefonoEnEdicion = signal('');
+  protected readonly guardandoTelefono = signal(false);
+  protected readonly errorDelTelefono = signal<string | null>(null);
+  protected readonly telefonoEnEdicionValido = computed(() =>
+    telefonoDeSedeValido(this.telefonoEnEdicion()),
+  );
+
+  protected abrirTelefonoDeSede(sede: PracticeSite): void {
+    this.sedeConTelefonoAbierto.set(sede);
+    this.telefonoEnEdicion.set(sede.contactPhone ?? '');
+    this.errorDelTelefono.set(null);
+  }
+
+  protected cerrarTelefonoDeSede(): void {
+    if (this.guardandoTelefono()) return;
+    this.sedeConTelefonoAbierto.set(null);
+  }
+
+  protected guardarTelefonoDeSede(): void {
+    const sede = this.sedeConTelefonoAbierto();
+    if (sede === null || this.guardandoTelefono() || !this.telefonoEnEdicionValido()) return;
+    const telefono = this.telefonoEnEdicion().trim();
+    this.guardandoTelefono.set(true);
+    this.errorDelTelefono.set(null);
+    this.sites.setSiteContactPhone(sede.id, telefono === '' ? null : telefono).subscribe({
+      next: (actualizada) => {
+        this.sedes.update((sedes) =>
+          sedes.map((actual) => actual.id === sede.id ? { ...actual, contactPhone: actualizada.contactPhone ?? null } : actual),
+        );
+        this.guardandoTelefono.set(false);
+        this.sedeConTelefonoAbierto.set(null);
+        this.toasts.success('El contacto de esta sede quedó actualizado.', 'Teléfono guardado');
+        this.added.emit();
+      },
+      error: () => {
+        this.guardandoTelefono.set(false);
+        this.errorDelTelefono.set('No pudimos guardar el teléfono. Reintente.');
+      },
+    });
+  }
+
   /** La sede cuyo QR bancario está abierto, o `null` si no hay ninguno. */
   protected readonly sedeConQrAbiertoId = signal<string | null>(null);
 
@@ -568,7 +622,8 @@ export class WorkHistory implements OnInit {
   });
 
   protected readonly puedeRegistrarSede = computed(
-    () => this.nombreDeSedeNueva().trim() !== '' && !this.registrandoSede(),
+    () => this.nombreDeSedeNueva().trim() !== '' &&
+      this.telefonoDeSedeNuevaValido() && !this.registrandoSede(),
   );
 
   /**
@@ -1135,6 +1190,9 @@ export class WorkHistory implements OnInit {
     const enEdicion = this.sedeEnEdicion();
     const cuerpo = {
       name: this.nombreDeSedeNueva().trim(),
+      ...(enEdicion !== null || this.telefonoDeSedeNueva().trim() === ''
+        ? {}
+        : { contactPhone: this.telefonoDeSedeNueva().trim() }),
       ...(address === undefined ? {} : { address }),
     };
 
@@ -1393,11 +1451,13 @@ export class WorkHistory implements OnInit {
    */
   protected accionesDeSede(sede: PracticeSite): readonly RowAction[] {
     const qr: RowAction = { code: 'qr', label: this.etiquetaDelQr(sede), icon: 'qr' };
+    const telefono: RowAction = { code: 'telefono', label: 'Editar teléfono', icon: 'phone' };
     if (sede.isOwnSite === true) {
-      return [qr];
+      return [qr, telefono];
     }
     return [
       qr,
+      telefono,
       {
         code: 'retirar',
         label: this.etiquetaDeRetiro(sede),
@@ -1409,6 +1469,10 @@ export class WorkHistory implements OnInit {
 
   /** Despacha el `code` que emitió `app-row-actions` sobre esa sede. */
   protected ejecutarAccionDeSede(code: string, sede: PracticeSite): void {
+    if (code === 'telefono') {
+      this.abrirTelefonoDeSede(sede);
+      return;
+    }
     if (code === 'qr') {
       this.abrirQrDeSede(sede);
       return;
@@ -1749,6 +1813,7 @@ export class WorkHistory implements OnInit {
 
   private limpiarSede(): void {
     this.nombreDeSedeNueva.set('');
+    this.telefonoDeSedeNueva.set('');
     this.direccionDeSede.set('');
     this.ciudadDeSede.set('');
     this.municipioDeSede.set(null);
