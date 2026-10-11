@@ -2327,7 +2327,7 @@ export class RegisterPractitioner {
       },
       {
         titulo: 'Su consultorio propio',
-        clave: 'own-office',
+        clave: 'own-office-contact',
         icon: 'building',
         // **Opcional, y aun así el que más importa** (punto 12/13/22 del módulo
         // médico del registro de procesos). Quien ejerce puede atender en
@@ -2361,6 +2361,14 @@ export class RegisterPractitioner {
             icono: 'phone',
             mensajeDeError: 'El número está incompleto para el país elegido.',
           },
+        ],
+      },
+      {
+        titulo: 'Dónde queda su consultorio',
+        clave: 'own-office',
+        icon: 'pin',
+        hint: 'Opcional. Puede completar la dirección ahora o más adelante desde su perfil.',
+        campos: [
           {
             key: 'municipioConsultorio',
             label: '',
