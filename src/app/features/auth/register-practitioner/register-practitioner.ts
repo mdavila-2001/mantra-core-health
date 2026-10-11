@@ -1118,6 +1118,10 @@ export class RegisterPractitioner {
     // El consultorio propio: su nombre y su calle. Ver la página
     // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
     officeName: new FormControl('', { nonNullable: true }),
+    officeContactPhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
     officeAddressLines: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
     // La firma y el sello: **imágenes**, no una firma electrónica. Opcionales.
@@ -2351,6 +2355,16 @@ export class RegisterPractitioner {
             icono: 'building',
           },
           {
+            key: 'officeContactPhone',
+            label: 'Teléfono de este consultorio (opcional)',
+            hint: 'Puede ser distinto del contacto general de su trabajo.',
+            control: 'tel',
+            autocomplete: 'tel',
+            testId: 'registration-practitioner-office-phone',
+            icono: 'phone',
+            mensajeDeError: 'El número está incompleto para el país elegido.',
+          },
+          {
             key: 'municipioConsultorio',
             label: '',
             control: 'custom',
@@ -2753,10 +2767,11 @@ export class RegisterPractitioner {
     const raw = this.formProfesional.getRawValue();
     const nombre = raw.officeName.trim();
     const calle = raw.officeAddressLines.trim();
+    const telefono = raw.officeContactPhone.trim();
     const municipio = this.municipioConsultorio();
     const punto = this.gpsConsultorio();
 
-    if (nombre === '' && calle === '' && municipio === null && punto === null) {
+    if (nombre === '' && calle === '' && telefono === '' && municipio === null && punto === null) {
       return null;
     }
 
@@ -2767,6 +2782,7 @@ export class RegisterPractitioner {
 
     return {
       name: nombre === '' ? NOMBRE_CONSULTORIO_POR_OMISION : nombre,
+      ...(telefono === '' ? {} : { contactPhone: telefono }),
       ...(conDireccion
         ? {
             address: {
