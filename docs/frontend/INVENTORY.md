@@ -14,7 +14,7 @@ está el índice para que FABLE no reconstruya lo que ya está escrito.
 | Componentes, inventario generado | `docs/reports/generated/component-inventory.md` |
 | Reglas de composición | `docs/components/composition-rules.md` |
 | Formularios, modales, tablas, notificaciones | `docs/components/` |
-| 188 tokens | `docs/design-system/tokens.md` |
+| 220 tokens | `docs/design-system/tokens.md` |
 | Color, espaciado, tipografía, responsive, temas, motion, iconos | `docs/design-system/` |
 | Estado y datos | `docs/data-and-state/` |
 | Nueve estados M34 | `docs/adr/ADR-0005-view-state-m34.md` |

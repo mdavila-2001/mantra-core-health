@@ -111,7 +111,7 @@ Es lo que hace que las 81 secciones se puedan escribir rápido:
 | Multi-organización | `X-Tenant-Id` |
 | Nombre accesible garantizado en formularios | `FORM_CONTROL_CONTEXT` |
 | Armazón con salto, anuncio de ruta y foco | `app-shell` |
-| Sistema de diseño con dos temas y 188 tokens | `styles.css` + `core/tokens/` |
+| Sistema de diseño con dos temas y 220 tokens | `styles.css` + `core/tokens/` |
 | Tabla de datos con estados y cursor | `app-data-table` |
 | Avisos y diálogos accesibles | `ToastService`, `app-dialog` |
 

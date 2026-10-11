@@ -3,14 +3,11 @@
  * Compara el catálogo tipado de tokens con lo que `styles.css` declara — **en
  * las dos direcciones**.
  *
- * Las pruebas del proyecto ya cubrían un sentido: cada token declarado en
- * TypeScript existe en el CSS. Faltaba el inverso, y ése es el que se rompe sin
- * ruido: **un token declarado solo en CSS pasa desapercibido**. No rompe nada
- * —el CSS funciona igual— pero el catálogo tipado deja de ser completo, y quien
- * lo busque por autocompletado no lo encuentra. Es cómo un sistema de diseño
- * empieza a tener dos fuentes.
+ * El catálogo debe coincidir con CSS en ambas direcciones. Si un token aparece
+ * en una sola fuente, el chequeo informa la deriva antes de que el catálogo
+ * tipado y los estilos se separen.
  *
- * Es el hallazgo M-22 / D4.
+ * Cierra el hallazgo M-22 / D4.
  *
  * Uso: node scripts/check-tokens.mjs
  */
@@ -86,6 +83,9 @@ function declaradosEnTypeScript() {
   }
   for (const tono of listaDe('BRAND_TONES')) {
     for (const ranura of listaDe('STATUS_SLOTS')) tokens.add(`--st-${tono}-${ranura}`);
+  }
+  for (const nivel of listaDe('HEAT_LEVELS')) {
+    for (const ranura of listaDe('HEAT_SLOTS')) tokens.add(`--heat-${nivel}-${ranura}`);
   }
 
   for (const paso of listaDe('SPACING_STEPS')) tokens.add(`--sp-${paso}`);

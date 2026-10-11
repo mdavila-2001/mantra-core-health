@@ -107,6 +107,13 @@ export const BRAND_TONES = ['primary', 'secondary'] as const;
 export type BrandTone = (typeof BRAND_TONES)[number];
 export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
 
+/** Escala de cuatro niveles para la matriz de intensidad de consultas. */
+export const HEAT_LEVELS = [1, 2, 3, 4] as const;
+export type HeatLevel = (typeof HEAT_LEVELS)[number];
+export const HEAT_SLOTS = ['bg', 'fg'] as const;
+export type HeatSlot = (typeof HEAT_SLOTS)[number];
+export type HeatToken = `--heat-${HeatLevel}-${HeatSlot}`;
+
 export const EFFECT = {
   shadowSm: '--shadow-sm',
   shadowMd: '--shadow-md',
@@ -268,6 +275,7 @@ export type DesignToken =
   | BorderToken
   | StatusToken
   | BrandToneToken
+  | HeatToken
   | EffectToken
   | SpacingToken
   | RadiusToken
@@ -294,6 +302,14 @@ export function statusToken<T extends StatusType, S extends StatusSlot>(
   slot: S,
 ): `--st-${T}-${S}` {
   return `--st-${status}-${slot}`;
+}
+
+/** Nombre del token de intensidad: `heatToken(2, 'bg')` → `--heat-2-bg`. */
+export function heatToken<L extends HeatLevel, S extends HeatSlot>(
+  level: L,
+  slot: S,
+): `--heat-${L}-${S}` {
+  return `--heat-${level}-${slot}`;
 }
 
 export function spacingToken<S extends SpacingStep>(step: S): `--sp-${S}` {
@@ -323,6 +339,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...BRAND_TONES.flatMap((tone) =>
     STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
   ),
+  ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),
