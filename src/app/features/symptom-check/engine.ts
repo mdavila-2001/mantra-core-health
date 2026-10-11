@@ -149,6 +149,8 @@ const NOT_CONFUSE: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['grado', new Set(['grano'])],
   ['graso', new Set(['grano'])],
   ['corro', new Set(['chorro'])],
+  // «Además» suena a «edema»: «…vista borrosa, además dolor de rodilla» no es hinchazón de piernas.
+  ['ademas', new Set(['edema'])],
 ]);
 
 /* --- El índice ------------------------------------------------------------ */
