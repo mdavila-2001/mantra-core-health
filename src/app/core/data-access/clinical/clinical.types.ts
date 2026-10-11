@@ -557,6 +557,12 @@ export interface NewCondition {
   readonly expectedResolutionAt?: Date;
   /** Hallazgos y justificación clínica (Patch v4.1.3). Narrativa libre. */
   readonly noteText?: string;
+  /**
+   * Certeza con la que nace. Sin declarar, el servidor lo registra confirmado;
+   * un diagnóstico que sale de una sugerencia nace `PROVISIONAL` (presuntivo,
+   * «en estudio») y el profesional lo confirma o lo descarta después.
+   */
+  readonly verificationStatus?: 'CONFIRMED' | 'PROVISIONAL';
 }
 
 /**

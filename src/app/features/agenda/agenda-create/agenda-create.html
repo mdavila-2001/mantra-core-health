@@ -55,17 +55,9 @@
     @if (publicaSoloLaPropia()) {
       <p class="agenda-create__titular">
         @if (esCambio()) {
-          Está cambiando su propia agenda
-          @if (nombreDelTitular()) {
-            , {{ nombreDelTitular() }}
-          }
-          .
+          Está cambiando su propia agenda{{ nombreDelTitular() ? ', ' + nombreDelTitular() : '' }}.
         } @else {
-          Va a publicar su propia agenda
-          @if (nombreDelTitular()) {
-            , {{ nombreDelTitular() }}
-          }
-          .
+          Va a publicar su propia agenda{{ nombreDelTitular() ? ', ' + nombreDelTitular() : '' }}.
         }
       </p>
     }
