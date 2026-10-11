@@ -1,6 +1,6 @@
 # Reporte — Rojos preexistentes de pruebas del front
 
-Fecha: 2026-10-11 · Handoff 2.6 · PRs front: pendientes de publicación.
+Fecha: 2026-10-11 · Handoff 2.6.
 
 ## Causa y cambios
 
@@ -34,7 +34,7 @@ El PR front a `test` requiere API #638 para que exista la clasificación `SPECIF
 
 ## PRs
 
-- Front `dev`: pendiente de publicación.
-- Front `test`: pendiente de publicación; depende de API #638.
+- Front `dev`: [PR #1047](https://github.com/mdavila-2001/mantra-core-health/pull/1047), abierto.
+- Front `test`: [PR #1048](https://github.com/mdavila-2001/mantra-core-health/pull/1048), abierto; depende de API #638.
 
 No se mergeó ningún PR.
