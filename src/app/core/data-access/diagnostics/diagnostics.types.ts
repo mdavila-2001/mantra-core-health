@@ -55,6 +55,11 @@ export interface DiagnosticOrder {
   readonly previousDiagnosticReportId?: string;
   /** La justificación del médico, si repitió un estudio duplicado. */
   readonly duplicateOverrideReason?: string;
+  /**
+   * La orden activa, aún sin informe, sobre la que se repitió el estudio
+   * (v4.2.47). Ausente en cualquier otro caso.
+   */
+  readonly previousServiceRequestId?: string;
 }
 
 /**

@@ -137,6 +137,11 @@
                 <span class="estudios__resultado" data-testid="estudios-duplicado">
                   Repetida con justificación
                 </span>
+                @if (estudio.justificacion !== null) {
+                  <span class="estudios__justificacion" data-testid="estudios-justificacion">
+                    «{{ estudio.justificacion }}»
+                  </span>
+                }
               } @else if (estudio.conResultado) {
                 <!-- «Con resultado» quiere decir liberado, no redactado: un
                      informe con versión vigente pero sin liberar es un borrador. -->

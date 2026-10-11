@@ -42,6 +42,10 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { writeFailureMessage } from '../../write-message';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
+import { conceptosDe, duplicadoDe, mensajeDeAlta } from './analysis-order-block.helpers';
+import type { EstudioEnFicha } from './analysis-order-block.helpers';
+
+export type { EstudioEnFicha } from './analysis-order-block.helpers';
 
 /**
  * La columna que gobierna qué se pide.
@@ -97,29 +101,6 @@ const TOPE = 25;
  * servidor — sólo se usa acá para reconstruir el diálogo, nunca para decidir.
  */
 const DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS = 30;
-
-/** Una orden del histórico, ya sin uuid y con su estado resuelto. */
-export interface EstudioEnFicha {
-  readonly id: string;
-  /** Qué se pidió, en palabras. Nunca el uuid del concepto. */
-  readonly estudio: string;
-  /** Laboratorio o imagenología. */
-  readonly categoria: string;
-  readonly estado: string;
-  readonly pedidoEl: Date;
-  /** Si ya hay un informe liberado que cuelgue de esta orden. */
-  readonly conResultado: boolean;
-  /**
-   * Antiduplicación de estudios (v4.2.17): `'reused'` si la orden nació
-   * satisfecha por un informe previo (no se llegó a pedir de nuevo),
-   * `'repeated'` si se repitió con justificación clínica, o `null` en
-   * cualquier otro caso. Gobierna qué línea reemplaza a «Sin resultado
-   * todavía» / «Resultado listo» en el histórico.
-   */
-  readonly duplicado: 'reused' | 'repeated' | null;
-  /** La fecha del informe previo. Sólo presente cuando `duplicado === 'reused'`. */
-  readonly informePrevioDel: Date | null;
-}
 
 /**
  * **Laboratorio e imagenología** del expediente: pedir el estudio y ver qué
@@ -614,12 +595,7 @@ export class AnalysisOrderBlock {
     conResultado: ReadonlySet<string>,
     informesPorId: ReadonlyMap<string, DiagnosticReport>,
   ): EstudioEnFicha {
-    const duplicado =
-      orden.previousDiagnosticReportId === undefined
-        ? null
-        : orden.duplicateOverrideReason === undefined
-          ? 'reused'
-          : 'repeated';
+    const duplicado = duplicadoDe(orden);
 
     return {
       id: orden.id,
@@ -633,6 +609,7 @@ export class AnalysisOrderBlock {
         duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
+      justificacion: orden.duplicateOverrideReason ?? null,
     };
   }
 
@@ -668,46 +645,4 @@ export class AnalysisOrderBlock {
           this.circuito.set(errorToViewState<PatientDiagnostics>(error)),
       });
   }
-}
-
-/**
- * Los conceptos que el histórico necesita traducir.
- *
- * Se juntan de los dos bloques en una sola lista porque `readConceptLabels` ya
- * deduplica y trocea: dos llamadas separadas pedirían dos veces los códigos que
- * la orden y su informe comparten.
- */
-function conceptosDe(circuito: PatientDiagnostics): readonly string[] {
-  const ids: string[] = [];
-  for (const orden of circuito.orders) {
-    ids.push(orden.codeConceptId, orden.statusConceptId);
-    if (orden.categoryConceptId !== undefined) {
-      ids.push(orden.categoryConceptId);
-    }
-  }
-  for (const informe of circuito.reports) {
-    ids.push(informe.codeConceptId, informe.lifecycleStatusConceptId);
-  }
-  return ids;
-}
-
-/**
- * El toast de éxito, según qué decisión de antiduplicación se mandó (o
- * ninguna). Devuelve `[mensaje, título]`, el orden que espera
- * `ToastService.success`.
- */
-function mensajeDeAlta(decision: {
-  readonly reusePreviousReport?: true;
-  readonly duplicateOverrideReason?: string;
-}): readonly [string, string] {
-  if (decision.reusePreviousReport === true) {
-    return [
-      'Quedó registrado como cubierto por el informe previo. No se pide un estudio nuevo.',
-      'Antiduplicación',
-    ];
-  }
-  if (decision.duplicateOverrideReason !== undefined) {
-    return ['Queda pedido con su justificación; la aseguradora la va a ver.', 'Estudio solicitado'];
-  }
-  return ['Queda pedido y va a verlo acá abajo con su resultado.', 'Estudio solicitado'];
 }
