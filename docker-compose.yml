@@ -80,16 +80,17 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # Vacía. Con el backend simulado da igual a dónde apunte —nada llega a
-        # la red—, y vacía deja la CSP en `connect-src 'self'`, que es lo mismo
-        # que en producción.
+        # La API simulada sigue en el navegador. El asistente de IA sí usa el
+        # servicio público configurado abajo.
         PUBLIC_API_BASE_URL: ''
+        PUBLIC_AI_BASE_URL: ${PUBLIC_AI_BASE_URL:-https://demo.alovidasalud.arauzsoftware.com/ai}
     image: mantra-core-health-mockup
     restart: unless-stopped
     environment:
       PORT: '4000'
       NODE_ENV: production
       PUBLIC_API_BASE_URL: ''
+      PUBLIC_AI_BASE_URL: ${PUBLIC_AI_BASE_URL:-https://demo.alovidasalud.arauzsoftware.com/ai}
       # Ver la nota de APP_DOMAIN arriba: sin esto el dominio devuelve 400.
       SSR_ALLOWED_HOSTS: ${APP_DOMAIN:-localhost}
     ports:

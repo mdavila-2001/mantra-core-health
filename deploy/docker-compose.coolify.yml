@@ -57,17 +57,17 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # VACÍA a propósito, y es la decisión de arquitectura de todo el
-        # montaje: la API vive detrás del MISMO dominio que el frontend, así
-        # que las peticiones salen relativas. Sin CORS que negociar y con la
-        # CSP en `connect-src 'self'`. Quien hace que eso sea verdad es el
-        # `proxy` de abajo.
+        # VACÍA a propósito: la API vive detrás del MISMO dominio que el
+        # frontend. El servicio de IA tiene su URL pública propia y la CSP
+        # permite ese origen de forma explícita.
         PUBLIC_API_BASE_URL: ''
+        PUBLIC_AI_BASE_URL: ${PUBLIC_AI_BASE_URL:-https://demo.alovidasalud.arauzsoftware.com/ai}
     restart: always
     environment:
       PORT: '4000'
       NODE_ENV: production
       PUBLIC_API_BASE_URL: ''
+      PUBLIC_AI_BASE_URL: ${PUBLIC_AI_BASE_URL:-https://demo.alovidasalud.arauzsoftware.com/ai}
       # EL DOMINIO PÚBLICO, Y ES OBLIGATORIO.
       #
       # `AngularNodeAppEngine` compara el `Host` de cada petición contra su
