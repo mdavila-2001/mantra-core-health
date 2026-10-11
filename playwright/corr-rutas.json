@@ -241,6 +241,12 @@
       "nombre": "directorio-sigue-vivo"
     }
   ],
+  "42": [
+    {
+      "ruta": "/psychological-help",
+      "nombre": "ayuda-psicologica-videos-apoyo-y-profesionales"
+    }
+  ],
   "34-inventario": [
     {
       "ruta": "/dashboard",

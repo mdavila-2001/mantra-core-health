@@ -236,7 +236,8 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // laboratorio muestran el archivo que la pantalla acaba de bajar, como URL
     // de objeto local. No abre ningún origen ajeno.
     //
-    // `upload.wikimedia.org`, `thumb.wikimedia.org` (miniaturas) y `cima.aemps.es` (30/09/2026): las imágenes del
+    // `upload.wikimedia.org`, `thumb.wikimedia.org` (miniaturas), `cima.aemps.es` (30/09/2026) y
+    // `i.ytimg.com` (vistas previas de los videos oficiales de ayuda psicológica): las imágenes del
     // glosario en castellano. Wikimedia Commons sirve las ilustraciones con su
     // licencia (atribución visible en la ficha) y CIMA las fotos de envase y
     // forma farmacéutica de los medicamentos autorizados (AEMPS, reproducción
@@ -244,15 +245,15 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // ni scripts ni conexiones se abren con ellos. Se piden directo del
     // navegador, como los mosaicos del mapa; copiarlas al propio almacén sería
     // redistribuirlas, que es otra decisión (de licencia) y no de esta política.
-    "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es",
+    "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es https://i.ytimg.com",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
-    // El visor de resultados muestra el PDF en un `<iframe>` con la URL de
-    // objeto que armó la misma pantalla. Sólo eso: ningún origen de terceros
-    // puede enmarcarse (y `frame-ancestors` sigue impidiendo que nos enmarquen).
-    "frame-src 'self' blob:",
-    // Vista previa local de audio/video; sin proveedores externos ni iframes.
+    // El visor de resultados usa blob: y la ayuda psicológica incrusta videos
+    // oficiales de YouTube sin cookies. No se permite ningún otro host externo.
+    "frame-src 'self' blob: https://www.youtube-nocookie.com",
+    // Vista previa local de audio/video; los reproductores externos quedan
+    // limitados a sus iframes y no amplían media-src.
     "media-src 'self' blob:",
     "base-uri 'self'",
     "form-action 'self'",
