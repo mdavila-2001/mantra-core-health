@@ -219,16 +219,16 @@ const vinculaciones = new Coleccion<VinculacionSimulada>([
   { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: SPECIALTY['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICAL.id },
 ]);
 
-const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; bankQrFileId: string | null; logoFileId: string | null }>([
+const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; contactPhone: string | null; bankQrFileId: string | null; logoFileId: string | null }>([
   // Sólo el consultorio propio arranca con QR bancario cargado: las otras tres
   // sedes quedan sin él para que el aviso en ámbar —«todavía no configuraste
   // ninguno»— se vea en la misma lista que el estado ya resuelto.
-  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: uuid('file-qr-consultorio'), logoFileId: uuid('file-logo-consultorio') },
-  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: null, logoFileId: null },
+  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, contactPhone: '+591 72123456', bankQrFileId: uuid('file-qr-consultorio'), logoFileId: uuid('file-logo-consultorio') },
+  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, contactPhone: '+591 33445566', bankQrFileId: null, logoFileId: null },
   // Dos sedes más para la médica: con cuatro, «Dónde atiende» de su ficha
   // pública pasa de una página y se puede ver el paginado funcionando.
-  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: null, logoFileId: null },
-  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, bankQrFileId: null, logoFileId: null },
+  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, contactPhone: null, bankQrFileId: null, logoFileId: null },
+  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICAL.id, contactPhone: null, bankQrFileId: null, logoFileId: null },
 ]);
 
 /**
@@ -267,6 +267,7 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
       longitude: p.lng,
       status: 'ACTIVE',
       isOwnSite: false,
+      contactPhone: null,
       // Una sede deducida de la organización no es una fila de nadie, así que
       // no hay dónde guardarle un QR: se responde «sin configurar».
       bankQrFileId: null,
@@ -288,6 +289,7 @@ export interface SedeDeProfesional {
   readonly status: string;
   /** Si es el consultorio propio y no una sede de una organización. */
   readonly isOwnSite: boolean;
+  readonly contactPhone: string | null;
   /** El QR bancario con el que el profesional cobra acá, o `null`. */
   readonly bankQrFileId: string | null;
   /** El logo del consultorio, o `null`. Sólo simulador: ver `LogoDelConsultorioClient`. */
@@ -402,7 +404,7 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   router.post('/practitioners/me/sites', (request) => {
-    const datos = cuerpo<{ name: string; timeZone?: string; address?: { lines: string[]; city?: string; latitude?: number; longitude?: number } }>(request);
+    const datos = cuerpo<{ name: string; timeZone?: string; contactPhone?: string; address?: { lines: string[]; city?: string; latitude?: number; longitude?: number } }>(request);
     const nuevo = sitiosPropios.agregar({
       id: nuevoId('site'),
       practiceId: PRACTICE_CONSULTORIO,
@@ -414,6 +416,7 @@ export function registrarPracticas(router: MockRouter): void {
       longitude: datos.address?.longitude ?? null,
       status: 'ACTIVE',
       practitionerProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
+      contactPhone: datos.contactPhone ?? null,
       // Un consultorio recién creado no tiene con qué cobrar todavía: el QR se
       // carga después, desde su propia fila.
       bankQrFileId: null,
@@ -460,6 +463,18 @@ export function registrarPracticas(router: MockRouter): void {
     const { fileId } = cuerpo<{ fileId: string | null }>(request);
     const actualizado = sitiosPropios.actualizar(sitio.id, { bankQrFileId: fileId ?? null });
     if (actualizado === undefined) return notFound('Consultorio no encontrado');
+    const { practitionerProfileId: _p, ...resto } = actualizado;
+    return { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO };
+  });
+
+  router.put('/practitioners/me/sites/:id/contact-phone', (request) => {
+    const sitio = sitiosPropios.get(request.params['id']!);
+    if (sitio === undefined || sitio.practitionerProfileId !== (request.user?.practitionerProfileId ?? MEDICAL.id)) {
+      return notFound('Lugar de atención no encontrado');
+    }
+    const { contactPhone } = cuerpo<{ contactPhone: string | null }>(request);
+    const actualizado = sitiosPropios.actualizar(sitio.id, { contactPhone: contactPhone?.trim() || null });
+    if (actualizado === undefined) return notFound('Lugar de atención no encontrado');
     const { practitionerProfileId: _p, ...resto } = actualizado;
     return { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO };
   });

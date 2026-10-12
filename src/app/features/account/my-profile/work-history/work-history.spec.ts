@@ -1095,10 +1095,10 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     const propiaOfrece = codigosDeSede(fixture, filas[0]!);
     const ajenaOfrece = codigosDeSede(fixture, filas[1]!);
 
-    // El consultorio propio no se puede quitar ni se corrige desde la tabla:
-    // sólo queda el QR. Dejar de atender es un vínculo, y vale sólo en la ajena.
-    expect(propiaOfrece).toEqual(['qr']);
-    expect(ajenaOfrece).toEqual(['qr', 'retirar']);
+    // El consultorio propio no se puede quitar desde la tabla. El teléfono es
+    // particular de cada vínculo; dejar de atender vale sólo en la ajena.
+    expect(propiaOfrece).toEqual(['qr', 'telefono']);
+    expect(ajenaOfrece).toEqual(['qr', 'telefono', 'retirar']);
     cerrarAcciones(fixture);
   });
 
@@ -1250,20 +1250,51 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
    * No se debilitó: cambió de exigencia junto con la decisión, y sigue
    * midiendo lo mismo, que es si se entiende qué hace cada acción.
    */
-  it('el consultorio propio muestra un único botón «Editar QR», sin desplegable', async () => {
+  it('el consultorio propio muestra QR y teléfono como acciones visibles', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [conQr()], count: 1 });
     fixture.detectChanges();
 
     const fila = filas(fixture)[0]!;
 
-    // Una sola acción: se dibuja en la fila con su texto, no en un menú.
+    // Ambas acciones se dibujan en la fila con texto.
     expect(fila.querySelector('[data-testid="row-actions-trigger"]')).toBeNull();
     const acciones = accionesDeSede(fixture, fila);
-    expect(acciones).toHaveLength(1);
+    expect(acciones).toHaveLength(2);
     expect(acciones[0]!.dataset['action']).toBe('qr');
     expect(acciones[0]!.textContent?.trim()).toBe('Editar QR');
     expect(acciones[0]!.getAttribute('aria-label')).toBe('Editar QR — Consultorio Dra. Pérez');
+    expect(acciones[1]!.dataset['action']).toBe('telefono');
+    expect(acciones[1]!.textContent?.trim()).toBe('Editar teléfono');
+  });
+
+  it('guarda y quita el teléfono de una sede sin modificar el de otra', async () => {
+    const { fixture, http } = await montarConSedes();
+    const primera = conQr({ contactPhone: '+591 70000001' });
+    const segunda = sinQr({ contactPhone: '+591 70000002' });
+    http.expectOne(SITIOS).flush({ items: [primera, segunda], count: 2 });
+    fixture.detectChanges();
+
+    (api(fixture)['abrirTelefonoDeSede'] as (sede: unknown) => void)(primera);
+    (api(fixture)['telefonoEnEdicion'] as UnMiembro).set('+591 71111111');
+    (api(fixture)['guardarTelefonoDeSede'] as () => void)();
+    const guardar = http.expectOne('/practitioners/me/sites/site-qr/contact-phone');
+    expect(guardar.request.method).toBe('PUT');
+    expect(guardar.request.body).toEqual({ contactPhone: '+591 71111111' });
+    guardar.flush({ ...primera, contactPhone: '+591 71111111' });
+    fixture.detectChanges();
+    expect(filas(fixture)[0]!.textContent).toContain('+591 71111111');
+    expect(filas(fixture)[1]!.textContent).toContain('+591 70000002');
+
+    (api(fixture)['abrirTelefonoDeSede'] as (sede: unknown) => void)(segunda);
+    (api(fixture)['telefonoEnEdicion'] as UnMiembro).set('');
+    (api(fixture)['guardarTelefonoDeSede'] as () => void)();
+    const quitar = http.expectOne('/practitioners/me/sites/site-sin-qr/contact-phone');
+    expect(quitar.request.body).toEqual({ contactPhone: null });
+    quitar.flush({ ...segunda, contactPhone: null });
+    fixture.detectChanges();
+    expect(filas(fixture)[0]!.textContent).toContain('+591 71111111');
+    expect(filas(fixture)[1]!.textContent).toContain('Sin teléfono registrado');
   });
 
   /**
@@ -1276,15 +1307,14 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
 
     const [propiaFila, ajenaFila] = filas(fixture);
     expect(accionDeSede(fixture, propiaFila!, 'retirar')).toBeNull();
-    expect(accionDeSede(fixture, ajenaFila!, 'retirar')!.textContent?.trim()).toBe(
+    const retirar = accionDeSede(fixture, ajenaFila!, 'retirar');
+    expect(retirar!.textContent?.trim()).toBe(
       'Dejar de atender',
     );
 
-    // De qué sede se trata ya no lo repite cada etiqueta: en la ajena, que se
-    // dibuja en la fila, lo dice el nombre accesible.
-    expect(accionDeSede(fixture, ajenaFila!, 'retirar')!.getAttribute('aria-label')).toBe(
-      'Dejar de atender — Hospital San Lucas',
-    );
+    // Con tres acciones, el nombre de la sede vive en el disparador del menú.
+    expect(ajenaFila!.querySelector('[data-testid="row-actions-trigger"]')?.getAttribute('aria-label'))
+      .toContain('Hospital San Lucas');
     cerrarAcciones(fixture);
   });
 

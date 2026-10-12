@@ -522,7 +522,12 @@ describe('Resumen contable', () => {
 
   describe('tableros y registros, en pestañas separadas', () => {
     const rotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
-      Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]')).map((t) =>
+      Array.from(fixture.nativeElement.querySelectorAll('.pestanas > .tabs__bar [role="tab"]')).map((t) =>
+        (t as HTMLElement).textContent?.trim() ?? '',
+      );
+
+    const subrotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('.subpestanas > .tabs__bar [role="tab"]')).map((t) =>
         (t as HTMLElement).textContent?.trim() ?? '',
       );
 
@@ -533,9 +538,41 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
+      expect(subrotulos(fixture)).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(texto).toContain('¿Cuánto hizo?');
-      expect(texto).toContain('Lo que está pendiente');
+
+      fixture.componentInstance.subtab.set(1);
+      fixture.detectChanges();
+      const textoPendientes = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(textoPendientes).toContain('Lo que está pendiente');
+    });
+
+    it('divide el resumen en subpestañas: Movimientos, Pendientes y Patrimonio', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.subtab()).toBe(0);
+      let raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.textContent).toContain('¿Cuánto hizo?');
+      expect(raiz.textContent).not.toContain('Lo que está pendiente');
+      expect(raiz.textContent).not.toContain('Lo que tiene y lo que debe');
+
+      fixture.componentInstance.subtab.set(1);
+      fixture.detectChanges();
+      raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.textContent).not.toContain('¿Cuánto hizo?');
+      expect(raiz.textContent).toContain('Lo que está pendiente');
+      expect(raiz.textContent).not.toContain('Lo que tiene y lo que debe');
+
+      fixture.componentInstance.subtab.set(2);
+      fixture.detectChanges();
+      raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.textContent).not.toContain('¿Cuánto hizo?');
+      expect(raiz.textContent).not.toContain('Lo que está pendiente');
+      expect(raiz.textContent).toContain('Lo que tiene y lo que debe');
     });
 
     it('el Resumen no trae la tarjeta de registros', () => {

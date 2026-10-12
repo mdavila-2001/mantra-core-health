@@ -168,6 +168,7 @@ describe('RegisterPractitioner', () => {
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
       workAddressLines: '',
+      officeContactPhone: '',
       officeName: '',
       officeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
@@ -275,6 +276,7 @@ describe('RegisterPractitioner', () => {
         'access',
         'residence',
         'workplace-location',
+        'own-office-contact',
         // El consultorio propio es una sede del profesional, separada de la
         // dirección laboral que se declara arriba.
         'own-office',
@@ -317,12 +319,12 @@ describe('RegisterPractitioner', () => {
       // profesional no tuvo dónde poner las otras dos.
       expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
       expect(camposDe('workplace-location')).toEqual(['workAddressLines', 'gpsTrabajo']);
-      // El consultorio propio: cuatro campos, todos opcionales. Es un calco del
+      // El consultorio propio: contacto y ubicación en dos páginas opcionales. Es un calco del
       // lugar de trabajo del alta de paciente, con el nombre que le da el
       // dominio — quien ejerce puede atender en varios lugares, y éste es el
       // único que no depende de que otro lo acepte.
+      expect(camposDe('own-office-contact')).toEqual(['officeName', 'officeContactPhone']);
       expect(camposDe('own-office')).toEqual([
-        'officeName',
         'municipioConsultorio',
         'officeAddressLines',
         'gpsConsultorio',
@@ -445,8 +447,8 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene quince páginas, ninguna de más de cuatro preguntas', () => {
-    // Quince (catorce más la opcional de firma y sello) y no menos porque el límite es de **campos por página**, no de
+  it('tiene dieciséis páginas, ninguna de más de cuatro preguntas', () => {
+    // Dieciséis páginas porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
     // de contactos privados —separada de la del acceso al dejar de mezclar el
@@ -460,7 +462,7 @@ describe('RegisterPractitioner', () => {
     // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(15);
+    expect(paginas.length).toBe(16);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -1064,7 +1066,7 @@ describe('RegisterPractitioner', () => {
     /** Lleva la pantalla hasta el paso «Tus títulos», «Siguiente» de a uno. */
     function irAlPasoDeTitulos(): void {
       fixture.detectChanges();
-      for (let pagina = 0; pagina < 12; pagina += 1) {
+      for (let pagina = 0; pagina < 13; pagina += 1) {
         if (fixture.nativeElement.querySelector('.registro-titulos') !== null) return;
         const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
           '[data-testid="paginated-form-continuar"]',
@@ -1838,7 +1840,7 @@ describe('RegisterPractitioner', () => {
       /** Lleva la pantalla hasta «Tu título profesional y foto». */
       function irAlPasoDelTitulo(): void {
         fixture.detectChanges();
-        for (let pagina = 0; pagina < 12; pagina += 1) {
+        for (let pagina = 0; pagina < 13; pagina += 1) {
           if (fixture.nativeElement.querySelector('.registro__estudio') !== null) return;
           const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
             '[data-testid="paginated-form-continuar"]',
@@ -2806,6 +2808,26 @@ describe('RegisterPractitioner', () => {
       // Sin dirección y no con una vacía: una dirección vacía no es «sin
       // dirección», es una fila vacía en `common.addresses`. Misma regla que
       // `work-history.ts` al registrar una sede desde el perfil.
+      expect(cuerpoDelAlta()['ownSite']).toEqual({ name: 'Consultorio Suárez' });
+    });
+
+    it('el teléfono opcional crea el consultorio y queda dentro de esa sede', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeContactPhone: '+591 72123456' });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        contactPhone: '+591 72123456',
+      });
+    });
+
+    it('un teléfono vacío no agrega un campo de contacto al consultorio', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({
+        officeName: 'Consultorio Suárez',
+        officeContactPhone: '',
+      });
+
       expect(cuerpoDelAlta()['ownSite']).toEqual({ name: 'Consultorio Suárez' });
     });
 

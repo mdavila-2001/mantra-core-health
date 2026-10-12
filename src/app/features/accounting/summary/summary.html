@@ -36,10 +36,12 @@
 
         <app-view-state-host [state]="dineroStatus()" (retry)="recargar()" (refresh)="recargar()">
           @if (data(); as d) {
-            <!-- ═══ 1 · ¿Cuánto hiciste? ══════════════════════════════════════════
-                 Los tres tramos a la vez y sin tocar nada: era la primera de las
-                 cuatro cosas que el propietario pidió ver. -->
-            <section class="bloque" aria-labelledby="titulo-cuanto">
+            <app-tabs class="subpestanas" [(selectedIndex)]="subtab">
+              <app-tab label="Movimientos">
+                <!-- ═══ 1 · ¿Cuánto hiciste? ══════════════════════════════════════════
+                     Los tres tramos a la vez y sin tocar nada: era la primera de las
+                     cuatro cosas que el propietario pidió ver. -->
+                <section class="bloque" aria-labelledby="titulo-cuanto">
               <app-section-heading icono="chart" titulo="¿Cuánto hizo?" id="titulo-cuanto" />
               <p class="bloque__bajada">
                 Lo que ya está registrado en sus libros. Lo que cobró y todavía no
@@ -175,7 +177,9 @@
                 </app-card>
               </div>
             </section>
+          </app-tab>
 
+          <app-tab label="Pendientes">
             <!-- ═══ 3 · ¿Quién te debe y a quién le debés? ════════════════════════
                  Las dos preguntas van juntas y en paralelo: son la misma pregunta
                  mirada desde los dos lados, y ponerlas en pantallas distintas obliga
@@ -312,7 +316,9 @@
                 </app-card>
               </div>
             </section>
+          </app-tab>
 
+          <app-tab label="Patrimonio">
             <!-- ═══ 4 · ¿Qué tenés y qué debés? ═══════════════════════════════════
                  Activos y pasivos, que hasta el 19/09/2026 eran una entrada suelta
                  del menú. El propietario pidió que estuvieran dentro de Contabilidad:
@@ -396,6 +402,8 @@
                 </span>
               </p>
             </section>
+          </app-tab>
+        </app-tabs>
 
             <!-- ═══ Para quien sí lleva los libros ════════════════════════════════
                  Nada se borró: el cockpit y los libros están enteros, a un clic. Van
