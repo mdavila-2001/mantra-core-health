@@ -12,7 +12,6 @@ import {
 } from '../../core/permissions/browser-permissions.service';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ThemeService } from '../../core/tokens/theme.service';
-import { AppButton } from '../../shared/components/atoms/button/button';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Switch } from '../../shared/components/atoms/switch/switch';
@@ -86,7 +85,7 @@ const BROWSER_PERMISSIONS: readonly {
  */
 @Component({
   selector: 'app-settings',
-  imports: [AlovidaThemeToggleDirective, AppButton, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
+  imports: [AlovidaThemeToggleDirective, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -97,9 +96,6 @@ export class Settings {
   protected readonly permissions = inject(BrowserPermissionsService);
 
   protected readonly browserPermissions = BROWSER_PERMISSIONS;
-
-  /** Si nadie eligió a mano: el interruptor refleja lo que pide el dispositivo. */
-  protected readonly followsSystem = computed(() => this.theme.currentTheme() === 'system');
 
   /** Lo que efectivamente se ve, que es lo que el interruptor marca. */
   protected readonly resolvedTheme = this.theme.resolvedTheme;
@@ -117,10 +113,6 @@ export class Settings {
 
   /** La verificación de identidad sólo se ofrece si el producto la ofrece. */
   protected readonly verificationOffered = OFFERED_IDENTITY_VERIFICATION;
-
-  protected useSystemTheme(): void {
-    this.theme.useSystemTheme();
-  }
 
   protected stateOf(permission: PermisoDelNavegador): EstadoPermiso {
     return this.permissions.estado()[permission];
