@@ -65,10 +65,7 @@
    es el que hace la diferencia: un borde continuo lo volvería pulsable a la
    vista y no lo es. */
 .view-state-host__next-action {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
-    justify-content: center;
+    display: block;
     text-align: center;
     padding: var(--sp-1) 0;
     /* Texto con flecha y nada más: sin recuadro (ni punteado), para que no

@@ -340,3 +340,8 @@
     }
 }
 
+
+/* Palabra + contador no se parten en dos renglones ni en teléfono. */
+.tabs__rotulo--contado {
+    white-space: nowrap;
+}
