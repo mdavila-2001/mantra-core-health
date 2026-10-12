@@ -150,7 +150,8 @@
   margin: var(--sp-1) 0 0 0;
   /* El error ENTRA, no salta: crece desde alto 0 con el muelle `suave` (con
      `interpolate-size` el alto automático es animable) y el formulario de abajo
-     se desplaza con él en vez de brincar. Sin esa API sólo hay fundido. */
+     se desplaza con él en vez de brincar. Sin esa API (Firefox, Safari previo) el alto
+     salta a mitad de la animación; el fundido y el muelle de opacidad se conservan. */
   interpolate-size: allow-keywords;
   /* `hidden` y no `clip`: así `min-height: auto` de un hijo flex no impide el 0 */
   overflow: hidden;

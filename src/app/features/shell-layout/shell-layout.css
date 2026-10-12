@@ -222,6 +222,7 @@
   .app-header__derecha {
     flex-wrap: nowrap;
     gap: 2px;
-    overflow: visible;
+    /* Sin `overflow: visible`: queda la tira desplazable de arriba como red de
+       seguridad si un rol suma un selector y las acciones no caben. */
   }
 }

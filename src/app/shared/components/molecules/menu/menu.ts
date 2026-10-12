@@ -273,7 +273,10 @@ export class Menu implements MenuHost, OnDestroy {
     }
 
     const anclaje = trigger.getBoundingClientRect();
-    const panel = this.hostElement.nativeElement.getBoundingClientRect();
+    // `offsetWidth/Height` y no `getBoundingClientRect`: miden el menú SIN la
+    // escala de su animación de entrada (0,92), que si no lo dejaba ~8 % corto.
+    const host = this.hostElement.nativeElement;
+    const panel = { width: host.offsetWidth, height: host.offsetHeight };
     const view = this.document.defaultView;
     const altoViewport = view?.innerHeight ?? 0;
     const anchoViewport = view?.innerWidth ?? 0;
