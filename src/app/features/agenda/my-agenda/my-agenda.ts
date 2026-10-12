@@ -561,6 +561,12 @@ export class MyAgenda implements OnInit {
    */
   protected readonly lecturasFallidas = signal<ReadonlyMap<LecturaDeAgenda, string>>(new Map());
 
+  /** Si falló alguna lectura del día: el día no afirma «No atiende» ni «No disponible». */
+  protected readonly dayLoadFailed = computed(() => {
+    const fallidas = this.lecturasFallidas();
+    return fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia');
+  });
+
   /** Los mensajes del aviso, sin repetir: sin conexión, todas dicen lo mismo. */
   protected readonly avisosDeLectura = computed(() => [
     ...new Set(this.lecturasFallidas().values()),
