@@ -103,6 +103,24 @@ Sin `backdrop-filter`, o con `prefers-reduced-transparency`, el fondo es
 `--material-respaldo` (opaco). **El texto nunca depende del desenfoque**: el contraste
 se mide sobre el respaldo.
 
+### Barra superior
+
+Cambia al desplazarse, **sólo con CSS** (`shell-layout.css`): una animación atada al
+scroll de la página (`animation-timeline: scroll(root block)`, rango 0–48 px) lleva la
+barra de la franja plana al material `fino`. Medido en navegador: a 0 px fondo opaco y
+sin trazo; a 24 px, tinte 81 % y desenfoque 5 px; a 384 px, tinte 62 %, desenfoque 10 px
+y trazo fino. Firefox, que aún no tiene la API, ve la barra siempre en vidrio. Sin
+`backdrop-filter` o con `prefers-reduced-transparency`, respaldo opaco.
+
+### Paneles que nacen del control
+
+`app-dialog`, `app-content-dialog`, `app-select`, `app-tree-select` y `app-date-picker`
+llevan `.panel-muelle` en su panel: muelle `suave` desde `--origen-x/y` (el centro del
+control que los abrió; `shared/motion/panel-motion.ts`) y una salida de 140 ms hacia el
+mismo origen. Sin animación posible (jsdom, movimiento reducido) cierran en el acto.
+`app-menu` usa el muelle `rápido`, crece desde el borde del disparador y es material
+`regular`.
+
 ### Transición entre rutas
 
 View Transitions API (`withViewTransitions` del router) con respaldo: sin la API, o con

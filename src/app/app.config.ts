@@ -10,7 +10,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -29,6 +29,7 @@ import { provideObservability } from './core/observability/observability.provide
 import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
 import { environment } from '../environments/environment';
+import { prefersReducedMotion } from './shared/motion/motion-tokens';
 
 /**
  * Datos de formato del idioma de la aplicación.
@@ -67,7 +68,22 @@ export const appConfig: ApplicationConfig = {
     // es «Trayectoria laboral» en la portada del perfil profesional (R2-4),
     // que baja hasta el bloque dentro de la misma pantalla. Sin esto el
     // fragmento cambia en la URL y la página no se mueve.
-    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
+    // Transición entre rutas con la View Transitions API: sólo el contenido
+    // (`view-transition-name: contenido`) hace un fundido corto; el menú y la
+    // barra se quedan quietos. Sin la API el router navega igual, y con
+    // `prefers-reduced-motion` no se crea la transición.
+    provideRouter(
+      routes,
+      withInMemoryScrolling({ anchorScrolling: 'enabled' }),
+      withViewTransitions({
+        skipInitialTransition: true,
+        onViewTransitionCreated: ({ transition }) => {
+          if (prefersReducedMotion()) {
+            transition.skipTransition();
+          }
+        },
+      }),
+    ),
     provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
     // servidor obliga a un reemplazo y rompe la transferencia de estado.

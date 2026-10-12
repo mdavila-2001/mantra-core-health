@@ -17,6 +17,7 @@ import {
 } from '@shared/forms/form-control.context';
 import { AppButton } from '../../atoms/button/button';
 import type { TreeSelectGroup, TreeSelectItem } from './tree-select.types';
+import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 
 /**
  * Una rama tal como se pinta: con sus hojas ya filtradas y su estado de
@@ -261,6 +262,12 @@ export class TreeSelect<T> {
         return;
       }
       this.showModal(dialog);
+      // Nace del control que lo abrió (ver `.panel-muelle` en styles.css).
+      fijarOrigenDelPanel(
+        dialog.querySelector<HTMLElement>('.tree-select-panel'),
+        dialog,
+        this.trigger().nativeElement,
+      );
       this.search()?.nativeElement.focus();
     });
   }
@@ -328,11 +335,14 @@ export class TreeSelect<T> {
     // que se quita abierto deja su entrada en la capa superior, con el velo
     // puesto y el resto de la página bloqueado.
     const dialog = this.dialog()?.nativeElement;
-    if (dialog?.open && typeof dialog.close === 'function') {
-      dialog.close();
-    }
-    this.isOpen.set(false);
-    this.trigger().nativeElement.focus();
+    // Salida corta hacia el control; sin animación posible cierra en el acto.
+    cerrarConSalida(dialog?.querySelector<HTMLElement>('.tree-select-panel'), () => {
+      if (dialog?.open && typeof dialog.close === 'function') {
+        dialog.close();
+      }
+      this.isOpen.set(false);
+      this.trigger().nativeElement.focus();
+    });
   }
 
   /** Un clic en el velo cierra; ver la nota de `handleBackdropClick` del calendario. */

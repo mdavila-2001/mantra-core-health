@@ -54,6 +54,7 @@ import { MENU_GAP_PX, MENU_PARENT, type MenuHost } from './menu.types';
     '[attr.aria-hidden]': 'isOpen() ? null : "true"',
     '[style.top.px]': 'top()',
     '[style.left.px]': 'left()',
+    '[style.transform-origin]': 'origen()',
     '(keydown)': 'handleKeydown($event)',
   },
 })
@@ -75,6 +76,8 @@ export class Menu implements MenuHost, OnDestroy {
 
   protected readonly top = signal(0);
   protected readonly left = signal(0);
+  /** De dónde crece al abrirse: el borde del disparador, no el centro del menú. */
+  protected readonly origen = signal('top left');
 
   protected readonly menuClasses = computed(() =>
     this.open() ? 'menu menu--open' : 'menu',
@@ -285,7 +288,15 @@ export class Menu implements MenuHost, OnDestroy {
 
     // Alineado a la izquierda del disparador, sin salirse por la derecha.
     const maximoIzquierda = Math.max(0, anchoViewport - panel.width);
-    this.left.set(Math.min(anclaje.left, maximoIzquierda));
+    const izquierda = Math.min(anclaje.left, maximoIzquierda);
+    this.left.set(izquierda);
+
+    // El muelle de entrada crece desde el disparador: su centro horizontal, y
+    // el borde del menú que toca al disparador (arriba si abre abajo).
+    const centro = Math.round(
+      Math.min(Math.max(anclaje.left + anclaje.width / 2 - izquierda, 0), panel.width),
+    );
+    this.origen.set(`${centro}px ${entraAbajo ? '0' : '100%'}`);
   }
 
   private closeIfOutside(event: Event): void {

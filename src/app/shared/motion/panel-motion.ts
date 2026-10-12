@@ -51,6 +51,25 @@ export function fijarOrigenDelPanel(
 }
 
 /**
+ * Abre el `<dialog>` como modal y fija de dónde nace su panel. El `typeof` es
+ * por jsdom, que no implementa `showModal()`: ahí cae al atributo `open`.
+ */
+export function abrirModal(
+  dialog: HTMLDialogElement,
+  selectorDelPanel: string,
+  disparador: Element | null | undefined,
+): void {
+  if (!dialog.open) {
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+  }
+  fijarOrigenDelPanel(dialog.querySelector<HTMLElement>(selectorDelPanel), dialog, disparador);
+}
+
+/**
  * Anima la salida del panel y después ejecuta `cerrar`.
  *
  * Sin animación posible, `cerrar` corre **de inmediato y en el mismo turno**.

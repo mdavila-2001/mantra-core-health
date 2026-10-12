@@ -183,24 +183,6 @@
   gap: var(--sp-3);
   max-height: calc(100vh - 2 * var(--sp-4));
   overflow-y: auto;
-  animation: dialog-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .date-picker-panel {
-    animation: none;
-  }
-}
-
-@keyframes dialog-appear {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .dialog-header {

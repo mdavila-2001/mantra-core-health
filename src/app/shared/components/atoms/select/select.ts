@@ -23,6 +23,7 @@ import {
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 import { AppButton } from '../button/button';
 import type { SelectOption } from './select.types';
+import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 
 /**
  * Desde cuántas opciones aparece el buscador. Con ocho o menos se ven todas de
@@ -198,6 +199,12 @@ export class Select<T> implements ControlValueAccessor {
       }
       untracked(() => {
         this.showModal(dialog);
+        // Nace del control que lo abrió (ver `.panel-muelle` en styles.css).
+        fijarOrigenDelPanel(
+          dialog.querySelector<HTMLElement>('.select-panel'),
+          dialog,
+          this.trigger().nativeElement,
+        );
         const target = this.search()?.nativeElement ?? this.list()?.nativeElement;
         target?.focus();
         this.scrollActiveIntoView();
@@ -249,11 +256,14 @@ export class Select<T> implements ControlValueAccessor {
     // Cerrar el elemento antes de que el @if lo saque del DOM: un `<dialog>`
     // que se quita abierto deja el velo puesto y la página bloqueada.
     const dialog = this.dialog()?.nativeElement;
-    if (dialog?.open && typeof dialog.close === 'function') {
-      dialog.close();
-    }
-    this.isOpen.set(false);
-    this.trigger().nativeElement.focus();
+    // Salida corta hacia el control; sin animación posible cierra en el acto.
+    cerrarConSalida(dialog?.querySelector<HTMLElement>('.select-panel'), () => {
+      if (dialog?.open && typeof dialog.close === 'function') {
+        dialog.close();
+      }
+      this.isOpen.set(false);
+      this.trigger().nativeElement.focus();
+    });
   }
 
   /** Elige la opción `index` de `options()` y cierra: elegir ES el final. */

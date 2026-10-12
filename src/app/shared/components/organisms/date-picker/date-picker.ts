@@ -18,6 +18,7 @@ import { Select } from '../../atoms/select/select';
 import { type DatePickerMode, MAX_DEFAULT_YEAR } from './date-picker.types';
 import { FORM_CONTROL_CONTEXT, nextControlId } from '../../../forms/form-control.context';
 import { NoFieldContext } from '../../../forms/no-field-context.directive';
+import { abrirModal, cerrarConSalida } from '@shared/motion/panel-motion';
 
 export interface CalendarDay {
   readonly date: Date;
@@ -508,20 +509,10 @@ export class DatePicker {
       if (!dialog) {
         return;
       }
-      this.showModal(dialog);
+      // Nace del control que lo abrió (ver `.panel-muelle` en styles.css).
+      abrirModal(dialog, '.date-picker-panel', this.trigger()?.nativeElement ?? this.inputEl()?.nativeElement);
       dialog.focus();
     });
-  }
-
-  private showModal(dialog: HTMLDialogElement): void {
-    if (dialog.open) {
-      return;
-    }
-    if (typeof dialog.showModal === 'function') {
-      dialog.showModal();
-      return;
-    }
-    dialog.setAttribute('open', '');
   }
 
   protected dayLabel(day: CalendarDay): string {
@@ -1314,12 +1305,15 @@ export class DatePicker {
       return;
     }
     const dialog = this.dialog()?.nativeElement;
-    if (dialog?.open && typeof dialog.close === 'function') {
-      dialog.close();
-    }
-    this.isOpen.set(false);
-    const el = this.inputEl()?.nativeElement ?? this.trigger()?.nativeElement;
-    el?.focus();
+    // Salida corta hacia el control; sin animación posible cierra en el acto.
+    cerrarConSalida(dialog?.querySelector<HTMLElement>('.date-picker-panel'), () => {
+      if (dialog?.open && typeof dialog.close === 'function') {
+        dialog.close();
+      }
+      this.isOpen.set(false);
+      const el = this.inputEl()?.nativeElement ?? this.trigger()?.nativeElement;
+      el?.focus();
+    });
   }
 
   protected handleBackdropClick(event: MouseEvent): void {

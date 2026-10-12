@@ -155,3 +155,54 @@
     margin-inline-start: auto;
   }
 }
+
+/*
+ * Barra superior translúcida (Carril F · material `fino`), sólo CSS.
+ *
+ * Arriba del todo es la franja de siempre; al desplazar, el contenido pasa por
+ * debajo y la barra se vuelve vidrio: tinte + desenfoque + un solo trazo fino
+ * inferior. El cambio lo conduce el scroll de la página (`animation-timeline:
+ * scroll()`), así que es progresivo —se completa en 48 px— y no hay estado en
+ * TypeScript. Los navegadores sin esa API (Firefox) ven la barra en vidrio
+ * siempre: el mismo material, sin el fundido. Sin `backdrop-filter` o con
+ * `prefers-reduced-transparency` el tinte es el respaldo opaco: el texto nunca
+ * depende del desenfoque.
+ */
+.app-header {
+  background: var(--material-fino-tinte);
+  -webkit-backdrop-filter: var(--material-fino-desenfoque);
+  backdrop-filter: var(--material-fino-desenfoque);
+  border-bottom-color: var(--material-trazo);
+}
+
+@keyframes barra-a-vidrio {
+  from {
+    background: var(--sup-pagina);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+    border-bottom-color: transparent;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .app-header {
+    animation: barra-a-vidrio linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 48px;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-header {
+    background: var(--material-respaldo);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-header {
+    background: var(--material-respaldo);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: none;
+  }
+}
