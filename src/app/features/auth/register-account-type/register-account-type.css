@@ -117,6 +117,29 @@
     transition-timing-function: var(--ease-standard), var(--ease-standard), var(--spring-rapido);
 }
 
+/* Sin borde, lo que dice «esto se pulsa» es la flecha: un chevron dibujado con
+   dos bordes, abajo a la derecha, que avanza un poco al apuntar. */
+.tipos__card {
+    position: relative;
+}
+
+.tipos__card::after {
+    content: '';
+    position: absolute;
+    inset-block-end: var(--sp-5);
+    inset-inline-end: var(--sp-5);
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-block-start: 2px solid var(--brand-primary);
+    border-inline-end: 2px solid var(--brand-primary);
+    transform: rotate(45deg);
+    transition: translate var(--spring-rapido-dur) var(--spring-rapido);
+}
+
+.tipos__card:hover::after {
+    translate: 3px -3px;
+}
+
 .tipos__card:focus-visible {
     outline: 2px solid var(--brand-primary);
     outline-offset: 2px;

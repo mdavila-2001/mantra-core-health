@@ -4,7 +4,7 @@
  * texto visible (ISO, uuid, coordenadas, desborde horizontal). Resultado en
  * `evidencias/carril-f-2026-10-12/<fase>/` + `auditoria-<fase>.json`.
  */
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { lanzar, contexto, entrar, ir, capturar, auditarCrudos, VISTAS, TEMAS, SALIDA } from './lib.mjs';
 
 const fase = process.argv[2] ?? 'antes';
@@ -66,7 +66,10 @@ async function main() {
       }
     }
   }
-  writeFileSync(`${SALIDA}/auditoria-${fase}.json`, JSON.stringify(auditoria, null, 1));
+  // Una ejecución parcial (filtro) suma a la auditoría existente en vez de pisarla.
+  const archivo = `${SALIDA}/auditoria-${fase}.json`;
+  const previa = existsSync(archivo) ? JSON.parse(readFileSync(archivo, 'utf8')) : {};
+  writeFileSync(archivo, JSON.stringify({ ...previa, ...auditoria }, null, 1));
   const fallos = Object.entries(auditoria).filter(([, v]) => v.fallo);
   console.log(`${Object.keys(auditoria).length} capturas · ${fallos.length} con fallo`);
   for (const [k, v] of fallos) console.log('  ✘', k, v.fallo);

@@ -181,7 +181,7 @@ app-alert {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3);
   /* Tonal y sin borde: seis colas de tarjetas con trazo eran una pared de
      líneas. El borde sólo reaparece como señal (pedido nuevo, ver abajo). */
   border: 1px solid transparent;
