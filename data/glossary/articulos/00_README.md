@@ -1,34 +1,46 @@
 # Artículos de autoría propia del glosario
 
-Un archivo `<slug>.json` por término. `node scripts/glossary-articulos-alovida.mjs` los compila al
+Un archivo `<slug>.md` por término. `node scripts/glossary-articulos-alovida.mjs` los compila al
 formato `GlossaryArticle` y los mezcla en `public/glossary-seed/mock/articles/` sin pisar los
-artículos de otras fuentes. `--check` sólo valida.
+artículos de otras fuentes. `--check` sólo valida; `--min N` fija el piso de palabras (2000 por
+omisión); `--only a,b` procesa sólo esos slugs.
 
 ## Estado y procedencia
 
 Todo el texto es **original del equipo y está pendiente de revisión médica**. Cada sección lo declara
 (`source: alovida-curated`, licencia «Texto original de AloVida, pendiente de revisión médica») y la
-pantalla lo muestra en la cita. No se presenta como texto de una fuente externa. Las `references` son
+pantalla lo muestra en la cita. No se presenta como texto de una fuente externa. Las referencias son
 lecturas recomendadas, no la procedencia literal de cada frase.
 
-## Esquema
+## Formato
 
-```jsonc
-{
-  "slug": "hipertension-arterial", // igual al nombre del archivo y al slug del término
-  "sections": [
-    { "kind": "definition", "locator": "Introducción", "text": "Párrafos separados por línea en blanco…" },
-  ],
-  "references": [{ "title": "…", "url": "https://…", "source": "OMS" }],
-  "image": { "file": "hipertension-arterial.svg", "caption": "…", "altText": "descripción de ≥ 20 caracteres" },
-}
+```markdown
+---
+slug: hipertension-arterial
+image: hipertension-arterial.svg | Pie de la imagen | Texto alternativo descriptivo (≥ 20 caracteres)
+image: hipertension-arterial-clasificacion.svg | Otro pie | Otro texto alternativo
+---
+
+## [definition] Introducción
+
+Párrafos separados por una línea en blanco.
+
+## [causes] Causas
+
+• Un párrafo cuyas líneas empiezan todas con «•» es una lista.
+
+## [references]
+
+- Título | https://url-verificada | Fuente
 ```
 
-- `kind`: uno de `GlossarySectionKind` (`glossary-article.types.ts`).
-- En `text`, un párrafo con todas sus líneas empezando por `•` es una lista; uno con todas sus líneas
-  con ` | ` es una tabla (una fila por línea). Los `items` se derivan solos.
-- La imagen vive en `public/glossary-images/<slug>.svg`: ilustración **original**, con colores por
-  variables y modo oscuro dentro del propio SVG, `<title>` y `<desc>`.
+- `slug`: igual al nombre del archivo y al slug del término.
+- `## [kind] Encabezado`: `kind` es uno de `GlossarySectionKind` (`glossary-article.types.ts`). Un
+  mismo `kind` puede repetirse con encabezados distintos; el encabezado se muestra como subtítulo.
+- Un párrafo con todas sus líneas con ` | ` es una tabla (una fila por línea, la primera es la cabecera).
+- Las imágenes viven en `public/glossary-images/<archivo>.svg`: ilustraciones **originales**, con
+  colores por variables y modo oscuro dentro del propio SVG, `<title>` y `<desc>`.
+- `## [references]`: sólo URLs que se verificaron (respuesta 200). Una sin verificar no se incluye.
 
 ## Lo que no se escribe aquí
 

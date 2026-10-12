@@ -110,6 +110,45 @@ describe('glossary-article.logic', () => {
     });
   });
 
+  describe('secciones de un artículo de autoría propia', () => {
+    const articulo = (secciones: GlossaryArticleSection[]): GlossaryArticle => ({
+      conceptRef: { system: 'alovida-curated', code: 'x', slug: 'x' },
+      lang: 'es',
+      sections: secciones,
+      images: [],
+      facts: [],
+      references: [],
+    });
+
+    it('titulan cada sección con su encabezado y no repiten «En la fuente»', () => {
+      const [uno, dos] = seccionesPintables(
+        articulo([
+          seccion({ source: 'alovida-curated', kind: 'additional_information', locator: 'Historia' }),
+          seccion({ source: 'alovida-curated', kind: 'additional_information', locator: 'Fisiopatología' }),
+        ]),
+      );
+      expect(uno?.titulo).toBe('Historia');
+      expect(dos?.titulo).toBe('Fisiopatología');
+      expect(uno?.encabezadoDeLaFuente).toBeNull();
+      expect(uno?.entradaDelIndice).toBe('Historia');
+    });
+
+    it('sin encabezado caen al título del kind', () => {
+      const [uno] = seccionesPintables(
+        articulo([seccion({ source: 'alovida-curated', kind: 'causes', locator: '' })]),
+      );
+      expect(uno?.titulo).toBe(TITULO_DE_SECCION.causes);
+    });
+
+    it('una fuente externa conserva el título del kind y el encabezado de la fuente', () => {
+      const [uno] = seccionesPintables(
+        articulo([seccion({ kind: 'causes', locator: 'Qué provoca la tos' })]),
+      );
+      expect(uno?.titulo).toBe(TITULO_DE_SECCION.causes);
+      expect(uno?.encabezadoDeLaFuente).toBe('Qué provoca la tos');
+    });
+  });
+
   it('enlaceSeguro sólo deja pasar https', () => {
     expect(enlaceSeguro('https://medlineplus.gov')).toBe('https://medlineplus.gov');
     expect(enlaceSeguro('data:text/html,x')).toBeNull();

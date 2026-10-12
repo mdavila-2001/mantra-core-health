@@ -1,8 +1,8 @@
 /**
- * Los artículos de autoría propia del glosario (`data/glossary/articulos/*.json`)
+ * Los artículos de autoría propia del glosario (`data/glossary/articulos/*.md`)
  * → cubetas de la maqueta (`public/glossary-seed/mock/articles/<hh>.json`).
  *
- * Un archivo por término, escrito a mano (el esquema está en
+ * Un archivo Markdown por término, escrito a mano (el esquema está en
  * `data/glossary/articulos/00_README.md`). Este script lo convierte al formato
  * `GlossaryArticle` (TAREA-41 §12.3) y lo **mezcla** en las cubetas que ya
  * existen: no pisa los artículos de otras fuentes (MedlinePlus), sólo los de
@@ -13,11 +13,16 @@
  * se disimula. Lo que no se escribió con fuente no se presenta como si la
  * tuviera.
  *
- * Uso: node scripts/glossary-articulos-alovida.mjs [--check]
+ * Uso: node scripts/glossary-articulos-alovida.mjs [--check] [--min <palabras>] [--only a,b]
  *   --check  valida los archivos y sale con error si alguno no cumple; no escribe.
+ *   --min    piso de palabras por artículo (por omisión 2000); uno más corto es error.
+ *   --only   procesa sólo esos slugs (para validar un lote sin tocar el resto).
+ *   --api    carpeta del repo del API (por omisión `../mantra-core-health-api` si existe): se le
+ *            escribe `src/common/seed/glossary-articles.generated.ts`, de donde el seed siembra la
+ *            propiedad `glossary-article` de cada término. Con `--only` no se escribe (sería parcial).
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 import { conceptIdOf } from './lib/glossary-shards.mjs';
 
@@ -26,6 +31,13 @@ const ORIGEN = join(RAIZ, 'data', 'glossary', 'articulos');
 const IMAGENES = join(RAIZ, 'public', 'glossary-images');
 const DESTINO = join(RAIZ, 'public', 'glossary-seed', 'mock', 'articles');
 const soloValidar = process.argv.includes('--check');
+const opcion = (nombre) => {
+  const i = process.argv.indexOf(nombre);
+  return i === -1 ? undefined : process.argv[i + 1];
+};
+const PISO = Number(opcion('--min') ?? 2000);
+const API = resolve(opcion('--api') ?? join(RAIZ, '..', 'mantra-core-health-api'));
+const SOLO = opcion('--only')?.split(',').filter(Boolean);
 
 /** Identificador corto de la fuente; `glossary-article.logic.ts` lo traduce a un nombre legible. */
 export const FUENTE = 'alovida-curated';
@@ -61,6 +73,70 @@ function itemsDe(texto) {
     .map((linea) => linea.replace(VINETA, ''));
 }
 
+
+/**
+ * Lee un archivo Markdown de autoría.
+ *
+ * ```
+ * ---
+ * slug: hipertension-arterial
+ * image: archivo.svg | Pie de imagen | Texto alternativo descriptivo
+ * ---
+ * ## [definition] Introducción
+ * Párrafos…
+ * ## [references]
+ * - Título | https://… | Fuente
+ * ```
+ */
+export function leerMarkdown(texto, archivo = '(texto)') {
+  const crudo = texto.replace(/\r\n/g, '\n');
+  const m = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(crudo);
+  if (m === null) throw new Error(`${archivo}: falta el encabezado «---»`);
+  const autoria = { slug: undefined, sections: [], references: [], images: [] };
+  for (const linea of m[1].split('\n')) {
+    if (linea.trim() === '') continue;
+    const i = linea.indexOf(':');
+    if (i === -1) throw new Error(`${archivo}: línea de encabezado inválida «${linea}»`);
+    const clave = linea.slice(0, i).trim();
+    const valor = linea.slice(i + 1).trim();
+    if (clave === 'slug') autoria.slug = valor;
+    else if (clave === 'image') {
+      const [file, caption, altText, ...resto] = valor.split('|').map((x) => x.trim());
+      if (file === undefined || caption === undefined || altText === undefined || resto.length > 0) {
+        throw new Error(`${archivo}: «image» lleva exactamente «archivo | pie | texto alternativo»`);
+      }
+      autoria.images.push({ file, caption, altText });
+    } else throw new Error(`${archivo}: clave de encabezado desconocida «${clave}»`);
+  }
+  let actual = null;
+  const cierra = () => {
+    if (actual === null) return;
+    const cuerpo = actual.lineas.join('\n').trim();
+    if (actual.kind === 'references') {
+      for (const linea of cuerpo.split('\n').filter((l) => l.trim() !== '')) {
+        const [title, url, source, ...resto] = linea.replace(/^[-•]\s*/, '').split('|').map((x) => x.trim());
+        if (!title || !url || !source || resto.length > 0) {
+          throw new Error(`${archivo}: referencia inválida «${linea}» (título | url | fuente)`);
+        }
+        autoria.references.push({ title, url, source });
+      }
+    } else {
+      autoria.sections.push({ kind: actual.kind, locator: actual.locator, text: cuerpo });
+    }
+    actual = null;
+  };
+  for (const linea of m[2].split('\n')) {
+    const h = /^##\s+\[([a-z_]+)\]\s*(.*)$/.exec(linea);
+    if (h !== null) {
+      cierra();
+      actual = { kind: h[1], locator: h[2].trim(), lineas: [] };
+    } else if (actual !== null) actual.lineas.push(linea);
+    else if (linea.trim() !== '') throw new Error(`${archivo}: texto antes de la primera sección «## [kind]»`);
+  }
+  cierra();
+  return autoria;
+}
+
 /** Convierte un archivo de autoría en el artículo que sirve la API. Lanza si no cumple. */
 export function compilar(autoria, hoy = VERSION) {
   const { slug } = autoria;
@@ -88,12 +164,11 @@ export function compilar(autoria, hoy = VERSION) {
     };
   });
 
-  const imagenes = [];
-  if (autoria.image !== undefined) {
-    const { file, caption, altText } = autoria.image;
+  const imagenes = (autoria.images ?? []).map(({ file, caption, altText }) => {
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*\.svg$/.test(file)) falla(`la imagen «${file}» debe llamarse en kebab-case y ser .svg`);
     if (!existsSync(join(IMAGENES, file))) falla(`la imagen ${file} no existe en public/glossary-images`);
-    if (typeof altText !== 'string' || altText.trim().length < 20) falla('la imagen necesita un texto alternativo descriptivo');
-    imagenes.push({
+    if (typeof altText !== 'string' || altText.trim().length < 20) falla(`la imagen ${file} necesita un texto alternativo descriptivo`);
+    return {
       url: `/glossary-images/${file}`,
       thumbUrl: `/glossary-images/${file}`,
       kind: 'diagram',
@@ -106,8 +181,9 @@ export function compilar(autoria, hoy = VERSION) {
       licenseUrl: '',
       sourcePage: '',
       retrievedAt: hoy,
-    });
-  }
+    };
+  });
+  if (imagenes.length === 0) falla('el artículo necesita al menos una imagen');
 
   return {
     conceptRef: { system: FUENTE, code: slug, slug },
@@ -124,20 +200,32 @@ export const palabrasDelArticulo = (articulo) =>
   articulo.sections.reduce((n, s) => n + palabras(s.text), 0);
 
 function main() {
-  const archivos = readdirSync(ORIGEN).filter((n) => n.endsWith('.json')).sort();
+  const archivos = readdirSync(ORIGEN)
+    .filter((n) => n.endsWith('.md') && n !== '00_README.md')
+    .filter((n) => SOLO === undefined || SOLO.includes(n.replace(/\.md$/, '')))
+    .sort();
   const cubetas = new Map();
+  const paraLaApi = {};
   let total = 0;
+  const cortos = [];
   for (const nombre of archivos) {
-    const articulo = compilar(JSON.parse(readFileSync(join(ORIGEN, nombre), 'utf8')));
-    if (`${articulo.conceptRef.slug}.json` !== nombre) {
+    const articulo = compilar(leerMarkdown(readFileSync(join(ORIGEN, nombre), 'utf8'), nombre));
+    if (`${articulo.conceptRef.slug}.md` !== nombre) {
       throw new Error(`${nombre}: el archivo debe llamarse como su slug`);
     }
+    const n = palabrasDelArticulo(articulo);
+    if (n < PISO) cortos.push(`${articulo.conceptRef.slug} (${n})`);
     const id = conceptIdOf(articulo.conceptRef.slug);
     const hh = id.slice(0, 2).toLowerCase();
     if (!cubetas.has(hh)) cubetas.set(hh, {});
     cubetas.get(hh)[id] = articulo;
-    total += palabrasDelArticulo(articulo);
-    console.log(`${articulo.conceptRef.slug}: ${articulo.sections.length} secciones, ${palabrasDelArticulo(articulo)} palabras`);
+    paraLaApi[articulo.conceptRef.slug] = articulo;
+    total += n;
+    console.log(`${articulo.conceptRef.slug}: ${articulo.sections.length} secciones, ${articulo.images.length} imágenes, ${n} palabras`);
+  }
+  if (cortos.length > 0) {
+    console.error(`glossary-articulos-alovida: bajo el piso de ${PISO} palabras: ${cortos.join(', ')}`);
+    process.exit(1);
   }
   if (soloValidar) {
     console.log(`glossary-articulos-alovida: ${archivos.length} archivos válidos, ${total} palabras.`);
@@ -150,6 +238,49 @@ function main() {
     writeFileSync(ruta, JSON.stringify({ ...existentes, ...nuevos }));
   }
   console.log(`glossary-articulos-alovida: ${archivos.length} artículos en ${cubetas.size} cubetas → ${DESTINO}`);
+  if (SOLO === undefined) escribirParaLaApi(paraLaApi);
+  else console.log('glossary-articulos-alovida: con --only no se regenera el archivo del API.');
+}
+
+/**
+ * El archivo que siembra el API: un literal de texto JSON por slug.
+ *
+ * Es un `JSON.parse` perezoso y no un objeto literal a propósito: 80 artículos de
+ * ~70 KB como literal de objeto hacen lento al compilador de TypeScript, y como texto
+ * son sólo cadenas. El API los valida y los parsea en `glossary-articles.catalog.ts`.
+ */
+export function textoParaLaApi(articulos) {
+  const filas = Object.keys(articulos)
+    .sort()
+    .map((slug) => `  ${JSON.stringify(slug)}: ${JSON.stringify(JSON.stringify(articulos[slug]))},`);
+  return [
+    '/* ============================================================================',
+    '   Los artículos enciclopédicos de autoría propia del glosario, serializados.',
+    '',
+    '   **GENERADO por `scripts/glossary-articulos-alovida.mjs` del front',
+    '   (`mantra-core-health`). No editar a mano**: la fuente son los archivos',
+    '   `data/glossary/articulos/*.md` de ese repositorio.',
+    '',
+    '   Todo el texto es original del equipo y está pendiente de revisión médica.',
+    '   ========================================================================== */',
+    '',
+    '/** Un artículo `GlossaryArticle` serializado como JSON, por slug del término. */',
+    'export const GLOSSARY_ARTICLES_JSON: Readonly<Record<string, string>> = {',
+    ...filas,
+    '};',
+    '',
+  ].join('\n');
+}
+
+function escribirParaLaApi(articulos) {
+  const carpeta = join(API, 'src', 'common', 'seed');
+  if (!existsSync(carpeta)) {
+    console.log(`glossary-articulos-alovida: no hay repo del API en ${API}; se omite el archivo del API (--api <carpeta>).`);
+    return;
+  }
+  const destino = join(carpeta, 'glossary-articles.generated.ts');
+  writeFileSync(destino, textoParaLaApi(articulos));
+  console.log(`glossary-articulos-alovida: ${Object.keys(articulos).length} artículos → ${destino}`);
 }
 
 if (process.argv[1] !== undefined && import.meta.url === new URL(`file://${process.argv[1]}`).href) main();

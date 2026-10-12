@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Línea de tiempo del salbutamol</title>
+  <desc id="d">Hitos de la historia del salbutamol: la clasificación de receptores alfa y beta en 1948, el primer inhalador presurizado en 1956, la distinción entre beta 1 y beta 2 en 1967, la síntesis y salida al mercado británico en 1968 y 1969, la aprobación en Estados Unidos en 1981, el isómero R en 1999, el fin de los inhaladores con CFC en 2008, el cambio de las guías GINA en 2019 y el ensayo MANDALA en 2022.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --acc:#2a6fb0; --hot:#c26a1b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --acc:#6fb0ee; --hot:#f0a15a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 14px; }
+    .yr { font-size: 16px; font-weight: 800; }
+    .ev { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="16" y="16" width="768" height="420" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="50" text-anchor="middle" class="title">Del receptor al inhalador de alivio</text>
+  <line x1="40" y1="236" x2="760" y2="236" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="92" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="92" y1="227" x2="92" y2="196" stroke="var(--acc)" stroke-width="2"/>
+  <text x="92" y="154" text-anchor="middle" class="yr" style="fill:var(--acc)">1948</text>
+  <text x="92" y="172" text-anchor="middle" class="ev">Ahlquist propone</text>
+  <text x="92" y="186" text-anchor="middle" class="ev">receptores α y β</text>
+  <circle cx="169" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="169" y1="245" x2="169" y2="276" stroke="var(--acc)" stroke-width="2"/>
+  <text x="169" y="296" text-anchor="middle" class="yr" style="fill:var(--acc)">1956</text>
+  <text x="169" y="316" text-anchor="middle" class="ev">Primer inhalador</text>
+  <text x="169" y="330" text-anchor="middle" class="ev">presurizado</text>
+  <text x="169" y="344" text-anchor="middle" class="ev">dosificador</text>
+  <circle cx="246" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="246" y1="227" x2="246" y2="196" stroke="var(--acc)" stroke-width="2"/>
+  <text x="246" y="154" text-anchor="middle" class="yr" style="fill:var(--acc)">1967</text>
+  <text x="246" y="172" text-anchor="middle" class="ev">Lands distingue β1</text>
+  <text x="246" y="186" text-anchor="middle" class="ev">y β2</text>
+  <circle cx="323" cy="236" r="9" fill="var(--hot)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="323" y1="245" x2="323" y2="276" stroke="var(--hot)" stroke-width="2"/>
+  <text x="323" y="296" text-anchor="middle" class="yr" style="fill:var(--hot)">1968-69</text>
+  <text x="323" y="316" text-anchor="middle" class="ev">Síntesis (1968) y</text>
+  <text x="323" y="330" text-anchor="middle" class="ev">lanzamiento</text>
+  <text x="323" y="344" text-anchor="middle" class="ev">británico (1969)</text>
+  <circle cx="400" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="400" y1="227" x2="400" y2="196" stroke="var(--acc)" stroke-width="2"/>
+  <text x="400" y="154" text-anchor="middle" class="yr" style="fill:var(--acc)">1981</text>
+  <text x="400" y="172" text-anchor="middle" class="ev">Aprobación en</text>
+  <text x="400" y="186" text-anchor="middle" class="ev">Estados Unidos</text>
+  <circle cx="477" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="477" y1="245" x2="477" y2="276" stroke="var(--acc)" stroke-width="2"/>
+  <text x="477" y="296" text-anchor="middle" class="yr" style="fill:var(--acc)">1999</text>
+  <text x="477" y="316" text-anchor="middle" class="ev">Se aprueba el</text>
+  <text x="477" y="330" text-anchor="middle" class="ev">isómero R</text>
+  <text x="477" y="344" text-anchor="middle" class="ev">(levalbuterol)</text>
+  <circle cx="554" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="554" y1="227" x2="554" y2="196" stroke="var(--acc)" stroke-width="2"/>
+  <text x="554" y="126" text-anchor="middle" class="yr" style="fill:var(--acc)">2008</text>
+  <text x="554" y="144" text-anchor="middle" class="ev">Fin de los</text>
+  <text x="554" y="158" text-anchor="middle" class="ev">inhaladores con</text>
+  <text x="554" y="172" text-anchor="middle" class="ev">CFC en Estados</text>
+  <text x="554" y="186" text-anchor="middle" class="ev">Unidos</text>
+  <circle cx="631" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="631" y1="245" x2="631" y2="276" stroke="var(--acc)" stroke-width="2"/>
+  <text x="631" y="296" text-anchor="middle" class="yr" style="fill:var(--acc)">2019</text>
+  <text x="631" y="316" text-anchor="middle" class="ev">GINA retira el</text>
+  <text x="631" y="330" text-anchor="middle" class="ev">SABA solo como</text>
+  <text x="631" y="344" text-anchor="middle" class="ev">tratamiento de</text>
+  <text x="631" y="358" text-anchor="middle" class="ev">asma</text>
+  <circle cx="708" cy="236" r="9" fill="var(--acc)" stroke="var(--panel)" stroke-width="3"/>
+  <line x1="708" y1="227" x2="708" y2="196" stroke="var(--acc)" stroke-width="2"/>
+  <text x="708" y="140" text-anchor="middle" class="yr" style="fill:var(--acc)">2022</text>
+  <text x="708" y="158" text-anchor="middle" class="ev">Ensayo MANDALA:</text>
+  <text x="708" y="172" text-anchor="middle" class="ev">albuterol con</text>
+  <text x="708" y="186" text-anchor="middle" class="ev">budesonida</text>
+  <text x="400" y="412" text-anchor="middle" class="sub muted">Las fechas son hitos de referencia; el desarrollo real fue gradual.</text>
+  <text x="400" y="460" text-anchor="middle" class="sub muted">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

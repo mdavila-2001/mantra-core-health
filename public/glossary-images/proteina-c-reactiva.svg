@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">De la interleucina 6 a la proteína C reactiva en sangre</title>
+  <desc id="d">Un estímulo inflamatorio agudo libera interleucina 6, que actúa sobre el hígado y estimula la síntesis de proteína C reactiva. La curva muestra que la concentración sérica empieza a subir a las 4 a 6 horas, alcanza su máximo entre las 36 y las 50 horas y cae después con una vida media de unas 19 horas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2a6fb0; --a-l:#dbe9f7; --b:#c0632b; --b-l:#f8e5d6; --c:#1f8a5b; --c-l:#d9f0e5; --bad:#c0392b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#6fb0ee; --a-l:#223a52; --b:#eb9a62; --b-l:#4a3324; --c:#4cc38a; --c-l:#1f3d31; --bad:#ef7467; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 13px; }
+    .ax { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">Respuesta de fase aguda: de la IL-6 a la PCR</text>
+
+  <!-- Flujo biológico -->
+  <rect x="24" y="64" width="350" height="372" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="46" y="86" width="306" height="68" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="199" y="114" text-anchor="middle" class="h">Estímulo agudo</text>
+  <text x="199" y="136" text-anchor="middle" class="s muted">infección · lesión · cirugía · infarto</text>
+  <path d="M199 158 v34 m-8 -9 l8 11 l8 -11" stroke="var(--muted)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="46" y="198" width="306" height="68" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="199" y="226" text-anchor="middle" class="h">Macrófagos y células del tejido</text>
+  <text x="199" y="248" text-anchor="middle" class="s muted">liberan IL-6 e IL-1β</text>
+  <path d="M199 270 v34 m-8 -9 l8 11 l8 -11" stroke="var(--muted)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="46" y="310" width="306" height="68" rx="12" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <text x="199" y="338" text-anchor="middle" class="h">Hígado: hepatocitos</text>
+  <text x="199" y="360" text-anchor="middle" class="s muted">vía STAT3 y C/EBP → gen CRP</text>
+  <text x="199" y="408" text-anchor="middle" class="s">Resultado: PCR en la sangre</text>
+  
+  <!-- Gráfica -->
+  <rect x="396" y="64" width="380" height="372" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="586" y="94" text-anchor="middle" class="h">Concentración sérica en el tiempo</text>
+  <!-- ejes -->
+  <path d="M440 126 V372 H752" stroke="var(--muted)" stroke-width="2" fill="none"/>
+  <text x="430" y="130" text-anchor="end" class="ax muted">PCR</text>
+  <!-- ticks horas -->
+  <g stroke="var(--muted)" stroke-width="1.5">
+    <path d="M440 372 v6"/><path d="M512 372 v6"/><path d="M584 372 v6"/><path d="M656 372 v6"/><path d="M728 372 v6"/>
+  </g>
+  <g class="ax muted" text-anchor="middle">
+    <text x="440" y="394" class="ax muted">0</text>
+    <text x="512" y="394" class="ax muted">24</text>
+    <text x="584" y="394" class="ax muted">48</text>
+    <text x="656" y="394" class="ax muted">72</text>
+    <text x="728" y="394" class="ax muted">96 h</text>
+  </g>
+  <!-- banda de máximo 36-50 h -->
+  <rect x="548" y="126" width="42" height="246" fill="var(--b-l)" opacity="0.9"/>
+  <text x="569" y="118" text-anchor="middle" class="ax" style="fill:var(--b)">máximo</text>
+  <!-- inicio 4-6 h -->
+  <path d="M455 372 V312" stroke="var(--a)" stroke-width="2" stroke-dasharray="4 4"/>
+  <text x="446" y="290" class="ax" style="fill:var(--a)">sube a las</text>
+  <text x="446" y="306" class="ax" style="fill:var(--a)">4–6 h</text>
+  <!-- curva -->
+  <path d="M440 372 C458 372 470 368 490 340 C520 296 545 176 572 146 C590 134 612 160 640 226 C668 288 700 330 744 350" fill="none" stroke="var(--bad)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="572" cy="146" r="6" fill="var(--bad)"/>
+  <text x="640" y="170" class="s">36–50 h</text>
+  <text x="640" y="190" class="ax muted">vida media ≈ 19 h</text>
+  <text x="640" y="208" class="ax muted">(igual en salud y</text>
+  <text x="640" y="224" class="ax muted">en enfermedad)</text>
+  <text x="586" y="420" text-anchor="middle" class="s muted">Horas desde el estímulo</text>
+
+  <text x="400" y="464" text-anchor="middle" class="s muted">Esquema ilustrativo, sin escala vertical. Ilustración original de AloVida.</text>
+</svg>

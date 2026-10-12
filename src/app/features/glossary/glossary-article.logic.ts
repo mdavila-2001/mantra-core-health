@@ -70,11 +70,14 @@ export const TITULO_DE_SECCION: Readonly<Record<GlossarySectionKind, string>> = 
   additional_information: 'Más información de la fuente',
 };
 
+/** Identificador de la fuente de los artículos de autoría propia del equipo (`data/glossary/articulos/`). */
+export const FUENTE_PROPIA = 'alovida-curated';
+
 /** Nombre legible de cada fuente por su identificador corto; uno desconocido se muestra tal cual. */
 const NOMBRE_DE_FUENTE: Readonly<Record<string, string>> = {
   'nlm-medlineplus-es': 'MedlinePlus en español (NLM)',
   'nlm-medlineplus-es-pruebas': 'MedlinePlus, pruebas de laboratorio (NLM)',
-  'alovida-curated': 'Equipo AloVida (texto original, pendiente de revisión médica)',
+  [FUENTE_PROPIA]: 'Equipo AloVida (texto original, pendiente de revisión médica)',
 };
 
 export function nombreDeFuente(source: string): string {
@@ -217,10 +220,20 @@ export function seccionesPintables(articulo: GlossaryArticle): readonly SeccionP
     repetidos.set(seccion.kind, (repetidos.get(seccion.kind) ?? 0) + 1);
   }
   return articulo.sections.map((seccion, indice) => {
-    const titulo = TITULO_DE_SECCION[seccion.kind] ?? TITULO_DE_SECCION.additional_information;
     const locator = seccion.locator.trim();
+    // Un artículo de autoría propia titula cada sección con su propio encabezado:
+    // el título genérico del `kind` repetiría «Más información de la fuente» en
+    // todas las secciones que no tienen un `kind` específico (historia,
+    // fisiopatología…). El encabezado no se repite además como «En la fuente».
+    const propia = seccion.source === FUENTE_PROPIA && locator !== '';
+    const titulo = propia
+      ? locator
+      : (TITULO_DE_SECCION[seccion.kind] ?? TITULO_DE_SECCION.additional_information);
     const dice =
-      locator !== '' && sinAdorno(locator) !== sinAdorno(titulo) && sinAdorno(locator) !== 'introduccion';
+      !propia &&
+      locator !== '' &&
+      sinAdorno(locator) !== sinAdorno(titulo) &&
+      sinAdorno(locator) !== 'introduccion';
     const encabezado = dice ? locator : null;
     const repetido = (repetidos.get(seccion.kind) ?? 0) > 1;
     return {
