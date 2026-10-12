@@ -96,7 +96,7 @@
 
 <ng-template #celdaPedida let-fila>{{ fila.requestedAt | date: 'dd/MM/yyyy' }}</ng-template>
 
-<ng-template #celdaEstudio let-fila>{{ fila.studyLabel }}</ng-template>
+<ng-template #celdaEstudio let-fila><span class="ordenes__estudio">{{ fila.studyLabel }}</span></ng-template>
 
 <ng-template #celdaTipo let-fila>
   <app-badge variant="info">{{ fila.typeLabel }}</app-badge>

@@ -367,3 +367,14 @@
 .turnos__cancelar {
   color: var(--st-error-fg);
 }
+
+/* El estado no va sólo en el color: un aspa delante del texto. */
+.turnos__cancelar::before {
+  content: '';
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  margin-inline-end: var(--sp-1);
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+}

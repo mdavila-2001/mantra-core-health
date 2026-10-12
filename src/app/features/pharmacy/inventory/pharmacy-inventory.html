@@ -20,9 +20,9 @@
   @if (scope.pharmacyId() !== null) {
     <app-card class="inventory" padding="lg" data-testid="inventory-card">
       <div class="inventory__panel">
-        <app-alert tone="info" data-testid="inventory-sync-notice">
+        <p class="inventory__nota" data-testid="inventory-sync-notice">
           Cuando exista la sincronización con su sistema, esta pantalla pasa a ser sólo de lectura.
-        </app-alert>
+        </p>
 
         @if (errors().length > 0) {
           <app-alert tone="error" title="Falta resolver esto" data-testid="inventory-errors">

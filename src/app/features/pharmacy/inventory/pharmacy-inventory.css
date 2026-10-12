@@ -77,3 +77,19 @@
     justify-content: flex-end;
   }
 }
+
+/* Una nota, no una alerta: es contexto, no un problema. Texto secundario y sin
+   caja (un recuadro verde dentro de la tarjeta era «caja dentro de caja»). */
+.inventory__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* Un número de unas pocas cifras no necesita toda la columna: el campo se
+   acota y la fila deja de ser una pared de recuadros anchos. */
+app-input {
+  display: block;
+  max-inline-size: 7.5rem;
+}

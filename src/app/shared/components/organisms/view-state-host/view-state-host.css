@@ -68,10 +68,11 @@
     display: inline-flex;
     align-items: center;
     gap: var(--sp-2);
-    padding: var(--sp-2) var(--sp-4);
-    border: 1px dashed var(--border-strong);
-    border-radius: var(--r-full);
-    background: var(--bg-inset);
+    padding: var(--sp-1) 0;
+    /* Texto con flecha y nada más: sin recuadro (ni punteado), para que no
+       parezca un botón que no es. */
+    border: 0;
+    background: transparent;
     color: var(--text-secondary);
     font-family: var(--font-body);
     font-size: var(--fs-caption);

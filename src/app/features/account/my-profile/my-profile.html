@@ -249,7 +249,7 @@
                           @if (p.nationalId) {
                             {{ p.nationalId }}
                             @if (p.issuerAdministrativeAreaConceptId; as depto) {
-                              <span class="mi-perfil__sufijo">{{ etiquetaDe(depto) }}</span>
+                              <span class="mi-perfil__sufijo">· exp. en {{ etiquetaDe(depto) }}</span>
                             }
                           } @else {
                             <span class="mi-perfil__ausente">Sin registrar</span>

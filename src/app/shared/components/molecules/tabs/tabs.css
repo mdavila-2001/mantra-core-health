@@ -339,3 +339,22 @@
         animation-range: calc(100% - 3rem) 100%;
     }
 }
+
+/* Cinco pestañas o más en teléfono: ninguna se esconde detrás de una flecha. La
+   tira se parte en dos renglones y cada pestaña toma un tercio. */
+@media (max-width: 40rem) {
+    :host(:not(.tabs--browser):has(.tabs__tab:nth-child(5))) .tabs__list {
+        flex-wrap: wrap;
+        overflow: visible;
+        -webkit-mask-image: none;
+        mask-image: none;
+        animation: none;
+    }
+
+    :host(:not(.tabs--browser):has(.tabs__tab:nth-child(5))) .tabs__tab {
+        flex: 1 1 30%;
+        min-width: 0;
+        padding-inline: var(--sp-2);
+        text-align: center;
+    }
+}
