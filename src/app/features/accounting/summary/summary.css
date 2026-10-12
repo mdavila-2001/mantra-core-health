@@ -17,6 +17,11 @@
   margin-block-start: var(--sp-6);
 }
 
+.subpestanas {
+  display: block;
+  margin-block-start: var(--sp-4);
+}
+
 .bloque__bajada {
   margin: var(--sp-2) 0 var(--sp-4);
   color: var(--text-secondary);
