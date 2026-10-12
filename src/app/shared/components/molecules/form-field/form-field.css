@@ -148,6 +148,22 @@
   line-height: var(--lh-caption);
   color: var(--c-error-500);
   margin: var(--sp-1) 0 0 0;
+  /* El error ENTRA, no salta: crece desde alto 0 con el muelle `suave` (con
+     `interpolate-size` el alto automático es animable) y el formulario de abajo
+     se desplaza con él en vez de brincar. Sin esa API sólo hay fundido. */
+  interpolate-size: allow-keywords;
+  /* `hidden` y no `clip`: así `min-height: auto` de un hijo flex no impide el 0 */
+  overflow: hidden;
+  animation: form-field-error-entra var(--spring-suave-dur) var(--spring-suave) both;
+}
+
+@keyframes form-field-error-entra {
+  from {
+    opacity: 0;
+    block-size: 0;
+    margin-block-start: 0;
+    transform: translateY(calc(-1 * var(--sp-1)));
+  }
 }
 
 .error-icon {

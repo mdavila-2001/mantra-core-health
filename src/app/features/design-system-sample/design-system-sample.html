@@ -45,11 +45,11 @@
 
             <h3>Botón — estados</h3>
             <p class="sandbox-note">
-                «Guardar cambios» y el ícono de búsqueda simulan una carga real de 1,5 s: el
-                contenido se apaga y queda el spinner.
+                «Guardar cambios» y el ícono de búsqueda simulan una carga de 1,5 s (spinner);
+                el primero se confirma 1,6 s con un check que se dibuja (`isSuccess`).
             </p>
             <div class="sandbox-grid">
-                <button app-button [isLoading]="savingDemo()" (clicked)="simulateSave()">
+                <button app-button [isLoading]="savingDemo()" [isSuccess]="savedDemo()" data-testid="demo-guardar" (clicked)="simulateSave()">
                     Guardar cambios
                 </button>
                 <button app-button variant="secondary" [disabled]="true">Deshabilitado</button>
@@ -563,7 +563,7 @@
                 <span class="spinner-ink-sample spinner-ink-sample--error">
                     <app-spinner size="sm" label="Reintentando envío" />
                 </span>
-                <button app-button [isLoading]="savingDemo()" (clicked)="simulateSave()">
+                <button app-button [isLoading]="savingDemo()" [isSuccess]="savedDemo()" data-testid="demo-guardar" (clicked)="simulateSave()">
                     Guardar cambios
                 </button>
             </div>

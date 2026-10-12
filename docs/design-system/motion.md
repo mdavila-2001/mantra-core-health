@@ -121,6 +121,18 @@ mismo origen. Sin animación posible (jsdom, movimiento reducido) cierran en el 
 `app-menu` usa el muelle `rápido`, crece desde el borde del disparador y es material
 `regular`.
 
+### Componentes con muelle (medido en navegador, 2026-10-12)
+
+| Pieza | Qué hace | Medido |
+|---|---|---|
+| `button[app-button]` | Se hunde a `scale(0.97)` al presionar; vuelve con el muelle `rápido`. Con `isSuccess` la etiqueta se transforma en un check que se dibuja (`rebote`) | `matrix(0.97…)` presionado; check a escala 1,048 a 120 ms |
+| `app-switch` | La perilla viaja con el muelle `rápido` (260 ms) y se estira al presionar | 5,1 px de 16 a 70 ms |
+| `app-checkbox`, `app-radio` | El tilde se dibuja y el punto nace con el muelle `rápido`; la caja se hunde al presionar | — |
+| `app-form-field` (error) | Entra creciendo desde alto 0 con el muelle `suave` (`interpolate-size`); no salta | 0 → 10,7 → 16,3 → 17 px (0 / 80 / 160 / 380 ms) |
+
+El esqueleto (`app-skeleton`) ya traía el barrido de brillo y el vacío (`app-empty-state`)
+ya traía su ilustración lineal con entrada propia: no se tocaron.
+
 ### Transición entre rutas
 
 View Transitions API (`withViewTransitions` del router) con respaldo: sin la API, o con
