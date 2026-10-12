@@ -753,7 +753,12 @@ app-shell-layout { display: block; }
   color: #fff;
   background: rgba(159, 216, 208, .16);
 }
-.app-side-nav__item:hover .icono { opacity: 1; }
+.app-side-nav__item:hover .icono,
+.app-side-nav__item:hover app-nav-icon {
+  opacity: 1;
+  transform: scale(1.15) translateY(-1px);
+  filter: drop-shadow(0 2px 8px rgba(159, 216, 208, .45));
+}
 .app-side-nav__item[aria-current="true"],
 .app-side-nav__item.is-activo {
   color: #fff; font-weight: 600;
@@ -1870,10 +1875,23 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 /* Fantasma — sin caja hasta que se lo toca. */
 [app-button][data-variante="fantasma"]:hover { background: var(--info-bg); color: var(--tinta-marca); }
 
-/* El icono acompaña al texto: se corre 1 px cuando el botón responde. */
-[app-button] .icono { transition: transform var(--mov-medio) var(--curva); }
-[app-button]:hover .icono { transform: translateX(1px); }
-[app-button][data-variante="secundario"]:hover .icono { transform: translateX(-1px); }
+/* El icono acompaña al texto con respuesta elástica viva. */
+[app-button] .icono {
+  transform-origin: center center;
+  transition: transform var(--dur-base) var(--pulse-icon-ease, var(--curva)), filter var(--dur-base) var(--pulse-ease);
+}
+[app-button]:hover .icono {
+  transform: scale(1.12) translateY(-0.5px);
+  filter: drop-shadow(0 2px 6px var(--pulse-icon-glow, rgba(79, 179, 169, .35)));
+}
+[app-button]:active .icono {
+  transform: scale(0.92);
+  transition-duration: var(--dur-fast);
+}
+[app-button][data-variante="secundario"]:hover .icono,
+[app-button].btn--secondary:hover .icono {
+  transform: translateX(-2px) scale(1.1);
+}
 
 /* Los demás controles con superficie propia también reaccionan. */
 .app-tenant-switcher:hover { border-color: var(--aguamarina); background: var(--info-bg); }

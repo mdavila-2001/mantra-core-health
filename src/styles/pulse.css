@@ -268,12 +268,265 @@
 [data-page-turn='prev-a'] { animation: pulse-page-prev-a var(--dur-base) var(--pulse-ease); }
 [data-page-turn='prev-b'] { animation: pulse-page-prev-b var(--dur-base) var(--pulse-ease); }
 
-@media (prefers-reduced-motion: reduce) {
-    .pulse-tap:active {
-        transform: none;
+/* ============================================================================
+    PULSE · ÍCONOS VIVOS — reactividad transversal, estética minimalista y vibrante.
+
+    Cada ícono de la aplicación responde con dinamismo físico y sutileza:
+    1. REACTIVIDAD: el ícono contesta con micro-resorte elástico al apuntar
+       (hover/focus) y compresión háptica al pulsar (active).
+    2. VIBRACIÓN: un halo translúcido sutil tintado de aguamarina/petróleo
+       destaca el trazo sin empastar ni romper el minimalismo.
+    3. DIRECCIÓN & CONTEXTO: flechas que avanzan o retroceden, lupas que rotan al
+       enfocar la búsqueda, campanas que oscilan orgánicamente al interactuar, y
+       cápsulas de cabecera que levitan suavemente.
+    4. ACCESIBILIDAD: con `prefers-reduced-motion` todo movimiento se anula.
+   ========================================================================== */
+
+:root {
+    --pulse-icon-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --pulse-icon-dur: 220ms;
+    --pulse-icon-glow: color-mix(in srgb, var(--brand-secondary, #4FB3A9) 32%, transparent);
+    --pulse-icon-glow-strong: color-mix(in srgb, var(--brand-secondary, #4FB3A9) 55%, transparent);
+}
+
+/* ── Base transversal de todo ícono ─────────────────────────────────────── */
+.icono,
+app-nav-icon,
+app-account-icon,
+app-data-type-icon,
+app-question-type-icon,
+app-service-icon,
+app-specialty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+    backface-visibility: hidden;
+    transition:
+        transform var(--pulse-icon-dur) var(--pulse-icon-ease),
+        filter var(--pulse-icon-dur) var(--pulse-ease),
+        color var(--dur-fast) var(--ease-standard),
+        opacity var(--dur-fast) var(--ease-standard);
+}
+
+.icono,
+app-nav-icon svg,
+app-account-icon svg,
+app-data-type-icon svg,
+app-question-type-icon svg,
+app-service-icon svg,
+app-specialty-icon svg {
+    transform-origin: center center;
+    transition:
+        transform var(--pulse-icon-dur) var(--pulse-icon-ease),
+        filter var(--pulse-icon-dur) var(--pulse-ease),
+        color var(--dur-fast) var(--ease-standard),
+        stroke var(--dur-fast) var(--ease-standard),
+        opacity var(--dur-fast) var(--ease-standard);
+}
+
+/* ── Respuesta viva al apuntar (Hover & Focus) ───────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+    button:hover .icono,
+    [app-button]:hover .icono,
+    .btn:hover .icono,
+    a:hover .icono,
+    [role='button']:hover .icono,
+    [role='tab']:hover .icono,
+    summary:hover .icono,
+    .app-side-nav__item:hover .icono,
+    .public-nav-rail__item:hover .icono,
+    .rejilla-item:hover .icono,
+    .app-card:hover .icono,
+    .landing-enlace-baja:hover .icono,
+    button:hover app-nav-icon,
+    [app-button]:hover app-nav-icon,
+    a:hover app-nav-icon,
+    .app-side-nav__item:hover app-nav-icon,
+    .public-nav-rail__item:hover app-nav-icon,
+    button:focus-visible .icono,
+    [app-button]:focus-visible .icono,
+    .btn:focus-visible .icono,
+    a:focus-visible .icono,
+    .app-side-nav__item:focus-visible .icono,
+    .app-side-nav__item:focus-visible app-nav-icon {
+        transform: scale(1.14) translateY(-1px);
+        filter: drop-shadow(0 2px 6px var(--pulse-icon-glow));
     }
 
+    button:hover app-nav-icon svg,
+    [app-button]:hover app-nav-icon svg,
+    a:hover app-nav-icon svg,
+    .app-side-nav__item:hover app-nav-icon svg,
+    .public-nav-rail__item:hover app-nav-icon svg {
+        transform: scale(1.14) translateY(-1px);
+        filter: drop-shadow(0 2px 6px var(--pulse-icon-glow));
+    }
+
+    .pulse-tap:hover .icono,
+    .pulse-tap:hover svg,
+    .btn--icon-only:hover .icono,
+    .btn--icon-only:hover svg,
+    .boton-desborde:hover .icono,
+    .boton-desborde:hover svg {
+        transform: scale(1.16) rotate(3deg);
+        filter: drop-shadow(0 2px 8px var(--pulse-icon-glow-strong));
+    }
+}
+
+/* ── Compresión háptica al pulsar (Active) ──────────────────────────────── */
+button:active .icono,
+[app-button]:active .icono,
+.btn:active .icono,
+a:active .icono,
+.app-side-nav__item:active .icono,
+.app-side-nav__item:active app-nav-icon,
+.pulse-tap:active .icono,
+.pulse-tap:active svg,
+button:active app-nav-icon svg,
+[app-button]:active app-nav-icon svg,
+a:active app-nav-icon svg {
+    transform: scale(0.92) translateY(0);
+    transition-duration: var(--dur-fast);
+}
+
+/* ── Especializaciones por rol y contexto ────────────────────────────────── */
+
+/* 1. Direccionales: avanzar (flechas a la derecha, chevrons al final) */
+@media (hover: hover) and (pointer: fine) {
+    :where(button, [app-button], .btn, a):hover :where(.icono--flecha, .icono--chevron, .icono:last-child:not(:only-child)) {
+        transform: translateX(3px) scale(1.12);
+    }
+
+    /* Retroceso (volver, back links, variante secundaria) */
+    :where(app-back-link, [app-button][data-variante='secundario'], .btn--secondary):hover :where(.icono, .icono--retroceso, .icono:first-child:not(:only-child)) {
+        transform: translateX(-3px) scale(1.12);
+    }
+}
+
+/* 2. Buscadores: la lupa se orienta y resalta al interactuar */
+.app-search-field:focus-within :where(.icono, .icono--busqueda) {
+    transform: scale(1.16) rotate(10deg);
+    color: var(--brand-primary);
+    filter: drop-shadow(0 0 6px var(--pulse-icon-glow-strong));
+}
+
+/* 3. Campana de notificaciones: oscilación viva (swing) */
+@keyframes pulse-bell-ring {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(-14deg) scale(1.12); }
+    40% { transform: rotate(11deg) scale(1.12); }
+    60% { transform: rotate(-6deg) scale(1.08); }
+    80% { transform: rotate(3deg) scale(1.04); }
+    100% { transform: rotate(0deg) scale(1.08); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .campana__boton:hover :where(svg, .icono),
+    .app-header__campana:hover :where(svg, .icono) {
+        animation: pulse-bell-ring 0.55s var(--pulse-ease) both;
+        filter: drop-shadow(0 2px 8px var(--pulse-icon-glow));
+    }
+}
+
+/* 4. Selector de tema: giro limpio */
+@media (hover: hover) and (pointer: fine) {
+    .app-theme-toggle:hover .icono {
+        transform: rotate(30deg) scale(1.16);
+        color: var(--brand-primary);
+        filter: drop-shadow(0 0 8px var(--pulse-icon-glow));
+    }
+}
+
+/* 5. Cabeceras de página y estados vacíos: levitación vibrante */
+.app-page-header__icono,
+.app-empty-state__icono {
+    transition:
+        transform var(--dur-base) var(--pulse-ease),
+        box-shadow var(--dur-base) var(--pulse-ease),
+        background-color var(--dur-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .app-page-header__icono:hover {
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 8px 20px var(--pulse-icon-glow), inset 0 0 0 1px var(--c-aqua-400);
+    }
+
+    .app-page-header__icono:hover .icono {
+        transform: scale(1.14) rotate(-3deg);
+        color: var(--brand-primary);
+    }
+
+    .app-empty-state__icono:hover {
+        transform: translateY(-4px) scale(1.06);
+        box-shadow: 0 10px 24px var(--pulse-icon-glow), inset 0 2px 6px var(--sombra-azul-suave);
+    }
+
+    .app-empty-state__icono:hover .icono {
+        transform: scale(1.16) rotate(3deg);
+    }
+}
+
+/* 6. Badges con ícono: realce sutil */
+@media (hover: hover) and (pointer: fine) {
+    .app-badge:hover .icono {
+        transform: scale(1.22);
+        filter: drop-shadow(0 1px 3px var(--pulse-icon-glow));
+    }
+}
+
+/* 7. Íconos de cabecera de tarjeta */
+@media (hover: hover) and (pointer: fine) {
+    .app-card:hover .app-card__cabecera .icono {
+        transform: scale(1.14) translateY(-1px);
+        color: var(--brand-secondary);
+        filter: drop-shadow(0 2px 6px var(--pulse-icon-glow));
+    }
+}
+
+/* 8. Entrada viva y pop-in al montar */
+@keyframes pulse-icon-enter {
+    from {
+        opacity: 0.3;
+        transform: scale(0.86);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.app-page-header__icono .icono,
+.app-empty-state__icono .icono {
+    animation: pulse-icon-enter var(--dur-base) var(--pulse-icon-ease) backwards;
+}
+
+/* ── Reducción de movimiento: anulación estricta ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .pulse-live,
+    .pulse-arrive,
+    .app-page-header__icono .icono,
+    .app-empty-state__icono .icono {
+        animation: none !important;
+    }
+
+    .pulse-tap:active,
+    .pulse-lift:hover,
+    .pulse-lift:active,
+    .pulse-press:active,
     [data-page-turn] {
-        animation: none;
+        transform: none !important;
+        animation: none !important;
+    }
+
+    :where(.icono, app-nav-icon, app-account-icon, app-data-type-icon, app-question-type-icon, app-service-icon, app-specialty-icon),
+    :where(.icono, app-nav-icon svg, app-account-icon svg, app-data-type-icon svg, app-question-type-icon svg, app-service-icon svg, app-specialty-icon svg),
+    .app-page-header__icono,
+    .app-empty-state__icono {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+        filter: none !important;
     }
 }
