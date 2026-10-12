@@ -40,7 +40,6 @@
       <!-- AC-07-1: encontrar a alguien por su carnet aunque su nombre o su
            código no contengan el texto buscado. -->
       <app-form-field
-        icon="labels"
         label="Documento de identidad"
         hint="El número exacto del carnet."
       >
@@ -50,7 +49,9 @@
           placeholder="Número de carnet"
           [value]="documentoTecleado()"
           (valueChange)="fijarDocumento($event)"
-        />
+        >
+          <app-nav-icon slot="icon-start" name="labels" />
+        </app-input>
       </app-form-field>
     </div>
 
