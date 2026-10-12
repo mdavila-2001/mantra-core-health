@@ -68,6 +68,8 @@
     display: inline-flex;
     align-items: center;
     gap: var(--sp-2);
+    justify-content: center;
+    text-align: center;
     padding: var(--sp-1) 0;
     /* Texto con flecha y nada más: sin recuadro (ni punteado), para que no
        parezca un botón que no es. */

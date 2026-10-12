@@ -28,8 +28,8 @@
          diagnósticos activos no necesita esta tarjeta vacía. -->
     @if (enfermedadesActivas().length > 0) {
       <app-card
-        variant="outlined"
-        padding="lg"
+        variant="flat"
+        padding="none"
         class="expediente__activas"
         data-testid="expediente-enfermedades-activas"
       >
@@ -111,7 +111,7 @@
             <app-data-table
               [state]="estadoDe(bloque.filas, bloque.titulo)"
               [columns]="bloque.columnas"
-              [trackBy]="porFila"
+              [trackBy]="porFila" stackedOnMobile
               [caption]="bloque.titulo + ' del expediente'"
               (retry)="recargar()"
             />
@@ -147,7 +147,7 @@
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrincipal let-fila>
   <span class="expediente__principal">{{ fila.principal }}</span>
-  @if (fila.secundario) {
+  @if (fila.secundario && fila.secundario !== 'Sin registrar') {
     <span class="expediente__secundario">{{ fila.secundario }}</span>
   }
 </ng-template>

@@ -241,23 +241,22 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-/* Escritorio y sin zona abierta: la columna toma el alto de la figura y las tres
-   pastillas se apilan grandes para llenarlo, en vez de dejar un hueco debajo de
-   una fila de chips. */
+/* Escritorio y sin zona abierta: las tres zonas son una lista de filas anchas,
+   alineada arriba y de altura natural (icono a la izquierda, rótulo al lado), no
+   losas estiradas hasta la altura de la figura ni chips perdidos en un rincón. */
 @media (min-width: 64rem) {
-  .sintomas__lado:has(> .sintomas__lado-otros:first-child) {
-    align-self: stretch;
-  }
-
   .sintomas__lado:has(> .sintomas__lado-otros:first-child) > .sintomas__zonas {
-    flex: 1;
     grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: 1fr;
+    gap: var(--e2);
   }
 
   .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona {
-    justify-content: center;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--e4);
+    padding: var(--e4) var(--e5);
     font-size: var(--fs-body);
+    text-align: start;
   }
 }
 
@@ -271,7 +270,7 @@
   /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
   border: 1px solid transparent;
   border-radius: var(--r-menu);
-  background: var(--sup-inset);
+  background: color-mix(in srgb, var(--tinta) 6%, var(--sup-tarjeta));
   color: var(--tinta);
   font: inherit;
   font-size: var(--fs-caption);
