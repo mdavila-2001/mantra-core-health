@@ -9,7 +9,7 @@
  * Cuentas demo (simulador `mockBackend`): medica@, paciente@, admin@ … alovida.mock
  */
 import { mkdirSync } from 'node:fs';
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 
 export const BASE = process.env.BASE ?? 'http://localhost:4301';
 export const SALIDA = process.env.SALIDA ?? 'evidencias/carril-f-2026-10-12';
@@ -25,11 +25,14 @@ export async function lanzar() {
 
 /** Contexto con tema estampado antes del primer paint (clave de ThemeService). */
 export async function contexto(navegador, { ancho, alto, tema = 'claro', reducido = false }) {
+  // A 390 se emula un iPhone real (táctil, 3x, agente móvil): lo que vería el teléfono.
+  const movil = ancho <= 430 && process.env.EMULAR !== '0' ? devices['iPhone 14'] : {};
   const ctx = await navegador.newContext({
+    ...movil,
     viewport: { width: ancho, height: alto },
     colorScheme: tema === 'oscuro' ? 'dark' : 'light',
     reducedMotion: reducido ? 'reduce' : 'no-preference',
-    deviceScaleFactor: 1,
+    ...(Object.keys(movil).length ? {} : { deviceScaleFactor: 1 }),
   });
   await ctx.addInitScript((t) => {
     try {
@@ -72,7 +75,7 @@ export async function ir(pagina, ruta, esperar) {
 export async function capturar(pagina, fase, pantalla, vista, tema, extra = {}) {
   mkdirSync(`${SALIDA}/${fase}`, { recursive: true });
   const ruta = `${SALIDA}/${fase}/${pantalla}-${vista}-${tema}.png`;
-  await pagina.screenshot({ path: ruta, ...extra });
+  await pagina.screenshot({ path: ruta, fullPage: process.env.COMPLETA === '1', ...extra });
   return ruta;
 }
 
