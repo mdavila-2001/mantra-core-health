@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Las cinco fases del proceso de enfermería</title>
+  <desc id="d">Cinco cuadros en secuencia: valoración, diagnóstico, planificación, ejecución y evaluación. Una flecha de retorno lleva de la evaluación a la valoración, porque el plan se revisa y se reajusta. El paciente y su familia participan en todas las fases.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="t">El proceso de enfermería: un ciclo, no una línea</text>
+  <g>
+    <rect x="24" y="76" width="136" height="214" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="92" y="106" text-anchor="middle" class="k" style="fill:var(--a)">1</text>
+    <text x="92" y="132" text-anchor="middle" class="h">Valoración</text>
+    <text x="92" y="162" text-anchor="middle" class="n">Entrevista</text>
+    <text x="92" y="182" text-anchor="middle" class="n">Examen físico</text>
+    <text x="92" y="202" text-anchor="middle" class="n">Historia y registros</text>
+    <text x="92" y="222" text-anchor="middle" class="n">Escalas validadas</text>
+    <text x="92" y="250" text-anchor="middle" class="n m">Datos subjetivos</text>
+    <text x="92" y="268" text-anchor="middle" class="n m">y objetivos</text>
+  </g>
+  <g>
+    <rect x="180" y="76" width="136" height="214" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="248" y="106" text-anchor="middle" class="k" style="fill:var(--a)">2</text>
+    <text x="248" y="132" text-anchor="middle" class="h">Diagnóstico</text>
+    <text x="248" y="162" text-anchor="middle" class="n">Analizar los datos</text>
+    <text x="248" y="182" text-anchor="middle" class="n">Agrupar patrones</text>
+    <text x="248" y="202" text-anchor="middle" class="n">Formular problema</text>
+    <text x="248" y="222" text-anchor="middle" class="n">y su causa</text>
+    <text x="248" y="250" text-anchor="middle" class="n m">Lenguaje estándar</text>
+    <text x="248" y="268" text-anchor="middle" class="n m">(p. ej. NANDA-I)</text>
+  </g>
+  <g>
+    <rect x="336" y="76" width="136" height="214" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="404" y="106" text-anchor="middle" class="k" style="fill:var(--a)">3</text>
+    <text x="404" y="132" text-anchor="middle" class="h">Planificación</text>
+    <text x="404" y="162" text-anchor="middle" class="n">Priorizar</text>
+    <text x="404" y="182" text-anchor="middle" class="n">Fijar resultados</text>
+    <text x="404" y="202" text-anchor="middle" class="n">Elegir intervenciones</text>
+    <text x="404" y="222" text-anchor="middle" class="n">Acordar con él</text>
+    <text x="404" y="250" text-anchor="middle" class="n m">Se escribe el plan</text>
+  </g>
+  <g>
+    <rect x="492" y="76" width="136" height="214" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="560" y="106" text-anchor="middle" class="k" style="fill:var(--a)">4</text>
+    <text x="560" y="132" text-anchor="middle" class="h">Ejecución</text>
+    <text x="560" y="162" text-anchor="middle" class="n">Realizar los cuidados</text>
+    <text x="560" y="182" text-anchor="middle" class="n">Delegar y coordinar</text>
+    <text x="560" y="202" text-anchor="middle" class="n">Educar</text>
+    <text x="560" y="222" text-anchor="middle" class="n">Registrar</text>
+    <text x="560" y="250" text-anchor="middle" class="n m">Seguir valorando</text>
+    <text x="560" y="268" text-anchor="middle" class="n m">mientras se actúa</text>
+  </g>
+  <g>
+    <rect x="648" y="76" width="128" height="214" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+    <text x="712" y="106" text-anchor="middle" class="k" style="fill:var(--b)">5</text>
+    <text x="712" y="132" text-anchor="middle" class="h">Evaluación</text>
+    <text x="712" y="162" text-anchor="middle" class="n">¿Se logró el</text>
+    <text x="712" y="182" text-anchor="middle" class="n">resultado?</text>
+    <text x="712" y="210" text-anchor="middle" class="n">¿Sigue vigente</text>
+    <text x="712" y="230" text-anchor="middle" class="n">el problema?</text>
+    <text x="712" y="258" text-anchor="middle" class="n m">Decide si se</text>
+    <text x="712" y="276" text-anchor="middle" class="n m">mantiene o cambia</text>
+  </g>
+  <path d="M162 183 H178" class="ln" marker-end="url(#ar)"/>
+  <path d="M318 183 H334" class="ln" marker-end="url(#ar)"/>
+  <path d="M474 183 H490" class="ln" marker-end="url(#ar)"/>
+  <path d="M630 183 H646" class="ln" marker-end="url(#ar)"/>
+  <path d="M712 292 V332 H92 V294" class="ln" stroke-dasharray="6 5" marker-end="url(#ar)"/>
+  <text x="400" y="326" text-anchor="middle" class="s" style="fill:var(--b)">Si el resultado no se alcanzó: nueva valoración y ajuste del plan</text>
+  <rect x="24" y="372" width="752" height="60" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="398" text-anchor="middle" class="h">El paciente y su familia participan en todas las fases</text>
+  <text x="400" y="420" text-anchor="middle" class="n m">aportan datos, aceptan o ajustan los objetivos y evalúan junto con el profesional</text>
+  <text x="400" y="458" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

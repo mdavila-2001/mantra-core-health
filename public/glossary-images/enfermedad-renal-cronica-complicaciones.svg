@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Complicaciones de la enfermedad renal crónica</title>
+  <desc id="d">Diagrama con el riñón en el centro y seis flechas hacia las complicaciones que aparecen al perder función: anemia por falta de eritropoyetina, alteraciones del calcio, el fósforo y el hueso, acidosis metabólica, potasio alto, retención de sal y agua con hipertensión, y mayor riesgo de enfermedad cardiovascular.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --kid:#c9705f; --kid-f:#e7a79a; --b1:#e6eefb; --b1s:#7aa0d8; --arrow:#5a6878; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --kid:#e08a7a; --kid-f:#b9695c; --b1:#243448; --b1s:#6c93cc; --arrow:#9fb0c1; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 14px; }
+    .bt { font-size: 14px; font-weight: 700; }
+    .bs { font-size: 12.5px; }
+    .k { font-size: 15px; font-weight: 700; }
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--arrow)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">Qué ocurre cuando el riñón pierde función</text>
+
+  <!-- riñón central -->
+  <path d="M400 150 C350 150 332 200 344 240 C356 288 392 306 408 292 C392 272 392 252 408 232 C392 214 392 186 420 166 C416 156 408 150 400 150 Z" fill="var(--kid-f)" stroke="var(--kid)" stroke-width="3"/>
+  <path d="M410 192 C432 204 438 226 428 242" fill="none" stroke="var(--kid)" stroke-width="3" opacity="0"/>
+  <text x="400" y="334" text-anchor="middle" class="k">Filtrado reducido</text>
+  <text x="400" y="352" text-anchor="middle" class="bs muted">Menos nefronas y hormonas</text>
+
+  <!-- flechas -->
+  <g stroke="var(--arrow)" stroke-width="2.5" fill="none" marker-end="url(#ah)">
+    <path d="M356 190 L256 118"/>
+    <path d="M338 232 L246 232"/>
+    <path d="M356 276 L256 344"/>
+    <path d="M436 190 L546 118" />
+    <path d="M444 232 L554 232"/>
+    <path d="M436 276 L546 344"/>
+  </g>
+
+  <!-- cajas izquierda -->
+  <rect x="24" y="76" width="232" height="84" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="40" y="100" class="bt">Anemia</text>
+  <text x="40" y="119" class="bs muted">Falta de eritropoyetina y hierro:</text>
+  <text x="40" y="136" class="bs muted">cansancio, palidez, poca tolerancia</text>
+  <text x="40" y="153" class="bs muted">al esfuerzo</text>
+
+  <rect x="24" y="190" width="222" height="84" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="40" y="214" class="bt">Calcio, fósforo y hueso</text>
+  <text x="40" y="233" class="bs muted">Fósforo retenido, vitamina D baja,</text>
+  <text x="40" y="250" class="bs muted">paratiroides hiperactiva: huesos</text>
+  <text x="40" y="267" class="bs muted">frágiles y calcificación vascular</text>
+
+  <rect x="24" y="304" width="232" height="84" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="40" y="328" class="bt">Acidosis metabólica</text>
+  <text x="40" y="347" class="bs muted">Acumulación de ácidos: pérdida de</text>
+  <text x="40" y="364" class="bs muted">músculo y de hueso, progresión</text>
+  <text x="40" y="381" class="bs muted">más rápida</text>
+
+  <!-- cajas derecha -->
+  <rect x="546" y="76" width="230" height="84" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="562" y="100" class="bt">Potasio elevado</text>
+  <text x="562" y="119" class="bs muted">Riesgo de alteraciones del ritmo</text>
+  <text x="562" y="136" class="bs muted">del corazón, sobre todo con ciertos</text>
+  <text x="562" y="153" class="bs muted">fármacos y acidosis</text>
+
+  <rect x="554" y="190" width="222" height="84" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="570" y="214" class="bt">Sal y agua retenidas</text>
+  <text x="570" y="233" class="bs muted">Edemas, hipertensión y falta de</text>
+  <text x="570" y="250" class="bs muted">aire por exceso de líquido</text>
+
+  <rect x="546" y="304" width="230" height="84" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="562" y="328" class="bt">Enfermedad cardiovascular</text>
+  <text x="562" y="347" class="bs muted">Infarto, falla cardíaca e ictus:</text>
+  <text x="562" y="364" class="bs muted">primera causa de muerte en la ERC</text>
+
+  <text x="400" y="422" text-anchor="middle" class="sub muted">Las complicaciones aparecen sobre todo a partir del estadio G3 y se acentúan en G4 y G5.</text>
+  <text x="400" y="458" text-anchor="middle" class="sub muted">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ruta de atención de la enfermedad renal crónica</title>
+  <desc id="d">Diagrama de flujo. Primero el diagnóstico con filtrado y albuminuria, luego tratar la causa, después los cuatro pilares de protección del riñón y del corazón: presión arterial, bloqueo del sistema renina-angiotensina, inhibidores de SGLT2 y control del riesgo cardiovascular y de la diabetes. Si el filtrado es muy bajo se elige entre trasplante, diálisis o manejo conservador.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --b1:#e6eefb; --b1s:#7aa0d8; --g1:#dff2e8; --g1s:#4aa57a; --o1:#fbe9d2; --o1s:#d39a4e; --arrow:#5a6878; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --b1:#243448; --b1s:#6c93cc; --g1:#1e3b2f; --g1s:#4cc38a; --o1:#3d3020; --o1s:#d9a35a; --arrow:#9fb0c1; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 14px; }
+    .bt { font-size: 14px; font-weight: 700; }
+    .bs { font-size: 12.5px; }
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--arrow)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="32" text-anchor="middle" class="title">De la detección al tratamiento</text>
+
+  <rect x="220" y="48" width="360" height="50" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="400" y="70" text-anchor="middle" class="bt">1. Diagnóstico y estadio (CGA)</text>
+  <text x="400" y="88" text-anchor="middle" class="bs muted">Filtrado estimado y albuminuria, más de 3 meses</text>
+
+  <rect x="220" y="122" width="360" height="50" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="400" y="144" text-anchor="middle" class="bt">2. Tratar la causa</text>
+  <text x="400" y="162" text-anchor="middle" class="bs muted">Diabetes, obstrucción, glomerulonefritis, fármacos</text>
+
+  <text x="400" y="204" text-anchor="middle" class="bt">3. Proteger riñón y corazón (según el caso)</text>
+  <g>
+    <rect x="24" y="212" width="176" height="82" rx="12" fill="var(--g1)" stroke="var(--g1s)" stroke-width="1.5"/>
+    <text x="112" y="236" text-anchor="middle" class="bt">Presión arterial</text>
+    <text x="112" y="255" text-anchor="middle" class="bs muted">Objetivo individual,</text>
+    <text x="112" y="271" text-anchor="middle" class="bs muted">poca sal, diuréticos</text>
+    <rect x="212" y="212" width="176" height="82" rx="12" fill="var(--g1)" stroke="var(--g1s)" stroke-width="1.5"/>
+    <text x="300" y="236" text-anchor="middle" class="bt">Eje renina-angiotensina</text>
+    <text x="300" y="255" text-anchor="middle" class="bs muted">Bloqueo cuando hay</text>
+    <text x="300" y="271" text-anchor="middle" class="bs muted">albuminuria</text>
+    <rect x="412" y="212" width="176" height="82" rx="12" fill="var(--g1)" stroke="var(--g1s)" stroke-width="1.5"/>
+    <text x="500" y="236" text-anchor="middle" class="bt">Inhibidores de SGLT2</text>
+    <text x="500" y="255" text-anchor="middle" class="bs muted">Con o sin diabetes,</text>
+    <text x="500" y="271" text-anchor="middle" class="bs muted">según el filtrado</text>
+    <rect x="600" y="212" width="176" height="82" rx="12" fill="var(--g1)" stroke="var(--g1s)" stroke-width="1.5"/>
+    <text x="688" y="236" text-anchor="middle" class="bt">Riesgo cardiovascular</text>
+    <text x="688" y="255" text-anchor="middle" class="bs muted">Estatinas, glucemia,</text>
+    <text x="688" y="271" text-anchor="middle" class="bs muted">tabaco, ejercicio</text>
+  </g>
+
+  <rect x="150" y="318" width="500" height="40" rx="12" fill="var(--b1)" stroke="var(--b1s)" stroke-width="1.5"/>
+  <text x="400" y="342" text-anchor="middle" class="bt">4. Complicaciones: anemia, hueso, acidosis, potasio, volumen</text>
+
+  <rect x="150" y="380" width="500" height="36" rx="12" fill="var(--o1)" stroke="var(--o1s)" stroke-width="1.5"/>
+  <text x="400" y="403" text-anchor="middle" class="bt">5. Filtrado muy bajo o síntomas urémicos: decisión compartida</text>
+  <g>
+    <text x="150" y="440" class="bs">Trasplante renal</text>
+    <text x="330" y="440" class="bs">Hemodiálisis o diálisis peritoneal</text>
+    <text x="560" y="440" class="bs">Manejo conservador integral</text>
+  </g>
+  <text x="400" y="466" text-anchor="middle" class="sub muted">Esquema ilustrativo, sin dosis. Ilustración original de AloVida.</text>
+
+  <g stroke="var(--arrow)" stroke-width="2.5" fill="none" marker-end="url(#ah)">
+    <path d="M400 98 V120"/>
+    <path d="M400 172 V186"/>
+    <path d="M400 296 V314"/>
+    <path d="M400 358 V378"/>
+  </g>
+</svg>
