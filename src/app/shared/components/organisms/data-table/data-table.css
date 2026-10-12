@@ -330,3 +330,71 @@ thead .data-table__cell {
 .data-table--constrained .data-table__detail-row {
     display: table-row;
 }
+
+/* ─── Modo apilado (`stackedOnMobile`) ──────────────────────────────────────
+   Sólo en teléfono y sólo si la pantalla lo pidió. Cada fila es una ficha
+   tonal sin borde; cada celda, un renglón «rótulo · valor» con el rótulo que
+   pone `data-label`. La cabecera sigue en el DOM (lectores de pantalla) pero
+   fuera de la vista, y la columna fija deja de serlo: no hay nada que tapar. */
+/* `not all and (min-width: …)` y no `max-width`: el CSS de esta tabla es
+   mobile-first por contrato (lo fija data-table.spec). 40.0625rem = justo
+   por encima de 640 px. */
+@media not all and (min-width: 40.0625rem) {
+    :host(.data-table--apilada) .data-table__table,
+    :host(.data-table--apilada) tbody,
+    :host(.data-table--apilada) .data-table__row,
+    :host(.data-table--apilada) .data-table__row > td {
+        display: block;
+    }
+
+    :host(.data-table--apilada) thead {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    :host(.data-table--apilada) .data-table__row {
+        margin-block-end: var(--sp-3);
+        padding: var(--sp-3) var(--sp-4);
+        border-radius: var(--r-lg);
+        background: var(--bg-surface-alt);
+    }
+
+    :host(.data-table--apilada) .data-table__row > td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        padding: var(--sp-1) 0;
+        border: 0;
+        text-align: end;
+        white-space: normal;
+    }
+
+    :host(.data-table--apilada) .data-table__row > td::before {
+        content: attr(data-label);
+        flex: none;
+        font-size: var(--fs-caption);
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-align: start;
+    }
+
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--sticky-end {
+        position: static;
+        box-shadow: none;
+        background: none;
+        justify-content: flex-end;
+        padding-block-start: var(--sp-2);
+    }
+
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--sticky-end::before {
+        display: none;
+    }
+
+    :host(.data-table--apilada) .data-table__row:hover {
+        background: var(--bg-surface-alt);
+    }
+}

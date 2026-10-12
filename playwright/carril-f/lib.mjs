@@ -64,7 +64,7 @@ export async function ir(pagina, ruta, esperar) {
   // La franja del modo demo («Datos de prueba», «Demo» a 390) NO es producto y
   // tapa texto en la captura: se oculta. Y el ratón se aparca en una esquina
   // vacía para que ninguna tarjeta salga en estado hover.
-  await pagina.addStyleTag({ content: 'app-mock-banner{display:none!important}' });
+  await pagina.addStyleTag({ content: 'app-mock-banner,app-toast-container{display:none!important}' });
   await pagina.mouse.move(1, 1);
   await pagina.waitForTimeout(900); // que termine la animación de entrada
 }

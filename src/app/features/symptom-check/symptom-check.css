@@ -235,10 +235,17 @@
   margin-block-start: 0;
 }
 
-/* Al lado de la figura hay menos ancho: las tres pastillas, en una fila. */
+/* Al lado de la figura las tres pastillas llenan su columna (sin tope de
+   30 rem: pegadas a la izquierda dejaban media tarjeta en blanco), y mientras
+   no hay zona abierta quedan centradas junto a la figura, que es alta. */
 .sintomas__lado .sintomas__zonas {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-inline-size: 30rem;
+}
+
+@media (min-width: 48rem) {
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) {
+    align-self: center;
+  }
 }
 
 .sintomas__zona {
@@ -247,10 +254,11 @@
   align-items: center;
   gap: var(--e2);
   inline-size: 100%;
-  padding: var(--e3) var(--e2);
-  border: 1px solid var(--filete);
+  padding: var(--e4) var(--e2);
+  /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
+  border: 1px solid transparent;
   border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
+  background: var(--sup-inset);
   color: var(--tinta);
   font: inherit;
   font-size: var(--fs-caption);
@@ -265,7 +273,7 @@
 .sintomas__zona:hover,
 .sintomas__zona:focus-visible {
   border-color: var(--aguamarina);
-  background: var(--sup-inset);
+  background: color-mix(in srgb, var(--aguamarina) 12%, var(--sup-inset));
   transform: translateY(-1px);
 }
 

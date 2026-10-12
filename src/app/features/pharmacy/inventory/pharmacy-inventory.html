@@ -96,6 +96,7 @@
           [columns]="columns()"
           [trackBy]="rowId"
           [rowLabel]="rowLabel"
+          stackedOnMobile
           [cursor]="cursor()"
           (cursorChanged)="goToCursor($event)"
           (retry)="reload()"

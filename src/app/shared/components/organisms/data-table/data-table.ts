@@ -65,6 +65,7 @@ import {
     '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
     '[class.data-table--wrap-headers]': 'wrapHeaders()',
     '[class.data-table--fit-container]': 'fitContainer()',
+    '[class.data-table--apilada]': 'stackedOnMobile()',
   },
 })
 export class DataTable<Row> {
@@ -146,6 +147,14 @@ export class DataTable<Row> {
    * secundarias viven en la fila de detalle.
    */
   readonly fitContainer = input(false, { transform: booleanAttribute });
+
+  /**
+   * En teléfono (≤ 40rem) cada fila pasa a ser una ficha apilada —rótulo a la
+   * izquierda, valor a la derecha— en vez de una tabla que se desplaza de costado
+   * con la última columna fija tapando datos. Opt-in: las tablas con muchas
+   * columnas de comparación siguen desplazándose.
+   */
+  readonly stackedOnMobile = input(false, { transform: booleanAttribute });
 
   /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
   protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);

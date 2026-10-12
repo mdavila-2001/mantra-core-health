@@ -270,13 +270,19 @@ app-alert {
    «hay más colas» en vez de dejar una columna cortada a secas, y el desvanecido
    se retira al llegar al final. Sólo donde hay `animation-timeline: scroll()`;
    sin ella el tablero queda como estaba. */
+/* Valor inicial 0: si el tablero NO se desborda, la línea de tiempo del scroll
+   está inactiva, la animación no se aplica y no hay desvanecido. */
 @property --bandeja-fin {
   syntax: '<length>';
   inherits: false;
-  initial-value: 3rem;
+  initial-value: 0rem;
 }
 
 @keyframes bandeja-fin {
+  from {
+    --bandeja-fin: 3rem;
+  }
+
   to {
     --bandeja-fin: 0rem;
   }

@@ -44,6 +44,7 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [cursor]="cursor()"
       [maxHeight]="maxHeight()"
       [fitContainer]="fitContainer()"
+      [stackedOnMobile]="apilada()"
       (sortChanged)="ordenes.push($event)"
       (cursorChanged)="cursores.push($event)"
       (selectionChanged)="selecciones.push($event)"
@@ -63,6 +64,7 @@ class HostComponent {
   readonly cursor = signal<CursorState>({});
   readonly maxHeight = signal<string | null>(null);
   readonly fitContainer = signal(false);
+  readonly apilada = signal(false);
   readonly ordenes: SortState[] = [];
   readonly cursores: string[] = [];
   readonly selecciones: (readonly Paciente[])[] = [];
@@ -478,6 +480,27 @@ describe('DataTable', () => {
       expect(css).toContain('container: data-table / inline-size');
       expect(css).toContain('@container data-table (width < 52rem)');
       expect(css).toContain(':host(.data-table--fit-container) .data-table__detail-row');
+    });
+  });
+  describe('modo apilado en teléfono (stackedOnMobile)', () => {
+    it('no marca el host ni cambia nada si no se pide', () => {
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--apilada')).toBe(false);
+    });
+
+    it('marca el host y rotula cada celda con el encabezado de su columna', async () => {
+      host.apilada.set(true);
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--apilada')).toBe(true);
+      const celdas = [...root().querySelectorAll<HTMLTableCellElement>('tbody tr.data-table__row:first-child > td[data-label]')];
+      expect(celdas.map((celda) => celda.dataset['label'])).toEqual(['Apellido', 'Documento', 'Obra social']);
+    });
+
+    it('el CSS apila sólo por debajo de 40rem y sólo si la pantalla lo pidió', () => {
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('@media not all and (min-width: 40.0625rem)');
+      expect(css).toContain(':host(.data-table--apilada) .data-table__row > td::before');
+      expect(css).toContain('content: attr(data-label)');
     });
   });
 });
