@@ -76,7 +76,7 @@
      y sin trazo: se lee por tono. El color de la zona reaparece al apuntar. */
   border: 1px solid transparent;
   border-radius: var(--r-lg);
-  background: var(--bg-surface);
+  background: var(--bg-surface-alt);
   color: inherit;
   font: inherit;
   text-align: start;

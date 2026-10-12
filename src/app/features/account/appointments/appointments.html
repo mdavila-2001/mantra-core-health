@@ -248,7 +248,7 @@
                   @if (esCancelable(turno)) {
                     <button
                       app-button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       [isLoading]="operando() === turno.id"
                       [attr.aria-label]="'Cancelar: ' + (turno.agenda || 'la cita') + (turno.cuando ? ', ' + (turno.cuando | date: &quot;d 'de' MMMM, HH:mm&quot;) : '')"
@@ -318,7 +318,7 @@
                           @if (esCancelable(turno)) {
                             <button
                               app-button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               class="turnos__cancelar"
                               [isLoading]="operando() === turno.id"

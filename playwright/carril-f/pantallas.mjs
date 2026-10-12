@@ -34,7 +34,9 @@ async function main() {
   mkdirSync(`${SALIDA}/${fase}`, { recursive: true });
   const navegador = await lanzar();
   const auditoria = {};
-  const lista = PANTALLAS.filter((p) => !filtro || p.id.includes(filtro));
+  const lista = PANTALLAS.filter((p) => !filtro || filtro.split(',').some((f) => p.id.includes(f)));
+  // SOLO=1440-claro,390-oscuro limita las variantes (para iterar rápido).
+  const solo = process.env.SOLO?.split(',');
   // Se agrupa por (usuario, org) para iniciar sesión una vez por contexto.
   const grupos = new Map();
   for (const p of lista) {
@@ -43,6 +45,7 @@ async function main() {
   }
   for (const vista of VISTAS) {
     for (const tema of TEMAS) {
+      if (solo && !solo.includes(`${vista.id}-${tema}`)) continue;
       for (const [, pantallas] of grupos) {
         const ctx = await contexto(navegador, { ancho: vista.ancho, alto: vista.alto, tema });
         const pagina = await ctx.newPage();

@@ -223,7 +223,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-default);
+  border: 1px solid transparent;
   border-radius: var(--r-full);
   background: var(--bg-surface);
 }

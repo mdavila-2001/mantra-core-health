@@ -127,7 +127,10 @@ app-alert {
    palabra y envuelven juntos. No devolver `display: flex` sin resolver eso. */
 .bandeja__titulo {
   margin: 0;
-  font-size: var(--fs-h3);
+  /* Una sola línea en las seis colas: con `--fs-h3` «Esperando al paciente»
+     envolvía y bajaba sus tarjetas 30 px respecto de las demás columnas. */
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
 }
 
 /* La última palabra de la etiqueta y la cifra, indivisibles.
@@ -260,5 +263,31 @@ app-alert {
 @media (min-width: 640px) {
   .bandeja__colas {
     grid-auto-columns: minmax(16rem, 1fr);
+  }
+}
+
+/* El tablero se desplaza de costado: el borde derecho se desvanece para decir
+   «hay más colas» en vez de dejar una columna cortada a secas, y el desvanecido
+   se retira al llegar al final. Sólo donde hay `animation-timeline: scroll()`;
+   sin ella el tablero queda como estaba. */
+@property --bandeja-fin {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 3rem;
+}
+
+@keyframes bandeja-fin {
+  to {
+    --bandeja-fin: 0rem;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .bandeja__colas {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--bandeja-fin)), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - var(--bandeja-fin)), transparent);
+    animation: bandeja-fin linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: calc(100% - 4rem) 100%;
   }
 }
