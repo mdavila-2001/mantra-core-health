@@ -164,7 +164,7 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     expect(unavailableMessageOf(error)).toContain('grupo sanguíneo');
   });
 
-  it('C15 · la sucursal se crea sin descripción ni enlace de mapa', () => {
+  it('C15 · la sucursal conserva la descripción y el enlace de mapa admitidos por la API', () => {
     TestBed.inject(DirectoryClient)
       .createBranch(UUID, {
         code: 'S1',
@@ -176,6 +176,8 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     expect(cuerpoAceptado('POST', `/tenants/${UUID}/branches`)).toEqual({
       code: 'S1',
       name: 'Centro',
+      description: 'Planta baja',
+      locationUrl: 'https://x',
     });
   });
 
