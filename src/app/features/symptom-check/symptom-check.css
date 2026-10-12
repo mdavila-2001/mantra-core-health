@@ -241,6 +241,26 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* Escritorio y sin zona abierta: la columna toma el alto de la figura y las tres
+   pastillas se apilan grandes para llenarlo, en vez de dejar un hueco debajo de
+   una fila de chips. */
+@media (min-width: 64rem) {
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) {
+    align-self: stretch;
+  }
+
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) > .sintomas__zonas {
+    flex: 1;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 1fr;
+  }
+
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona {
+    justify-content: center;
+    font-size: var(--fs-body);
+  }
+}
+
 .sintomas__zona {
   display: flex;
   flex-direction: column;

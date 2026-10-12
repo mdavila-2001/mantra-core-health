@@ -394,6 +394,12 @@ thead .data-table__cell {
         display: none;
     }
 
+    /* Apilada muestra TODAS las celdas (también las secundarias): el botón que
+       desplegaba el detalle ya no tiene nada que desplegar. */
+    :host(.data-table--apilada) .data-table__row > td.data-table__detail-toggle-cell {
+        display: none;
+    }
+
     :host(.data-table--apilada) .data-table__row:hover {
         background: var(--bg-surface-alt);
     }

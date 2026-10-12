@@ -21,6 +21,7 @@ export const PANTALLAS = [
   { id: '07-mis-citas', usuario: 'paciente@alovida.mock', ruta: '/my-account/appointments', esperar: 'h1' },
   { id: '08-agenda-medica', usuario: 'medica@alovida.mock', org: 'Clínica', ruta: '/schedule', esperar: 'h1' },
   { id: '09-ficha-clinica-medica', usuario: 'medica@alovida.mock', org: 'Clínica', ruta: '/medical-records', esperar: 'h1' },
+  { id: '15-ficha-paciente-medica', usuario: 'medica@alovida.mock', org: 'Clínica', ruta: '/medical-records/c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0', esperar: '.tabs__list' },
   { id: '10-historia-paciente', usuario: 'paciente@alovida.mock', ruta: '/my-account/medical-record', esperar: 'h1' },
   { id: '11-farmacia-pedidos', usuario: 'farmacia@alovida.mock', ruta: '/administration/pharmacy-orders', esperar: 'h1' },
   { id: '12-farmacia-inventario', usuario: 'farmacia@alovida.mock', ruta: '/administration/pharmacy-inventory', esperar: 'h1' },
