@@ -22,6 +22,12 @@ describe('la gramática de verdad', () => {
     expect(ids('ayer me dolia la cabeza')).toContain('dolor-de-cabeza');
   });
 
+  it('«además» no se lee como «edema»', () => {
+    expect(ids('tengo la vista borrosa, además dolor de rodilla al caminar')).not.toContain(
+      'hinchazon-de-piernas',
+    );
+  });
+
   it('deja meter palabras en el medio', () => {
     expect(ids('tengo un dolor muy fuerte en la cabeza')).toContain('dolor-de-cabeza');
   });
