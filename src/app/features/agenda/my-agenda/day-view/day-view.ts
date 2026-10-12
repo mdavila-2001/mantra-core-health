@@ -119,8 +119,12 @@ export interface BloqueDelDia {
    * era— y eso ofrecía reservar un rato que el servidor iba a rechazar. La
    * tabla de Consultas ya lo derivaba bien (`disponible: remainingCapacity > 0`
    * en `agenda.ts`); el día no. Ahora las dos dicen lo mismo.
+   *
+   * `sin-cargar` es ese mismo cupo cuando la lectura del día **falló**: sin la
+   * lectura de citas no se sabe si está cerrado o si hay un paciente encima, y
+   * decir «No disponible» afirmaría algo que la pantalla no sabe.
    */
-  readonly tipo: 'cita' | 'visita' | 'libre' | 'no-disponible' | 'ocupado' | 'aire';
+  readonly tipo: 'cita' | 'visita' | 'libre' | 'no-disponible' | 'sin-cargar' | 'ocupado' | 'aire';
   /** La cita, cuando la hay. */
   readonly cita: Booking | null;
   /** Cómo se llama quien viene. */
@@ -426,6 +430,14 @@ export class DayView {
    * cómo se traduce su estado es de quien contiene la agenda.
    */
   readonly visitas = input<readonly VisitaDelDia[]>([]);
+
+  /**
+   * Si alguna lectura del día (citas o cupos) falló. Lo decide `my-agenda`,
+   * que es quien anota cada fallo: acá sólo cambia lo que el día **afirma**.
+   * Con la lectura caída, un día vacío no es «No atiende este día» y un cupo
+   * sin cita encima no es «No disponible».
+   */
+  readonly incompleteLoad = input<boolean>(false);
 
   /** Pidieron hacer algo con una cita. */
   readonly accionPedida = output<PedidoDeAccion>();
@@ -746,11 +758,12 @@ export class DayView {
         // un 409. La regla se aplica donde se dibuja Y donde se crea
         // (`tocar()`), no sólo escondiendo el botón.
         const tomado = cupo.remainingCapacity <= 0;
+        const tipoTomado = this.incompleteLoad() ? 'sin-cargar' : 'no-disponible';
         delDia.push({
           clave: cupo.id,
           desde: cupo.startAt,
           hasta,
-          tipo: tomado ? 'no-disponible' : 'libre',
+          tipo: tomado ? tipoTomado : 'libre',
           cita: null,
           paciente: '',
           estado: '',
@@ -817,6 +830,7 @@ export class DayView {
 
   /** Cuántos turnos tiene tomados, para el encabezado. */
   protected readonly resumen = computed(() => {
+    if (this.incompleteLoad()) return 'No se pudieron cargar las citas de este día.';
     const bloques = this.bloques();
     const cupos = bloques.filter((b) => b.tipo === 'cita' || b.tipo === 'libre');
     const conCita = bloques.filter((b) => b.tipo === 'cita').length;
