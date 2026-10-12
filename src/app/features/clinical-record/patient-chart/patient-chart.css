@@ -209,9 +209,10 @@
 .expediente__activas-item {
   display: grid;
   gap: var(--sp-2);
-  padding: var(--sp-3);
-  background-color: var(--bg-surface-alt);
-  border-radius: var(--r-md);
+  padding: var(--sp-3) 0;
+  /* Fila con separador y sin recuadro: ya está dentro de la tarjeta de la ficha. */
+  background-color: transparent;
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .expediente__activas-nombre {
