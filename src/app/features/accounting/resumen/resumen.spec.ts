@@ -525,6 +525,11 @@ describe('Resumen contable', () => {
         (t as HTMLElement).textContent?.trim() ?? '',
       );
 
+    const subrotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('.subpestanas > .tabs__bar [role="tab"]')).map((t) =>
+        (t as HTMLElement).textContent?.trim() ?? '',
+      );
+
     it('son dos pestañas —Resumen y Registros— y abre en Resumen', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
@@ -532,33 +537,41 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
+      expect(subrotulos(fixture)).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(texto).toContain('¿Cuánto hizo?');
+
+      fixture.componentInstance.subpestana.set(1);
+      fixture.detectChanges();
+      const textoPendientes = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(textoPendientes).toContain('Lo que está pendiente');
     });
 
-    it('el Resumen divide el contenido en tres subpestañas: Movimientos, Pendientes y Patrimonio', () => {
+    it('divide el resumen en subpestañas: Movimientos, Pendientes y Patrimonio', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      const subrotulos = Array.from(
-        fixture.nativeElement.querySelectorAll('.subpestanas > .tabs__bar [role="tab"]'),
-      ).map((t) => (t as HTMLElement).textContent?.trim() ?? '');
-      expect(subrotulos).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
+      expect(subrotulos(fixture)).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
 
-      // Movimientos (activa por defecto)
-      expect((fixture.nativeElement as HTMLElement).textContent).toContain('¿Cuánto hizo?');
+      // Movimientos
+      expect(fixture.componentInstance.subpestana()).toBe(0);
+      let texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('¿Cuánto hizo?');
+      expect(texto).toContain('¿En qué se le va la plata?');
 
       // Pendientes
       fixture.componentInstance.subpestana.set(1);
       fixture.detectChanges();
-      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Lo que está pendiente');
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Lo que está pendiente');
 
       // Patrimonio
       fixture.componentInstance.subpestana.set(2);
       fixture.detectChanges();
-      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Lo que tiene y lo que debe');
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Lo que tiene y lo que debe');
     });
 
     it('el Resumen no trae la tarjeta de registros', () => {
