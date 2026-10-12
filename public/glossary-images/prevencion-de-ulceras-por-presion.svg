@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo la presión y la cizalla dañan la piel y los tejidos</title>
+  <desc id="d">Dos cortes esquemáticos de tejido sobre una superficie de apoyo. A la izquierda, la presión sostenida entre el hueso y la superficie comprime los tejidos y el daño puede comenzar en profundidad, junto al hueso. A la derecha, la cizalla y la fricción deforman las capas cuando el esqueleto se desliza y la piel queda retenida por la superficie.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="t">Dos fuerzas que lesionan: presión y cizalla</text>
+  <!-- Panel izquierdo -->
+  <rect x="24" y="52" width="372" height="344" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210" y="80" text-anchor="middle" class="h">Presión sostenida</text>
+  <rect x="48" y="170" width="324" height="52" fill="var(--mus)"/>
+  <rect x="48" y="222" width="324" height="32" fill="var(--fat)"/>
+  <rect x="48" y="254" width="324" height="12" fill="var(--skin)"/>
+  <ellipse cx="210" cy="168" rx="74" ry="30" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
+  <rect x="48" y="266" width="324" height="22" fill="var(--bg)" stroke="var(--line)"/>
+  <path d="M144 190 L276 190 L238 266 L182 266 Z" fill="var(--d)" fill-opacity=".28" stroke="var(--d)" stroke-width="2" stroke-dasharray="6 4"/>
+  <g stroke="var(--d)" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M150 96 V128 M144 120 L150 129 L156 120"/>
+    <path d="M210 96 V128 M204 120 L210 129 L216 120"/>
+    <path d="M270 96 V128 M264 120 L270 129 L276 120"/>
+  </g>
+  <g stroke="var(--a)" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M150 326 V296 M144 304 L150 295 L156 304"/>
+    <path d="M210 326 V296 M204 304 L210 295 L216 304"/>
+    <path d="M270 326 V296 M264 304 L270 295 L276 304"/>
+  </g>
+  <text x="292" y="112" class="n" style="fill:var(--d)">Peso corporal</text>
+  <text x="292" y="318" class="n" style="fill:var(--a)">Reacción</text>
+  <text x="60" y="206" class="n">Músculo</text>
+  <text x="60" y="243" class="n">Grasa</text>
+  <text x="284" y="242" class="n" style="fill:var(--d)">Zona de daño</text>
+  <text x="168" y="172" class="n">Hueso</text>
+  <text x="210" y="350" text-anchor="middle" class="n">Los vasos se comprimen entre hueso y superficie:</text>
+  <text x="210" y="368" text-anchor="middle" class="n">llega menos oxígeno y el daño puede empezar</text>
+  <text x="210" y="386" text-anchor="middle" class="n">en profundidad, junto al hueso.</text>
+  <!-- Panel derecho -->
+  <rect x="404" y="52" width="372" height="344" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="590" y="80" text-anchor="middle" class="h">Cizalla y fricción</text>
+  <rect x="428" y="170" width="324" height="52" fill="var(--mus)"/>
+  <path d="M428 222 H752 L736 254 H412 Z" fill="var(--fat)"/>
+  <path d="M412 254 H736 V266 H412 Z" fill="var(--skin)"/>
+  <ellipse cx="590" cy="168" rx="74" ry="30" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
+  <rect x="428" y="266" width="324" height="22" fill="var(--bg)" stroke="var(--line)"/>
+  <path d="M520 112 H640" stroke="var(--d)" stroke-width="2.5" fill="none" marker-end="url(#ar)" transform="translate(0 0)"/>
+    <text x="590" y="102" text-anchor="middle" class="n" style="fill:var(--d)">El esqueleto se desliza (cama elevada)</text>
+  <path d="M640 310 H520" stroke="var(--a)" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+  <text x="590" y="332" text-anchor="middle" class="n" style="fill:var(--a)">La superficie retiene la piel</text>
+  <text x="440" y="206" class="n">Músculo</text>
+  <text x="440" y="243" class="n">Grasa</text>
+  <text x="590" y="350" text-anchor="middle" class="n">Las capas se estiran y se angulan, y se ocluyen</text>
+  <text x="590" y="368" text-anchor="middle" class="n">vasos profundos aunque la piel parezca íntegra.</text>
+  <rect x="24" y="406" width="752" height="46" rx="12" fill="none" stroke="var(--c)" stroke-width="2"/>
+  <text x="400" y="426" text-anchor="middle" class="s">La tolerancia del tejido baja con la humedad, la mala nutrición,</text>
+  <text x="400" y="444" text-anchor="middle" class="s">la perfusión reducida, la edad avanzada y la pérdida de sensibilidad.</text>
+  <text x="400" y="472" text-anchor="middle" class="n m">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

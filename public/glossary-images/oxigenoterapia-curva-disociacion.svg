@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Curva de disociación de la oxihemoglobina</title>
+  <desc id="d">Gráfico en forma de S. En el eje horizontal está la presión parcial de oxígeno y en el vertical la saturación de la hemoglobina. A la derecha hay una meseta en la que subir el oxígeno casi no cambia la saturación; a la izquierda hay un tramo empinado en el que pequeños cambios producen grandes variaciones. Flechas indican los desplazamientos a derecha e izquierda.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --curve:#c0392b; --plateau:#dff1e7; --steep:#fbe3df; --ok:#1f8a5b; --blue:#2f6fa8; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --curve:#ef7467; --plateau:#1e3a2f; --steep:#432826; --ok:#4cc38a; --blue:#7fb8e8; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .ax { font-size: 14px; font-weight: 600; }
+    .lab { font-size: 14px; font-weight: 700; }
+    .cap { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="16" y="16" width="768" height="448" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="50" text-anchor="middle" class="title">Curva de disociación de la oxihemoglobina</text>
+
+  <!-- zonas -->
+  <rect x="440" y="80" width="300" height="290" fill="var(--plateau)"/>
+  <rect x="100" y="80" width="150" height="290" fill="var(--steep)"/>
+  <!-- ejes -->
+  <path d="M100 370 H750 M100 370 V80" stroke="var(--ink)" stroke-width="2" fill="none"/>
+  <path d="M750 370 l-9 -5 v10z M100 80 l-5 9 h10z" fill="var(--ink)"/>
+  <!-- curva sigmoide -->
+  <path d="M100 370 C150 368 190 340 230 270 C270 190 320 130 400 108 C470 94 560 90 740 88" fill="none" stroke="var(--curve)" stroke-width="5" stroke-linecap="round"/>
+  <!-- desplazamientos -->
+  <path d="M290 238 C330 190 370 160 420 148" fill="none" stroke="var(--blue)" stroke-width="2" stroke-dasharray="6 5" opacity=".0"/>
+  <text x="595" y="130" text-anchor="middle" class="lab" style="fill:var(--ok)">Meseta</text>
+  <text x="595" y="152" text-anchor="middle" class="cap">Más oxígeno inspirado casi</text>
+  <text x="595" y="170" text-anchor="middle" class="cap">no cambia la saturación</text>
+  <text x="175" y="130" text-anchor="middle" class="lab" style="fill:var(--curve)">Tramo empinado</text>
+  <text x="175" y="152" text-anchor="middle" class="cap">Pequeños cambios de presión,</text>
+  <text x="175" y="170" text-anchor="middle" class="cap">grandes cambios de saturación</text>
+
+  <text x="425" y="400" text-anchor="middle" class="ax">Presión parcial de oxígeno en la sangre</text>
+  <text x="60" y="230" text-anchor="middle" class="ax" transform="rotate(-90 60 230)">Saturación de la hemoglobina</text>
+  <text x="92" y="92" text-anchor="end" class="cap muted">100 %</text>
+  <text x="92" y="374" text-anchor="end" class="cap muted">0</text>
+
+  <!-- desplazamiento -->
+  <g transform="translate(300 300)">
+    <path d="M0 0 H70" stroke="var(--blue)" stroke-width="3" fill="none"/>
+    <path d="M70 0 l-10 -6 v12z" fill="var(--blue)"/>
+    <text x="35" y="22" text-anchor="middle" class="cap">Derecha: cede O2</text>
+    <text x="35" y="38" text-anchor="middle" class="cap muted">calor, acidez, CO2</text>
+  </g>
+  <g transform="translate(500 300)">
+    <path d="M70 0 H0" stroke="var(--blue)" stroke-width="3" fill="none"/>
+    <path d="M0 0 l10 -6 v12z" fill="var(--blue)"/>
+    <text x="35" y="22" text-anchor="middle" class="cap">Izquierda: retiene O2</text>
+    <text x="35" y="38" text-anchor="middle" class="cap muted">frío, monóxido de carbono</text>
+  </g>
+  <text x="400" y="446" text-anchor="middle" class="cap muted">Esquema ilustrativo, sin valores de laboratorio. Ilustración original de AloVida.</text>
+</svg>

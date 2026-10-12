@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Fístula, injerto y catéter: accesos para hemodiálisis</title>
+  <desc id="d">Tres esquemas de acceso vascular. La fístula arteriovenosa une una arteria con una vena propia en el antebrazo y se pincha con agujas; el injerto es un tubo sintético bajo la piel entre arteria y vena; el catéter venoso central entra en una vena grande del cuello hacia el corazón, con un trayecto bajo la piel y un manguito, y sale por la piel del tórax.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --blood:#d6453d; --blood-l:#f2a9a3; --dial:#2a7fb8; --dial-l:#a9d3ee; --mem:#8a6bbf; --ok:#1f8a5b; --warn:#b7791f; --bad:#c0392b; --soft:#eef2f7; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --blood:#e0584f; --blood-l:#7d3a36; --dial:#5aaee0; --dial-l:#27465c; --mem:#b79be6; --ok:#4cc38a; --warn:#e3b04b; --bad:#ef7467; --soft:#243140; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lab { font-size: 14px; font-weight: 600; }
+    .sm { font-size: 13px; }
+  </style>
+  <defs>
+    <marker id="ak" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--ink)"/></marker>
+    <marker id="am" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--blood)"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--dial)"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--ok)"/></marker>
+    <marker id="aw" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--warn)"/></marker>
+    <marker id="ax" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--bad)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">Tres accesos para la hemodiálisis</text>
+  <rect x="20" y="50" width="240" height="330" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="140" y="76" text-anchor="middle" class="lab">Fístula arteriovenosa</text>
+  <text x="140" y="286" text-anchor="middle" class="sm muted" style="font-size:12.5px">Une una arteria y una vena propias.</text>
+  <text x="140" y="304" text-anchor="middle" class="sm muted" style="font-size:12.5px">Es la opción preferida: más duradera</text>
+  <text x="140" y="322" text-anchor="middle" class="sm muted" style="font-size:12.5px">y con menos infecciones. Necesita</text>
+  <text x="140" y="340" text-anchor="middle" class="sm muted" style="font-size:12.5px">semanas para madurar.</text>
+  <rect x="34" y="104" width="212" height="100" rx="30" fill="var(--soft)" stroke="var(--muted)" stroke-width="2"/>
+  <text x="54" y="122" class="sm muted" style="font-size:12px">codo</text><text x="216" y="122" text-anchor="middle" class="sm muted" style="font-size:12px">mano</text>
+  <path d="M50 136 H230" stroke="var(--blood)" stroke-width="5" fill="none" marker-end="url(#ab)"/>
+  <text x="232" y="156" text-anchor="end" class="sm" style="fill:var(--blood);font-size:12px">arteria</text>
+  <path d="M140 136 V172" stroke="var(--blood)" stroke-width="5"/>
+  <path d="M140 174 H60" stroke="var(--dial)" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <path d="M220 174 H142" stroke="var(--dial)" stroke-width="3" fill="none"/>
+  <path d="M80 150 l8 20" stroke="var(--ink)" stroke-width="2.5"/>
+  <path d="M118 150 l8 20" stroke="var(--ink)" stroke-width="2.5"/>
+  <text x="100" y="196" text-anchor="middle" class="sm" style="font-size:12px">agujas</text>
+  <circle cx="140" cy="155" r="14" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="188" y="196" text-anchor="middle" class="sm" style="fill:var(--warn);font-size:12px">anastomosis</text>
+  <text x="56" y="192" class="sm" style="fill:var(--dial);font-size:12px"></text>
+  <text x="52" y="166" class="sm" style="fill:var(--dial);font-size:12px">vena</text>
+  <rect x="280" y="50" width="240" height="330" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="400" y="76" text-anchor="middle" class="lab">Injerto arteriovenoso</text>
+  <text x="400" y="286" text-anchor="middle" class="sm muted" style="font-size:12.5px">Un tubo sintético bajo la piel une</text>
+  <text x="400" y="304" text-anchor="middle" class="sm muted" style="font-size:12.5px">arteria y vena. Sirve cuando las venas</text>
+  <text x="400" y="322" text-anchor="middle" class="sm muted" style="font-size:12.5px">no permiten una fístula; se obstruye</text>
+  <text x="400" y="340" text-anchor="middle" class="sm muted" style="font-size:12.5px">e infecta con más frecuencia.</text>
+  <rect x="294" y="104" width="212" height="100" rx="30" fill="var(--soft)" stroke="var(--muted)" stroke-width="2"/>
+  <text x="314" y="122" class="sm muted" style="font-size:12px">codo</text><text x="476" y="122" text-anchor="middle" class="sm muted" style="font-size:12px">mano</text>
+  <path d="M310 136 H490" stroke="var(--blood)" stroke-width="5" fill="none" marker-end="url(#ab)"/>
+  <text x="492" y="156" text-anchor="end" class="sm" style="fill:var(--blood);font-size:12px">arteria</text>
+  <path d="M370 136 C370 190 430 190 430 174" stroke="var(--muted)" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <path d="M430 174 H320" stroke="var(--dial)" stroke-width="5" fill="none"/>
+  <path d="M490 174 H430" stroke="var(--dial)" stroke-width="3" fill="none"/>
+  <text x="400" y="226" text-anchor="middle" class="sm muted" style="font-size:12px">tubo sintético (injerto)</text>
+  <text x="316" y="192" class="sm" style="fill:var(--dial);font-size:12px"></text>
+  <text x="312" y="168" class="sm" style="fill:var(--dial);font-size:12px">vena</text>
+  <rect x="540" y="50" width="240" height="330" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="660" y="76" text-anchor="middle" class="lab">Catéter venoso central</text>
+  <text x="660" y="286" text-anchor="middle" class="sm muted" style="font-size:12.5px">Se usa de inmediato, sin cirugía previa.</text>
+  <text x="660" y="304" text-anchor="middle" class="sm muted" style="font-size:12.5px">Es el acceso con más riesgo de</text>
+  <text x="660" y="322" text-anchor="middle" class="sm muted" style="font-size:12.5px">infección y de trombosis; se procura</text>
+  <text x="660" y="340" text-anchor="middle" class="sm muted" style="font-size:12.5px">usarlo el menor tiempo posible.</text>
+  <rect x="600" y="108" width="120" height="150" rx="40" fill="var(--soft)" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="640" y="92" width="40" height="30" rx="10" fill="var(--soft)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M652 96 V176" stroke="var(--dial)" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <path d="M660 188 m-22 0 a22 22 0 1 1 44 0 a22 22 0 1 1 -44 0z" fill="var(--blood-l)" stroke="var(--blood)" stroke-width="2"/>
+  <text x="660" y="192" text-anchor="middle" class="sm" style="font-size:12px">corazón</text>
+  <path d="M652 176 V150 L668 124 L668 138 L700 148 H740" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linejoin="round"/>
+  <rect x="678" y="142" width="10" height="12" rx="2" fill="var(--warn)"/>
+  <path d="M740 144 H762" stroke="var(--blood)" stroke-width="3"/><path d="M740 153 H762" stroke="var(--dial)" stroke-width="3"/>
+  <text x="732" y="136" text-anchor="middle" class="sm" style="font-size:12px">sale por la piel</text>
+  <text x="683" y="172" text-anchor="middle" class="sm" style="fill:var(--warn);font-size:12px">manguito</text>
+  <text x="576" y="210" class="sm" style="fill:var(--dial);font-size:12px">vena</text><text x="576" y="224" class="sm" style="fill:var(--dial);font-size:12px">central</text>
+  <text x="400" y="408" text-anchor="middle" class="sm muted">Los dos accesos internos (fístula e injerto) se pinchan con aguja en cada sesión;</text>
+  <text x="400" y="428" text-anchor="middle" class="sm muted">el catéter se conecta directamente. Las guías procuran planificar el acceso con antelación.</text>
+  <text x="400" y="468" text-anchor="middle" class="sm muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

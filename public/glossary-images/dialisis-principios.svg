@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Difusión, ultrafiltración y convección en la diálisis</title>
+  <desc id="d">Tres paneles que comparan el transporte a través de una membrana semipermeable. En la difusión, los solutos pequeños pasan del lado de mayor concentración al de menor. En la ultrafiltración, una diferencia de presión empuja el agua y los solutos quedan. En la convección, los solutos son arrastrados con el agua que atraviesa la membrana. Las moléculas grandes, como las proteínas, no atraviesan la membrana.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --blood:#d6453d; --blood-l:#f2a9a3; --dial:#2a7fb8; --dial-l:#a9d3ee; --mem:#8a6bbf; --ok:#1f8a5b; --warn:#b7791f; --bad:#c0392b; --soft:#eef2f7; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --blood:#e0584f; --blood-l:#7d3a36; --dial:#5aaee0; --dial-l:#27465c; --mem:#b79be6; --ok:#4cc38a; --warn:#e3b04b; --bad:#ef7467; --soft:#243140; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lab { font-size: 14px; font-weight: 600; }
+    .sm { font-size: 13px; }
+  </style>
+  <defs>
+    <marker id="ak" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--ink)"/></marker>
+    <marker id="am" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--blood)"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--dial)"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--ok)"/></marker>
+    <marker id="aw" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--warn)"/></marker>
+    <marker id="ax" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--bad)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">Cómo atraviesan las sustancias la membrana</text>
+  <rect x="20" y="56" width="240" height="326" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="140" y="84" text-anchor="middle" class="lab">Difusión</text>
+  <rect x="32" y="108" width="102" height="190" rx="8" fill="var(--blood-l)" opacity=".45"/>
+  <rect x="146" y="108" width="102" height="190" rx="8" fill="var(--dial-l)" opacity=".55"/>
+  <path d="M140 104 V302" stroke="var(--mem)" stroke-width="4" stroke-dasharray="14 8"/>
+  <text x="80" y="324" text-anchor="middle" class="sm" style="fill:var(--blood)">Sangre</text>
+  <text x="200" y="324" text-anchor="middle" class="sm" style="fill:var(--dial)">Dializado</text>
+  <text x="140" y="98" text-anchor="middle" class="sm muted"></text>
+  <text x="140" y="350" text-anchor="middle" class="sm muted">Los solutos van de donde hay</text>
+  <text x="140" y="368" text-anchor="middle" class="sm muted">más a donde hay menos</text>
+  <circle cx="82" cy="150" r="10" fill="var(--mem)"/>
+  <circle cx="98" cy="262" r="10" fill="var(--mem)"/>
+  <circle cx="70" cy="215" r="10" fill="var(--mem)"/>
+  <rect x="280" y="56" width="240" height="326" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="400" y="84" text-anchor="middle" class="lab">Ultrafiltración</text>
+  <rect x="292" y="108" width="102" height="190" rx="8" fill="var(--blood-l)" opacity=".45"/>
+  <rect x="406" y="108" width="102" height="190" rx="8" fill="var(--dial-l)" opacity=".55"/>
+  <path d="M400 104 V302" stroke="var(--mem)" stroke-width="4" stroke-dasharray="14 8"/>
+  <text x="340" y="324" text-anchor="middle" class="sm" style="fill:var(--blood)">Sangre</text>
+  <text x="460" y="324" text-anchor="middle" class="sm" style="fill:var(--dial)">Dializado</text>
+  <text x="400" y="98" text-anchor="middle" class="sm muted"></text>
+  <text x="400" y="350" text-anchor="middle" class="sm muted">El agua pasa por una diferencia</text>
+  <text x="400" y="368" text-anchor="middle" class="sm muted">de presión; los solutos quedan</text>
+  <circle cx="342" cy="150" r="10" fill="var(--mem)"/>
+  <circle cx="358" cy="262" r="10" fill="var(--mem)"/>
+  <circle cx="330" cy="215" r="10" fill="var(--mem)"/>
+  <rect x="540" y="56" width="240" height="326" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="660" y="84" text-anchor="middle" class="lab">Convección</text>
+  <rect x="552" y="108" width="102" height="190" rx="8" fill="var(--blood-l)" opacity=".45"/>
+  <rect x="666" y="108" width="102" height="190" rx="8" fill="var(--dial-l)" opacity=".55"/>
+  <path d="M660 104 V302" stroke="var(--mem)" stroke-width="4" stroke-dasharray="14 8"/>
+  <text x="600" y="324" text-anchor="middle" class="sm" style="fill:var(--blood)">Sangre</text>
+  <text x="720" y="324" text-anchor="middle" class="sm" style="fill:var(--dial)">Dializado</text>
+  <text x="660" y="98" text-anchor="middle" class="sm muted"></text>
+  <text x="660" y="350" text-anchor="middle" class="sm muted">Los solutos viajan arrastrados</text>
+  <text x="660" y="368" text-anchor="middle" class="sm muted">con el agua que cruza la membrana</text>
+  <circle cx="602" cy="150" r="10" fill="var(--mem)"/>
+  <circle cx="618" cy="262" r="10" fill="var(--mem)"/>
+  <circle cx="590" cy="215" r="10" fill="var(--mem)"/>
+  <circle cx="60" cy="125" r="5" fill="var(--blood)"/>
+  <circle cx="80" cy="175" r="5" fill="var(--blood)"/>
+  <circle cx="105" cy="140" r="5" fill="var(--blood)"/>
+  <circle cx="115" cy="200" r="5" fill="var(--blood)"/>
+  <circle cx="70" cy="240" r="5" fill="var(--blood)"/>
+  <circle cx="110" cy="265" r="5" fill="var(--blood)"/>
+  <circle cx="95" cy="285" r="5" fill="var(--blood)"/>
+  <circle cx="50" cy="185" r="5" fill="var(--blood)"/>
+  <circle cx="120" cy="235" r="5" fill="var(--blood)"/>
+  <circle cx="120" cy="160" r="5" fill="var(--blood)"/>
+  <circle cx="170" cy="150" r="5" fill="var(--dial)"/>
+  <circle cx="200" cy="230" r="5" fill="var(--dial)"/>
+  <circle cx="225" cy="270" r="5" fill="var(--dial)"/>
+  <path d="M124 170 H170" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#ak)"/>
+  <path d="M124 215 H170" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#ak)"/>
+  <path d="M124 260 H170" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#ak)"/>
+  <circle cx="320" cy="125" r="5" fill="var(--blood)"/>
+  <circle cx="340" cy="175" r="5" fill="var(--blood)"/>
+  <circle cx="365" cy="140" r="5" fill="var(--blood)"/>
+  <circle cx="375" cy="200" r="5" fill="var(--blood)"/>
+  <circle cx="315" cy="240" r="5" fill="var(--blood)"/>
+  <circle cx="380" cy="265" r="5" fill="var(--blood)"/>
+  <circle cx="375" cy="285" r="5" fill="var(--blood)"/>
+  <circle cx="385" cy="185" r="5" fill="var(--blood)"/>
+  <path d="M296 118 V288" stroke="var(--bad)" stroke-width="3"/>
+  <path d="M302 150 h18" stroke="var(--bad)" stroke-width="3" marker-end="url(#ax)"/>
+  <path d="M302 200 h18" stroke="var(--bad)" stroke-width="3" marker-end="url(#ax)"/>
+  <path d="M302 250 h18" stroke="var(--bad)" stroke-width="3" marker-end="url(#ax)"/>
+  <path d="M412 151 C420 160 420 168 412 168 C404 168 404 160 412 151z" fill="var(--dial)"/>
+  <path d="M445 191 C453 200 453 208 445 208 C437 208 437 200 445 191z" fill="var(--dial)"/>
+  <path d="M430 241 C438 250 438 258 430 258 C422 258 422 250 430 241z" fill="var(--dial)"/>
+  <path d="M475 121 C483 130 483 138 475 138 C467 138 467 130 475 121z" fill="var(--dial)"/>
+  <path d="M480 261 C488 270 488 278 480 278 C472 278 472 270 480 261z" fill="var(--dial)"/>
+  <path d="M384 160 H404" stroke="var(--dial)" stroke-width="2.5" marker-end="url(#ad)"/>
+  <path d="M384 230 H404" stroke="var(--dial)" stroke-width="2.5" marker-end="url(#ad)"/>
+  <circle cx="580" cy="125" r="5" fill="var(--blood)"/>
+  <circle cx="600" cy="175" r="5" fill="var(--blood)"/>
+  <circle cx="625" cy="140" r="5" fill="var(--blood)"/>
+  <circle cx="590" cy="240" r="5" fill="var(--blood)"/>
+  <circle cx="630" cy="265" r="5" fill="var(--blood)"/>
+  <circle cx="615" cy="285" r="5" fill="var(--blood)"/>
+  <path d="M675 161 C683 170 683 178 675 178 C667 178 667 170 675 161z" fill="var(--dial)"/>
+  <circle cx="692" cy="172" r="5" fill="var(--blood)"/>
+  <path d="M644 170 H658" stroke="var(--dial)" stroke-width="2.5" marker-end="url(#ad)"/>
+  <path d="M675 216 C683 225 683 233 675 233 C667 233 667 225 675 216z" fill="var(--dial)"/>
+  <circle cx="692" cy="227" r="5" fill="var(--blood)"/>
+  <circle cx="708" cy="227" r="5" fill="var(--blood)"/>
+  <path d="M644 225 H658" stroke="var(--dial)" stroke-width="2.5" marker-end="url(#ad)"/>
+  <path d="M675 256 C683 265 683 273 675 273 C667 273 667 265 675 256z" fill="var(--dial)"/>
+  <circle cx="692" cy="267" r="5" fill="var(--blood)"/>
+  <path d="M644 265 H658" stroke="var(--dial)" stroke-width="2.5" marker-end="url(#ad)"/>
+  <circle cx="60" cy="410" r="5" fill="var(--blood)"/><text x="72" y="415" class="sm">Solutos pequeños (urea, potasio)</text>
+  <circle cx="320" cy="410" r="9" fill="var(--mem)"/><text x="336" y="415" class="sm">Moléculas grandes (proteínas): no pasan</text>
+  <path d="M640 401 C648 410 648 418 640 418 C632 418 632 410 640 401z" fill="var(--dial)"/>
+  <text x="654" y="415" class="sm">Agua</text>
+  <text x="400" y="445" text-anchor="middle" class="sm muted">La hemodiálisis usa sobre todo difusión; la hemofiltración, convección; la hemodiafiltración, ambas.</text>
+  <text x="400" y="468" text-anchor="middle" class="sm muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Sistema de conducción del corazón y su huella en el electrocardiograma</title>
+  <desc id="d">A la izquierda, esquema de los cuatro compartimentos del corazón con el nódulo sinusal en la aurícula derecha, el nódulo auriculoventricular, el haz de His, sus ramas derecha e izquierda y la red de Purkinje. A la derecha, un trazado de electrocardiograma con la onda P de la despolarización auricular, el complejo QRS de la despolarización ventricular y la onda T de la repolarización ventricular.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --atr:#cfe0f5; --ven:#f2cfc8; --edge:#b68b84; --node:#d9822b; --path:#1f6fb2; --wave:#1c2733; --p:#1f8a5b; --qrs:#c0392b; --t:#6a4fb3; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --atr:#2a4262; --ven:#573a38; --edge:#a56f68; --node:#f0a24f; --path:#6db2f2; --wave:#e8eef5; --p:#4cc38a; --qrs:#ef7467; --t:#ab95ee; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 14px; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 19px; font-weight: 700; }
+    .lbl { font-size: 14px; font-weight: 700; }
+    .ldr { stroke: var(--muted); stroke-width: 1.2; fill: none; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="30" text-anchor="middle" class="title">Cómo viaja el impulso y qué se ve en el electrocardiograma</text>
+
+  <rect x="20" y="48" width="380" height="396" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="420" y="48" width="360" height="396" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+
+  <!-- esquema cardíaco -->
+  <rect x="110" y="78" width="110" height="90" rx="18" fill="var(--atr)" stroke="var(--edge)" stroke-width="2"/>
+  <rect x="236" y="78" width="110" height="90" rx="18" fill="var(--atr)" stroke="var(--edge)" stroke-width="2"/>
+  <path d="M110 178 L346 178 L346 270 Q340 372 250 396 Q228 402 210 392 Q112 350 110 262 Z" fill="var(--ven)" stroke="var(--edge)" stroke-width="2"/>
+  <path d="M228 178 L228 394" stroke="var(--edge)" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="165" y="150" text-anchor="middle" class="muted">AD</text>
+  <text x="291" y="150" text-anchor="middle" class="muted">AI</text>
+  <text x="150" y="330" text-anchor="middle" class="muted">VD</text>
+  <text x="304" y="330" text-anchor="middle" class="muted">VI</text>
+
+  <!-- vías internodales y nódulos -->
+  <path d="M142 104 C170 112 196 150 224 176" stroke="var(--path)" stroke-width="2.5" stroke-dasharray="4 4" fill="none"/>
+  <path d="M150 100 C200 90 250 92 290 112" stroke="var(--path)" stroke-width="2.5" stroke-dasharray="4 4" fill="none"/>
+  <circle cx="136" cy="102" r="11" fill="var(--node)" stroke="var(--ink)" stroke-width="1.5"/>
+  <circle cx="228" cy="184" r="10" fill="var(--node)" stroke="var(--ink)" stroke-width="1.5"/>
+  <!-- haz de His y ramas -->
+  <path d="M228 194 L228 236" stroke="var(--path)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M228 236 C214 262 180 300 168 372" stroke="var(--path)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M228 236 C250 262 286 300 292 372" stroke="var(--path)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <g stroke="var(--path)" stroke-width="2" fill="none" stroke-linecap="round">
+    <path d="M168 372 L144 340 M168 372 L172 394 M168 372 L196 384 M190 320 L206 334 M176 340 L150 308"/>
+    <path d="M292 372 L318 340 M292 372 L286 394 M292 372 L262 386 M270 322 L252 338 M284 340 L312 306"/>
+  </g>
+
+  <!-- rótulos del esquema -->
+  <path class="ldr" d="M125 94 L90 74"/><text x="34" y="70" class="lbl" style="fill:var(--node)">Nódulo sinusal</text>
+  <text x="34" y="86" class="muted" style="font-size:12px">marcapasos</text>
+  <path class="ldr" d="M238 186 L360 200"/><text x="364" y="198" class="lbl" style="fill:var(--node)" transform="translate(-6,0)">Nódulo AV</text>
+  <text x="358" y="214" class="muted" style="font-size:12px">frena el impulso</text>
+  <path class="ldr" d="M232 214 L296 232"/><text x="300" y="248" class="lbl" style="fill:var(--path)">Haz de His</text>
+  <path class="ldr" d="M196 296 L116 280"/><text x="114" y="276" text-anchor="end" class="lbl" style="fill:var(--path)">Rama</text>
+  <text x="114" y="292" text-anchor="end" class="lbl" style="fill:var(--path)">derecha</text>
+  <path class="ldr" d="M284 300 L360 288"/><text x="360" y="284" class="lbl" style="fill:var(--path)">Rama</text>
+  <text x="360" y="300" class="lbl" style="fill:var(--path)">izquierda</text>
+  <path class="ldr" d="M200 388 L180 420"/><text x="34" y="428" class="lbl" style="fill:var(--path)">Fibras de Purkinje</text>
+
+  <!-- ECG -->
+  <text x="600" y="76" text-anchor="middle" class="lbl">Un latido en el electrocardiograma</text>
+  <g stroke="var(--line)" stroke-width="1">
+    <path d="M440 120 H760 M440 170 H760 M440 220 H760 M440 270 H760 M440 320 H760"/>
+  </g>
+  <path d="M436 270 H466 C474 270 478 246 490 246 C502 246 506 270 514 270 H540 L546 280 L558 168 L568 306 L576 270 H614 C628 270 636 222 656 222 C676 222 684 270 698 270 H764" fill="none" stroke="var(--wave)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- marcas -->
+  <path d="M466 350 H514" stroke="var(--p)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M546 350 H576" stroke="var(--qrs)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M614 350 H698" stroke="var(--t)" stroke-width="5" stroke-linecap="round"/>
+  <text x="490" y="372" text-anchor="middle" class="lbl" style="fill:var(--p)">P</text>
+  <text x="561" y="372" text-anchor="middle" class="lbl" style="fill:var(--qrs)">QRS</text>
+  <text x="656" y="372" text-anchor="middle" class="lbl" style="fill:var(--t)">T</text>
+  <text x="440" y="396" class="muted"><tspan style="fill:var(--p);font-weight:700">P</tspan> despolarización de las aurículas</text>
+  <text x="440" y="414" class="muted"><tspan style="fill:var(--qrs);font-weight:700">QRS</tspan> despolarización de los ventrículos</text>
+  <text x="440" y="432" class="muted"><tspan style="fill:var(--t);font-weight:700">T</tspan> repolarización de los ventrículos</text>
+  <text x="528" y="100" text-anchor="middle" class="muted" style="font-size:12px">pausa en el nódulo AV</text>
+  <path class="ldr" d="M528 106 L528 262"/>
+
+  <text x="400" y="466" text-anchor="middle" class="muted" style="font-size:12px">Esquema conceptual, sin escala. Ilustración original de AloVida.</text>
+</svg>
