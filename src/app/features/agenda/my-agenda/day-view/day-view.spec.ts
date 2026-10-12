@@ -329,6 +329,30 @@ describe('DayView', () => {
     expect(texto).toContain('1 rato ocupado');
   });
 
+  it('con la lectura del día caída NO dice «No atiende» ni pinta «No disponible»', () => {
+    // El cupo tomado sin cita encima es justo lo que deja una lectura de citas
+    // fallida: la médica atiende y tiene un paciente que la pantalla no ve.
+    montar([{ ...cupo(9), remainingCapacity: 0 }]);
+    fixture.componentRef.setInput('incompleteLoad', true);
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('No se pudieron cargar las citas de este día.');
+    expect(texto).not.toContain('No atiende este día');
+    expect(texto).not.toContain('No disponible');
+    expect(tipos()).toEqual(['sin-cargar']);
+  });
+
+  it('con la lectura caída y sin cupos tampoco dice «No atiende este día»', () => {
+    montar([]);
+    fixture.componentRef.setInput('incompleteLoad', true);
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('No se pudieron cargar las citas de este día.');
+    expect(texto).not.toContain('No atiende este día');
+  });
+
   it('un día sin nada lo dice con palabras, y deja crear', () => {
     montar([]);
 
