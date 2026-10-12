@@ -325,6 +325,13 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
       'quisiera no despertar',
       'quiero desaparecer',
       'mejor estaria muerto',
+      'me voy a matar',
+      'voy a matarme',
+      'me mato',
+      'pienso en matarme',
+      'quiero quitarme la vida',
+      'me voy a quitar la vida',
+      'quitarme la vida',
     ],
     alarma: true,
     mensaje:
