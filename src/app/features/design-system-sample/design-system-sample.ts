@@ -171,7 +171,6 @@ export class DesignSystemSample {
   protected readonly themeOptions: readonly { mode: ThemeMode; label: string }[] = [
     { mode: 'light', label: 'Claro' },
     { mode: 'dark', label: 'Oscuro' },
-    { mode: 'system', label: 'Sistema' },
   ];
 
   protected readonly savingDemo = signal(false);

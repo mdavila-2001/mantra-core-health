@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthLayout } from './auth-layout';
@@ -11,6 +11,7 @@ import { AuthLayout } from './auth-layout';
       <nav auth-footer class="legales">Privacidad</nav>
     </app-auth-layout>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class HostComponent {
   readonly title = signal('Ingrese a su cuenta');
@@ -86,7 +87,7 @@ describe('AuthLayout', () => {
     it('el selector de tema está disponible antes de entrar', () => {
       const grupo = root().querySelector('[role="group"][aria-label="Tema de la interfaz"]');
 
-      expect(grupo?.querySelectorAll('button')).toHaveLength(3);
+      expect(grupo?.querySelectorAll('button')).toHaveLength(2);
     });
 
     it('el selector vive fuera del main: es chrome, no contenido', () => {

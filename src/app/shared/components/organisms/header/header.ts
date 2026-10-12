@@ -83,9 +83,9 @@ export class Header {
     this.tenantChanged.emit(tenantId);
   }
 
-  /** Ciclo claro → oscuro → sistema, el mismo orden que la vitrina. */
+  /** Ciclo claro ↔ oscuro. */
   protected cycleTheme(): void {
-    const orden: readonly ThemeMode[] = ['light', 'dark', 'system'];
+    const orden: readonly ThemeMode[] = ['light', 'dark'];
     const actual = orden.indexOf(this.theme());
     this.themeService.setTheme(orden[(actual + 1) % orden.length]);
   }
