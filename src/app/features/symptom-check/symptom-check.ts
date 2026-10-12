@@ -237,6 +237,17 @@ export class SymptomCheck {
     () => this.alarmas().find((alarma) => alarma.mensaje !== undefined)?.mensaje ?? null,
   );
 
+  /** Si la alarma detectada corresponde a riesgo de suicidio o autolesión. */
+  protected readonly esRiesgoSuicida = computed(() =>
+    this.alarmas().some((alarma) => alarma.id === 'ideas-suicidas'),
+  );
+
+  /** Parámetros de búsqueda para recomendación de medicamentos según síntomas reconocidos. */
+  protected readonly medicamentosQueryParams = computed(() => {
+    const primer = this.sintomas()[0];
+    return primer !== undefined ? { q: primer.nombre } : {};
+  });
+
   /**
    * Lo que la persona escribió **para decir que no lo tiene**.
    *

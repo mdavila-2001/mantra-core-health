@@ -398,3 +398,52 @@ describe('SymptomCheck · dictar', () => {
     expect(boton().textContent).toContain('Dictar');
   });
 });
+
+describe('SymptomCheck · crisis de ideación suicida y recomendación de medicamentos', () => {
+  let componente: SymptomCheck;
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    componente = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => http.verify());
+
+  it('detecta «me voy a matar» y despliega videos, teléfonos de crisis y enlaces de psicología', () => {
+    (componente as unknown as { escribir(v: string): void }).escribir('me voy a matar');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    const html = fixture.nativeElement as HTMLElement;
+    const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
+    expect(crisis).not.toBeNull();
+    expect(crisis?.textContent).toContain('800-11-3040');
+    expect(crisis?.textContent).toContain('772-22123');
+    expect(crisis?.textContent).toContain('psicológica');
+    expect(crisis?.textContent).toContain('psiquiatras');
+    const iframes = crisis?.querySelectorAll('iframe');
+    expect(iframes?.length).toBe(2);
+    expect(iframes?.[0]?.getAttribute('src')).toContain('youtube-nocookie.com/embed/nY66tl39PkE');
+    expect(iframes?.[1]?.getAttribute('src')).toContain('youtube-nocookie.com/embed/T1ysvMHuV-Y');
+  });
+
+  it('muestra el botón de recomendar medicamentos cuando hay recomendaciones activas', () => {
+    (componente as unknown as { escribir(v: string): void }).escribir('dolor de cabeza');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    const html = fixture.nativeElement as HTMLElement;
+    const botonMed = html.querySelector('[data-testid="sintomas-boton-recomendar-medicamentos"]');
+    expect(botonMed).not.toBeNull();
+    expect(botonMed?.textContent).toContain('Recomendar medicamentos');
+    expect(botonMed?.getAttribute('href')).toContain('/search/medications');
+  });
+});
+
