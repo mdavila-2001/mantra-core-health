@@ -182,7 +182,8 @@ describe('DiagnosticResults', () => {
 
     const texto = fixture.nativeElement.textContent as string;
     expect(texto).toContain('Valores dentro de rango.');
-    expect(texto).toContain('Descargar Archivo 1');
+    // Un solo archivo y el catálogo sin resolver: «Informe», no «Archivo 1».
+    expect(texto).toContain('Descargar Informe');
     // Ni el identificador del informe ni el del archivo llegan a pantalla.
     expect(texto).not.toContain(REPORT_ID);
     expect(texto).not.toContain(FILE_ID);

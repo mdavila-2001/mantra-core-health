@@ -109,8 +109,10 @@
 </app-view-state-host>
 
 <ng-template #nameCell let-product>
-  <span class="inventory__main">{{ name(product) }}</span>
-  <code class="inventory__code">{{ product.productCode }}</code>
+  <span class="inventory__producto">
+    <span class="inventory__main">{{ name(product) }}</span>
+    <code class="inventory__code">{{ product.productCode }}</code>
+  </span>
 </ng-template>
 
 <ng-template #stockCell let-product>

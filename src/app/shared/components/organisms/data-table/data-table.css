@@ -391,13 +391,20 @@ thead .data-table__cell {
         padding-block-start: var(--sp-2);
     }
 
-    :host(.data-table--apilada) .data-table__row > td.data-table__cell--sticky-end::before {
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--sticky-end::before,
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--accion::before {
         display: none;
+    }
+
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--accion {
+        justify-content: flex-end;
     }
 
     /* Apilada muestra TODAS las celdas (también las secundarias): el botón que
        desplegaba el detalle ya no tiene nada que desplegar. */
-    :host(.data-table--apilada) .data-table__row > td.data-table__detail-toggle-cell {
+    :host(.data-table--apilada) .data-table__row > td.data-table__detail-toggle-cell,
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--vacia,
+    :host(.data-table--apilada) .data-table__row > td:empty {
         display: none;
     }
 

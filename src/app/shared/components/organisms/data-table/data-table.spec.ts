@@ -30,6 +30,10 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
   { key: 'obraSocial', header: 'Obra social', priority: 2, sticky: 'end' },
 ];
 
+const FILAS_CON_HUECO: readonly Paciente[] = [
+  { id: 'p-1', apellido: 'Peña', documento: '4821133', obraSocial: '' },
+];
+
 @Component({
   imports: [DataTable],
   template: `
@@ -494,6 +498,18 @@ describe('DataTable', () => {
       expect(root().querySelector('app-data-table')?.classList.contains('data-table--apilada')).toBe(true);
       const celdas = [...root().querySelectorAll<HTMLTableCellElement>('tbody tr.data-table__row:first-child > td[data-label]')];
       expect(celdas.map((celda) => celda.dataset['label'])).toEqual(['Apellido', 'Documento', 'Obra social']);
+    });
+
+    it('marca la celda sin valor para que el apilado la oculte, y la columna de acción para quitarle la etiqueta', async () => {
+      host.state.set(ready(FILAS_CON_HUECO));
+      host.apilada.set(true);
+      await fixture.whenStable();
+
+      const celdas = [...root().querySelectorAll<HTMLTableCellElement>('tbody tr.data-table__row:first-child > td[data-label]')];
+      expect(celdas.map((celda) => celda.classList.contains('data-table__cell--vacia'))).toEqual([false, false, true]);
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('td.data-table__cell--vacia');
+      expect(css).toContain('td.data-table__cell--accion::before');
     });
 
     it('el CSS apila sólo por debajo de 40rem y sólo si la pantalla lo pidió', () => {

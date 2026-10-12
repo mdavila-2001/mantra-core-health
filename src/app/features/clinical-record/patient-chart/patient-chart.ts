@@ -1867,6 +1867,7 @@ export class PatientChart {
               key: 'acciones',
               header: 'Cambiar estado',
               priority: 2,
+              accion: true,
               cell: this.celdaAcciones(),
             } satisfies ColumnDef<FilaClinica>,
           ]
@@ -1882,6 +1883,7 @@ export class PatientChart {
         key: 'ver',
         header: 'Ver',
         priority: 1,
+        accion: true,
         cell: this.celdaVer(),
       } satisfies ColumnDef<FilaClinica>,
       // «En todos los formularios debe poderse poner un adjunto… incluso en la

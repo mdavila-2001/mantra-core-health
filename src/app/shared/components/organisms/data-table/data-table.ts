@@ -223,7 +223,8 @@ export class DataTable<Row> {
   protected cellClassFor(column: ColumnDef<Row>): string {
     const secundaria = column.priority >= MOBILE_DETAIL_PRIORITY ? ' data-table__secondary' : '';
     const fija = column.sticky === 'end' ? ' data-table__cell--sticky-end' : '';
-    return `data-table__cell${secundaria}${fija} data-table__cell--${column.align ?? 'start'}`;
+    const accion = column.accion ? ' data-table__cell--accion' : '';
+    return `data-table__cell${secundaria}${fija}${accion} data-table__cell--${column.align ?? 'start'}`;
   }
 
   /** Las que en móvil se pliegan a la fila de detalle — nunca se ocultan. */

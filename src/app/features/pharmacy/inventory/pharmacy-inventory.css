@@ -42,7 +42,14 @@
   color: var(--text-primary);
 }
 
+.inventory__producto {
+  display: block;
+  min-inline-size: 0;
+}
+
 .inventory__code {
+  display: block;
+  overflow-wrap: anywhere;
   font-family: var(--font-mono);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
