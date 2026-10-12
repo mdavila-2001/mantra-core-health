@@ -452,71 +452,6 @@
       }
     }
 
-    <!-- ─── Lo que se puede corregir o retirar (sólo en «Trayectoria») ─────
-           La pestaña ya pinta la historia entera arriba, así que acá no se
-           repite: se lista únicamente lo accionable —lo declarado por el
-           profesional y lo que ninguna institución contestó todavía—, y va
-           pegado al formulario que es el que corrige. Sin nada que tocar, el
-           bloque no existe. -->
-    @if (layout() === 'timeline' && vinculosEditables().length > 0) {
-      <h3 class="historial__subtitulo">Corregir o retirar</h3>
-      <p class="historial__intro">
-        Lo que declaró usted, y las solicitudes que todavía nadie contestó. Lo que una institución
-        ya confirmó o rechazó no se edita desde acá.
-      </p>
-      <ul class="historial__lista" data-testid="vinculos-editables">
-        @for (afiliacion of vinculosEditables(); track afiliacion.id) {
-          <li class="historial__item">
-            <div class="historial__institucion">
-              <strong>{{ afiliacion.organizationName }}</strong>
-              @if (afiliacion.roleTitle) {
-                <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
-              }
-            </div>
-
-            <div class="historial__periodo">
-              <span class="historial__fechas">
-                {{ afiliacion.startDate | date: 'MM/yyyy' }} —
-                @if (afiliacion.endDate) {
-                  {{ afiliacion.endDate | date: 'MM/yyyy' }}
-                } @else {
-                  actualidad
-                }
-              </span>
-            </div>
-
-            <div class="historial__acciones-sede">
-              @if (puedeCorregirse(afiliacion)) {
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="vinculo-editar"
-                  [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
-                  (clicked)="abrirEdicionDeVinculo(afiliacion)"
-                >
-                  Editar
-                </button>
-              }
-              @if (puedeRetirarse(afiliacion)) {
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="vinculo-retirar"
-                  [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
-                  (clicked)="retirarVinculo(afiliacion)"
-                >
-                  Retirar
-                </button>
-              }
-            </div>
-          </li>
-        }
-      </ul>
-    }
 
     <!-- ─── La línea de tiempo ──────────────────────────────────────────────
            Mismo reparto visual que el historial de verificaciones de arriba: una
@@ -632,6 +567,18 @@
         data-testid="abrir-alta-vinculo"
         (clicked)="abrirAltaDeVinculo()"
       >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
         Añadir elemento a su historial
       </button>
     </p>

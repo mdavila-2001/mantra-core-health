@@ -802,20 +802,6 @@ export class WorkHistory implements OnInit {
       });
   }
 
-  /**
-   * Los vínculos sobre los que hay algo que hacer.
-   *
-   * En la pestaña «Trayectoria» la historia completa ya está pintada arriba, y
-   * volver a listarla entera acá sería el mismo dato dos veces. Lo que ahí NO
-   * hay es dónde corregir o retirar, así que este bloque lista **sólo** lo
-   * accionable: lo que el profesional declaró por su cuenta y lo que todavía
-   * nadie contestó. Si no hay nada que tocar, no se dibuja.
-   */
-  protected readonly vinculosEditables = computed<readonly PractitionerAffiliation[]>(() =>
-    this.afiliaciones().filter(
-      (afiliacion) => this.puedeCorregirse(afiliacion) || this.puedeRetirarse(afiliacion),
-    ),
-  );
 
   /**
    * Si este vínculo lo puede corregir el profesional.
