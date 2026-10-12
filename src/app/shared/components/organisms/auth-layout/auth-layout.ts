@@ -41,7 +41,6 @@ export class AuthLayout {
   protected readonly themeOptions: readonly { mode: ThemeMode; label: string }[] = [
     { mode: 'light', label: 'Claro' },
     { mode: 'dark', label: 'Oscuro' },
-    { mode: 'system', label: 'Sistema' },
   ];
 
   protected setTheme(mode: ThemeMode): void {
