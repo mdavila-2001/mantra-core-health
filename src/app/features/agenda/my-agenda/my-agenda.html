@@ -217,6 +217,7 @@
                   [puedeIngresarPorMostrador]="puedeIngresarPorMostrador()"
                   [puedeAvisarDemora]="puedeAvisarDemora()"
                   [visitas]="visitasDelDia()"
+                  [incompleteLoad]="dayLoadFailed()"
                   (accionPedida)="ejecutar($event)"
                   (diaCambiado)="moverDia($event)"
                   (detallePedido)="verDetalleDelBloque($event)"
