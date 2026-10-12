@@ -46,6 +46,7 @@
                 [routerLink]="['/glossary']"
                 [queryParams]="{ category: tarjeta.internalCode, tag: null }"
                 queryParamsHandling="merge"
+                (click)="desplazarACuerpo()"
                 [attr.title]="tarjeta.description ?? null"
               >
                 <span class="glosario__tarjeta-cabeza">

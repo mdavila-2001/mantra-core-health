@@ -68,11 +68,11 @@ for (const vista of VISTAS) {
     await expect(page.getByRole('tab', { name: 'Pendientes' })).toBeVisible();
     await page.getByRole('tab', { name: 'Pendientes' }).click();
     await expect(page.getByRole('heading', { name: 'Lo que está pendiente' })).toBeVisible();
-    await expect(page.getByTestId('contabilidad-registros')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Nuevo gasto' })).toHaveCount(0);
     await page.getByRole('tab', { name: 'Patrimonio' }).click();
     await expect(page.getByRole('heading', { name: 'Lo que tiene y lo que debe' })).toBeVisible();
     await page.getByRole('tab', { name: 'Movimientos' }).click();
+    await expect(page.getByTestId('contabilidad-registros')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Nuevo gasto' })).toHaveCount(0);
     await foto(page, vista, `resumen-${vista.nombre}.png`);
 
     /* ---- Registros: tablas, ningún tablero ---------------------------- */
