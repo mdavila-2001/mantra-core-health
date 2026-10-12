@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Arteria con presión normal frente a arteria con hipertensión</title>
+  <desc id="d">Dos cortes longitudinales de una arteria. A la izquierda la pared es delgada, la luz es amplia y la presión es de 120 sobre 80 mmHg. A la derecha la pared está engrosada, la luz es estrecha y la presión es de 140 sobre 90 mmHg o más.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --wall:#e7a79a; --wall-d:#c9705f; --blood:#d6453d; --blood-l:#ef8a80; --ok:#1f8a5b; --bad:#c0392b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --wall:#b9695c; --wall-d:#e08a7a; --blood:#e0584f; --blood-l:#f19b92; --ok:#4cc38a; --bad:#ef7467; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 14px; }
+    .big { font-size: 30px; font-weight: 800; }
+    .unit { font-size: 14px; }
+    .tag { font-size: 13px; font-weight: 600; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <!-- Panel izquierdo: presión normal -->
+  <rect x="24" y="24" width="372" height="404" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210" y="62" text-anchor="middle" class="title">Presión normal</text>
+  <text x="210" y="84" text-anchor="middle" class="sub muted">Pared delgada, luz amplia</text>
+  <!-- pared -->
+  <rect x="48" y="118" width="324" height="170" rx="20" fill="var(--wall)" stroke="var(--wall-d)" stroke-width="2"/>
+  <!-- luz -->
+  <rect x="48" y="138" width="324" height="130" fill="var(--blood)"/>
+  <!-- flechas de flujo -->
+  <g fill="var(--blood-l)">
+    <path d="M90 190 h90 v-14 l36 28 -36 28 v-14 h-90z"/>
+    <path d="M230 190 h70 v-14 l36 28 -36 28 v-14 h-70z" opacity=".7"/>
+  </g>
+  <!-- flechas de presión suaves sobre la pared -->
+  <g stroke="var(--wall-d)" stroke-width="3" stroke-linecap="round" fill="none">
+    <path d="M130 150 v-10 M130 140 l-5 6 M130 140 l5 6"/>
+    <path d="M210 150 v-10 M210 140 l-5 6 M210 140 l5 6"/>
+    <path d="M290 150 v-10 M290 140 l-5 6 M290 140 l5 6"/>
+  </g>
+  <text x="210" y="326" text-anchor="middle" class="big" style="fill:var(--ok)">120 / 80</text>
+  <text x="210" y="348" text-anchor="middle" class="unit muted">mmHg · sistólica / diastólica</text>
+  <rect x="116" y="368" width="188" height="30" rx="15" fill="none" stroke="var(--ok)" stroke-width="2"/>
+  <text x="210" y="388" text-anchor="middle" class="tag" style="fill:var(--ok)">Dentro de lo esperado</text>
+
+  <!-- Panel derecho: hipertensión -->
+  <rect x="404" y="24" width="372" height="404" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="590" y="62" text-anchor="middle" class="title">Hipertensión</text>
+  <text x="590" y="84" text-anchor="middle" class="sub muted">Pared engrosada, luz estrecha</text>
+  <!-- pared engrosada -->
+  <rect x="428" y="118" width="324" height="170" rx="20" fill="var(--wall)" stroke="var(--wall-d)" stroke-width="2"/>
+  <!-- luz estrecha -->
+  <rect x="428" y="170" width="324" height="66" fill="var(--blood)"/>
+  <!-- flechas de flujo más apretadas -->
+  <g fill="var(--blood-l)">
+    <path d="M470 203 h90 v-8 l28 16 -28 16 v-8 h-90z"/>
+    <path d="M620 203 h70 v-8 l28 16 -28 16 v-8 h-70z" opacity=".7"/>
+  </g>
+  <!-- flechas de presión fuertes sobre la pared -->
+  <g stroke="var(--bad)" stroke-width="4" stroke-linecap="round" fill="none">
+    <path d="M510 164 v-30 M510 134 l-8 10 M510 134 l8 10"/>
+    <path d="M590 164 v-30 M590 134 l-8 10 M590 134 l8 10"/>
+    <path d="M670 164 v-30 M670 134 l-8 10 M670 134 l8 10"/>
+    <path d="M510 242 v30 M510 272 l-8 -10 M510 272 l8 -10"/>
+    <path d="M590 242 v30 M590 272 l-8 -10 M590 272 l8 -10"/>
+    <path d="M670 242 v30 M670 272 l-8 -10 M670 272 l8 -10"/>
+  </g>
+  <text x="590" y="326" text-anchor="middle" class="big" style="fill:var(--bad)">≥ 140 / 90</text>
+  <text x="590" y="348" text-anchor="middle" class="unit muted">mmHg · sistólica / diastólica</text>
+  <rect x="496" y="368" width="188" height="30" rx="15" fill="none" stroke="var(--bad)" stroke-width="2"/>
+  <text x="590" y="388" text-anchor="middle" class="tag" style="fill:var(--bad)">Presión elevada y sostenida</text>
+
+  <text x="400" y="458" text-anchor="middle" class="sub muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

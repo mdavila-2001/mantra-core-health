@@ -74,6 +74,7 @@ export const TITULO_DE_SECCION: Readonly<Record<GlossarySectionKind, string>> = 
 const NOMBRE_DE_FUENTE: Readonly<Record<string, string>> = {
   'nlm-medlineplus-es': 'MedlinePlus en español (NLM)',
   'nlm-medlineplus-es-pruebas': 'MedlinePlus, pruebas de laboratorio (NLM)',
+  'alovida-curated': 'Equipo AloVida (texto original, pendiente de revisión médica)',
 };
 
 export function nombreDeFuente(source: string): string {
@@ -108,9 +109,34 @@ export function imagenesVisibles(
     (imagen) =>
       imagen.enabled !== false &&
       imagen.match !== 'label-match' &&
-      [imagen.url, imagen.thumbUrl, imagen.licenseUrl, imagen.sourcePage].every(
-        (enlace) => enlaceSeguro(enlace) !== null,
-      ),
+      (esImagenPropia(imagen) ||
+        [imagen.url, imagen.thumbUrl, imagen.licenseUrl, imagen.sourcePage].every(
+          (enlace) => enlaceSeguro(enlace) !== null,
+        )),
+  );
+}
+
+/** Carpeta pública de las ilustraciones originales de AloVida (`public/glossary-images/`). */
+const CARPETA_DE_IMAGENES_PROPIAS = '/glossary-images/';
+
+/** Ruta de un archivo de la carpeta propia: absoluta, sin `..` ni protocolo, y con extensión de imagen. */
+const RUTA_PROPIA = /^\/glossary-images\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:svg|webp|png)$/;
+
+/**
+ * Una ilustración original de AloVida, servida desde este mismo origen.
+ *
+ * Es la **única** excepción a «sólo `https://`», y es estrecha: la ruta tiene
+ * que ser un archivo de {@link CARPETA_DE_IMAGENES_PROPIAS}, y la imagen tiene
+ * que declarar autor y licencia. Como la obra es de la plataforma, no hay
+ * «página de origen» ni «URL de licencia» externas que enlazar; un valor que
+ * venga vacío no se pinta como enlace (ver la plantilla).
+ */
+export function esImagenPropia(imagen: GlossaryArticleImage): boolean {
+  return (
+    RUTA_PROPIA.test(imagen.url) &&
+    RUTA_PROPIA.test(imagen.thumbUrl) &&
+    imagen.author.trim() !== '' &&
+    imagen.license.trim() !== ''
   );
 }
 

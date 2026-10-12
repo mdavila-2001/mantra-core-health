@@ -121,13 +121,15 @@
                   }
                   <span>
                     {{ imagen.author }} ·
-                    <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{
-                      imagen.license
-                    }}</a>
-                    ·
-                    <a [href]="imagen.sourcePage" target="_blank" rel="noopener noreferrer"
-                      >página de origen</a
-                    >
+                    @if (enlaceSeguro(imagen.licenseUrl); as url) {
+                      <a [href]="url" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+                    } @else {
+                      {{ imagen.license }}
+                    }
+                    @if (enlaceSeguro(imagen.sourcePage); as url) {
+                      ·
+                      <a [href]="url" target="_blank" rel="noopener noreferrer">página de origen</a>
+                    }
                   </span>
                 </figcaption>
               </figure>
@@ -178,9 +180,15 @@
       <img [src]="imagen.url" [alt]="imagen.altText" />
       <figcaption class="articulo__pie">
         {{ imagen.author }} ·
-        <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
-        ·
-        <a [href]="imagen.sourcePage" target="_blank" rel="noopener noreferrer">página de origen</a>
+        @if (enlaceSeguro(imagen.licenseUrl); as url) {
+          <a [href]="url" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+        } @else {
+          {{ imagen.license }}
+        }
+        @if (enlaceSeguro(imagen.sourcePage); as url) {
+          ·
+          <a [href]="url" target="_blank" rel="noopener noreferrer">página de origen</a>
+        }
       </figcaption>
     </figure>
   </app-content-dialog>

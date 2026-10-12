@@ -66,6 +66,50 @@ describe('glossary-article.logic', () => {
     expect(imagenesVisibles([imagen({ sourcePage: 'data:text/html,x' })])).toEqual([]);
   });
 
+  describe('ilustraciones propias de AloVida', () => {
+    const propia = (parcial: Partial<GlossaryArticleImage> = {}) =>
+      imagen({
+        url: '/glossary-images/hipertension-arterial.svg',
+        thumbUrl: '/glossary-images/hipertension-arterial.svg',
+        kind: 'diagram',
+        author: 'Equipo AloVida',
+        license: 'Ilustración original de AloVida',
+        licenseUrl: '',
+        sourcePage: '',
+        ...parcial,
+      });
+
+    it('se pintan aunque no tengan enlace de licencia ni página de origen', () => {
+      expect(imagenesVisibles([propia()])).toHaveLength(1);
+    });
+
+    it('no se pintan si la ruta sale de la carpeta propia o trae un protocolo', () => {
+      for (const ruta of [
+        '/otra-carpeta/x.svg',
+        '/glossary-images/../secreto.svg',
+        '/glossary-images/x.svg?a=1',
+        '/glossary-images/Mayuscula.svg',
+        '/glossary-images/x.html',
+        '//evil.example/glossary-images/x.svg',
+        'javascript:alert(1)',
+        'data:image/svg+xml,<svg/>',
+      ]) {
+        expect(imagenesVisibles([propia({ url: ruta })])).toEqual([]);
+        expect(imagenesVisibles([propia({ thumbUrl: ruta })])).toEqual([]);
+      }
+    });
+
+    it('exigen autor y licencia declarados', () => {
+      expect(imagenesVisibles([propia({ author: '' })])).toEqual([]);
+      expect(imagenesVisibles([propia({ license: '  ' })])).toEqual([]);
+    });
+
+    it('una imagen apagada o label-match sigue descartada', () => {
+      expect(imagenesVisibles([propia({ enabled: false })])).toEqual([]);
+      expect(imagenesVisibles([propia({ match: 'label-match' })])).toEqual([]);
+    });
+  });
+
   it('enlaceSeguro sólo deja pasar https', () => {
     expect(enlaceSeguro('https://medlineplus.gov')).toBe('https://medlineplus.gov');
     expect(enlaceSeguro('data:text/html,x')).toBeNull();
