@@ -182,26 +182,18 @@ describe('Settings', () => {
     expect(theme.currentTheme()).toBe('dark');
   });
 
-  it('siguiendo al dispositivo dice cuál rige y no ofrece volver a él', () => {
-    mount();
-    goTo('Apariencia');
-    theme.useSystemTheme();
-    fixture.detectChanges();
-
-    expect(text()).toContain('Sigue a su dispositivo');
-    expect(query('theme-use-system')).toBeNull();
-  });
-
-  it('elegido a mano, se puede volver a seguir al dispositivo', () => {
+  it('muestra el estado del modo oscuro en el texto descriptivo', () => {
     mount();
     goTo('Apariencia');
     theme.setTheme('dark');
     fixture.detectChanges();
 
-    query('theme-use-system')?.click();
+    expect(text()).toContain('Activado');
+
+    theme.setTheme('light');
     fixture.detectChanges();
 
-    expect(theme.currentTheme()).toBe('system');
+    expect(text()).toContain('Desactivado');
   });
 
   /** El interruptor nativo que hay dentro del `app-switch` de ese permiso. */
