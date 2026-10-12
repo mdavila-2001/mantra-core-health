@@ -355,11 +355,12 @@ thead .data-table__cell {
         clip-path: inset(50%);
     }
 
+    /* Filas planas separadas por un divisor: las pantallas con tabla ya viven
+       dentro de una tarjeta, y una ficha tonal por fila era caja dentro de caja. */
     :host(.data-table--apilada) .data-table__row {
-        margin-block-end: var(--sp-3);
-        padding: var(--sp-3) var(--sp-4);
-        border-radius: var(--r-lg);
-        background: var(--bg-surface-alt);
+        padding: var(--sp-3) 0;
+        border-block-end: 1px solid var(--border-subtle);
+        background: transparent;
     }
 
     :host(.data-table--apilada) .data-table__row > td {
@@ -401,6 +402,6 @@ thead .data-table__cell {
     }
 
     :host(.data-table--apilada) .data-table__row:hover {
-        background: var(--bg-surface-alt);
+        background: transparent;
     }
 }

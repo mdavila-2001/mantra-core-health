@@ -229,6 +229,7 @@
 /* Sin caja alrededor: las fichas de adentro son lo único con superficie. */
 app-card.expediente__activas {
   background: transparent;
+  margin-block-end: var(--sp-6);
 }
 
 /* Los archivos de un documento, uno por renglón, debajo del detalle. */

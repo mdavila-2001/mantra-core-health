@@ -23,9 +23,8 @@
       </app-alert>
     }
 
-    <!-- «Enfermedades activas» (C3): lo primero que se ve del historial
-         estructurado. Sólo aparece con al menos una activa; un expediente sin
-         diagnósticos activos no necesita esta tarjeta vacía. -->
+    <!-- UNA tarjeta: «Enfermedades activas» (C3, sólo con al menos una activa) arriba y la historia en pestañas debajo. -->
+    <app-card variant="elevated" padding="lg" class="expediente__ficha">
     @if (enfermedadesActivas().length > 0) {
       <app-card
         variant="flat"
@@ -64,7 +63,7 @@
       aria-label="Historia clínica"
       appTutorialTarget="expediente-pestanas"
     >
-      <app-tabs appearance="browser">
+      <app-tabs>
         @for (bloque of bloques(); track bloque.clave) {
           <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
             <!-- El alta del bloque, arriba de su tabla. El expediente sigue
@@ -119,6 +118,7 @@
         }
       </app-tabs>
     </section>
+    </app-card>
   </div>
 </app-view-state-host>
 

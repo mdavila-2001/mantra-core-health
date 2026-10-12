@@ -258,6 +258,17 @@
     font-size: var(--fs-body);
     text-align: start;
   }
+
+  /* El chevron al final de la fila: dice «esto se abre» y llena el ancho. */
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona::after {
+    content: '';
+    margin-inline-start: auto;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-block-start: 2px solid var(--petroleo);
+    border-inline-end: 2px solid var(--petroleo);
+    transform: rotate(45deg);
+  }
 }
 
 .sintomas__zona {
@@ -270,7 +281,7 @@
   /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
   border: 1px solid transparent;
   border-radius: var(--r-menu);
-  background: color-mix(in srgb, var(--tinta) 6%, var(--sup-tarjeta));
+  background: color-mix(in srgb, var(--petroleo) 9%, var(--sup-tarjeta));
   color: var(--tinta);
   font: inherit;
   font-size: var(--fs-caption);
