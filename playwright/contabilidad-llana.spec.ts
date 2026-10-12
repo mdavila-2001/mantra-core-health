@@ -128,6 +128,7 @@ test.describe('Contabilidad en cristiano', () => {
 
     /* ---- 3 y 4 · quién te debe, a quién le debés --------------------------- */
 
+    await page.getByRole('tab', { name: 'Pendientes' }).click();
     await expect(page.getByRole('heading', { name: 'Le deben' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Tiene que pagar' })).toBeVisible();
 
@@ -148,6 +149,7 @@ test.describe('Contabilidad en cristiano', () => {
     // Un toast no prueba nada: se recarga la página entera y se vuelve a leer.
     await page.reload();
     await estable(page);
+    await page.getByRole('tab', { name: 'Pendientes' }).click();
     await expect(page.getByRole('heading', { name: 'Le deben' })).toBeVisible();
 
     const totalDespues = aNumero(await page.locator('.panel--cobrar .panel__total').textContent());
@@ -156,6 +158,7 @@ test.describe('Contabilidad en cristiano', () => {
 
     /* ---- activos y pasivos: adentro, no al lado ---------------------------- */
 
+    await page.getByRole('tab', { name: 'Patrimonio' }).click();
     await expect(
       page.getByRole('heading', { name: 'Lo que tiene y lo que debe' }),
     ).toBeVisible();
