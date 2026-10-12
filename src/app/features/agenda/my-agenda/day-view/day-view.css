@@ -200,10 +200,10 @@
   padding: var(--sp-3) var(--sp-4);
   /* Sin trazo ni sombra de reposo: la franja de estado es la ÚNICA línea que
      lleva significado. La sombra aparece al apuntar. */
-  border: 1px solid transparent;
-  border-inline-start: 4px solid var(--dia-acento);
-  border-radius: var(--r-lg);
-  background: var(--bg-surface);
+  border: 0;
+  border-block-end: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
   color: var(--text-primary);
   transition:
     box-shadow var(--dur-base) var(--ease-out),

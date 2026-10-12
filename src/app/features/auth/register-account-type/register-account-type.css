@@ -219,6 +219,8 @@
 }
 
 .tipos__card-detail {
+    /* Deja libre el rincón de la flecha (abajo a la derecha). */
+    padding-inline-end: var(--sp-6);
     font-family: var(--font-body);
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);

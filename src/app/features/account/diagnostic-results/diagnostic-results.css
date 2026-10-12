@@ -95,9 +95,13 @@
 
 /* El separador es decorativo y va en `::before`: un «·» en el marcado se leería
    en voz alta entre cada dato. */
-.resultados__meta-dato + .resultados__meta-dato::before {
-  content: '·';
-  margin-inline-end: var(--sp-3);
+@media (min-width: 40rem) {
+  /* En teléfono la tira se parte en renglones y el punto quedaría huérfano al
+     inicio de línea: allí sólo manda el `gap`. */
+  .resultados__meta-dato + .resultados__meta-dato::before {
+    content: '·';
+    margin-inline-end: var(--sp-3);
+  }
 }
 
 .resultados__sellos {

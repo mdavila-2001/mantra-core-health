@@ -302,7 +302,7 @@
    caben, la tira sigue desplazándose con sus flechas. El marco `browser` no se
    toca: ahí un rótulo partido deforma la tira. */
 @media (max-width: 40rem) {
-    :host(:not(.tabs--browser)) .tabs__tab {
+    :host(:not(.tabs--browser):not(:has(.tabs__tab:nth-child(5)))) .tabs__tab {
         flex: 1 1 0;
         min-width: min-content;
         padding-inline: var(--sp-2);

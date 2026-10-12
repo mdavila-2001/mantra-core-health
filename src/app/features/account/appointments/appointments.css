@@ -361,3 +361,9 @@
   display: block;
   margin-block: var(--sp-4);
 }
+
+/* «Cancelar» es una acción secundaria y destructiva: texto discreto en el tono
+   de error (con icono de estado el color no va solo), no un recuadro por fila. */
+.turnos__cancelar {
+  color: var(--st-error-fg);
+}
