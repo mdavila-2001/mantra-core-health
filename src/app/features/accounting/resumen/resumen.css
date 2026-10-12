@@ -570,3 +570,14 @@
   display: block;
   margin-block-end: var(--sp-4);
 }
+
+/* ---- subpestañas dentro de Resumen (Movimientos, Pendientes, Patrimonio) --- */
+.subpestanas {
+  display: block;
+  inline-size: 100%;
+}
+
+.subpestanas app-tab > .bloque:first-child {
+  margin-block-start: var(--sp-4);
+}
+
