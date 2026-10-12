@@ -132,7 +132,13 @@
 }
 
 .cinta__tramo--curso {
-  background: var(--st-primary-fg);
+  /* Rayado y no sólo otro tono: «en curso» y «por venir» eran dos azules casi
+     iguales, y un estado no puede depender del color. */
+  background: repeating-linear-gradient(
+    135deg,
+    var(--st-primary-fg) 0 4px,
+    var(--st-primary-bd) 4px 8px
+  );
 }
 
 .cinta__tramo--sala {
@@ -241,7 +247,11 @@
 }
 
 .cifras__dato--curso::before {
-  background: var(--st-primary-fg);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--st-primary-fg) 0 2px,
+    var(--st-primary-bd) 2px 4px
+  );
 }
 
 .cifras__dato--sala::before {
