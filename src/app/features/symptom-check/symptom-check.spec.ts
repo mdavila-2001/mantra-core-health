@@ -813,6 +813,38 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
 
     expect(siluetaHija().sexo()).toBeUndefined();
   });
+
+  it('detecta «me voy a matar» y despliega videos, teléfonos de crisis y enlaces de psicología', () => {
+    responderSexoPropio(http);
+    (componente as unknown as { escribir(v: string): void }).escribir('me voy a matar');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    html = fixture.nativeElement as HTMLElement;
+    const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
+    expect(crisis).not.toBeNull();
+    expect(crisis?.textContent).toContain('800-11-3040');
+    expect(crisis?.textContent).toContain('772-22123');
+    expect(crisis?.textContent).toContain('psicológica');
+    expect(crisis?.textContent).toContain('psiquiatras');
+    const iframes = crisis?.querySelectorAll('iframe');
+    expect(iframes?.length).toBe(2);
+    expect(iframes?.[0]?.getAttribute('src')).toContain('youtube-nocookie.com/embed/nY66tl39PkE');
+    expect(iframes?.[1]?.getAttribute('src')).toContain('youtube-nocookie.com/embed/T1ysvMHuV-Y');
+  });
+
+  it('muestra el botón de recomendar medicamentos cuando hay recomendaciones activas', () => {
+    responderSexoPropio(http);
+    (componente as unknown as { escribir(v: string): void }).escribir('dolor de cabeza');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    html = fixture.nativeElement as HTMLElement;
+    const botonMed = html.querySelector('[data-testid="sintomas-boton-recomendar-medicamentos"]');
+    expect(botonMed).not.toBeNull();
+    expect(botonMed?.textContent).toContain('Recomendar medicamentos');
+    expect(botonMed?.getAttribute('href')).toContain('/search/medications');
+  });
 });
 
 /**
