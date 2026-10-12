@@ -469,7 +469,7 @@ export function registrarPracticas(router: MockRouter): void {
 
   router.put('/practitioners/me/sites/:id/contact-phone', (request) => {
     const sitio = sitiosPropios.get(request.params['id']!);
-    if (sitio === undefined || sitio.practitionerProfileId !== (request.user?.practitionerProfileId ?? MEDICA.id)) {
+    if (sitio === undefined || sitio.practitionerProfileId !== (request.user?.practitionerProfileId ?? MEDICAL.id)) {
       return notFound('Lugar de atención no encontrado');
     }
     const { contactPhone } = cuerpo<{ contactPhone: string | null }>(request);
