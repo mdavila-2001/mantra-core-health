@@ -247,6 +247,8 @@ export class Resumen {
   private readonly recarga = signal(0);
   /** 0 = Resumen (tableros) · 1 = Registros (tablas con su alta). */
   readonly pestana = signal(0);
+  /** Subpestañas del Resumen: 0 = Movimientos · 1 = Pendientes · 2 = Patrimonio. */
+  readonly subpestana = signal(0);
   readonly practicaElegida = signal<string | null>(null);
   private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
   private readonly dinero = signal<ViewState<Dinero>>(loading());

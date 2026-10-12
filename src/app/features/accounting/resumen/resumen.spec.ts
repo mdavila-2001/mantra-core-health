@@ -521,7 +521,7 @@ describe('Resumen contable', () => {
 
   describe('tableros y registros, en pestañas separadas', () => {
     const rotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
-      Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]')).map((t) =>
+      Array.from(fixture.nativeElement.querySelectorAll('.pestanas > .tabs__bar [role="tab"]')).map((t) =>
         (t as HTMLElement).textContent?.trim() ?? '',
       );
 
@@ -534,7 +534,31 @@ describe('Resumen contable', () => {
       expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(texto).toContain('¿Cuánto hizo?');
-      expect(texto).toContain('Lo que está pendiente');
+    });
+
+    it('el Resumen divide el contenido en tres subpestañas: Movimientos, Pendientes y Patrimonio', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      const subrotulos = Array.from(
+        fixture.nativeElement.querySelectorAll('.subpestanas > .tabs__bar [role="tab"]'),
+      ).map((t) => (t as HTMLElement).textContent?.trim() ?? '');
+      expect(subrotulos).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
+
+      // Movimientos (activa por defecto)
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('¿Cuánto hizo?');
+
+      // Pendientes
+      fixture.componentInstance.subpestana.set(1);
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Lo que está pendiente');
+
+      // Patrimonio
+      fixture.componentInstance.subpestana.set(2);
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Lo que tiene y lo que debe');
     });
 
     it('el Resumen no trae la tarjeta de registros', () => {
