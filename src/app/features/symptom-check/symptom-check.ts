@@ -21,6 +21,7 @@ import {
   type ObservacionDeSintomas,
 } from '@core/symptom-notes/symptom-observations.store';
 import { BODY_ZONES, type BodyZone } from './zones.data';
+import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import { Spinner } from '@shared/components/atoms/spinner/spinner';
@@ -28,6 +29,10 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
+import {
+  recomendarMedicamentos,
+  type MedicamentoSugerido,
+} from './medications-guide.data';
 import {
   BodyMap,
   ZONAS_CON_SILUETA,
@@ -127,7 +132,7 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, BodyMap, Card, Chip, EmergencyPanel, FormField, RouterLink, Spinner, Textarea],
+  imports: [Alert, AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormField, RouterLink, Spinner, Textarea],
   templateUrl: './symptom-check.html',
   // El dictado vive y muere con la pantalla: ver `Dictado`.
   providers: [Dictation],
@@ -479,11 +484,40 @@ export class SymptomCheck {
     this.alarmas().some((alarma) => alarma.id === 'ideas-suicidas'),
   );
 
+  /** Permite al usuario desplegar manualmente el módulo de ayuda y contención emocional desde la cabecera. */
+  protected readonly ayudaManualAbierta = signal(false);
+
+  protected alternarAyudaManual(): void {
+    this.ayudaManualAbierta.update((v) => !v);
+  }
+
+  /** Si se debe desplegar el módulo de apoyo y contención en crisis (por detección en texto o apertura manual). */
+  protected readonly mostrarCrisis = computed(
+    () => this.esRiesgoSuicida() || this.ayudaManualAbierta(),
+  );
+
+  /** Modo activo de recomendación: por especialidades médicas o recomendación de medicamentos. */
+  protected readonly vistaRecomendacion = signal<'especialidades' | 'medicamentos'>('especialidades');
+
+  /** Medicamentos orientativos recomendados según los síntomas activos y conocimiento farmacológico. */
+  protected readonly medicamentosSugeridos = computed<readonly MedicamentoSugerido[]>(() =>
+    recomendarMedicamentos(this.sintomas()),
+  );
+
+  /** Resumen de nombres de síntomas detectados para la vista de medicamentos. */
+  protected readonly sintomasDetectadosTexto = computed(() =>
+    this.sintomas().map((s) => s.nombre).join(', '),
+  );
+
   /** Parámetros de búsqueda para recomendación de medicamentos según síntomas reconocidos. */
   protected readonly medicamentosQueryParams = computed(() => {
     const primer = this.sintomas()[0];
     return primer !== undefined ? { q: primer.nombre } : {};
   });
+
+  protected cambiarVistaRecomendacion(modo: 'especialidades' | 'medicamentos'): void {
+    this.vistaRecomendacion.set(modo);
+  }
 
   /**
    * Lo que la persona escribió **para decir que no lo tiene**.

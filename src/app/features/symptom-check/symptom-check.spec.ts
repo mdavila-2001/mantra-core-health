@@ -833,6 +833,19 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(iframes?.[1]?.getAttribute('src')).toContain('youtube-nocookie.com/embed/T1ysvMHuV-Y');
   });
 
+  it('detecta crisis ante mayúsculas con salto de línea (enter) y variantes («mE VOY A MATAR\\n», «me quiero matar», «me voi a matar», «suicidio»)', () => {
+    responderSexoPropio(http);
+    for (const frase of ['mE VOY A MATAR\n', 'me quiero matar', 'me voi a matar', 'suicidio']) {
+      (componente as unknown as { escribir(v: string): void }).escribir(frase);
+      fixture.detectChanges();
+      http.match(() => true);
+
+      html = fixture.nativeElement as HTMLElement;
+      const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
+      expect(crisis, `Fallo en detección de crisis para: «${frase}»`).not.toBeNull();
+    }
+  });
+
   it('muestra el botón de recomendar medicamentos cuando hay recomendaciones activas', () => {
     responderSexoPropio(http);
     (componente as unknown as { escribir(v: string): void }).escribir('dolor de cabeza');
@@ -844,6 +857,40 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(botonMed).not.toBeNull();
     expect(botonMed?.textContent).toContain('Recomendar medicamentos');
     expect(botonMed?.getAttribute('href')).toContain('/search/medications');
+  });
+
+  it('detecta «necesito ayuda» y ubica el soporte de crisis ARRIBA del área de escritura', () => {
+    responderSexoPropio(http);
+    (componente as unknown as { escribir(v: string): void }).escribir('necesito ayuda');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    html = fixture.nativeElement as HTMLElement;
+    const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
+    const escribir = html.querySelector('[data-testid="sintomas-escribir"]');
+    expect(crisis).not.toBeNull();
+    expect(escribir).not.toBeNull();
+    // La crisis debe aparecer antes en el árbol DOM (ARRIBA, y el chat/escritura ABAJO)
+    expect(crisis!.compareDocumentPosition(escribir!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(crisis?.textContent).toContain('800-11-3040');
+    expect(crisis?.textContent).toContain('772-22123');
+  });
+
+  it('permite abrir manualmente las líneas de contención desde el botón superior', () => {
+    responderSexoPropio(http);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+
+    const botonTop = html.querySelector<HTMLButtonElement>('[data-testid="sintomas-boton-ayuda-top"]');
+    expect(botonTop).not.toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-crisis-soporte"]')).toBeNull();
+
+    botonTop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+
+    const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
+    expect(crisis).not.toBeNull();
+    expect(crisis?.textContent).toContain('800-11-3040');
   });
 });
 

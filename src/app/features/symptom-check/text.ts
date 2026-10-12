@@ -55,7 +55,14 @@ const SOFT_CUT = /[,:]/;
  * cabeza» y eso no debería fallar.
  */
 export function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(DIACRITICS, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  return texto
+    .normalize('NFD')
+    .replace(DIACRITICS, '')
+    .toLowerCase()
+    .replace(/[^\S\r\n]+/g, ' ')
+    .replace(/\r?\n+/g, '\n')
+    .replace(/ *\n */g, '\n')
+    .trim();
 }
 
 /**
@@ -636,9 +643,8 @@ const IRREGULAR: ReadonlyMap<string, string> = new Map([
   ['caer', 'caida'],
   ['cayendo', 'caida'],
   ['cai', 'caida'],
-  // Morir: la misma raíz sostiene el duelo de alguien y la urgencia de otro, y
-  // lo que los separa es quién es el sujeto —«se murió mi papá» contra «me
-  // quiero morir»—, así que las formas se juntan acá y la tabla las distingue.
+  // Morir, matar y suicidio: la misma raíz sostiene el duelo de alguien y la
+  // urgencia de otro; las formas y faltas frecuentes se normalizan acá.
   ['muero', 'morir'],
   ['morirme', 'morir'],
   ['murio', 'morir'],
@@ -648,6 +654,25 @@ const IRREGULAR: ReadonlyMap<string, string> = new Map([
   ['muerte', 'morir'],
   ['moria', 'morir'],
   ['muriendo', 'morir'],
+  ['matar', 'matar'],
+  ['matarme', 'matar'],
+  ['matara', 'matar'],
+  ['mataria', 'matar'],
+  ['matando', 'matar'],
+  ['mato', 'matar'],
+  ['suicidio', 'suicidio'],
+  ['suicidarme', 'suicidio'],
+  ['suicidar', 'suicidio'],
+  ['suicidado', 'suicidio'],
+  ['suicidas', 'suicidio'],
+  ['suicida', 'suicidio'],
+  ['suisidio', 'suicidio'],
+  ['suisidarme', 'suicidio'],
+  ['suisidar', 'suicidio'],
+  ['voi', 'voy'],
+  ['boy', 'voy'],
+  ['kiero', 'quiero'],
+  ['kierome', 'quiero'],
   // Vacunas: la consulta llega conjugada más veces que en sustantivo.
   ['vacunar', 'vacuna'],
   ['vacunarme', 'vacuna'],
@@ -852,7 +877,7 @@ function calculateKey(palabra: string): string {
  * mira un `split`.
  */
 export function ultimaFrase(texto: string): string {
-  const partes = normalizar(texto).split(/[,.;]| y /);
+  const partes = normalizar(texto).split(/[,.;\n]| y /);
   return (partes[partes.length - 1] ?? '').trim();
 }
 
