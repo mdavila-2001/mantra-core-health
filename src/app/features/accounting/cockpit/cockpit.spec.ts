@@ -77,6 +77,7 @@ function ejercicioDePrueba(): object {
 function responderRestoDelTablero(
   http: HttpTestingController,
   activos: readonly object[] = [],
+  devengos: readonly object[] = [],
 ): void {
   http.expectOne((r) => r.url.startsWith(`${BASE}/accounting/trial-balance`)).flush({
     items: [],
@@ -129,13 +130,35 @@ function responderRestoDelTablero(
     monthlyCharge: '0.00',
   });
   http.expectOne((r) => r.url.startsWith(`${BASE}/accounting/accrual-objects`)).flush({
-    items: [],
+    items: devengos,
     pendingTotal: '0.00',
     periodCharge: '0.00',
   });
   http
     .expectOne((r) => r.url.startsWith(`${BASE}/accounting/journal-transactions`))
     .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+  http.expectOne((r) => r.url.startsWith(`${BASE}/accounting/accounts`)).flush({
+    items: [
+      { id: 'acc-banco', code: '1.2', name: 'Banco', accountTypeConceptId: 't', normalBalanceConceptId: 'n' },
+      { id: 'acc-gasto', code: '5.5', name: 'Gasto por amortización', accountTypeConceptId: 't', normalBalanceConceptId: 'n' },
+      { id: 'acc-acum', code: '1.5', name: 'Amortización acumulada', accountTypeConceptId: 't', normalBalanceConceptId: 'n' },
+    ],
+    count: 3,
+    limit: 200,
+  });
+}
+
+/** Monta el cockpit con el tablero entero cargado y el período 1 abierto. */
+function montarConTablero(devengos: readonly object[] = []): ReturnType<typeof montar> {
+  const montado = montar();
+  responderPracticas(montado.http);
+  montado.fixture.detectChanges();
+  montado.http
+    .expectOne((r) => r.url.startsWith(`${BASE}/accounting/fiscal-years`))
+    .flush(ejercicioDePrueba());
+  responderRestoDelTablero(montado.http, [], devengos);
+  montado.fixture.detectChanges();
+  return montado;
 }
 
 describe('Cockpit contable', () => {
@@ -204,6 +227,7 @@ describe('Cockpit contable', () => {
       'assets',
       'accrual-objects',
       'journal-transactions',
+      'accounts',
     ]) {
       try {
         http.expectOne((r) => r.url.startsWith(`${BASE}/accounting/${ruta}`)).flush({});
@@ -367,8 +391,8 @@ describe('Cockpit contable — fallos de las acciones', () => {
   });
 
   it('ante un fallo sin motivo, dice qué se intentaba y NO inventa una causa', async () => {
-    const { fixture, http } = montar();
-    responderPracticas(http);
+    const { fixture, http } = montarConTablero();
+    fixture.componentInstance.cuentaDeBanco.set('acc-banco');
     const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
     vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
 
@@ -390,5 +414,122 @@ describe('Cockpit contable — fallos de las acciones', () => {
       'No se pudo compensar la partida FAC-7. Intente de nuevo. (Código de soporte: corr-500)',
     );
     expect(ultimo?.message).not.toMatch(/período|postear|cerrad/i);
+  });
+});
+
+/* ============================================================================
+    Los cuerpos de los tres procesos que asientan (informe B, C9–C11): los que
+    declara la API, no los mínimos que respondían 400 siempre.
+    ========================================================================== */
+
+describe('Cockpit contable — contrato de compensar, amortizar y devengar', () => {
+  const devengo = (id: string, completed: boolean): object => ({
+    id,
+    code: id.toUpperCase(),
+    name: `Devengo ${id}`,
+    kind: 'EXPENSE',
+    totalAmount: '1200.00',
+    periods: 12,
+    postedPeriods: completed ? 12 : 3,
+    remainingPeriods: completed ? 0 : 9,
+    periodAmount: '100.00',
+    recognizedAmount: '300.00',
+    pendingAmount: completed ? '0.00' : '900.00',
+    startsOn: '2026-01-01',
+    completed,
+  });
+
+  it('compensar manda CreateClearingDto: práctica, banco elegido, fecha del período e importe', async () => {
+    const { fixture, http } = montarConTablero();
+    const cockpit = fixture.componentInstance;
+    vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+    const partida = {
+      id: 'oi-1',
+      documentNumber: 'FAC-7',
+      openAmount: '100.00',
+      partnerName: 'Clínica Norte',
+    } as Parameters<Cockpit['compensar']>[0];
+
+    // Sin cuenta de banco no sale nada: la pantalla no adivina una.
+    await cockpit.compensar(partida);
+    http.expectNone(`${BASE}/accounting/clearing-documents`);
+
+    cockpit.cuentaDeBanco.set('acc-banco');
+    await cockpit.compensar(partida);
+    const pedido = http.expectOne(`${BASE}/accounting/clearing-documents`);
+    expect(pedido.request.body).toEqual({
+      practiceId: 'prac-1',
+      bankAccountId: 'acc-banco',
+      // Hoy no cae en enero de 2026: el asiento va al último día del período.
+      clearingDate: '2026-01-31',
+      items: [{ openItemId: 'oi-1', clearedAmount: '100.00' }],
+    });
+    pedido.flush({ id: 'cd-1', clearingNumber: 'CLR-1', transactionId: 'tx-1', clearedItems: 1 });
+  });
+
+  it('amortizar exige las dos cuentas y manda RunDepreciationDto con el período abierto', async () => {
+    const { fixture, http } = montarConTablero();
+    const cockpit = fixture.componentInstance;
+    vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+
+    expect(cockpit.puedeAmortizar()).toBe(false);
+    cockpit.cuentaDeGastoPorAmortizacion.set('acc-gasto');
+    cockpit.cuentaDeAmortizacionAcumulada.set('acc-acum');
+    expect(cockpit.puedeAmortizar()).toBe(true);
+
+    await cockpit.amortizar();
+    const pedido = http.expectOne(`${BASE}/accounting/depreciation/run`);
+    expect(pedido.request.body).toEqual({
+      practiceId: 'prac-1',
+      fiscalPeriodId: 'period-1',
+      depreciationExpenseAccountId: 'acc-gasto',
+      accumulatedDepreciationAccountId: 'acc-acum',
+      postingDate: '2026-01-31',
+    });
+  });
+
+  it('devengar corre UN objeto por llamada, sólo los pendientes y en orden', async () => {
+    const { fixture, http } = montarConTablero([devengo('d1', false), devengo('d2', true), devengo('d3', false)]);
+    const cockpit = fixture.componentInstance;
+    vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+
+    expect(cockpit.puedeDevengar()).toBe(true);
+    await cockpit.devengar();
+
+    const primero = http.expectOne(`${BASE}/accounting/accruals/run`);
+    expect(primero.request.body).toEqual({
+      accrualObjectId: 'd1',
+      fiscalPeriodId: 'period-1',
+      practiceId: 'prac-1',
+      postingDate: '2026-01-31',
+    });
+    primero.flush({ postedLines: 1, transactionIds: ['tx-1'] });
+
+    const segundo = http.expectOne(`${BASE}/accounting/accruals/run`);
+    expect(segundo.request.body).toMatchObject({ accrualObjectId: 'd3' });
+    segundo.flush({ postedLines: 1, transactionIds: ['tx-2'] });
+  });
+
+  it('con el período elegido cerrado no ofrece correr ni compensar', () => {
+    const { fixture, http } = montar();
+    responderPracticas(http);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.startsWith(`${BASE}/accounting/fiscal-years`))
+      .flush({
+        ...ejercicioDePrueba(),
+        periods: [
+          { id: 'period-1', periodNumber: 1, name: 'Enero', startsOn: '2026-01-01', endsOn: '2026-01-31', status: 'CLOSED' },
+        ],
+      });
+    responderRestoDelTablero(http, [], [devengo('d1', false)]);
+    fixture.detectChanges();
+    const cockpit = fixture.componentInstance;
+    cockpit.cuentaDeGastoPorAmortizacion.set('acc-gasto');
+    cockpit.cuentaDeAmortizacionAcumulada.set('acc-acum');
+
+    expect(cockpit.periodoParaAsentar()).toBeNull();
+    expect(cockpit.puedeAmortizar()).toBe(false);
+    expect(cockpit.puedeDevengar()).toBe(false);
   });
 });

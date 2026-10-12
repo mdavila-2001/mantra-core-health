@@ -564,3 +564,9 @@
 .pestana > .bloque:first-child {
   margin-block-start: 0;
 }
+
+/* La cuenta contra la que se asienta un cobro o un pago (informe B, C9). */
+.cuenta-de-cobro {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
