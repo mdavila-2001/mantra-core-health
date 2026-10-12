@@ -264,6 +264,7 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'estoy embarazada y sangro', sintomas: [], alarmas: ['sangrado-en-el-embarazo'] },
   { texto: 'me tome muchas pastillas', sintomas: [], alarmas: ['intoxicacion'] },
   { texto: 'me quiero morir', sintomas: [], alarmas: ['ideas-suicidas'] },
+  { texto: 'me voy a matar', sintomas: [], alarmas: ['ideas-suicidas'] },
   { texto: 'tengo pensamientos suicidas', sintomas: [], alarmas: ['ideas-suicidas'] },
   {
     texto: 'es el peor dolor de cabeza de mi vida',
