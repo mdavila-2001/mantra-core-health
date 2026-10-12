@@ -12,13 +12,13 @@
 
 /* ---- tema y estados ------------------------------------------------------ */
 
-/** Preferencia del usuario. 'system' delega en `@media (prefers-color-scheme)`. */
-export type ThemeMode = 'light' | 'dark' | 'system';
+/** Preferencia del usuario: claro u oscuro. */
+export type ThemeMode = 'light' | 'dark';
 
-/** Tema efectivamente pintado, ya resuelta la preferencia del sistema. */
-export type ResolvedTheme = Exclude<ThemeMode, 'system'>;
+/** Tema efectivamente pintado. */
+export type ResolvedTheme = ThemeMode;
 
-export const THEME_MODES = ['light', 'dark', 'system'] as const;
+export const THEME_MODES = ['light', 'dark'] as const;
 
 /** Semántica de producto de los `--st-*`. NO es severidad clínica (identidad-visual.md Parte 11.3). */
 export const STATUS_TYPES = ['success', 'warning', 'error', 'info'] as const;
