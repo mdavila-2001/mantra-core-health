@@ -163,6 +163,22 @@
   width: 1.2em;
   height: 1.2em;
   flex-shrink: 0;
+  transform-origin: center center;
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    filter var(--dur-base) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :host(:hover:not(.btn--disabled):not(.btn--loading)) ::ng-deep svg {
+    transform: scale(1.12) translateY(-0.5px);
+    filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--brand-secondary, #4FB3A9) 35%, transparent));
+  }
+}
+
+:host(:active:not(.btn--disabled):not(.btn--loading)) ::ng-deep svg {
+  transform: scale(0.92);
+  transition-duration: var(--dur-fast);
 }
 
 /* ---- estados ------------------------------------------------------------- */
