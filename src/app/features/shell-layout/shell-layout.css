@@ -206,3 +206,22 @@
     animation: none;
   }
 }
+
+/*
+ * Cabecera de teléfono en UNA fila (Carril F). Entre 360 y 640 px las acciones
+ * caben sin envolver —medido: el último botón termina a 382 px de 390, a 352 de
+ * 360 y a 396 de 412—, y envueltas dejaban al avatar solo en una segunda fila:
+ * 101 px de cabecera contra 61. Debajo de 360 sigue envolviendo, que es lo que
+ * evita el desborde en los teléfonos más angostos.
+ */
+@media (min-width: 360px) and (max-width: 640px) {
+  .app-header {
+    gap: 4px;
+  }
+
+  .app-header__derecha {
+    flex-wrap: nowrap;
+    gap: 2px;
+    overflow: visible;
+  }
+}

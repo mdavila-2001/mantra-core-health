@@ -221,6 +221,18 @@
   padding: var(--sp-4);
 }
 
+/* Las citas y la lista de espera son filas de LECTURA, no opciones: superficie
+   tonal sin borde y esquina de tarjeta, para que la pantalla no sea una pila de
+   cajas. Los horarios (`.turnos__horario`) sí son opciones a elegir y conservan
+   su borde. */
+.turnos__item,
+.turnos__espera {
+  background: var(--bg-surface-alt);
+  border-color: transparent;
+  border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-5);
+}
+
 /* El horario y su acción caben lado a lado apenas hay ancho. */
 @media (min-width: 32rem) {
   .turnos__item,

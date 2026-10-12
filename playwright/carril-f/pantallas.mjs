@@ -29,6 +29,8 @@ export const PANTALLAS = [
 ];
 
 async function main() {
+  // Tras editar, `ng serve` recompila: sin esta espera la primera captura sale con el estado viejo.
+  if (fase === 'despues') await new Promise((r) => setTimeout(r, Number(process.env.ESPERA_MS ?? 25_000)));
   mkdirSync(`${SALIDA}/${fase}`, { recursive: true });
   const navegador = await lanzar();
   const auditoria = {};
