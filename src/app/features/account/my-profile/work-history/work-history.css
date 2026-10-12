@@ -35,6 +35,12 @@
   line-height: var(--lh-caption);
 }
 
+.historial__telefono {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 .historial__lista {
   display: grid;
   gap: var(--sp-3);
