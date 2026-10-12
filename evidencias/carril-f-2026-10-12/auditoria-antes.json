@@ -1,0 +1,394 @@
+{
+ "01-auth|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "02-registro|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "03-inicio-paciente|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "06-mi-perfil|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "07-mis-citas|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "10-historia-paciente|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "13-resultados|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "14-ordenes|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "04-inicio-medica|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "05-inicio-farmacia|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "11-farmacia-pedidos|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "12-farmacia-inventario|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "08-agenda-medica|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "09-ficha-clinica-medica|1440|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "01-auth|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "02-registro|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "03-inicio-paciente|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "06-mi-perfil|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "07-mis-citas|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "10-historia-paciente|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "13-resultados|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "14-ordenes|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "04-inicio-medica|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "05-inicio-farmacia|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "11-farmacia-pedidos|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "12-farmacia-inventario|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "08-agenda-medica|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "09-ficha-clinica-medica|1440|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "01-auth|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "02-registro|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "03-inicio-paciente|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "06-mi-perfil|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "07-mis-citas|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "10-historia-paciente|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "13-resultados|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "14-ordenes|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "04-inicio-medica|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "05-inicio-farmacia|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "11-farmacia-pedidos|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "12-farmacia-inventario|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "08-agenda-medica|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "09-ficha-clinica-medica|390|claro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "01-auth|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "02-registro|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "03-inicio-paciente|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "06-mi-perfil|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "07-mis-citas|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "10-historia-paciente|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "13-resultados|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "14-ordenes|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "04-inicio-medica|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "05-inicio-farmacia|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "11-farmacia-pedidos|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "12-farmacia-inventario|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "08-agenda-medica|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ },
+ "09-ficha-clinica-medica|390|oscuro": {
+  "iso": [],
+  "uuid": [],
+  "coordenadas": [],
+  "desbordeHorizontal": false,
+  "errores": []
+ }
+}
