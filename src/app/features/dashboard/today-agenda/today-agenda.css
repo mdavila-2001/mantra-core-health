@@ -331,10 +331,7 @@
 
 /* Sobre el fondo tonal de «en curso» la píldora es del mismo color y sólo
    sangra la palabra: sin relleno, «Ahora» queda alineada con la hora. */
-.ahora--en-curso .ahora__rotulo {
-  padding-inline: 0;
-  background: transparent;
-}
+.ahora--en-curso .ahora__rotulo { padding-inline: 0; background: transparent; }
 
 .ahora__hora {
   grid-area: hora;
@@ -608,6 +605,4 @@
   overflow-wrap: anywhere;
 }
 
-.hoy__aviso {
-  margin-block-end: var(--sp-4);
-}
+.hoy__aviso { margin-block-end: var(--sp-4); }

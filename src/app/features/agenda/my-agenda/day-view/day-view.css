@@ -137,7 +137,8 @@
 }
 
 @media (min-width: 780px) {
-  .dia__acciones-barra {
+  .dia__acciones-barra,
+  .dia__acciones {
     margin-inline-start: 0;
   }
 }
@@ -226,21 +227,10 @@
   translate: 0 -1px;
 }
 
-.dia__bloque[data-sello='approved'] {
-  --dia-acento: var(--st-success-bd);
-}
-
-.dia__bloque[data-sello='in-review'] {
-  --dia-acento: var(--st-warning-bd);
-}
-
-.dia__bloque[data-sello='rejected'] {
-  --dia-acento: var(--st-error-bd);
-}
-
-.dia__bloque[data-sello='expired'] {
-  --dia-acento: var(--st-info-bd);
-}
+.dia__bloque[data-sello='approved'] { --dia-acento: var(--st-success-bd); }
+.dia__bloque[data-sello='in-review'] { --dia-acento: var(--st-warning-bd); }
+.dia__bloque[data-sello='rejected'] { --dia-acento: var(--st-error-bd); }
+.dia__bloque[data-sello='expired'] { --dia-acento: var(--st-info-bd); }
 
 .dia__paciente {
   display: flex;
@@ -257,9 +247,7 @@
   color: var(--text-primary);
 }
 
-.dia__estado {
-  margin: 0;
-}
+.dia__estado { margin: 0; }
 
 .dia__motivo {
   margin: 0;
@@ -273,12 +261,6 @@
   gap: var(--sp-1);
   margin-top: auto;
   margin-inline-start: -14px;
-}
-
-@media (min-width: 780px) {
-  .dia__acciones {
-    margin-inline-start: 0;
-  }
 }
 
 /* -- El tiempo bloqueado: en rojo, punto 3 del carril 12 -------------------
@@ -621,7 +603,4 @@
   background: var(--bg-surface-alt);
 }
 
-.dia__visita-bandeja {
-  margin: 0;
-  font-size: var(--fs-caption);
-}
+.dia__visita-bandeja { margin: 0; font-size: var(--fs-caption); }
