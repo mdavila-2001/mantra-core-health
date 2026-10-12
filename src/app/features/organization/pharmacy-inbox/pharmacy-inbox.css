@@ -181,16 +181,27 @@ app-alert {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-  padding: var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
+  padding: var(--sp-3) var(--sp-4);
+  /* Tonal y sin borde: seis colas de tarjetas con trazo eran una pared de
+     líneas. El borde sólo reaparece como señal (pedido nuevo, ver abajo). */
+  border: 1px solid transparent;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
   color: inherit;
   text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    transform var(--spring-rapido-dur) var(--spring-rapido);
 }
 
+/* Sin sombra: la lista de cada cola se desplaza por dentro y recortaría el halo. */
 .bandeja__tarjeta:hover {
-  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--brand-primary) 9%, var(--bg-surface-alt));
+  transform: translateY(-1px);
+}
+
+.bandeja__tarjeta:active {
+  transform: scale(0.98);
 }
 
 .bandeja__tarjeta--nueva {

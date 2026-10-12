@@ -284,10 +284,10 @@
   row-gap: var(--sp-2);
   margin-block-start: var(--sp-6);
   padding: var(--sp-5);
+  /* Dentro de la tarjeta de la jornada (la única caja con trazo y sombra): sin borde. */
   background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  border: 1px solid transparent;
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-sm);
   transition:
     border-color var(--dur-base) var(--ease-standard),
     box-shadow var(--dur-base) var(--ease-standard),
@@ -311,7 +311,7 @@
 .ahora--en-curso {
   background: var(--st-warning-bg);
   border-color: var(--st-warning-bd);
-  box-shadow: inset 3px 0 0 var(--st-warning-bd), var(--shadow-sm);
+  box-shadow: inset 3px 0 0 var(--st-warning-bd);
 }
 
 .ahora__rotulo {
