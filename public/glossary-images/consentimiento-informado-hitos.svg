@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Línea de tiempo de los hitos del consentimiento informado</title>
+  <desc id="d">Línea de tiempo con nueve hitos: sentencia Schloendorff de 1914, Código de Núremberg de 1947, caso Salgo de 1957, Declaración de Helsinki de 1964, Informe Belmont de 1979, Declaración de Lisboa de 1981, Convenio de Oviedo de 1997, sentencia Montgomery de 2015 y revisión de Helsinki de 2024.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="t">Hitos del consentimiento informado</text>
+  <path d="M24 250 H776" stroke="var(--muted)" stroke-width="3"/>
+  <circle cx="90.0" cy="250" r="7" fill="var(--b)"/>
+  <path d="M90.0 243 V196" stroke="var(--line)" stroke-width="2"/>
+  <rect x="16.0" y="62" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="90.0" y="88" text-anchor="middle" class="h" style="fill:var(--b)">1914</text>
+  <text x="90.0" y="112" text-anchor="middle" class="n">Schloendorff</text>
+  <text x="90.0" y="131" text-anchor="middle" class="n">(EE. UU.): derecho a</text>
+  <text x="90.0" y="150" text-anchor="middle" class="n">decidir sobre el</text>
+  <text x="90.0" y="169" text-anchor="middle" class="n">propio cuerpo</text>
+  <circle cx="167.5" cy="250" r="7" fill="var(--b)"/>
+  <path d="M167.5 257 V304" stroke="var(--line)" stroke-width="2"/>
+  <rect x="93.5" y="304" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="167.5" y="330" text-anchor="middle" class="h" style="fill:var(--b)">1947</text>
+  <text x="167.5" y="354" text-anchor="middle" class="n">Código de</text>
+  <text x="167.5" y="373" text-anchor="middle" class="n">Núremberg: el consen-</text>
+  <text x="167.5" y="392" text-anchor="middle" class="n">timiento voluntario</text>
+  <text x="167.5" y="411" text-anchor="middle" class="n">es esencial</text>
+  <circle cx="245.0" cy="250" r="7" fill="var(--b)"/>
+  <path d="M245.0 243 V196" stroke="var(--line)" stroke-width="2"/>
+  <rect x="171.0" y="62" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="245.0" y="88" text-anchor="middle" class="h" style="fill:var(--b)">1957</text>
+  <text x="245.0" y="112" text-anchor="middle" class="n">Salgo (EE. UU.):</text>
+  <text x="245.0" y="131" text-anchor="middle" class="n">se acuña la expresión</text>
+  <text x="245.0" y="150" text-anchor="middle" class="n">«informed consent»</text>
+  <circle cx="322.5" cy="250" r="7" fill="var(--b)"/>
+  <path d="M322.5 257 V304" stroke="var(--line)" stroke-width="2"/>
+  <rect x="248.5" y="304" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="322.5" y="330" text-anchor="middle" class="h" style="fill:var(--b)">1964</text>
+  <text x="322.5" y="354" text-anchor="middle" class="n">Declaración de</text>
+  <text x="322.5" y="373" text-anchor="middle" class="n">Helsinki (AMM):</text>
+  <text x="322.5" y="392" text-anchor="middle" class="n">ética de la</text>
+  <text x="322.5" y="411" text-anchor="middle" class="n">investigación</text>
+  <circle cx="400.0" cy="250" r="7" fill="var(--b)"/>
+  <path d="M400.0 243 V196" stroke="var(--line)" stroke-width="2"/>
+  <rect x="326.0" y="62" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="88" text-anchor="middle" class="h" style="fill:var(--b)">1979</text>
+  <text x="400.0" y="112" text-anchor="middle" class="n">Informe Belmont</text>
+  <text x="400.0" y="131" text-anchor="middle" class="n">(EE. UU.): respeto</text>
+  <text x="400.0" y="150" text-anchor="middle" class="n">por las personas,</text>
+  <text x="400.0" y="169" text-anchor="middle" class="n">beneficencia, justicia</text>
+  <circle cx="477.5" cy="250" r="7" fill="var(--b)"/>
+  <path d="M477.5 257 V304" stroke="var(--line)" stroke-width="2"/>
+  <rect x="403.5" y="304" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="477.5" y="330" text-anchor="middle" class="h" style="fill:var(--b)">1981</text>
+  <text x="477.5" y="354" text-anchor="middle" class="n">Declaración de</text>
+  <text x="477.5" y="373" text-anchor="middle" class="n">Lisboa (AMM):</text>
+  <text x="477.5" y="392" text-anchor="middle" class="n">derechos del</text>
+  <text x="477.5" y="411" text-anchor="middle" class="n">paciente</text>
+  <circle cx="555.0" cy="250" r="7" fill="var(--b)"/>
+  <path d="M555.0 243 V196" stroke="var(--line)" stroke-width="2"/>
+  <rect x="481.0" y="62" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="555.0" y="88" text-anchor="middle" class="h" style="fill:var(--b)">1997</text>
+  <text x="555.0" y="112" text-anchor="middle" class="n">Convenio de Oviedo</text>
+  <text x="555.0" y="131" text-anchor="middle" class="n">(Consejo de Europa):</text>
+  <text x="555.0" y="150" text-anchor="middle" class="n">consentimiento libre</text>
+  <text x="555.0" y="169" text-anchor="middle" class="n">e informado</text>
+  <circle cx="632.5" cy="250" r="7" fill="var(--b)"/>
+  <path d="M632.5 257 V304" stroke="var(--line)" stroke-width="2"/>
+  <rect x="558.5" y="304" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="632.5" y="330" text-anchor="middle" class="h" style="fill:var(--b)">2015</text>
+  <text x="632.5" y="354" text-anchor="middle" class="n">Montgomery</text>
+  <text x="632.5" y="373" text-anchor="middle" class="n">(Reino Unido): el</text>
+  <text x="632.5" y="392" text-anchor="middle" class="n">paciente como</text>
+  <text x="632.5" y="411" text-anchor="middle" class="n">adulto capaz</text>
+  <circle cx="710.0" cy="250" r="7" fill="var(--b)"/>
+  <path d="M710.0 243 V196" stroke="var(--line)" stroke-width="2"/>
+  <rect x="636.0" y="62" width="148" height="134" rx="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="710.0" y="88" text-anchor="middle" class="h" style="fill:var(--b)">2024</text>
+  <text x="710.0" y="112" text-anchor="middle" class="n">Helsinki revisada:</text>
+  <text x="710.0" y="131" text-anchor="middle" class="n">consentimiento como</text>
+  <text x="710.0" y="150" text-anchor="middle" class="n">proceso continuo</text>
+  <text x="400" y="466" text-anchor="middle" class="n m">Selección ilustrativa, no exhaustiva. Ilustración original de AloVida.</text>
+</svg>

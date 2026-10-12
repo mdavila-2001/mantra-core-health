@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Historia orientada por problemas y nota SOAP</title>
+  <desc id="d">Diagrama de flujo en dos niveles. Arriba la historia orientada por problemas de Weed: base de datos, lista de problemas y plan por problema. Abajo, la nota de evolución SOAP con sus cuatro partes, subjetivo, objetivo, evaluación y plan, que actualiza la lista de problemas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#c9d3df; --ink:#1c2733; --muted:#566576; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a6b; --b-l:#d9f0e8; --c:#b86e0a; --c-l:#fbecd2; --bad:#c0392b; --bad-l:#f9dcd8; --p:#7a4bb0; --p-l:#ebe0f6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#3a4958; --ink:#e8eef5; --muted:#a3b3c4; --a:#7db4ea; --a-l:#223a54; --b:#4cc38a; --b-l:#1d3a31; --c:#e8b04a; --c-l:#43361d; --bad:#ef7467; --bad-l:#4a2723; --p:#b794e0; --p-l:#35294a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .s { font-size: 12.5px; }
+    .t { font-size: 13px; }
+    .big { font-size: 28px; font-weight: 800; }
+    .w { font-weight: 700; }
+    .mid { text-anchor: middle; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" class="title mid">Historia orientada por problemas (Weed, 1968)</text>
+  <rect x="26" y="62" width="240" height="88" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="146.0" y="95.0" class="h mid">1  Base de datos</text>
+  <text x="146.0" y="113.0" class="s muted mid">Historia, examen físico</text>
+  <text x="146.0" y="129.0" class="s muted mid">y estudios básicos</text>
+  <rect x="280" y="62" width="240" height="88" rx="10" fill="var(--c-l)" stroke="var(--c)" stroke-width="1.6"/>
+  <text x="400.0" y="95.0" class="h mid">2  Lista de problemas</text>
+  <text x="400.0" y="113.0" class="s muted mid">Numerados y actualizados:</text>
+  <text x="400.0" y="129.0" class="s muted mid">índice de la historia</text>
+  <rect x="534" y="62" width="240" height="88" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.6"/>
+  <text x="654.0" y="95.0" class="h mid">3  Plan por problema</text>
+  <text x="654.0" y="113.0" class="s muted mid">Estudiar, tratar,</text>
+  <text x="654.0" y="129.0" class="s muted mid">explicar al paciente</text>
+  <line x1="268" y1="106" x2="278" y2="106" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="522" y1="106" x2="532" y2="106" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="26" y="206" width="748" height="224" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
+  <text x="400" y="234" class="h mid">4  Nota de evolución, una por problema (formato SOAP)</text>
+  <rect x="46" y="262" width="147" height="100" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="119.5" y="301.0" class="h mid">S  Subjetivo</text>
+  <text x="119.5" y="319.0" class="s muted mid">Lo que refiere</text>
+  <text x="119.5" y="335.0" class="s muted mid">la persona</text>
+  <rect x="233" y="262" width="147" height="100" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="306.5" y="301.0" class="h mid">O  Objetivo</text>
+  <text x="306.5" y="319.0" class="s muted mid">Hallazgos, constantes,</text>
+  <text x="306.5" y="335.0" class="s muted mid">resultados</text>
+  <rect x="420" y="262" width="147" height="100" rx="10" fill="var(--c-l)" stroke="var(--c)" stroke-width="1.6"/>
+  <text x="493.5" y="301.0" class="h mid">A  Evaluación</text>
+  <text x="493.5" y="319.0" class="s muted mid">Interpretación y</text>
+  <text x="493.5" y="335.0" class="s muted mid">estado del problema</text>
+  <rect x="607" y="262" width="147" height="100" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.6"/>
+  <text x="680.5" y="301.0" class="h mid">P  Plan</text>
+  <text x="680.5" y="319.0" class="s muted mid">Qué se hará</text>
+  <text x="680.5" y="335.0" class="s muted mid">a continuación</text>
+  <line x1="195" y1="312" x2="231" y2="312" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="382" y1="312" x2="418" y2="312" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="569" y1="312" x2="605" y2="312" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="400" y="392" class="s muted mid">Datos (S, O) y razonamiento (A, P) quedan separados y se pueden auditar</text>
+  <text x="400" y="416" class="s muted mid">Cada nota revisa el problema y modifica el plan</text>
+  <line x1="654" y1="150" x2="654" y2="204" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M400 204 L400 152" fill="none" stroke="var(--c)" stroke-width="2.2" marker-end="url(#ar)"/>
+  <text x="412" y="184" class="s muted">actualiza</text>
+  <text x="400" y="468" class="s muted mid">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

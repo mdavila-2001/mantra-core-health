@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Principio de adquisición de la tomografía computarizada</title>
+  <desc id="d">Corte transversal de un escáner. Un tubo de rayos X y un arco de detectores enfrentados giran dentro del gantry alrededor de un paciente acostado sobre la mesa. El haz en abanico atraviesa el cuerpo y los detectores miden cuánta radiación llega; un computador reconstruye la imagen del corte.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --ring:#e6ecf4; --tube:#2f6fb5; --det:#1f8a5b; --beam:#e8a317; --body:#f0cdb8; --body-l:#d99f82; --lung:#8fb7d9; --bone:#fafafa; --acc:#2f6fb5; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --ring:#2a3a4c; --tube:#6aa9ec; --det:#4cc38a; --beam:#f2b94a; --body:#8a6556; --body-l:#c08b73; --lung:#3b6a93; --bone:#e8eef5; --acc:#6aa9ec; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lbl { font-size: 14px; font-weight: 600; }
+    .small { font-size: 13px; }
+    .num { font-size: 15px; font-weight: 800; fill: #fff; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="16" y="16" width="480" height="448" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+
+  <!-- gantry -->
+  <circle cx="256" cy="240" r="190" fill="var(--ring)" stroke="var(--line)" stroke-width="2"/>
+  <circle cx="256" cy="240" r="106" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+
+  <!-- haz en abanico -->
+  <path d="M256 92 L176 366 A150 150 0 0 0 336 366 Z" fill="var(--beam)" opacity=".28"/>
+  <path d="M256 92 L176 366 M256 92 L336 366" stroke="var(--beam)" stroke-width="2" fill="none"/>
+
+  <!-- paciente (corte axial de tórax) -->
+  <ellipse cx="256" cy="240" rx="74" ry="50" fill="var(--body)" stroke="var(--body-l)" stroke-width="2"/>
+  <ellipse cx="232" cy="236" rx="22" ry="28" fill="var(--lung)"/>
+  <ellipse cx="282" cy="236" rx="22" ry="28" fill="var(--lung)"/>
+  <circle cx="256" cy="270" r="8" fill="var(--bone)" stroke="var(--body-l)"/>
+  <!-- mesa -->
+  <rect x="190" y="292" width="132" height="9" rx="4" fill="var(--muted)"/>
+
+  <!-- detectores -->
+  <path d="M176 366 A150 150 0 0 0 336 366" fill="none" stroke="var(--det)" stroke-width="10" stroke-linecap="round"/>
+  <!-- tubo -->
+  <rect x="234" y="76" width="44" height="26" rx="6" fill="var(--tube)"/>
+  <path d="M256 102 v6" stroke="var(--tube)" stroke-width="3"/>
+
+  <!-- flecha de giro -->
+  <path d="M410 150 A170 170 0 0 1 424 250" fill="none" stroke="var(--acc)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M424 262 l-10 -16 l20 -2 z" fill="var(--acc)"/>
+  <path d="M102 330 A170 170 0 0 1 88 230" fill="none" stroke="var(--acc)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M88 218 l10 16 l-20 2 z" fill="var(--acc)"/>
+
+  <!-- rótulos -->
+  <text x="292" y="96" class="lbl" style="fill:var(--tube)">Tubo de rayos X</text>
+  <text x="256" y="416" text-anchor="middle" class="lbl" style="fill:var(--det)">Arco de detectores</text>
+  <text x="256" y="146" text-anchor="middle" class="small muted" transform="translate(70 4)">Haz en abanico</text>
+  <text x="256" y="322" text-anchor="middle" class="small muted">Mesa</text>
+  <text x="256" y="184" text-anchor="middle" class="small muted">Paciente (corte axial)</text>
+  <text x="256" y="444" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala</text>
+
+  <!-- panel de pasos -->
+  <rect x="512" y="16" width="272" height="448" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="532" y="52" class="title">Cómo se forma</text>
+  <text x="532" y="74" class="title">la imagen</text>
+
+  <circle cx="540" cy="112" r="13" fill="var(--acc)"/><text x="540" y="117" text-anchor="middle" class="num">1</text>
+  <text x="562" y="108" class="small">El tubo y los detectores</text>
+  <text x="562" y="126" class="small">giran juntos alrededor</text>
+  <text x="562" y="144" class="small">del paciente.</text>
+
+  <circle cx="540" cy="190" r="13" fill="var(--acc)"/><text x="540" y="195" text-anchor="middle" class="num">2</text>
+  <text x="562" y="186" class="small">Cada detector mide cuánta</text>
+  <text x="562" y="204" class="small">radiación llega tras atravesar</text>
+  <text x="562" y="222" class="small">el cuerpo (atenuación).</text>
+
+  <circle cx="540" cy="268" r="13" fill="var(--acc)"/><text x="540" y="273" text-anchor="middle" class="num">3</text>
+  <text x="562" y="264" class="small">Un computador combina miles</text>
+  <text x="562" y="282" class="small">de proyecciones y calcula la</text>
+  <text x="562" y="300" class="small">densidad de cada punto.</text>
+
+  <circle cx="540" cy="346" r="13" fill="var(--acc)"/><text x="540" y="351" text-anchor="middle" class="num">4</text>
+  <text x="562" y="342" class="small">La mesa avanza y se repite:</text>
+  <text x="562" y="360" class="small">los cortes forman un volumen</text>
+  <text x="562" y="378" class="small">que se ve en cualquier plano.</text>
+
+  <text x="532" y="428" class="small muted">Ilustración original de AloVida.</text>
+</svg>

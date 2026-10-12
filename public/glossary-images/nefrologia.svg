@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">El nefrón y las funciones de cada segmento</title>
+  <desc id="d">Esquema conceptual de un nefrón. El corpúsculo renal filtra el plasma; el túbulo proximal reabsorbe la mayor parte del agua y los solutos; el asa de Henle crea el gradiente que permite concentrar la orina; el túbulo distal ajusta el sodio, el potasio y el calcio; el conducto colector regula el agua según la hormona antidiurética y conduce la orina final.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --c1:#d6453d; --c2:#2b7bbf; --c3:#1f9a8a; --c4:#8a5bc2; --c5:#d98a1f; --c6:#2f8f55; --med:#eef1f6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --c1:#ef7467; --c2:#5aa6e6; --c3:#4cc3b0; --c4:#b48ae6; --c5:#efae52; --c6:#52c27d; --med:#243140; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .h { font-size: 14px; font-weight: 700; }
+    .num { font-size: 14px; font-weight: 800; fill: #fff; }
+    .zone { font-size: 12px; font-weight: 600; letter-spacing: .5px; }
+    .tube { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="24" y="36" class="title">El nefrón: cinco segmentos, cinco tareas</text>
+
+  <!-- Panel del esquema -->
+  <rect x="24" y="52" width="476" height="384" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <!-- médula -->
+  <rect x="25" y="250" width="474" height="185" rx="0" fill="var(--med)"/>
+  <path d="M25 250 H499" stroke="var(--line)" stroke-dasharray="5 4"/>
+  <text x="40" y="76" class="zone muted">CORTEZA</text>
+  <text x="40" y="424" class="zone muted">MÉDULA</text>
+
+  <!-- arteriolas -->
+  <path d="M60 110 H92" class="tube" stroke="var(--c1)" stroke-width="5"/>
+  <path d="M60 138 H92" class="tube" stroke="var(--c1)" stroke-width="5" opacity=".6"/>
+  <text x="38" y="104" class="lab muted">entra</text>
+  <text x="34" y="160" class="lab muted">sale</text>
+  <!-- cápsula y glomérulo -->
+  <circle cx="122" cy="124" r="38" fill="none" stroke="var(--c1)" stroke-width="3"/>
+  <circle cx="122" cy="124" r="22" fill="var(--c1)" opacity=".25" stroke="var(--c1)" stroke-width="2"/>
+  <path d="M110 118 q8 -10 16 0 t8 10 M108 130 q10 8 18 -2" fill="none" stroke="var(--c1)" stroke-width="2.5"/>
+
+  <!-- túbulo proximal (ondulado) -->
+  <path d="M158 124 C170 90 190 90 200 116 S228 150 242 116 S268 88 282 116" class="tube" stroke="var(--c2)" stroke-width="9"/>
+  <!-- rama descendente -->
+  <path d="M282 116 V330 Q282 392 330 392 Q378 392 378 330" class="tube" stroke="var(--c3)" stroke-width="5"/>
+  <!-- rama ascendente gruesa -->
+  <path d="M378 330 V186" class="tube" stroke="var(--c3)" stroke-width="11"/>
+  <!-- distal -->
+  <path d="M378 186 C390 150 410 150 420 176 S446 206 458 176" class="tube" stroke="var(--c5)" stroke-width="9"/>
+  <!-- conducto colector -->
+  <path d="M458 176 H470 V386" class="tube" stroke="var(--c6)" stroke-width="12"/>
+  <path d="M470 386 v22 m-8 -10 l8 12 l8 -12" fill="none" stroke="var(--c6)" stroke-width="3"/>
+  <text x="404" y="424" class="lab muted">orina → pelvis</text>
+
+  <!-- números -->
+  <g>
+    <circle cx="122" cy="124" r="0"/>
+    <circle cx="164" cy="64" r="13" fill="var(--c1)"/><text x="164" y="69" text-anchor="middle" class="num">1</text>
+    <circle cx="214" cy="158" r="13" fill="var(--c2)"/><text x="214" y="163" text-anchor="middle" class="num">2</text>
+    <circle cx="330" cy="344" r="13" fill="var(--c3)"/><text x="330" y="349" text-anchor="middle" class="num">3</text>
+    <circle cx="420" cy="142" r="13" fill="var(--c5)"/><text x="420" y="147" text-anchor="middle" class="num">4</text>
+    <circle cx="436" cy="300" r="13" fill="var(--c6)"/><text x="436" y="305" text-anchor="middle" class="num">5</text>
+  </g>
+  <path d="M164 77 L140 100" stroke="var(--c1)" stroke-width="1.5"/>
+
+  <!-- Leyenda -->
+  <g>
+    <circle cx="534" cy="70" r="12" fill="var(--c1)"/><text x="534" y="75" text-anchor="middle" class="num">1</text>
+    <text x="554" y="68" class="h">Corpúsculo renal</text>
+    <text x="554" y="86" class="lab muted">Filtra el plasma: agua y solutos</text>
+    <text x="554" y="102" class="lab muted">pequeños pasan, las proteínas no.</text>
+
+    <circle cx="534" cy="140" r="12" fill="var(--c2)"/><text x="534" y="145" text-anchor="middle" class="num">2</text>
+    <text x="554" y="138" class="h">Túbulo proximal</text>
+    <text x="554" y="156" class="lab muted">Reabsorbe la mayor parte del agua,</text>
+    <text x="554" y="172" class="lab muted">sodio, glucosa y bicarbonato.</text>
+
+    <circle cx="534" cy="210" r="12" fill="var(--c3)"/><text x="534" y="215" text-anchor="middle" class="num">3</text>
+    <text x="554" y="208" class="h">Asa de Henle</text>
+    <text x="554" y="226" class="lab muted">Crea el gradiente de la médula que</text>
+    <text x="554" y="242" class="lab muted">permite concentrar la orina.</text>
+
+    <circle cx="534" cy="280" r="12" fill="var(--c5)"/><text x="534" y="285" text-anchor="middle" class="num">4</text>
+    <text x="554" y="278" class="h">Túbulo distal</text>
+    <text x="554" y="296" class="lab muted">Ajuste fino de sodio, potasio y</text>
+    <text x="554" y="312" class="lab muted">calcio, bajo control hormonal.</text>
+
+    <circle cx="534" cy="350" r="12" fill="var(--c6)"/><text x="534" y="355" text-anchor="middle" class="num">5</text>
+    <text x="554" y="348" class="h">Conducto colector</text>
+    <text x="554" y="366" class="lab muted">Regula el agua según la hormona</text>
+    <text x="554" y="382" class="lab muted">antidiurética y conduce la orina.</text>
+  </g>
+  <text x="400" y="464" text-anchor="middle" class="lab muted">Esquema conceptual, sin escala. Ilustración original de AloVida.</text>
+</svg>

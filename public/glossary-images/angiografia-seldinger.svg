@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Técnica de Seldinger en cuatro tiempos</title>
+  <desc id="d">Cuatro viñetas del acceso a un vaso sanguíneo: primero se punciona con una aguja hueca; después se pasa una guía flexible por la aguja; luego se retira la aguja dejando la guía; por último se avanza un catéter sobre la guía hasta dentro del vaso.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --skin:#f1d6c4; --skin-d:#d9a98e; --wall:#e7a79a; --blood:#d6453d; --wire:#1c2733; --cath:#2b6cb0; --needle:#8a96a3; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --skin:#4a3a33; --skin-d:#8a6657; --wall:#b9695c; --blood:#e0584f; --wire:#f0f4f8; --cath:#6aa7e8; --needle:#b4bfca; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .h { font-size: 15px; font-weight: 700; }
+    .v { font-size: 13px; }
+    .small { font-size: 12px; }
+    .lab { font-size: 12px; fill: var(--muted); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <rect x="16" y="16" width="184" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="108" y="46" text-anchor="middle" class="h">1 · Punción</text>
+  <rect x="26" y="150" width="164" height="60" fill="var(--skin)" stroke="var(--skin-d)"/>
+  <text x="156" y="146" class="lab">Piel</text>
+  <rect x="26" y="250" width="164" height="54" fill="var(--wall)"/>
+  <rect x="26" y="262" width="164" height="30" fill="var(--blood)"/>
+  <text x="156" y="326" class="lab">Vaso</text>
+  <line x1="44" y1="100" x2="106" y2="277" stroke="var(--needle)" stroke-width="5" stroke-linecap="round"/>
+  <rect x="32" y="80" width="24" height="22" rx="4" fill="var(--needle)" transform="rotate(-19 44 100)"/>
+  <text x="116" y="120" class="lab">Aguja</text>
+  <text x="108" y="366" text-anchor="middle" class="v">Aguja hueca entra</text>
+  <text x="108" y="384" text-anchor="middle" class="v">en el vaso: sale sangre</text>
+  <rect x="212" y="16" width="184" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="304" y="46" text-anchor="middle" class="h">2 · Guía</text>
+  <rect x="222" y="150" width="164" height="60" fill="var(--skin)" stroke="var(--skin-d)"/>
+  <text x="352" y="146" class="lab">Piel</text>
+  <rect x="222" y="250" width="164" height="54" fill="var(--wall)"/>
+  <rect x="222" y="262" width="164" height="30" fill="var(--blood)"/>
+  <text x="352" y="326" class="lab">Vaso</text>
+  <line x1="240" y1="100" x2="302" y2="277" stroke="var(--needle)" stroke-width="5" stroke-linecap="round"/>
+  <rect x="228" y="80" width="24" height="22" rx="4" fill="var(--needle)" transform="rotate(-19 240 100)"/>
+  <polyline points="240,70 240,90 302,277 380,277" fill="none" stroke="var(--wire)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="312" y="120" class="lab">Aguja</text>
+  <text x="330" y="242" class="lab">Guía</text>
+  <text x="304" y="366" text-anchor="middle" class="v">Una guía flexible pasa</text>
+  <text x="304" y="384" text-anchor="middle" class="v">por dentro de la aguja</text>
+  <rect x="408" y="16" width="184" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="500" y="46" text-anchor="middle" class="h">3 · Se retira la aguja</text>
+  <rect x="418" y="150" width="164" height="60" fill="var(--skin)" stroke="var(--skin-d)"/>
+  <text x="548" y="146" class="lab">Piel</text>
+  <rect x="418" y="250" width="164" height="54" fill="var(--wall)"/>
+  <rect x="418" y="262" width="164" height="30" fill="var(--blood)"/>
+  <text x="548" y="326" class="lab">Vaso</text>
+  <polyline points="430,70 430,90 498,277 576,277" fill="none" stroke="var(--wire)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="518" y="120" class="lab">Guía</text>
+  <text x="500" y="366" text-anchor="middle" class="v">Queda solo la guía</text>
+  <text x="500" y="384" text-anchor="middle" class="v">dentro del vaso</text>
+  <rect x="604" y="16" width="184" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="696" y="46" text-anchor="middle" class="h">4 · Catéter</text>
+  <rect x="614" y="150" width="164" height="60" fill="var(--skin)" stroke="var(--skin-d)"/>
+  <text x="744" y="146" class="lab">Piel</text>
+  <rect x="614" y="250" width="164" height="54" fill="var(--wall)"/>
+  <rect x="614" y="262" width="164" height="30" fill="var(--blood)"/>
+  <text x="744" y="326" class="lab">Vaso</text>
+  <polyline points="626,70 626,90 694,277 754,277" fill="none" stroke="var(--cath)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+  <polyline points="626,70 626,90 694,277 772,277" fill="none" stroke="var(--wire)" stroke-width="2" stroke-linejoin="round"/>
+  <text x="714" y="120" class="lab">Catéter</text>
+  <text x="696" y="366" text-anchor="middle" class="v">El catéter avanza</text>
+  <text x="696" y="384" text-anchor="middle" class="v">sobre la guía</text>
+  <text x="400" y="462" text-anchor="middle" class="small muted">Esquema simplificado, sin escala. El principio se aplica a arterias y venas. Ilustración original de AloVida.</text>
+</svg>
