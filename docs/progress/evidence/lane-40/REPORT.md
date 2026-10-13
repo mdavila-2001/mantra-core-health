@@ -7,7 +7,7 @@ Rama: `justin/mockup-corr-40-sacar-perfil-publico` sobre `origin/mockup` (`b912a
 
 La sección de perfil deja de describirse como una configuración de vitrina pública: el editor y el título de ruta dicen “Editar perfil”, se quitó el texto “Cómo le ven las personas que consultan su perfil” y se eliminó el acceso duplicado “Configurar mi perfil”. Se conserva el acceso general “Editar perfil”, el logo del consultorio y el resto de datos profesionales.
 
-La ficha pública y el directorio siguen disponibles para pacientes. También se conserva “Mis artículos”. Como el mensaje “continúa” no eligió explícitamente una de las opciones de alcance, se aplicó el criterio menos destructivo de la ficha: mantener esos dos elementos. La confirmación del propietario sigue pendiente; el criterio quedó anotado en `docs/progress/DECISIONS.md`.
+La ficha pública y el directorio siguen disponibles para pacientes. También se conserva “Mis artículos”. El propietario confirmó el 2026-10-13 que ambos se conservan; la decisión quedó registrada en `docs/progress/DECISIONS.md`.
 
 ## Evidencia visual
 
