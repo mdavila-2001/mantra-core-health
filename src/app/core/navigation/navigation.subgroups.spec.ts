@@ -35,8 +35,9 @@ describe('NAV_SUBGROUPS', () => {
    * estaba detrás de «Consultorio», un escalón que había que desplegar para
    * encontrar una sola cosa (pedido del propietario, 04/09/2026).
    *
-   * La lista es corta a propósito: es la excepción, no la regla. Un subgrupo se
-   * justifica cuando ordena varias secciones; envolver una sola es ruido.
+   * También cuelga directo «Ayuda psicológica» en General: la sección es una
+   * puerta independiente solicitada para ofrecer recursos de salud mental
+   * (11/10/2026), no parte de otro subgrupo.
    *
    * Era de dos: `consultation` salió del registro entero el 2026-09-10, cuando
    * el propietario pidió borrar la pantalla vieja que duplicaba a «Consultas
@@ -44,7 +45,7 @@ describe('NAV_SUBGROUPS', () => {
    * del producto, «Historia clínica» quedaba envolviendo sólo al archivo
    * clínico, y se disolvió por la misma regla.
    */
-  const SUELTAS_A_PROPOSITO = ['schedule', 'medical-records'];
+  const SUELTAS_A_PROPOSITO = ['schedule', 'medical-records', 'psychological-help'];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {
     const sinBloque = rutasDelRegistro.filter(
