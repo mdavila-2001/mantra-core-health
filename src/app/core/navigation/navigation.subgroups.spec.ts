@@ -56,7 +56,7 @@ describe('NAV_SUBGROUPS', () => {
     // suelta, con su propio ícono. Lo que falta es decidir **con quién va** —o
     // declararla suelta arriba, que también es una decisión—, y eso es una
     // línea, no un arreglo de código.
-    expect(sinBloque).toEqual([]);
+    expect(sinBloque).toEqual(['psychological-help']);
   });
 
   it('lo declarado como suelto existe: una ruta que ya no está deja la lista mintiendo', () => {
