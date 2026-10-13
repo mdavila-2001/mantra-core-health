@@ -13,7 +13,7 @@ Sin herramienta, sin capturas de referencia, sin comparación.
 
 ## El problema concreto
 
-El sistema tiene **188 tokens** y **dos temas**. Un cambio en un token:
+El sistema tiene **220 tokens** y **dos temas**. Un cambio en un token:
 
 | Consecuencia | ¿Lo detecta algo hoy? |
 |---|---|

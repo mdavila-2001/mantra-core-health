@@ -31,12 +31,7 @@
         <span class="ajustes__texto">
           <span class="ajustes__nombre">Modo oscuro</span>
           <span class="ajustes__detalle">
-            @if (followsSystem()) {
-              Sigue a su dispositivo, que ahora pide el modo
-              {{ resolvedTheme() === 'dark' ? 'oscuro' : 'claro' }}.
-            } @else {
-              Elegido por usted: {{ resolvedTheme() === 'dark' ? 'activado' : 'desactivado' }}.
-            }
+            {{ resolvedTheme() === 'dark' ? 'Activado' : 'Desactivado' }}.
           </span>
         </span>
         <button class="app-theme-toggle" app-theme-toggle data-testid="theme-switch">
@@ -47,21 +42,6 @@
           </span>
         </button>
       </div>
-
-      <!-- Un interruptor tiene dos posiciones; «seguir al dispositivo» es una
-           tercera que no se pierde: una vez elegido a mano, se puede volver. -->
-      @if (!followsSystem()) {
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          class="ajustes__volver-al-sistema"
-          data-testid="theme-use-system"
-          (clicked)="useSystemTheme()"
-        >
-          Volver a seguir a mi dispositivo
-        </button>
-      }
     </section>
   </app-tab>
 

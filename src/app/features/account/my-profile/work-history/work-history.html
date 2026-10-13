@@ -186,6 +186,21 @@
               />
             </app-form-field>
 
+            @if (sedeEnEdicion() === null) {
+              <app-form-field label="Teléfono de este lugar" hint="Opcional. Puede ser distinto en cada lugar donde atiende.">
+                <app-input
+                  [(value)]="telefonoDeSedeNueva"
+                  inputMode="tel"
+                  autocomplete="tel"
+                  placeholder="+591 72123456"
+                  testId="sede-telefono-nuevo"
+                />
+              </app-form-field>
+              @if (!telefonoDeSedeNuevaValido()) {
+                <p class="historial__vacio">Use al menos seis caracteres: números, espacios, guiones o paréntesis.</p>
+              }
+            }
+
             <app-form-field label="Dirección" hint="Calle, número y una referencia si hace falta.">
               <app-input
                 [(value)]="direccionDeSede"
@@ -311,6 +326,41 @@
           (closed)="cerrarQrDeSede()"
         />
       }
+
+      @if (sedeConTelefonoAbierto(); as sedeDelTelefono) {
+        <app-content-dialog
+          [heading]="'Teléfono en ' + sedeDelTelefono.name"
+          size="sm"
+          closeLabel="Cancelar"
+          [dismissible]="!guardandoTelefono()"
+          (closed)="cerrarTelefonoDeSede()"
+        >
+          <app-form-field label="Teléfono de contacto" hint="Opcional. Dejarlo vacío quita el número de esta sede.">
+            <app-input
+              [(value)]="telefonoEnEdicion"
+              inputMode="tel"
+              autocomplete="tel"
+              placeholder="+591 72123456"
+              testId="sede-telefono-editar"
+            />
+          </app-form-field>
+          @if (errorDelTelefono(); as mensaje) {
+            <app-alert tone="error">{{ mensaje }}</app-alert>
+          }
+          @if (!telefonoEnEdicionValido()) {
+            <app-alert tone="error">Use al menos seis caracteres: números, espacios, guiones o paréntesis.</app-alert>
+          }
+          <button
+            dialog-actions
+            app-button
+            type="button"
+            variant="primary"
+            [isLoading]="guardandoTelefono()"
+            [disabled]="!telefonoEnEdicionValido()"
+            (clicked)="guardarTelefonoDeSede()"
+          >Guardar teléfono</button>
+        </app-content-dialog>
+      }
     </section>
 
     <!-- Plantillas de celda de la tabla de sedes (H4.S1, ADR-0015). El
@@ -318,6 +368,10 @@
          `patient-list.html`. -->
     <ng-template #celdaNombreSede let-sede>
       <strong>{{ sede.name }}</strong>
+      <br />
+      <span class="historial__telefono" data-testid="sede-telefono">
+        {{ sede.contactPhone ? 'Tel.: ' + sede.contactPhone : 'Sin teléfono registrado' }}
+      </span>
     </ng-template>
 
     <ng-template #celdaDireccionSede let-sede>

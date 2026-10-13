@@ -1,0 +1,107 @@
+<div class="psychological-help">
+  <app-page-header
+    title="Ayuda psicológica"
+    subtitle="Un espacio de apoyo emocional, recursos confiables y profesionales de salud mental."
+  />
+
+  <section class="psychological-help__welcome" aria-labelledby="welcome-title">
+    <app-card variant="elevated">
+      <div class="welcome-copy">
+        <span class="welcome-copy__eyebrow">Estamos para acompañarte</span>
+        <h2 id="welcome-title">Lo que estás sintiendo importa.</h2>
+        <p>
+          Si estás pasando por un momento difícil, no tenés que resolver todo ahora ni hacerlo a solas.
+          Podemos empezar con un paso pequeño: buscar a alguien de confianza, tomar un momento para
+          ubicarte y pedir apoyo profesional cuando lo necesites.
+        </p>
+        <a class="help-link help-link--primary" routerLink="/directory" [queryParams]="{ q: 'Psicología Clínica' }">
+          Buscar psicólogos
+        </a>
+      </div>
+    </app-card>
+  </section>
+
+  <section aria-labelledby="videos-title">
+    <div class="section-heading">
+      <h2 id="videos-title">Videos para informarte y acompañarte</h2>
+      <p>Material de la Organización Panamericana de la Salud (OPS/OMS), reproducido acá.</p>
+    </div>
+    <div class="video-grid">
+      <app-card>
+        <h3>Cómo cuidar la salud mental</h3>
+        <p>Una conversación de la OPS sobre bienestar emocional y formas de cuidar la salud mental.</p>
+        <div class="video-frame video-frame--mental-health">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/nY66tl39PkE?rel=0"
+            title="OPS: Cuidar la salud mental"
+            loading="eager"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+        <a class="source-link" href="https://www.paho.org/es/documentos/podcast-hablemos-salud-ep-15-cuidar-salud-mental" target="_blank" rel="noopener noreferrer">
+          Ver la fuente de la OPS
+        </a>
+      </app-card>
+
+      <app-card>
+        <h3>Adolescentes y salud mental</h3>
+        <p>Especialistas de la OPS conversan sobre salud mental en niñas, niños y adolescentes.</p>
+        <div class="video-frame video-frame--adolescents">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/T1ysvMHuV-Y?rel=0"
+            title="OPS: Adolescentes y salud mental"
+            loading="eager"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+        <a class="source-link" href="https://www.paho.org/es/podcast?page=2" target="_blank" rel="noopener noreferrer">
+          Ver la fuente de la OPS
+        </a>
+      </app-card>
+    </div>
+  </section>
+
+  <section class="support-grid" aria-label="Apoyo emocional y atención profesional">
+    <app-card>
+      <h2>Un primer paso para este momento</h2>
+      <p>Si te sentís abrumado/a, probá hacer una pausa breve:</p>
+      <ul>
+        <li>Apoyá los pies en el piso y mirá a tu alrededor con calma.</li>
+        <li>Escribile o llamá a alguien de confianza y contale cómo te sentís.</li>
+        <li>Si esto persiste o interfiere con tu vida diaria, buscá acompañamiento profesional.</li>
+      </ul>
+      <p class="support-note">No hace falta tener un diagnóstico para pedir ayuda.</p>
+    </app-card>
+
+    <app-card>
+      <h2>Encontrá un/a profesional</h2>
+      <p>
+        Podés consultar con un/a psicólogo/a para conversar sobre lo que te pasa o con un/a
+        psiquiatra para una evaluación médica de salud mental. La elección depende de lo que
+        necesites; el directorio muestra los perfiles disponibles en la red.
+      </p>
+      <div class="professional-links">
+        <a class="help-link" routerLink="/directory" [queryParams]="{ q: 'Psicología Clínica' }">Ver psicólogos/as</a>
+        <a class="help-link" routerLink="/directory" [queryParams]="{ q: 'Psiquiatría' }">Ver psiquiatras</a>
+      </div>
+    </app-card>
+  </section>
+
+  <aside class="urgent-support" aria-labelledby="urgent-title">
+    <h2 id="urgent-title">Si hay peligro inmediato</h2>
+    <p>
+      Si pensás que podrías lastimarte o lastimar a alguien, o no podés mantenerte a salvo,
+      acercate ahora a un servicio de urgencias y pedile a una persona de confianza que te acompañe.
+      Esta página no es un servicio de emergencias.
+    </p>
+  </aside>
+
+  <p class="content-source">
+    Recursos audiovisuales: Organización Panamericana de la Salud (OPS/OMS).
+    <a href="https://www.paho.org/es/temas/salud-mental" target="_blank" rel="noopener noreferrer">Información oficial sobre salud mental</a>.
+  </p>
+</div>

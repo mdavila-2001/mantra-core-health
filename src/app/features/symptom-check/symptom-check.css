@@ -475,3 +475,767 @@
 .sintomas__emergencia {
   margin-block-start: var(--sp-3);
 }
+
+/* ─── Selector de opciones en la parte de arriba ────────────────────────── */
+.sintomas__orientacion-header {
+  margin-block-start: var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+
+.sintomas__orientacion-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2, 8px);
+  padding: 4px;
+  background: var(--color-neutral-100, #f1f5f9);
+  border: 1px solid var(--filete, #e2e8f0);
+  border-radius: var(--r-menu, 12px);
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.sintomas__tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2, 8px);
+  padding: 8px 16px;
+  border: 0;
+  border-radius: calc(var(--r-menu, 12px) - 3px);
+  background: transparent;
+  color: var(--tinta-2, #64748b);
+  font-family: inherit;
+  font-size: var(--fs-cuerpo-sm, 0.875rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.sintomas__tab-btn:hover {
+  color: var(--tinta, #0f172a);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.sintomas__tab-btn:focus-visible {
+  outline: 2px solid var(--color-primary-500, #0d9488);
+  outline-offset: 2px;
+}
+
+.sintomas__tab-btn--activo {
+  background: #ffffff !important;
+  color: var(--color-primary-700, #0f766e) !important;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.sintomas__tab-icono {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.sintomas__tab-conteo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: var(--color-neutral-200, #e2e8f0);
+  color: var(--tinta, #334155);
+}
+
+.sintomas__tab-btn--activo .sintomas__tab-conteo {
+  background: var(--color-primary-100, #ccfbf1);
+  color: var(--color-primary-800, #115e59);
+}
+
+/* ─── Callout complementario en vista de especialistas ───────────────────── */
+.sintomas__meds-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  margin-block-start: var(--sp-4);
+  background: var(--color-primary-50, #f0fdfa);
+  border: 1px solid var(--color-primary-200, #99f6e4);
+  border-radius: var(--r-tarjeta, 12px);
+}
+
+.sintomas__meds-callout-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 18rem;
+}
+
+.sintomas__meds-callout-titulo {
+  font-size: var(--fs-cuerpo-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--color-primary-900, #134e4a);
+}
+
+.sintomas__meds-callout-bajada {
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--color-primary-800, #115e59);
+}
+
+/* ─── Sección y tarjetas de Medicamentos Sugeridos ───────────────────────── */
+.sintomas__medicamentos-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-2);
+}
+
+.sintomas__meds-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-2);
+}
+
+.sintomas__meds-intro-texto {
+  flex: 1 1 18rem;
+}
+
+.sintomas__subtitulo--meds {
+  margin: 0 0 var(--sp-1);
+}
+
+.sintomas__meds-descripcion {
+  margin: 0;
+  font-size: var(--fs-cuerpo-sm, 0.875rem);
+  color: var(--tinta-2, #64748b);
+  max-inline-size: 68ch;
+}
+
+.sintomas__meds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+  gap: var(--sp-4);
+}
+
+.sintomas__med-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid var(--filete, #e2e8f0);
+  border-radius: var(--r-tarjeta, 14px);
+  padding: var(--sp-4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sintomas__med-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary-300, #5eead4);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.1);
+}
+
+.sintomas__med-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__med-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 10px;
+  background: var(--color-primary-50, #f0fdfa);
+  color: var(--color-primary-600, #0d9488);
+  border: 1px solid var(--color-primary-100, #ccfbf1);
+  flex-shrink: 0;
+}
+
+.sintomas__med-svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sintomas__med-main-info {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.sintomas__med-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2, 6px);
+  margin-block-end: 4px;
+}
+
+.sintomas__med-tag-atc {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-neutral-100, #f1f5f9);
+  color: var(--tinta-2, #475569);
+  border: 1px solid var(--filete, #e2e8f0);
+}
+
+.sintomas__med-titulo {
+  margin: 0;
+  font-size: var(--fs-h4, 1.125rem);
+  font-weight: 700;
+  color: var(--tinta, #0f172a);
+  line-height: 1.3;
+}
+
+.sintomas__med-subtitulo {
+  margin: 2px 0 0;
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta-2, #64748b);
+}
+
+.sintomas__med-indicacion-caja {
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__med-indicacion-texto {
+  margin: 0;
+  font-size: var(--fs-cuerpo-sm, 0.875rem);
+  color: var(--tinta, #1e293b);
+  line-height: 1.45;
+}
+
+/* ─── Bloque de Posología detallada ─────────────────────────────────────── */
+.sintomas__posologia-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--color-neutral-50, #f8fafc);
+  border: 1px solid var(--filete, #e2e8f0);
+  border-radius: 10px;
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__posologia-encabezado {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--color-primary-800, #115e59);
+}
+
+.sintomas__posologia-icono {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.sintomas__posologia-titulo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.sintomas__posologia-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--sp-2);
+}
+
+.sintomas__posologia-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sintomas__posologia-etiqueta {
+  font-size: 0.6875rem;
+  color: var(--tinta-2, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sintomas__posologia-valor {
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta, #0f172a);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.sintomas__posologia-pautas {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding-block-start: 6px;
+  border-block-start: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta-2, #475569);
+  line-height: 1.4;
+}
+
+.sintomas__posologia-pautas-icono {
+  flex-shrink: 0;
+}
+
+.sintomas__med-alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: 8px 12px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  font-size: var(--fs-caption, 0.8125rem);
+  color: #92400e;
+  line-height: 1.4;
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__med-alerta-icono {
+  flex-shrink: 0;
+}
+
+.sintomas__med-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--filete, #e2e8f0);
+}
+
+.sintomas__med-precio-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sintomas__med-precio-label {
+  font-size: 0.6875rem;
+  color: var(--tinta-2, #64748b);
+}
+
+.sintomas__med-precio-val {
+  font-size: var(--fs-caption, 0.8125rem);
+  font-weight: 600;
+  color: var(--color-success-700, #15803d);
+}
+
+/* ─── Aviso clínico de responsabilidad al pie ────────────────────────────── */
+.sintomas__meds-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-neutral-50, #f8fafc);
+  border: 1px solid var(--filete, #e2e8f0);
+  border-radius: var(--r-tarjeta, 10px);
+  color: var(--tinta-2, #475569);
+}
+
+.sintomas__meds-disclaimer-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--color-primary-600, #0d9488);
+  flex-shrink: 0;
+  margin-block-start: 2px;
+}
+
+.sintomas__meds-disclaimer-texto {
+  font-size: var(--fs-caption, 0.8125rem);
+  line-height: 1.45;
+}
+
+/* ─── Cabecera y botón de ayuda en la parte superior ──────────────────────── */
+.sintomas__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3, 12px);
+}
+
+.sintomas__cabecera-textos {
+  flex: 1 1 20rem;
+}
+
+.sintomas__cabecera-accion {
+  display: flex;
+  align-items: center;
+  padding-block-start: 2px;
+}
+
+.sintomas__boton-ayuda-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: var(--fs-caption, 0.82rem);
+  font-weight: 600;
+  color: var(--tinta-2, #4E5151);
+  background: var(--sup-tarjeta, #ffffff);
+  border: 1px solid var(--filete, #CDD9D5);
+  box-shadow: var(--sombra-1);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.sintomas__boton-ayuda-top:hover {
+  color: var(--petroleo, #0B557E);
+  border-color: var(--aguamarina, #4FB3A9);
+  background: rgba(79, 179, 169, 0.08);
+  transform: translateY(-1px);
+}
+
+.sintomas__boton-ayuda-top.is-activo {
+  background: var(--petroleo, #0B557E);
+  color: #ffffff;
+  border-color: var(--petroleo, #0B557E);
+}
+
+.sintomas__icono-ayuda-top {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ─── Contenedor superior de urgencia y soporte en crisis (ARRIBA) ────────── */
+.sintomas__urgencia-top {
+  margin-block-start: var(--sp-4, 16px);
+  margin-block-end: var(--sp-2, 8px);
+  animation: urgenciaEntrada 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes urgenciaEntrada {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Módulo de crisis psicológica Ultra HD y minimalista ────────────────── */
+.sintomas__crisis-soporte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4, 16px);
+}
+
+.sintomas__crisis-soporte--hd {
+  gap: var(--sp-5, 20px);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: var(--r-card, 18px);
+  background: #ffffff;
+  border: 1px solid rgba(11, 85, 126, 0.14);
+  box-shadow:
+    0 1px 3px rgba(11, 85, 126, 0.04),
+    0 12px 32px -8px rgba(11, 85, 126, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.sintomas__crisis-soporte--hd::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4FB3A9 0%, #0B557E 50%, #3B82F6 100%);
+}
+
+.sintomas__crisis-cabecera-hd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sintomas__crisis-badge-hd {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(79, 179, 169, 0.12);
+  color: var(--ok-tinta, #27725C);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sintomas__crisis-pulso-hd {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulsoVerde 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes pulsoVerde {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.sintomas__crisis-titulo-principal-hd {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+  font-weight: 700;
+  color: var(--tinta, #242828);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.sintomas__crisis-subtitulo-hd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--tinta-2, #4E5151);
+  line-height: 1.55;
+  max-inline-size: 50rem;
+}
+
+.sintomas__crisis-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2, 8px);
+}
+
+.sintomas__crisis-titulo {
+  margin: 0;
+  font-size: var(--fs-h4, 1.05rem);
+  font-weight: 600;
+  color: var(--tinta, #242828);
+  letter-spacing: -0.01em;
+}
+
+.sintomas__crisis-subtexto {
+  margin: 0;
+  font-size: var(--fs-cuerpo-sm, 0.88rem);
+  color: var(--tinta-2, #4E5151);
+  line-height: 1.45;
+}
+
+/* Teléfonos de Crisis Ultra HD Minimalistas */
+.sintomas__crisis-telefonos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-3, 14px);
+  margin-block-start: 4px;
+}
+
+.sintomas__crisis-telefono-link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid var(--filete-2, #E3EAE7);
+  box-shadow: 0 2px 8px -2px rgba(11, 85, 126, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+  position: relative;
+}
+
+.sintomas__crisis-telefono-link:hover {
+  border-color: var(--petroleo, #0B557E);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -6px rgba(11, 85, 126, 0.15);
+}
+
+.sintomas__crisis-tel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sintomas__crisis-tel-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--petroleo, #0B557E);
+}
+
+.sintomas__crisis-tel-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--petroleo, #0B557E);
+}
+
+.sintomas__crisis-telefono-numero {
+  font-weight: 800;
+  font-size: 1.65rem;
+  color: var(--petroleo, #0B557E);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.sintomas__crisis-telefono-desc {
+  font-size: 0.85rem;
+  color: var(--tinta-2, #4E5151);
+  line-height: 1.35;
+  flex: 1 1 auto;
+}
+
+.sintomas__crisis-llamar-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--petroleo, #0B557E);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-block-start: 4px;
+  transition: background 0.15s ease;
+}
+
+.sintomas__crisis-telefono-link:hover .sintomas__crisis-llamar-cta {
+  background: var(--petroleo-h, #0B4768);
+}
+
+/* Acciones de Salud Mental */
+.sintomas__crisis-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-block-start: 6px;
+}
+
+.sintomas__btn-icon {
+  width: 15px;
+  height: 15px;
+  margin-inline-end: 6px;
+  flex-shrink: 0;
+  vertical-align: -2px;
+}
+
+/* Videos OPS/OMS Grid */
+.sintomas__crisis-subbloque-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sintomas__crisis-fuente-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--tinta-3, #656768);
+}
+
+.sintomas__crisis-videos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-4, 16px);
+  margin-block-start: 8px;
+}
+
+.sintomas__video-caja {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: var(--sup-tarjeta, #ffffff);
+  border: 1px solid var(--filete-2, #E3EAE7);
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(11, 85, 126, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sintomas__video-caja:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(11, 85, 126, 0.12);
+}
+
+.sintomas__video-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--filete-2, #E3EAE7);
+  background: #fbfdfc;
+}
+
+.sintomas__video-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(11, 85, 126, 0.08);
+  color: var(--petroleo, #0B557E);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sintomas__video-titulo {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--tinta, #242828);
+}
+
+.sintomas__video-caja iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  display: block;
+  background: #000;
+}
+
+/* Footer de Emergencias */
+.sintomas__crisis-emergencia-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block-start: var(--sp-4, 16px);
+  border-block-start: 1px solid var(--filete-2, #E3EAE7);
+  margin-block-start: 4px;
+}
+
+.sintomas__crisis-emergencia-aviso {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tinta-2, #4E5151);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+

@@ -374,6 +374,14 @@ describe('PractitionersDirectory', () => {
     expect(total()).toBe(2);
   });
 
+  it('aplica la búsqueda de la URL al abrir el directorio desde Ayuda psicológica', () => {
+    parametros.next({ q: 'Psicología Clínica' });
+    montarTodos();
+    responder([]);
+
+    expect(senal<string>('filtro')()).toBe('Psicología Clínica');
+  });
+
   /**
    * «Todos los doctores» significa agotar el cursor: con una sola página la
    * guía mostraría los primeros cincuenta y nada más.

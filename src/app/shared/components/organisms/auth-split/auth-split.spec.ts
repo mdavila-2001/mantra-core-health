@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthSplit, type AuthSplitScene } from './auth-split';
@@ -7,7 +7,7 @@ import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 
 /** Doble del servicio de tema: jsdom no da `localStorage` con origen opaco. */
 class ThemeServiceFalso {
-  readonly currentTheme = signal<ThemeMode>('system');
+  readonly currentTheme = signal<ThemeMode>('light');
 
   setTheme(mode: ThemeMode): void {
     this.currentTheme.set(mode);
@@ -21,6 +21,7 @@ class ThemeServiceFalso {
       <p class="proyectado">formulario</p>
     </app-auth-split>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class Host {
   readonly claim = signal('Su salud, conectada');
@@ -97,12 +98,11 @@ describe('AuthSplit', () => {
   });
 
   describe('selector de tema', () => {
-    it('ofrece los tres modos', () => {
+    it('ofrece los dos modos', () => {
       // Son botones de ícono: el nombre va en `aria-label`, no en texto visible.
       expect(botonesTema().map((b) => b.getAttribute('aria-label'))).toEqual([
         'Claro',
         'Oscuro',
-        'Sistema',
       ]);
     });
 
@@ -114,7 +114,7 @@ describe('AuthSplit', () => {
       // Quien no distingue el matiz del `secondary` necesita otra señal.
       const pressed = () => botonesTema().map((b) => b.getAttribute('aria-pressed'));
 
-      expect(pressed()).toEqual(['false', 'false', 'true']);
+      expect(pressed()).toEqual(['true', 'false']);
     });
 
     it('cambia el tema al elegir uno', async () => {

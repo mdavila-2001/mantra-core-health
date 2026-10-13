@@ -72,6 +72,19 @@ describe('PracticeSitesClient', () => {
     expect(pagina!.count).toBe(0);
   });
 
+  it('envía el teléfono particular de la sede y permite quitarlo', () => {
+    client.setSiteContactPhone('site-1', '+591 72123456').subscribe();
+    const guardar = http.expectOne('/practitioners/me/sites/site-1/contact-phone');
+    expect(guardar.request.method).toBe('PUT');
+    expect(guardar.request.body).toEqual({ contactPhone: '+591 72123456' });
+    guardar.flush({ id: 'site-1', contactPhone: '+591 72123456' });
+
+    client.setSiteContactPhone('site-1', null).subscribe();
+    const quitar = http.expectOne('/practitioners/me/sites/site-1/contact-phone');
+    expect(quitar.request.body).toEqual({ contactPhone: null });
+    quitar.flush({ id: 'site-1', contactPhone: null });
+  });
+
   describe('Carril 18 — mis organizaciones', () => {
     it('listMyRoleAssignments pide /practitioners/me/role-assignments y normaliza opcionales', () => {
       let vinculaciones: readonly unknown[] = [];

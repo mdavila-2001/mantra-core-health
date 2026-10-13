@@ -12,13 +12,13 @@
 
 /* ---- tema y estados ------------------------------------------------------ */
 
-/** Preferencia del usuario. 'system' delega en `@media (prefers-color-scheme)`. */
-export type ThemeMode = 'light' | 'dark' | 'system';
+/** Preferencia del usuario: claro u oscuro. */
+export type ThemeMode = 'light' | 'dark';
 
-/** Tema efectivamente pintado, ya resuelta la preferencia del sistema. */
-export type ResolvedTheme = Exclude<ThemeMode, 'system'>;
+/** Tema efectivamente pintado. */
+export type ResolvedTheme = ThemeMode;
 
-export const THEME_MODES = ['light', 'dark', 'system'] as const;
+export const THEME_MODES = ['light', 'dark'] as const;
 
 /** Semántica de producto de los `--st-*`. NO es severidad clínica (identidad-visual.md Parte 11.3). */
 export const STATUS_TYPES = ['success', 'warning', 'error', 'info'] as const;
@@ -106,6 +106,13 @@ export type StatusToken = `--st-${StatusType}-${StatusSlot}`;
 export const BRAND_TONES = ['primary', 'secondary'] as const;
 export type BrandTone = (typeof BRAND_TONES)[number];
 export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
+
+/** Escala de cuatro niveles para la matriz de intensidad de consultas. */
+export const HEAT_LEVELS = [1, 2, 3, 4] as const;
+export type HeatLevel = (typeof HEAT_LEVELS)[number];
+export const HEAT_SLOTS = ['bg', 'fg'] as const;
+export type HeatSlot = (typeof HEAT_SLOTS)[number];
+export type HeatToken = `--heat-${HeatLevel}-${HeatSlot}`;
 
 export const EFFECT = {
   shadowSm: '--shadow-sm',
@@ -291,6 +298,7 @@ export type DesignToken =
   | BorderToken
   | StatusToken
   | BrandToneToken
+  | HeatToken
   | EffectToken
   | SpacingToken
   | RadiusToken
@@ -324,6 +332,14 @@ export function statusToken<T extends StatusType, S extends StatusSlot>(
   return `--st-${status}-${slot}`;
 }
 
+/** Nombre del token de intensidad: `heatToken(2, 'bg')` → `--heat-2-bg`. */
+export function heatToken<L extends HeatLevel, S extends HeatSlot>(
+  level: L,
+  slot: S,
+): `--heat-${L}-${S}` {
+  return `--heat-${level}-${slot}`;
+}
+
 export function spacingToken<S extends SpacingStep>(step: S): `--sp-${S}` {
   return `--sp-${step}`;
 }
@@ -351,6 +367,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...BRAND_TONES.flatMap((tone) =>
     STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
   ),
+  ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),
