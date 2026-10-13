@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cuándo y cómo indicar una tomografía</title>
+  <desc id="d">Diagrama de flujo. Una pregunta clínica concreta lleva a la pregunta de si el resultado cambiará la conducta; si no, no se indica el estudio. Si sí, se pregunta si una técnica sin radiación responde igual; en ese caso se elige ecografía o resonancia. Si no, se realiza la tomografía con protocolo optimizado, se registra la dosis, se informa y se comunican los hallazgos críticos. Abajo, los principios de justificación, optimización y revisión.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --ok:#1f8a5b; --no:#b9552c; --acc:#2f6fb5; --accl:#e3eefa; --okl:#e0f3ea; --nol:#fbe9e0; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --ok:#4cc38a; --no:#f08a5d; --acc:#6aa9ec; --accl:#20344b; --okl:#1c3a2f; --nol:#41291f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .box { font-size: 13.5px; font-weight: 600; }
+    .small { font-size: 13px; }
+    .yes { font-size: 13px; font-weight: 800; fill: var(--ok); }
+    .nop { font-size: 13px; font-weight: 800; fill: var(--no); }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="24" y="40" class="title">Justificar, optimizar y revisar</text>
+
+  <!-- fila superior -->
+  <rect x="20" y="98" width="140" height="64" rx="12" fill="var(--accl)" stroke="var(--acc)" stroke-width="2"/>
+  <text x="90" y="126" text-anchor="middle" class="box">Pregunta</text>
+  <text x="90" y="144" text-anchor="middle" class="box">clínica concreta</text>
+
+  <path d="M160 130 H182" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M270 76 L355 130 L270 184 L185 130 Z" fill="var(--panel)" stroke="var(--acc)" stroke-width="2"/>
+  <text x="270" y="122" text-anchor="middle" class="box">¿Cambiará la</text>
+  <text x="270" y="140" text-anchor="middle" class="box">conducta?</text>
+
+  <path d="M355 130 H392" stroke="var(--ok)" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="373" y="122" text-anchor="middle" class="yes">Sí</text>
+  <path d="M480 76 L565 130 L480 184 L395 130 Z" fill="var(--panel)" stroke="var(--acc)" stroke-width="2"/>
+  <text x="480" y="118" text-anchor="middle" class="box">¿Otra técnica sin</text>
+  <text x="480" y="136" text-anchor="middle" class="box">radiación responde</text>
+  <text x="480" y="154" text-anchor="middle" class="box">igual?</text>
+
+  <path d="M565 130 H600" stroke="var(--no)" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="583" y="122" text-anchor="middle" class="nop">No</text>
+  <rect x="602" y="90" width="178" height="80" rx="12" fill="var(--accl)" stroke="var(--acc)" stroke-width="2"/>
+  <text x="691" y="114" text-anchor="middle" class="box">Tomografía con</text>
+  <text x="691" y="132" text-anchor="middle" class="box">protocolo optimizado</text>
+  <text x="691" y="152" text-anchor="middle" class="small muted">región y dosis mínimas</text>
+
+  <!-- fila intermedia -->
+  <path d="M270 184 V240" stroke="var(--no)" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="284" y="214" class="nop">No</text>
+  <rect x="190" y="242" width="160" height="76" rx="12" fill="var(--nol)" stroke="var(--no)" stroke-width="2"/>
+  <text x="270" y="268" text-anchor="middle" class="box">No se indica:</text>
+  <text x="270" y="286" text-anchor="middle" class="box">seguimiento clínico</text>
+  <text x="270" y="304" text-anchor="middle" class="small muted">o esperar y reevaluar</text>
+
+  <path d="M480 184 V240" stroke="var(--ok)" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="494" y="214" class="yes">Sí</text>
+  <rect x="400" y="242" width="160" height="76" rx="12" fill="var(--okl)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="480" y="268" text-anchor="middle" class="box">Ecografía, resonancia</text>
+  <text x="480" y="286" text-anchor="middle" class="box">u otra técnica</text>
+  <text x="480" y="304" text-anchor="middle" class="small muted">sin radiación ionizante</text>
+
+  <path d="M691 170 V240" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="602" y="242" width="178" height="76" rx="12" fill="var(--accl)" stroke="var(--acc)" stroke-width="2"/>
+  <text x="691" y="268" text-anchor="middle" class="box">Informe, registro de</text>
+  <text x="691" y="286" text-anchor="middle" class="box">dosis y aviso de</text>
+  <text x="691" y="304" text-anchor="middle" class="box">hallazgos críticos</text>
+
+  <!-- principios -->
+  <g>
+    <rect x="20" y="352" width="244" height="84" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+    <text x="36" y="378" class="box" style="fill:var(--acc)">Justificación</text>
+    <text x="36" y="398" class="small">Cada estudio responde a una</text>
+    <text x="36" y="416" class="small">pregunta y aporta beneficio neto.</text>
+    <rect x="278" y="352" width="244" height="84" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+    <text x="294" y="378" class="box" style="fill:var(--acc)">Optimización (ALARA)</text>
+    <text x="294" y="398" class="small">Protocolo según edad, tamaño y</text>
+    <text x="294" y="416" class="small">tarea; nada de fases de más.</text>
+    <rect x="536" y="352" width="244" height="84" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+    <text x="552" y="378" class="box" style="fill:var(--acc)">Revisión</text>
+    <text x="552" y="398" class="small">Auditar dosis y resultados frente</text>
+    <text x="552" y="416" class="small">a los niveles de referencia.</text>
+  </g>
+  <text x="24" y="462" class="small muted">Esquema ilustrativo de los principios de protección radiológica (ICRP). Ilustración original de AloVida.</text>
+</svg>

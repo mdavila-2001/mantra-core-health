@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Priorización de los problemas del plan de cuidados</title>
+  <desc id="d">Pirámide de tres niveles que muestra cómo se ordenan los diagnósticos de enfermería: en la base y primero, los que amenazan la vida o la seguridad inmediata como vía aérea, respiración y circulación; en el centro, los problemas que afectan la salud sin riesgo inmediato; arriba, las necesidades de desarrollo y bienestar a mediano plazo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="38" text-anchor="middle" class="t">¿Qué se atiende primero? Orden de prioridades</text>
+  <path d="M180 100 L133 190 L227 190 Z" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <path d="M133 190 L227 190 L278 290 L82 290 Z" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <path d="M82 290 L278 290 L330 390 L30 390 Z" fill="var(--d-l)" stroke="var(--d)" stroke-width="2"/>
+  <text x="180" y="170" text-anchor="middle" class="h" style="fill:var(--b)">3.ª</text>
+  <text x="180" y="248" text-anchor="middle" class="h" style="fill:var(--c)">2.ª</text>
+  <text x="180" y="346" text-anchor="middle" class="h" style="fill:var(--d)">1.ª</text>
+  <text x="180" y="414" text-anchor="middle" class="n m">Base: lo que no puede esperar</text>
+  <rect x="352" y="86" width="424" height="96" rx="12" fill="var(--panel)" stroke="var(--b)" stroke-width="2"/>
+  <text x="368" y="110" class="h" style="fill:var(--b)">Tercera prioridad: bienestar y desarrollo</text>
+  <text x="368" y="132" class="n">Aprendizaje, autocuidado a largo plazo, adaptación,</text>
+  <text x="368" y="150" class="n">proyecto de vida, rehabilitación progresiva.</text>
+  <text x="368" y="168" class="n m">Se planifican, pero no desplazan lo urgente.</text>
+  <rect x="352" y="196" width="424" height="96" rx="12" fill="var(--panel)" stroke="var(--c)" stroke-width="2"/>
+  <text x="368" y="220" class="h" style="fill:var(--c)">Segunda prioridad: salud sin riesgo inmediato</text>
+  <text x="368" y="242" class="n">Dolor, movilidad, nutrición, eliminación, descanso,</text>
+  <text x="368" y="260" class="n">integridad de la piel, ansiedad y comprensión del proceso.</text>
+  <text x="368" y="278" class="n m">Se atienden cuando lo vital está estable.</text>
+  <rect x="352" y="306" width="424" height="96" rx="12" fill="var(--panel)" stroke="var(--d)" stroke-width="2"/>
+  <text x="368" y="330" class="h" style="fill:var(--d)">Primera prioridad: amenaza vital o de seguridad</text>
+  <text x="368" y="352" class="n">Vía aérea, respiración, circulación, riesgo de caída</text>
+  <text x="368" y="370" class="n">o de daño, conciencia alterada, riesgo de autolesión.</text>
+  <text x="368" y="388" class="n m">Se actúa de inmediato y se avisa al equipo.</text>
+  <text x="400" y="440" text-anchor="middle" class="n">La prioridad cambia con el estado del paciente y se revisa en cada valoración.</text>
+  <text x="400" y="466" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

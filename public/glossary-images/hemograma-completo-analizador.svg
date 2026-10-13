@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo cuenta las células un analizador hematológico</title>
+  <desc id="d">Diagrama de flujo conceptual. La muestra anticoagulada se mezcla y se divide en canales. En el canal de impedancia las células atraviesan una abertura entre dos electrodos y cada célula genera un pulso cuya altura es proporcional a su volumen. En el canal óptico las células cruzan un haz láser y se mide la dispersión frontal, la dispersión lateral y la fluorescencia. Los datos producen histogramas, diagramas de dispersión, el recuento y alertas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#aab8c8; --ink:#1c2733; --muted:#5a6878; --acc:#2b6cb0; --acc-l:#dbe8f6; --cell:#d6453d; --beam:#c28a12; --ok:#1f8a5b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#566a82; --ink:#e8eef5; --muted:#9fb0c1; --acc:#7fb2e8; --acc-l:#243a54; --cell:#e8695f; --beam:#e8b84a; --ok:#4cc38a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 12.5px; }
+    .c { text-anchor: middle; }
+    .arrow { stroke: var(--muted); stroke-width: 2; fill: none; marker-end: url(#ah); }
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">Del tubo de EDTA al resultado</text>
+
+  <!-- muestra -->
+  <rect x="20" y="170" width="120" height="110" rx="12" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <rect x="62" y="184" width="36" height="66" rx="6" fill="var(--cell)" opacity=".85"/>
+  <rect x="62" y="184" width="36" height="12" rx="4" fill="#8d6bd0"/>
+  <text x="80" y="268" class="s c">Sangre + EDTA</text>
+  <text x="80" y="292" class="s c muted">mezcla suave</text>
+
+  <path class="arrow" d="M140 205 H176 V120 H196"/>
+  <path class="arrow" d="M140 245 H176 V360 H196"/>
+
+  <!-- canal impedancia -->
+  <rect x="196" y="66" width="312" height="110" rx="12" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="212" y="90" class="h">Canal de impedancia</text>
+  <text x="212" y="108" class="s muted">Dilución en líquido conductor</text>
+  <!-- abertura -->
+  <path d="M300 120 H336 Q346 120 346 130 V146 M346 146 V150 M346 150 V152 Q346 162 336 162 H300" fill="none" stroke="var(--line)" stroke-width="2"/>
+  <rect x="340" y="128" width="12" height="28" rx="2" fill="var(--panel)"/>
+  <path d="M352 130 V150" stroke="var(--line)" stroke-width="0"/>
+  <line x1="347" y1="120" x2="347" y2="140" stroke="var(--line)" stroke-width="3"/>
+  <line x1="347" y1="146" x2="347" y2="164" stroke="var(--line)" stroke-width="3"/>
+  <circle cx="318" cy="142" r="6" fill="var(--cell)"/>
+  <circle cx="334" cy="146" r="5" fill="var(--cell)"/>
+  <circle cx="362" cy="143" r="6" fill="var(--cell)"/>
+  <text x="212" y="146" class="s">Células</text>
+  <text x="212" y="161" class="s">una a una</text>
+  <!-- pulsos -->
+  <path d="M390 160 H410 V132 H416 V160 H430 V120 H438 V160 H452 V140 H458 V160 H490" fill="none" stroke="var(--acc)" stroke-width="2.5"/>
+  <text x="446" y="112" class="s c muted">pulso ∝ volumen</text>
+
+  <!-- canal optico -->
+  <rect x="196" y="304" width="312" height="110" rx="12" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="212" y="328" class="h">Canal óptico (citometría de flujo)</text>
+  <text x="212" y="346" class="s muted">Reactivos y colorantes específicos</text>
+  <!-- haz -->
+  <line x1="262" y1="384" x2="352" y2="384" stroke="var(--beam)" stroke-width="3"/>
+  <text x="212" y="388" class="s">Láser</text>
+  <circle cx="308" cy="384" r="8" fill="var(--cell)"/>
+  <path d="M308 376 V358" stroke="var(--beam)" stroke-width="2" stroke-dasharray="3 3"/>
+  <path d="M316 390 L346 402" stroke="var(--beam)" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="372" y="368" class="s">Lateral: complejidad</text>
+  <text x="372" y="386" class="s">Frontal: tamaño</text>
+  <text x="372" y="404" class="s">Fluorescencia: ARN/ADN</text>
+
+  <path class="arrow" d="M508 121 H548 V215 H566"/>
+  <path class="arrow" d="M508 359 H548 V265 H566"/>
+
+  <!-- salida -->
+  <rect x="566" y="170" width="214" height="110" rx="12" fill="var(--acc-l)" stroke="var(--acc)" stroke-width="2"/>
+  <text x="673" y="196" class="h c">Resultado</text>
+  <text x="673" y="218" class="s c">Histogramas y diagramas</text>
+  <text x="673" y="235" class="s c">de dispersión</text>
+  <text x="673" y="256" class="s c">Recuentos e índices</text>
+  <text x="673" y="272" class="s c">+ alertas de revisión</text>
+
+  <path class="arrow" d="M673 280 V310"/>
+  <rect x="566" y="312" width="214" height="62" rx="12" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="673" y="338" class="s c" style="font-weight:700;fill:var(--ok)">Frotis y revisión humana</text>
+  <text x="673" y="356" class="s c muted">si hay alertas o dudas</text>
+
+  <text x="400" y="456" text-anchor="middle" class="s muted">Esquema conceptual, sin escala; los equipos reales varían según el fabricante. Ilustración original de AloVida.</text>
+</svg>

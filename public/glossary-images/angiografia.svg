@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Principio de la angiografía por sustracción digital</title>
+  <desc id="d">A la izquierda, un tubo de rayos X emite un haz que atraviesa un vaso con un catéter y llega a un detector. A la derecha, tres imágenes: una máscara sin contraste, la misma proyección con contraste dentro del vaso y la resta de ambas, que deja solo el vaso visible.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 30px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <!-- Panel izquierdo -->
+  <rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200" y="50" text-anchor="middle" class="title">Cómo se forma la imagen</text>
+
+  <!-- tubo -->
+  <rect x="130" y="68" width="140" height="34" rx="8" fill="var(--accent)"/>
+  <text x="200" y="90" text-anchor="middle" class="lab" style="fill:var(--on)">Tubo de rayos X</text>
+  <!-- haz -->
+  <polygon points="150,102 250,102 300,372 100,372" fill="var(--beam)" opacity=".45"/>
+  <!-- paciente -->
+  <rect x="80" y="200" width="240" height="110" rx="30" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="200" y="334" text-anchor="middle" class="small muted">Tejidos blandos y hueso (se restan)</text>
+  <!-- hueso -->
+  <rect x="226" y="214" width="14" height="82" rx="7" fill="var(--bone)"/>
+  <rect x="250" y="214" width="14" height="82" rx="7" fill="var(--bone)"/>
+  <!-- vaso -->
+  <path d="M60 255 H170 C195 255 200 235 225 235 H300" fill="none" stroke="var(--vessel)" stroke-width="10" stroke-linecap="round"/>
+  <path d="M200 249 C215 262 225 272 255 272 H292" fill="none" stroke="var(--vessel)" stroke-width="6" stroke-linecap="round"/>
+  <!-- catéter -->
+  <path d="M40 255 H150" fill="none" stroke="var(--ink)" stroke-width="3" stroke-dasharray="1 0"/>
+  <text x="60" y="244" class="lab">Catéter</text>
+  <text x="300" y="220" text-anchor="end" class="lab" style="fill:var(--vessel)">Vaso con contraste</text>
+  <!-- detector -->
+  <rect x="80" y="372" width="240" height="30" rx="8" fill="var(--accent)"/>
+  <text x="200" y="392" text-anchor="middle" class="lab" style="fill:var(--on)">Detector digital</text>
+  <text x="200" y="426" text-anchor="middle" class="small muted">El yodo absorbe más rayos X que el tejido</text>
+
+  <!-- Panel derecho -->
+  <rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588" y="50" text-anchor="middle" class="title">Sustracción digital</text>
+
+  <!-- imagen 1 -->
+  <text x="466" y="86" text-anchor="middle" class="step">1 · Máscara</text>
+  <rect x="416" y="98" width="100" height="130" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="448" y="108" width="12" height="110" rx="6" fill="var(--bone)"/>
+  <rect x="470" y="108" width="12" height="110" rx="6" fill="var(--bone)"/>
+  <text x="466" y="248" text-anchor="middle" class="small muted">Sin contraste</text>
+
+  <!-- imagen 2 -->
+  <text x="588" y="86" text-anchor="middle" class="step">2 · Con contraste</text>
+  <rect x="538" y="98" width="100" height="130" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="570" y="108" width="12" height="110" rx="6" fill="var(--bone)"/>
+  <rect x="592" y="108" width="12" height="110" rx="6" fill="var(--bone)"/>
+  <path d="M548 112 C560 150 590 150 588 170 C586 190 620 200 628 218" fill="none" stroke="var(--vessel)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M588 170 C600 160 616 156 628 150" fill="none" stroke="var(--vessel)" stroke-width="3" stroke-linecap="round"/>
+  <text x="588" y="248" text-anchor="middle" class="small muted">Vaso opacificado</text>
+
+  <!-- imagen 3 -->
+  <text x="710" y="86" text-anchor="middle" class="step">3 · Resta</text>
+  <rect x="660" y="98" width="100" height="130" rx="8" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <path d="M670 112 C682 150 712 150 710 170 C708 190 742 200 750 218" fill="none" stroke="var(--vessel)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M710 170 C722 160 738 156 750 150" fill="none" stroke="var(--vessel)" stroke-width="3" stroke-linecap="round"/>
+  <text x="710" y="248" text-anchor="middle" class="small muted">Solo el vaso</text>
+
+  <text x="527" y="170" text-anchor="middle" class="op">−</text>
+  <text x="649" y="170" text-anchor="middle" class="op">=</text>
+
+  <!-- explicación -->
+  <rect x="416" y="278" width="344" height="140" rx="10" fill="none" stroke="var(--line)"/>
+  <text x="432" y="304" class="lab">• La máscara guarda hueso y tejido blando.</text>
+  <text x="432" y="328" class="lab">• Con el contraste, el vaso se vuelve opaco.</text>
+  <text x="432" y="352" class="lab">• El equipo resta ambas imágenes en tiempo real.</text>
+  <text x="432" y="376" class="lab">• Exige que el paciente no se mueva entre ellas.</text>
+  <text x="432" y="404" class="small muted">La imagen muestra la luz del vaso, no su pared.</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

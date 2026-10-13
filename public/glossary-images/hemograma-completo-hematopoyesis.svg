@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hematopoyesis simplificada</title>
+  <desc id="d">Árbol de diferenciación: la célula madre hematopoyética origina un progenitor mieloide y un progenitor linfoide. Del progenitor mieloide derivan eritrocitos, plaquetas, granulocitos (neutrófilos, eosinófilos y basófilos) y monocitos. Del linfoide derivan los linfocitos T, B y las células NK.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#aab8c8; --ink:#1c2733; --muted:#5a6878; --stem:#6b4ea8; --stem-l:#e6defa; --red:#d6453d; --red-l:#f6d3cf; --wht:#5b7fb8; --wht-l:#d9e4f4; --plt:#b8861f; --plt-l:#f3e4be; --lym:#2f8f77; --lym-l:#d3ede6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#566a82; --ink:#e8eef5; --muted:#9fb0c1; --stem:#b49cf0; --stem-l:#34294f; --red:#e8695f; --red-l:#4a2a2a; --wht:#86a6da; --wht-l:#26364d; --plt:#e0b24d; --plt-l:#4a3f1f; --lym:#5ccbad; --lym-l:#1f4038; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .box { font-size: 14px; font-weight: 600; text-anchor: middle; }
+    .cy { font-size: 13px; text-anchor: middle; }
+    .sm { font-size: 12px; }
+    .lnk { stroke: var(--line); stroke-width: 2; fill: none; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">De la célula madre a las células del hemograma</text>
+
+  <rect x="290" y="52" width="220" height="40" rx="20" fill="var(--stem-l)" stroke="var(--stem)" stroke-width="2"/>
+  <text x="400" y="77" class="box">Célula madre hematopoyética</text>
+
+  <path class="lnk" d="M400 92 V112 H216 V130"/>
+  <path class="lnk" d="M400 92 V112 H620 V130"/>
+
+  <rect x="116" y="130" width="200" height="38" rx="19" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="216" y="154" class="box">Progenitor mieloide</text>
+  <rect x="520" y="130" width="200" height="38" rx="19" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="620" y="154" class="box">Progenitor linfoide</text>
+
+  <path class="lnk" d="M216 168 V190 M66 190 H366 M66 190 V214 M166 190 V214 M266 190 V214 M366 190 V214"/>
+  <path class="lnk" d="M620 168 V190 M520 190 H720 M520 190 V214 M620 190 V214 M720 190 V214"/>
+
+  <!-- Eritrocitos -->
+  <rect x="20" y="214" width="92" height="64" rx="12" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <ellipse cx="66" cy="238" rx="15" ry="10" fill="var(--red)"/>
+  <ellipse cx="66" cy="238" rx="5.5" ry="3.5" fill="var(--red-l)"/>
+  <text x="66" y="268" class="cy">Eritrocitos</text>
+  <!-- Plaquetas -->
+  <rect x="120" y="214" width="92" height="64" rx="12" fill="var(--plt-l)" stroke="var(--plt)" stroke-width="2"/>
+  <ellipse cx="156" cy="238" rx="7" ry="5" fill="var(--plt)"/>
+  <ellipse cx="172" cy="233" rx="6" ry="4.5" fill="var(--plt)"/>
+  <ellipse cx="168" cy="244" rx="5" ry="3.5" fill="var(--plt)"/>
+  <text x="166" y="268" class="cy">Plaquetas</text>
+  <!-- Granulocitos -->
+  <rect x="220" y="214" width="92" height="64" rx="12" fill="var(--wht-l)" stroke="var(--wht)" stroke-width="2"/>
+  <circle cx="266" cy="238" r="12" fill="var(--wht)"/>
+  <text x="266" y="268" class="cy">Granulocitos</text>
+  <!-- Monocitos -->
+  <rect x="320" y="214" width="92" height="64" rx="12" fill="var(--wht-l)" stroke="var(--wht)" stroke-width="2"/>
+  <circle cx="366" cy="238" r="13" fill="var(--wht)"/>
+  <path d="M361 233 a6 6 0 1 0 10 7" stroke="var(--wht-l)" stroke-width="3" fill="none"/>
+  <text x="366" y="268" class="cy">Monocitos</text>
+
+  <!-- Linfoides -->
+  <rect x="474" y="214" width="92" height="64" rx="12" fill="var(--lym-l)" stroke="var(--lym)" stroke-width="2"/>
+  <circle cx="520" cy="238" r="11" fill="var(--lym)"/>
+  <text x="520" y="268" class="cy">Linfocitos T</text>
+  <rect x="574" y="214" width="92" height="64" rx="12" fill="var(--lym-l)" stroke="var(--lym)" stroke-width="2"/>
+  <circle cx="620" cy="238" r="11" fill="var(--lym)"/>
+  <text x="620" y="268" class="cy">Linfocitos B</text>
+  <rect x="674" y="214" width="92" height="64" rx="12" fill="var(--lym-l)" stroke="var(--lym)" stroke-width="2"/>
+  <circle cx="720" cy="238" r="11" fill="var(--lym)"/>
+  <text x="720" y="268" class="cy">Células NK</text>
+
+  <!-- subtipos de granulocitos -->
+  <path class="lnk" d="M266 278 V292 M190 292 H342 M190 292 V304 M266 292 V304 M342 292 V304"/>
+  <rect x="152" y="304" width="76" height="28" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="190" y="323" class="cy sm">Neutrófilos</text>
+  <rect x="228" y="304" width="76" height="28" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="266" y="323" class="cy sm">Eosinófilos</text>
+  <rect x="304" y="304" width="76" height="28" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="342" y="323" class="cy sm">Basófilos</text>
+
+  <rect x="20" y="352" width="760" height="86" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="36" y="377" class="box" style="text-anchor:start">Reguladores principales</text>
+  <text x="36" y="401" class="sm" style="text-anchor:start">Eritropoyetina (sobre todo renal): serie roja  ·  Trombopoyetina (sobre todo hepática): megacariocitos y plaquetas</text>
+  <text x="36" y="423" class="sm" style="text-anchor:start">G-CSF y otras citocinas: neutrófilos y monocitos  ·  Interleucinas: linfocitos y eosinófilos</text>
+  <text x="400" y="464" text-anchor="middle" class="sm muted">Esquema simplificado, sin escala. Ilustración original de AloVida.</text>
+</svg>
