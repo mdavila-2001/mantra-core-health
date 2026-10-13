@@ -115,7 +115,7 @@ describe('NotificationCenter', () => {
     const pestanas = fixture.nativeElement.querySelectorAll(
       '[data-testid="avisos-pestanas"] [role="tab"]',
     ) as NodeListOf<HTMLElement>;
-    expect(pestanas.length).toBe(2);
+    expect(pestanas.length).toBe(6);
     pestanas[1]!.click();
     fixture.detectChanges();
 
@@ -135,6 +135,62 @@ describe('NotificationCenter', () => {
     fixture.detectChanges();
 
     expect(filas()[0].tagName).toBe('DIV');
+  });
+
+  it('muestra preferencias y filtra consultas, mensajes, recetas y red', () => {
+    const consulta = aviso('consulta', { type: 'ENCOUNTER', id: 'e-1' });
+    const mensaje = {
+      ...aviso('mensaje', { type: 'CONVERSATION', id: 'c-1' }),
+      category: 'MESSAGES',
+    };
+    const receta = aviso('receta', { type: 'PRESCRIPTION', id: 'r-1' });
+    const red = {
+      ...aviso('red', { type: 'POST', id: 'p-1' }),
+      category: 'SOCIAL',
+    };
+    http
+      .expectOne((r) => r.url === '/notifications/me')
+      .flush(pagina([consulta, mensaje, receta, red], null));
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('a[routerLink="/settings"]')?.textContent,
+    ).toContain('Preferencias');
+    const pestañas = fixture.nativeElement.querySelectorAll(
+      '[data-testid="avisos-pestanas"] [role="tab"]',
+    ) as NodeListOf<HTMLElement>;
+    expect(Array.from(pestañas).map((pestaña) => pestaña.textContent?.trim())).toEqual([
+      'Todas',
+      'Sin leer (1)',
+      'Consultas',
+      'Mensajes',
+      'Recetas',
+      'Red',
+    ]);
+
+    pestañas[2]!.click();
+    fixture.detectChanges();
+    expect(filas().map((fila) => fila.textContent)).toEqual(
+      expect.arrayContaining([expect.stringContaining('Aviso consulta')]),
+    );
+    expect(filas().length).toBe(1);
+
+    pestañas[3]!.click();
+    fixture.detectChanges();
+    expect(filas().map((fila) => fila.textContent?.trim())).toEqual(
+      expect.arrayContaining([expect.stringContaining('Aviso mensaje')]),
+    );
+    expect(filas().length).toBe(1);
+
+    pestañas[4]!.click();
+    fixture.detectChanges();
+    expect(filas().length).toBe(1);
+    expect(texto()).toContain('Aviso receta');
+
+    pestañas[5]!.click();
+    fixture.detectChanges();
+    expect(filas().length).toBe(1);
+    expect(texto()).toContain('Aviso red');
   });
 
   it('abrir una notificación la marca y la saca de negrita sin recargar la lista', () => {
@@ -161,12 +217,38 @@ describe('NotificationCenter', () => {
     ).toBeNull();
   });
 
-  it('cuenta el error sin dejar la pantalla en blanco', () => {
+  it('marca toda la bandeja como leída desde la acción de cabecera', () => {
     http
       .expectOne((r) => r.url === '/notifications/me')
-      .error(new ProgressEvent('error'));
+      .flush(pagina([aviso('n-1'), aviso('n-2')], null, 2));
     fixture.detectChanges();
 
-    expect(texto()).toContain('No pudimos cargar sus notificaciones.');
+    (fixture.nativeElement.querySelector('[data-testid="avisos-marcar-todas"]') as HTMLElement)
+      .click();
+    http.expectOne('/notifications/in-app/read-all').flush({ marked: 2, unreadCount: 0 });
+    const refrescos = http.match((r) => r.url === '/notifications/me');
+    refrescos.forEach((pedido) => pedido.flush(pagina([], null, 0)));
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="avisos-marcar-todas"]'),
+    ).toBeNull();
+  });
+
+  it('presenta el identificador de soporte en el estado S9', () => {
+    http.expectOne((r) => r.url === '/notifications/me').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Error',
+        correlationId: 'req-35-1',
+        timestamp: '2026-10-13T12:00:00.000Z',
+        path: '/notifications/me',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Código de soporte');
+    expect(texto()).toContain('req-35-1');
   });
 });
