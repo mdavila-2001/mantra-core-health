@@ -312,6 +312,12 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
         } as const;
         const context = await browser.newContext(contextOptions);
         const publicContext = await browser.newContext(contextOptions);
+        const preference = tema === 'oscuro' ? 'dark' : 'light';
+        for (const browserContext of [context, publicContext]) {
+          await browserContext.addInitScript((value) => {
+            localStorage.setItem('mantra-core-health.theme', value);
+          }, preference);
+        }
         const page = await context.newPage();
         const publicPage = await publicContext.newPage();
         const consoleByPage = new Map<Page, { count: number; details: string[] }>([
