@@ -48,6 +48,10 @@ interface Ruta {
   readonly destino?: string;
   /** Respuesta acotada para capturar un estado vacío sin cambiar la aplicación. */
   readonly fixture?: 'empty-memberships';
+  readonly accion?:
+    | 'crear-consultorio'
+    | 'editar-perfil-consultorio'
+    | 'panel-consultorio';
   /**
    * `no-encontrado` para una ruta que este carril **borró**: la prueba pasa si
    * la aplicación ya no la sirve. Sin esto, borrar una pantalla dejaría la
@@ -316,6 +320,12 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
         } as const;
         const context = await browser.newContext(contextOptions);
         const publicContext = await browser.newContext(contextOptions);
+        const preference = tema === 'oscuro' ? 'dark' : 'light';
+        for (const browserContext of [context, publicContext]) {
+          await browserContext.addInitScript((value) => {
+            localStorage.setItem('mantra-core-health.theme', value);
+          }, preference);
+        }
         const page = await context.newPage();
         const publicPage = await publicContext.newPage();
         const consoleByPage = new Map<Page, { count: number; details: string[] }>([
@@ -376,6 +386,38 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
               componente.vinculaciones.set([]);
             });
             await expect(activePage.getByText('Todavía no tiene vinculaciones')).toBeVisible();
+          }
+          const routeEntry = RUTAS.find((entry) => entry.ruta === ruta && entry.nombre === nombre);
+          if (routeEntry?.accion === 'crear-consultorio') {
+            await activePage.getByTestId('sede-agregar').click();
+            await activePage.getByTestId('sede-cargar-propio').click();
+            await expect(activePage.getByTestId('sede-formulario')).toBeVisible();
+            // Esperar la transición del diálogo para evitar capturarlo a medio abrir.
+            await activePage.waitForTimeout(400);
+          }
+          if (routeEntry?.accion === 'editar-perfil-consultorio') {
+            await activePage.getByRole('tab', { name: 'Dónde atiendo' }).click();
+            await expect(activePage.getByTestId('sedes-propias')).toBeVisible();
+          }
+          if (routeEntry?.accion === 'panel-consultorio') {
+            const accesos = activePage.getByTestId('panel-accesos');
+            await accesos.scrollIntoViewIfNeeded();
+            await activePage
+              .getByTestId('panel-zona')
+              .filter({ hasText: 'Administración' })
+              .click();
+            const zonaAbierta = activePage.getByTestId('panel-zona-abierta');
+            await zonaAbierta.scrollIntoViewIfNeeded();
+            const accesoConsultorio = activePage
+              .getByTestId('panel-acceso')
+              .filter({ hasText: 'Mi consultorio propio' });
+            if (FASE === 'antes') {
+              await expect(accesoConsultorio).toHaveCount(0);
+            } else {
+              await expect(accesoConsultorio).toBeVisible();
+              await accesoConsultorio.scrollIntoViewIfNeeded();
+            }
+            await activePage.waitForTimeout(400);
           }
           if (ruta.includes('with-file=1')) {
             const input = activePage.getByTestId('matricula-archivo');

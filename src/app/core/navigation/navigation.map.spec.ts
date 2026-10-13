@@ -114,6 +114,17 @@ describe('APP_SECTIONS', () => {
     }
   });
 
+  it('Mi consultorio propio reemplaza la tarjeta de organización para la profesional', () => {
+    const practice = APP_SECTIONS.find((section) => section.path === 'administration/my-practice');
+
+    expect(practice).toBeDefined();
+    expect(practice?.label).toBe('Mi consultorio propio');
+    expect(practice?.roles).toEqual(['PRACTITIONER']);
+    expect(isVisibleTo(practice!, ['PRACTITIONER'])).toBe(true);
+    expect(isVisibleTo(practice!, ['PATIENT'])).toBe(false);
+    expect(practice?.summary).toBe('Creá y editá tu consultorio: dirección, mapa, teléfono y horario.');
+  });
+
   it('el panel es la primera sección: el breadcrumb lo usa como raíz', () => {
     expect(APP_SECTIONS[0]?.path).toBe('dashboard');
   });
@@ -269,10 +280,10 @@ describe('APP_SECTIONS', () => {
   it('el comodín sólo lo rompen las dos secciones que lo declaran', () => {
     // Si `exclusiveRoles` se empezara a repartir, el comodín dejaría de servir
     // para lo que existe —que quien administra pueda recorrer el sistema— y
-    // nadie se enteraría hasta que una sección deje de aparecer. Son dos, y
-    // cada una por un pedido explícito del cliente: la Guía es sólo del
-    // paciente (15/08/2026) y el generador de formularios sólo del doctor
-    // (22/08/2026).
+    // nadie se enteraría hasta que una sección deje de aparecer. Son tres:
+    // la Guía es sólo del paciente (15/08/2026), el generador de formularios
+    // sólo del doctor (22/08/2026) y Ayuda psicológica sólo del paciente
+    // (11/10/2026).
     const exclusivas = APP_SECTIONS.filter((s) => s.exclusiveRoles === true).map((s) => s.path);
 
     expect(exclusivas).toEqual(['directory', 'psychological-help', 'form-builder']);
