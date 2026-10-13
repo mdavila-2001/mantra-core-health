@@ -477,6 +477,46 @@
               </p>
             </ng-template>
 
+            <!-- El directorio local es una sugerencia con líneas públicas
+                 documentadas. La persona puede seguir usando su ambulancia
+                 privada escribiendo nombre y teléfono abajo. -->
+            <ng-template appCampoPersonalizado="trustedAmbulanceDepartment">
+              <app-form-field
+                label="Departamento"
+                hint="Filtramos los servicios disponibles por departamento."
+                description="Elija dónde necesita una línea local de emergencias."
+              >
+                <app-select
+                  [options]="departamentosAmbulancia"
+                  [value]="formPaciente.controls.trustedAmbulanceDepartment.value"
+                  (valueChange)="elegirDepartamentoAmbulancia($event)"
+                  placeholder="Elija un departamento"
+                  data-testid="registro-ambulancia-departamento"
+                >
+                  <app-nav-icon slot="icon-start" name="pin" class="registro__campo-icono" />
+                </app-select>
+              </app-form-field>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="trustedAmbulanceService">
+              <app-form-field
+                label="Servicio de ambulancia"
+                hint="Al elegir uno, se completan nombre y teléfono. Puede editarlos."
+                description="El directorio muestra el alcance y la fuente de cada línea."
+              >
+                <app-select
+                  [options]="opcionesDeAmbulancia()"
+                  [value]="formPaciente.controls.trustedAmbulanceService.value"
+                  (valueChange)="elegirServicioAmbulancia($event)"
+                  [disabled]="!formPaciente.controls.trustedAmbulanceDepartment.value"
+                  [placeholder]="formPaciente.controls.trustedAmbulanceDepartment.value ? 'Elija un servicio' : 'Elija primero el departamento'"
+                  data-testid="registro-ambulancia-servicio"
+                >
+                  <app-nav-icon slot="icon-start" name="hospital" class="registro__campo-icono" />
+                </app-select>
+              </app-form-field>
+            </ng-template>
+
             <ng-template appCampoPersonalizado="privateInsurancePlanId">
               <p class="registro__catalogo-caido">
                 No pudimos traer el catálogo de aseguradoras.
