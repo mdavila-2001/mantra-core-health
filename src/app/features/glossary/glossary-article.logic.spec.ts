@@ -66,6 +66,89 @@ describe('glossary-article.logic', () => {
     expect(imagenesVisibles([imagen({ sourcePage: 'data:text/html,x' })])).toEqual([]);
   });
 
+  describe('ilustraciones propias de AloVida', () => {
+    const propia = (parcial: Partial<GlossaryArticleImage> = {}) =>
+      imagen({
+        url: '/glossary-images/hipertension-arterial.svg',
+        thumbUrl: '/glossary-images/hipertension-arterial.svg',
+        kind: 'diagram',
+        author: 'Equipo AloVida',
+        license: 'Ilustración original de AloVida',
+        licenseUrl: '',
+        sourcePage: '',
+        ...parcial,
+      });
+
+    it('se pintan aunque no tengan enlace de licencia ni página de origen', () => {
+      expect(imagenesVisibles([propia()])).toHaveLength(1);
+    });
+
+    it('no se pintan si la ruta sale de la carpeta propia o trae un protocolo', () => {
+      for (const ruta of [
+        '/otra-carpeta/x.svg',
+        '/glossary-images/../secreto.svg',
+        '/glossary-images/x.svg?a=1',
+        '/glossary-images/Mayuscula.svg',
+        '/glossary-images/x.html',
+        '//evil.example/glossary-images/x.svg',
+        'javascript:alert(1)',
+        'data:image/svg+xml,<svg/>',
+      ]) {
+        expect(imagenesVisibles([propia({ url: ruta })])).toEqual([]);
+        expect(imagenesVisibles([propia({ thumbUrl: ruta })])).toEqual([]);
+      }
+    });
+
+    it('exigen autor y licencia declarados', () => {
+      expect(imagenesVisibles([propia({ author: '' })])).toEqual([]);
+      expect(imagenesVisibles([propia({ license: '  ' })])).toEqual([]);
+    });
+
+    it('una imagen apagada o label-match sigue descartada', () => {
+      expect(imagenesVisibles([propia({ enabled: false })])).toEqual([]);
+      expect(imagenesVisibles([propia({ match: 'label-match' })])).toEqual([]);
+    });
+  });
+
+  describe('secciones de un artículo de autoría propia', () => {
+    const articulo = (secciones: GlossaryArticleSection[]): GlossaryArticle => ({
+      conceptRef: { system: 'alovida-curated', code: 'x', slug: 'x' },
+      lang: 'es',
+      sections: secciones,
+      images: [],
+      facts: [],
+      references: [],
+    });
+
+    it('titulan cada sección con su encabezado y no repiten «En la fuente»', () => {
+      const [uno, dos] = seccionesPintables(
+        articulo([
+          seccion({ source: 'alovida-curated', kind: 'additional_information', locator: 'Historia' }),
+          seccion({ source: 'alovida-curated', kind: 'additional_information', locator: 'Fisiopatología' }),
+        ]),
+      );
+      expect(uno?.titulo).toBe('Historia');
+      expect(dos?.titulo).toBe('Fisiopatología');
+      expect(uno?.encabezadoDeLaFuente).toBeNull();
+      expect(uno?.entradaDelIndice).toBe('Historia');
+    });
+
+    it('sin encabezado caen al título del kind', () => {
+      const [uno] = seccionesPintables(
+        articulo([seccion({ source: 'alovida-curated', kind: 'causes', locator: '' })]),
+      );
+      expect(uno?.titulo).toBe(TITULO_DE_SECCION.causes);
+    });
+
+    it('una fuente externa conserva el título del kind y el encabezado de la fuente', () => {
+      const [uno] = seccionesPintables(
+        articulo([seccion({ kind: 'causes', locator: 'Qué provoca la tos' })]),
+      );
+      expect(uno?.titulo).toBe(TITULO_DE_SECCION.causes);
+      expect(uno?.encabezadoDeLaFuente).toBe('Qué provoca la tos');
+    });
+  });
+
   it('enlaceSeguro sólo deja pasar https', () => {
     expect(enlaceSeguro('https://medlineplus.gov')).toBe('https://medlineplus.gov');
     expect(enlaceSeguro('data:text/html,x')).toBeNull();
