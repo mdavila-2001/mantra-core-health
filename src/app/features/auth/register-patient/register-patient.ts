@@ -28,6 +28,12 @@ import {
   CODIGO_OCUPACION_OTRA,
 } from '../../../core/data-access/terminology/bo-occupations.service';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
+import {
+  AMBULANCE_DIRECTORY_SEED,
+  DEPARTAMENTOS_BOLIVIA,
+  ambulancesForDepartment,
+  isSeededAmbulancePhone,
+} from '../../../core/emergency/ambulance-directory.seed';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   BoMunicipalitiesCatalog,
@@ -72,6 +78,7 @@ import {
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppMap } from '../../../shared/components/organisms/map/map';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Select } from '../../../shared/components/atoms/select/select';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
 import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
@@ -450,6 +457,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     RegistroAyuda,
     AppMap,
     FormField,
+    Select,
     AppInput,
   ],
   templateUrl: './register-patient.html',
@@ -460,6 +468,38 @@ export class RegisterPatient {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
+
+  readonly departamentosAmbulancia = DEPARTAMENTOS_BOLIVIA.map((department) => ({
+    value: department.code,
+    label: department.name,
+  }));
+
+  opcionesDeAmbulancia() {
+    const department = this.formPaciente.controls.trustedAmbulanceDepartment.value;
+    return ambulancesForDepartment(department).map((service) => ({
+      value: service.id,
+      label: service.name,
+      description: `${service.scope} · ${service.phone}`,
+    }));
+  }
+
+  elegirDepartamentoAmbulancia(departmentCode: string | null): void {
+    const anterior = this.formPaciente.controls.trustedAmbulanceService.value;
+    this.formPaciente.controls.trustedAmbulanceDepartment.setValue(departmentCode);
+    this.formPaciente.controls.trustedAmbulanceService.setValue(null);
+    if (anterior) {
+      this.formPaciente.controls.trustedAmbulanceName.setValue('');
+      this.formPaciente.controls.trustedAmbulancePhone.setValue('');
+    }
+  }
+
+  elegirServicioAmbulancia(serviceId: string | null): void {
+    this.formPaciente.controls.trustedAmbulanceService.setValue(serviceId);
+    const service = AMBULANCE_DIRECTORY_SEED.find((entry) => entry.id === serviceId);
+    if (!service) return;
+    this.formPaciente.controls.trustedAmbulanceName.setValue(service.name);
+    this.formPaciente.controls.trustedAmbulancePhone.setValue(service.phone);
+  }
 
   readonly formPaciente = new FormGroup(
     {
@@ -590,8 +630,17 @@ export class RegisterPatient {
       trustedAmbulanceName: new FormControl('', { nonNullable: true }),
       trustedAmbulancePhone: new FormControl('', {
         nonNullable: true,
-        validators: [telefonoCompleto],
+        validators: [
+          (control) =>
+            isSeededAmbulancePhone(String(control.value ?? ''))
+              ? null
+              : telefonoCompleto(control),
+        ],
       }),
+      // Filtros locales del seed: no contienen información de paciente y no
+      // viajan a la API. Nombre y teléfono se guardan sólo en este equipo.
+      trustedAmbulanceDepartment: new FormControl<string | null>(null),
+      trustedAmbulanceService: new FormControl<string | null>(null),
       // Los seguros declarados: el valor es el **plan**, no la compañía.
       privateInsurancePlanId: new FormControl<string | null>(null),
       publicInsurancePlanId: new FormControl<string | null>(null),
@@ -1219,12 +1268,28 @@ export class RegisterPatient {
         titulo: 'Su ambulancia de confianza',
         clave: 'ambulance',
         icon: 'phone',
-        hint: 'Opcional. Si la carga, el botón de emergencia la llama directamente.',
+        hint: 'Opcional. Filtre por departamento o escriba la de su seguro o clínica.',
         campos: [
+          {
+            key: 'trustedAmbulanceDepartment',
+            label: 'Departamento',
+            hint: 'Filtramos los servicios disponibles por departamento.',
+            description: 'Elija dónde necesita una línea local de emergencias.',
+            control: 'custom',
+            icono: 'pin',
+          },
+          {
+            key: 'trustedAmbulanceService',
+            label: 'Servicio de ambulancia',
+            hint: 'Al elegir uno, se completan nombre y teléfono. Puede editarlos.',
+            description: 'El directorio muestra el alcance y la fuente de cada línea.',
+            control: 'custom',
+            icono: 'hospital',
+          },
           {
             key: 'trustedAmbulanceName',
             label: 'Nombre de la ambulancia (opcional)',
-            hint: 'Por ejemplo, la de su seguro o la de su clínica.',
+            hint: 'Puede editarlo o escribir la ambulancia de su seguro o clínica.',
             description: 'Se guarda sólo en este dispositivo.',
             control: 'text',
             placeholder: 'Ambulancias de mi seguro',
