@@ -127,7 +127,7 @@
 
 .help-link--primary {
   background: var(--brand-primary);
-  color: var(--text-on-brand);
+  color: var(--text-inverse);
 }
 
 .professional-links {
