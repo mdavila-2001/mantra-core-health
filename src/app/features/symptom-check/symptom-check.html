@@ -519,9 +519,33 @@
     </div>
   }
 
-  @if (alarmas().length === 0) {
+  @if (alarmas().length > 0) {
+    <app-alert tone="error" title="Esto no puede esperar a un turno">
+      @if (respuestaDelServicio(); as respuesta) {
+        <p class="sintomas__respuesta-ia" data-testid="sintomas-respuesta-ia">{{ respuesta }}</p>
+      } @else if (mensajeDeAlarma(); as mensaje) {
+        <p>{{ mensaje }}</p>
+      } @else {
+        <p>
+          Lo que cuenta
+          @if (alarmas().length === 1) {
+            —{{ alarmas()[0].nombre }}—
+          }
+          puede ser una urgencia.
+          <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
+        </p>
+      }
+      <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
+    </app-alert>
+  } @else {
     @if (recomendaciones().length > 0) {
       <div class="sintomas__recomendaciones">
+        @if (respuestaEmpatica(); as respuesta) {
+          <section class="sintomas__respuesta-ia" role="status" data-testid="sintomas-respuesta-ia">
+            <span class="sintomas__respuesta-ia-rotulo">Una respuesta para usted</span>
+            <p>{{ respuesta }}</p>
+          </section>
+        }
         @if (sintomas().length === 0) {
           <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
                y la pista para que pruebe de nuevo si quiere. -->

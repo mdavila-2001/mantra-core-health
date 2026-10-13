@@ -62,6 +62,32 @@
 
 /* ---- la recomendación --------------------------------------------------- */
 
+.sintomas__respuesta-ia {
+  display: block;
+  margin-block: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--filete);
+  border-inline-start: 3px solid var(--petroleo);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  max-inline-size: 68ch;
+}
+
+.sintomas__respuesta-ia-rotulo {
+  display: block;
+  margin-block-end: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sintomas__respuesta-ia p {
+  margin: 0;
+  line-height: var(--lh-body);
+}
+
 .sintomas__subtitulo {
   margin: var(--sp-5) 0 var(--sp-3);
   font-size: var(--fs-h3);
