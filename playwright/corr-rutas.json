@@ -17,11 +17,22 @@
   "32": [
     {
       "ruta": "/administration/my-practice",
-      "nombre": "mi-consultorio-propio"
+      "nombre": "mi-consultorio-lista"
     },
     {
-      "ruta": "/my-account",
-      "nombre": "perfil-enlaza-al-consultorio"
+      "ruta": "/administration/my-practice",
+      "nombre": "mi-consultorio-nuevo",
+      "accion": "crear-consultorio"
+    },
+    {
+      "ruta": "/my-account/edit",
+      "nombre": "perfil-enlaza-al-consultorio",
+      "accion": "editar-perfil-consultorio"
+    },
+    {
+      "ruta": "/dashboard",
+      "nombre": "panel-administracion-sin-tu-organizacion",
+      "accion": "panel-consultorio"
     }
   ],
   "33": [
