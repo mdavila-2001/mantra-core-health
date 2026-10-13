@@ -275,7 +275,7 @@ describe('APP_SECTIONS', () => {
     // (22/08/2026).
     const exclusivas = APP_SECTIONS.filter((s) => s.exclusiveRoles === true).map((s) => s.path);
 
-    expect(exclusivas).toEqual(['directory', 'form-builder']);
+    expect(exclusivas).toEqual(['directory', 'psychological-help', 'form-builder']);
   });
 });
 

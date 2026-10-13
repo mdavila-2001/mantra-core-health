@@ -44,6 +44,10 @@ const FOTOS = join(DESTINO, 'fotos', FASE);
 interface Ruta {
   readonly ruta: string;
   readonly nombre: string;
+  /** URL final esperada para una sección que conserva evidencia de su alias. */
+  readonly destino?: string;
+  /** Respuesta acotada para capturar un estado vacío sin cambiar la aplicación. */
+  readonly fixture?: 'empty-memberships';
   /**
    * `no-encontrado` para una ruta que este carril **borró**: la prueba pasa si
    * la aplicación ya no la sirve. Sin esto, borrar una pantalla dejaría la
@@ -338,7 +342,7 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
 
         await entrarAlSimulador(page, USUARIO, BASE);
 
-        for (const { ruta, nombre, esperado } of RUTAS) {
+        for (const { ruta, nombre, esperado, destino, fixture } of RUTAS) {
           const activePage = isPublicRoute(ruta) ? publicPage : page;
           const consoleState = consoleByPage.get(activePage);
           if (!consoleState) throw new Error(`No hay contador de consola para ${ruta}`);
@@ -351,6 +355,28 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
+          if (fixture === 'empty-memberships') {
+            // Fixture de evidencia: deja asentado el estado vacío después de
+            // que terminó la consulta simulada, sin agregar parámetros de
+            // prueba ni ramas especiales al cliente de producción.
+            await activePage.evaluate(() => {
+              const angular = (window as Window & {
+                ng?: { getComponent(host: Element): unknown };
+              }).ng;
+              const host = document.querySelector('app-memberships-tab');
+              if (!angular || !host) throw new Error('No se encontró el componente de vinculaciones');
+              const componente = angular.getComponent(host) as {
+                vinculaciones?: { set(value: readonly unknown[]): void };
+                falloDeVinculaciones?: { set(value: null): void };
+              } | null;
+              if (!componente?.vinculaciones || !componente.falloDeVinculaciones) {
+                throw new Error('No se pudo preparar la fixture de vinculaciones vacías');
+              }
+              componente.falloDeVinculaciones.set(null);
+              componente.vinculaciones.set([]);
+            });
+            await expect(activePage.getByText('Todavía no tiene vinculaciones')).toBeVisible();
+          }
           if (ruta.includes('with-file=1')) {
             const input = activePage.getByTestId('matricula-archivo');
             await expect(input).toBeVisible();
@@ -369,19 +395,42 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           // La medición y la foto usan el viewport declarado
           // (375/768/1440), igual al que usaría una persona.
           const m = await medir(activePage);
-          const expectedPath = new URL(ruta, BASE).pathname.replace(/\/$/, '') || '/';
-          const actualPath = new URL(activePage.url()).pathname.replace(/\/$/, '') || '/';
-          const routeLoaded = expectedPath === actualPath;
-          // La foto representa el viewport medido. Capturar documentos de casi
-          // 200 000 px de alto producía una franja ilegible y ocultaba el primer
-          // pantallazo que realmente recibe la persona.
-          await activePage.screenshot({ path: foto });
+          const expectedUrl = new URL(destino ?? ruta, BASE);
+          const actualUrl = new URL(activePage.url());
+          const expectedPath = expectedUrl.pathname.replace(/\/$/, '') || '/';
+          const actualPath = actualUrl.pathname.replace(/\/$/, '') || '/';
+          const routeLoaded =
+            expectedPath === actualPath &&
+            [...expectedUrl.searchParams].every(([key, value]) => actualUrl.searchParams.get(key) === value);
+          // La foto encuadra el organismo del carril 33 dentro del viewport
+          // medido para que la tabla y el vacío queden visibles sin capturar un
+          // documento largo con el menú fijo superpuesto.
+          if (LANE === '33') {
+            const target = fixture === 'empty-memberships'
+              ? activePage.getByText('Todavía no tiene vinculaciones')
+              : activePage.locator('app-data-table tbody tr').first();
+            if (vp.width > 768) {
+              await target.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+            }
+          }
+          if (LANE === '33' && vp.width <= 768) {
+            // El contenido queda debajo del formulario en móvil. Capturar todo
+            // el documento deja ver la tabla; resetear los contenedores evita
+            // que el encabezado fijo quede congelado a mitad de la foto.
+            await activePage.evaluate(() => {
+              document.querySelectorAll<HTMLElement>('*').forEach((element) => {
+                element.scrollTop = 0;
+                element.scrollLeft = 0;
+              });
+            });
+          }
+          await activePage.screenshot({ path: foto, fullPage: LANE === '33' && vp.width <= 768 });
           const bytes = statSync(foto).size;
           if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);
           }
           if (!routeLoaded && esperado !== 'no-encontrado') {
-            errores.push(`${ruta} @ ${vp.nombre}/${tema}: redirigió a ${actualPath}`);
+            errores.push(`${ruta} @ ${vp.nombre}/${tema}: terminó en ${actualUrl.pathname}${actualUrl.search}`);
           }
           if (!m.cargo && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: la ruta no cargó el área de contenido`);

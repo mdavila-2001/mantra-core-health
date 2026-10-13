@@ -1,11 +1,14 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
-import { MyOrganizations } from './my-organizations';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 
-describe('MyOrganizations — Carril 18', () => {
-  let fixture: ComponentFixture<MyOrganizations>;
+import { MembershipsTab } from './memberships-tab';
+
+describe('MembershipsTab — Carril 33', () => {
+  let fixture: ComponentFixture<MembershipsTab>;
   let http: HttpTestingController;
 
   function flushInicial(): void {
@@ -15,11 +18,33 @@ describe('MyOrganizations — Carril 18', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MyOrganizations],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      imports: [MembershipsTab],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: TerminologyClient,
+          useValue: {
+            readConceptLabels: (ids: readonly string[]) =>
+              of(
+                new Map(
+                  ids.map((conceptId) => [
+                    conceptId,
+                    {
+                      conceptId,
+                      code: 'ROLE-MEDICO',
+                      display: 'Médico/a de planta',
+                      codeSystemVersionId: 'version-1',
+                    },
+                  ]),
+                ),
+              ),
+          },
+        },
+      ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(MyOrganizations);
+    fixture = TestBed.createComponent(MembershipsTab);
     http = TestBed.inject(HttpTestingController);
   });
 
@@ -28,6 +53,35 @@ describe('MyOrganizations — Carril 18', () => {
   it('pide mis vinculaciones y las organizaciones disponibles al construirse', () => {
     fixture.detectChanges();
     flushInicial();
+  });
+
+  it('pinta organización, cargo, fecha y acción de una vinculación finalizada', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([
+      {
+        id: 'role-2',
+        practiceId: 'practice-2',
+        practiceName: 'Consultorio X',
+        practiceType: null,
+        practiceSiteId: null,
+        roleConceptId: 'role-attending',
+        specialtyConceptId: null,
+        status: '18506270-2c10-5ca4-ba5d-650d4102431d',
+        isPrimary: false,
+        validFrom: '2026-02-10',
+        validTo: '2026-05-10',
+        createdAt: '2026-02-10T00:00:00.000Z',
+        avatarUrl: null,
+      },
+    ]);
+    http.expectOne((r) => r.url === '/practices').flush([]);
+    fixture.detectChanges();
+
+    const tabla = (fixture.nativeElement as HTMLElement).querySelector('app-data-table');
+    expect(tabla?.textContent).toContain('Consultorio X');
+    expect(tabla?.textContent).toContain('Médico/a de planta');
+    expect(tabla?.textContent).toContain('10 feb 2026');
+    expect(tabla?.textContent).toContain('Solicitar');
   });
 
   /* ---- una caída no es «no tiene organizaciones» (regla 14, 2026-10-08) ---- */
@@ -157,6 +211,33 @@ describe('MyOrganizations — Carril 18', () => {
         verified: false,
       }),
     ]);
+  });
+
+  it('si la solicitud falla con S9, muestra el código de soporte que permite seguir el caso', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
+    http.expectOne((r) => r.url === '/practices').flush([{ id: 'practice-1', name: 'Hospital Central' }]);
+    fixture.detectChanges();
+
+    const componente = fixture.componentInstance as unknown as {
+      organizacionElegida: { set: (v: string | null) => void };
+      solicitar: () => void;
+    };
+    componente.organizacionElegida.set('practice-1');
+    componente.solicitar();
+    http.expectOne((r) => r.url === '/practices/practice-1/role-assignments/self-request').flush(
+      {
+        code: 'INTERNAL',
+        message: 'No pudimos completar la operación.',
+        correlationId: 'corr-vinculacion-33',
+        timestamp: '',
+        path: '',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('corr-vinculacion-33');
   });
 
   it('una vinculación ACTIVA (la organización ya aceptó) se marca verificada', () => {
