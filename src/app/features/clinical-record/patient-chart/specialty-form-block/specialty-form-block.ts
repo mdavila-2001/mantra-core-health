@@ -72,6 +72,7 @@ import {
   responsesOf,
   type ResponseVisible,
 } from './form-reading';
+import { esMapa, esVacio } from './form-values';
 import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';
@@ -1557,24 +1558,4 @@ export class SpecialtyFormBlock {
     }
     return entradas;
   }
-}
-
-function esVacio(valor: unknown): boolean {
-  return (
-    valor === undefined ||
-    valor === null ||
-    valor === '' ||
-    // Un odontograma sin ninguna pieza tocada es un mapa vacío: es «no lo
-    // llené», no un dato. Sin esto viajaría un `{}` y contaría como respuesta.
-    (esMapa(valor) && Object.keys(valor).length === 0) ||
-    // Una lista de varias respuestas sin ninguna marcada tampoco es un dato.
-    (Array.isArray(valor) && valor.length === 0)
-  );
-}
-
-/** Si el valor es un objeto plano —el mapa del odontograma, hoy—. */
-function esMapa(valor: unknown): valor is Record<string, unknown> {
-  return (
-    typeof valor === 'object' && valor !== null && !(valor instanceof Date) && !Array.isArray(valor)
-  );
 }

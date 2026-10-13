@@ -398,11 +398,12 @@ type Fechas<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, stri
 // este archivo usa `Fechas<T, K>` en vez de confiar en el tipo de la vista.
 type WireOrder = Omit<
   DiagnosticOrder,
-  'createdAt' | 'previousDiagnosticReportId' | 'duplicateOverrideReason'
+  'createdAt' | 'previousDiagnosticReportId' | 'duplicateOverrideReason' | 'previousServiceRequestId'
 > & {
   readonly createdAt: string;
   readonly previousDiagnosticReportId?: string | null;
   readonly duplicateOverrideReason?: string | null;
+  readonly previousServiceRequestId?: string | null;
 };
 
 type WireReport = Omit<DiagnosticReport, 'createdAt'> & { readonly createdAt: string };
@@ -422,6 +423,7 @@ function toOrder({
   createdAt,
   previousDiagnosticReportId,
   duplicateOverrideReason,
+  previousServiceRequestId,
   ...resto
 }: WireOrder): DiagnosticOrder {
   return {
@@ -429,6 +431,7 @@ function toOrder({
     createdAt: new Date(createdAt),
     ...(previousDiagnosticReportId == null ? {} : { previousDiagnosticReportId }),
     ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
+    ...(previousServiceRequestId == null ? {} : { previousServiceRequestId }),
   };
 }
 

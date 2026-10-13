@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
+import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 import { AppButton } from '../../atoms/button/button';
 
 /** Los cuatro anchos de referencia del panel. Ver {@link ContentDialog.size}. */
@@ -227,10 +228,15 @@ export class ContentDialog implements OnDestroy {
 
   private doClose(): void {
     this.cerrado = true;
-    this.closeNative();
-    this.unlockScroll();
-    this.returnFocus();
-    this.closed.emit();
+    // Salida corta hacia el control que lo abrió; sin animación posible
+    // (jsdom, movimiento reducido) cierra en el acto, como siempre.
+    const panel = this.dialogRef().nativeElement.querySelector<HTMLElement>('.content-dialog__panel');
+    cerrarConSalida(panel, () => {
+      this.closeNative();
+      this.unlockScroll();
+      this.returnFocus();
+      this.closed.emit();
+    });
   }
 
   /**
@@ -284,6 +290,12 @@ export class ContentDialog implements OnDestroy {
     } else {
       nativo.setAttribute('open', '');
     }
+    // Nace del control que lo abrió (ver `.panel-muelle` en styles.css).
+    fijarOrigenDelPanel(
+      nativo.querySelector<HTMLElement>('.content-dialog__panel'),
+      nativo,
+      this.origen,
+    );
     this.lockScroll();
     this.opened.emit();
   }

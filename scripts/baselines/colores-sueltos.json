@@ -1,9 +1,10 @@
 {
+  "src/app/features/symptom-check/symptom-check.css": 103,
   "src/app/features/component-stock/component-stock.css": 34,
   "src/app/shared/components/organisms/auth-stage/auth-stage.css": 11,
   "src/app/features/messaging/thread/thread.css": 10,
   "src/app/shared/components/organisms/content-dialog/content-dialog.css": 7,
-  "src/app/core/mock/mock-banner.ts": 6,
+  "src/app/core/mock/mock-banner.ts": 5,
   "src/app/features/alovida/buscar/feed-publicaciones/feed-banner/feed-banner.css": 5,
   "src/app/features/public-profile/public-post-card/public-post-card.css": 5,
   "src/app/shared/components/organisms/auth-split/auth-split.css": 5,

@@ -137,6 +137,49 @@
     /* rebote corto: SOLO para confirmar una acción del dedo, nunca para datos */
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+    /* ---- muelles ---------------------------------------------------------
+       Curvas `linear()` de un muelle amortiguado real (x'' + 2ζω·x' + ω²·x = 0,
+       de 0 a 1), muestreadas. Son la ley del movimiento «físico»: lo que se
+       abre, se arrastra o cambia de lugar llega con inercia y se posa.
+       Cada curva trae SU duración: un muelle no se estira ni se acorta, o deja
+       de ser ese muelle. Usar siempre el par (`--spring-x` + `--spring-x-dur`).
+
+         rápido  ζ=1,00  260 ms  sin rebote · menús, chips, interruptores
+         suave   ζ=0,85  380 ms  asomo de 0,6 % · diálogos, hojas, popovers
+         rebote  ζ=0,60  460 ms  pasa 9 % y vuelve · SÓLO confirmaciones (el
+                                 check del botón); nunca para datos
+
+       Sin `linear()` (navegadores previos a 2023) caen a un cubic-bezier
+       equivalente, al final de este bloque. Espejo en Flutter: MantraMotion
+       (mismos ζ y duración; el nombre se alinea, los valores no cambian). */
+    --spring-rapido: linear(0, 0.169, 0.433, 0.648, 0.793, 0.882, 0.935, 0.965, 0.981, 0.99, 0.995, 0.997, 1);
+    --spring-rapido-dur: 260ms;
+    --spring-suave: linear(0, 0.147, 0.407, 0.64, 0.806, 0.909, 0.966, 0.993, 1.004, 1.006, 1.006, 1.004, 1.002, 1.001, 1);
+    --spring-suave-dur: 380ms;
+    --spring-rebote: linear(0, 0.211, 0.584, 0.885, 1.047, 1.094, 1.079, 1.044, 1.014, 0.997, 0.991, 0.992, 0.995, 0.998, 1, 1.001, 1.001, 1, 1);
+    --spring-rebote-dur: 460ms;
+
+    /* ================= materiales ========================================
+       Tres grosores de vidrio. Cada uno es un tinte (translúcido sobre el
+       contenido que pasa por debajo) + un desenfoque + un trazo fino; las
+       capas se leen por profundidad, no por líneas. Los tres traen RESPALDO
+       OPACO (`--material-respaldo`) para donde no hay `backdrop-filter` y para
+       `prefers-reduced-transparency`: el texto nunca depende del desenfoque.
+
+         fino     barras de herramientas, cabeceras que se desplazan
+         regular  menús, popovers, listas desplegables
+         grueso   diálogos y hojas modales
+
+       Se usan con las clases `.material-fino|regular|grueso` (más abajo). */
+    --material-fino-tinte: rgba(255, 255, 255, 0.62);
+    --material-regular-tinte: rgba(255, 255, 255, 0.78);
+    --material-grueso-tinte: rgba(255, 255, 255, 0.90);
+    --material-fino-desenfoque: blur(10px) saturate(1.5);
+    --material-regular-desenfoque: blur(22px) saturate(1.7);
+    --material-grueso-desenfoque: blur(34px) saturate(1.8);
+    --material-trazo: rgba(11, 85, 126, 0.12);
+    --material-respaldo: #FFFFFF;
+
     /* ================= apilamiento =========================================
        Sin estos tokens, cada capa fijaba su propio z-index y dos podían
        coincidir: el orden lo decidía entonces la posición en el DOM, que es
@@ -287,12 +330,21 @@
         --brand-accent: var(--c-amber-400);
 
         --border-default: rgba(255, 255, 255, 0.12);
-        --border-strong: rgba(255, 255, 255, 0.24);  /* excepción E3: <3:1 sin foco */
+        /* borde de control. Era velo al 24 % (2,15:1 sobre la tarjeta: la
+           excepción E3). Al 40 % da 3,57 tarjeta · 3,27 surface-alt · 3,51
+           inset · 3,78 base: ≥3:1 (WCAG 1.4.11) en toda superficie oscura. */
+        --border-strong: rgba(255, 255, 255, 0.40);
 
         --focus-ring: var(--c-mint-500);     /* sólido: ≥7,6:1 sobre toda superficie oscura */
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
         --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
         --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
+
+        --material-fino-tinte: rgba(10, 43, 61, 0.62);
+        --material-regular-tinte: rgba(10, 43, 61, 0.78);
+        --material-grueso-tinte: rgba(10, 43, 61, 0.90);
+        --material-trazo: rgba(255, 255, 255, 0.14);
+        --material-respaldo: #0A2B3D;
 
         /* estados en oscuro: fondo hundido + texto claro (800/200/600) */
         --st-success-bg: var(--c-success-800); --st-success-fg: var(--c-success-200); --st-success-bd: var(--c-success-600);
@@ -336,12 +388,18 @@
     --brand-accent: var(--c-amber-400);
 
     --border-default: rgba(255, 255, 255, 0.12);
-    --border-strong: rgba(255, 255, 255, 0.24);
+    --border-strong: rgba(255, 255, 255, 0.40);  /* ≥3:1, ver el bloque de arriba */
 
     --focus-ring: var(--c-mint-500);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
     --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
     --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
+
+    --material-fino-tinte: rgba(10, 43, 61, 0.62);
+    --material-regular-tinte: rgba(10, 43, 61, 0.78);
+    --material-grueso-tinte: rgba(10, 43, 61, 0.90);
+    --material-trazo: rgba(255, 255, 255, 0.14);
+    --material-respaldo: #0A2B3D;
 
     --st-success-bg: var(--c-success-800); --st-success-fg: var(--c-success-200); --st-success-bd: var(--c-success-600);
     --st-warning-bg: var(--c-warning-800); --st-warning-fg: var(--c-warning-200); --st-warning-bd: var(--c-warning-600);
@@ -425,6 +483,111 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 :focus-visible {
     outline: 4px solid var(--focus-ring);
     outline-offset: 0;
+}
+
+/* ---- materiales: las tres clases ----------------------------------------
+   `background` con el tinte, `backdrop-filter` con el desenfoque, trazo fino
+   por dentro. Sin `backdrop-filter` (o con `prefers-reduced-transparency`) el
+   tinte se vuelve el respaldo opaco: mismo aspecto, sin vidrio. */
+.material-fino,
+.material-regular,
+.material-grueso {
+    border: 1px solid var(--material-trazo);
+}
+.material-fino {
+    background: var(--material-fino-tinte);
+    -webkit-backdrop-filter: var(--material-fino-desenfoque);
+    backdrop-filter: var(--material-fino-desenfoque);
+}
+.material-regular {
+    background: var(--material-regular-tinte);
+    -webkit-backdrop-filter: var(--material-regular-desenfoque);
+    backdrop-filter: var(--material-regular-desenfoque);
+}
+.material-grueso {
+    background: var(--material-grueso-tinte);
+    -webkit-backdrop-filter: var(--material-grueso-desenfoque);
+    backdrop-filter: var(--material-grueso-desenfoque);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .material-fino,
+    .material-regular,
+    .material-grueso {
+        background: var(--material-respaldo);
+    }
+}
+@media (prefers-reduced-transparency: reduce) {
+    .material-fino,
+    .material-regular,
+    .material-grueso {
+        background: var(--material-respaldo);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+/* Muelles sin `linear()`: cubic-bezier de la misma duración y rebote parecido. */
+@supports not (transition-timing-function: linear(0, 1)) {
+    :root {
+        --spring-rapido: cubic-bezier(0.2, 0.9, 0.3, 1);
+        --spring-suave: cubic-bezier(0.22, 1.1, 0.36, 1);
+        --spring-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+}
+
+/* ---- paneles que nacen del control que los abre ------------------------
+   `.panel-muelle` va en el PANEL de un `<dialog>` (no en el `<dialog>`: el
+   velo `::backdrop` aparece con su propio fundido). Entra con el muelle
+   `suave` desde `--origen-x/y`, que `fijarOrigenDelPanel` publica con el
+   centro del control; sin control, crece desde el centro. Nace chico y
+   transparente y se posa: el movimiento explica de dónde viene. */
+@keyframes panel-nace {
+    from {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+}
+.panel-muelle {
+    transform-origin: var(--origen-x, 50%) var(--origen-y, 50%);
+    animation: panel-nace var(--spring-suave-dur) var(--spring-suave) both;
+}
+/* Mientras sale no recibe toques: un segundo clic no repite la elección. */
+.panel-muelle[data-saliendo='true'] {
+    pointer-events: none;
+}
+
+/* ---- transición entre rutas (View Transitions API) ----------------------
+   Sólo se anima el contenido (`view-transition-name: contenido`, en
+   `.app-main__inner`): el menú lateral y la barra superior no se mueven. El
+   resto de la página no tiene transición propia. Sin la API el router
+   navega como siempre; con `prefers-reduced-motion` ni siquiera se crea. */
+@keyframes vt-sale {
+    to {
+        opacity: 0;
+    }
+}
+@keyframes vt-entra {
+    from {
+        opacity: 0;
+        transform: translateY(var(--sp-2));
+    }
+}
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+}
+::view-transition-old(contenido) {
+    animation: vt-sale var(--dur-fast) var(--ease-standard) both;
+}
+::view-transition-new(contenido) {
+    animation: vt-entra var(--dur-base) var(--ease-out) both;
+}
+::view-transition-group(contenido) {
+    animation-duration: 0s;
+}
+.app-main__inner {
+    view-transition-name: contenido;
 }
 
 @media (prefers-reduced-motion: reduce) {

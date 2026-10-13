@@ -27,9 +27,11 @@ que el sistema necesita y vigila.
 | Familias tipográficas | 3 | `--font-*` | No |
 | Tamaños de tipografía | 9 | `--fs-*` | No |
 | Interlineados | 7 | `--lh-*` | No |
+| Muelles | 3 × 2 = **6** | `--spring-<rapido\|suave\|rebote>[-dur]` | No |
+| Materiales | 3 × 2 + 2 = **8** | `--material-<fino\|regular\|grueso>-<tinte\|desenfoque>`, `--material-trazo\|respaldo` | **Sí** (tinte, trazo, respaldo) |
 | Alias de compatibilidad | 7 | `--surface-*`, `--text-*`, `--border-*`, `--accent` | **Sí** |
 
-**220 tokens.** `DESIGN_TOKENS` los enumera en tiempo de ejecución.
+**234 tokens** (220 + 6 muelles + 8 materiales, 2026-10-12). `DESIGN_TOKENS` los enumera en tiempo de ejecución.
 
 Los PDF del sistema toman de acá sus colores y sus dos familias tipográficas,
 copiados en RGB y TTF porque `jsPDF` no lee CSS; cómo y con qué prueba de
@@ -131,7 +133,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([…]);
 > *«Existe para que la deriva CSS ↔ TS sea detectable, **no para iterarlo en la
 > UI**.»*
 
-La advertencia importa: pintar 220 tokens en una pantalla no es documentación, es
+La advertencia importa: pintar 234 tokens en una pantalla no es documentación, es
 un volcado. La vitrina exhibe los que tienen significado, no todos.
 
 ## Tokens que **no** existen
@@ -143,3 +145,22 @@ un volcado. La vitrina exhibe los que tienen significado, no todos.
 | Tokens específicos de componente | No existen, y es correcto: se componen desde los semánticos |
 
 Las tres primeras son las que más se notarían al crecer. Anotadas como `LOW`.
+
+
+## Radios y sombras: cuál va en qué
+
+Tabla de uso. Los valores no cambian; lo que se fija acá es **qué escalón
+corresponde a qué pieza**, para que dos pantallas no resuelvan lo mismo distinto.
+
+| Pieza | Radio | Sombra | Notas |
+|---|---|---|---|
+| Chip, badge, interruptor, avatar | `--r-full` | — | Cápsula |
+| Campo, botón, selector | `--r-md` (12) | — | Nunca `signature` |
+| Tarjeta (UNA elevada por pantalla) | `--r-lg` (18) | `--shadow-sm` | El resto, superficie tonal sin borde ni sombra |
+| Menú, popover, lista desplegable | `--r-lg` (18) | `--shadow-md` | Material `regular` |
+| Diálogo, hoja modal | `--r-xl` (24) | `--shadow-lg` | Material `grueso` |
+| Barra superior | 0 | — (trazo del material) | Material `fino` |
+| Elemento destacado de la pantalla | `--r-signature` | `--shadow-md` | Uno por pantalla |
+
+Los materiales (`.material-fino|regular|grueso`) llevan su propio trazo fino:
+una pieza con material no suma `border` ni `box-shadow` de borde.

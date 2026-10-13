@@ -131,3 +131,9 @@ app-access-tree {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
+
+/* La bandeja de accesos no es una caja: sólo agrupa su título, su nota y las
+   zonas. Fondo transparente y sin relleno propio (Carril F). */
+app-card.panel__sin-caja {
+  background: transparent;
+}

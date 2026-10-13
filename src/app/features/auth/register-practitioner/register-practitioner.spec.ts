@@ -8,6 +8,13 @@ import { vi } from 'vitest';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
+import {
+  chooseSelectOptionNow,
+  selectHasValue,
+  selectOptionLabelsNow,
+  selectShownLabel,
+  selectTrigger,
+} from '../../../../testing/select';
 import { SPECIALTY } from '../../../core/mock/fixtures/concepts';
 import { CATALOG_OUTSIDE_INSTITUTION } from '../../../core/profession/educational-institutions';
 import {
@@ -1108,41 +1115,44 @@ describe('RegisterPractitioner', () => {
       fixture.detectChanges();
     }
 
-    /** El `<select>` nativo de un `app-select` del paso, por el `data-testid` de su host. */
-    function desplegable(testId: string): HTMLSelectElement {
-      const select = enElPaso<HTMLElement>(testId)?.querySelector('select') ?? null;
-      if (select === null) throw new Error(`No está el desplegable ${testId}`);
-      return select;
+    /** El `app-select` del paso, por el `data-testid` de su host. */
+    function hostDelDesplegable(testId: string): HTMLElement {
+      const host = enElPaso<HTMLElement>(testId);
+      if (host === null) throw new Error(`No está el desplegable ${testId}`);
+      return host;
     }
 
-    /** Las etiquetas que ofrece un desplegable del paso, sin el placeholder oculto. */
+    /** El botón que hace de campo en un `app-select` del paso (donde vive `disabled`). */
+    function desplegable(testId: string): HTMLButtonElement {
+      return selectTrigger(hostDelDesplegable(testId));
+    }
+
+    /** Las etiquetas que ofrece un desplegable del paso (el placeholder no es una fila). */
     function etiquetasDe(testId: string): readonly string[] {
-      return Array.from(desplegable(testId).options)
-        .filter((opcion) => !opcion.hidden)
-        .map((opcion) => opcion.textContent?.trim() ?? '');
+      // Deshabilitado no se abre: leer su lista daría vacío y una aserción
+      // negativa pasaría sin mirar nada.
+      if (desplegable(testId).disabled) {
+        throw new Error(`El desplegable ${testId} está deshabilitado y no muestra su lista`);
+      }
+      return selectOptionLabelsNow(fixture, hostDelDesplegable(testId));
     }
 
     /** La etiqueta marcada en un desplegable del paso, o `null` si está en el placeholder. */
     function elegidoEn(testId: string): string | null {
-      const select = desplegable(testId);
-      const opcion = select.options[select.selectedIndex];
-      return opcion === undefined || opcion.hidden ? null : (opcion.textContent?.trim() ?? '');
+      const host = hostDelDesplegable(testId);
+      return selectHasValue(host) ? selectShownLabel(host) : null;
     }
 
     /**
-     * Elige en un desplegable como lo hace el ratón: la opción por su etiqueta
-     * y el evento `change`. `app-select` indexa las opciones por posición, así
-     * que escribir el valor a mano no sirve.
+     * Elige en un desplegable como lo hace el ratón: abre la lista y toca la
+     * opción por su etiqueta.
      */
     function elegirEnDesplegable(testId: string, etiqueta: string): void {
-      const select = desplegable(testId);
-      const opcion = Array.from(select.options).find(
-        (candidata) => candidata.textContent?.trim() === etiqueta,
-      );
-      if (opcion === undefined) throw new Error(`No hay «${etiqueta}» en ${testId}`);
-      select.value = opcion.value;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-      fixture.detectChanges();
+      const host = hostDelDesplegable(testId);
+      if (!selectOptionLabelsNow(fixture, host).includes(etiqueta)) {
+        throw new Error(`No hay «${etiqueta}» en ${testId}`);
+      }
+      chooseSelectOptionNow(fixture, host, etiqueta);
     }
 
     it('permite cargar más de un título del mismo tipo', () => {
@@ -1921,18 +1931,14 @@ describe('RegisterPractitioner', () => {
         // se puede cambiar, pero sólo por otra de sus sedes.
         expect(elegidoEn('registro-pro-titulo-ciudad')).toBe('Cochabamba');
         expect(
-          Array.from(desplegable('registro-pro-titulo-ciudad').options)
-            .map((o) => o.textContent?.trim())
-            .filter((t) => t !== '' && t !== undefined),
+          etiquetasDe('registro-pro-titulo-ciudad').filter((t) => t !== ''),
         ).toContain('Punata');
 
         // Un médico no ve la UPSA (no dicta Medicina): el filtro de salud ya
         // actúa sobre el título elegido.
-        expect(
-          Array.from(desplegable('registro-pro-titulo-universidad').options).map((o) =>
-            o.textContent?.trim(),
-          ),
-        ).not.toContain('Universidad Privada de Santa Cruz de la Sierra (UPSA)');
+        expect(etiquetasDe('registro-pro-titulo-universidad')).not.toContain(
+          'Universidad Privada de Santa Cruz de la Sierra (UPSA)',
+        );
 
         // Con una sola sede el desplegable queda fijo.
         elegirEnDesplegable(

@@ -183,24 +183,6 @@
   gap: var(--sp-3);
   max-height: calc(100vh - 2 * var(--sp-4));
   overflow-y: auto;
-  animation: dialog-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .date-picker-panel {
-    animation: none;
-  }
-}
-
-@keyframes dialog-appear {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .dialog-header {
@@ -410,14 +392,9 @@
   gap: var(--sp-1);
 }
 
+/* El marco lo pone `app-select`; aquí sólo el ancho de cada mitad. */
 .time-select {
-  background-color: var(--bg-surface-alt);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-xs);
-  padding: 4px var(--sp-2);
-  font-family: var(--font-body);
-  font-size: var(--fs-caption);
-  color: var(--text-primary);
+  width: 7.5rem;
 }
 
 .time-separator {

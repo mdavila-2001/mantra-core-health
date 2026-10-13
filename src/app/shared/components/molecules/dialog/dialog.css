@@ -55,18 +55,9 @@
   margin-top: var(--sp-6);
 }
 
-/* Entrada corta; la regla global de prefers-reduced-motion la vuelve
+/* La entrada es `.panel-muelle` (styles.css): muelle `suave` desde el control
+   que abrió el diálogo. Con prefers-reduced-motion la regla global la vuelve
    instantánea, que para un modal es exactamente lo correcto. */
-.dialog[open] .dialog__panel {
-  animation: dialog-in var(--dur-fast) var(--ease-standard);
-}
-
-@keyframes dialog-in {
-  from {
-    opacity: 0;
-    transform: translateY(var(--sp-2));
-  }
-}
 
 /* -- Datos en pares rótulo/valor ------------------------------------------- */
 

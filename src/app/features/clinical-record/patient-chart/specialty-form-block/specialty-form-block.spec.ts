@@ -1616,6 +1616,8 @@ describe('SpecialtyFormBlock', () => {
         codeConceptId: 'dx-1',
         encounterId: 'enc-1',
         noteText: 'Del formulario «Ficha de cardiología»',
+        // Tentativo: nace provisional hasta que el médico lo confirme.
+        verificationStatus: 'PROVISIONAL',
       });
       // La orden espera al diagnóstico: en serie, no en paralelo.
       http.expectNone('/clinical/service-requests');

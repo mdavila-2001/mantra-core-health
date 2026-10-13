@@ -74,7 +74,7 @@ function declaradosEnTypeScript() {
   // por donde el script mira el catálogo. El resultado fue el peor de los dos
   // mundos: un guardarraíl en rojo permanente, que es un guardarraíl que nadie
   // lee. `DESIGN_TOKENS` sí los incluye, al final y aparte.
-  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY', 'COMPAT_ALIASES']) {
+  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY', 'COMPAT_ALIASES', 'MATERIAL_SHARED']) {
     for (const token of objetoDe(objeto)) tokens.add(token);
   }
 
@@ -94,6 +94,14 @@ function declaradosEnTypeScript() {
   for (const nombre of listaDe('LAYER_NAMES')) tokens.add(`--z-${nombre}`);
   for (const nombre of listaDe('DURATION_NAMES')) tokens.add(`--dur-${nombre}`);
   for (const nombre of listaDe('EASING_NAMES')) tokens.add(`--ease-${nombre}`);
+  for (const nombre of listaDe('SPRING_NAMES')) {
+    tokens.add(`--spring-${nombre}`);
+    tokens.add(`--spring-${nombre}-dur`);
+  }
+  for (const nombre of listaDe('MATERIAL_NAMES')) {
+    tokens.add(`--material-${nombre}-tinte`);
+    tokens.add(`--material-${nombre}-desenfoque`);
+  }
   for (const rol of listaDe('TYPE_ROLES')) tokens.add(`--fs-${rol}`);
   for (const rol of listaDe('LINE_HEIGHT_ROLES')) tokens.add(`--lh-${rol}`);
 

@@ -59,3 +59,13 @@
     background: var(--bg-inset);
     color: var(--text-primary);
 }
+
+/* Teléfono: el escalón actual se calla (el título de la pantalla ya lo dice) y
+   con él su separador. En una columna angosta caía a un segundo renglón y dejaba
+   una barra suelta al final de la primera. */
+@media not all and (min-width: 40.0625rem) {
+    .breadcrumb__list > .breadcrumb__item:last-child,
+    .breadcrumb__list > .breadcrumb__separator:nth-last-child(2) {
+        display: none;
+    }
+}

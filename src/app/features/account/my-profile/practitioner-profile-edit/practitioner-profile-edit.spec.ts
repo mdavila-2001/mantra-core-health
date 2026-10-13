@@ -13,6 +13,7 @@ import { WorkHistory } from '../work-history/work-history';
 
 import { EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
+import { selectOptionLabels } from '../../../../../testing/select';
 import { environment } from '../../../../../environments/environment';
 
 /**
@@ -4211,7 +4212,7 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => readonly unknown[]>('opcionesDeIdioma')()).toHaveLength(2);
     });
 
-    it('con vista: Datos personales conserva idiomas y su guardado; Credenciales los excluye', () => {
+    it('con vista: Datos personales conserva idiomas y su guardado; Credenciales los excluye', async () => {
       parametros = { pestana: '0' };
       const fixture = montarConVista({ languages: IDIOMAS });
       responderCatalogoDeIdiomas();
@@ -4221,7 +4222,9 @@ describe('PractitionerProfileEdit', () => {
       const bloque = panel.querySelector('[data-testid="edicion-idiomas"]');
       expect(bloque).not.toBeNull();
       expect(bloque?.querySelectorAll('[data-testid^="idioma-select-"]')).toHaveLength(2);
-      expect(bloque?.querySelector('[data-testid="idioma-select-0"] select')?.textContent).toContain('Español');
+      const idioma0 = bloque?.querySelector('[data-testid="idioma-select-0"]');
+      expect(idioma0).toBeTruthy();
+      expect(await selectOptionLabels(fixture, idioma0!)).toContain('Español');
       expect(bloque?.querySelector('[data-testid="idioma-interpreta-0"] [role="switch"]')?.getAttribute('aria-checked')).toBe('true');
       const guardar = [...(bloque?.querySelectorAll('button') ?? [])].find((b) =>
         b.textContent?.includes('Guardar idiomas'),

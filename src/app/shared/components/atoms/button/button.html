@@ -3,4 +3,11 @@
 @if (isLoading()) {
   <app-spinner class="btn__spinner" size="sm" decorative />
 }
+@if (isSuccess()) {
+  <!-- El nombre accesible sigue siendo el texto proyectado (transparente, no
+       oculto): el check es sólo la confirmación visual. -->
+  <svg class="btn__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1" />
+  </svg>
+}
 <ng-content />

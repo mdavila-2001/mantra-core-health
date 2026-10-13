@@ -8,6 +8,7 @@ import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
 import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
+import { selectOptionLabels, selectTrigger } from '../../../../testing/select';
 import { RegisterOrganization } from './register-organization';
 import { nameExtraControl } from '../shared-registration/name-fields/person-name';
 
@@ -1415,7 +1416,7 @@ describe('RegisterOrganization', () => {
       req.flush(RESPUESTA);
     });
 
-    it('AC-03: Estados Unidos (multizona) ofrece el selector de zona horaria, preseleccionado en la del Este', () => {
+    it('AC-03: Estados Unidos (multizona) ofrece el selector de zona horaria, preseleccionado en la del Este', async () => {
       fixture.detectChanges();
       completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
       // `completar()` fija `timeZone` en 'America/La_Paz' de forma explícita
@@ -1432,15 +1433,14 @@ describe('RegisterOrganization', () => {
       expect(totalDePaginas()).toBe(8);
 
       avanzarHasta('Datos de la aseguradora');
-      // `[data-testid]` va en el host `<app-select>`; el `<select>` nativo
-      // (donde vive `aria-required`, ver `select.html`) es su descendiente.
+      // `[data-testid]` va en el host `<app-select>`; el botón que hace de
+      // campo (donde vive `aria-required`, ver `select.html`) es su descendiente.
       const contenedor: HTMLElement | null = fixture.nativeElement.querySelector(
         '[data-testid="registro-organizacion-zona"]',
       );
-      const nativo: HTMLSelectElement | null | undefined = contenedor?.querySelector('select');
       expect(contenedor).not.toBeNull();
-      expect(nativo?.getAttribute('aria-required')).toBe('true');
-      expect(contenedor?.querySelectorAll('option:not([hidden])').length).toBe(7);
+      expect(selectTrigger(contenedor!).getAttribute('aria-required')).toBe('true');
+      expect((await selectOptionLabels(fixture, contenedor!)).length).toBe(7);
       expect(component.form.controls.timeZone.value).toBe('America/New_York');
 
       // Elegir el Pacífico y enviar: el valor viaja en el cuerpo.

@@ -11,6 +11,7 @@ import type {
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
 import type { ProductFields, LoadMode } from '../catalog-rules/catalog.rules';
+import { chooseSelectOption, selectOptionLabels } from '../../../../testing/select';
 import { PharmacyImport } from './pharmacy-import';
 
 /**
@@ -454,18 +455,15 @@ describe('PharmacyImport', () => {
   describe('modo', () => {
     const MODE_CSV = ['codigo;marca', 'A-1;Nuevo', 'PAR-500;Ya está', ''].join('\n');
 
-    it('ofrece las tres opciones con sus rótulos y cambiarla en el desplegable cambia el modo', () => {
+    it('ofrece las tres opciones con sus rótulos y cambiarla en el desplegable cambia el modo', async () => {
       mount();
 
-      const select = root().querySelector('app-select select') as HTMLSelectElement;
-      const labels = Array.from(select.options)
-        .filter((option) => !option.hidden)
-        .map((option) => option.textContent?.trim());
+      const select = root().querySelector('app-select') as HTMLElement;
+      const labels = await selectOptionLabels(fixture, select);
       expect(labels).toEqual(['Crear y actualizar', 'Sólo crear', 'Sólo actualizar']);
       expect(text()).toContain('Los códigos nuevos se crean y los que ya están en su catálogo se actualizan');
 
-      select.value = String(labels.indexOf('Sólo actualizar'));
-      select.dispatchEvent(new Event('change'));
+      await chooseSelectOption(fixture, select, 'Sólo actualizar');
       fixture.detectChanges();
 
       expect(internal().mode()).toBe('SOLO_ACTUALIZAR');
