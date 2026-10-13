@@ -44,6 +44,10 @@ const FOTOS = join(DESTINO, 'fotos', FASE);
 interface Ruta {
   readonly ruta: string;
   readonly nombre: string;
+  readonly accion?:
+    | 'crear-consultorio'
+    | 'editar-perfil-consultorio'
+    | 'panel-consultorio';
   /**
    * `no-encontrado` para una ruta que este carril **borró**: la prueba pasa si
    * la aplicación ya no la sirve. Sin esto, borrar una pantalla dejaría la
@@ -357,6 +361,38 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
+          const routeEntry = RUTAS.find((entry) => entry.ruta === ruta && entry.nombre === nombre);
+          if (routeEntry?.accion === 'crear-consultorio') {
+            await activePage.getByTestId('sede-agregar').click();
+            await activePage.getByTestId('sede-cargar-propio').click();
+            await expect(activePage.getByTestId('sede-formulario')).toBeVisible();
+            // Esperar la transición del diálogo para evitar capturarlo a medio abrir.
+            await activePage.waitForTimeout(400);
+          }
+          if (routeEntry?.accion === 'editar-perfil-consultorio') {
+            await activePage.getByRole('tab', { name: 'Dónde atiendo' }).click();
+            await expect(activePage.getByTestId('sedes-propias')).toBeVisible();
+          }
+          if (routeEntry?.accion === 'panel-consultorio') {
+            const accesos = activePage.getByTestId('panel-accesos');
+            await accesos.scrollIntoViewIfNeeded();
+            await activePage
+              .getByTestId('panel-zona')
+              .filter({ hasText: 'Administración' })
+              .click();
+            const zonaAbierta = activePage.getByTestId('panel-zona-abierta');
+            await zonaAbierta.scrollIntoViewIfNeeded();
+            const accesoConsultorio = activePage
+              .getByTestId('panel-acceso')
+              .filter({ hasText: 'Mi consultorio propio' });
+            if (FASE === 'antes') {
+              await expect(accesoConsultorio).toHaveCount(0);
+            } else {
+              await expect(accesoConsultorio).toBeVisible();
+              await accesoConsultorio.scrollIntoViewIfNeeded();
+            }
+            await activePage.waitForTimeout(400);
+          }
           if (ruta.includes('with-file=1')) {
             const input = activePage.getByTestId('matricula-archivo');
             await expect(input).toBeVisible();
