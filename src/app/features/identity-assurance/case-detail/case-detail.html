@@ -1,0 +1,51 @@
+<app-page-header
+  title="Expediente de verificación"
+  subtitle="Evidencias enviadas por la persona solicitante. El acceso a estos archivos queda registrado."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (errorMessage(); as mensaje) {
+  <app-alert tone="error">{{ mensaje }}</app-alert>
+}
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  @if (detail(); as caso) {
+    <section class="expediente">
+      <app-card variant="outlined" padding="lg">
+        <h2>Datos del caso</h2>
+        <dl class="expediente__datos">
+          <dt>Identificador</dt><dd><code>{{ caso.id }}</code></dd>
+          <dt>Sujeto</dt><dd><code>{{ caso.subjectEntityId }}</code></dd>
+          <dt>Estado</dt><dd><code>{{ caso.status }}</code></dd>
+          <dt>Abierto</dt><dd>{{ caso.openedAt?.toLocaleString() ?? 'Sin fecha' }}</dd>
+          <dt>Riesgo</dt><dd>{{ caso.riskScore ?? 'Sin puntaje' }}</dd>
+        </dl>
+      </app-card>
+
+      <h2>Evidencias ({{ previews().length }})</h2>
+      <div class="expediente__evidencias">
+        @for (evidence of previews(); track evidence.id) {
+          <app-card variant="outlined" padding="md">
+            <h3>{{ evidence.label }}</h3>
+            @if (evidence.contentUrl; as contentUrl) {
+              @if (esImagen(contentUrl)) {
+                <img class="expediente__imagen" [src]="contentUrl" [alt]="evidence.label" />
+              } @else {
+                <a [href]="contentUrl" [download]="evidence.label + '.pdf'">Abrir evidencia</a>
+              }
+            } @else {
+              <p>No se pudo cargar el archivo. Puede reintentar el expediente.</p>
+            }
+            <p class="expediente__fecha">Recibida {{ evidence.createdAt.toLocaleString() }}</p>
+          </app-card>
+        } @empty {
+          <p>Este caso no tiene archivos asociados.</p>
+        }
+      </div>
+
+      <a class="expediente__accion" [routerLink]="escalationRoute" [queryParams]="{ caseId: caso.id }">
+        Abrir herramientas de revisión para este caso
+      </a>
+    </section>
+  }
+</app-view-state-host>

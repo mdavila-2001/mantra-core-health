@@ -31,7 +31,7 @@ import {
 import { AT_RISK_CODE, toReviewerStatusLabel } from './case-queue.presentation';
 
 /** Ruta del formulario que escala un caso a revisión manual. */
-const ESCALATE_ROUTE = '/administration/identity-assurance/review/escalate';
+const DETAIL_ROUTE = '/administration/identity-assurance/cases';
 /** Ruta del alta de caso, salida del estado vacío. */
 const OPEN_CASE_ROUTE = '/administration/identity-assurance/cases/new';
 
@@ -133,7 +133,7 @@ export class CaseQueue {
       : (estado as ViewState<readonly QueueRow[]>);
   });
 
-  protected readonly escalateRoute = ESCALATE_ROUTE;
+  protected readonly detailRoute = DETAIL_ROUTE;
 
   private readonly statusCell = viewChild<QueueCell>('statusCell');
   private readonly caseCell = viewChild<QueueCell>('caseCell');

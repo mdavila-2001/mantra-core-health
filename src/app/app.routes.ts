@@ -1888,6 +1888,9 @@ export const routes: Routes = [
           (m) => m.CaseExpireSweep,
         ),
       ),
+      pantallaDeVerificacionIdentidad('cases/:caseId', 'Expediente de identidad', () =>
+        import('./features/identity-assurance/case-detail/case-detail').then((m) => m.CaseDetail),
+      ),
       pantallaDeVerificacionIdentidad(
         'checks/attempt',
         'Registrar intento contra la autoridad',
