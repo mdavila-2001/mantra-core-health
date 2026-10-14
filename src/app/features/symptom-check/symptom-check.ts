@@ -489,6 +489,9 @@ export class SymptomCheck {
 
   protected alternarAyudaManual(): void {
     this.ayudaManualAbierta.update((v) => !v);
+    if (this.ayudaManualAbierta() && typeof window !== 'undefined') {
+      setTimeout(() => document.querySelector('[data-testid="sintomas-crisis-soporte"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
   }
 
   /** Si se debe desplegar el módulo de apoyo y contención en crisis (por detección en texto o apertura manual). */
@@ -500,14 +503,10 @@ export class SymptomCheck {
   protected readonly vistaRecomendacion = signal<'especialidades' | 'medicamentos'>('especialidades');
 
   /** Medicamentos orientativos recomendados según los síntomas activos y conocimiento farmacológico. */
-  protected readonly medicamentosSugeridos = computed<readonly MedicamentoSugerido[]>(() =>
-    recomendarMedicamentos(this.sintomas()),
-  );
+  protected readonly medicamentosSugeridos = computed<readonly MedicamentoSugerido[]>(() => recomendarMedicamentos(this.sintomas()));
 
   /** Resumen de nombres de síntomas detectados para la vista de medicamentos. */
-  protected readonly sintomasDetectadosTexto = computed(() =>
-    this.sintomas().map((s) => s.nombre).join(', '),
-  );
+  protected readonly sintomasDetectadosTexto = computed(() => this.sintomas().map((s) => s.nombre).join(', '));
 
   /** Parámetros de búsqueda para recomendación de medicamentos según síntomas reconocidos. */
   protected readonly medicamentosQueryParams = computed(() => {
