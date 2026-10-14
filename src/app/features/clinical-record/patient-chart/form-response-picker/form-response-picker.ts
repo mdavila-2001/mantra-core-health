@@ -103,7 +103,7 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
     }
     .respuesta__estado {
       margin: 0;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       font-size: var(--fs-caption);
     }
   `,
