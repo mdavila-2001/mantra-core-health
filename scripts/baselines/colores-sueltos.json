@@ -1,6 +1,6 @@
 {
-  "src/app/features/symptom-check/symptom-check.css": 103,
   "src/app/features/component-stock/component-stock.css": 34,
+  "src/app/features/symptom-check/symptom-check.css": 33,
   "src/app/shared/components/organisms/auth-stage/auth-stage.css": 11,
   "src/app/features/messaging/thread/thread.css": 10,
   "src/app/shared/components/organisms/content-dialog/content-dialog.css": 7,
