@@ -56,8 +56,8 @@ set -uo pipefail
 
 RAMA="${AUTODEPLOY_RAMA:-mockup}"
 REPO="${AUTODEPLOY_REPO:-https://github.com/mdavila-2001/mantra-core-health.git}"
-COOLIFY="${AUTODEPLOY_COOLIFY:-http://173.249.39.237:8000}"
-APP="${AUTODEPLOY_APP:-miwmlirpzpz9p5hdvbx1urjo}"
+COOLIFY="${AUTODEPLOY_COOLIFY:-http://62.169.18.132:8000}"
+APP="${AUTODEPLOY_APP:-yy47w4mo8vhdor3ykgbr3z3t}"
 ENV_TOKEN="${AUTODEPLOY_ENV:-$HOME/.config/alovida/coolify.env}"
 
 ESTADO_DIR="${AUTODEPLOY_ESTADO:-$HOME/.local/state/alovida-autodeploy}"
