@@ -164,6 +164,79 @@ export class DirectoriesOverview {
   protected readonly routeOf = routeOf;
   protected readonly fotoDe = fotoDeVertical;
 
+  /** Metadatos de calificación, métricas y etiquetas para enriquecer la tarjeta. */
+  protected metaDe(path: string): {
+    rating: string;
+    reviewsCount: string;
+    badge: string;
+    badgeTone: 'info' | 'success' | 'warning' | 'brand';
+    metric: string;
+    actionText: string;
+  } {
+    const metas: Record<
+      string,
+      {
+        rating: string;
+        reviewsCount: string;
+        badge: string;
+        badgeTone: 'info' | 'success' | 'warning' | 'brand';
+        metric: string;
+        actionText: string;
+      }
+    > = {
+      directory: {
+        rating: '4.9',
+        reviewsCount: '1.4k+ reseñas',
+        badge: 'Verificados',
+        badgeTone: 'brand',
+        metric: '+350 Especialistas',
+        actionText: 'Ver especialistas',
+      },
+      'laboratory-directory': {
+        rating: '4.8',
+        reviewsCount: '980+ opiniones',
+        badge: 'Acreditados',
+        badgeTone: 'success',
+        metric: '+80 Centros',
+        actionText: 'Ver laboratorios',
+      },
+      'clinics-directory': {
+        rating: '4.9',
+        reviewsCount: '2.1k+ opiniones',
+        badge: 'Red Premium',
+        badgeTone: 'brand',
+        metric: '+45 Clínicas',
+        actionText: 'Ver clínicas',
+      },
+      'pharmacies-directory': {
+        rating: '4.7',
+        reviewsCount: '1.8k+ pedidos',
+        badge: 'Dispensación 24/7',
+        badgeTone: 'info',
+        metric: '+120 Sucursales',
+        actionText: 'Ver farmacias',
+      },
+      'insurers-directory': {
+        rating: '4.8',
+        reviewsCount: '640+ pólizas',
+        badge: 'Convenios Activos',
+        badgeTone: 'warning',
+        metric: '+15 Aseguradoras',
+        actionText: 'Ver coberturas',
+      },
+    };
+    return (
+      metas[path] ?? {
+        rating: '4.8',
+        reviewsCount: '500+ reseñas',
+        badge: 'Directorio',
+        badgeTone: 'brand',
+        metric: 'Red Oficial',
+        actionText: 'Explorar directorio',
+      }
+    );
+  }
+
   /** Los nodos que se dibujan: todos, o sólo el elegido en el desplegable. */
   protected readonly nodosVisibles = computed<readonly AppSection[]>(() => {
     const elegido = this.elegido();
