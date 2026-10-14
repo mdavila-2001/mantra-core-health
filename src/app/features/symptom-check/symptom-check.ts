@@ -322,6 +322,23 @@ export class SymptomCheck {
     currentReading(this.lecturaGuardada(), this.texto()),
   );
 
+  /** Mensaje seguro del servicio; el texto local mantiene una respuesta amable con servicios viejos. */
+  protected readonly respuestaDelServicio = computed(() => this.lecturaVigente()?.response ?? null);
+
+  protected readonly respuestaEmpatica = computed(() => {
+    if (this.alarmas().length > 0 || this.texto().trim() === '') {
+      return null;
+    }
+    const respuesta = this.respuestaDelServicio();
+    if (respuesta !== null) {
+      return respuesta;
+    }
+    if (this.sintomas().length === 0) {
+      return 'Gracias por contarnos cómo se siente. A veces cuesta encontrar las palabras, y lo que siente merece atención. Un médico general puede escucharle y ayudarle a decidir el próximo paso.';
+    }
+    return 'Gracias por contarnos cómo se siente. Entendemos que esto puede preocuparle. No podemos determinar la causa por este medio, pero un profesional puede escucharle, evaluar sus síntomas y orientarle sobre los próximos pasos.';
+  });
+
   /** Los hallazgos del servicio que todavía valen para lo escrito. */
   private readonly deLaLectura = computed(() => readingSymptoms(this.lecturaVigente()));
 

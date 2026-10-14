@@ -31,6 +31,8 @@ export interface HallazgoIa {
 export interface LecturaIa {
   readonly symptoms: readonly HallazgoIa[];
   readonly urgency: 'urgente' | 'prioritaria' | 'programada';
+  /** Respuesta empática de orientación, nunca un diagnóstico. */
+  readonly response?: string;
   /**
    * Quién leyó el texto: `model` = MedGemma (una interpretación, puede no ser
    * exacta); `semantic` = parecido de significado con las frases de la tabla

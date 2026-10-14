@@ -548,6 +548,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
       },
     ],
     urgency: 'programada',
+    response: 'Gracias por contarnos cómo se siente. Entendemos que esto puede preocuparle.',
   };
 
   beforeEach(() => {
@@ -590,6 +591,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('manchas en la espalda');
     expect(html.querySelector('.sintomas__recomendaciones')?.textContent).toContain('Dermatología');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain('Gracias por contarnos');
   });
 
   it('si el servicio no responde, la pantalla sigue con lo que reconoce sola', () => {
@@ -599,6 +601,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     fixture.detectChanges();
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('dolor de cabeza');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain('Gracias por contarnos');
   });
 
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
