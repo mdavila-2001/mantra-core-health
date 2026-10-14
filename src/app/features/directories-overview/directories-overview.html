@@ -64,17 +64,15 @@
           <span class="mapa__alovida-sub">Red de Salud</span>
         </div>
 
-        <!-- Radiación de destellos / rayos del asterisco hacia los nodos -->
-        <div class="mapa__rayos" aria-hidden="true">
-          <span class="mapa__rayo mapa__rayo--tl"></span>
-          <span class="mapa__rayo mapa__rayo--tr"></span>
-          <span class="mapa__rayo mapa__rayo--bl"></span>
-          <span class="mapa__rayo mapa__rayo--br"></span>
-          <span class="mapa__rayo mapa__rayo--bc"></span>
-        </div>
       </div>
 
-      <!-- Tarjetas de los directorios distribuidas como nodos del asterisco -->
+      <!-- Red / Bus de distribución que conecta el núcleo central con los directorios -->
+      <div class="mapa__distribuidor" aria-hidden="true">
+        <div class="mapa__tallo"></div>
+        <div class="mapa__barra-horizontal"></div>
+      </div>
+
+      <!-- Tarjetas de los directorios distribuidas de forma ultra estética -->
       <ul class="rejilla mapa__nodos">
         @for (nodo of nodosVisibles(); track nodo.path; let idx = $index) {
           <li
@@ -82,17 +80,48 @@
             [attr.data-path]="nodo.path"
             [attr.data-pos]="posicionDe(nodo.path, idx)"
           >
-            <!-- Brazo / conector del asterisco hacia el núcleo central -->
+            <!-- Conector desde la barra horizontal al nodo de la tarjeta -->
             <div class="mapa__conector" aria-hidden="true">
               <span class="mapa__conector-trazo"></span>
               <span class="mapa__conector-nodo"></span>
             </div>
 
             <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
-              <img class="rejilla__foto" [src]="fotoDe(nodo.path)" alt="" loading="lazy" />
-              <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
-              <span class="rejilla__nombre">{{ nodo.label }}</span>
-              <span class="rejilla__resumen">{{ nodo.summary }}</span>
+              <!-- Cabecera de la tarjeta: Foto con badges y métrica flotante -->
+              <div class="rejilla__cabecera">
+                <img class="rejilla__foto" [src]="fotoDe(nodo.path)" alt="" loading="lazy" />
+                <div class="rejilla__foto-degradado" aria-hidden="true"></div>
+                <span class="rejilla__badge" [attr.data-tono]="metaDe(nodo.path).badgeTone">
+                  {{ metaDe(nodo.path).badge }}
+                </span>
+                <span class="rejilla__metrica">
+                  {{ metaDe(nodo.path).metric }}
+                </span>
+              </div>
+
+              <!-- Cuerpo de la tarjeta: Identidad, Calificación, Resumen y CTA -->
+              <div class="rejilla__cuerpo">
+                <div class="rejilla__identidad">
+                  <div class="rejilla__icono-envoltura">
+                    <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
+                  </div>
+                  <span class="rejilla__nombre">{{ nodo.label }}</span>
+                </div>
+
+                <!-- Calificación / Opiniones de pacientes y usuarios -->
+                <div class="rejilla__calificacion" aria-label="Calificación de usuarios">
+                  <span class="rejilla__estrellas" aria-hidden="true">★★★★★</span>
+                  <span class="rejilla__puntuacion">{{ metaDe(nodo.path).rating }}</span>
+                  <span class="rejilla__opiniones">{{ metaDe(nodo.path).reviewsCount }}</span>
+                </div>
+
+                <p class="rejilla__resumen">{{ nodo.summary }}</p>
+
+                <div class="rejilla__pie">
+                  <span class="rejilla__accion">{{ metaDe(nodo.path).actionText }}</span>
+                  <span class="rejilla__flecha" aria-hidden="true">→</span>
+                </div>
+              </div>
             </a>
           </li>
         }
