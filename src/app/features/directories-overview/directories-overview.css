@@ -1,11 +1,11 @@
 /* ============================================================================
-   PORTADA DE DIRECTORIOS — NODO EN ASTERISCO CON ALOVIDA LATIENDO AL CENTRO
+   PORTADA DE DIRECTORIOS — RED TOPOLÓGICA CON NÚCLEO ALOVIDA Y TARJETAS ENRIQUECIDAS
    
    Estructura:
-   - Hub central: AloVida con logo, corazón latiendo con trazado ECG y ondas de pulso
-   - Conectores radiales: Enlaces hacia cada directorio (Médicos, Laboratorios,
-     Clínicas, Farmacias, Aseguradoras)
-   - Tarjetas: Rejilla elevada y ultra estética con fotos, badges e interacción
+   - Hub central: Núcleo AloVida con logo, corazón latiendo con trazado ECG y ondas de pulso
+   - Red distribuidora: Tallo vertical y barra horizontal que conecta de forma simétrica a los directorios
+   - Conectores radiales: Enlaces directos a cada tarjeta con nodo brillante reactivo
+   - Tarjetas: Rejilla elevada y ultra estética con fotos, calificaciones, insignias y métricas
    ========================================================================== */
 
 :host {
@@ -13,7 +13,7 @@
 }
 
 /* ============================================================================
-   CONTENEDOR PRINCIPAL DEL MAPA EN ASTERISCO
+   CONTENEDOR PRINCIPAL DEL MAPA
    ========================================================================== */
 .mapa {
   position: relative;
@@ -31,7 +31,7 @@
   flex-direction: column;
   align-items: center;
   inline-size: 100%;
-  max-inline-size: 76rem;
+  max-inline-size: 78rem;
   margin-inline: auto;
 }
 
@@ -44,8 +44,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-block-end: var(--sp-6);
-  z-index: 2;
+  margin-block-end: 0;
+  z-index: 3;
 }
 
 /* Ondas circulares concéntricas de pulso / latido expansivo */
@@ -103,8 +103,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  padding: var(--sp-5) var(--sp-8);
-  min-inline-size: 15rem;
+  padding: var(--sp-4) var(--sp-7);
+  min-inline-size: 14rem;
   border-radius: var(--r-2xl);
   background: linear-gradient(145deg, var(--c-neutral-800) 0%, var(--c-neutral-900) 100%);
   color: var(--bg-surface);
@@ -165,14 +165,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  inline-size: 3rem;
-  block-size: 3rem;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
   margin-block: var(--sp-1);
 }
 
 .mapa__corazon-svg {
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
+  inline-size: 2.4rem;
+  block-size: 2.4rem;
   overflow: visible;
   animation: latido-cardiaco 1.4s ease-in-out infinite;
   filter: drop-shadow(0 0 8px rgba(181, 83, 60, 0.6));
@@ -245,25 +245,68 @@
   border-radius: var(--r-full);
 }
 
-/* Radiación de rayos sutiles del asterisco */
-.mapa__rayos {
-  display: none;
+/* ============================================================================
+   RED / BUS DE DISTRIBUCIÓN
+   ========================================================================== */
+.mapa__distribuidor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  inline-size: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mapa__tallo {
+  inline-size: 2px;
+  block-size: 1.5rem;
+  background: linear-gradient(to bottom, var(--brand-primary), rgba(11, 85, 126, 0.45));
+}
+
+.mapa__barra-horizontal {
+  inline-size: calc(100% - 6rem);
+  max-inline-size: 72rem;
+  block-size: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(11, 85, 126, 0.3) 8%,
+    var(--brand-primary) 50%,
+    rgba(11, 85, 126, 0.3) 92%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px rgba(11, 85, 126, 0.2);
+}
+
+/* En pantallas angostas el bus lineal se oculta para no cruzar el layout en columna */
+@media (max-width: 768px) {
+  .mapa__distribuidor {
+    display: none;
+  }
 }
 
 /* ============================================================================
    REJILLA DE NODOS PERIFÉRICOS (TARJETAS DE DIRECTORIO)
    ========================================================================== */
 .mapa__nodos {
-  --rejilla-min: 15rem;
-
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--rejilla-min)), 1fr));
-  gap: var(--sp-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--sp-4);
   inline-size: 100%;
+  max-inline-size: 78rem;
   margin: 0;
   padding: 0;
   list-style: none;
+  justify-content: center;
+}
+
+/* Distribución simétrica de 5 columnas en monitores de escritorio */
+@media (min-width: 1024px) {
+  .mapa[data-total="5"] .mapa__nodos {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 /* Conector vertical y nodo terminal hacia cada tarjeta */
@@ -277,10 +320,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   inline-size: 100%;
-  block-size: var(--sp-5);
+  block-size: 1.25rem;
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .mapa__conector {
+    display: none;
+  }
 }
 
 .mapa__conector-trazo {
@@ -295,8 +344,14 @@
   border-radius: var(--r-full);
   background: var(--brand-primary);
   box-shadow: 0 0 6px var(--brand-primary);
-  margin-block-end: -4px;
-  z-index: 1;
+  margin-block-start: -4px;
+  z-index: 2;
+  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard);
+}
+
+.mapa__item:hover .mapa__conector-nodo {
+  transform: scale(1.4);
+  box-shadow: 0 0 12px var(--brand-primary);
 }
 
 /* ============================================================================
@@ -306,15 +361,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
   inline-size: 100%;
   block-size: 100%;
-  padding: var(--sp-4);
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--r-xl);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 4px 16px -2px rgba(0, 0, 0, 0.05),
+    0 2px 4px rgba(0, 0, 0, 0.02);
   text-decoration: none;
   color: inherit;
   transition:
@@ -324,84 +379,251 @@
 }
 
 .rejilla__tarjeta:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
   border-color: var(--brand-primary);
   box-shadow:
-    0 16px 32px -8px rgba(11, 85, 126, 0.16),
-    0 4px 12px rgba(0, 0, 0, 0.04);
+    0 20px 40px -10px rgba(11, 85, 126, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Cabecera visual con foto, overlays e insignias */
+.rejilla__cabecera {
+  position: relative;
+  inline-size: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--bg-inset);
 }
 
 .rejilla__foto {
   display: block;
-  inline-size: calc(100% + var(--sp-4) * 2);
-  max-inline-size: none;
-  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-3);
-  aspect-ratio: 16 / 10;
+  inline-size: 100%;
+  block-size: 100%;
   object-fit: cover;
-  background: var(--bg-inset);
   transition: transform 0.4s var(--ease-standard);
 }
 
 .rejilla__tarjeta:hover .rejilla__foto {
-  transform: scale(1.04);
+  transform: scale(1.06);
+}
+
+.rejilla__foto-degradado {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(7, 47, 69, 0.65) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Badge flotante superior */
+.rejilla__badge {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-start: var(--sp-2);
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--r-full);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--brand-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.rejilla__badge[data-tono="success"] {
+  background: rgba(234, 250, 243, 0.94);
+  color: #107C41;
+}
+
+.rejilla__badge[data-tono="info"] {
+  background: rgba(235, 245, 255, 0.94);
+  color: #0078D4;
+}
+
+.rejilla__badge[data-tono="warning"] {
+  background: rgba(255, 249, 235, 0.94);
+  color: #B45309;
+}
+
+/* Métrica flotante */
+.rejilla__metrica {
+  position: absolute;
+  inset-block-end: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: var(--r-full);
+  background: rgba(7, 47, 69, 0.85);
+  color: #FFFFFF;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Cuerpo de la tarjeta */
+.rejilla__cuerpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--sp-4);
+  gap: var(--sp-2);
+}
+
+.rejilla__identidad {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.rejilla__icono-envoltura {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  flex-shrink: 0;
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+.rejilla__tarjeta:hover .rejilla__icono-envoltura {
+  transform: scale(1.1);
+  background: var(--brand-primary);
+  color: #FFFFFF;
 }
 
 .rejilla__icono {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 2.25rem;
-  block-size: 2.25rem;
-  padding: 6px;
-  border-radius: var(--r-md);
-  background: var(--st-primary-bg);
-  color: var(--st-primary-fg);
-  box-shadow: inset 0 0 0 1px var(--st-primary-bd);
-  transition: background-color var(--dur-fast), color var(--dur-fast);
-}
-
-.rejilla__tarjeta:hover .rejilla__icono {
-  background: var(--brand-primary);
-  color: var(--bg-surface);
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
 }
 
 .rejilla__nombre {
-  font-size: var(--fs-body);
+  font-size: 0.9375rem;
   font-weight: 700;
+  line-height: var(--lh-tight, 1.25);
   color: var(--text-primary);
-  line-height: var(--lh-body);
-  margin-block-start: var(--sp-1);
+  margin: 0;
 }
 
+/* Calificación con estrellas doradas */
+.rejilla__calificacion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-block-start: 2px;
+}
+
+.rejilla__estrellas {
+  color: #F59E0B;
+  font-size: 0.8125rem;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.rejilla__puntuacion {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-inline-start: 2px;
+}
+
+.rejilla__opiniones {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-inline-start: 2px;
+}
+
+/* Resumen */
 .rejilla__resumen {
   font-size: var(--fs-caption);
+  line-height: 1.45;
   color: var(--text-secondary);
-  line-height: var(--lh-caption);
+  margin: 0;
+  flex: 1;
+}
+
+/* Pie de la tarjeta con acción */
+.rejilla__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-start: var(--sp-2);
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.07));
+}
+
+.rejilla__accion {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--brand-primary);
+  transition: color var(--dur-base) var(--ease-standard);
+}
+
+.rejilla__flecha {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+.rejilla__tarjeta:hover .rejilla__flecha {
+  transform: translateX(4px);
 }
 
 /* ============================================================================
-   RESPONSIVIDAD Y PREFERS-REDUCED-MOTION
+   TEMA OSCURO
    ========================================================================== */
-@media (max-width: 40rem) {
-  .mapa__nucleo {
-    padding: var(--sp-4) var(--sp-6);
-    min-inline-size: 13rem;
-  }
-
-  .mapa__conector {
-    display: none;
-  }
+[data-theme="dark"] .mapa__barra-horizontal,
+[data-tema="oscuro"] .mapa__barra-horizontal {
+  box-shadow: 0 0 12px rgba(79, 179, 169, 0.35);
 }
 
+[data-theme="dark"] .rejilla__tarjeta,
+[data-tema="oscuro"] .rejilla__tarjeta {
+  background: var(--c-neutral-900);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .rejilla__tarjeta:hover,
+[data-tema="oscuro"] .rejilla__tarjeta:hover {
+  border-color: var(--st-primary-bd);
+  box-shadow:
+    0 20px 40px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--st-primary-bd);
+}
+
+[data-theme="dark"] .rejilla__badge,
+[data-tema="oscuro"] .rejilla__badge {
+  background: rgba(15, 23, 42, 0.88);
+  color: var(--st-primary-bd);
+}
+
+[data-theme="dark"] .rejilla__pie,
+[data-tema="oscuro"] .rejilla__pie {
+  border-block-start-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================================
+   ACCESIBILIDAD Y PREFERENCIA DE MOVIMIENTO REDUCIDO
+   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .mapa__onda,
   .mapa__nucleo,
+  .mapa__onda,
   .mapa__corazon-svg,
-  .mapa__corazon-ecg,
+  .mapa__corazon-ecg {
+    animation: none;
+  }
+
   .rejilla__tarjeta,
-  .rejilla__foto {
-    animation: none !important;
-    transition: none !important;
+  .rejilla__foto,
+  .rejilla__icono-envoltura,
+  .rejilla__flecha {
+    transition: none;
   }
 }
