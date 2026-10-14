@@ -26,6 +26,15 @@ import { generarEntradas, type ValorGenerado } from '../../core/mock/faker';
 import { forcedRealApi } from '../../core/mock/api-mode';
 import { MOCK_USERS, emitirAccessToken, emitirRefreshToken } from '../../core/mock/mock-session';
 
+import { Select } from '../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../shared/components/atoms/select/select.types';
+import {
+  NIVELES,
+  OPCIONES_DE_CUENTA,
+  OPCIONES_DE_NIVEL,
+  VALORES_GENERADOS,
+  opcionesDeEscenario,
+} from './component-stock.opciones';
 import { COMPONENTES } from './component-index.generated';
 import type { ScenarioHost, ComponentScenario } from './scenarios/scenario.types';
 import { scenariosOf } from './scenarios/scenarios';
@@ -57,15 +66,6 @@ import {
     abrir la consola ni la pestaña de red del navegador.
     ========================================================================== */
 
-const NIVELES: readonly NivelDeComponente[] = [
-  'atomo',
-  'molecula',
-  'organismo',
-  'pantalla',
-  'maqueta',
-  'otro',
-];
-
 export interface Dispositivo {
   readonly clave: string;
   readonly nombre: string;
@@ -83,13 +83,6 @@ const DISPOSITIVOS: readonly Dispositivo[] = [
 ];
 
 type Pestana = 'props' | 'composicion' | 'salidas' | 'problemas' | 'red' | 'accesibilidad';
-
-/**
- * La opción del selector de escenarios que monta «a ciegas», con los valores
- * del generador. Sigue existiendo para comparar: es lo que se ve cuando nadie
- * escribió un anfitrión.
- */
-const VALORES_GENERADOS = 'valores-generados';
 
 /**
  * Una dimensión de la acreditación de un componente. El estado va en palabras
@@ -117,7 +110,7 @@ interface FalloDeAccesibilidad {
 
 @Component({
   selector: 'app-component-stock',
-  imports: [RouterLink],
+  imports: [RouterLink, Select],
   templateUrl: './component-stock.html',
   styleUrl: './component-stock.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -134,6 +127,9 @@ export class ComponentStock implements OnDestroy {
   protected readonly dispositivos = DISPOSITIVOS;
   protected readonly etiquetaDeNivel = ETIQUETA_DE_NIVEL;
   protected readonly cuentas = MOCK_USERS;
+
+  protected readonly opcionesDeCuenta = OPCIONES_DE_CUENTA;
+  protected readonly opcionesDeNivel = OPCIONES_DE_NIVEL;
   protected readonly apiReal = forcedRealApi;
 
   /* ---- navegación --------------------------------------------------------- */
@@ -234,6 +230,10 @@ export class ComponentStock implements OnDestroy {
     source: this.elegido,
     computation: () => null,
   });
+
+  protected readonly opcionesDeEscenario = computed<readonly SelectOption<string>[]>(() =>
+    opcionesDeEscenario(this.escenarios()),
+  );
 
   /** El escenario vigente, o `null` cuando se monta con valores generados. */
   protected readonly escenario = computed<ComponentScenario | null>(() => {

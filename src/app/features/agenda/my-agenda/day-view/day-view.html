@@ -1,12 +1,12 @@
 <div class="dia">
   <header class="dia__barra">
     <div class="dia__cabecera">
-      <h3 class="dia__titulo">
+      <h2 class="dia__titulo">
         {{ titulo() }}
         @if (esHoy()) {
           <span class="dia__hoy">Hoy</span>
         }
-      </h3>
+      </h2>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
     </div>
 
@@ -134,13 +134,13 @@
        a quién alcanza. Mismo criterio que el aviso de demora. -->
   @if (moverAbierto()) {
     <section class="dia__mover" data-testid="dia-mover-panel" aria-labelledby="mover-titulo">
-      <h4 id="mover-titulo" class="dia__mover-titulo">
+      <h3 id="mover-titulo" class="dia__mover-titulo">
         @if (moverDesde()) {
           Correr desde las {{ moverDesde() | date: 'HH:mm' }} en adelante
         } @else {
           Correr todo el día
         }
-      </h4>
+      </h3>
       <p class="dia__mover-nota">
         Las citas cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
         suya, <strong>no se mueve ninguno</strong>.

@@ -84,7 +84,7 @@
 }
 
 .trigger-value.is-placeholder {
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* ==========================================================================

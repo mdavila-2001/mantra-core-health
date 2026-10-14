@@ -57,7 +57,7 @@
 }
 
 .select-value.is-placeholder {
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* Íconos proyectados: conservan la encapsulación del padre, así que solo los

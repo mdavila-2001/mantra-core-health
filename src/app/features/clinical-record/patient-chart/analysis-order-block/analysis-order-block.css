@@ -48,7 +48,7 @@
 
 .estudios__vacio {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
