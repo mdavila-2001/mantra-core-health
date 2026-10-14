@@ -13,27 +13,90 @@
   [portada]="enPortada()"
   (reintentar)="reintentar()"
 >
-  <div slot="portada" class="mapa">
-    <div class="mapa__centro" aria-hidden="true">
-      <app-nav-icon name="directory" />
-    </div>
+  <div slot="portada" class="mapa mapa--asterisco" [attr.data-total]="nodosVisibles().length">
+    <div class="mapa__grafo">
+      <!-- Nodo central en asterisco: AloVida latiendo con corazón y pulso cardíaco -->
+      <div class="mapa__centro" aria-hidden="true">
+        <div class="mapa__ondas" aria-hidden="true">
+          <span class="mapa__onda mapa__onda--1"></span>
+          <span class="mapa__onda mapa__onda--2"></span>
+          <span class="mapa__onda mapa__onda--3"></span>
+        </div>
 
-    <!-- La misma rejilla y la misma tarjeta que la portada de cada directorio
-         —`shared/styles/card-grid.css`—: esta pantalla es la puerta de
-         las cuatro, y llegar a ella para encontrar otra clase de tarjeta se lee
-         como haber salido de la aplicación. Lo único propio de acá es el nodo
-         central y el filete que baja hasta cada tarjeta. -->
-    <ul class="rejilla mapa__nodos">
-      @for (nodo of nodosVisibles(); track nodo.path) {
-        <li class="mapa__item">
-          <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
-            <img class="rejilla__foto" [src]="fotoDe(nodo.path)" alt="" loading="lazy" />
-            <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
-            <span class="rejilla__nombre">{{ nodo.label }}</span>
-            <span class="rejilla__resumen">{{ nodo.summary }}</span>
-          </a>
-        </li>
-      }
-    </ul>
+        <div class="mapa__nucleo">
+          <!-- Logo AloVida -->
+          <div class="mapa__marca">
+            <img
+              class="mapa__alovida-logo"
+              src="/alovida/imagenes/alovida-logo-blanco.svg"
+              alt=""
+              width="44"
+              height="32"
+            />
+            <span class="mapa__alovida-rotulo">AloVida</span>
+          </div>
+
+          <!-- Corazón latiendo con trazado electrocardiograma -->
+          <div class="mapa__corazon-contenedor">
+            <svg
+              class="mapa__corazon-svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Silueta del corazón -->
+              <path
+                class="mapa__corazon-forma"
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              />
+              <!-- Línea del latido / trazado cardíaco -->
+              <path
+                class="mapa__corazon-ecg"
+                d="M5.2 12h2.5l1.5-3.2 2.2 6.8 1.8-4.6 1.1 1.8h4.5"
+                stroke="var(--bg-surface)"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <span class="mapa__alovida-sub">Red de Salud</span>
+        </div>
+
+        <!-- Radiación de destellos / rayos del asterisco hacia los nodos -->
+        <div class="mapa__rayos" aria-hidden="true">
+          <span class="mapa__rayo mapa__rayo--tl"></span>
+          <span class="mapa__rayo mapa__rayo--tr"></span>
+          <span class="mapa__rayo mapa__rayo--bl"></span>
+          <span class="mapa__rayo mapa__rayo--br"></span>
+          <span class="mapa__rayo mapa__rayo--bc"></span>
+        </div>
+      </div>
+
+      <!-- Tarjetas de los directorios distribuidas como nodos del asterisco -->
+      <ul class="rejilla mapa__nodos">
+        @for (nodo of nodosVisibles(); track nodo.path; let idx = $index) {
+          <li
+            class="mapa__item"
+            [attr.data-path]="nodo.path"
+            [attr.data-pos]="posicionDe(nodo.path, idx)"
+          >
+            <!-- Brazo / conector del asterisco hacia el núcleo central -->
+            <div class="mapa__conector" aria-hidden="true">
+              <span class="mapa__conector-trazo"></span>
+              <span class="mapa__conector-nodo"></span>
+            </div>
+
+            <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
+              <img class="rejilla__foto" [src]="fotoDe(nodo.path)" alt="" loading="lazy" />
+              <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
+              <span class="rejilla__nombre">{{ nodo.label }}</span>
+              <span class="rejilla__resumen">{{ nodo.summary }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
   </div>
 </app-directory-page>

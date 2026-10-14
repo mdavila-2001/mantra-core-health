@@ -137,6 +137,15 @@ export interface SearchResultItem {
    * mismo destino. Los directorios que no la declaran no cambian en nada.
    */
   readonly action?: SearchResultAction;
+  /** Calificación y número de valoraciones o reseñas. */
+  readonly rating?: SearchResultRating;
+}
+
+/** Calificación y número de valoraciones de un resultado. */
+export interface SearchResultRating {
+  readonly average: number;
+  readonly count: number;
+  readonly label?: string;
 }
 
 /** Un enlace de acción dentro de la tarjeta. */
