@@ -170,6 +170,23 @@ export class DirectoriesOverview {
     return elegido === null ? this.nodos() : this.nodos().filter((nodo) => nodo.path === elegido);
   });
 
+  /**
+   * Posición visual del nodo dentro de la topología en asterisco.
+   */
+  protected posicionDe(path: string, index: number): string {
+    const mapa: Readonly<Record<string, string>> = {
+      directory: 'top-left',
+      'laboratory-directory': 'top-right',
+      'clinics-directory': 'bottom-left',
+      'pharmacies-directory': 'bottom-right',
+      'insurers-directory': 'bottom-center',
+    };
+    return (
+      mapa[path] ??
+      ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'bottom-center'][index % 5]
+    );
+  }
+
   /* ---- la búsqueda en los directorios ------------------------------------ */
 
   private readonly laboratorios = inject(DiagnosticUnitsClient);

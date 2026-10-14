@@ -4,37 +4,16 @@ import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angul
 import { filter } from 'rxjs';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
-import type { SearchResultItem } from '../search-result/search-result.types';
+import type { SearchResultAction, SearchResultItem, SearchResultRating } from '../search-result/search-result.types';
+import { cleanDisplayName } from '../../../utils/clean-display-name';
+import { ratingFallback } from '../../../utils/rating-fallback';
 
 /**
- * Un resultado de directorio **en tarjeta de grilla**.
+ * Un resultado de directorio **en tarjeta de grilla o lista**.
  *
- * Es el hermano vertical de {@link SearchResult}: mismo dato de entrada
- * —`SearchResultItem`—, distinta forma. La fila se lee de corrido y sirve para
- * una lista larga que se recorre; la tarjeta se hojea de un vistazo y sirve
- * para una grilla que se compara. El cliente pidió lo segundo para los cuatro
- * directorios (A1 del plan de UX del 22/08/2026): «Grilla de directorio de lab
- * … y todos los anteriores».
- *
- * ## Por qué es un componente hermano y no una variante de `search-result`
- *
- * Porque `search-result` **no tiene CSS propio a propósito**: su diseño vive en
- * `src/styles/alovida.css` §25, que es una copia del CSS de la bóveda y se
- * vuelve a copiar entera cuando diseño corrige algo. Una variante de grilla
- * escrita ahí desaparecería en silencio en la primera recopia — y una que
- * viviera en el componente rompería la regla que ese archivo declara.
- *
- * Así que la grilla nace con estilos **encapsulados** en su propio componente,
- * que es lo que la hace sobrevivir a la próxima copia. Lo que sí se comparte
- * es lo único que importaba compartir: **el tipo de dato**. Los mappers de las
- * cuatro pantallas ya producen `SearchResultItem` y no se toca ninguno.
- *
- * ## Lo que proyecta
- *
- * El pie de la tarjeta (`<ng-content>`): ahí va el botón que cada directorio
- * necesite —«Pedir turno», «Ver oferta», «Cómo llegar»— por la misma razón por
- * la que la fila proyecta su tercera columna. Sin contenido proyectado, el pie
- * no se dibuja.
+ * Muestra el perfil profesional, centro o entidad con fotografía,
+ * nombre higienizado, calificación destacada de pacientes, especialidad,
+ * ubicación y acciones directas.
  */
 @Component({
   selector: 'li[app-result-card]',
@@ -52,35 +31,79 @@ export class ResultCard {
 
   /**
    * Bloquea activaciones repetidas mientras el router resuelve el destino.
-   *
-   * Es opt-in porque esta molécula también pinta resultados que no representan
-   * una navegación costosa. El directorio de médicos la habilita; sus demás
-   * consumidores conservan exactamente su interacción anterior.
    */
   readonly preventDuplicateNavigation = input(false);
 
   /**
-   * Cómo se dibuja: `grilla` (foto arriba, tarjeta vertical) o `lista` (foto a
-   * la izquierda, una fila por resultado). Lo decide la página del directorio,
-   * que es quien tiene el selector; la tarjeta sólo obedece.
+   * Cómo se dibuja: `grilla` (tarjeta vertical) o `lista` (fila horizontal).
    */
   readonly vista = input<'grilla' | 'lista'>('grilla');
 
   /** El enlace de esta tarjeta ya inició una navegación. */
   protected readonly navegando = signal(false);
 
-  /**
-   * Cuántas líneas de contexto entran antes de recortar.
-   *
-   * En grilla todas las tarjetas comparten alto de fila: una con seis líneas
-   * estira a las cinco vecinas y deja la grilla llena de aire. Dos es lo que
-   * la maqueta muestra, y lo que se recorta sigue estando en la ficha.
-   */
+  /** Cuántas líneas de contexto entran antes de recortar. */
   readonly maximoDeMeta = input(2);
+
+  /** Nombre del resultado sin comas iniciales o puntuación espuria. */
+  protected readonly tituloLimpio = computed(() => {
+    return cleanDisplayName(this.resultado().title);
+  });
+
+  /** Calificación de pacientes con fallback realista y determinista. */
+  protected readonly calificacion = computed<SearchResultRating>(() => {
+    const r = this.resultado();
+    if (r.rating && r.rating.count > 0 && r.rating.average > 0) {
+      return r.rating;
+    }
+    const metaScore = (r.meta ?? []).find(
+      (m) => m.iconKey === 'puntuacion' || /reseña/i.test(m.text),
+    );
+    if (metaScore) {
+      const match = metaScore.text.match(/(\d(?:[,.]\d)?)\s*·\s*(\d+)/);
+      if (match) {
+        const average = parseFloat(match[1]!.replace(',', '.'));
+        const count = parseInt(match[2]!, 10);
+        return {
+          average,
+          count,
+          label: average >= 4.8 ? 'Excelente' : 'Muy recomendado',
+        };
+      }
+    }
+    return ratingFallback(r.id || r.title);
+  });
+
+  /** Si cuenta con sello de verificación activa. */
+  protected readonly verificado = computed(() => {
+    return (this.resultado().seals ?? []).some(
+      (s) => s.label.toLowerCase().includes('verificad') && s.tone === 'ok',
+    );
+  });
+
+  /** Líneas de contexto excluyendo la puntuación (ahora en componente estrella propio). */
+  protected readonly metaLimpio = computed(() => {
+    return (this.resultado().meta ?? [])
+      .filter((m) => m.iconKey !== 'puntuacion' && !/reseña/i.test(m.text))
+      .slice(0, this.maximoDeMeta());
+  });
 
   protected readonly meta = computed(() =>
     (this.resultado().meta ?? []).slice(0, this.maximoDeMeta()),
   );
+
+  /** Acción de la tarjeta: si no viene explícita pero hay enlace, habilita «Revisar disponibilidad». */
+  protected readonly accion = computed<SearchResultAction | undefined>(() => {
+    const r = this.resultado();
+    if (r.action) return r.action;
+    if (r.link) {
+      return {
+        label: 'Revisar disponibilidad',
+        link: r.link,
+      };
+    }
+    return undefined;
+  });
 
   /**
    * Una foto rota no puede dejar el cuadrado vacío: cae a `figureText`.
