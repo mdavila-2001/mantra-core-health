@@ -288,11 +288,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'psychological-help',
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Ayuda psicológica',
     group: 'General',
     icon: 'heart',
     roles: ['PATIENT'],
-    exclusiveRoles: true,
     availability: 'disponible',
     summary: 'Apoyo emocional, videos de la OPS y acceso a psicólogos y psiquiatras.',
     module: 'M-mental-health-support',

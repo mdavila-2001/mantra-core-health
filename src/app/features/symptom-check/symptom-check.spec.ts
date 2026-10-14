@@ -859,7 +859,7 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(botonMed?.getAttribute('href')).toContain('/search/medications');
   });
 
-  it('detecta «necesito ayuda» y ubica el soporte de crisis ARRIBA del área de escritura', () => {
+  it('detecta «necesito ayuda» y ubica el soporte de crisis ABAJO del área de escritura', () => {
     responderSexoPropio(http);
     (componente as unknown as { escribir(v: string): void }).escribir('necesito ayuda');
     fixture.detectChanges();
@@ -870,8 +870,8 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     const escribir = html.querySelector('[data-testid="sintomas-escribir"]');
     expect(crisis).not.toBeNull();
     expect(escribir).not.toBeNull();
-    // La crisis debe aparecer antes en el árbol DOM (ARRIBA, y el chat/escritura ABAJO)
-    expect(crisis!.compareDocumentPosition(escribir!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // La crisis debe aparecer después en el árbol DOM (la escritura ARRIBA, y el soporte ABAJO)
+    expect(escribir!.compareDocumentPosition(crisis!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(crisis?.textContent).toContain('800-11-3040');
     expect(crisis?.textContent).toContain('772-22123');
   });
