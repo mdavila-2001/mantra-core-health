@@ -95,6 +95,16 @@ describe('PracticeSitesMap', () => {
     expect(raiz.querySelector('.sedes__ruta')).toBeNull();
   });
 
+  it('muestra el teléfono de contacto de la sede como enlace telefónico', () => {
+    const fixture = montar([sede({ contactPhone: '+591 72123456' })]);
+    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="practice-site-contact-phone"]',
+    );
+
+    expect(link?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Teléfono: +591 72123456');
+    expect(link?.getAttribute('href')).toBe('tel:+59172123456');
+  });
+
   it('si ninguna está ubicada no dibuja el mapa', () => {
     const fixture = montar([sede({ punto: null })]);
 

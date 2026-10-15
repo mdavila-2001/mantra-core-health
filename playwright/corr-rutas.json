@@ -212,11 +212,17 @@
   "37": [
     {
       "ruta": "/my-account",
-      "nombre": "perfil-medico"
+      "nombre": "practitioner-profile-overview"
     },
     {
-      "ruta": "/my-account/edit",
-      "nombre": "perfil-medico-editar"
+      "ruta": "/my-account",
+      "nombre": "practitioner-profile-practice",
+      "accion": "practitioner-practice-tab"
+    },
+    {
+      "ruta": "/my-account",
+      "nombre": "practitioner-profile-credentials",
+      "accion": "practitioner-credentials-tab"
     }
   ],
   "38": [
