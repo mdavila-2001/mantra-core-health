@@ -21,6 +21,7 @@ El E2E recorre `/p/jorge-salazar`, selecciona «Reseñas», comprueba que la pes
 - `corepack yarn typecheck` — PASS.
 - `corepack yarn eslint playwright/public-profile-reviews.spec.ts src/app/core/mock/handlers/public.handlers.ts` — PASS.
 - `corepack yarn pw playwright/public-profile-reviews.spec.ts --workers=1 --reporter=list` — PASS; 1 prueba, 1 worker.
+- `corepack yarn test --watch=false --include src/app/features/public-profile/public-profile-card/public-profile-card.tabs.spec.ts` — PASS; 1 archivo, 7 pruebas. Repetido el 2026-10-15 después del ajuste del mock.
 - `git diff --check` — PASS.
 
 No se corrieron build, suite global ni route-health en esta pasada. No se cambió API real ni modelo; la respuesta ajustada pertenece al simulador del frontend.
