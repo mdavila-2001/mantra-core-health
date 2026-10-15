@@ -33,6 +33,13 @@
 - MT-38-02 se interpreta por el resultado observable y no exige un `FormGroup` completo. `practitionerFields()` pagina el alta y describe sus controles; el editor usa PATCH parciales por pestaña, señales tipadas y componentes especializados, y además contiene datos que el alta no pregunta (facturación, ubicación y datos propios de edición). Forzar el grupo paginado al editor duplicaría los campos especiales y podría enviar o restaurar valores fuera de la pestaña activa.
 - La opción recomendada es compartir con `practitionerField()` las definiciones y validadores de los campos comunes, y conservar en el editor sus controles y estado por pestaña. La ficha TAREA-38 se ajustó con esta interpretación. El criterio funcional se mantiene: misma validación para campos compartidos y PATCH limitado a la pestaña editada.
 - La auditoría anterior rechazó el diff bajo el texto literal del `FormGroup`; el diff actual se revisa de nuevo con el criterio corregido. El carril sigue abierto hasta pasar regresión y route-health.
+
+## 2026-10-15 — Alinear la ficha con C-02 y el estado vigente
+
+- La ficha inicial pedía duplicar lista/formulario dentro de una tarjeta con pestañas y navegar desde el perfil a `?tab=new`/`?edit=<id>`. C-02 del 2026-09-20 pidió que el consultorio propio se gestione dentro de la pestaña «Dónde atiendo» y que se retiren esos enlaces sueltos; gana esa instrucción posterior, ya implementada y fotografiada.
+- `MyPractice` queda como un contenedor delgado que monta `WorkHistory(secciones="consultorios")`. El mismo flujo conserva lista, alta, edición y acciones de lugares desde Administración y perfil. No se duplica CRUD ni se añade una tarjeta/pestaña que compita con el control compartido.
+- `administration/my-organization` se mantiene para quienes administran una organización/tenant, oculto para `PRACTITIONER`; redirigirlo a la pantalla personal rompería ese uso.
+- Se actualiza `tareas/TAREA-32-mi-consultorio-propio.md` para retirar los criterios superados y dejar como fuente de verificación el spec compartido de WorkHistory, la navegación y las capturas Playwright.
 # Decisión de trabajo del carril 35
 
 ## 2026-10-15 — Ruta vigente y evidencia de estados
