@@ -83,7 +83,11 @@
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
               <!-- Vacío BORRA el dato opcional, que es cómo se quita un segundo
                    nombre que no se lleva. -->
-              <app-form-field label="Nombre" [errorMessage]="errorDelServidor('name')">
+              <app-form-field
+                [label]="practitionerFieldLabel('name', 'Nombre')"
+                [required]="practitionerFieldRule('name')?.required ?? false"
+                [errorMessage]="errorDelServidor('name')"
+              >
                 <app-input [(value)]="nombre" placeholder="Su nombre" />
               </app-form-field>
               <app-form-field
@@ -148,13 +152,15 @@
                 </button>
               </p>
               <app-form-field
-                label="Apellido paterno"
+                [label]="practitionerFieldLabel('lastName', 'Apellido paterno')"
+                [required]="practitionerFieldRule('lastName')?.required ?? false"
                 [errorMessage]="errorDelServidor('lastName')"
               >
                 <app-input [(value)]="apellidoPaterno" />
               </app-form-field>
               <app-form-field
-                label="Apellido materno (opcional)"
+                [label]="practitionerFieldLabel('motherLastName', 'Apellido materno') + ' (opcional)'"
+                [required]="practitionerFieldRule('motherLastName')?.required ?? false"
                 [errorMessage]="errorDelServidor('motherLastName')"
               >
                 <app-input [(value)]="apellidoMaterno" />
@@ -163,11 +169,17 @@
               <!-- ALV-003: el contrato ya aceptaba estos dos y el formulario no los
                    ofrecía; la ficha los mostraba sin forma de corregirlos. -->
               <app-form-field
-                label="Fecha de nacimiento"
+                [label]="practitionerFieldLabel('birthDate', 'Fecha de nacimiento')"
+                [required]="practitionerFieldRule('birthDate')?.required ?? false"
                 [errorMessage]="errorDelServidor('birthDate')"
                 hint="Se usa para calcular su edad en la ficha. No se publica."
               >
-                <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento" />
+                <app-date-picker
+                  [(value)]="fechaNacimiento"
+                  [minDate]="practitionerFieldRule('birthDate')?.minDate ?? null"
+                  [maxDate]="practitionerFieldRule('birthDate')?.maxDate ?? null"
+                  data-testid="edicion-nacimiento"
+                />
               </app-form-field>
 
               <!-- La MISMA lista cerrada del alta, no un texto libre: de este
@@ -175,7 +187,8 @@
                    especialidades se ofrecen, y escrito a mano la misma profesión
                    terminaba en cuatro variantes. -->
               <app-form-field
-                label="Título profesional"
+                [label]="practitionerFieldLabel('professionalTitle', 'Título profesional')"
+                [required]="practitionerFieldRule('professionalTitle')?.required ?? false"
                 [errorMessage]="errorDelServidor('professionalTitle')"
                 hint="Sale de la misma lista que el registro, para que la misma profesión no figure escrita de varias maneras."
               >
@@ -543,11 +556,14 @@
                      la misma persona terminaba con el número escrito de tres
                      maneras. -->
                 <app-form-field
-                  label="Celular personal"
+                  [label]="practitionerFieldLabel('mobilePhone', 'Celular personal')"
+                  [required]="practitionerFieldRule('mobilePhone')?.required ?? false"
                   hint="Elija el país si su número no es de Bolivia. No se publica en su ficha."
                   [errorMessage]="
                     enRojo(celularPersonal)
-                      ? mensajeTelefonoIncompleto
+                      ? celularPersonal.hasError('required')
+                        ? 'Ingrese su celular personal.'
+                        : mensajeTelefonoIncompleto
                       : errorDelServidor('mobilePhone')
                   "
                 >
@@ -558,11 +574,16 @@
                   />
                 </app-form-field>
                 <app-form-field
-                  label="Correo personal"
-                  [errorMessage]="errorDelServidor('personalEmail')"
+                  [label]="practitionerFieldLabel('personalEmail', 'Correo personal')"
+                  [required]="practitionerFieldRule('personalEmail')?.required ?? false"
+                  [errorMessage]="personalEmailError() || errorDelServidor('personalEmail')"
                   hint="Distinto del de trabajo. No se publica en su ficha."
                 >
-                  <app-input [(value)]="correoPersonal" placeholder="su.correo@ejemplo.com" />
+                  <app-input
+                    [(value)]="correoPersonal"
+                    [hasError]="!!(personalEmailError() || errorDelServidor('personalEmail'))"
+                    placeholder="su.correo@ejemplo.com"
+                  />
                 </app-form-field>
                 <!-- El correo de trabajo es un contacto, no la cuenta: el alta lo
                      siembra con el mismo valor que el login, pero cambiarlo acá

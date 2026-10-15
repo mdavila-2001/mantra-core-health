@@ -33,6 +33,13 @@ La evidencia visual de CORR-39 verifica presentación, no la disponibilidad del 
 - La regla de evidencia de fondo blanco aplica también al tema oscuro en este carril, siguiendo las instrucciones entregadas para el workspace. El chequeo específico se corrigió sin alterar otros carriles.
 - La línea base de suite completa se obtuvo sobre `c36a0188f`: 74 fallos; la rama termina con 73. Los fallos residuales y los bloqueos de API/Fable se documentan en `docs/progress/evidence/lane-36/REPORT.md`.
 
+# Decisión de trabajo del carril 38
+
+## 2026-10-15 — Interfaz compartida del alta y edición
+
+- MT-38-02 se interpreta por el resultado observable y no exige un `FormGroup` completo. `practitionerFields()` pagina el alta y describe sus controles; el editor usa PATCH parciales por pestaña, señales tipadas y componentes especializados, y además contiene datos que el alta no pregunta (facturación, ubicación y datos propios de edición). Forzar el grupo paginado al editor duplicaría los campos especiales y podría enviar o restaurar valores fuera de la pestaña activa.
+- La opción recomendada es compartir con `practitionerField()` las definiciones y validadores de los campos comunes, y conservar en el editor sus controles y estado por pestaña. La ficha TAREA-38 se ajustó con esta interpretación. El criterio funcional se mantiene: misma validación para campos compartidos y PATCH limitado a la pestaña editada.
+- La auditoría anterior rechazó el diff bajo el texto literal del `FormGroup`; el diff actual se revisa de nuevo con el criterio corregido. El carril sigue abierto hasta pasar regresión y route-health.
 
 ## 2026-10-15 — Alinear la ficha con C-02 y el estado vigente
 

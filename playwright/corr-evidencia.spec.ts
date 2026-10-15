@@ -614,6 +614,39 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             fullPage: LANE === '33' && vp.width <= 768,
             animations: 'disabled',
           });
+          if (LANE === '38' && nombre === 'practitioner-profile-editor' && vp.width === 1440 && tema === 'claro') {
+            // La cuenta demo sólo trae especialidades verificadas, que por
+            // diseño no se pueden editar. Abrimos el editor real sobre la fila
+            // cargada para dejar evidencia directa del formulario corregido.
+            await activePage.evaluate(() => {
+              const angular = (window as Window & {
+                ng?: {
+                  getComponent(host: Element): Record<string, unknown> | null;
+                  applyChanges(component: unknown): void;
+                };
+              }).ng;
+              const host = document.querySelector('app-practitioner-profile-edit');
+              const component = angular && host ? angular.getComponent(host) : null;
+              const filas = component?.['filasEspecialidades'] as (() => unknown[]) | undefined;
+              const editar = component?.['editarEspecialidad'] as ((fila: unknown) => void) | undefined;
+              const fila = filas?.()[0];
+              if (!fila || !editar) throw new Error('No hay una especialidad demo para abrir el editor');
+              if (!angular || !component) throw new Error('No se encontró el editor de perfil');
+              editar.call(component, fila);
+              angular.applyChanges(component);
+              const nativeDialog = document.querySelector<HTMLDialogElement>(
+                '[data-testid="edicion-dialogo"] dialog',
+              );
+              if (!nativeDialog) throw new Error('El diálogo de edición no se montó');
+              if (!nativeDialog.open) nativeDialog.showModal();
+            });
+            const dialogoEspecialidad = activePage.getByTestId('edicion-dialogo');
+            await expect(dialogoEspecialidad.locator('dialog')).toBeVisible();
+            await expect(dialogoEspecialidad.getByTestId('edicion-especialidad')).toBeVisible();
+            await expect(dialogoEspecialidad.locator('app-switch')).toHaveCount(0);
+            await activePage.waitForTimeout(400);
+            await activePage.screenshot({ path: join(FOTOS, 'specialty-edit-dialog-1440-claro.png') });
+          }
           const bytes = statSync(foto).size;
           if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);
