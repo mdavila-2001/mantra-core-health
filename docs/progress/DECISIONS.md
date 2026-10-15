@@ -16,3 +16,11 @@
 - Se conserva el listado existente de consultorios propios y lugares afiliados; se conserva el uso del mismo formulario desde «Mi perfil» para crear y editar, como ordena la ficha.
 - `organization-panel` no se elimina: sigue siendo la pantalla de administración para roles de organización/tenant.
 
+## D-22 · CORR-09 se alinea con el editor vigente de `mockup` (2026-10-15)
+
+La ficha de CORR-09 describía un estado anterior: matrícula sin adjunto y sin títulos en edición. La base vigente ya contiene el módulo compartido `credenciales-del-medico.ts`, tablas, diálogos de alta para matrícula y título y `app-file-input`. Los specs del editor comprueban la selección, la subida con `FilesClient`, la asociación del `fileId`, el fallo de subida y el rechazo por tamaño.
+
+La aclaración vieja «los archivos no viajan a la API» contradice ese comportamiento y los comentarios de dueño fechados el 13/09/2026. La pantalla usa los endpoints ya existentes; este carril no cambia backend, contrato, modelo, DDL ni seeds. No se extrae `credentials-editor`: dividir una pestaña que ya funciona sería un refactor interno sin resultado observable y contradice la exclusión de refactors adyacentes. Se actualizó `tareas/TAREA-39-matriculas-y-adjuntos-en-editar.md` para reflejar el estado y las pruebas reales.
+
+La evidencia visual de CORR-39 verifica presentación, no la disponibilidad del servidor; la integración de subida queda respaldada por los specs con HTTP simulado. La regresión global, route-health y Fable siguen siendo gates separados y no se declaran aprobados.
+

@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
@@ -36,7 +36,9 @@ const USUARIO = process.env['CORR_USUARIO'] ?? 'medica';
 const ROUTE_KEY =
   LANE === '34' && USUARIO !== 'medica' ? `${LANE}-${USUARIO}` : LANE;
 
-const BASE_DESTINATION = join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+const BASE_DESTINATION = process.env['CORR_EVIDENCE_DESTINATION']
+  ? resolve(process.env['CORR_EVIDENCE_DESTINATION'])
+  : join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
 // Las dos pasadas de usuario deben conservar matrices y fotos independientes.
 const DESTINO = USUARIO === 'medica' ? BASE_DESTINATION : join(BASE_DESTINATION, USUARIO);
 const FOTOS = join(DESTINO, 'fotos', FASE);
@@ -76,6 +78,43 @@ const VIEWPORTS = [
 const HOLGURA_MAX_PX = 2;
 const ANCHO_MIN = 0.85;
 const FOTO_MIN_BYTES = 8 * 1024;
+
+async function crearAdjuntoDeMuestra(page: Page): Promise<Buffer> {
+  const base64 = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 650;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('No se pudo crear el adjunto de muestra');
+
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = '#125B80';
+    context.lineWidth = 12;
+    context.strokeRect(24, 24, canvas.width - 48, canvas.height - 48);
+    context.fillStyle = '#125B80';
+    context.fillRect(36, 36, canvas.width - 72, 108);
+    context.fillStyle = '#fff';
+    context.font = 'bold 36px sans-serif';
+    context.fillText('MUESTRA SINTÉTICA · SIN VALIDEZ LEGAL', 68, 102);
+    context.fillStyle = '#173B4B';
+    context.font = 'bold 42px sans-serif';
+    context.fillText('Matrícula profesional', 68, 218);
+    context.font = '28px sans-serif';
+    context.fillText('Nombre: Dra. Valeria Rojas (dato de prueba)', 68, 286);
+    context.fillText('Registro: MP-12345', 68, 344);
+    context.fillText('Autoridad: Ministerio de Salud', 68, 402);
+    context.fillText('Documento generado sólo para evidencia visual.', 68, 520);
+    context.strokeStyle = '#9FD8D0';
+    context.lineWidth = 4;
+    context.beginPath();
+    context.moveTo(68, 452);
+    context.lineTo(930, 452);
+    context.stroke();
+    return canvas.toDataURL('image/png').split(',')[1];
+  });
+  return Buffer.from(base64 ?? '', 'base64');
+}
 
 function isPublicRoute(routePath: string): boolean {
   return routePath === '/posts' || routePath.startsWith('/auth/');
@@ -365,6 +404,22 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
+          // La preferencia del menú se restaura después de hidratar. Esperar a
+          // que el ancho fijo del menú coincida con el espacio reservado por
+          // el marco evita capturas con contenido debajo de la barra lateral.
+          await activePage.waitForFunction(
+            () => {
+              if (window.innerWidth <= 900) return true;
+              const shell = document.querySelector('.app-shell');
+              const nav = document.querySelector('.app-side-nav');
+              if (!shell || !nav) return true;
+              const padding = Number.parseFloat(getComputedStyle(shell).paddingLeft);
+              const width = nav.getBoundingClientRect().width;
+              return Number.isFinite(padding) && Math.abs(padding - width) <= 2;
+            },
+            undefined,
+            { timeout: 5_000 },
+          );
           if (fixture === 'empty-memberships') {
             // Fixture de evidencia: deja asentado el estado vacío después de
             // que terminó la consulta simulada, sin agregar parámetros de
@@ -420,18 +475,18 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             await activePage.waitForTimeout(400);
           }
           if (ruta.includes('with-file=1')) {
+            await activePage.getByRole('button', { name: 'Agregar matrícula' }).click();
             const input = activePage.getByTestId('matricula-archivo');
             await expect(input).toBeVisible();
             await input.setInputFiles({
               name: 'matricula.png',
               mimeType: 'image/png',
-              buffer: Buffer.from(
-                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLSDwAAAABJRU5ErkJggg==',
-                'base64',
-              ),
+              buffer: await crearAdjuntoDeMuestra(activePage),
             });
             await expect(activePage.getByText('matricula.png')).toBeVisible();
-            await expect(activePage.locator('app-file-preview img')).toBeVisible();
+            const preview = activePage.locator('app-file-preview img');
+            await expect(preview).toBeVisible();
+            await preview.scrollIntoViewIfNeeded();
           }
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
           // La medición y la foto usan el viewport declarado
@@ -466,7 +521,11 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
               });
             });
           }
-          await activePage.screenshot({ path: foto, fullPage: LANE === '33' && vp.width <= 768 });
+          await activePage.screenshot({
+            path: foto,
+            fullPage: LANE === '33' && vp.width <= 768,
+            animations: 'disabled',
+          });
           const bytes = statSync(foto).size;
           if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);
