@@ -710,8 +710,7 @@ const PANTALLAS_HIJAS: Routes = [
     title: `${APP_TITLE} - Caso de verificación`,
     loadComponent: () =>
       import('./features/identity-assurance/verification-case-detail/verification-case-detail')
-        .then((m) => m.VerificationCaseDetail)
-        .catch(() => chunkFallido()),
+        .then((m) => m.VerificationCaseDetail).catch(() => chunkFallido()),
   },
   {
     // La ficha de un profesional: el destino del clic en la guía (R2-1). No va
