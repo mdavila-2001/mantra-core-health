@@ -96,22 +96,25 @@
                 type="button"
                 class="perfil__estrella perfil__calificacion-boton"
                 data-testid="perfil-estrellas"
-                title="Ver quiénes dieron estrellas"
+                [attr.aria-label]="'Promedio ' + media + ' de 5 estrellas. Ver reseñas.'"
                 (click)="abrirOpiniones()"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  stroke="none"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path
-                    d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
-                  />
-                </svg>
+                <span class="perfil__estrellas" aria-hidden="true">
+                  @for (llena of estrellasCabecera(); track $index) {
+                    <svg
+                      [class.perfil__estrella--vacia]="!llena"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      stroke="none"
+                      focusable="false"
+                    >
+                      <path
+                        d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
+                      />
+                    </svg>
+                  }
+                </span>
                 {{ media }}
-                <span class="solo-lectores">de 5: ver quiénes dieron estrellas</span>
               </button>
               <button
                 type="button"
@@ -501,15 +504,24 @@
       </aside>
     </div>
 
-    <!-- Las opiniones. Se montan sólo al desplegarlas: la lectura sale a la
-         API recién cuando alguien la pide. Misma forma que en
-         `public-profile.html`, que es donde este componente ya vivía. -->
+    <!-- Las reseñas cargan al abrir su pestaña. El componente conserva su
+         paginado y su promedio provisto por la API. -->
     @if (opinionesAbiertas()) {
-      <app-public-profile-reviews
-        [kind]="p.kind"
-        [slug]="p.slug"
-        [professionalName]="p.displayName"
-      />
+      <section
+        class="app-card perfil__seccion"
+        id="reviews"
+        role="tabpanel"
+        aria-labelledby="pestana-reviews"
+        tabindex="0"
+        data-testid="perfil-reviews"
+        [hidden]="!mostrar('reviews')"
+      >
+        <app-public-profile-reviews
+          [kind]="p.kind"
+          [slug]="p.slug"
+          [professionalName]="p.displayName"
+        />
+      </section>
     }
 
     <!-- Calificar la atención recibida. Hermano del modal de opiniones y no
