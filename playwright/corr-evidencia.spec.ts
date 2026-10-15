@@ -53,7 +53,9 @@ interface Ruta {
   readonly accion?:
     | 'crear-consultorio'
     | 'editar-perfil-consultorio'
-    | 'panel-consultorio';
+    | 'panel-consultorio'
+    | 'practitioner-practice-tab'
+    | 'practitioner-credentials-tab';
   /**
    * `no-encontrado` para una ruta que este carril **borró**: la prueba pasa si
    * la aplicación ya no la sirve. Sin esto, borrar una pantalla dejaría la
@@ -502,6 +504,50 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             // transitorio aunque la cuenta demo ya tuviera sus cuatro sedes.
             await expect(activePage.getByText('Centro Médico Equipetrol')).toBeVisible();
           }
+          if (routeEntry?.accion === 'practitioner-practice-tab') {
+            const tab = activePage.getByRole('tab', { name: 'Dónde atiendo' });
+            await tab.click();
+            await expect(tab).toHaveAttribute('aria-selected', 'true');
+            await expect(activePage.getByTestId('perfil-sedes')).toBeVisible();
+            await expect(activePage.getByTestId('practice-site-contact-phone').first()).toBeVisible();
+          }
+          if (routeEntry?.accion === 'practitioner-credentials-tab') {
+            const tab = activePage.getByRole('tab', { name: 'Credenciales' });
+            await tab.click();
+            await expect(tab).toHaveAttribute('aria-selected', 'true');
+            const tip = activePage
+              .locator('app-toast')
+              .filter({ hasText: 'Acá se separa lo que declaró' });
+            await expect(tip).toBeVisible();
+            await tip.getByTestId('toast-cerrar').click();
+            await expect(tip).toBeHidden();
+          }
+          if (LANE === '37') {
+            await activePage.evaluate(() => {
+              document.querySelectorAll<HTMLElement>('*').forEach((element) => {
+                element.scrollTop = 0;
+                element.scrollLeft = 0;
+              });
+              window.scrollTo(0, 0);
+            });
+            if (vp.width > 768) {
+              await activePage.locator('.app-header').evaluate((element) => {
+                element.scrollIntoView({ block: 'start', behavior: 'instant' });
+              });
+            }
+            await activePage.waitForTimeout(500);
+            if (routeEntry?.accion === 'practitioner-practice-tab') {
+              await expect(
+                activePage.getByRole('tab', { name: 'Dónde atiendo' }),
+              ).toHaveAttribute('aria-selected', 'true');
+              await expect(activePage.getByTestId('practice-site-contact-phone').first()).toBeVisible();
+            }
+            if (routeEntry?.accion === 'practitioner-credentials-tab') {
+              await expect(
+                activePage.getByRole('tab', { name: 'Credenciales' }),
+              ).toHaveAttribute('aria-selected', 'true');
+            }
+          }
           if (routeEntry?.accion === 'panel-consultorio') {
             const accesos = activePage.getByTestId('panel-accesos');
             await accesos.scrollIntoViewIfNeeded();
@@ -569,6 +615,10 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
               });
             });
           }
+          const fullPage =
+            (LANE === '33' && vp.width <= 768) ||
+            (LANE === '37' && vp.width <= 768);
+          await activePage.screenshot({ path: foto, fullPage, animations: 'disabled' });
           await activePage.screenshot({
             path: foto,
             fullPage: LANE === '33' && vp.width <= 768,

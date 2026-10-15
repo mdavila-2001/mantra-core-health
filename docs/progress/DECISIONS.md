@@ -26,6 +26,13 @@
 - La regla de evidencia de fondo blanco aplica también al tema oscuro en este carril, siguiendo las instrucciones entregadas para el workspace. El chequeo específico se corrigió sin alterar otros carriles.
 - La línea base de suite completa se obtuvo sobre `c36a0188f`: 74 fallos; la rama termina con 73. Los fallos residuales y los bloqueos de API/Fable se documentan en `docs/progress/evidence/lane-36/REPORT.md`.
 
+# Decisión de trabajo del carril 37
+
+## 2026-10-15 — Conservar el orden vigente y completar el contacto de sede
+
+- La ficha `TAREA-37` proponía seis pestañas basadas en los pasos del alta. La inspección de `/my-account` mostró que la base ya tiene una tarjeta con siete pestañas, producto de solicitudes posteriores de facturación, consultorio, trayectoria y actividad. Se conserva el orden actual de `PESTANAS_DEL_PERFIL_MEDICO` para no descartar esas solicitudes.
+- El propietario indicó que en todas las decisiones se elija la opción más recomendada. Para esta discrepancia, la recomendación es preservar las siete pestañas vigentes y actualizar la ficha vieja, no volver a un agrupamiento que oculta secciones.
+- El contrato del alta agrega el teléfono como `PracticeSite.contactPhone`; se incluye en el mapa a «Dónde atiendo» y en la lectura de la sede mediante un enlace `tel:`. No se modifica contrato ni servicio.
 # Decisión de trabajo del carril 38
 
 ## 2026-10-15 — Interfaz compartida del alta y edición

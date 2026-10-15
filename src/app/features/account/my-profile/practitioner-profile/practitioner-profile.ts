@@ -1021,6 +1021,7 @@ function sedeVisible(sede: PracticeSite): SedeVisible {
   return {
     id: sede.id,
     nombre: sede.name,
+    contactPhone: sede.contactPhone ?? null,
     direccion: (sede.addressText ?? '').toLocaleUpperCase('es-BO'),
     punto:
       sede.latitude === null || sede.longitude === null
