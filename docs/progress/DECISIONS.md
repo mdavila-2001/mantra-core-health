@@ -33,3 +33,10 @@
 - MT-38-02 se interpreta por el resultado observable y no exige un `FormGroup` completo. `practitionerFields()` pagina el alta y describe sus controles; el editor usa PATCH parciales por pestaña, señales tipadas y componentes especializados, y además contiene datos que el alta no pregunta (facturación, ubicación y datos propios de edición). Forzar el grupo paginado al editor duplicaría los campos especiales y podría enviar o restaurar valores fuera de la pestaña activa.
 - La opción recomendada es compartir con `practitionerField()` las definiciones y validadores de los campos comunes, y conservar en el editor sus controles y estado por pestaña. La ficha TAREA-38 se ajustó con esta interpretación. El criterio funcional se mantiene: misma validación para campos compartidos y PATCH limitado a la pestaña editada.
 - La auditoría anterior rechazó el diff bajo el texto literal del `FormGroup`; el diff actual se revisa de nuevo con el criterio corregido. El carril sigue abierto hasta pasar regresión y route-health.
+# Decisión de trabajo del carril 35
+
+## 2026-10-15 — Ruta vigente y evidencia de estados
+
+- La ruta registrada en `app.routes.ts` es `/notification-center`; `/notifications` y sus parámetros de estado no son rutas de producto. Se corrige la ficha para usar la ruta real.
+- Las evidencias Todas, Sin leer y Vacío se obtienen con controles visibles: abrir cada pestaña y, para Vacío, marcar la bandeja como leída antes de abrir Sin leer. El capturador agrega `evidenceState` sólo como selector interno del escenario; la pantalla lo ignora. No se inventa un endpoint de fixtures ni se modifica el comportamiento del producto para la prueba.
+- Las fotos son capturas del viewport que se mide (375, 768, 1440 claro y 1440 oscuro), no capturas `fullPage`; se prioriza que la imagen represente el primer pantallazo evaluado por la regla visual.
