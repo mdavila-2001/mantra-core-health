@@ -1,5 +1,7 @@
 # MATRIZ visual — carril 33 — despues — 2026-10-13T10:50:58.793Z
 
+> **Seguimiento 2026-10-15:** las filas de abajo son la matriz histórica capturada el 2026-10-13. La celda de «Mis vinculaciones» a 375 px no verifica el ajuste responsive del PR de seguimiento; la recaptura en navegador queda pendiente. No se actualizaron los resultados ni las fotos sin una nueva corrida.
+
 Celdas: 12 · en rojo: 3
 
 | Ruta | Viewport | Tema | Fondo blanco | Centrado (≤2 px) | Ancho (≥85 %) | Sin scroll H | Consola | Foto |
