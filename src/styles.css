@@ -180,8 +180,9 @@
     --fs-data: 14px;                          /* Inter 600 · tabular */
 
     /* ================= tokens semánticos — modo claro ===================== */
-    --bg-base: #FFFFFF;
-    --bg-surface: #FFFFFF;
+    --surface-white: #FFFFFF;
+    --bg-base: var(--surface-white);
+    --bg-surface: var(--surface-white);
     --bg-surface-alt: var(--c-ivory-400);
     --bg-inset: var(--c-ivory-300);
 

@@ -173,7 +173,13 @@ export class MembershipsTab {
     { key: 'roleConceptId', header: 'Rol/cargo', priority: 2, cell: this.celdaCargo() },
     { key: 'validFrom', header: 'Desde', priority: 3, cell: this.celdaDesde() },
     { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'actions', header: 'Acciones', priority: 1, cell: this.celdaAcciones() },
+    {
+      key: 'actions',
+      header: 'Acciones',
+      priority: 1,
+      sticky: 'end',
+      cell: this.celdaAcciones(),
+    },
   ]);
 
   protected readonly porId = (fila: AssignmentRow): string => fila.id;

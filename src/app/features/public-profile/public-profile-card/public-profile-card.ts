@@ -185,6 +185,12 @@ export class PublicProfileCard {
     return media == null ? null : media.toFixed(1).replace('.', ',');
   });
 
+  /** Cinco estrellas del promedio, redondeado al entero más cercano. */
+  protected readonly estrellasCabecera = computed(() => {
+    const media = this.perfil().ratingAverage ?? 0;
+    return Array.from({ length: 5 }, (_, indice) => media >= indice + 0.5);
+  });
+
   /**
    * Dónde atiende, en una línea.
    *
@@ -274,6 +280,7 @@ export class PublicProfileCard {
       tira.push({ id: 'donde-queda', rotulo: this.esLugar() ? 'Dónde queda' : 'Dónde atiende' });
     }
     if (p.posts.length > 0 || previa) tira.push({ id: 'publicaciones', rotulo: 'Publicaciones' });
+    if (!previa) tira.push({ id: 'reviews', rotulo: 'Reseñas' });
 
     // Con una sola sección la tira sobra: sería un rótulo disfrazado de
     // navegación, que es peor que no tener navegación.
@@ -284,7 +291,9 @@ export class PublicProfileCard {
   protected readonly pestanaActiva = signal('resumen');
 
   protected seleccionar(id: string): void {
+    if (this.preview() && id === 'reviews') return;
     this.pestanaActiva.set(id);
+    if (id === 'reviews') this.opinionesAbiertas.set(true);
   }
 
   /** Si la sección se ve con la pestaña actual. «Inicio» las muestra todas. */
@@ -358,7 +367,9 @@ export class PublicProfileCard {
   protected readonly opinionesAbiertas = signal(false);
 
   protected abrirOpiniones(): void {
+    if (this.preview()) return;
     this.opinionesAbiertas.set(true);
+    this.seleccionar('reviews');
   }
 
   protected cerrarOpiniones(): void {
@@ -402,6 +413,7 @@ export class PublicProfileCard {
   protected calificacionPublicada(): void {
     this.calificando.set(false);
     this.opinionesAbiertas.set(true);
+    this.seleccionar('reviews');
   }
 
   /* ==========================================================================
