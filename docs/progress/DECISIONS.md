@@ -16,3 +16,10 @@
 - Se conserva el listado existente de consultorios propios y lugares afiliados; se conserva el uso del mismo formulario desde «Mi perfil» para crear y editar, como ordena la ficha.
 - `organization-panel` no se elimina: sigue siendo la pantalla de administración para roles de organización/tenant.
 
+## 2026-10-15 — Alinear la ficha con C-02 y el estado vigente
+
+- La ficha inicial pedía duplicar lista/formulario dentro de una tarjeta con pestañas y navegar desde el perfil a `?tab=new`/`?edit=<id>`. C-02 del 2026-09-20 pidió que el consultorio propio se gestione dentro de la pestaña «Dónde atiendo» y que se retiren esos enlaces sueltos; gana esa instrucción posterior, ya implementada y fotografiada.
+- `MyPractice` queda como un contenedor delgado que monta `WorkHistory(secciones="consultorios")`. El mismo flujo conserva lista, alta, edición y acciones de lugares desde Administración y perfil. No se duplica CRUD ni se añade una tarjeta/pestaña que compita con el control compartido.
+- `administration/my-organization` se mantiene para quienes administran una organización/tenant, oculto para `PRACTITIONER`; redirigirlo a la pantalla personal rompería ese uso.
+- Se actualiza `tareas/TAREA-32-mi-consultorio-propio.md` para retirar los criterios superados y dejar como fuente de verificación el spec compartido de WorkHistory, la navegación y las capturas Playwright.
+
