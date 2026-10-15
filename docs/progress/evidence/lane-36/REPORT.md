@@ -1,7 +1,7 @@
 # REPORT — Carril 36 · CORR-06
 ## Veredicto: VERIFIED_FUNCTIONAL_ONLY
 
-La implementación cumple el alcance funcional y visual observado. La regresión completa mantiene los fallos preexistentes, con un fallo menos que la línea base. No declaro `VERIFIED` porque `carril-19-route-health.spec.ts` no pudo recorrer las rutas sin la API local, la suite global conserva fallos y el verificador Fable del repositorio no está disponible.
+La implementación cumple el alcance funcional y visual observado. La regresión completa mantiene los fallos preexistentes, con un fallo menos que la línea base. No declaro `VERIFIED` porque `carril-19-route-health.spec.ts` no pudo recorrer las rutas sin la API local, la suite global conserva fallos y el verificador Fable no tiene los prerrequisitos para cerrar este carril.
 
 ## Rutas
 
@@ -29,8 +29,10 @@ La recaptura final se hizo después de rebasar la rama sobre `mockup` (`bac6a193
 - `E2E_BASE_URL=http://127.0.0.1:4200 scripts/corr-evidencia.sh 36 --antes` — 8 celdas; 2 rojas por la regla genérica de fondo oscuro que no correspondía a la regla explícita de fondo blanco de este carril.
 - `E2E_BASE_URL=http://127.0.0.1:4200 scripts/corr-evidencia.sh 36` — `1 passed`; 20 celdas, 0 rojas.
 - `CORR_EVIDENCE_DESTINATION="$PWD/docs/progress/evidence/lane-36" scripts/corr-evidencia.sh 36` — recaptura final sobre la rama rebasada; `1 passed`, 20 celdas, 0 rojas. Se revisaron las 20 fotos posteriores una por una.
-- `corepack yarn typecheck` — PASS.
-- ESLint dirigido a archivos modificados — PASS.
+- `corepack yarn typecheck` — PASS en la recaptura final con la paleta tokenizada.
+- `corepack yarn lint` — FAIL con 268 errores preexistentes distribuidos por el repositorio; esta microtarea sólo toca CSS y evidencia.
+- `corepack yarn eslint src/styles.css src/styles/alovida.css` — ESLint ignora ambos CSS por no tener configuración para ese formato; no se presenta como validación de CSS.
+- `git diff --check` — PASS.
 - `corepack yarn build` — PASS; emitió advertencias preexistentes de tamaño de bundles/CSS y CommonJS.
 - Specs dirigidos de identidad — `3 files, 36 tests passed`.
 - `node scripts/check-route-prefixes.mjs` — PASS; 269 rutas, sin colisiones con 79 prefijos de API.
@@ -38,7 +40,7 @@ La recaptura final se hizo después de rebasar la rama sobre `mockup` (`bac6a193
 - El mismo comando en esta rama — `775 files, 10,635 passed, 73 failed; 10,708 total`. No aumentaron fallos; hay 2 pruebas más aprobadas y 1 fallo menos que en la base.
 - `corepack yarn lint` en base y rama — FAIL con 269 errores en cada árbol; comparación normalizada por archivo/regla: 0 agregados y 0 corregidos. ESLint dirigido a los archivos modificados pasa.
 - `corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1` — bloqueado antes de recorrer rutas porque `apiViva=false`; un caso falla y tres se omiten. Se intentó iniciar la API sin permitir sincronización de esquema (`ORM_SCHEMA_SYNC=off PORT=3000 corepack yarn start:dev`), pero Nest salió con `UnknownDependenciesException`: `LinkedClaimOrderService` no resuelve `LinkedOrderDataRepository` en `InsurancePatientSettlementModule`. No se modificó el repositorio backend, que está fuera del alcance visual de CORR-36.
-- `python3 -S scripts/atlas/fable-proof-check.py --lane 36` — no ejecutable: `scripts/atlas/fable-proof-check.py` no existe en este checkout.
+- `python3 -S ../scripts/atlas/fable-proof-check.py --lane 36` — FAIL: no hay claim `.claude/runtime/lane-36-claim.json` y falta `docs/progress/BUGS.md`; no se fabricó un claim de regresión verificada.
 - `corepack yarn pw playwright/fable-matriz-roles.spec.ts --workers=1` — no se completó: esta matriz general recorre todas las rutas para cinco cuentas y dos viewports, con timeout de una hora; no forma parte del comando de regresión de CORR-36. La regresión obligatoria de suite completa sí se comparó con la base.
 
 ## Bugs encontrados / corregidos
@@ -49,12 +51,22 @@ La recaptura final se hizo después de rebasar la rama sobre `mockup` (`bac6a193
 - El chequeo oscuro genérico de la línea base esperaba una superficie oscura. La regla del workspace exige fondo blanco en todas las vistas, así que el chequeo específico de este carril se ajustó a esa regla; no se cambió el criterio de otros carriles.
 - La primera recaptura sobre la base actual expuso que el tema oscuro todavía pintaba el contenido de identidad en petróleo, aunque el carril exige blanco. Se fijaron los tokens de superficie, texto, borde y controles para esta vista y se apagaron la imagen y los velos del fondo; el criterio de medición se conservó.
 
+## Revisión de código — microtarea de paleta
+
+- Alcance visual: PASS; sólo se cambia el token semántico blanco y el mapeo de tokens de identidad en tema oscuro.
+- Límites del repositorio: PASS; no se tocaron modelo, API, secretos ni proxy.
+- Criterio de fondo blanco/contraste: PASS en la matriz y en las 20 capturas inspeccionadas.
+- Tokens: PASS; el bloque usa tokens existentes de `src/styles.css`; `--surface-white` queda definido una vez en la paleta central y se reutiliza en ambas hojas.
+- Tema oscuro: PASS; el selector scoped conserva fondo, superficies y texto claros sólo para `app-identity-hub`.
+- Pruebas debilitadas/rutas nuevas/accesibilidad nueva: no aplica; no se modificaron specs, rutas ni controles.
+- Typecheck y diff: PASS. Lint global: FAIL por 268 errores ajenos; ESLint ignora CSS sin configuración para ese formato.
+
 ## Riesgos residuales
 
 - La suite global conserva 73 fallos; la comparación con la base del mismo commit muestra que no son regresiones de esta rama (74 fallos antes).
-- La suite `lint` global ya falla en la base del proyecto; el análisis dirigido de los archivos tocados sí pasa.
+- La suite `lint` global falla con 268 errores preexistentes. ESLint no analiza CSS en esta configuración; los cambios CSS se verificaron con typecheck, compilación, Playwright visual y revisión manual de las 20 capturas.
 - La verificación de salud de rutas requiere que la API esté disponible; su arranque actual está bloqueado por la dependencia indicada arriba, ajena a este cambio.
-- Falta el script `scripts/atlas/fable-proof-check.py`; no fue posible completar esa validación automatizada.
+- El verificador Fable existe en el workspace padre, pero falla porque falta el claim de cierre y `docs/progress/BUGS.md`; no corresponde declarar regresión verificada mientras sigan pendientes los gates globales/API.
 - No se inspeccionó manualmente el panel Network del navegador; la evidencia de red se limita a respuestas 5xx y errores de consola medidos por Playwright.
 
 ## Decisiones
