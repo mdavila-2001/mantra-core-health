@@ -36,6 +36,7 @@ Revisé individualmente las doce capturas. «Sin leer» muestra los cuatro aviso
 - `scripts/corr-evidencia.sh 35` en SSR → PASS, 4 celdas.
 - `corepack yarn lint` → FAIL global, 269 errores del repositorio. Los archivos tocados pasan el ESLint dirigido.
 - `corepack yarn test --watch=false`: antes, sobre `origin/mockup` (`c36a0188f`), 10.633 aprobadas y 74 fallidas (10.707 total); después, 10.633 aprobadas y 76 fallidas (10.709 total). Las dos fallas netas adicionales aparecen en `practitioner-detail.spec.ts`, `insurance-portability.handlers.spec.ts` y `clinical.handlers.spec.ts`; desaparece la falla de `pdf-logo.spec.ts`. Ninguno de esos archivos se modifica en esta rama. La cantidad de aprobadas se mantiene; no se declara regresión aprobada porque el total de fallas sube en dos. Los fallos repetidos dominantes son 66 casos preexistentes de `medication-block.spec.ts`.
+- Repetición dirigida del 2026-10-15 en la rama y en `wt-corr-35-before` (`c36a0188f`): los tres specs de esas fallas (`clinical.handlers`, `insurance-portability.handlers` y `practitioner-detail`) pasaron **46/46 en ambos árboles**. La diferencia de fallos de la corrida completa no se reprodujo en este subconjunto y queda sin resolver; no se eleva el claim global por esta comprobación dirigida.
 - `corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1` → FAIL antes de iniciar el barrido: la API local no está viva (`apiViva` esperado true, recibido false).
 
 ## Bugs encontrados / corregidos
@@ -47,6 +48,7 @@ Revisé individualmente las doce capturas. «Sin leer» muestra los cuatro aviso
 ## Riesgos residuales
 
 - La regresión completa queda sin aprobar: al comparar base y rama, las aprobadas quedan en 10.633, pero las fallidas suben de 74 a 76 en specs ajenos a este cambio. Debe repetirse la suite en un entorno estable y revisar esos fallos antes de elevar el claim.
+- Los tres specs mencionados pasaron 46/46 tanto en la rama como en la base al repetirlos; esto acota la investigación, pero no sustituye la suite completa ni explica su variación.
 - Las pestañas de categoría filtran las páginas ya cargadas; si una página no contiene coincidencias, se informa y se ofrece cargar más. La API sólo soporta el filtro de no leídas.
 - El lint global falla en 269 errores no acotados a CORR-35. La suite completa y route-health deben ejecutarse antes de elevar el claim de regresión.
 - La implementación original ya existe en `mockup`; el PR de esta rama cubre las brechas y su evidencia.
