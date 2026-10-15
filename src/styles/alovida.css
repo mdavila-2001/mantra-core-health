@@ -4078,6 +4078,65 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
   background-image: url("/alovida/imagenes/fondo-vista.svg");
 }
 
+/* Identidad conserva la vista clara exigida por el carril incluso si la
+   persona tiene activada la paleta oscura. Los tokens de la pantalla y los
+   organismos se fijan para que el fondo, las tarjetas y el texto mantengan
+   juntos el contraste del tema claro. */
+:root[data-tema="oscuro"] body:has(app-identity-hub),
+:root[data-theme="dark"] body:has(app-identity-hub) {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  background-image: none;
+  --bg-base: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #F9F8F4;
+  --bg-inset: #F3F6F5;
+  --text-primary: #242828;
+  --text-secondary: #4E5151;
+  --text-muted: #656768;
+  --text-tertiary: #656768;
+  --brand-primary: #0B557E;
+  --brand-primary-hover: #0B4768;
+  --brand-primary-active: #0B3953;
+  --brand-secondary: #33706C;
+  --brand-secondary-hover: #285B58;
+  --brand-accent: #8B5E2A;
+  --border-default: #CDD9D5;
+  --border-strong: #7D8786;
+  --focus-ring: #33706C;
+  --sup-pagina: #FFFFFF;
+  --sup-tarjeta: #FFFFFF;
+  --sup-inset: #F9F8F4;
+  --tinta: #242828;
+  --tinta-2: #4E5151;
+  --tinta-3: #656768;
+  --tinta-marca: #0A3E5C;
+  --petroleo: #0B557E;
+  --petroleo-h: #0B4768;
+  --petroleo-p: #0B3953;
+  --aguamarina: #4FB3A9;
+  --menta: #9FD8D0;
+  --filete: #CDD9D5;
+  --filete-2: #E3EAE7;
+  --borde-ctrl: #7D8786;
+  --ok-bg: #DFEDE9;
+  --ok-tinta: #27725C;
+  --aviso-bg: #FBF2E8;
+  --aviso-tinta: #5E4B35;
+  --error-bg: #F4E5E1;
+  --error-tinta: #924534;
+  --info-bg: #E4F3F2;
+  --info-tinta: #33706C;
+  --neutro-bg: #F3F6F5;
+  --neutro-tinta: #4E5151;
+}
+:root[data-tema="oscuro"] body:has(app-identity-hub)::before,
+:root[data-tema="oscuro"] body:has(app-identity-hub)::after,
+:root[data-theme="dark"] body:has(app-identity-hub)::before,
+:root[data-theme="dark"] body:has(app-identity-hub)::after {
+  opacity: 0;
+}
+
 
 /* ===========================================================================
     Rejilla de formulario — regla de UI de ALOVIDA

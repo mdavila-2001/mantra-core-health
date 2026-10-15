@@ -15,6 +15,8 @@ La implementación cumple el alcance funcional y visual observado. La regresión
 
 La matriz automatizada mide 20 celdas, 0 en rojo. El requisito de fondo blanco también se verificó en tema oscuro según las instrucciones del workspace.
 
+La recaptura final se hizo después de rebasar la rama sobre `mockup` (`bac6a1931`). La primera medición detectó dos superficies oscuras reales en tema oscuro (`/my-account/identity` y `?tab=cases`); se corrigió la paleta de esa vista en `src/styles/alovida.css`, sin relajar la medición. Después se repitieron las 20 celdas y se abrieron las 20 capturas finales: todas cumplen visualmente.
+
 ## Fotos (rutas relativas)
 
 - Capturas antes y después: `fotos/antes/` y `fotos/despues/`.
@@ -26,6 +28,7 @@ La matriz automatizada mide 20 celdas, 0 en rojo. El requisito de fondo blanco t
 
 - `E2E_BASE_URL=http://127.0.0.1:4200 scripts/corr-evidencia.sh 36 --antes` — 8 celdas; 2 rojas por la regla genérica de fondo oscuro que no correspondía a la regla explícita de fondo blanco de este carril.
 - `E2E_BASE_URL=http://127.0.0.1:4200 scripts/corr-evidencia.sh 36` — `1 passed`; 20 celdas, 0 rojas.
+- `CORR_EVIDENCE_DESTINATION="$PWD/docs/progress/evidence/lane-36" scripts/corr-evidencia.sh 36` — recaptura final sobre la rama rebasada; `1 passed`, 20 celdas, 0 rojas. Se revisaron las 20 fotos posteriores una por una.
 - `corepack yarn typecheck` — PASS.
 - ESLint dirigido a archivos modificados — PASS.
 - `corepack yarn build` — PASS; emitió advertencias preexistentes de tamaño de bundles/CSS y CommonJS.
@@ -44,6 +47,7 @@ La matriz automatizada mide 20 celdas, 0 en rojo. El requisito de fondo blanco t
 - La vista unificada elimina la tarjeta duplicada de trámites anteriores en la pestaña de verificación.
 - El detalle de un trámite abre un diálogo compartible y restaura su estado desde `?tab=cases&case=<id>`; se preservan redirecciones de rutas anteriores.
 - El chequeo oscuro genérico de la línea base esperaba una superficie oscura. La regla del workspace exige fondo blanco en todas las vistas, así que el chequeo específico de este carril se ajustó a esa regla; no se cambió el criterio de otros carriles.
+- La primera recaptura sobre la base actual expuso que el tema oscuro todavía pintaba el contenido de identidad en petróleo, aunque el carril exige blanco. Se fijaron los tokens de superficie, texto, borde y controles para esta vista y se apagaron la imagen y los velos del fondo; el criterio de medición se conservó.
 
 ## Riesgos residuales
 

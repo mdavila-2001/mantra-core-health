@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
@@ -36,7 +36,9 @@ const USUARIO = process.env['CORR_USUARIO'] ?? 'medica';
 const ROUTE_KEY =
   LANE === '34' && USUARIO !== 'medica' ? `${LANE}-${USUARIO}` : LANE;
 
-const BASE_DESTINATION = join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+const BASE_DESTINATION = process.env['CORR_EVIDENCE_DESTINATION']
+  ? resolve(process.env['CORR_EVIDENCE_DESTINATION'])
+  : join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
 // Las dos pasadas de usuario deben conservar matrices y fotos independientes.
 const DESTINO = USUARIO === 'medica' ? BASE_DESTINATION : join(BASE_DESTINATION, USUARIO);
 const FOTOS = join(DESTINO, 'fotos', FASE);
@@ -375,6 +377,19 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
+          await activePage.waitForFunction(
+            () => {
+              if (window.innerWidth <= 900) return true;
+              const shell = document.querySelector('.app-shell');
+              const nav = document.querySelector('.app-side-nav');
+              if (!shell || !nav) return true;
+              const padding = Number.parseFloat(getComputedStyle(shell).paddingLeft);
+              const width = nav.getBoundingClientRect().width;
+              return Number.isFinite(padding) && Math.abs(padding - width) <= 2;
+            },
+            undefined,
+            { timeout: 5_000 },
+          );
           if (LANE === '36' && ruta.startsWith('/my-account/identity')) {
             await expect(activePage.getByText('Desconocido', { exact: true })).toHaveCount(0);
             const esSeguimiento = ruta.includes('tab=cases') || ruta.includes('/cases');
