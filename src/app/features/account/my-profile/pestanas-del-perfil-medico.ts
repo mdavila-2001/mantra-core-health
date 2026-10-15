@@ -196,6 +196,7 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
      no el municipio suelto— y ahora monta además el bloque del consultorio,
      donde los cuatro se ven y se corrigen con su propio control (C-02). */
   officeName: PESTANA_MEDICO.dondeAtiendo,
+  officeContactPhone: PESTANA_MEDICO.dondeAtiendo,
   municipioConsultorio: PESTANA_MEDICO.dondeAtiendo,
   officeAddressLines: PESTANA_MEDICO.dondeAtiendo,
   gpsConsultorio: PESTANA_MEDICO.dondeAtiendo,

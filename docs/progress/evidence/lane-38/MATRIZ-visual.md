@@ -1,4 +1,4 @@
-# MATRIZ visual — carril 38 — despues — 2026-09-24T07:13:49.929Z
+# MATRIZ visual — carril 38 — despues — 2026-10-15T16:18:04.454Z
 
 Celdas: 8 · en rojo: 0
 
@@ -10,8 +10,8 @@ Celdas: 8 · en rojo: 0
 | `/my-account/edit?pestana=5` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/edit-specialties-no-switches-768-claro.png` |
 | `/my-account/edit` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/practitioner-profile-editor-1440-claro.png` |
 | `/my-account/edit?pestana=5` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/edit-specialties-no-switches-1440-claro.png` |
-| `/my-account/edit` | 1440 | oscuro | — | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/practitioner-profile-editor-1440-oscuro.png` |
-| `/my-account/edit?pestana=5` | 1440 | oscuro | — | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/edit-specialties-no-switches-1440-oscuro.png` |
+| `/my-account/edit` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/practitioner-profile-editor-1440-oscuro.png` |
+| `/my-account/edit?pestana=5` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/edit-specialties-no-switches-1440-oscuro.png` |
 
 ## Errores
 - ninguno

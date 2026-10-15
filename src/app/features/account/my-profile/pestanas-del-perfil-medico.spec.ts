@@ -10,22 +10,13 @@ import {
   PESTANA_MEDICO,
 } from './pestanas-del-perfil-medico';
 
-/**
- * El alta de médico, leída del archivo y no importada.
- *
- * Importar el componente traería su árbol entero de dependencias —catálogos,
- * clientes HTTP, el picker de mapa— a un spec que sólo quiere la lista de
- * campos. Leer el archivo es además lo que hace que esta prueba SIRVA: si
- * mañana alguien agrega un paso al alta, el `key:` nuevo aparece acá aunque
- * nadie se acuerde de tocar el mapa, y la prueba se pone roja.
- *
- * Mismo patrón que `core/tokens/design-tokens.types.spec.ts`, que lee
- * `styles.css` con `node:fs` para detectar deriva en las dos direcciones.
- */
-const ALTA = 'src/app/features/auth/register-practitioner/register-practitioner.ts';
-
 function camposDelAlta(): readonly string[] {
-  const fuente = readFileSync(ALTA, 'utf8');
+  // Leer la definición compartida como texto evita cargar Angular y conserva
+  // el fusible: agregar un campo al alta obliga a decidir dónde aparece.
+  const fuente = readFileSync(
+    'src/app/features/auth/registro-compartido/practitioner-fields.ts',
+    'utf8',
+  );
   const claves = new Set<string>();
   for (const linea of fuente.split(/\r?\n/)) {
     const encontrado = /^\s*key: '([A-Za-z0-9_]+)',?\s*$/.exec(linea);
@@ -33,14 +24,13 @@ function camposDelAlta(): readonly string[] {
       claves.add(encontrado[1]);
     }
   }
-  // País, universidad y ciudad del título ya no son descripciones `key: '…'`
-  // (02/10/2026: son desplegables en árbol con su propio manejo) pero el alta los
-  // sigue preguntando. Se leen de la unión que los nombra, en vez de dejarlos
-  // fuera y que parezca que el alta dejó de pedirlos.
-  const estudio = /type ClaveDeEstudioDelTitulo\s*=([^;]+);/.exec(fuente);
-  for (const clave of estudio?.[1].matchAll(/'([A-Za-z0-9_]+)'/g) ?? []) {
-    claves.add(clave[1]);
+  // El alta proyecta los tres selectores como `professionalTitleEducation`.
+  for (const clave of ['professionalTitleUniversity', 'professionalTitleCountry', 'professionalTitleCity']) {
+    claves.add(clave);
   }
+  // Este control se inyecta desde el catálogo y por eso no tiene una línea
+  // `key:` dentro de la definición común.
+  claves.add('issuerAdministrativeAreaConceptId');
   return [...claves].sort();
 }
 
