@@ -34,7 +34,7 @@ La matriz automatizada mide 20 celdas, 0 en rojo. El requisito de fondo blanco t
 - `corepack yarn test --watch=false` en base `c36a0188f` — `775 files, 10,633 passed, 74 failed; 10,707 total`.
 - El mismo comando en esta rama — `775 files, 10,635 passed, 73 failed; 10,708 total`. No aumentaron fallos; hay 2 pruebas más aprobadas y 1 fallo menos que en la base.
 - `corepack yarn lint` en base y rama — FAIL con 269 errores en cada árbol; comparación normalizada por archivo/regla: 0 agregados y 0 corregidos. ESLint dirigido a los archivos modificados pasa.
-- `corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1` — bloqueado antes de recorrer rutas porque la API local no está disponible (`apiViva=false`); un caso falla y tres se omiten por esa condición.
+- `corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1` — bloqueado antes de recorrer rutas porque `apiViva=false`; un caso falla y tres se omiten. Se intentó iniciar la API sin permitir sincronización de esquema (`ORM_SCHEMA_SYNC=off PORT=3000 corepack yarn start:dev`), pero Nest salió con `UnknownDependenciesException`: `LinkedClaimOrderService` no resuelve `LinkedOrderDataRepository` en `InsurancePatientSettlementModule`. No se modificó el repositorio backend, que está fuera del alcance visual de CORR-36.
 - `python3 -S scripts/atlas/fable-proof-check.py --lane 36` — no ejecutable: `scripts/atlas/fable-proof-check.py` no existe en este checkout.
 - `corepack yarn pw playwright/fable-matriz-roles.spec.ts --workers=1` — no se completó: esta matriz general recorre todas las rutas para cinco cuentas y dos viewports, con timeout de una hora; no forma parte del comando de regresión de CORR-36. La regresión obligatoria de suite completa sí se comparó con la base.
 
@@ -49,7 +49,7 @@ La matriz automatizada mide 20 celdas, 0 en rojo. El requisito de fondo blanco t
 
 - La suite global conserva 73 fallos; la comparación con la base del mismo commit muestra que no son regresiones de esta rama (74 fallos antes).
 - La suite `lint` global ya falla en la base del proyecto; el análisis dirigido de los archivos tocados sí pasa.
-- La verificación de salud de rutas que depende de API requiere que el servicio API esté disponible.
+- La verificación de salud de rutas requiere que la API esté disponible; su arranque actual está bloqueado por la dependencia indicada arriba, ajena a este cambio.
 - Falta el script `scripts/atlas/fable-proof-check.py`; no fue posible completar esa validación automatizada.
 - No se inspeccionó manualmente el panel Network del navegador; la evidencia de red se limita a respuestas 5xx y errores de consola medidos por Playwright.
 
