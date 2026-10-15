@@ -647,7 +647,7 @@
 
 .sintomas__meds-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
   gap: var(--sp-4);
 }
 
@@ -1069,7 +1069,7 @@
 /* Teléfonos de Crisis */
 .sintomas__crisis-telefonos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: var(--sp-3, 14px);
   margin-block-start: 4px;
 }
@@ -1185,7 +1185,7 @@
 
 .sintomas__crisis-videos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: var(--sp-4, 16px);
   margin-block-start: 8px;
 }

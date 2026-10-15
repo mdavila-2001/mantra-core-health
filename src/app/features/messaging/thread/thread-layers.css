@@ -96,11 +96,17 @@
   margin: 0;
   padding: var(--e1);
   min-inline-size: 9rem;
+  max-inline-size: calc(100vw - 2rem);
   list-style: none;
   border: 1px solid var(--filete);
   border-radius: var(--r-menu);
   background: var(--sup-tarjeta);
   box-shadow: var(--sombra);
+}
+
+.hilo__burbuja:not(.is-propio) .hilo__menu {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
 }
 
 .hilo__menu button {
@@ -121,9 +127,9 @@
   background: var(--sup-inset);
 }
 
-@media (hover: none) {
+@media (hover: none), (max-width: 60rem) {
   .hilo__mas-mensaje {
-    opacity: 1;
+    opacity: 0.85;
   }
 }
 

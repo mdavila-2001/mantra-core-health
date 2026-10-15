@@ -324,7 +324,7 @@ describe('Messaging', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('Dra. Quispe');
-    expect(texto()).toContain('No pudimos cargar sus conversaciones.');
+    expect(texto()).toContain('No hay conexión con el servidor.');
   });
 
   function escribir(valor: string): void {

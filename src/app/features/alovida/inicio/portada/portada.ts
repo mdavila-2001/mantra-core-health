@@ -11,6 +11,7 @@ import { AlovidaThemeToggleDirective } from '@core/alovida/alovida-theme-toggle.
   selector: 'app-alovida-inicio-portada',
   imports: [RouterLink, AlovidaThemeToggleDirective],
   templateUrl: './portada.html',
+  styleUrl: './portada.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InicioPortada {}
