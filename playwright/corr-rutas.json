@@ -215,6 +215,24 @@
     {
       "ruta": "/my-account/identity?tab=cases",
       "nombre": "identidad-tramites"
+    },
+    {
+      "ruta": "/my-account/identity/cases",
+      "nombre": "identidad-ruta-casos-antigua",
+      "esperado": "redirige",
+      "destino": "/my-account/identity"
+    },
+    {
+      "ruta": "/my-account/identity/cases/b1eb2350-dc62-4c14-a7dc-12c4547ab0a4",
+      "nombre": "identidad-detalle-dialog",
+      "esperado": "redirige",
+      "destino": "/my-account/identity"
+    },
+    {
+      "ruta": "/my-account/identity/verify",
+      "nombre": "identidad-ruta-verificar-antigua",
+      "esperado": "redirige",
+      "destino": "/my-account/identity"
     }
   ],
   "37": [

@@ -55,6 +55,8 @@
     [state]="estadoDeLaTabla()"
     [columns]="columnas()"
     [trackBy]="porId"
+    [fitContainer]="true"
+    [wrapHeaders]="true"
     caption="Sus vinculaciones con organizaciones"
     data-testid="mis-vinculaciones"
     (retry)="reintentarVinculaciones()"
@@ -98,7 +100,9 @@
 </ng-template>
 
 <ng-template #celdaEstado let-fila>
-  <app-badge [variant]="fila.statusVariant">{{ fila.statusLabel }}</app-badge>
+  <app-badge class="vinculacion__estado" [variant]="fila.statusVariant">
+    <span class="vinculacion__estado-rotulo">{{ fila.statusLabel }}</span>
+  </app-badge>
 </ng-template>
 
 <ng-template #celdaCargo let-fila>

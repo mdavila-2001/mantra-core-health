@@ -16,6 +16,16 @@
 - Se conserva el listado existente de consultorios propios y lugares afiliados; se conserva el uso del mismo formulario desde «Mi perfil» para crear y editar, como ordena la ficha.
 - `organization-panel` no se elimina: sigue siendo la pantalla de administración para roles de organización/tenant.
 
+# Decisión de trabajo del carril 36
+
+## 2026-10-14 — Cierre de CORR-06
+
+- `origin/mockup` ya contenía la pantalla unificada y el mapeo de estados a conceptos; esta rama completa los criterios pendientes de CORR-36.
+- Los casos mock de la doctora demo muestran estados verificado, abierto y rechazado, con fechas calculadas respecto al reloj de Playwright fijado en 2026.
+- El detalle se conserva dentro de un diálogo y en la URL con `?tab=cases&case=<id>`; los enlaces históricos redirigen a la pantalla unificada.
+- La regla de evidencia de fondo blanco aplica también al tema oscuro en este carril, siguiendo las instrucciones entregadas para el workspace. El chequeo específico se corrigió sin alterar otros carriles.
+- La línea base de suite completa se obtuvo sobre `c36a0188f`: 74 fallos; la rama termina con 73. Los fallos residuales y los bloqueos de API/Fable se documentan en `docs/progress/evidence/lane-36/REPORT.md`.
+
 # Decisión de trabajo del carril 35
 
 ## 2026-10-15 — Ruta vigente y evidencia de estados
@@ -23,4 +33,3 @@
 - La ruta registrada en `app.routes.ts` es `/notification-center`; `/notifications` y sus parámetros de estado no son rutas de producto. Se corrige la ficha para usar la ruta real.
 - Las evidencias Todas, Sin leer y Vacío se obtienen con controles visibles: abrir cada pestaña y, para Vacío, marcar la bandeja como leída antes de abrir Sin leer. El capturador agrega `evidenceState` sólo como selector interno del escenario; la pantalla lo ignora. No se inventa un endpoint de fixtures ni se modifica el comportamiento del producto para la prueba.
 - Las fotos son capturas del viewport que se mide (375, 768, 1440 claro y 1440 oscuro), no capturas `fullPage`; se prioriza que la imagen represente el primer pantallazo evaluado por la regla visual.
-

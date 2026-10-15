@@ -4078,6 +4078,65 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
   background-image: url("/alovida/imagenes/fondo-vista.svg");
 }
 
+/* Identidad conserva la vista clara exigida por el carril incluso si la
+   persona tiene activada la paleta oscura. Los tokens de la pantalla y los
+   organismos se fijan para que el fondo, las tarjetas y el texto mantengan
+   juntos el contraste del tema claro. */
+:root[data-tema="oscuro"] body:has(app-identity-hub),
+:root[data-theme="dark"] body:has(app-identity-hub) {
+  color-scheme: light;
+  background-color: var(--surface-white);
+  background-image: none;
+  --bg-base: var(--surface-white);
+  --bg-surface: var(--surface-white);
+  --bg-surface-alt: var(--c-ivory-300);
+  --bg-inset: var(--c-sage-100);
+  --text-primary: var(--c-neutral-500);
+  --text-secondary: var(--c-neutral-400);
+  --text-muted: var(--c-ivory-800);
+  --text-tertiary: var(--c-ivory-800);
+  --brand-primary: var(--c-petrol-500);
+  --brand-primary-hover: var(--c-petrol-600);
+  --brand-primary-active: var(--c-petrol-700);
+  --brand-secondary: var(--c-aqua-700);
+  --brand-secondary-hover: var(--c-aqua-800);
+  --brand-accent: var(--c-amber-800);
+  --border-default: var(--c-sage-500);
+  --border-strong: var(--c-sage-700);
+  --focus-ring: var(--c-aqua-700);
+  --sup-pagina: var(--surface-white);
+  --sup-tarjeta: var(--surface-white);
+  --sup-inset: var(--c-ivory-300);
+  --tinta: var(--c-neutral-500);
+  --tinta-2: var(--c-neutral-400);
+  --tinta-3: var(--c-ivory-800);
+  --tinta-marca: var(--c-petrol-700);
+  --petroleo: var(--c-petrol-500);
+  --petroleo-h: var(--c-petrol-600);
+  --petroleo-p: var(--c-petrol-700);
+  --aguamarina: var(--c-aqua-500);
+  --menta: var(--c-mint-500);
+  --filete: var(--c-sage-500);
+  --filete-2: var(--c-sage-200);
+  --borde-ctrl: var(--c-sage-700);
+  --ok-bg: var(--c-success-50);
+  --ok-tinta: var(--c-success-600);
+  --aviso-bg: var(--c-warning-50);
+  --aviso-tinta: var(--c-warning-800);
+  --error-bg: var(--c-error-50);
+  --error-tinta: var(--c-error-600);
+  --info-bg: var(--c-info-50);
+  --info-tinta: var(--c-info-700);
+  --neutro-bg: var(--c-sage-100);
+  --neutro-tinta: var(--c-neutral-400);
+}
+:root[data-tema="oscuro"] body:has(app-identity-hub)::before,
+:root[data-tema="oscuro"] body:has(app-identity-hub)::after,
+:root[data-theme="dark"] body:has(app-identity-hub)::before,
+:root[data-theme="dark"] body:has(app-identity-hub)::after {
+  opacity: 0;
+}
+
 
 /* ===========================================================================
     Rejilla de formulario — regla de UI de ALOVIDA
