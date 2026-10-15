@@ -11,6 +11,7 @@ import { Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
+import { environment } from '../../../../environments/environment';
 
 /**
  * Lo que estas pruebas fijan.
@@ -750,6 +751,14 @@ describe('Thread', () => {
   /* --- Reacciones, recibos, info del mensaje y bloqueo ------------------- */
 
   describe('reacciones, recibos y bloqueo', () => {
+    const originalMockBackend = environment.mockBackend;
+    beforeEach(() => {
+      Object.assign(environment, { mockBackend: true });
+    });
+    afterEach(() => {
+      Object.assign(environment, { mockBackend: originalMockBackend });
+    });
+
     const propio = (id: string, extra: Record<string, unknown> = {}) => ({
       ...mensaje(id, 'pp-1', 'Hola doctora'),
       sentAt: new Date(Date.now() - 3_600_000).toISOString(),
