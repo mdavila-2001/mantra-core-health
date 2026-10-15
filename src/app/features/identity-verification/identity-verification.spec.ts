@@ -282,6 +282,20 @@ describe('IdentityVerification', () => {
     ).not.toBeNull();
   });
 
+  it('en la pestaña unificada no duplica el historial de la pestaña «Mis trámites»', () => {
+    const integrada = TestBed.createComponent(IdentityVerification);
+    integrada.componentRef.setInput('embedded', true);
+    http.expectOne('/identity/me/verification-cases').flush([
+      { id: 'caso-compartido', status: 'PENDING', openedAt: '2026-10-10T10:00:00.000Z' },
+    ]);
+    integrada.detectChanges();
+
+    const pantalla = integrada.nativeElement as HTMLElement;
+    expect(pantalla.querySelector('.verificar__historial')).toBeNull();
+    expect(pantalla.textContent).not.toContain('Sus trámites anteriores');
+    expect(pantalla.querySelector('app-radio-group')).not.toBeNull();
+  });
+
   function elegirTramite(tramite: string) {
     interno<(v: unknown) => void>('alElegirTramite')(tramite);
   }

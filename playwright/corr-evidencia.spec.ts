@@ -57,7 +57,7 @@ interface Ruta {
    * la aplicación ya no la sirve. Sin esto, borrar una pantalla dejaría la
    * matriz en rojo para siempre y el rojo dejaría de significar algo.
    */
-  readonly esperado?: 'pantalla' | 'no-encontrado';
+  readonly esperado?: 'pantalla' | 'no-encontrado' | 'redirige';
 }
 
 const RUTAS: readonly Ruta[] = (
@@ -260,6 +260,12 @@ function fila(
       ok: borrada,
     };
   }
+  if (esperado === 'redirige') {
+    return {
+      texto: `| \`${ruta}\` | ${vp} | ${tema} | REDIRIGE (esperado) | — | — | — | PASS | \`${foto}\` |`,
+      ok: true,
+    };
+  }
   if (!m.cargo) {
     return {
       texto: `| \`${ruta}\` | ${vp} | ${tema} | SIN CARGAR | | | | | \`${foto}\` |`,
@@ -270,8 +276,9 @@ function fila(
   // sobre un color blanco se seguiría viendo celeste, que es lo que el
   // propietario rechazó.
   const esBlanco = m.fondo === 'rgb(255, 255, 255)' && !m.fondoImagen;
+  const exigeFondoBlanco = LANE === '36' || tema === 'claro';
   const fondo =
-    tema === 'oscuro'
+    !exigeFondoBlanco
       ? esBlanco
         ? 'FAIL (se perdió la superficie oscura)'
         : 'PASS (oscuro conservado)'
@@ -350,6 +357,9 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           });
         }
 
+        if (LANE === '36') {
+          await page.clock.install({ time: new Date('2026-10-14T12:00:00-04:00') });
+        }
         await entrarAlSimulador(page, USUARIO, BASE);
 
         for (const { ruta, nombre, esperado, destino, fixture } of RUTAS) {
@@ -365,6 +375,27 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
+          if (LANE === '36' && ruta.startsWith('/my-account/identity')) {
+            await expect(activePage.getByText('Desconocido', { exact: true })).toHaveCount(0);
+            const esSeguimiento = ruta.includes('tab=cases') || ruta.includes('/cases');
+            if (esSeguimiento) {
+              const tabla = activePage.getByTestId('tabla');
+              await expect(tabla.getByText('Pendiente', { exact: true })).toBeVisible();
+              await expect(tabla.getByText('Aprobado', { exact: true })).toBeVisible();
+              await expect(tabla.getByText('Rechazado', { exact: true })).toBeVisible();
+              await expect(activePage.locator('body')).not.toContainText(/\b2025\b/);
+            }
+            if (ruta.includes('/cases/')) {
+              await expect(activePage.getByTestId('content-dialog-title')).toHaveText(
+                'Detalle del trámite',
+              );
+              expect(new URL(activePage.url()).searchParams.get('case')).toBe(
+                ruta.split('/').at(-1),
+              );
+            } else if (esperado === 'redirige' && ruta.endsWith('/cases')) {
+              expect(new URL(activePage.url()).searchParams.get('tab')).toBe('cases');
+            }
+          }
           if (fixture === 'empty-memberships') {
             // Fixture de evidencia: deja asentado el estado vacío después de
             // que terminó la consulta simulada, sin agregar parámetros de
@@ -466,7 +497,11 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
               });
             });
           }
-          await activePage.screenshot({ path: foto, fullPage: LANE === '33' && vp.width <= 768 });
+          await activePage.screenshot({
+            path: foto,
+            fullPage: LANE === '33' && vp.width <= 768,
+            animations: 'disabled',
+          });
           const bytes = statSync(foto).size;
           if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);
