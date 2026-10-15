@@ -195,8 +195,16 @@
   ],
   "35": [
     {
-      "ruta": "/notification-center",
-      "nombre": "notificaciones"
+      "ruta": "/notification-center?evidenceState=all",
+      "nombre": "notificaciones-todas"
+    },
+    {
+      "ruta": "/notification-center?evidenceState=unread",
+      "nombre": "notificaciones-sin-leer"
+    },
+    {
+      "ruta": "/notification-center?evidenceState=empty",
+      "nombre": "notificaciones-vacio"
     }
   ],
   "36": [

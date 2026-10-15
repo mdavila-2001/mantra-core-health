@@ -33,3 +33,10 @@
 - La ficha `TAREA-37` proponía seis pestañas basadas en los pasos del alta. La inspección de `/my-account` mostró que la base ya tiene una tarjeta con siete pestañas, producto de solicitudes posteriores de facturación, consultorio, trayectoria y actividad. Se conserva el orden actual de `PESTANAS_DEL_PERFIL_MEDICO` para no descartar esas solicitudes.
 - El propietario indicó que en todas las decisiones se elija la opción más recomendada. Para esta discrepancia, la recomendación es preservar las siete pestañas vigentes y actualizar la ficha vieja, no volver a un agrupamiento que oculta secciones.
 - El contrato del alta agrega el teléfono como `PracticeSite.contactPhone`; se incluye en el mapa a «Dónde atiendo» y en la lectura de la sede mediante un enlace `tel:`. No se modifica contrato ni servicio.
+# Decisión de trabajo del carril 35
+
+## 2026-10-15 — Ruta vigente y evidencia de estados
+
+- La ruta registrada en `app.routes.ts` es `/notification-center`; `/notifications` y sus parámetros de estado no son rutas de producto. Se corrige la ficha para usar la ruta real.
+- Las evidencias Todas, Sin leer y Vacío se obtienen con controles visibles: abrir cada pestaña y, para Vacío, marcar la bandeja como leída antes de abrir Sin leer. El capturador agrega `evidenceState` sólo como selector interno del escenario; la pantalla lo ignora. No se inventa un endpoint de fixtures ni se modifica el comportamiento del producto para la prueba.
+- Las fotos son capturas del viewport que se mide (375, 768, 1440 claro y 1440 oscuro), no capturas `fullPage`; se prioriza que la imagen represente el primer pantallazo evaluado por la regla visual.
