@@ -1,7 +1,7 @@
 # Reporte — CORR-01: retirar «Consulta médica»
 
 - Fecha: 2026-10-13 · Plan: [PLAN.md](../../../../trabajo/2026-10-13-corr-31-borrar-consulta-medica/PLAN.md) · Rama: `justin/mockup-corr-31-borrar-consulta-medica`
-- Peldaño de evidencia alcanzado: `TESTED` para navegación y referencias; evidencia visual parcial por falla heredada de CORR-04 en tema oscuro.
+- Peldaño de evidencia alcanzado: `VERIFIED` para la verificación visual en `origin/mockup` (`bac6a1931`, 2026-10-15); la regresión integral y el cierre Fable siguen pendientes.
 - Avance del plan de esta rama: 5/7 microtareas = **71 %**. El carril no se declara cerrado.
 
 ## Completado
@@ -18,17 +18,15 @@
 
 ### H1.S2.M1 — Fotos posteriores y regla visual CORR-04
 
-- Qué anda: se generaron y revisaron las 12 fotos del carril (panel, `/schedule` y `/consultation`, en 375, 768, 1440 claro y 1440 oscuro cuando corresponde). En claro, el panel y la agenda pasan fondo, centrado, ancho, scroll y consola; `/consultation` muestra «No encontramos lo que busca».
-- Qué no anda: la medición marca «se perdió la superficie oscura» en `/dashboard` y `/schedule` a 1440 oscuro. La misma falla aparece en la línea base previa, así que no la introdujo esta rama. Es parte del cierre global de CORR-04, que el plan ordena ejecutar al final.
-- Qué falta exactamente: corregir el fondo oscuro en CORR-04, actualizar `mockup`, repetir `scripts/corr-evidencia.sh 31` y confirmar 12/12 celdas.
-- Dónde quedó: imágenes y matrices en [`docs/progress/evidence/lane-31/`](./); el resultado literal de la última corrida está en la sesión y se resumió en la matriz.
+- Rechequeo: `scripts/corr-evidencia.sh 31` sobre `origin/mockup` (`bac6a1931`) el 2026-10-15 generó 12 celdas PASS. Las cuatro capturas oscuras fueron inspeccionadas; `/dashboard` y `/schedule` conservan la superficie oscura y `/consultation` muestra el estado de ruta retirada.
+- La matriz histórica del 2026-10-13 conserva los dos rojos de ese momento; la matriz actual está en [`MATRIZ-visual.md`](./MATRIZ-visual.md) y las capturas actuales en [`fotos/despues/`](./fotos/despues/).
 
 ## Pendiente
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| H1.S2.M1 | A MEDIAS | Cierre final de CORR-04 y nueva evidencia visual |
-| H1.S2.M2 | TODO | Regresión completa, ruta de salud, `fable-proof-check.py` y PR cuando no haya rojos de CORR-04 |
+| H1.S2.M1 | COMPLETADO | Rechequeo actual: 12 celdas PASS en `origin/mockup` |
+| H1.S2.M2 | PENDIENTE | Suite completa y route-health; `scripts/atlas/fable-proof-check.py` no existe en esta punta |
 
 ## Evidencia
 
@@ -36,8 +34,9 @@
 - `corepack yarn eslint src/app/core/navigation/navigation.map.spec.ts src/app/core/navigation/navigation.subgroups.spec.ts` → exit 0.
 - `corepack yarn test --watch=false --include='src/app/core/navigation/**/*.spec.ts'` → `Test Files 9 passed (9)`; `Tests 170 passed (170)`.
 - `corepack yarn lint` → exit 1; 269 errores en archivos no modificados de la base.
-- Línea base visual → `1 passed`; 12 celdas, 2 rojas de superficie oscura.
-- Corrida final visual → 1 test falla porque `/dashboard` y `/schedule` no conservan la superficie oscura. Ambas celdas ya estaban rojas en la línea base.
+- Corrida histórica visual del 2026-10-13 → 12 celdas, 2 rojas de superficie oscura.
+- `scripts/corr-evidencia.sh 31` en `origin/mockup` (`bac6a1931`), 2026-10-15 → `1 passed`; 12 celdas, 0 rojas. Las fotos nuevas se inspeccionaron una por una.
+- `python3 -S scripts/atlas/fable-proof-check.py --lane 31` → no disponible: el archivo no existe en esta punta `mockup`.
 
 ## No cubierto
 
@@ -51,7 +50,8 @@
 
 ## Riesgos residuales
 
-- La regla visual global no pasa en tema oscuro para dos rutas y bloquea el cierre hasta CORR-04.
+- La medición visual actual pasa; las matrices históricas mantienen el registro de sus resultados de entonces.
+- La suite completa, route-health y Fable proof siguen sin ejecutarse en este follow-up.
 - `corepack yarn lint` global conserva deuda preexistente; el lint de los archivos tocados sí pasó.
 
 ## Decisiones y ambigüedades

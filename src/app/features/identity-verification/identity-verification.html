@@ -122,7 +122,7 @@
     <!-- El historial responde «¿esto ya lo mandé?» sin que nadie pregunte.
          `GET /identity/me/verification-cases`, que el backend publicaba desde
          siempre y esta pantalla no pedía. -->
-    @if (historialOrdenado().length > 0) {
+    @if (!embedded() && historialOrdenado().length > 0) {
       <app-card variant="outlined" padding="lg">
         <h2 class="verificar__titulo">Sus trámites anteriores</h2>
 
