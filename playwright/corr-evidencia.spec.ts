@@ -308,6 +308,58 @@ function fila(
   return { texto, ok: ![fondo, centrado, ancho, scroll, cons].some((x) => x.startsWith('FAIL')) };
 }
 
+/**
+ * Produce los tres estados visuales de CORR-35 recorriendo la interfaz real.
+ * El query param sólo selecciona el escenario del capturador; no es una opción
+ * de producto ni una fixture de datos. El estado vacío se obtiene marcando
+ * toda la bandeja como leída y entrando a «Sin leer».
+ */
+async function prepararEstadoNotificaciones(page: Page, ruta: string): Promise<void> {
+  const url = new URL(ruta, BASE);
+  if (url.pathname !== '/notification-center') return;
+
+  const escenario = url.searchParams.get('evidenceState');
+  const titulos = page.locator('.avisos__titulo');
+  const esperarBandejaLista = async (): Promise<void> => {
+    // Al cambiar de pestaña se conserva el contenido previo y se dispara otra
+    // consulta. Esperar sólo una fila visible puede aceptar el esqueleto o
+    // contenido viejo; la foto debe esperar al cierre del estado de carga.
+    await expect(page.locator('.view-state-host__loading')).toHaveCount(0);
+    await expect(titulos.first()).toBeVisible();
+    await expect(titulos.first()).toHaveText(/\S+/);
+  };
+  if (!escenario || escenario === 'all') {
+    await esperarBandejaLista();
+    return;
+  }
+
+  const pestanas = page.locator('[data-testid="avisos-pestanas"] [role="tab"]');
+  await expect(pestanas).toHaveCount(6);
+
+  if (escenario === 'unread') {
+    await pestanas.nth(1).click();
+    await esperarBandejaLista();
+    // El simulador de la evidencia devuelve cuatro avisos sin leer. Esperar
+    // esa respuesta evita fotografiar el esqueleto o una lista transitoria.
+    await expect(titulos).toHaveCount(4);
+    return;
+  }
+
+  if (escenario === 'empty') {
+    const marcarTodas = page.getByTestId('avisos-marcar-todas');
+    await expect(marcarTodas).toBeVisible();
+    await marcarTodas.click();
+    await expect(marcarTodas).toHaveCount(0);
+    await pestanas.nth(1).click();
+    await expect(page.locator('.view-state-host__loading')).toHaveCount(0);
+    await expect(page.getByText('No hay notificaciones sin leer.')).toBeVisible();
+    await expect(page.locator('app-empty-state')).toBeVisible();
+    return;
+  }
+
+  throw new Error(`Escenario de notificaciones desconocido: ${escenario}`);
+}
+
 test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
   test.skip(!LANE, 'CORR_LANE es obligatoria');
 
@@ -377,6 +429,7 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
+          await prepararEstadoNotificaciones(activePage, ruta);
           await activePage.waitForFunction(
             () => {
               if (window.innerWidth <= 900) return true;

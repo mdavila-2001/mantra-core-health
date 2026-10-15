@@ -33,3 +33,10 @@
 - `MyPractice` queda como un contenedor delgado que monta `WorkHistory(secciones="consultorios")`. El mismo flujo conserva lista, alta, edición y acciones de lugares desde Administración y perfil. No se duplica CRUD ni se añade una tarjeta/pestaña que compita con el control compartido.
 - `administration/my-organization` se mantiene para quienes administran una organización/tenant, oculto para `PRACTITIONER`; redirigirlo a la pantalla personal rompería ese uso.
 - Se actualiza `tareas/TAREA-32-mi-consultorio-propio.md` para retirar los criterios superados y dejar como fuente de verificación el spec compartido de WorkHistory, la navegación y las capturas Playwright.
+# Decisión de trabajo del carril 35
+
+## 2026-10-15 — Ruta vigente y evidencia de estados
+
+- La ruta registrada en `app.routes.ts` es `/notification-center`; `/notifications` y sus parámetros de estado no son rutas de producto. Se corrige la ficha para usar la ruta real.
+- Las evidencias Todas, Sin leer y Vacío se obtienen con controles visibles: abrir cada pestaña y, para Vacío, marcar la bandeja como leída antes de abrir Sin leer. El capturador agrega `evidenceState` sólo como selector interno del escenario; la pantalla lo ignora. No se inventa un endpoint de fixtures ni se modifica el comportamiento del producto para la prueba.
+- Las fotos son capturas del viewport que se mide (375, 768, 1440 claro y 1440 oscuro), no capturas `fullPage`; se prioriza que la imagen represente el primer pantallazo evaluado por la regla visual.
