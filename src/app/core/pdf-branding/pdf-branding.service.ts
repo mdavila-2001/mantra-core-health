@@ -5,17 +5,17 @@ import { AuthService } from '../auth/auth.service';
 import { SignatureAndSealClient } from '../data-access/profiles/signature-and-seal.client';
 import { ProfilesClient } from '../data-access/profiles/profiles.client';
 import { PracticeLogoClient } from '../data-access/practice-sites/practice-logo.client';
-import { setDocumentSignature } from '../../shared/utils/pdf-export/pdf-signature';
+import { setDocumentSignature } from './pdf-signature';
 import {
   setDocumentFonts,
   prepareFonts,
   type PdfFonts,
-} from '../../shared/utils/pdf-export/pdf-fonts';
+} from './pdf-fonts';
 import {
   establecerLogoDeDocumentos,
   prepararLogo,
   type PdfLogo,
-} from '../../shared/utils/pdf-export/pdf-logo';
+} from './pdf-logo';
 
 /**
  * Cómo se prepara una imagen para el PDF. Es un token para poder sustituirlo en

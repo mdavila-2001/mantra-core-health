@@ -1,4 +1,4 @@
-import type { Match } from './engine';
+import type { Match } from './engine.types';
 import type { Symptom } from './symptoms.data';
 
 /**

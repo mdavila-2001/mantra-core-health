@@ -22,37 +22,12 @@ import type * as Leaflet from 'leaflet';
 
 import { nextControlId } from '@shared/forms/form-control.context';
 import type { PinMap, PuntoGeo } from './map-pin.types';
+import { construirPopup, pinAccessibleName } from './map-popup';
+import { DEMO_ATTRIBUTION, DEMO_TILES } from './map-tiles';
 import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinceIn } from './provinces';
 
-/**
- * Mosaicos del servidor comunitario de OpenStreetMap, sin clave de API.
- *
- * **Por qué ya no son los de CARTO** (19/09/2026): CARTO dejó de servir sus
- * basemaps de forma anónima y ahora estampa «API KEY REQUIRED ·
- * carto.com/basemaps/apikey» **en diagonal sobre cada mosaico**. No es un
- * fallo de carga que se vea en la consola: el mosaico llega con 200 y con la
- * marca de agua pintada encima, así que TODOS los mapas del producto —el de
- * los directorios, «Dónde comprar», las sedes del perfil— se veían rotos y
- * nada lo delataba salvo mirarlos. Medido pidiendo el mismo mosaico de Santa
- * Cruz a los dos proveedores: CARTO 26 441 B con la marca, OSM 34 984 B
- * limpio.
- *
- * El comentario que estaba acá decía que OSM «bloquea las solicitudes de esta
- * aplicación por su política de uso». No se sostiene: el mismo mosaico, con el
- * agente y el referente del navegador, responde 200 y se lee. La política de
- * OSM pide atribución visible y uso moderado —las dos se cumplen—, y es
- * además la decisión ya escrita del proyecto: Leaflet + OpenStreetMap sin
- * clave, que es lo que la CSP del servidor permitía antes de que alguien la
- * abriera a CARTO.
- *
- * Un solo host: el servidor de OSM ya no reparte por subdominios `a`/`b`/`c`,
- * así que la plantilla no lleva `{s}` ni la capa `subdomains`.
- */
-const DEMO_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-/** La atribución de OSM es condición de uso, no un adorno. */
-const DEMO_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+/** El constructor del popup vive en `map-popup.ts`; se reexporta porque es API del organismo. */
+export { construirPopup };
 
 const ZOOM_MAXIMO = 19;
 
@@ -119,51 +94,6 @@ export const CARGADOR_DE_LEAFLET = new InjectionToken<CargadorDeLeaflet>('CARGAD
   providedIn: 'root',
   factory: () => () => import('leaflet'),
 });
-
-/**
- * El contenido del popup, armado con DOM propio: Leaflet vive fuera del
- * template de Angular, así que acá no hay proyección de contenido — el CTA
- * entra como etiqueta y sale como callback. Todo texto va por `textContent`:
- * los nombres vienen de datos y jamás se interpolan como HTML.
- */
-export function construirPopup(
-  documento: Document,
-  pin: PinMap,
-  alElegir: () => void,
-): HTMLElement {
-  const caja = documento.createElement('div');
-  caja.className = 'mapa__popup';
-
-  const titulo = documento.createElement('strong');
-  titulo.className = 'mapa__popup-titulo';
-  titulo.textContent = pin.titulo;
-  caja.appendChild(titulo);
-
-  if (pin.estado !== undefined) {
-    const estado = documento.createElement('span');
-    estado.className = `mapa__popup-estado mapa__popup-estado--${pin.estado.tono}`;
-    estado.textContent = pin.estado.etiqueta;
-    caja.appendChild(estado);
-  }
-
-  if (pin.subtitulo !== undefined) {
-    const detalle = documento.createElement('p');
-    detalle.className = 'mapa__popup-detalle';
-    detalle.textContent = pin.subtitulo;
-    caja.appendChild(detalle);
-  }
-
-  if (pin.ctaEtiqueta !== undefined) {
-    const cta = documento.createElement('button');
-    cta.type = 'button';
-    cta.className = 'mapa__popup-cta';
-    cta.textContent = pin.ctaEtiqueta;
-    cta.addEventListener('click', alElegir);
-    caja.appendChild(cta);
-  }
-
-  return caja;
-}
 
 /**
  * **El mapa compartido** (carril FAR-I1): Leaflet + OpenStreetMap como
@@ -657,11 +587,4 @@ export class AppMap implements OnDestroy {
       cara?.classList.toggle('mapa__pin--activo', id === elegido);
     }
   }
-}
-
-/** «Farmacia Central · Sede Centro, Tiene todo, 1,2 km en línea recta»: lo que dice el pin enfocado. */
-function pinAccessibleName(pin: PinMap): string {
-  return [pin.titulo, pin.estado?.etiqueta, pin.subtitulo]
-    .filter((parte): parte is string => parte !== undefined && parte !== '')
-    .join(', ');
 }

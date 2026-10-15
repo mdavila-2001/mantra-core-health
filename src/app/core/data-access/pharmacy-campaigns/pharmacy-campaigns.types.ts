@@ -151,3 +151,12 @@ export type FalloDeBorrador =
   | 'PORCENTAJE_FUERA_DE_RANGO'
   | 'PRECIO_NO_ES_DESCUENTO'
   | 'MONEDAS_MEZCLADAS';
+
+/** Un producto del catálogo, como lo conoce quien tiene precios a mano. */
+export interface ProductoDeCatalogo {
+  readonly productId: string;
+  readonly nombre: string;
+  readonly presentacion: string | null;
+  readonly precio: string;
+  readonly moneda: string;
+}
