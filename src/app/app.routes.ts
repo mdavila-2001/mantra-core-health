@@ -706,8 +706,6 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Ficha de un caso de verificación (V27-01): una fila del listado de
-    // `identidad/casos` abierta.
     path: 'my-account/identity/cases/:caseId',
     title: `${APP_TITLE} - Caso de verificación`,
     loadComponent: () =>
