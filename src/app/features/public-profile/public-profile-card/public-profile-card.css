@@ -168,6 +168,17 @@
   color: var(--ambar);
 }
 
+.perfil__estrellas {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.perfil__estrella svg.perfil__estrella--vacia {
+  color: var(--tinta-3);
+  opacity: 0.42;
+}
+
 /* Las acciones, en su propio renglón debajo de la identidad. */
 .perfil__acciones {
   display: flex;

@@ -11,10 +11,10 @@ import type {
 import { PublicProfileCard } from './public-profile-card';
 
 /**
- * Pestañas, paginado y opiniones de la ficha pública (pedido del 13/09/2026):
+ * Pestañas, paginado y opiniones de la ficha pública:
  * - las pestañas eran anclas que sacaban de la ficha;
  * - publicaciones y sedes se pagina con anterior / siguiente;
- * - «N opiniones» y la estrella abren un modal con quién opinó y quién calificó.
+ * - la calificación y la cantidad resumen el promedio; «Reseñas» abre la lista.
  */
 describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
   const post = (i: number): PublicPostSummary => ({
@@ -54,12 +54,13 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
     updatedAt: new Date('2026-08-01T00:00:00Z'),
   };
 
-  function crear(perfil: PublicProfileDetail = PERFIL) {
+  function crear(perfil: PublicProfileDetail = PERFIL, preview = false) {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     const fixture = TestBed.createComponent(PublicProfileCard);
     fixture.componentRef.setInput('perfil', perfil);
+    fixture.componentRef.setInput('preview', preview);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const q = <T extends HTMLElement = HTMLElement>(testId: string) =>
@@ -70,9 +71,34 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
   it('las pestañas son botones, no anclas que naveguen fuera de la ficha', () => {
     const { el } = crear();
     const pestanas = el.querySelectorAll('[role="tab"]');
-    // Inicio, Acerca de, Especialidades, Dónde atiende y Publicaciones: sin trayectoria no hay pestaña.
-    expect(pestanas.length).toBe(5);
+    // Inicio, Acerca de, Especialidades, Dónde atiende, Publicaciones y Reseñas.
+    expect(pestanas.length).toBe(6);
     expect(el.querySelector('.perfil__tabs a[href^="#"]')).toBeNull();
+  });
+
+  it('muestra cinco estrellas y el promedio junto a la cantidad de reseñas', () => {
+    const { q } = crear();
+    const estrellas = q('perfil-estrellas')!;
+
+    expect(estrellas.querySelectorAll('svg').length).toBe(5);
+    expect(estrellas.querySelectorAll('svg.perfil__estrella--vacia').length).toBe(0);
+    expect(estrellas.getAttribute('aria-label')).toBe(
+      'Promedio 4,9 de 5 estrellas. Ver reseñas.',
+    );
+    expect(q('perfil-opiniones')!.textContent!.trim()).toBe('2 opiniones');
+  });
+
+  it('no agrega la pestaña de reseñas a la vista previa del perfil', () => {
+    const { fixture, q } = crear(PERFIL, true);
+
+    expect(q('perfil-tab-reviews')).toBeNull();
+    expect(q('perfil-reviews')).toBeNull();
+    q<HTMLButtonElement>('perfil-estrellas')!.click();
+    fixture.detectChanges();
+    expect(q('perfil-reviews')).toBeNull();
+    q<HTMLButtonElement>('perfil-opiniones')!.click();
+    fixture.detectChanges();
+    expect(q('perfil-reviews')).toBeNull();
   });
 
   it('elegir «Acerca de» muestra sólo esa sección, e «Inicio» vuelve a mostrar todas', () => {
@@ -113,24 +139,17 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
     expect(sedes()).toBe(1);
   });
 
-  /**
-   * Hasta el merge de `dev` esto abría un modal con dos pestañas —«2 opiniones»
-   * una, la estrella la otra— y el cable traía `rating`, `text` y `reviewer`.
-   * Ese componente ya no existe: quedó la versión que se monta en línea, con el
-   * contrato nuevo (`overallRating`, `reviewText`, `reviewerDisplayName`), que
-   * es el único que soporta que alguien opine en anónimo.
-   *
-   * Lo que sigue valiendo, y es lo que se prueba, es que los dos botones de la
-   * calificación abran las opiniones y que las opiniones se lean. Las pestañas
-   * son una función a recuperar aparte, no algo que este archivo deba fingir.
-   */
-  it('«2 opiniones» despliega las opiniones y se leen', async () => {
+  it('la pestaña «Reseñas» despliega las opiniones y se leen', async () => {
     const { fixture, el, q } = crear();
     const http = TestBed.inject(HttpTestingController);
 
-    expect(q('perfil-opiniones')!.textContent!.trim()).toBe('2 opiniones');
-    q('perfil-opiniones')!.click();
+    q('perfil-tab-reviews')!.click();
     fixture.detectChanges();
+    expect(q('perfil-tab-reviews')!.getAttribute('aria-selected')).toBe('true');
+    const panel = q('perfil-reviews')!;
+    expect(panel.getAttribute('role')).toBe('tabpanel');
+    expect(panel.getAttribute('aria-labelledby')).toBe('pestana-reviews');
+    expect(panel.getAttribute('tabindex')).toBe('0');
 
     http
       .expectOne((req) => req.url.endsWith('/public/profiles/p/dra-lucia-salas/reviews'))
@@ -164,6 +183,7 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
+    expect(q('perfil-reviews')!.hidden).toBe(false);
     expect(el.querySelectorAll('[data-testid="opinion"]').length).toBe(2);
     const texto = el.textContent ?? '';
     expect(texto).toContain('Excelente atención.');

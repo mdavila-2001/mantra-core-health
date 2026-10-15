@@ -563,35 +563,39 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
     const v = vitrinaPorSlug(params['slug']!);
     if (v === undefined && (await directorio.porSlug(params['slug']!)) !== undefined) {
       // Una ficha del directorio oficial todavía no tiene opiniones.
-      return paginaPublica([], query);
+      return {
+        ...paginar([], query, 20),
+        ratingAverage: null,
+        ratingCount: 0,
+      };
     }
     if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
     const items = resenas
       .filtrar((r) => r.targetPublicProfileId === v.id)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-      .map((r) => {
-        const anonima = r.reviewerDisplayModeConceptId === CONCEPTO.reviewDisplayAnon;
-        const conFicha = vitrinas.get(r.reviewerProfileId);
-        const publica = conFicha !== undefined && conFicha.kind !== 'PATIENT' && conFicha.visibility === 'PUBLIC';
-        const respuesta = r.responses[0];
-        return {
-          id: r.id,
-          rating: r.overallRating,
-          text: r.reviewText === '' ? null : r.reviewText,
-          publishedAt: r.publishedAt,
-          reviewer: anonima
-            ? { displayName: 'Paciente verificado', headline: 'Eligió no mostrar su nombre', avatarUrl: null, slug: null, kind: null }
-            : {
-                displayName: r.reviewerDisplayName ?? conFicha?.displayName ?? 'Paciente',
-                headline: publica ? conFicha.headline : 'Paciente',
-                avatarUrl: r.reviewerAvatarUrl ?? conFicha?.avatarUrl ?? null,
-                slug: publica ? conFicha.slug : null,
-                kind: publica ? (conFicha.kind as ClasePublica) : null,
-              },
-          response: respuesta === undefined ? null : { text: respuesta.responseText, publishedAt: respuesta.publishedAt },
-        };
-      });
-    return paginaPublica(items, query, 20);
+      .map((r) => ({
+        id: r.id,
+        overallRating: r.overallRating,
+        reviewText: r.reviewText === '' ? null : r.reviewText,
+        reviewerDisplayName:
+          r.reviewerDisplayModeConceptId === CONCEPTO.reviewDisplayAnon
+            ? null
+            : (r.reviewerDisplayName ?? 'Paciente'),
+        publishedAt: r.publishedAt,
+        editedAt: null,
+        responses: r.responses.map((respuesta) => ({
+          id: respuesta.id,
+          responseText: respuesta.responseText,
+          publishedAt: respuesta.publishedAt,
+        })),
+      }));
+    const pagina = paginar(items, query, 20);
+    return {
+      items: pagina.items,
+      nextCursor: pagina.nextCursor,
+      ratingAverage: v.ratingAverage,
+      ratingCount: v.ratingCount,
+    };
   });
 
   /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
