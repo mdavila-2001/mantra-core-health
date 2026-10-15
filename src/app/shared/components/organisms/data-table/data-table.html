@@ -85,7 +85,11 @@
             }
 
             @for (column of columns(); track column.key) {
-              <td [class]="cellClassFor(column)">
+              <td
+                [class]="cellClassFor(column)"
+                [class.data-table__cell--vacia]="!column.cell && cellValue(row, column).trim() === ''"
+                [attr.data-label]="column.header"
+              >
                 @if (column.cell) {
                   <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {

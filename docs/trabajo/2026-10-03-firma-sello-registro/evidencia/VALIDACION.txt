@@ -1,0 +1,22 @@
+Frontend base: ae80aba7fa12bc5ed2d415facce52ebee5804eb0
+Vitest dirigido, cliente IAM y registro profesional:
+Test Files 2 passed (2)
+Tests 157 passed (157)
+Exit code: 0
+
+Build productivo, API real, un worker:
+Application bundle generation complete. [169.088 seconds] - 2026-10-03T16:59:33.019Z
+Output location: /app/dist/mantra-core-health
+Exit code: 0
+
+ESLint en los cinco archivos de código afectados:
+Exit code: 0; sin diagnósticos.
+git diff --check: exit code 0.
+
+API hermana: https://github.com/mdavila-2001/mantra-core-health-api/pull/549
+Jest API: 159 passed, 159 total.
+Integración HTTP + PostgreSQL: 2 passed, 2 total; 50.64 s.
+Comprueba precarga, registro, login, referencias persistidas, lectura privada de ambos archivos con bytes exactos y rollback ante referencia inválida.
+
+No E2E del formulario en navegador. El arnés de integración heredado de API tiene tres fallos reproducidos también en el código base de dev (domicilio y alta asistida); no se afirma verde global.
+No se modificó el despliegue ni datos de AloVida Dev. Bases temporales eliminadas; contenedores de verificación --rm.

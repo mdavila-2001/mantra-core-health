@@ -1,0 +1,358 @@
+{
+  "measurements": [
+    {
+      "cell": "listados-390x844-claro-credenciales",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 316,
+          "container": 316
+        }
+      ]
+    },
+    {
+      "cell": "listados-390x844-claro-trayectoria",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 316,
+          "container": 316
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 316,
+          "container": 316
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 316,
+          "container": 316
+        }
+      ]
+    },
+    {
+      "cell": "datos-propios-390x844-claro",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": []
+    },
+    {
+      "cell": "cancelacion-390x844-claro",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": []
+    },
+    {
+      "cell": "listados-768x1024-claro-credenciales",
+      "viewport": 768,
+      "documentWidth": 768,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 678,
+          "container": 678
+        }
+      ]
+    },
+    {
+      "cell": "listados-768x1024-claro-trayectoria",
+      "viewport": 768,
+      "documentWidth": 768,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 678,
+          "container": 678
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 678,
+          "container": 678
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 678,
+          "container": 678
+        }
+      ]
+    },
+    {
+      "cell": "listados-1024x768-claro-credenciales",
+      "viewport": 1024,
+      "documentWidth": 1024,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 694,
+          "container": 694
+        }
+      ]
+    },
+    {
+      "cell": "listados-1024x768-claro-trayectoria",
+      "viewport": 1024,
+      "documentWidth": 1024,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 694,
+          "container": 694
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 694,
+          "container": 694
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 694,
+          "container": 694
+        }
+      ]
+    },
+    {
+      "cell": "listados-1440x900-claro-credenciales",
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1070,
+          "container": 1070
+        }
+      ]
+    },
+    {
+      "cell": "listados-1440x900-claro-trayectoria",
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 1070,
+          "container": 1070
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 1070,
+          "container": 1070
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 1070,
+          "container": 1070
+        }
+      ]
+    },
+    {
+      "cell": "listados-1920x1080-claro-credenciales",
+      "viewport": 1920,
+      "documentWidth": 1920,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1310,
+          "container": 1310
+        }
+      ]
+    },
+    {
+      "cell": "listados-1920x1080-claro-trayectoria",
+      "viewport": 1920,
+      "documentWidth": 1920,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 1310,
+          "container": 1310
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 1310,
+          "container": 1310
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 1310,
+          "container": 1310
+        }
+      ]
+    },
+    {
+      "cell": "listados-390x844-oscuro-credenciales",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 316,
+          "container": 316
+        }
+      ]
+    },
+    {
+      "cell": "listados-390x844-oscuro-trayectoria",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 316,
+          "container": 316
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 316,
+          "container": 316
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 316,
+          "container": 316
+        }
+      ]
+    },
+    {
+      "cell": "listados-768x1024-oscuro-credenciales",
+      "viewport": 768,
+      "documentWidth": 768,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 678,
+          "container": 678
+        }
+      ]
+    },
+    {
+      "cell": "listados-768x1024-oscuro-trayectoria",
+      "viewport": 768,
+      "documentWidth": 768,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 678,
+          "container": 678
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 678,
+          "container": 678
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 678,
+          "container": 678
+        }
+      ]
+    },
+    {
+      "cell": "listados-1024x768-oscuro-credenciales",
+      "viewport": 1024,
+      "documentWidth": 1024,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 694,
+          "container": 694
+        }
+      ]
+    },
+    {
+      "cell": "listados-1024x768-oscuro-trayectoria",
+      "viewport": 1024,
+      "documentWidth": 1024,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 694,
+          "container": 694
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 694,
+          "container": 694
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 694,
+          "container": 694
+        }
+      ]
+    },
+    {
+      "cell": "listados-1440x900-oscuro-credenciales",
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1070,
+          "container": 1070
+        }
+      ]
+    },
+    {
+      "cell": "listados-1440x900-oscuro-trayectoria",
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 1070,
+          "container": 1070
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 1070,
+          "container": 1070
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 1070,
+          "container": 1070
+        }
+      ]
+    },
+    {
+      "cell": "listados-1920x1080-oscuro-credenciales",
+      "viewport": 1920,
+      "documentWidth": 1920,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1310,
+          "container": 1310
+        }
+      ]
+    },
+    {
+      "cell": "listados-1920x1080-oscuro-trayectoria",
+      "viewport": 1920,
+      "documentWidth": 1920,
+      "tables": [
+        {
+          "nombre": "Actividad actual",
+          "width": 1310,
+          "container": 1310
+        },
+        {
+          "nombre": "Experiencia histórica",
+          "width": 1310,
+          "container": 1310
+        },
+        {
+          "nombre": "Tu historial laboral",
+          "width": 1310,
+          "container": 1310
+        }
+      ]
+    }
+  ],
+  "problems": [],
+  "negativoEsperado": "403 al PDF desde la segunda cuenta"
+}

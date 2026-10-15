@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Fotografía del reverso del documento</title>
+  <desc id="desc">Reverso horizontal completo dentro de un marco, con líneas y código visibles.</desc>
+  <rect width="640" height="360" rx="28" fill="#f3f7f6"/>
+  <rect x="112" y="70" width="416" height="220" rx="18" fill="#fff" stroke="#24786e" stroke-width="6"/>
+  <path d="M151 111h338M151 143h280M151 175h315" stroke="#91aaa5" stroke-width="9" stroke-linecap="round"/>
+  <rect x="151" y="207" width="338" height="48" rx="7" fill="#e8efed"/>
+  <path d="M166 219v24m16-24v24m15-24v24m19-24v24m13-24v24m27-24v24m17-24v24m19-24v24m15-24v24m24-24v24m14-24v24m18-24v24m25-24v24m19-24v24m16-24v24" stroke="#456e68" stroke-width="4"/>
+  <path d="m78 52-25 18 25 18M562 52l25 18-25 18M78 308l-25-18 25-18M562 308l25-18-25-18" fill="none" stroke="#d38a36" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

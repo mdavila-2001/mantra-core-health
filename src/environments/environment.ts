@@ -11,6 +11,7 @@ export const environment: Environment = {
   loyaltyDemo: false,
   campaignsDemo: false,
   billingSiatDemo: false,
+  billingSimulatedApi: false,
   designMockups: false,
   mockBackend: false,
   telemetry: {

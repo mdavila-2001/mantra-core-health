@@ -2,6 +2,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { DOCUMENTOS_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
 import { LegalDocuments } from './legal-documents';
+import { selectOptionLabels } from '../../../../../testing/select';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { DocumentoLegal } from '../pharmacy-profile.types';
@@ -247,14 +248,16 @@ describe('DocumentosLegales', () => {
   });
 
   describe('agregar un papel que falta', () => {
-    it('sólo ofrece los papeles del registro que la carpeta no tiene', () => {
+    it('sólo ofrece los papeles del registro que la carpeta no tiene', async () => {
       const root = montar(ready(DOCUMENTOS_DE_EJEMPLO.slice(0, 4)));
 
       pulsar(root, 'ficha-agregar-documento');
 
-      const opciones = Array.from(root.querySelectorAll('option'))
-        .map((opcion) => opcion.textContent?.trim())
-        .filter((texto) => texto !== 'Elija el documento');
+      // Las opciones de todos los desplegables de la ficha, como antes las `<option>`.
+      const opciones: string[] = [];
+      for (const desplegable of Array.from(root.querySelectorAll('app-select'))) {
+        opciones.push(...(await selectOptionLabels(fixture, desplegable)));
+      }
       expect(opciones).toEqual(['Certificado SEDES', 'Poder del representante legal']);
     });
 

@@ -45,35 +45,6 @@
   color: var(--text-muted);
 }
 
-/* Seguros y tutores (pestañas separadas), en lectura: la misma lista de la ficha. */
-.datos__lista {
-  margin: var(--sp-3) 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.datos__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
-}
-
-.datos__item-nombre {
-  font-weight: 600;
-}
-
-.datos__item-detalle {
-  color: var(--text-muted);
-}
-
 .datos__titulo {
   margin: 0;
   font-size: var(--fs-h3);

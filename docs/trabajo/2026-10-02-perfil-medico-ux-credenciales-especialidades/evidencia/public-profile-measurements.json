@@ -1,0 +1,125 @@
+{
+  "measurements": [
+    {
+      "cell": "public-390x844-claro-credentials",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 316,
+          "container": 316
+        }
+      ]
+    },
+    {
+      "cell": "public-768x1024-claro-credentials",
+      "viewport": 768,
+      "documentWidth": 768,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 678,
+          "container": 678
+        }
+      ]
+    },
+    {
+      "cell": "public-1024x768-claro-credentials",
+      "viewport": 1024,
+      "documentWidth": 1024,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 694,
+          "container": 694
+        }
+      ]
+    },
+    {
+      "cell": "public-1440x900-claro-credentials",
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1070,
+          "container": 1070
+        }
+      ]
+    },
+    {
+      "cell": "public-1920x1080-claro-credentials",
+      "viewport": 1920,
+      "documentWidth": 1920,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1310,
+          "container": 1310
+        }
+      ]
+    },
+    {
+      "cell": "public-390x844-oscuro-credentials",
+      "viewport": 390,
+      "documentWidth": 390,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 316,
+          "container": 316
+        }
+      ]
+    },
+    {
+      "cell": "public-768x1024-oscuro-credentials",
+      "viewport": 768,
+      "documentWidth": 768,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 678,
+          "container": 678
+        }
+      ]
+    },
+    {
+      "cell": "public-1024x768-oscuro-credentials",
+      "viewport": 1024,
+      "documentWidth": 1024,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 694,
+          "container": 694
+        }
+      ]
+    },
+    {
+      "cell": "public-1440x900-oscuro-credentials",
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1070,
+          "container": 1070
+        }
+      ]
+    },
+    {
+      "cell": "public-1920x1080-oscuro-credentials",
+      "viewport": 1920,
+      "documentWidth": 1920,
+      "tables": [
+        {
+          "nombre": "Títulos y formación",
+          "width": 1310,
+          "container": 1310
+        }
+      ]
+    }
+  ],
+  "problems": []
+}

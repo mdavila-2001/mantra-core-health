@@ -185,6 +185,13 @@ export class PublicProfileCard {
     return media == null ? null : media.toFixed(1).replace('.', ',');
   });
 
+  /** Cinco estrellas del promedio, redondeado al entero más cercano. */
+  protected readonly headerRatingStars = computed(() => {
+    const media = this.perfil().ratingAverage ?? 0;
+    return Array.from({ length: 5 }, (_, indice) => media >= indice + 0.5);
+  });
+  protected readonly estrellasCabecera = this.headerRatingStars;
+
   /**
    * Dónde atiende, en una línea.
    *
@@ -274,6 +281,7 @@ export class PublicProfileCard {
       tira.push({ id: 'donde-queda', rotulo: this.esLugar() ? 'Dónde queda' : 'Dónde atiende' });
     }
     if (p.posts.length > 0 || previa) tira.push({ id: 'publicaciones', rotulo: 'Publicaciones' });
+    tira.push({ id: 'reviews', rotulo: 'Reseñas' });
 
     // Con una sola sección la tira sobra: sería un rótulo disfrazado de
     // navegación, que es peor que no tener navegación.
@@ -285,6 +293,7 @@ export class PublicProfileCard {
 
   protected seleccionar(id: string): void {
     this.pestanaActiva.set(id);
+    if (id === 'reviews') this.opinionesAbiertas.set(true);
   }
 
   /** Si la sección se ve con la pestaña actual. «Inicio» las muestra todas. */
@@ -340,18 +349,9 @@ export class PublicProfileCard {
   }
 
   /* ==========================================================================
-      Las opiniones.
-
-      Hasta el merge de `dev` esto abría un modal con dos pestañas —«8
-      opiniones» abría una, la estrella la otra—. Ese modal ya no existe: el
-      merge dejó la versión de `PublicProfileReviews` que se monta **en línea**,
-      sin pestañas y sin salida `cerrado`, y esta tarjeta seguía hablándole al
-      componente anterior. La rama no compilaba.
-
-      Se reconcilia con el componente que quedó, que es el que trae el contrato
-      nuevo —con anonimato de quien opina— y sus pruebas. Los dos botones ahora
-      despliegan la misma sección. Recuperar las pestañas es una función, no un
-      arreglo de compilación: va aparte y con su decisión.
+      Las reseñas se cargan al entrar a su pestaña. La calificación del
+      encabezado y su cantidad usan los totales que sirve el perfil; la lista no
+      recalcula el promedio a partir de la página visible.
       ====================================================================== */
 
   /** Si la sección de opiniones está desplegada. */
@@ -359,10 +359,7 @@ export class PublicProfileCard {
 
   protected abrirOpiniones(): void {
     this.opinionesAbiertas.set(true);
-  }
-
-  protected cerrarOpiniones(): void {
-    this.opinionesAbiertas.set(false);
+    this.seleccionar('reviews');
   }
 
   /* ==========================================================================
@@ -402,6 +399,7 @@ export class PublicProfileCard {
   protected calificacionPublicada(): void {
     this.calificando.set(false);
     this.opinionesAbiertas.set(true);
+    this.seleccionar('reviews');
   }
 
   /* ==========================================================================

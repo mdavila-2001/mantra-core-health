@@ -15,6 +15,7 @@ import type { StatusSealVariant } from '../../../../../shared/components/organis
 /** Una fila de formación, ya traducida y con su vigencia resuelta. */
 export interface FormacionVisible {
   readonly id: string;
+  readonly fileId?: string;
   readonly tipo: string;
   readonly numero: string;
   readonly institucion: string;
@@ -22,12 +23,13 @@ export interface FormacionVisible {
   readonly hasta: Date | null;
   readonly estado: string;
   readonly sello: StatusSealVariant;
+  /** Decisión aprobatoria del catálogo, independiente del vencimiento posterior. */
+  readonly approved?: boolean;
   /** Si venció. Se muestra igual: la formación cursada no deja de existir. */
   readonly vencida: boolean;
   /**
-   * Contra qué se comprobó. Presente **sólo** si se verificó — el backend lo
-   * exige al verificar — así que es la señal más directa de «esto pasó de
-   * declarado a verificado», más confiable que inferirlo del sello.
+   * Fuente consultada en la revisión. Puede acompañar una aprobación o un
+   * rechazo: su presencia no determina la decisión ni la vigencia.
    */
   readonly fuenteVerificacion?: string;
 }
@@ -53,6 +55,8 @@ export interface AfiliacionVisible {
   readonly desde: Date;
   readonly hasta: Date | null;
   readonly actual: boolean;
+  readonly sello?: StatusSealVariant;
+  readonly estado?: string;
 }
 
 /**
@@ -71,12 +75,19 @@ export interface SedeVisible {
 /** Una matrícula, ya traducida. */
 export interface MatriculaVisible {
   readonly id: string;
+  readonly fileId?: string;
   readonly jurisdiccion: string;
   readonly numero: string;
   readonly autoridad: string;
   readonly estado: string;
   readonly sello: StatusSealVariant;
   readonly hasta: Date | null;
+}
+
+/** Intención de descargar un respaldo propio mediante el cliente autenticado. */
+export interface RespaldoCredencial {
+  readonly fileId: string;
+  readonly nombre: string;
 }
 
 /** Un idioma, ya traducido. */

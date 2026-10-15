@@ -187,8 +187,8 @@ export class MyProfile {
    * Los datos completos de filiación, para MOSTRARLOS.
    *
    * Va aparte del resumen y no reemplaza a ninguno: el resumen compone el nombre
-   * y trae el estado; éste trae lo que la persona declaró —documento, correo,
-   * direcciones, seguros, tutores—, que hasta ahora sólo se podía ver entrando a
+   * y trae el estado; éste trae documento, correo, direcciones, seguros,
+   * contactos de emergencia y tutores activos, que antes sólo se podían ver entrando a
    * editar. Un fallo acá no rompe la tarjeta: los bloques nuevos sencillamente
    * no se dibujan.
    */
@@ -252,9 +252,9 @@ export class MyProfile {
    * vuelta en la URL.
    */
   protected readonly pestanas = PROFILE_TABS;
-  protected readonly pestana = signal(
-    tabIndex(inject(ActivatedRoute).snapshot.queryParamMap.get('pestana')) ?? 0,
-  );
+  private readonly pestanaPedida = inject(ActivatedRoute).snapshot.queryParamMap.get('pestana');
+  protected readonly pestana = signal(0);
+  private pestanaInicialAplicada = false;
 
   /**
    * Adónde va «Cambiar contraseña» (FT-11-R08).
@@ -267,6 +267,7 @@ export class MyProfile {
   protected readonly rutaDeCambioDeContrasena = '/auth/forgot-password';
 
   protected editar(): void {
+    if (this.pestana() > 2) this.pestana.set(0);
     this.editando.set(true);
   }
 
@@ -509,6 +510,7 @@ export class MyProfile {
     this.profiles.getOwnPatientProfile().subscribe({
       next: (p) => {
         this.perfil.set(p);
+        this.aplicarPestanaInicial(p.guardians.length > 0);
         if (p.photoFileId !== undefined) {
           this.files
             .imageDataUrl(p.photoFileId)
@@ -551,6 +553,20 @@ export class MyProfile {
         this.errorDePerfil.set(describeApiFailure(error, FICHA_INCOMPLETA));
       },
     });
+  }
+
+  /** Ajusta los índices cuando Tutores no existe, sin cambiar la URL pública. */
+  private aplicarPestanaInicial(tieneTutores: boolean): void {
+    if (this.pestanaInicialAplicada) return;
+    this.pestanaInicialAplicada = true;
+    const pedida = tabIndex(this.pestanaPedida) ?? 0;
+    if (pedida === 5) {
+      this.pestana.set(tieneTutores ? 5 : 4);
+    } else if (pedida === 4 && !tieneTutores) {
+      this.pestana.set(0);
+    } else {
+      this.pestana.set(pedida);
+    }
   }
 
   /**

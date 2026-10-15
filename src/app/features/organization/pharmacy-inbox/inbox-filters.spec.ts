@@ -26,11 +26,10 @@ describe('sedePorDefecto', () => {
     expect(siteByDefault([sede('S1')])).toEqual({ id: 'id-S1', sinMatrizMarcada: false });
   });
 
-  it('con varias y ninguna matriz, toma la de código más bajo y lo marca', () => {
-    // El orden es numérico dentro del código: S2 antes que S10.
+  it('con varias y ninguna matriz, abre con todas las sedes', () => {
     expect(siteByDefault([sede('S10'), sede('S2'), sede('S3')])).toEqual({
-      id: 'id-S2',
-      sinMatrizMarcada: true,
+      id: null,
+      sinMatrizMarcada: false,
     });
   });
 

@@ -62,7 +62,11 @@
               </app-form-field>
 
               <app-form-field label="Tercer nombre" hint="Si no lleva, déjelo vacío.">
-                <app-input testId="perfil-tercer-nombre" placeholder="María" [(value)]="tercerNombre" />
+                <app-input
+                  testId="perfil-tercer-nombre"
+                  placeholder="María"
+                  [(value)]="tercerNombre"
+                />
               </app-form-field>
 
               <!-- Hay gente con cuatro y cinco nombres, y hasta hoy los que pasaban
@@ -195,7 +199,12 @@
                 <app-form-field label="Ocupación (opcional)">
                   <p class="datos__aviso" data-testid="perfil-ocupaciones-caido">
                     No pudimos traer el catálogo de ocupaciones.
-                    <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      (clicked)="reintentarOcupaciones()"
+                    >
                       Reintentar
                     </button>
                   </p>
@@ -206,7 +215,7 @@
                      alta ya la tenía; este editor había quedado con un `<select>`. -->
                 <app-form-field
                   label="Ocupación (opcional)"
-                  [hint]="hintOcupacion()"
+                  [hint]="hintOcupacion"
                   [errorMessage]="errorDelServidor('occupationConceptId')"
                 >
                   <app-reference-combobox
@@ -221,6 +230,19 @@
                     (selectionChange)="elegirOcupacion($event)"
                   />
                 </app-form-field>
+                @if (ocupacionEsOtra()) {
+                  <app-form-field
+                    label="Especifique su ocupación"
+                    hint="Escriba su profesión u oficio como lo diría usted."
+                    [errorMessage]="errorDelServidor('occupationFreeText')"
+                  >
+                    <app-input
+                      testId="perfil-ocupacion-otra"
+                      placeholder="Apicultor"
+                      [(value)]="ocupacionTextoLibre"
+                    />
+                  </app-form-field>
+                }
               }
             </div>
           </section>
@@ -324,12 +346,12 @@
                      ubicación o se marca el pin a mano, y se confirma mirándolo.
                      Es el MISMO bloque del alta, no una copia. -->
                 <app-map-location-picker
-                pinId="perfil-domicilio"
-                etiquetaConfirmada="Su casa"
-                etiquetaQuitar="Quitar la ubicación de su casa"
-                etiquetaMapa="La ubicación de su casa en el mapa"
-                etiquetaMarcar="Marcar mi casa en el mapa"
-                indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
+                  pinId="perfil-domicilio"
+                  etiquetaConfirmada="Su casa"
+                  etiquetaQuitar="Quitar la ubicación de su casa"
+                  etiquetaMapa="La ubicación de su casa en el mapa"
+                  etiquetaMarcar="Marcar mi casa en el mapa"
+                  indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioGuardado()"
                   (confirmado)="gpsDomicilio.set($event)"
@@ -364,12 +386,12 @@
                 }
 
                 <app-map-location-picker
-                pinId="perfil-trabajo"
-                etiquetaConfirmada="Su trabajo"
-                etiquetaQuitar="Quitar la ubicación de su trabajo"
-                etiquetaMapa="La ubicación de su trabajo en el mapa"
-                etiquetaMarcar="Marcar mi trabajo en el mapa"
-                indicacionMarcar="Toque el mapa en la puerta de su trabajo para poner el pin."
+                  pinId="perfil-trabajo"
+                  etiquetaConfirmada="Su trabajo"
+                  etiquetaQuitar="Quitar la ubicación de su trabajo"
+                  etiquetaMapa="La ubicación de su trabajo en el mapa"
+                  etiquetaMarcar="Marcar mi trabajo en el mapa"
+                  indicacionMarcar="Toque el mapa en la puerta de su trabajo para poner el pin."
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoGuardado()"
                   (confirmado)="gpsTrabajo.set($event)"
@@ -431,41 +453,10 @@
           </section>
         </app-tab>
 
-        <!-- ─── Seguros ─────────────────────────────────────────────────── -->
-        <!-- Fuera del editor desde el 25/09/2026 (pedido del propietario): no
-             se leen ni se escriben acá. No es que el `PATCH` no las acepte hoy
-             y algún día las acepte —como pasa con «Tutores», que sí puede
-             cambiar—; una cobertura es el resultado de una integración
-             posterior (la aseguradora, no la persona, la declara), así que
-             nunca se corrige desde este formulario. Antes iba apagada en la
-             tira; el mismo día se pidió sacarla directamente, igual que «Mis
-             puntos». La ficha de lectura (`my-profile.html`) sigue mostrando
-             el detalle completo. -->
-
-        <!-- ─── Tutores ─────────────────────────────────────────────────── -->
-        <app-tab [label]="pestanas[4]">
-          <section class="datos__seccion">
-            <h3 class="datos__titulo">Tutores</h3>
-            <p class="datos__nota">Lo que declaró al registrarse. Todavía no se corrige desde acá.</p>
-
-            @if (datos(); as p) {
-              @if (p.guardians.length > 0) {
-                <ul class="datos__lista" data-testid="perfil-tutores">
-                  @for (tutor of p.guardians; track tutor.displayName ?? '') {
-                    <li class="datos__item">
-                      <span class="datos__item-nombre">{{ tutor.displayName ?? 'Sin nombre registrado' }}</span>
-                      @if (tutor.phone) {
-                        <span class="datos__item-detalle">{{ tutor.phone }}</span>
-                      }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="datos__nota">No declaró ningún contacto de emergencia ni tutor.</p>
-              }
-            }
-          </section>
-        </app-tab>
+        <!-- Seguros y tutores no son datos declarados en este formulario.
+             Las coberturas vienen de sus integraciones y los tutores nacen de
+             solicitudes de dependencia aceptadas. Ambos se muestran en la
+             ficha de lectura cuando corresponde. -->
 
         <!-- «Mis puntos» no se edita: es la billetera del programa de
              fidelidad, no un dato declarado, y desde el 25/09/2026 (pedido del
@@ -495,7 +486,12 @@
            no se ve: «Guardar» apagado sin decir por qué es un formulario que
            parece roto. La nota nombra la pestaña donde falta algo. -->
       @if (pendienteEnOtraPestana(); as aviso) {
-        <span form-actions-extra class="datos__pendiente" data-testid="perfil-pendiente" role="status">
+        <span
+          form-actions-extra
+          class="datos__pendiente"
+          data-testid="perfil-pendiente"
+          role="status"
+        >
           {{ aviso }}
         </span>
       }

@@ -87,6 +87,7 @@ function resolverPerfilCompleto(
       patientProfileId: 'pp-1',
       identityVerified: false,
       coverages: [],
+      emergencyContacts: [],
       guardians: [],
       ...perfil,
     });
@@ -158,6 +159,7 @@ describe('MyProfile', () => {
         patientProfileId: 'pp-1',
         identityVerified: false,
         coverages: [],
+        emergencyContacts: [],
         guardians: [],
         ...perfil,
       });
@@ -229,13 +231,13 @@ describe('MyProfile', () => {
       expect(texto).toContain('Sin verificar');
     });
 
-    it('el tutor se ve con su teléfono: es el dato por el que existe', () => {
+    it('el tutor se ve con su parentesco y su teléfono', () => {
       const texto = conPerfil({
         guardians: [
           {
             displayName: 'Carlos Mamani',
             phone: '+591 70055443',
-            isEmergencyContact: true,
+            relationshipDisplay: 'Padre',
             isLegalGuardian: true,
           },
         ],
@@ -243,7 +245,29 @@ describe('MyProfile', () => {
 
       expect(texto).toContain('Carlos Mamani');
       expect(texto).toContain('+591 70055443');
+      expect(texto).toContain('Padre');
       expect(texto).toContain('Tutor legal');
+    });
+
+    it('el contacto de emergencia vive en Contacto y no crea la pestaña Tutores', () => {
+      conPerfil({
+        emergencyContacts: [
+          {
+            displayName: 'Rosa Pérez',
+            phone: '+591 70011223',
+            relationshipDisplay: 'Madre',
+          },
+        ],
+      });
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const pestanas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      expect(pestanas.map((p) => p.textContent?.trim())).not.toContain('Tutores');
+      pestanas.find((p) => p.textContent?.trim() === 'Contacto')!.click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Rosa Pérez');
+      expect(raiz.textContent).toContain('Madre');
+      expect(raiz.textContent).toContain('+591 70011223');
     });
 
     /**
@@ -255,9 +279,7 @@ describe('MyProfile', () => {
      */
     it('«Seguros» y «Tutores» son pestañas separadas: cada una sólo muestra lo suyo', () => {
       http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-      http
-        .expectOne((r) => r.url === '/terminology/concepts')
-        .flush({ items: [], count: 0 });
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0 });
       const señal = (
         fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>
       )['perfil'];
@@ -266,7 +288,14 @@ describe('MyProfile', () => {
         patientProfileId: 'pp-1',
         identityVerified: false,
         coverages: [{ carrierName: 'Alianza Vida Seguros', isPublic: false, verified: false }],
-        guardians: [{ displayName: 'Carlos Mamani', isEmergencyContact: true, isLegalGuardian: true }],
+        emergencyContacts: [],
+        guardians: [
+          {
+            displayName: 'Carlos Mamani',
+            relationshipDisplay: 'Padre',
+            isLegalGuardian: true,
+          },
+        ],
       });
       fixture.detectChanges();
 
@@ -850,10 +879,10 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
    * título repetido. Desde el 24/09/2026, con «Seguros» y «Tutores» separadas,
    * es la SEXTA y última.
    */
-  describe('«Mis puntos» como sexta pestaña', () => {
+  describe('«Mis puntos» como última pestaña', () => {
     const PACIENTE = { sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'], pid: 'pp-1' };
 
-    it('la ficha tiene seis pestañas y la última es «Mis puntos»', () => {
+    it('sin tutores, la ficha oculta esa pestaña y «Mis puntos» queda al final', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
@@ -863,7 +892,6 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
         'Contacto',
         'Facturación',
         'Seguros',
-        'Tutores',
         'Mis puntos',
       ]);
       // Se entra por «Datos personales», como siempre.
@@ -874,7 +902,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
-      pestanasDeLaFicha()[5].click();
+      pestanasDeLaFicha()[4].click();
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
@@ -891,7 +919,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
-      expect(pestanasDeLaFicha()[5].getAttribute('aria-selected')).toBe('true');
+      expect(pestanasDeLaFicha()[4].getAttribute('aria-selected')).toBe('true');
       expect(
         (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-puntos"]'),
       ).not.toBeNull();

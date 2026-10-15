@@ -139,9 +139,9 @@ export class QuotationSources {
       case 'MEDICAMENTOS':
         return this.medications(termino, origen);
       case 'ANALISIS':
-        return this.studies(termino, 'LABORATORY', 'ANALISIS');
+        return this.studies(termino, 'LABORATORY', 'ANALISIS', origen);
       case 'IMAGENOLOGIA':
-        return this.studies(termino, 'IMAGING', 'IMAGENOLOGIA');
+        return this.studies(termino, 'IMAGING', 'IMAGENOLOGIA', origen);
       case 'SERVICIOS_MEDICOS':
         return this.medicalServices(termino);
     }
@@ -190,6 +190,7 @@ export class QuotationSources {
     termino: string,
     kind: DiagnosticUnitKind,
     vertical: 'ANALISIS' | 'IMAGENOLOGIA',
+    origen: SearchOrigin | null,
   ): Observable<readonly ResultQuotation[]> {
     return this.diagnosis.search({ kind, limit: CENTERS_LIMIT }).pipe(
       switchMap((pagina) =>
@@ -206,7 +207,7 @@ export class QuotationSources {
                 normalizeQuotation(estudio.name).includes(buscado) ||
                 normalizeQuotation(estudio.code).includes(buscado),
             )
-            .map((estudio) => studyRow(centro, estudio, vertical)),
+            .map((estudio) => studyRow(centro, estudio, vertical, origen)),
         );
       }),
     );
@@ -326,10 +327,41 @@ function productPrice(
   };
 }
 
+/**
+ * El código de moneda que sirve la API puede venir con prefijo de catálogo
+ * (`diagnostic_units:CURRENCY_BOB`); lo que se muestra es la sigla (`BOB`).
+ */
+function monedaLegible(codigo: string): string {
+  const base = codigo.split(':').pop() ?? codigo;
+  return base.replace(/^CURRENCY_/, '');
+}
+
+/** Distancia en línea recta, en km con un decimal, entre el origen y la sede del estudio. */
+function distanciaAlCentro(
+  centro: DiagnosticUnitDetail,
+  estudio: DiagnosticStudy,
+  origen: SearchOrigin | null,
+): number | null {
+  if (origen === null) return null;
+  const sedes = centro.sites.filter(
+    (sede) => typeof sede.latitude === 'number' && typeof sede.longitude === 'number',
+  );
+  const sede = sedes.find((una) => una.id === estudio.siteId) ?? sedes[0];
+  if (sede === undefined) return null;
+  const rad = (grados: number): number => (grados * Math.PI) / 180;
+  const dLat = rad((sede.latitude as number) - origen.lat);
+  const dLng = rad((sede.longitude as number) - origen.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(origen.lat)) * Math.cos(rad(sede.latitude as number)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * 6371 * Math.asin(Math.sqrt(h)) * 10) / 10;
+}
+
 function studyRow(
   centro: DiagnosticUnitDetail,
   estudio: DiagnosticStudy,
   vertical: 'ANALISIS' | 'IMAGENOLOGIA',
+  origen: SearchOrigin | null,
 ): ResultQuotation {
   // El precio de la sede del estudio si la lista lo distingue; si no, el
   // general del centro. Nunca el de otra sede.
@@ -348,12 +380,12 @@ function studyRow(
         ? null
         : {
             amount: importe,
-            currency: publicado.currency.code,
+            currency: monedaLegible(publicado.currency.code),
             source: siteProvenance('Tarifario', centro.name),
           },
-    distanceKm: null,
+    distanceKm: distanciaAlCentro(centro, estudio, origen),
     sinPrecio: 'El centro no publicó el precio de este estudio',
-    sinDistancia: 'No disponible: el directorio de centros no trae su ubicación',
+    sinDistancia: 'El centro no publicó su ubicación',
     // Lo que se quiere de un estudio es hacérselo: se pide un horario en la
     // agenda del centro, igual que una cita con un profesional.
     reserva: { centroId: centro.id, centro: centro.name, estudio: estudio.name },

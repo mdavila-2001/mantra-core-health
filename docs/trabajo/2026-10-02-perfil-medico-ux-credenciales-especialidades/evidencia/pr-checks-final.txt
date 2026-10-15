@@ -1,0 +1,2 @@
+[{"bucket":"pending","name":"dependencias","state":"QUEUED"},{"bucket":"pending","name":"e2e","state":"QUEUED"},{"bucket":"pending","name":"verificar","state":"QUEUED"}]
+EXIT_CODE=0

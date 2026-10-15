@@ -1,7 +1,7 @@
 # Renombrado a inglés del frontend — inventario y estado (2026-10-09)
 
 Hallazgo D4 de `docs/INVENTARIO-ESTRUCTURA-BACKEND-2026-10-08.md`; regla 29 (identificadores y archivos en inglés,
-prosa visible en castellano). Rama `justin/ddd-front-rename-test`, base `origin/test` (`785c6a7b`). Es el mismo renombrado del PR a `dev` (#1032), reaplicado con los mismos scripts sobre `test` en vez de cherry-pick (las ramas divergen y dev movió ≈100 de estos archivos).
+prosa visible en castellano). Rama `justin/ddd-front-rename`, base `origin/dev` (`c728d124`). El renombrado se rehízo con los mismos scripts sobre `c728d124` porque `dev` avanzó 151 archivos (≈100 de ellos renombrados acá) mientras se trabajaba: fusionar daba decenas de conflictos.
 
 ## Cómo se midió y cómo se aplicó
 
@@ -25,7 +25,7 @@ prosa visible en castellano). Rama `justin/ddd-front-rename-test`, base `origin/
 | Archivos movidos | **337** (169 `.ts`, 101 `.spec.ts`, 30 `.html`, 37 `.css`) en `core/`, `features/` (salvo alovida) y `shared/` |
 | Archivos reescritos por importaciones y referencias | 362 + 11 |
 | Símbolos de nivel superior renombrados | **1 272** (clases, funciones, constantes, interfaces, tipos) |
-| Miembros de clase renombrados (propiedades, signals, métodos) | **631** |
+| Miembros de clase renombrados (propiedades, signals, métodos) | **632** |
 | Selectores de componente `app-…` | **34** (plantillas, specs y escenarios de navegador) |
 | Referencias en `scripts/` y `tools/` | generadores (`gen-*`), `generate-component-index.mjs`, `glossary-seed/export-rows.ts` |
 
@@ -54,18 +54,25 @@ prosa visible en castellano). Rama `justin/ddd-front-rename-test`, base `origin/
 
 ## Verificación (comandos y resultado literal)
 
+Suite en la base `c728d124` (un worker; las fallas se midieron en un worktree de la base):
+
 ```
-tsc -p tsconfig.app.json  --noEmit                        →  sin salida (0 errores)
-tsc -p tsconfig.spec.json --noEmit                        →  sin salida (0 errores)
-corepack yarn build                                       →  exit 0 (avisos de presupuesto de CSS ya existentes)
-corepack yarn ng build --configuration production-api     →  exit 0, «Application bundle generation complete» (la configuración del despliegue)
-corepack yarn test --watch=false (1 worker)               →  Test Files 4 failed | 778 passed (782) · Tests 4 failed | 10 849 passed (10 853)
-   las 4: design-tokens.types.spec (--heat-*), standard-sheets.spec (137 ≠ 43), messaging.spec («No pudimos cargar sus conversaciones»),
-   clinical.handlers.spec (buildPrescriptionPdf(...).output; pasa aislada, 22/22)
+design-tokens.types.spec         falla en la base (--heat-*)
+fichas-estandar.spec             falla en la base (137 ≠ 43)
+messaging.spec                   falla en la base («No pudimos cargar sus conversaciones»)
+clinical.handlers.spec (PDF)     falla en la suite completa de la base anterior (d2d6669d); pasa aislada
 ```
 
-Esas cuatro fallan con el mismo mensaje en la base de `dev` (`c728d124`, medido en un worktree de la base). **No se midió en un
-worktree de `origin/test`**: el disco se llenó al crearlo; por eso la comparación contra la base de `test` es por igualdad de mensajes, no por corrida.
+Rama, tras el último commit:
 
-**Rung de evidencia (regla 15): RUNS + TESTED** (compila, build normal y `production-api`, y pruebas unitarias). **No se abrió el
-navegador ni se corrió Cypress/E2E**: el flujo en pantalla no está verificado.
+```
+tsc -p tsconfig.app.json  --noEmit   →  sin salida (0 errores)
+tsc -p tsconfig.spec.json --noEmit   →  sin salida (0 errores)
+corepack yarn build                  →  exit 0 (avisos de presupuesto de CSS ya existentes)
+corepack yarn test --watch=false     →  Test Files 5 failed | 777 passed (782) · Tests 5 failed | 10 942 passed (10 947)
+   las 5: design-tokens, standard-sheets (ex fichas-estandar), messaging, clinical.handlers (PDF, pasa aislada),
+   practitioner-detail (flaky: pasa aislada)
+```
+
+**Rung de evidencia (regla 15): RUNS + TESTED** (compila, build y pruebas unitarias). **No se abrió el navegador ni se corrió
+Cypress/E2E**: el flujo en pantalla no está verificado.

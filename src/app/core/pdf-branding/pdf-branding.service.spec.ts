@@ -2,12 +2,12 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { setDocumentSignature, documentSignature } from '../../shared/utils/pdf-export/pdf-signature';
+import { setDocumentSignature, documentSignature } from './pdf-signature';
 import {
   setDocumentFonts,
   documentFonts,
-} from '../../shared/utils/pdf-export/pdf-fonts';
-import { establecerLogoDeDocumentos, logoDeDocumentos } from '../../shared/utils/pdf-export/pdf-logo';
+} from './pdf-fonts';
+import { establecerLogoDeDocumentos, logoDeDocumentos } from './pdf-logo';
 import { AuthService } from '../auth/auth.service';
 import { SignatureAndSealClient } from '../data-access/profiles/signature-and-seal.client';
 import { ProfilesClient } from '../data-access/profiles/profiles.client';

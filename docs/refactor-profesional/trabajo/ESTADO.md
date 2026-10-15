@@ -1,6 +1,12 @@
 # Estado
 
-**Actualización 2026-10-05:** piloto visual de `/dashboard` ejecutado para personal, administración y paciente. Jerarquía de jornada, accesos, reporte y próxima cita revisada en navegador; el mapa de actividad ya conserva contraste AA en claro/oscuro. Build, typecheck y lint pasan; las 4 pruebas de navegador y la prueba unitaria mensual (29/29) pasan.
+## Rescate de `wt-e2e` — 2026-10-14
+
+- Se rescató de `wt-e2e` (sucio y 68 commits atrás) solo lo que sigue siendo válido sobre `origin/dev`: jerarquía de encabezados de la agenda (h3→h2, h4→h3), `<main>` anidado de la tienda de farmacia, nombre accesible de la marca en la cabecera pública, contraste de textos de estado (`--text-secondary`), `playwright/mac-motion-a11y.spec.ts`, la ampliación de `consulta-rejilla.spec.ts` y el cierre de verificación del 12/10.
+- Descartado a propósito: registro de paciente, selector de ambulancias paralelo (la versión mergeada es #1079), `symptom-check`, `shell-layout`, `mock-banner`, tokens heatmap y `check-tokens.mjs`; y los cambios de specs que borran pruebas o cambian comportamiento sin cobertura. Las cifras de suite del 12 y 13/10 de `wt-e2e` no se trasladan: eran de un árbol que no es `dev`.
+- El banco de componentes migra sus tres `<select>` nativos a `app-select` (verificado en navegador con `ng serve --configuration demo`).
+
+**Actualización 2026-10-05:** piloto visual de `/dashboard` ejecutado para personal, administración y paciente. Jerarquía de jornada, accesos, reporte y próxima cita revisada en navegador; el mapa de actividad ya conserva contraste AA en claro/oscuro. Build y typecheck pasan; las 4 pruebas de navegador y la prueba unitaria mensual (29/29) pasan. `yarn lint` global sigue rojo por 256 errores ajenos a este piloto; lint del archivo E2E nuevo pasa.
 
 Recorrido visual de `/schedule` y del menú móvil del encabezado verificado en Chromium con rol médico simulado: día, semana, mes e histórico del 3 de octubre con reservas/estados; grilla del modal con desplazamiento interno y dos columnas en la semana móvil. La vista mensual oscura a 320/390 px ya muestra conteos compactos (`N libres`/`Bloq.`), causas completas en nombres accesibles y sin overflow horizontal del documento. En «Más accesos», «Tutoriales» navegó a `/tutorials`, Escape cerró el menú y devolvió el foco; el documento no desborda a 320/390 px. **Cierre visual dentro del recorrido documentado**, sin afirmar cobertura de otros roles, navegadores o API real. Capturas y límites en `PLAN_PANEL_PRINCIPAL.md`, `EVIDENCIAS.md` y `QA_FINAL.md`.
 

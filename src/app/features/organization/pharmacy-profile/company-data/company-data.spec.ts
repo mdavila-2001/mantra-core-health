@@ -2,6 +2,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { CompanyData } from './company-data';
+import { selectOptionLabels } from '../../../../../testing/select';
 import { EMPRESA_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
 import { AppMap, CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map/map';
 import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
@@ -111,14 +112,16 @@ describe('DatosDeLaEmpresa', () => {
     expect(root.querySelector('[data-testid="ficha-empresa"]')).toBeNull();
   });
 
-  it('el tipo de sociedad ofrece los ocho del registro, en su orden y sin traducir', () => {
+  it('el tipo de sociedad ofrece los ocho del registro, en su orden y sin traducir', async () => {
     const root = montar();
     root.querySelector<HTMLButtonElement>('[data-testid="ficha-editar-empresa"]')?.click();
     fixture.detectChanges();
 
-    const opciones = Array.from(root.querySelectorAll('option'))
-      .map((opcion) => opcion.textContent?.trim())
-      .filter((texto) => texto !== 'Elija el tipo de sociedad');
+    // Las opciones de todos los desplegables del formulario, como antes las `<option>`.
+    const opciones: string[] = [];
+    for (const desplegable of Array.from(root.querySelectorAll('app-select'))) {
+      opciones.push(...(await selectOptionLabels(fixture, desplegable)));
+    }
     expect(opciones).toEqual([...TIPOS_DE_SOCIEDAD]);
   });
 

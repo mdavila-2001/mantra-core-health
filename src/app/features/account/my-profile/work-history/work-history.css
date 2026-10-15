@@ -4,6 +4,7 @@
 
 :host {
   display: block;
+  min-inline-size: 0;
 }
 
 .historial {
@@ -69,6 +70,7 @@
   /* Que el nombre largo de un hospital no empuje el período fuera de la
      tarjeta: la columna cede antes que el reparto. */
   min-inline-size: 0;
+  overflow-wrap: anywhere;
 }
 
 .historial__cargo,

@@ -19,6 +19,7 @@
 .emergencia__llamar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--sp-3);
   min-block-size: 48px;
   padding: var(--sp-2) var(--sp-3);
@@ -49,6 +50,7 @@
 
 .emergencia__numero {
   min-inline-size: 7ch;
+  flex-shrink: 0;
   font-size: var(--fs-h3);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -57,6 +59,8 @@
 
 .emergencia__texto {
   display: grid;
+  flex: 1 1 12rem;
+  min-inline-size: 0;
 }
 
 .emergencia__nombre {

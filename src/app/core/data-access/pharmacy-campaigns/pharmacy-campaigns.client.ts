@@ -31,6 +31,7 @@ import {
   EstadoDeCampana,
   FalloDeBorrador,
   ProductoConPrecioPromocional,
+  ProductoDeCatalogo,
   ProductoEnCampana,
 } from './pharmacy-campaigns.types';
 
@@ -40,14 +41,7 @@ import {
  */
 const CANAL_DE_DEMO = 'alovida.pharmacy-campaigns.demo';
 
-/** Un producto del catálogo, como lo conoce quien tiene precios a mano. */
-export interface ProductoDeCatalogo {
-  readonly productId: string;
-  readonly nombre: string;
-  readonly presentacion: string | null;
-  readonly precio: string;
-  readonly moneda: string;
-}
+export type { ProductoDeCatalogo };
 
 /**
  * Campañas de farmacia (carril FAR-I7), **sin backend y con gate de demo**.

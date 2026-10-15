@@ -60,6 +60,8 @@ import type { LineResult, OrderLine } from '../../../../core/promotions-engine/p
 
 /** Menos de una unidad no es un renglón: para no pedirlo está «Volver». */
 const CANTIDAD_MINIMA = 1;
+/** Tope de unidades por producto cuando el pedido sale del carrito y no de una receta. */
+const CANTIDAD_MAXIMA_SIN_RECETA = 10;
 
 /** Lo que la persona decidió sobre un renglón. */
 interface EleccionDeRenglon {
@@ -195,6 +197,9 @@ export class NewOrder {
 
   protected readonly hasUnresolvedProducts = this.unresolvedProductNames.length > 0;
 
+  /** El pedido salió del carrito: no hay receta que limite las cantidades. */
+  protected readonly sinReceta = (this.borrador?.requestId ?? '') === '';
+
   /** Vuelve a la consulta de sedes de la misma receta. */
   protected readonly rutaDeVuelta =
     this.borrador === null
@@ -294,7 +299,9 @@ export class NewOrder {
         medicamento: alternativa?.nombre ?? linea.medicamento,
         presentacion: alternativa?.presentacion ?? linea.presentacion,
         cantidad: eleccion.cantidad,
-        cantidadRecetada: deEjemplo?.cantidadRecetada ?? linea.cantidad,
+        cantidadRecetada: this.sinReceta
+          ? Math.max(deEjemplo?.cantidadRecetada ?? 0, linea.cantidad, CANTIDAD_MAXIMA_SIN_RECETA)
+          : (deEjemplo?.cantidadRecetada ?? linea.cantidad),
         precioDeLista: alternativa?.precio ?? this.precioNormalizado(linea.precio),
         alternativa,
         alternativas,

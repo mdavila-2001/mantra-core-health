@@ -32,8 +32,8 @@ import type {
   UserPage,
   UserSearchQuery,
   VerifiedEmail,
-  DiagnosticCenterRegistration,
 } from './iam.types';
+import { cuerpoDeCentroDiagnostico } from './diagnostic-center.body';
 
 /** Respuestas de la API tal como viajan: las fechas son texto. */
 interface TokenResponseBody {
@@ -284,15 +284,16 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
-      // Firma y sello sólo los entiende el simulador: el DTO real no los
-      // declara y, con `forbidNonWhitelisted`, los rechaza con 400 («property
-      // signatureImageBase64 should not exist») y el alta no avanza.
       ...(!environment.mockBackend || registration.signatureImageBase64 === undefined
         ? {}
         : { signatureImageBase64: registration.signatureImageBase64 }),
       ...(!environment.mockBackend || registration.sealImageBase64 === undefined
         ? {}
         : { sealImageBase64: registration.sealImageBase64 }),
+      ...(registration.signatureFileId === undefined
+        ? {}
+        : { signatureFileId: registration.signatureFileId }),
+      ...(registration.sealFileId === undefined ? {} : { sealFileId: registration.sealFileId }),
       ...(registration.occupationConceptId === undefined
         ? {}
         : { occupationConceptId: registration.occupationConceptId }),
@@ -421,6 +422,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        taxIdentifier: registration.taxIdentifier,
         legalEntityType: registration.legalEntityType,
         tenantType: 'PHARMACY',
         countryConceptId: registration.countryConceptId,
@@ -551,6 +553,19 @@ export class IamClient {
     form.append('file', file);
     return this.http.post<UploadedRegistrationDocument>(
       this.url('/iam/auth/upload-registration-document'),
+      form,
+      { reportProgress: true, observe: 'events' },
+    );
+  }
+
+  /** Precarga privada de una imagen de firma/sello antes de crear la cuenta. */
+  uploadRegistrationSignatureImage(
+    file: File,
+  ): Observable<HttpEvent<UploadedRegistrationDocument>> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<UploadedRegistrationDocument>(
+      this.url('/iam/auth/upload-registration-signature-image'),
       form,
       { reportProgress: true, observe: 'events' },
     );
@@ -758,54 +773,5 @@ function toAssistedResult(body: AssistedRegistrationBody): AssistedRegistrationR
     activationToken: body.activationToken,
     activationExpiresAt: new Date(body.activationExpiresAt),
     status: body.status,
-  };
-}
-
-/**
- * El cuerpo del alta de un laboratorio o centro de imagenología.
- *
- * Campo por campo y no con un `...registration`, por lo mismo que el resto del
- * cliente: `forbidNonWhitelisted` rechaza toda clave que el DTO no declare.
- */
-function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistration): unknown {
-  const { diagnosticUnit } = registration;
-  const { address } = diagnosticUnit.primarySite;
-  return {
-    organization: {
-      code: registration.code,
-      legalName: registration.legalName,
-      legalEntityType: registration.legalEntityType,
-      ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
-      tenantType: 'DIAGNOSTIC_CENTER',
-      ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
-      countryConceptId: registration.countryConceptId,
-      jurisdictionConceptId: registration.jurisdictionConceptId,
-      diagnosticUnit: {
-        diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
-        modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
-        primarySite: {
-          name: diagnosticUnit.primarySite.name,
-          ...(diagnosticUnit.primarySite.timeZone === undefined
-            ? {}
-            : { timeZone: diagnosticUnit.primarySite.timeZone }),
-          address: {
-            lines: [...address.lines],
-            ...(address.latitude === undefined || address.longitude === undefined
-              ? {}
-              : { latitude: address.latitude, longitude: address.longitude }),
-          },
-        },
-      },
-      legalDocuments: registration.legalDocuments,
-      ...(registration.legalRepresentative === undefined
-        ? {}
-        : { legalRepresentative: registration.legalRepresentative }),
-      ...(registration.executives === undefined ? {} : { executives: registration.executives }),
-    },
-    owner: {
-      email: registration.owner.email,
-      password: registration.owner.password,
-      displayName: registration.owner.displayName,
-    },
   };
 }

@@ -1,0 +1,50 @@
+
+Running 1 test using 1 worker
+
+corepack.cmd : (node:10568) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 4 Carácter: 235
++ ... OLATED='1'; corepack.cmd yarn pw playwright/practitioner-profile-list ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:10568) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
+  x  1 [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados (19.0s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+
+    Error: cada sello cabe dentro de su insignia de especialidad: [{"contained":false,"badge":{"left":57,"right":333,"width":276},"seal":{"left":70,"right":345.625,"width":275.625},"grid":276}]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+    -   true,
+    +   false,
+      ]
+
+      540 |           }),
+      541 |         );
+    > 542 |         expect(specialtyBounds.map((bounds) => bounds.contained), `cada sello cabe dentro de su insignia de especialidad: ${JSON.stringify(specialtyBounds)}`).toEqual([true]);
+          |                                                                                                                                                                ^
+      543 |         const cell = `public-${viewport.width}x${viewport.height}-${theme.nombre}-credentials`;
+      544 |         measurements.push(await measureOverflow(page, cell));
+      545 |         await dismissNotices(page);
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:542:160
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+  1 error was not a part of any test, see above for details
+EXIT_CODE=1

@@ -1,0 +1,118 @@
+Updating e32dc33b..b84f74aa
+Created autostash: 5197e196
+Fast-forward
+ .gitignore                                         |     3 +
+ PENDIENTES-BACKEND.md                              |    22 +
+ .../handoff/alta-profesional-titulos-y-adjuntos.md |    25 +-
+ docs/pendientes-backend-formularios.md             |    21 +
+ docs/pendientes-backend-perfil-profesional.md      |    13 +
+ docs/progress/BLOCKERS.md                          |    32 +
+ .../evidence/sync-mockup-dev-2026-10-02/REPORT.md  |    35 +
+ .../editar-facturacion-1440.png                    |   Bin 206284 -> 206197 bytes
+ .../ficha-facturacion-1440.png                     |   Bin 221009 -> 217977 bytes
+ .../idiomas-editor-antes-1440.png                  |   Bin 0 -> 297642 bytes
+ .../idiomas-editor-elegido-1440.png                |   Bin 0 -> 307206 bytes
+ .../idiomas-ficha-1440.png                         |   Bin 0 -> 284925 bytes
+ .../laboratorios-mapa-al-final-1440.png            |   Bin 0 -> 357365 bytes
+ .../laboratorios-mapa-al-final-375.png             |   Bin 0 -> 306179 bytes
+ .../2026-10-02-horarios-otros-servicios/REPORT.md  |    81 +
+ .../README.md                                      |   488 +
+ playwright/dictamen-h6-recorrido-2.spec.ts         |     7 +-
+ playwright/horarios-otros-servicios.spec.ts        |   168 +
+ ...gistro-doctor-universidad-y-profesiones.spec.ts |   208 +-
+ playwright/sync-mockup-dev-2026-10-02.spec.ts      |    85 +
+ scripts/gen-chart-templates-fixture.mjs            |    32 +-
+ scripts/gen-universidades-por-pais.mjs             |   127 +
+ .../chart-templates/chart-templates.types.ts       |    30 +
+ .../data-access/profiles/especialidad-vigente.ts   |    40 +
+ .../data-access/profiles/profiles.client.spec.ts   |    18 +
+ .../core/data-access/profiles/profiles.client.ts   |    14 +
+ .../terminology/languages.service.spec.ts          |   138 +
+ .../data-access/terminology/languages.service.ts   |    92 +
+ .../mock/fixtures/fichas-estandar.generated.ts     | 30205 +++++++++++++++++--
+ src/app/core/mock/fixtures/fichas-estandar.spec.ts |    64 +-
+ src/app/core/mock/handlers/clinical.handlers.ts    |    65 +-
+ src/app/core/mock/handlers/profiles.handlers.ts    |    45 +-
+ src/app/core/profesion/instituciones-educativas.ts |     2 +-
+ .../core/profesion/padron-de-universidades.spec.ts |    85 +
+ src/app/core/profesion/padron-de-universidades.ts  |   194 +
+ .../profesion/universidades-por-pais.generated.ts  | 11435 +++++++
+ .../account/appointments/appointments.routes.ts    |     8 +
+ .../features/account/appointments/appointments.ts  |     3 +-
+ .../my-profile/pestanas-del-perfil-medico.spec.ts  |     8 +
+ .../practitioner-profile-edit.css                  |    44 +
+ .../practitioner-profile-edit.html                 |   127 +
+ .../practitioner-profile-edit.spec.ts              |   279 +-
+ .../practitioner-profile-edit.ts                   |   202 +
+ src/app/features/agenda/agenda.html                |    12 +
+ src/app/features/agenda/agenda.spec.ts             |    39 +-
+ src/app/features/agenda/agenda.ts                  |    33 +-
+ src/app/features/agenda/my-agenda/my-agenda.ts     |     6 +-
+ .../my-agenda/schedule-grid/schedule-grid.css      |    17 +
+ .../my-agenda/schedule-grid/schedule-grid.html     |     3 +
+ .../my-agenda/schedule-grid/schedule-grid.spec.ts  |    55 +
+ .../my-agenda/schedule-grid/schedule-grid.ts       |    55 +-
+ .../agenda/services-schedule/services-schedule.css |    95 +
+ .../services-schedule/services-schedule.html       |    79 +
+ .../services-schedule/services-schedule.spec.ts    |   206 +
+ .../agenda/services-schedule/services-schedule.ts  |   189 +
+ .../register-practitioner.css                      |    21 +-
+ .../register-practitioner.html                     |   179 +-
+ .../register-practitioner.spec.ts                  |   227 +-
+ .../register-practitioner/register-practitioner.ts |   332 +-
+ .../specialty-form-block/specialty-form-block.css  |     7 +
+ .../specialty-form-block/specialty-form-block.html |    42 +-
+ .../specialty-form-block.spec.ts                   |    91 +-
+ .../specialty-form-block/specialty-form-block.ts   |   165 +-
+ .../practitioner-detail/practitioner-detail.html   |    26 +-
+ .../practitioner-detail.spec.ts                    |    42 +
+ .../practitioner-detail/practitioner-detail.ts     |     9 +
+ .../practitioner-service-schedule.css              |    74 +
+ .../practitioner-service-schedule.html             |   153 +
+ .../practitioner-service-schedule.spec.ts          |   160 +
+ .../practitioner-service-schedule.ts               |   274 +
+ src/app/features/form-builder/form-builder.css     |    41 +
+ src/app/features/form-builder/form-builder.html    |   319 +-
+ src/app/features/form-builder/form-builder.spec.ts |   154 +-
+ src/app/features/form-builder/form-builder.ts      |   202 +-
+ .../laboratory-directory/laboratory-directory.html |    57 +-
+ .../organisms/directory-page/directory-page.html   |     5 +
+ .../organisms/paginated-form/paginated-form.css    |     8 +
+ .../organisms/paginated-form/paginated-form.html   |     7 +-
+ .../paginated-form/paginated-form.spec.ts          |    48 +
+ .../organisms/paginated-form/paginated-form.ts     |    81 +-
+ .../shared/forms/paginated/paginar-campos.spec.ts  |    21 +
+ src/app/shared/forms/paginated/paginar-campos.ts   |    35 +-
+ .../shared/forms/paginated/paginated-form.types.ts |    12 +
+ .../paginated/visibilidad-condicional.spec.ts      |    41 +
+ .../forms/paginated/visibilidad-condicional.ts     |    77 +
+ .../form-template-pdf/form-template-pdf.spec.ts    |    24 +
+ .../utils/form-template-pdf/form-template-pdf.ts   |    51 +-
+ src/app/shared/utils/form-values/form-values.ts    |     2 +
+ 88 files changed, 44797 insertions(+), 3424 deletions(-)
+ create mode 100644 docs/progress/BLOCKERS.md
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/idiomas-editor-antes-1440.png
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/idiomas-editor-elegido-1440.png
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/idiomas-ficha-1440.png
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/laboratorios-mapa-al-final-1440.png
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/laboratorios-mapa-al-final-375.png
+ create mode 100644 docs/trabajo/2026-10-02-horarios-otros-servicios/REPORT.md
+ create mode 100644 planes/05-farmacia-solo-retiro-y-chat-2026-10-02/README.md
+ create mode 100644 playwright/horarios-otros-servicios.spec.ts
+ create mode 100644 scripts/gen-universidades-por-pais.mjs
+ create mode 100644 src/app/core/data-access/profiles/especialidad-vigente.ts
+ create mode 100644 src/app/core/data-access/terminology/languages.service.spec.ts
+ create mode 100644 src/app/core/data-access/terminology/languages.service.ts
+ create mode 100644 src/app/core/profesion/padron-de-universidades.spec.ts
+ create mode 100644 src/app/core/profesion/padron-de-universidades.ts
+ create mode 100644 src/app/core/profesion/universidades-por-pais.generated.ts
+ create mode 100644 src/app/features/agenda/services-schedule/services-schedule.css
+ create mode 100644 src/app/features/agenda/services-schedule/services-schedule.html
+ create mode 100644 src/app/features/agenda/services-schedule/services-schedule.spec.ts
+ create mode 100644 src/app/features/agenda/services-schedule/services-schedule.ts
+ create mode 100644 src/app/features/directory/practitioner-service-schedule/practitioner-service-schedule.css
+ create mode 100644 src/app/features/directory/practitioner-service-schedule/practitioner-service-schedule.html
+ create mode 100644 src/app/features/directory/practitioner-service-schedule/practitioner-service-schedule.spec.ts
+ create mode 100644 src/app/features/directory/practitioner-service-schedule/practitioner-service-schedule.ts
+ create mode 100644 src/app/shared/forms/paginated/visibilidad-condicional.spec.ts
+ create mode 100644 src/app/shared/forms/paginated/visibilidad-condicional.ts

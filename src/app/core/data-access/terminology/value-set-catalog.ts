@@ -47,6 +47,11 @@ export abstract class ValueSetCatalog {
     this.cache = null;
   }
 
+  /** Permite que un catálogo adapte sólo su presentación sin duplicar la lectura. */
+  protected transformOptions(opciones: readonly ValueSetOption[]): readonly ValueSetOption[] {
+    return opciones;
+  }
+
   private readCatalog(): Observable<readonly ValueSetOption[]> {
     return this.terminology.listValueSets({ code: this.code }).pipe(
       map((pagina) => pagina.items.find((conjunto) => conjunto.internalCode === this.code)),
@@ -56,7 +61,9 @@ export abstract class ValueSetCatalog {
         }
         return this.terminology.readAllOptions(conjunto.id);
       }),
-      map((opciones) => opciones.filter((opcion) => opcion.selectable !== false)),
+      map((opciones) =>
+        this.transformOptions(opciones.filter((opcion) => opcion.selectable !== false)),
+      ),
     );
   }
 }

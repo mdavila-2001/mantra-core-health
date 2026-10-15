@@ -181,7 +181,7 @@ PUT /practitioners/me/sites/:siteId/logo
   sensibilidad `NORMAL` (`upload-policy.ts` ya cita «el logo de una
   organización»). PNG, JPG o WEBP, hasta 2 MB.
 
-### Lo que sigue abierto aunque llegue la ruta
+### Pendientes fuera del registro
 
 - **Quién puede verlo.** `GET /common/files/:id/content` sólo entrega a quien
   subió el archivo, así que hoy el logo lo ve **su dueño**. Para que un paciente
@@ -207,7 +207,7 @@ Justin pidió que el doctor pueda **subir, ver, cambiar y quitar** su **firma** 
 **estampen al pie de los documentos que emite** —los 12 del maquetador del
 frontend— con su nombre y su matrícula debajo, y que el alta permita cargarlos como
 paso **opcional**. El frontend está entregado contra el simulador de `mockup`;
-**el backend no tiene dónde guardarlas.**
+La API de `dev` ya tiene el contrato autenticado de firma/sello; el flujo de alta descrito abajo incorpora su precarga y persistencia real.
 
 ### Qué es y qué NO es
 
@@ -217,27 +217,15 @@ validez legal por sí misma—. Si alguna vez se pide firma electrónica, es otr
 trabajo (ver `clinical.prescription_signatures` y la política de firma de recetas D-05
 en la API, que sí existen y no se tocan acá).
 
-### Lo que hay hoy
+### Contrato real del perfil y del alta (2026-10-03)
 
-- `profiles.practitioner_profiles` y `profiles.persons` sólo tienen `photo_file_id`.
-  No hay columna ni tabla para la firma ni para el sello.
-- `IamClient.registerPractitioner` **arma el cuerpo campo por campo**: las claves
-  `signatureImageBase64` y `sealImageBase64` se mandan sólo si el alta las tiene, y
-  **un DTO real con `forbidNonWhitelisted` las rechazaría con 400**. Hoy las atiende
-  únicamente el simulador.
+El modelo ya declara `signature_file_id` y `seal_file_id` en
+`profiles.health_practitioner_profiles`, con FK a `common.files` e índices.
+Para bases existentes se aplica el patch canónico
+`SQL/patches/2026-10-03_profiles_signature_assets.sql` (también incluido en el
+snapshot `database/SQL/patches/` de la API).
 
-### Decisión pendiente
-
-Un lugar donde viva cada imagen, por ejemplo dos columnas nuevas
-`signature_image_file_id` y `seal_image_file_id` en `profiles.practitioner_profiles`
-(con FK a `common.files` e índice, empezando por el `.puml` del módulo de perfiles,
-ADR-0021), o una tabla de «activos del profesional» si se prevén más.
-
-### Contrato que el frontend ya espera
-
-Todo va detrás de `FirmaYSelloClient`
-(`core/data-access/profiles/firma-y-sello.client.ts`); el día que exista el backend
-se cambia **ese archivo** y las pantallas, el alta y el PDF no se tocan.
+El perfil usa el contrato autenticado que consume `FirmaYSelloClient`:
 
 ```http
 GET /profiles/practitioners/me/signature-assets
@@ -248,15 +236,31 @@ PUT /profiles/practitioners/me/signature-assets
 → 200 lo mismo que el GET
 ```
 
-- Una clave **ausente** deja lo que había; `null` quita esa imagen.
-- Sólo el profesional de la sesión (`me`): no existe la forma de escribir la de otro.
-- El archivo se sube antes con `POST /common/files/upload` como `IMAGE` de
-  sensibilidad `NORMAL`. PNG, JPG o WEBP, hasta 2 MB cada una.
-- Para el alta, o bien se admiten las dos claves `…Base64` como la foto
-  (`profilePhotoBase64`), o se agrega un paso posterior a la primera sesión. Hoy el
-  simulador hace lo primero.
+Una clave ausente conserva el valor anterior; `null` quita esa imagen. La API
+verifica propiedad, formato y tamaño del archivo.
 
-### Lo que sigue abierto aunque llegue la ruta
+En el registro, todavía sin sesión, cada imagen se precarga mediante
+`POST /iam/auth/upload-registration-signature-image`, multipart con el campo
+`file`: PNG, JPEG o WebP de hasta 2 MB, detectado por firma binaria. Nace sin
+dueño, con categoría `IMAGE` y sensibilidad `PHI`; la ruta pública de medios
+no la sirve. La ruta tiene límite de solicitudes por IP.
+
+Después el formulario envía `signatureFileId` y/o `sealFileId` en
+`POST /iam/auth/register-practitioner`. El alta reclama los archivos para la
+cuenta nueva y los vincula al perfil dentro de la misma transacción. Un
+archivo ajeno, público, de otro formato o demasiado grande rechaza el alta.
+Las cargas confirmadas permanecen en memoria para reintentar sin duplicarlas.
+
+Las claves `signatureImageBase64` y `sealImageBase64` se conservan únicamente
+para el simulador; la API real recibe referencias UUID. No se aumenta el
+límite del cuerpo JSON. Tras iniciar sesión, el titular consulta los
+identificadores y descarga los bytes por `/common/files/:id/content`.
+
+La prueba HTTP de precarga → registro → login → lectura del perfil → descarga
+está en `test/integration/practitioner-signature-registration.int-spec.ts` de
+la API. No equivale a una prueba del formulario desplegado en navegador.
+
+### Pendientes fuera del registro
 
 - **El PDF oficial de la receta** sale de la API (`prescription-pdf.service.ts`,
   pdfkit) y **no lleva el bloque de firma**; tampoco los otros dos generadores
@@ -266,7 +270,7 @@ PUT /profiles/practitioners/me/signature-assets
 - **Quién puede ver las imágenes.** `GET /common/files/:id/content` sólo entrega a
   quien subió el archivo: hoy la ve **su dueño**. Para que una receta impresa o
   descargada por un paciente las lleve, el PDF tiene que generarse del lado del
-  servidor o las imágenes servirse por `/public/media/<fileId>`.
+  servidor con autorización contextual. Las imágenes privadas del alta no se exponen por `/public/media/<fileId>`.
 - **El nombre y la matrícula** del bloque salen de `getOwnPractitionerProfile`
   (`displayName` y la primera matrícula cargada). Falta decidir cuál matrícula
   imprimir cuando hay varias (vigente, de una jurisdicción concreta).

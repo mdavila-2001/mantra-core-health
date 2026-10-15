@@ -169,6 +169,14 @@ jobs:
       - name: Contraste del sistema de diseño
         run: node scripts/check-contrast.mjs
 
+      # Ningún color literal nuevo fuera de las hojas de tokens, ni archivo nuevo
+      # por encima del tope de líneas (ratchets sobre scripts/baselines/*.json).
+      - name: Colores sueltos fuera de tokens
+        run: node scripts/check-colores-sueltos.mjs
+
+      - name: Tamaño máximo de archivo
+        run: node scripts/check-max-lines.mjs
+
       # Regla 29 (transversal a los 36 carriles): toda ruta, identificador,
       # variable, clase y archivo NUEVO o TOCADO va en inglés. El checkout de
       # arriba es superficial (`fetch-depth: 1`): sólo trae el commit de la

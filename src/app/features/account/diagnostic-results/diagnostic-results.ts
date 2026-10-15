@@ -529,7 +529,10 @@ export class DiagnosticResults {
         fileId: archivo.fileId,
         // El rol del contenido es lo que la persona reconoce —«Informe»,
         // «Imagen»—; el ordinal es el respaldo cuando el catálogo no lo trae.
-        rotulo: this.etiqueta(archivo.contentRoleConceptId, `Archivo ${indice + 1}`),
+        rotulo: this.etiqueta(
+          archivo.contentRoleConceptId,
+          item.files.length === 1 ? 'Informe' : `Archivo ${indice + 1}`,
+        ),
         formato: this.etiqueta(archivo.presentationFormatConceptId ?? '', ''),
         contentRoleConceptId: archivo.contentRoleConceptId,
         presentationFormatConceptId: archivo.presentationFormatConceptId ?? '',
@@ -547,7 +550,10 @@ export class DiagnosticResults {
       estado: this.etiqueta(item.clinicalStatusConceptId, ''),
       archivos: item.archivos.map((archivo) => ({
         ...archivo,
-        rotulo: this.etiqueta(archivo.contentRoleConceptId, `Archivo ${archivo.ordinal}`),
+        rotulo: this.etiqueta(
+          archivo.contentRoleConceptId,
+          item.archivos.length === 1 ? 'Informe' : `Archivo ${archivo.ordinal}`,
+        ),
         formato: this.etiqueta(archivo.presentationFormatConceptId, ''),
       })),
     };

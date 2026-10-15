@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { RegisterPatient } from './register-patient';
+import { chooseSelectOptionNow, selectOptionLabelsNow } from '../../../../testing/select';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
 import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
@@ -252,8 +253,9 @@ describe('RegisterPatient', () => {
         items: [
           { conceptId: 'o-1', code: 'occupation:bo:DOCENTE', display: 'Docente' },
           { conceptId: 'o-2', code: 'occupation:bo:MINERO', display: 'Minero / Minera' },
+          { conceptId: 'o-otra', code: CODIGO_OCUPACION_OTRA, display: 'Otra ocupación' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -264,6 +266,7 @@ describe('RegisterPatient', () => {
       expect(component.opcionesOcupacion()).toEqual([
         { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
         { value: 'o-2', label: 'Minero / Minera', code: 'occupation:bo:MINERO' },
+        { value: 'o-otra', label: 'Otro', code: CODIGO_OCUPACION_OTRA },
       ]);
     });
 
@@ -2209,18 +2212,17 @@ describe('RegisterPatient', () => {
 
     /** Elige una ciudad en el select de residencia, como lo haría la persona. */
     function elegirCiudad(nombre: string): void {
-      const select = pantalla().querySelector<HTMLSelectElement>(
-        '[data-testid="registration-residence-municipio"] select',
+      const select = pantalla().querySelector<HTMLElement>(
+        '[data-testid="registration-residence-municipio"]',
       );
       expect(select, 'el select de ciudad no está en pantalla').not.toBeNull();
-      const opcion = [...(select?.options ?? [])].find(
-        (candidata) => candidata.textContent?.trim() === nombre,
+      if (select === null) return;
+      const opcion = selectOptionLabelsNow(fixture, select).find(
+        (candidata) => candidata === nombre,
       );
       expect(opcion, `«${nombre}» no está entre las ciudades ofrecidas`).toBeDefined();
-      if (select === null || opcion === undefined) return;
-      select.value = opcion.value;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-      fixture.detectChanges();
+      if (opcion === undefined) return;
+      chooseSelectOptionNow(fixture, select, opcion);
     }
 
     function direccion(): string {

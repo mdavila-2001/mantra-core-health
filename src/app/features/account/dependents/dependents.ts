@@ -10,11 +10,15 @@ import type {
 } from '../../../core/data-access/profiles/profiles.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { RelatedPersonRelationshipsCatalog } from '../../../core/data-access/system-context/related-person-relationships.service';
 import { DependentFormDialog, type SolicitudEnviada } from './dependent-form-dialog';
 
 /**
@@ -39,9 +43,11 @@ import { DependentFormDialog, type SolicitudEnviada } from './dependent-form-dia
     RouterLink,
     AppButton,
     Badge,
+    Select,
     Alert,
     Card,
     EmptyState,
+    FormField,
     PageHeader,
     DependentFormDialog,
   ],
@@ -68,16 +74,17 @@ export class Dependents {
    * No es un error ni falta de permisos: quien atiende tiene sesión válida y
    * ninguna razón para tener dependientes. Mismo criterio que «Mis citas».
    */
-  protected readonly sinPerfilDePaciente = computed(
-    () => this.auth.patientProfileId() === null,
-  );
+  protected readonly sinPerfilDePaciente = computed(() => this.auth.patientProfileId() === null);
 
   private readonly profiles = inject(ProfilesClient);
+  private readonly relationshipsCatalog = inject(RelatedPersonRelationshipsCatalog);
 
   /** Lo que otras personas le pidieron a esta cuenta: ser su dependiente. */
   protected readonly solicitudes = signal<readonly IncomingDependentLinkRequest[]>([]);
   /** La solicitud que se está respondiendo, para bloquear el doble clic. */
   protected readonly respondiendo = signal<string | null>(null);
+  protected readonly opcionesDeRelacion = signal<readonly SelectOption<string>[]>([]);
+  private readonly relacionesElegidas = signal<ReadonlyMap<string, string>>(new Map());
 
   constructor() {
     if (this.sinPerfilDePaciente()) return;
@@ -87,9 +94,45 @@ export class Dependents {
 
   private cargarSolicitudes(): void {
     this.profiles.listIncomingDependentLinkRequests().subscribe({
-      next: (filas) => this.solicitudes.set(filas),
+      next: (filas) => {
+        this.solicitudes.set(filas);
+        if (filas.length > 0) this.cargarRelaciones();
+      },
       error: () => this.solicitudes.set([]),
     });
+  }
+
+  private cargarRelaciones(): void {
+    const permitidos = new Set([
+      'RELATIONSHIP_GUARDIAN',
+      'RELATIONSHIP_MOTHER',
+      'RELATIONSHIP_FATHER',
+      'RELATIONSHIP_SPOUSE',
+      'RELATIONSHIP_CHILD',
+    ]);
+    this.relationshipsCatalog.listar().subscribe({
+      next: (opciones) =>
+        this.opcionesDeRelacion.set(
+          opciones
+            .filter((opcion) => permitidos.has(opcion.code))
+            .map((opcion) => ({
+              value: opcion.conceptId,
+              label: this.relationshipsCatalog.etiquetaDe(opcion),
+            })),
+        ),
+      error: () => this.opcionesDeRelacion.set([]),
+    });
+  }
+
+  protected relacionDe(solicitudId: string): string | null {
+    return this.relacionesElegidas().get(solicitudId) ?? null;
+  }
+
+  protected cambiarRelacion(solicitudId: string, relacion: string | null): void {
+    const siguientes = new Map(this.relacionesElegidas());
+    if (relacion === null) siguientes.delete(solicitudId);
+    else siguientes.set(solicitudId, relacion);
+    this.relacionesElegidas.set(siguientes);
   }
 
   /** Se envió la solicitud; el vínculo nace cuando la otra persona acepte. */
@@ -103,9 +146,11 @@ export class Dependents {
 
   protected responder(solicitud: IncomingDependentLinkRequest, aceptar: boolean): void {
     if (this.respondiendo() !== null) return;
+    const relacion = this.relacionDe(solicitud.id);
+    if (aceptar && relacion === null) return;
     this.respondiendo.set(solicitud.id);
     const operacion = aceptar
-      ? this.profiles.acceptDependentLinkRequest(solicitud.id)
+      ? this.profiles.acceptDependentLinkRequest(solicitud.id, relacion ?? undefined)
       : this.profiles.rejectDependentLinkRequest(solicitud.id);
     operacion.subscribe({
       next: () => {

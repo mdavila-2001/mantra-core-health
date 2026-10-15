@@ -14,11 +14,9 @@
       @if (registered()) {
         <div class="registro__header">
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
-            Su cuenta está lista
+            ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">
-            Ya puede entrar con {{ accessHint }} y la contraseña que eligió.
-          </p>
+          <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con {{ accessHint }} y la contraseña que eligió.</p>
         </div>
         <button
           app-button

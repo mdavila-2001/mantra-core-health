@@ -22,17 +22,13 @@
       @if (registered()) {
         <div class="registro__header">
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-farmacia-exito">
-            Su cuenta está lista
+            ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">
-            Ya puede entrar con el correo del representante legal y la contraseña que eligió.
-            @if (verificationSent()) {
-              Le mandamos un correo para verificar su dirección; puede hacerlo cuando quiera, no hace
-              falta para usar su cuenta.
-            }
-            Su farmacia queda pendiente de aprobación: mientras la plataforma no la apruebe, no aparece
-            en las búsquedas de pacientes.
-          </p>
+          <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con el correo del representante legal y la contraseña que eligió.</p>
+          @if (verificationSent()) {
+            <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar a usar AloVida.</p>
+          }
+          <p class="registro__subtitle">Su farmacia está en revisión: en cuanto la plataforma la apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya puede ingresar con su cuenta.</p>
         </div>
         <button
           app-button
@@ -134,6 +130,21 @@
                  y su propia confirmación. -->
             <ng-template appCampoPersonalizado="sucursales">
               <div class="farmacia-sucursales">
+                @if (avisoDeSucursalesIncompletas(); as aviso) {
+                  <!-- Antes estas sucursales se descartaban al enviar sin decir
+                       nada. Se nombran acá, apenas aparecen, y cada tarjeta marca
+                       qué le falta. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="warning"
+                    title="Sucursales sin ubicar"
+                    data-testid="registro-farmacia-sucursales-incompletas"
+                  >
+                    {{ aviso }}
+                  </app-alert>
+                }
                 @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
                   <section class="farmacia-sucursal">
                     <header class="farmacia-sucursal__cabecera">
@@ -191,7 +202,7 @@
                       </app-alert>
                     }
 
-                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. El enlace de Google Maps u OpenStreetMap.">
+                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Pegue el enlace de Google Maps u OpenStreetMap con el punto, o márquelo en el mapa de abajo. Sin punto la sucursal no se registra.">
                       <app-input
                         type="url"
                         [testId]="'registro-farmacia-' + sucursal.id + '-url-ubicacion'"

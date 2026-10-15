@@ -99,6 +99,34 @@
   scrollbar-color: var(--border-strong) transparent;
 }
 
+/* Hay más columnas de las que caben en un teléfono: el borde derecho se
+   desvanece mientras queden horas por ver, y se retira al llegar al final. */
+@property --calor-fin {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0rem;
+}
+
+@keyframes calor-fin {
+  from {
+    --calor-fin: 2rem;
+  }
+
+  to {
+    --calor-fin: 0rem;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .consultas-resumen__tabla-scroll {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--calor-fin)), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - var(--calor-fin)), transparent);
+    animation: calor-fin linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: calc(100% - 3rem) 100%;
+  }
+}
+
 .consultas-resumen__tabla {
   border-collapse: separate;
   border-spacing: 3px;

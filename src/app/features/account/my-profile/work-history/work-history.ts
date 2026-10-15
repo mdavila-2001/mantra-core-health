@@ -56,6 +56,7 @@ import {
   FilterBar,
 } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 
 const SITE_PHONE_PATTERN = /^[+]?[0-9 ()-]{6,}$/;
 
@@ -143,6 +144,7 @@ function telefonoDeSedeValido(value: string): boolean {
     ReferenceCombobox,
     RowActions,
     Select,
+    StatusSeal,
     SiteBankQrDialog,
     UpperCasePipe,
   ],
@@ -1570,28 +1572,45 @@ export class WorkHistory implements OnInit {
    */
 
   protected readonly busquedaHistorial = signal('');
+  protected readonly historialEnTabla = computed(
+    () =>
+      this.layout() === 'tabla' ||
+      (this.layout() === 'timeline' &&
+        (this.historial().status !== 'ready' || this.vinculosEditables().length > 5)),
+  );
+  private readonly filasDelHistorial = computed(() =>
+    this.layout() === 'timeline' ? this.vinculosEditables() : this.afiliaciones(),
+  );
   protected readonly paginaHistorial = signal(1);
   protected readonly tamanoPaginaHistorial = signal(10);
 
   protected readonly historialFiltrado = computed(() => {
     const termino = normalizarTexto(this.busquedaHistorial());
     if (termino === '') {
-      return this.afiliaciones();
+      return this.filasDelHistorial();
     }
-    return this.afiliaciones().filter((afiliacion) => {
+    return this.filasDelHistorial().filter((afiliacion) => {
       const institucion = normalizarTexto(afiliacion.organizationName);
       const cargo = normalizarTexto(afiliacion.roleTitle ?? '');
       return institucion.includes(termino) || cargo.includes(termino);
     });
   });
 
+  protected readonly paginaHistorialVisible = computed(() => {
+    const ultimaPagina = Math.ceil(this.historialFiltrado().length / this.tamanoPaginaHistorial());
+    return Math.max(1, Math.min(this.paginaHistorial(), ultimaPagina));
+  });
+
   protected readonly historialPaginado = computed(() => {
-    const inicio = (this.paginaHistorial() - 1) * this.tamanoPaginaHistorial();
+    const inicio = (this.paginaHistorialVisible() - 1) * this.tamanoPaginaHistorial();
     return this.historialFiltrado().slice(inicio, inicio + this.tamanoPaginaHistorial());
   });
 
   protected readonly estadoHistorialTabla = computed<ViewState<readonly PractitionerAffiliation[]>>(
-    () => ready(this.historialPaginado()),
+    () => {
+      const state = this.historial();
+      return state.status === 'ready' ? ready(this.historialPaginado()) : state;
+    },
   );
 
   protected onFiltrosHistorialChanged(activos: Readonly<Record<string, string>>): void {
@@ -1602,6 +1621,9 @@ export class WorkHistory implements OnInit {
   private readonly celdaInstitucionHistorial = viewChild.required<
     TemplateRef<{ $implicit: PractitionerAffiliation }>
   >('celdaInstitucionHistorial');
+  private readonly celdaEstadoHistorial = viewChild.required<
+    TemplateRef<{ $implicit: PractitionerAffiliation }>
+  >('celdaEstadoHistorial');
   private readonly celdaPeriodoHistorial =
     viewChild.required<TemplateRef<{ $implicit: PractitionerAffiliation }>>(
       'celdaPeriodoHistorial',
@@ -1619,8 +1641,9 @@ export class WorkHistory implements OnInit {
         priority: 1,
         cell: this.celdaInstitucionHistorial(),
       },
+      { key: 'statusKind', header: 'Estado', priority: 1, cell: this.celdaEstadoHistorial() },
       { key: 'startDate', header: 'Período', priority: 2, cell: this.celdaPeriodoHistorial() },
-      { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesHistorial() },
+      { key: 'acciones', header: 'Acciones', priority: 2, cell: this.celdaAccionesHistorial() },
     ],
   );
 
@@ -1629,19 +1652,19 @@ export class WorkHistory implements OnInit {
   protected readonly nombreAccesibleDeAfiliacion = (afiliacion: PractitionerAffiliation): string =>
     afiliacion.organizationName;
 
-  protected accionesDeAfiliacion(): readonly RowAction[] {
-    return [
-      { code: 'editar', label: 'Editar', icon: 'edit' },
-      { code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true },
-    ];
+  protected accionesDeAfiliacion(afiliacion: PractitionerAffiliation): readonly RowAction[] {
+    const acciones: RowAction[] = [];
+    if (this.puedeCorregirse(afiliacion)) acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    if (this.puedeRetirarse(afiliacion)) acciones.push({ code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true });
+    return acciones;
   }
 
   protected ejecutarAccionDeAfiliacion(code: string, afiliacion: PractitionerAffiliation): void {
-    if (code === 'editar') {
+    if (code === 'editar' && this.puedeCorregirse(afiliacion)) {
       this.abrirEdicionDeAfiliacion(afiliacion);
       return;
     }
-    if (code === 'retirar') {
+    if (code === 'retirar' && this.puedeRetirarse(afiliacion)) {
       void this.retirarVinculo(afiliacion);
     }
   }

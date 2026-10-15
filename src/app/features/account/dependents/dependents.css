@@ -48,6 +48,7 @@
   display: grid;
   gap: var(--sp-1);
   min-width: 0;
+  flex: 1 1 22rem;
 }
 
 .dependents__nombre {

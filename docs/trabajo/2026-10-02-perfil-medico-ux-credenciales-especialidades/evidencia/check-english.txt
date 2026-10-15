@@ -1,0 +1,1 @@
+check-english-identifiers: OK — sin identificadores nuevos en castellano contra "ad5623a749141fed32a566bf9a5fe8a980f3dffc".

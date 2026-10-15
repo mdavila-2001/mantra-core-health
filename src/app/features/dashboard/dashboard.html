@@ -74,10 +74,13 @@
        una sección nueva aparece acá sola, y una que se apaga desaparece de los
        dos lados a la vez. Con el resumen al lado, que el menú no tiene espacio
        para mostrar. -->
+    <!-- Sin caja alrededor (`panel__sin-caja`): las zonas de adentro SON las
+         tarjetas, y un recuadro alrededor de recuadros era «caja dentro de
+         caja». El título y la nota quedan sobre la página. -->
     <app-card
-      variant="outlined"
-      padding="lg"
-      class="panel__bloque--ancho"
+      variant="flat"
+      padding="none"
+      class="panel__bloque--ancho panel__sin-caja"
       data-testid="panel-accesos"
     >
       <h2 class="panel__card-title">Sus herramientas</h2>

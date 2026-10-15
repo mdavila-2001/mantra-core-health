@@ -55,7 +55,9 @@ export function pharmaciesSites(farmacias: readonly PharmacyDetail[]): readonly 
 
 /**
  * La sede con la que abre el tablero: la casa matriz; si no hay marcada, la
- * única sede; si hay varias sin matriz, la de código más bajo.
+ * única sede; si hay varias sin matriz, **todas** (`id: null`): el mostrador
+ * de una cadena que no marcó su casa matriz no debe abrir mirando una sola
+ * sucursal y esconder los pedidos de las demás.
  */
 export function siteByDefault(sedes: readonly InboxSite[]): SiteByDefault {
   const matriz = sedes.find((sede) => sede.esMatriz);
@@ -68,7 +70,7 @@ export function siteByDefault(sedes: readonly InboxSite[]): SiteByDefault {
   if (primera === undefined) {
     return { id: null, sinMatrizMarcada: false };
   }
-  return { id: primera.id, sinMatrizMarcada: resto.length > 0 };
+  return { id: resto.length > 0 ? null : primera.id, sinMatrizMarcada: false };
 }
 
 /**

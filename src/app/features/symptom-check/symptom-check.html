@@ -18,7 +18,7 @@
         <svg class="sintomas__icono-ayuda-top" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
         </svg>
-        <span>{{ mostrarCrisis() ? 'Ocultar líneas de contención' : '¿Necesita ayuda o contención?' }}</span>
+        <span>{{ mostrarCrisis() ? 'Ocultar líneas de contención' : '¿Líneas de contención emocional?' }}</span>
       </button>
     </div>
   </div>
@@ -362,12 +362,10 @@
       }
     </div>
   }
-
-  @if (mostrarCrisis() || alarmas().length > 0) {
-    <!-- ─── Derivación a urgencias y crisis (ABAJO, en la zona de resolución) ─── -->
+  @if (mostrarCrisis()) {
+    <!-- ─── Soporte en crisis y líneas de contención (detección o apertura manual) ─── -->
     <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
-      @if (mostrarCrisis()) {
-        <div class="sintomas__crisis-soporte sintomas__crisis-soporte--hd" data-testid="sintomas-crisis-soporte">
+      <div class="sintomas__crisis-soporte sintomas__crisis-soporte--hd" data-testid="sintomas-crisis-soporte">
           <div class="sintomas__crisis-cabecera-hd">
             <div class="sintomas__crisis-badge-hd">
               <span class="sintomas__crisis-pulso-hd" aria-hidden="true"></span>
@@ -499,27 +497,39 @@
             <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
           </div>
         </div>
-      } @else {
-        <!-- Alarma médica general no psiquiátrica -->
-        <app-alert tone="error" title="Esto no puede esperar a un turno">
-          @if (mensajeDeAlarma(); as mensaje) {
-            <p>{{ mensaje }}</p>
-          } @else {
-            <p>
-              Lo que cuenta
-              @if (alarmas().length === 1) {
-                —{{ alarmas()[0].nombre }}—
-              }
-              puede ser una urgencia.
-              <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
-            </p>
-          }
-          <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
-        </app-alert>
-      }
+      </div>
+  } @else if (alarmas().length > 0) {
+    <!-- Alarma médica general no psiquiátrica -->
+    <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
+      <app-alert tone="error" title="Esto no puede esperar a un turno">
+        @if (respuestaDelServicio(); as respuesta) {
+          <p class="sintomas__respuesta-ia" data-testid="sintomas-respuesta-ia">{{ respuesta }}</p>
+        } @else if (mensajeDeAlarma(); as mensaje) {
+          <p>{{ mensaje }}</p>
+        } @else {
+          <p>
+            Lo que cuenta
+            @if (alarmas().length === 1) {
+              —{{ alarmas()[0].nombre }}—
+            }
+            puede ser una urgencia.
+            <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
+          </p>
+        }
+        <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
+      </app-alert>
     </div>
-  } @else if (recomendaciones().length > 0) {
+  }
+
+  @if (alarmas().length === 0) {
+    @if (recomendaciones().length > 0) {
       <div class="sintomas__recomendaciones">
+        @if (respuestaEmpatica(); as respuesta) {
+          <section class="sintomas__respuesta-ia" role="status" data-testid="sintomas-respuesta-ia">
+            <span class="sintomas__respuesta-ia-rotulo">Una respuesta para usted</span>
+            <p>{{ respuesta }}</p>
+          </section>
+        }
         @if (sintomas().length === 0) {
           <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
                y la pista para que pruebe de nuevo si quiere. -->
@@ -820,6 +830,7 @@
         }
       </p>
     }
+  }
 
   <!-- ─── Guardar la observación (propietario, 2026-10-08) ─────────────────
        Queda en el dispositivo y viaja como motivo de consulta al pedir turno:

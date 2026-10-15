@@ -17,7 +17,7 @@
        el fondo se insinúa y el contraste sigue siendo el de los tokens— y
        vidrio real donde exista `backdrop-filter`. */
     padding: var(--sp-6);
-    border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+    border: 1px solid var(--material-trazo);
     border-radius: var(--r-2xl);
     background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
     backdrop-filter: blur(22px) saturate(1.35);
@@ -84,25 +84,25 @@
     align-items: flex-start;
     gap: var(--sp-2);
     padding: var(--sp-5);
-    border: 1px solid var(--border-default);
+    /* Superficie tonal SIN borde: el panel ya es la única caja con trazo; las
+       opciones se leen por tono y no por línea (nada de caja dentro de caja). */
+    border: 0;
     border-radius: var(--r-xl);
-    background: var(--bg-surface);
+    background: var(--bg-surface-alt);
     text-decoration: none;
     /* La tarjeta entera es el destino táctil: en un teléfono, apuntar sólo al
        título deja la mitad del área muerta y se siente rota. */
     cursor: pointer;
-    /* El resorte del sistema al levantar, la curva corta al hundir: una
-       tarjeta que sube con rebote y baja en seco es exactamente cómo se siente
-       un control con masa. Que la salida y la entrada usen curvas distintas es
-       la mitad de lo que hace «nativo» a un hover. */
+    /* Sube con el muelle `suave` y se hunde con el `rápido`: una tarjeta con
+       masa. El tono cambia al instante (respuesta < 100 ms). */
     transition:
-        border-color var(--dur-base) var(--ease-out),
+        background-color var(--dur-fast) var(--ease-standard),
         box-shadow var(--dur-base) var(--ease-out),
-        transform var(--dur-base) var(--ease-spring);
+        transform var(--spring-suave-dur) var(--spring-suave);
 }
 
 .tipos__card:hover {
-    border-color: var(--brand-primary);
+    background: color-mix(in srgb, var(--brand-primary) 9%, var(--bg-surface-alt));
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
 }
@@ -111,9 +111,33 @@
    ruta carga y no acusa recibo del toque, que es cuando la gente vuelve a
    tocar pensando que no funcionó. */
 .tipos__card:active {
-    transform: scale(0.985);
-    transition-duration: var(--dur-fast);
-    transition-timing-function: var(--ease-standard);
+    transform: scale(0.98);
+    box-shadow: none;
+    transition-duration: var(--dur-fast), var(--dur-fast), var(--spring-rapido-dur);
+    transition-timing-function: var(--ease-standard), var(--ease-standard), var(--spring-rapido);
+}
+
+/* Sin borde, lo que dice «esto se pulsa» es la flecha: un chevron dibujado con
+   dos bordes, abajo a la derecha, que avanza un poco al apuntar. */
+.tipos__card {
+    position: relative;
+}
+
+.tipos__card::after {
+    content: '';
+    position: absolute;
+    inset-block-end: var(--sp-5);
+    inset-inline-end: var(--sp-5);
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-block-start: 2px solid var(--brand-primary);
+    border-inline-end: 2px solid var(--brand-primary);
+    transform: rotate(45deg);
+    transition: translate var(--spring-rapido-dur) var(--spring-rapido);
+}
+
+.tipos__card:hover::after {
+    translate: 3px -3px;
 }
 
 .tipos__card:focus-visible {
@@ -141,9 +165,9 @@
     height: 48px;
     margin-block-end: var(--sp-2);
     border-radius: var(--r-lg);
-    background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+    background: var(--bg-surface);
     color: var(--brand-primary);
-    transition: background var(--dur-base) var(--ease-out);
+    transition: background-color var(--dur-fast) var(--ease-standard);
 }
 
 .tipos__icon app-account-icon {
@@ -152,14 +176,14 @@
 }
 
 .tipos__card:hover .tipos__icon {
-    background: color-mix(in srgb, var(--brand-primary) 18%, transparent);
+    background: color-mix(in srgb, var(--brand-primary) 14%, var(--bg-surface));
 }
 
 /* La entrada de las tres, escalonada y con el mismo asentarse que la tarjeta
    del acceso: la pantalla se lee de izquierda a derecha en vez de aparecer
    entera. Nacen un punto por debajo de su tamaño, no desde un borde. */
 .tipos__item {
-    animation: tipos-asienta var(--dur-slow) var(--ease-spring) both;
+    animation: tipos-asienta var(--spring-suave-dur) var(--spring-suave) both;
 }
 
 /* `--stage-content-delay` lo publica `app-auth-split` en `scene="stage"`: la
@@ -195,6 +219,8 @@
 }
 
 .tipos__card-detail {
+    /* Deja libre el rincón de la flecha (abajo a la derecha). */
+    padding-inline-end: var(--sp-6);
     font-family: var(--font-body);
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);

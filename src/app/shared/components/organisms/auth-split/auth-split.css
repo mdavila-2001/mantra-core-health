@@ -640,10 +640,15 @@
     animation: auth-entra var(--dur-slow) var(--ease-out) 140ms both;
   }
 
-  /* La única columna que scrollea. */
+  /* La única columna que scrollea. Solo en vertical: con `overflow-y: auto` a
+     secas el eje X pasa a `auto` también (una propiedad que no es `visible`
+     arrastra a la otra), y el resplandor de la tarjeta en `scene="stage"`
+     —que sobresale `22 %` por cada lado— le armaba una barra horizontal al
+     panel. Es un degradado difuso: recortarlo en el borde no se nota. */
   .auth-split__panel {
     padding: var(--sp-6);
     min-height: 0;
+    overflow-x: hidden;
     overflow-y: auto;
   }
 

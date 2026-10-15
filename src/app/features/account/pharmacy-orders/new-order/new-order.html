@@ -205,6 +205,8 @@
                   <span class="confirmacion__secundario">
                     @if (sampleData) {
                       Recetado: hasta {{ renglon.cantidadRecetada }}
+                    } @else if (sinReceta) {
+                      Hasta {{ renglon.cantidadRecetada }} unidades por producto
                     } @else {
                       Hasta {{ renglon.cantidadRecetada }}: la receta no declara cantidades
                     }

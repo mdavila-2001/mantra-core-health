@@ -35,14 +35,15 @@
   justify-content: center;
   inline-size: 100%;
   padding: var(--sp-5) var(--sp-4) var(--sp-6);
-  border: 1px solid var(--border-subtle);
+  /* Superficie tonal sin trazo ni sombra: va dentro de una tarjeta, y una caja
+     con borde dentro de otra caja con borde era «caja dentro de caja». */
+  border: 0;
   border-radius: var(--r-xl);
   background: radial-gradient(
     ellipse 70% 60% at 50% 42%,
     var(--bg-surface) 0%,
     var(--bg-surface-alt) 100%
   );
-  box-shadow: var(--shadow-sm);
 }
 
 /* La sombra de piso: una elipse difusa bajo los pies. En la cara no va (es un

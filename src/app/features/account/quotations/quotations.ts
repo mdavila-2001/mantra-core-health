@@ -11,7 +11,7 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, map, of, startWith, switchMap, type Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
@@ -130,6 +130,7 @@ export class Quotations {
   private readonly cart = inject(CartStore);
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly cartPath = PHARMACY_CART_ROUTE;
   protected readonly centerTables: readonly string[] = [DIAGNOSIS_CENTER_TABLE];
@@ -169,8 +170,15 @@ export class Quotations {
    */
   readonly fixedVertical = input<Exclude<VerticalQuotation, 'TODAS'> | null>(null);
 
-  protected readonly term = signal('');
-  protected readonly vertical = signal<VerticalQuotation>(this.fixedVertical() ?? 'TODAS');
+  /**
+   * `?q=` y `?vertical=` dejan la búsqueda armada: es como «Mis órdenes» manda a
+   * comparar precio y distancia del estudio pedido sin que la persona lo
+   * vuelva a escribir.
+   */
+  protected readonly term = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
+  protected readonly vertical = signal<VerticalQuotation>(
+    this.fixedVertical() ?? verticalDeLaUrl(this.route.snapshot.queryParamMap.get('vertical')),
+  );
   protected readonly order = signal<QuotationOrder>('PRECIO');
   protected readonly origin = signal<SearchOrigin | null>(null);
   protected readonly page = signal(1);
@@ -442,4 +450,14 @@ export class Quotations {
   protected retry(): void {
     this.attempt.update((n) => n + 1);
   }
+}
+
+/** La vertical que viaja en la URL, o «Todas» si falta o no es una conocida. */
+function verticalDeLaUrl(valor: string | null): VerticalQuotation {
+  return valor === 'MEDICAMENTOS' ||
+    valor === 'ANALISIS' ||
+    valor === 'IMAGENOLOGIA' ||
+    valor === 'SERVICIOS_MEDICOS'
+    ? valor
+    : 'TODAS';
 }

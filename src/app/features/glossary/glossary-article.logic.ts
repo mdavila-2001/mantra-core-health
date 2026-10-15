@@ -120,7 +120,7 @@ export function imagenesVisibles(
 }
 
 /** Carpeta pública de las ilustraciones originales de AloVida (`public/glossary-images/`). */
-const CARPETA_DE_IMAGENES_PROPIAS = '/glossary-images/';
+export const CARPETA_DE_IMAGENES_PROPIAS = '/glossary-images/';
 
 /** Ruta de un archivo de la carpeta propia: absoluta, sin `..` ni protocolo, y con extensión de imagen. */
 const RUTA_PROPIA = /^\/glossary-images\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:svg|webp|png)$/;

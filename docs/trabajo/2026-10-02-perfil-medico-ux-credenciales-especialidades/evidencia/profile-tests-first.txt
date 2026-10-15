@@ -1,0 +1,177 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  611 componentes · 3 otros · 361 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos
+  208 con algo que mirar
+  relaciones: 2718 template-instantiates · 5 imports-available sin instanciar · 68 type-only · 233 dynamic-loads
+  nivel: 0 declarado · 611 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 611/611 · con escenario 3/611 · verificados visualmente 3/611 · bloqueados 81/611 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                                                                                                | Names                                                                                                                           |  Raw size
+spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js                                        | spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit                                        | 458.49 kB |
+chunk-EXQ5CZTE.js                                                                                                                  | -                                                                                                                               | 322.98 kB |
+chunk-EIA4GHXB.js                                                                                                                  | -                                                                                                                               | 232.82 kB |
+chunk-BISJKUFB.js                                                                                                                  | -                                                                                                                               | 213.73 kB |
+chunk-BH4VFUZ6.js                                                                                                                  | -                                                                                                                               | 176.53 kB |
+chunk-KY5EQ4ZO.js                                                                                                                  | -                                                                                                                               | 169.39 kB |
+styles.css                                                                                                                         | styles                                                                                                                          | 166.42 kB |
+chunk-ZQFTF6PH.js                                                                                                                  | -                                                                                                                               | 152.94 kB |
+chunk-7TVLSMOA.js                                                                                                                  | -                                                                                                                               | 152.58 kB |
+chunk-OAI752UA.js                                                                                                                  | -                                                                                                                               |  97.89 kB |
+chunk-FLKI6VBN.js                                                                                                                  | -                                                                                                                               |  85.33 kB |
+spec-app-features-account-my-profile-work-history-work-history.js                                                                  | spec-app-features-account-my-profile-work-history-work-history                                                                  |  82.01 kB |
+chunk-TY6ERYOC.js                                                                                                                  | -                                                                                                                               |  81.43 kB |
+chunk-EI5KTBQW.js                                                                                                                  | -                                                                                                                               |  77.86 kB |
+spec-app-features-account-my-profile-medical-articles-medical-articles.js                                                          | spec-app-features-account-my-profile-medical-articles-medical-articles                                                          |  74.68 kB |
+chunk-P6G26EOW.js                                                                                                                  | -                                                                                                                               |  65.76 kB |
+chunk-T7H5IVEV.js                                                                                                                  | -                                                                                                                               |  64.91 kB |
+chunk-CITM3YJS.js                                                                                                                  | -                                                                                                                               |  56.54 kB |
+chunk-NVQ7XHYE.js                                                                                                                  | -                                                                                                                               |  55.30 kB |
+chunk-6VKIIQN7.js                                                                                                                  | -                                                                                                                               |  55.16 kB |
+chunk-VVCRDDIG.js                                                                                                                  | -                                                                                                                               |  53.04 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view.js                   | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view                   |  49.96 kB |
+chunk-3RRF5FYF.js                                                                                                                  | -                                                                                                                               |  47.84 kB |
+chunk-OUCLT3QE.js                                                                                                                  | -                                                                                                                               |  46.69 kB |
+chunk-TTFC2FT2.js                                                                                                                  | -                                                                                                                               |  35.07 kB |
+chunk-KAEWIBJH.js                                                                                                                  | -                                                                                                                               |  34.97 kB |
+spec-app-features-account-my-profile-my-profile.js                                                                                 | spec-app-features-account-my-profile-my-profile                                                                                 |  33.78 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile.js                                                  | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile                                                  |  33.54 kB |
+chunk-DSIVYIWM.js                                                                                                                  | -                                                                                                                               |  30.84 kB |
+chunk-SVK5GHXM.js                                                                                                                  | -                                                                                                                               |  30.61 kB |
+spec-app-features-account-my-profile-patient-profile-edit-patient-profile-edit.js                                                  | spec-app-features-account-my-profile-patient-profile-edit-patient-profile-edit                                                  |  30.60 kB |
+chunk-DRAC3PDD.js                                                                                                                  | -                                                                                                                               |  28.03 kB |
+chunk-4WMVPRM2.js                                                                                                                  | -                                                                                                                               |  26.66 kB |
+chunk-OQM2F5QN.js                                                                                                                  | -                                                                                                                               |  25.89 kB |
+chunk-TMH2PNCD.js                                                                                                                  | -                                                                                                                               |  23.59 kB |
+chunk-6WN5AFPU.js                                                                                                                  | -                                                                                                                               |  19.84 kB |
+chunk-7VPSRZCJ.js                                                                                                                  | -                                                                                                                               |  19.24 kB |
+chunk-SVFPQOSF.js                                                                                                                  | -                                                                                                                               |  18.52 kB |
+chunk-7JQWPMDG.js                                                                                                                  | -                                                                                                                               |  17.68 kB |
+chunk-CNGZNIEA.js                                                                                                                  | -                                                                                                                               |  16.74 kB |
+chunk-QEUXT6IT.js                                                                                                                  | -                                                                                                                               |  16.14 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel.js         | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel         |  15.79 kB |
+chunk-BVN2A3DI.js                                                                                                                  | -                                                                                                                               |  15.70 kB |
+chunk-XBI35YVQ.js                                                                                                                  | -                                                                                                                               |  14.72 kB |
+chunk-TRN3WSKR.js                                                                                                                  | -                                                                                                                               |  12.45 kB |
+spec-app-features-account-my-profile-insurance-portability-card-portability-export-dialog-portability-export-dialog.js             | spec-app-features-account-my-profile-insurance-portability-card-portability-export-dialog-portability-export-dialog             |  11.87 kB |
+spec-app-features-account-my-profile-medical-articles-article-composer-article-composer.js                                         | spec-app-features-account-my-profile-medical-articles-article-composer-article-composer                                         |  11.60 kB |
+chunk-SBZYHYIB.js                                                                                                                  | -                                                                                                                               |  11.26 kB |
+chunk-2K37GGXZ.js                                                                                                                  | -                                                                                                                               |   9.14 kB |
+chunk-IA2NEF4C.js                                                                                                                  | -                                                                                                                               |   9.12 kB |
+chunk-HC22KH4G.js                                                                                                                  | -                                                                                                                               |   8.87 kB |
+chunk-MSOW33KK.js                                                                                                                  | -                                                                                                                               |   8.68 kB |
+chunk-LXFIJTIW.js                                                                                                                  | -                                                                                                                               |   8.16 kB |
+chunk-BS6JHK4D.js                                                                                                                  | -                                                                                                                               |   7.51 kB |
+spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.logic.js                                  | spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.logic                                  |   7.37 kB |
+spec-app-features-account-my-profile-work-history-site-bank-qr-dialog-site-bank-qr-dialog.js                                       | spec-app-features-account-my-profile-work-history-site-bank-qr-dialog-site-bank-qr-dialog                                       |   7.08 kB |
+chunk-6XZ7MQDS.js                                                                                                                  | -                                                                                                                               |   7.01 kB |
+chunk-7ER3R3A2.js                                                                                                                  | -                                                                                                                               |   6.39 kB |
+spec-app-features-account-my-profile-insurance-portability-card-insurance-portability-card.js                                      | spec-app-features-account-my-profile-insurance-portability-card-insurance-portability-card                                      |   6.04 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart.js               | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart               |   5.61 kB |
+chunk-HZXEPMDQ.js                                                                                                                  | -                                                                                                                               |   5.27 kB |
+chunk-DQ64ZSPL.js                                                                                                                  | -                                                                                                                               |   5.27 kB |
+chunk-O7L5N2NL.js                                                                                                                  | -                                                                                                                               |   5.20 kB |
+spec-app-features-account-my-profile-pestanas-del-perfil-medico.js                                                                 | spec-app-features-account-my-profile-pestanas-del-perfil-medico                                                                 |   5.17 kB |
+spec-app-features-account-my-profile-my-profile.verificacion-ofrecida.js                                                           | spec-app-features-account-my-profile-my-profile.verificacion-ofrecida                                                           |   5.02 kB |
+spec-app-features-account-my-profile-practitioner-profile-edit-estado-de-imagen.js                                                 | spec-app-features-account-my-profile-practitioner-profile-edit-estado-de-imagen                                                 |   4.14 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity.js | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity |   4.12 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map.js       | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map       |   3.86 kB |
+chunk-JJOXPN2S.js                                                                                                                  | -                                                                                                                               |   3.53 kB |
+chunk-BHGYPEXO.js                                                                                                                  | -                                                                                                                               |   2.85 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators.js       | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators       |   2.75 kB |
+chunk-UOOV77LO.js                                                                                                                  | -                                                                                                                               |   1.56 kB |
+chunk-PO5ZOFJ3.js                                                                                                                  | -                                                                                                                               |   1.27 kB |
+init-testbed.js                                                                                                                    | init-testbed                                                                                                                    |   1.21 kB |
+vitest-mock-patch.js                                                                                                               | vitest-mock-patch                                                                                                               | 974 bytes |
+setup-test-setup.js                                                                                                                | setup-test-setup                                                                                                                | 911 bytes |
+chunk-4SD4475N.js                                                                                                                  | -                                                                                                                               | 742 bytes |
+chunk-7MJHCKUZ.js                                                                                                                  | -                                                                                                                               | 633 bytes |
+chunk-MC42X2SK.js                                                                                                                  | -                                                                                                                               | 552 bytes |
+chunk-RZMBRUBG.js                                                                                                                  | -                                                                                                                               | 369 bytes |
+
+                                                                                                                                   | Initial total                                                                                                                   |   3.72 MB
+
+Lazy chunk files                                                                                                                   | Names                                                                                                                           |  Raw size
+chunk-O6FAHW53.js                                                                                                                  | selector-emojis                                                                                                                 | 177.39 kB |
+chunk-X4EJCEPU.js                                                                                                                  | bolivia-municipalities-geometry                                                                                                 | 107.84 kB |
+chunk-FSS53BDX.js                                                                                                                  | location-picker                                                                                                                 | 308 bytes |
+chunk-M5M52FSB.js                                                                                                                  | map                                                                                                                             | 254 bytes |
+chunk-OOLHGJ74.js                                                                                                                  | pestanas-del-perfil                                                                                                             | 228 bytes |
+
+Application bundle generation complete. [73.513 seconds] - 2026-10-02T18:54:28.769Z
+
+corepack.cmd : ▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+En línea: 2 Carácter: 1
++ corepack.cmd yarn test --include="src/app/features/account/my-profile ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 C:/Alovida/mantra-core-health
+
+(node:14092) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14092) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14092) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14092) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+
+ Test Files  20 passed (20)
+      Tests  691 passed (691)
+   Start at  14:54:31
+   Duration  18.71s (transform 4.40s, setup 2.01s, import 6.66s, tests 24.66s, environment 193.27s)
+

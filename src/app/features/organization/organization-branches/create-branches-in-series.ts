@@ -2,10 +2,8 @@ import { catchError, concatMap, from, map, of, toArray, type Observable } from '
 
 import type { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import {
-  BRANCH_SIMULATOR_EXTENSIONS,
   type NewBranch,
 } from '../../../core/data-access/directory/directory.types';
-import { droppedSimulatorExtensions } from '../../../core/data-access/simulator-only';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import {
   branchCodeFromName,
@@ -57,11 +55,8 @@ export function createBranchesInSeries(
     taken.add(code);
     return { name: draft.name, branch: newBranchFrom(draft, code) };
   });
-  const unsaved = new Set(
-    requests.flatMap(({ branch }) =>
-      droppedSimulatorExtensions(branch, BRANCH_SIMULATOR_EXTENSIONS),
-    ),
-  );
+  // Desde el 11/10/2026 la API guarda descripción y enlace (P54): nada se descarta.
+  const unsaved = new Set<string>();
   return from(requests).pipe(
     concatMap(({ name, branch }) =>
       directory.createBranch(tenantId, branch).pipe(

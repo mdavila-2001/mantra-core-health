@@ -397,16 +397,13 @@ export interface PractitionerRegistration {
   readonly sexAtBirth?: BirthSexCode;
   /** Foto de perfil en formato Base64 (Data URI o base64 plano). */
   readonly profilePhotoBase64?: string;
-  /**
-   * La **imagen** de la firma manuscrita, en base64 (Data URI). Opcional.
-   *
-   * **Sólo simulador**: el DTO real no la declara ni el backend tiene dónde
-   * guardarla (ver `docs/pendientes-backend-perfil-profesional.md`). No es una
-   * firma electrónica.
-   */
+  /** Imagen de firma para el simulador; la API real usa signatureFileId. No es firma electrónica. */
   readonly signatureImageBase64?: string;
-  /** La **imagen** del sello médico, en base64. Mismas reservas que la firma. */
+  /** Imagen del sello para el simulador; la API real usa sealFileId. */
   readonly sealImageBase64?: string;
+  /** Firma y sello precargados para el registro contra API real. */
+  readonly signatureFileId?: string;
+  readonly sealFileId?: string;
   /** Ocupación del catálogo (VS_BO_OCCUPATION). */
   readonly occupationConceptId?: string;
   /** Ocupación en texto libre, para cuando no está en el catálogo. */

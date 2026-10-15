@@ -39,13 +39,17 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
-import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
+import {
+  coordinatesFromMapUrl,
+  type BranchDraft,
+} from '../../../shared/utils/branch-import/branch-import';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
   RegistrationHelp,
   type HelpCard,
 } from '../../../shared/components/organisms/registration-help/registration-help';
+import { AYUDA } from './register-pharmacy.help';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
@@ -138,99 +142,6 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * `RegisterLaboratory` —el molde— también usa controles planos para sus tres
  * gerencias.
  */
-
-/** Por qué se pide cada cosa, por sección — mismo mecanismo que el molde, texto propio de farmacia. */
-const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
-  empresa: [
-    {
-      icono: 'building',
-      titulo: 'La empresa, no el local',
-      texto:
-        'Acá va la razón social con la que su farmacia está inscrita. Los locales donde atiende se cargan más adelante, cada uno con su punto en el mapa.',
-    },
-    {
-      icono: 'labels',
-      titulo: 'El tipo se elige de la lista',
-      texto:
-        'La plataforma necesita poder contar cuántas farmacias tiene de cada tipo societario, y eso sólo funciona si todas eligen de la misma lista.',
-    },
-  ],
-  documentos: [
-    {
-      icono: 'folder',
-      titulo: 'Ningún papel frena su alta',
-      texto:
-        'Puede adjuntarlos ahora o más adelante desde la Ficha de su farmacia. Sí van a hacer falta para que su farmacia quede habilitada a operar.',
-    },
-    {
-      icono: 'shield',
-      titulo: 'Quién los ve',
-      texto:
-        'Los mira el equipo que aprueba el alta. No se publican en su ficha ni los ve un paciente.',
-    },
-  ],
-  ubicacion: [
-    {
-      icono: 'pin',
-      titulo: 'El punto es lo que le hace aparecer',
-      texto:
-        'Cuando un paciente busca dónde comprar su receta, la app ordena por cercanía. Sin el punto en el mapa su farmacia queda fuera de esa lista, aunque la dirección esté escrita.',
-    },
-  ],
-  sucursales: [
-    {
-      icono: 'hospital',
-      titulo: 'Una fila por local',
-      texto:
-        'Cada sucursal se ubica sola en el mapa: un paciente del sur no tiene por qué cruzar la ciudad porque la central esté en el norte.',
-    },
-  ],
-  representante: [
-    {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
-      texto:
-        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
-    },
-    {
-      icono: 'folder',
-      titulo: 'El poder va con quien lo firma',
-      texto:
-        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
-    },
-  ],
-  'gerencia-general': [
-    {
-      icono: 'briefcase',
-      titulo: 'Los cargos son opcionales',
-      texto:
-        'Ninguno de los tres frena el alta. Se piden para saber a quién escribirle según el asunto, y no todo al mismo correo.',
-    },
-  ],
-  'gerencia-comercial': [
-    {
-      icono: 'chart',
-      titulo: 'A quién le llega el resumen de ventas',
-      texto:
-        'Si lo deja vacío, el resumen de pedidos y ventas va al correo del representante legal.',
-    },
-  ],
-  'gerencia-marketing': [
-    {
-      icono: 'megaphone',
-      titulo: 'Promociones y campañas',
-      texto:
-        'Las promociones de su farmacia se coordinan con esta persona. Se puede cargar después.',
-    },
-  ],
-  acceso: [
-    {
-      icono: 'lock',
-      titulo: 'Una clave nueva, no la del correo',
-      texto: 'Al menos ocho caracteres. Se puede cambiar después desde el perfil.',
-    },
-  ],
-};
 
 /**
  * **Registro público de una farmacia** (Módulo Farmacia §1 del registro de
@@ -749,7 +660,16 @@ export class RegisterPharmacy {
   }
 
   escribirUrlDeSucursal(id: string, url: string | number | null): void {
-    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+    const enlace = url === null ? '' : String(url).trim();
+    // Pegar el enlace es una de las dos maneras de ubicar la sucursal: si trae el
+    // punto escrito, es el punto (y el pin lo muestra); si ya había uno marcado
+    // a mano, ése se respeta.
+    const punto = enlace === '' ? null : coordinatesFromMapUrl(enlace);
+    const yaUbicada = (this.sucursales().find((sucursal) => sucursal.id === id)?.gps ?? null) !== null;
+    this.actualizarSucursal(id, {
+      urlUbicacion: enlace,
+      ...(punto === null || yaUbicada ? {} : { gps: { lat: punto.latitude, lng: punto.longitude } }),
+    });
   }
 
   /* --- carga en lote ------------------------------------------------------ */
@@ -786,6 +706,39 @@ export class RegisterPharmacy {
     });
     this.sucursales.update((lista) => [...lista, ...nuevas]);
   }
+
+  /**
+   * Las sucursales que no se podrían registrar: sin punto en el mapa o sin
+   * nombre. La API exige las dos cosas, y antes se descartaban EN SILENCIO al
+   * enviar —una sucursal del CSV sin punto desaparecía del alta sin avisar—.
+   * Ahora se dicen por su nombre y el envío espera a que se completen o se quiten.
+   */
+  readonly sucursalesIncompletas = computed(() =>
+    this.sucursales().flatMap((sucursal, indice) => {
+      const faltaNombre = sucursal.nombre.trim() === '';
+      const faltaPunto = sucursal.gps === null;
+      return faltaNombre || faltaPunto
+        ? [
+            {
+              id: sucursal.id,
+              rotulo: faltaNombre ? `Sucursal ${indice + 1} (sin nombre)` : sucursal.nombre.trim(),
+              faltaNombre,
+              faltaPunto,
+            },
+          ]
+        : [];
+    }),
+  );
+
+  /** El aviso para el banner y para el envío: cuáles y qué les falta. */
+  readonly avisoDeSucursalesIncompletas = computed<string | null>(() => {
+    const lista = this.sucursalesIncompletas();
+    if (lista.length === 0) return null;
+    const nombres = lista.map((s) => `«${s.rotulo}»`).join(', ');
+    return lista.length === 1
+      ? `Una sucursal no se puede registrar todavía: ${nombres}. Márquela en el mapa, pegue el enlace de su ubicación (o complete el nombre), o quítela.`
+      : `${lista.length} sucursales no se pueden registrar todavía: ${nombres}. Márquelas en el mapa, pegue el enlace de su ubicación (o complete el nombre), o quítelas.`;
+  });
 
   fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
     this.actualizarSucursal(id, { gps });
@@ -834,6 +787,12 @@ export class RegisterPharmacy {
     if (this.isSubmitting()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const aviso = this.avisoDeSucursalesIncompletas();
+    if (aviso !== null) {
+      this.state.set(validation([{ field: 'sucursales', message: aviso }]));
       return;
     }
 

@@ -41,6 +41,7 @@ export const CREDENTIAL_GROUP_LABELS: Readonly<Record<CredentialKind, string>> =
  */
 export interface CredencialEnTarjeta {
   readonly id: string;
+  readonly fileId?: string;
   readonly clase: CredentialKind;
   /** El nombre propio: «Santa Cruz», «Cardiología», «Medicina», «Quechua». */
   readonly titulo: string;
@@ -48,9 +49,9 @@ export interface CredencialEnTarjeta {
   readonly detalles: readonly string[];
   /** El sello del trámite, o `null` cuando la clase no tramita nada. */
   readonly sello: { readonly variant: StatusSealVariant; readonly label: string } | null;
-  /** Contra qué se comprobó. Sólo lo tiene lo verificado. */
+  /** Fuente de la revisión, tanto si se aprobó como si se rechazó. */
   readonly fuente: string | null;
-  /** Si pasó por una verificación contra una fuente. Decide el filtro. */
+  /** Si la revisión fue aprobatoria. Decide el filtro sin inferir vigencia. */
   readonly verificada: boolean;
 }
 

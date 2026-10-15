@@ -1,13 +1,16 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
+import { getDebugNode, type WritableSignal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { CODIGO_OCUPACION_OTRA } from '../../../../core/data-access/terminology/bo-occupations.service';
 import { PatientProfileEdit } from './patient-profile-edit';
+import type { Select } from '../../../../shared/components/atoms/select/select';
+import { selectOptionLabels } from '../../../../../testing/select';
 import { MapLocationPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 
 /**
@@ -74,7 +77,7 @@ const MUNICIPIOS = [
   },
 ];
 
-/** Dos ocupaciones del catálogo `VS_BO_OCCUPATION`, con sus conceptos reales. */
+/** Ocupaciones del catálogo `VS_BO_OCCUPATION`, incluida su salida a texto libre. */
 const OCUPACIONES = [
   {
     conceptId: 'oc-docente',
@@ -86,6 +89,12 @@ const OCUPACIONES = [
     conceptId: 'oc-albanil',
     code: 'occupation:BUILDER',
     display: 'Albañil',
+    codeSystemVersionId: 'csv-1',
+  },
+  {
+    conceptId: 'oc-otra',
+    code: CODIGO_OCUPACION_OTRA,
+    display: 'Otra ocupación',
     codeSystemVersionId: 'csv-1',
   },
 ];
@@ -231,17 +240,27 @@ describe('PatientProfileEdit', () => {
     return 0;
   }
 
-  /** El `<select>` real de un campo, que vive dentro del átomo. */
-  function desplegable(testId: string): HTMLSelectElement | null {
+  /** El `app-select` de un campo, en su pestaña. */
+  function desplegable(testId: string): HTMLElement | null {
     abrirPestana(pestanaDe(testId));
-    return (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
-      `[data-testid="${testId}"] select`,
+    const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      `[data-testid="${testId}"]`,
     );
+    return campo?.matches('app-select') ? campo : (campo?.querySelector('app-select') ?? null);
   }
 
-  /** Las etiquetas que ofrece un desplegable, marcador incluido. */
-  function opcionesDe(testId: string): readonly string[] {
-    return [...(desplegable(testId)?.options ?? [])].map((opcion) => opcion.text.trim());
+  /**
+   * Las etiquetas que ofrece un desplegable, marcador incluido. El marcador ya
+   * no es una fila de la lista: es lo que el campo muestra sin elección, y sale
+   * de su `placeholder`.
+   */
+  async function opcionesDe(testId: string): Promise<readonly string[]> {
+    const host = desplegable(testId);
+    if (host === null) {
+      return [];
+    }
+    const marcador = (getDebugNode(host)?.componentInstance as Select<unknown>).placeholder();
+    return [marcador, ...(await selectOptionLabels(fixture, host))];
   }
 
   /** El `<input>` real del teléfono, que vive dentro de `app-phone-input`. */
@@ -316,15 +335,7 @@ describe('PatientProfileEdit', () => {
     expect([...pestanas].map((p) => p.textContent?.trim())).not.toContain('Mis puntos');
   });
 
-  /**
-   * Pedido del propietario del 25/09/2026: una cobertura es el resultado de
-   * una integración posterior —la aseguradora la declara, no la persona—, así
-   * que nunca se corrige desde este formulario. No es el caso de «Tutores»,
-   * que sí puede cambiar y por eso sigue siendo una pestaña utilizable. El
-   * mismo día se corrigió: en vez de apagada, «Seguros» se saca de la tira
-   * del editor, igual que «Mis puntos».
-   */
-  it('«Seguros» no está en la tira del editor; «Tutores» sigue abierta', () => {
+  it('«Seguros» y «Tutores» no se editan desde los datos personales', () => {
     montarPintadoYCargado({
       coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
       guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
@@ -337,13 +348,11 @@ describe('PatientProfileEdit', () => {
       'Datos personales',
       'Contacto',
       'Facturación',
-      'Tutores',
     ]);
-    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Alianza Vida Seguros');
-
-    expect(pestanas[3].disabled).toBe(false);
-    abrirPestana(3);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carlos Mamani');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Alianza Vida Seguros',
+    );
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Carlos Mamani');
   });
 
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {
@@ -586,9 +595,9 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
 
       expect(señal<string>('domicilio')()).toBe('');
-      expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent).toContain(
-        'Vuelva a escribir la dirección para este punto',
-      );
+      expect(
+        raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent,
+      ).toContain('Vuelva a escribir la dirección para este punto');
       // El trabajo no se entera: cada mapa vacía sólo su campo.
       expect(señal<string>('direccionTrabajo')()).toBe('Calle Ayacucho 241');
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).toBeNull();
@@ -629,9 +638,7 @@ describe('PatientProfileEdit', () => {
       abrirPestana(pestanaDe('perfil-domicilio'));
       fixture.detectChanges();
 
-      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll(
-        'app-map-location-picker',
-      );
+      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll('app-map-location-picker');
       expect(mapas).toHaveLength(2);
     });
 
@@ -1025,12 +1032,21 @@ describe('PatientProfileEdit', () => {
     expect(filtradas.map((o) => o.label)).toEqual(['Albañil']);
   });
 
+  it('buscar «otro» encuentra la salida transversal con ese mismo rótulo', () => {
+    montarPintadoYCargado();
+
+    señal<string>('busquedaOcupacion').set('otro');
+
+    const filtradas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
+    expect(filtradas.map((o) => o.label)).toEqual(['Otro']);
+  });
+
   /** Sin nada escrito se ofrecen todas: la lupa no esconde el catálogo. */
   it('sin búsqueda ofrece el catálogo entero', () => {
     montarPintadoYCargado();
 
     const todas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
-    expect(todas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
+    expect(todas.map((o) => o.label)).toEqual(['Docente', 'Albañil', 'Otro']);
   });
 
   /**
@@ -1060,18 +1076,16 @@ describe('PatientProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, occupationConceptId: undefined });
   });
 
-  /**
-   * Las altas anteriores al catálogo guardaron texto libre. El desplegable no
-   * puede preseleccionarlo —no es un concepto— y dejarlo mudo haría creer que
-   * la persona nunca declaró su ocupación, así que la ayuda del campo lo dice.
-   */
-  it('la ocupación escrita antes del catálogo se dice en la ayuda del campo', () => {
+  it('una ocupación libre guardada abre «Otro» y permite editar el texto', () => {
     montarPintadoYCargado({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
 
-    expect(señal<string | null>('ocupacionConceptId')()).toBeNull();
-    expect(notaDelCampo('perfil-ocupacion', '.form-field-hint')).toBe(
-      'Registrada como «Panadera». Elija una opción del catálogo para reemplazarla.',
-    );
+    expect(señal<string | null>('ocupacionConceptId')()).toBe('oc-otra');
+    expect(señal<string>('ocupacionTextoLibre')()).toBe('Panadera');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+        '[data-testid="perfil-ocupacion-otra"]',
+      )?.value,
+    ).toBe('Panadera');
   });
 
   /** Y no se manda sola: quien no toca el desplegable conserva su texto libre. */
@@ -1084,6 +1098,43 @@ describe('PatientProfileEdit', () => {
     const req = pedidoDeGuardado();
     expect(req.request.body).toEqual({ name: 'Ana María' });
     req.flush({ ...PERFIL_BASE, name: 'Ana María' });
+  });
+
+  it('elegir «Otro» manda el oficio escrito libremente y quita el concepto anterior', () => {
+    montarYCargar();
+
+    interno<(opcion: { value: string; label: string }) => void>('elegirOcupacion')({
+      value: 'oc-otra',
+      label: 'Otro',
+    });
+    señal<string>('ocupacionTextoLibre').set('Apicultora');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({
+      occupationConceptId: '',
+      occupationFreeText: 'Apicultora',
+    });
+    req.flush({
+      ...PERFIL_BASE,
+      occupationConceptId: undefined,
+      occupationFreeText: 'Apicultora',
+    });
+  });
+
+  it('al cambiar «Otro» por una ocupación catalogada deja de mandar texto libre', () => {
+    montarYCargar({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
+
+    interno<(opcion: { value: string; label: string }) => void>('elegirOcupacion')({
+      value: 'oc-albanil',
+      label: 'Albañil',
+    });
+    expect(señal<string>('ocupacionTextoLibre')()).toBe('');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ occupationConceptId: 'oc-albanil' });
+    req.flush({ ...PERFIL_BASE, occupationConceptId: 'oc-albanil' });
   });
 
   it('si el catálogo de ocupaciones se cae lo dice, y reintentar vuelve a tocar la red', () => {
@@ -1109,7 +1160,7 @@ describe('PatientProfileEdit', () => {
     // Ya no hay `<option>` que contar: la ocupación es una lupa. Lo que importa
     // del reintento es que el catálogo volvió a estar disponible para buscar.
     const recuperadas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
-    expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
+    expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil', 'Otro']);
   });
 
   /* ---- el sexo, con las mismas opciones que el alta ----------------------- */
@@ -1118,10 +1169,10 @@ describe('PatientProfileEdit', () => {
    * Dos opciones, las del alta. Ofrecer más acá dejaría corregir los datos con
    * un valor que el alta no admite, y esa diferencia no la explica nada.
    */
-  it('el sexo se ofrece con las dos opciones del alta', () => {
+  it('el sexo se ofrece con las dos opciones del alta', async () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
+    expect(await opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
   });
 
   /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */

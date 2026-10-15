@@ -72,9 +72,11 @@
   width: 100%;
   height: 100%;
   padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
+  /* Sobre la bandeja tonal de `dashboard.html` la zona es la superficie clara
+     y sin trazo: se lee por tono. El color de la zona reaparece al apuntar. */
+  border: 1px solid transparent;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
   color: inherit;
   font: inherit;
   text-align: start;
@@ -82,7 +84,7 @@
   /* `translate` y no `transform`: la propiedad individual no pisa nada de lo
      que la animación de entrada haga con el resto de la transformación. */
   transition:
-    translate var(--dur-fast) var(--ease-standard),
+    translate var(--spring-suave-dur) var(--spring-suave),
     border-color var(--dur-fast) var(--ease-standard),
     box-shadow var(--dur-fast) var(--ease-standard),
     background-color var(--dur-fast) var(--ease-standard);

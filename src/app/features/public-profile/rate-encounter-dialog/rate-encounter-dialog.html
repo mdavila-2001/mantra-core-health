@@ -18,7 +18,7 @@
     <form class="calificar" (submit)="$event.preventDefault()">
       <app-form-field
         label="Qué atención está calificando"
-        hint="Sólo aparecen las suyas que ya están cerradas."
+        [hint]="'La opinión se publica solo si esta atención fue con ' + professionalName() + ' y ya terminó.'"
         data-testid="calificar-atencion"
       >
         <app-select

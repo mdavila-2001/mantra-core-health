@@ -1,5 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, getDebugNode } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+
+import type { Select } from '../../../../shared/components/atoms/select/select';
+import { selectHasValue, selectOptionLabels, selectTrigger } from '../../../../../testing/select';
 
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { LocationPicker } from './location-picker';
@@ -62,10 +65,24 @@ describe('LocationPicker', () => {
     fixture.detectChanges();
   }
 
-  function opcionesDeCiudad(): readonly string[] {
-    return [...html.querySelectorAll('option')]
-      .map((opcion) => opcion.textContent?.trim() ?? '')
-      .filter((texto) => texto !== '' && texto !== 'Elija su ciudad o municipio');
+  async function opcionesDeCiudad(): Promise<readonly string[]> {
+    const desplegable = html.querySelector('app-select');
+    if (desplegable === null) {
+      return [];
+    }
+    return (await selectOptionLabels(fixture, desplegable)).filter(
+      (texto) => texto !== '' && texto !== 'Elija su ciudad o municipio',
+    );
+  }
+
+  /**
+   * Las opciones que carga el desplegable aunque esté deshabilitado: así
+   * cerrado no se abre, y su lista sólo existe en las `options` que recibe.
+   */
+  function opcionesCargadasDeCiudad(): readonly string[] {
+    const desplegable = html.querySelector('app-select');
+    const select = desplegable ? (getDebugNode(desplegable)?.componentInstance as Select<string>) : null;
+    return (select?.options() ?? []).map((opcion) => opcion.label);
   }
 
   it('en sólo lectura muestra lo guardado y no deja cambiarlo', () => {
@@ -73,14 +90,15 @@ describe('LocationPicker', () => {
     component.value.set('mun-scz');
     fixture.detectChanges();
 
-    const select = html.querySelector<HTMLSelectElement>('select');
-    expect(select?.disabled).toBe(true);
-    expect(select?.value).not.toBe('');
+    const select = html.querySelector<HTMLElement>('app-select');
+    expect(select).not.toBeNull();
+    expect(selectTrigger(select!).disabled).toBe(true);
+    expect(selectHasValue(select!)).toBe(true);
     expect(html.querySelector('app-department-map')?.hasAttribute('inert')).toBe(true);
 
     pulsarDepartamento('CB');
     expect(component.value()).toBe('mun-scz');
-    expect(opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
+    expect(opcionesCargadasDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
   });
 
   it('mientras no hay departamento no ofrece ciudades: dice qué falta', () => {
@@ -95,12 +113,12 @@ describe('LocationPicker', () => {
    * los municipios del departamento elegido. La alternativa era una lista plana
    * de ~340, donde además siete nombres se repiten entre departamentos.
    */
-  it('el departamento elegido acota el select de ciudad', () => {
+  it('el departamento elegido acota el select de ciudad', async () => {
     pulsarDepartamento('CB');
-    expect(opcionesDeCiudad()).toEqual(['Sacaba', 'Quillacollo']);
+    expect(await opcionesDeCiudad()).toEqual(['Sacaba', 'Quillacollo']);
 
     pulsarDepartamento('SC');
-    expect(opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
+    expect(await opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
   });
 
   /**
@@ -108,7 +126,7 @@ describe('LocationPicker', () => {
    * miente: parece que no se eligió nada cuando hay un municipio de otro
    * departamento a punto de viajar.
    */
-  it('cambiar de departamento suelta el municipio que dejó de pertenecerle', () => {
+  it('cambiar de departamento suelta el municipio que dejó de pertenecerle', async () => {
     pulsarDepartamento('CB');
     component.value.set('mun-sacaba');
     fixture.detectChanges();
@@ -116,7 +134,7 @@ describe('LocationPicker', () => {
     pulsarDepartamento('SC');
 
     expect(component.value()).toBeNull();
-    expect(opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
+    expect(await opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
   });
 
   /**
@@ -124,14 +142,14 @@ describe('LocationPicker', () => {
    * mostrarlo marcado aunque nadie haya vuelto a tocarlo: el municipio manda
    * sobre lo pulsado.
    */
-  it('con municipio elegido, el mapa muestra su departamento marcado', () => {
+  it('con municipio elegido, el mapa muestra su departamento marcado', async () => {
     component.value.set('mun-warnes');
     fixture.detectChanges();
 
     expect(
       html.querySelector('[data-testid="location-mapa-SC"]')?.getAttribute('aria-pressed'),
     ).toBe('true');
-    expect(opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
+    expect(await opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
   });
 
   /** El departamento no viaja: el código INE del municipio ya lo lleva adentro. */
@@ -198,7 +216,7 @@ describe('LocationPicker', () => {
       conGlifo.detectChanges();
 
       const glifo = suHtml.querySelector('[data-testid="glifo"]');
-      const desplegable = suHtml.querySelector('select');
+      const desplegable = suHtml.querySelector('.select-trigger');
 
       expect(glifo).not.toBeNull();
       expect(desplegable?.parentElement?.contains(glifo!)).toBe(true);
@@ -208,7 +226,7 @@ describe('LocationPicker', () => {
     it('sin glifo proyectado el desplegable queda como estaba', () => {
       pulsarDepartamento('CB');
 
-      expect(marcoDelSelect(html)).toEqual(['select.native-select', 'span.select-arrow']);
+      expect(marcoDelSelect(html)).toEqual(['button.select-trigger', 'span.select-arrow']);
     });
   });
 });

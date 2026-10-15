@@ -1,6 +1,6 @@
-/* Las acciones pasan a otra fila en pantallas angostas, sin ocultar controles
+/* Las acciones pasan a otra fila en pantallas de teléfono y tablet, sin ocultar controles
    ni reducir sus areas tactiles cuando aparece la navegacion de retorno. */
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   .app-header {
     height: auto;
     min-height: var(--h-header);
@@ -153,5 +153,76 @@
 
   .app-header__rapidos-lista .app-header__chats-badge {
     margin-inline-start: auto;
+  }
+}
+
+/*
+ * Barra superior translúcida (Carril F · material `fino`), sólo CSS.
+ *
+ * Arriba del todo es la franja de siempre; al desplazar, el contenido pasa por
+ * debajo y la barra se vuelve vidrio: tinte + desenfoque + un solo trazo fino
+ * inferior. El cambio lo conduce el scroll de la página (`animation-timeline:
+ * scroll()`), así que es progresivo —se completa en 48 px— y no hay estado en
+ * TypeScript. Los navegadores sin esa API (Firefox) ven la barra en vidrio
+ * siempre: el mismo material, sin el fundido. Sin `backdrop-filter` o con
+ * `prefers-reduced-transparency` el tinte es el respaldo opaco: el texto nunca
+ * depende del desenfoque.
+ */
+.app-header {
+  background: var(--material-fino-tinte);
+  -webkit-backdrop-filter: var(--material-fino-desenfoque);
+  backdrop-filter: var(--material-fino-desenfoque);
+  border-bottom-color: var(--material-trazo);
+}
+
+@keyframes barra-a-vidrio {
+  from {
+    background: var(--sup-pagina);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+    border-bottom-color: transparent;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .app-header {
+    animation: barra-a-vidrio linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 48px;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-header {
+    background: var(--material-respaldo);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-header {
+    background: var(--material-respaldo);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: none;
+  }
+}
+
+/*
+ * Cabecera de teléfono en UNA fila (Carril F). Entre 360 y 640 px las acciones
+ * caben sin envolver —medido: el último botón termina a 382 px de 390, a 352 de
+ * 360 y a 396 de 412—, y envueltas dejaban al avatar solo en una segunda fila:
+ * 101 px de cabecera contra 61. Debajo de 360 sigue envolviendo, que es lo que
+ * evita el desborde en los teléfonos más angostos.
+ */
+@media (min-width: 360px) and (max-width: 640px) {
+  .app-header {
+    gap: 4px;
+  }
+
+  .app-header__derecha {
+    flex-wrap: nowrap;
+    gap: 2px;
+    /* Sin `overflow: visible`: queda la tira desplazable de arriba como red de
+       seguridad si un rol suma un selector y las acciones no caben. */
   }
 }
