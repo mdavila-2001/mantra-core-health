@@ -33,6 +33,13 @@
 - La ficha `TAREA-37` proponía seis pestañas basadas en los pasos del alta. La inspección de `/my-account` mostró que la base ya tiene una tarjeta con siete pestañas, producto de solicitudes posteriores de facturación, consultorio, trayectoria y actividad. Se conserva el orden actual de `PESTANAS_DEL_PERFIL_MEDICO` para no descartar esas solicitudes.
 - El propietario indicó que en todas las decisiones se elija la opción más recomendada. Para esta discrepancia, la recomendación es preservar las siete pestañas vigentes y actualizar la ficha vieja, no volver a un agrupamiento que oculta secciones.
 - El contrato del alta agrega el teléfono como `PracticeSite.contactPhone`; se incluye en el mapa a «Dónde atiendo» y en la lectura de la sede mediante un enlace `tel:`. No se modifica contrato ni servicio.
+# Decisión de trabajo del carril 38
+
+## 2026-10-15 — Interfaz compartida del alta y edición
+
+- MT-38-02 se interpreta por el resultado observable y no exige un `FormGroup` completo. `practitionerFields()` pagina el alta y describe sus controles; el editor usa PATCH parciales por pestaña, señales tipadas y componentes especializados, y además contiene datos que el alta no pregunta (facturación, ubicación y datos propios de edición). Forzar el grupo paginado al editor duplicaría los campos especiales y podría enviar o restaurar valores fuera de la pestaña activa.
+- La opción recomendada es compartir con `practitionerField()` las definiciones y validadores de los campos comunes, y conservar en el editor sus controles y estado por pestaña. La ficha TAREA-38 se ajustó con esta interpretación. El criterio funcional se mantiene: misma validación para campos compartidos y PATCH limitado a la pestaña editada.
+- La auditoría anterior rechazó el diff bajo el texto literal del `FormGroup`; el diff actual se revisa de nuevo con el criterio corregido. El carril sigue abierto hasta pasar regresión y route-health.
 
 ## 2026-10-15 — Alinear la ficha con C-02 y el estado vigente
 
