@@ -497,6 +497,10 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           if (routeEntry?.accion === 'editar-perfil-consultorio') {
             await activePage.getByRole('tab', { name: 'Dónde atiendo' }).click();
             await expect(activePage.getByTestId('sedes-propias')).toBeVisible();
+            // El bloque se monta al abrir la pestaña y su lectura termina un
+            // poco después. Esperar sólo el contenedor capturaba el vacío
+            // transitorio aunque la cuenta demo ya tuviera sus cuatro sedes.
+            await expect(activePage.getByText('Centro Médico Equipetrol')).toBeVisible();
           }
           if (routeEntry?.accion === 'panel-consultorio') {
             const accesos = activePage.getByTestId('panel-accesos');
