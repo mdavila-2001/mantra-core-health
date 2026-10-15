@@ -1,6 +1,6 @@
 # REPORT — Carril 35 · CORR-05
 
-## Veredicto: VISUAL VERIFIED; regresión completa no verificada
+## Veredicto: VISUAL VERIFIED (12/12); regresión completa no verificada
 
 La pantalla `/notification-center` ahora presenta pestañas Todas, Sin leer, Consultas, Mensajes, Recetas y Red. Se agregó Preferencias en la cabecera y se conectaron carga, vacío y errores al organismo `app-view-state-host`, con el identificador de soporte visible en S9. Las categorías filtran los resultados cargados; el cursor sigue permitiendo cargar páginas posteriores.
 
@@ -8,24 +8,29 @@ La implementación general de notificaciones ya estaba en `origin/mockup` (`6e95
 
 ## Rutas y mediciones
 
-| Ruta | 375 claro | 768 claro | 1440 claro | 1440 oscuro | Fondo claro | Centrado | Ancho ≥85 % | Scroll | Consola |
-|---|---|---|---|---|---|---|---|---|---|
-| `/notification-center` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| Estado | 375 claro | 768 claro | 1440 claro | 1440 oscuro | Celdas |
+|---|---|---|---|---|---:|
+| Todas | PASS | PASS | PASS | PASS | 4 |
+| Sin leer (cuatro avisos reales) | PASS | PASS | PASS | PASS | 4 |
+| Vacío (marcar todas como leídas y abrir Sin leer) | PASS | PASS | PASS | PASS | 4 |
 
-Matrices: [antes](MATRIZ-visual-antes.md) · [después](MATRIZ-visual.md). La línea base y el resultado final tienen 4 celdas cada una, 0 rojas. En producción el tema oscuro se fija mediante `mantra-core-health.theme`; el auditor ahora establece explícitamente esa preferencia para que la prueba mida el tema pedido, no sólo `prefers-color-scheme`.
+Matriz [después](MATRIZ-visual.md): 12 celdas, 0 rojas. La matriz histórica [antes](MATRIZ-visual-antes.md) conserva las cuatro capturas de `/notification-center` previas a esta ampliación de evidencia. En producción el tema oscuro se fija mediante `mantra-core-health.theme`; el auditor establece explícitamente esa preferencia para medir el tema pedido y no sólo `prefers-color-scheme`.
 
 ## Fotos
 
 - Antes: [375 claro](fotos/antes/notificaciones-375-claro.png), [768 claro](fotos/antes/notificaciones-768-claro.png), [1440 claro](fotos/antes/notificaciones-1440-claro.png), [1440 oscuro](fotos/antes/notificaciones-1440-oscuro.png).
-- Después: [375 claro](fotos/despues/notificaciones-375-claro.png), [768 claro](fotos/despues/notificaciones-768-claro.png), [1440 claro](fotos/despues/notificaciones-1440-claro.png), [1440 oscuro](fotos/despues/notificaciones-1440-oscuro.png).
+- Después — Todas: [375](fotos/despues/notificaciones-todas-375-claro.png), [768](fotos/despues/notificaciones-todas-768-claro.png), [1440 claro](fotos/despues/notificaciones-todas-1440-claro.png), [1440 oscuro](fotos/despues/notificaciones-todas-1440-oscuro.png).
+- Después — Sin leer: [375](fotos/despues/notificaciones-sin-leer-375-claro.png), [768](fotos/despues/notificaciones-sin-leer-768-claro.png), [1440 claro](fotos/despues/notificaciones-sin-leer-1440-claro.png), [1440 oscuro](fotos/despues/notificaciones-sin-leer-1440-oscuro.png).
+- Después — Vacío: [375](fotos/despues/notificaciones-vacio-375-claro.png), [768](fotos/despues/notificaciones-vacio-768-claro.png), [1440 claro](fotos/despues/notificaciones-vacio-1440-claro.png), [1440 oscuro](fotos/despues/notificaciones-vacio-1440-oscuro.png).
 
-Revisé las capturas en móvil y escritorio, claro y oscuro. La de oscuro muestra la superficie oscura y las seis pestañas sin overflow horizontal.
+Revisé individualmente las doce capturas. «Sin leer» muestra los cuatro avisos del simulador y «Vacío» muestra el estado vacío después de marcarlos como leídos. La captura inicial de 768 px mostró el esqueleto; reforcé la sincronización para esperar cuatro títulos y repetí el carril completo antes de conservar estas fotos. La de oscuro muestra la superficie oscura y las seis pestañas sin overflow horizontal.
 
 ## Comandos y salida
 
 - `corepack yarn env:generate && corepack yarn typecheck` → PASS.
 - ESLint dirigido a `notification-center.ts`, `.html`, `.spec.ts` y `playwright/corr-evidencia.spec.ts` → PASS.
 - Specs de `notification-center` y `notification-presentation` → 2 archivos, 27 pruebas PASS.
+- `scripts/corr-evidencia.sh 35` → Playwright 1 test PASS; 12 celdas, 0 rojas. Un único worker.
 - `corepack yarn build` → PASS; quedan avisos CommonJS/prerender y advertencias NG8113 en componentes ajenos.
 - `scripts/corr-evidencia.sh 35 --antes` contra `origin/mockup` en SSR → PASS, 4 celdas.
 - `scripts/corr-evidencia.sh 35` en SSR → PASS, 4 celdas.

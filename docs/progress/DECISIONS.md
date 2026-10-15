@@ -16,3 +16,11 @@
 - Se conserva el listado existente de consultorios propios y lugares afiliados; se conserva el uso del mismo formulario desde «Mi perfil» para crear y editar, como ordena la ficha.
 - `organization-panel` no se elimina: sigue siendo la pantalla de administración para roles de organización/tenant.
 
+# Decisión de trabajo del carril 35
+
+## 2026-10-15 — Ruta vigente y evidencia de estados
+
+- La ruta registrada en `app.routes.ts` es `/notification-center`; `/notifications` y sus parámetros de estado no son rutas de producto. Se corrige la ficha para usar la ruta real.
+- Las evidencias Todas, Sin leer y Vacío se obtienen con controles visibles: abrir cada pestaña y, para Vacío, marcar la bandeja como leída antes de abrir Sin leer. El capturador agrega `evidenceState` sólo como selector interno del escenario; la pantalla lo ignora. No se inventa un endpoint de fixtures ni se modifica el comportamiento del producto para la prueba.
+- Las fotos son capturas del viewport que se mide (375, 768, 1440 claro y 1440 oscuro), no capturas `fullPage`; se prioriza que la imagen represente el primer pantallazo evaluado por la regla visual.
+
