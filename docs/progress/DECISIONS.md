@@ -33,6 +33,13 @@
 - La ficha `TAREA-37` proponía seis pestañas basadas en los pasos del alta. La inspección de `/my-account` mostró que la base ya tiene una tarjeta con siete pestañas, producto de solicitudes posteriores de facturación, consultorio, trayectoria y actividad. Se conserva el orden actual de `PESTANAS_DEL_PERFIL_MEDICO` para no descartar esas solicitudes.
 - El propietario indicó que en todas las decisiones se elija la opción más recomendada. Para esta discrepancia, la recomendación es preservar las siete pestañas vigentes y actualizar la ficha vieja, no volver a un agrupamiento que oculta secciones.
 - El contrato del alta agrega el teléfono como `PracticeSite.contactPhone`; se incluye en el mapa a «Dónde atiendo» y en la lectura de la sede mediante un enlace `tel:`. No se modifica contrato ni servicio.
+
+## 2026-10-15 — Alinear la ficha con C-02 y el estado vigente
+
+- La ficha inicial pedía duplicar lista/formulario dentro de una tarjeta con pestañas y navegar desde el perfil a `?tab=new`/`?edit=<id>`. C-02 del 2026-09-20 pidió que el consultorio propio se gestione dentro de la pestaña «Dónde atiendo» y que se retiren esos enlaces sueltos; gana esa instrucción posterior, ya implementada y fotografiada.
+- `MyPractice` queda como un contenedor delgado que monta `WorkHistory(secciones="consultorios")`. El mismo flujo conserva lista, alta, edición y acciones de lugares desde Administración y perfil. No se duplica CRUD ni se añade una tarjeta/pestaña que compita con el control compartido.
+- `administration/my-organization` se mantiene para quienes administran una organización/tenant, oculto para `PRACTITIONER`; redirigirlo a la pantalla personal rompería ese uso.
+- Se actualiza `tareas/TAREA-32-mi-consultorio-propio.md` para retirar los criterios superados y dejar como fuente de verificación el spec compartido de WorkHistory, la navegación y las capturas Playwright.
 # Decisión de trabajo del carril 35
 
 ## 2026-10-15 — Ruta vigente y evidencia de estados

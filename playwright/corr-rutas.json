@@ -26,7 +26,7 @@
     },
     {
       "ruta": "/my-account/edit",
-      "nombre": "perfil-enlaza-al-consultorio",
+      "nombre": "profile-where-i-practice",
       "accion": "editar-perfil-consultorio"
     },
     {
