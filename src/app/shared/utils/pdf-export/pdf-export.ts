@@ -25,9 +25,9 @@ import {
   RITMO,
   TIPOGRAFIA,
 } from './pdf-theme';
-import { documentSignature, type PdfSignature } from './pdf-signature';
-import { documentFonts, type PdfFonts } from './pdf-fonts';
-import { contenerLogo, logoDeDocumentos, type PdfLogo } from './pdf-logo';
+import { documentSignature, type PdfSignature } from '../../../core/pdf-branding/pdf-signature';
+import { documentFonts, type PdfFonts } from '../../../core/pdf-branding/pdf-fonts';
+import { contenerLogo, logoDeDocumentos, type PdfLogo } from '../../../core/pdf-branding/pdf-logo';
 
 /**
  * El maquetador de PDF de AloVida, sobre `jsPDF` puro.

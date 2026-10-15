@@ -12,7 +12,7 @@
 
 import { fromCents, toCents } from '../../promotions-engine/promotion-money';
 import type { CampaignConditions, Mechanic } from '../../promotions-engine/promotion-mechanics.types';
-import type { ProductoDeCatalogo } from './pharmacy-campaigns.client';
+import type { ProductoDeCatalogo } from './pharmacy-campaigns.types';
 
 /** Un día en milisegundos, para escribir las ventanas en días legibles. */
 export const UN_DIA = 24 * 60 * 60 * 1000;

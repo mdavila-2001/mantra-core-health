@@ -84,7 +84,7 @@
     padding: var(--sp-4);
     border: 1px solid var(--border-subtle);
     border-radius: var(--r-md);
-    background: var(--bg-subtle);
+    background: var(--bg-inset);
 }
 
 .verificar__liveness h3,
@@ -110,8 +110,8 @@
 }
 
 .verificar__poses li.is-complete {
-    color: var(--text-success);
-    border-color: var(--border-success);
+    color: var(--st-success-fg);
+    border-color: var(--st-success-bd);
 }
 
 .verificar__liveness video {
@@ -130,7 +130,7 @@
 .verificar__pose-actual,
 .verificar__capturas-listas {
     margin: 0;
-    font-weight: var(--fw-semibold);
+    font-weight: 600;
 }
 
 .verificar__acciones {

@@ -1,3 +1,5 @@
+import { downloadWithFetch, type DownloadFile } from '../data-access/pdf-branding/typeface-download';
+
 /**
  * Las fuentes de marca del papel: Poppins para lo que se destaca e Inter para
  * lo que se lee.
@@ -44,9 +46,6 @@ export interface PdfFonts {
   readonly cuerpo: PdfFont;
 }
 
-/** Cómo se bajan los bytes de un archivo. Sustituible en pruebas. */
-export type DownloadFile = (url: string) => Promise<ArrayBuffer | null>;
-
 let currentFonts: PdfFonts | null = null;
 
 /** Deja las fuentes listas para todos los documentos, o las quita con `null`. */
@@ -92,14 +91,6 @@ async function fontFrom(archivo: string, bajar: DownloadFile): Promise<PdfFont |
     return null;
   }
   return { archivo, base64: aBase64(bytes) };
-}
-
-async function downloadWithFetch(url: string): Promise<ArrayBuffer | null> {
-  if (typeof fetch === 'undefined') {
-    return null;
-  }
-  const respuesta = await fetch(url);
-  return respuesta.ok ? respuesta.arrayBuffer() : null;
 }
 
 /** Tramos de 32 KB: `String.fromCharCode(...bytes)` con 400 KB desborda la pila. */

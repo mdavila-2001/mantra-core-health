@@ -241,9 +241,9 @@ vi.mock('jspdf', () => ({ jsPDF: DocumentoFalso }));
 let buildPdfDocument: typeof import('./pdf-export').buildPdfDocument;
 let buildBlocksPdf: typeof import('./pdf-export').buildBlocksPdf;
 let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
-let establecerLogoDeDocumentos: typeof import('./pdf-logo').establecerLogoDeDocumentos;
-let establecerFirmaDeDocumentos: typeof import('./pdf-signature').setDocumentSignature;
-let establecerFuentesDeDocumentos: typeof import('./pdf-fonts').setDocumentFonts;
+let establecerLogoDeDocumentos: typeof import('../../../core/pdf-branding/pdf-logo').establecerLogoDeDocumentos;
+let establecerFirmaDeDocumentos: typeof import('../../../core/pdf-branding/pdf-signature').setDocumentSignature;
+let establecerFuentesDeDocumentos: typeof import('../../../core/pdf-branding/pdf-fonts').setDocumentFonts;
 
 /** Un elemento con encabezado, párrafo y una tabla de dos filas. */
 function elementoDeEjemplo(): HTMLElement {
@@ -300,9 +300,9 @@ beforeEach(async () => {
   // lo que corra antes en este trabajador.
   vi.resetModules();
   ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf } = await import('./pdf-export'));
-  ({ establecerLogoDeDocumentos } = await import('./pdf-logo'));
-  ({ setDocumentSignature: establecerFirmaDeDocumentos } = await import('./pdf-signature'));
-  ({ setDocumentFonts: establecerFuentesDeDocumentos } = await import('./pdf-fonts'));
+  ({ establecerLogoDeDocumentos } = await import('../../../core/pdf-branding/pdf-logo'));
+  ({ setDocumentSignature: establecerFirmaDeDocumentos } = await import('../../../core/pdf-branding/pdf-signature'));
+  ({ setDocumentFonts: establecerFuentesDeDocumentos } = await import('../../../core/pdf-branding/pdf-fonts'));
   establecerFirmaDeDocumentos(null);
   establecerFuentesDeDocumentos(null);
   DocumentoFalso.fallarAlDibujarImagenes = false;
