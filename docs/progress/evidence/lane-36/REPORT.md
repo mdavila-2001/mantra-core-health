@@ -38,7 +38,7 @@ La recaptura final se hizo después de rebasar la rama sobre `mockup` (`bac6a193
 - `node scripts/check-route-prefixes.mjs` — PASS; 269 rutas, sin colisiones con 79 prefijos de API.
 - `corepack yarn test --watch=false` en base `c36a0188f` — `775 files, 10,633 passed, 74 failed; 10,707 total`.
 - El mismo comando en esta rama — `775 files, 10,635 passed, 73 failed; 10,708 total`. No aumentaron fallos; hay 2 pruebas más aprobadas y 1 fallo menos que en la base.
-- `corepack yarn lint` en base y rama — FAIL con 269 errores en cada árbol; comparación normalizada por archivo/regla: 0 agregados y 0 corregidos. ESLint dirigido a los archivos modificados pasa.
+- `corepack yarn lint` en base y rama — FAIL. La comparación registrada en la corrida original normalizó 269 errores en cada árbol: 0 agregados y 0 corregidos. Una repetición tras el retoque CSS informó 268 errores globales; los dos CSS son ignorados por ESLint, sin errores dirigidos atribuibles a esta microtarea.
 - `corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1` — bloqueado antes de recorrer rutas porque `apiViva=false`; un caso falla y tres se omiten. Se intentó iniciar la API sin permitir sincronización de esquema (`ORM_SCHEMA_SYNC=off PORT=3000 corepack yarn start:dev`), pero Nest salió con `UnknownDependenciesException`: `LinkedClaimOrderService` no resuelve `LinkedOrderDataRepository` en `InsurancePatientSettlementModule`. No se modificó el repositorio backend, que está fuera del alcance visual de CORR-36.
 - `python3 -S ../scripts/atlas/fable-proof-check.py --lane 36` — FAIL: no hay claim `.claude/runtime/lane-36-claim.json` y falta `docs/progress/BUGS.md`; no se fabricó un claim de regresión verificada.
 - `corepack yarn pw playwright/fable-matriz-roles.spec.ts --workers=1` — no se completó: esta matriz general recorre todas las rutas para cinco cuentas y dos viewports, con timeout de una hora; no forma parte del comando de regresión de CORR-36. La regresión obligatoria de suite completa sí se comparó con la base.
@@ -64,7 +64,7 @@ La recaptura final se hizo después de rebasar la rama sobre `mockup` (`bac6a193
 ## Riesgos residuales
 
 - La suite global conserva 73 fallos; la comparación con la base del mismo commit muestra que no son regresiones de esta rama (74 fallos antes).
-- La suite `lint` global falla con 268 errores preexistentes. ESLint no analiza CSS en esta configuración; los cambios CSS se verificaron con typecheck, compilación, Playwright visual y revisión manual de las 20 capturas.
+- La suite `lint` global falla con 268 errores en la última repetición (la comparación original base/rama fue 269/269). ESLint no analiza CSS en esta configuración; los cambios CSS se verificaron con typecheck, compilación, Playwright visual y revisión manual de las 20 capturas.
 - La verificación de salud de rutas requiere que la API esté disponible; su arranque actual está bloqueado por la dependencia indicada arriba, ajena a este cambio.
 - El verificador Fable existe en el workspace padre, pero falla porque falta el claim de cierre y `docs/progress/BUGS.md`; no corresponde declarar regresión verificada mientras sigan pendientes los gates globales/API.
 - No se inspeccionó manualmente el panel Network del navegador; la evidencia de red se limita a respuestas 5xx y errores de consola medidos por Playwright.
