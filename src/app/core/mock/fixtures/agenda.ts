@@ -86,6 +86,8 @@ export interface ReservaSimulada {
   readonly statusReason: { reasonText: string; actorKind: 'PATIENT' | 'PROVIDER'; toStateConceptId: string; changedAt: string } | null;
   readonly delayNotice: { delayMinutes: number; message: string; announcedAt: string } | null;
   readonly paymentState: { state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; label: string; conceptId: string; insuranceUsed: boolean; markedByUserId: string; markedAt: string } | null;
+  /** Importe del pago QR confirmado en la maqueta, en bolivianos. */
+  readonly paymentAmount?: string;
   /**
    * De qué cita salió ésta, si es una reconsulta (C4). `null` es lo corriente.
    *

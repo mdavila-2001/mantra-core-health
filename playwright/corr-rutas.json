@@ -271,6 +271,12 @@
       "nombre": "credenciales-con-adjunto"
     }
   ],
+  "41": [
+    {
+      "ruta": "/administration/accounting",
+      "nombre": "contabilidad-pagos-confirmados"
+    }
+  ],
   "40": [
     {
       "ruta": "/my-account",

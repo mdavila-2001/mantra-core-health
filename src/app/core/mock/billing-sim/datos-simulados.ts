@@ -28,6 +28,7 @@ import type {
 } from '../../data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedSalesNote } from '../../data-access/billing-simulated/billing-simulated.types';
 import { RECURSO_CONSULTORIO_MEDICA, recursos, reservas, type ReservaSimulada } from '../fixtures/agenda';
+import { ESTADO_RESERVA } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId } from '../fixtures/personas';
 import { renglonesDePedidoSimulado } from '../handlers/pharmacy.handlers';
 import { uuid } from '../mock-store';
@@ -263,7 +264,7 @@ function cobrosDeConsultas(): CobroInicial[] {
     .filtrar((r) => r.paymentState?.state === 'PARTIALLY_PAID' && !reconsultaDe.has(r.id))
     .slice(0, PLANES_DE_PAGO_PARCIAL);
 
-  return [
+  const cobrosBase: CobroInicial[] = [
     ...pagadas.map((r, i) => {
       const monto = i % 3 === 0 ? '180.00' : '250.00';
       // Una consulta pagada que ya tiene su reconsulta agendada es un servicio
@@ -277,6 +278,25 @@ function cobrosDeConsultas(): CobroInicial[] {
     ...parciales.map((r, i) => conPlan(r, '250.00', i + 1)),
     ...[...pendientes, ...enAtencion].map((r) => cobro(r, '250.00', null)),
   ];
+  // Toda cita de la paciente demo abre su pago, también si es futura. Sólo se
+  // agregan las que no tenían un cobro sembrado para no duplicar servicios.
+  const referencias = new Set(cobrosBase
+    .filter((item) => item.source === 'CONSULTATION')
+    .map((item) => item.sourceRef));
+  const faltantes = reservas.filtrar((r) =>
+    r.patientProfileId === PACIENTE.id &&
+    r.statusConceptId !== ESTADO_RESERVA['BK-CANCELLED'] &&
+    r.statusConceptId !== ESTADO_RESERVA['BK-REJECTED'] &&
+    !referencias.has(r.appointmentId ?? r.id) &&
+    r.followUpOf === null,
+  );
+  return [...cobrosBase, ...faltantes.map((r) => cobro(
+    r,
+    '250.00',
+    r.paymentState?.state === 'PAID'
+      ? pago(`consulta-${r.id}`, 1, '250.00', r.startAt)
+      : null,
+  ))];
 
   /** El electrocardiograma (`ECG` del catálogo, Bs 120) hecho en esa consulta, todavía sin cobrar. */
   function electrocardiograma(r: ReservaSimulada): CobroInicial {

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,7 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
@@ -14,14 +15,17 @@ import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
 import { SessionStore } from '../../../core/auth/session.store';
 import { ContabilidadSimple } from '../registros/registros';
+import { centavos, deCentavos } from '../../billing/cobros-en-pantalla';
 import type {
   BalanceSheet,
   FinancialStatementLine,
   FixedAssetRegister,
+  GeneralLedgerPage,
   IncomeStatement,
   LedgerAccount,
   OpenItem,
   OpenItemsPage,
+  PaidConsultation,
   Practice,
 } from '../../../core/data-access/accounting/accounting.types';
 import { describeApiFailure } from '../../../core/http/api-failure';
@@ -211,6 +215,7 @@ interface Dinero {
   selector: 'app-accounting-resumen',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DatePipe,
     AppButton,
     AppButtonLink,
     Card,
@@ -247,7 +252,7 @@ export class Resumen {
   private readonly recarga = signal(0);
   /** 0 = Resumen (tableros) · 1 = Registros (tablas con su alta). */
   readonly pestana = signal(0);
-  /** Subpestañas del Resumen: 0 = Movimientos · 1 = Pendientes · 2 = Patrimonio. */
+  /** Subpestañas del Resumen: ingresos, pendientes, patrimonio y flujo de caja. */
   readonly subpestana = signal(0);
   readonly practicaElegida = signal<string | null>(null);
   private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
@@ -274,6 +279,47 @@ export class Resumen {
       : [];
   });
 
+  readonly cashAccountOptions = computed(() => {
+    const estado = this.dinero();
+    return estado.status === 'ready' || estado.status === 'stale'
+      ? estado.data.cuentas
+          .filter((cuenta) => cuenta.code === '1.1' || cuenta.code === '1.2')
+          .map((cuenta) => ({ value: cuenta.id, label: `${cuenta.code} · ${cuenta.name}` }))
+      : [];
+  });
+  readonly cashAccountSelected = signal<string | null>(null);
+  readonly cashAccountId = computed(() => {
+    const opciones = this.cashAccountOptions();
+    const elegido = this.cashAccountSelected();
+    return opciones.find((opcion) => opcion.value === elegido)?.value ?? opciones[0]?.value ?? null;
+  });
+  readonly cashFlow = toSignal(
+    toObservable(computed(() => ({ practiceId: this.practicaElegida(), accountId: this.cashAccountId(), tab: this.subpestana() }))).pipe(
+      switchMap(({ practiceId, accountId, tab }) =>
+        practiceId === null || accountId === null || tab !== 3
+          ? of(loading() as ViewState<GeneralLedgerPage>)
+          : this.accounting.generalLedger(practiceId, { accountId, limit: 500 }).pipe(
+              map((page) => ready(page)),
+              startWith(loading() as ViewState<GeneralLedgerPage>),
+              catchError((error: unknown) => of(errorToViewState<GeneralLedgerPage>(error))),
+            ),
+      ),
+    ),
+    { initialValue: loading() as ViewState<GeneralLedgerPage> },
+  );
+  readonly cashFlowTotals = computed(() => {
+    const estado = this.cashFlow();
+    if (estado.status !== 'ready') return null;
+    const entradas = estado.data.items.reduce((suma, item) => suma + centavos(item.debit), 0);
+    const salidas = estado.data.items.reduce((suma, item) => suma + centavos(item.credit), 0);
+    return {
+      entradas: deCentavos(entradas),
+      salidas: deCentavos(salidas),
+      neto: deCentavos(entradas - salidas),
+      hayMas: estado.data.nextCursor !== null,
+    };
+  });
+
   readonly opcionesDePractica = computed(() => {
     const estado = this.practicas();
     return estado.status !== 'ready' ? [] : estado.data.map((p) => ({ value: p.id, label: p.name }));
@@ -286,6 +332,19 @@ export class Resumen {
     const estado = this.dinero();
     return estado.status === 'ready' ? estado.data : null;
   });
+
+  /** Cobros ya confirmados pero aún sin asiento, para que no se pierdan del resumen. */
+  readonly pagosRecibidos = toSignal(
+    toObservable(this.practicaElegida).pipe(
+      switchMap((practiceId) => practiceId === null ? of([] as readonly PaidConsultation[]) :
+        this.accounting.listPaidConsultations(practiceId).pipe(catchError(() => of([] as readonly PaidConsultation[])))),
+    ),
+    { initialValue: [] as readonly PaidConsultation[] },
+  );
+
+  readonly totalPagosRecibidos = computed(() =>
+    deCentavos(this.pagosRecibidos().reduce((sum, item) => sum + centavos(item.paidTotal), 0)),
+  );
 
   /* ---- 1 · ¿Cuánto hiciste? ------------------------------------------------ */
 

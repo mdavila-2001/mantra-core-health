@@ -54,6 +54,33 @@ export class BillingSimulatedClient {
     });
   }
 
+  /** Cobro propio del turno abierto por el paciente en la maqueta. */
+  patientChargesForBooking(bookingId: string): Observable<SimulatedChargesPage> {
+    return this.http.get<SimulatedChargesPage>(this.url('/billing/simulated/patient/charges'), {
+      params: new HttpParams().set('bookingId', bookingId),
+    });
+  }
+
+  reportPatientQrPayment(chargeId: string): Observable<SimulatedCharge> {
+    return this.http.post<SimulatedCharge>(
+      this.url(`/billing/simulated/patient/charges/${encodeURIComponent(chargeId)}/report`),
+      {},
+    );
+  }
+
+  paymentReports(patientProfileId: string): Observable<SimulatedChargesPage> {
+    return this.http.get<SimulatedChargesPage>(this.url('/billing/simulated/payment-reports'), {
+      params: new HttpParams().set('patientProfileId', patientProfileId),
+    });
+  }
+
+  confirmPaymentReport(chargeId: string): Observable<SimulatedCharge> {
+    return this.http.post<SimulatedCharge>(
+      this.url(`/billing/simulated/payment-reports/${encodeURIComponent(chargeId)}/confirm`),
+      {},
+    );
+  }
+
   /** Pago de una instancia del plan. Responde el cobro, con la nota de venta nueva. */
   registerInstancePayment(chargeId: string, instanceId: string, input: RegisterInstancePaymentInput): Observable<SimulatedCharge> {
     return this.http.post<SimulatedCharge>(

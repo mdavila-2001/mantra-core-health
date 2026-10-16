@@ -12,6 +12,9 @@
  */
 export default defineConfig({
   test: {
+    // Una sola compilación de pruebas por vez: el mockup Angular agota la RAM
+    // del equipo cuando Vitest abre varios trabajadores en paralelo.
+    maxWorkers: 1,
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'json-summary', 'lcov'],

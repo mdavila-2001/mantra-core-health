@@ -37,7 +37,7 @@
         <app-view-state-host [state]="estadoDelDinero()" (retry)="recargar()" (refresh)="recargar()">
           @if (datos(); as d) {
             <app-tabs class="subpestanas" [(selectedIndex)]="subpestana">
-              <app-tab label="Movimientos">
+              <app-tab label="Ingresos y gastos">
                 <!-- ═══ 1 · ¿Cuánto hizo? ══════════════════════════════════════════
                      Los tres tramos a la vez y sin tocar nada: era la primera de las
                      cuatro cosas que el propietario pidió ver. -->
@@ -176,6 +176,26 @@
                       }
                     </app-card>
                   </div>
+                  <app-card class="panel panel--recibidos" data-testid="pagos-confirmados-contabilidad">
+                    <div class="panel__cabecera">
+                      <h3 class="panel__titulo">Pagos recibidos y confirmados</h3>
+                      <p class="panel__total">{{ importe(totalPagosRecibidos()) }}</p>
+                    </div>
+                    <p class="panel__lectura">Pagos de consultas confirmados como recibidos. Revise los libros para ver cuáles ya fueron registrados.</p>
+                    @if (pagosRecibidos().length === 0) {
+                      <p class="nota">No hay pagos confirmados de consultas.</p>
+                    } @else {
+                      <ul class="equipos">
+                        @for (pago of pagosRecibidos(); track pago.invoiceId) {
+                          <li class="equipo">
+                            <span class="equipo__nombre">{{ pago.invoiceNumber }} · {{ pago.issueDate | date: 'dd/MM/yyyy' }}</span>
+                            <app-chip variant="success" size="sm">Recibido</app-chip>
+                            <span class="equipo__valor">{{ importe(pago.paidTotal) }}</span>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </app-card>
                 </section>
               </app-tab>
 
@@ -318,7 +338,7 @@
                 </section>
               </app-tab>
 
-              <app-tab label="Patrimonio">
+              <app-tab label="Activos y pasivos">
                 <!-- ═══ 4 · ¿Qué tenés y qué debés? ═══════════════════════════════════
                      Activos y pasivos, que hasta el 19/09/2026 eran una entrada suelta
                      del menú. El propietario pidió que estuvieran dentro de Contabilidad:
@@ -326,7 +346,7 @@
                 <section class="bloque" aria-labelledby="titulo-patrimonio">
                   <app-section-heading
                     icono="briefcase"
-                    titulo="Lo que tiene y lo que debe"
+                    titulo="Activos y pasivos"
                     id="titulo-patrimonio"
                   />
                   <p class="bloque__bajada">
@@ -400,6 +420,40 @@
                       Ahí se cargan los equipos que compra y las deudas que toma, y se
                       registra cada cuota.
                     </span>
+                  </p>
+                </section>
+              </app-tab>
+
+              <app-tab label="Flujo de dinero">
+                <section class="bloque" aria-labelledby="titulo-flujo-dinero">
+                  <app-section-heading icono="billing" titulo="Flujo de dinero" id="titulo-flujo-dinero" />
+                  <p class="bloque__bajada">Entradas, salidas y saldo neto de una cuenta de caja o banco, según los movimientos registrados en el libro mayor.</p>
+                  <app-form-field class="cuenta-de-cobro" label="Cuenta de caja o banco">
+                    <app-select
+                      [options]="cashAccountOptions()"
+                      [value]="cashAccountId()"
+                      (valueChange)="cashAccountSelected.set($event)"
+                      placeholder="Elija una cuenta"
+                    />
+                  </app-form-field>
+                  @if (cashFlowTotals(); as flujo) {
+                    <app-card class="panel" data-testid="flujo-de-dinero">
+                      <dl class="tramo__cuentas">
+                        <div class="tramo__cuenta"><dt>Entró</dt><dd>{{ importe(flujo.entradas) }}</dd></div>
+                        <div class="tramo__cuenta"><dt>Salió</dt><dd>{{ importe(flujo.salidas) }}</dd></div>
+                        <div class="tramo__cuenta tramo__cuenta--total"><dt>Flujo neto</dt><dd>{{ importe(flujo.neto) }}</dd></div>
+                      </dl>
+                      @if (flujo.hayMas) {
+                        <p class="nota">Se muestran los primeros 500 movimientos. Consulte el libro mayor para ver el resto.</p>
+                      }
+                    </app-card>
+                  } @else if (cashFlow().status === 'error') {
+                    <p role="alert">No pudimos cargar el flujo de dinero. Vuelva a abrir esta pestaña para reintentar.</p>
+                  } @else {
+                    <p role="status">Cargando los movimientos de la cuenta…</p>
+                  }
+                  <p class="patrimonio__acceso">
+                    <a app-button variant="outline" routerLink="/administration/accounting/libros">Ver movimientos de caja y banco</a>
                   </p>
                 </section>
               </app-tab>
