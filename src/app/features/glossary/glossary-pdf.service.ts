@@ -181,7 +181,7 @@ export function glossaryPdfBlocks(
       const section = item.seccion;
       appendParagraphs(
         blocks,
-        `Fuente: ${nombreDeFuente(section.source)} · ${section.sourceUrl} · ${section.license} · versión ${section.sourceVersion} · consultado el ${fechaLegible(section.retrievedAt)} · ${section.locator}`,
+        `Fuente: ${nombreDeFuente(section.source)} · ${section.sourceUrl} · ${section.license} · versión ${section.sourceVersion}${section.nregistro ? ` · ficha técnica del producto con registro ${section.nregistro}` : ''} · consultado el ${fechaLegible(section.retrievedAt)} · ${section.locator}`,
       );
     }
     if (article.facts.length > 0) {

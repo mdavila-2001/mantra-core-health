@@ -1,6 +1,6 @@
 # Primera carga S1 del glosario
 
-Estado: lote cargado en la semilla local y verificado en navegador; despliegue remoto pendiente de registrar.
+Estado: lote publicado y verificado en la maqueta de Contabo.
 
 ## Resultado
 
@@ -27,6 +27,8 @@ El script preserva las cubetas existentes y puede reanudarse. Un lote con slug a
 - Specs dirigidos de cubetas y artículos: 15 de 15 correctos.
 - ESLint de los scripts, `node --check` y `git diff --check`: correctos.
 - Navegador local: artículo, fuente y PDF verificados; cero errores de página.
+- PR #1124 integrado en `mockup` como `1f7cd8e639e4c596b5b68694841efaf16d934508`; despliegue Coolify `5en9ya7hwcqleyvknn9ouliu` finalizado el 2026-10-16 22:39 UTC.
+- URL pública: `https://mockup.62.169.18.132.sslip.io/glossary/b66560fd-8a7b-4eb1-a0c2-1d54e896aabe`; la cubeta responde JSON y el navegador descargó el PDF de 288.974 bytes sin errores. La captura y `verificacion.json` corresponden ahora a Contabo.
 
 ## Alcance
 
