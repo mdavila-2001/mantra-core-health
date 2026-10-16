@@ -95,7 +95,14 @@
           } @else {
             {{ nombreDeFuente(item.seccion.source) }}
           }
-          · {{ item.seccion.license }} · consultado el {{ fechaLegible(item.seccion.retrievedAt) }}
+          · {{ item.seccion.license }}
+          @if (item.seccion.source === 'aemps-cima' && item.seccion.sourceVersion) {
+            · documento actualizado el {{ fechaLegible(item.seccion.sourceVersion) }}
+          }
+          @if (item.seccion.source === 'aemps-cima' && item.seccion.nregistro) {
+            · ficha técnica del producto con registro {{ item.seccion.nregistro }}
+          }
+          · consultado el {{ fechaLegible(item.seccion.retrievedAt) }}
         </p>
       </section>
     }

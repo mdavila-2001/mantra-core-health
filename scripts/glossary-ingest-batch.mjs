@@ -4,6 +4,7 @@
  *
  * Uso: node scripts/glossary-ingest-batch.mjs <articles.ndjson>
  *      --source nlm-medlineplus-es --license 'Dominio público (NLM)'
+ *      [--policy fuentes.json] [--lang es]
  *      [--dry-run] [--checkpoint ruta.json]
  */
 import { createHash } from 'node:crypto';
@@ -19,15 +20,21 @@ const option = (name) => {
 };
 const source = option('--source');
 const license = option('--license');
+const policyPath = option('--policy');
+const language = option('--lang');
 const checkpoint = resolve(
   option('--checkpoint') ?? 'docs/trabajo/2026-10-16-glossary-ingestion/CHECKPOINT.json',
 );
 const dryRun = args.includes('--dry-run');
-if (!source || !license) throw new Error('Se requieren --source y --license.');
+if ((!source || !license) && !policyPath)
+  throw new Error('Se requieren --source y --license, o --policy.');
+const policy = policyPath ? JSON.parse(readFileSync(resolve(policyPath), 'utf8')) : null;
+if (policy && (!policy.sources || typeof policy.sources !== 'object'))
+  throw new Error('La política requiere un mapa sources.');
 for (const arg of args) {
   if (
     arg.startsWith('--') &&
-    !['--source', '--license', '--checkpoint', '--dry-run'].includes(arg)
+    !['--source', '--license', '--policy', '--lang', '--checkpoint', '--dry-run'].includes(arg)
   ) {
     throw new Error(`Opción desconocida: ${arg}`);
   }
@@ -52,6 +59,8 @@ const sourceSha256 = createHash('sha256').update(sourceBytes).digest('hex');
 const pending = new Map();
 const seen = new Set();
 let accepted = 0;
+let skippedNoSections = 0;
+let omittedUnversionedSections = 0;
 let hiddenImages = 0;
 for (const [index, line] of sourceBytes.toString('utf8').split(/\r?\n/u).entries()) {
   if (line.trim() === '') continue;
@@ -63,22 +72,46 @@ for (const [index, line] of sourceBytes.toString('utf8').split(/\r?\n/u).entries
   const id = idBySlug.get(slug);
   if (!id) throw new Error(`El término no está en la semilla: ${slug}`);
   if (!Array.isArray(article.sections) || article.sections.length === 0) {
+    if (policy) {
+      skippedNoSections++;
+      continue;
+    }
     throw new Error(`Artículo sin secciones: ${slug}`);
   }
   for (const section of article.sections) {
+    const allowed = policy?.sources[section.source];
+    const sourceUrl = URL.canParse(section.sourceUrl) ? new URL(section.sourceUrl) : null;
     if (
-      ![source, `${source}-pruebas`].includes(section.source) ||
-      section.license !== license ||
-      typeof section.sourceUrl !== 'string' ||
-      !section.sourceUrl.startsWith('https://')
+      (policy
+        ? !allowed ||
+          section.license !== allowed.license ||
+          !allowed.hosts.includes(sourceUrl?.hostname)
+        : ![source, `${source}-pruebas`].includes(section.source) || section.license !== license) ||
+      sourceUrl?.protocol !== 'https:'
     ) {
       throw new Error(`Sección con fuente, licencia o URL no admitida: ${slug}`);
     }
+  }
+  let sections = language
+    ? article.sections.filter((section) => section.lang === language)
+    : article.sections;
+  if (policy) {
+    const before = sections.length;
+    sections = sections.filter((section) => {
+      const requirement = policy.sources[section.source]?.requireVersionDate;
+      return !requirement || /^\d{4}-\d{2}-\d{2}$/u.test(section.sourceVersion ?? '');
+    });
+    omittedUnversionedSections += before - sections.length;
+  }
+  if (sections.length === 0) {
+    skippedNoSections++;
+    continue;
   }
   const images = Array.isArray(article.images) ? article.images : [];
   hiddenImages += images.filter((image) => image.enabled !== false).length;
   const safeArticle = {
     ...article,
+    sections,
     images: images.map((image) => ({ ...image, enabled: false })),
   };
   const bucket = id.slice(0, 2).toLowerCase();
@@ -110,9 +143,11 @@ const outputSha256 = createHash('sha256')
 const result = {
   input: relative(process.cwd(), resolve(input)),
   sourceSha256,
-  source,
-  license,
+  source: source ?? relative(process.cwd(), resolve(policyPath)),
+  license: license ?? 'según política por fuente',
   accepted,
+  skippedNoSections,
+  omittedUnversionedSections,
   existing,
   newArticles: accepted - existing,
   imagesHiddenPendingReview: hiddenImages,
