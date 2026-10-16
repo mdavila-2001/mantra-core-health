@@ -66,11 +66,14 @@
 
       </div>
 
-      <!-- Red / Bus de distribución que conecta el núcleo central con los directorios -->
-      <div class="mapa__distribuidor" aria-hidden="true">
-        <div class="mapa__tallo"></div>
-        <div class="mapa__barra-horizontal"></div>
-      </div>
+      <!-- Cinco radios salen directamente del centro AloVida hacia cada directorio. -->
+      <svg class="mapa__conexiones" viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M500 350 L145 100" />
+        <path d="M500 350 L855 100" />
+        <path d="M500 350 L145 585" />
+        <path d="M500 350 L855 585" />
+        <path d="M500 350 L500 585" />
+      </svg>
 
       <!-- Tarjetas de los directorios distribuidas de forma ultra estética -->
       <ul class="rejilla mapa__nodos">
@@ -80,7 +83,7 @@
             [attr.data-path]="nodo.path"
             [attr.data-pos]="posicionDe(nodo.path, idx)"
           >
-            <!-- Conector desde la barra horizontal al nodo de la tarjeta -->
+            <!-- Punto de llegada del radio en esta tarjeta -->
             <div class="mapa__conector" aria-hidden="true">
               <span class="mapa__conector-trazo"></span>
               <span class="mapa__conector-nodo"></span>

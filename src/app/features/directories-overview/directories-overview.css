@@ -3,8 +3,8 @@
    
    Estructura:
    - Hub central: Núcleo AloVida con logo, corazón latiendo con trazado ECG y ondas de pulso
-   - Red distribuidora: Tallo vertical y barra horizontal que conecta de forma simétrica a los directorios
-   - Conectores radiales: Enlaces directos a cada tarjeta con nodo brillante reactivo
+   - Centro AloVida rodeado por cinco directorios
+   - Radios directos desde el núcleo a cada tarjeta
    - Tarjetas: Rejilla elevada y ultra estética con fotos, calificaciones, insignias y métricas
    ========================================================================== */
 
@@ -27,11 +27,17 @@
 
 .mapa__grafo {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 16rem) minmax(0, 1fr);
+  grid-template-rows: minmax(13rem, 1fr) 10rem minmax(13rem, 1fr);
+  grid-template-areas:
+    'top-left . top-right'
+    '. center .'
+    'bottom-left bottom-center bottom-right';
+  gap: var(--sp-4);
   inline-size: 100%;
   max-inline-size: 78rem;
+  min-block-size: 38rem;
   margin-inline: auto;
 }
 
@@ -40,12 +46,30 @@
    ========================================================================== */
 .mapa__centro {
   position: relative;
+  grid-area: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-block-end: 0;
-  z-index: 3;
+  z-index: 2;
+}
+
+.mapa__conexiones {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mapa__conexiones path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--brand-primary) 55%, transparent);
+  stroke-width: 2;
+  stroke-dasharray: 7 7;
+  vector-effect: non-scaling-stroke;
 }
 
 /* Ondas circulares concéntricas de pulso / latido expansivo */
@@ -246,112 +270,92 @@
 }
 
 /* ============================================================================
-   RED / BUS DE DISTRIBUCIÓN
-   ========================================================================== */
-.mapa__distribuidor {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  inline-size: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.mapa__tallo {
-  inline-size: 2px;
-  block-size: 1.5rem;
-  background: linear-gradient(to bottom, var(--brand-primary), rgba(11, 85, 126, 0.45));
-}
-
-.mapa__barra-horizontal {
-  inline-size: calc(100% - 6rem);
-  max-inline-size: 72rem;
-  block-size: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(11, 85, 126, 0.3) 8%,
-    var(--brand-primary) 50%,
-    rgba(11, 85, 126, 0.3) 92%,
-    transparent 100%
-  );
-  box-shadow: 0 0 8px rgba(11, 85, 126, 0.2);
-}
-
-/* En pantallas angostas el bus lineal se oculta para no cruzar el layout en columna */
-@media (max-width: 768px) {
-  .mapa__distribuidor {
-    display: none;
-  }
-}
-
-/* ============================================================================
    REJILLA DE NODOS PERIFÉRICOS (TARJETAS DE DIRECTORIO)
    ========================================================================== */
 .mapa__nodos {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-  gap: var(--sp-4);
-  inline-size: 100%;
-  max-inline-size: 78rem;
+  grid-template-columns: inherit;
+  grid-template-rows: inherit;
+  grid-template-areas: inherit;
+  gap: inherit;
   margin: 0;
   padding: 0;
   list-style: none;
-  justify-content: center;
 }
 
-/* Distribución simétrica de 5 columnas en monitores de escritorio */
-@media (min-width: 1024px) {
-  .mapa[data-total="5"] .mapa__nodos {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-/* Conector vertical y nodo terminal hacia cada tarjeta */
 .mapa__item {
   position: relative;
   display: flex;
-  flex-direction: column;
+  min-inline-size: 0;
+  z-index: 1;
+}
+
+.mapa__item[data-pos='top-left'] { grid-area: top-left; }
+.mapa__item[data-pos='top-right'] { grid-area: top-right; }
+.mapa__item[data-pos='bottom-left'] { grid-area: bottom-left; }
+.mapa__item[data-pos='bottom-right'] { grid-area: bottom-right; }
+.mapa__item[data-pos='bottom-center'] { grid-area: bottom-center; }
+
+.mapa .rejilla__cabecera {
+  flex: 0 0 6rem;
+  aspect-ratio: auto;
+}
+
+.mapa .rejilla__cuerpo {
+  padding: var(--sp-3);
+  gap: var(--sp-1);
+}
+
+.mapa .rejilla__resumen {
+  display: none;
 }
 
 .mapa__conector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  inline-size: 100%;
-  block-size: 1.25rem;
-  pointer-events: none;
+  display: none;
 }
 
-@media (max-width: 768px) {
-  .mapa__conector {
-    display: none;
+@media (max-width: 900px) and (min-width: 769px) {
+  .mapa__grafo {
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem) minmax(0, 1fr);
+    grid-template-rows: minmax(12rem, 1fr) 9rem minmax(12rem, 1fr);
+    min-block-size: 34rem;
+    gap: var(--sp-3);
   }
 }
 
-.mapa__conector-trazo {
-  inline-size: 2px;
-  block-size: 100%;
-  background: linear-gradient(to bottom, var(--brand-primary), var(--border-default));
-}
+@media (max-width: 768px) {
+  .mapa__grafo {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-4);
+    min-block-size: 0;
+  }
 
-.mapa__conector-nodo {
-  inline-size: 8px;
-  block-size: 8px;
-  border-radius: var(--r-full);
-  background: var(--brand-primary);
-  box-shadow: 0 0 6px var(--brand-primary);
-  margin-block-start: -4px;
-  z-index: 2;
-  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard);
-}
+  .mapa__conexiones { display: none; }
 
-.mapa__item:hover .mapa__conector-nodo {
-  transform: scale(1.4);
-  box-shadow: 0 0 12px var(--brand-primary);
+  .mapa__centro {
+    align-self: center;
+    margin-block: var(--sp-6);
+  }
+
+  .mapa__nodos {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    grid-template-rows: auto;
+    grid-template-areas: none;
+    gap: var(--sp-4);
+    inline-size: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .mapa__item[data-pos] { grid-area: auto; }
 }
 
 /* ============================================================================
@@ -578,11 +582,6 @@
 /* ============================================================================
    TEMA OSCURO
    ========================================================================== */
-[data-theme="dark"] .mapa__barra-horizontal,
-[data-tema="oscuro"] .mapa__barra-horizontal {
-  box-shadow: 0 0 12px rgba(79, 179, 169, 0.35);
-}
-
 [data-theme="dark"] .rejilla__tarjeta,
 [data-tema="oscuro"] .rejilla__tarjeta {
   background: var(--c-neutral-900);
