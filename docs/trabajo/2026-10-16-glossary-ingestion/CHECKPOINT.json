@@ -1,0 +1,13 @@
+{
+  "input": "../docs/progress/evidence/lane-41/F9/s1-medlineplus/output/articles.ndjson",
+  "sourceSha256": "7d6e9ac2221449ca253e282ec4ad1cae2029b6b9b242c9beecf36b59cb7bb22d",
+  "source": "nlm-medlineplus-es",
+  "license": "Dominio público (NLM)",
+  "accepted": 1318,
+  "existing": 1318,
+  "newArticles": 0,
+  "imagesHiddenPendingReview": 342,
+  "buckets": 251,
+  "outputSha256": "7009556893d5c15a3a5bd43148aed7408f138644cde5beb4fcc042b196277752",
+  "dryRun": false
+}
