@@ -124,6 +124,11 @@
   color: var(--text-secondary);
 }
 
+.articulo__parrafo {
+  text-align: justify;
+  hyphens: auto;
+}
+
 .articulo__lista,
 .articulo__referencias {
   padding-inline-start: var(--sp-5);

@@ -20,6 +20,7 @@
 const { DocumentoFalso } = vi.hoisted(() => {
   class DocumentoFalso {
     static instancias: DocumentoFalso[] = [];
+    static lineasForzadas = 0;
 
     /** La página en la que se está escribiendo; `setPage` la mueve. */
     paginaActual = 1;
@@ -82,6 +83,9 @@ const { DocumentoFalso } = vi.hoisted(() => {
 
     /** Una línea por llamada: mantiene la altura de cada bloque predecible. */
     splitTextToSize(text: string): string[] {
+      if (DocumentoFalso.lineasForzadas > 0 && text === 'PÁRRAFO_LARGO') {
+        return Array.from({ length: DocumentoFalso.lineasForzadas }, (_, i) => `Renglón ${i + 1}`);
+      }
       return [text];
     }
 
@@ -90,8 +94,10 @@ const { DocumentoFalso } = vi.hoisted(() => {
       return text.length * 5;
     }
 
-    text(line: string, x: number, y: number): this {
-      this.llamadas.text.push([line, x, y]);
+    text(line: string | string[], x: number, y: number): this {
+      for (const [index, value] of (Array.isArray(line) ? line : [line]).entries()) {
+        this.llamadas.text.push([value, x, y + index * 14]);
+      }
       return this;
     }
 
@@ -122,12 +128,7 @@ const { DocumentoFalso } = vi.hoisted(() => {
       return this;
     }
 
-    lines(
-      segmentos: number[][],
-      x: number,
-      y: number,
-      escala: [number, number],
-    ): this {
+    lines(segmentos: number[][], x: number, y: number, escala: [number, number]): this {
       this.llamadas.lines.push({ segmentos: segmentos.length, x, y, escala: escala[0] });
       return this;
     }
@@ -159,7 +160,14 @@ const { DocumentoFalso } = vi.hoisted(() => {
     /** `fallar` simula una imagen que `jsPDF` no acepta: lanza igual que el real. */
     static fallarAlDibujarImagenes = false;
 
-    addImage(_datos: string, formato: string, x: number, y: number, ancho: number, alto: number): this {
+    addImage(
+      _datos: string,
+      formato: string,
+      x: number,
+      y: number,
+      ancho: number,
+      alto: number,
+    ): this {
       if (DocumentoFalso.fallarAlDibujarImagenes) {
         throw new Error('imagen no soportada');
       }
@@ -294,6 +302,7 @@ function textosDelCuerpo(): string[] {
 
 beforeEach(async () => {
   DocumentoFalso.instancias = [];
+  DocumentoFalso.lineasForzadas = 0;
 
   // `resetModules` vacía el registro y el `import()` de abajo vuelve a evaluar
   // `pdf-export.ts` — esta vez con el `vi.mock` de arriba ya registrado, corra
@@ -401,7 +410,8 @@ describe('buildPdfDocument', () => {
    */
   it('no repite como sección el encabezado de la pantalla que ya es el título', () => {
     const el = document.createElement('div');
-    el.innerHTML = '<h2>Balance de sumas y saldos</h2><p>Saldos</p><h2>Balance de sumas y saldos</h2>';
+    el.innerHTML =
+      '<h2>Balance de sumas y saldos</h2><p>Saldos</p><h2>Balance de sumas y saldos</h2>';
 
     buildPdfDocument(el, { title: 'Balance de sumas y saldos' });
 
@@ -452,16 +462,24 @@ describe('las fuentes de marca', () => {
   };
 
   it('sin fuentes cargadas todo el papel va en Helvetica', () => {
-    buildBlocksPdf([{ kind: 'heading', text: 'Sección', level: 2 }, { kind: 'paragraph', text: 'Cuerpo' }]);
+    buildBlocksPdf([
+      { kind: 'heading', text: 'Sección', level: 2 },
+      { kind: 'paragraph', text: 'Cuerpo' },
+    ]);
 
     const doc = ultimoDocumento();
     expect(doc.llamadas.addFont).toEqual([]);
-    expect(new Set(doc.llamadas.setFont.map(([familia]) => familia))).toEqual(new Set(['helvetica']));
+    expect(new Set(doc.llamadas.setFont.map(([familia]) => familia))).toEqual(
+      new Set(['helvetica']),
+    );
   });
 
   it('con fuentes cargadas las registra en el documento y escribe lo destacado en Poppins y la lectura en Inter', () => {
     establecerFuentesDeDocumentos(FUENTES);
-    buildBlocksPdf([{ kind: 'heading', text: 'Sección', level: 2 }, { kind: 'paragraph', text: 'Cuerpo' }]);
+    buildBlocksPdf([
+      { kind: 'heading', text: 'Sección', level: 2 },
+      { kind: 'paragraph', text: 'Cuerpo' },
+    ]);
 
     const doc = ultimoDocumento();
     expect(doc.llamadas.addFont).toEqual([
@@ -485,6 +503,17 @@ describe('las fuentes de marca', () => {
 });
 
 describe('el membrete de marca', () => {
+  it('usa papel blanco y omite la filigrana en un artículo extenso', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], {
+      title: 'Artículo médico',
+      plainPaper: true,
+    });
+
+    const doc = ultimoDocumento();
+    expect(doc.llamadas.rect).toContainEqual([0, 0, 595, 842, 'F']);
+    expect(doc.llamadas.lines).toHaveLength(4);
+  });
+
   it('estampa el isotipo dos veces por página: el del membrete y la filigrana', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], { title: 'Receta médica' });
 
@@ -530,9 +559,7 @@ describe('el membrete de marca', () => {
     // El total es el mismo en todas: se sella cuando ya se sabe cuántas hay.
     expect(paginas[0]).toBe(`Página 1 de ${paginas.length}`);
     expect(paginas.at(-1)).toBe(`Página ${paginas.length} de ${paginas.length}`);
-    expect(doc.llamadas.setPage).toEqual(
-      Array.from({ length: paginas.length }, (_, i) => i + 1),
-    );
+    expect(doc.llamadas.setPage).toEqual(Array.from({ length: paginas.length }, (_, i) => i + 1));
   });
 
   it('el pie dice la línea legal que el documento pida', () => {
@@ -606,10 +633,18 @@ describe('el logo del consultorio en el membrete', () => {
     'un logo %s no mueve el título ni el arranque del contenido, y cabe en la caja',
     (_nombre, forma) => {
       buildBlocksPdf(CUERPO, { ...OPCIONES, subtitle: 'Bajada' });
-      const sinLogo = { titulo: yDe('Receta médica'), bajada: yDe('Bajada'), cuerpo: yDe('Una línea') };
+      const sinLogo = {
+        titulo: yDe('Receta médica'),
+        bajada: yDe('Bajada'),
+        cuerpo: yDe('Una línea'),
+      };
 
       buildBlocksPdf(CUERPO, { ...OPCIONES, subtitle: 'Bajada', logo: forma });
-      const conLogo = { titulo: yDe('Receta médica'), bajada: yDe('Bajada'), cuerpo: yDe('Una línea') };
+      const conLogo = {
+        titulo: yDe('Receta médica'),
+        bajada: yDe('Bajada'),
+        cuerpo: yDe('Una línea'),
+      };
       const [imagen] = ultimoDocumento().llamadas.addImage;
 
       expect(conLogo).toEqual(sinLogo);
@@ -681,7 +716,12 @@ describe('el bloque de firma y sello del pie', () => {
     firma: imagen(300, 100),
     sello: imagen(160, 160),
   };
-  const SIN_IMAGENES = { nombre: 'Dra. Valeria Rojas', matricula: 'M-1234', firma: null, sello: null };
+  const SIN_IMAGENES = {
+    nombre: 'Dra. Valeria Rojas',
+    matricula: 'M-1234',
+    firma: null,
+    sello: null,
+  };
 
   const CUERPO = [{ kind: 'paragraph' as const, text: 'Una línea' }];
   const yDe = (texto: string): number =>
@@ -731,9 +771,9 @@ describe('el bloque de firma y sello del pie', () => {
     buildBlocksPdf(CUERPO, { title: 'Receta', firma: { ...SIN_IMAGENES, matricula: null } });
 
     expect(hay('Dra. Valeria Rojas')).toBe(true);
-    expect(
-      ultimoDocumento().llamadas.text.some(([linea]) => linea.startsWith('Matrícula')),
-    ).toBe(false);
+    expect(ultimoDocumento().llamadas.text.some(([linea]) => linea.startsWith('Matrícula'))).toBe(
+      false,
+    );
   });
 
   it('no mueve nada de lo escrito antes: el contenido queda donde estaba', () => {
@@ -931,8 +971,17 @@ describe('las tablas', () => {
 
   it('no manda a la derecha una columna que no es de números', () => {
     buildBlocksPdf([
-      { kind: 'row', text: 'Estudio\tPreparación', cells: ['Estudio', 'Preparación'], header: true },
-      { kind: 'row', text: 'Hemograma\tAyuno de 8 horas', cells: ['Hemograma', 'Ayuno de 8 horas'] },
+      {
+        kind: 'row',
+        text: 'Estudio\tPreparación',
+        cells: ['Estudio', 'Preparación'],
+        header: true,
+      },
+      {
+        kind: 'row',
+        text: 'Hemograma\tAyuno de 8 horas',
+        cells: ['Hemograma', 'Ayuno de 8 horas'],
+      },
     ]);
 
     const doc = ultimoDocumento();
@@ -940,6 +989,35 @@ describe('las tablas', () => {
     const celda = doc.llamadas.text.find(([linea]) => linea === 'Ayuno de 8 horas');
     // Alineadas a la izquierda las dos: comparten el borde de la columna.
     expect(encabezado?.[1]).toBe(celda?.[1]);
+  });
+
+  it('continúa un párrafo largo en páginas nuevas sin perder renglones', () => {
+    DocumentoFalso.lineasForzadas = 100;
+    buildBlocksPdf([{ kind: 'paragraph', text: 'PÁRRAFO_LARGO' }], { logo: null, firma: null });
+
+    const doc = ultimoDocumento();
+    expect(doc.llamadas.addPage).toBeGreaterThan(0);
+    const written = doc.llamadas.text.map(([line]) => line);
+    expect(written).toContain('Renglón 1');
+    expect(written).toContain('Renglón 100');
+    expect(written.filter((line) => line.startsWith('Renglón '))).toHaveLength(100);
+  });
+
+  it('inserta la ilustración del contenido antes de su atribución', () => {
+    buildBlocksPdf(
+      [
+        {
+          kind: 'image',
+          text: 'Esquema',
+          image: { dataUrl: 'data:image/png;base64,AA==', formato: 'PNG', ancho: 100, alto: 80 },
+        },
+        { kind: 'paragraph', text: 'Autor · CC BY 4.0' },
+      ],
+      { logo: null, firma: null },
+    );
+
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
+    expect(ultimoDocumento().llamadas.text.map(([line]) => line)).toContain('Autor · CC BY 4.0');
   });
 });
 

@@ -77,6 +77,8 @@ export interface PdfExportOptions {
   readonly reference?: string;
   /** La línea legal del pie. Por omisión, la de confidencialidad. */
   readonly footerNote?: string;
+  /** Papel blanco sin filigrana, para artículos extensos con imágenes clínicas. */
+  readonly plainPaper?: boolean;
   /**
    * El logo del consultorio, arriba a la derecha de la primera página.
    *
@@ -122,6 +124,7 @@ export interface PdfBlock {
     | 'total'
     | 'divider'
     | 'caption'
+    | 'image'
     /**
      * Un hueco para escribir a mano: uno o varios renglones vacíos.
      *
@@ -168,6 +171,8 @@ export interface PdfBlock {
    * evita.
    */
   readonly lines?: number;
+  /** Imagen rasterizada y con licencia validada por el documento que la agrega. */
+  readonly image?: PdfLogo;
 }
 
 /** La línea del pie cuando el documento no pide otra. */
@@ -382,7 +387,7 @@ function abrirHoja(doc: jsPDF, opciones: PdfExportOptions): Hoja {
     y: 0,
   };
 
-  dibujarFiligrana(hoja);
+  dibujarFondoDeHoja(hoja);
   hoja.y = dibujarMembrete(hoja, true);
   hoja.inicio = hoja.y;
   return hoja;
@@ -397,9 +402,18 @@ function abrirHoja(doc: jsPDF, opciones: PdfExportOptions): Hoja {
  */
 function pasarDePagina(hoja: Hoja): void {
   hoja.doc.addPage();
-  dibujarFiligrana(hoja);
+  dibujarFondoDeHoja(hoja);
   hoja.y = dibujarMembrete(hoja, false);
   hoja.inicio = hoja.y;
+}
+
+function dibujarFondoDeHoja(hoja: Hoja): void {
+  if (hoja.opciones.plainPaper === true) {
+    hoja.doc.setFillColor(255, 255, 255);
+    hoja.doc.rect(0, 0, hoja.ancho, hoja.alto, 'F');
+    return;
+  }
+  dibujarFiligrana(hoja);
 }
 
 /**
@@ -817,6 +831,9 @@ function dibujarBloque(hoja: Hoja, bloque: PdfBlock): void {
     case 'caption':
       dibujarPieDeBloque(hoja, bloque);
       return;
+    case 'image':
+      dibujarImagenDeContenido(hoja, bloque);
+      return;
     default:
       dibujarParrafo(hoja, bloque);
   }
@@ -835,10 +852,7 @@ function dibujarEncabezado(hoja: Hoja, bloque: PdfBlock): void {
   const tamano = TAMANO_DE_ENCABEZADO[nivel] ?? TIPOGRAFIA.cuerpo;
 
   if (nivel <= 2) {
-    abrirEspacio(
-      hoja,
-      RITMO.antesDeSeccion + RITMO.despuesDeSeccion + tamano + RITMO.linea * 2,
-    );
+    abrirEspacio(hoja, RITMO.antesDeSeccion + RITMO.despuesDeSeccion + tamano + RITMO.linea * 2);
     hoja.y += RITMO.antesDeSeccion;
     escribirEspaciado(hoja, {
       texto: bloque.text.toLocaleUpperCase('es'),
@@ -877,18 +891,49 @@ function dibujarEncabezado(hoja: Hoja, bloque: PdfBlock): void {
 /** Un párrafo del cuerpo. */
 function dibujarParrafo(hoja: Hoja, bloque: PdfBlock): void {
   const lineas = partir(hoja, bloque.text, hoja.util, TIPOGRAFIA.cuerpo, 'normal');
-  const alto = lineas.length * RITMO.linea;
-  abrirEspacio(hoja, alto);
-  escribirLineas(hoja, {
-    lineas,
-    x: hoja.izquierda,
-    y: hoja.y,
-    tamano: TIPOGRAFIA.cuerpo,
-    estilo: 'normal',
-    color: COLOR_TINTA,
-    interlineado: RITMO.linea,
-  });
-  hoja.y += alto + RITMO.entreBloques;
+  let siguiente = 0;
+  while (siguiente < lineas.length) {
+    let disponibles = Math.floor((hoja.fondo - hoja.y) / RITMO.linea);
+    if (disponibles < 1) {
+      pasarDePagina(hoja);
+      disponibles = Math.floor((hoja.fondo - hoja.y) / RITMO.linea);
+    }
+    const grupo = lineas.slice(siguiente, siguiente + disponibles);
+    usarFuente(hoja, 'normal');
+    hoja.doc.setFontSize(TIPOGRAFIA.cuerpo);
+    hoja.doc.setTextColor(COLOR_TINTA[0], COLOR_TINTA[1], COLOR_TINTA[2]);
+    hoja.doc.text(grupo, hoja.izquierda, hoja.y, {
+      align: 'justify',
+      maxWidth: hoja.util,
+      lineHeightFactor: RITMO.linea / TIPOGRAFIA.cuerpo,
+    });
+    hoja.y += grupo.length * RITMO.linea;
+    siguiente += grupo.length;
+    if (siguiente < lineas.length) pasarDePagina(hoja);
+  }
+  hoja.y += RITMO.entreBloques;
+}
+
+/** Dibuja una imagen del contenido sin separarla de su crédito siguiente. */
+function dibujarImagenDeContenido(hoja: Hoja, bloque: PdfBlock): void {
+  if (bloque.image === undefined) return;
+  const caja = { ancho: hoja.util, alto: Math.min(300, hoja.fondo - hoja.inicio - 20) };
+  const medida = contenerLogo(bloque.image, caja);
+  if (medida === null) return;
+  abrirEspacio(hoja, medida.alto + 2 * RITMO.linea);
+  try {
+    hoja.doc.addImage(
+      bloque.image.dataUrl,
+      bloque.image.formato,
+      hoja.izquierda,
+      hoja.y,
+      medida.ancho,
+      medida.alto,
+    );
+  } catch {
+    throw new Error('No se pudo insertar una imagen del glosario en el PDF.');
+  }
+  hoja.y += medida.alto + RITMO.entreBloques;
 }
 
 /**
@@ -1309,7 +1354,8 @@ function repartirColumnas(
     minimos.push(Math.min(minimo + sangria, hoja.util / 2));
   }
 
-  const sumar = (anchos: readonly number[]): number => anchos.reduce((suma, ancho) => suma + ancho, 0);
+  const sumar = (anchos: readonly number[]): number =>
+    anchos.reduce((suma, ancho) => suma + ancho, 0);
   const total = sumar(preferidos);
   if (total <= 0) {
     return preferidos.map(() => hoja.util / columnas);
@@ -1327,10 +1373,14 @@ function repartirColumnas(
     // Ni los mínimos entran: se achica todo en proporción antes que salirse del margen.
     return minimos.map((minimo) => (minimo / base) * hoja.util);
   }
-  const holguras = preferidos.map((preferido, columna) => Math.max(0, preferido - minimos[columna]));
+  const holguras = preferidos.map((preferido, columna) =>
+    Math.max(0, preferido - minimos[columna]),
+  );
   const holguraTotal = sumar(holguras);
   return minimos.map((minimo, columna) =>
-    holguraTotal > 0 ? minimo + (holguras[columna] / holguraTotal) * sobrante : minimo + sobrante / columnas,
+    holguraTotal > 0
+      ? minimo + (holguras[columna] / holguraTotal) * sobrante
+      : minimo + sobrante / columnas,
   );
 }
 
