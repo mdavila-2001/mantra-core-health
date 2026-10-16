@@ -3,11 +3,13 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { registrarTerminologia } from './handlers/terminology.handlers';
+import { imagenDe } from './glossary-en-linea';
 import {
   AlmacenDeGlosario,
   ArchivoAusente,
   idDeConjunto,
   type LectorDeArchivos,
+  type FilaDeGlosario,
   type ManifiestoDelGlosario,
 } from './glossary-shards';
 import { MockRouter } from './mock-router';
@@ -76,6 +78,19 @@ interface Pagina {
 }
 
 describe('glosario de la maqueta en shards (semilla commiteada)', () => {
+  it('oculta una foto licenciada sin revisión de pertinencia y admite su aprobación explícita', () => {
+    const rows = JSON.parse(
+      readFileSync(join(PUBLICO, 'glossary-seed/shards/anatomy/page-1.json'), 'utf8'),
+    ) as FilaDeGlosario[];
+    const row = rows.find((item) => item.slug === 'wikidata-anatomia-q17120946');
+    expect(row?.imageUrl).toContain('Bone');
+    expect(imagenDe(row!)).toBeUndefined();
+    expect(
+      imagenDe({ ...row!, properties: { ...row!.properties, image_review_status: 'approved' } })
+        ?.source,
+    ).toBe(row?.imageUrl);
+  });
+
   it('sin el glosario completo, cae a la semilla', async () => {
     const { almacen } = montar();
     expect(await almacen.origen()).toBe('glossary-seed');
@@ -146,12 +161,12 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     expect(primera.items.every((t) => t.translated)).toBe(true);
     expect(ultima.items.every((t) => t.translated)).toBe(true);
 
-    const conjuntos = await get<{ items: readonly { internalCode: string; translatedMemberCount?: number }[] }>(
-      '/terminology/value-sets',
-      { limit: '200' },
-    );
+    const conjuntos = await get<{
+      items: readonly { internalCode: string; translatedMemberCount?: number }[];
+    }>('/terminology/value-sets', { limit: '200' });
     expect(
-      conjuntos.items.find((c) => c.internalCode === enfermedades.internalCode)?.translatedMemberCount,
+      conjuntos.items.find((c) => c.internalCode === enfermedades.internalCode)
+        ?.translatedMemberCount,
     ).toBe(enfermedades.translatedCount);
   });
 

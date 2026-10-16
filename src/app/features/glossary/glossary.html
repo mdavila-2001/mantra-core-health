@@ -64,7 +64,10 @@
                       <!-- Si hay términos que sólo tienen su nombre en inglés, el
                            total solo engaña: «Enfermedades» suma las categorías
                            ICD-10-CM sin traducir. -->
-                      @if (tarjeta.enCastellano !== undefined && tarjeta.enCastellano < tarjeta.cantidad) {
+                      @if (
+                        tarjeta.enCastellano !== undefined &&
+                        tarjeta.enCastellano < tarjeta.cantidad
+                      ) {
                         · {{ tarjeta.enCastellano.toLocaleString('es') }} en castellano
                       }
                     </span>
@@ -148,10 +151,7 @@
         aria-labelledby="glosario-cuerpo-titulo"
       >
         @for (grupo of grupos(); track grupo.letra) {
-          <section
-            class="glosario__tramo"
-            [attr.aria-labelledby]="'glosario-letra-' + grupo.letra"
-          >
+          <section class="glosario__tramo" [attr.aria-labelledby]="'glosario-letra-' + grupo.letra">
             <h3 class="glosario__letra" [id]="'glosario-letra-' + grupo.letra">
               {{ grupo.letra }}
             </h3>
@@ -163,7 +163,10 @@
                        siendo el enlace del título (se estira con ::after). -->
                   <app-card class="glosario__entrada">
                     <div card-header class="glosario__entrada-cabeza">
-                      @if (termino.imageThumbnailUrl; as miniatura) {
+                      @if (
+                        termino.imageReviewStatus === 'approved' ? termino.imageThumbnailUrl : null;
+                        as miniatura
+                      ) {
                         <!-- La miniatura es decorativa en la lista (el nombre
                              ya está escrito al lado): alt vacío. El crédito y
                              la licencia se muestran en la ficha, junto a la

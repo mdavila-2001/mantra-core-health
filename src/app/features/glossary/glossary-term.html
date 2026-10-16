@@ -1,9 +1,24 @@
 <app-page-header [title]="titulo()" subtitle="Término del glosario" [breadcrumbs]="breadcrumbs()" />
 
 <div class="termino">
-  <p class="termino__volver">
+  <div class="termino__acciones">
     <a routerLink="/glossary">← Volver al glosario</a>
-  </p>
+    @if (ficha()) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [isLoading]="pdfOcupado()"
+        [disabled]="!articuloCargado()"
+        (clicked)="descargarPdf()"
+      >
+        Descargar ficha en PDF
+      </button>
+    }
+  </div>
+  @if (pdfError()) {
+    <p class="termino__pdf-error" role="alert">{{ pdfError() }}</p>
+  }
 
   <app-view-state-host [state]="termino()" (retry)="recargar()">
     @if (ficha(); as termino) {
@@ -18,12 +33,12 @@
           </p>
         }
 
-        <div class="termino__cabecera" [class.termino__cabecera--con-foto]="!!termino.image">
+        <div class="termino__cabecera" [class.termino__cabecera--con-foto]="!!imagenAprobada()">
           <!-- Imagen médica con su atribución y licencia SIEMPRE visibles
                —nunca sin crédito—. La miniatura abre la imagen entera en un
                modal. Sin imagen, el ícono de la categoría hace de marcador:
                ninguna foto de stock la reemplaza. -->
-          @if (termino.image; as imagen) {
+          @if (imagenAprobada(); as imagen) {
             <figure class="termino__imagen">
               <button
                 type="button"
@@ -128,66 +143,68 @@
               />
             </app-tab>
           } @else {
-          <app-tab label="Definición">
-            <h2 class="termino__subtitulo">Qué significa</h2>
-            @if (definicion() !== '') {
-              <p class="termino__definicion termino__verbatim">{{ definicion() }}</p>
-              @if (esDescripcionDeWikidata()) {
-                <p class="termino__sin-traducir-parcial">
-                  Descripción breve de la comunidad de Wikidata (CC0): no es una definición clínica
-                  revisada.
-                </p>
-              }
-              @if (fuenteDeDefinicion(); as origen) {
-                <p class="termino__medicamento-fuente" data-testid="termino-fuente-definicion">
-                  Fuente de la definición:
-                  @if (origen.url; as url) {
-                    <a [href]="url" target="_blank" rel="noopener noreferrer">{{ origen.nombre }}</a>
-                  } @else {
-                    {{ origen.nombre }}
-                  }
-                  @if (origen.consultado; as fecha) {
-                    · consultado el {{ fechaLegible(fecha) }}
-                  }
-                </p>
-              }
-              @if (termino.clinicalDefinition?.translated === false) {
-                <p class="termino__sin-traducir-parcial">
-                  Definición en su idioma original: todavía no tiene traducción al castellano
-                  cargada.
-                </p>
-              }
-            } @else {
-              <!-- Nunca un párrafo inventado: se dice que falta y por qué. -->
-              <p
-                class="termino__definicion termino__definicion--ausente"
-                data-testid="termino-sin-definicion"
-              >
-                {{ motivoSinDefinicion() }}
-              </p>
-            }
-
-            @for (seccion of seccionesDeLaFuente(); track $index) {
-              <section class="termino__seccion">
-                <h2 class="termino__subtitulo">{{ seccion.titulo }}</h2>
-                <p class="termino__verbatim">{{ seccion.texto }}</p>
-              </section>
-            }
-
-            @if (termino.synonyms.length > 0) {
-              <h2 class="termino__subtitulo">También se le dice</h2>
-              <ul class="termino__sinonimos">
-                @for (sinonimo of termino.synonyms; track sinonimo.value) {
-                  <li>
-                    {{ sinonimo.value }}
-                    @if (sinonimo.language) {
-                      <span class="termino__idioma">({{ sinonimo.language }})</span>
-                    }
-                  </li>
+            <app-tab label="Definición">
+              <h2 class="termino__subtitulo">Qué significa</h2>
+              @if (definicion() !== '') {
+                <p class="termino__definicion termino__verbatim">{{ definicion() }}</p>
+                @if (esDescripcionDeWikidata()) {
+                  <p class="termino__sin-traducir-parcial">
+                    Descripción breve de la comunidad de Wikidata (CC0): no es una definición
+                    clínica revisada.
+                  </p>
                 }
-              </ul>
-            }
-          </app-tab>
+                @if (fuenteDeDefinicion(); as origen) {
+                  <p class="termino__medicamento-fuente" data-testid="termino-fuente-definicion">
+                    Fuente de la definición:
+                    @if (origen.url; as url) {
+                      <a [href]="url" target="_blank" rel="noopener noreferrer">{{
+                        origen.nombre
+                      }}</a>
+                    } @else {
+                      {{ origen.nombre }}
+                    }
+                    @if (origen.consultado; as fecha) {
+                      · consultado el {{ fechaLegible(fecha) }}
+                    }
+                  </p>
+                }
+                @if (termino.clinicalDefinition?.translated === false) {
+                  <p class="termino__sin-traducir-parcial">
+                    Definición en su idioma original: todavía no tiene traducción al castellano
+                    cargada.
+                  </p>
+                }
+              } @else {
+                <!-- Nunca un párrafo inventado: se dice que falta y por qué. -->
+                <p
+                  class="termino__definicion termino__definicion--ausente"
+                  data-testid="termino-sin-definicion"
+                >
+                  {{ motivoSinDefinicion() }}
+                </p>
+              }
+
+              @for (seccion of seccionesDeLaFuente(); track $index) {
+                <section class="termino__seccion">
+                  <h2 class="termino__subtitulo">{{ seccion.titulo }}</h2>
+                  <p class="termino__verbatim">{{ seccion.texto }}</p>
+                </section>
+              }
+
+              @if (termino.synonyms.length > 0) {
+                <h2 class="termino__subtitulo">También se le dice</h2>
+                <ul class="termino__sinonimos">
+                  @for (sinonimo of termino.synonyms; track sinonimo.value) {
+                    <li>
+                      {{ sinonimo.value }}
+                      @if (sinonimo.language) {
+                        <span class="termino__idioma">({{ sinonimo.language }})</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </app-tab>
           }
 
           @if (cima(); as ficha) {
@@ -391,13 +408,17 @@
             @if (referenciasEditoriales().length > 0) {
               <h2 class="termino__subtitulo">Fuentes editoriales</h2>
               <ul class="termino__fuentes-editoriales">
-                @for (referencia of referenciasEditoriales(); track referencia.source + referencia.recordId + referencia.language) {
+                @for (
+                  referencia of referenciasEditoriales();
+                  track referencia.source + referencia.recordId + referencia.language
+                ) {
                   <li>
                     <a [href]="referencia.url" target="_blank" rel="noopener noreferrer">
                       {{ referencia.source }} · {{ referencia.recordId }}
                     </a>
                     <span class="termino__idioma">
-                      {{ referencia.language === 'es' ? 'Español' : 'Inglés' }} · versión {{ referencia.version }} ·
+                      {{ referencia.language === 'es' ? 'Español' : 'Inglés' }} · versión
+                      {{ referencia.version }} ·
                       {{ rolDeFuente(referencia.role) }}
                     </span>
                     <p class="termino__fuente-derechos">

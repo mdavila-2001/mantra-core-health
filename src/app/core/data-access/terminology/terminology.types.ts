@@ -460,6 +460,8 @@ export interface GlossaryTerm extends GlossaryTermBase {
   readonly status: GlossaryTermStatus;
   /** Miniatura de la imagen del término, si tiene una. El crédito viaja en la ficha. */
   readonly imageThumbnailUrl?: string;
+  /** La pertinencia clínica de la imagen fue aprobada de forma explícita. */
+  readonly imageReviewStatus?: 'approved';
 }
 
 /**

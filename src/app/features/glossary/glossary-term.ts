@@ -24,6 +24,7 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Chip } from '../../shared/components/atoms/chip/chip';
+import { AppButton } from '../../shared/components/atoms/button/button';
 import { Card } from '../../shared/components/molecules/card/card';
 import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
@@ -39,6 +40,8 @@ import {
 import { GlossaryCategoryIcon } from './glossary-category-icon';
 import { GlossaryArticleView } from './glossary-article';
 import { GlossaryDataFlow } from './glossary-data-flow';
+import { GlossaryPdfService } from './glossary-pdf.service';
+import { imagenAprobadaDelTermino } from './glossary-image.logic';
 import type { GlossaryArticle } from '../../core/data-access/terminology/glossary-article.types';
 
 /**
@@ -118,7 +121,8 @@ function fuentesDesdePropiedad(valor: unknown): readonly GlossarySourceReference
   if (!Array.isArray(valor)) return [];
   return valor.flatMap((item: unknown) => {
     if (!esObjeto(item)) return [];
-    const { source, recordId, url, language, version, retrievedAt, role, attribution, rights } = item;
+    const { source, recordId, url, language, version, retrievedAt, role, attribution, rights } =
+      item;
     if (
       typeof source !== 'string' ||
       typeof recordId !== 'string' ||
@@ -134,18 +138,20 @@ function fuentesDesdePropiedad(valor: unknown): readonly GlossarySourceReference
       return [];
     }
     const matchBasis = item['matchBasis'];
-    return [{
-      source,
-      recordId,
-      url,
-      language,
-      version,
-      retrievedAt,
-      role,
-      ...(matchBasis === 'title' || matchBasis === 'also_called' ? { matchBasis } : {}),
-      attribution,
-      rights,
-    }];
+    return [
+      {
+        source,
+        recordId,
+        url,
+        language,
+        version,
+        retrievedAt,
+        role,
+        ...(matchBasis === 'title' || matchBasis === 'also_called' ? { matchBasis } : {}),
+        attribution,
+        rights,
+      },
+    ];
   });
 }
 
@@ -192,6 +198,7 @@ export interface GrupoDeRelaciones {
 @Component({
   selector: 'app-glossary-term',
   imports: [
+    AppButton,
     Card,
     Chip,
     ContentDialog,
@@ -212,6 +219,7 @@ export class GlossaryTerm {
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly glossaryPdf = inject(GlossaryPdfService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -301,7 +309,8 @@ export class GlossaryTerm {
     return {
       nombre: cruda['name'],
       url: typeof cruda['url'] === 'string' ? cruda['url'] : null,
-      consultado: typeof cruda['retrievedAt'] === 'string' ? cruda['retrievedAt'].slice(0, 10) : null,
+      consultado:
+        typeof cruda['retrievedAt'] === 'string' ? cruda['retrievedAt'].slice(0, 10) : null,
     };
   });
 
@@ -354,6 +363,10 @@ export class GlossaryTerm {
    * la lectura, el término conserva la ficha de siempre.
    */
   protected readonly articulo = signal<GlossaryArticle | null>(null);
+  protected readonly imagenAprobada = computed(() => imagenAprobadaDelTermino(this.ficha()));
+  protected readonly articuloCargado = signal(false);
+  protected readonly pdfOcupado = signal(false);
+  protected readonly pdfError = signal('');
 
   /** Los nombres alternativos del término, para el artículo. */
   protected readonly nombresAlternativos = computed(() =>
@@ -404,7 +417,8 @@ export class GlossaryTerm {
     const propiedades = this.ficha()?.properties ?? {};
     const sistema = valorDeTexto(propiedades, 'code_system');
     const codigo = valorDeTexto(propiedades, 'external_code');
-    const quien = this.fuente()?.nombre ?? (sistema ? NOMBRE_DE_SISTEMA[sistema] ?? sistema : null);
+    const quien =
+      this.fuente()?.nombre ?? (sistema ? (NOMBRE_DE_SISTEMA[sistema] ?? sistema) : null);
     const loQuePublica =
       codigo === undefined ? 'su nombre oficial' : `el código «${codigo}» y su nombre oficial`;
     return quien === null
@@ -429,15 +443,25 @@ export class GlossaryTerm {
 
     this.termino.set(loading());
     this.articulo.set(null);
+    this.articuloCargado.set(false);
+    this.pdfError.set('');
     this.pestana.set(0);
     this.ampliada.set(false);
 
     this.terminology.readGlossaryArticle(conceptId).subscribe({
       next: (articulo) => {
-        if (conceptId === this.conceptId()) this.articulo.set(articulo);
+        if (conceptId === this.conceptId()) {
+          this.articulo.set(articulo);
+          this.articuloCargado.set(true);
+        }
       },
       // El artículo es un complemento: si falla la lectura, la ficha sigue.
-      error: () => this.articulo.set(null),
+      error: () => {
+        if (conceptId === this.conceptId()) {
+          this.articulo.set(null);
+          this.articuloCargado.set(true);
+        }
+      },
     });
 
     this.terminology.readGlossaryTerm(conceptId).subscribe({
@@ -449,6 +473,22 @@ export class GlossaryTerm {
         this.termino.set(errorToViewState<GlossaryTermDetail>(error));
       },
     });
+  }
+
+  protected async descargarPdf(): Promise<void> {
+    const term = this.ficha();
+    if (term === null || !this.articuloCargado() || this.pdfOcupado()) return;
+    this.pdfOcupado.set(true);
+    this.pdfError.set('');
+    try {
+      await this.glossaryPdf.download(term, this.articulo());
+    } catch {
+      this.pdfError.set(
+        'No pudimos generar un PDF completo con las imágenes y sus fuentes. Vuelva a intentarlo.',
+      );
+    } finally {
+      this.pdfOcupado.set(false);
+    }
   }
 
   /**

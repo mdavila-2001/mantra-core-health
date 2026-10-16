@@ -274,6 +274,7 @@ describe('GlossaryTerm', () => {
   it('con imagen, la muestra con su fuente, licencia y alt — nunca sin atribución', async () => {
     peticion().flush({
       ...FICHA,
+      properties: { ...FICHA.properties, image_review_status: 'approved' },
       image: {
         source: 'https://ejemplo.org/hipertension.png',
         license: 'CC BY 4.0',
@@ -385,7 +386,7 @@ describe('GlossaryTerm', () => {
   };
 
   it('con imagen, muestra la miniatura con atribución, licencia y enlace a la fuente, siempre visibles', async () => {
-    peticion().flush({ ...FICHA, image: IMAGEN });
+    peticion().flush({ ...FICHA, properties: { ...FICHA.properties, image_review_status: 'approved' }, image: IMAGEN });
     await harness.fixture.whenStable();
 
     const img = html().querySelector<HTMLImageElement>('.termino__imagen img');
@@ -397,8 +398,16 @@ describe('GlossaryTerm', () => {
     expect(credito?.querySelector('a')?.getAttribute('rel')).toContain('noopener');
   });
 
-  it('«Ampliar» abre la imagen entera en un modal, también con su crédito', async () => {
+  it('una imagen con licencia y crédito, pero sin aprobación de pertinencia, no se muestra', async () => {
     peticion().flush({ ...FICHA, image: IMAGEN });
+    await harness.fixture.whenStable();
+
+    expect(html().querySelector('.termino__imagen img')).toBeNull();
+    expect(html().querySelector('.termino__imagen-boton')).toBeNull();
+  });
+
+  it('«Ampliar» abre la imagen entera en un modal, también con su crédito', async () => {
+    peticion().flush({ ...FICHA, properties: { ...FICHA.properties, image_review_status: 'approved' }, image: IMAGEN });
     await harness.fixture.whenStable();
     expect(html().querySelector('app-content-dialog')).toBeNull();
 

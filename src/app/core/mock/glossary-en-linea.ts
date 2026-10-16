@@ -35,7 +35,11 @@ interface Conjunto {
 }
 
 function referencia(conjunto: Conjunto) {
-  return { id: idDeConjunto(conjunto.internalCode), internalCode: conjunto.internalCode, name: conjunto.name };
+  return {
+    id: idDeConjunto(conjunto.internalCode),
+    internalCode: conjunto.internalCode,
+    name: conjunto.name,
+  };
 }
 
 function referenciaConUuid(conjunto: Conjunto) {
@@ -62,13 +66,18 @@ function taxonomiaDe(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
 /**
  * La imagen publicable de una fila, o `undefined`.
  *
- * Mismo criterio que `imageFromProperty` de la API: sin URL, atribución o
- * licencia no se publica. Una foto sin crédito no se muestra.
+ * Exige aprobación explícita de pertinencia además de URL, atribución y licencia.
+ * Las imágenes importadas automáticamente no tienen esa aprobación.
  */
 export function imagenDe(fila: FilaDeGlosario) {
   // Los importadores escriben `null` donde no hay imagen (SCHEMA.md): null y
   // ausente valen lo mismo.
-  if (!fila.imageUrl || !fila.imageAttribution || !fila.imageLicense) {
+  if (
+    fila.properties?.['image_review_status'] !== 'approved' ||
+    !fila.imageUrl ||
+    !fila.imageAttribution ||
+    !fila.imageLicense
+  ) {
     return undefined;
   }
   return {
@@ -163,14 +172,21 @@ export function terminoEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGl
     valueSets: [PARAGUAS_DEL_GLOSARIO, categoria, ...etiquetas].map(referencia),
     ...(imagen === undefined
       ? {}
-      : { imageThumbnailUrl: imagen.thumbnailSource ?? imagen.source }),
+      : {
+          imageThumbnailUrl: imagen.thumbnailSource ?? imagen.source,
+          imageReviewStatus: 'approved' as const,
+        }),
   };
 }
 
 /** Las propiedades de la ficha: las que la fila trae, con los códigos de la API. */
 function propiedadesDe(fila: FilaDeGlosario): Record<string, unknown> {
   const propiedades: Record<string, unknown> = { ...(fila.properties ?? {}) };
-  if (fila.code !== undefined && fila.codeSystem !== undefined && !SISTEMAS_INTERNOS.has(fila.codeSystem)) {
+  if (
+    fila.code !== undefined &&
+    fila.codeSystem !== undefined &&
+    !SISTEMAS_INTERNOS.has(fila.codeSystem)
+  ) {
     propiedades['external_code'] = fila.code;
     propiedades['code_system'] = fila.codeSystem;
   }
@@ -308,7 +324,10 @@ export function vecindarioEnLinea(
   const grupos = new Map<string, Map<string, VecinoSimulado>>();
   for (const vecino of vecinos) {
     if (vecino.conceptId === foco.id || !TIPOS_DEL_VECINDARIO.has(vecino.type)) continue;
-    if (pedido.modo === 'grupo' && (vecino.type !== pedido.type || vecino.direction !== pedido.direction)) {
+    if (
+      pedido.modo === 'grupo' &&
+      (vecino.type !== pedido.type || vecino.direction !== pedido.direction)
+    ) {
       continue;
     }
     const clave = `${vecino.type}|${vecino.direction}`;
@@ -318,7 +337,9 @@ export function vecindarioEnLinea(
 
   const categoria = (key: string | null) => {
     const encontrada = key === null ? undefined : manifiesto.categories.find((c) => c.key === key);
-    return encontrada === undefined ? null : { internalCode: encontrada.internalCode, name: encontrada.name };
+    return encontrada === undefined
+      ? null
+      : { internalCode: encontrada.internalCode, name: encontrada.name };
   };
   const termino = terminoEnLinea(foco, manifiesto);
 
