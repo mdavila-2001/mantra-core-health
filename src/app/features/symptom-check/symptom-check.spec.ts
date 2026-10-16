@@ -548,6 +548,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
       },
     ],
     urgency: 'programada',
+    response: 'Gracias por contarnos cómo se siente. Entendemos que esto puede preocuparle.',
   };
 
   beforeEach(() => {
@@ -590,6 +591,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('manchas en la espalda');
     expect(html.querySelector('.sintomas__recomendaciones')?.textContent).toContain('Dermatología');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain('Gracias por contarnos');
   });
 
   it('si el servicio no responde, la pantalla sigue con lo que reconoce sola', () => {
@@ -599,6 +601,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     fixture.detectChanges();
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('dolor de cabeza');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain('Gracias por contarnos');
   });
 
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
@@ -859,9 +862,9 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(botonMed?.getAttribute('href')).toContain('/search/medications');
   });
 
-  it('detecta «necesito ayuda» y ubica el soporte de crisis ABAJO del área de escritura', () => {
+  it('detecta «ideas suicidas» y ubica el soporte de crisis ABAJO del área de escritura', () => {
     responderSexoPropio(http);
-    (componente as unknown as { escribir(v: string): void }).escribir('necesito ayuda');
+    (componente as unknown as { escribir(v: string): void }).escribir('tengo ideas suicidas');
     fixture.detectChanges();
     http.match(() => true);
 
@@ -874,6 +877,18 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(escribir!.compareDocumentPosition(crisis!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(crisis?.textContent).toContain('800-11-3040');
     expect(crisis?.textContent).toContain('772-22123');
+  });
+
+  it('no confunde «necesito ayuda» con ideación suicida ni bloquea la orientación médica', () => {
+    responderSexoPropio(http);
+    (componente as unknown as { escribir(v: string): void }).escribir('necesito ayuda me duele la rodilla');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    html = fixture.nativeElement as HTMLElement;
+    const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
+    expect(crisis).toBeNull();
+    expect(html.querySelector('.sintomas__chips')?.textContent).toContain('Dolor de rodilla');
   });
 
   it('permite abrir manualmente las líneas de contención desde el botón superior', () => {

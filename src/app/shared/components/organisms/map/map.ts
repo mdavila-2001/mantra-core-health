@@ -21,8 +21,8 @@ import {
 import type * as Leaflet from 'leaflet';
 
 import { nextControlId } from '@shared/forms/form-control.context';
-import type { PinMapa, PuntoGeo } from './pin-mapa.types';
-import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinciaEn } from './provincias';
+import type { PinMap, PuntoGeo } from './map-pin.types';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinceIn } from './provinces';
 
 /**
  * Mosaicos del servidor comunitario de OpenStreetMap, sin clave de API.
@@ -103,7 +103,7 @@ const KEYBOARD_DIRECTIONS: Readonly<Record<string, readonly [number, number]>> =
 
 /** El `<link>` del CSS de Leaflet, compartido entre todas las instancias. */
 const ID_DE_ESTILOS = 'leaflet-css';
-const RUTA_DE_ESTILOS = 'assets/leaflet/leaflet.css';
+const RUTA_DE_ESTILOS = '/assets/leaflet/leaflet.css';
 
 /** El namespace de Leaflet, venga como ESM o como CJS interoperado. */
 type ModuloLeaflet = typeof Leaflet & { readonly default?: typeof Leaflet };
@@ -128,7 +128,7 @@ export const CARGADOR_DE_LEAFLET = new InjectionToken<CargadorDeLeaflet>('CARGAD
  */
 export function construirPopup(
   documento: Document,
-  pin: PinMapa,
+  pin: PinMap,
   alElegir: () => void,
 ): HTMLElement {
   const caja = documento.createElement('div');
@@ -208,7 +208,7 @@ export function construirPopup(
   encapsulation: ViewEncapsulation.None,
 })
 export class AppMap implements OnDestroy {
-  readonly pines = input.required<readonly PinMapa[]>();
+  readonly pines = input.required<readonly PinMap[]>();
 
   /** Nombre accesible del mapa; debe remitir a la lista que repite el dato. */
   readonly etiqueta = input.required<string>();
@@ -270,7 +270,7 @@ export class AppMap implements OnDestroy {
   private mapa: Leaflet.Map | null = null;
   private capaDePines: Leaflet.LayerGroup | null = null;
   private readonly marcadores = new Map<string, Leaflet.Marker>();
-  private pinesDibujados: readonly PinMapa[] | null = null;
+  private pinesDibujados: readonly PinMap[] | null = null;
   private destruido = false;
   private observadorDeTamano: ResizeObserver | null = null;
   /** Si el lienzo llegó a medir algo alguna vez. Ver {@link vigilarElTamano}. */
@@ -283,14 +283,30 @@ export class AppMap implements OnDestroy {
     // Montar exige el lienzo ya pintado — el mismo motivo por el que el menú
     // difiere su medición (`menu.ts`): acá `L.map(el)` necesita el elemento.
     afterNextRender(() => void this.montar(), { injector: this.injector });
+    let ultimoCentro: PuntoGeo | null = null;
+    let ultimoZoom: number | null = null;
+
     effect(() => {
       const pines = this.pines();
       const elegido = this.seleccionado();
-      if (this.mapa === null) {
+      const centro = this.centro();
+      const zoom = this.zoom();
+      const mapa = this.mapa;
+      const L = this.leaflet;
+
+      if (mapa === null || L === null) {
         return;
       }
       if (pines !== this.pinesDibujados) {
         this.dibujar(pines);
+      }
+      if (
+        (centro !== null && (centro.lat !== ultimoCentro?.lat || centro.lng !== ultimoCentro?.lng)) ||
+        (zoom !== null && zoom !== ultimoZoom)
+      ) {
+        ultimoCentro = centro;
+        ultimoZoom = zoom;
+        this.encuadrar(L, mapa, pines);
       }
       this.resaltar(elegido);
     });
@@ -431,7 +447,7 @@ export class AppMap implements OnDestroy {
     panel.style.pointerEvents = 'none';
 
     // `L.geoJSON` pide el tipo de `@types/geojson`; el nuestro es el mismo
-    // contrato escrito en `provincias.ts`, sin depender de ese paquete.
+    // contrato escrito en `provinces.ts`, sin depender de ese paquete.
     L.geoJSON(provincias as unknown as Parameters<typeof L.geoJSON>[0], {
       pane: PANEL_DE_PROVINCIAS,
       interactive: false,
@@ -462,7 +478,7 @@ export class AppMap implements OnDestroy {
   }
 
   private nombrarProvincia(provincias: ProvinciasDeBolivia, centro: PuntoGeo): string | null {
-    const provincia = provinciaEn(provincias, centro);
+    const provincia = provinceIn(provincias, centro);
     return provincia === null
       ? null
       : `Provincia ${provincia.properties.nombre} · ${provincia.properties.departamento}`;
@@ -514,7 +530,7 @@ export class AppMap implements OnDestroy {
     this.documento.head.appendChild(enlace);
   }
 
-  private dibujar(pines: readonly PinMapa[]): void {
+  private dibujar(pines: readonly PinMap[]): void {
     const L = this.leaflet;
     const mapa = this.mapa;
     if (L === null || mapa === null) {
@@ -525,6 +541,7 @@ export class AppMap implements OnDestroy {
     this.marcadores.clear();
 
     const capa = L.layerGroup();
+    const isSeleccionable = this.seleccionable();
     for (const pin of pines) {
       const marcador = L.marker([pin.lat, pin.lng], {
         icon: this.iconoDe(L, pin),
@@ -532,11 +549,27 @@ export class AppMap implements OnDestroy {
         // Un pin es un botón: elige el lugar y abre su popup. Con `keyboard`
         // Leaflet le da `tabindex="0"` y `role="button"`, y Enter abre el popup.
         keyboard: true,
+        draggable: isSeleccionable,
       });
+      if (isSeleccionable && typeof marcador.on === 'function') {
+        marcador.on('dragend', () => {
+          const pos = typeof (marcador as unknown as { getLatLng?: () => Leaflet.LatLng }).getLatLng === 'function'
+            ? (marcador as unknown as { getLatLng: () => Leaflet.LatLng }).getLatLng()
+            : null;
+          if (pos) {
+            this.pointPicked.emit({ lat: pos.lat, lng: pos.lng });
+          }
+        });
+      }
       marcador.bindPopup(
         construirPopup(this.documento, pin, () => this.pinElegido.emit(pin.id)),
       );
-      marcador.on('click', () => this.seleccionado.set(pin.id));
+      marcador.on('click', () => {
+        this.seleccionado.set(pin.id);
+        if (isSeleccionable) {
+          this.pointPicked.emit({ lat: pin.lat, lng: pin.lng });
+        }
+      });
       // Enter lo resuelve Leaflet para el popup, pero no dispara `click`: la
       // selección cruzada se hace acá. Espacio, como en cualquier botón, hace
       // lo mismo que Enter.
@@ -564,7 +597,7 @@ export class AppMap implements OnDestroy {
     this.encuadrar(L, mapa, pines);
   }
 
-  private encuadrar(L: typeof Leaflet, mapa: Leaflet.Map, pines: readonly PinMapa[]): void {
+  private encuadrar(L: typeof Leaflet, mapa: Leaflet.Map, pines: readonly PinMap[]): void {
     const centro = this.centro();
     if (centro !== null) {
       mapa.setView([centro.lat, centro.lng], this.zoom() ?? ZOOM_POR_DEFECTO);
@@ -583,18 +616,32 @@ export class AppMap implements OnDestroy {
     );
   }
 
-  private iconoDe(L: typeof Leaflet, pin: PinMapa): Leaflet.DivIcon {
+  private iconoDe(L: typeof Leaflet, pin: PinMap): Leaflet.DivIcon {
     const cara = this.documento.createElement('span');
-    // La letra del pin es un dibujo: el nombre lo da `aria-label` en el botón.
     cara.setAttribute('aria-hidden', 'true');
-    cara.className = `mapa__pin mapa__pin--${pin.estado?.tono ?? 'neutral'}`;
-    cara.textContent = pin.codigo ?? '';
+    const tieneCodigo = pin.codigo !== undefined && pin.codigo !== '';
+    if (tieneCodigo) {
+      cara.className = `mapa__pin mapa__pin--${pin.estado?.tono ?? 'neutral'}`;
+      cara.textContent = pin.codigo ?? '';
+      return L.divIcon({
+        className: 'mapa__marcador',
+        html: cara,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -18],
+      });
+    }
+
+    cara.className = `mapa__pin mapa__pin--ubicacion mapa__pin--${pin.estado?.tono ?? 'neutral'}`;
+    const centroPunto = this.documento.createElement('span');
+    centroPunto.className = 'mapa__pin-centro';
+    cara.appendChild(centroPunto);
     return L.divIcon({
       className: 'mapa__marcador',
       html: cara,
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-      popupAnchor: [0, -18],
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
     });
   }
 
@@ -612,7 +659,7 @@ export class AppMap implements OnDestroy {
 }
 
 /** «Farmacia Central · Sede Centro, Tiene todo, 1,2 km en línea recta»: lo que dice el pin enfocado. */
-function pinAccessibleName(pin: PinMapa): string {
+function pinAccessibleName(pin: PinMap): string {
   return [pin.titulo, pin.estado?.etiqueta, pin.subtitulo]
     .filter((parte): parte is string => parte !== undefined && parte !== '')
     .join(', ');
