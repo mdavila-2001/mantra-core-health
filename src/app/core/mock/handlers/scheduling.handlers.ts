@@ -1151,3 +1151,20 @@ export function registrarAgenda(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id, priority: nueva.priority, statusConceptId: nueva.statusConceptId } };
   });
 }
+
+/** Sincroniza un pago QR confirmado con el estado de la cita del mock. */
+export function registrarPagoConfirmadoDeReserva(referencia: string, amount: string): void {
+  const reserva = reservas.todos().find((r) => r.id === referencia || r.appointmentId === referencia);
+  if (reserva === undefined) return;
+  reservas.actualizar(reserva.id, {
+    paymentState: {
+      state: 'PAID',
+      label: 'Pagada',
+      conceptId: ESTADO['ST-COMPLETED']!,
+      insuranceUsed: false,
+      markedByUserId: 'confirmacion-pago-demo',
+      markedAt: ahora(),
+    },
+    paymentAmount: amount,
+  });
+}

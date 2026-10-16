@@ -28,6 +28,7 @@ import type {
 } from '../../data-access/billing-simulated/billing-simulated.types';
 import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../billing-sim/datos-simulados';
 import { PACIENTE } from '../fixtures/personas';
+import { reservas } from '../fixtures/agenda';
 import { FacturacionSimulada, type ErrorDeFacturacion, type Resultado } from '../billing-sim/facturacion-simulada';
 import {
   conflict,
@@ -45,6 +46,7 @@ import {
 import { TENANT_FARMACIA, type MockUser } from '../mock-session';
 import { cuerpo } from '../mock-store';
 import { SiatSimuladoAdapter } from '../siat-sim/siat-simulado.adapter';
+import { registrarPagoConfirmadoDeReserva } from './scheduling.handlers';
 
 export const ROLES_DE_FACTURACION: readonly string[] = ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'SUPERADMIN'];
 
@@ -187,6 +189,70 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     }
     return motor;
   };
+
+  const pacienteActivo = (request: MockRequest): string | MockReply => {
+    if (!environment.paymentDemo || !activa()) return notFound('Los pagos QR de demostración están apagados');
+    if (request.user === null) return unauthorized('Sin sesión');
+    if (!request.user.roles.includes('PATIENT') || request.user.patientProfileId === undefined) {
+      return forbidden('Esta pantalla es para pacientes');
+    }
+    return request.user.patientProfileId;
+  };
+
+  // El portal del paciente sólo accede a cobros propios. El QR no registra
+  // un pago: deja el comprobante como recibido y pendiente de revisión.
+  router.get('/billing/simulated/patient/charges', (request) => {
+    const paciente = pacienteActivo(request);
+    if (isMockReply(paciente)) return paciente;
+    const bookingId = request.query.get('bookingId');
+    const reserva = bookingId === null ? undefined : reservas.get(bookingId);
+    const referencias = new Set([bookingId, reserva?.appointmentId].filter((id): id is string => id !== null && id !== undefined));
+    const items = facturacion().listarCobros().filter((c) =>
+      c.source === 'CONSULTATION' && c.patientProfileId === paciente &&
+      (bookingId === null || referencias.has(c.sourceRef) || c.plan?.instances.some((i) => i.bookingId === bookingId)),
+    );
+    return { items, count: items.length, simulated: true };
+  });
+
+  router.post('/billing/simulated/patient/charges/:chargeId/report', (request) => {
+    const paciente = pacienteActivo(request);
+    if (isMockReply(paciente)) return paciente;
+    const cobro = facturacion().cobro(request.params['chargeId']!);
+    if (cobro === null || cobro.source !== 'CONSULTATION' || cobro.patientProfileId !== paciente) return notFound('El cobro no existe');
+    return aRespuesta(facturacion().informarPagoDelPaciente(cobro.id), 201);
+  });
+
+  // «Ver pagos» en la consulta: quien atiende ve los avisos recibidos y puede
+  // confirmarlos. La confirmación crea SimulatedPayment, que es lo que cuenta
+  // para facturación e ingresos.
+  router.get('/billing/simulated/payment-reports', (request) => {
+    if (request.user === null) return unauthorized('Sin sesión');
+    const profesional = request.user.practitionerProfileId;
+    const tieneAlcance = request.user.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) ||
+      (profesional !== undefined && request.user.roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol)));
+    if (!tieneAlcance) return forbidden('Su rol no permite revisar pagos');
+    const items = facturacion().listarCobros().filter((c) =>
+      c.patientPaymentReport !== null && c.patientPaymentReport !== undefined &&
+      (request.user!.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) || c.practitionerProfileId === profesional) &&
+      (request.query.get('patientProfileId') === null || c.patientProfileId === request.query.get('patientProfileId')),
+    );
+    return { items, count: items.length, simulated: true };
+  });
+
+  router.post('/billing/simulated/payment-reports/:chargeId/confirm', (request) => {
+    if (request.user === null) return unauthorized('Sin sesión');
+    const profesional = request.user.practitionerProfileId;
+    const tieneAlcance = request.user.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) ||
+      (profesional !== undefined && request.user.roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol)));
+    if (!tieneAlcance) return forbidden('Su rol no permite confirmar pagos');
+    const cobro = facturacion().cobro(request.params['chargeId']!);
+    if (cobro === null || (profesional !== undefined && !request.user.roles.some((rol) => ROLES_DE_FACTURACION.includes(rol)) && cobro.practitionerProfileId !== profesional)) {
+      return notFound('El cobro no existe');
+    }
+    const resultado = facturacion().confirmarPagoInformado(cobro.id);
+    if (resultado.ok && cobro.source === 'CONSULTATION') registrarPagoConfirmadoDeReserva(cobro.sourceRef, cobro.total);
+    return aRespuesta(resultado);
+  });
 
   /**
    * Apagada → 404; sin sesión → 401; sin rol → 403. Con `consultorio`, quien

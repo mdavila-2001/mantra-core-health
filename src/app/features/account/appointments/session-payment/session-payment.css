@@ -1,0 +1,31 @@
+.session-payment {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-color-border, #d6e0e5);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.session-payment h4,
+.session-payment p {
+  margin: 0;
+}
+
+.session-payment canvas {
+  display: block;
+  inline-size: 11rem;
+  block-size: 11rem;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid #e1e8ec;
+  border-radius: 0.5rem;
+}
+
+.session-payment__amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

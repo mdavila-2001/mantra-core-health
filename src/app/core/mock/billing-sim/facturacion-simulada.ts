@@ -33,6 +33,7 @@ import type {
   SimulatedInvoiceSummary,
   SimulatedIssuer,
   SimulatedOutboxEntry,
+  PatientPaymentReport,
   SimulatedPayment,
   SimulatedPaymentPlan,
   SimulatedPlanInstance,
@@ -83,6 +84,7 @@ export interface CobroInicial {
   readonly suggestedBuyer: SuggestedBuyer;
   /** Si la maqueta ya lo da por pagado (T-E4, consultas pagadas). */
   readonly payment: SimulatedPayment | null;
+  readonly patientPaymentReport?: PatientPaymentReport | null;
   /**
    * El plan, si el tipo de servicio implica más de una instancia de pago (una
    * consulta con su serie de reconsultas). Con plan, los renglones del cobro
@@ -349,6 +351,44 @@ export class FacturacionSimulada {
       simulated: true,
     };
     return { ok: true, value: this.aCobro(this.cobros.actualizar(cobroId, { payment })!) };
+  }
+
+  /** Guarda el aviso del paciente sin marcar el cobro como pagado. */
+  informarPagoDelPaciente(cobroId: string): Resultado<SimulatedCharge> {
+    const cobro = this.cobros.get(cobroId);
+    if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
+    if (cobro.payment !== null) return error('ALREADY_PAID', 'El cobro ya está pagado');
+    if (cobro.plan !== null && cobro.plan !== undefined) {
+      return error('PLAN_REQUIRED', 'El servicio tiene un plan de pagos: informe cada cuota al consultorio');
+    }
+    if (cobro.patientPaymentReport?.status === 'PENDING_CONFIRMATION') {
+      return { ok: true, value: this.aCobro(cobro) };
+    }
+    const patientPaymentReport: PatientPaymentReport = {
+      id: `reporte-${sha256Hex(`${cobroId}|${this.reloj().getTime()}`).slice(0, 16)}`,
+      status: 'PENDING_CONFIRMATION',
+      methodLabel: 'QR (demo)',
+      amount: cobro.total,
+      reportedAt: this.reloj().toISOString(),
+      confirmedAt: null,
+    };
+    return { ok: true, value: this.aCobro(this.cobros.actualizar(cobroId, { patientPaymentReport })!) };
+  }
+
+  /** Quien atiende confirma el aviso y recién ahí crea el pago contable. */
+  confirmarPagoInformado(cobroId: string): Resultado<SimulatedCharge> {
+    const cobro = this.cobros.get(cobroId);
+    if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
+    if (cobro.patientPaymentReport?.status !== 'PENDING_CONFIRMATION') {
+      return error('PAYMENT_REQUIRED', 'No hay un pago pendiente de confirmación');
+    }
+    const resultado = this.registrarPago(cobroId, 3);
+    if (!resultado.ok) return resultado;
+    const report = cobro.patientPaymentReport;
+    const actualizado = this.cobros.actualizar(cobroId, {
+      patientPaymentReport: { ...report, status: 'CONFIRMED', confirmedAt: this.reloj().toISOString() },
+    });
+    return actualizado === undefined ? error('NOT_FOUND', 'El cobro no existe') : { ok: true, value: this.aCobro(actualizado) };
   }
 
   /**
@@ -869,6 +909,7 @@ export class FacturacionSimulada {
       currency: 'BOB',
       createdAt: c.createdAt,
       payment: c.payment,
+      patientPaymentReport: c.patientPaymentReport ?? null,
       suggestedBuyer: c.suggestedBuyer,
       latestInvoice: ultima === null ? null : this.aResumen(ultima),
       plan: c.plan ? this.aPlan(c.plan) : null,

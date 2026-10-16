@@ -80,6 +80,9 @@ function responderPracticas(
     .expectOne(`${BASE}/practices`)
     .flush([{ id: 'prac-1', code: 'P1', name: 'Consultorio de prueba' }]);
   fixture.detectChanges();
+  http.expectOne((request) => request.url === `${BASE}/accounting/practitioner/paid-consultations` && request.params.get('practiceId') === 'prac-1')
+    .flush({ items: [], count: 0 });
+  fixture.detectChanges();
 }
 
 /** Un estado de resultados con los totales dados y sin líneas. */
@@ -537,7 +540,7 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
-      expect(subrotulos(fixture)).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
+      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Activos y pasivos', 'Flujo de dinero']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(texto).toContain('¿Cuánto hizo?');
 
@@ -547,13 +550,13 @@ describe('Resumen contable', () => {
       expect(textoPendientes).toContain('Lo que está pendiente');
     });
 
-    it('divide el resumen en subpestañas: Movimientos, Pendientes y Patrimonio', () => {
+    it('divide el resumen en ingresos, pendientes, activos y flujo de dinero', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      expect(subrotulos(fixture)).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
+      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Activos y pasivos', 'Flujo de dinero']);
 
       // Movimientos
       expect(fixture.componentInstance.subpestana()).toBe(0);
@@ -571,7 +574,11 @@ describe('Resumen contable', () => {
       fixture.componentInstance.subpestana.set(2);
       fixture.detectChanges();
       texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(texto).toContain('Lo que tiene y lo que debe');
+      expect(texto).toContain('Activos y pasivos');
+      fixture.componentInstance.subpestana.set(3);
+      fixture.detectChanges();
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Flujo de dinero');
     });
 
     it('el Resumen no trae la tarjeta de registros', () => {

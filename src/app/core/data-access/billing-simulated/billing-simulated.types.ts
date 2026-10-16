@@ -62,6 +62,16 @@ export interface SimulatedPayment {
   readonly simulated: true;
 }
 
+/** Aviso del paciente: todavía no es un cobro confirmado ni un ingreso contable. */
+export interface PatientPaymentReport {
+  readonly id: string;
+  readonly status: 'PENDING_CONFIRMATION' | 'CONFIRMED';
+  readonly methodLabel: 'QR (demo)';
+  readonly amount: string;
+  readonly reportedAt: string;
+  readonly confirmedAt: string | null;
+}
+
 export interface SuggestedBuyer {
   readonly name: string;
   readonly documentTypeCode: number;
@@ -149,6 +159,8 @@ export interface SimulatedCharge {
   readonly currency: 'BOB';
   readonly createdAt: string;
   readonly payment: SimulatedPayment | null;
+  /** Pago que el paciente informó por QR y que quien atiende debe validar. */
+  readonly patientPaymentReport?: PatientPaymentReport | null;
   readonly suggestedBuyer: SuggestedBuyer;
   readonly latestInvoice: SimulatedInvoiceSummary | null;
   /** `null`: el servicio es de una sola instancia. */

@@ -10,6 +10,7 @@ import type {
 import { MockRouter, isMockReply, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
+import { reservas } from '../fixtures/agenda';
 import { ESQUEMA_COMPRA_VENTA } from '../siat-sim/esquema-siat';
 import { facturaDesdeXml, leerXmlFactura } from '../siat-sim/factura-xml';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
@@ -94,7 +95,11 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       const facturaDeFarmacia = facturar(deFarmacia).body as SimulatedInvoice;
       expect(llamar('GET', `/billing/simulated/invoices/${facturaDeFarmacia.id}`, null, medica).status).toBe(404);
 
-      const f = facturarComo(cobroPagado('CONSULTATION'), medica);
+      // El primer cobro pagado de la lista puede ser de otra profesional: se
+      // factura uno que sea de la médica, que es lo que este caso afirma.
+      const propio = cobros().find((c) =>
+        c.source === 'CONSULTATION' && c.payment !== null && c.practitionerProfileId === medica.practitionerProfileId)!;
+      const f = facturarComo(propio, medica);
       expect(f.status).toBe(201);
       const factura = f.body as SimulatedInvoice;
       expect(llamar('GET', `/billing/simulated/invoices/${factura.id}`, null, medica).status).toBe(200);
@@ -125,6 +130,35 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(estado.credentials).toEqual([]);
       expect(estado.issuers.every((e) => e.kind === 'PRACTICE')).toBe(true);
     });
+  });
+
+  it('mantiene el pago QR pendiente hasta que quien atiende confirma la recepción', () => {
+    const propios = (llamar('GET', '/billing/simulated/patient/charges', null, paciente).body as SimulatedChargesPage).items;
+    const cobro = propios.find((item) => item.source === 'CONSULTATION' && item.payment === null && item.plan === null && item.practitionerProfileId === medica.practitionerProfileId);
+    expect(cobro).toBeDefined();
+    const reserva = reservas.todos().find((item) => item.id === cobro!.sourceRef || item.appointmentId === cobro!.sourceRef)!;
+    const estadoAnterior = reserva.paymentState;
+    const importeAnterior = reserva.paymentAmount;
+    try {
+      const reportado = llamar('POST', `/billing/simulated/patient/charges/${cobro!.id}/report`, {}, paciente);
+      expect(reportado.status).toBe(201);
+      expect(reportado.body).toMatchObject({ payment: null, patientPaymentReport: { status: 'PENDING_CONFIRMATION', amount: cobro!.total } });
+      expect(llamar('GET', `/billing/simulated/payment-reports?patientProfileId=${paciente.patientProfileId}`, null, medica).body)
+        .toMatchObject({ items: [expect.objectContaining({ id: cobro!.id })] });
+
+      const confirmado = llamar('POST', `/billing/simulated/payment-reports/${cobro!.id}/confirm`, {}, medica);
+      expect(confirmado.status).toBe(200);
+      expect(confirmado.body).toMatchObject({ patientPaymentReport: { status: 'CONFIRMED' }, payment: { amount: cobro!.total } });
+      const conFinanzas = new MockRouter();
+      registrarFinanzas(conFinanzas);
+      const recibidos = llamar('GET', '/accounting/practitioner/paid-consultations', null, medica, conFinanzas).body as {
+        items: { appointmentId: string | null; paidTotal: string }[];
+      };
+      expect(recibidos.items).toContainEqual(expect.objectContaining({ appointmentId: reserva.appointmentId, paidTotal: cobro!.total }));
+      expect(llamar('POST', `/billing/simulated/payment-reports/${cobro!.id}/confirm`, {}, medica).status).toBe(412);
+    } finally {
+      reservas.actualizar(reserva.id, { paymentState: estadoAnterior, paymentAmount: importeAnterior });
+    }
   });
 
   describe('cobros', () => {

@@ -106,6 +106,8 @@ export class CobrosDelPaciente {
   protected readonly fechaYHora = fechaYHora;
   protected readonly datos = computed(() => dataOf(this.estado()));
   protected readonly cobros = computed(() => this.datos()?.cobros ?? []);
+  protected readonly pagosPorConfirmar = computed(() => this.cobros().filter((c) => c.patientPaymentReport?.status === 'PENDING_CONFIRMATION'));
+  protected readonly confirmandoPago = signal<string | null>(null);
   protected readonly filas = computed(() => ready(this.cobros()));
 
   /** El cobro cuyo plan está abierto; se busca por id para ver siempre el releído. */
@@ -205,6 +207,15 @@ export class CobrosDelPaciente {
 
   protected recargar(): void {
     this.intento.update((n) => n + 1);
+  }
+
+  protected confirmarPago(cobro: SimulatedCharge): void {
+    if (this.confirmandoPago() !== null) return;
+    this.confirmandoPago.set(cobro.id);
+    this.client.confirmPaymentReport(cobro.id).subscribe({
+      next: () => { this.confirmandoPago.set(null); this.recargar(); },
+      error: () => { this.confirmandoPago.set(null); this.recargar(); },
+    });
   }
 
   protected emisorDe(cobro: SimulatedCharge): SimulatedIssuer | null {

@@ -55,6 +55,22 @@
           <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
         </app-alert>
       }
+      @if (pagosPorConfirmar().length > 0) {
+        <section class="cobros__recibidos" aria-labelledby="cobros-recibidos-titulo" data-testid="pagos-recibidos">
+          <h3 id="cobros-recibidos-titulo">Recibidos · pendientes de confirmar</h3>
+          <p>La persona avisó que pagó por QR. Confirme cuando vea acreditado el dinero; todavía no cuenta como cobrado.</p>
+          <ul>
+            @for (pago of pagosPorConfirmar(); track pago.id) {
+              <li>
+                <span>{{ pago.patientName }} · {{ pago.description }} · {{ pago.patientPaymentReport?.amount }} Bs</span>
+                <button app-button type="button" variant="primary" size="sm" [isLoading]="confirmandoPago() === pago.id" (clicked)="confirmarPago(pago)">
+                  Confirmar recepción
+                </button>
+              </li>
+            }
+          </ul>
+        </section>
+      }
       @if (planAbierto(); as cobro) {
         <!-- ── El plan de un servicio con reconsultas ─────────────────────── -->
         <div class="cobros__plan">

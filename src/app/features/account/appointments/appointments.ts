@@ -66,6 +66,7 @@ import {
   reservaDelPortalRoute,
 } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
+import { SessionPayment } from './session-payment/session-payment';
 import { splitUpcomingAndPast } from './upcoming-and-past';
 
 /**
@@ -372,6 +373,7 @@ const SEDE_CUALQUIERA = 'cualquiera';
     AppButton,
     AppButtonLink,
     AppointmentCalendar,
+    SessionPayment,
     Badge,
     DatePipe,
     FormField,
@@ -746,6 +748,10 @@ export class Appointments {
   /** Desde el calendario el clic siempre abre: nunca cierra por segunda vez. */
   protected abrirDetalle(id: string): void {
     this.seleccionado.set(id);
+  }
+
+  protected alternarSesion(id: string): void {
+    this.seleccionado.update((actual) => actual === id ? null : id);
   }
 
   /* ---- mis turnos --------------------------------------------------------- */
