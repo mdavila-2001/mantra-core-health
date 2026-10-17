@@ -9,7 +9,7 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 export const NOMBRE_DE_CLASE: Readonly<Record<AccountClass, string>> = {
   ASSET: 'Activo',
   LIABILITY: 'Deuda',
-  EQUITY: 'Capital',
+  EQUITY: 'Capital propio',
   INCOME: 'Ingreso',
   EXPENSE: 'Gasto',
 };
@@ -21,6 +21,9 @@ export const OPCIONES_DE_CLASE: readonly SelectOption<AccountClass>[] = (
 /** Lo que cambia entre gasto, activo y deuda: los rótulos. El resto es igual. */
 export interface TextosDelRegistro {
   readonly singular: string;
+  readonly plural: string;
+  /** Qué está viendo en la pestaña, dicho para un médico. */
+  readonly explicacion: string;
   /** Con su artículo: «la deuda», no «el deuda». */
   readonly conArticulo: string;
   /** «quedó guardado» o «quedó guardada», según el género. */
@@ -35,6 +38,9 @@ export interface TextosDelRegistro {
 export const TEXTOS: Readonly<Record<RecordKind, TextosDelRegistro>> = {
   EXPENSE: {
     singular: 'gasto',
+    plural: 'gastos',
+    explicacion:
+      'Lo que paga para que el consultorio funcione: alquiler, insumos, luz, internet, sueldos. Cada gasto resta de su ganancia del mes.',
     conArticulo: 'el gasto',
     guardado: 'El gasto quedó guardado.',
     nuevo: 'Nuevo gasto',
@@ -45,6 +51,9 @@ export const TEXTOS: Readonly<Record<RecordKind, TextosDelRegistro>> = {
   },
   ASSET: {
     singular: 'activo',
+    plural: 'activos',
+    explicacion:
+      'Lo que el consultorio tiene y le sirve por años: equipos médicos, muebles, computadoras. No es un gasto del mes; es parte de lo que vale su consultorio.',
     conArticulo: 'el activo',
     guardado: 'El activo quedó guardado.',
     nuevo: 'Nuevo activo',
@@ -55,6 +64,9 @@ export const TEXTOS: Readonly<Record<RecordKind, TextosDelRegistro>> = {
   },
   DEBT: {
     singular: 'deuda',
+    plural: 'deudas',
+    explicacion:
+      'Lo que usted debe pagar a otros: un préstamo del banco, una cuenta con un proveedor, impuestos por pagar.',
     conArticulo: 'la deuda',
     guardado: 'La deuda quedó guardada.',
     nuevo: 'Nueva deuda',
@@ -112,3 +124,26 @@ export function montoNormalizado(escrito: string): string | null {
 export function montoEditable(monto: string): string {
   return monto.replace('.', ',');
 }
+
+/** «¿Qué significa cada cosa?», arriba de los registros. */
+export const GLOSARIO: readonly { readonly termino: string; readonly significado: string }[] = [
+  { termino: 'Gasto', significado: 'Dinero que paga para que el consultorio funcione. Resta de su ganancia.' },
+  { termino: 'Activo', significado: 'Algo que el consultorio tiene y usa por años, como un equipo. Suma a lo que vale su consultorio.' },
+  { termino: 'Deuda', significado: 'Dinero que usted debe pagar a otros, como un préstamo o un proveedor.' },
+  {
+    termino: 'Transacción',
+    significado: 'Dinero que pasa de una cuenta a otra, por ejemplo de la caja al banco.',
+  },
+  { termino: 'Debe', significado: 'La cuenta a la que llega el dinero.' },
+  { termino: 'Haber', significado: 'La cuenta de la que sale el dinero.' },
+  {
+    termino: 'Cuenta',
+    significado: 'Una categoría para ordenar el dinero: Caja, Banco, Alquiler, Insumos. Cada registro va a una cuenta.',
+  },
+];
+
+export const EXPLICACION_DE_TRANSACCIONES =
+  'Movimientos de dinero entre dos de sus cuentas; por ejemplo, depositar en el banco el efectivo de la caja. «Debe» es la cuenta a la que llega el dinero y «Haber», la cuenta de la que sale.';
+
+export const EXPLICACION_DE_CUENTAS =
+  'Las categorías con las que se ordena todo lo anterior. Las del sistema ya vienen creadas y se pueden renombrar; las que cree usted también se pueden borrar.';

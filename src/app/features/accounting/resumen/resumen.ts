@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,25 +6,23 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { toObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
 import { SessionStore } from '../../../core/auth/session.store';
+import { FlujoDeDinero } from '../flujo/flujo-de-dinero';
 import { ContabilidadSimple } from '../registros/registros';
-import { centavos, deCentavos } from '../../billing/cobros-en-pantalla';
 import type {
   BalanceSheet,
   FinancialStatementLine,
   FixedAssetRegister,
-  GeneralLedgerPage,
   IncomeStatement,
   LedgerAccount,
   OpenItem,
   OpenItemsPage,
-  PaidConsultation,
   Practice,
 } from '../../../core/data-access/accounting/accounting.types';
 import { describeApiFailure } from '../../../core/http/api-failure';
@@ -89,8 +86,8 @@ const NOMBRE_LLANO: Readonly<Record<string, string>> = {
  */
 const ACLARACION: Readonly<Record<string, string>> = {
   '5.5':
-    'No sale plata de su cuenta: es lo que sus equipos perdieron de valor este mes por usarlos.',
-  '5.6': 'Es sólo el interés del préstamo. La cuota que devuelve el capital no es un gasto.',
+    'No sale dinero de su cuenta: es el valor que sus equipos perdieron este mes por el uso.',
+  '5.6': 'Es solo el interés del préstamo. La parte de la cuota que devuelve el préstamo no es un gasto.',
 };
 
 /** Una línea de «en qué se te va la plata», lista para dibujar. */
@@ -215,12 +212,12 @@ interface Dinero {
   selector: 'app-accounting-resumen',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe,
     AppButton,
     AppButtonLink,
     Card,
     ContabilidadSimple,
     Chip,
+    FlujoDeDinero,
     FormField,
     PageHeader,
     RouterLink,
@@ -252,7 +249,7 @@ export class Resumen {
   private readonly recarga = signal(0);
   /** 0 = Resumen (tableros) · 1 = Registros (tablas con su alta). */
   readonly pestana = signal(0);
-  /** Subpestañas del Resumen: ingresos, pendientes, patrimonio y flujo de caja. */
+  /** Subpestañas del Resumen: ingresos y gastos, pendientes, bienes y deudas, flujo de dinero. */
   readonly subpestana = signal(0);
   readonly practicaElegida = signal<string | null>(null);
   private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
@@ -279,47 +276,6 @@ export class Resumen {
       : [];
   });
 
-  readonly cashAccountOptions = computed(() => {
-    const estado = this.dinero();
-    return estado.status === 'ready' || estado.status === 'stale'
-      ? estado.data.cuentas
-          .filter((cuenta) => cuenta.code === '1.1' || cuenta.code === '1.2')
-          .map((cuenta) => ({ value: cuenta.id, label: `${cuenta.code} · ${cuenta.name}` }))
-      : [];
-  });
-  readonly cashAccountSelected = signal<string | null>(null);
-  readonly cashAccountId = computed(() => {
-    const opciones = this.cashAccountOptions();
-    const elegido = this.cashAccountSelected();
-    return opciones.find((opcion) => opcion.value === elegido)?.value ?? opciones[0]?.value ?? null;
-  });
-  readonly cashFlow = toSignal(
-    toObservable(computed(() => ({ practiceId: this.practicaElegida(), accountId: this.cashAccountId(), tab: this.subpestana() }))).pipe(
-      switchMap(({ practiceId, accountId, tab }) =>
-        practiceId === null || accountId === null || tab !== 3
-          ? of(loading() as ViewState<GeneralLedgerPage>)
-          : this.accounting.generalLedger(practiceId, { accountId, limit: 500 }).pipe(
-              map((page) => ready(page)),
-              startWith(loading() as ViewState<GeneralLedgerPage>),
-              catchError((error: unknown) => of(errorToViewState<GeneralLedgerPage>(error))),
-            ),
-      ),
-    ),
-    { initialValue: loading() as ViewState<GeneralLedgerPage> },
-  );
-  readonly cashFlowTotals = computed(() => {
-    const estado = this.cashFlow();
-    if (estado.status !== 'ready') return null;
-    const entradas = estado.data.items.reduce((suma, item) => suma + centavos(item.debit), 0);
-    const salidas = estado.data.items.reduce((suma, item) => suma + centavos(item.credit), 0);
-    return {
-      entradas: deCentavos(entradas),
-      salidas: deCentavos(salidas),
-      neto: deCentavos(entradas - salidas),
-      hayMas: estado.data.nextCursor !== null,
-    };
-  });
-
   readonly opcionesDePractica = computed(() => {
     const estado = this.practicas();
     return estado.status !== 'ready' ? [] : estado.data.map((p) => ({ value: p.id, label: p.name }));
@@ -333,19 +289,6 @@ export class Resumen {
     return estado.status === 'ready' ? estado.data : null;
   });
 
-  /** Cobros ya confirmados pero aún sin asiento, para que no se pierdan del resumen. */
-  readonly pagosRecibidos = toSignal(
-    toObservable(this.practicaElegida).pipe(
-      switchMap((practiceId) => practiceId === null ? of([] as readonly PaidConsultation[]) :
-        this.accounting.listPaidConsultations(practiceId).pipe(catchError(() => of([] as readonly PaidConsultation[])))),
-    ),
-    { initialValue: [] as readonly PaidConsultation[] },
-  );
-
-  readonly totalPagosRecibidos = computed(() =>
-    deCentavos(this.pagosRecibidos().reduce((sum, item) => sum + centavos(item.paidTotal), 0)),
-  );
-
   /* ---- 1 · ¿Cuánto hiciste? ------------------------------------------------ */
 
   readonly tramos = computed<readonly Tramo[]>(() => {
@@ -355,7 +298,7 @@ export class Resumen {
     const semana = ventanasDeLaSemana(this.hoy);
     const mes = ventanasDelMes(this.hoy);
     return [
-      this.tramo('hoy', 'Hoy', 'Lo de este día', d.hoy, d.hoyPrevio, dia.rotuloPrevio, false),
+      this.tramo('hoy', 'Hoy', 'Desde la medianoche', d.hoy, d.hoyPrevio, dia.rotuloPrevio, false),
       this.tramo(
         'semana',
         'Esta semana',

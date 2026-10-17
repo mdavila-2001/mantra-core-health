@@ -16,342 +16,157 @@
    CONTENEDOR PRINCIPAL DEL MAPA
    ========================================================================== */
 .mapa {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: block;
   inline-size: 100%;
-  padding-block: var(--sp-4) var(--sp-10);
-  overflow: visible;
+  container: mapa / inline-size;
+  padding-block: var(--sp-6) var(--sp-10);
 }
 
 .mapa__grafo {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0;
   inline-size: 100%;
   max-inline-size: 78rem;
   margin-inline: auto;
 }
 
 /* ============================================================================
-   NODO CENTRAL EN ASTERISCO: ALOVIDA RED DE SALUD LATIENDO
+   NÚCLEO: LA MARCA EN UNA CÁPSULA
+   Todo dentro de su propia caja: nada se dibuja por fuera ni tapa el buscador.
    ========================================================================== */
 .mapa__centro {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin-block-end: 0;
-  z-index: 3;
+  inline-size: 100%;
 }
 
-/* Ondas circulares concéntricas de pulso / latido expansivo */
-.mapa__ondas {
-  position: absolute;
-  inset: 50%;
-  transform: translate(-50%, -50%);
-  inline-size: 14rem;
-  block-size: 14rem;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.mapa__onda {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--r-full);
-  border: 1.5px solid var(--st-primary-bd);
-  opacity: 0;
-  animation: pulso-onda-cardiaca 3.6s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
-}
-
-.mapa__onda--1 {
-  animation-delay: 0s;
-}
-
-.mapa__onda--2 {
-  animation-delay: 1.2s;
-}
-
-.mapa__onda--3 {
-  animation-delay: 2.4s;
-}
-
-@keyframes pulso-onda-cardiaca {
-  0% {
-    transform: scale(0.65);
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 0.35;
-  }
-  100% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-}
-
-/* Núcleo del nodo central: Cápsula / Escudo de salud */
 .mapa__nucleo {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
-  padding: var(--sp-4) var(--sp-7);
-  min-inline-size: 14rem;
-  border-radius: var(--r-2xl);
-  background: linear-gradient(145deg, var(--c-neutral-800) 0%, var(--c-neutral-900) 100%);
-  color: var(--bg-surface);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 16px 36px -8px rgba(11, 85, 126, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  backdrop-filter: blur(12px);
-  animation: latido-suave 2.8s ease-in-out infinite;
-}
-
-@keyframes latido-suave {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow:
-      0 16px 36px -8px rgba(11, 85, 126, 0.35),
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  }
-  14% {
-    transform: scale(1.03);
-    box-shadow:
-      0 20px 44px -6px rgba(11, 85, 126, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.25) inset;
-  }
-  28% {
-    transform: scale(1);
-  }
-  42% {
-    transform: scale(1.02);
-  }
-}
-
-/* Marca: Logo blanco y tipografía de AloVida */
-.mapa__marca {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-pill);
+  background: var(--brand-primary);
+  color: var(--text-on-brand, #ffffff);
+  box-shadow: 0 10px 24px -12px rgba(11, 85, 126, 0.55);
 }
 
 .mapa__alovida-logo {
   display: block;
   inline-size: 2.25rem;
   block-size: auto;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.mapa__textos {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
 }
 
 .mapa__alovida-rotulo {
+  font-family: var(--font-display);
   font-size: var(--fs-h3);
   font-weight: 700;
-  line-height: var(--lh-tight, 1.2);
-  letter-spacing: -0.02em;
-  color: var(--bg-surface);
+  letter-spacing: -0.01em;
 }
 
-/* Corazón latiendo con trazado electrocardiograma */
-.mapa__corazon-contenedor {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  margin-block: var(--sp-1);
+.mapa__alovida-sub {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .mapa__corazon-svg {
-  inline-size: 2.4rem;
-  block-size: 2.4rem;
-  overflow: visible;
-  animation: latido-cardiaco 1.4s ease-in-out infinite;
-  filter: drop-shadow(0 0 8px rgba(181, 83, 60, 0.6));
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  animation: latido-cardiaco 1.6s ease-in-out infinite;
 }
 
 .mapa__corazon-forma {
-  fill: var(--c-error-500);
-}
-
-.mapa__corazon-ecg {
-  fill: none;
-  stroke: var(--bg-surface);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 28;
-  stroke-dashoffset: 0;
-  animation: trazado-ecg 1.4s linear infinite;
+  fill: var(--c-error-400, #f07a63);
 }
 
 @keyframes latido-cardiaco {
-  0% {
+  0%,
+  50%,
+  100% {
     transform: scale(1);
   }
   12% {
-    transform: scale(1.22);
+    transform: scale(1.18);
   }
   24% {
     transform: scale(1.04);
   }
   36% {
-    transform: scale(1.14);
-  }
-  50% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1);
+    transform: scale(1.12);
   }
 }
 
-@keyframes trazado-ecg {
-  0% {
-    stroke-dashoffset: 28;
-    opacity: 0.3;
-  }
-  40% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  80% {
-    stroke-dashoffset: -28;
-    opacity: 0.6;
-  }
-  100% {
-    stroke-dashoffset: -28;
-    opacity: 0.2;
-  }
-}
-
-/* Rótulo inferior "Red de Salud" */
-.mapa__alovida-sub {
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--st-primary-bd);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 2px 10px;
-  border-radius: var(--r-full);
-}
-
-/* ============================================================================
-   RED / BUS DE DISTRIBUCIÓN
-   ========================================================================== */
-.mapa__distribuidor {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  inline-size: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
+/* Del núcleo baja un trazo corto a una línea que se desvanece a los lados:
+   separa la marca de las tarjetas sin apuntar a ninguna en particular. */
 .mapa__tallo {
+  display: block;
   inline-size: 2px;
-  block-size: 1.5rem;
-  background: linear-gradient(to bottom, var(--brand-primary), rgba(11, 85, 126, 0.45));
+  block-size: var(--sp-5);
+  background: var(--brand-primary);
+  opacity: 0.6;
 }
 
 .mapa__barra-horizontal {
-  inline-size: calc(100% - 6rem);
-  max-inline-size: 72rem;
-  block-size: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(11, 85, 126, 0.3) 8%,
-    var(--brand-primary) 50%,
-    rgba(11, 85, 126, 0.3) 92%,
-    transparent 100%
-  );
-  box-shadow: 0 0 8px rgba(11, 85, 126, 0.2);
-}
-
-/* En pantallas angostas el bus lineal se oculta para no cruzar el layout en columna */
-@media (max-width: 768px) {
-  .mapa__distribuidor {
-    display: none;
-  }
+  display: block;
+  inline-size: min(100%, 60rem);
+  block-size: 1px;
+  margin-block-end: var(--sp-6);
+  background: linear-gradient(90deg, transparent, var(--brand-primary) 50%, transparent);
+  opacity: 0.45;
 }
 
 /* ============================================================================
-   REJILLA DE NODOS PERIFÉRICOS (TARJETAS DE DIRECTORIO)
+   LAS TARJETAS
    ========================================================================== */
 .mapa__nodos {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-  gap: var(--sp-4);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-5);
   inline-size: 100%;
-  max-inline-size: 78rem;
   margin: 0;
   padding: 0;
   list-style: none;
-  justify-content: center;
 }
 
-/* Distribución simétrica de 5 columnas en monitores de escritorio */
-@media (min-width: 1024px) {
-  .mapa[data-total="5"] .mapa__nodos {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-/* Conector vertical y nodo terminal hacia cada tarjeta */
+/* Cuántas por fila lo decide el ancho real del mapa, no la ventana: cinco si
+   caben holgadas; si no, tres arriba y dos abajo; en una tableta, de a dos;
+   en el teléfono, una. Siempre centradas: nunca una sola colgando a la
+   izquierda. */
 .mapa__item {
-  position: relative;
   display: flex;
-  flex-direction: column;
+  flex: 0 1 calc((100% - 2 * var(--sp-5)) / 3);
+  min-inline-size: 0;
 }
 
-.mapa__conector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  inline-size: 100%;
-  block-size: 1.25rem;
-  pointer-events: none;
-}
-
-@media (max-width: 768px) {
-  .mapa__conector {
-    display: none;
+@container mapa (min-width: 72rem) {
+  .mapa__item {
+    flex-basis: calc((100% - 4 * var(--sp-5)) / 5);
   }
 }
 
-.mapa__conector-trazo {
-  inline-size: 2px;
-  block-size: 100%;
-  background: linear-gradient(to bottom, var(--brand-primary), var(--border-default));
+@container mapa (max-width: 46rem) {
+  .mapa__item {
+    flex-basis: calc((100% - var(--sp-5)) / 2);
+  }
 }
 
-.mapa__conector-nodo {
-  inline-size: 8px;
-  block-size: 8px;
-  border-radius: var(--r-full);
-  background: var(--brand-primary);
-  box-shadow: 0 0 6px var(--brand-primary);
-  margin-block-start: -4px;
-  z-index: 2;
-  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard);
-}
-
-.mapa__item:hover .mapa__conector-nodo {
-  transform: scale(1.4);
-  box-shadow: 0 0 12px var(--brand-primary);
+@container mapa (max-width: 30rem) {
+  .mapa__item {
+    flex-basis: 100%;
+  }
 }
 
 /* ============================================================================
@@ -379,7 +194,7 @@
 }
 
 .rejilla__tarjeta:hover {
-  transform: translateY(-6px);
+  transform: translateY(-3px);
   border-color: var(--brand-primary);
   box-shadow:
     0 20px 40px -10px rgba(11, 85, 126, 0.22),
@@ -511,9 +326,14 @@
 }
 
 /* Calificación con estrellas doradas */
+/* Estrellas y nota en una línea; cuántas opiniones, en la de abajo y entera.
+   Igual en las cinco tarjetas: antes se partía distinto en cada una. */
 .rejilla__calificacion {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 2px;
+  align-items: baseline;
+  white-space: nowrap;
   gap: var(--sp-1);
   margin-block-start: 2px;
 }
@@ -533,9 +353,9 @@
 }
 
 .rejilla__opiniones {
+  flex-basis: 100%;
   font-size: 0.75rem;
   color: var(--text-secondary);
-  margin-inline-start: 2px;
 }
 
 /* Resumen */
@@ -613,10 +433,7 @@
    ACCESIBILIDAD Y PREFERENCIA DE MOVIMIENTO REDUCIDO
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .mapa__nucleo,
-  .mapa__onda,
-  .mapa__corazon-svg,
-  .mapa__corazon-ecg {
+  .mapa__corazon-svg {
     animation: none;
   }
 

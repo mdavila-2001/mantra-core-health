@@ -4,9 +4,11 @@ import {
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -181,6 +183,18 @@ export class Messaging {
     this.store.iniciar();
     inject(DestroyRef).onDestroy(() => this.store.detener());
 
+    // El carril de filtros nace cuando se resuelve el perfil: se mide al
+    // aparecer y cada vez que cambia de ancho, para prender las flechas justas.
+    effect((onCleanup) => {
+      const el = this.carril()?.nativeElement;
+      if (el === undefined) return;
+      untracked(() => this.medirCarril());
+      if (typeof ResizeObserver === 'undefined') return;
+      const observador = new ResizeObserver(() => this.medirCarril());
+      observador.observe(el);
+      onCleanup(() => observador.disconnect());
+    });
+
     // Al directorio se le pregunta cuando la persona dejó de escribir: una
     // petición por tecla contra un buscador que atraviesa todos los tenants es
     // ruido para el servidor y resultados que parpadean para quien mira.
@@ -235,6 +249,27 @@ export class Messaging {
   protected limpiarBusqueda(): void {
     this.consulta.set('');
     this.store.limpiarBusqueda();
+  }
+
+  /* ---- el carril de filtros, paginado con flechas ---------------------- */
+
+  private readonly carril = viewChild<ElementRef<HTMLElement>>('carril');
+  protected readonly puedeRetroceder = signal(false);
+  protected readonly puedeAvanzar = signal(false);
+
+  /** Prende o apaga cada flecha según dónde quedó el carril. */
+  protected medirCarril(): void {
+    const el = this.carril()?.nativeElement;
+    if (el === undefined) return;
+    this.puedeRetroceder.set(el.scrollLeft > 1);
+    this.puedeAvanzar.set(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }
+
+  /** Una «página» de filtros: lo que se ve del carril, menos un chip de solapa. */
+  protected pasarFiltros(sentido: 1 | -1): void {
+    const el = this.carril()?.nativeElement;
+    if (el === undefined) return;
+    el.scrollBy({ left: sentido * Math.max(el.clientWidth - 48, 48), behavior: 'smooth' });
   }
 
   protected elegirFiltro(filtro: Filtro): void {

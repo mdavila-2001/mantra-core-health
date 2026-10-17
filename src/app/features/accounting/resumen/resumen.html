@@ -3,14 +3,14 @@
      Ver el JSDoc de `Resumen` para el porqué de cada decisión. -->
 <app-page-header
   title="Contabilidad"
-  subtitle="Cuánto entró, en qué se le va, quién le debe y a quién le debe."
+  subtitle="Cuánto ingresó, en qué gastó, qué le deben y qué tiene que pagar."
 />
 
 <!-- La práctica sólo se pregunta si hay más de una. Con una sola, el selector
      es una pregunta cuya respuesta ya sabemos. -->
 @if (hayVariasPracticas()) {
   <div class="eleccion">
-    <app-form-field icon="building" label="Consultorio" hint="Los números son los de este consultorio">
+    <app-form-field icon="building" label="Consultorio" hint="Las cifras corresponden a este consultorio">
       <app-select
         [options]="opcionesDePractica()"
         [(value)]="practicaElegida"
@@ -42,10 +42,10 @@
                      Los tres tramos a la vez y sin tocar nada: era la primera de las
                      cuatro cosas que el propietario pidió ver. -->
                 <section class="bloque" aria-labelledby="titulo-cuanto">
-                  <app-section-heading icono="chart" titulo="¿Cuánto hizo?" id="titulo-cuanto" />
+                  <app-section-heading icono="chart" titulo="¿Cuánto ganó?" id="titulo-cuanto" />
                   <p class="bloque__bajada">
-                    Lo que ya está registrado en sus libros. Lo que cobró y todavía no
-                    registró no entra acá todavía.
+                    Lo que ingresó, lo que gastó y lo que le quedó hoy, esta semana y este
+                    mes. Solo se cuenta lo que ya está registrado.
                   </p>
 
                   <div class="tramos">
@@ -61,7 +61,7 @@
                         </p>
 
                         <p class="tramo__cifra">{{ importe(t.entro) }}</p>
-                        <p class="tramo__pie">entró</p>
+                        <p class="tramo__pie">ingresó</p>
 
                         @if (t.comparacion; as c) {
                           <p
@@ -83,18 +83,18 @@
 
                         <dl class="tramo__cuentas">
                           <div class="tramo__cuenta">
-                            <dt>Se fue en gastos</dt>
+                            <dt>Gastó</dt>
                             <dd>{{ importe(t.salio) }}</dd>
                           </div>
                           <div class="tramo__cuenta tramo__cuenta--total">
-                            <dt>Le quedó</dt>
+                            <dt>Ganancia</dt>
                             <dd [class.tramo__negativo]="negativo(t.quedo)">{{ importe(t.quedo) }}</dd>
                           </div>
                         </dl>
 
                         @if (negativo(t.quedo)) {
                           <p class="tramo__alerta">
-                            Gastó más de lo que entró. Mire abajo en qué se le fue.
+                            Gastó más de lo que ingresó. Revise abajo en qué gastó.
                           </p>
                         }
                       </app-card>
@@ -102,10 +102,13 @@
                   </div>
                 </section>
 
-                <!-- ═══ 2 · ¿En qué se le va? ═════════════════════════════════════ -->
+                <!-- ═══ 2 · ¿En qué gasta? ════════════════════════════════════════ -->
                 <section class="bloque" aria-labelledby="titulo-gastos">
-                  <app-section-heading icono="billing" titulo="¿En qué se le va la plata?" id="titulo-gastos" />
-                  <p class="bloque__bajada">Sus gastos de este mes, del más grande al más chico.</p>
+                  <app-section-heading icono="billing" titulo="¿En qué gasta?" id="titulo-gastos" />
+                  <p class="bloque__bajada">
+                    Sus gastos de este mes, del mayor al menor, y de dónde vinieron sus
+                    ingresos.
+                  </p>
 
                   <div class="dos-columnas">
                     <app-card class="panel" data-testid="panel-gastos">
@@ -115,12 +118,12 @@
                       </div>
 
                       @if (gastosDelMes().length === 0) {
-                        <p class="nota">Todavía no hay gastos registrados este mes.</p>
+                        <p class="nota">Este mes todavía no registró gastos.</p>
                       } @else {
                         @if (gastoMasGrande(); as mayor) {
                           <p class="panel__lectura">
-                            Lo que más le cuesta es <strong>{{ mayor.nombre }}</strong
-                            >: se lleva el {{ mayor.porcentaje }}% de sus gastos del mes.
+                            Su mayor gasto es <strong>{{ mayor.nombre }}</strong
+                            >: representa el {{ mayor.porcentaje }} % de lo que gastó este mes.
                           </p>
                         }
 
@@ -149,12 +152,12 @@
 
                     <app-card class="panel" data-testid="panel-ingresos">
                       <div class="panel__cabecera">
-                        <h3 class="panel__titulo">De dónde vino</h3>
+                        <h3 class="panel__titulo">Ingresos del mes</h3>
                         <p class="panel__total">{{ importe(d.mes.totalRevenue) }}</p>
                       </div>
 
                       @if (ingresosDelMes().length === 0) {
-                        <p class="nota">Todavía no hay ingresos registrados este mes.</p>
+                        <p class="nota">Este mes todavía no registró ingresos.</p>
                       } @else {
                         <ul class="barras">
                           @for (i of ingresosDelMes(); track i.id) {
@@ -176,45 +179,25 @@
                       }
                     </app-card>
                   </div>
-                  <app-card class="panel panel--recibidos" data-testid="pagos-confirmados-contabilidad">
-                    <div class="panel__cabecera">
-                      <h3 class="panel__titulo">Pagos recibidos y confirmados</h3>
-                      <p class="panel__total">{{ importe(totalPagosRecibidos()) }}</p>
-                    </div>
-                    <p class="panel__lectura">Pagos de consultas confirmados como recibidos. Revise los libros para ver cuáles ya fueron registrados.</p>
-                    @if (pagosRecibidos().length === 0) {
-                      <p class="nota">No hay pagos confirmados de consultas.</p>
-                    } @else {
-                      <ul class="equipos">
-                        @for (pago of pagosRecibidos(); track pago.invoiceId) {
-                          <li class="equipo">
-                            <span class="equipo__nombre">{{ pago.invoiceNumber }} · {{ pago.issueDate | date: 'dd/MM/yyyy' }}</span>
-                            <app-chip variant="success" size="sm">Recibido</app-chip>
-                            <span class="equipo__valor">{{ importe(pago.paidTotal) }}</span>
-                          </li>
-                        }
-                      </ul>
-                    }
-                  </app-card>
                 </section>
               </app-tab>
 
               <app-tab label="Pendientes">
-                <!-- ═══ 3 · ¿Quién te debe y a quién le debés? ════════════════════════
+                <!-- ═══ 3 · ¿Quién le debe y a quién le debe? ════════════════════════
                      Las dos preguntas van juntas y en paralelo: son la misma pregunta
                      mirada desde los dos lados, y ponerlas en pantallas distintas obliga
                      a recordar un número para compararlo con el otro. -->
                 <section class="bloque" aria-labelledby="titulo-pendientes">
-                  <app-section-heading icono="clipboard" titulo="Lo que está pendiente" id="titulo-pendientes" />
+                  <app-section-heading icono="clipboard" titulo="Cobros y pagos pendientes" id="titulo-pendientes" />
                   <p class="bloque__bajada">
-                    Facturas que quedaron abiertas: las que le tienen que pagar y las que
-                    tiene que pagar usted.
+                    Facturas que todavía no se cobraron o no se pagaron. Cuando se salde
+                    una, márquela aquí y el dinero se anota en la cuenta que elija.
                   </p>
 
                   <app-form-field
                     class="cuenta-de-cobro"
-                    label="Cuenta del dinero"
-                    hint="Donde entran los cobros y de donde salen los pagos que marque como saldados."
+                    label="Cuenta donde entra o sale el dinero"
+                    hint="Elija Caja si fue en efectivo o Banco si fue por transferencia."
                   >
                     <app-select
                       testId="cuenta-de-cobro"
@@ -227,22 +210,22 @@
                   <div class="dos-columnas">
                     <app-card class="panel panel--cobrar">
                       <div class="panel__cabecera">
-                        <h3 class="panel__titulo">Le deben</h3>
+                        <h3 class="panel__titulo">Por cobrar</h3>
                         <p class="panel__total">{{ importe(d.partidas.totalReceivable) }}</p>
                       </div>
                       <p class="panel__lectura">
                         @if (teDeben().length === 0) {
-                          Nadie le debe nada. Todo cobrado.
+                          Nadie le debe. Todo está cobrado.
                         } @else if (vencidasQueTeDeben() > 0) {
                           {{ teDeben().length }}
-                          {{ teDeben().length === 1 ? 'factura abierta' : 'facturas abiertas' }} ·
+                          {{ teDeben().length === 1 ? 'factura pendiente' : 'facturas pendientes' }} ·
                           <strong
                             >{{ vencidasQueTeDeben() }} ya
                             {{ vencidasQueTeDeben() === 1 ? 'venció' : 'vencieron' }}</strong
                           >
                         } @else {
                           {{ teDeben().length }}
-                          {{ teDeben().length === 1 ? 'factura abierta' : 'facturas abiertas' }}, ninguna
+                          {{ teDeben().length === 1 ? 'factura pendiente' : 'facturas pendientes' }}, ninguna
                           vencida.
                         }
                       </p>
@@ -272,7 +255,7 @@
                                 [disabled]="saldando() !== null || settlementAccount() === null"
                                 (click)="saldar(p, 'cobro')"
                               >
-                                Ya me pagaron
+                                Marcar como cobrada
                               </button>
                             </li>
                           }
@@ -282,23 +265,23 @@
 
                     <app-card class="panel panel--pagar">
                       <div class="panel__cabecera">
-                        <h3 class="panel__titulo">Tiene que pagar</h3>
+                        <h3 class="panel__titulo">Por pagar</h3>
                         <p class="panel__total">{{ importe(d.partidas.totalPayable) }}</p>
                       </div>
                       <p class="panel__lectura">
                         @if (tenesQuePagar().length === 0) {
-                          No debe nada. Todo pagado.
+                          No tiene pagos pendientes.
                         } @else if (vencidasQueDebes() > 0) {
                           {{ tenesQuePagar().length }}
-                          {{ tenesQuePagar().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }} ·
+                          {{ tenesQuePagar().length === 1 ? 'pago pendiente' : 'pagos pendientes' }} ·
                           <strong
                             >{{ vencidasQueDebes() }} ya
                             {{ vencidasQueDebes() === 1 ? 'venció' : 'vencieron' }}</strong
                           >
                         } @else {
                           {{ tenesQuePagar().length }}
-                          {{ tenesQuePagar().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }}, ninguna
-                          vencida.
+                          {{ tenesQuePagar().length === 1 ? 'pago pendiente' : 'pagos pendientes' }}, ninguno
+                          vencido.
                         }
                       </p>
 
@@ -327,7 +310,7 @@
                                 [disabled]="saldando() !== null || settlementAccount() === null"
                                 (click)="saldar(p, 'pago')"
                               >
-                                Ya lo pagué
+                                Marcar como pagada
                               </button>
                             </li>
                           }
@@ -338,20 +321,20 @@
                 </section>
               </app-tab>
 
-              <app-tab label="Activos y pasivos">
-                <!-- ═══ 4 · ¿Qué tenés y qué debés? ═══════════════════════════════════
+              <app-tab label="Bienes y deudas">
+                <!-- ═══ 4 · ¿Qué tiene y qué debe? ═══════════════════════════════════
                      Activos y pasivos, que hasta el 19/09/2026 eran una entrada suelta
                      del menú. El propietario pidió que estuvieran dentro de Contabilidad:
                      son la foto del consultorio, y la foto se mira junto al movimiento. -->
                 <section class="bloque" aria-labelledby="titulo-patrimonio">
                   <app-section-heading
                     icono="briefcase"
-                    titulo="Activos y pasivos"
+                    titulo="Bienes y deudas"
                     id="titulo-patrimonio"
                   />
                   <p class="bloque__bajada">
-                    La foto del consultorio hoy, sin importar cuándo entró o salió cada
-                    boliviano.
+                    Cuánto vale hoy su consultorio: el dinero, los equipos y lo que le
+                    deben, menos lo que usted debe.
                   </p>
 
                   <div class="patrimonio">
@@ -359,7 +342,7 @@
                       <p class="patrimonio__rotulo">Lo que tiene</p>
                       <p class="patrimonio__cifra">{{ importe(d.situacion.totalAssets) }}</p>
                       <p class="patrimonio__pie">
-                        Plata en caja y en el banco, lo que le deben, y sus equipos.
+                        Dinero en caja y en el banco, cobros pendientes y sus equipos.
                       </p>
                     </app-card>
 
@@ -370,7 +353,7 @@
                     </app-card>
 
                     <app-card class="patrimonio__tile patrimonio__tile--neto" variant="elevated">
-                      <p class="patrimonio__rotulo">Le queda suyo</p>
+                      <p class="patrimonio__rotulo">Patrimonio</p>
                       <p
                         class="patrimonio__cifra"
                         [class.patrimonio__cifra--negativa]="negativo(d.situacion.totalEquity)"
@@ -378,8 +361,8 @@
                         {{ importe(d.situacion.totalEquity) }}
                       </p>
                       <p class="patrimonio__pie">
-                        Lo que quedaría si cobrara todo lo que le deben y pagara todo lo que
-                        debe.
+                        Lo que le quedaría si cobrara todo lo pendiente y pagara todas sus
+                        deudas.
                       </p>
                     </app-card>
                   </div>
@@ -391,9 +374,10 @@
                         <p class="panel__total">{{ importe(d.equipos.totalNetBookValue) }}</p>
                       </div>
                       <p class="panel__lectura">
-                        Lo que valen hoy, ya descontado el uso. Este mes se desgastan
-                        <strong>{{ importe(d.equipos.monthlyCharge) }}</strong> — no sale plata de
-                        su cuenta, pero es un costo real que ya está contado arriba.
+                        Su valor actual, ya descontado el desgaste por uso. Este mes se
+                        desgastan <strong>{{ importe(d.equipos.monthlyCharge) }}</strong>: no sale
+                        dinero de su cuenta, pero es un costo real y ya está incluido en sus
+                        gastos.
                       </p>
                       <ul class="equipos">
                         @for (e of equiposConValor(); track e.id) {
@@ -414,48 +398,29 @@
                       routerLink="/administration/accounting/assets-liabilities"
                       data-testid="go-to-assets-liabilities"
                     >
-                      Dar de alta un equipo o un préstamo
+                      Registrar un equipo o un préstamo
                     </a>
                     <span class="patrimonio__nota">
-                      Ahí se cargan los equipos que compra y las deudas que toma, y se
-                      registra cada cuota.
+                      Allí se registran los equipos que compra, los préstamos que toma y
+                      cada cuota que paga.
                     </span>
                   </p>
                 </section>
               </app-tab>
 
               <app-tab label="Flujo de dinero">
-                <section class="bloque" aria-labelledby="titulo-flujo-dinero">
-                  <app-section-heading icono="billing" titulo="Flujo de dinero" id="titulo-flujo-dinero" />
-                  <p class="bloque__bajada">Entradas, salidas y saldo neto de una cuenta de caja o banco, según los movimientos registrados en el libro mayor.</p>
-                  <app-form-field class="cuenta-de-cobro" label="Cuenta de caja o banco">
-                    <app-select
-                      [options]="cashAccountOptions()"
-                      [value]="cashAccountId()"
-                      (valueChange)="cashAccountSelected.set($event)"
-                      placeholder="Elija una cuenta"
-                    />
-                  </app-form-field>
-                  @if (cashFlowTotals(); as flujo) {
-                    <app-card class="panel" data-testid="flujo-de-dinero">
-                      <dl class="tramo__cuentas">
-                        <div class="tramo__cuenta"><dt>Entró</dt><dd>{{ importe(flujo.entradas) }}</dd></div>
-                        <div class="tramo__cuenta"><dt>Salió</dt><dd>{{ importe(flujo.salidas) }}</dd></div>
-                        <div class="tramo__cuenta tramo__cuenta--total"><dt>Flujo neto</dt><dd>{{ importe(flujo.neto) }}</dd></div>
-                      </dl>
-                      @if (flujo.hayMas) {
-                        <p class="nota">Se muestran los primeros 500 movimientos. Consulte el libro mayor para ver el resto.</p>
-                      }
-                    </app-card>
-                  } @else if (cashFlow().status === 'error') {
-                    <p role="alert">No pudimos cargar el flujo de dinero. Vuelva a abrir esta pestaña para reintentar.</p>
-                  } @else {
-                    <p role="status">Cargando los movimientos de la cuenta…</p>
-                  }
-                  <p class="patrimonio__acceso">
-                    <a app-button variant="outline" routerLink="/administration/accounting/libros">Ver movimientos de caja y banco</a>
-                  </p>
-                </section>
+                @if (subpestana() === 3) {
+                  <section class="bloque" aria-labelledby="titulo-flujo-dinero">
+                    <app-section-heading icono="wallet" titulo="Flujo de dinero" id="titulo-flujo-dinero" />
+                    <p class="bloque__bajada">
+                      Lo que entró y salió de su caja y su banco, con la factura o el
+                      comprobante que respalda cada movimiento.
+                    </p>
+                    @if (practicaElegida(); as practica) {
+                      <app-flujo-de-dinero [practiceId]="practica" [cuentas]="d.cuentas" />
+                    }
+                  </section>
+                }
               </app-tab>
             </app-tabs>
 
@@ -464,10 +429,11 @@
                  al pie y con su nombre técnico, que es donde los busca quien los
                  necesita — y donde no molestan a quien no. -->
             <section class="bloque bloque--pie" aria-labelledby="titulo-contable">
-              <h2 class="pie__titulo" id="titulo-contable">¿Lleva usted la contabilidad?</h2>
+              <h2 class="pie__titulo" id="titulo-contable">Para su contador</h2>
               <p class="pie__bajada">
-                El detalle contable está entero: el estado del ejercicio, los documentos
-                frenados en el flujo, la cartera por antigüedad y el cierre del período.
+                Los informes contables completos: estado de resultados, documentos
+                pendientes de aprobación, antigüedad de las cuentas por cobrar y cierre
+                del período.
               </p>
               <p class="pie__acciones">
                 <a app-button variant="outline" routerLink="/administration/accounting/cockpit">

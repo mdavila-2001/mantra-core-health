@@ -15,64 +15,35 @@
 >
   <div slot="portada" class="mapa mapa--asterisco" [attr.data-total]="nodosVisibles().length">
     <div class="mapa__grafo">
-      <!-- Nodo central en asterisco: AloVida latiendo con corazón y pulso cardíaco -->
+      <!-- El núcleo: la marca en una cápsula, con el corazón que late. Sin
+           ondas alrededor: crecían por encima del buscador y del título
+           (propietario, 17/10/2026). -->
       <div class="mapa__centro" aria-hidden="true">
-        <div class="mapa__ondas" aria-hidden="true">
-          <span class="mapa__onda mapa__onda--1"></span>
-          <span class="mapa__onda mapa__onda--2"></span>
-          <span class="mapa__onda mapa__onda--3"></span>
-        </div>
-
         <div class="mapa__nucleo">
-          <!-- Logo AloVida -->
-          <div class="mapa__marca">
-            <img
-              class="mapa__alovida-logo"
-              src="/alovida/imagenes/alovida-logo-blanco.svg"
-              alt=""
-              width="44"
-              height="32"
-            />
+          <img
+            class="mapa__alovida-logo"
+            src="/alovida/imagenes/alovida-logo-blanco.svg"
+            alt=""
+            width="36"
+            height="26"
+          />
+          <span class="mapa__textos">
             <span class="mapa__alovida-rotulo">AloVida</span>
-          </div>
-
-          <!-- Corazón latiendo con trazado electrocardiograma -->
-          <div class="mapa__corazon-contenedor">
-            <svg
-              class="mapa__corazon-svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <!-- Silueta del corazón -->
-              <path
-                class="mapa__corazon-forma"
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-              />
-              <!-- Línea del latido / trazado cardíaco -->
-              <path
-                class="mapa__corazon-ecg"
-                d="M5.2 12h2.5l1.5-3.2 2.2 6.8 1.8-4.6 1.1 1.8h4.5"
-                stroke="var(--bg-surface)"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </div>
-
-          <span class="mapa__alovida-sub">Red de Salud</span>
+            <span class="mapa__alovida-sub">Red de salud</span>
+          </span>
+          <svg class="mapa__corazon-svg" viewBox="0 0 24 24" fill="none" focusable="false">
+            <path
+              class="mapa__corazon-forma"
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+            />
+          </svg>
         </div>
-
+        <span class="mapa__tallo"></span>
+        <span class="mapa__barra-horizontal"></span>
       </div>
 
-      <!-- Red / Bus de distribución que conecta el núcleo central con los directorios -->
-      <div class="mapa__distribuidor" aria-hidden="true">
-        <div class="mapa__tallo"></div>
-        <div class="mapa__barra-horizontal"></div>
-      </div>
-
-      <!-- Tarjetas de los directorios distribuidas de forma ultra estética -->
+      <!-- Los directorios: tarjetas del mismo ancho, centradas, que pasan a la
+           fila siguiente cuando no entran en vez de apretarse. -->
       <ul class="rejilla mapa__nodos">
         @for (nodo of nodosVisibles(); track nodo.path; let idx = $index) {
           <li
@@ -80,12 +51,6 @@
             [attr.data-path]="nodo.path"
             [attr.data-pos]="posicionDe(nodo.path, idx)"
           >
-            <!-- Conector desde la barra horizontal al nodo de la tarjeta -->
-            <div class="mapa__conector" aria-hidden="true">
-              <span class="mapa__conector-trazo"></span>
-              <span class="mapa__conector-nodo"></span>
-            </div>
-
             <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
               <!-- Cabecera de la tarjeta: Foto con badges y métrica flotante -->
               <div class="rejilla__cabecera">

@@ -1016,15 +1016,14 @@ export function registrarFinanzas(router: MockRouter): void {
       .filter((a) => (from === null || a.transactionDate >= from) && (to === null || a.transactionDate <= to))
       .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
       .slice(0, limit)
-      .map(({ lines: _l, practiceId: _p, description: _d, ...a }) => a);
+      .map(({ lines: _l, practiceId: _p, ...a }) => a);
     return { items, count: items.length, limit };
   });
 
   router.get('/accounting/journal-transactions/:id', ({ params }) => {
     const a = asientos.get(params['id']!);
     if (a === undefined) return notFound('Asiento no encontrado');
-    const { description: _d, ...resto } = a;
-    return resto;
+    return a;
   });
 
   const publicar = (borrador: boolean) => (request: { body: unknown }) => {

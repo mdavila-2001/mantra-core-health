@@ -16,12 +16,16 @@
   position: relative;
 }
 
+/* Rejilla fija: avatar y texto, 72 px de alto en todas las filas. El texto
+   se corta con puntos suspensivos; nunca ensancha la fila. */
 .conversaciones__item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--e3);
   padding: var(--e2) var(--e4);
-  min-block-size: 72px;
+  block-size: 72px;
+  box-sizing: border-box;
   color: inherit;
   text-decoration: none;
   transition: background var(--mov-rapido) var(--curva);
