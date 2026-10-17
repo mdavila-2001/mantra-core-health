@@ -22,6 +22,7 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
+import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
@@ -77,6 +78,9 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
   private readonly formTracing = inject(FormTracing);
 
+  /** La cuenta local de desarrollo, o `null` en producción (ver `local-login-hint.ts`). */
+  protected readonly localHint = localLoginHint();
+
   readonly form = new FormGroup({
     identifier: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -116,6 +120,12 @@ export class Login {
     }
     return null;
   });
+
+  /** Rellena el formulario con la cuenta local; no envía: entrar sigue siendo un clic. */
+  protected usarCuentaLocal(cuenta: LocalLoginHint): void {
+    this.form.patchValue({ identifier: cuenta.identifier, password: cuenta.password });
+    this.form.markAsDirty();
+  }
 
   submit(): void {
     if (this.form.invalid || this.isSubmitting()) {

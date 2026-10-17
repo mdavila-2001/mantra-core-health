@@ -1,6 +1,6 @@
 # Reporte — Superadministración de AloVida (lado front)
 
-> **AVANCE: 29 / 33 — 87,9 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6, H6.1–5. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
+> **AVANCE: 30 / 35 — 85,7 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6, H6.1–5, H8.1. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
 
 - Fecha: 2026-10-17 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude-marcelo/serene-planck-1q7zje`
 - Peldaño de evidencia alcanzado: **`VERIFIED` local** para la portada «Observabilidad» y las redirecciones: se ejercitaron en navegador contra el front y la **API real** (PostgreSQL 16 descartable, tráfico HTTP real) y se miraron 60 capturas. **No** `REGRESSION_VERIFIED`: no se corrió la suite completa ni se probó el perfil `paciente`.
@@ -28,6 +28,13 @@
 | H6.5 | **Mutación de punta a punta, real:** el admin completa las tres pestañas → `POST` 201 sin `password` → la pantalla muestra el código y la matrícula `PENDING` → el médico activa su cuenta en `/auth/activate` con ese código → inicia sesión (`/dashboard`) → SQL: usuario, 1 credencial, perfil `PRACT_VERIF_PENDING`, matrícula `AUTH_PENDING`, especialidad, rol `CLINICIAN`; el alta con el mismo correo da 409, se explica en pantalla, conserva lo escrito y **no** crea un segundo usuario | `node playwright/superadmin-registrar-medico.mjs` (`E2E_MODO=real`) | 6/6 combinaciones (3 anchos × 2 temas) sin fallos; 28 capturas **miradas**; tarjeta centrada (40/40 px) y a lo ancho (93 %) · `evidencia/H6-playwright-real.log`, `H6-persistencia-sql.txt` |
 
 Defectos hallados al probar y corregidos: 36 casillas de especialidad en vertical (pasó al patrón de selectores repetibles del registro del médico); migas de pan sin escalón propio; un choque de nombre entre el catálogo inyectado y la señal de especialidades.
+
+### H8 — Credenciales locales en el login
+| ID | Qué se logró | Comando | Resultado |
+|---|---|---|---|
+| H8.1 | El login de `dev` muestra, sólo en modo desarrollo, «Cuenta de administración local» con `admin@alovidasalud.com` y `12345678` escritos y un botón que **rellena sin enviar**. Gobernado por `ngDevMode`: el compilador lo fija en `false` en producción y el literal desaparece | `yarn ng test --include 'auth/login/**'` (17 verdes), `ng build --configuration production` + `grep` (0 archivos con el correo), `node playwright/login-cuenta-local.mjs` contra la API real | 6/6 combinaciones (3 anchos × 2 temas) sin desborde ni errores de consola; en escritorio claro: rellenar no envía, «Entrar» inicia sesión y llega a `/dashboard`; capturas miradas · `evidencia/H8-gates.log`, `H8-login-cuenta-local-real.log` |
+
+**No cubierto (H8):** un despliegue de desarrollo armado en modo producción **no** muestra el recuadro (decisión pendiente: una variable `PUBLIC_*` publicaría la clave); no se corrió la suite completa ni se probó el recuadro con lector de pantalla (axe automático no se agregó a esta pantalla).
 
 ## A medias
 ### H0.3.3 — Menú del perfil `paciente`

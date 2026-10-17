@@ -1,0 +1,10 @@
+$ yarn typecheck
+exit=0 (sin líneas error TS)
+$ yarn eslint src/app/features/auth/login playwright/login-cuenta-local.mjs
+exit=0
+$ yarn ng test --include login/**
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+$ ng build --configuration production  (exit 0, 1m45s) → grep en dist/
+admin@alovidasalud.com en el build de producción: 0 archivos
+(la plantilla compilada conserva el texto del botón, pero el recuadro no se dibuja porque localHint es null, y no contiene credenciales)
