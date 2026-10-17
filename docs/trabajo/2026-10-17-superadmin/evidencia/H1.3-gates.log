@@ -1,0 +1,321 @@
+=== node scripts/check-api-contract-drift.mjs
+
+✗ check-api-contract-drift
+
+  21 operación(es) que el código llama y la documentación no declara:
+    GET /admin/ops/traffic
+    GET /admin/ops/traffic/endpoints
+    GET /identity/verification-cases/:caseId
+    GET /insurance/my-claims
+    GET /insurance/patients/options
+    GET /pharmacy/catalog-products
+    GET /scheduling/service-availability
+    GET /scheduling/service-offerings
+    GET /tenants/:tenantId/logo
+    GET /tenants/:tenantId/logo/content
+    GET /terminology/concepts/:conceptId/glossary-article
+    GET /terminology/concepts/:conceptId/glossary-neighborhood
+    PATCH /scheduling/service-offerings/:id
+    POST /community/conversations/contacts/search
+    POST /iam/auth/upload-registration-signature-image
+    POST /insurance/patients/conversation
+    POST /insurance/patients/search
+    POST /scheduling/service-offerings
+    POST /scheduling/service-offerings/:offeringId/holds
+    PUT /practitioners/me/sites/:siteId/contact-phone
+    PUT /tenants/:tenantId/logo
+
+  20 operación(es) declarada(s) que el código no llama:
+    DELETE /accounting/practitioner/simple/accounts/:id
+    DELETE /accounting/practitioner/simple/records/:id
+    DELETE /accounting/practitioner/simple/transactions/:id
+    DELETE /insurance-plans/:planId
+    GET /pharmacies/:pharmacyId/inventory
+    PATCH /forms/field-definitions/:fieldId
+    PATCH /pharmacies/:pharmacyId/products/:productId
+    PATCH /profiles/practitioners/me
+    POST /accounting/practitioner/simple/accounts
+    POST /accounting/practitioner/simple/records
+    POST /accounting/practitioner/simple/transactions
+    POST /forms/field-definitions
+    POST /iam/users/search
+    POST /insurance/received-claims/:claimId/invoice
+    POST /insurance/received-claims/:claimId/invoice/annulment
+    POST /profiles/patients/search
+    PUT /accounting/practitioner/simple/accounts/:id
+    PUT /accounting/practitioner/simple/records/:id
+    PUT /accounting/practitioner/simple/transactions/:id
+    PUT /insurance-plans/:planId
+
+  Actualizá docs/integrations/backend-api.md.
+
+exit=1
+=== node scripts/check-api-prefixes.mjs
+✓ check-api-prefixes
+  83 prefijos, iguales en las 3 fuentes
+  /access-requests  /accounting  /admin/analytics  /admin/catalog  /admin/content-packs  /admin/ops  /admin/qa  /admin/tenants  /ai  /auth-providers  /authz  /billing/service-catalog  /billing/simulated  /cds  /charts  /clinical  /common  /community  /consent  /delegated-access  /delegated-permission-sets  /dental-procedures  /diagnostic-results  /diagnostic-study-offerings  /diagnostic-units  /diagnostics/accessions  /diagnostics/containers  /diagnostics/lab  /diagnostics/patients  /diagnostics/reports  /diagnostics/service-requests  /diagnostics/specimens  /diagnostics/work-orders  /forms  /geo  /health-context  /iam  /identity  /insurance-brokers  /insurance-campaigns  /insurance-carrier-catalog  /insurance-carriers  /insurance-claims  /insurance-marketplace  /insurance-plans  /insurance-products  /insurance/analytics  /insurance/my-claims  /insurance/patients  /insurance/portability  /insurance/received-claims  /loyalty  /notifications  /org  /otel  /patient-spending  /patients/me  /patients/me/reviews  /pharma-labs  /pharmacies  /pharmacy  /pharmacy-inventory  /practices  /practitioner-delegates  /practitioners  /prescription-favorites  /price-schedules  /procedure-cases  /profiles  /promotions/me  /public  /quotations  /scheduling  /socket.io  /study-prices  /surveys  /system-context  /tenants  /terminology  /visit-agenda  /visit-records  /visit-requests  /visit-surveys
+exit=0
+=== node scripts/check-architecture.mjs
+✓ check-architecture
+  2148 archivos · 10025 importaciones internas
+  sin ciclos · capas en una sola dirección · red confinada a core/data-access/ · faker confinado a core/mock/
+  excepción declarada: src/app/core/dev/ (herramienta de desarrollo, diferida)
+exit=0
+=== node scripts/check-client-prefixes.mjs
+✓ check-client-prefixes
+  618 operaciones de core/data-access, todas cubiertas por los 83 prefijos
+exit=0
+=== node scripts/check-colores-sueltos.mjs
+
+✗ check-colores-sueltos — 1 archivo(s) con más colores literales que su techo
+
+  src/app/shared/components/organisms/map/map.css: 12 (techo 0)
+      148: background: var(--tono-bg, var(--brand-primary, #007788));
+      149: color: var(--tono-fg, #ffffff);
+      150: border: 1.5px solid var(--tono-bd, #ffffff);
+
+  Usá un token (`var(--st-error-fg)`, `var(--brand-primary)`…); ver docs/design-system/tokens.md.
+  Si falta el token, se agrega en styles.css con su par de contraste en check-contrast.mjs.
+
+exit=1
+=== node scripts/check-contrast.mjs
+✓ check-contrast
+
+  ── src/styles.css · ALOVIDA v1.0
+  ✓ claro              --text-primary       sobre --bg-surface          14.90:1  (mín. 4.5)
+  ✓ claro              --text-secondary     sobre --bg-surface           8.02:1  (mín. 4.5)
+  ✓ claro              --text-muted         sobre --bg-surface           5.69:1  (mín. 4.5)
+  ✓ claro              --text-muted         sobre --bg-surface-alt       5.23:1  (mín. 4.5)
+  ✓ claro              --text-muted         sobre --bg-inset             5.35:1  (mín. 4.5)
+  ✓ claro              --text-muted         sobre #F6F3ED                5.13:1  (mín. 4.5)
+  ✓ claro              --focus-ring         sobre --bg-base              5.71:1  (mín. 3)
+  ✓ claro              --focus-ring         sobre --bg-surface           5.71:1  (mín. 3)
+  ✓ claro              --focus-ring         sobre --bg-surface-alt       5.25:1  (mín. 3)
+  ✓ claro              --focus-ring         sobre --bg-inset             5.38:1  (mín. 3)
+  ✓ claro              --focus-ring         sobre #F6F3ED                5.16:1  (mín. 3)
+  ✓ claro              --brand-primary      sobre --bg-surface           8.03:1  (mín. 4.5)
+  ✓ claro              --border-strong      sobre --bg-base              3.70:1  (mín. 3)
+  ✓ claro              --border-strong      sobre --bg-surface           3.70:1  (mín. 3)
+  ✓ claro              --border-strong      sobre --bg-surface-alt       3.40:1  (mín. 3)
+  ✓ claro              --border-strong      sobre --bg-inset             3.48:1  (mín. 3)
+  ✓ claro              --st-success-fg      sobre --st-success-bg        6.75:1  (mín. 4.5)
+  ✓ claro              --st-warning-fg      sobre --st-warning-bg        7.49:1  (mín. 4.5)
+  ✓ claro              --st-error-fg        sobre --st-error-bg          7.53:1  (mín. 4.5)
+  ✓ claro              --st-info-fg         sobre --st-info-bg           5.01:1  (mín. 4.5)
+  ✓ claro              --st-primary-fg      sobre --st-primary-bg        9.49:1  (mín. 4.5)
+  ✓ claro              --st-secondary-fg    sobre --st-secondary-bg      6.63:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-muted         sobre --bg-surface-alt       5.46:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-muted         sobre --bg-inset             6.32:1  (mín. 4.5)
+  ✓ oscuro · sistema   --focus-ring         sobre --bg-base             10.93:1  (mín. 3)
+  ✓ oscuro · sistema   --focus-ring         sobre --bg-surface           9.26:1  (mín. 3)
+  ✓ oscuro · sistema   --focus-ring         sobre --bg-surface-alt       7.66:1  (mín. 3)
+  ✓ oscuro · sistema   --focus-ring         sobre --bg-inset             8.87:1  (mín. 3)
+  ✓ oscuro · sistema   --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+  ✓ oscuro · sistema   --border-strong      sobre --bg-base              3.78:1  (mín. 3)
+  ✓ oscuro · sistema   --border-strong      sobre --bg-surface           3.57:1  (mín. 3)
+  ✓ oscuro · sistema   --border-strong      sobre --bg-surface-alt       3.27:1  (mín. 3)
+  ✓ oscuro · sistema   --border-strong      sobre --bg-inset             3.51:1  (mín. 3)
+  ✓ oscuro · sistema   --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-muted         sobre --bg-surface-alt       5.46:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-muted         sobre --bg-inset             6.32:1  (mín. 4.5)
+  ✓ oscuro · manual    --focus-ring         sobre --bg-base             10.93:1  (mín. 3)
+  ✓ oscuro · manual    --focus-ring         sobre --bg-surface           9.26:1  (mín. 3)
+  ✓ oscuro · manual    --focus-ring         sobre --bg-surface-alt       7.66:1  (mín. 3)
+  ✓ oscuro · manual    --focus-ring         sobre --bg-inset             8.87:1  (mín. 3)
+  ✓ oscuro · manual    --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+  ✓ oscuro · manual    --border-strong      sobre --bg-base              3.78:1  (mín. 3)
+  ✓ oscuro · manual    --border-strong      sobre --bg-surface           3.57:1  (mín. 3)
+  ✓ oscuro · manual    --border-strong      sobre --bg-surface-alt       3.27:1  (mín. 3)
+  ✓ oscuro · manual    --border-strong      sobre --bg-inset             3.51:1  (mín. 3)
+  ✓ oscuro · manual    --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+
+  ── src/styles/alovida.css · ALOVIDA v1.1 (bóveda)
+  ✓ claro              --tinta              sobre --sup-tarjeta         14.90:1  (mín. 4.5)
+  ✓ claro              --tinta              sobre --sup-pagina          14.90:1  (mín. 4.5)
+  ✓ claro              --tinta              sobre --sup-inset           14.02:1  (mín. 4.5)
+  ✓ claro              --tinta-2            sobre --sup-tarjeta          8.02:1  (mín. 4.5)
+  ✓ claro              --tinta-2            sobre --sup-pagina           8.02:1  (mín. 4.5)
+  ✓ claro              --tinta-3            sobre --sup-tarjeta          5.69:1  (mín. 4.5)
+  ✓ claro              --tinta-3            sobre --sup-pagina           5.69:1  (mín. 4.5)
+  ✓ claro              --tinta-3            sobre --sup-inset            5.35:1  (mín. 4.5)
+  ✓ claro              --tinta-3            sobre #F6F3ED                5.13:1  (mín. 4.5)
+  ✓ claro              --tinta-marca        sobre --sup-tarjeta         11.31:1  (mín. 4.5)
+  ✓ claro              --petroleo           sobre --sup-pagina           8.03:1  (mín. 4.5)
+  ✓ claro              --petroleo           sobre --sup-tarjeta          8.03:1  (mín. 4.5)
+  ✓ claro              --petroleo           sobre --sup-inset            7.56:1  (mín. 4.5)
+  ✓ claro              --petroleo-relleno   sobre #FFFFFF                8.03:1  (mín. 4.5)
+  ✓ claro              --borde-ctrl         sobre --sup-pagina           3.70:1  (mín. 3)
+  ✓ claro              --borde-ctrl         sobre --sup-tarjeta          3.70:1  (mín. 3)
+  ✓ claro              --borde-ctrl         sobre --sup-inset            3.48:1  (mín. 3)
+  ✓ claro              --ok-tinta           sobre --ok-bg                4.78:1  (mín. 4.5)
+  ✓ claro              --aviso-tinta        sobre --aviso-bg             7.49:1  (mín. 4.5)
+  ✓ claro              --error-tinta        sobre --error-bg             5.49:1  (mín. 4.5)
+  ✓ claro              --info-tinta         sobre --info-bg              5.01:1  (mín. 4.5)
+  ✓ claro              --neutro-tinta       sobre --neutro-bg            7.37:1  (mín. 4.5)
+  ✓ claro              --anillo-foco        sobre --sup-pagina           5.71:1  (mín. 3)
+  ✓ claro              --anillo-foco        sobre --sup-tarjeta          5.71:1  (mín. 3)
+  ✓ claro              --anillo-foco        sobre --sup-inset            5.38:1  (mín. 3)
+  ✓ claro              --anillo-foco        sobre #F6F3ED                5.16:1  (mín. 3)
+  ✓ claro              --anillo-foco-nav    sobre --sup-nav              5.05:1  (mín. 3)
+  ✓ claro              --anillo-foco-nav    sobre --petroleo-x           8.80:1  (mín. 3)
+  ✓ oscuro             --tinta              sobre --sup-tarjeta         13.01:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-pagina          14.33:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-inset           13.69:1  (mín. 4.5)
+  ✓ oscuro             --tinta-2            sobre --sup-tarjeta          9.07:1  (mín. 4.5)
+  ✓ oscuro             --tinta-2            sobre --sup-pagina           9.99:1  (mín. 4.5)
+  ✓ oscuro             --tinta-3            sobre --sup-tarjeta          5.43:1  (mín. 4.5)
+  ✓ oscuro             --tinta-3            sobre --sup-pagina           5.98:1  (mín. 4.5)
+  ✓ oscuro             --tinta-3            sobre --sup-inset            5.71:1  (mín. 4.5)
+  ✓ oscuro             --tinta-marca        sobre --sup-tarjeta         12.43:1  (mín. 4.5)
+  ✓ oscuro             --petroleo           sobre --sup-pagina           6.92:1  (mín. 4.5)
+  ✓ oscuro             --petroleo           sobre --sup-tarjeta          6.29:1  (mín. 4.5)
+  ✓ oscuro             --petroleo           sobre --sup-inset            6.61:1  (mín. 4.5)
+  ✓ oscuro             --petroleo-relleno   sobre #FFFFFF                5.40:1  (mín. 4.5)
+  ✓ oscuro             --borde-ctrl         sobre --sup-pagina           4.05:1  (mín. 3)
+  ✓ oscuro             --borde-ctrl         sobre --sup-tarjeta          3.68:1  (mín. 3)
+  ✓ oscuro             --borde-ctrl         sobre --sup-inset            3.87:1  (mín. 3)
+  ✓ oscuro             --ok-tinta           sobre --ok-bg                7.89:1  (mín. 4.5)
+  ✓ oscuro             --aviso-tinta        sobre --aviso-bg             7.83:1  (mín. 4.5)
+  ✓ oscuro             --error-tinta        sobre --error-bg             7.40:1  (mín. 4.5)
+  ✓ oscuro             --info-tinta         sobre --info-bg              8.19:1  (mín. 4.5)
+  ✓ oscuro             --neutro-tinta       sobre --neutro-bg            8.72:1  (mín. 4.5)
+  ✓ oscuro             --anillo-foco        sobre --sup-pagina           8.59:1  (mín. 3)
+  ✓ oscuro             --anillo-foco        sobre --sup-tarjeta          7.80:1  (mín. 3)
+  ✓ oscuro             --anillo-foco        sobre --sup-inset            8.20:1  (mín. 3)
+  ✓ oscuro             --anillo-foco-nav    sobre --sup-nav             11.38:1  (mín. 3)
+  ✓ oscuro             --anillo-foco-nav    sobre --petroleo-x          11.94:1  (mín. 3)
+
+  116 combinaciones medidas en 2 hojas · sin excepciones declaradas
+exit=0
+=== node scripts/check-css-tokens.mjs
+✓ check-css-tokens — 470 tokens declarados, ningún var() huérfano
+exit=0
+=== node scripts/check-english-identifiers.mjs
+fatal: Needed a single revision
+check-english-identifiers: no hay una base de diff resoluble (ni CHECK_ENGLISH_BASE ni origin/test). Sin diff, no se reporta nada del árbol existente.
+exit=0
+=== node scripts/check-form-pages.mjs
+
+✗ check-form-pages — 1 formulario(s) sin paginar
+
+  'app/features/auth/shared-registration/inline-name-fields/inline-name-fields.html' pide 6 campos de una vez en una sola pantalla y no usa <app-paginated-form>
+
+  Un formulario de este sistema se sirve de a una página, con un tope de
+  cuatro campos y una barra de avance. Eso lo da <app-paginated-form>:
+  se le pasan las páginas (paginarCampos() las arma) y el FormGroup de la
+  pantalla. Si de verdad no es un formulario, agregalo a EXCEPCIONES con
+  su motivo escrito.
+
+exit=1
+=== node scripts/check-max-lines.mjs
+
+✗ check-max-lines — 3 archivo(s) por encima de su techo
+
+  src/app/features/symptom-check/symptom-check.html: 899 líneas (techo 895)
+  src/app/features/symptom-check/corpus.fixture.ts: 696 líneas (techo 693)
+  src/app/features/public-profile/public-profile-card/public-profile-card.css: 680 líneas (techo 671)
+
+  Partilo: plantilla en .html, estilos en .css, lógica en servicios/ayudas. No subas el techo.
+
+exit=1
+=== node scripts/check-mock-vs-client.mjs
+
+✗ check-mock-vs-client
+
+  8 operación(es) sin manejador y SIN registrar en CONOCIDAS:
+
+    POST /community/conversations/contacts/search  (CommunityClient, src/app/core/data-access/community/community.client.ts)
+    POST /iam/auth/upload-registration-signature-image  (IamClient, src/app/core/data-access/iam/iam.client.ts)
+    GET /identity/verification-cases/:caseId  (IdentityAdminClient, src/app/core/data-access/identity/identity-admin.client.ts)
+    POST /insurance/patients/conversation  (InsuranceClient, src/app/core/data-access/insurance/insurance.client.ts)
+    GET /insurance/patients/options  (InsuranceClient, src/app/core/data-access/insurance/insurance.client.ts)
+    POST /insurance/patients/search  (InsuranceClient, src/app/core/data-access/insurance/insurance.client.ts)
+    GET /tenants/:tenantId/logo/content  (DirectoryClient, src/app/core/data-access/directory/directory.client.ts)
+    GET /terminology/concepts/:conceptId/glossary-neighborhood  (TerminologyClient, src/app/core/data-access/terminology/terminology.client.ts)
+
+  Con el mock honesto (H2.S1.M1) esto responde 501: la pantalla que lo llame
+  va a mostrar el estado de error. Si es una brecha conocida, agregala a
+  CONOCIDAS con su prompt; si no, escribile el manejador.
+
+exit=1
+=== node scripts/check-route-prefixes.mjs
+✓ check-route-prefixes
+  213 rutas del router, ninguna colisiona con los 83 prefijos de la API
+  excepción declarada: 'practitioners' — cuelga de 'search': la URL real es /search/practitioners
+exit=0
+=== node scripts/check-tokens.mjs
+✓ check-tokens
+  234 tokens, iguales en styles.css y en el catálogo tipado
+exit=0
+=== node scripts/check-usted.mjs
+check-usted: 47 texto(s) visibles le hablan al usuario de vos o de tú.
+
+  src/app/core/mock/fixtures/community.ts:258  «Te»  …Te asesora para elegir el plan, …
+  src/app/core/mock/fixtures/community.ts:258  «te»  … asesora para elegir el plan, te acompaña en la contratación y…
+  src/app/core/mock/fixtures/community.ts:394  «tenés»  …al menos una vez al año, y si tenés antecedentes familiares, cada…
+  src/app/core/mock/fixtures/community.ts:394  «Controlá»  …Controlá tu presión…
+  src/app/core/mock/fixtures/community.ts:394  «tu»  …Controlá tu presión…
+  src/app/core/mock/fixtures/community.ts:402  «tu»  …al consultorio. Reservá desde tu cuenta. #teleconsulta…
+  src/app/core/mock/fixtures/community.ts:408  «preferís»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/community.ts:408  «tu»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/community.ts:602  «Te»  …Sí, lo aplicamos desde marzo. Te escribo por privado con los d…
+  src/app/core/mock/fixtures/community.ts:673  «usá»  …ectar el riñón. Para el dolor usá paracetamol.…
+  src/app/core/mock/fixtures/community.ts:678  «preferís»  …los miro antes del jueves. Si preferís, subilos a tu historia clínic…
+  src/app/core/mock/fixtures/community.ts:678  «tu»  …ueves. Si preferís, subilos a tu historia clínica desde https:…
+  src/app/core/mock/fixtures/community.ts:679  «te»  …Vale, te derivo a la mamá de un pacien…
+  src/app/core/mock/fixtures/community.ts:679  «Tenés»  …ciente de 14 años con soplo. ¿Tenés turno esta semana?…
+  src/app/core/mock/fixtures/community.ts:680  «decile»  …Sí, decile que reserve el jueves a la ta…
+  src/app/core/mock/fixtures/community.ts:684  «Tu»  …Tu solicitud de cita con la Dra.…
+  src/app/core/mock/fixtures/community.ts:684  «Podés»  …a para el jueves a las 09:30. Podés ver el detalle en «Mis citas»…
+  src/app/core/mock/fixtures/community.ts:693  «Vos»  …asístoles aisladas nada más. ¿Vos, Vale?…
+  src/app/core/mock/fixtures/community.ts:701  «preferís»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/community.ts:701  «tu»  …¿Qué preferís para tu control cardiológico?…
+  src/app/core/mock/fixtures/standard-sheets.generated.ts:34904  «uní»  …Aumento de volumen uní o bi-palpebral del ojo afecta…
+  src/app/features/psychological-help/psychological-help.html:11  «estás»  …<h2 id="welcome-title">Lo que estás sintiendo importa.</h2> …
+  src/app/features/psychological-help/psychological-help.html:13  «estás»  …/h2> <p> Si estás pasando por un momento difíci…
+  src/app/features/psychological-help/psychological-help.html:13  «tenés»  …do por un momento difícil, no tenés que resolver todo ahora ni ha…
+  src/app/features/psychological-help/psychological-help.html:71  «te»  …este momento</h2> <p>Si te sentís abrumado/a, probá hace…
+  src/app/features/psychological-help/psychological-help.html:71  «sentís»  …e momento</h2> <p>Si te sentís abrumado/a, probá hacer una p…
+  src/app/features/psychological-help/psychological-help.html:71  «probá»  … <p>Si te sentís abrumado/a, probá hacer una pausa breve:</p> …
+  src/app/features/psychological-help/psychological-help.html:73  «mirá»  …i>Apoyá los pies en el piso y mirá a tu alrededor con calma.</li…
+  src/app/features/psychological-help/psychological-help.html:73  «tu»  … los pies en el piso y mirá a tu alrededor con calma.</li> …
+  src/app/features/psychological-help/psychological-help.html:74  «Escribile»  …r con calma.</li> <li>Escribile o llamá a alguien de confianz…
+  src/app/features/psychological-help/psychological-help.html:74  «llamá»  …</li> <li>Escribile o llamá a alguien de confianza y cont…
+  src/app/features/psychological-help/psychological-help.html:74  «contale»  …lamá a alguien de confianza y contale cómo te sentís.</li> …
+  src/app/features/psychological-help/psychological-help.html:74  «te»  …n de confianza y contale cómo te sentís.</li> <li>Si e…
+  src/app/features/psychological-help/psychological-help.html:74  «sentís»  …e confianza y contale cómo te sentís.</li> <li>Si esto per…
+  src/app/features/psychological-help/psychological-help.html:75  «tu»  …sto persiste o interfiere con tu vida diaria, buscá acompañami…
+  src/app/features/psychological-help/psychological-help.html:75  «buscá»  …nterfiere con tu vida diaria, buscá acompañamiento profesional.</…
+  src/app/features/psychological-help/psychological-help.html:81  «Encontrá»  …rd> <app-card> <h2>Encontrá un/a profesional</h2> <…
+  src/app/features/psychological-help/psychological-help.html:83  «Podés»  …sional</h2> <p> Podés consultar con un/a psicólogo/…
+  src/app/features/psychological-help/psychological-help.html:83  «te»  …a para conversar sobre lo que te pasa o con un/a psiqu…
+  src/app/features/psychological-help/psychological-help.html:97  «podés»  …te o lastimar a alguien, o no podés mantenerte a salvo, ace…
+  src/app/features/psychological-help/psychological-help.html:98  «pedile»  … a un servicio de urgencias y pedile a una persona de confianza qu…
+  src/app/features/psychological-help/psychological-help.html:98  «te»  … una persona de confianza que te acompañe. Esta página n…
+  src/app/features/symptom-check/text.ts:127  «te»  …te…
+  src/app/features/symptom-check/text.ts:128  «tu»  …tu…
+  src/app/features/symptom-check/text.ts:129  «tus»  …tus…
+  src/app/features/symptom-check/text.ts:153  «tienes»  …tienes…
+  src/app/features/symptom-check/text.ts:352  «te»  …te…
+
+Páselos a usted («Elija», «Le avisamos», «su»). Guía: docs/design-system/voice-and-tone.md
+exit=1
+=== node scripts/check-real-api-config.mjs
+[check-real-api-config] PASS: API real por defecto, demo explicita y production-api con SSR.
+exit=0

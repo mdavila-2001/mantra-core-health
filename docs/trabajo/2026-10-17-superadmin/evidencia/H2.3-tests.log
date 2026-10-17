@@ -1,0 +1,10 @@
+$ yarn test --include data-catalog + handlers del portal + navegación + rutas
+     × reparte el registro entero: ninguna sección se queda sin bloque por descuido 7ms
+       × inválido — un enlace viejo con `?q=` busca lo que traía y lo saca de la URL 93ms
+     × elegir un filtro de catálogo viaja a la consulta con su clave real 81ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts > NAV_SUBGROUPS > reparte el registro entero: ninguna sección se queda sin bloque por descuido
+ FAIL   mantra-core-health  src/app/features/admin/patients/patient-list/patient-list.spec.ts > PatientList > el texto buscado no va a la URL > inválido — un enlace viejo con `?q=` busca lo que traía y lo saca de la URL
+ FAIL   mantra-core-health  src/app/features/admin/patients/patient-list/patient-list.spec.ts > PatientList > elegir un filtro de catálogo viaja a la consulta con su clave real
+ Test Files  2 failed | 88 passed (90)
+      Tests  3 failed | 1127 passed (1130)

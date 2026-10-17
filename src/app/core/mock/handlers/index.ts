@@ -34,6 +34,8 @@ import { registrarSeguros } from './insurance.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
+import { registrarFlujos } from './flows.handlers';
+import { registrarTrafico } from './ops-traffic.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 
@@ -81,6 +83,8 @@ export function crearRouterSimulado(): MockRouter {
   registrarVarios(router);
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
+  registrarTrafico(router);
+  registrarFlujos(router);
   registerPromotions(router);
   registerPatientSpending(router);
   return router;

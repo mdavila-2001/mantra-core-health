@@ -1,0 +1,9 @@
+max-lines exit=1
+mock-vs-client exit=1
+css-tokens exit=0
+contrast exit=0
+colores-sueltos exit=1
+client-prefixes exit=0
+route-prefixes exit=0
+api-contract-drift exit=1
+doc-coverage exit=1
