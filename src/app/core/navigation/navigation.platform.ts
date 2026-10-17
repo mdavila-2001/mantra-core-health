@@ -117,9 +117,7 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     group: 'Superadministración',
     icon: 'route',
     roles: ['QA_ADMIN', 'QA_ENGINEER', 'RELEASE_MANAGER', 'PLATFORM_ADMIN'],
-    // `planificada` hasta que exista su pantalla (H1.3 / H3.4 del plan): no se
-    // afirma «disponible» una sección que hoy cae en el placeholder.
-    availability: 'planificada',
+    availability: 'disponible',
     summary: 'Cada recorrido del usuario como árbol de decisión: pasos, endpoints y casos válidos, límite e inválidos.',
     module: 'M36 qa_lab',
   },

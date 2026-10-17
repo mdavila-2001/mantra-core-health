@@ -42,8 +42,20 @@
 | H2.3.4 | Prueba visual real (3 anchos × 2 temas) | `node playwright/superadmin-catalogo-visual.mjs` con `E2E_MODO=real` | HECHO (VERIFIED local) · `evidencia/H2.3-visual-real.log` |
 | H2.3.5 | Mutación «Aprobar» real: UI → petición → respuesta → fila → volver a leer → UI | `node playwright/superadmin-catalogo-aprobacion.mjs` | HECHO (VERIFIED local) · `evidencia/H2.3-aprobacion-real.txt` |
 
-## H3.4 / H5.2
-Pantallas `features/admin/flows` y cambios en `qa-lab`, con los gates `check-*.mjs` en 0 y capturas 390/820/1440 × claro/oscuro.
+## H3.4 — Catálogo de flujos (front)
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H3.4.1 | Tipos y cliente `FlowsClient`, simulador `flows.handlers.ts` con las reglas de la API | `flows.handlers.spec.ts` · `tsc` | HECHO (TESTED) · `evidencia/H3.4-flows-tests.log` |
+| H3.4.2 | Lista `features/admin/flows` (filtros, contrato, cobertura, última corrida; estados M34) | `flows.spec.ts` | HECHO (TESTED) |
+| H3.4.3 | Detalle (una tarjeta con pestañas Árbol · Endpoints · Casos QA · Fuente) y árbol presentacional | `flow-detail.spec.ts` + `flow-tree.spec.ts`, con axe | HECHO (TESTED) |
+| H3.4.4 | Rutas `superadmin/flows` y `superadmin/flows/:flowId`, sección `disponible`, contrato en `backend-api.md` | `app.routes`/navegación en verde (1 rojo previo) · `check-api-contract-drift` y `check-doc-coverage` ya no nombran `flows` | HECHO (TESTED) |
+| H3.4.5 | Prueba visual 3 anchos × 2 temas, simulador y API real, mirando las capturas | `node playwright/superadmin-flujos-visual.mjs` (`E2E_MODO=demo` y `real`) | HECHO (VERIFIED local) · 6/6 y 6/6 · `evidencia/H3.4-visual-informes.log` |
+| H3.4.6 | Gates manuales (CI caído) | `scripts/check-*.mjs` | HECHO: ninguno nombra un archivo mío; rojos previos sin cambios · `evidencia/H3.4-gates.log` |
+
+## H5.2
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H5.2.1 | Pestañas «Por flujo» / «Por endpoint» en `qa-lab` | spec + Playwright `orquestacion` | TODO |
 
 ## Riesgos
 Ver plan aprobado §Riesgos. Entorno: sin `node_modules` (Yarn 4 PnP) en esta sesión → todo DoD que requiera instalar/ejecutar se declara `NOT_RUN` hasta lograrlo.

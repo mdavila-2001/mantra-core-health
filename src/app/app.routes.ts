@@ -205,12 +205,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
   // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
   // vivían bajo `administration/*`; esas direcciones redirigen (ver
-  // `SECCIONES_REDIRIGIDAS`). `superadmin/flows` no figura todavía: cae en el
-  // placeholder hasta que tenga pantalla.
+  // `SECCIONES_REDIRIGIDAS`).
   'superadmin/observability': () =>
     import('./features/admin/observability/observability').then((m) => m.Observability),
   'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
+  'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
   'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
   'superadmin/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
@@ -909,6 +909,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/qa-lab/plan-detail/qa-plan-detail')
         .then((m) => m.QaPlanDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Un flujo del catálogo. Hereda los roles de `superadmin/flows` (prefijo más largo).
+    path: 'superadmin/flows/:flowId',
+    title: `${APP_TITLE} - Flujo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/flows/flow-detail/flow-detail')
+        .then((m) => m.FlowDetailPage)
         .catch(() => chunkFallido()),
   },
   {
