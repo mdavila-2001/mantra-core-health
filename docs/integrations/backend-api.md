@@ -1492,6 +1492,7 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/admin/analytics/timeseries` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/analytics/web-vitals` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/admin/catalog/annotations/:annotationId/review` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/columns/:columnId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` |
 | `GET` | `/admin/catalog/coverage` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/catalog/objects` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/catalog/objects/:id` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
