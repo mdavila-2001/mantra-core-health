@@ -778,15 +778,15 @@ describe('NavigationService', () => {
       ]);
     });
 
-    it('el aplanado es de la aseguradora: quien administra la plataforma sigue viendo el desplegable', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
+    it('el aplanado es de la aseguradora o superadmin: otros administradores siguen viendo el desplegable', () => {
+      abrirSesion(['SECURITY_ADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
 
       const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
       expect(administracion?.aplanado).toBe(false);
     });
 
-    it('sin el claim de tipo, «Administración» sigue plegada', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1']);
+    it('sin el claim de tipo, «Administración» sigue plegada para roles no superadmin', () => {
+      abrirSesion(['SECURITY_ADMIN'], ['t-1']);
 
       const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
       expect(administracion?.aplanado).toBe(false);
@@ -843,6 +843,14 @@ describe('NavigationService', () => {
         '/my-account',
         '/notification-center',
       ]);
+    });
+
+    it('los grupos de superadministración vienen todos aplanados para mostrar los accesos sin desplegables', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
+
+      const grupos = service.menu();
+      expect(grupos.length).toBeGreaterThan(0);
+      expect(grupos.every((g) => g.aplanado)).toBe(true);
     });
 
     it('no contiene accesos clínicos, generales, de facturación ni de autoservicio del paciente', () => {

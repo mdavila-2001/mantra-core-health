@@ -104,7 +104,7 @@ export class NavigationService {
         // Un grupo aplanado igual se reparte en bloques: `blocks` es la única
         // vista que conserva el orden de dibujo, y el día que alguien lo saque
         // de la lista tiene que volver a plegarse sin recalcular nada.
-        aplanado: seAplanaElGrupo(group, activeTenantType),
+        aplanado: seAplanaElGrupo(group, activeTenantType, roles),
       };
     }).filter((section) => section.items.length > 0);
   });

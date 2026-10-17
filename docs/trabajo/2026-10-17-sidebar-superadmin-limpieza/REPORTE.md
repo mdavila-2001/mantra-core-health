@@ -1,15 +1,17 @@
-# Reporte — Limpieza del sidebar de Superadministración
+# Reporte — Limpieza y aplanado del sidebar de Superadministración
 
 - Fecha: 2026-10-17 · Plan: [PLAN.md](./PLAN.md) · Rama(s): mockup
 - Peldaño de evidencia alcanzado: `REGRESSION_VERIFIED`
-- Avance: 3 / 3 (100%)
+- Avance: 5 / 5 (100%)
 
 ## Completado
 | ID | Qué se logró | Comando | Resultado |
 |---|---|---|---|
 | H1.S1.M1 | Configuración de `fueraDelMenuPara` con `'SUPERADMIN'` en `navigation.map.ts` para ítems circulados (general, atención, facturación, mi cuenta, aseguradora, mi organización, mis productos) | `yarn test --include='src/app/core/navigation/navigation.map.spec.ts'` | 43 passed (43), exit 0 |
 | H1.S1.M2 | Exclusión de `'SUPERADMIN'` de la vitrina de `Herramientas` (`/design-system`) en `shell-layout.ts` | `yarn test --include='src/app/features/shell-layout/shell-layout.spec.ts'` | 88 passed (88), exit 0 |
-| H1.S1.M3 | Batería de pruebas unitarias en `navigation.service.spec.ts` certificando la estructura completa del menú lateral para `SUPERADMIN` | `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` | 44 passed (44), exit 0 |
+| H1.S1.M3 | Batería de pruebas unitarias en `navigation.service.spec.ts` certificando la estructura completa del menú lateral para `SUPERADMIN` | `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` | 45 passed (45), exit 0 |
+| H2.S1.M1 | Extensión de `seAplanaElGrupo` en `navigation.subgroups.ts` para aceptar `roles` y retornar `true` si contiene `'SUPERADMIN'` | `yarn test --include='src/app/core/navigation/navigation.subgroups.spec.ts'` | 12 passed (12), exit 0 |
+| H2.S1.M2 | Propagación de `roles` a `seAplanaElGrupo` en `navigation.service.ts` y test unitario validando que todos los grupos de superadmin son planos | `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` | 45 passed (45), exit 0 |
 
 ## A medias
 ninguna
@@ -27,15 +29,23 @@ ninguna
       Tests  43 passed (43)
 ```
 
-### 2. `yarn test --include="src/app/core/navigation/navigation.service.spec.ts"`
+### 2. `yarn test --include="src/app/core/navigation/navigation.subgroups.spec.ts"`
 ```
- ✓  mantra-core-health  src/app/core/navigation/navigation.service.spec.ts (44 tests) 62ms
+ ✓  mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts (12 tests) 9ms
 
  Test Files  1 passed (1)
-      Tests  44 passed (44)
+      Tests  12 passed (12)
 ```
 
-### 3. `yarn test --include="src/app/features/shell-layout/shell-layout.spec.ts"`
+### 3. `yarn test --include="src/app/core/navigation/navigation.service.spec.ts"`
+```
+ ✓  mantra-core-health  src/app/core/navigation/navigation.service.spec.ts (45 tests) 124ms
+
+ Test Files  1 passed (1)
+      Tests  45 passed (45)
+```
+
+### 4. `yarn test --include="src/app/features/shell-layout/shell-layout.spec.ts"`
 ```
  ✓  mantra-core-health  src/app/features/shell-layout/shell-layout.spec.ts (88 tests) 4039ms
 
@@ -43,7 +53,7 @@ ninguna
       Tests  88 passed (88)
 ```
 
-### 4. `yarn typecheck`
+### 5. `yarn typecheck`
 ```
 ✓ src/app/features/component-stock/component-index.generated.ts
   625 componentes · 3 otros · 375 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos

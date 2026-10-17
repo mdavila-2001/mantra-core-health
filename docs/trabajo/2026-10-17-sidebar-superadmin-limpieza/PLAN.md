@@ -45,8 +45,24 @@
 | H1.S1.M2 | En `shell-layout.ts`, excluir `'SUPERADMIN'` de `Herramientas` | `SUPERADMIN` no ve `Herramientas` en el menú | `yarn test --include='src/app/features/shell-layout/shell-layout.spec.ts'` → exit 0 | HECHO |
 | H1.S1.M3 | Agregar pruebas en `navigation.service.spec.ts` verificando la lista exacta de rutas para `SUPERADMIN` | El menú de `SUPERADMIN` tiene exactamente las rutas autorizadas | `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` → exit 0 | HECHO |
 
+## H2 — Menú plano/desagrupado para superadministración
+**CA:** Dado un usuario con rol `SUPERADMIN`, cuando consulta el menú lateral, entonces todos sus grupos de navegación se presentan aplanados (`grupo.aplanado === true`), mostrándose todas las opciones directamente sin desplegables (`<details>`).
+**DoD:** `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` exit 0 con pruebas de `aplanado` para `SUPERADMIN`.
+**Estado:** HECHO
+
+### H2.S1 — Aplanar grupos para SUPERADMIN
+**CA:** `seAplanaElGrupo` retorna `true` cuando `roles` incluye `'SUPERADMIN'`.
+**DoD:** `yarn typecheck` exit 0 y tests unitarios en verde.
+**Estado:** HECHO
+
+| ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
+|---|---|---|---|---|
+| H2.S1.M1 | Extender `seAplanaElGrupo` en `navigation.subgroups.ts` para aceptar `roles` y retornar `true` si contiene `'SUPERADMIN'` | `seAplanaElGrupo` retorna `true` para `SUPERADMIN` | `yarn test --include='src/app/core/navigation/navigation.subgroups.spec.ts'` → exit 0 | HECHO |
+| H2.S1.M2 | Pasar `roles` en `navigation.service.ts` y actualizar pruebas de `aplanado` en `navigation.service.spec.ts` | El menú de `SUPERADMIN` tiene todos sus grupos con `aplanado === true` | `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` → exit 0 | HECHO |
+
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
-| Regresión en menús de otros roles | Alto | Las modificaciones son específicas al rol `SUPERADMIN` agregándolo a `fueraDelMenuPara` |
+| Regresión en menús de otros roles | Alto | Las modificaciones son específicas al rol `SUPERADMIN` agregándolo a `fueraDelMenuPara` y en la condición de `roles.includes('SUPERADMIN')` |
 | Pruebas preexistentes esperando que superadmin vea todo | Medio | Actualizar pruebas que asumían que superadmin veía rutas de paciente/médico en el menú lateral |
+| Pruebas preexistentes esperando que superadmin vea Administración plegada | Bajo | Actualizar la prueba de `navigation.service.spec.ts` que usaba SUPERADMIN para verificar desplegables |
