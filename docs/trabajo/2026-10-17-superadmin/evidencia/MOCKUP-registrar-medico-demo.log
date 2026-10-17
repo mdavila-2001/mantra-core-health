@@ -1,0 +1,37 @@
+# Corrida en rama mockup (simulador). Se ignora SOLO el error de consola del CSP de ng serve, que no es de este trabajo pero NO se contrastó contra mockup sin mis cambios (index.html y angular.json no se tocaron).
+
+== telefono-light
+  ✓ Usuarios → «Registrar médico» abre la pantalla
+  ✓ tarjeta centrada (12/12px) y a lo ancho (94%)
+  ✓ el envío vacío señala 3 campo(s) y no sale a la red
+
+== telefono-dark
+  ✓ Usuarios → «Registrar médico» abre la pantalla
+  ✓ tarjeta centrada (12/12px) y a lo ancho (94%)
+  ✓ el envío vacío señala 3 campo(s) y no sale a la red
+
+== tableta-light
+  ✓ Usuarios → «Registrar médico» abre la pantalla
+  ✓ tarjeta centrada (20/20px) y a lo ancho (95%)
+  ✓ el envío vacío señala 3 campo(s) y no sale a la red
+
+== tableta-dark
+  ✓ Usuarios → «Registrar médico» abre la pantalla
+  ✓ tarjeta centrada (20/20px) y a lo ancho (95%)
+  ✓ el envío vacío señala 3 campo(s) y no sale a la red
+
+== escritorio-light
+  ✓ Usuarios → «Registrar médico» abre la pantalla
+  ✓ tarjeta centrada (40/40px) y a lo ancho (93%)
+  ✓ el envío vacío señala 3 campo(s) y no sale a la red
+  ✓ se muestra el código de activación una vez
+  ✓ la matrícula figura PENDING
+  ✓ el correo repetido se rechaza en pantalla
+  ✓ tras el 409 se conserva lo escrito
+
+== escritorio-dark
+  ✓ Usuarios → «Registrar médico» abre la pantalla
+  ✓ tarjeta centrada (40/40px) y a lo ancho (93%)
+  ✓ el envío vacío señala 3 campo(s) y no sale a la red
+
+✓ sin fallos

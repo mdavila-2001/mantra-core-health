@@ -26,7 +26,7 @@ import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-d
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { joinNames } from '../../../core/profession/additional-names';
+import { unirNombres } from '../../../core/profesion/nombres-adicionales';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -50,8 +50,8 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
-import { InlineNameFields } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
-import { nameGroup } from '../../auth/shared-registration/name-fields/person-name';
+import { CamposDeNombre } from '../../auth/registro-compartido/campos-de-nombre/campos-de-nombre';
+import { grupoDeNombre } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
 
 /** Largos que exige `RegisterPractitionerDto` en el backend. */
 const MAX_MOTIVO = 500;
@@ -104,7 +104,7 @@ const PESTANAS = ['Médico', 'Documento y matrícula', 'Habilitación y motivo']
     DatePipe,
     FormField,
     FormSection,
-    InlineNameFields,
+    CamposDeNombre,
     Input,
     Link,
     NavIcon,
@@ -164,7 +164,7 @@ export class PractitionerAssistedRegistration implements OnInit {
   protected readonly catalogoEspecialidadesCaido = signal(false);
 
   protected readonly form = new FormGroup({
-    doctorName: nameGroup(true),
+    doctorName: grupoDeNombre(true),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -368,7 +368,7 @@ export class PractitionerAssistedRegistration implements OnInit {
     const raw = this.form.getRawValue();
     const nombre = raw.doctorName;
     // Sin columna para tercer nombre ni agregados: se pliegan en `middleName`.
-    const segundoNombre = joinNames([nombre.middleName, nombre.thirdName, ...nombre.extraNames]);
+    const segundoNombre = unirNombres([nombre.middleName, nombre.thirdName, ...nombre.extraNames]);
     const apellidoMaterno = nombre.motherLastName.trim();
     // Sin casillas vacías ni repetidas: el contrato las toma como conceptos distintos.
     const elegidas = [...new Set(this.especialidades().filter((id) => id !== ''))];

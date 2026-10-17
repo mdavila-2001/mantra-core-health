@@ -14,6 +14,9 @@ const VALIDO = {
   reason: 'Alta cargada por operaciones',
 };
 
+/** Lo que contesta el helper `validation` de esta rama (en `dev` es 400: ver `mock-router.ts`). */
+const VALIDACION = 422;
+
 describe('alta administrativa de un médico demo: mismas reglas que la API', () => {
   const router = new MockRouter();
   registrarAltaDeMedicoAsistida(router);
@@ -56,23 +59,23 @@ describe('alta administrativa de un médico demo: mismas reglas que la API', () 
     expect(estado(pedir(VALIDO))).toBe(201);
   });
 
-  it('cada campo obligatorio ausente es un 400 que nombra el campo', () => {
+  it('cada campo obligatorio ausente es un error de validación que nombra el campo', () => {
     for (const campo of Object.keys(VALIDO)) {
       const { [campo]: _quitado, ...resto } = VALIDO as Record<string, string>;
       const r = pedir(resto);
-      expect(estado(r)).toBe(400);
+      expect(estado(r)).toBe(VALIDACION);
       expect(JSON.stringify(cuerpo(r))).toContain(campo);
     }
   });
 
   it('una contraseña en el cuerpo se rechaza: el contrato no la admite', () => {
     const r = pedir({ ...VALIDO, password: 'S3cret-passw0rd' });
-    expect(estado(r)).toBe(400);
+    expect(estado(r)).toBe(VALIDACION);
     expect(JSON.stringify(cuerpo(r))).toContain('password');
   });
 
-  it('un motivo de más de 500 caracteres es un 400', () => {
-    expect(estado(pedir({ ...VALIDO, reason: 'x'.repeat(501) }))).toBe(400);
+  it('un motivo de más de 500 caracteres es un error de validación', () => {
+    expect(estado(pedir({ ...VALIDO, reason: 'x'.repeat(501) }))).toBe(VALIDACION);
     expect(estado(pedir({ ...VALIDO, reason: 'x'.repeat(500) }))).toBe(201);
   });
 

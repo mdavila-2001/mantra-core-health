@@ -1,6 +1,6 @@
 # Reporte — Superadministración de AloVida (lado front)
 
-> **AVANCE: 29 / 33 — 87,9 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6, H6.1–5. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
+> **AVANCE: 32 / 36 — 88,9 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6, H6.1–5, H7.1–3. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
 
 - Fecha: 2026-10-17 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude-marcelo/serene-planck-1q7zje`
 - Peldaño de evidencia alcanzado: **`VERIFIED` local** para la portada «Observabilidad» y las redirecciones: se ejercitaron en navegador contra el front y la **API real** (PostgreSQL 16 descartable, tráfico HTTP real) y se miraron 60 capturas. **No** `REGRESSION_VERIFIED`: no se corrió la suite completa ni se probó el perfil `paciente`.
@@ -29,6 +29,21 @@
 
 Defectos hallados al probar y corregidos: 36 casillas de especialidad en vertical (pasó al patrón de selectores repetibles del registro del médico); migas de pan sin escalón propio; un choque de nombre entre el catálogo inyectado y la señal de especialidades.
 
+### H7 — Rama `mockup` (contingencia)
+| ID | Qué se logró | Comando | Resultado |
+|---|---|---|---|
+| H7.1 | Los 6 commits del front llevados a `claude-marcelo/serene-planck-1q7zje-mockup` (base `origin/mockup`). `mockup` está **2 909 commits por delante y 214 por detrás de `dev`** y nombra distinto (`CamposDeNombre`, `grupoDeNombre`, `unirNombres`; su `validation` del simulador responde 422): se adaptó lo mío, no el resto | `yarn typecheck` (exit 0), ESLint de lo tocado (exit 0) | PASS |
+| H7.2 | `admin@alovidasalud.com` entra al simulador como la cuenta `superadmin`, con cualquier contraseña no vacía | `mock-backend.spec.ts` (nueva prueba, incluye que un correo parecido NO entra) | PASS |
+| H7.3 | En navegador, con ese usuario y contra el simulador: «Usuarios › Registrar médico» (3 anchos × 2 temas, alta, código, 409 señalado, datos conservados), Observabilidad y Flujos (escritorio claro) | `E2E_MODO=demo node playwright/superadmin-registrar-medico.mjs` (+ `-observabilidad-visual`, `-flujos-visual`) · `evidencia/MOCKUP-*.log` | Registrar médico 6/6 sin fallos. Observabilidad y Flujos: sus comprobaciones funcionales pasan; el único fallo es un error de consola del CSP del servidor de desarrollo (ver «Hallazgos de H7») |
+
+#### Hallazgos de H7
+- **Rojos de `mockup` sin mis cambios** (medidos en un checkout limpio de `origin/mockup`, 125 archivos de prueba dirigidos): 4 — `app.routes.spec` («cada dirección vieja redirige a una ruta que existe»), `navigation.map.spec` («el comodín…»), `navigation.subgroups.spec`, `fichas-estandar.spec`. Con mis cambios, en la corrida grande (134 archivos): los mismos 4 más `insurance-analytics.handlers.spec` («primas de fábrica», **en las dos corridas**) y, sólo en la primera, `insurance-portability.handlers.spec` («el titular exporta su propio historial»). Los dos **pasan corridos solos** (18/18) y no fallan en el checkout limpio de `mockup`: dependen de qué otras pruebas corren antes o de la carga, **no se probó la causa** y no hay relación visible con archivos míos. Queda como rojo abierto de esta rama.
+- **Error de consola en todas las páginas del `ng serve` de `mockup`:** `Refused to execute inline script … Content Security Policy`. El encabezado CSP lo pone el servidor de desarrollo; `index.html`, `angular.json` y el servidor no se tocaron, pero **no se contrastó** contra `mockup` sin mis cambios. Se ignoró sólo ese mensaje (`E2E_IGNORAR_CONSOLA`) y así consta en `MOCKUP-registrar-medico-demo.log`.
+- **El selector de `mockup` es el `<select>` nativo** (en `dev` es el selector con diálogo): los scripts de Playwright distinguen los dos.
+- **Catálogo de datos en `mockup`:** la prueba visual falla en «la tabla no tiene ninguna clave foránea para probar la nota»: la tabla de demostración (`clinical.conditions`) no trae FK en ese simulador. La pantalla funciona (se miró la captura); la nota de FK no se pudo demostrar en esta rama, sí en `dev` contra la API real.
+- `docs/integrations/backend-api.md`: en `mockup` ya no existe la sección «Consumos incorporados en Hito 2» donde mis commits agregaron filas; se conservó la de `mockup` y esas filas **no están** en esta rama.
+- No se corrió la suite completa de `mockup` ni `ng build`.
+
 ## A medias
 ### H0.3.3 — Menú del perfil `paciente`
 - **Qué anda:** el menú del superadmin con las 6 secciones (6/6 combinaciones, simulador y API real) y las 7 redirecciones en navegador, incluidas query y fragmento.
@@ -43,7 +58,7 @@ Defectos hallados al probar y corregidos: 36 casillas de especialidad en vertica
 | H5.2.1 | `TODO` | Segunda entrega: pestañas «Por flujo» / «Por endpoint» en `qa-lab`; depende de H5.1 (API) |
 
 ## Evidencia
-`docs/trabajo/2026-10-17-superadmin/evidencia/`: `H2.3-tests.log`, `H2.3-visual-real.log`, `H2.3-aprobacion-real.txt`, `H1.3-observability-tests.log` (16/16), `H1.3-visual-real.log` (6/6 contra la API real), `H0.3.3-redirecciones-navegador.log` (7/7), `H0-hallazgo-query-redirecciones-texto.log`, `H1.3-navegacion-y-mock.log` (784 verdes / 1 rojo previo), `H1.3-eslint.log`, `H1.3-gates.log`, `H1.3-visual-demo.log`; y `baseline-navegacion.log` (antes: 284 verdes / 1 rojo), `H0-navegacion-y-rutas.log` (después: 292 / 1), `H0-admin-catalog-qalab.log`, `H0-typecheck.log`; y de H6: `H6-typecheck.log`, `H6-eslint.log`, `H6-tests.log`, `H6-gates.log`, `H6-playwright-real.log`, `H6-persistencia-sql.txt`.
+`docs/trabajo/2026-10-17-superadmin/evidencia/`: `H2.3-tests.log`, `H2.3-visual-real.log`, `H2.3-aprobacion-real.txt`, `H1.3-observability-tests.log` (16/16), `H1.3-visual-real.log` (6/6 contra la API real), `H0.3.3-redirecciones-navegador.log` (7/7), `H0-hallazgo-query-redirecciones-texto.log`, `H1.3-navegacion-y-mock.log` (784 verdes / 1 rojo previo), `H1.3-eslint.log`, `H1.3-gates.log`, `H1.3-visual-demo.log`; y `baseline-navegacion.log` (antes: 284 verdes / 1 rojo), `H0-navegacion-y-rutas.log` (después: 292 / 1), `H0-admin-catalog-qalab.log`, `H0-typecheck.log`; y de H6: `H6-typecheck.log`, `H6-eslint.log`, `H6-tests.log`, `H6-gates.log`, `H6-playwright-real.log`, `H6-persistencia-sql.txt`; de H7: `MOCKUP-registrar-medico-demo.log`, `MOCKUP-observabilidad-demo.log`, `MOCKUP-flujos-demo.log`, `MOCKUP-catalogo-demo.log`.
 
 ## No cubierto
 - **H6:** sólo se ejercitó el rol `CLINICIAN` (el único que ofrece la pantalla); no hay una **lista** administrativa de médicos (no existe endpoint de listado), así que «recarga → UI» se prueba con el inicio de sesión del médico recién activado y con SQL, no con una fila en una tabla. La verificación de la matrícula, el correo de verificación y el flujo móvil no se probaron. Los selectores de fecha/archivos del autorregistro completo quedan fuera de alcance.

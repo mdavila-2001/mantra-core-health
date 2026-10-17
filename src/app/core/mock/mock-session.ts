@@ -314,8 +314,20 @@ export function resolverCuentasRegistradas(resolver: ResolverDeCuentas): void {
   cuentaRegistrada = resolver;
 }
 
+/**
+ * Correos con los que se conoce, fuera del simulador, a una cuenta de
+ * demostración. `admin@alovidasalud.com` es el superadministrador local con el
+ * que se probó la Superadministración contra la API real (sólo local y dev):
+ * quien lo escribe acá entra a la cuenta `superadmin` del simulador, con
+ * cualquier contraseña no vacía como el resto.
+ */
+export const ALIAS_DE_CUENTA: Readonly<Record<string, string>> = {
+  'admin@alovidasalud.com': 'superadmin',
+};
+
 export function buscarUsuario(identificador: string): MockUser | undefined {
-  const limpio = identificador.trim().toLocaleLowerCase('es');
+  const escrito = identificador.trim().toLocaleLowerCase('es');
+  const limpio = ALIAS_DE_CUENTA[escrito] ?? escrito;
   // Primero lo exacto, en todas las fuentes; recién al final el atajo «la
   // parte antes de la arroba es la clave» (`farmacia@…` → la cuenta demo).
   // Al revés, `farmacia@sanmartin.bo`, registrada en el recorrido, entraba a

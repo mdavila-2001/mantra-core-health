@@ -72,5 +72,16 @@
 | H6.4 | Ruta `administration/users/practitioner` con `seccionRolesGuard` (en su propio `.route.ts`: `app.routes.ts` está en su techo de líneas), botón «Registrar médico» en «Usuarios», contrato en `backend-api.md` | navegación/rutas en verde; `check-doc-coverage` y `check-api-contract-drift` sin hallazgos de esta pantalla | HECHO — `evidencia/H6-tests.log`, `H6-gates.log` (los rojos que quedan son previos) |
 | H6.5 | Prueba real en navegador contra la API: alta → token → activar cuenta → el médico inicia sesión; 3 anchos × 2 temas, mirando capturas | `node playwright/superadmin-registrar-medico.mjs` + SQL (usuario, perfil, matrícula PENDIENTE, rol) | HECHO — `evidencia/H6-playwright-real.log` (6/6, sin fallos), `H6-persistencia-sql.txt` |
 
+## H7 — Contingencia: los cambios, en la rama `mockup` (pedido del 17/10)
+**Resultado observable:** quien corre la rama `mockup` (simulador, sin API) entra con el superadministrador local (`admin@alovidasalud.com`, cualquier contraseña no vacía) y recorre Superadministración y «Registrar médico».
+**Alcance IN:** los 6 commits del front (5 de la Superadministración ya en `dev` + H6) llevados con `cherry-pick` a una rama nueva con base `origin/mockup`; adaptar lo que `mockup` nombra distinto; alias de la cuenta en el simulador; prueba en navegador contra el simulador. **OUT:** API y bóveda (no se tocan); poner `mockup` al día con `dev`.
+**Ambigüedad:** «ese usuario que creamos» se tomó como `admin@alovidasalud.com` (el de la API real local); en `mockup` entra a la cuenta `superadmin` del simulador.
+
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H7.1 | Rama `claude-marcelo/serene-planck-1q7zje-mockup` desde `origin/mockup` + 6 `cherry-pick`; conflictos resueltos conservando las dos partes (`app.routes.ts`, `navigation.subgroups.spec.ts`, `backend-api.md`); identificadores adaptados a los de `mockup` (`CamposDeNombre`, `grupoDeNombre`, `unirNombres`; helper `validation` = 422) | `typecheck` exit 0 + ESLint de lo tocado | HECHO |
+| H7.2 | Alias `admin@alovidasalud.com` → cuenta `superadmin` del simulador (`ALIAS_DE_CUENTA`), con prueba y nota en el README del simulador | `mock-backend.spec.ts` | HECHO |
+| H7.3 | Prueba en navegador contra el simulador con ese usuario: «Registrar médico» (6 combinaciones), Observabilidad y Flujos (escritorio claro) | `playwright/superadmin-*.mjs` con `E2E_MODO=demo` | HECHO con reservas — ver REPORTE |
+
 ## Riesgos
 Ver plan aprobado §Riesgos. Entorno: sin `node_modules` (Yarn 4 PnP) en esta sesión → todo DoD que requiera instalar/ejecutar se declara `NOT_RUN` hasta lograrlo.
