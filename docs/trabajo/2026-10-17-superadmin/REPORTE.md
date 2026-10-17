@@ -1,6 +1,6 @@
 # Reporte — Superadministración de AloVida (lado front)
 
-> **AVANCE: 32 / 36 — 88,9 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6, H6.1–5, H7.1–3. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
+> **AVANCE: 34 / 38 — 89,5 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6, H6.1–5, H7.1–3, H8.1–2. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
 
 - Fecha: 2026-10-17 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude-marcelo/serene-planck-1q7zje`
 - Peldaño de evidencia alcanzado: **`VERIFIED` local** para la portada «Observabilidad» y las redirecciones: se ejercitaron en navegador contra el front y la **API real** (PostgreSQL 16 descartable, tráfico HTTP real) y se miraron 60 capturas. **No** `REGRESSION_VERIFIED`: no se corrió la suite completa ni se probó el perfil `paciente`.
@@ -47,6 +47,10 @@ Defectos hallados al probar y corregidos: 36 casillas de especialidad en vertica
 | ID | Qué se logró | Comando | Resultado |
 |---|---|---|---|
 | H8.1 | El login de `dev` muestra, sólo en modo desarrollo, «Cuenta de administración local» con `admin@alovidasalud.com` y `12345678` escritos y un botón que **rellena sin enviar**. Gobernado por `ngDevMode`: el compilador lo fija en `false` en producción y el literal desaparece | `yarn ng test --include 'auth/login/**'` (17 verdes), `ng build --configuration production` + `grep` (0 archivos con el correo), `node playwright/login-cuenta-local.mjs` contra la API real | 6/6 combinaciones (3 anchos × 2 temas) sin desborde ni errores de consola; en escritorio claro: rellenar no envía, «Entrar» inicia sesión y llega a `/dashboard`; capturas miradas · `evidencia/H8-gates.log`, `H8-login-cuenta-local-real.log` |
+
+| H8.2 | En `mockup` el mismo recuadro, además encendido por el simulador (`mockBackend`: la rama se despliega en modo producción y sin esa puerta nunca se vería; el simulador acepta cualquier contraseña, no hay secreto). `admin@alovidasalud.com` entra como la cuenta `superadmin` | `login.spec.ts` + `local-login-hint.spec.ts` (19), `node playwright/login-cuenta-local.mjs` contra el simulador | 6/6 combinaciones; «Usar estas credenciales» rellena sin enviar y «Entrar» llega a la selección de organización · `evidencia/H8-MOCKUP-login-cuenta-local.log` |
+
+**Revisión de seguridad automática (hallazgo MEDIO, credencial fija en el front):** el pedido es explícito y la cuenta sólo existe en la API local, pero el hallazgo era válido en un punto: `ngDevMode` dice cómo se compiló, no dónde corre; un build de desarrollo publicado por túnel o en un servidor compartido habría mostrado la clave. Se agregó la segunda condición `location.hostname ∈ {localhost, 127.0.0.1, [::1]}` (resuelta tras el primer render en el navegador, para no romper la hidratación). En producción el literal sigue sin existir (0 archivos con el correo en el build).
 
 **No cubierto (H8):** un despliegue de desarrollo armado en modo producción **no** muestra el recuadro (decisión pendiente: una variable `PUBLIC_*` publicaría la clave); no se corrió la suite completa ni se probó el recuadro con lector de pantalla (axe automático no se agregó a esta pantalla).
 

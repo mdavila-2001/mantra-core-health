@@ -1,0 +1,24 @@
+# mockup (simulador). Se ignora SOLO el error de consola del CSP de ng serve (no contrastado contra mockup sin mis cambios).
+
+== telefono-light
+  ✓ el recuadro muestra el correo y la contraseña escritos
+
+== telefono-dark
+  ✓ el recuadro muestra el correo y la contraseña escritos
+
+== tableta-light
+  ✓ el recuadro muestra el correo y la contraseña escritos
+
+== tableta-dark
+  ✓ el recuadro muestra el correo y la contraseña escritos
+
+== escritorio-light
+  ✓ el recuadro muestra el correo y la contraseña escritos
+  ✓ «Usar estas credenciales» rellena el formulario
+  ✓ rellenar NO envía nada
+  ✓ «Entrar» inicia sesión (/auth/organization)
+
+== escritorio-dark
+  ✓ el recuadro muestra el correo y la contraseña escritos
+
+✓ sin fallos

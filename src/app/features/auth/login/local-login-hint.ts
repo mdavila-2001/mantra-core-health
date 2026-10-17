@@ -16,7 +16,17 @@
  * Mostrarla no la crea: si la API local no la sembró, el login la rechaza como
  * a cualquier otra.
  */
+import { environment } from '../../../../environments/environment';
+
 declare const ngDevMode: boolean | undefined;
+
+/**
+ * **En `mockup` además se ofrece con el simulador encendido** (`mockBackend`),
+ * porque esta rama se despliega en modo producción y sin esa segunda puerta el
+ * recuadro nunca se vería. No expone nada: el simulador acepta cualquier
+ * contraseña no vacía y `admin@alovidasalud.com` es un alias de su cuenta
+ * `superadmin` (`ALIAS_DE_CUENTA`).
+ */
 
 export interface LocalLoginHint {
   readonly identifier: string;
@@ -24,11 +34,23 @@ export interface LocalLoginHint {
 }
 
 /**
+ * Sólo si la página se sirve desde esta misma máquina. `ngDevMode` dice cómo se
+ * compiló, no dónde corre: un build de desarrollo publicado por un túnel o en un
+ * servidor compartido lo trae en `true`, y esa clave no debe verse ahí.
+ */
+function sirveDesdeLocalhost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+}
+
+/**
  * La cuenta local, o `null` fuera del modo desarrollo. Se evalúa al llamarla y
  * no al cargar el módulo: Angular inicializa `ngDevMode` al importar `core`.
  */
-export function localLoginHint(): LocalLoginHint | null {
-  return typeof ngDevMode !== 'undefined' && ngDevMode
+export function localLoginHint(
+  host: string = globalThis.location?.hostname ?? '',
+): LocalLoginHint | null {
+  const enDesarrollo = typeof ngDevMode !== 'undefined' && ngDevMode && sirveDesdeLocalhost(host);
+  return enDesarrollo || environment.mockBackend
     ? { identifier: 'admin@alovidasalud.com', password: '12345678' }
     : null;
 }
