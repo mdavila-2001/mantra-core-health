@@ -1,6 +1,6 @@
 # Reporte — Superadministración de AloVida (lado front)
 
-> **AVANCE: 24 / 28 — 85,7 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
+> **AVANCE: 29 / 33 — 87,9 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6, H2.3.1–5, H3.4.1–6, H6.1–5. Pendiente: H5.2.1 (TODO); A medias: H0.3.3; descartada: H0.1.4.)
 
 - Fecha: 2026-10-17 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude-marcelo/serene-planck-1q7zje`
 - Peldaño de evidencia alcanzado: **`VERIFIED` local** para la portada «Observabilidad» y las redirecciones: se ejercitaron en navegador contra el front y la **API real** (PostgreSQL 16 descartable, tráfico HTTP real) y se miraron 60 capturas. **No** `REGRESSION_VERIFIED`: no se corrió la suite completa ni se probó el perfil `paciente`.
@@ -20,6 +20,15 @@
 | H3.4.5 | Prueba visual real (6 combinaciones) contra el simulador y contra la API real, con las capturas **miradas** | `node playwright/superadmin-flujos-visual.mjs` | demo 6/6 (48 capturas) y real 6/6 (36), sin desborde, sin errores de consola ni 4xx/5xx inesperadas. **Defectos hallados mirando y corregidos:** el detalle no se recargaba al pasar de un flujo a otro (leía el parámetro una vez); en teléfono la sangría del árbol dejaba columnas de una palabra; la fecha de la última corrida se pegaba a su badge; la columna «Última corrida» quedaba cortada en tableta |
 | H3.4.6 | Gates manuales | `scripts/check-*.mjs` | `css-tokens`, `contrast`, `client-prefixes`, `route-prefixes` en 0; los rojos son los previos |
 
+### H6 — «Registrar médico» (administración › Usuarios)
+| ID | Qué se logró | Comando | Resultado |
+|---|---|---|---|
+| H6.1–H6.2 | `AssistedPractitionerClient` (cuerpo sin claves vacías, sin contraseña) y simulador con las reglas de la API (obligatorios, 403 sin rol, 409 por correo repetido, token de un solo uso, rol desconocido) | `yarn ng test --include 'core/data-access/iam/assisted-practitioner*.spec.ts' --include 'core/mock/handlers/**'` | verdes · `evidencia/H6-tests.log` |
+| H6.3–H6.4 | Pantalla: UNA tarjeta centrada con 3 pestañas, envío único que salta a la primera pestaña con error, selectores de especialidad repetibles (hasta 4), bloqueo de doble envío, error del servidor visible y datos conservados, resultado con el código una sola vez. Ruta con guard de sección, botón en «Usuarios», contrato documentado | `yarn typecheck` (exit 0), `yarn eslint` (exit 0), 878 pruebas dirigidas verdes + 1 roja **previa** (`navigation.subgroups`) | `evidencia/H6-typecheck.log`, `H6-eslint.log`, `H6-tests.log`, `H6-gates.log` |
+| H6.5 | **Mutación de punta a punta, real:** el admin completa las tres pestañas → `POST` 201 sin `password` → la pantalla muestra el código y la matrícula `PENDING` → el médico activa su cuenta en `/auth/activate` con ese código → inicia sesión (`/dashboard`) → SQL: usuario, 1 credencial, perfil `PRACT_VERIF_PENDING`, matrícula `AUTH_PENDING`, especialidad, rol `CLINICIAN`; el alta con el mismo correo da 409, se explica en pantalla, conserva lo escrito y **no** crea un segundo usuario | `node playwright/superadmin-registrar-medico.mjs` (`E2E_MODO=real`) | 6/6 combinaciones (3 anchos × 2 temas) sin fallos; 28 capturas **miradas**; tarjeta centrada (40/40 px) y a lo ancho (93 %) · `evidencia/H6-playwright-real.log`, `H6-persistencia-sql.txt` |
+
+Defectos hallados al probar y corregidos: 36 casillas de especialidad en vertical (pasó al patrón de selectores repetibles del registro del médico); migas de pan sin escalón propio; un choque de nombre entre el catálogo inyectado y la señal de especialidades.
+
 ## A medias
 ### H0.3.3 — Menú del perfil `paciente`
 - **Qué anda:** el menú del superadmin con las 6 secciones (6/6 combinaciones, simulador y API real) y las 7 redirecciones en navegador, incluidas query y fragmento.
@@ -34,9 +43,10 @@
 | H5.2.1 | `TODO` | Segunda entrega: pestañas «Por flujo» / «Por endpoint» en `qa-lab`; depende de H5.1 (API) |
 
 ## Evidencia
-`docs/trabajo/2026-10-17-superadmin/evidencia/`: `H2.3-tests.log`, `H2.3-visual-real.log`, `H2.3-aprobacion-real.txt`, `H1.3-observability-tests.log` (16/16), `H1.3-visual-real.log` (6/6 contra la API real), `H0.3.3-redirecciones-navegador.log` (7/7), `H0-hallazgo-query-redirecciones-texto.log`, `H1.3-navegacion-y-mock.log` (784 verdes / 1 rojo previo), `H1.3-eslint.log`, `H1.3-gates.log`, `H1.3-visual-demo.log`; y `baseline-navegacion.log` (antes: 284 verdes / 1 rojo), `H0-navegacion-y-rutas.log` (después: 292 / 1), `H0-admin-catalog-qalab.log`, `H0-typecheck.log`.
+`docs/trabajo/2026-10-17-superadmin/evidencia/`: `H2.3-tests.log`, `H2.3-visual-real.log`, `H2.3-aprobacion-real.txt`, `H1.3-observability-tests.log` (16/16), `H1.3-visual-real.log` (6/6 contra la API real), `H0.3.3-redirecciones-navegador.log` (7/7), `H0-hallazgo-query-redirecciones-texto.log`, `H1.3-navegacion-y-mock.log` (784 verdes / 1 rojo previo), `H1.3-eslint.log`, `H1.3-gates.log`, `H1.3-visual-demo.log`; y `baseline-navegacion.log` (antes: 284 verdes / 1 rojo), `H0-navegacion-y-rutas.log` (después: 292 / 1), `H0-admin-catalog-qalab.log`, `H0-typecheck.log`; y de H6: `H6-typecheck.log`, `H6-eslint.log`, `H6-tests.log`, `H6-gates.log`, `H6-playwright-real.log`, `H6-persistencia-sql.txt`.
 
 ## No cubierto
+- **H6:** sólo se ejercitó el rol `CLINICIAN` (el único que ofrece la pantalla); no hay una **lista** administrativa de médicos (no existe endpoint de listado), así que «recarga → UI» se prueba con el inicio de sesión del médico recién activado y con SQL, no con una fila en una tabla. La verificación de la matrícula, el correo de verificación y el flujo móvil no se probaron. Los selectores de fecha/archivos del autorregistro completo quedan fuera de alcance.
 - La API real corrió como proceso suelto contra un PostgreSQL 16 descartable (sin Timescale), con un parche de DI aplicado sólo al `dist` de la copia; no es el stack de Docker ni un despliegue.
 - «Ejecutar» un flujo desde la pantalla no existe todavía (H5.2): el catálogo sólo lee. Con la API real se vio el estado «Sin correr»; los veredictos PASSED/FAILED por rama se vieron en el **simulador** y, contra Postgres real, en el int-spec de la API.
 - Teclado: el árbol se manejó con clic y con `aria-expanded`; el recorrido completo con Tab/Enter no se probó en navegador, ni con lector de pantalla (axe automático en los specs, sin violaciones).
@@ -67,6 +77,7 @@
 - Un `SECURITY_ADMIN` de organización también verá «Superadministración» (mismos roles que ya tenía en «Administración › Plataforma»).
 
 ## Decisiones y ambigüedades
+- **H6:** el rol `CLINICIAN` viene marcado por defecto en «Registrar médico» (sin rol la cuenta no puede operar; es visible y desmarcable). Es una decisión de negocio sin confirmar: a quien gobierna permisos. La matrícula nace pendiente de verificación y la pantalla lo dice.
 - «Reformular» se interpretó como **mover** las 4 secciones bajo el grupo nuevo (confirmar con el usuario).
 
 ## Hallazgos fuera de alcance (no se arreglan acá)
