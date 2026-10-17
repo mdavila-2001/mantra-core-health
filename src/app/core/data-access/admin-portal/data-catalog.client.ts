@@ -131,6 +131,13 @@ export class DataCatalogClient {
       .pipe(map((items) => items.map((item) => withDates<Evidence, 'createdAt'>(item, ['createdAt']))));
   }
 
+  /** Evidencia de una columna (p. ej. la nota de la bóveda de una clave foránea). */
+  listColumnEvidence(columnId: string): Observable<readonly Evidence[]> {
+    return this.http
+      .get<readonly Wire<Evidence, 'createdAt'>[]>(this.url(`/admin/catalog/columns/${columnId}/evidence`))
+      .pipe(map((items) => items.map((item) => withDates<Evidence, 'createdAt'>(item, ['createdAt']))));
+  }
+
   addEvidence(objectId: string, input: EvidenceInput): Observable<Evidence> {
     return this.http
       .post<Wire<Evidence, 'createdAt'>>(this.url(`/admin/catalog/objects/${objectId}/evidence`), input)

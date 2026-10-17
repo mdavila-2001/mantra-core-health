@@ -1,0 +1,162 @@
+<app-page-header
+  [title]="titulo()"
+  subtitle="El recorrido como árbol de decisión: pasos, endpoints y casos válidos, límite e inválidos."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="flujo">
+  <app-view-state-host [state]="flujo()" (retry)="cargar()">
+    @if (datos(); as f) {
+      @if (!f.qa.seeded) {
+        <app-alert tone="info" title="Los casos de este flujo todavía no están en el QA Lab" data-testid="flow-not-seeded">
+          La suite <code>{{ f.qa.suiteCode }}</code> no existe. Se siembra con <code>SEED_QA_FLOWS=true</code> en la API; mientras tanto el árbol se
+          muestra completo, pero ninguna rama tiene veredicto.
+        </app-alert>
+      }
+
+      <app-card variant="outlined" padding="md">
+        <section class="flujo__resumen" aria-label="Resumen del flujo" data-testid="flow-summary">
+          <div class="flujo__dato">
+            <span class="flujo__valor">{{ entero(f.counts.nodes) }}</span>
+            <span class="flujo__rotulo">Pasos</span>
+            <span class="flujo__ayuda">{{ f.counts.apiCalls }} llamadas a la API · {{ f.counts.gaps }} sin endpoint</span>
+          </div>
+          <div class="flujo__dato">
+            <span class="flujo__valor" data-testid="flow-contract-declared">{{ f.contract.declared }} de {{ f.contract.endpoints }}</span>
+            <span class="flujo__rotulo">Endpoints en el contrato</span>
+            <span class="flujo__ayuda">
+              @if (f.contract.missing > 0) {
+                {{ f.contract.missing }} no existen en la API que se está leyendo.
+              } @else {
+                Todos existen en la API que se está leyendo.
+              }
+            </span>
+          </div>
+          <div class="flujo__dato">
+            <span class="flujo__valor" data-testid="flow-cases-linked">{{ f.qa.casesLinked }} de {{ f.qa.casesExpected }}</span>
+            <span class="flujo__rotulo">Casos sembrados</span>
+            <span class="flujo__ayuda">{{ f.qa.branchesNotRunnable }} ramas declaran por qué no tienen caso.</span>
+          </div>
+          <div class="flujo__dato">
+            <span class="flujo__valor" data-testid="flow-results">{{ f.qa.passed }} · {{ f.qa.failed }}</span>
+            <span class="flujo__rotulo">Pasaron · fallaron</span>
+            <span class="flujo__ayuda">
+              @if (f.qa.lastRun; as corrida) {
+                Corrida {{ corrida.runNumber }}
+                @if (corrida.finishedAt) {
+                  del {{ corrida.finishedAt | date: 'dd/MM HH:mm' }}
+                }
+                · {{ conceptStatus(corrida.status).label }}
+              } @else {
+                Nunca se corrió.
+              }
+            </span>
+          </div>
+        </section>
+
+        <app-tabs [(selectedIndex)]="pestana" data-testid="flow-tabs">
+          <app-tab label="Árbol">
+            <app-flow-tree [nodes]="f.nodes" [rootId]="f.root" />
+          </app-tab>
+
+          <app-tab label="Endpoints">
+            <app-data-table
+              [state]="filasEndpoints()"
+              [columns]="columnasEndpoints()"
+              [trackBy]="porId"
+              stackedOnMobile
+              fitContainer
+              caption="Llamadas a la API del flujo y si el contrato las declara"
+              data-testid="flow-endpoints"
+              (retry)="cargar()"
+            />
+            @for (n of f.nodes; track n.id) {
+              @if (n.gap) {
+                <p class="flujo__ayuda"><strong>{{ n.title }}:</strong> {{ n.gap }}</p>
+              }
+            }
+          </app-tab>
+
+          <app-tab label="Casos QA">
+            <app-data-table
+              [state]="filasCasos()"
+              [columns]="columnasCasos()"
+              [trackBy]="porId"
+              stackedOnMobile
+              fitContainer
+              caption="Casos de prueba del flujo, con su último resultado"
+              data-testid="flow-cases"
+              (retry)="cargar()"
+            />
+            <p class="flujo__ayuda">
+              «Espera» es el estado HTTP que la API devolvió cuando se escribió el caso (día en el árbol). Si la API cambia, el caso falla: eso es lo que
+              se quiere ver.
+            </p>
+            @if (filasSinCaso().length > 0) {
+              <h3 class="flujo__subtitulo">Ramas sin caso ({{ filasSinCaso().length }})</h3>
+              <app-data-table
+                [state]="sinCasoEstado()"
+                [columns]="columnasSinCaso()"
+                [trackBy]="porId"
+                stackedOnMobile
+                fitContainer
+                caption="Ramas que no tienen caso de prueba y la razón"
+                data-testid="flow-no-case"
+              />
+            }
+          </app-tab>
+
+          <app-tab label="Fuente">
+            <dl class="flujo__fuente" data-testid="flow-source">
+              <div><dt>Documento</dt><dd><code>{{ f.source.document }}</code></dd></div>
+              <div><dt>Sección</dt><dd>{{ f.source.section }}</dd></div>
+              <div><dt>Módulo</dt><dd>{{ f.module }}</dd></div>
+              <div><dt>Actores</dt><dd>{{ f.actors.join(', ') }}</dd></div>
+              <div>
+                <dt>Pantallas del front</dt>
+                <dd>
+                  @for (r of f.frontRoutes; track r) {
+                    <code>{{ r }}</code>{{ $last ? '' : ' · ' }}
+                  } @empty {
+                    Ninguna declarada.
+                  }
+                </dd>
+              </div>
+              <div><dt>Suite en el QA Lab</dt><dd><code>{{ f.qa.suiteCode }}</code></dd></div>
+            </dl>
+            <h3 class="flujo__subtitulo">Preguntas abiertas</h3>
+            @if (f.openQuestions.length === 0) {
+              <p class="flujo__ayuda">Ninguna declarada.</p>
+            } @else {
+              <ul class="flujo__preguntas" data-testid="flow-open-questions">
+                @for (q of f.openQuestions; track q) {
+                  <li>{{ q }}</li>
+                }
+              </ul>
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  </app-view-state-host>
+</div>
+
+<ng-template #contratoCell let-row>
+  @if (row.contract === 'GAP') {
+    <app-badge variant="warning">Sin endpoint</app-badge>
+  } @else {
+    <app-badge [variant]="rotuloContrato(row.contract).tone">{{ rotuloContrato(row.contract).label }}</app-badge>
+  }
+</ng-template>
+
+<ng-template #tipoCell let-row>
+  <app-badge [variant]="rotuloRama(row.kind).tone" size="sm">{{ rotuloRama(row.kind).label }}</app-badge>
+</ng-template>
+
+<ng-template #veredictoCell let-row>
+  @let v = veredicto(row.caso);
+  <app-badge [variant]="v.tone" size="sm">{{ v.label }}</app-badge>
+  @if (v.detail) {
+    <span class="flujo__ayuda">{{ v.detail }}</span>
+  }
+</ng-template>

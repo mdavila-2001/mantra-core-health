@@ -68,6 +68,10 @@ const EXCEPCIONES = new Map([
     'es un constructor de agenda semanal, no un cuestionario: la rejilla de días, el horario de cada uno y la vista previa de los turnos que van a salir se leen juntos, y partirlos en páginas de cuatro escondería justamente lo que hay que comparar',
   ],
   [
+    'app/features/admin/practitioner-assisted-registration/practitioner-assisted-registration.html',
+    'es una ficha de una sola tarjeta con pestañas, por regla del cliente del 09/09/2026 (docs/components/composition-rules.md §5, CLAUDE.md punto 6): «tarjeta única con pestañas, centrada y a lo ancho». Las tres pestañas son las tres páginas del formulario —médico, documento y matrícula, habilitación y motivo— y un único envío fuera de ellas salta a la primera con error; paginar además con el motor volvería a partir en pasos lo que la regla pide ver junto',
+  ],
+  [
     'app/features/insurance/insurance-catalog/approval-rules-dialog.html',
     'son tres preguntas, no seis campos: si la cobertura requiere autorización previa, qué documentos hay que adjuntar y la cláusula de exclusión. Los documentos son UNA lista de opciones múltiples, que se dibuja con cuatro casillas porque no existe el átomo de grupo que sí tiene el radio — el verificador cuenta controles y acá cuatro controles son una sola respuesta',
   ],
