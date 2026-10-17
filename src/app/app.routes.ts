@@ -22,6 +22,7 @@ import {
   rutasHeredadasConParametro,
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
   ROLES_ROUTE_DATA,
@@ -690,6 +691,7 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.AssistedRegistration)
         .catch(() => chunkFallido()),
   },
+  PRACTITIONER_ASSISTED_ROUTE,
   {
     path: 'administration/patients/:profileId',
     title: `${APP_TITLE} - Ficha de paciente`,

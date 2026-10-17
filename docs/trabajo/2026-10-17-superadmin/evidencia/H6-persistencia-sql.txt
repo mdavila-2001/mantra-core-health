@@ -1,0 +1,15 @@
+$ SQL tras el alta de «medico.<enmascarado>@mantra.test» hecha desde la pantalla (BD local descartable)
+-- usuario creado, activado (correo aún sin verificar) y con sesión iniciada
+usuario|1018029a-8a9f-4130-8822-6d04aae5a189|Luis Rojasmvchexre|f|t
+-- credencial de acceso (sólo el conteo; el hash no se muestra)
+credenciales|1
+-- perfil profesional del médico y verificación de su matrícula
+perfil|PRC-b17c23e6-e0d2-48bb-b71a-4245a95d1b43|profiles:PRACT_VERIF_PENDING
+-- matrícula (licencia jurisdiccional) y su estado
+matricula|MP-mvchexre|profiles:AUTH_PENDING
+-- especialidad elegida
+especialidad|Cardiología
+-- rol asistencial concedido
+rol|CLINICIAN
+-- el correo repetido NO creó un segundo usuario
+usuarios con ese nombre|1

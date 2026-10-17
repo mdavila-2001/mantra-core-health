@@ -2,7 +2,19 @@
   title="Alta de usuario"
   subtitle="Cree una cuenta con su contraseña inicial y su rol."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <!-- El médico se da de alta por su propia pantalla: no tiene contraseña
+       inicial —la elige él con un código—, así que no cabe en este formulario. -->
+  <a
+    app-button
+    page-actions
+    variant="outline"
+    routerLink="/administration/users/practitioner"
+    data-testid="usuarios-registrar-medico"
+  >
+    Registrar médico
+  </a>
+</app-page-header>
 
 @if (created(); as usuario) {
   <div class="alta__resultado" data-testid="alta-usuario-exito">
