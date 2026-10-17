@@ -116,7 +116,7 @@ export class CatalogObjectDetail {
   });
 
   protected readonly breadcrumbs = computed(() => [
-    { label: 'Catálogo de datos', routerLink: '/administration/data-catalog' },
+    { label: 'Catálogo de datos', routerLink: '/superadmin/data-catalog' },
     { label: this.titulo() },
   ]);
 

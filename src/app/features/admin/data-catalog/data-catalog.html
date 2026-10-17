@@ -143,7 +143,7 @@
 </div>
 
 <ng-template #nombreCell let-row>
-  <a class="catalogo__nombre" [routerLink]="['/administration/data-catalog', row.id]">
+  <a class="catalogo__nombre" [routerLink]="['/superadmin/data-catalog', row.id]">
     <span class="catalogo__schema">{{ row.schemaName }}.</span>{{ row.objectName }}
   </a>
   @if (row.annotation?.businessName; as negocio) {

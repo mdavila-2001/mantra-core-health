@@ -186,7 +186,7 @@
                         @if (n.depth > 0) {
                           <li>
                             <span class="ficha-objeto__profundidad">nivel {{ n.depth }}</span>
-                            <a [routerLink]="['/administration/data-catalog', n.objectId]">{{ nombreNodo(n) }}</a>
+                            <a [routerLink]="['/superadmin/data-catalog', n.objectId]">{{ nombreNodo(n) }}</a>
                             <span class="ficha-objeto__nota">
                               {{ n.reviewStatus ? reviewStatus(n.reviewStatus).label : 'sin ficha' }} · {{ n.owner ?? 'sin responsable' }}
                             </span>
