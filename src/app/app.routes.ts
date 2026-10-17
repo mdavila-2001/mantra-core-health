@@ -1236,9 +1236,11 @@ export interface DestinoRedirigido {
  * puntos»—.
  */
 export function redireccionConQuery(destino: DestinoRedirigido): RedirectFunction {
-  return ({ queryParams }) =>
+  return ({ queryParams, fragment }) =>
     inject(Router).createUrlTree([destino.ruta], {
       queryParams: { ...queryParams, ...destino.query },
+      // El `#ancla` también es parte del enlace: un `redirectTo` de texto lo pierde.
+      ...(fragment === null || fragment === undefined ? {} : { fragment }),
     });
 }
 

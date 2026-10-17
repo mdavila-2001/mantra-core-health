@@ -1,0 +1,2 @@
+/auth/verificar?token=abc123  →  /auth/verify-email
+/ajustes?x=1  →  /auth

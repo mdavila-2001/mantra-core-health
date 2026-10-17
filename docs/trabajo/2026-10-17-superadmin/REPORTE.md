@@ -1,9 +1,9 @@
 # Reporte — Superadministración de AloVida (lado front)
 
-> **AVANCE: 11 / 14 — 78,6 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H1.3.1–4, H1.3.6. H2.3, H3.4 y H5.2 sin empezar y aún sin microtareas.)
+> **AVANCE: 13 / 15 — 86,7 %.** (`microtareas HECHO / total` del PLAN.md de este repo; `A MEDIAS`, `DESCARTADO` y `NOT_RUN` no suman. Hecho: H0.2.1–4, H0.3.1–2, H0.3.4, H1.3.1–6. H2.3, H3.4 y H5.2 sin empezar y aún sin microtareas.)
 
 - Fecha: 2026-10-17 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude-marcelo/serene-planck-1q7zje`
-- Peldaño de evidencia alcanzado: **`TESTED`** (tests dirigidos en verde) y, para la portada, **`VERIFIED_FUNCTIONAL_ONLY`-con-simulador**: se ejercitó en navegador y se miraron 30 capturas, pero contra el backend simulado; **no** contra la API real (el simulador responde dentro de la aplicación, sin red).
+- Peldaño de evidencia alcanzado: **`VERIFIED` local** para la portada «Observabilidad» y las redirecciones: se ejercitaron en navegador contra el front y la **API real** (PostgreSQL 16 descartable, tráfico HTTP real) y se miraron 60 capturas. **No** `REGRESSION_VERIFIED`: no se corrió la suite completa ni se probó el perfil `paciente`.
 
 ## Completado
 | ID | Qué se logró | Comando | Resultado |
@@ -13,17 +13,11 @@
 | Gates | `typecheck` exit 0; ESLint sobre los 18 archivos tocados exit 0; `check-max-lines`, `check-route-prefixes`, `check-client-prefixes`, `check-architecture` sin hallazgos míos | ver `evidencia/` | PASS (los del baseline preexistente se listan abajo) |
 
 ## A medias
-### H1.3.5 — Prueba visual de la portada
-- **Qué anda:** `playwright/superadmin-observabilidad-visual.mjs` pasa 6/6 (390/820/1440 × claro/oscuro): el grupo «Superadministración» muestra sus 6 secciones, la pantalla carga, solicitudes = exitosas + fallidas, las 4 pestañas se renderizan, sin desborde horizontal, sin errores de consola. Las capturas se miraron y llevaron a dos arreglos reales: el selector de ventana truncaba «7 d…» en teléfono y la tabla de endpoints se cortaba a la derecha (ahora `stackedOnMobile`).
-- **Qué no anda / no se probó:** la comparación entre lo que se ve y el cuerpo de la respuesta HTTP (`E2E_MODO=real`) no se corrió: no hay API sirviendo ni login real. Tampoco el menú para el perfil `paciente`.
-- **Qué falta exactamente:** levantar la API (ver REPORTE de la API: la app no arranca por un defecto de DI ajeno), sembrar `admin@alovidasalud.com`, y correr el script con `E2E_MODO=real E2E_BASE_URL=… E2E_IDENTIFICADOR=… E2E_CLAVE=…`.
-- **Dónde quedó:** `playwright/superadmin-observabilidad-visual.mjs`, capturas en `artifacts/superadmin-observabilidad/` (no versionadas; el log está en `evidencia/H1.3-visual-demo.log`). Compila y los tests pasan.
-
-### H0.3.3 — Menú y redirecciones en navegador
-- **Qué anda:** el menú del superadmin con las 6 secciones, verificado en 6 combinaciones (cajón plegado en teléfono y tableta).
-- **Qué no anda / no se probó:** el perfil `paciente` (no debe ver el grupo) y las redirecciones `administration/*` → `superadmin/*` en navegador, incluida la pérdida de query de las redirecciones de texto (hallazgo 1).
-- **Qué falta exactamente:** un barrido con `paciente` y navegar a las 4 rutas viejas con `?x=1`.
-- **Dónde quedó:** mismo script; sin cambios de código pendientes.
+### H0.3.3 — Menú del perfil `paciente`
+- **Qué anda:** el menú del superadmin con las 6 secciones (6/6 combinaciones, simulador y API real) y las 7 redirecciones en navegador, incluidas query y fragmento.
+- **Qué no anda / no se probó:** que un `paciente` **no** vea «Superadministración» ni llegue a `/superadmin/observability`: en la API real no hay una cuenta de paciente sembrada (`SEED_CONTENT_ON_BOOT=false`). Lo cubren las pruebas unitarias de navegación y `seccionRolesGuard`, no un navegador.
+- **Qué falta exactamente:** sembrar o crear una cuenta de paciente y recorrer `/dashboard` y `/superadmin/observability` con ella (o correr el script contra el perfil `paciente` del simulador).
+- **Dónde quedó:** sin cambios de código pendientes; compila.
 
 ## Pendiente
 | ID | Estado | Qué lo destraba |
@@ -32,10 +26,10 @@
 | H2.3, H3.4, H5.2 | `TODO` | Dependen de las lecturas de la API (H2.2, H3.3, H5.1) |
 
 ## Evidencia
-`docs/trabajo/2026-10-17-superadmin/evidencia/`: `H1.3-observability-tests.log` (16/16), `H1.3-navegacion-y-mock.log` (784 verdes / 1 rojo previo), `H1.3-eslint.log`, `H1.3-gates.log`, `H1.3-visual-demo.log`; y `baseline-navegacion.log` (antes: 284 verdes / 1 rojo), `H0-navegacion-y-rutas.log` (después: 292 / 1), `H0-admin-catalog-qalab.log`, `H0-typecheck.log`.
+`docs/trabajo/2026-10-17-superadmin/evidencia/`: `H1.3-observability-tests.log` (16/16), `H1.3-visual-real.log` (6/6 contra la API real), `H0.3.3-redirecciones-navegador.log` (7/7), `H0-hallazgo-query-redirecciones-texto.log`, `H1.3-navegacion-y-mock.log` (784 verdes / 1 rojo previo), `H1.3-eslint.log`, `H1.3-gates.log`, `H1.3-visual-demo.log`; y `baseline-navegacion.log` (antes: 284 verdes / 1 rojo), `H0-navegacion-y-rutas.log` (después: 292 / 1), `H0-admin-catalog-qalab.log`, `H0-typecheck.log`.
 
 ## No cubierto
-- Nada se ejercitó contra la API real; en navegador sólo contra el simulador.
+- La API real corrió como proceso suelto contra un PostgreSQL 16 descartable (sin Timescale), con un parche de DI aplicado sólo al `dist` de la copia; no es el stack de Docker ni un despliegue.
 - La sección `superadmin/flows` está `planificada` (cae en el placeholder): no tiene pantalla. `superadmin/observability` ya está `disponible`.
 - No se corrió la suite completa del front (4985 pruebas); sólo las dirigidas y las de navegación, rutas y handlers.
 - `ng build` no se corrió: `tsc` no revisa plantillas; las plantillas se ejercitaron en los tests del componente y en el navegador (`ng serve`).
@@ -47,6 +41,7 @@
 - En `navigation.subgroups.spec.ts` se agregó `superadmin/observability` a `SUELTAS_A_PROPOSITO` y en `navigation.service.spec.ts` el grupo nuevo al orden esperado: ambos son cambios de comportamiento pedidos, ninguna aserción se debilitó.
 
 ## Hallazgos fuera de alcance (H1.3)
+- **Confirmado en navegador:** las redirecciones de **texto** de `app.routes.ts` pierden la query: `/auth/verificar?token=abc123` termina en `/auth/verify-email` **sin el token** (el enlace del correo de verificación) y `/ajustes?x=1` en `/auth` (`evidencia/H0-hallazgo-query-redirecciones-texto.log`). Código previo, no tocado: se arregla igual que las secciones (`redireccionConQuery`), pero afecta a otros flujos y requiere decisión del dueño.
 - Gates en rojo **previos** que no son de este trabajo: `check-api-contract-drift` (19 operaciones sin documentar), `check-colores-sueltos` (`map.css`), `check-form-pages` (`inline-name-fields`), `check-max-lines` (`symptom-check`, `public-profile-card.css`), `check-mock-vs-client` (8 operaciones), `check-usted` (`symptom-check/text.ts`).
 - El selector `Hoy/24 h/7 días` usa «Hoy» = 00:00 UTC (las 20:00 del día anterior en La Paz); está dicho en pantalla. Decisión pendiente del usuario si se quiere hora de La Paz.
 
