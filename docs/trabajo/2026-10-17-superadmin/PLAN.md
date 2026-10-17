@@ -19,7 +19,8 @@
 | H0.2.4 | 6 secciones `superadmin/*` + 4 viejas `fueraDelMenuPara:[ANY_ROLE]` | `…navigation.map.spec.ts`; `node scripts/check-route-prefixes.mjs` | HECHO (TESTED) |
 | H0.3.1 | `PANTALLAS_DIFERIDAS` + `SECCIONES_REDIRIGIDAS` + `superadmin`→observability | `yarn test --include='src/app/app.routes.spec.ts'` | HECHO (TESTED) |
 | H0.3.2 | Hijas renombradas + redirecciones con parámetro | ídem | HECHO (TESTED) |
-| H0.3.3 | Evidencia del menú (perfiles superadmin/paciente, 3 viewports × 2 temas) | `yarn pw playwright/superadmin-portal.spec.ts -g 'menu\|redirecciones'` | A MEDIAS: menú del superadmin verificado en navegador (6/6 combinaciones, `evidencia/H1.3-visual-demo.log`); sin correr el perfil `paciente` ni las redirecciones en navegador |
+| H0.3.3 | Evidencia del menú (perfiles superadmin/paciente, 3 viewports × 2 temas) | `yarn pw playwright/superadmin-portal.spec.ts -g 'menu\|redirecciones'` | A MEDIAS: menú del superadmin 6/6 y redirecciones 7/7 verificados en navegador contra el front real; sin correr el perfil `paciente` (no hay cuenta de paciente sembrada) |
+| H0.3.4 | La redirección de sección conserva el fragmento `#ancla` (hallado en navegador) | `app.routes.spec.ts` 69/69 y `playwright/superadmin-redirecciones.mjs` 7/7 | HECHO (VERIFIED local) · `evidencia/H0.3.3-redirecciones-navegador.log` |
 | H0.1.4 | ~~Alinear `E2E_ADMIN_EMAIL` y perfil mock al correo nuevo~~ | — | — | DESCARTADO: `playwright/support/actores.ts:119` ya lee `E2E_ADMIN_EMAIL` del entorno; cambiar el valor por defecto rompería a quien siembra `admin@alovida.com` (también lo usan Cypress y una int-spec de la API). Se corre con `E2E_ADMIN_EMAIL=admin@alovidasalud.com`. El perfil mock (`superadmin@alovida.mock`) no depende del correo real |
 
 ## H1.3 — Portada «Observabilidad»
@@ -29,7 +30,7 @@
 | H1.3.2 | Simulador `ops-traffic.handlers.ts` con las reglas de la API (ventana, 422, totales = suma) | `ops-traffic.handlers.spec.ts` 5/5; `check-mock-vs-client` sin hallazgos míos | HECHO (TESTED) |
 | H1.3.3 | Pantalla `features/admin/observability` (una tarjeta con 4 pestañas, estados M34) | `observability.spec.ts` 11/11; ESLint exit 0 | HECHO (TESTED) |
 | H1.3.4 | Ruta `superadmin/observability` y sección `disponible`; contrato documentado en `docs/integrations/backend-api.md` | tests de navegación/rutas (784 verdes, 1 rojo previo); `check-api-contract-drift` ya no nombra mis 2 operaciones | HECHO (TESTED) |
-| H1.3.5 | Prueba visual 3 anchos × 2 temas × 4 pestañas, mirada, y comparación contra la respuesta de red | `node playwright/superadmin-observabilidad-visual.mjs` | A MEDIAS: 6/6 ✓ y 30 capturas inspeccionadas contra el **simulador**; la comparación con la respuesta de red (`E2E_MODO=real`) NOT_RUN |
+| H1.3.5 | Prueba visual 3 anchos × 2 temas × 4 pestañas, mirada, y comparación contra la respuesta de red | `node playwright/superadmin-observabilidad-visual.mjs` | HECHO (VERIFIED local): 6/6 contra el simulador y 6/6 contra la **API real** (login `admin@alovidasalud.com`, la cifra en pantalla = `measured.requests` de la respuesta de red), 60 capturas inspeccionadas · `evidencia/H1.3-visual-demo.log`, `H1.3-visual-real.log` |
 | H1.3.6 | Gates manuales (CI caído) | `scripts/check-*.mjs` | HECHO: ninguno nombra un archivo mío; rojos previos listados en el REPORTE |
 
 ## H2.3 / H3.4 / H5.2

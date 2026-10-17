@@ -840,6 +840,11 @@ describe('la mudanza del portal de plataforma a «Superadministración»', () =>
     };
   }
 
+  it('la sección redirigida conserva también el fragmento (#ancla)', async () => {
+    await router.navigateByUrl('/administration/data-catalog?schema=iam#tabla');
+    expect(location.path(true)).toBe('/superadmin/data-catalog?schema=iam#tabla');
+  });
+
   it.each([
     ['/administration/data-catalog', '/superadmin/data-catalog'],
     ['/administration/web-analytics', '/superadmin/web-analytics'],
