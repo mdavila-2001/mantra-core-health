@@ -24,11 +24,23 @@ export interface LocalLoginHint {
 }
 
 /**
- * La cuenta local, o `null` fuera del modo desarrollo. Se evalúa al llamarla y
+ * Sólo si la página se sirve desde esta misma máquina. `ngDevMode` dice cómo se
+ * compiló, no dónde corre: un build de desarrollo publicado por un túnel o en un
+ * servidor compartido lo trae en `true`, y esa clave no debe verse ahí.
+ */
+function sirveDesdeLocalhost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+}
+
+/**
+ * La cuenta local, o `null` fuera del modo desarrollo o fuera de localhost. Se evalúa al llamarla y
  * no al cargar el módulo: Angular inicializa `ngDevMode` al importar `core`.
  */
-export function localLoginHint(): LocalLoginHint | null {
-  return typeof ngDevMode !== 'undefined' && ngDevMode
+export function localLoginHint(
+  host: string = globalThis.location?.hostname ?? '',
+): LocalLoginHint | null {
+  const enDesarrollo = typeof ngDevMode !== 'undefined' && ngDevMode;
+  return enDesarrollo && sirveDesdeLocalhost(host)
     ? { identifier: 'admin@alovidasalud.com', password: '12345678' }
     : null;
 }

@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -78,8 +85,14 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
   private readonly formTracing = inject(FormTracing);
 
-  /** La cuenta local de desarrollo, o `null` en producción (ver `local-login-hint.ts`). */
-  protected readonly localHint = localLoginHint();
+  /**
+   * La cuenta local de desarrollo, o `null` (ver `local-login-hint.ts`).
+   *
+   * Se resuelve **después del primer render, en el navegador**: depende de dónde
+   * se sirve la página (`location`), que en el servidor no existe, y decidirlo
+   * antes dibujaría en el cliente algo que el HTML del servidor no trae.
+   */
+  protected readonly localHint = signal<LocalLoginHint | null>(null);
 
   readonly form = new FormGroup({
     identifier: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -120,6 +133,10 @@ export class Login {
     }
     return null;
   });
+
+  constructor() {
+    afterNextRender(() => this.localHint.set(localLoginHint()));
+  }
 
   /** Rellena el formulario con la cuenta local; no envía: entrar sigue siendo un clic. */
   protected usarCuentaLocal(cuenta: LocalLoginHint): void {

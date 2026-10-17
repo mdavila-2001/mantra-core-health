@@ -74,12 +74,12 @@
 
 ## H8 — Credenciales de la cuenta local visibles en el login (pedido del 17/10)
 **Resultado observable:** quien abre el login en local ve `admin@alovidasalud.com` / `12345678` escritos y puede rellenar el formulario con un clic; en producción no existe.
-**Alcance IN:** recuadro «Cuenta de administración local» en el login de `dev` (gobernado por `ngDevMode`), prueba en navegador contra la API real; en `mockup`, lo mismo gobernado además por el simulador (el cartel de «Datos de prueba» ya existe pero está plegado y no lleva la clave). **OUT:** crear la cuenta (la siembra la API local); mostrarla en un despliegue de producción.
+**Alcance IN:** recuadro «Cuenta de administración local» en el login de `dev` (gobernado por `ngDevMode` **y** por servirse desde `localhost`, tras la revisión de seguridad), prueba en navegador contra la API real; en `mockup`, lo mismo gobernado además por el simulador (el cartel de «Datos de prueba» ya existe pero está plegado y no lleva la clave). **OUT:** crear la cuenta (la siembra la API local); mostrarla en un despliegue de producción.
 **Ambigüedad:** «el que sí tiene el backend» se tomó como el login de `dev` contra la API real; «y dev» como los builds de desarrollo (`ngDevMode`): **un despliegue de desarrollo armado en modo producción NO lo muestra** — habría que decidir cómo (no con una variable `PUBLIC_*`: publicaría la clave).
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H8.1 | Recuadro en el login de `dev`, con «Usar estas credenciales» (rellena, no envía) | `login.spec.ts` + `local-login-hint.spec.ts` (17 verdes); build de producción sin el literal; navegador contra la API real | HECHO — `evidencia/H8-*.log` |
+| H8.1 | Recuadro en el login de `dev`, con «Usar estas credenciales» (rellena, no envía) | `login.spec.ts` + `local-login-hint.spec.ts` (18 verdes); build de producción sin el literal; navegador contra la API real | HECHO — `evidencia/H8-*.log` |
 | H8.2 | Lo mismo en `mockup` (PR #1129) | spec + navegador contra el simulador | TODO |
 
 ## Riesgos
