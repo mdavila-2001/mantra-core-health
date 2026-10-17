@@ -194,8 +194,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
   // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
   // vivían bajo `administration/*`; esas direcciones redirigen (ver
-  // `SECCIONES_REDIRIGIDAS`). `superadmin/observability` y `superadmin/flows`
-  // no figuran todavía: caen en el placeholder hasta que tengan pantalla.
+  // `SECCIONES_REDIRIGIDAS`). `superadmin/flows` no figura todavía: cae en el
+  // placeholder hasta que tenga pantalla.
+  'superadmin/observability': () =>
+    import('./features/admin/observability/observability').then((m) => m.Observability),
   'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
   'superadmin/web-analytics': () =>

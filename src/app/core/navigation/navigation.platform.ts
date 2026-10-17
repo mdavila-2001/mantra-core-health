@@ -92,9 +92,7 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     group: 'Superadministración',
     icon: 'chart',
     roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
-    // `planificada` hasta que exista su pantalla (H1.3 / H3.4 del plan): no se
-    // afirma «disponible» una sección que hoy cae en el placeholder.
-    availability: 'planificada',
+    availability: 'disponible',
     summary: 'Cuántas solicitudes recibió la API hoy, cuántas fallaron, qué tan rápido respondió y quién la usa.',
     module: 'M58 time_series · M46 platform_ops',
   },
