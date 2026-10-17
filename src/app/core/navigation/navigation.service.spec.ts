@@ -562,6 +562,10 @@ describe('NavigationService', () => {
         'Atención',
         'Administración',
         'Facturación',
+        // 17/10/2026 · `SECURITY_ADMIN` alcanza las secciones de plataforma
+        // (catálogo, analítica, operación), que ahora forman su propio dominio.
+        // Va entre «Facturación» y «Mi cuenta», que sigue siendo el último.
+        'Superadministración',
         'Mi cuenta',
       ]);
     });

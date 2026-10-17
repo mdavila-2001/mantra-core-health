@@ -20,6 +20,10 @@ import {
   APP_SECTIONS,
   ROLES_DE_QUIEN_ATIENDE,
 } from './core/navigation/navigation.map';
+import {
+  RUTAS_HEREDADAS_CON_PARAMETRO,
+  rutasHeredadasConParametro,
+} from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
@@ -199,12 +203,16 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
-  'administration/data-catalog': () =>
+  // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
+  // vivían bajo `administration/*`; esas direcciones redirigen (ver
+  // `SECCIONES_REDIRIGIDAS`). `superadmin/observability` y `superadmin/flows`
+  // no figuran todavía: caen en el placeholder hasta que tengan pantalla.
+  'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
-  'administration/web-analytics': () =>
+  'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
-  'administration/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
-  'administration/operations': () =>
+  'superadmin/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
+  'superadmin/operations': () =>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
@@ -892,8 +900,8 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Detalle de un plan de QA. Hereda los roles de `administration/qa-lab`.
-    path: 'administration/qa-lab/plans/:planId',
+    // Detalle de un plan de QA. Hereda los roles de `superadmin/qa-lab`.
+    path: 'superadmin/qa-lab/plans/:planId',
     title: `${APP_TITLE} - Plan de QA`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -903,8 +911,8 @@ const PANTALLAS_HIJAS: Routes = [
   },
   {
     // Ficha de un objeto del catálogo. Hereda los roles de la sección
-    // `administration/data-catalog` (prefijo más largo).
-    path: 'administration/data-catalog/:objectId',
+    // `superadmin/data-catalog` (prefijo más largo).
+    path: 'superadmin/data-catalog/:objectId',
     title: `${APP_TITLE} - Ficha del catálogo`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -1200,6 +1208,12 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   // La ficha de la farmacia es el «Mi perfil» de la cuenta de farmacia
   // (01/10/2026): la cuenta es la organización, no una persona que la administra.
   'administration/pharmacy-profile': { ruta: '/my-account' },
+  // El portal de plataforma pasó al dominio «Superadministración» (17/10/2026).
+  // Query conservado: `?pestana=` y `?search=` viajaban en los favoritos.
+  'administration/data-catalog': { ruta: '/superadmin/data-catalog' },
+  'administration/web-analytics': { ruta: '/superadmin/web-analytics' },
+  'administration/qa-lab': { ruta: '/superadmin/qa-lab' },
+  'administration/operations': { ruta: '/superadmin/operations' },
 };
 
 /** A dónde manda una sección redirigida: la ruta y el query que le suma. */
@@ -1320,6 +1334,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // farmacia se elige ahora desde la tienda y el carrito, no desde una
   // pantalla de "cerca de mí" aparte. Sigue en historiales y en favoritos.
   'nearby-places': '/my-account/pharmacy',
+  // «Superadministración» (17/10/2026). La portada del dominio es
+  // Observabilidad; las hijas con parámetro de las cuatro secciones que se
+  // mudaron conservan el identificador (`:objectId`, `:planId`) y el query.
+  superadmin: '/superadmin/observability',
 };
 
 /**
@@ -2020,6 +2038,7 @@ export const routes: Routes = [
         }),
       },
       ...rutasHeredadas(RUTAS_HEREDADAS),
+      ...rutasHeredadasConParametro(RUTAS_HEREDADAS_CON_PARAMETRO),
     ],
   },
   {

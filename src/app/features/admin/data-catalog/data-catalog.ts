@@ -253,7 +253,7 @@ export class DataCatalog {
   }
 
   protected abrir(row: ObjectRow): void {
-    void this.router.navigate(['/administration/data-catalog', row.id]);
+    void this.router.navigate(['/superadmin/data-catalog', row.id]);
   }
 
   protected cargarEscaneos(): void {

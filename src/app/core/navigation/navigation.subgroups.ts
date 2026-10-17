@@ -249,13 +249,33 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Plataforma',
     group: 'Administración',
     icon: 'monitor',
-    // El portal administrativo de la plataforma misma: qué datos guarda y por
-    // qué, cómo la usan, cómo se prueba y si está lista para producción.
+    // Desde el 17/10/2026 estas cuatro secciones salen del menú —están fuera
+    // para todos (`fueraDelMenuPara`)— y sus rutas redirigen a `superadmin/*`
+    // (ver `SECCIONES_REDIRIGIDAS`). Siguen repartidas acá, como
+    // `my-account/loyalty` en «Mis gestiones», porque la prueba de este archivo
+    // exige que cada sección del registro esté en exactamente un bloque; el
+    // bloque, sin renglones visibles, no se dibuja.
     paths: [
       'administration/data-catalog',
       'administration/web-analytics',
       'administration/qa-lab',
       'administration/operations',
+    ],
+  },
+  /* -- Superadministración ------------------------------------------------ */
+  {
+    label: 'Plataforma',
+    group: 'Superadministración',
+    icon: 'monitor',
+    // La plataforma misma: qué datos guarda y por qué, qué flujos existen, cómo
+    // se prueba, cómo la usan y si está lista para producción. «Observabilidad»
+    // —la portada del dominio— va suelta arriba (ver `SUELTAS_A_PROPOSITO`).
+    paths: [
+      'superadmin/data-catalog',
+      'superadmin/flows',
+      'superadmin/qa-lab',
+      'superadmin/web-analytics',
+      'superadmin/operations',
     ],
   },
   {
@@ -389,6 +409,8 @@ export const NAV_GROUP_ICONS: Record<NavGroup, NavIconName> = {
   // La perilla: configurar la plataforma, no usarla.
   Administración: 'settings',
   Facturación: 'billing',
+  // El escudo: lo que sólo ve quien responde por la plataforma entera.
+  Superadministración: 'shield',
   // Una persona: mis propios datos, no los que administro.
   'Mi cuenta': 'patients',
 };
