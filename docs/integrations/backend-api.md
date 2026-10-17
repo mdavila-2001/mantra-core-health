@@ -51,6 +51,7 @@ inyección»*.
 | `GET` | `/iam/users` | `OrganizationNew` (buscador de owner, V04-01·F) | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
+| `POST` | `/iam/users/assisted-practitioner-registration` | `PractitionerAssistedRegistration` (vía `AssistedPractitionerClient`) | No |
 | `POST` | `/iam/auth/register-organization` | `ActivateAccount` y 13 pantallas más | Sí |
 
 #### Las tres altas no son la misma operación con distintos campos
@@ -63,6 +64,7 @@ la contraseña de otra persona.
 | `/iam/auth/register-patient` · `register-practitioner` | la persona, sin sesión | su dueño, al registrarse | los ids del perfil |
 | `/iam/users` | un `SECURITY_ADMIN` | **quien crea la cuenta** | la cuenta creada |
 | `/iam/users/assisted-registration` | un `SECURITY_ADMIN` o `CLINICIAN` | su dueño, **al activar** | un **token de activación de un solo uso** |
+| `/iam/users/assisted-practitioner-registration` | un `SECURITY_ADMIN` | su dueño, **al activar** | el **token de un solo uso** y los ids del médico (matrícula `PENDING`) |
 
 `/iam/users` es la única de las tres que fija una clave desde afuera, y por eso
 la pantalla que la usa dice explícitamente que hay que entregarla por un canal

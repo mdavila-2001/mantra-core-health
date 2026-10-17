@@ -57,5 +57,20 @@
 |---|---|---|---|
 | H5.2.1 | Pestañas «Por flujo» / «Por endpoint» en `qa-lab` | spec + Playwright `orquestacion` | TODO |
 
+## H6 — Alta administrativa de un médico (pedido del 17/10, tras el PR)
+**Resultado observable:** un `SECURITY_ADMIN` abre «Usuarios › Registrar médico», completa lo mínimo y recibe el código de activación de un solo uso (nunca una contraseña) para entregarlo al médico. Consume `POST /iam/users/assisted-practitioner-registration`, que la API ya tiene y el front no usaba.
+**Kill-test:** sin el cliente/pantalla, `grep -rn assisted-practitioner-registration src/app` sólo nombra el contrato generado.
+**Alcance IN:** formulario mínimo (nombre y apellidos, correo, CI y departamento emisor, matrícula, hasta cuatro especialidades opcionales, rol asistencial, motivo), pantalla de resultado con el token, cliente, tipos, simulador con las reglas de la API, ruta con guarda de sección, enlace desde «Usuarios», doc de contrato, pruebas, prueba en navegador contra la API real.
+**Alcance OUT:** el formulario completo del autorregistro (3 200 líneas: domicilio, coordenadas, credenciales con PDF, consultorio propio) — el médico lo completa en su perfil; una **lista** administrativa de médicos (no hay endpoint de listado: es la deuda «Listado pendiente»); verificar la matrícula.
+**Ambigüedades:** (1) el rol `CLINICIAN` se ofrece marcado por defecto porque sin rol la cuenta «no puede hacer nada» (comentario de la API), pero la matrícula nace PENDIENTE de verificación → confirmar con quien gobierna permisos; (2) los códigos de rol válidos son los de `GET /authz/roles`: se ofrece sólo `CLINICIAN`, el que usa el resto del front, y no se inventan otros.
+
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H6.1 | Tipos y `AssistedPractitionerClient.register` (cliente propio y no un método más de `IamClient`, ya largo; cuerpo armado campo por campo, sin claves vacías) | `assisted-practitioner.client.spec.ts` (5) + `tsc` | HECHO — `evidencia/H6-tests.log`, `H6-typecheck.log` |
+| H6.2 | Simulador `POST /iam/users/assisted-practitioner-registration` con las reglas de la API (campos obligatorios, 403 sin rol, token de un solo uso) | `assisted-practitioner.handlers.spec.ts` (7) | HECHO — `evidencia/H6-tests.log` |
+| H6.3 | Pantalla `features/admin/practitioner-assisted-registration` (UNA tarjeta con 3 pestañas, no formulario paginado: regla del cliente §5; resultado con token). Desvío: `check-form-pages` pedía paginar → excepción escrita con su motivo | spec del componente (11, con axe en formulario y en resultado) | HECHO — `evidencia/H6-tests.log` |
+| H6.4 | Ruta `administration/users/practitioner` con `seccionRolesGuard` (en su propio `.route.ts`: `app.routes.ts` está en su techo de líneas), botón «Registrar médico» en «Usuarios», contrato en `backend-api.md` | navegación/rutas en verde; `check-doc-coverage` y `check-api-contract-drift` sin hallazgos de esta pantalla | HECHO — `evidencia/H6-tests.log`, `H6-gates.log` (los rojos que quedan son previos) |
+| H6.5 | Prueba real en navegador contra la API: alta → token → activar cuenta → el médico inicia sesión; 3 anchos × 2 temas, mirando capturas | `node playwright/superadmin-registrar-medico.mjs` + SQL (usuario, perfil, matrícula PENDIENTE, rol) | HECHO — `evidencia/H6-playwright-real.log` (6/6, sin fallos), `H6-persistencia-sql.txt` |
+
 ## Riesgos
 Ver plan aprobado §Riesgos. Entorno: sin `node_modules` (Yarn 4 PnP) en esta sesión → todo DoD que requiera instalar/ejecutar se declara `NOT_RUN` hasta lograrlo.
