@@ -26,8 +26,10 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
@@ -38,12 +40,21 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
+import { FilterBar } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { importeBs } from '../resumen/ventanas';
 import { CuentaDialog } from './cuenta-dialog';
 import { motivoDelError } from './errores';
 import { RegistroDialog } from './registro-dialog';
-import { diaLegible, NOMBRE_DE_CLASE, rotuloDeCuenta, TEXTOS } from './registros.formato';
+import {
+  diaLegible,
+  EXPLICACION_DE_CUENTAS,
+  EXPLICACION_DE_TRANSACCIONES,
+  GLOSARIO,
+  NOMBRE_DE_CLASE,
+  rotuloDeCuenta,
+  TEXTOS,
+} from './registros.formato';
 import { TransaccionDialog } from './transaccion-dialog';
 
 /** Una fila de la tabla de gastos, activos o deudas, ya en palabras. */
@@ -100,6 +111,17 @@ const SIN_BORRAR: readonly RowAction[] = [{ code: 'editar', label: 'Editar', ico
 
 const KINDS: readonly RecordKind[] = ['EXPENSE', 'ASSET', 'DEBT'];
 
+/** Cada tabla de la tarjeta, para su búsqueda y su página. */
+type Tabla = RecordKind | 'TX' | 'CUENTAS';
+const TAMANO_INICIAL = 10;
+const PORTABLAS = <T,>(valor: T): Record<Tabla, T> => ({
+  EXPENSE: valor,
+  ASSET: valor,
+  DEBT: valor,
+  TX: valor,
+  CUENTAS: valor,
+});
+
 /**
  * **La contabilidad simple del doctor** (28/09/2026), arriba del resumen de
  * «Contabilidad».
@@ -126,6 +148,9 @@ const KINDS: readonly RecordKind[] = ['EXPENSE', 'ASSET', 'DEBT'];
     Card,
     CuentaDialog,
     DataTable,
+    FilterBar,
+    NavIcon,
+    Pagination,
     RegistroDialog,
     RowActions,
     SectionHeading,
@@ -165,6 +190,15 @@ export class ContabilidadSimple {
   protected readonly textos = TEXTOS;
   protected readonly kinds = KINDS;
   protected readonly modal = signal<Modal | null>(null);
+  protected readonly glosario = GLOSARIO;
+  protected readonly explicacionDeTransacciones = EXPLICACION_DE_TRANSACCIONES;
+  protected readonly explicacionDeCuentas = EXPLICACION_DE_CUENTAS;
+
+  /* ---- búsqueda y página de cada tabla ------------------------------------ */
+
+  protected readonly busqueda = signal<Record<Tabla, string>>(PORTABLAS(''));
+  protected readonly pagina = signal<Record<Tabla, number>>(PORTABLAS(1));
+  protected readonly tamano = signal<Record<Tabla, number>>(PORTABLAS(TAMANO_INICIAL));
 
   protected readonly resumen = signal<ViewState<PractitionerSummary>>(loading());
   protected readonly cuentas = signal<ViewState<readonly SimpleAccount[]>>(loading());
@@ -202,8 +236,8 @@ export class ContabilidadSimple {
     () => [
       { key: 'fecha', header: 'Fecha', priority: 2 },
       { key: 'descripcion', header: 'Descripción', priority: 1 },
-      { key: 'debe', header: 'Debe', priority: 1 },
-      { key: 'haber', header: 'Haber', priority: 1 },
+      { key: 'debe', header: 'Debe (llega a)', priority: 1 },
+      { key: 'haber', header: 'Haber (sale de)', priority: 1 },
       { key: 'monto', header: 'Monto', priority: 1, align: 'end' },
       { key: 'acciones', header: 'Acciones', priority: 1, cell: this.accionesDeTransaccion() },
     ],
@@ -212,7 +246,7 @@ export class ContabilidadSimple {
   protected readonly columnasDeCuenta = computed<readonly ColumnDef<FilaDeCuenta>[]>(() => [
     { key: 'codigo', header: 'Código', priority: 2 },
     { key: 'nombre', header: 'Nombre', priority: 1 },
-    { key: 'clase', header: 'Clase', priority: 1 },
+    { key: 'clase', header: 'Tipo', priority: 1 },
     { key: 'origen', header: 'Origen', priority: 3 },
     { key: 'acciones', header: 'Acciones', priority: 1, cell: this.accionesDeCuenta() },
   ]);
@@ -255,10 +289,63 @@ export class ContabilidadSimple {
       codigo: cuenta.code,
       nombre: cuenta.name,
       clase: NOMBRE_DE_CLASE[cuenta.accountClass],
-      origen: cuenta.seeded ? 'General' : 'Suya',
+      origen: cuenta.seeded ? 'Del sistema' : 'Creada por usted',
       cuenta,
     })),
   );
+
+  /* ---- lo filtrado y la página visible de cada tabla ------------------------ */
+
+  private filasFiltradas(tabla: Tabla): readonly { readonly id: string }[] {
+    const estado: ViewState<readonly { readonly id: string }[]> =
+      tabla === 'TX'
+        ? this.filasDeTransacciones()
+        : tabla === 'CUENTAS'
+          ? this.filasDeCuentas()
+          : this.filasDe(tabla);
+    const filas = dataOf(estado) ?? [];
+    const buscado = normalizar(this.busqueda()[tabla].trim());
+    if (buscado === '') return filas;
+    return filas.filter((fila) =>
+      Object.values(fila).some((valor) => typeof valor === 'string' && normalizar(valor).includes(buscado)),
+    );
+  }
+
+  /** La página visible; los estados que no son «listo» pasan igual. */
+  private paginaDe<T>(tabla: Tabla, estado: ViewState<readonly T[]>): ViewState<readonly T[]> {
+    if (estado.status !== 'ready') return estado;
+    const filtradas = this.filasFiltradas(tabla) as readonly T[];
+    const inicio = (this.pagina()[tabla] - 1) * this.tamano()[tabla];
+    return ready(filtradas.slice(inicio, inicio + this.tamano()[tabla]));
+  }
+
+  protected paginaDeRegistros(kind: RecordKind): ViewState<readonly FilaDeRegistro[]> {
+    return this.paginaDe(kind, this.filasDe(kind));
+  }
+
+  protected readonly paginaDeTransacciones = computed(() =>
+    this.paginaDe('TX', this.filasDeTransacciones()),
+  );
+
+  protected readonly paginaDeCuentas = computed(() => this.paginaDe('CUENTAS', this.filasDeCuentas()));
+
+  protected totalDe(tabla: Tabla): number {
+    return this.filasFiltradas(tabla).length;
+  }
+
+  protected buscar(tabla: Tabla, termino: string): void {
+    this.busqueda.update((todas) => ({ ...todas, [tabla]: termino }));
+    this.pagina.update((todas) => ({ ...todas, [tabla]: 1 }));
+  }
+
+  protected irAPagina(tabla: Tabla, numero: number): void {
+    this.pagina.update((todas) => ({ ...todas, [tabla]: numero }));
+  }
+
+  protected cambiarTamano(tabla: Tabla, tamano: number): void {
+    this.tamano.update((todos) => ({ ...todos, [tabla]: tamano }));
+    this.pagina.update((todas) => ({ ...todas, [tabla]: 1 }));
+  }
 
   /** Cuántos hay de cada cosa, para el rótulo de la pestaña. */
   protected cuantos(estado: ViewState<readonly unknown[]>): string {
@@ -447,4 +534,12 @@ function mapear<T, U>(
   return estado.status === 'ready'
     ? ready(estado.data.map(fn))
     : (estado as ViewState<readonly U[]>);
+}
+
+/** Para buscar sin tildes ni mayúsculas. */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLowerCase();
 }

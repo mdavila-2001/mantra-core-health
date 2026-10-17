@@ -80,9 +80,6 @@ function responderPracticas(
     .expectOne(`${BASE}/practices`)
     .flush([{ id: 'prac-1', code: 'P1', name: 'Consultorio de prueba' }]);
   fixture.detectChanges();
-  http.expectOne((request) => request.url === `${BASE}/accounting/practitioner/paid-consultations` && request.params.get('practiceId') === 'prac-1')
-    .flush({ items: [], count: 0 });
-  fixture.detectChanges();
 }
 
 /** Un estado de resultados con los totales dados y sin líneas. */
@@ -279,7 +276,7 @@ describe('Resumen contable', () => {
       // Ordenados de mayor a menor, con su parte del total.
       expect(gastos.map((g) => g.porcentaje)).toEqual([60, 30, 10]);
       // El desgaste se explica: no es plata que sale de la cuenta.
-      expect(gastos[0]?.aclaracion).toContain('No sale plata');
+      expect(gastos[0]?.aclaracion).toContain('No sale dinero');
       expect(gastos[1]?.aclaracion).toBeNull();
     });
 
@@ -393,7 +390,7 @@ describe('Resumen contable', () => {
       expect(c.vencidasQueDebes()).toBe(1);
     });
 
-    it('«Ya me pagaron» compensa la partida y vuelve a leer el tablero', () => {
+    it('«Marcar como cobrada» compensa la partida y vuelve a leer el tablero', () => {
       // Es la misma compensación que el cockpit llama «Compensar». Cambia el
       // verbo porque cambia el lector, no el contrato.
       const { fixture, http } = montarConCartera();
@@ -540,14 +537,14 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
-      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Activos y pasivos', 'Flujo de dinero']);
+      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Bienes y deudas', 'Flujo de dinero']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(texto).toContain('¿Cuánto hizo?');
+      expect(texto).toContain('¿Cuánto ganó?');
 
       fixture.componentInstance.subpestana.set(1);
       fixture.detectChanges();
       const textoPendientes = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(textoPendientes).toContain('Lo que está pendiente');
+      expect(textoPendientes).toContain('Cobros y pagos pendientes');
     });
 
     it('divide el resumen en ingresos, pendientes, activos y flujo de dinero', () => {
@@ -556,25 +553,25 @@ describe('Resumen contable', () => {
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Activos y pasivos', 'Flujo de dinero']);
+      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Bienes y deudas', 'Flujo de dinero']);
 
       // Movimientos
       expect(fixture.componentInstance.subpestana()).toBe(0);
       let texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(texto).toContain('¿Cuánto hizo?');
-      expect(texto).toContain('¿En qué se le va la plata?');
+      expect(texto).toContain('¿Cuánto ganó?');
+      expect(texto).toContain('¿En qué gasta?');
 
       // Pendientes
       fixture.componentInstance.subpestana.set(1);
       fixture.detectChanges();
       texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(texto).toContain('Lo que está pendiente');
+      expect(texto).toContain('Cobros y pagos pendientes');
 
       // Patrimonio
       fixture.componentInstance.subpestana.set(2);
       fixture.detectChanges();
       texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(texto).toContain('Activos y pasivos');
+      expect(texto).toContain('Bienes y deudas');
       fixture.componentInstance.subpestana.set(3);
       fixture.detectChanges();
       texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -602,8 +599,8 @@ describe('Resumen contable', () => {
 
       const raiz = fixture.nativeElement as HTMLElement;
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).not.toBeNull();
-      expect(raiz.textContent).not.toContain('¿Cuánto hizo?');
-      expect(raiz.textContent).not.toContain('Lo que está pendiente');
+      expect(raiz.textContent).not.toContain('¿Cuánto ganó?');
+      expect(raiz.textContent).not.toContain('Cobros y pagos pendientes');
       http.verify();
     });
   });

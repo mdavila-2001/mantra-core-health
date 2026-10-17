@@ -1,0 +1,90 @@
+/* Flujo de dinero: la cuenta, tres cifras y una tarjeta con pestañas.
+   Sólo distribución; color y tipografía salen de los tokens. */
+
+:host {
+  display: grid;
+  gap: var(--sp-5);
+  inline-size: 100%;
+}
+
+.flujo__cuenta {
+  max-inline-size: 28rem;
+}
+
+/* Tres cifras del mismo ancho; en el teléfono, una debajo de la otra. */
+.flujo__cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.flujo__cifra {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.flujo__cifra dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.flujo__cifra dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.flujo__cifra--neto {
+  border-color: var(--brand-primary);
+}
+
+.flujo__tarjeta {
+  display: block;
+  inline-size: 100%;
+}
+
+.flujo__panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+.flujo__explicacion,
+.flujo__nota {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+  max-inline-size: 72ch;
+}
+
+/* El buscador ocupa lo que sobra; la descarga, a la derecha. */
+.flujo__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.flujo__buscador {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.flujo__resumen {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
