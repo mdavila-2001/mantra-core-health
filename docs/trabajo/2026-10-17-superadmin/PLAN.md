@@ -33,8 +33,17 @@
 | H1.3.5 | Prueba visual 3 anchos × 2 temas × 4 pestañas, mirada, y comparación contra la respuesta de red | `node playwright/superadmin-observabilidad-visual.mjs` | HECHO (VERIFIED local): 6/6 contra el simulador y 6/6 contra la **API real** (login `admin@alovidasalud.com`, la cifra en pantalla = `measured.requests` de la respuesta de red), 60 capturas inspeccionadas · `evidencia/H1.3-visual-demo.log`, `H1.3-visual-real.log` |
 | H1.3.6 | Gates manuales (CI caído) | `scripts/check-*.mjs` | HECHO: ninguno nombra un archivo mío; rojos previos listados en el REPORTE |
 
-## H2.3 / H3.4 / H5.2
-Pantallas y cambios en `data-catalog`, `features/admin/flows` y `qa-lab`, con los gates `check-*.mjs` en 0 y capturas 390/820/1440 × claro/oscuro.
+## H2.3 — Catálogo de datos completo (front)
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H2.3.1 | Tipos (`SchemaDescription`), `listColumnEvidence` y simulador (`catalog-vault.mock.ts`: descripción por schema, ficha importada con plantilla, nota de FK) | `tsc`; `admin-portal.handlers.spec.ts` | HECHO (TESTED) |
+| H2.3.2 | Pestaña «Esquemas» (módulo de la bóveda, negocio, sistema, fuente; «sin módulo» y «sin propósito» dichos) | `data-catalog.spec.ts` 6 casos nuevos | HECHO (TESTED) |
+| H2.3.3 | Ficha: Negocio / Por qué existe / Sistema, badge de origen, aviso de plantilla, «Nota de la bóveda» por FK (lectura bajo demanda), «Relaciones» | `catalog-object-detail.spec.ts` 7 casos nuevos | HECHO (TESTED) |
+| H2.3.4 | Prueba visual real (3 anchos × 2 temas) | `node playwright/superadmin-catalogo-visual.mjs` con `E2E_MODO=real` | HECHO (VERIFIED local) · `evidencia/H2.3-visual-real.log` |
+| H2.3.5 | Mutación «Aprobar» real: UI → petición → respuesta → fila → volver a leer → UI | `node playwright/superadmin-catalogo-aprobacion.mjs` | HECHO (VERIFIED local) · `evidencia/H2.3-aprobacion-real.txt` |
+
+## H3.4 / H5.2
+Pantallas `features/admin/flows` y cambios en `qa-lab`, con los gates `check-*.mjs` en 0 y capturas 390/820/1440 × claro/oscuro.
 
 ## Riesgos
 Ver plan aprobado §Riesgos. Entorno: sin `node_modules` (Yarn 4 PnP) en esta sesión → todo DoD que requiera instalar/ejecutar se declara `NOT_RUN` hasta lograrlo.
