@@ -43,6 +43,12 @@ Defectos hallados al probar y corregidos: 36 casillas de especialidad en vertica
 - **Catálogo de datos en `mockup`:** la prueba visual falla en «la tabla no tiene ninguna clave foránea para probar la nota»: la tabla de demostración (`clinical.conditions`) no trae FK en ese simulador. La pantalla funciona (se miró la captura); la nota de FK no se pudo demostrar en esta rama, sí en `dev` contra la API real.
 - `docs/integrations/backend-api.md`: en `mockup` ya no existe la sección «Consumos incorporados en Hito 2» donde mis commits agregaron filas; se conservó la de `mockup` y esas filas **no están** en esta rama.
 - No se corrió la suite completa de `mockup` ni `ng build`.
+### H8 — Credenciales locales en el login
+| ID | Qué se logró | Comando | Resultado |
+|---|---|---|---|
+| H8.1 | El login de `dev` muestra, sólo en modo desarrollo, «Cuenta de administración local» con `admin@alovidasalud.com` y `12345678` escritos y un botón que **rellena sin enviar**. Gobernado por `ngDevMode`: el compilador lo fija en `false` en producción y el literal desaparece | `yarn ng test --include 'auth/login/**'` (17 verdes), `ng build --configuration production` + `grep` (0 archivos con el correo), `node playwright/login-cuenta-local.mjs` contra la API real | 6/6 combinaciones (3 anchos × 2 temas) sin desborde ni errores de consola; en escritorio claro: rellenar no envía, «Entrar» inicia sesión y llega a `/dashboard`; capturas miradas · `evidencia/H8-gates.log`, `H8-login-cuenta-local-real.log` |
+
+**No cubierto (H8):** un despliegue de desarrollo armado en modo producción **no** muestra el recuadro (decisión pendiente: una variable `PUBLIC_*` publicaría la clave); no se corrió la suite completa ni se probó el recuadro con lector de pantalla (axe automático no se agregó a esta pantalla).
 
 ## A medias
 ### H0.3.3 — Menú del perfil `paciente`

@@ -82,6 +82,38 @@ describe('Login', () => {
     component.form.setValue({ identifier, password, mfaCode: '' });
   }
 
+  describe('cuenta de administración local (sólo desarrollo)', () => {
+    it('muestra el correo y la contraseña escritos, para copiarlos', () => {
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+
+      expect(el.querySelector('[data-testid="login-local-correo"]')?.textContent).toBe(
+        'admin@alovidasalud.com',
+      );
+      expect(el.querySelector('[data-testid="login-local-clave"]')?.textContent).toBe('12345678');
+    });
+
+    it('«Usar estas credenciales» rellena el formulario pero no envía nada', () => {
+      fixture.detectChanges();
+      (fixture.nativeElement.querySelector('[data-testid="login-local-usar"]') as HTMLElement).click();
+
+      expect(component.form.getRawValue()).toMatchObject({
+        identifier: 'admin@alovidasalud.com',
+        password: '12345678',
+      });
+      // `http.verify()` del afterEach falla si salió alguna petición.
+    });
+
+    it('con la cuenta rellenada, entrar manda correo y contraseña por la vía normal', () => {
+      fixture.detectChanges();
+      (fixture.nativeElement.querySelector('[data-testid="login-local-usar"]') as HTMLElement).click();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/login');
+      expect(req.request.body).toEqual({ email: 'admin@alovidasalud.com', password: '12345678' });
+    });
+  });
+
   describe('identificador dual', () => {
     it('lo que tiene arroba se manda como correo', () => {
       completar('admin@mantra.test');
