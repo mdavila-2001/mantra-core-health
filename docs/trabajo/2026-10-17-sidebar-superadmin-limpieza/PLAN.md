@@ -32,18 +32,18 @@
 ## H1 — Limpieza y restricciones en el registro de navegación y shell
 **CA:** Dado un usuario con rol `SUPERADMIN`, cuando consulta el menú lateral, entonces ve únicamente sus accesos fijados (`Mi perfil`, `Notificaciones`), el grupo `Administración` (sin aseguradora ni mi organización) y el grupo `Superadministración`.
 **DoD:** `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` exit 0 con pruebas específicas del menú de superadmin.
-**Estado:** TODO
+**Estado:** HECHO
 
 ### H1.S1 — Configuración en navigation.map.ts y shell-layout.ts
 **CA:** Las secciones circuladas y de aseguradora tienen `'SUPERADMIN'` en `fueraDelMenuPara`, y `shell-layout` no agrega `Herramientas` para `SUPERADMIN`.
 **DoD:** `yarn typecheck` exit 0 y tests unitarios en verde.
-**Estado:** TODO
+**Estado:** HECHO
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
 |---|---|---|---|---|
-| H1.S1.M1 | Añadir `'SUPERADMIN'` a `fueraDelMenuPara` en `navigation.map.ts` para ítems circulados y de aseguradora | Las secciones marcadas no aparecen en el menú para superadmin | `yarn test --include='src/app/core/navigation/navigation.map.spec.ts'` → exit 0 | TODO |
-| H1.S1.M2 | En `shell-layout.ts`, excluir `'SUPERADMIN'` de `Herramientas` | `SUPERADMIN` no ve `Herramientas` en el menú | `yarn test --include='src/app/features/shell-layout/shell-layout.spec.ts'` → exit 0 | TODO |
-| H1.S1.M3 | Agregar pruebas en `navigation.service.spec.ts` verificando la lista exacta de rutas para `SUPERADMIN` | El menú de `SUPERADMIN` tiene exactamente las rutas autorizadas | `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` → exit 0 | TODO |
+| H1.S1.M1 | Añadir `'SUPERADMIN'` a `fueraDelMenuPara` en `navigation.map.ts` para ítems circulados y de aseguradora | Las secciones marcadas no aparecen en el menú para superadmin | `yarn test --include='src/app/core/navigation/navigation.map.spec.ts'` → exit 0 | HECHO |
+| H1.S1.M2 | En `shell-layout.ts`, excluir `'SUPERADMIN'` de `Herramientas` | `SUPERADMIN` no ve `Herramientas` en el menú | `yarn test --include='src/app/features/shell-layout/shell-layout.spec.ts'` → exit 0 | HECHO |
+| H1.S1.M3 | Agregar pruebas en `navigation.service.spec.ts` verificando la lista exacta de rutas para `SUPERADMIN` | El menú de `SUPERADMIN` tiene exactamente las rutas autorizadas | `yarn test --include='src/app/core/navigation/navigation.service.spec.ts'` → exit 0 | HECHO |
 
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |
