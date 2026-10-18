@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Diabetes tipo 1: la glucosa sin insulina y con insulina</title>
+  <desc id="d">Dos paneles. Sin insulina: el sistema inmunitario ataca las células del páncreas que fabrican insulina, el cuerpo produce poca o ninguna, la glucosa se queda en la sangre y las células no la reciben. Con insulina diaria: la insulina permite que la glucosa pase de la sangre a las células, donde se usa como energía. Abajo, la vigilancia de la glucosa con pinchazo en el dedo o monitor continuo y el análisis A1C.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --bad:#c0392b; --bad-l:#f6d5cf; --ok:#1f8a5b; --ok-l:#d7f0e4; --blue:#1f6fb2; --blue-l:#d6e6f5; --glu:#b7791f; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --bad:#ef7467; --bad-l:#4a2a27; --ok:#4cc38a; --ok-l:#1f4033; --blue:#6aa7e8; --blue-l:#1f3347; --glu:#e0b25a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .hd { font-size: 15px; font-weight: 700; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="440" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Diabetes tipo 1: faltan las células que fabrican insulina</text>
+
+  <!-- sin insulina -->
+  <rect x="40" y="76" width="350" height="238" rx="10" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="2"/>
+  <text x="215" y="102" text-anchor="middle" class="hd" style="fill:var(--bad)">Sin insulina</text>
+  <text x="215" y="130" text-anchor="middle" class="lab">El sistema inmunitario ataca las células</text>
+  <text x="215" y="148" text-anchor="middle" class="lab">del páncreas que fabrican insulina</text>
+  <rect x="70" y="170" width="140" height="56" rx="8" fill="var(--panel)" stroke="var(--glu)" stroke-width="2"/>
+  <text x="140" y="194" text-anchor="middle" class="lab">Sangre</text>
+  <text x="140" y="212" text-anchor="middle" class="small" style="fill:var(--glu)">glucosa se acumula</text>
+  <rect x="250" y="170" width="110" height="56" rx="8" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <text x="305" y="194" text-anchor="middle" class="lab">Células</text>
+  <text x="305" y="212" text-anchor="middle" class="small muted">sin energía</text>
+  <path d="M210 198 L 245 198" stroke="var(--bad)" stroke-width="2" stroke-dasharray="4 3" fill="none"/>
+  <text x="227" y="190" text-anchor="middle" class="lab" style="fill:var(--bad)">✕</text>
+  <text x="215" y="262" text-anchor="middle" class="small muted">Glucosa alta: daño a vasos y nervios con los años</text>
+  <text x="215" y="284" text-anchor="middle" class="small muted">Riesgo de cetoacidosis: emergencia</text>
+
+  <!-- con insulina -->
+  <rect x="410" y="76" width="350" height="238" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="585" y="102" text-anchor="middle" class="hd" style="fill:var(--ok)">Con insulina todos los días</text>
+  <text x="585" y="130" text-anchor="middle" class="lab">Inyecciones o bomba de insulina</text>
+  <text x="585" y="148" text-anchor="middle" class="lab">según indique el equipo de salud</text>
+  <rect x="440" y="170" width="140" height="56" rx="8" fill="var(--panel)" stroke="var(--glu)" stroke-width="2"/>
+  <text x="510" y="194" text-anchor="middle" class="lab">Sangre</text>
+  <text x="510" y="212" text-anchor="middle" class="small" style="fill:var(--glu)">glucosa</text>
+  <rect x="620" y="170" width="110" height="56" rx="8" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="675" y="194" text-anchor="middle" class="lab">Células</text>
+  <text x="675" y="212" text-anchor="middle" class="small muted">usan energía</text>
+  <path d="M580 198 L 615 198" stroke="var(--ok)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="597" y="190" text-anchor="middle" class="small" style="fill:var(--ok)">insulina</text>
+  <text x="585" y="262" text-anchor="middle" class="small muted">La insulina permite que la glucosa entre a las células</text>
+
+  <!-- vigilancia -->
+  <rect x="40" y="332" width="720" height="64" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="400" y="358" text-anchor="middle" class="hd" style="fill:var(--blue)">Vigilar la glucosa</text>
+  <text x="400" y="380" text-anchor="middle" class="lab">Pinchazo en el dedo o monitor continuo · análisis A1C con el tiempo</text>
+</svg>

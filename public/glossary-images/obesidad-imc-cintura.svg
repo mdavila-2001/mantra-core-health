@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se mide la obesidad y qué enfermedades se asocian</title>
+  <desc id="d">Tres bloques. El índice de masa corporal es el peso en kilos dividido por la talla en metros al cuadrado; en adultos la OMS define sobrepeso como 25 o más y obesidad como 30 o más. Una cinta métrica rodea la cintura, porque la grasa en el abdomen aumenta el riesgo. A la derecha, enfermedades asociadas: diabetes tipo 2, enfermedad del corazón, presión alta, accidente cerebrovascular, apnea del sueño y algunos cánceres.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --ok:#1f8a5b; --ok-l:#d7f0e4; --warn:#b7791f; --warn-l:#f7e4bf; --bad:#c0392b; --bad-l:#f6d5cf; --blue:#1f6fb2; --blue-l:#d6e6f5; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --ok:#4cc38a; --ok-l:#1f4033; --warn:#e0b25a; --warn-l:#4a3b1f; --bad:#ef7467; --bad-l:#4a2a27; --blue:#6aa7e8; --blue-l:#1f3347; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .hd { font-size: 15px; font-weight: 700; }
+    .big { font-size: 20px; font-weight: 700; }
+  </style>
+  <rect width="800" height="440" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Obesidad: medir peso, talla y cintura</text>
+
+  <rect x="40" y="76" width="230" height="300" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="155" y="104" text-anchor="middle" class="hd" style="fill:var(--blue)">Índice de masa corporal</text>
+  <text x="155" y="140" text-anchor="middle" class="lab">IMC = peso (kg)</text>
+  <line x1="85" y1="150" x2="225" y2="150" stroke="var(--ink)" stroke-width="1.5"/>
+  <text x="155" y="170" text-anchor="middle" class="lab">talla (m) al cuadrado</text>
+  <rect x="62" y="196" width="186" height="52" rx="8" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
+  <text x="155" y="218" text-anchor="middle" class="hd" style="fill:var(--warn)">Sobrepeso</text>
+  <text x="155" y="238" text-anchor="middle" class="lab">IMC de 25 o más</text>
+  <rect x="62" y="260" width="186" height="52" rx="8" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="2"/>
+  <text x="155" y="282" text-anchor="middle" class="hd" style="fill:var(--bad)">Obesidad</text>
+  <text x="155" y="302" text-anchor="middle" class="lab">IMC de 30 o más</text>
+  <text x="155" y="340" text-anchor="middle" class="small muted">Valores de la OMS para adultos</text>
+  <text x="155" y="358" text-anchor="middle" class="small muted">En niños se usan otras tablas</text>
+
+  <rect x="285" y="76" width="230" height="300" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="400" y="104" text-anchor="middle" class="hd">También la cintura</text>
+  <ellipse cx="400" cy="190" rx="52" ry="66" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2"/>
+  <ellipse cx="400" cy="200" rx="58" ry="12" fill="none" stroke="var(--warn)" stroke-width="4"/>
+  <text x="400" y="290" text-anchor="middle" class="lab">El IMC no distingue grasa,</text>
+  <text x="400" y="308" text-anchor="middle" class="lab">músculo y hueso</text>
+  <text x="400" y="334" text-anchor="middle" class="small muted">Más grasa en el abdomen que</text>
+  <text x="400" y="352" text-anchor="middle" class="small muted">en las caderas aumenta el riesgo</text>
+
+  <rect x="530" y="76" width="230" height="312" rx="10" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="2"/>
+  <text x="645" y="104" text-anchor="middle" class="hd" style="fill:var(--bad)">Se asocia con</text>
+  <text x="645" y="140" text-anchor="middle" class="lab">Diabetes tipo 2</text>
+  <text x="645" y="166" text-anchor="middle" class="lab">Enfermedad del corazón</text>
+  <text x="645" y="192" text-anchor="middle" class="lab">Presión alta</text>
+  <text x="645" y="218" text-anchor="middle" class="lab">Accidente cerebrovascular</text>
+  <text x="645" y="244" text-anchor="middle" class="lab">Apnea del sueño · artrosis</text>
+  <text x="645" y="270" text-anchor="middle" class="lab">Problemas de fertilidad</text>
+  <text x="645" y="296" text-anchor="middle" class="lab">Algunos cánceres</text>
+  <text x="645" y="338" text-anchor="middle" class="small muted">Perder 5 a 10 % del peso puede</text>
+  <text x="645" y="356" text-anchor="middle" class="small muted">retrasar o prevenir algunas</text>
+  <text x="645" y="374" text-anchor="middle" class="small muted">enfermedades</text>
+
+  <text x="400" y="404" text-anchor="middle" class="small muted">Enfermedad crónica con causas biológicas, ambientales y sociales</text>
+</svg>
