@@ -1782,3 +1782,113 @@ Application bundle generation complete. [104.083 seconds] - 2026-10-21T15:54:05.
 
 Not implemented: navigation to another Document
 Not implemented: navigation to another Document
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts [2m([22m[2m67 tests[22m[2m | [22m[31m66 failed[39m[2m)[22m[33m 2256[2mms[22m[39m
+[31m     [31m×[31m sin binding declarado no ofrece el formulario y explica por qué[39m[32m 54[2mms[22m[39m
+[31m     [31m×[31m con binding declarado ofrece el formulario[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m no ofrece descarga, demostración ni favoritos y tampoco los consulta[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m no envía sin medicamento elegido: es obligatorio en el DTO[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m manda los tres obligatorios y el encuentro, y omite lo vacío[39m[32m 23[2mms[22m[39m
+[31m     [31m×[31m manda el diagnóstico elegido como indicación de la receta[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m ancla el 422 estructurado de la API al campo Medicamento[39m[32m 33[2mms[22m[39m
+[31m     [31m×[31m sin diagnóstico elegido la clave no viaja: la receta sintomática es legítima[39m[32m 21[2mms[22m[39m
+[31m     [31m×[31m C5: ofrece sólo los diagnósticos confirmados, con la fecha, y «Otro motivo» al final — sin opción vacía[39m[32m 28[2mms[22m[39m
+[31m     [31m×[31m manda dosis, frecuencia y cantidad cuando se cargaron[39m[32m 20[2mms[22m[39m
+[31m     [31m×[31m manda la vía como concepto cuando se eligió[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m sin elegir vía, su clave no viaja[39m[32m 25[2mms[22m[39m
+[31m     [31m×[31m una cantidad en blanco no viaja como cero[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m tras prescribir avisa para releer y limpia el formulario[39m[32m 33[2mms[22m[39m
+[31m     [31m×[31m manda inicio y fin de vigencia como fechas ISO cuando están configurados[39m[32m 47[2mms[22m[39m
+[31m     [31m×[31m las indicaciones al paciente viajan separadas de la dosis (v4.1.3)[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m la pauta sugiere la cantidad sin pisar lo tecleado a mano[39m[32m 21[2mms[22m[39m
+[31m     [31m×[31m «Crónico» no aparece elegido al abrir, y al elegirlo borra el fin de vigencia[39m[32m 43[2mms[22m[39m
+[31m     [31m×[31m usa selects para las pautas y conserva la frecuencia como texto editable[39m[32m 247[2mms[22m[39m
+[31m     [31m×[31m sin medicación activa, prescribe sin pedir el chequeo de interacciones[39m[32m 20[2mms[22m[39m
+[31m     [31m×[31m con medicación activa y sin interacciones, prescribe sin confirmar nada[39m[32m 27[2mms[22m[39m
+[31m     [31m×[31m con interacciones encontradas, pide confirmar antes de prescribir[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m si se rechaza la confirmación de interacciones, no prescribe[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m si el chequeo de interacciones falla, prescribe igual[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m si el chequeo falla, avisa que no se revisaron las interacciones, con código de soporte[39m[32m 21[2mms[22m[39m
+[31m     [31m×[31m el aviso de interacciones sin revisar se va cuando el próximo chequeo responde[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m con interacciones revisadas sin hallazgos, no aparece el aviso de revisión pendiente[39m[32m 22[2mms[22m[39m
+[31m     [31m×[31m firmar pega contra `sign` sin cuerpo y pide releer[39m[32m 39[2mms[22m[39m
+[31m     [31m×[31m emitir sin confirmar no manda nada[39m[32m 38[2mms[22m[39m
+[31m     [31m×[31m emitir confirmado pega contra `issue` y pide releer[39m[32m 32[2mms[22m[39m
+[31m     [31m×[31m emitir sin firmar muestra el 422 como aviso de precondición, no como error[39m[32m 23[2mms[22m[39m
+[31m     [31m×[31m la precondición sobre una receta firmada se cuenta como estado viejo[39m[32m 32[2mms[22m[39m
+[31m     [31m×[31m una receta emitida no ofrece firmar ni emitir: es inmutable[39m[32m 27[2mms[22m[39m
+[31m     [31m×[31m agrupa las acciones editables en el menú estándar[39m[32m 28[2mms[22m[39m
+[31m     [31m×[31m el sello distingue las tres etapas del ciclo[39m[32m 21[2mms[22m[39m
+[31m     [31m×[31m busca dentro del vademécum, sin pedirle nada a la terminología[39m[32m 27[2mms[22m[39m
+[31m     [31m×[31m encuentra sin tilde lo que el catálogo escribe con tilde[39m[32m 23[2mms[22m[39m
+[31m     [31m×[31m también busca por código ATC[39m[32m 37[2mms[22m[39m
+[31m     [31m×[31m sin texto ofrece el catálogo entero, no una lista vacía[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m al elegir, lee la ficha y ofrece presentaciones y concentraciones[39m[32m 38[2mms[22m[39m
+[31m     [31m×[31m completa la frecuencia manual con el valor publicado por el medicamento[39m[32m 37[2mms[22m[39m
+[31m     [31m×[31m conserva la frecuencia escrita al elegir un medicamento con valor por defecto[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m deja la frecuencia manual vacía si el medicamento no publica una por defecto[39m[32m 37[2mms[22m[39m
+[31m     [31m×[31m ignora una frecuencia por defecto malformada[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m reemplaza una sugerencia anterior al elegir otro medicamento[39m[32m 40[2mms[22m[39m
+[31m     [31m×[31m ignora la ficha que llega tarde para una selección anterior[39m[32m 39[2mms[22m[39m
+[31m     [31m×[31m conserva una edición manual posterior a una sugerencia al cambiar de medicamento[39m[32m 32[2mms[22m[39m
+[31m     [31m×[31m los valores del catálogo completan la dosis, pero el texto libre manda[39m[32m 37[2mms[22m[39m
+[31m     [31m×[31m un medicamento sin propiedades declaradas cae al texto libre de siempre[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m si la ficha falla, el medicamento sigue siendo prescribible (con la indicación resuelta)[39m[32m 38[2mms[22m[39m
+[31m     [31m×[31m cambiar de medicamento descarta la posología del anterior[39m[32m 32[2mms[22m[39m
+[31m       [31m×[31m C5: sin diagnóstico ni motivo NO se puede prescribir — la receta siempre se liga a uno de los dos[39m[32m 39[2mms[22m[39m
+[31m       [31m×[31m un diagnóstico confirmado de la historia alcanza[39m[32m 39[2mms[22m[39m
+[31m       [31m×[31m «Otro motivo» habilita el campo, y exige texto para poder prescribir[39m[32m 31[2mms[22m[39m
+[31m       [31m×[31m sin diagnóstico, un motivo libre viaja como texto[39m[32m 36[2mms[22m[39m
+[31m       [31m×[31m con «Otro motivo» viaja el texto y NO la condición[39m[32m 32[2mms[22m[39m
+[31m       [31m×[31m con un diagnóstico elegido viaja la condición y no el texto[39m[32m 32[2mms[22m[39m
+[31m       [31m×[31m salir de «Otro motivo» borra el texto[39m[32m 34[2mms[22m[39m
+[31m       [31m×[31m recién montado no tiene cambios pendientes[39m[32m 27[2mms[22m[39m
+[31m       [31m×[31m con la dosis escrita tiene cambios pendientes[39m[32m 29[2mms[22m[39m
+[31m       [31m×[31m la vigencia que el bloque completa solo no cuenta como pendiente[39m[32m 25[2mms[22m[39m
+[31m       [31m×[31m elegir una duración rápida sí cuenta, aunque también fije validFrom[39m[32m 26[2mms[22m[39m
+[31m       [31m×[31m abrir el diálogo limpia la selección anterior[39m[32m 17[2mms[22m[39m
+[31m       [31m×[31m vincular a un diagnóstico confirmado manda indicationConditionId y cierra el diálogo[39m[32m 22[2mms[22m[39m
+[31m       [31m×[31m vincular con «Otro motivo» exige texto y manda indicationText[39m[32m 23[2mms[22m[39m
+[31m       [31m×[31m un 422 del servidor se muestra dentro del diálogo, que sigue abierto[39m[32m 25[2mms[22m[39m
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: HTMLFormElement's requestSubmit() method
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/app.routes.spec.ts [2m([22m[2m62 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 4297[2mms[22m[39m
+[31m     [31m×[31m cada dirección vieja redirige a una ruta que existe[39m[32m 6[2mms[22m[39m
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/clinical.handlers.spec.ts [2m([22m[2m23 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 115[2mms[22m[39m
+[31m     [31m×[31m devuelve un PDF de verdad, armado por el maquetador, y no la hoja en blanco de antes[39m[32m 60[2mms[22m[39m
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/navigation/access-tree.spec.ts [2m([22m[2m37 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 14[2mms[22m[39m
+[31m     [31m×[31m la portada sigue en el registro, para el menú lateral[39m[32m 3[2mms[22m[39m
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/messaging/messaging.spec.ts [2m([22m[2m10 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 199[2mms[22m[39m
+[31m     [31m×[31m no borra la bandeja cuando un tic falla[39m[32m 21[2mms[22m[39m
+Not implemented: navigation to another Document
+Not implemented: Window's open() method
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/faker/faker.spec.ts [2m([22m[2m14 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 16[2mms[22m[39m
+[31m       [31m×[31m cada ocupación y cada municipio de cada paciente existen[39m[32m 3[2mms[22m[39m
+Not implemented: navigation to another Document
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/fixtures/fichas-estandar.spec.ts [2m([22m[2m9 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 18[2mms[22m[39m
+[31m     [31m×[31m son tantas como los JSON que siembra el backend[39m[32m 1[2mms[22m[39m
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
