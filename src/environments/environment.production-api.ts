@@ -22,4 +22,11 @@ export const environment: Environment = {
     tracesEndpoint: envFromProcess.telemetry?.tracesEndpoint ?? '/otel/v1/traces',
     sampleRatio: envFromProcess.telemetry?.sampleRatio ?? 0.1,
   },
+  // Captura de interacciones para los mapas de calor: apagada salvo que el
+  // despliegue la encienda con `PUBLIC_UX_ANALYTICS_*` (ver environment.types.ts).
+  uxAnalytics: {
+    enabled: envFromProcess.uxAnalytics?.enabled ?? false,
+    eventSchemaDefinitionId: envFromProcess.uxAnalytics?.eventSchemaDefinitionId ?? '',
+    sampleRatio: envFromProcess.uxAnalytics?.sampleRatio ?? 1,
+  },
 };
