@@ -1,6 +1,6 @@
 # Reporte — Inventario y portal interno de AloVida como AtlasAdminPortal
 
-> **AVANCE: 5 / 73 — 6,8 %.**
+> **AVANCE: 7 / 73 — 9,6 %.**
 
 - Fecha: 2026-10-21 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `claude-marcelo/vigilant-bardeen-gcoocw` en `mantra-core-health` (plan y evidencia) y `mantra-core-health-api` (código); `mantra-core-health-model` sin cambios todavía
 - Peldaño de evidencia alcanzado: **H0 y H1.S1.M1 → `TESTED`**. H1.S1.M1 es un refactor sin superficie visual: se demostró salida idéntica (`diff -r` sobre 67 archivos) y 7 pruebas de la librería nueva. El resto del trabajo sigue en `DISCOVERED`.
@@ -13,6 +13,8 @@
 | H0.S1.M3 | Las seis ambigüedades del plan confirmadas por Marcelo | mensaje del 2026-10-21 («confirmo los seis supuestos, arrancá H1 con scheduling») | PASS |
 | H1.S1.M1 | `tools/inventario/lib/openapi.mjs` con la lectura pura del contrato; `generate-endpoint-markdown.mjs` la importa (−80/+16 líneas) y su salida no cambia | `diff -r` original vs refactor; `yarn inventario:test`; `prettier --check` | PASS — `evidencia/H1-S1-M1-equivalencia.txt`: sin diferencias en 67 archivos, 7/7 tests |
 | H1.S1.M2 | Índice AST (`lib/ast.mjs`) y cruce contrato ↔ código (`lib/handlers.mjs`) con CLI `--solo-ast` | `node tools/inventario/endpoints.mjs --modulo scheduling,audit --solo-ast`; `yarn inventario:test`; equivalencia del generador | PASS — `evidencia/H1-S1-M2-handlers.txt`: 52/52 handlers de los pilotos con servicio resuelto; 1 190/1 190 en toda la API; 12/12 tests; salida del generador sin cambios |
+| H1.S1.M3 | Lector de DTO (`lib/dto.mjs`), payload mínimo y campos estructurados con decorador literal y `fuente` | `yarn inventario:test`; equivalencia del generador; medición sobre 863 operaciones con cuerpo | PASS — `evidencia/H1-S1-M3-M4-dto-y-requerimientos.txt`: 5 678 campos, 1,6 % sin fuente, generador byte-idéntico |
+| H1.S1.M4 | Requerimientos por operación con límites leídos del código (`lib/requerimientos.mjs`) | medición sobre 1 190 operaciones | PASS — 0 listas vacías; 27/27 tests |
 
 ## A medias
 ninguna
