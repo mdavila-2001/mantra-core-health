@@ -11,6 +11,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../auth/auth.service';
 import { CommunityClient } from '../data-access/community/community.client';
 import { NotificationsClient } from '../data-access/notifications/notifications.client';
+import { ProfileSummaryStore } from '../social/profile-summary.store';
 import type {
   InAppNotification,
   NotificationAction,
@@ -52,6 +53,8 @@ export interface AvisoUnificado {
   readonly sinLeer: boolean;
   /** Cuándo llegó. */
   readonly fecha: Date;
+  /** Quién lo provocó, en los sociales: su nombre encabeza el título cuando se conoce. */
+  readonly actorPerfilId?: string;
 }
 
 /**
@@ -125,8 +128,26 @@ export class NotificationsStore {
   readonly avisos = computed<readonly AvisoUnificado[]>(() =>
     [...this.avisosMessaging(), ...this.avisosSociales()]
       .sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
-      .slice(0, TOPE_PANEL),
+      .slice(0, TOPE_PANEL)
+      .map((aviso) => this.conNombreDelActor(aviso)),
   );
+
+  private readonly resumenes = inject(ProfileSummaryStore);
+
+  /**
+   * «Valeria Rojas · Comentó: …» en vez de «Comentó: …».
+   *
+   * El aviso trae sólo el id de quien actuó; el nombre se resuelve con el
+   * mismo `ProfileSummaryStore` de la red (una lectura por persona, con
+   * caché) y **sólo para los que se muestran**, no para la bandeja entera.
+   * Mientras no llega, o si no se pudo leer, el título queda como vino: nunca
+   * un id ni un nombre inventado.
+   */
+  private conNombreDelActor(aviso: AvisoUnificado): AvisoUnificado {
+    if (aviso.actorPerfilId === undefined) return aviso;
+    const nombre = this.resumenes.resumen(aviso.actorPerfilId)?.displayName;
+    return nombre === undefined ? aviso : { ...aviso, titulo: `${nombre} · ${aviso.titulo}` };
+  }
 
   constructor() {
     // Detener el sondeo al destruirse el inyector raíz importa en las pruebas
@@ -326,6 +347,7 @@ function deCommunity(aviso: {
     acciones: [],
     sinLeer: !aviso.isRead,
     fecha: aviso.createdAt,
+    ...(aviso.actorProfileId ? { actorPerfilId: aviso.actorProfileId } : {}),
   };
 }
 

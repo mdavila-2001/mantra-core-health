@@ -1,0 +1,9 @@
+✔ hay avisos sociales en la campana — 4
+✔ los sociales empiezan con el nombre de quien actuó — María Fernanda Quiroga Añez · Comentó: «Excelente explicación, gracias por compartir.» | Jorge Andrés Salazar Vaca · Le gustó su publicación «¿Sabías que la hipertensión no suele dar…»
+✔ ningún título muestra un id
+✔ tocar un aviso de publicación abre la publicación suelta — /p/valeria-rojas/post/de5052aa-02df-467a-ae99-f9100f2fb0c4
+✔ y la publicación se ve
+(CSP inline-script aparte: 2)
+✔ sin errores de página ni de consola (salvo CSP)
+
+6/6 en verde

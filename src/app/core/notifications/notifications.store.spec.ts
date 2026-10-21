@@ -7,6 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../auth/auth.service';
+import { ProfileSummaryStore } from '../social/profile-summary.store';
 import { NotificationsStore } from './notifications.store';
 
 /**
@@ -25,6 +26,8 @@ import { NotificationsStore } from './notifications.store';
  */
 describe('NotificationsStore', () => {
   let store: NotificationsStore;
+  /** Resúmenes de perfil conocidos; lo que no está, todavía no llegó. */
+  const resumenes = signal<Record<string, { displayName: string } | null>>({});
   let http: HttpTestingController;
 
   const VACIA = {
@@ -117,11 +120,13 @@ describe('NotificationsStore', () => {
   };
 
   beforeEach(() => {
+    resumenes.set({});
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { isAuthenticated: signal(true) } },
+        { provide: ProfileSummaryStore, useValue: { resumen: (id: string) => resumenes()[id] } },
       ],
     });
     store = TestBed.inject(NotificationsStore);
@@ -187,6 +192,26 @@ describe('NotificationsStore', () => {
 
     it('sin quién actuó, no manda un `actor` vacío', () => {
       expect(rutaDelAviso(avisoSocial({ actorProfileId: null }))).toBe('/posts/p-1');
+    });
+
+    it('encabeza el título con el nombre de quien actuó cuando se conoce', () => {
+      resumenes.set({ 'pp-7': { displayName: 'Valeria Rojas' } });
+      store.iniciar();
+      resolver({ perfil: { id: 'pp-1' }, messaging: VACIA, social: avisoSocial({ actorProfileId: 'pp-7' }) });
+
+      expect(store.avisos().find((a) => a.fuente === 'community')?.titulo).toBe('Valeria Rojas · Alguien reaccionó');
+    });
+
+    it('mientras el nombre no llega, o si no se pudo leer, deja el título como vino', () => {
+      store.iniciar();
+      resolver({ perfil: { id: 'pp-1' }, messaging: VACIA, social: avisoSocial({ actorProfileId: 'pp-7' }) });
+      expect(store.avisos().find((a) => a.fuente === 'community')?.titulo).toBe('Alguien reaccionó');
+
+      resumenes.set({ 'pp-7': null });
+      expect(store.avisos().find((a) => a.fuente === 'community')?.titulo).toBe('Alguien reaccionó');
+
+      resumenes.set({ 'pp-7': { displayName: 'Valeria Rojas' } });
+      expect(store.avisos().find((a) => a.fuente === 'community')?.titulo).toBe('Valeria Rojas · Alguien reaccionó');
     });
 
     it('escapa el id para que no rompa la dirección', () => {
