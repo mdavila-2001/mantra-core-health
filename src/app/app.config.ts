@@ -25,6 +25,7 @@ import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
 import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
+import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
 
 /**
@@ -105,6 +106,9 @@ export const appConfig: ApplicationConfig = {
     provideObservability(),
     // Qué hacen los botones de las notificaciones (`core/notifications/notification-actions.ts`).
     provideDependentLinkNotificationActions(),
+    // Interacciones para los mapas de calor (`POST /telemetry/activity-events`).
+    // Independiente de las trazas: se enciende con `PUBLIC_UX_ANALYTICS_*`.
+    provideUxAnalytics(),
     // El tema no depende de que exista un componente: se instancia al arrancar.
     provideAppInitializer(() => {
       inject(ThemeService);
