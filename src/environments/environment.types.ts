@@ -87,6 +87,37 @@ export interface TelemetryEnvironment {
   readonly sampleRatio: number;
 }
 
+/**
+ * Captura de interacciones del portal para los mapas de calor.
+ *
+ * Es aparte de {@link TelemetryEnvironment} porque el destino y la naturaleza
+ * son otros: las trazas describen al sistema y van al Collector; esto describe
+ * lo que hace una persona en la pantalla y va a la API
+ * (`POST /telemetry/activity-events`), que aplica el consentimiento y la
+ * idempotencia. Ver `docs/observability/analytics-events.md`.
+ */
+export interface UxAnalyticsEnvironment {
+  /**
+   * Con `false` no se instancia ningún oyente ni sale ninguna petición. Es el
+   * valor por defecto: la captura se enciende en el despliegue que tenga
+   * registrado el esquema de evento.
+   */
+  readonly enabled: boolean;
+  /**
+   * Id del esquema de evento registrado en la API
+   * (`POST /telemetry/event-schemas`). La API lo exige en cada evento y de él
+   * saca el propósito contra el que valida el consentimiento. Vacío deja la
+   * captura apagada aunque `enabled` diga lo contrario.
+   */
+  readonly eventSchemaDefinitionId: string;
+  /**
+   * Proporción de sesiones que se capturan, entre 0 y 1. Se decide una vez por
+   * sesión del navegador: un mapa de calor con la mitad de los clics de cada
+   * persona dibujaría recorridos que nadie hizo.
+   */
+  readonly sampleRatio: number;
+}
+
 export interface Environment {
   /**
    * Raíz de la API.
@@ -108,6 +139,9 @@ export interface Environment {
 
   /** Ver {@link TelemetryEnvironment}. */
   readonly telemetry: TelemetryEnvironment;
+
+  /** Ver {@link UxAnalyticsEnvironment}. */
+  readonly uxAnalytics: UxAnalyticsEnvironment;
 
   /**
    * Enciende la barra de casos de demostración de la ficha clínica.
@@ -183,6 +217,7 @@ export interface Environment {
 export interface EnvironmentOverrides {
   readonly apiBaseUrl?: string;
   readonly telemetry?: Partial<TelemetryEnvironment>;
+  readonly uxAnalytics?: Partial<UxAnalyticsEnvironment>;
   readonly demoPresets?: boolean;
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
