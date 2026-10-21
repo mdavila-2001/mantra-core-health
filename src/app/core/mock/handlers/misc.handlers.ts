@@ -760,8 +760,6 @@ export function registrarVarios(router: MockRouter): void {
     return { ok: true, affected: 1 };
   });
 
-  void SPECIALTY;
-  void professionalById;
   /*
    * Ingesta de interacciones del portal (mapas de calor). La maqueta no guarda
    * nada: responde lo que respondería la API con el consentimiento otorgado,
@@ -775,8 +773,8 @@ export function registrarVarios(router: MockRouter): void {
     };
   });
 
-  void ESPECIALIDAD;
-  void profesionalPorId;
+  void SPECIALTY;
+  void professionalById;
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
