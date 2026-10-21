@@ -125,7 +125,8 @@
       "/promotions/me",
       "/patients/me/reviews",
       "/patients/me/",
-      "/insurance/patients"
+      "/insurance/patients",
+      "/telemetry"
     ],
     "target": "http://localhost:3000",
     "secure": false,

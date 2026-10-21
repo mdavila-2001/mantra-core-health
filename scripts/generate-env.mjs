@@ -123,6 +123,32 @@ const MANIFEST = [
     validate: validateRatio,
   },
 
+  // --- Captura de interacciones (mapas de calor) ---------------------------
+  //
+  // Tampoco son secretos: el id del esquema identifica un registro público del
+  // catálogo de telemetría, no autoriza nada. La ingesta la protege la API
+  // —token de sesión, consentimiento e idempotencia—.
+  {
+    key: 'PUBLIC_UX_ANALYTICS_ENABLED',
+    group: 'uxAnalytics',
+    field: 'enabled',
+    literal: true,
+    validate: validateBoolean,
+  },
+  {
+    key: 'PUBLIC_UX_ANALYTICS_EVENT_SCHEMA_ID',
+    group: 'uxAnalytics',
+    field: 'eventSchemaDefinitionId',
+    validate: validateUuid,
+  },
+  {
+    key: 'PUBLIC_UX_ANALYTICS_SAMPLE_RATIO',
+    group: 'uxAnalytics',
+    field: 'sampleRatio',
+    literal: true,
+    validate: validateRatio,
+  },
+
   // --- Demostración ---------------------------------------------------------
   //
   // Enciende la barra de casos de demostración de la ficha clínica. No es un
@@ -349,6 +375,19 @@ function validateRatio(key, value) {
     );
   }
   return ratio;
+}
+
+/**
+ * Identificador de un registro de la API.
+ *
+ * Un id mal copiado haría que la API rechace cada lote con 404 en silencio para
+ * quien mira la pantalla; se prefiere que falle el build.
+ */
+function validateUuid(key, value) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+    fail(`«${key}» debe ser un uuid (8-4-4-4-12 hexadecimal). Se recibió: ${value}`);
+  }
+  return value.toLowerCase();
 }
 
 /**
