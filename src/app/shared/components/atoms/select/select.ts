@@ -106,6 +106,7 @@ export class Select<T> implements ControlValueAccessor {
    * le ganaría por precedencia.
    */
   readonly ariaLabel = input<string>('');
+  readonly searchable = input<boolean | undefined>(undefined);
 
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
@@ -148,7 +149,9 @@ export class Select<T> implements ControlValueAccessor {
     return index >= 0 ? this.options()[index].label : this.placeholder();
   });
 
-  protected readonly searchable = computed(() => this.options().length > SEARCH_FROM);
+  protected readonly isSearchable = computed(
+    () => this.searchable() ?? (this.options().length > SEARCH_FROM),
+  );
 
   /** Las opciones que pasan el filtro, por etiqueta y por descripción. */
   protected readonly visible = computed<readonly Row<T>[]>(() => {
