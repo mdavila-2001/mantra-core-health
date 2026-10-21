@@ -1,6 +1,6 @@
 # Reporte — Captura de interacciones del portal para mapas de calor
 
-> **AVANCE: 9 / 9 — 100 %.** Las 9 microtareas están cerradas. El hito H1 queda
+> **AVANCE: 10 / 10 — 100 %.** Las 10 microtareas están cerradas. El hito H1 queda
 > **A MEDIAS**: se verificó contra un doble de la API, no contra la API real, y
 > sin pantalla de consentimiento la API real descartaría los eventos (ver Pendiente).
 
@@ -21,6 +21,7 @@
 | H1.S2.M6 | uuid sin `crypto.randomUUID` (HTTP en la red local) e inicializador que no rompe el arranque | spec `nuevoUuid` | PASS |
 | H1.S2.M7 | Recorrido en Chromium real (escritorio 1440 y móvil 390) contra un **doble** de la API | `node evidencia/verificar.mjs` | PASS contra el doble, `evidencia/navegador-ingestas.txt` |
 | H1.S3.M1 | Catálogo, prohibidos, cómo encenderlo y consulta SQL del mapa | — | `docs/observability/analytics-events.md` |
+| H1.S4.M1 | Hallazgos de la revisión independiente (ver abajo) arreglados con su prueba | specs dirigidas · typecheck · lint · build · suite | PASS: 44 pruebas; mutación del aislamiento entre personas → 1 fallo |
 
 ## A medias
 
@@ -91,6 +92,26 @@ contiene 'paciente.sintetico' / 'Sintético' / 'clave-sintetica' / 'Bearer ey' -
   ni con todo `core/mock`, ni en la corrida 2. No tocan ningún archivo de este
   cambio. Sin causa raíz demostrada: quedan registradas como intermitentes.
 
+## Revisión independiente
+
+`frontend-reviewer` (solo lectura) dictaminó **NO APROBADO** sobre el primer
+commit, y la revisión de seguridad automática agregó un hallazgo. Todos se
+verificaron contra el código y se arreglaron en `cb8b4663`, cada uno con su prueba:
+
+| # | Hallazgo | Arreglo |
+|---|---|---|
+| 1 | Cerrar la pestaña con el token vencido podía revocar la sesión (refresco sin `keepalive` cortado por la descarga, `auth.interceptor.ts:105`) | Sin envío al ocultar o cerrar si el token venció |
+| 2 | Mismo `sessionId` para dos personas en la misma pestaña (la API agrupa por él, `telemetry-events.service.ts:517`) | Se renueva al cambiar de usuario; también la página abierta |
+| S | Un lote fallido de A se reencolaba y salía con el token de B | Contador de generación + filtro por `userId` al enviar |
+| 3 | El abandono del cierre no salía si el lote del ocultamiento seguía en vuelo | `keepalive` ignora `enVuelo` |
+| 4 | Tras bfcache no se capturaba nada | `pageshow` con `persisted` reabre la página |
+| 5 | Una URL sin plantilla viajaba cruda | `normalizarRuta` |
+| 6 | Un 4xx definitivo reintentaba cada 10 s para siempre | 400/403/404 detienen la captura |
+| 7 | 429 sin espera | Espera creciente de 10 s a 5 min |
+| 8 | Las pruebas usaban ids que no son uuid | uuid como los de la API |
+| 9 | Esquema vacío rompía el build | Vacío deja la captura apagada |
+| 10 | Salen eventos de quien no consintió (la API los descarta) | Registrado como decisión (abajo) |
+
 ## Desvíos del plan
 
 - Se agregaron H1.S2.M5 (proxy sin `/telemetry`: lo denunció
@@ -116,4 +137,8 @@ contiene 'paciente.sintetico' / 'Sintético' / 'clave-sintetica' / 'Bearer ey' -
   autoriza. Sin pantalla de consentimiento, los eventos quedan en `skipped`.
 - Un solo esquema de evento con `eventName` por tipo, en vez de un esquema por
   evento: la API admite el override y así el despliegue configura un solo id.
+- **Minimización (hallazgo 10):** el navegador manda los eventos de quien
+  todavía no consintió y la API los descarta. Lo correcto es no mandarlos, pero
+  el frontend no tiene hoy cómo saber si hubo consentimiento. Se resuelve con la
+  pantalla de consentimiento. Confirmar con Marcelo / responsable de privacidad.
 - `data-ux-ignore` como vía para excluir zonas sensibles de una pantalla.
