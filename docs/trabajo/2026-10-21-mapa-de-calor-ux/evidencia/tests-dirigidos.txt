@@ -1,3 +1,3 @@
  Test Files  3 passed (3)
-      Tests  37 passed (37)
-   Duration  1.37s (transform 326ms, setup 1.01s, import 300ms, tests 176ms, environment 1.62s)
+      Tests  44 passed (44)
+   Duration  1.18s (transform 311ms, setup 768ms, import 289ms, tests 211ms, environment 1.28s)
