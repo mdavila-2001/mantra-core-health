@@ -415,4 +415,56 @@ describe('RegisterPharmacy', () => {
     expect(component.errorMessage()).toContain('correo');
     expect(component.registered()).toBe(false);
   });
+
+  describe('persistencia de borrador (onboarding draft)', () => {
+    afterEach(() => {
+      localStorage.removeItem('alovida.onboarding.draft.pharmacy');
+    });
+
+    it('guarda el avance en localStorage al cambiar de paso', () => {
+      component.form.patchValue({
+        legalName: 'Farmacia San Antonio SRL',
+        taxId: '1023456789',
+      });
+      component.guardarBorrador();
+      const raw = localStorage.getItem('alovida.onboarding.draft.pharmacy');
+      expect(raw).not.toBeNull();
+      const draft = JSON.parse(raw!);
+      expect(draft.data.legalName).toBe('Farmacia San Antonio SRL');
+      expect(draft.data.taxId).toBe('1023456789');
+    });
+
+    it('restaura el borrador guardado', () => {
+      const mockDraft = {
+        id: 'draft-pharm-1',
+        formType: 'pharmacy',
+        stepIndex: 1,
+        stepKey: 'ubicacion',
+        stepTitle: 'Ubicación de la central',
+        totalSteps: 6,
+        data: {
+          legalName: 'Farmacia Central',
+          taxId: '987654321',
+        },
+        extraData: {
+          gpsCentral: { lat: -17.8, lng: -63.15 },
+        },
+        lastSavedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('alovida.onboarding.draft.pharmacy', JSON.stringify(mockDraft));
+
+      component.restaurarBorrador();
+
+      expect(component.form.controls.legalName.value).toBe('Farmacia Central');
+      expect(component.form.controls.taxId.value).toBe('987654321');
+      expect(component.gpsCentral()).toEqual({ lat: -17.8, lng: -63.15 });
+      expect(component.pasoGuardado()).toBe(1);
+    });
+
+    it('limpia el borrador al descartarlo', () => {
+      localStorage.setItem('alovida.onboarding.draft.pharmacy', '{"id":"draft-1"}');
+      component.descartarBorrador();
+      expect(localStorage.getItem('alovida.onboarding.draft.pharmacy')).toBeNull();
+    });
+  });
 });

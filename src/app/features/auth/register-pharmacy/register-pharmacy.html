@@ -53,6 +53,14 @@
           </p>
         </div>
 
+        @if (borradorDetectado(); as borrador) {
+          <app-onboarding-draft-banner
+            [draft]="borrador"
+            (resume)="restaurarBorrador(borrador)"
+            (discard)="descartarBorrador()"
+          />
+        }
+
         @if (errorMessage(); as mensaje) {
           <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-farmacia-error">{{
             mensaje
@@ -64,6 +72,7 @@
             data-testid="registro-form-farmacia"
             [paginas]="paginas()"
             [form]="form"
+            [initialStep]="pasoGuardado()"
             label="Registrar farmacia"
             submitLabel="Crear cuenta de la farmacia"
             [iconOnlyNav]="true"
