@@ -1,0 +1,63 @@
+# H1.S2 — tablas, eventos y trabajos alcanzables desde cada operación
+# repo: mantra-core-health-api · base: 97861af3 + cambios sin commitear · fecha: 2026-10-21
+
+## M1 — entidades → tabla
+clases @Entity con schema y tableName literales: 1240 · tablas distintas: 1240 · schemas: 60
+
+## M2/M3 — tablas por operación (contrato: 1190 operaciones)
+operaciones analizadas: 1190 · con ≥1 tabla: 1164 (97.8 %) · sin tablas: 26 · cierre parcial por ciclo/profundidad: 10
+pares (operación, tabla, operación) por confianza: {"DIRECTA":5032,"POR_TIPO":713,"POR_SQL":196,"POR_REGISTRO":56} · por tipo: {"LEE":3512,"CREA":1687,"ACTUALIZA":766,"BORRA":26,"GUARDA":6}
+llamadas que no se pudieron seguir (1):
+  - this.historyRepo.timeline (entidad según argumento no literal) @ src/modules/audit/services/audit-history.service.ts:68 ← GET /audit/history/{entity}/{id}
+
+operaciones sin tablas (26), con el motivo que se puede afirmar:
+  GET    /                                                          [app] → NO DETERMINADO: revisar a mano
+  GET    /health                                                    [app] → el handler no invoca ningún servicio
+  GET    /liveness                                                  [app] → el handler no invoca ningún servicio
+  GET    /readiness                                                 [app] → NO DETERMINADO: revisar a mano
+  GET    /health/data-sources                                       [app] → NO DETERMINADO: revisar a mano
+  GET    /health/data-sources/metrics                               [app] → NO DETERMINADO: revisar a mano
+  POST   /authz/pdp/cache/invalidate                                [authz] → NO DETERMINADO: revisar a mano
+  POST   /search/{index}/documents                                  [search_platform] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  POST   /search/{index}/_search                                    [search_platform] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  DELETE /search/{index}/documents/{id}                             [search_platform] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  POST   /redis-runtime/cache                                       [redis_runtime] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  GET    /redis-runtime/cache/{key}                                 [redis_runtime] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  DELETE /redis-runtime/cache/{key}                                 [redis_runtime] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  POST   /redis-runtime/locks                                       [redis_runtime] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  DELETE /redis-runtime/locks/{key}                                 [redis_runtime] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  GET    /admin/content-packs                                       [content_packs] → el handler no invoca ningún servicio
+  GET    /pharma-labs/reference/concepts                            [pharma_lab] → el handler no invoca ningún servicio
+  GET    /dental-procedures/catalog                                 [procedures_perioperative] → NO DETERMINADO: revisar a mano
+  GET    /ts/series/{seriesId}/query                                [time_series] → NO DETERMINADO: revisar a mano
+  POST   /ts/admin/hypertables                                      [time_series] → NO DETERMINADO: revisar a mano
+  PATCH  /ts/admin/hypertables/{table}                              [time_series] → NO DETERMINADO: revisar a mano
+  POST   /document-store/collections/{collection}/documents         [document_store] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  GET    /document-store/collections/{collection}/documents         [document_store] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  GET    /document-store/collections/{collection}/documents/{id}    [document_store] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  PATCH  /document-store/collections/{collection}/documents/{id}    [document_store] → almacén no relacional (Redis / OpenSearch / MongoDB)
+  DELETE /document-store/collections/{collection}/documents/{id}    [document_store] → almacén no relacional (Redis / OpenSearch / MongoDB)
+
+## M4 — eventos de dominio y trabajos
+líneas con 'publishDomainEvent(' (grep): 90 · de ellas definición o comentario: 3 · llamadas: 87
+sitios de publicación detectados por el análisis: 87
+llamadas del grep que el análisis no detectó: 0
+tipos de evento distintos (literal o constante): 81 · sitios con tipo dinámico: 4
+   src/modules/pharmacy_inventory/services/pharmacy-orders.service.ts:1939 → event.eventType
+   src/modules/time_series/services/timescale-admin.service.ts:378 → name === 'continuous_audit_daily' ? 'AuditDailyRollupRefreshed' : 'SliRollupMaterialized'
+   src/modules/workflow/services/transition-execution.service.ts:399 → `${effect.outboxEventType}.compensated`
+   src/modules/workflow/services/transition-execution.service.ts:738 → effect.outboxEventType
+docs/events/event-catalog.md declara 79 sitios; el código tiene 87. Tipos presentes en el código y ausentes del catálogo (5): ["PharmacyOrderSubmitted","PharmacyOrderCancelled","PharmacyOrderExpired","periop.case.reacceptance_required","periop.case.team_participation_declined"]
+operaciones que publican ≥1 evento: 91 · sitios alcanzables desde algún endpoint: 87 de 87
+operaciones que encolan ≥1 trabajo (enqueueJob): 3 · códigos: ["~code","audio-generation"]
+
+$ yarn inventario:test
+# tests 42
+# pass 42
+# fail 0
+
+$ equivalencia del generador de endpoints
+BYTE-IDÉNTICO vs original: 67 archivos, sha256 e9706f596ae82b7bf86ad98f09bd0cc4
+
+$ prettier --check
+All matched files use Prettier code style!
