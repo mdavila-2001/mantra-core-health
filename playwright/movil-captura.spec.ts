@@ -40,6 +40,12 @@ const ENLACES_PREVIOS = join('docs', 'refactor-profesional', 'trabajo', 'barrido
 const MOVIL = { width: 390, height: 844 } as const;
 const POR_PRUEBA = 8;
 const EJECUTABLE = process.env['PW_CHROMIUM'];
+/**
+ * `MOVIL_SOLO_MEDIR=1` repite la medición sin tomar capturas: sirve para
+ * agregar una medición nueva al estado «antes» sin recapturarlo, siempre que el
+ * código de la aplicación no haya cambiado desde esa fase.
+ */
+const SOLO_MEDIR = process.env['MOVIL_SOLO_MEDIR'] === '1';
 
 test.use({
   viewport: MOVIL,
@@ -146,6 +152,27 @@ async function medirEnPagina(page: Page): Promise<Record<string, string[]>> {
       }
     }
 
+    // Contenido que se sale por el borde y NO hace desplazar la página porque un
+    // contenedor lo recorta (overflow hidden/clip): el caso de una lista de
+    // chats cuyo texto queda cortado. Dentro de un contenedor con scroll
+    // lateral (auto/scroll) no cuenta: ahí el recorte tiene salida.
+    const recortadoPor = (e: Element): boolean => {
+      for (let p = e.parentElement; p; p = p.parentElement) {
+        const o = getComputedStyle(p).overflowX;
+        if (o === 'auto' || o === 'scroll') return false;
+        if (o === 'hidden' || o === 'clip') return true;
+      }
+      return false;
+    };
+    for (const e of main.querySelectorAll('*')) {
+      if (!visible(e)) continue;
+      const r = e.getBoundingClientRect();
+      if (r.right <= W + 1) continue;
+      const padre = e.parentElement?.getBoundingClientRect();
+      if (padre && padre.right > W + 1) continue;
+      if (recortadoPor(e)) add('cortado', `${etiqueta(e)} → ${Math.round(r.right)}px en ${W}px`);
+    }
+
     const h1 = [...document.querySelectorAll('h1')].filter(visible);
     if (h1.length !== 1) add('h1', `${h1.length} h1`);
 
@@ -237,6 +264,14 @@ async function capturar(page: Page, archivo: string, tema: 'light' | 'dark'): Pr
   return alto;
 }
 
+/** Captura en claro y oscuro, o sólo mide el alto si `MOVIL_SOLO_MEDIR`. */
+async function capturarEnAmbosTemas(page: Page, carpeta: string, base: string): Promise<number> {
+  if (SOLO_MEDIR) return page.evaluate(() => document.documentElement.scrollHeight);
+  const alto = await capturar(page, join(carpeta, `${base}-claro.png`), 'light');
+  await capturar(page, join(carpeta, `${base}-oscuro.png`), 'dark');
+  return alto;
+}
+
 function carpetaDe(destino: string): string {
   const carpeta = join(EVIDENCIA, FASE, destino);
   mkdirSync(carpeta, { recursive: true });
@@ -275,8 +310,7 @@ test('publicas', async ({ page }) => {
     const problemas = await medirEnPagina(page);
     if (errores.length) problemas['consola'] = errores.slice(0, 4).map((t) => t.slice(0, 140));
     const base = nombreDeArchivo(ruta);
-    const alto = await capturar(page, join(carpeta, `${base}-claro.png`), 'light');
-    await capturar(page, join(carpeta, `${base}-oscuro.png`), 'dark');
+    const alto = await capturarEnAmbosTemas(page, carpeta, base);
     mediciones.push({ ruta, abierta: new URL(page.url()).pathname, componente: '', archivo: base, alto, problemas });
   }
   writeFileSync(join(carpeta, 'medicion.json'), JSON.stringify(mediciones, null, 1));
@@ -354,8 +388,7 @@ for (const clave of Object.keys(ACTORES) as Clave[]) {
         if (abierta !== destino.split(/[?#]/)[0]) (problemas['rebota'] ??= []).push(abierta);
         if (errores.length) problemas['consola'] = errores.slice(0, 4).map((t) => t.slice(0, 140));
         const base = nombreDeArchivo(entrada.ruta);
-        const alto = await capturar(page, join(carpeta, `${base}-claro.png`), 'light');
-        await capturar(page, join(carpeta, `${base}-oscuro.png`), 'dark');
+        const alto = await capturarEnAmbosTemas(page, carpeta, base);
         previas.push({ ruta: entrada.ruta, abierta, componente: entrada.componente, archivo: base, alto, problemas });
       }
       writeFileSync(archivo, JSON.stringify(previas, null, 1));

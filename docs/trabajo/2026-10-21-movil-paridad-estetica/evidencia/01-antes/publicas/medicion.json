@@ -1,0 +1,263 @@
+[
+ {
+  "ruta": "/auth",
+  "abierta": "/auth",
+  "componente": "",
+  "archivo": "auth",
+  "alto": 887,
+  "problemas": {
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/register",
+  "abierta": "/auth/register",
+  "componente": "",
+  "archivo": "auth_register",
+  "alto": 1356,
+  "problemas": {
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/register/patient",
+  "abierta": "/auth/register/patient",
+  "componente": "",
+  "archivo": "auth_register_patient",
+  "alto": 1451,
+  "problemas": {
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/register/practitioner",
+  "abierta": "/auth/register/practitioner",
+  "componente": "",
+  "archivo": "auth_register_practitioner",
+  "alto": 1385,
+  "problemas": {
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/register/organization",
+  "abierta": "/auth/register/organization",
+  "componente": "",
+  "archivo": "auth_register_organization",
+  "alto": 981,
+  "problemas": {
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/register/laboratory",
+  "abierta": "/auth/register/laboratory",
+  "componente": "",
+  "archivo": "auth_register_laboratory",
+  "alto": 1347,
+  "problemas": {
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/register/imaging-center",
+  "abierta": "/auth/register/imaging-center",
+  "componente": "",
+  "archivo": "auth_register_imaging-center",
+  "alto": 1398,
+  "problemas": {}
+ },
+ {
+  "ruta": "/auth/forgot-password",
+  "abierta": "/auth/forgot-password",
+  "componente": "",
+  "archivo": "auth_forgot-password",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/reset-password",
+  "abierta": "/auth/reset-password",
+  "componente": "",
+  "archivo": "auth_reset-password",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/verify-email",
+  "abierta": "/auth/verify-email",
+  "componente": "",
+  "archivo": "auth_verify-email",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/activate",
+  "abierta": "/auth/activate",
+  "componente": "",
+  "archivo": "auth_activate",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/auth/resend-verification",
+  "abierta": "/auth/resend-verification",
+  "componente": "",
+  "archivo": "auth_resend-verification",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/error",
+  "abierta": "/error",
+  "componente": "",
+  "archivo": "error",
+  "alto": 844,
+  "problemas": {
+   "h1": [
+    "0 h1"
+   ],
+   "objetivo-chico": [
+    "44×18 Datos de prueba"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/ruta-que-no-existe",
+  "abierta": "/ruta-que-no-existe",
+  "componente": "",
+  "archivo": "ruta-que-no-existe",
+  "alto": 844,
+  "problemas": {
+   "h1": [
+    "0 h1"
+   ],
+   "objetivo-chico": [
+    "64×22 Ir al inicio",
+    "44×18 Datos de prueba"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/verify/portability/0000000000000000",
+  "abierta": "/verify/portability/0000000000000000",
+  "componente": "",
+  "archivo": "verify_portability_0000000000000000",
+  "alto": 844,
+  "problemas": {
+   "h1": [
+    "0 h1"
+   ],
+   "objetivo-chico": [
+    "44×18 Datos de prueba"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/design-system",
+  "abierta": "/design-system",
+  "componente": "",
+  "archivo": "design-system",
+  "alto": 35899,
+  "problemas": {
+   "cortado": [
+    "div.app-header__actions → 410px en 390px"
+   ],
+   "h1": [
+    "3 h1"
+   ],
+   "objetivo-chico": [
+    "121×22 Ver ficha (default)",
+    "115×22 Ver ficha (subtle)",
+    "121×22 Ver ficha (danger)",
+    "83×22 Guía OMS(se abre en una pestaña nueva)",
+    "93×22 OPS Bolivia(se abre en una pestaña nueva)",
+    "167×22 Escribir a mesa de ayuda"
+   ],
+   "tabla-columnas": [
+    "6 columnas visibles"
+   ],
+   "pestanas-desbordan": [
+    "193px sin indicio"
+   ],
+   "texto-chico": [
+    "14 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "35899px"
+   ],
+   "texto-roto": [
+    "null"
+   ],
+   "consola": [
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-HasAYtZ13nA",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+   ]
+  }
+ }
+]

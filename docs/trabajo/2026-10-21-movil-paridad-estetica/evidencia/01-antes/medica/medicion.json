@@ -1,0 +1,848 @@
+[
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "archivo": "dashboard",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "archivo": "tutorials",
+  "alto": 3762,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "archivo": "messaging",
+  "alto": 844,
+  "problemas": {
+   "cortado": [
+    "section.mensajeria__panel → 831px en 390px"
+   ],
+   "texto-chico": [
+    "6 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "archivo": "directories",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/groups",
+  "componente": "Groups",
+  "archivo": "groups",
+  "alto": 1230,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "archivo": "laboratory-directory",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "archivo": "clinics-directory",
+  "alto": 122633,
+  "problemas": {
+   "texto-chico": [
+    "2 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "122633px"
+   ]
+  }
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "archivo": "pharmacies-directory",
+  "alto": 16185,
+  "problemas": {
+   "texto-chico": [
+    "2 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "16185px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule",
+  "abierta": "/schedule",
+  "componente": "Agenda",
+  "archivo": "schedule",
+  "alto": 2486,
+  "problemas": {
+   "desborde": [
+    "530 > 390",
+    "span.app-header__account-name → 563px",
+    "div.dia__acciones-barra → 530px",
+    "aside.mock.mock--plegado → 522px",
+    "div.app-nav-velo → 530px"
+   ],
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records",
+  "abierta": "/medical-records",
+  "componente": "ClinicalRecord",
+  "archivo": "medical-records",
+  "alto": 1005,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/progress-notes",
+  "abierta": "/progress-notes",
+  "componente": "ProgressNotes",
+  "archivo": "progress-notes",
+  "alto": 7847,
+  "problemas": {
+   "tabla-ancha": [
+    "8 col, 488px en 390px"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "7847px"
+   ]
+  }
+ },
+ {
+  "ruta": "/diagnostics",
+  "abierta": "/diagnostics",
+  "componente": "Diagnostics",
+  "archivo": "diagnostics",
+  "alto": 1498,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "tabla-columnas": [
+    "4 columnas visibles"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/lab-visits",
+  "abierta": "/lab-visits",
+  "componente": "DoctorVisits",
+  "archivo": "lab-visits",
+  "alto": 939,
+  "problemas": {
+   "tabla-ancha": [
+    "7 col, 387px en 390px"
+   ],
+   "pestanas-desbordan": [
+    "117px sin indicio"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/glossary",
+  "componente": "Glossary",
+  "archivo": "glossary",
+  "alto": 6153,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "texto-chico": [
+    "49 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "6153px"
+   ]
+  }
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/form-builder",
+  "componente": "FormBuilder",
+  "archivo": "form-builder",
+  "alto": 10050,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "texto-chico": [
+    "40 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "10050px"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/my-services",
+  "componente": "MyServices",
+  "archivo": "my-services",
+  "alto": 2238,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/my-quotations",
+  "componente": "QuotationList",
+  "archivo": "my-quotations",
+  "alto": 844,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/questionnaires",
+  "abierta": "/questionnaires",
+  "componente": "SurveysHome",
+  "archivo": "questionnaires",
+  "alto": 1251,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel",
+    "32×21 Abrir: Satisfacción con la consulta",
+    "32×21 Abrir: Experiencia de teleconsulta",
+    "32×21 Abrir: Encuesta post-cirugía",
+    "32×21 Abrir: Encuesta de vacunación 2025"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "archivo": "administration_insurance",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "archivo": "administration_insurance-analytics",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/medical-organization",
+  "abierta": "/administration/medical-organization",
+  "componente": "MedicalOrganization",
+  "archivo": "administration_medical-organization",
+  "alto": 1541,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "tabla-columnas": [
+    "5 columnas visibles"
+   ],
+   "pestanas-desbordan": [
+    "494px sin indicio"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting",
+  "abierta": "/administration/accounting",
+  "componente": "Resumen",
+  "archivo": "administration_accounting",
+  "alto": 4799,
+  "problemas": {
+   "texto-chico": [
+    "14 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "4799px"
+   ]
+  }
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "archivo": "settings",
+  "alto": 1516,
+  "problemas": {
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "archivo": "notification-center",
+  "alto": 1510,
+  "problemas": {
+   "texto-chico": [
+    "14 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-practice",
+  "abierta": "/administration/my-practice",
+  "componente": "MyPractice",
+  "archivo": "administration_my-practice",
+  "alto": 1457,
+  "problemas": {
+   "cortado": [
+    "table.data-table__table → 489px en 390px"
+   ],
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "tabla-ancha": [
+    "6 col, 452px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "archivo": "administration_my-organization",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/administration/pharmacy-orders",
+  "componente": "PharmacyInbox",
+  "archivo": "administration_pharmacy-orders",
+  "alto": 1441,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "texto-chico": [
+    "7 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/administration/pharmacy-campaigns",
+  "componente": "PharmacyCampaigns",
+  "archivo": "administration_pharmacy-campaigns",
+  "alto": 844,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/administration/pharmacy-profile",
+  "componente": "PharmacyProfile",
+  "archivo": "administration_pharmacy-profile",
+  "alto": 1420,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "pestanas-desbordan": [
+    "104px sin indicio"
+   ],
+   "texto-chico": [
+    "2 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "consola": [
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting/assets-liabilities",
+  "abierta": "/administration/accounting/assets-liabilities",
+  "componente": "AssetsLiabilities",
+  "archivo": "administration_accounting_assets-liabilities",
+  "alto": 1950,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting/cockpit",
+  "abierta": "/administration/accounting/cockpit",
+  "componente": "Cockpit",
+  "archivo": "administration_accounting_cockpit",
+  "alto": 3126,
+  "problemas": {
+   "pestanas-desbordan": [
+    "286px sin indicio"
+   ],
+   "texto-chico": [
+    "6 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting/libros",
+  "abierta": "/administration/accounting/libros",
+  "componente": "Accounting",
+  "archivo": "administration_accounting_libros",
+  "alto": 2260,
+  "problemas": {
+   "pestanas-desbordan": [
+    "447px sin indicio"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "archivo": "administration_getting-started",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/my-quotations/new",
+  "componente": "QuotationForm",
+  "archivo": "my-quotations_new",
+  "alto": 2548,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "tabla-ancha": [
+    "5 col, 389px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/onboarding",
+  "componente": "OnboardingPractitioner",
+  "archivo": "onboarding",
+  "alto": 1242,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/appointment/new",
+  "abierta": "/schedule/appointment/new",
+  "componente": "AppointmentNew",
+  "archivo": "schedule_appointment_new",
+  "alto": 1132,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/blocks",
+  "abierta": "/schedule/blocks",
+  "componente": "Blocks",
+  "archivo": "schedule_blocks",
+  "alto": 915,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/edit",
+  "abierta": "/schedule/edit",
+  "componente": "AgendaCreate",
+  "archivo": "schedule_edit",
+  "alto": 2617,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "tabla-ancha": [
+    "6 col, 707px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/new",
+  "abierta": "/schedule/new",
+  "componente": "AgendaCreate",
+  "archivo": "schedule_new",
+  "alto": 2617,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "tabla-ancha": [
+    "6 col, 707px en 390px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-orders/:orderId",
+  "abierta": "/administration/pharmacy-orders/26bed0b7-301f-4df5-a13a-841e58d1edfc",
+  "componente": "InboxOrder",
+  "archivo": "administration_pharmacy-orders_orderId",
+  "alto": 918,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "archivo": "clinics-directory_slug",
+  "alto": 1965,
+  "problemas": {
+   "objetivo-chico": [
+    "121×18 Directorio de clínicas"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/glossary/:conceptId",
+  "abierta": "/glossary/9b7cb6d6-cb22-4f18-af3d-230218cfa76e",
+  "componente": "GlossaryTerm",
+  "archivo": "glossary_conceptId",
+  "alto": 1309,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/groups/:groupId",
+  "abierta": "/groups/5163cb71-7f7f-4b73-aa94-ee22c8d7ce14",
+  "componente": "GroupDetail",
+  "archivo": "groups_groupId",
+  "alto": 969,
+  "problemas": {
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/laboratory-directory/:unitId",
+  "abierta": "",
+  "componente": "LaboratoryDetail",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId",
+  "abierta": "/medical-records/8675f52f-6cfb-4f59-a543-e00ac3241a18",
+  "componente": "PatientChart",
+  "archivo": "medical-records_profileId",
+  "alto": 1004,
+  "problemas": {
+   "objetivo-chico": [
+    "32×18 Panel",
+    "85×18 Archivo clínico"
+   ],
+   "tabla-columnas": [
+    "6 columnas visibles"
+   ],
+   "pestanas-desbordan": [
+    "888px sin indicio"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId/consultation",
+  "abierta": "",
+  "componente": "Consultation",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId/request-access",
+  "abierta": "",
+  "componente": "RequestAccess",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "archivo": "pharmacies-directory_slug",
+  "alto": 3121,
+  "problemas": {
+   "objetivo-chico": [
+    "134×18 Directorio de farmacias",
+    "83×21 Analgésicos",
+    "88×21 Antialérgicos",
+    "82×21 Antibióticos",
+    "98×21 Cardiovascular",
+    "110×21 Sistema nervioso"
+   ],
+   "texto-chico": [
+    "17 elementos < 12px"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "consola": [
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+   ]
+  }
+ },
+ {
+  "ruta": "/questionnaires/:surveyId",
+  "abierta": "/questionnaires/bafb1c09-2103-46f3-a56c-4c0aec3d722c",
+  "componente": "SurveyDetailScreen",
+  "archivo": "questionnaires_surveyId",
+  "alto": 5862,
+  "problemas": {
+   "recorte": [
+    "INPUT",
+    "INPUT"
+   ],
+   "objetivo-chico": [
+    "32×18 Panel"
+   ],
+   "sin-marca": [
+    "ningún isotipo ALOVIDA visible en los primeros 140px"
+   ],
+   "muy-larga": [
+    "5862px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/book/:slotId",
+  "abierta": "",
+  "componente": "BookingNew",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ }
+]

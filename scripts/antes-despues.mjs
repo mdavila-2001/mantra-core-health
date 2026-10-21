@@ -22,7 +22,7 @@ const ROTULO = { publicas: 'Sin sesión', paciente: 'Paciente', medica: 'Médica
 /** Mediciones que cuentan como defecto (las demás son informativas). */
 const DEFECTOS = [
   'desborde', 'recorte', 'objetivo-chico', 'tabla-ancha', 'tabla-columnas',
-  'pestanas-desbordan', 'texto-chico', 'sin-marca', 'muy-larga', 'h1', 'texto-roto', 'uuid-visible',
+  'pestanas-desbordan', 'cortado', 'texto-chico', 'sin-marca', 'muy-larga', 'h1', 'texto-roto', 'uuid-visible',
 ];
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -34,10 +34,12 @@ function leer(fase, actor) {
 
 const url = (ruta) => relative(TRABAJO, ruta).split('\\').join('/');
 
+/** La captura de una pantalla: WebP si existe (así se versionan), PNG si no. */
 function celda(fase, actor, archivo, tema) {
-  const png = join(EVIDENCIA, fase, actor, `${archivo}-${tema}.png`);
-  if (!archivo || !existsSync(png)) return '<div class="vacio">sin captura</div>';
-  return `<a href="${url(png)}" target="_blank" rel="noopener"><img loading="lazy" src="${url(png)}" alt="${esc(`${fase} ${actor} ${archivo} ${tema}`)}"></a>`;
+  const base = join(EVIDENCIA, fase, actor, `${archivo}-${tema}`);
+  const imagen = [`${base}.webp`, `${base}.png`].find(existsSync);
+  if (!archivo || !imagen) return '<div class="vacio">sin captura</div>';
+  return `<a href="${url(imagen)}" target="_blank" rel="noopener"><img loading="lazy" src="${url(imagen)}" alt="${esc(`${fase} ${actor} ${archivo} ${tema}`)}"></a>`;
 }
 
 const defectosDe = (m) => Object.keys(m?.problemas ?? {}).filter((k) => DEFECTOS.includes(k));

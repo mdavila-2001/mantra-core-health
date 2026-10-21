@@ -1,0 +1,34 @@
+
+Running 26 tests using 1 worker
+
+  ✓   1 [chromium] › playwright/movil-captura.spec.ts:295:5 › publicas (40.6s)
+  ✓   2 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil paciente 1/7 (22.2s)
+  ✓   3 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil paciente 2/7 (24.1s)
+  ✓   4 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil paciente 3/7 (22.4s)
+  ✓   5 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil paciente 4/7 (22.3s)
+  ✓   6 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil paciente 5/7 (23.0s)
+  ✓   7 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil paciente 6/7 (9.5s)
+  ✓   8 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil paciente 7/7 (15.9s)
+  ✓   9 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil medica 1/6 (23.6s)
+  ✓  10 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil medica 2/6 (22.6s)
+  ✓  11 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil medica 3/6 (22.1s)
+  ✓  12 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil medica 4/6 (22.4s)
+  ✓  13 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil medica 5/6 (20.3s)
+  ✓  14 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil medica 6/6 (21.0s)
+  ✓  15 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 1/12 (23.3s)
+  ✓  16 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 2/12 (23.1s)
+  ✓  17 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 3/12 (23.9s)
+  ✓  18 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 4/12 (23.2s)
+  ✓  19 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 5/12 (22.6s)
+  ✓  20 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 6/12 (22.9s)
+  ✓  21 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 7/12 (22.2s)
+  ✓  22 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 8/12 (22.5s)
+  ✓  23 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 9/12 (23.1s)
+  ✓  24 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 10/12 (22.9s)
+  ✓  25 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 11/12 (19.1s)
+  ✓  26 [chromium] › playwright/movil-captura.spec.ts:331:9 › movil superadmin 12/12 (14.7s)
+
+  Slow test file: [chromium] › playwright/movil-captura.spec.ts (9.6m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  26 passed (9.6m)
+EXIT 0
