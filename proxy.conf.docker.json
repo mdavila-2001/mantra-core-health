@@ -61,7 +61,8 @@
       "/insurance-plans",
       "/insurance-products",
       "/insurance/analytics",
-      "/insurance/portability"
+      "/insurance/portability",
+      "/telemetry"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

@@ -566,6 +566,19 @@ export function registrarVarios(router: MockRouter): void {
     return { ok: true, affected: 1 };
   });
 
+  /*
+   * Ingesta de interacciones del portal (mapas de calor). La maqueta no guarda
+   * nada: responde lo que respondería la API con el consentimiento otorgado,
+   * para que la captura se pueda encender en la rama sin un aviso por lote.
+   */
+  router.post('/telemetry/activity-events', (request) => {
+    const eventos = cuerpo<{ events: readonly unknown[] }>(request).events ?? [];
+    return {
+      status: 201,
+      body: { inserted: eventos.length, skipped: 0, eventIds: eventos.map(() => nuevoId('ux')) },
+    };
+  });
+
   void ESPECIALIDAD;
   void profesionalPorId;
 }

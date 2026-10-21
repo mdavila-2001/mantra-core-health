@@ -22,6 +22,7 @@ import { IdleLogout } from './core/auth/idle-logout';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
+import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
 
 /**
@@ -90,6 +91,9 @@ export const appConfig: ApplicationConfig = {
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.
     provideObservability(),
+    // Interacciones para los mapas de calor (`POST /telemetry/activity-events`).
+    // Independiente de las trazas: se enciende con `PUBLIC_UX_ANALYTICS_*`.
+    provideUxAnalytics(),
     // El tema no depende de que exista un componente: se instancia al arrancar.
     provideAppInitializer(() => {
       inject(ThemeService);

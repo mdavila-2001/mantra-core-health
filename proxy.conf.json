@@ -99,7 +99,8 @@
       "/insurance-plans",
       "/insurance-products",
       "/insurance/analytics",
-      "/insurance/portability"
+      "/insurance/portability",
+      "/telemetry"
     ],
     "target": "http://localhost:3000",
     "secure": false,
