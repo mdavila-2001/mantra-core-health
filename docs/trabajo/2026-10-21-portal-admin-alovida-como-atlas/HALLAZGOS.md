@@ -69,4 +69,9 @@ Salen de `mantra-core-health-api/docs/inventario/catalogo/` (`index.md`, `deriva
 | HZ-34 | **Sólo el 23,1 % de las 16 851 columnas tiene alguna descripción**, y el 70 % de ésas es la convención de columnas estándar (`id`, `created_at`, `updated_at`). Descripción propia del modelo: 54 columnas (0,3 %). Los comentarios `+ v4.0.x` de los `.puml` (14) son marcas de versión, no descripciones. El generador de entidades escribe por plantilla «Valor de X mantenido por la instancia» en 12 808 columnas: no dice nada y no se cuenta | `evidencia/H3-catalogo.txt` | El portal no puede mostrar «para qué sirve» una columna salvo en una de cada cuatro. Completarlas es trabajo de los dueños de dominio | dueños de dominio |
 
 ## §H4 — Decisión sobre `system_ops.entity_registry` (H4.S1.M1)
-_(pendiente)_
+**Decisión (HZ-31):** la ficha, sus revisiones, decisiones y evidencia se guardan en `data_catalog.*`, que el modelo ya define; `entity_registry` sólo aporta gobierno (equipo dueño, PII/PHI, append-only) y se lee. No se creó ninguna tabla. Las entidades salen de `gen_entities.py 67`.
+
+- **HZ-35 — El módulo sirve 31 rutas, no 29.** El plan decía 14 lecturas del inventario; son 16 (`/admin/portal/*`) más 15 de `/admin/catalog`.
+- **HZ-36 — Cuatro defectos que sólo aparecieron contra PostgreSQL real**, todos corregidos y con prueba (`evidencia/H4-hallazgos-de-la-integracion.txt`): claves foráneas sin detectar por `name[]` crudo; fechas en texto de Postgres y no ISO; 500 al paginar escaneos/cambios; orden no determinista del grafo de impacto. Ninguno lo habría visto una prueba con la base mockeada.
+- **HZ-37 — El extractor del inventario no resolvía `@Roles(...CONSTANTE)`** y mostraba `...PORTAL_READ_ROLES` como rol. Ahora resuelve la constante si su nombre es único en el repo; si no, lo deja tal cual.
+- **HZ-38 — `schemas.catalog.ts` no lista `data_catalog`**; `yarn orm:catalog` exige el vault externo y no se corrió.

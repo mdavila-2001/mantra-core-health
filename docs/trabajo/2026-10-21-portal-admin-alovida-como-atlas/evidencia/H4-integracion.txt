@@ -1,0 +1,63 @@
+# comando: DB_*=<base descartable PostgreSQL 16 en 127.0.0.1:54329> node --experimental-vm-modules node_modules/jest-cli/bin/jest.js --config ./test/jest-integration.json test/integration/data-catalog-admin --json
+# (segunda corrida consecutiva; la limpieza de la primera deja la base reutilizable)
+PASS autorización (matriz negativa) > /admin/catalog/schemas sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/objects sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/coverage sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/scans sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/schemas con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/objects con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/coverage con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/scans con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/schemas con DPO (sólo lectura) → 200
+PASS autorización (matriz negativa) > /admin/catalog/objects con DPO (sólo lectura) → 200
+PASS autorización (matriz negativa) > /admin/catalog/coverage con DPO (sólo lectura) → 200
+PASS autorización (matriz negativa) > /admin/catalog/scans con DPO (sólo lectura) → 200
+PASS autorización (matriz negativa) > /admin/catalog/objects/6d8a1e84-8f81-4ade-9a1d-4c118acf14c5/annotation (put) sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/objects/553f9ec5-43b0-40b1-bd34-a2fdc1d14131/evidence (post) sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/annotations/2bee211c-997b-4706-b1fd-a983d994233f/review (post) sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/scans (post) sin token → 401
+PASS autorización (matriz negativa) > /admin/catalog/objects/6d8a1e84-8f81-4ade-9a1d-4c118acf14c5/annotation (put) con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/objects/553f9ec5-43b0-40b1-bd34-a2fdc1d14131/evidence (post) con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/annotations/2bee211c-997b-4706-b1fd-a983d994233f/review (post) con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/scans (post) con rol clínico → 403
+PASS autorización (matriz negativa) > /admin/catalog/objects/6d8a1e84-8f81-4ade-9a1d-4c118acf14c5/annotation (put) con DPO (lector) → 403
+PASS autorización (matriz negativa) > /admin/catalog/objects/553f9ec5-43b0-40b1-bd34-a2fdc1d14131/evidence (post) con DPO (lector) → 403
+PASS autorización (matriz negativa) > /admin/catalog/annotations/2bee211c-997b-4706-b1fd-a983d994233f/review (post) con DPO (lector) → 403
+PASS autorización (matriz negativa) > /admin/catalog/scans (post) con DPO (lector) → 403
+PASS autorización (matriz negativa) > el rol SECURITY_ADMIN puede leer
+PASS autorización (matriz negativa) > el rol PLATFORM_ADMIN puede leer
+PASS autorización (matriz negativa) > el rol DATA_PLATFORM_ADMIN puede leer
+PASS autorización (matriz negativa) > el rol GOVERNANCE_ADMIN puede leer
+PASS autorización (matriz negativa) > el rol DPO puede leer
+PASS escaneo > exige Idempotency-Key
+PASS escaneo > acepta (202), lee pg_catalog y deja el escaneo SUCCEEDED con contadores y límites
+PASS escaneo > la misma Idempotency-Key devuelve el mismo escaneo sin crear otro
+PASS escaneo > un segundo escaneo sin cambios no duplica objetos ni columnas ni genera cambios
+PASS escaneo > dos pedidos simultáneos: uno se acepta y el otro recibe 409 (índice único, no un if)
+PASS escaneo > detecta tabla nueva, columna nueva y tabla retirada, con su evento
+PASS lecturas > el cursor de escaneos recorre todos una vez aunque sean más que una página
+PASS lecturas > toda fecha sale en ISO 8601 UTC, nunca en el texto de Postgres
+PASS lecturas > lista schemas con conteos coherentes
+PASS lecturas > el cursor recorre todos los objetos una vez, sin saltos ni repetidos
+PASS lecturas > filtra por schema y por texto, y rechaza entradas inválidas con 400
+PASS lecturas > detalle: ficha técnica con clave primaria y estadísticas marcadas como estimación
+PASS lecturas > columnas con tipo, nulabilidad, clave foránea y única
+PASS lecturas > 404 para un objeto inexistente y 400 para un id mal formado
+PASS lecturas > impacto: quién referencia a catalog_scan_runs, y avisa que hay más allá de la profundidad pedida
+PASS lecturas > impacto: una tabla que nadie referencia no sale truncada
+PASS lecturas > impacto: iam.users tiene más referenciantes que el tope; lo dice y el resultado es estable
+PASS lecturas > cobertura: el denominador son los objetos observados; sin objetos no inventa un porcentaje
+PASS ficha: versiones, envío a revisión y segregación > crea la ficha con expectedVersion 0 (borrador, versión 1, revisión 1)
+PASS ficha: versiones, envío a revisión y segregación > 409 CONCURRENCY_CONFLICT si la versión esperada ya no es la vigente
+PASS ficha: versiones, envío a revisión y segregación > dos ediciones simultáneas con la misma versión: una gana, la otra recibe 409
+PASS ficha: versiones, envío a revisión y segregación > enviar a revisión sin respuestas que expliquen → 422 con las violaciones por campo
+PASS ficha: versiones, envío a revisión y segregación > rechaza campos no declarados y valores fuera de la lista (400)
+PASS ficha: versiones, envío a revisión y segregación > una pregunta abierta declarada en el campo deja pasar el envío (deuda reconocida)
+PASS ficha: versiones, envío a revisión y segregación > el autor envía a revisión; el autor no puede revisarla (403 SELF_REVIEW)
+PASS ficha: versiones, envío a revisión y segregación > el revisor no aprueba sin evidencia (422), ni con una revisión vieja (409), ni rechaza sin motivo (422)
+PASS ficha: versiones, envío a revisión y segregación > evidencia: se enlaza (201), se lista, y se valida
+PASS ficha: versiones, envío a revisión y segregación > el revisor aprueba con evidencia: la aprobación es de la revisión vigente y cuenta en la cobertura
+PASS ficha: versiones, envío a revisión y segregación > editar una ficha aprobada la devuelve a borrador y la aprobación deja de ser vigente
+PASS ficha: versiones, envío a revisión y segregación > el historial deja cada revisión y la decisión, de la más reciente a la más antigua
+
+Suites: 1/1 · Tests: 59/59 pasan

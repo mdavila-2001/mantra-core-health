@@ -1,0 +1,17 @@
+$ yarn test src/modules/data_catalog
+
+Test Suites: 8 passed, 8 total
+Tests:       140 passed, 140 total
+Snapshots:   0 total
+Time:        3.899 s, estimated 4 s
+Ran all test suites matching src/modules/data_catalog.
+
+$ yarn tsc --noEmit -p tsconfig.json  (exit)
+exit=0
+$ yarn eslint src/modules/data_catalog test/integration/data-catalog-admin.int-spec.ts (exit)
+exit=0
+$ yarn inventario:verificar / inventario:test (corrida previa al commit f577fece)
+Inventario al día: 1254 operaciones en 66 módulos.
+Flujos al día: 68 procesos, 1254 árboles.
+Catálogo al día: 1230 tablas en 61 schemas.
+# tests 121 / pass 121 / fail 0

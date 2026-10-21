@@ -1,9 +1,9 @@
 # Reporte — Inventario y portal interno de AloVida como AtlasAdminPortal
 
-> **AVANCE: 30 / 73 — 41,1 %.**
+> **AVANCE: 36 / 73 — 49,3 %.**
 
 - Fecha: 2026-10-21 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `claude-marcelo/vigilant-bardeen-gcoocw` en `mantra-core-health` (plan y evidencia) y `mantra-core-health-api` (código); `mantra-core-health-model` sin cambios todavía
-- Peldaño de evidencia alcanzado: **H0, H1, H2 y H3 (lo hecho) → `TESTED`**. Ninguna parte tiene superficie visual del portal todavía: los diagramas Mermaid se parsearon en un navegador y se miró uno por tipo (árbol y máquina de estados), no se hizo prueba visual del portal (eso es H5). H4 en adelante sigue en `UNKNOWN`/`DISCOVERED`. H3.S1.M6 tocó una base real, pero descartable y construida con el DDL canónico: alcanza `VERIFIED` sólo para «el modelo es coherente consigo mismo».
+- Peldaño de evidencia alcanzado: **H0, H1, H2 y H3 (lo hecho) → `TESTED`; H4.S1.M1–M6 → `VERIFIED` para la API contra una base PostgreSQL 16 descartable (59 pruebas de integración; no se rompió nada a propósito ni hay otros servicios, no aplica la regla 98 porque no cruza servicios)**. Ninguna parte tiene superficie visual del portal todavía: los diagramas Mermaid se parsearon en un navegador y se miró uno por tipo (árbol y máquina de estados), no se hizo prueba visual del portal (eso es H5). H5 en adelante sigue en `UNKNOWN`. H3.S1.M6 tocó una base real, pero descartable y construida con el DDL canónico: alcanza `VERIFIED` sólo para «el modelo es coherente consigo mismo».
 
 ## Completado
 | ID | Qué se logró | Comando | Resultado |
@@ -33,6 +33,12 @@
 | H3.S1.M6 | Comparación con una base PostgreSQL 16 descartable construida con el DDL canónico (`tools/inventario/deriva-bd.mjs`, sólo `SELECT`) | `DERIVA_DATABASE_URL=… node tools/inventario/deriva-bd.mjs`; `deriva-bd.test.mjs` | PASS — `evidencia/H3-deriva-bd.txt`: 1 230/1 230 tablas coinciden, 0 diferencias; sin la variable sale 2 con `BLOQUEADO` |
 | H3.S1.M7 | Linaje operación → tabla → tabla con su esquema (`lib/linaje.mjs`) | `catalogo.test.mjs` (ajv) | PASS — 11 801 aristas; métricas cuadran con las listas |
 | H3.S1.M10 | Glosario de la API y del frontend con fuente y tablas relacionadas | `catalogo-fuentes.test.mjs` | PASS — 66 términos; los enlaces relativos rotos se quitaron |
+| H4.S1.M1 | Decisión: la ficha y la revisión viven en `data_catalog.*` (ya existe en el modelo) y se sirven por `/admin/catalog/*`; entidades generadas con `gen_entities.py 67` | `git status` de la API | PASS — PASS — HZ-31, commit c5d1a3d0 |
+| H4.S1.M2 | Módulo `data_catalog` registrado en `AppModule`; sin el inventario, 503 con mensaje | `yarn tsc --noEmit` · `yarn eslint` · `yarn test src/modules/data_catalog` | PASS — exit 0 · 140 pruebas — `evidencia/H4-unitarias-y-gates.txt` |
+| H4.S1.M3 | 16 lecturas del inventario bajo `/admin/portal/*` con los cinco roles | `yarn test src/modules/data_catalog` | PASS — 140 pruebas — `evidencia/H4-unitarias-y-gates.txt` |
+| H4.S1.M4 | `/admin/catalog` lecturas + escaneo real de `pg_catalog` + cobertura + impacto | `node --experimental-vm-modules … jest --config test/jest-integration.json test/integration/data-catalog-admin` | PASS — 59/59 — `evidencia/H4-integracion.txt` |
+| H4.S1.M5 | Escrituras: `PUT annotation` con `expectedVersion` (409), relleno 422, autor ≠ revisor (403), evidencia, revisión | mismo comando | PASS — 59/59 — `evidencia/H4-integracion.txt` |
+| H4.S1.M6 | Matriz de autorización negativa: sin token (401), rol clínico (403) y DPO sólo-lectura intentando escribir (403) en lecturas y escrituras | mismo comando | PASS — 29 casos — `evidencia/H4-authz.txt` |
 
 ## A medias
 ### H2.S1.M3 — Máquinas de estado
@@ -65,11 +71,16 @@
 - **Qué falta exactamente:** correr `yarn docs:build` donde unpkg sea alcanzable.
 - **Dónde quedó:** igual que H3.S1.M8.
 
+### H4.S1.M7 — OpenAPI y README del módulo
+- **Qué anda:** README con la tabla UC-67-01..31; `yarn inventario:verificar` exit 0 con las 31 rutas; el contrato que producen los decoradores se comprobó en integración (15 operaciones de `/admin/catalog`, operationId únicos, códigos 202/403/409/422).
+- **Qué no anda:** `yarn docs:openapi:generate` arranca el `AppModule` completo (Mongo, OpenSearch, MinIO) y no corre aquí (ENVIRONMENT): `openapi/openapi.yaml` no incluye el módulo y no se corrió `docs:openapi:lint`.
+- **Qué falta exactamente:** generarlo donde esté la infraestructura y decidir HZ-08 (el baseline está desactualizado: regenerarlo toca muchos archivos ajenos).
+- **Dónde quedó:** API, commit f577fece; compila.
+
 ## Pendiente
 | ID | Estado | Qué lo destraba |
 |---|---|---|
 | H2.S1.M4 | DESCARTADO | Lo decidió Marcelo el 2026-10-21 («seguí con todo el plan completo sin parar»). La revisión del piloto `scheduling` pasa a la revisión final: ver «Decisiones» |
-| H4 (7) | TODO | H1–H3 |
 | H5 (26) | TODO | H5.S1–S2 pueden arrancar contra el inventario estático |
 | H6 (4) | TODO | todo lo anterior |
 
@@ -107,7 +118,7 @@ corepack yarn inventario:verificar  # exit 0: lo escrito coincide con el código
 - **La base descartable** no es un despliegue real ni incluye `SQL/patches` ni los almacenes de `NoSQL/`. Demuestra que el DDL canónico es coherente consigo mismo, no que producción lo esté.
 - **Append-only** sólo refleja lo que un README declara en una de tres formas; una tabla no declarada puede ser append-only igualmente.
 - **El tamaño del catálogo en el repositorio** (21 MB de JSON y 8 MB de Markdown) no se evaluó contra la política de tamaño del repo.
-- H4 en adelante no se ejecutó. La hipótesis H-1 quedó resuelta en parte por HZ-31 (ya existe `data_catalog`), pero falta decidir.
+- H5 en adelante no se ejecutó. H-1 quedó resuelta con HZ-31: la ficha vive en `data_catalog.*`.
 
 ## Desvíos del plan
 1. **Denominador corregido: 73, no 75.** El primer reporte dijo «0 / 75» y luego «2 / 75» con un total estimado a ojo. Contadas las filas del plan: H0 3 · H1 13 · H2 10 · H3 10 · H4 7 · H5 26 · H6 4 = **73**. El porcentaje de arriba usa el valor contado. La tabla «Pendiente» anterior decía H5 = 22; son 26.
