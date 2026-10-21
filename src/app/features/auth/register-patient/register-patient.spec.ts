@@ -264,6 +264,7 @@ describe('RegisterPatient', () => {
       // El `code` viaja además del uuid: es lo que distingue a «Otra ocupación»
       // —la salida que abre el campo escrito a mano— del resto de la lista.
       expect(component.opcionesOcupacion()).toEqual([
+        { value: 'o-otra', label: 'Otro', code: CODIGO_OCUPACION_OTRA },
         { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
         { value: 'o-2', label: 'Minero / Minera', code: 'occupation:bo:MINERO' },
       ]);
