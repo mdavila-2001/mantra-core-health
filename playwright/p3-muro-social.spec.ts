@@ -31,8 +31,16 @@ import { esperarAplicacionLista, irA } from './support/sesion';
  * motivo que no tiene nada que ver con lo que prueba.
  */
 
+/** El rótulo de cada visibilidad en el selector del redactor. */
+const ROTULO_DE_VISIBILIDAD = {
+  PUBLIC: 'Pública',
+  FOLLOWERS: 'Sólo quienes me siguen',
+  PRIVATE: 'Sólo yo',
+} as const;
+
 /**
- * Publica desde el muro y devuelve el texto exacto que quedó publicado.
+ * Publica desde el inicio de la red (`/posts`, modal «Crear publicación») y
+ * devuelve el id de lo publicado.
  *
  * Espera la respuesta real del `POST`: es la única señal honesta de que el
  * servidor aceptó, y además da el id para localizar la tarjeta sin depender del
@@ -43,13 +51,17 @@ async function publicar(
   texto: string,
   visibilidad: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE',
 ): Promise<string> {
-  await irA(page, '/app/comunidad');
+  await irA(page, '/posts');
   await esperarAplicacionLista(page);
 
-  await page.getByTestId(UI.postComposerBody).fill(texto);
+  await page.getByTestId(UI.feedCreateOpen).click();
+  // El selector y el área de texto son controles del sistema de diseño: el
+  // control nativo está adentro.
   await page
     .getByTestId(UI.postComposerVisibility)
-    .selectOption(visibilidad);
+    .locator('select')
+    .selectOption({ label: ROTULO_DE_VISIBILIDAD[visibilidad] });
+  await page.getByTestId(UI.postComposerBody).locator('textarea').fill(texto);
 
   const respuesta = page.waitForResponse(
     (r) => r.url().includes('/posts') && r.request().method() === 'POST',
@@ -63,7 +75,9 @@ async function publicar(
 }
 
 /**
- * Espera a que una publicación aparezca en el muro, recargando.
+ * Espera a que una publicación aparezca en el feed personal («Siguiendo» de
+ * `/posts`), recargando. «Recientes» sólo trae lo público: una publicación para
+ * seguidores sólo llega a quien sigue por el feed personal.
  *
  * El fan-out es asíncrono: la publicación existe antes de estar repartida. Se
  * consulta con tope y, si no llega, el error nombra al worker — que es el
@@ -72,7 +86,7 @@ async function publicar(
 async function esperarEnMuro(page: Page, postId: string, tope = 30_000): Promise<void> {
   const limite = Date.now() + tope;
   for (;;) {
-    await irA(page, '/app/comunidad');
+    await irA(page, '/posts?feed=siguiendo');
     await esperarAplicacionLista(page);
     if (await page.getByTestId(UI.postCard(postId)).isVisible().catch(() => false)) {
       return;
@@ -111,7 +125,7 @@ test.describe('P3 · muro social', () => {
     // El negativo va en el mismo journey: si esto apareciera, la regla de
     // visibilidad no existe aunque el journey feliz siga en verde.
     const ajeno = await abrirComo(browser, ACTORES.patientTwo);
-    await irA(ajeno.page, '/app/comunidad');
+    await irA(ajeno.page, '/posts?feed=siguiendo');
     await esperarAplicacionLista(ajeno.page);
     await expect(ajeno.page.getByTestId(UI.postCard(postId))).toHaveCount(0);
 
@@ -138,7 +152,7 @@ test.describe('P3 · muro social', () => {
     const reaccion = paciente.page.waitForResponse(
       (r) => r.url().includes('/community/reactions') && r.ok(),
     );
-    await tarjeta.getByRole('button', { name: 'Me sirve' }).click();
+    await tarjeta.getByTestId(UI.postLike).click();
     await reaccion;
 
     await tarjeta.getByTestId(UI.postCommentsToggle).click();
@@ -155,9 +169,7 @@ test.describe('P3 · muro social', () => {
     await esperarAplicacionLista(paciente.page);
 
     const trasRecargar = paciente.page.getByTestId(UI.postCard(postId));
-    await expect(
-      trasRecargar.getByRole('button', { name: 'Me sirve' }),
-    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(trasRecargar.getByTestId(UI.postLike)).toHaveAttribute('aria-pressed', 'true');
     await expect(trasRecargar.getByTestId(UI.postReactionCount)).toContainText('1');
 
     await trasRecargar.getByTestId(UI.postCommentsToggle).click();

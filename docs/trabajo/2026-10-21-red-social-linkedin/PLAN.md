@@ -136,9 +136,9 @@ Gates por microtarea (DoD mínimo, siempre): `yarn lint` 0 · `yarn typecheck` 0
 
 | ID | Microtarea | CA (binario) | DoD (comando → salida esperada) | Estado |
 |---|---|---|---|---|
-| H0.S1.M1 | Reiniciar la rama desde `origin/mockup` (si D-01 = sí) | `git merge-base --is-ancestor origin/mockup HEAD` → 0 | `git fetch origin mockup && git checkout -B claude-marcelo/hopeful-ride-7z2qps origin/mockup` → rama en `5318f35d` o posterior | TODO |
-| H0.S1.M2 | Instalar y verificar gates base | lint/typecheck/test corren igual que en `ESTADO.md` (9 fallos preexistentes conocidos) | `corepack yarn install --immutable && yarn lint && yarn typecheck` → 0 · `yarn test` → sólo los fallos preexistentes listados | TODO |
-| H0.S1.M3 | Evidencia «antes»: `/feed`, `/feed?post=<id>`, `/posts` con y sin sesión, `/p/<slug>` | 5 PNG en 1440 + 1 en 390 | `node playwright/red-social-linkedin.mjs http://localhost:<p> evidencia/antes` → 22 ✔ (línea base) | TODO |
+| H0.S1.M1 | Reiniciar la rama desde `origin/mockup` (si D-01 = sí) | `git merge-base --is-ancestor origin/mockup HEAD` → 0 | `git fetch origin mockup && git checkout -B claude-marcelo/hopeful-ride-7z2qps origin/mockup` → rama en `5318f35d` o posterior | HECHO |
+| H0.S1.M2 | Instalar y verificar gates base | lint/typecheck/test corren igual que en `ESTADO.md` (9 fallos preexistentes conocidos) | `corepack yarn install --immutable && yarn lint && yarn typecheck` → 0 · `yarn test` → sólo los fallos preexistentes listados | HECHO |
+| H0.S1.M3 | Evidencia «antes»: `/feed`, `/feed?post=<id>`, `/posts` con y sin sesión, `/p/<slug>` | 5 PNG en 1440 + 1 en 390 | `node playwright/red-social-linkedin.mjs http://localhost:<p> evidencia/antes` → 22 ✔ (línea base) | TODO — no se capturó el «antes»; la base sigue en el worktree de `origin/mockup` y queda para H10.S0.M3 |
 
 ---
 
@@ -152,22 +152,22 @@ Gates por microtarea (DoD mínimo, siempre): `yarn lint` 0 · `yarn typecheck` 0
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H1.S1.M1 | Mover `features/feed/composer/` a `features/social/composer/` (carpeta nueva `features/social/` para lo que es del flujo social y no del buscador público) y actualizar el import en `feed-crear-publicacion.ts:8` | `git grep "feed/composer"` vacío | `yarn typecheck` 0 · `yarn test src/app/features/social/composer` verde | TODO |
-| H1.S1.M2 | Mover `features/feed/report-post/` a `features/social/report-post/` y actualizar `feed-publicaciones.ts:14` | `git grep "feed/report-post"` vacío | `yarn typecheck` 0 · spec de `report-post` verde | TODO |
-| H1.S1.M3 | Mover la lógica reutilizable de `post-card.ts` que no esté en la tarjeta pública (toggle de guardado `bookmark/unbookmark` y comentario con adjunto) a servicios de `features/social/` **antes** de borrar la tarjeta | `features/social/bookmark.service.ts` (o nombre coherente con el repo) con spec | `yarn test src/app/features/social` verde | TODO |
+| H1.S1.M1 | Mover `features/feed/composer/` a `features/social/composer/` (carpeta nueva `features/social/` para lo que es del flujo social y no del buscador público) y actualizar el import en `feed-crear-publicacion.ts:8` | `git grep "feed/composer"` vacío | `yarn typecheck` 0 · `yarn test src/app/features/social/composer` verde | HECHO |
+| H1.S1.M2 | Mover `features/feed/report-post/` a `features/social/report-post/` y actualizar `feed-publicaciones.ts:14` | `git grep "feed/report-post"` vacío | `yarn typecheck` 0 · spec de `report-post` verde | HECHO |
+| H1.S1.M3 | Mover la lógica reutilizable de `post-card.ts` que no esté en la tarjeta pública (toggle de guardado `bookmark/unbookmark` y comentario con adjunto) a servicios de `features/social/` **antes** de borrar la tarjeta | `features/social/bookmark.service.ts` (o nombre coherente con el repo) con spec | `yarn test src/app/features/social` verde | HECHO — `core/social/bookmark.store.ts` |
 
 ### H1.S2 — Redirigir y borrar
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H1.S2.M1 | Reemplazar la ruta `feed` (`app.routes.ts:1695-1698`) por `{ path: 'feed', redirectTo: '/posts' }` y quitar el cargador `feed:` de `:74` | `/feed` → `/posts` | `app.routes.spec.ts` (fila `'feed'` en `:96`) actualizada a redirect y verde | TODO |
-| H1.S2.M2 | Guard/`redirectTo` funcional: `/feed?post=<id>` → `/p/:slug/post/<id>` (resolviendo el slug con `readPost` + `readProfile`) y si falla → `/posts` | Con `post` válido aterriza en el detalle | spec nuevo `feed-redirect.spec.ts` con los dos casos verde | TODO |
-| H1.S2.M3 | Borrar `features/feed/feed.{ts,html,css,spec.ts}` y `features/feed/post-card/*` | carpeta `features/feed/` ya no existe | `ls src/app/features/feed` → no existe · `yarn build` 0 | TODO |
-| H1.S2.M4 | `notifications.store.ts:326`: aviso social → `/p/:slug/post/:postId` cuando `sourceTypeConceptId` es publicación o comentario (comentario → la publicación con `#comentario-<id>`), con el slug resuelto en el store | Un aviso «comentaron tu publicación» abre la publicación | `notifications.store.spec.ts` caso nuevo verde | TODO |
-| H1.S2.M5 | `feed-perfil-mini.html:62`: «Mi muro» → «Mi actividad» (`/p/:miSlug`, pestaña Publicaciones) | el enlace abre la ficha propia | spec de `feed-perfil-mini` verde | TODO |
-| H1.S2.M6 | `public-post-comments.ts:254`: «Responder» abre el redactor **en línea** bajo el comentario con `parentCommentId` (el redactor ya existe en el mismo componente, `comment-composer`) | Respondo sin cambiar de URL y la respuesta aparece bajo el comentario | spec `public-post-comments.spec.ts` caso «responder en línea» verde · navegador: UI → `POST /community/comments` con `parentCommentId` → respuesta → recarga → UI | TODO |
-| H1.S2.M7 | `playwright/carril-p3-p6-humo.spec.ts:123`: el humo del muro pasa a `/posts` (mismas dos ramas: redactor visible o puerta «Cree su vitrina») | spec verde contra `ng serve` | `yarn pw carril-p3-p6-humo` → passed | TODO |
-| H1.S2.M8 | Comentarios y docs: `navigation.map.ts:207-236`, `app.routes.ts:1686`, `feed-publicaciones.ts:127`, `docs/reports/generated/route-inventory.md`, `docs/integrations/backend-api.md` | ningún texto dice que el muro «sigue en pie» | `git grep -n "Muro profesional" src docs` → sólo historial | TODO |
+| H1.S2.M1 | Reemplazar la ruta `feed` (`app.routes.ts:1695-1698`) por `{ path: 'feed', redirectTo: '/posts' }` y quitar el cargador `feed:` de `:74` | `/feed` → `/posts` | `app.routes.spec.ts` (fila `'feed'` en `:96`) actualizada a redirect y verde | HECHO — desvío: `feedHeredadoGuard` en vez de `redirectTo` |
+| H1.S2.M2 | Guard/`redirectTo` funcional: `/feed?post=<id>` → `/p/:slug/post/<id>` (resolviendo el slug con `readPost` + `readProfile`) y si falla → `/posts` | Con `post` válido aterriza en el detalle | spec nuevo `feed-redirect.spec.ts` con los dos casos verde | HECHO — `enlaces-sociales.guard.ts` + spec |
+| H1.S2.M3 | Borrar `features/feed/feed.{ts,html,css,spec.ts}` y `features/feed/post-card/*` | carpeta `features/feed/` ya no existe | `ls src/app/features/feed` → no existe · `yarn build` 0 | HECHO |
+| H1.S2.M4 | `notifications.store.ts:326`: aviso social → `/p/:slug/post/:postId` cuando `sourceTypeConceptId` es publicación o comentario (comentario → la publicación con `#comentario-<id>`), con el slug resuelto en el store | Un aviso «comentaron tu publicación» abre la publicación | `notifications.store.spec.ts` caso nuevo verde | HECHO — desvío: `/posts/:id?actor=` resuelto por `publicacionPorIdGuard` |
+| H1.S2.M5 | `feed-perfil-mini.html:62`: «Mi muro» → «Mi actividad» (`/p/:miSlug`, pestaña Publicaciones) | el enlace abre la ficha propia | spec de `feed-perfil-mini` verde | HECHO |
+| H1.S2.M6 | `public-post-comments.ts:254`: «Responder» abre el redactor **en línea** bajo el comentario con `parentCommentId` (el redactor ya existe en el mismo componente, `comment-composer`) | Respondo sin cambiar de URL y la respuesta aparece bajo el comentario | spec `public-post-comments.spec.ts` caso «responder en línea» verde · navegador: UI → `POST /community/comments` con `parentCommentId` → respuesta → recarga → UI | HECHO |
+| H1.S2.M7 | `playwright/carril-p3-p6-humo.spec.ts:123`: el humo del muro pasa a `/posts` (mismas dos ramas: redactor visible o puerta «Cree su vitrina») | spec verde contra `ng serve` | `yarn pw carril-p3-p6-humo` → passed | A MEDIAS — spec adaptado a `/posts` y al modal; no se corrió `yarn pw` (necesita la API real) |
+| H1.S2.M8 | Comentarios y docs: `navigation.map.ts:207-236`, `app.routes.ts:1686`, `feed-publicaciones.ts:127`, `docs/reports/generated/route-inventory.md`, `docs/integrations/backend-api.md` | ningún texto dice que el muro «sigue en pie» | `git grep -n "Muro profesional" src docs` → sólo historial | HECHO |
 
 ---
 
@@ -181,10 +181,10 @@ Motivo: el feed personal (`GET /community/feed`) devuelve `PostListItem` sin nom
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | API: `PostListItemDto` (`src/modules/community/dto/read-social.dto.ts`) + `author: PostAuthorSummaryDto` (campo **nuevo y opcional** → compatible hacia atrás, regla 96.4). Resolver en el servicio de lectura con un `IN (...)` por página, no por ítem | `GET /community/feed` devuelve `items[].post.author` | `npm test -- community-feed` + int-spec nuevo `community-feed-author.int-spec.ts` verde · OpenAPI actualizado en el mismo PR | TODO |
+| H2.S1.M1 | API: `PostListItemDto` (`src/modules/community/dto/read-social.dto.ts`) + `author: PostAuthorSummaryDto` (campo **nuevo y opcional** → compatible hacia atrás, regla 96.4). Resolver en el servicio de lectura con un `IN (...)` por página, no por ítem | `GET /community/feed` devuelve `items[].post.author` | `npm test -- community-feed` + int-spec nuevo `community-feed-author.int-spec.ts` verde · OpenAPI actualizado en el mismo PR | TODO — no se hizo; la API no trae `author` (ver M4) |
 | H2.S1.M2 | API: lo mismo en `GET /community/profiles/:id/posts` y `GET /community/posts/:id` | idem | int-spec existente ampliado verde | TODO |
 | H2.S1.M3 | Front: `community.types.ts` (`PostListItem.author?`), `community.client.ts` (mapeo del wire), `community.handlers.ts` (devolver `author` desde `vitrinaDe(authorProfileId)`) | tipos y mock alineados | `yarn test src/app/core/data-access/community src/app/core/mock/handlers` verde | TODO |
-| H2.S1.M4 | Front, respaldo mientras la API no esté desplegada: `ProfileSummaryStore` con caché por id que resuelve `author` ausente vía `readProfile` **una vez por autor y por sesión** (nunca por tarjeta) | con `author` ausente, la tarjeta igual muestra nombre y avatar | spec con 3 posts del mismo autor → 1 `GET /community/profiles/:id` | TODO |
+| H2.S1.M4 | Front, respaldo mientras la API no esté desplegada: `ProfileSummaryStore` con caché por id que resuelve `author` ausente vía `readProfile` **una vez por autor y por sesión** (nunca por tarjeta) | con `author` ausente, la tarjeta igual muestra nombre y avatar | spec con 3 posts del mismo autor → 1 `GET /community/profiles/:id` | HECHO — `ProfileSummaryStore` + `cola-acotada` |
 
 Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de crear un endpoint «feed enriquecido» paralelo.
 
@@ -200,19 +200,19 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H3.S1.M1 | `feed-publicaciones.html/.css`: izquierda = `feed-perfil-mini` (con sesión) · derecha = `feed-tendencias` + `feed-banner`; sin sesión la izquierda no se reserva (clase `red--sin-perfil`, regla §5 de `composition-rules.md`: nunca una columna vacía) | medidas: izq < centro > der en 1440; una columna en 390 (orden DOM: centro, izq, der) | script `.mjs` → «tres columnas izquierda < centro < derecha» ✔ y «sin sesión el feed es más ancho» ✔ | TODO |
-| H3.S1.M2 | `feed-perfil-mini`: agregar «Vistas de su perfil (7 días)» y «Apariciones en búsquedas» desde `GET /community/profiles/me/stats` (cliente: método nuevo `readOwnStats`), y accesos **Guardados** (`/my-account/saved`, H6) · **Grupos** (`/groups`) · **Editar mi vitrina** | los dos números y los tres accesos | spec del mini + `community.client.spec.ts` (`readOwnStats`) verde | TODO |
-| H3.S1.M3 | `feed-tendencias` → «Profesionales para seguir»: cada fila con botón **Seguir / Siguiendo** (H6.S1) y sin reseñas como dato principal | botón presente y funcional | spec verde; navegador: Seguir → `POST /community/follows` → `GET` lo incluye → el feed lo refleja | TODO |
+| H3.S1.M1 | `feed-publicaciones.html/.css`: izquierda = `feed-perfil-mini` (con sesión) · derecha = `feed-tendencias` + `feed-banner`; sin sesión la izquierda no se reserva (clase `red--sin-perfil`, regla §5 de `composition-rules.md`: nunca una columna vacía) | medidas: izq < centro > der en 1440; una columna en 390 (orden DOM: centro, izq, der) | script `.mjs` → «tres columnas izquierda < centro < derecha» ✔ y «sin sesión el feed es más ancho» ✔ | HECHO |
+| H3.S1.M2 | `feed-perfil-mini`: agregar «Vistas de su perfil (7 días)» y «Apariciones en búsquedas» desde `GET /community/profiles/me/stats` (cliente: método nuevo `readOwnStats`), y accesos **Guardados** (`/my-account/saved`, H6) · **Grupos** (`/groups`) · **Editar mi vitrina** | los dos números y los tres accesos | spec del mini + `community.client.spec.ts` (`readOwnStats`) verde | HECHO — accesos: Mi actividad · Mi red · Guardados · Editar · Mi panel |
+| H3.S1.M3 | `feed-tendencias` → «Profesionales para seguir»: cada fila con botón **Seguir / Siguiendo** (H6.S1) y sin reseñas como dato principal | botón presente y funcional | spec verde; navegador: Seguir → `POST /community/follows` → `GET` lo incluye → el feed lo refleja | HECHO |
 
 ### H3.S2 — Feed personalizado con sesión
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H3.S2.M1 | `feed-publicaciones.ts`: con sesión y vitrina → `community.listFeed({ profileId })` (`GET /community/feed`) mapeado a la forma de la tarjeta usando `post.author` (H2); sin sesión → `feedPublico` como hoy | el médico ve publicaciones de a quién sigue | spec: con sesión llama a `/community/feed`, sin sesión a `/public/posts` | TODO |
-| H3.S2.M2 | Estados M34 (`ViewState<T>`): cargando (S1) · con datos (S2) · vacío con próxima acción «Siga a profesionales para llenar su inicio» + lista de sugerencias (S3) · error con reintento (S5) · «ver más» con cursor | los nueve estados que apliquen están codificados, no inventados | spec con `view-state-host` por estado verde | TODO |
-| H3.S2.M3 | Vacío con sesión → mostrar el feed de descubrimiento (`/public/posts`) debajo del aviso, para que la pantalla nunca quede muda (regla 95.2.2) | aviso + publicaciones públicas | spec verde · captura | TODO |
-| H3.S2.M4 | Tiempo relativo («hace 2 h», «ayer», fecha si > 7 días) en un pipe compartido `shared/pipes/tiempo-relativo` (buscar antes si ya existe: `git grep -i "hace .* h\|relativeTime"`) + `<time datetime>` absoluto | la tarjeta dice «hace 2 h» y el lector de pantalla la fecha completa | spec del pipe (6 casos) verde | TODO |
-| H3.S2.M5 | Selector «Recientes / Destacadas» (LinkedIn: Top/Recent): `rankScore` del ítem del feed ya viene (`FeedListItem.rankScore`) → ordenar en cliente dentro de la página; sin inventar ranking server-side | el selector cambia el orden de la página cargada | spec verde | TODO |
+| H3.S2.M1 | `feed-publicaciones.ts`: con sesión y vitrina → `community.listFeed({ profileId })` (`GET /community/feed`) mapeado a la forma de la tarjeta usando `post.author` (H2); sin sesión → `feedPublico` como hoy | el médico ve publicaciones de a quién sigue | spec: con sesión llama a `/community/feed`, sin sesión a `/public/posts` | HECHO — desvío: pestaña «Siguiendo»; «Recientes» es la de entrada (el feed real depende del fan-out) |
+| H3.S2.M2 | Estados M34 (`ViewState<T>`): cargando (S1) · con datos (S2) · vacío con próxima acción «Siga a profesionales para llenar su inicio» + lista de sugerencias (S3) · error con reintento (S5) · «ver más» con cursor | los nueve estados que apliquen están codificados, no inventados | spec con `view-state-host` por estado verde | HECHO |
+| H3.S2.M3 | Vacío con sesión → mostrar el feed de descubrimiento (`/public/posts`) debajo del aviso, para que la pantalla nunca quede muda (regla 95.2.2) | aviso + publicaciones públicas | spec verde · captura | A MEDIAS — el vacío de Siguiendo orienta y ofrece «Ver recientes», pero no pinta el descubrimiento debajo |
+| H3.S2.M4 | Tiempo relativo («hace 2 h», «ayer», fecha si > 7 días) en un pipe compartido `shared/pipes/tiempo-relativo` (buscar antes si ya existe: `git grep -i "hace .* h\|relativeTime"`) + `<time datetime>` absoluto | la tarjeta dice «hace 2 h» y el lector de pantalla la fecha completa | spec del pipe (6 casos) verde | HECHO — reusa `shared/date/tiempo-relativo` |
+| H3.S2.M5 | Selector «Recientes / Destacadas» (LinkedIn: Top/Recent): `rankScore` del ítem del feed ya viene (`FeedListItem.rankScore`) → ordenar en cliente dentro de la página; sin inventar ranking server-side | el selector cambia el orden de la página cargada | spec verde | TODO — no se hizo el selector Destacadas (en su lugar: Recientes / Siguiendo) |
 
 ---
 
@@ -224,13 +224,13 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H4.S1.M1 | Averiguar y fijar **cómo se sube una imagen de publicación**: `attachment-uploader` (organismo existente) y el endpoint de archivos que usa `comment-media-picker` (`community.comment_media`). Registrar en §9 si el endpoint de medios de post difiere del de comentarios | ruta y contrato escritos acá con línea | `git grep -n "comment_media\|/files" src/app/core` pegado en `evidencia/` | TODO |
-| H4.S1.M2 | `features/social/composer`: `media` con `comment-media-picker` (o el uploader que M1 determine), máximo y tipos según el contrato, vista previa, alt obligatorio opcional según `NewPostMedia.altText`, quitar | se adjunta y se ve antes de publicar | spec: adjuntar 2 → `NewPost.media.length === 2` | TODO |
-| H4.S1.M3 | Quitar el botón apagado «Agregar imágenes» + «Todavía no se pueden adjuntar imágenes» y la aserción `aria-disabled` de `carril-p3-p6-humo.spec.ts` | no queda texto de «todavía no» | `git grep "Todavía no se pueden adjuntar"` vacío | TODO |
-| H4.S1.M4 | `feed-crear-publicacion`: la pastilla y «Foto» abren el modal (`app-content-dialog`); «Foto» abre con el selector de archivos disparado; «Escribir artículo» sigue yendo a `/my-account/articles` si `escribeArticulos()` | modal con foco, Escape, restauración | spec del modal (a11y: `role=dialog`, nombre, foco inicial, Escape, foco de vuelta a la pastilla) verde | TODO |
-| H4.S1.M5 | Cabecera del modal: avatar + nombre + selector de visibilidad (`PUBLIC/FOLLOWERS/PRIVATE`) como en LinkedIn («Cualquiera / Sólo quienes me siguen / Sólo yo») | se ve y cambia `visibility` | spec verde | TODO |
-| H4.S1.M6 | Mock: `POST /community/profiles/:id/posts` con `media` → el feed devuelve `mediaUrls` resolviendo por `GET /public/media/:id` simulado | la demo muestra la imagen subida | `yarn test community.handlers` verde · navegador | TODO |
-| H4.S1.M7 | Prueba de mutación completa (regla «un toast no prueba nada»): spec de componente con `HttpTestingController` y corrida Playwright `publicar-con-imagen` que recarga y encuentra la tarjeta nueva con `<img>` | pasa en `ng serve` | `yarn pw publicar-con-imagen` → passed + captura | TODO |
+| H4.S1.M1 | Averiguar y fijar **cómo se sube una imagen de publicación**: `attachment-uploader` (organismo existente) y el endpoint de archivos que usa `comment-media-picker` (`community.comment_media`). Registrar en §9 si el endpoint de medios de post difiere del de comentarios | ruta y contrato escritos acá con línea | `git grep -n "comment_media\|/files" src/app/core` pegado en `evidencia/` | HECHO |
+| H4.S1.M2 | `features/social/composer`: `media` con `comment-media-picker` (o el uploader que M1 determine), máximo y tipos según el contrato, vista previa, alt obligatorio opcional según `NewPostMedia.altText`, quitar | se adjunta y se ve antes de publicar | spec: adjuntar 2 → `NewPost.media.length === 2` | HECHO |
+| H4.S1.M3 | Quitar el botón apagado «Agregar imágenes» + «Todavía no se pueden adjuntar imágenes» y la aserción `aria-disabled` de `carril-p3-p6-humo.spec.ts` | no queda texto de «todavía no» | `git grep "Todavía no se pueden adjuntar"` vacío | HECHO |
+| H4.S1.M4 | `feed-crear-publicacion`: la pastilla y «Foto» abren el modal (`app-content-dialog`); «Foto» abre con el selector de archivos disparado; «Escribir artículo» sigue yendo a `/my-account/articles` si `escribeArticulos()` | modal con foco, Escape, restauración | spec del modal (a11y: `role=dialog`, nombre, foco inicial, Escape, foco de vuelta a la pastilla) verde | HECHO |
+| H4.S1.M5 | Cabecera del modal: avatar + nombre + selector de visibilidad (`PUBLIC/FOLLOWERS/PRIVATE`) como en LinkedIn («Cualquiera / Sólo quienes me siguen / Sólo yo») | se ve y cambia `visibility` | spec verde | HECHO |
+| H4.S1.M6 | Mock: `POST /community/profiles/:id/posts` con `media` → el feed devuelve `mediaUrls` resolviendo por `GET /public/media/:id` simulado | la demo muestra la imagen subida | `yarn test community.handlers` verde · navegador | HECHO |
+| H4.S1.M7 | Prueba de mutación completa (regla «un toast no prueba nada»): spec de componente con `HttpTestingController` y corrida Playwright `publicar-con-imagen` que recarga y encuentra la tarjeta nueva con `<img>` | pasa en `ng serve` | `yarn pw publicar-con-imagen` → passed + captura | A MEDIAS — spec + recorrido de navegador `playwright/red-social/h4-modal.mjs` (17/17); no hay spec `yarn pw publicar-con-imagen` |
 
 ---
 
@@ -244,27 +244,27 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H5.S1.M1 | `public-post-card`: tiempo relativo (H3.S2.M4) + ícono de visibilidad según `visibilityConceptId` (🌐 pública / 👥 seguidores / 🔒 privada) con texto para lectores | se ve «hace 2 h · 🌐» | spec verde | TODO |
-| H5.S1.M2 | Botón **Seguir** en la cabecera cuando `actorProfileId !== autor` y no lo sigo; «Siguiendo» cuando sí (estado desde `FollowStore`, H6.S1); oculto en la ficha del propio autor | el botón alterna y persiste | spec: `POST /community/follows` → `GET` lo incluye · navegador | TODO |
-| H5.S1.M3 | Menú «…» (`post-preferences-menu`): mantener las 7 entradas; «Guardar / Quitar de guardados» entra como octava **sólo si** producto lo pide (ambigüedad §9); si no, Guardar vive en la fila de acciones | AC-01-15 se mantiene | `carril-01` AC-01-15 verde | TODO |
+| H5.S1.M1 | `public-post-card`: tiempo relativo (H3.S2.M4) + ícono de visibilidad según `visibilityConceptId` (🌐 pública / 👥 seguidores / 🔒 privada) con texto para lectores | se ve «hace 2 h · 🌐» | spec verde | HECHO — el ícono se dibuja cuando la visibilidad se conoce; la lectura por id la trae como concept id y no se inventa |
+| H5.S1.M2 | Botón **Seguir** en la cabecera cuando `actorProfileId !== autor` y no lo sigo; «Siguiendo» cuando sí (estado desde `FollowStore`, H6.S1); oculto en la ficha del propio autor | el botón alterna y persiste | spec: `POST /community/follows` → `GET` lo incluye · navegador | HECHO |
+| H5.S1.M3 | Menú «…» (`post-preferences-menu`): mantener las 7 entradas; «Guardar / Quitar de guardados» entra como octava **sólo si** producto lo pide (ambigüedad §9); si no, Guardar vive en la fila de acciones | AC-01-15 se mantiene | `carril-01` AC-01-15 verde | HECHO — el menú conserva sus 7 entradas |
 
 ### H5.S2 — Cinco reacciones
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H5.S2.M1 | Molécula nueva `shared/components/molecules/reaction-picker` (buscar antes: `git grep -il "reaction-picker\|reaccion" src/app/shared` vacío → se crea): cinco botones con ícono + rótulo («Recomendar», «Me encanta», «Me hizo pensar», «Celebro», «Apoyo»), `role="group"`, flechas para moverse, Escape cierra, respeta `prefers-reduced-motion` | se abre al mantener (toque) / al pasar o enfocar (puntero y teclado) | spec a11y + teclado verde | TODO |
-| H5.S2.M2 | `public-post-card.recomendar()`: clic corto = LIKE o quitar; selector = `react({ reactionType })` (el backend hace upsert: cambiar de tipo no duplica, `community.types.ts:1084-1090`); el botón muestra la reacción propia (`actorReactionType`) | el botón dice «Me encanta» en rojo si reaccioné LOVE | spec: cambiar LIKE→LOVE manda **un** `PUT /community/reactions` y el total no cambia · navegador | TODO |
-| H5.S2.M3 | Resumen: iconos de los tipos presentes en `reactions.tallies` (máx. 3) + total; clic abre `public-post-reactions` (existe) | «👍 ❤️ 💡 24» | spec verde; AC-01-9/10 verde | TODO |
-| H5.S2.M4 | La tarjeta pública consume `ReactionSummary` (tipos) y no sólo `reactionCount`: ampliar `PublicPostSummary` con `reactions` (API `GET /public/posts` ya expone reacciones por post; verificar DTO en `community-public.controller.ts` y, si falta, microtarea de API aditiva) | los tallies llegan | int-spec/contrato pegado en `evidencia/` | TODO |
+| H5.S2.M1 | Molécula nueva `shared/components/molecules/reaction-picker` (buscar antes: `git grep -il "reaction-picker\|reaccion" src/app/shared` vacío → se crea): cinco botones con ícono + rótulo («Recomendar», «Me encanta», «Me hizo pensar», «Celebro», «Apoyo»), `role="group"`, flechas para moverse, Escape cierra, respeta `prefers-reduced-motion` | se abre al mantener (toque) / al pasar o enfocar (puntero y teclado) | spec a11y + teclado verde | HECHO — `shared/components/molecules/reaction-button` |
+| H5.S2.M2 | `public-post-card.recomendar()`: clic corto = LIKE o quitar; selector = `react({ reactionType })` (el backend hace upsert: cambiar de tipo no duplica, `community.types.ts:1084-1090`); el botón muestra la reacción propia (`actorReactionType`) | el botón dice «Me encanta» en rojo si reaccioné LOVE | spec: cambiar LIKE→LOVE manda **un** `PUT /community/reactions` y el total no cambia · navegador | HECHO |
+| H5.S2.M3 | Resumen: iconos de los tipos presentes en `reactions.tallies` (máx. 3) + total; clic abre `public-post-reactions` (existe) | «👍 ❤️ 💡 24» | spec verde; AC-01-9/10 verde | HECHO |
+| H5.S2.M4 | La tarjeta pública consume `ReactionSummary` (tipos) y no sólo `reactionCount`: ampliar `PublicPostSummary` con `reactions` (API `GET /public/posts` ya expone reacciones por post; verificar DTO en `community-public.controller.ts` y, si falta, microtarea de API aditiva) | los tallies llegan | int-spec/contrato pegado en `evidencia/` | A MEDIAS — el desglose llega en «Siguiendo»; `GET /public/posts` sólo trae el total |
 
 ### H5.S3 — Comentarios, Compartir, Guardar
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H5.S3.M1 | Hilo: redactor **arriba** del listado (como LinkedIn), avatar del comentarista, «Responder» en línea (H1.S2.M6), «Ver más comentarios» ya existe | orden y redactor arriba | spec verde; captura | TODO |
-| H5.S3.M2 | **Compartir**: `app-menu` con «Copiar enlace» (clipboard + toast; existe `copyLink` en el menú «…», reutilizar la acción) y «Enviar por chat» → abre `/messaging` con `createConversation` precargando el enlace en el cuerpo (contrato `NewDirectMessage.bodyText`) | las dos opciones funcionan | spec: «Enviar por chat» → `POST /community/conversations` + `POST …/messages` · navegador | TODO |
-| H5.S3.M3 | **Guardar**: botón con `aria-pressed`, `bookmark/unbookmark` (`community.client.ts:441/454`), estado inicial desde `listBookmarks` cacheado por sesión (`BookmarkStore`, H1.S1.M3) | alterna y persiste tras recargar | spec + navegador: `POST /community/bookmarks` → recarga → sigue «Guardada» | TODO |
-| H5.S3.M4 | Fila de acciones a lo ancho de la tarjeta con cuatro botones de igual peso, íconos + rótulo, rótulo oculto en 390 con tooltip accesible (regla 95.4.1) | 4 botones, sin desborde en 390 | captura 390/768/1440 claro/oscuro | TODO |
+| H5.S3.M1 | Hilo: redactor **arriba** del listado (como LinkedIn), avatar del comentarista, «Responder» en línea (H1.S2.M6), «Ver más comentarios» ya existe | orden y redactor arriba | spec verde; captura | HECHO |
+| H5.S3.M2 | **Compartir**: `app-menu` con «Copiar enlace» (clipboard + toast; existe `copyLink` en el menú «…», reutilizar la acción) y «Enviar por chat» → abre `/messaging` con `createConversation` precargando el enlace en el cuerpo (contrato `NewDirectMessage.bodyText`) | las dos opciones funcionan | spec: «Enviar por chat» → `POST /community/conversations` + `POST …/messages` · navegador | A MEDIAS — Copiar enlace y Compartir (nativo) andan; «Enviar por chat» no se construyó |
+| H5.S3.M3 | **Guardar**: botón con `aria-pressed`, `bookmark/unbookmark` (`community.client.ts:441/454`), estado inicial desde `listBookmarks` cacheado por sesión (`BookmarkStore`, H1.S1.M3) | alterna y persiste tras recargar | spec + navegador: `POST /community/bookmarks` → recarga → sigue «Guardada» | HECHO |
+| H5.S3.M4 | Fila de acciones a lo ancho de la tarjeta con cuatro botones de igual peso, íconos + rótulo, rótulo oculto en 390 con tooltip accesible (regla 95.4.1) | 4 botones, sin desborde en 390 | captura 390/768/1440 claro/oscuro | HECHO |
 
 ---
 
@@ -276,14 +276,14 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H6.S1.M1 | `features/social/follow.store.ts`: carga `listFollows` una vez por sesión (paginando hasta el final, `nextCursor`), `sigue(profileId)`, `seguir`, `dejarDeSeguir` con actualización optimista y reversión en error | una sola lectura por sesión | spec: 3 consultas de estado → 1 `GET` · error en `POST` revierte | TODO |
-| H6.S1.M2 | Botón **Seguir / Siguiendo** como molécula `follow-button` (`aria-pressed`, texto que cambia al pasar: «Siguiendo» → «Dejar de seguir», como LinkedIn) | reutilizable en 3 lugares | spec verde | TODO |
-| H6.S1.M3 | `public-profile-card.html`: Seguir junto a «Enviar mensaje» (`:140-143`); sin sesión manda a `/auth` con retorno (AC-01-17); vitrina propia no lo muestra | Seguir en la ficha | spec + `carril-05-perfil-doctor.spec.ts` sigue verde | TODO |
-| H6.S1.M4 | Ruta `network` en el shell público (`rutasDeBusquedaPublica`, junto a `posts`) con guard de sesión → `features/social/network/`: pestañas (`app-tabs`) **Siguiendo** · **Sugerencias** · **Grupos** (enlace a `/groups`); regla §5: una tarjeta con pestañas, centrada, a lo ancho | las tres pestañas | spec de ruta + componente verde; medición de holgura ≤ 2 px como `mi-perfil-paciente.mjs` | TODO |
-| H6.S1.M5 | «Siguiendo»: filas con avatar, nombre, titular (resueltos con `ProfileSummaryStore`, H2.S1.M4) y «Dejar de seguir»; vacío orienta («Todavía no sigue a nadie. Empiece por las sugerencias») | lista y vacío | spec verde | TODO |
-| H6.S1.M6 | «Sugerencias»: misma fuente que «Profesionales para seguir» excluyendo a quienes ya sigo y a mí; «Seguir» en cada fila | sin duplicados con «Siguiendo» | spec verde | TODO |
-| H6.S1.M7 | **Guardados** `/my-account/saved` (ruta hija de `my-account`, `pantallaDeOperacion`): lista de `listBookmarks` resolviendo cada `bookmarkableRefId` a su publicación (`readPost`) y pintándola con `public-post-card`; «Quitar» | abre y quita | spec + navegador | TODO |
-| H6.S1.M8 | Mock: sembrar guardados y notificaciones de «empezó a seguirte» para la médica y la paciente, con ids estables (`uuid('…')`) | la demo tiene datos | `yarn test fixtures` verde · segunda corrida sin duplicar (idempotencia de seeds) | TODO |
+| H6.S1.M1 | `features/social/follow.store.ts`: carga `listFollows` una vez por sesión (paginando hasta el final, `nextCursor`), `sigue(profileId)`, `seguir`, `dejarDeSeguir` con actualización optimista y reversión en error | una sola lectura por sesión | spec: 3 consultas de estado → 1 `GET` · error en `POST` revierte | HECHO |
+| H6.S1.M2 | Botón **Seguir / Siguiendo** como molécula `follow-button` (`aria-pressed`, texto que cambia al pasar: «Siguiendo» → «Dejar de seguir», como LinkedIn) | reutilizable en 3 lugares | spec verde | HECHO |
+| H6.S1.M3 | `public-profile-card.html`: Seguir junto a «Enviar mensaje» (`:140-143`); sin sesión manda a `/auth` con retorno (AC-01-17); vitrina propia no lo muestra | Seguir en la ficha | spec + `carril-05-perfil-doctor.spec.ts` sigue verde | HECHO |
+| H6.S1.M4 | Ruta `network` en el shell público (`rutasDeBusquedaPublica`, junto a `posts`) con guard de sesión → `features/social/network/`: pestañas (`app-tabs`) **Siguiendo** · **Sugerencias** · **Grupos** (enlace a `/groups`); regla §5: una tarjeta con pestañas, centrada, a lo ancho | las tres pestañas | spec de ruta + componente verde; medición de holgura ≤ 2 px como `mi-perfil-paciente.mjs` | HECHO — desvío: dos pestañas (Siguiendo · Sugerencias); Grupos queda en el rail/perfil |
+| H6.S1.M5 | «Siguiendo»: filas con avatar, nombre, titular (resueltos con `ProfileSummaryStore`, H2.S1.M4) y «Dejar de seguir»; vacío orienta («Todavía no sigue a nadie. Empiece por las sugerencias») | lista y vacío | spec verde | HECHO |
+| H6.S1.M6 | «Sugerencias»: misma fuente que «Profesionales para seguir» excluyendo a quienes ya sigo y a mí; «Seguir» en cada fila | sin duplicados con «Siguiendo» | spec verde | HECHO |
+| H6.S1.M7 | **Guardados** `/my-account/saved` (ruta hija de `my-account`, `pantallaDeOperacion`): lista de `listBookmarks` resolviendo cada `bookmarkableRefId` a su publicación (`readPost`) y pintándola con `public-post-card`; «Quitar» | abre y quita | spec + navegador | HECHO — desvío: ruta `/saved` en el marco público |
+| H6.S1.M8 | Mock: sembrar guardados y notificaciones de «empezó a seguirte» para la médica y la paciente, con ids estables (`uuid('…')`) | la demo tiene datos | `yarn test fixtures` verde · segunda corrida sin duplicar (idempotencia de seeds) | TODO — la demo arranca sin guardados (se crean desde la tarjeta); los avisos de seguimiento ya existían |
 
 ---
 
@@ -295,9 +295,9 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H7.S1.M1 | `notifications.store.ts` (`deCommunity`): destino por `notificationTypeConceptId` — reacción/comentario → publicación (H1.S2.M4); seguimiento → `/p/:slugDelActor`; desconocido → `/posts` (nunca `/feed`) | tres destinos | spec con los 3 + el desconocido verde | TODO |
-| H7.S1.M2 | Título del aviso con el nombre del actor (resolver `actorProfileId` con `ProfileSummaryStore`) en vez de «Novedad en su perfil» | «Valeria Rojas recomendó su publicación» | spec verde | TODO |
-| H7.S1.M3 | «Contactarme con este doctor» del menú «…» (`pedirContacto`, hoy manda a la ficha con un aviso): mantener hasta que producto decida (P-01-1, §9); registrar | sin cambio de comportamiento | — | TODO |
+| H7.S1.M1 | `notifications.store.ts` (`deCommunity`): destino por `notificationTypeConceptId` — reacción/comentario → publicación (H1.S2.M4); seguimiento → `/p/:slugDelActor`; desconocido → `/posts` (nunca `/feed`) | tres destinos | spec con los 3 + el desconocido verde | HECHO — desvío: el destino lo resuelve la ruta, no el store |
+| H7.S1.M2 | Título del aviso con el nombre del actor (resolver `actorProfileId` con `ProfileSummaryStore`) en vez de «Novedad en su perfil» | «Valeria Rojas recomendó su publicación» | spec verde | HECHO |
+| H7.S1.M3 | «Contactarme con este doctor» del menú «…» (`pedirContacto`, hoy manda a la ficha con un aviso): mantener hasta que producto decida (P-01-1, §9); registrar | sin cambio de comportamiento | — | HECHO — sin cambio, registrado |
 
 ---
 
@@ -309,10 +309,10 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H8.S1.M1 | Reutilizar `public-nav-rail` (organismo existente, 4 secciones con tooltip) extendiéndolo con entradas condicionadas a sesión, en vez de crear otro rail | un solo rail | spec del rail: con sesión 5 entradas sociales, sin sesión las 4 actuales | TODO |
-| H8.S1.M2 | Contadores: chats sin leer (`listConversations` → `unreadCount`, mismo origen que `etiquetaChats()` de `shell-layout.html`) y notificaciones (`NotificationPage.unreadCount`) como `app-badge`, con texto accesible «3 sin leer» | números correctos | spec verde | TODO |
-| H8.S1.M3 | «Yo»: avatar + menú (`app-menu`) con «Ver mi vitrina», «Editar mi vitrina», «Guardados», «Volver a mi panel», «Cerrar sesión» (reusar lo del header de la app) | menú con teclado y Escape | spec a11y verde | TODO |
-| H8.S1.M4 | Header de la app (`shell-layout.html:419-424`): el ícono «Red social» sigue a `/posts`; verificar que el tooltip/aria no cambian (spec `:1358-1359`) | sin regresión | `shell-layout.spec.ts` verde | TODO |
+| H8.S1.M1 | Reutilizar `public-nav-rail` (organismo existente, 4 secciones con tooltip) extendiéndolo con entradas condicionadas a sesión, en vez de crear otro rail | un solo rail | spec del rail: con sesión 5 entradas sociales, sin sesión las 4 actuales | HECHO |
+| H8.S1.M2 | Contadores: chats sin leer (`listConversations` → `unreadCount`, mismo origen que `etiquetaChats()` de `shell-layout.html`) y notificaciones (`NotificationPage.unreadCount`) como `app-badge`, con texto accesible «3 sin leer» | números correctos | spec verde | HECHO |
+| H8.S1.M3 | «Yo»: avatar + menú (`app-menu`) con «Ver mi vitrina», «Editar mi vitrina», «Guardados», «Volver a mi panel», «Cerrar sesión» (reusar lo del header de la app) | menú con teclado y Escape | spec a11y verde | DESCARTADO — el marco ya ofrece «Volver a mi panel» y el perfil mini los accesos; un menú «Yo» los duplicaba (decisión de implementación, a confirmar con Marcelo) |
+| H8.S1.M4 | Header de la app (`shell-layout.html:419-424`): el ícono «Red social» sigue a `/posts`; verificar que el tooltip/aria no cambian (spec `:1358-1359`) | sin regresión | `shell-layout.spec.ts` verde | HECHO |
 
 ---
 

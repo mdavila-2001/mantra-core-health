@@ -1,0 +1,36 @@
+import { mkdirSync } from 'node:fs';
+import { chromium } from 'playwright';
+const BASE = process.argv[2], OUT = process.argv[3];
+mkdirSync(OUT, { recursive: true });
+const res = []; const ok = (n, c, d = '') => { res.push(!!c); console.log(`${c ? '✔' : '✘'} ${n}${d ? ' — ' + d : ''}`); };
+const consola = []; let csp = 0;
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+p.on('pageerror', (e) => consola.push('pageerror: ' + e));
+p.on('console', (m) => { if (m.type() !== 'error') return; if (/Content Security Policy directive: "script-src/.test(m.text())) { csp++; return; } consola.push(m.text()); });
+await p.goto(`${BASE}/auth`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+await p.getByTestId('login-identifier').fill('medica@alovida.mock');
+await p.getByTestId('login-password').fill('mockup');
+await p.getByTestId('login-submit').click();
+await p.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60000 });
+if (p.url().includes('/auth/organization')) { await p.getByTestId('tenant-opcion').first().click(); await p.waitForURL(/\/dashboard/); }
+await p.getByTestId('campana').first().click();
+await p.getByTestId('campana-item').first().waitFor({ timeout: 60000 });
+// el nombre llega después de la bandeja: se espera por condición
+await p.waitForFunction(() => [...document.querySelectorAll('[data-testid="campana-item"]')].some((e) => / · /.test(e.textContent)), null, { timeout: 30000 }).catch(() => {});
+const textos = await p.getByTestId('campana-item').allInnerTexts();
+const sociales = textos.filter((t) => /Comentó|gustó|seguir/i.test(t));
+ok('hay avisos sociales en la campana', sociales.length > 0, String(sociales.length));
+ok('los sociales empiezan con el nombre de quien actuó', sociales.length > 0 && sociales.every((t) => /^[A-ZÁÉÍÓÚÑ][^·]+ · /.test(t.trim())), sociales.slice(0, 2).map((t) => t.split('\n')[0]).join(' | '));
+ok('ningún título muestra un id', !textos.some((t) => /[0-9a-f]{8}-[0-9a-f]{4}-/.test(t)));
+await p.screenshot({ path: `${OUT}/campana-1440.png` });
+const social = p.getByTestId('campana-item').filter({ hasText: /Comentó|gustó/ }).first();
+await social.click();
+await p.waitForURL(/\/p\/[^/]+\/post\//, { timeout: 60000 }).catch(() => {});
+ok('tocar un aviso de publicación abre la publicación suelta', /\/p\/[^/]+\/post\//.test(p.url()), p.url().replace(BASE, ''));
+await p.locator('app-public-post-card').first().waitFor({ timeout: 60000 }).catch(() => {});
+ok('y la publicación se ve', (await p.locator('app-public-post-card').count()) > 0);
+console.log(`(CSP inline-script aparte: ${csp})`);
+ok('sin errores de página ni de consola (salvo CSP)', consola.length === 0, consola.slice(0, 3).join(' || '));
+await b.close();
+console.log(`\n${res.filter(Boolean).length}/${res.length} en verde`);

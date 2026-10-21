@@ -40,7 +40,7 @@ test.describe('P6 · moderación y reseñas', () => {
 
     // 1. Alguien reporta una publicación real.
     const denunciante = await abrirComo(browser, ACTORES.patientOne);
-    await irA(denunciante.page, '/app/comunidad');
+    await irA(denunciante.page, '/posts');
     await esperarAplicacionLista(denunciante.page);
 
     const primeraTarjeta = denunciante.page
@@ -54,13 +54,20 @@ test.describe('P6 · moderación y reseñas', () => {
     const reportado = denunciante.page.waitForResponse(
       (r) => r.url().includes('/community/reports') && r.ok(),
     );
-    await primeraTarjeta.getByRole('button', { name: 'Reportar' }).click();
-    await denunciante.page
-      .getByRole('textbox', { name: /detalle|motivo/i })
-      .fill('Reporte de prueba ' + marca);
-    await denunciante.page
-      .getByRole('button', { name: /enviar|reportar/i })
+    // «Denunciar» vive en el menú «…» de la tarjeta y abre el formulario en su lugar.
+    await primeraTarjeta.getByTestId(UI.postPreferences).click();
+    await denunciante.page.getByRole('menuitem', { name: 'Denunciar' }).click();
+    const formulario = denunciante.page.getByTestId('report-post');
+    await formulario
+      .getByRole('group', { name: 'Motivo del reporte' })
+      .getByRole('button')
+      .first()
       .click();
+    await formulario
+      .getByTestId(UI.reportPostDetail)
+      .locator('textarea')
+      .fill('Reporte de prueba ' + marca);
+    await formulario.getByTestId(UI.reportPostSubmit).click();
     await reportado;
 
     // 2. El moderador la encuentra en una cola que ahora se puede leer.

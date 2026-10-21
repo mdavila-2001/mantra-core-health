@@ -22,7 +22,7 @@
  */
 export const UI = {
   // --- P3 · muro ---
-  /** El redactor del muro. */
+  /** El redactor de publicaciones (dentro del modal «Crear publicación» de `/posts`). */
   postComposer: 'post-composer',
   /** El área de texto del redactor. */
   postComposerBody: 'post-composer-body',
@@ -37,16 +37,28 @@ export const UI = {
    * poder apuntar a una concreta sin depender de su posición en la lista.
    */
   postCard: (postId: string): string => `post-card-${postId}`,
-  /** El total de reacciones de una tarjeta. */
-  postReactionCount: 'post-reaction-count',
-  /** El total de comentarios de una tarjeta. */
-  postCommentCount: 'post-comment-count',
-  /** El botón que abre y cierra el hilo. */
-  postCommentsToggle: 'post-comments-toggle',
-  /** El área de texto del comentario. */
-  postCommentBody: 'post-comment-body',
-  /** El botón de enviar el comentario. */
-  postCommentSubmit: 'post-comment-submit',
+  /** El resumen de reacciones de una tarjeta («👍 💡 24»); abre quién reaccionó. */
+  postReactionCount: 'post-reactions',
+  /** El total de comentarios de una tarjeta («3 comentarios»). */
+  postCommentCount: 'post-comments',
+  /** «Comentar» en la fila de acciones: abre y cierra el hilo. */
+  postCommentsToggle: 'post-action-comment',
+  /** El área de texto del comentario raíz (el redactor en línea del hilo). */
+  postCommentBody: 'comment-composer-body',
+  /** El botón de enviar el comentario raíz. */
+  postCommentSubmit: 'comment-composer-submit',
+  /** «Recomendar»: clic corto = LIKE o quitarla; mantener abre las cinco reacciones. */
+  postLike: 'post-action-like',
+  /** «Guardar» en la fila de acciones (`aria-pressed`). */
+  postSave: 'post-action-save',
+  /** El menú «…» de la tarjeta (Copiar enlace, Denunciar, …). */
+  postPreferences: 'post-preferences-trigger',
+  /** La pastilla «Crear publicación» de Inicio: abre el redactor en un modal. */
+  feedCreateOpen: 'feed-crear-abrir',
+  /** El detalle del formulario de denuncia, que reemplaza a la tarjeta en su lugar. */
+  reportPostDetail: 'report-post-detail',
+  /** Enviar la denuncia. */
+  reportPostSubmit: 'report-post-submit',
 
   // --- P6 · moderación ---
   /** La pestaña de cola. */

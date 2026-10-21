@@ -1,0 +1,12 @@
+✔ sin sesión «Seguir» manda a entrar con retorno a la ficha
+✔ con sesión la ficha ofrece «Seguir» — Seguir
+✔ al tocarlo pasa a «Siguiendo»
+✔ tras recargar sigue «Siguiendo» (persistió)
+✔ y aparece en Mi red — Ramiro Céspedes Villca
+✔ volver a tocarlo deja de seguir
+✔ en la ficha propia no se dibuja
+(CSP inline-script aparte: 12 · túnel del sandbox aparte: 16, hosts: tile.openstreetmap.org)
+✔ lo único que no carga por red son los mosaicos del mapa (entorno) — tile.openstreetmap.org
+✔ sin errores de página ni de consola (salvo CSP)
+
+9/9 en verde
