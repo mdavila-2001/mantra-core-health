@@ -115,7 +115,8 @@
       "/insurance/patients",
       "/insurance/received-claims",
       "/patient-spending",
-      "/promotions/me"
+      "/promotions/me",
+      "/telemetry"
     ],
     "target": "http://localhost:3000",
     "secure": false,
