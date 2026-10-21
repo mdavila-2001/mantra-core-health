@@ -1,0 +1,87 @@
+# H1.S1.M3 y M4 — restricciones por campo del DTO, payload mínimo y requerimientos por operación
+# repo: mantra-core-health-api · base: 15a35b92 + cambios sin commitear · fecha: 2026-10-21
+
+## límites globales leídos del código
+{
+ "cuerpo": {
+  "limite": "1mb",
+  "fuente": "src/main.ts:140"
+ },
+ "tasa": {
+  "ttlMs": 60000,
+  "limite": 300,
+  "fuente": "src/app.module.ts:134"
+ },
+ "validacion": {
+  "fuente": "src/main.ts:159"
+ },
+ "tenant": {
+  "fuente": "src/app.module.ts:251"
+ }
+}
+
+## POST /scheduling/slots/{id}/holds  (DTO CreateHoldDto)
+payload mínimo: {}
+ - patientProfileId: string | @IsOptional() @IsUUID() | formato uuid | src/modules/scheduling/dto/scheduling-bookings.dto.ts:56
+requerimientos:
+   [AUTENTICACION] JWT Bearer  ← contrato (security)
+   [ROL] Alguno de: SCHEDULING_ADMIN, SCHEDULING_AGENT, PATIENT  ← src/modules/scheduling/controllers/scheduling.controller.ts:533
+   [TENANT] Tenant por cabecera X-Tenant-Id o por la membresía única del actor; 403 si es ambiguo o no le pertenece  ← src/app.module.ts:251
+   [PARAMETRO_RUTA] Deben ser UUID válidos: id  ← src/modules/scheduling/controllers/scheduling.controller.ts:533
+   [CUERPO] application/json (obligatorio); máximo 1mb  ← src/main.ts:140
+   [VALIDACION] Se rechazan las propiedades no declaradas en el DTO (whitelist + forbidNonWhitelisted)  ← src/main.ts:159
+   [RATE_LIMIT] 300 solicitudes cada 60 s (límite global)  ← src/app.module.ts:134
+
+## POST /scheduling/bookings/{id}/cancel  (DTO CancelBookingDto)
+payload mínimo: {"cancelledBy":"PATIENT","reasonText":"Texto descriptivo de ejemplo"}
+ - cancelledBy: string OBLIGATORIO | @IsIn(['PATIENT', 'PROVIDER']) | valores: PATIENT, PROVIDER | src/modules/scheduling/dto/scheduling-bookings.dto.ts:368
+ - isNoShow: boolean | @IsOptional() @IsBoolean() | — | src/modules/scheduling/dto/scheduling-bookings.dto.ts:380
+ - reasonText: string OBLIGATORIO | @IsString() @MinLength(MIN_REASON_LENGTH) @MaxLength(MAX_REASON_LENGTH) | longitud mínima 5; longitud máxima 500 | src/modules/scheduling/dto/scheduling-bookings.dto.ts:398
+requerimientos:
+   [AUTENTICACION] JWT Bearer  ← contrato (security)
+   [ROL] Alguno de: SCHEDULING_ADMIN, SCHEDULING_AGENT, PRACTITIONER, PATIENT  ← src/modules/scheduling/controllers/scheduling-bookings.controller.ts:327
+   [TENANT] Tenant por cabecera X-Tenant-Id o por la membresía única del actor; 403 si es ambiguo o no le pertenece  ← src/app.module.ts:251
+   [PARAMETRO_RUTA] Deben ser UUID válidos: id  ← src/modules/scheduling/controllers/scheduling-bookings.controller.ts:327
+   [CUERPO] application/json (obligatorio); máximo 1mb  ← src/main.ts:140
+   [VALIDACION] Se rechazan las propiedades no declaradas en el DTO (whitelist + forbidNonWhitelisted)  ← src/main.ts:159
+   [RATE_LIMIT] 300 solicitudes cada 60 s (límite global)  ← src/app.module.ts:134
+
+## M4 — requerimientos sobre 1190 operaciones: con lista vacía = 0
+{"AUTENTICACION":1190,"ROL":1152,"TENANT":1152,"RATE_LIMIT":1190,"CUERPO":863,"VALIDACION":863,"PARAMETRO_RUTA":663,"PARAMETRO_QUERY":139,"CABECERA":5}
+
+## M3 — operaciones con cuerpo: 863 · campos de DTO de entrada: 5678
+campos sin fuente archivo:línea: 89 (1.6 %) · sin decorador de validación: 137 · operaciones con payload mínimo {}: 148
+sin fuente por clase: [["(objeto en línea)",36],["BrokerProfileDto",32],["CreateAffiliationDto",8],["QualityFindingDto",5],["LocationPingDto",5],["CreateAssignmentDto",3]]
+[CIFRA CORREGIDA ABAJO: este 70 incluía servicios y repositorios, no sólo DTO] nombres de clase repetidos entre archivos y al menos uno sin @ApiSchema: 70; ejemplos:
+  AccountResponseDto: src/modules/accounting/dto/account.dto.ts · src/modules/crm/dto/crm.dto.ts
+  LedgerService: src/modules/accounting/services/ledger.service.ts · src/modules/billing/services/ledger.service.ts
+  EvaluateRuleResponseDto: src/modules/ads/dto/ads.dto.ts · src/modules/graph_intelligence/dto/graph-intelligence.dto.ts
+  ModerationRepository: src/modules/audit/repositories/moderation.repository.ts · src/modules/community/repositories/moderation.repository.ts
+  ProviderResponseDto: src/modules/auth_providers/dto/auth-providers.dto.ts · src/modules/integrations/dto/responses.dto.ts
+  AgentResponseDto: src/modules/automation/dto/automation.dto.ts · src/modules/health_context/dto/health-context.dto.ts
+
+handlers de controlador: 1223 · públicos: 44 · autenticados sin @Roles: 173 · @RequiresVerifiedIdentity: 0
+
+$ yarn inventario:test
+# tests 27
+# pass 27
+# fail 0
+
+$ equivalencia del generador de endpoints
+Documentación generada: 1190 endpoints, 65 módulos, 66 archivos Markdown.
+BYTE-IDÉNTICO vs original: 67 archivos, sha256 e9706f596ae82b7bf86ad98f09bd0cc4
+
+$ prettier --check
+All matched files use Prettier code style!
+
+
+## Verificación posterior (corrige las dos cifras marcadas arriba)
+$ grep -rn "RequiresVerifiedIdentity" src --include=*.ts   (sin specs)
+  src/modules/profiles/controllers/profiles-practitioners.controller.ts:79:   * Tampoco lleva `@RequiresVerifiedIdentity`, a diferencia del resumen del   ← es un COMENTARIO
+  src/common/index.ts:21 · src/common/auth/jwt-payload.interface.ts:49 · src/common/auth/verified-identity.guard.ts:16 · src/common/auth/requires-verified-identity.decorator.ts:15  ← definición del decorador y del guard
+  => el decorador se define pero NO se aplica en ningún handler (0 de 1223).
+
+clases *Dto con nombre repetido entre archivos: 84; de ellas con al menos una SIN @ApiSchema: 62
+  ejemplos: AccountResponseDto: accounting/dto/account.dto.ts · crm/dto/crm.dto.ts
+            ProviderResponseDto: auth_providers/dto/auth-providers.dto.ts · integrations/dto/responses.dto.ts
+            ApprovalResponseDto: automation · erp · platform_ops
