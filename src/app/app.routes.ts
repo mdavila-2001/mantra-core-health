@@ -14,6 +14,7 @@ import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
 import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
+import { feedHeredadoGuard, publicacionPorIdGuard } from './features/social/enlaces-sociales.guard';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import {
@@ -65,13 +66,6 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
-  // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
-  // de publicación con sus reacciones.
-  //
-  // Sigue existiendo aunque el menú ya no la ofrezca (carril R2-1): quien tenga
-  // el enlace guardado llega igual. Borrarla es una decisión de producto que el
-  // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
-  feed: () => import('./features/feed/feed').then((m) => m.Feed),
   // Carril P1 · el centro de notificaciones. Diferido: la campana del header ya
   // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
   // abre quien viene a revisar.
@@ -1508,6 +1502,15 @@ function rutasDeBusquedaPublica(): Routes {
               (m) => m.FeedPublicaciones,
             ),
         },
+        {
+          // Una publicación por su id —lo único que traen los avisos de la red—.
+          // Sin pantalla propia: el guard resuelve a la vista suelta
+          // (`/p/:slug/post/:id`), a la ficha de quien actuó o al inicio.
+          path: ':postId',
+          pathMatch: 'full',
+          canActivate: [publicacionPorIdGuard],
+          children: [],
+        },
       ],
     },
     {
@@ -1679,22 +1682,14 @@ export const routes: Routes = [
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
       {
-        // El muro profesional, **sin entrada de menú**.
-        //
-        // El carril R2-1 sacó el ítem del menú del paciente porque el cliente
-        // pidió reemplazarlo por la guía de doctores, y su comentario en
-        // `navigation.map.ts` dice que «el muro NO se borró: `features/feed/`
-        // sigue en pie y su ruta también». Lo segundo no era cierto: las rutas
-        // se construyen desde `APP_SECTIONS`, así que al salir del registro la
-        // ruta salió con él. El cargador diferido quedó declarado y sin nada que
-        // lo alcance — la pantalla existía y no se podía abrir.
-        //
-        // Se declara acá y no en `APP_SECTIONS` justamente para respetar la
-        // decisión de producto: sin ítem de menú, pero alcanzable por enlace
-        // directo, que es lo que el comentario decía que pasaba.
+        // La dirección vieja del «Muro profesional», que ya no existe: la red
+        // social es una sola pantalla, `/posts`. El enlace guardado, el aviso ya
+        // enviado y el historial siguen abriendo — el guard lleva a `/posts`, o a
+        // la publicación suelta si traía `?post=`. Sin pantalla propia, de ahí
+        // `children: []` (Angular no deja combinar `canActivate` con `redirectTo`).
         path: 'feed',
-        title: 'Muro profesional',
-        loadComponent: () => import('./features/feed/feed').then((m) => m.Feed),
+        canActivate: [feedHeredadoGuard],
+        children: [],
       },
       // Alta de agenda por fases (UC-41-01 → UC-41-04). Cuelga de la sección
       // `schedule`: se llega desde la propia agenda, no desde el menú, igual que

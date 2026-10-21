@@ -5,7 +5,7 @@ import { SessionStore } from '@core/auth/session.store';
 import { ROLES_DE_QUIEN_ATIENDE } from '@core/navigation/navigation.map';
 import type { OwnPublicProfile } from '@core/data-access/community/community.types';
 import { inicialesDe } from '@shared/text/iniciales';
-import { Composer } from '../../../../feed/composer/composer';
+import { Composer } from '../../../../social/composer/composer';
 
 /**
  * «Crear publicación» — la barra de arriba del feed, para quien tiene sesión.

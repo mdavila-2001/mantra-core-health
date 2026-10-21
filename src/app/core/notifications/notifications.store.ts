@@ -311,6 +311,8 @@ function deMessaging(aviso: InAppNotification): AvisoUnificado {
  */
 function deCommunity(aviso: {
   readonly id: string;
+  readonly sourceRefId?: string;
+  readonly actorProfileId?: string;
   readonly previewText?: string;
   readonly isRead: boolean;
   readonly createdAt: Date;
@@ -320,12 +322,28 @@ function deCommunity(aviso: {
     fuente: 'community',
     categoria: 'SOCIAL',
     titulo: aviso.previewText ?? 'Novedad en su perfil',
-    // Al muro, que es donde vive lo social. No al objeto concreto: el aviso
-    // trae `sourceRefId` con el id de una publicación o un comentario, y el
-    // muro no tiene todavía pantalla de publicación suelta.
-    ruta: '/feed',
+    ruta: rutaDeAvisoSocial(aviso.sourceRefId, aviso.actorProfileId),
     acciones: [],
     sinLeer: !aviso.isRead,
     fecha: aviso.createdAt,
   };
+}
+
+/**
+ * A dónde lleva un aviso de la red social.
+ *
+ * El aviso trae `sourceRefId` (el id de lo que pasó) y `actorProfileId` (quién
+ * lo hizo), pero **no** dice si ese id es de una publicación, de un comentario
+ * o de un seguimiento: el tipo viaja como concept id. Por eso la ruta es
+ * `/posts/:id?actor=` y es esa ruta la que resuelve —publicación, ficha de
+ * quien actuó o inicio, en ese orden—; acá no se adivina el tipo.
+ *
+ * Sin `sourceRefId` no hay a qué apuntar y se abre el inicio de la red.
+ */
+function rutaDeAvisoSocial(sourceRefId?: string, actorProfileId?: string): string {
+  if (sourceRefId === undefined || sourceRefId === '') {
+    return '/posts';
+  }
+  const actor = actorProfileId === undefined ? '' : `?actor=${encodeURIComponent(actorProfileId)}`;
+  return `/posts/${encodeURIComponent(sourceRefId)}${actor}`;
 }

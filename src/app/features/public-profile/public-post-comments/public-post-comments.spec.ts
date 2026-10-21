@@ -5,6 +5,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { of, throwError, type Observable } from 'rxjs';
 
 import { SessionStore } from '@core/auth/session.store';
+import { CommunityClient } from '@core/data-access/community/community.client';
+import { FilesClient } from '@core/data-access/files/files.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type {
   PublicComment,
@@ -89,13 +91,16 @@ class RutaVacia {}
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [PublicPostComments],
-  template: '<app-public-post-comments postId="post-1" />',
+  template: '<app-public-post-comments postId="post-1" [actorProfileId]="actor" />',
 })
-class HostComponent {}
+class HostComponent {
+  actor: string | null = null;
+}
 
 describe('PublicPostComments', () => {
   let fixture: ComponentFixture<HostComponent>;
   let respuestasPedidas: string[];
+  let comentariosCreados: Record<string, unknown>[];
 
   function root(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -109,8 +114,12 @@ describe('PublicPostComments', () => {
     raiz?: () => Observable<PublicPage<PublicComment>>;
     respuestas?: (id: string) => Observable<PublicPage<PublicComment>>;
     conSesion?: boolean;
+    /** El perfil público de quien mira; `null` es «con sesión pero sin vitrina». */
+    actor?: string | null;
+    crearComentario?: (datos: Record<string, unknown>) => Observable<{ id: string }>;
   }): Promise<void> {
     respuestasPedidas = [];
+    comentariosCreados = [];
 
     const directorio = {
       postComments: opciones.raiz ?? (() => of(pagina([]))),
@@ -126,10 +135,20 @@ describe('PublicPostComments', () => {
         provideRouter([
           { path: 'posts', component: RutaVacia },
           { path: 'auth', component: RutaVacia },
-          { path: 'feed', component: RutaVacia },
+          { path: 'my-account/profile/edit', component: RutaVacia },
           { path: 'p/:slug', component: RutaVacia },
         ]),
         { provide: PublicDirectoryClient, useValue: directorio },
+        {
+          provide: CommunityClient,
+          useValue: {
+            createComment: (datos: Record<string, unknown>) => {
+              comentariosCreados.push(datos);
+              return (opciones.crearComentario ?? (() => of({ id: 'nuevo-1' })))(datos);
+            },
+          },
+        },
+        { provide: FilesClient, useValue: {} },
         {
           provide: SessionStore,
           useValue: { isAuthenticated: () => opciones.conSesion === true },
@@ -139,6 +158,7 @@ describe('PublicPostComments', () => {
 
     await TestBed.inject(Router).navigateByUrl('/posts');
     fixture = TestBed.createComponent(HostComponent);
+    fixture.componentInstance.actor = opciones.actor ?? null;
     await fixture.whenStable();
   }
 
@@ -282,6 +302,131 @@ describe('PublicPostComments', () => {
       await montar({ raiz: () => of(pagina([comentario('a')])), conSesion: false });
 
       expect(botones('comment-reply')).toHaveLength(1);
+    });
+  });
+
+  describe('«Responder» en línea', () => {
+    const conVitrina = {
+      raiz: () => of(pagina([comentario('a', { displayName: 'Dr. Ariel' })])),
+      conSesion: true,
+      actor: 'perfil-yo',
+    };
+
+    function campoDeRespuesta(): HTMLTextAreaElement {
+      return root().querySelector<HTMLTextAreaElement>('[data-testid="reply-composer-body"]')!;
+    }
+
+    async function escribirRespuesta(texto: string): Promise<void> {
+      const campo = campoDeRespuesta();
+      campo.value = texto;
+      campo.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+    }
+
+    it('abre el redactor bajo el comentario y NO sale de la publicación', async () => {
+      await montar(conVitrina);
+
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+
+      expect(campoDeRespuesta()).toBeTruthy();
+      expect(campoDeRespuesta().placeholder).toBe('Responda a Dr. Ariel…');
+      expect(TestBed.inject(Router).url).toBe('/posts');
+    });
+
+    it('volver a tocar «Responder» lo cierra', async () => {
+      await montar(conVitrina);
+
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="reply-composer"]')).toBeNull();
+    });
+
+    it('«Cancelar» lo cierra sin mandar nada', async () => {
+      await montar(conVitrina);
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+
+      botones('reply-composer-cancel')[0]?.click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="reply-composer"]')).toBeNull();
+      expect(comentariosCreados).toEqual([]);
+    });
+
+    it('manda la respuesta con el comentario padre, relee las respuestas y suma al contador', async () => {
+      await montar({
+        ...conVitrina,
+        respuestas: () => of(pagina([comentario('r1', { bodyText: 'Mi respuesta' })])),
+      });
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+      await escribirRespuesta('  Mi respuesta  ');
+
+      botones('reply-composer-submit')[0]?.click();
+      await fixture.whenStable();
+
+      expect(comentariosCreados).toEqual([
+        {
+          authorProfileId: 'perfil-yo',
+          commentableRefId: 'post-1',
+          bodyText: 'Mi respuesta',
+          parentCommentId: 'a',
+        },
+      ]);
+      expect(respuestasPedidas).toEqual(['a']);
+      expect(root().textContent).toContain('Mi respuesta');
+      expect(root().querySelector('[data-testid="reply-composer"]')).toBeNull();
+      expect(botones('comment-replies-toggle')[0]?.textContent).toContain('Ocultar las respuestas');
+    });
+
+    it('si el servidor falla conserva lo escrito y dice qué hacer', async () => {
+      await montar({
+        ...conVitrina,
+        crearComentario: () => throwError(() => new HttpErrorResponse({ status: 500 })),
+      });
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+      await escribirRespuesta('No quiero perder esto');
+
+      botones('reply-composer-submit')[0]?.click();
+      await fixture.whenStable();
+
+      expect(campoDeRespuesta().value).toBe('No quiero perder esto');
+      expect(root().querySelector('[data-testid="reply-composer-error"]')?.textContent).toContain(
+        'Lo escrito sigue ahí',
+      );
+      expect(respuestasPedidas).toEqual([]);
+    });
+
+    it('sin texto no se puede enviar: un adjunto solo no alcanza', async () => {
+      await montar(conVitrina);
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+      await escribirRespuesta('   ');
+
+      expect(botones('reply-composer-submit')[0]?.disabled).toBe(true);
+    });
+
+    it('con sesión pero sin vitrina pública lleva a crearla, no a un muro que ya no existe', async () => {
+      await montar({ ...conVitrina, actor: null });
+
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/my-account/profile/edit');
+    });
+
+    it('sin sesión nunca navega a /feed', async () => {
+      await montar({ raiz: () => of(pagina([comentario('a')])), conSesion: false });
+
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).not.toContain('/feed');
     });
   });
 

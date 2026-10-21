@@ -1,0 +1,66 @@
+/* El redactor de un comentario o de una respuesta. Píldora que crece con el
+   texto: una red social no pide un formulario para un comentario de una línea. */
+
+:host {
+  display: block;
+}
+
+.redactor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.redactor__fila {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--e2);
+}
+
+.redactor__campo {
+  flex: 1;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  max-block-size: 10rem;
+  padding: 10px var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: 22px;
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  resize: none;
+  field-sizing: content;
+}
+
+.redactor__campo:focus-visible {
+  outline: none;
+  border-color: var(--petroleo);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.redactor__acciones {
+  display: flex;
+  gap: var(--e2);
+  flex: none;
+}
+
+.redactor__fallo {
+  margin: 0;
+  color: var(--st-error-fg, var(--tinta));
+  font-size: var(--fs-caption);
+}
+
+/* En 390 px el botón baja debajo del campo: una píldora de 150 px de ancho
+   no deja espacio para escribir. */
+@media (max-width: 520px) {
+  .redactor__fila {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .redactor__acciones {
+    justify-content: flex-end;
+  }
+}

@@ -1,0 +1,93 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation failed. [115.229 seconds] - 2026-10-21T05:03:26.596Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './composer/composer' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/feed/feed.ts:22:25:
+[37m      22 │ import { Composer } from [32m'./composer/composer'[37m;
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './report-post/report-post' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/feed/feed.ts:24:27:
+[37m      24 │ import { ReportPost } from [32m'./report-post/report-post'[37m;
+         ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG1010: 'imports' must be an array of components, directives, pipes, or NgModules.
+  Value could not be determined statically.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/feed/feed.ts:104:4:
+[37m      104 │     [32mComposer[37m,
+          ╵     [32m~~~~~~~~[0m
+
+  Unknown reference.
+
+    src/app/features/feed/feed.ts:104:4:
+[37m      104 │     [32mComposer[37m,
+          ╵     [32m~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG1010: 'imports' must be an array of components, directives, pipes, or NgModules.
+  Value could not be determined statically.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/feed/feed.ts:108:4:
+[37m      108 │     [32mReportPost[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+  Unknown reference.
+
+    src/app/features/feed/feed.ts:108:4:
+[37m      108 │     [32mReportPost[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+
+real	1m56.641s
+user	2m18.681s
+sys	0m22.574s

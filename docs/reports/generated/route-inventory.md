@@ -8,7 +8,7 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 22 entradas 
 |---|---|---|---|---|
 | `/` | — | Protegida (`homeGuard`) | Client | — |
 | `/` | `ShellLayout` | Protegida (`authGuard`) | Client | — |
-| `/feed` | `Feed` (diferida) | Protegida (`authGuard`) | Client | Muro profesional |
+| `/feed` | redirección (`feedHeredadoGuard`) | Protegida (`authGuard`) | Client | Dirección vieja del muro: lleva a `/posts` (o a `/p/:slug/post/:id` con `?post=`) |
 | `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | AloVida - Vitrina de Diseño |
 | `/design-system/stock` | `ComponentStock` (diferida) | Pública | Client | AloVida - Stock de componentes |
 | `/design-system/stock/**` | `ComponentStock` (diferida) | Pública | Client | AloVida - Stock de componentes |

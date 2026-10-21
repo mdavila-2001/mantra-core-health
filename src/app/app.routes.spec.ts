@@ -90,12 +90,11 @@ describe('rutas del armazón', () => {
     /**
      * Pantallas que a propósito no cuelgan de ninguna sección.
      *
-     * El muro salió del menú con R2-1 —el ítem del paciente pasó a ser la guía
-     * de doctores— pero la pantalla sigue en pie y se alcanza por enlace
-     * directo. Es una decisión de producto, no un olvido: por eso figura acá y
-     * no como sección, y por eso esta lista es explícita y corta. Cualquier
-     * pantalla que no esté en ella y no cuelgue de una sección sigue siendo un
-     * error.
+     * `feed` es la dirección vieja del «Muro profesional», que se eliminó: la
+     * ruta sólo existe para que el enlace guardado no dé 404 y lleve a `/posts`
+     * (`feedHeredadoGuard`). No es una pantalla, así que no cuelga de ninguna
+     * sección. Esta lista es explícita y corta: cualquier pantalla que no esté
+     * en ella y no cuelgue de una sección sigue siendo un error.
      */
     const sinSeccionAProposito = [
       'feed',

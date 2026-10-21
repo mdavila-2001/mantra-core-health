@@ -233,9 +233,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // debe mostrar una especie de guía telefónica de todos los doctores
     // agrupados por especialidad». Esta es esa guía.
     //
-    // El muro NO se borró: `features/feed/` sigue en pie y su ruta también. Lo
-    // único que se le sacó es la entrada del menú — borrarlo es una decisión
-    // de producto que el cliente no pidió.
+    // Actualización (21/10/2026): el «Muro profesional» (`features/feed/`) se
+    // eliminó. La red social es una sola pantalla, `/posts`, al estilo de
+    // LinkedIn, y `/feed` quedó como una dirección vieja que redirige allí
+    // (`feedHeredadoGuard`). Ver `docs/trabajo/2026-10-21-red-social-linkedin/`.
     //
     // **Sólo `PATIENT`** (corrección #2 del 15/08/2026, carril 02). Nació sin
     // `roles` con el razonamiento de que «la usa sobre todo quien busca

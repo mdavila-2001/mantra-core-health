@@ -4,37 +4,16 @@
      paginación de a veinte con «Ver más comentarios» es lo que impide que
      un hilo largo empuje todo de golpe. -->
 <div class="comentarios">
-  @if (actorProfileId() !== null) {
+  @if (actorProfileId(); as actor) {
     <!-- El redactor arriba del hilo, como en una red profesional: quien abrió
-         los comentarios está a un toque de escribir el suyo. -->
-    <form class="comentarios__redactor" data-testid="comment-composer" (submit)="enviar($event)">
-      <label class="solo-lectores" [attr.for]="'comentario-' + postId()">Su comentario</label>
-      <textarea
-        class="comentarios__campo"
-        data-testid="comment-composer-body"
-        [id]="'comentario-' + postId()"
-        rows="1"
-        placeholder="Agregue un comentario…"
-        [value]="borrador()"
-        [disabled]="enviando()"
-        (input)="escribir($event)"
-      ></textarea>
-      @if (borrador().trim().length > 0) {
-        <button
-          app-button
-          data-variante="primario"
-          data-tam="sm"
-          type="submit"
-          data-testid="comment-composer-submit"
-          [disabled]="enviando()"
-        >
-          {{ enviando() ? 'Enviando…' : 'Comentar' }}
-        </button>
-      }
-    </form>
-    @if (falloAlEnviar(); as motivo) {
-      <p class="comentarios__fallo" role="alert">{{ motivo }} Lo escrito sigue ahí: vuelva a intentarlo.</p>
-    }
+         los comentarios está a un toque de escribir el suyo. Es la misma pieza
+         que usa «Responder»: comentar y responder sólo difieren en el padre. -->
+    <app-comment-composer
+      class="comentarios__redactor"
+      [postId]="postId()"
+      [actorProfileId]="actor"
+      (enviado)="alComentar()"
+    />
   }
 
   @switch (estado()) {
@@ -166,12 +145,13 @@
           type="button"
           class="comentario__accion"
           data-testid="comment-reply"
-          (click)="responder()"
+          [attr.aria-expanded]="respondiendoA() === comentario.id"
+          (click)="responder(comentario.id)"
         >
           Responder
         </button>
 
-        @if (comentario.replyCount > 0) {
+        @if (cuantasRespuestas(comentario) > 0) {
           <button
             type="button"
             class="comentario__accion"
@@ -186,12 +166,27 @@
               Ocultar las respuestas
             } @else {
               Ver
-              {{ comentario.replyCount }}
-              {{ comentario.replyCount === 1 ? 'respuesta' : 'respuestas' }}
+              {{ cuantasRespuestas(comentario) }}
+              {{ cuantasRespuestas(comentario) === 1 ? 'respuesta' : 'respuestas' }}
             }
           </button>
         }
       </p>
+
+      @if (respondiendoA() === comentario.id && actorProfileId(); as actor) {
+        <app-comment-composer
+          class="comentario__respuesta"
+          testidBase="reply-composer"
+          [postId]="postId()"
+          [actorProfileId]="actor"
+          [parentCommentId]="comentario.id"
+          [placeholder]="'Responda a ' + comentario.author.displayName + '…'"
+          [cancelable]="true"
+          [enfocar]="true"
+          (enviado)="alResponder(comentario.id)"
+          (cancelado)="cerrarRespuesta()"
+        />
+      }
 
       @if (respuestasAbiertas(comentario.id)) {
         <ul class="comentarios__lista comentarios__lista--respuestas">

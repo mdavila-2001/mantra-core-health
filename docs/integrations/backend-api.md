@@ -953,7 +953,7 @@ que son sus primeros consumidores.
 | `GET` | `/community/posts/:postId` | `MedicalArticles` |
 | `GET` | `/community/posts/:postId/comments` | `MedicalArticles` |
 | `GET` | `/community/posts/:postId/reactions` | — |
-| `GET` | `/community/feed` | — (V19-13 muro) |
+| `GET` | `/community/feed` | Pestaña «Siguiendo» del inicio de la red social (`/posts`) |
 | `GET` | `/community/notifications` | — |
 | `GET` | `/community/follows` | — (V65-13) |
 | `GET` | `/community/bookmarks` | — |
@@ -967,7 +967,7 @@ que son sus primeros consumidores.
 | `PUT` | `/community/profiles/me` | `PublicProfilePreview` |
 | `POST` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
 | `POST` | `/community/comments` | `MedicalArticles` |
-| `PUT` | `/community/reactions` | `PostCard` (muro) |
+| `PUT` | `/community/reactions` | `PublicPostCard` (selector de reacciones) |
 | `DELETE` | `/community/blocks` | `ChatStore` y 12 pantallas más | No |
 | `POST` | `/community/blocks` | `ChatStore` y 12 pantallas más | No |
 | `DELETE` | `/community/bookmarks` | `ChatStore` y 12 pantallas más | No |

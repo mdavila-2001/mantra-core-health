@@ -40,7 +40,6 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
-import { CommunityClient } from '@core/data-access/community/community.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { describeApiFailure } from '@core/http/api-failure';
 import {
@@ -49,6 +48,7 @@ import {
   type PublicSocialActor,
 } from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
+import { CommentComposer } from '../comment-composer/comment-composer';
 
 type EstadoHilo = 'carga' | 'datos' | 'vacio' | 'error';
 
@@ -81,7 +81,7 @@ export function comentarioDestacado(
 
 @Component({
   selector: 'app-public-post-comments',
-  imports: [DatePipe, NgTemplateOutlet, RouterLink],
+  imports: [CommentComposer, DatePipe, NgTemplateOutlet, RouterLink],
   templateUrl: './public-post-comments.html',
   styleUrl: './public-post-comments.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -103,49 +103,7 @@ export class PublicPostComments implements OnInit {
   /** Se publicó un comentario desde este hilo: la tarjeta suma al contador. */
   readonly comentado = output<void>();
 
-  private readonly community = inject(CommunityClient);
 
-  protected readonly borrador = signal('');
-  protected readonly enviando = signal(false);
-  /** Por qué no se publicó el comentario —con el código de soporte—, o `null`. */
-  protected readonly falloAlEnviar = signal<string | null>(null);
-
-  /**
-   * Publica el comentario y **relee** el hilo.
-   *
-   * No se inserta a mano: el servidor decide orden, profundidad y moderación,
-   * y componer eso en el cliente es reimplementar su regla. Lo escrito se
-   * conserva si falla: perder un comentario por un error de red no se perdona.
-   */
-  protected enviar(evento?: Event): void {
-    evento?.preventDefault();
-    const actor = this.actorProfileId();
-    const texto = this.borrador().trim();
-    if (actor === null || texto.length === 0 || this.enviando()) return;
-
-    this.enviando.set(true);
-    this.falloAlEnviar.set(null);
-    this.community
-      .createComment({ authorProfileId: actor, commentableRefId: this.postId(), bodyText: texto })
-      .subscribe({
-        next: () => {
-          this.borrador.set('');
-          this.enviando.set(false);
-          this.comentado.emit();
-          this.leer();
-        },
-        error: (error: unknown) => {
-          this.enviando.set(false);
-          this.falloAlEnviar.set(describeApiFailure(error, 'No pudimos publicar su comentario.'));
-        },
-      });
-  }
-
-  protected escribir(evento: Event): void {
-    this.borrador.set((evento.target as HTMLTextAreaElement).value);
-  }
-
-  /** Si hay sesión: sin ella, «Responder» manda a entrar con retorno. */
   protected readonly haySesion = this.sesion.isAuthenticated;
 
   private readonly comentarios = signal<readonly PublicComment[]>([]);
@@ -221,7 +179,66 @@ export class PublicPostComments implements OnInit {
       return;
     }
 
-    this.cargandoRespuestas.update((ids) => [...ids, commentId]);
+    this.cargarRespuestas(commentId);
+  }
+
+  /**
+   * Qué comentario tiene abierto su redactor de respuesta, o `null`.
+   *
+   * Uno solo a la vez: dos redactores abiertos en un hilo son dos borradores
+   * que la persona tiene que recordar.
+   */
+  protected readonly respondiendoA = signal<string | null>(null);
+
+  /** Respuestas agregadas en esta sesión por comentario, para que el contador acompañe. */
+  private readonly respuestasNuevas = signal<Readonly<Record<string, number>>>({});
+
+  /**
+   * «Responder» abre el redactor **en línea**, bajo el comentario.
+   *
+   * Antes mandaba a `/feed?post=` porque el redactor con adjuntos vivía sólo en
+   * el muro viejo; ese muro se eliminó y el hilo es autosuficiente. Sin sesión
+   * se manda a entrar con retorno a esta misma URL (AC-01-17); con sesión pero
+   * sin vitrina pública —el contrato exige el perfil del autor y no lo deduce
+   * de la sesión— se lleva a crearla, igual que «Recomendar».
+   */
+  protected responder(commentId: string): void {
+    if (!this.haySesion()) {
+      void this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+    if (this.actorProfileId() === null) {
+      void this.router.navigate(['/my-account/profile/edit']);
+      return;
+    }
+    this.respondiendoA.update((abierto) => (abierto === commentId ? null : commentId));
+  }
+
+  protected cerrarRespuesta(): void {
+    this.respondiendoA.set(null);
+  }
+
+  /** Cuántas respuestas tiene un comentario: las que leyó el servidor más las de esta sesión. */
+  protected cuantasRespuestas(comentario: PublicComment): number {
+    return comentario.replyCount + (this.respuestasNuevas()[comentario.id] ?? 0);
+  }
+
+  /** Un comentario de primer nivel se publicó: se relee el hilo (el servidor decide el orden). */
+  protected alComentar(): void {
+    this.comentado.emit();
+    this.leer();
+  }
+
+  /** Una respuesta se publicó: se cierra el redactor y se muestran las respuestas con la nueva. */
+  protected alResponder(commentId: string): void {
+    this.respondiendoA.set(null);
+    this.respuestasNuevas.update((nuevas) => ({ ...nuevas, [commentId]: (nuevas[commentId] ?? 0) + 1 }));
+    this.comentado.emit();
+    this.cargarRespuestas(commentId);
+  }
+
+  private cargarRespuestas(commentId: string): void {
+    this.cargandoRespuestas.update((ids) => (ids.includes(commentId) ? ids : [...ids, commentId]));
     this.directorio.commentReplies(commentId, { limit: TAMANO_DE_PAGINA }).subscribe({
       next: (pagina) => {
         this.respuestas.update((abiertas) => ({ ...abiertas, [commentId]: pagina.items }));
@@ -229,29 +246,6 @@ export class PublicPostComments implements OnInit {
       },
       error: () => this.dejarDeCargarRespuestas(commentId),
     });
-  }
-
-  /**
-   * «Responder» (AC-01-12).
-   *
-   * Sin sesión no se esconde el botón: se ofrece y lleva a `/auth` con retorno
-   * a esta misma URL, que es lo que AC-01-17 pide para toda acción que exige
-   * cuenta en la superficie pública. Esconderlo dejaría a un anónimo sin saber
-   * que puede responder.
-   *
-   * Con sesión, el redactor vive en el muro con sesión: se lo manda ahí en vez
-   * de duplicar acá un compositor. Ya no es sólo un desvío cómodo — desde
-   * REQ-01-011 el compositor con sesión (`app-post-card`) es el único lugar
-   * que sabe subir el adjunto (`app-comment-media-picker` + `community.comment_media`)
-   * antes de mandarlo con el comentario, así que duplicar el formulario acá
-   * significaría reimplementar esa subida una segunda vez.
-   */
-  protected responder(): void {
-    if (!this.haySesion()) {
-      void this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
-      return;
-    }
-    void this.router.navigate(['/feed'], { queryParams: { post: this.postId() } });
   }
 
   protected reintentar(): void {

@@ -16,13 +16,15 @@ import { apiViva, contextoDeApi, urlDeApi } from './support/actores';
  * `app-public-post-comments` pinta esa URL como una imagen dentro de la
  * tarjeta, contra la API real.
  *
- * ## Por qué no entra por el compositor con sesión
+ * ## Por qué no entra por el redactor con sesión
  *
- * `app-post-card` (el compositor autenticado) sólo vive en `/feed`, y `/feed`
- * depende del fan-out a `community.feed_items` — un worker aparte (UC-19-15)
- * que este entorno no tiene corriendo; con la tabla vacía el muro está vacío
- * para cualquier cuenta, antes de que este carril tocara una sola línea. Se
- * documenta como `BLOCKED-EXTERNAL` y no se simula un `/feed` con contenido.
+ * Hasta el 21/10/2026 el redactor con adjuntos sólo vivía en el «Muro
+ * profesional» (`/feed`), que depende del fan-out a `community.feed_items` —un
+ * worker aparte (UC-19-15) que este entorno no tiene corriendo; con la tabla
+ * vacía el muro estaba vacío para cualquier cuenta—. El muro se eliminó y el
+ * redactor con adjuntos pasó al hilo de `/posts` (`app-comment-composer`); este
+ * archivo sigue probando la **lectura** pública y deja el alta con sesión al
+ * recorrido `red-social-linkedin.mjs`.
  *
  * Por eso el comentario con adjunto de este archivo se crea por API —mismo
  * patrón que ya usa `carril-p5-medios.spec.ts` para lo que la pantalla

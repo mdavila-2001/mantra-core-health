@@ -173,42 +173,13 @@ a.comentario__autor:hover {
   block-size: 32px;
 }
 
-/* ---- el redactor de arriba del hilo -------------------------------------- */
+/* ---- los redactores (arriba del hilo y de respuesta) ---------------------
+   El redactor en sí es `app-comment-composer`; acá sólo su lugar en el hilo. */
 
 .comentarios__redactor {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--e2);
   margin-block-end: var(--e3);
 }
 
-/* Píldora que crece con el texto: una red social no pide un formulario para
-   un comentario de una línea. */
-.comentarios__campo {
-  flex: 1;
-  min-inline-size: 0;
-  min-block-size: 44px;
-  max-block-size: 10rem;
-  padding: 10px var(--e4);
-  border: 1px solid var(--filete);
-  border-radius: 22px;
-  background: var(--sup-tarjeta);
-  color: var(--tinta);
-  font: inherit;
-  font-size: var(--fs-body);
-  line-height: 1.4;
-  resize: none;
-  field-sizing: content;
-}
-
-.comentarios__campo:focus-visible {
-  outline: none;
-  border-color: var(--petroleo);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
-.comentarios__fallo {
-  margin: 0 0 var(--e3);
-  color: var(--st-error-fg, var(--tinta));
-  font-size: var(--fs-caption);
+.comentario__respuesta {
+  margin-block-start: var(--e2);
 }

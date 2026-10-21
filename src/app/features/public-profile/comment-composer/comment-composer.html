@@ -1,0 +1,61 @@
+<form class="redactor" [attr.data-testid]="testidBase()" (submit)="enviar($event)">
+  <label class="solo-lectores" [attr.for]="testidBase() + '-' + postId() + '-' + (parentCommentId() ?? 'raiz')">
+    {{ parentCommentId() === null ? 'Su comentario' : 'Su respuesta' }}
+  </label>
+  <div class="redactor__fila">
+    <textarea
+      #campo
+      class="redactor__campo"
+      [attr.data-testid]="testidBase() + '-body'"
+      [id]="testidBase() + '-' + postId() + '-' + (parentCommentId() ?? 'raiz')"
+      rows="1"
+      [placeholder]="placeholder()"
+      [value]="borrador()"
+      [disabled]="enviando()"
+      (input)="escribir($event)"
+      (focus)="tomarFoco()"
+      (blur)="soltarFoco()"
+      (keydown.control.enter)="enviar($event)"
+      (keydown.meta.enter)="enviar($event)"
+    ></textarea>
+    @if (borrador().trim().length > 0 || cancelable()) {
+      <div class="redactor__acciones">
+        @if (cancelable()) {
+          <button
+            app-button
+            data-variante="secundario"
+            data-tam="sm"
+            type="button"
+            [attr.data-testid]="testidBase() + '-cancel'"
+            [disabled]="enviando()"
+            (click)="cancelar()"
+          >
+            Cancelar
+          </button>
+        }
+        <button
+          app-button
+          data-variante="primario"
+          data-tam="sm"
+          type="submit"
+          [attr.data-testid]="testidBase() + '-submit'"
+          [disabled]="!puedeEnviar()"
+        >
+          {{ enviando() ? 'Enviando…' : parentCommentId() === null ? 'Comentar' : 'Responder' }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (activo()) {
+    <!-- REQ-01-011 — imágenes, stickers y GIFs adjuntos. Se ofrecen cuando la
+         persona empieza a escribir. -->
+    <app-comment-media-picker [disabled]="enviando()" (cambio)="adjuntos.set($event)" />
+  }
+
+  @if (fallo(); as motivo) {
+    <p class="redactor__fallo" role="alert" [attr.data-testid]="testidBase() + '-error'">
+      {{ motivo }} Lo escrito sigue ahí: vuelva a intentarlo.
+    </p>
+  }
+</form>

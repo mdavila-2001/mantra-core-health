@@ -151,6 +151,51 @@ describe('NotificationsStore', () => {
     expect(store.avisos()[0].fuente).toBe('community');
   });
 
+  describe('a dónde lleva un aviso social', () => {
+    const avisoSocial = (extra: Record<string, unknown>) => ({
+      items: [
+        {
+          id: 's-9',
+          notificationTypeConceptId: 'c-follow',
+          sourceTypeConceptId: 'c-post',
+          sourceRefId: 'p-1',
+          previewText: 'Alguien reaccionó',
+          isRead: false,
+          readAt: null,
+          createdAt: '2026-08-18T11:00:00.000Z',
+          ...extra,
+        },
+      ],
+      count: 1,
+      limit: 8,
+      nextCursor: null,
+      unreadCount: 1,
+    });
+
+    const rutaDelAviso = (social: unknown): string | null => {
+      store.iniciar();
+      resolver({ perfil: { id: 'pp-1' }, messaging: VACIA, social });
+      return store.avisos().find((aviso) => aviso.fuente === 'community')?.ruta ?? null;
+    };
+
+    it('nunca a /feed, que ya no existe: va a /posts/:id con quién actuó', () => {
+      const ruta = rutaDelAviso(avisoSocial({ actorProfileId: 'pp-7' }));
+
+      expect(ruta).toBe('/posts/p-1?actor=pp-7');
+      expect(ruta).not.toContain('/feed');
+    });
+
+    it('sin quién actuó, no manda un `actor` vacío', () => {
+      expect(rutaDelAviso(avisoSocial({ actorProfileId: null }))).toBe('/posts/p-1');
+    });
+
+    it('escapa el id para que no rompa la dirección', () => {
+      expect(rutaDelAviso(avisoSocial({ sourceRefId: 'a/b?c', actorProfileId: 'x y' }))).toBe(
+        '/posts/a%2Fb%3Fc?actor=x%20y',
+      );
+    });
+  });
+
   it('sigue mostrando lo clínico aunque lo social falle', () => {
     store.iniciar();
     resolver({

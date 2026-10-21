@@ -1,0 +1,330 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                           | Names                                                                      |  Raw size
+styles.css                                                                    | styles                                                                     | 180.89 kB | 
+spec-app-app.routes.js                                                        | spec-app-app.routes                                                        | 148.33 kB | 
+chunk-ICA44WAV.js                                                             | -                                                                          | 120.61 kB | 
+chunk-ZUJGNREL.js                                                             | -                                                                          | 102.07 kB | 
+chunk-5E44FJ6Z.js                                                             | -                                                                          |  67.91 kB | 
+chunk-UT33KHBC.js                                                             | -                                                                          |  67.64 kB | 
+chunk-Y3H3B5VM.js                                                             | -                                                                          |  66.47 kB | 
+chunk-YDJOWGFG.js                                                             | -                                                                          |  58.54 kB | 
+chunk-KPMNLKU7.js                                                             | -                                                                          |  55.88 kB | 
+chunk-L2AMMLDO.js                                                             | -                                                                          |  54.23 kB | 
+chunk-7YLHTKLD.js                                                             | -                                                                          |  53.03 kB | 
+chunk-PHX524XI.js                                                             | -                                                                          |  45.56 kB | 
+chunk-W6EEGJC6.js                                                             | -                                                                          |  45.05 kB | 
+chunk-X2SG6C5G.js                                                             | -                                                                          |  41.70 kB | 
+chunk-KUHW6S5C.js                                                             | -                                                                          |  39.77 kB | 
+chunk-TRXBKGUT.js                                                             | -                                                                          |  38.82 kB | 
+chunk-4FQWNBYI.js                                                             | -                                                                          |  38.68 kB | 
+chunk-HNQY3V52.js                                                             | -                                                                          |  37.28 kB | 
+chunk-G3FYGH4U.js                                                             | -                                                                          |  36.63 kB | 
+chunk-GL4GBYWP.js                                                             | -                                                                          |  36.62 kB | 
+chunk-IU6563YR.js                                                             | -                                                                          |  36.57 kB | 
+chunk-O3UVQNR5.js                                                             | -                                                                          |  35.57 kB | 
+chunk-L4JZS5NW.js                                                             | -                                                                          |  31.60 kB | 
+chunk-L6IYUIG3.js                                                             | -                                                                          |  30.45 kB | 
+chunk-RCFNDVRS.js                                                             | -                                                                          |  29.75 kB | 
+chunk-F33N4OH3.js                                                             | -                                                                          |  28.12 kB | 
+chunk-PB2SMCIS.js                                                             | -                                                                          |  27.64 kB | 
+chunk-LMUT3THW.js                                                             | -                                                                          |  26.89 kB | 
+chunk-JPWZHOY3.js                                                             | -                                                                          |  26.67 kB | 
+chunk-JTQ732S3.js                                                             | -                                                                          |  26.27 kB | 
+chunk-LDEBCDH2.js                                                             | -                                                                          |  25.79 kB | 
+chunk-2Q4CBFEK.js                                                             | -                                                                          |  24.85 kB | 
+chunk-ADA46OAN.js                                                             | -                                                                          |  23.70 kB | 
+chunk-Y3GIQTXE.js                                                             | -                                                                          |  22.81 kB | 
+chunk-I2S2JHPL.js                                                             | -                                                                          |  20.97 kB | 
+chunk-OEM36JGO.js                                                             | -                                                                          |  20.76 kB | 
+chunk-UXWQK3O4.js                                                             | -                                                                          |  20.60 kB | 
+chunk-KUI5QO4B.js                                                             | -                                                                          |  20.06 kB | 
+chunk-BAC6AWSN.js                                                             | -                                                                          |  20.03 kB | 
+chunk-C7HJJ2MD.js                                                             | -                                                                          |  18.51 kB | 
+chunk-3TJEDQE4.js                                                             | -                                                                          |  18.42 kB | 
+chunk-6UFN2NPO.js                                                             | -                                                                          |  18.19 kB | 
+spec-app-features-public-profile-public-post-comments-public-post-comments.js | spec-app-features-public-profile-public-post-comments-public-post-comments |  17.97 kB | 
+chunk-5YNBAQ3G.js                                                             | -                                                                          |  17.62 kB | 
+chunk-XSYQMOKY.js                                                             | -                                                                          |  17.38 kB | 
+chunk-QBMAVXHZ.js                                                             | -                                                                          |  17.26 kB | 
+chunk-4NGTYPOQ.js                                                             | -                                                                          |  16.70 kB | 
+chunk-LOZG5OLF.js                                                             | -                                                                          |  16.50 kB | 
+chunk-XEICNJW2.js                                                             | -                                                                          |  16.38 kB | 
+chunk-WFGXGAKD.js                                                             | -                                                                          |  16.10 kB | 
+chunk-5S246VAT.js                                                             | -                                                                          |  15.12 kB | 
+chunk-D5GJKCZO.js                                                             | -                                                                          |  14.99 kB | 
+chunk-JPEADLER.js                                                             | -                                                                          |  14.68 kB | 
+chunk-THSH2ZKG.js                                                             | -                                                                          |  14.42 kB | 
+chunk-X2VCT34M.js                                                             | -                                                                          |  14.25 kB | 
+chunk-VTUGQCAH.js                                                             | -                                                                          |  14.18 kB | 
+chunk-UJ2OQQH7.js                                                             | -                                                                          |  14.05 kB | 
+chunk-U6M3S4LH.js                                                             | -                                                                          |  13.51 kB | 
+chunk-64ZWWVQX.js                                                             | -                                                                          |  13.43 kB | 
+chunk-SH7LEYSX.js                                                             | -                                                                          |  13.28 kB | 
+spec-app-core-social-follow.store.js                                          | spec-app-core-social-follow.store                                          |  13.01 kB | 
+chunk-MP6Q34ZH.js                                                             | -                                                                          |  12.68 kB | 
+chunk-Y7XYFY6T.js                                                             | -                                                                          |  12.59 kB | 
+chunk-B4R5V6BW.js                                                             | -                                                                          |  12.48 kB | 
+chunk-K22XISJT.js                                                             | -                                                                          |  12.46 kB | 
+chunk-3N4IASJ2.js                                                             | -                                                                          |  12.39 kB | 
+chunk-M6M4QNQK.js                                                             | -                                                                          |  12.37 kB | 
+chunk-7SHTGQOP.js                                                             | -                                                                          |  11.89 kB | 
+chunk-X3YTEKBR.js                                                             | -                                                                          |  11.83 kB | 
+chunk-OR7WMDAZ.js                                                             | -                                                                          |  11.30 kB | 
+chunk-AWLXPS7M.js                                                             | -                                                                          |  11.09 kB | 
+chunk-VCZDDXUW.js                                                             | -                                                                          |  11.06 kB | 
+chunk-3PXVX4EX.js                                                             | -                                                                          |  10.49 kB | 
+chunk-X2SBDQAB.js                                                             | -                                                                          |  10.14 kB | 
+spec-app-core-social-bookmark.store.js                                        | spec-app-core-social-bookmark.store                                        |   9.73 kB | 
+chunk-XGXZPTJ2.js                                                             | -                                                                          |   9.62 kB | 
+chunk-AU53KL47.js                                                             | -                                                                          |   9.48 kB | 
+chunk-EDLZ6GUD.js                                                             | -                                                                          |   9.43 kB | 
+spec-app-core-notifications-notifications.store.js                            | spec-app-core-notifications-notifications.store                            |   9.41 kB | 
+chunk-7LPZ2DBE.js                                                             | -                                                                          |   9.03 kB | 
+chunk-VIEJ4MYZ.js                                                             | -                                                                          |   8.83 kB | 
+chunk-GDEYVO5U.js                                                             | -                                                                          |   8.67 kB | 
+chunk-GJG2JCKD.js                                                             | -                                                                          |   8.61 kB | 
+chunk-TIBG4OKY.js                                                             | -                                                                          |   8.01 kB | 
+chunk-P2SVABEB.js                                                             | -                                                                          |   7.93 kB | 
+spec-app-core-social-profile-summary.store.js                                 | spec-app-core-social-profile-summary.store                                 |   7.67 kB | 
+chunk-H5FLAYGN.js                                                             | -                                                                          |   7.44 kB | 
+chunk-VUY5UHUE.js                                                             | -                                                                          |   7.44 kB | 
+chunk-NFQXYM2J.js                                                             | -                                                                          |   7.39 kB | 
+chunk-6HLS6C23.js                                                             | -                                                                          |   7.06 kB | 
+chunk-6LVNHXLN.js                                                             | -                                                                          |   7.01 kB | 
+chunk-DEQKWFBT.js                                                             | -                                                                          |   6.72 kB | 
+chunk-LE5XIVVF.js                                                             | -                                                                          |   6.46 kB | 
+spec-app-features-social-composer-composer.js                                 | spec-app-features-social-composer-composer                                 |   6.15 kB | 
+chunk-VNOY4F2F.js                                                             | -                                                                          |   6.08 kB | 
+spec-app-core-social-post-actor-state.store.js                                | spec-app-core-social-post-actor-state.store                                |   5.97 kB | 
+chunk-FCS73OOL.js                                                             | -                                                                          |   5.76 kB | 
+chunk-AT373JF6.js                                                             | -                                                                          |   5.55 kB | 
+chunk-BJTKG5YO.js                                                             | -                                                                          |   5.45 kB | 
+chunk-7LSEFLPE.js                                                             | -                                                                          |   5.32 kB | 
+chunk-HZXEPMDQ.js                                                             | -                                                                          |   5.27 kB | 
+chunk-KUFEGT63.js                                                             | -                                                                          |   5.27 kB | 
+spec-app-features-social-enlaces-sociales.guard.js                            | spec-app-features-social-enlaces-sociales.guard                            |   5.11 kB | 
+chunk-T6RTP72J.js                                                             | -                                                                          |   5.01 kB | 
+chunk-KC5EBPAU.js                                                             | -                                                                          |   4.83 kB | 
+chunk-U7DJGORK.js                                                             | -                                                                          |   4.75 kB | 
+chunk-7Y534UOS.js                                                             | -                                                                          |   4.66 kB | 
+chunk-E44MYSAG.js                                                             | -                                                                          |   4.24 kB | 
+spec-app-features-social-report-post-report-post.js                           | spec-app-features-social-report-post-report-post                           |   4.01 kB | 
+chunk-7UYKJULR.js                                                             | -                                                                          |   3.79 kB | 
+chunk-4EXGYCWQ.js                                                             | -                                                                          |   3.75 kB | 
+chunk-BTCXDCZC.js                                                             | -                                                                          |   3.60 kB | 
+chunk-IYA6LTRK.js                                                             | -                                                                          |   3.56 kB | 
+chunk-DM464ZDJ.js                                                             | -                                                                          |   3.24 kB | 
+chunk-25D53Q5D.js                                                             | -                                                                          |   3.23 kB | 
+chunk-JASK3GQK.js                                                             | -                                                                          |   2.98 kB | 
+chunk-Q6RMHKQW.js                                                             | -                                                                          |   2.96 kB | 
+chunk-ME7JOAMQ.js                                                             | -                                                                          |   2.93 kB | 
+chunk-QYNBLSJC.js                                                             | -                                                                          |   2.85 kB | 
+chunk-23FOA7Y2.js                                                             | -                                                                          |   2.81 kB | 
+chunk-DSGHRLDL.js                                                             | -                                                                          |   2.80 kB | 
+chunk-JGO6EDGH.js                                                             | -                                                                          |   2.80 kB | 
+chunk-TALFS2Y6.js                                                             | -                                                                          |   2.66 kB | 
+spec-app-core-notifications-notification-actions.js                           | spec-app-core-notifications-notification-actions                           |   2.65 kB | 
+chunk-4LU326QX.js                                                             | -                                                                          |   2.61 kB | 
+spec-app-core-social-own-profile.store.js                                     | spec-app-core-social-own-profile.store                                     |   2.58 kB | 
+chunk-TLZIG6VA.js                                                             | -                                                                          |   2.43 kB | 
+chunk-UEA7KLBS.js                                                             | -                                                                          |   2.36 kB | 
+chunk-OIJJD4TL.js                                                             | -                                                                          |   2.28 kB | 
+chunk-SQOEIKWV.js                                                             | -                                                                          |   2.27 kB | 
+chunk-B5YCLXME.js                                                             | -                                                                          |   2.26 kB | 
+chunk-ICKJVC5W.js                                                             | -                                                                          |   2.25 kB | 
+chunk-GDH4RNSR.js                                                             | -                                                                          |   2.21 kB | 
+chunk-VQ7JYMXK.js                                                             | -                                                                          |   2.16 kB | 
+chunk-NQFI4KXC.js                                                             | -                                                                          |   2.11 kB | 
+chunk-PLEDCAHZ.js                                                             | -                                                                          |   2.11 kB | 
+chunk-W2GSFEVF.js                                                             | -                                                                          |   1.99 kB | 
+chunk-3MSOSGHT.js                                                             | -                                                                          |   1.86 kB | 
+chunk-4QYIHMEK.js                                                             | -                                                                          |   1.74 kB | 
+spec-app-core-notifications-notification-routes.js                            | spec-app-core-notifications-notification-routes                            |   1.73 kB | 
+chunk-DDIM2HCA.js                                                             | -                                                                          |   1.71 kB | 
+chunk-LYMOWT5U.js                                                             | -                                                                          |   1.51 kB | 
+init-testbed.js                                                               | init-testbed                                                               |   1.21 kB | 
+chunk-3BW3LGGC.js                                                             | -                                                                          |   1.18 kB | 
+chunk-AMQ6ERPS.js                                                             | -                                                                          |   1.07 kB | 
+chunk-ZISUCVSZ.js                                                             | -                                                                          |   1.01 kB | 
+chunk-OVC5PIJV.js                                                             | -                                                                          | 995 bytes | 
+setup-test-setup.js                                                           | setup-test-setup                                                           | 984 bytes | 
+chunk-FIKS5ITZ.js                                                             | -                                                                          | 977 bytes | 
+vitest-mock-patch.js                                                          | vitest-mock-patch                                                          | 974 bytes | 
+chunk-YWXUXEBI.js                                                             | -                                                                          | 879 bytes | 
+chunk-YDSSWSDS.js                                                             | -                                                                          | 780 bytes | 
+chunk-N3H3YT6Z.js                                                             | -                                                                          | 755 bytes | 
+chunk-6RTKCTCP.js                                                             | -                                                                          | 742 bytes | 
+chunk-JZKWLLDS.js                                                             | -                                                                          | 668 bytes | 
+chunk-43NKZE4U.js                                                             | -                                                                          | 639 bytes | 
+chunk-QGSCJ2MW.js                                                             | -                                                                          | 633 bytes | 
+chunk-5VQFNVAH.js                                                             | -                                                                          | 552 bytes | 
+chunk-H6KZE6RA.js                                                             | -                                                                          | 543 bytes | 
+chunk-PFXE4JVD.js                                                             | -                                                                          | 535 bytes | 
+chunk-RTBZPI2L.js                                                             | -                                                                          | 488 bytes | 
+chunk-LGVMVNUS.js                                                             | -                                                                          | 377 bytes | 
+chunk-DLPBMKRA.js                                                             | -                                                                          | 369 bytes | 
+chunk-WODMWDAM.js                                                             | -                                                                          | 272 bytes | 
+chunk-DRR2OSWA.js                                                             | -                                                                          | 249 bytes | 
+chunk-NLXS4FJ2.js                                                             | -                                                                          | 211 bytes | 
+chunk-4O34EBAV.js                                                             | -                                                                          | 201 bytes | 
+chunk-MYSBD2DV.js                                                             | -                                                                          | 198 bytes | 
+
+                                                                              | Initial total                                                              |   2.68 MB
+
+Lazy chunk files                                                              | Names                                                                      |  Raw size
+chunk-HAYDAZN2.js                                                             | component-stock                                                            |   2.01 MB | 
+chunk-Z2LJ4D5J.js                                                             | universidades-por-pais-generated                                           | 737.04 kB | 
+chunk-LH4VX72J.js                                                             | practitioner-profile-edit                                                  | 354.98 kB | 
+chunk-ICWF6CUJ.js                                                             | -                                                                          | 341.01 kB | 
+chunk-HSEUDUI2.js                                                             | -                                                                          | 237.31 kB | 
+chunk-RW5SW6BB.js                                                             | design-system-sample                                                       | 224.88 kB | 
+chunk-YHIKUTCB.js                                                             | register-patient                                                           | 222.47 kB | 
+chunk-KZG6XJAS.js                                                             | register-practitioner                                                      | 221.87 kB | 
+chunk-J3LWLG32.js                                                             | agenda                                                                     | 208.27 kB | 
+chunk-TXEF6DC4.js                                                             | appointments                                                               | 184.57 kB | 
+chunk-3CYHGLQ4.js                                                             | -                                                                          | 184.50 kB | 
+chunk-XFHHPYCH.js                                                             | portada                                                                    | 182.22 kB | 
+chunk-DUP5DGLD.js                                                             | thread                                                                     | 175.28 kB | 
+chunk-WUZ7PGL7.js                                                             | -                                                                          | 173.44 kB | 
+chunk-WDAOWUKY.js                                                             | cockpit                                                                    | 172.66 kB | 
+...and 951 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [108.749 seconds] - 2026-10-21T05:14:19.795Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/app.routes.spec.ts [2m([22m[2m62 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 6279[2mms[22m[39m
+[31m     [31m×[31m cada dirección vieja redirige a una ruta que existe[39m[32m 18[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/app.routes.spec.ts[2m > [22mrutas del armazón[2m > [22mcada dirección vieja redirige a una ruta que existe
+[31m[1mAssertionError[22m: my-account/identity/cases: expected [ '/dashboard', '/tutorials', …(684) ] to include '/my-account/identity?tab=cases'[39m
+[36m [2m❯[22m src/app/app.routes.spec.ts:[2m252:42[22m[39m
+    [90m250|[39m     [35mfor[39m ([35mconst[39m redireccion [35mof[39m redirecciones) {
+    [90m251|[39m       [34mexpect[39m(redireccion[33m.[39mpathMatch[33m,[39m redireccion[33m.[39mpath)[33m.[39m[34mtoBe[39m([32m'full'[39m)[33m;[39m
+    [90m252|[39m       expect(destinos, redireccion.path).toContain(redireccion.redirec…
+    [90m   |[39m                                          [31m^[39m
+    [90m253|[39m     }
+    [90m254|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Errors [49m[22m[31m⎯⎯⎯⎯⎯⎯[39m
+[31m[1m
+Vitest caught 4 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.[22m[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: this.community.readProfile(...).pipe is not a function[39m
+[90m [2m❯[22m _ProfileSummaryStore.leer src/app/core/social/profile-summary.store.ts:[2m108:49[22m[39m
+[90m [2m❯[22m _ProfileSummaryStore.avanzar src/app/core/social/profile-summary.store.ts:[2m99:12[22m[39m
+[90m [2m❯[22m src/app/core/social/profile-summary.store.ts:[2m92:31[22m[39m
+[90m [2m❯[22m node:internal/process/task_queues:[2m151:7[22m[39m
+[90m [2m❯[22m AsyncResource.runInAsyncScope node:async_hooks:[2m214:14[22m[39m
+[90m [2m❯[22m AsyncResource.runMicrotask node:internal/process/task_queues:[2m148:8[22m[39m
+[90m [2m❯[22m processTicksAndRejections node:internal/process/task_queues:[2m105:5[22m[39m
+
+[31mThis error originated in "[1msrc/app/core/social/profile-summary.store.spec.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mno dispara más de cuatro lecturas a la vez[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: this.community.readProfile(...).pipe is not a function[39m
+[90m [2m❯[22m _ProfileSummaryStore.leer src/app/core/social/profile-summary.store.ts:[2m108:49[22m[39m
+[90m [2m❯[22m _ProfileSummaryStore.avanzar src/app/core/social/profile-summary.store.ts:[2m99:12[22m[39m
+[90m [2m❯[22m src/app/core/social/profile-summary.store.ts:[2m92:31[22m[39m
+[90m [2m❯[22m node:internal/process/task_queues:[2m151:7[22m[39m
+[90m [2m❯[22m AsyncResource.runInAsyncScope node:async_hooks:[2m214:14[22m[39m
+[90m [2m❯[22m AsyncResource.runMicrotask node:internal/process/task_queues:[2m148:8[22m[39m
+[90m [2m❯[22m processTicksAndRejections node:internal/process/task_queues:[2m105:5[22m[39m
+
+[31mThis error originated in "[1msrc/app/core/social/profile-summary.store.spec.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mno dispara más de cuatro lecturas a la vez[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: this.community.readProfile(...).pipe is not a function[39m
+[90m [2m❯[22m _ProfileSummaryStore.leer src/app/core/social/profile-summary.store.ts:[2m108:49[22m[39m
+[90m [2m❯[22m _ProfileSummaryStore.avanzar src/app/core/social/profile-summary.store.ts:[2m99:12[22m[39m
+[90m [2m❯[22m src/app/core/social/profile-summary.store.ts:[2m92:31[22m[39m
+[90m [2m❯[22m node:internal/process/task_queues:[2m151:7[22m[39m
+[90m [2m❯[22m AsyncResource.runInAsyncScope node:async_hooks:[2m214:14[22m[39m
+[90m [2m❯[22m AsyncResource.runMicrotask node:internal/process/task_queues:[2m148:8[22m[39m
+[90m [2m❯[22m processTicksAndRejections node:internal/process/task_queues:[2m105:5[22m[39m
+
+[31mThis error originated in "[1msrc/app/core/social/profile-summary.store.spec.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mno dispara más de cuatro lecturas a la vez[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: this.community.readProfile(...).pipe is not a function[39m
+[90m [2m❯[22m _ProfileSummaryStore.leer src/app/core/social/profile-summary.store.ts:[2m108:49[22m[39m
+[90m [2m❯[22m _ProfileSummaryStore.avanzar src/app/core/social/profile-summary.store.ts:[2m99:12[22m[39m
+[90m [2m❯[22m src/app/core/social/profile-summary.store.ts:[2m92:31[22m[39m
+[90m [2m❯[22m node:internal/process/task_queues:[2m151:7[22m[39m
+[90m [2m❯[22m AsyncResource.runInAsyncScope node:async_hooks:[2m214:14[22m[39m
+[90m [2m❯[22m AsyncResource.runMicrotask node:internal/process/task_queues:[2m148:8[22m[39m
+[90m [2m❯[22m processTicksAndRejections node:internal/process/task_queues:[2m105:5[22m[39m
+
+[31mThis error originated in "[1msrc/app/core/social/profile-summary.store.spec.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mno dispara más de cuatro lecturas a la vez[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m12 passed[39m[22m[90m (13)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m191 passed[39m[22m[90m (192)[39m
+[2m     Errors [22m [1m[31m4 errors[39m[22m
+[2m   Start at [22m 05:14:20
+[2m   Duration [22m 12.83s[2m (transform 202.70s, setup 515ms, import 3.42s, tests 7.63s, environment 956ms)[22m
+

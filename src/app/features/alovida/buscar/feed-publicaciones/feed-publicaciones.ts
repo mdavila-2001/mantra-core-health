@@ -11,7 +11,7 @@ import type {
 } from '@core/data-access/public-directory/public-directory.types';
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
 import { inicialesDe } from '@shared/text/iniciales';
-import { ReportPost } from '../../../feed/report-post/report-post';
+import { ReportPost } from '../../../social/report-post/report-post';
 import { PublicPostCard } from '../../../public-profile/public-post-card/public-post-card';
 import { FeedBanner } from './feed-banner/feed-banner';
 import { FeedCrearPublicacion } from './feed-crear-publicacion/feed-crear-publicacion';
@@ -123,9 +123,9 @@ export class FeedPublicaciones {
   /**
    * Qué publicación se está denunciando, o `null`.
    *
-   * El formulario de denuncia reemplaza a la tarjeta en su lugar de la lista,
-   * como ya hace el muro con sesión (`features/feed/feed.html`): abrirlo en un
-   * modal sacaría de contexto de qué publicación se está hablando.
+   * El formulario de denuncia reemplaza a la tarjeta en su lugar de la lista:
+   * abrirlo en un modal sacaría de contexto de qué publicación se está
+   * hablando.
    */
   protected readonly denunciando = signal<string | null>(null);
 
