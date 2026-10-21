@@ -1,0 +1,20 @@
+✔ el modal se abre y el foco queda adentro
+✔ el modal tiene título accesible «Crear una publicación»
+✔ muestra quién publica
+✔ Publicar está deshabilitado sin texto
+✔ la imagen se sube y aparece su miniatura
+✔ sólo se ofrece «Imagen» (no sticker ni GIF)
+✔ Esc con borrador pregunta si se descarta (hay un segundo diálogo) — dialogs=2
+✔ tras «seguir editando» el modal y el texto siguen
+✔ al publicar el modal se cierra
+✔ la publicación nueva aparece en el feed tras releer
+✔ con su imagen
+✔ tras recargar la publicación sigue ahí
+✔ y su imagen también
+✔ cerrar sin nada escrito no pregunta
+✔ el foco vuelve a la pastilla
+✔ 390px sin scroll horizontal con el modal
+(CSP inline-script aparte: 2)
+✔ sin errores de página ni de consola (salvo CSP)
+
+17/17 en verde

@@ -1,0 +1,90 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                               | Names                                                                          |  Raw size
+styles.css                                                                        | styles                                                                         | 180.89 kB | 
+spec-app-shared-components-molecules-comment-media-picker-comment-media-picker.js | spec-app-shared-components-molecules-comment-media-picker-comment-media-picker | 100.81 kB | 
+chunk-JBWBLPNK.js                                                                 | -                                                                              |   5.19 kB | 
+init-testbed.js                                                                   | init-testbed                                                                   |   1.21 kB | 
+setup-test-setup.js                                                               | setup-test-setup                                                               | 984 bytes | 
+vitest-mock-patch.js                                                              | vitest-mock-patch                                                              | 974 bytes | 
+
+                                                                                  | Initial total                                                                  | 290.06 kB
+
+Application bundle generation complete. [113.278 seconds] - 2026-10-21T13:40:54.244Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/shared/components/molecules/comment-media-picker/comment-media-picker.spec.ts [2m([22m[2m12 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 523[2mms[22m[39m
+[31m       [31m×[31m respeta el máximo que le pasan y lo dice[39m[32m 34[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/shared/components/molecules/comment-media-picker/comment-media-picker.spec.ts[2m > [22mCommentMediaPicker[2m > [22mmodo «publicación» (parametrizado, no copiado)[2m > [22mrespeta el máximo que le pasan y lo dice
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+- Expected
++ Received
+
+- true
++ false
+
+[36m [2m❯[22m src/app/shared/components/molecules/comment-media-picker/comment-media-picker.spec.ts:[2m152:57[22m[39m
+    [90m150|[39m       await elegirArchivo('comment-media-add-image', archivo('foto.png…
+    [90m151|[39m
+    [90m152|[39m       [34mexpect[39m([34mboton[39m([32m'comment-media-add-image'[39m)[33m.[39mdisabled)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   |[39m                                                         [31m^[39m
+    [90m153|[39m       expect(fixture.nativeElement.textContent).toContain('Máximo 1 ad…
+    [90m154|[39m     })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m11 passed[39m[22m[90m (12)[39m
+[2m   Start at [22m 13:40:55
+[2m   Duration [22m 3.19s[2m (transform 977ms, setup 442ms, import 1.01s, tests 523ms, environment 960ms)[22m
+

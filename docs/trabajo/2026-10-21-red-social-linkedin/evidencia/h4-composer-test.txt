@@ -1,0 +1,76 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                               | Names                                                                          |  Raw size
+styles.css                                                                        | styles                                                                         | 180.89 kB | 
+spec-app-features-social-report-post-report-post.js                               | spec-app-features-social-report-post-report-post                               |  98.53 kB | 
+spec-app-features-social-composer-composer.js                                     | spec-app-features-social-composer-composer                                     |  74.22 kB | 
+spec-app-features-social-follow-button-follow-button.js                           | spec-app-features-social-follow-button-follow-button                           |  59.92 kB | 
+chunk-ER6K6E5Q.js                                                                 | -                                                                              |  52.00 kB | 
+chunk-GNII6FSH.js                                                                 | -                                                                              |  46.69 kB | 
+chunk-GXYY2FLE.js                                                                 | -                                                                              |  37.33 kB | 
+chunk-EGA5GR6S.js                                                                 | -                                                                              |  18.74 kB | 
+spec-app-shared-components-molecules-comment-media-picker-comment-media-picker.js | spec-app-shared-components-molecules-comment-media-picker-comment-media-picker |   7.10 kB | 
+spec-app-features-social-enlaces-sociales.guard.js                                | spec-app-features-social-enlaces-sociales.guard                                |   7.00 kB | 
+chunk-HZXEPMDQ.js                                                                 | -                                                                              |   5.27 kB | 
+chunk-FFFR5CTT.js                                                                 | -                                                                              |   4.99 kB | 
+chunk-IGNPN3GF.js                                                                 | -                                                                              |   2.74 kB | 
+init-testbed.js                                                                   | init-testbed                                                                   |   1.21 kB | 
+setup-test-setup.js                                                               | setup-test-setup                                                               | 984 bytes | 
+vitest-mock-patch.js                                                              | vitest-mock-patch                                                              | 974 bytes | 
+
+                                                                                  | Initial total                                                                  | 598.59 kB
+
+Application bundle generation complete. [105.631 seconds] - 2026-10-21T13:45:48.849Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[32m62 passed[39m[22m[90m (62)[39m
+[2m   Start at [22m 13:45:49
+[2m   Duration [22m 4.17s[2m (transform 1.26s, setup 404ms, import 1.51s, tests 1.43s, environment 593ms)[22m
+

@@ -117,30 +117,35 @@ async function abrir(
 
 for (const formato of FORMATOS) {
   test.describe(`P3/P6 · humo en ${formato.nombre}`, () => {
-    test('el muro abre, ofrece publicar y no desborda', async ({ browser }) => {
+    test('la red social abre, ofrece publicar en un modal y no desborda', async ({ browser }) => {
       const page = await abrir(browser, formato.opciones);
       await entrar(page);
-      await irA(page, '/feed');
+      // `/feed` ya no es una pantalla: la red social es `/posts`.
+      await irA(page, '/posts');
       await esperarAplicacionLista(page);
 
-      // Dos estados legítimos: hay vitrina y aparece el composer, o no la hay y
-      // aparece la puerta que invita a crearla. Lo que no puede pasar es que la
-      // pantalla quede en blanco.
-      const composer = page.getByTestId(UI.postComposer);
-      const puerta = page.getByText('Todavía no tiene perfil público');
-      await expect(composer.or(puerta).first()).toBeVisible({ timeout: 30_000 });
+      // Dos estados legítimos: hay vitrina y aparece la barra «Crear publicación»,
+      // o no la hay y aparece la puerta que invita a crearla. Lo que no puede
+      // pasar es que la pantalla quede en blanco.
+      const abrirCrear = page.getByTestId('feed-crear-abrir');
+      const puerta = page.getByTestId('feed-crear-sin-vitrina');
+      await expect(abrirCrear.or(puerta).first()).toBeVisible({ timeout: 30_000 });
 
-      if (await composer.isVisible().catch(() => false)) {
+      if (await abrirCrear.isVisible().catch(() => false)) {
+        await abrirCrear.click();
+        await expect(page.getByTestId(UI.postComposer)).toBeVisible();
         await expect(page.getByTestId(UI.postComposerBody)).toBeVisible();
         await expect(page.getByTestId(UI.postComposerVisibility)).toBeVisible();
-        // El punto de extensión de P5: existe, se ve y está apagado.
-        const imagenes = page.getByTestId(UI.postComposerMedia);
-        await expect(imagenes).toBeVisible();
-        await expect(imagenes).toHaveAttribute('aria-disabled', 'true');
+        // Las imágenes ya se pueden adjuntar: el punto de extensión de P5 se cumplió.
+        await expect(page.getByTestId(UI.postComposerMedia)).toBeVisible();
+        await expect(page.getByTestId('comment-media-add-image')).toBeEnabled();
+        await capturar(page, `crear-${formato.nombre}`);
+        await page.getByTestId('content-dialog-close').click();
+        await expect(page.getByTestId(UI.postComposer)).toBeHidden();
       }
 
       await sinDesbordeHorizontal(page);
-      await capturar(page, `muro-${formato.nombre}`);
+      await capturar(page, `red-social-${formato.nombre}`);
     });
 
     test('la moderación abre su cola y sus dos pestañas', async ({

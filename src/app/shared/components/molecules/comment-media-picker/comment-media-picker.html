@@ -1,6 +1,6 @@
 <div class="media-picker">
   <div class="media-picker__botones">
-    @for (opcion of opciones; track opcion.kind) {
+    @for (opcion of opciones(); track opcion.kind) {
       <button
         [appFileDropTarget]="archivo" (fileDropRejected)="error.set($event)"
         app-button
@@ -11,7 +11,12 @@
         [disabled]="!puedeAgregar()"
         (clicked)="archivo.click()"
       >
-        {{ opcion.label }}
+        @if (conTextoAlternativo() && opcion.kind === 'IMAGE') {
+          <svg class="media-picker__icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
+          Agregar imagen
+        } @else {
+          {{ opcion.label }}
+        }
       </button>
       <input
         #archivo
@@ -26,13 +31,13 @@
 
     @if (subiendo()) {
       <span class="media-picker__estado" aria-live="polite">Subiendo…</span>
-    } @else if (adjuntos().length >= tope) {
-      <span class="media-picker__estado">Máximo {{ tope }} adjuntos</span>
+    } @else if (adjuntos().length >= tope()) {
+      <span class="media-picker__estado">Máximo {{ tope() }} adjuntos</span>
     }
   </div>
 
   @if (adjuntos().length > 0) {
-    <ul class="media-picker__lista" data-testid="comment-media-list">
+    <ul class="media-picker__lista" [class.media-picker__lista--grande]="conTextoAlternativo()" data-testid="comment-media-list">
       @for (adjunto of adjuntos(); track adjunto.fileId) {
         <li class="media-picker__item" data-testid="comment-media-item">
           <img
@@ -42,6 +47,19 @@
             width="48"
             height="48"
           />
+          @if (conTextoAlternativo()) {
+            <input
+              type="text"
+              class="media-picker__alt"
+              data-testid="comment-media-alt"
+              maxlength="200"
+              placeholder="Describa la imagen (opcional)"
+              [attr.aria-label]="'Texto alternativo de ' + adjunto.nombre"
+              [value]="adjunto.altText"
+              [disabled]="disabled()"
+              (input)="cambiarTextoAlternativo(adjunto.fileId, $event)"
+            />
+          }
           <button
             type="button"
             class="media-picker__quitar"

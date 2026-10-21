@@ -2,20 +2,24 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
   signal,
+  untracked,
+  viewChild,
+  type ElementRef,
 } from '@angular/core';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
-import type { PostVisibility } from '../../../core/data-access/community/community.types';
+import type { NewPostMedia, PostVisibility } from '../../../core/data-access/community/community.types';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { CommentMediaPicker } from '../../../shared/components/molecules/comment-media-picker/comment-media-picker';
+import type { AdjuntoEmitido } from '../../../shared/components/molecules/comment-media-picker/comment-media-picker.types';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 
@@ -31,6 +35,9 @@ export const POST_BODY_MAX = 5000;
 
 /** Tope real de etiquetas por publicación (`CreatePostDto.hashtags`, `@ArrayMaxSize(30)`). */
 export const POST_HASHTAG_MAX = 30;
+
+/** Cuántas imágenes como máximo por publicación (el contrato admite 20; diez alcanzan para un caso clínico). */
+export const POST_MEDIA_MAX = 10;
 
 /**
  * Las tres visibilidades que el contrato admite, con el texto que se muestra.
@@ -117,7 +124,7 @@ export function etiquetasDe(texto: string): readonly string[] {
  */
 @Component({
   selector: 'app-composer',
-  imports: [Alert, AppButton, Card, FormField, Select, Textarea],
+  imports: [Alert, AppButton, CommentMediaPicker, Select, Textarea],
   templateUrl: './composer.html',
   styleUrl: './composer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -125,35 +132,47 @@ export function etiquetasDe(texto: string): readonly string[] {
 export class Composer {
   private readonly community = inject(CommunityClient);
 
-  /**
-   * La vitrina que firma la publicación.
-   *
-   * Sin ella no se puede publicar: el servidor exige el perfil en la ruta y
-   * comprueba que sea del actor. Quien no tenga vitrina ve la invitación a
-   * crearla, no un formulario que va a fallar.
-   */
+  private readonly selectorDeImagenes = viewChild(CommentMediaPicker, { read: CommentMediaPicker });
+  private readonly contenedorDeImagenes = viewChild<ElementRef<HTMLElement>>('imagenes');
+
+  /** Quién publica: su perfil público. El contrato lo exige y no lo deduce de la sesión. */
   readonly profileId = input.required<string>();
 
+  /** Cómo se llama quien publica, para la cabecera («Valeria Rojas Mendoza»). */
+  readonly autorNombre = input('');
+
+  /** Su foto, si la tiene; sin ella se dibujan sus iniciales. */
+  readonly autorAvatar = input<string | null>(null);
+
+  /** Sus iniciales, para cuando no hay foto. */
+  readonly autorIniciales = input('');
+
   /**
-   * Advertencia a mostrar sobre el cuerpo, si hay alguna.
-   *
-   * Es el punto de extensión de P6: la detección de datos identificables de
-   * pacientes es una regla del backend, y hasta que exista, esto queda vacío.
+   * Advertencia previa a publicar, si alguien la calcula (P8: detección de
+   * datos de pacientes). Vacío hoy, y por eso no se pinta nada: una
+   * advertencia inventada acá diría que el sistema detecta algo que no detecta.
    */
   readonly avisoPii = input<string>('');
 
-  /** Se emite con el id de la publicación creada. */
+  /** Si arranca con el foco en «Agregar imágenes» (el atajo «Foto» de la barra de crear). */
+  readonly enfocarImagenes = input(false);
+
+  /** Se emite con el id de la publicación creada, después de que el servidor confirmó. */
   readonly publicado = output<string>();
+
+  /** `true` cuando hay algo escrito o adjunto que se perdería al cerrar. */
+  readonly borradorCambio = output<boolean>();
 
   protected readonly cuerpo = signal('');
   protected readonly visibilidad = signal<PostVisibility>('PUBLIC');
   protected readonly enviando = signal(false);
   protected readonly error = signal('');
+  protected readonly imagenes = signal<readonly NewPostMedia[]>([]);
 
-  /** Las opciones tal como las pide `app-select`, con el tipo del código. */
   protected readonly opciones: readonly SelectOption<PostVisibility>[] =
     VISIBILIDADES.map(({ value, label }) => ({ value, label }));
   protected readonly maximo = POST_BODY_MAX;
+  protected readonly maximoDeImagenes = POST_MEDIA_MAX;
 
   protected readonly etiquetas = computed(() => etiquetasDe(this.cuerpo()));
 
@@ -161,29 +180,58 @@ export class Composer {
     () => POST_BODY_MAX - this.cuerpo().length,
   );
 
-  /** El texto sin espacios alrededor: es lo que se manda y lo que se valida. */
   private readonly texto = computed(() => this.cuerpo().trim());
 
   protected readonly excedido = computed(() => this.restantes() < 0);
 
+  /** Hay algo que se perdería: la guardia de cierre del diálogo lo pregunta. */
+  readonly hayBorrador = computed(() => this.texto().length > 0 || this.imagenes().length > 0);
+
+  /**
+   * El texto es obligatorio aunque haya imágenes: el contrato exige `bodyText`
+   * de al menos un carácter, y una imagen sola no lo cumple.
+   */
   protected readonly puedePublicar = computed(
     () => this.texto().length > 0 && !this.excedido() && !this.enviando(),
   );
 
-  /** La explicación de la visibilidad elegida, para no dejarla a la adivinanza. */
   protected readonly explicacion = computed(
     () =>
       VISIBILIDADES.find((opcion) => opcion.value === this.visibilidad())
         ?.hint ?? '',
   );
 
+  private readonly avisarBorrador = effect(() => {
+    const hay = this.hayBorrador();
+    untracked(() => this.borradorCambio.emit(hay));
+  });
+
+  private readonly enfocarAlAbrir = effect(() => {
+    if (!this.enfocarImagenes()) return;
+    // El selector existe una vez dibujado; se enfoca su primer botón.
+    queueMicrotask(() =>
+      this.contenedorDeImagenes()?.nativeElement.querySelector<HTMLElement>('button')?.focus(),
+    );
+  });
+
   /**
-   * Acepta el código elegido, y sólo si es uno de los tres del contrato.
-   *
-   * Un valor fuera de la lista —o un `null`— **no** cae en «PUBLIC por
-   * defecto»: eso publicaría más abierto de lo que se pidió, que es el peor
-   * error posible en esta pantalla.
+   * Los adjuntos que reporta el selector. Sólo imágenes: el selector se
+   * configura para eso, y el filtro es la red de seguridad si alguien cambiara
+   * su configuración sin mirar acá.
    */
+  protected alCambiarImagenes(lista: readonly AdjuntoEmitido[]): void {
+    this.imagenes.set(
+      lista
+        .filter((m) => m.mediaRole === 'IMAGE')
+        .map((m) => ({
+          fileId: m.fileId,
+          mediaRole: 'IMAGE' as const,
+          ...(m.altText === undefined ? {} : { altText: m.altText }),
+          ...(m.ordinal === undefined ? {} : { ordinal: m.ordinal }),
+        })),
+    );
+  }
+
   protected cambiarVisibilidad(valor: PostVisibility | null): void {
     if (
       valor !== null &&
@@ -194,8 +242,6 @@ export class Composer {
   }
 
   protected publicar(): void {
-    // Single-flight: la guarda está acá y no sólo en el `disabled` del botón,
-    // porque el botón no es el único camino a esta función.
     if (!this.puedePublicar()) {
       return;
     }
@@ -204,23 +250,26 @@ export class Composer {
     this.error.set('');
 
     const etiquetas = this.etiquetas();
+    const imagenes = this.imagenes();
 
     this.community
       .publishPost(this.profileId(), {
         bodyText: this.texto(),
         visibility: this.visibilidad(),
         ...(etiquetas.length > 0 ? { hashtags: [...etiquetas] } : {}),
+        ...(imagenes.length > 0 ? { media: [...imagenes] } : {}),
       })
       .subscribe({
         next: ({ id }) => {
           this.cuerpo.set('');
           this.visibilidad.set('PUBLIC');
+          this.imagenes.set([]);
+          this.selectorDeImagenes()?.limpiar();
           this.enviando.set(false);
           this.publicado.emit(id);
         },
         error: (error: unknown) => {
-          // El cuerpo **no** se limpia: si falló, lo que se escribió es lo único
-          // que no se puede recuperar.
+          // Lo escrito y lo adjunto se conservan: perderlo ante un fallo está prohibido.
           this.enviando.set(false);
           this.error.set(describeApiFailure(error, 'No pudimos publicar. Revise y reintente.'));
         },

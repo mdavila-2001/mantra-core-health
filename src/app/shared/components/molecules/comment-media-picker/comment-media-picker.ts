@@ -39,13 +39,13 @@ import {
 } from '@angular/core';
 
 import { FilesClient } from '@core/data-access/files/files.client';
-import type { NewCommentMedia } from '@core/data-access/community/community.types';
 import { AppButton } from '../../atoms/button/button';
 import { Alert } from '../alert/alert';
 import {
   COMMENT_MEDIA_MAX,
   COMMENT_MEDIA_MAX_BYTES,
   COMMENT_MEDIA_OPTIONS,
+  type AdjuntoEmitido,
   type CommentMediaAttachment,
   type CommentMediaKind,
 } from './comment-media-picker.types';
@@ -63,18 +63,37 @@ export class CommentMediaPicker {
   /** Se deshabilita entera mientras el comentario se está enviando. */
   readonly disabled = input(false);
 
-  /** Emite la lista completa de adjuntos confirmados en cada cambio. */
-  readonly cambio = output<readonly NewCommentMedia[]>();
+  /**
+   * Qué tipos de adjunto se ofrecen. Por defecto los tres de un comentario; el
+   * redactor de publicaciones sólo admite imágenes. Parametrizar es mejor que
+   * copiar el componente entero para quitarle dos botones.
+   */
+  readonly kinds = input<readonly CommentMediaKind[]>(['IMAGE', 'STICKER', 'GIF']);
 
-  protected readonly opciones = COMMENT_MEDIA_OPTIONS;
-  protected readonly tope = COMMENT_MEDIA_MAX;
+  /** Cuántos adjuntos como máximo (un comentario: 4; una publicación admite más). */
+  readonly maximo = input(COMMENT_MEDIA_MAX);
+
+  /**
+   * Si se pide un texto alternativo por imagen y la miniatura se dibuja grande.
+   * Una imagen sin descripción no existe para quien usa lector de pantalla
+   * (WCAG 1.1.1); en una publicación se ofrece, en un comentario no.
+   */
+  readonly conTextoAlternativo = input(false);
+
+  /** Emite la lista completa de adjuntos confirmados en cada cambio. */
+  readonly cambio = output<readonly AdjuntoEmitido[]>();
+
+  protected readonly opciones = computed(() =>
+    COMMENT_MEDIA_OPTIONS.filter((opcion) => this.kinds().includes(opcion.kind)),
+  );
+  protected readonly tope = computed(() => this.maximo());
 
   protected readonly adjuntos = signal<readonly CommentMediaAttachment[]>([]);
   protected readonly subiendo = signal(false);
   protected readonly error = signal('');
 
   protected readonly puedeAgregar = computed(
-    () => !this.disabled() && !this.subiendo() && this.adjuntos().length < this.tope,
+    () => !this.disabled() && !this.subiendo() && this.adjuntos().length < this.tope(),
   );
 
   /**
@@ -115,6 +134,7 @@ export class CommentMediaPicker {
         mediaRole: kind,
         previewUrl,
         nombre: file.name,
+        altText: '',
       };
       this.adjuntos.update((previos) => [...previos, adjunto]);
       this.emitirCambio();
@@ -135,12 +155,24 @@ export class CommentMediaPicker {
     this.files.softDelete(fileId).subscribe({ error: () => undefined });
   }
 
+  /** Guarda lo que la persona escribe como descripción de una imagen. */
+  protected cambiarTextoAlternativo(fileId: string, evento: Event): void {
+    const texto = (evento.target as HTMLInputElement).value;
+    this.adjuntos.update((previos) => previos.map((a) => (a.fileId === fileId ? { ...a, altText: texto } : a)));
+    this.emitirCambio();
+  }
+
   private emitirCambio(): void {
     this.cambio.emit(
-      this.adjuntos().map((a) => ({
-        fileId: a.fileId,
-        mediaRole: a.mediaRole,
-      })),
+      this.adjuntos().map((a, ordinal) => {
+        const alt = a.altText.trim();
+        return {
+          fileId: a.fileId,
+          mediaRole: a.mediaRole,
+          ...(alt === '' ? {} : { altText: alt }),
+          ...(this.conTextoAlternativo() ? { ordinal } : {}),
+        };
+      }),
     );
   }
 }

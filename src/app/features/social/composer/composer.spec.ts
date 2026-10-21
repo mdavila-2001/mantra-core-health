@@ -4,6 +4,9 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+
+import { CommentMediaPicker } from '../../../shared/components/molecules/comment-media-picker/comment-media-picker';
 
 import { Composer, etiquetasDe, POST_BODY_MAX } from './composer';
 
@@ -170,26 +173,150 @@ describe('Composer', () => {
     );
   });
 
-  /**
-   * El punto de extensión de P5 tiene que estar visible y apagado, con el motivo
-   * escrito. Un selector de archivos que no sube nada sería peor.
-   */
-  it('el botón de imágenes está presente y deshabilitado, con su motivo', () => {
-    montar();
+  describe('imágenes', () => {
+    const selector = (): CommentMediaPicker =>
+      fixture.debugElement.query(By.directive(CommentMediaPicker)).componentInstance as CommentMediaPicker;
 
-    const botones: HTMLButtonElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    );
-    const imagenes = botones.find((b) =>
-      b.textContent!.includes('Agregar imágenes'),
-    )!;
+    it('ofrece subir imágenes, y sólo imágenes: no stickers ni GIF', () => {
+      montar();
 
-    expect(imagenes).toBeDefined();
-    // `aria-disabled` y no el atributo nativo: es como deshabilita `app-button`,
-    // para que el botón siga siendo alcanzable por teclado y anuncie por qué no
-    // se puede usar en vez de desaparecer del recorrido de foco.
-    expect(imagenes.getAttribute('aria-disabled')).toBe('true');
-    expect(texto()).toContain('Todavía no se pueden adjuntar imágenes');
+      const botones = fixture.nativeElement.querySelectorAll('[data-testid^="comment-media-add-"]');
+
+      expect(Array.from(botones as NodeListOf<HTMLElement>).map((b) => b.dataset['testid'])).toEqual([
+        'comment-media-add-image',
+      ]);
+      expect(texto()).not.toContain('Todavía no se pueden adjuntar imágenes');
+      // En el modal se llama por lo que hace, no «Imagen» a secas.
+      expect(texto()).toContain('Agregar imagen');
+    });
+
+    it('publica con las imágenes adjuntas, con su descripción y su orden', () => {
+      montar();
+      escribir('Radiografía de hoy.');
+      selector().cambio.emit([
+        { fileId: 'f-1', mediaRole: 'IMAGE', altText: 'Tórax sin hallazgos', ordinal: 0 },
+        { fileId: 'f-2', mediaRole: 'IMAGE', ordinal: 1 },
+      ]);
+      fixture.detectChanges();
+      publicar();
+
+      const req = http.expectOne((r) => r.url === '/community/profiles/pp-1/posts');
+      expect(req.request.body.media).toEqual([
+        { fileId: 'f-1', mediaRole: 'IMAGE', altText: 'Tórax sin hallazgos', ordinal: 0 },
+        { fileId: 'f-2', mediaRole: 'IMAGE', ordinal: 1 },
+      ]);
+      req.flush({ id: 'post-1' });
+    });
+
+    it('sin imágenes no manda la clave `media`', () => {
+      montar();
+      escribir('Sólo texto.');
+      publicar();
+
+      const req = http.expectOne((r) => r.url === '/community/profiles/pp-1/posts');
+      expect('media' in req.request.body).toBe(false);
+      req.flush({ id: 'post-1' });
+    });
+
+    it('el texto sigue siendo obligatorio: una imagen sola no alcanza (el contrato exige bodyText)', () => {
+      montar();
+      selector().cambio.emit([{ fileId: 'f-1', mediaRole: 'IMAGE', ordinal: 0 }]);
+      fixture.detectChanges();
+
+      const boton = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>).find((b) =>
+        b.textContent!.includes('Public'),
+      )!;
+
+      expect(boton.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('descarta lo que no es imagen aunque el selector lo emitiera', () => {
+      montar();
+      escribir('Texto.');
+      selector().cambio.emit([
+        { fileId: 'f-1', mediaRole: 'GIF' },
+        { fileId: 'f-2', mediaRole: 'IMAGE', ordinal: 0 },
+      ]);
+      fixture.detectChanges();
+      publicar();
+
+      const req = http.expectOne((r) => r.url === '/community/profiles/pp-1/posts');
+      expect(req.request.body.media).toEqual([{ fileId: 'f-2', mediaRole: 'IMAGE', ordinal: 0 }]);
+      req.flush({ id: 'p' });
+    });
+
+    it('si el servidor falla conserva las imágenes y el texto: perderlos está prohibido', () => {
+      montar();
+      escribir('No quiero perder esto.');
+      selector().cambio.emit([{ fileId: 'f-1', mediaRole: 'IMAGE', ordinal: 0 }]);
+      fixture.detectChanges();
+      publicar();
+      http.expectOne((r) => r.url === '/community/profiles/pp-1/posts').flush({ message: 'x' }, { status: 500, statusText: 'x' });
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement).value).toBe('No quiero perder esto.');
+      expect(fixture.componentInstance.hayBorrador()).toBe(true);
+      expect(texto()).toContain('No pudimos publicar');
+    });
+
+    it('tras publicar se limpia todo', () => {
+      montar();
+      escribir('Hola.');
+      publicar();
+      http.expectOne((r) => r.url === '/community/profiles/pp-1/posts').flush({ id: 'post-1' });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.hayBorrador()).toBe(false);
+    });
+  });
+
+  describe('el borrador', () => {
+    it('avisa cuando hay algo que se perdería y cuando ya no', () => {
+      const avisos: boolean[] = [];
+      montar();
+      fixture.componentInstance.borradorCambio.subscribe((hay) => avisos.push(hay));
+
+      escribir('algo');
+      escribir('');
+
+      expect(avisos).toContain(true);
+      expect(avisos.at(-1)).toBe(false);
+    });
+
+    it('un texto de sólo espacios no es un borrador', () => {
+      montar();
+
+      escribir('    ');
+
+      expect(fixture.componentInstance.hayBorrador()).toBe(false);
+    });
+  });
+
+  describe('la cabecera', () => {
+    it('dice quién publica, con sus iniciales si no hay foto', () => {
+      montar();
+      fixture.componentRef.setInput('autorNombre', 'Valeria Rojas Mendoza');
+      fixture.componentRef.setInput('autorIniciales', 'VR');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="post-composer-author"]').textContent).toContain('Valeria Rojas Mendoza');
+      expect(fixture.nativeElement.querySelector('.composer__avatar--iniciales').textContent).toContain('VR');
+    });
+
+    it('con foto la muestra, decorativa (el nombre ya está escrito al lado)', () => {
+      montar();
+      fixture.componentRef.setInput('autorAvatar', 'data:image/png;base64,AAAA');
+      fixture.detectChanges();
+
+      const img = fixture.nativeElement.querySelector('img.composer__avatar') as HTMLImageElement;
+      expect(img.getAttribute('alt')).toBe('');
+    });
+
+    it('explica quién puede leerla según la visibilidad elegida', () => {
+      montar();
+
+      expect(texto()).toContain('La puede leer cualquiera con sesión.');
+    });
   });
 
   /** El aviso de P6 no se pinta mientras nadie lo llene. */

@@ -1,0 +1,113 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                                                  | Names                                                                                             |  Raw size
+chunk-2F4VQZRY.js                                                                                    | -                                                                                                 | 233.90 kB | 
+styles.css                                                                                           | styles                                                                                            | 180.89 kB | 
+chunk-FJHEOMB2.js                                                                                    | -                                                                                                 | 151.23 kB | 
+spec-app-features-alovida-buscar-feed-publicaciones-feed-crear-publicacion-feed-crear-publicacion.js | spec-app-features-alovida-buscar-feed-publicaciones-feed-crear-publicacion-feed-crear-publicacion | 129.42 kB | 
+chunk-6YA7C6GK.js                                                                                    | -                                                                                                 | 109.13 kB | 
+chunk-EYXBWOVU.js                                                                                    | -                                                                                                 |  62.87 kB | 
+chunk-WTD5PDND.js                                                                                    | -                                                                                                 |  53.03 kB | 
+chunk-VMRCMB6P.js                                                                                    | -                                                                                                 |  46.73 kB | 
+chunk-2YFZ6P67.js                                                                                    | -                                                                                                 |  41.37 kB | 
+chunk-2S3YZSGD.js                                                                                    | -                                                                                                 |  37.26 kB | 
+chunk-PIXC7HAX.js                                                                                    | -                                                                                                 |  31.77 kB | 
+chunk-PHBICNLT.js                                                                                    | -                                                                                                 |  30.13 kB | 
+chunk-OS56XF6M.js                                                                                    | -                                                                                                 |  27.85 kB | 
+spec-app-features-social-report-post-report-post.js                                                  | spec-app-features-social-report-post-report-post                                                  |  27.02 kB | 
+chunk-EZOPCMFK.js                                                                                    | -                                                                                                 |  26.54 kB | 
+chunk-NU2EZYKB.js                                                                                    | -                                                                                                 |  26.04 kB | 
+spec-app-features-public-profile-public-post-card-public-post-card.js                                | spec-app-features-public-profile-public-post-card-public-post-card                                |  24.70 kB | 
+chunk-2BLVTCNE.js                                                                                    | -                                                                                                 |  21.91 kB | 
+spec-app-features-alovida-buscar-feed-publicaciones-feed-tendencias-feed-tendencias.js               | spec-app-features-alovida-buscar-feed-publicaciones-feed-tendencias-feed-tendencias               |  20.93 kB | 
+chunk-NFEI3WXY.js                                                                                    | -                                                                                                 |  20.66 kB | 
+chunk-BAGQOEWD.js                                                                                    | -                                                                                                 |  18.51 kB | 
+chunk-TOI3C6ND.js                                                                                    | -                                                                                                 |  18.42 kB | 
+spec-app-features-public-profile-public-post-comments-public-post-comments.js                        | spec-app-features-public-profile-public-post-comments-public-post-comments                        |  17.70 kB | 
+spec-app-features-public-profile-public-profile.js                                                   | spec-app-features-public-profile-public-profile                                                   |  17.50 kB | 
+chunk-UDAZI7YJ.js                                                                                    | -                                                                                                 |  16.62 kB | 
+chunk-IGOMQK4W.js                                                                                    | -                                                                                                 |  12.78 kB | 
+chunk-TP57O2TE.js                                                                                    | -                                                                                                 |  12.55 kB | 
+chunk-VCZDDXUW.js                                                                                    | -                                                                                                 |  11.06 kB | 
+spec-app-features-social-composer-composer.js                                                        | spec-app-features-social-composer-composer                                                        |  10.84 kB | 
+chunk-XJJWULEY.js                                                                                    | -                                                                                                 |  10.29 kB | 
+spec-app-features-public-profile-public-profile-card-public-profile-card.js                          | spec-app-features-public-profile-public-profile-card-public-profile-card                          |  10.24 kB | 
+spec-app-features-public-profile-public-post-reactions-public-post-reactions.js                      | spec-app-features-public-profile-public-post-reactions-public-post-reactions                      |   9.70 kB | 
+spec-app-features-social-follow-button-follow-button.js                                              | spec-app-features-social-follow-button-follow-button                                              |   7.72 kB | 
+spec-app-features-public-profile-public-profile-card-public-profile-card.tabs.js                     | spec-app-features-public-profile-public-profile-card-public-profile-card.tabs                     |   7.32 kB | 
+spec-app-shared-components-molecules-comment-media-picker-comment-media-picker.js                    | spec-app-shared-components-molecules-comment-media-picker-comment-media-picker                    |   7.19 kB | 
+spec-app-features-social-enlaces-sociales.guard.js                                                   | spec-app-features-social-enlaces-sociales.guard                                                   |   7.03 kB | 
+spec-app-features-public-profile-public-profile-reviews-public-profile-reviews.js                    | spec-app-features-public-profile-public-profile-reviews-public-profile-reviews                    |   6.54 kB | 
+spec-app-features-social-composer-dialog-composer-dialog.js                                          | spec-app-features-social-composer-dialog-composer-dialog                                          |   6.54 kB | 
+spec-app-features-public-profile-rate-encounter-dialog-rate-encounter-dialog.js                      | spec-app-features-public-profile-rate-encounter-dialog-rate-encounter-dialog                      |   5.92 kB | 
+chunk-HZXEPMDQ.js                                                                                    | -                                                                                                 |   5.27 kB | 
+chunk-VHIVV5EO.js                                                                                    | -                                                                                                 |   4.15 kB | 
+chunk-D5Q6C54F.js                                                                                    | -                                                                                                 |   3.40 kB | 
+spec-app-features-public-profile-public-profile.resolver.js                                          | spec-app-features-public-profile-public-profile.resolver                                          |   2.96 kB | 
+spec-app-features-public-profile-public-profile-pager-public-profile-pager.js                        | spec-app-features-public-profile-public-profile-pager-public-profile-pager                        |   2.22 kB | 
+chunk-GDH4RNSR.js                                                                                    | -                                                                                                 |   2.21 kB | 
+chunk-ZJVBUBDB.js                                                                                    | -                                                                                                 |   2.15 kB | 
+init-testbed.js                                                                                      | init-testbed                                                                                      |   1.21 kB | 
+chunk-NEPBROPX.js                                                                                    | -                                                                                                 |   1.17 kB | 
+setup-test-setup.js                                                                                  | setup-test-setup                                                                                  | 984 bytes | 
+vitest-mock-patch.js                                                                                 | vitest-mock-patch                                                                                 | 974 bytes | 
+chunk-3KTMTSJ3.js                                                                                    | -                                                                                                 | 893 bytes | 
+chunk-N3H3YT6Z.js                                                                                    | -                                                                                                 | 755 bytes | 
+chunk-DLPBMKRA.js                                                                                    | -                                                                                                 | 369 bytes | 
+
+                                                                                                     | Initial total                                                                                     |   1.55 MB
+
+Application bundle generation complete. [106.372 seconds] - 2026-10-21T13:54:47.868Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m18 passed[39m[22m[90m (18)[39m
+[2m      Tests [22m [1m[32m211 passed[39m[22m[90m (211)[39m
+[2m   Start at [22m 13:54:48
+[2m   Duration [22m 8.20s[2m (transform 1.82s, setup 448ms, import 2.14s, tests 4.75s, environment 581ms)[22m
+

@@ -52,3 +52,60 @@
   margin: 0;
   color: var(--danger-fg, var(--text-primary));
 }
+
+/* ---- el modal de crear: autor, texto grande, adjuntos y publicar ---------- */
+
+.composer__autor {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.composer__avatar {
+  flex: none;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: var(--r-full);
+  object-fit: cover;
+  background: var(--menta);
+}
+
+.composer__avatar--iniciales {
+  display: grid;
+  place-items: center;
+  color: var(--tinta-marca);
+  font-family: var(--f-titulo);
+  font-weight: 700;
+}
+
+.composer__quien {
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.composer__nombre {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.composer__visibilidad {
+  max-inline-size: 16rem;
+}
+
+.composer__explicacion,
+.composer__ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.composer__imagenes {
+  display: block;
+}
+
+.composer__acciones {
+  justify-content: flex-end;
+}

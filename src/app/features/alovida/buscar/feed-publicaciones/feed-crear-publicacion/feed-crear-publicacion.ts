@@ -5,7 +5,7 @@ import { SessionStore } from '@core/auth/session.store';
 import { ROLES_DE_QUIEN_ATIENDE } from '@core/navigation/navigation.map';
 import type { OwnPublicProfile } from '@core/data-access/community/community.types';
 import { inicialesDe } from '@shared/text/iniciales';
-import { Composer } from '../../../../social/composer/composer';
+import { ComposerDialog } from '../../../../social/composer-dialog/composer-dialog';
 
 /**
  * «Crear publicación» — la barra de arriba del feed, para quien tiene sesión.
@@ -27,7 +27,7 @@ import { Composer } from '../../../../social/composer/composer';
  */
 @Component({
   selector: 'app-feed-crear-publicacion',
-  imports: [Composer, RouterLink],
+  imports: [ComposerDialog, RouterLink],
   templateUrl: './feed-crear-publicacion.html',
   styleUrl: './feed-crear-publicacion.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +47,9 @@ export class FeedCrearPublicacion {
 
   protected readonly abierto = signal(false);
 
+  /** Si el modal abre con el foco en «Agregar imágenes» (el atajo «Foto»). */
+  protected readonly conFoto = signal(false);
+
   protected readonly nombre = computed(
     () => this.perfil()?.displayName ?? this.sesion.displayName() ?? 'Su cuenta',
   );
@@ -65,16 +68,19 @@ export class FeedCrearPublicacion {
     this.sesion.roles().some((rol) => ROLES_DE_QUIEN_ATIENDE.includes(rol)),
   );
 
-  protected abrir(): void {
+  protected abrir(conFoto = false): void {
+    this.conFoto.set(conFoto);
     this.abierto.set(true);
   }
 
+  /** El modal terminó de cerrarse (por publicar o por descartar). */
   protected cerrar(): void {
     this.abierto.set(false);
+    this.conFoto.set(false);
   }
 
+  /** La publicación quedó guardada; el modal se cierra solo y avisa con `cerrado`. */
   protected alPublicar(id: string): void {
-    this.abierto.set(false);
     this.publicado.emit(id);
   }
 }

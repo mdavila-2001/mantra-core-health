@@ -1,96 +1,102 @@
-<app-card variant="outlined" padding="md">
-  <!-- `(submit)` con `preventDefault` y un botón `type="button"`, como el resto
-       de los formularios del repo: `(ngSubmit)` necesita la directiva `NgForm`,
-       y sin `FormsModule` importado no se enlaza a nada — el formulario parecería
-       funcionar y no enviaría nunca. -->
-  <form class="composer" data-testid="post-composer" (submit)="$event.preventDefault()">
-    <!-- Punto de extensión P6: la advertencia de datos identificables de
-         pacientes. Vacío hoy, y por eso no se pinta nada: una advertencia
-         inventada acá diría que el sistema detecta algo que no detecta. -->
-    @if (avisoPii(); as aviso) {
-      <app-alert class="composer__aviso" tone="warning" title="Revise antes de publicar">
-        {{ aviso }}
-      </app-alert>
+<!-- `(submit)` con `preventDefault` y no `(ngSubmit)`: es la forma de los
+     formularios del repo; `(ngSubmit)` necesita la directiva `NgForm`, y sin
+     `FormsModule` importado no se enlaza a nada — el formulario parecería
+     funcionar y no enviaría nunca. -->
+<form class="composer" data-testid="post-composer" (submit)="$event.preventDefault()">
+  <!-- Quién publica y para quién, como en la ventana de crear de una red
+       profesional: la foto y el nombre arriba, y la visibilidad al lado. -->
+  <header class="composer__autor">
+    @if (autorAvatar(); as foto) {
+      <img class="composer__avatar" [src]="foto" alt="" width="48" height="48" />
+    } @else {
+      <span class="composer__avatar composer__avatar--iniciales" aria-hidden="true">{{ autorIniciales() }}</span>
     }
-
-    <app-form-field
-      label="Qué quiere compartir"
-      hint="Escriba #etiquetas dentro del texto y se guardan solas."
-      [errorMessage]="excedido() ? 'Se pasó del largo permitido.' : ''"
-    >
-      <app-textarea
-        data-testid="post-composer-body"
-        [(value)]="cuerpo"
-        [rows]="4"
-        [maxRows]="14"
-        [autoResize]="true"
-        [hasError]="excedido()"
-        [disabled]="enviando()"
-        placeholder="Un caso, una lectura, una pregunta al resto."
-      />
-    </app-form-field>
-
-    <p class="composer__contador" [class.composer__contador--excedido]="excedido()">
-      <!-- Se muestra siempre, no sólo al acercarse al tope: quien escribe un
-           texto largo tiene que poder saber cuánto le queda antes de llegar. -->
-      {{ restantes() }} caracteres
-    </p>
-
-    @if (etiquetas().length > 0) {
-      <p class="composer__etiquetas">
-        Etiquetas:
-        @for (etiqueta of etiquetas(); track etiqueta) {
-          <span class="composer__etiqueta">#{{ etiqueta }}</span>
-        }
-      </p>
-    }
-
-    <app-form-field label="Quién puede leerla" [hint]="explicacion()">
+    <div class="composer__quien">
+      @if (autorNombre()) {
+        <p class="composer__nombre" data-testid="post-composer-author">{{ autorNombre() }}</p>
+      }
       <app-select
+        class="composer__visibilidad"
         data-testid="post-composer-visibility"
         [options]="opciones"
         [value]="visibilidad()"
         (valueChange)="cambiarVisibilidad($event)"
         [disabled]="enviando()"
-        ariaLabel="Visibilidad de la publicación"
+        ariaLabel="Quién puede leer la publicación"
       />
-    </app-form-field>
+    </div>
+  </header>
+  <p class="composer__explicacion">{{ explicacion() }}</p>
 
-    <footer class="composer__acciones">
-      <!-- Punto de extensión P5: el botón existe, se ve y está apagado, con el
-           motivo escrito. `NewPost` ya admite `media`, así que P5 llena el
-           arreglo y lo habilita sin reescribir este formulario. No hay selector
-           de archivos falso detrás. -->
-      <button
-        app-button
-        data-testid="post-composer-media"
-        type="button"
-        variant="ghost"
-        size="sm"
-        [disabled]="true"
-        aria-describedby="composer-imagenes-motivo"
-      >
-        Agregar imágenes
-      </button>
-      <p id="composer-imagenes-motivo" class="composer__pendiente">
-        Todavía no se pueden adjuntar imágenes.
-      </p>
+  <!-- P8 · advertencia previa por posibles datos de pacientes. Vacío hoy, y por
+       eso no se pinta nada: una advertencia inventada acá diría que el sistema
+       detecta algo que no detecta. -->
+  @if (avisoPii(); as aviso) {
+    <app-alert class="composer__aviso" tone="warning" title="Revise antes de publicar">
+      {{ aviso }}
+    </app-alert>
+  }
 
-      <button
-        app-button
-        data-testid="post-composer-submit"
-        type="button"
-        variant="primary"
-        size="md"
-        [disabled]="!puedePublicar()"
-        (clicked)="publicar()"
-      >
-        {{ enviando() ? 'Publicando…' : 'Publicar' }}
-      </button>
-    </footer>
+  <app-textarea
+    data-testid="post-composer-body"
+    ariaLabel="Qué quiere compartir"
+    class="composer__texto"
+    [(value)]="cuerpo"
+    [rows]="8"
+    [autoResize]="false"
+    [hasError]="excedido()"
+    [disabled]="enviando()"
+    placeholder="¿Sobre qué quiere hablar? Un caso, una lectura, una pregunta al resto."
+  />
+  @if (excedido()) {
+    <p class="composer__error" role="alert">Se pasó del largo permitido.</p>
+  }
 
-    @if (error(); as mensaje) {
-      <p class="composer__error" role="alert">{{ mensaje }}</p>
-    }
-  </form>
-</app-card>
+  <p class="composer__contador" [class.composer__contador--excedido]="excedido()">
+    <!-- No es un adorno: quien escribe un texto largo tiene que poder saber
+         cuánto le queda antes de llegar. -->
+    {{ restantes() }} caracteres
+  </p>
+
+  @if (etiquetas().length > 0) {
+    <p class="composer__etiquetas">
+      Etiquetas:
+      @for (etiqueta of etiquetas(); track etiqueta) {
+        <span class="composer__etiqueta">#{{ etiqueta }}</span>
+      }
+    </p>
+  } @else {
+    <p class="composer__ayuda">Escriba #etiquetas dentro del texto y se guardan solas.</p>
+  }
+
+  <!-- Las imágenes se suben al elegirlas y acá sólo viaja el `fileId` ya
+       confirmado. Cada una pide su descripción para quien usa lector de
+       pantalla. -->
+  <div #imagenes class="composer__imagenes" data-testid="post-composer-media">
+    <app-comment-media-picker
+      [kinds]="['IMAGE']"
+      [maximo]="maximoDeImagenes"
+      [conTextoAlternativo]="true"
+      [disabled]="enviando()"
+      (cambio)="alCambiarImagenes($event)"
+    />
+  </div>
+
+  @if (error(); as mensaje) {
+    <p class="composer__error" role="alert" data-testid="post-composer-error">{{ mensaje }}</p>
+  }
+
+  <footer class="composer__acciones">
+    <button
+      app-button
+      data-testid="post-composer-submit"
+      type="button"
+      variant="primary"
+      size="md"
+      [disabled]="!puedePublicar()"
+      (clicked)="publicar()"
+    >
+      {{ enviando() ? 'Publicando…' : 'Publicar' }}
+    </button>
+  </footer>
+</form>

@@ -1,0 +1,17 @@
+<app-content-dialog
+  heading="Crear una publicación"
+  size="lg"
+  closeLabel="Cerrar"
+  [closeGuard]="guardia"
+  (closed)="cerrado.emit()"
+>
+  <app-composer
+    [profileId]="profileId()"
+    [autorNombre]="autorNombre()"
+    [autorAvatar]="autorAvatar()"
+    [autorIniciales]="autorIniciales()"
+    [enfocarImagenes]="enfocarImagenes()"
+    (borradorCambio)="alCambiarBorrador($event)"
+    (publicado)="alPublicar($event)"
+  />
+</app-content-dialog>

@@ -75,3 +75,60 @@
   cursor: default;
   opacity: 0.6;
 }
+
+/* ---- modo «publicación»: miniaturas grandes con su texto alternativo ------ */
+
+.media-picker__lista--grande {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--e3);
+}
+
+.media-picker__lista--grande .media-picker__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.media-picker__lista--grande .media-picker__miniatura {
+  inline-size: 100%;
+  block-size: 7rem;
+}
+
+/* En modo grande la cruz es un objetivo de 28 px (WCAG 2.5.8: mínimo 24). */
+.media-picker__lista--grande .media-picker__quitar {
+  inline-size: 28px;
+  block-size: 28px;
+  top: var(--e1);
+  right: var(--e1);
+  background: var(--sup-tarjeta);
+}
+
+.media-picker__lista--grande .media-picker__quitar svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.media-picker__alt {
+  inline-size: 100%;
+  min-block-size: 36px;
+  padding: 0 var(--e2);
+  border: 1px solid var(--filete);
+  border-radius: 8px;
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--fs-caption);
+}
+
+.media-picker__alt:focus-visible {
+  outline: none;
+  border-color: var(--petroleo);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.media-picker__icono {
+  inline-size: 18px;
+  block-size: 18px;
+  margin-inline-end: var(--e2);
+}

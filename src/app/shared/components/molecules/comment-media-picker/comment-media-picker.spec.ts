@@ -125,4 +125,64 @@ describe('CommentMediaPicker', () => {
 
     expect(fixture.nativeElement.querySelectorAll('[data-testid="comment-media-item"]').length).toBe(0);
   });
+
+  describe('modo «publicación» (parametrizado, no copiado)', () => {
+    it('sólo ofrece los tipos que se le piden: una publicación admite imágenes, no stickers ni GIF', () => {
+      fixture.componentRef.setInput('kinds', ['IMAGE']);
+      fixture.detectChanges();
+
+      expect(boton('comment-media-add-image')).toBeTruthy();
+      expect(boton('comment-media-add-sticker')).toBeNull();
+      expect(boton('comment-media-add-gif')).toBeNull();
+    });
+
+    it('por defecto sigue ofreciendo los tres del comentario', () => {
+      expect(boton('comment-media-add-image')).toBeTruthy();
+      expect(boton('comment-media-add-sticker')).toBeTruthy();
+      expect(boton('comment-media-add-gif')).toBeTruthy();
+    });
+
+    it('respeta el máximo que le pasan y lo dice', async () => {
+      fixture.componentRef.setInput('kinds', ['IMAGE']);
+      fixture.componentRef.setInput('maximo', 1);
+      fixture.detectChanges();
+
+      await elegirArchivo('comment-media-add-image', archivo('foto.png', 'image/png'));
+
+      expect(boton('comment-media-add-image').getAttribute('aria-disabled')).toBe('true');
+      expect(fixture.nativeElement.textContent).toContain('Máximo 1 adjuntos');
+    });
+
+    it('pide un texto alternativo por imagen y lo emite con su orden', async () => {
+      fixture.componentRef.setInput('kinds', ['IMAGE']);
+      fixture.componentRef.setInput('conTextoAlternativo', true);
+      fixture.detectChanges();
+      await elegirArchivo('comment-media-add-image', archivo('radiografia.png', 'image/png'));
+
+      const alt = fixture.nativeElement.querySelector('[data-testid="comment-media-alt"]') as HTMLInputElement;
+      expect(alt.getAttribute('aria-label')).toBe('Texto alternativo de radiografia.png');
+      alt.value = '  Radiografía de tórax sin hallazgos  ';
+      alt.dispatchEvent(new Event('input'));
+
+      expect(emitidos.at(-1)).toEqual([
+        { fileId: 'f-1', mediaRole: 'IMAGE', altText: 'Radiografía de tórax sin hallazgos', ordinal: 0 },
+      ]);
+    });
+
+    it('sin texto alternativo no manda `altText` vacío', async () => {
+      fixture.componentRef.setInput('conTextoAlternativo', true);
+      fixture.detectChanges();
+
+      await elegirArchivo('comment-media-add-image', archivo('foto.png', 'image/png'));
+
+      expect(emitidos.at(-1)).toEqual([{ fileId: 'f-1', mediaRole: 'IMAGE', ordinal: 0 }]);
+    });
+
+    it('en un comentario (sin la opción) el texto alternativo no se pide ni se emite', async () => {
+      await elegirArchivo('comment-media-add-image', archivo('foto.png', 'image/png'));
+
+      expect(fixture.nativeElement.querySelector('[data-testid="comment-media-alt"]')).toBeNull();
+      expect(emitidos.at(-1)).toEqual([{ fileId: 'f-1', mediaRole: 'IMAGE' }]);
+    });
+  });
 });
