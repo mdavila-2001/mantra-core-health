@@ -292,6 +292,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     paths: [
       'superadmin/observability',
       'superadmin/data-catalog',
+      'superadmin/portal',
       'superadmin/flows',
       'superadmin/qa-lab',
       'superadmin/web-analytics',

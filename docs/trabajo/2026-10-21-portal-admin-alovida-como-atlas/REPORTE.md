@@ -1,9 +1,9 @@
 # Reporte — Inventario y portal interno de AloVida como AtlasAdminPortal
 
-> **AVANCE: 36 / 73 — 49,3 %.**
+> **AVANCE: 41 / 73 — 56,2 %.**
 
 - Fecha: 2026-10-21 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `claude-marcelo/vigilant-bardeen-gcoocw` en `mantra-core-health` (plan y evidencia) y `mantra-core-health-api` (código); `mantra-core-health-model` sin cambios todavía
-- Peldaño de evidencia alcanzado: **H0, H1, H2 y H3 (lo hecho) → `TESTED`; H4.S1.M1–M6 → `VERIFIED` para la API contra una base PostgreSQL 16 descartable (59 pruebas de integración; no se rompió nada a propósito ni hay otros servicios, no aplica la regla 98 porque no cruza servicios)**. Ninguna parte tiene superficie visual del portal todavía: los diagramas Mermaid se parsearon en un navegador y se miró uno por tipo (árbol y máquina de estados), no se hizo prueba visual del portal (eso es H5). H5 en adelante sigue en `UNKNOWN`. H3.S1.M6 tocó una base real, pero descartable y construida con el DDL canónico: alcanza `VERIFIED` sólo para «el modelo es coherente consigo mismo».
+- Peldaño de evidencia alcanzado: **H0, H1, H2 y H3 (lo hecho) → `TESTED`; H4.S1.M1–M6 → `VERIFIED` para la API contra una base PostgreSQL 16 descartable (59 pruebas de integración; no se rompió nada a propósito ni hay otros servicios, no aplica la regla 98 porque no cruza servicios)**. Ninguna parte tiene superficie visual del portal todavía: los diagramas Mermaid se parsearon en un navegador y se miró uno por tipo (árbol y máquina de estados), no se hizo prueba visual del portal (eso es H5). H5: cinco microtareas en `TESTED` (primitivas y centro; el centro con captura en 3 anchos × 2 temas) y seis `A MEDIAS`. Nada de H5 está en `VERIFIED` todavía: no hay pantallas de sistemas, procesos, catálogo ni linaje. H3.S1.M6 tocó una base real, pero descartable y construida con el DDL canónico: alcanza `VERIFIED` sólo para «el modelo es coherente consigo mismo».
 
 ## Completado
 | ID | Qué se logró | Comando | Resultado |
@@ -39,6 +39,11 @@
 | H4.S1.M4 | `/admin/catalog` lecturas + escaneo real de `pg_catalog` + cobertura + impacto | `node --experimental-vm-modules … jest --config test/jest-integration.json test/integration/data-catalog-admin` | PASS — 59/59 — `evidencia/H4-integracion.txt` |
 | H4.S1.M5 | Escrituras: `PUT annotation` con `expectedVersion` (409), relleno 422, autor ≠ revisor (403), evidencia, revisión | mismo comando | PASS — 59/59 — `evidencia/H4-integracion.txt` |
 | H4.S1.M6 | Matriz de autorización negativa: sin token (401), rol clínico (403) y DPO sólo-lectura intentando escribir (403) en lecturas y escrituras | mismo comando | PASS — 29 casos — `evidencia/H4-authz.txt` |
+| H5.S1.M1 | Auditoría de primitivas Atlas → AloVida | Tabla en `evidencia/H5-primitivas.md` | revisión | `evidencia/H5-primitivas.md` |
+| H5.S1.M2 | `app-metric-card` | `yarn ng test … metric-card.spec.ts` | 5/5 PASS · capturas `H5-centro-*` |
+| H5.S1.M5 | Frase de confirmación en `app-dialog` | `yarn ng test … dialog.spec.ts` | PASS (3 casos nuevos) |
+| H5.S1.M6 | `app-key-value-section` | `yarn ng test … key-value-section.spec.ts` | 4/4 PASS |
+| H5.S1.M7 | `app-data-table`: encabezado «Registros · n», resumen, cabecera fija | `yarn ng test … data-table.spec.ts` | PASS, pruebas previas incluidas |
 
 ## A medias
 ### H2.S1.M3 — Máquinas de estado
@@ -77,11 +82,52 @@
 - **Qué falta exactamente:** generarlo donde esté la infraestructura y decidir HZ-08 (el baseline está desactualizado: regenerarlo toca muchos archivos ajenos).
 - **Dónde quedó:** API, commit f577fece; compila.
 
+### H5.S1.M3 — Insignias y contraste
+- **Qué anda:** mapas de etiquetas y tonos en `portal-labels.ts` sobre `app-badge`, con spec 8/8.
+- **Qué no anda:** no se midió contraste (`check-contrast.mjs`) y no hay componente de insignia propio.
+- **Qué falta exactamente:** medir contraste ≥ 4,5:1 de cada tono y decidir si los mapas bastan.
+- **Dónde quedó:** frontend, commit pendiente (ver «Rama(s)»).
+
+### H5.S1.M4 — Cajón lateral (`app-drawer-panel`)
+- **Qué anda:** 5/5 specs: abre como modal, cierra con el botón, con `Escape` y con el velo; el estado del padre queda en sincronía.
+- **Qué no anda:** la prueba no comprueba el foco atrapado ni su restauración; eso lo deja al `<dialog>` del navegador, sin verificar.
+- **Qué falta exactamente:** un spec de foco con teclado.
+- **Dónde quedó:** frontend, commit pendiente.
+
+### H5.S1.M8 — Paginación
+- **Qué anda:** el resumen «Página x de y · n registros» va en la barra de cursor (`pageSummary`), probado.
+- **Qué no anda:** `app-pagination` no se tocó. «Ir a página» no se ofrece porque un cursor no puede saltar (decisión declarada).
+- **Qué falta exactamente:** el selector de filas por página.
+- **Dónde quedó:** frontend, commit pendiente.
+
+### H5.S2.M1 — Shell del portal
+- **Qué anda:** `PORTAL_NAV` como registro único; barra lateral con grupos plegables (recuerda por sesión); migas; buscador global (pantallas en local, operaciones y tablas por la API); explicador de la vista; cajón móvil. Verificado en navegador sólo el centro, a 360, 768 y 1280, claro y oscuro (`H5-centro-*.png`, `H5-recorrido-informe.json`).
+- **Qué no anda:** sin spec del shell ni del buscador; sin Playwright del shell; `portal-shell.css` supera el presupuesto de componente en 657 B.
+- **Qué falta exactamente:** specs del shell y del buscador; captura del buscador y del cajón móvil; ajustar el CSS al presupuesto.
+- **Dónde quedó:** frontend, commit pendiente.
+
+### H5.S2.M2 — Cliente del portal
+- **Qué anda:** `portal.client.ts`, `portal.types.ts` y `portal.client.spec.ts` 7/7 contra las rutas reales del inventario.
+- **Qué no anda:** los tipos se escribieron a partir de las respuestas reales, no del OpenAPI (que no se pudo regenerar, H4.S1.M7); `check-api-contract-drift.mjs` no se actualizó. En el navegador sólo se ejercitó `version`; las demás rutas se comprobaron con `curl` contra el arnés.
+- **Qué falta exactamente:** regenerar el contrato y añadir las rutas del portal al script de deriva.
+- **Dónde quedó:** frontend, commit pendiente.
+
+### H5.S2.M3 — Centro del portal
+- **Qué anda:** cuatro cifras de la API, accesos a las áreas; probado a 360, 768 y 1280, claro y oscuro, sin desplazamiento horizontal.
+- **Qué no anda:** sin spec propio. Faltan las cifras «con PII», «sin revisar» y «hallazgos» (el inventario no las da todavía) y la «postura del catálogo».
+- **Qué falta exactamente:** decidir esas cifras con quien las mide.
+- **Dónde quedó:** frontend, commit pendiente.
+
+## Verificación de H5 contra la API real (arnés, no producto)
+- `tools/portal-dev/` en la API (sin commit): levanta los controladores reales del módulo 67 con guards y base PostgreSQL reales; sólo el login es sustituto (cuentas de desarrollo). Motivo: el `AppModule` completo exige Mongo, OpenSearch y MinIO.
+- Consola: 33 entradas en el recorrido. 21 son 404 de `/community/profiles/me` y `/notifications/me`, que el arnés no sirve (son de otros módulos); 12 son el aviso de hidratación que también aparece en el dashboard (`diagnostico-404.mjs.txt`). Ninguna viene de `/admin/portal`.
+- Red: 0 respuestas 4xx/5xx de `/admin/portal` en el recorrido.
+
 ## Pendiente
 | ID | Estado | Qué lo destraba |
 |---|---|---|
 | H2.S1.M4 | DESCARTADO | Lo decidió Marcelo el 2026-10-21 («seguí con todo el plan completo sin parar»). La revisión del piloto `scheduling` pasa a la revisión final: ver «Decisiones» |
-| H5 (26) | TODO | H5.S1–S2 pueden arrancar contra el inventario estático |
+| H5 (26) | 5 HECHO · 6 A MEDIAS · 15 TODO | H5.S3–S4 (sistemas, procesos, catálogo, linaje, esquema) no empezaron |
 | H6 (4) | TODO | todo lo anterior |
 
 ## Evidencia

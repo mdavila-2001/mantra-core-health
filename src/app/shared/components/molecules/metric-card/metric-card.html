@@ -1,0 +1,14 @@
+@if (icon(); as nombre) {
+  <span class="metric-card__tile" aria-hidden="true">
+    <app-nav-icon [name]="nombre" />
+  </span>
+}
+<span class="metric-card__body">
+  <span class="metric-card__label">{{ label() }}</span>
+  <span class="metric-card__value" [class.metric-card__value--empty]="value() === null">{{
+    shown()
+  }}</span>
+  @if (hint()) {
+    <span class="metric-card__hint">{{ hint() }}</span>
+  }
+</span>
