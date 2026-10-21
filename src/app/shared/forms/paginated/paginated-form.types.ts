@@ -176,6 +176,9 @@ export interface CampoDeFormulario {
    */
   readonly otro?: boolean;
 
+  /** Si un desplegable (select) permite filtrar u opciones con búsqueda interactiva. */
+  readonly searchable?: boolean;
+
   /**
    * Cuándo se muestra el campo: si el control `key` vale `equals` (ver
    * `visibilidad-condicional.ts`). Es lo que pone «¿cuál?» debajo de un «sí».

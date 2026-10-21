@@ -244,6 +244,9 @@ export class PaginatedForm {
    */
   readonly interactiveSteps = input(true, { transform: booleanAttribute });
 
+  /** Permite páginas explícitas con más de 4 campos cuando la vista define pasos consolidados */
+  readonly allowLargePages = input(false, { transform: booleanAttribute });
+
   /**
    * «Atrás» y «Siguiente» pasan a ser botones de sólo ícono.
    *
@@ -458,7 +461,7 @@ export class PaginatedForm {
     // en vez de por `paginarCampos`. En desarrollo se avisa fuerte: en
     // producción el fallo no es una excepción, es una pantalla con nueve campos.
     effect(() => {
-      if (!isDevMode()) return;
+      if (!isDevMode() || this.allowLargePages()) return;
       for (const pagina of this.paginas()) {
         // Los «¿cuál?» condicionales no cuentan: viajan con su pregunta.
         const principales = pagina.campos.filter(esPreguntaPrincipal).length;

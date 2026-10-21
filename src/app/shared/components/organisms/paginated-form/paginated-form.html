@@ -81,6 +81,7 @@
                     [options]="campo.options ?? []"
                     [placeholder]="campo.placeholder ?? campo.description ?? 'Seleccionar opción'"
                     [hasError]="errorDe(campo) !== ''"
+                    [searchable]="campo.searchable ?? true"
                   >
                     <!-- El desplegable dibuja su glifo igual que el campo de
                        texto, y por la misma razón: dentro del marco, para
