@@ -1,8 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { catchError, EMPTY, tap } from 'rxjs';
 
 import { CommunityClient } from '../data-access/community/community.client';
 import type { ReactionType } from '../data-access/community/community.types';
-import { OwnProfileStore } from './own-profile.store';
+import { ColaAcotada } from './cola-acotada';
 
 /** Cuántas lecturas de publicación pueden estar en vuelo a la vez. */
 const SIMULTANEAS = 3;
@@ -32,12 +33,10 @@ const SIMULTANEAS = 3;
 @Injectable({ providedIn: 'root' })
 export class PostActorStateStore {
   private readonly community = inject(CommunityClient);
-  private readonly propio = inject(OwnProfileStore);
 
   private readonly reacciones = signal<Readonly<Record<string, ReactionType | null>>>({});
   private readonly pedidas = new Set<string>();
-  private readonly cola: string[] = [];
-  private enVuelo = 0;
+  private readonly cola = new ColaAcotada(SIMULTANEAS);
 
   /** La reacción propia a una publicación; ver los tres estados arriba. Lee una señal. */
   reaccionDe(postId: string): ReactionType | null | undefined {
@@ -46,16 +45,39 @@ export class PostActorStateStore {
 
   /**
    * Pide el estado de estas publicaciones (las que no se hayan pedido ya).
-   * Se llama al cargar cada página del feed.
+   *
+   * El actor lo pasa **quien llama**, no se consulta en otro store: la tarjeta
+   * recibe su `actorProfileId` y pide en ese mismo instante, y el perfil propio
+   * puede estar todavía leyéndose. Consultarlo acá descartaba el pedido sin
+   * dejar rastro (`null` → no se pide, no se marca como pedido y nadie vuelve a
+   * llamar), y el botón quedaba apagado para siempre tras recargar.
+   *
+   * @param postIds - Las publicaciones visibles.
+   * @param actorProfileId - El perfil de quien mira.
    */
-  cargar(postIds: readonly string[]): void {
-    if (this.propio.id() === null) return;
+  cargar(postIds: readonly string[], actorProfileId: string): void {
+    const actor = actorProfileId;
+
     for (const id of postIds) {
       if (this.pedidas.has(id)) continue;
       this.pedidas.add(id);
-      this.cola.push(id);
+      this.cola.encolar(() =>
+        this.community.readPost(id, { actorProfileId: actor }).pipe(
+          tap((detalle) =>
+            // Una reacción que el usuario dejó mientras llegaba la lectura manda
+            // sobre la lectura: es más nueva.
+            this.reacciones.update((actuales) =>
+              id in actuales ? actuales : { ...actuales, [id]: detalle.reactions.actorReactionType ?? null },
+            ),
+          ),
+          // Si no se pudo, no se afirma nada: queda «no se sabe» y se puede reintentar.
+          catchError(() => {
+            this.pedidas.delete(id);
+            return EMPTY;
+          }),
+        ),
+      );
     }
-    this.avanzar();
   }
 
   /** Recuerda la reacción tras reaccionar o quitarla desde la tarjeta. */
@@ -64,40 +86,27 @@ export class PostActorStateStore {
     this.reacciones.update((actuales) => ({ ...actuales, [postId]: reaccion }));
   }
 
+  /**
+   * Deshace un {@link fijar} cuando la escritura falló: vuelve a lo que había.
+   * Si lo anterior era «no se sabe» (`undefined`) se olvida la publicación y
+   * puede volver a pedirse; afirmar `null` sería inventar que no reaccionó.
+   */
+  restaurar(postId: string, anterior: ReactionType | null | undefined): void {
+    if (anterior === undefined) {
+      this.pedidas.delete(postId);
+      this.reacciones.update((actuales) => {
+        const { [postId]: _olvidada, ...resto } = actuales;
+        return resto;
+      });
+      return;
+    }
+    this.reacciones.update((actuales) => ({ ...actuales, [postId]: anterior }));
+  }
+
   /** Se olvida todo (al cambiar de sesión). */
   olvidar(): void {
     this.pedidas.clear();
-    this.cola.length = 0;
+    this.cola.vaciar();
     this.reacciones.set({});
-  }
-
-  private avanzar(): void {
-    const actor = this.propio.id();
-    if (actor === null) return;
-
-    while (this.enVuelo < SIMULTANEAS && this.cola.length > 0) {
-      const id = this.cola.shift()!;
-      this.enVuelo += 1;
-      this.community.readPost(id, { actorProfileId: actor }).subscribe({
-        next: (detalle) => {
-          // Una reacción que el usuario dejó mientras llegaba la lectura manda
-          // sobre la lectura: es más nueva.
-          this.reacciones.update((actuales) =>
-            id in actuales ? actuales : { ...actuales, [id]: detalle.reactions.actorReactionType ?? null },
-          );
-          this.terminar();
-        },
-        // Si no se pudo, no se afirma nada: queda «no se sabe» y se puede reintentar.
-        error: () => {
-          this.pedidas.delete(id);
-          this.terminar();
-        },
-      });
-    }
-  }
-
-  private terminar(): void {
-    this.enVuelo -= 1;
-    this.avanzar();
   }
 }

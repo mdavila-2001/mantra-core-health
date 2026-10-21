@@ -1130,6 +1130,23 @@ export interface NewReaction {
   readonly reactionType: ReactionType;
 }
 
+/** A qué y de quién es una reacción: la clave, sin el tipo (hay una sola por actor y objeto). */
+export type ReactionTarget = Omit<NewReaction, 'reactionType'>;
+
+/**
+ * Lo que contesta `PUT /community/reactions`.
+ *
+ * `created` distingue una reacción **nueva** (`true`: el total sube uno) de un
+ * cambio de tipo sobre una que ya existía (`false`: el total no se mueve). La
+ * tarjeta lo usa para corregir su cuenta cuando no sabía si ya había reaccionado.
+ * Es opcional porque una API vieja podría no mandarlo.
+ */
+export interface ReactionResult {
+  readonly id: string;
+  readonly created?: boolean;
+  readonly reactionType?: ReactionType;
+}
+
 // ─── Moderación (UC-19-08/09/10) ─────────────────────────────────────────────
 
 /** Estados de la cola de moderación, tal como los filtra la pantalla. */

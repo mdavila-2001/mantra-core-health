@@ -1,14 +1,24 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
 import { CommunityClient } from '@core/data-access/community/community.client';
+import type { PostVisibility, ReactionType } from '@core/data-access/community/community.types';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 import { describeApiFailure } from '@core/http/api-failure';
+import { BookmarkStore } from '@core/social/bookmark.store';
+import { PostActorStateStore } from '@core/social/post-actor-state.store';
+import { Menu } from '@shared/components/molecules/menu/menu';
+import { MenuItem } from '@shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '@shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { PostPreferencesMenu } from '@shared/components/molecules/post-preferences-menu/post-preferences-menu';
+import { ReactionButton } from '@shared/components/molecules/reaction-button/reaction-button';
+import { reaccionOfrecida } from '@shared/components/molecules/reaction-button/reaction-button.types';
 import { ArticleBody } from '@shared/components/organisms/article-body/article-body';
+import { tiempoRelativo } from '@shared/date/tiempo-relativo';
 import { hasArticleStructure } from '@shared/text/article-markup';
+import { FollowButton } from '../../social/follow-button/follow-button';
 import { PublicPostComments } from '../public-post-comments/public-post-comments';
 import { PublicPostReactions } from '../public-post-reactions/public-post-reactions';
 
@@ -27,9 +37,14 @@ import { PublicPostReactions } from '../public-post-reactions/public-post-reacti
   imports: [
     ArticleBody,
     DatePipe,
+    FollowButton,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     PostPreferencesMenu,
     PublicPostComments,
     PublicPostReactions,
+    ReactionButton,
     RouterLink,
   ],
   templateUrl: './public-post-card.html',
@@ -75,6 +90,31 @@ export class PublicPostCard {
    */
   readonly conAcciones = input(false);
 
+  /**
+   * Quién puede leerla: `PUBLIC` (🌐), `FOLLOWERS` (👥) o `PRIVATE` (🔒).
+   *
+   * El feed público sólo trae publicaciones públicas, así que por defecto es
+   * `PUBLIC`; la pestaña «Siguiendo» puede traer las de seguidores y las
+   * propias privadas, y la cabecera lo dice con un ícono y un texto.
+   */
+  readonly visibilidad = input<PostVisibility>('PUBLIC');
+
+  /**
+   * El id de perfil del autor, si quien monta la tarjeta lo conoce (el feed
+   * personal lo trae). El feed público sólo trae el `slug`; el botón «Seguir»
+   * lo resuelve solo cuando no se lo pasan.
+   */
+  readonly autorPerfilId = input<string | null>(null);
+
+  /**
+   * Cuántas reacciones de cada tipo, si quien monta la tarjeta lo sabe.
+   *
+   * El feed público trae sólo el total (`reactionCount`); el personal trae el
+   * desglose. Con él el resumen muestra los íconos de los tipos que hay; sin
+   * él, el de la reacción propia o el de `LIKE`.
+   */
+  readonly reaccionesPorTipo = input<Readonly<Partial<Record<ReactionType, number>>> | null>(null);
+
   /* ---- menú de preferencias (AC-01-15 a AC-01-18) ------------------------ */
 
   /**
@@ -93,69 +133,191 @@ export class PublicPostCard {
   private readonly sesion = inject(SessionStore);
   private readonly community = inject(CommunityClient);
   private readonly router = inject(Router);
+  private readonly estadoDelActor = inject(PostActorStateStore);
+  private readonly marcadores = inject(BookmarkStore);
 
   private readonly menu = viewChild(PostPreferencesMenu);
 
+  /**
+   * Pide qué reaccionó la persona a esta publicación. El feed público no la
+   * conoce (no sabe quién lee), y sin este dato el botón arrancaba siempre
+   * apagado aunque el servidor tuviera la reacción guardada.
+   */
+  private readonly pedirEstadoDelActor = effect(() => {
+    const id = this.post().id;
+    const actor = this.actorProfileId();
+    untracked(() => {
+      if (actor !== null) this.estadoDelActor.cargar([id], actor);
+    });
+  });
+
   /* ---- la fila de acciones del feed ------------------------------------- */
 
-  /** Si quien mira ya recomendó esta publicación en esta visita. */
-  protected readonly recomendada = signal(false);
-  private readonly recomendando = signal(false);
-  /** Lo que la recomendación propia sumó al recuento del servidor. */
+  /**
+   * Qué reaccionó quien mira: un tipo, `null` (no reaccionó) o `undefined`
+   * (todavía no se sabe). Sin vitrina no hay reacción posible.
+   */
+  protected readonly miReaccion = computed<ReactionType | null | undefined>(() =>
+    this.actorProfileId() === null ? null : this.estadoDelActor.reaccionDe(this.post().id),
+  );
+
+  private readonly reaccionando = signal(false);
+  protected readonly ocupadoReaccionando = this.reaccionando.asReadonly();
+
+  /** Lo que las reacciones propias de esta visita sumaron al recuento del servidor. */
   private readonly deltaReacciones = signal(0);
   /** Comentarios escritos desde esta tarjeta, hasta la próxima carga. */
   private readonly deltaComentarios = signal(0);
 
   protected readonly totalReacciones = computed(
-    () => this.post().reactionCount + this.deltaReacciones(),
+    () => Math.max(0, this.post().reactionCount + this.deltaReacciones()),
   );
   protected readonly totalComentarios = computed(
     () => this.post().commentCount + this.deltaComentarios(),
   );
 
   /**
-   * «Recomendar» — la reacción `LIKE`, optimista.
-   *
-   * El servidor hace upsert sobre `(actor, objeto)` y volver a mandar el mismo
-   * tipo la retira, así que el mismo botón pone y saca. Si falla, el contador
-   * vuelve a donde estaba: un número que miente es peor que un gesto lento.
+   * Los íconos del resumen: los tipos que hay (máximo tres, de más a menos), o
+   * —cuando sólo se conoce el total— la reacción propia o `LIKE`.
    */
-  /** Por qué no se pudo recomendar (o quitar la recomendación), o `null`. */
+  protected readonly iconosDeReacciones = computed<readonly string[]>(() => {
+    const desglose = this.reaccionesPorTipo();
+    if (desglose !== null) {
+      const tipos = (Object.entries(desglose) as [ReactionType, number][])
+        .filter(([, cuantas]) => cuantas > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([tipo]) => reaccionOfrecida(tipo).emoji);
+      if (tipos.length > 0) return tipos;
+    }
+    const propia = this.miReaccion();
+    return [reaccionOfrecida(propia ?? 'LIKE').emoji];
+  });
+
+  /** Por qué no se pudo reaccionar, quitar la reacción, guardar o quitar el marcador. */
   protected readonly errorAlRecomendar = signal<string | null>(null);
 
-  protected recomendar(): void {
+  /**
+   * Reaccionar — **upsert** en el servidor: una reacción por actor y objeto.
+   *
+   * Reaccionar con otro tipo la cambia; reaccionar con el mismo la deja igual.
+   * **No hay forma de quitarla con este llamado**: para eso existe
+   * `unreact()`. (Esta tarjeta creía lo contrario —que repetir `LIKE` la
+   * retiraba— porque el simulador alternaba; la API real no lo hace, y el botón
+   * decía «ya no recomendás» con la reacción todavía puesta.)
+   *
+   * El cambio es optimista y vuelve atrás si falla. El total sube sólo si la
+   * reacción es nueva: la respuesta trae `created`, y cuando no se sabía si ya
+   * había reaccionado se corrige con ella.
+   */
+  protected reaccionar(tipo: ReactionType): void {
     const actor = this.actorProfileId();
     if (actor === null) {
       this.pedirCuenta();
       return;
     }
-    if (this.recomendando()) return;
+    if (this.reaccionando()) return;
 
-    const antes = this.recomendada();
+    const id = this.post().id;
+    const anterior = this.miReaccion();
+    const sumaba = anterior === null || anterior === undefined;
+
     this.errorAlRecomendar.set(null);
-    this.recomendando.set(true);
-    this.recomendada.set(!antes);
-    this.deltaReacciones.update((d) => d + (antes ? -1 : 1));
+    this.reaccionando.set(true);
+    this.estadoDelActor.fijar(id, tipo);
+    if (sumaba) this.deltaReacciones.update((d) => d + 1);
 
     this.community
-      .react({ actorProfileId: actor, reactableType: 'POST', reactableRefId: this.post().id, reactionType: 'LIKE' })
+      .react({ actorProfileId: actor, reactableType: 'POST', reactableRefId: id, reactionType: tipo })
       .subscribe({
-        next: () => this.recomendando.set(false),
+        next: (respuesta) => {
+          // No se sabía si ya había reaccionado, se asumió que no, y el
+          // servidor dice que ya existía: el total no tenía que subir.
+          if (anterior === undefined && respuesta.created === false) {
+            this.deltaReacciones.update((d) => d - 1);
+          }
+          this.reaccionando.set(false);
+        },
         error: (error: unknown) => {
-          this.recomendada.set(antes);
-          this.deltaReacciones.update((d) => d + (antes ? 1 : -1));
-          this.recomendando.set(false);
+          this.estadoDelActor.restaurar(id, anterior);
+          if (sumaba) this.deltaReacciones.update((d) => d - 1);
+          this.reaccionando.set(false);
           // El botón vuelve a su estado; sin este aviso, la vuelta parecía un
           // clic que no llegó a registrarse.
-          this.errorAlRecomendar.set(
-            describeApiFailure(
-              error,
-              antes ? 'No pudimos quitar su recomendación.' : 'No pudimos guardar su recomendación.',
-            ),
-          );
+          this.errorAlRecomendar.set(describeApiFailure(error, 'No pudimos guardar su reacción.'));
         },
       });
   }
+
+  /** Quitar la reacción propia (`DELETE /community/reactions`), optimista y con reversa. */
+  protected quitarReaccion(): void {
+    const actor = this.actorProfileId();
+    if (actor === null) {
+      this.pedirCuenta();
+      return;
+    }
+    const anterior = this.miReaccion();
+    if (this.reaccionando() || anterior === null || anterior === undefined) return;
+
+    const id = this.post().id;
+    this.errorAlRecomendar.set(null);
+    this.reaccionando.set(true);
+    this.estadoDelActor.fijar(id, null);
+    this.deltaReacciones.update((d) => d - 1);
+
+    this.community.unreact({ actorProfileId: actor, reactableType: 'POST', reactableRefId: id }).subscribe({
+      next: (resultado) => {
+        // Nada que quitar (otra pestaña ya lo hizo): el total no baja.
+        if (!resultado.removed) this.deltaReacciones.update((d) => d + 1);
+        this.reaccionando.set(false);
+      },
+      error: (error: unknown) => {
+        this.estadoDelActor.restaurar(id, anterior);
+        this.deltaReacciones.update((d) => d + 1);
+        this.reaccionando.set(false);
+        this.errorAlRecomendar.set(describeApiFailure(error, 'No pudimos quitar su reacción.'));
+      },
+    });
+  }
+
+  /* ---- guardar ----------------------------------------------------------- */
+
+  /** `true`/`false`, o `null` mientras no se sabe: el botón no afirma ninguna de las dos. */
+  protected readonly guardada = computed(() => this.marcadores.estaGuardada(this.post().id));
+
+  protected alternarGuardado(): void {
+    if (this.actorProfileId() === null) {
+      this.pedirCuenta();
+      return;
+    }
+    const id = this.post().id;
+    if (this.marcadores.ocupado(id)) return;
+
+    const estaba = this.guardada() === true;
+    this.errorAlRecomendar.set(null);
+    (estaba ? this.marcadores.quitar(id) : this.marcadores.guardar(id)).subscribe({
+      error: (error: unknown) =>
+        this.errorAlRecomendar.set(
+          describeApiFailure(error, estaba ? 'No pudimos quitarla de sus guardados.' : 'No pudimos guardarla.'),
+        ),
+    });
+  }
+
+  /* ---- la cabecera: cuándo y para quién ---------------------------------- */
+
+  /** «hace 2 h», «ayer»; pasada una semana, `null` y la plantilla cae a la fecha. */
+  protected readonly hace = computed(() => tiempoRelativo(this.post().publishedAt));
+
+  protected readonly textoDeVisibilidad = computed(() => {
+    switch (this.visibilidad()) {
+      case 'FOLLOWERS':
+        return 'Sólo para quienes siguen a este autor';
+      case 'PRIVATE':
+        return 'Sólo la ve quien la escribió';
+      default:
+        return 'Publicación pública';
+    }
+  });
 
   /** «Comentar» abre el hilo, que es donde está el redactor. */
   protected comentar(): void {
@@ -167,9 +329,14 @@ export class PublicPostCard {
     this.deltaComentarios.update((d) => d + 1);
   }
 
-  /** «Compartir» hace lo mismo que la entrada del menú: una sola lógica. */
+  /** «Compartir…» abre la hoja nativa del dispositivo; sin ella, copia el enlace. Una sola lógica con el menú. */
   protected compartir(): void {
     this.menu()?.compartir();
+  }
+
+  /** «Copiar enlace» a la publicación. */
+  protected copiarEnlace(): void {
+    this.menu()?.copiarEnlace();
   }
 
   /**

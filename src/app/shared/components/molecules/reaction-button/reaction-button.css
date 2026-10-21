@@ -1,0 +1,168 @@
+/* «Recomendar» con su selector de cinco reacciones. */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.reaccion {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  inline-size: 100%;
+}
+
+.reaccion__principal {
+  flex: 1;
+  min-inline-size: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  min-block-size: 48px;
+  padding: 0 var(--e2);
+  border: 0;
+  border-radius: 10px 0 0 10px;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  cursor: pointer;
+  /* Sin esto, mantener el dedo selecciona texto en vez de abrir el selector. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.reaccion__principal svg {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.reaccion__emoji {
+  flex: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.reaccion__principal:hover,
+.reaccion__mas:hover {
+  background: var(--sup-inset);
+  color: var(--tinta);
+}
+
+.reaccion__principal--activa,
+.reaccion__principal--activa:hover {
+  color: var(--petroleo);
+}
+
+.reaccion__principal[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* El chevron es chico a propósito —no es la acción principal— pero su área
+   táctil es de 44 px de alto como el resto de la fila. */
+.reaccion__mas {
+  flex: none;
+  inline-size: 28px;
+  min-block-size: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0 10px 10px 0;
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.reaccion__mas svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.reaccion__panel {
+  position: absolute;
+  inset-block-end: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  padding: var(--e1);
+  border: 1px solid var(--filete);
+  border-radius: 999px;
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-2, 0 8px 24px rgb(0 0 0 / 0.18));
+  max-inline-size: calc(100vw - 2 * var(--e4));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reaccion__panel {
+    animation: reaccion-entra 140ms ease-out;
+  }
+}
+
+@keyframes reaccion-entra {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.reaccion__opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-inline-size: 52px;
+  min-block-size: 56px;
+  padding: var(--e1) var(--e1);
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.reaccion__opcion:hover,
+.reaccion__opcion:focus-visible {
+  background: var(--sup-inset);
+  color: var(--tinta);
+}
+
+.reaccion__opcion--elegida {
+  background: var(--sup-inset);
+  color: var(--petroleo);
+}
+
+.reaccion__opcion-emoji {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reaccion__opcion:hover .reaccion__opcion-emoji {
+    transform: scale(1.18);
+    transition: transform 120ms ease-out;
+  }
+}
+
+.reaccion__opcion-rotulo {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* El foco visible siempre (95.4.7): el anillo del sistema. */
+.reaccion__principal:focus-visible,
+.reaccion__mas:focus-visible,
+.reaccion__opcion:focus-visible {
+  outline: 2px solid var(--petroleo);
+  outline-offset: -2px;
+}

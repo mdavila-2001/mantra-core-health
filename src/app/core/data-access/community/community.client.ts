@@ -67,6 +67,8 @@ import type {
   ResolveAppeal,
   NewMessageReaction,
   NewReaction,
+  ReactionResult,
+  ReactionTarget,
   NewPost,
   SocialRemoval,
   TopicPage,
@@ -324,11 +326,35 @@ export class CommunityClient {
    *
    * @param reaccion - Quién, a qué y con qué.
    */
-  react(reaccion: NewReaction): Observable<{ readonly id: string }> {
-    return this.http.put<{ readonly id: string }>(
-      this.url('/community/reactions'),
-      reaccion,
-    );
+  react(reaccion: NewReaction): Observable<ReactionResult> {
+    return this.http.put<ReactionResult>(this.url('/community/reactions'), reaccion);
+  }
+
+  /**
+   * `DELETE /community/reactions` — quita la reacción propia a una publicación
+   * o comentario.
+   *
+   * `PUT /community/reactions` es sólo upsert: cambia el tipo pero **no hay
+   * forma de dejar de reaccionar** con él, y repetir el mismo tipo lo deja
+   * igual. Para que «Recomendar» se pueda deshacer —como en cualquier red
+   * profesional— hace falta esta baja, con el mismo molde que `unfollow` y
+   * `unbookmark`: los tres campos de la clave por query y un `{ removed }` de
+   * respuesta (no es error quitar lo que no estaba).
+   *
+   * Es una ruta **nueva** de la API (`community-social.controller.ts`); contra
+   * una API que todavía no la tiene responde 404 y la pantalla vuelve atrás y lo
+   * dice, en vez de fingir que quitó la reacción.
+   *
+   * @param reaccion - Quién y a qué (el tipo no hace falta: hay una sola por actor y objeto).
+   * @returns Si esta llamada quitó una reacción.
+   */
+  unreact(reaccion: ReactionTarget): Observable<SocialRemoval> {
+    return this.http.delete<SocialRemoval>(this.url('/community/reactions'), {
+      params: new HttpParams()
+        .set('actorProfileId', reaccion.actorProfileId)
+        .set('reactableType', reaccion.reactableType)
+        .set('reactableRefId', reaccion.reactableRefId),
+    });
   }
 
   createComment(datos: NewComment): Observable<{ readonly id: string }> {

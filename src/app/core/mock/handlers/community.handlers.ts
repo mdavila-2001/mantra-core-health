@@ -28,7 +28,7 @@ import { conflict, forbidden, notFound, validation, type MockRequest, type MockR
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
-import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 import { fileContent, urlDeArchivoSimulado } from './files.handlers';
 
 /* ============================================================================
@@ -42,8 +42,61 @@ const DEMORA_DE_LECTURA_MS = 30_000;
 
 type Reaccion = 'LIKE' | 'LOVE' | 'INSIGHTFUL' | 'CELEBRATE' | 'SUPPORT';
 
-const seguimientos = new Map<string, Set<string>>();
-const marcadores = new Map<string, Set<string>>();
+/**
+ * Conjuntos de ids por actor (a quién sigue, qué guardó) que **sobreviven a la
+ * recarga** (`sessionStorage`, con el sello del build de `Coleccion`).
+ *
+ * Seguir y guardar son escrituras que la persona espera encontrar al volver:
+ * «seguir, recargar, seguir ahí» es la única comprobación que distingue un botón
+ * que guarda de uno que sólo cambia de color.
+ */
+class ConjuntosPorActor {
+  private readonly filas: Coleccion<{ readonly id: string; readonly refs: readonly string[] }>;
+
+  constructor(iniciales: Readonly<Record<string, readonly string[]>>, clave: string) {
+    this.filas = new Coleccion(
+      Object.entries(iniciales).map(([id, refs]) => ({ id, refs: [...refs] })),
+      clave,
+    );
+  }
+
+  de(actor: string): ReadonlySet<string> {
+    return new Set(this.filas.get(actor)?.refs ?? []);
+  }
+
+  agregar(actor: string, ref: string): void {
+    const fila = this.filas.get(actor);
+    if (fila === undefined) {
+      this.filas.agregar({ id: actor, refs: [ref] });
+    } else if (!fila.refs.includes(ref)) {
+      this.filas.actualizar(actor, { refs: [...fila.refs, ref] });
+    }
+  }
+
+  /** @returns Si había algo que quitar. */
+  quitar(actor: string, ref: string): boolean {
+    const fila = this.filas.get(actor);
+    if (fila === undefined || !fila.refs.includes(ref)) return false;
+    this.filas.actualizar(actor, { refs: fila.refs.filter((r) => r !== ref) });
+    return true;
+  }
+}
+
+const PACIENTE_SOCIAL = vitrinaDe(uuid('pid-paciente'))?.id ?? '';
+
+// La médica sigue a algunos colegas y la paciente a su médica.
+const seguimientos = new ConjuntosPorActor(
+  {
+    [VITRINA_MEDICA.id]: vitrinas.todos().slice(1, 6).map((v) => v.id),
+    [PACIENTE_SOCIAL]: [VITRINA_MEDICA.id, vitrinas.todos()[1]!.id],
+  },
+  'mock.comunidad.seguimientos',
+);
+const marcadores = new ConjuntosPorActor(
+  { [PACIENTE_SOCIAL]: [publicaciones.todos()[0]!.id, publicaciones.todos()[6]!.id] },
+  'mock.comunidad.marcadores',
+);
+
 const bloqueos = new Map<string, Set<string>>();
 
 function conjunto(mapa: Map<string, Set<string>>, clave: string): Set<string> {
@@ -54,13 +107,6 @@ function conjunto(mapa: Map<string, Set<string>>, clave: string): Set<string> {
   }
   return s;
 }
-
-// La médica sigue a algunos colegas y la paciente a su médica.
-for (const v of vitrinas.todos().slice(1, 6)) conjunto(seguimientos, VITRINA_MEDICA.id).add(v.id);
-conjunto(seguimientos, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(VITRINA_MEDICA.id);
-conjunto(seguimientos, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(vitrinas.todos()[1]!.id);
-conjunto(marcadores, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(publicaciones.todos()[0]!.id);
-conjunto(marcadores, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(publicaciones.todos()[6]!.id);
 
 /**
  * `true` si quien usa la maqueta encendió la respuesta automática.
@@ -386,26 +432,50 @@ export function registrarComunidad(router: MockRouter): void {
 
   // `CommunityClient.react` manda `PUT` (es un upsert sobre `(actor, objeto)`);
   // el muro con sesión y la red social pública comparten este mismo handler.
+  /**
+   * `PUT /community/reactions` — **upsert**, igual que la API real.
+   *
+   * La maqueta alternaba: repetir el mismo tipo quitaba la reacción. La API no
+   * hace eso (cambia el tipo si es otro y deja igual si es el mismo), y una
+   * pantalla que «funcionaba» así en la demo mentía contra el servidor real. Para
+   * quitar hay `DELETE /community/reactions`.
+   *
+   * Responde `created`: `true` si la reacción es nueva (el total sube), `false`
+   * si sólo cambió de tipo o ya era ésa.
+   */
   const reaccionar = (request: MockRequest) => {
     const datos = cuerpo<{ actorProfileId: string; reactableType: string; reactableRefId: string; reactionType: Reaccion }>(request);
     const p = publicaciones.get(datos.reactableRefId ?? '');
+    let created = false;
     if (p !== undefined && datos.actorProfileId !== undefined && datos.reactionType !== undefined) {
       const previa = p.reaccionDelActor[datos.actorProfileId];
-      const reacciones = { ...p.reacciones };
-      if (previa !== undefined) reacciones[previa] = Math.max(0, reacciones[previa] - 1);
-      const reaccionDelActor = { ...p.reaccionDelActor };
-      if (previa === datos.reactionType) {
-        delete reaccionDelActor[datos.actorProfileId];
-      } else {
+      if (previa !== datos.reactionType) {
+        const reacciones = { ...p.reacciones };
+        if (previa !== undefined) reacciones[previa] = Math.max(0, reacciones[previa] - 1);
         reacciones[datos.reactionType] += 1;
-        reaccionDelActor[datos.actorProfileId] = datos.reactionType;
+        created = previa === undefined;
+        publicaciones.actualizar(p.id, {
+          reacciones,
+          reaccionDelActor: { ...p.reaccionDelActor, [datos.actorProfileId]: datos.reactionType },
+        });
       }
-      publicaciones.actualizar(p.id, { reacciones, reaccionDelActor });
     }
-    return { status: 201, body: { id: nuevoId('reaction') } };
+    return { status: 200, body: { id: nuevoId('reaction'), created, reactionType: datos.reactionType } };
   };
   router.post('/community/reactions', reaccionar);
   router.put('/community/reactions', reaccionar);
+
+  /** `DELETE /community/reactions` — quitar la reacción propia. No es error quitar lo que no estaba. */
+  router.delete('/community/reactions', ({ query }) => {
+    const actor = texto(query, 'actorProfileId') ?? '';
+    const p = publicaciones.get(texto(query, 'reactableRefId') ?? '');
+    const previa = p?.reaccionDelActor[actor];
+    if (p === undefined || previa === undefined) return { removed: false };
+    const reacciones = { ...p.reacciones, [previa]: Math.max(0, p.reacciones[previa] - 1) };
+    const { [actor]: _quitada, ...resto } = p.reaccionDelActor;
+    publicaciones.actualizar(p.id, { reacciones, reaccionDelActor: resto });
+    return { removed: true };
+  });
 
   router.post('/community/comments', (request) => {
     const datos = cuerpo<{ authorProfileId: string; commentableRefId: string; bodyText: string; parentCommentId?: string; media?: { fileId: string }[] }>(request);
@@ -430,32 +500,32 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.post('/community/follows', (request) => {
     const datos = cuerpo<{ followerProfileId: string; followableRefId: string }>(request);
-    conjunto(seguimientos, datos.followerProfileId ?? '').add(datos.followableRefId ?? '');
+    seguimientos.agregar(datos.followerProfileId ?? '', datos.followableRefId ?? '');
     return { status: 201, body: { id: nuevoId('follow') } };
   });
-  router.delete('/community/follows', (request) => {
-    const datos = cuerpo<{ followerProfileId: string; followableRefId: string }>(request);
-    const removed = conjunto(seguimientos, datos.followerProfileId ?? '').delete(datos.followableRefId ?? '');
+  // La clave viaja por QUERY, igual que en la API real (`DELETE` sin cuerpo): el
+  // cliente (`unfollow`) no manda body, y leerlo de ahí dejaba la baja sin efecto.
+  router.delete('/community/follows', ({ query }) => {
+    const removed = seguimientos.quitar(texto(query, 'followerProfileId') ?? '', texto(query, 'followableRefId') ?? '');
     return { removed };
   });
   router.get('/community/follows', ({ query }) => {
     const follower = texto(query, 'followerProfileId') ?? '';
-    const items = [...conjunto(seguimientos, follower)].map((ref, i) => ({ id: uuid(`follow-${follower}-${ref}`), followerProfileId: follower, followableTypeConceptId: CONCEPTO.followProfile, followableRefId: ref, notificationLevelConceptId: null, createdAt: iso(-30 - i) }));
+    const items = [...seguimientos.de(follower)].map((ref, i) => ({ id: uuid(`follow-${follower}-${ref}`), followerProfileId: follower, followableTypeConceptId: CONCEPTO.followProfile, followableRefId: ref, notificationLevelConceptId: null, createdAt: iso(-30 - i) }));
     return paginar(items, query, 20);
   });
 
   router.post('/community/bookmarks', (request) => {
     const datos = cuerpo<{ profileId: string; bookmarkableRefId: string }>(request);
-    conjunto(marcadores, datos.profileId ?? '').add(datos.bookmarkableRefId ?? '');
+    marcadores.agregar(datos.profileId ?? '', datos.bookmarkableRefId ?? '');
     return { status: 201, body: { id: nuevoId('bookmark') } };
   });
-  router.delete('/community/bookmarks', (request) => {
-    const datos = cuerpo<{ profileId: string; bookmarkableRefId: string }>(request);
-    return { removed: conjunto(marcadores, datos.profileId ?? '').delete(datos.bookmarkableRefId ?? '') };
+  router.delete('/community/bookmarks', ({ query }) => {
+    return { removed: marcadores.quitar(texto(query, 'profileId') ?? '', texto(query, 'bookmarkableRefId') ?? '') };
   });
   router.get('/community/bookmarks', ({ query }) => {
     const profileId = texto(query, 'profileId') ?? '';
-    const items = [...conjunto(marcadores, profileId)].map((ref, i) => ({ id: uuid(`bookmark-${profileId}-${ref}`), bookmarkableTypeConceptId: CONCEPTO.bookmarkPost, bookmarkableRefId: ref, collectionName: 'Guardados', createdAt: iso(-10 - i) }));
+    const items = [...marcadores.de(profileId)].map((ref, i) => ({ id: uuid(`bookmark-${profileId}-${ref}`), bookmarkableTypeConceptId: CONCEPTO.bookmarkPost, bookmarkableRefId: ref, collectionName: 'Guardados', createdAt: iso(-10 - i) }));
     return paginar(items, query, 20);
   });
 
@@ -478,7 +548,7 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.get('/community/feed', ({ query }) => {
     const profileId = texto(query, 'profileId') ?? '';
-    const seguidos = conjunto(seguimientos, profileId);
+    const seguidos = seguimientos.de(profileId);
     const items = publicaciones
       .todos()
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))

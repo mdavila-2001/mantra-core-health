@@ -1,0 +1,57 @@
+/* «Seguir» / «Siguiendo». Pastilla compacta en la tarjeta; más grande en la ficha. */
+
+:host {
+  display: inline-flex;
+}
+
+.seguir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e1);
+  /* 44 px de área táctil sin engordar la cabecera: el relleno vertical es transparente. */
+  min-block-size: 44px;
+  padding: 0 var(--e3);
+  border: 0;
+  border-radius: var(--r-full);
+  background: none;
+  color: var(--petroleo);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.seguir svg {
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.seguir:hover {
+  background: var(--sup-inset);
+}
+
+.seguir--siguiendo {
+  color: var(--tinta-2);
+}
+
+.seguir--ficha {
+  padding: 0 var(--e5);
+  border: 1px solid var(--petroleo);
+  font-size: var(--fs-body);
+}
+
+.seguir--ficha.seguir--siguiendo {
+  border-color: var(--filete);
+}
+
+.seguir[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.seguir:focus-visible {
+  outline: 2px solid var(--petroleo);
+  outline-offset: 2px;
+}

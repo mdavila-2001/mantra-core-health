@@ -15,11 +15,14 @@ const base = (id: string, extra: Record<string, unknown> = {}) => ({
 });
 
 describe('ProfileSummaryStore', () => {
-  let community: { readProfile: ReturnType<typeof vi.fn> };
+  let community: { readProfile: ReturnType<typeof vi.fn>; readProfileBySlug: ReturnType<typeof vi.fn> };
   let directorio: { getProfile: ReturnType<typeof vi.fn> };
 
   function armar(): ProfileSummaryStore {
-    community = { readProfile: vi.fn((id: string) => of(base(id))) };
+    community = {
+      readProfile: vi.fn((id: string) => of(base(id))),
+      readProfileBySlug: vi.fn((slug: string) => of(base(`id-de-${slug}`))),
+    };
     directorio = {
       getProfile: vi.fn(() => of({ headline: 'Cardióloga · Clínica', avatarUrl: 'data:foto' })),
     };
@@ -116,6 +119,48 @@ describe('ProfileSummaryStore', () => {
 
     expect(store.resumen('yo')?.displayName).toBe('Yo');
     expect(community.readProfile).not.toHaveBeenCalled();
+  });
+
+  describe('idPorSlug — la superficie pública no expone ids', () => {
+    it('resuelve el id del perfil a partir de su slug', async () => {
+      const store = armar();
+
+      expect(store.idPorSlug('dra-rojas')).toBeUndefined();
+      await esperar();
+
+      expect(store.idPorSlug('dra-rojas')).toBe('id-de-dra-rojas');
+      expect(community.readProfileBySlug).toHaveBeenCalledWith('dra-rojas');
+    });
+
+    it('lee una sola vez por slug', async () => {
+      const store = armar();
+
+      store.idPorSlug('dra-rojas');
+      store.idPorSlug('dra-rojas');
+      await esperar();
+      store.idPorSlug('dra-rojas');
+
+      expect(community.readProfileBySlug).toHaveBeenCalledTimes(1);
+    });
+
+    it('si no se puede resolver queda en null: se intentó y no se pudo', async () => {
+      const store = armar();
+      community.readProfileBySlug.mockReturnValue(throwError(() => new Error('404')));
+
+      store.idPorSlug('nadie');
+      await esperar();
+
+      expect(store.idPorSlug('nadie')).toBeNull();
+    });
+
+    it('registrar un resumen también enseña su slug: no hace falta volver a leerlo', () => {
+      const store = armar();
+
+      store.registrar({ id: 'yo', slug: 'mi-slug', kind: 'PRACTITIONER', displayName: 'Yo', headline: null, avatarUrl: null, enlace: ['/p', 'mi-slug'] });
+
+      expect(store.idPorSlug('mi-slug')).toBe('yo');
+      expect(community.readProfileBySlug).not.toHaveBeenCalled();
+    });
   });
 
   it('enlaceDe: cada vertical tiene su prefijo y el paciente ninguno', () => {

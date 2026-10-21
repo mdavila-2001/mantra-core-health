@@ -1,6 +1,6 @@
 @let p = post();
 
-<article class="publicacion">
+<article class="publicacion" [attr.data-testid]="'post-card-' + p.id">
   <div class="publicacion__texto">
     <header class="publicacion__cabecera">
       @if (autorEnlazado()) {
@@ -42,28 +42,42 @@
                `<time datetime>` queda: lo leen el buscador y el lector de
                pantalla. -->
           <time class="publicacion__fecha" [attr.datetime]="p.publishedAt.toISOString()">
-            {{ p.publishedAt | date: 'd MMM y' }}
+            {{ hace() ?? (p.publishedAt | date: 'd MMM y') }}<span class="solo-lectores"> ({{ p.publishedAt | date: 'd MMM y, HH:mm' }})</span>
           </time>
           <span class="publicacion__punto" aria-hidden="true">·</span>
-          <svg
-            class="publicacion__globo"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.7"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
-          </svg>
-          <span class="solo-lectores">Publicación pública</span>
+          @switch (visibilidad()) {
+            @case ('FOLLOWERS') {
+              <svg class="publicacion__globo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-testid="post-visibility-followers">
+                <circle cx="9" cy="8" r="3.2" /><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" /><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.8c1.8.7 3 2.4 3 5.2" />
+              </svg>
+            }
+            @case ('PRIVATE') {
+              <svg class="publicacion__globo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-testid="post-visibility-private">
+                <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+            }
+            @default {
+              <svg class="publicacion__globo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+              </svg>
+            }
+          }
+          <span class="solo-lectores">{{ textoDeVisibilidad() }}</span>
         </p>
       </div>
 
       <!-- AC-01-15 — Las siete opciones del pedido. Es una molécula compartida
            y no marcado suelto: la misma fila aparece en el feed y en la vista
            de una publicación suelta. -->
+      @if (conAcciones()) {
+        <app-follow-button
+          class="publicacion__seguir"
+          [slug]="slug()"
+          [perfilId]="autorPerfilId()"
+          [nombre]="autorNombre()"
+        />
+      }
       <app-post-preferences-menu
         class="publicacion__preferencias"
         [postLink]="enlacePost()"
@@ -163,7 +177,11 @@
           data-testid="post-reactions"
           (click)="abrirReacciones()"
         >
-          <svg class="publicacion__pulgar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 10v11H3V10z"/><path d="M7 10l4.5-7a2.2 2.2 0 0 1 3.8 1.9L14.4 9H20a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"/></svg>
+          <span class="publicacion__iconos" aria-hidden="true">
+            @for (icono of iconosDeReacciones(); track $index) {
+              <span class="publicacion__icono">{{ icono }}</span>
+            }
+          </span>
           {{ totalReacciones() }}
           <span class="solo-lectores">
             {{ totalReacciones() === 1 ? 'reacción: ver quién reaccionó' : 'reacciones: ver quiénes reaccionaron' }}
@@ -192,21 +210,17 @@
          crearla: esconderlos dejaría a quien lee sin saber que puede
          participar. -->
     <div class="publicacion__acciones" role="group" aria-label="Acciones de la publicación">
-      <button
-        type="button"
-        class="publicacion__accion"
-        data-testid="post-action-like"
-        [class.publicacion__accion--activa]="recomendada()"
-        [attr.aria-pressed]="recomendada()"
-        (click)="recomendar()"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 10v11H3V10z"/><path d="M7 10l4.5-7a2.2 2.2 0 0 1 3.8 1.9L14.4 9H20a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"/></svg>
-        Recomendar
-      </button>
+      <app-reaction-button
+        [actual]="miReaccion()"
+        [ocupado]="ocupadoReaccionando()"
+        (elegida)="reaccionar($event)"
+        (quitada)="quitarReaccion()"
+      />
       <button
         type="button"
         class="publicacion__accion"
         data-testid="post-action-comment"
+        [attr.aria-expanded]="comentariosAbiertos()"
         (click)="comentar()"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>
@@ -216,12 +230,29 @@
         type="button"
         class="publicacion__accion"
         data-testid="post-action-share"
-        (click)="compartir()"
+        [appMenuTrigger]="menuCompartir"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M17 3l4 4-4 4"/><path d="M21 7H10a6 6 0 0 0-6 6v8"/></svg>
         Compartir
       </button>
+      <button
+        type="button"
+        class="publicacion__accion"
+        [class.publicacion__accion--activa]="guardada() === true"
+        data-testid="post-action-save"
+        [attr.aria-pressed]="guardada() === null ? null : guardada()"
+        (click)="alternarGuardado()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 4h10v16l-5-3.4L7 20z"/></svg>
+        {{ guardada() === true ? 'Guardada' : 'Guardar' }}
+      </button>
     </div>
+    <!-- El destino de «Compartir» es un menú anclado (no clipea ni empuja): las
+         dos formas de compartir que existen sin un servicio de mensajes aparte. -->
+    <app-menu #menuCompartir>
+      <app-menu-item data-testid="post-share-copy" (selected)="copiarEnlace()">Copiar enlace</app-menu-item>
+      <app-menu-item data-testid="post-share-native" (selected)="compartir()">Compartir…</app-menu-item>
+    </app-menu>
     @if (errorAlRecomendar(); as mensaje) {
       <p class="publicacion__fallo" role="alert" data-testid="post-action-like-error">{{ mensaje }}</p>
     }

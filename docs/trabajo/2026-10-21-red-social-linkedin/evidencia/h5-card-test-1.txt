@@ -1,0 +1,131 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                                 | Names                                                                            |  Raw size
+chunk-MMD4JZIG.js                                                                   | -                                                                                | 183.20 kB | 
+chunk-TLYUJ2KI.js                                                                   | -                                                                                | 182.25 kB | 
+styles.css                                                                          | styles                                                                           | 180.89 kB | 
+chunk-TI7QPMDI.js                                                                   | -                                                                                | 151.23 kB | 
+chunk-AGKEXQV5.js                                                                   | -                                                                                |  95.63 kB | 
+chunk-JOSJJF2A.js                                                                   | -                                                                                |  56.54 kB | 
+chunk-7XSVRMLY.js                                                                   | -                                                                                |  52.38 kB | 
+chunk-XDNPRMVA.js                                                                   | -                                                                                |  47.53 kB | 
+chunk-PMLI5FPN.js                                                                   | -                                                                                |  30.13 kB | 
+chunk-SPLCP6VU.js                                                                   | -                                                                                |  29.34 kB | 
+chunk-COTNQEMI.js                                                                   | -                                                                                |  27.83 kB | 
+chunk-KDBTAQCQ.js                                                                   | -                                                                                |  22.75 kB | 
+chunk-GL7747YK.js                                                                   | -                                                                                |  21.88 kB | 
+spec-app-features-public-profile-public-post-comments-public-post-comments.js       | spec-app-features-public-profile-public-post-comments-public-post-comments       |  17.54 kB | 
+spec-app-features-public-profile-public-profile.js                                  | spec-app-features-public-profile-public-profile                                  |  17.41 kB | 
+spec-app-features-public-profile-public-post-card-public-post-card.js               | spec-app-features-public-profile-public-post-card-public-post-card               |  12.57 kB | 
+chunk-TP57O2TE.js                                                                   | -                                                                                |  12.55 kB | 
+chunk-VCZDDXUW.js                                                                   | -                                                                                |  11.06 kB | 
+chunk-XJJWULEY.js                                                                   | -                                                                                |  10.29 kB | 
+spec-app-features-public-profile-public-profile-card-public-profile-card.js         | spec-app-features-public-profile-public-profile-card-public-profile-card         |  10.15 kB | 
+spec-app-features-public-profile-public-post-reactions-public-post-reactions.js     | spec-app-features-public-profile-public-post-reactions-public-post-reactions     |   9.64 kB | 
+spec-app-shared-components-molecules-post-preferences-menu-post-preferences-menu.js | spec-app-shared-components-molecules-post-preferences-menu-post-preferences-menu |   9.58 kB | 
+spec-app-features-public-profile-public-profile-card-public-profile-card.tabs.js    | spec-app-features-public-profile-public-profile-card-public-profile-card.tabs    |   7.22 kB | 
+chunk-FCT4QDSB.js                                                                   | -                                                                                |   6.57 kB | 
+spec-app-core-social-follow.store.js                                                | spec-app-core-social-follow.store                                                |   6.47 kB | 
+spec-app-features-public-profile-public-profile-reviews-public-profile-reviews.js   | spec-app-features-public-profile-public-profile-reviews-public-profile-reviews   |   6.33 kB | 
+chunk-G7HHKBRL.js                                                                   | -                                                                                |   5.83 kB | 
+spec-app-features-public-profile-rate-encounter-dialog-rate-encounter-dialog.js     | spec-app-features-public-profile-rate-encounter-dialog-rate-encounter-dialog     |   5.71 kB | 
+spec-app-core-social-profile-summary.store.js                                       | spec-app-core-social-profile-summary.store                                       |   5.64 kB | 
+chunk-HZXEPMDQ.js                                                                   | -                                                                                |   5.27 kB | 
+chunk-5USI6K57.js                                                                   | -                                                                                |   4.61 kB | 
+chunk-VHIVV5EO.js                                                                   | -                                                                                |   4.15 kB | 
+spec-app-core-social-bookmark.store.js                                              | spec-app-core-social-bookmark.store                                              |   3.94 kB | 
+spec-app-core-social-post-actor-state.store.js                                      | spec-app-core-social-post-actor-state.store                                      |   3.93 kB | 
+chunk-7EIHB2UL.js                                                                   | -                                                                                |   3.59 kB | 
+chunk-NMOTPOVA.js                                                                   | -                                                                                |   2.98 kB | 
+spec-app-features-public-profile-public-profile.resolver.js                         | spec-app-features-public-profile-public-profile.resolver                         |   2.96 kB | 
+spec-app-core-social-own-profile.store.js                                           | spec-app-core-social-own-profile.store                                           |   2.46 kB | 
+spec-app-features-public-profile-public-profile-pager-public-profile-pager.js       | spec-app-features-public-profile-public-profile-pager-public-profile-pager       |   2.22 kB | 
+chunk-ZJVBUBDB.js                                                                   | -                                                                                |   2.15 kB | 
+chunk-IMT4YERA.js                                                                   | -                                                                                |   1.87 kB | 
+spec-app-core-social-cola-acotada.js                                                | spec-app-core-social-cola-acotada                                                |   1.76 kB | 
+init-testbed.js                                                                     | init-testbed                                                                     |   1.21 kB | 
+setup-test-setup.js                                                                 | setup-test-setup                                                                 | 984 bytes | 
+vitest-mock-patch.js                                                                | vitest-mock-patch                                                                | 974 bytes | 
+chunk-IBTU3FWD.js                                                                   | -                                                                                | 966 bytes | 
+chunk-DLPBMKRA.js                                                                   | -                                                                                | 369 bytes | 
+
+                                                                                    | Initial total                                                                    |   1.28 MB
+
+Application bundle generation complete. [103.123 seconds] - 2026-10-21T05:34:01.557Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/public-profile/public-post-card/public-post-card.spec.ts [2m([22m[2m16 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 595[2mms[22m[39m
+[31m     [31m×[31m vuelve el botón a su estado y dice por qué, con el código de soporte[39m[32m 50[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/public-profile/public-post-card/public-post-card.spec.ts[2m > [22mPublicPostCard — «Recomendar» que falla[2m > [22mvuelve el botón a su estado y dice por qué, con el código de soporte
+[31m[1mAssertionError[22m: expected null to be 'false' // Object.is equality[39m
+
+- Expected:
+"false"
+
++ Received:
+null
+
+[36m [2m❯[22m src/app/features/public-profile/public-post-card/public-post-card.spec.ts:[2m275:98[22m[39m
+    [90m273|[39m     [35mawait[39m fixture[33m.[39m[34mwhenStable[39m()[33m;[39m
+    [90m274|[39m
+    [90m275|[39m     expect(root.querySelector('[data-testid="post-action-like"]')?.get…
+    [90m   |[39m                                                                                                  [31m^[39m
+    [90m276|[39m     expect(root.querySelector('[data-testid="post-action-like-error"]'…
+    [90m277|[39m       'No pudimos guardar su recomendación. (Código de soporte: corr-l…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m16 passed[39m[22m[90m (17)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m179 passed[39m[22m[90m (180)[39m
+[2m   Start at [22m 05:34:02
+[2m   Duration [22m 15.18s[2m (transform 3.23s, setup 616ms, import 4.91s, tests 7.87s, environment 1.33s)[22m
+

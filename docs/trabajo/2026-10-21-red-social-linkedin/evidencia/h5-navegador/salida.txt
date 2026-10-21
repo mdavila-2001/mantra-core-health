@@ -1,0 +1,18 @@
+✔ /feed redirige a /posts — http://127.0.0.1:4311/posts
+✔ el botón arranca en «Recomendar» — Recomendar
+✔ el selector muestra 5 reacciones
+✔ elegir «Celebro» cambia el botón — Celebro
+✔ tras recargar la reacción propia sigue siendo «Celebro» — Celebro
+✔ tocar el botón quita la reacción
+✔ Guardar pasa a «Guardada»
+✔ Seguir/Siguiendo alterna con un toque — Siguiendo → Seguir
+✔ y vuelve con otro toque
+✔ tras recargar sigue «Guardada»
+✔ tras recargar el follow queda como se dejó — Seguir
+✔ el comentario aparece
+✔ «Responder» abre el redactor en línea sin cambiar de URL
+✔ la respuesta aparece bajo el comentario
+(CSP inline-script aparte: 2 en http://127.0.0.1:4311/auth)
+✔ sin errores de página ni de consola (salvo CSP)
+
+15/15 en verde

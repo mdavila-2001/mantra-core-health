@@ -117,6 +117,11 @@ export class PostPreferencesMenu {
     this.run('share');
   }
 
+  /** Copia el enlace de la publicación al portapapeles y lo avisa. Para botones de la tarjeta que no son este menú. */
+  copiarEnlace(): void {
+    this.run('copyLink');
+  }
+
   protected activate(entry: PostPreferenceEntry): void {
     if (entry.access === 'session' && !this.hasSession()) {
       void this.goToLogin();

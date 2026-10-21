@@ -1,17 +1,13 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { CommunityClient } from '../data-access/community/community.client';
-import { OwnProfileStore } from './own-profile.store';
 import { PostActorStateStore } from './post-actor-state.store';
 
 describe('PostActorStateStore', () => {
-  let id: ReturnType<typeof signal<string | null>>;
   let community: { readPost: ReturnType<typeof vi.fn> };
 
-  function armar(actor: string | null = 'yo'): PostActorStateStore {
-    id = signal(actor);
+  function armar(): PostActorStateStore {
     community = {
       readPost: vi.fn((postId: string) =>
         of({ id: postId, reactions: { actorReactionType: postId === 'p1' ? 'LOVE' : undefined } }),
@@ -20,7 +16,6 @@ describe('PostActorStateStore', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: CommunityClient, useValue: community },
-        { provide: OwnProfileStore, useValue: { id } },
       ],
     });
     return TestBed.inject(PostActorStateStore);
@@ -29,7 +24,7 @@ describe('PostActorStateStore', () => {
   it('lee la reacción propia de cada publicación con el perfil como actor', () => {
     const store = armar();
 
-    store.cargar(['p1', 'p2']);
+    store.cargar(['p1', 'p2'], 'yo');
 
     expect(community.readPost).toHaveBeenCalledWith('p1', { actorProfileId: 'yo' });
     expect(store.reaccionDe('p1')).toBe('LOVE');
@@ -46,42 +41,53 @@ describe('PostActorStateStore', () => {
   it('no vuelve a pedir lo ya pedido', () => {
     const store = armar();
 
-    store.cargar(['p1']);
-    store.cargar(['p1', 'p2']);
+    store.cargar(['p1'], 'yo');
+    store.cargar(['p1', 'p2'], 'yo');
 
     expect(community.readPost).toHaveBeenCalledTimes(2);
   });
 
-  it('sin perfil propio no pide nada', () => {
-    const store = armar(null);
+  it('usa el actor que le pasan aunque el perfil propio todavía se esté leyendo', () => {
+    // Era el defecto: el store consultaba otro store que seguía en `null`, descartaba
+    // el pedido sin marcarlo y nadie volvía a pedir.
+    const store = armar();
 
-    store.cargar(['p1']);
+    store.cargar(['p1'], 'actor-que-llega-por-input');
 
-    expect(community.readPost).not.toHaveBeenCalled();
+    expect(community.readPost).toHaveBeenCalledWith('p1', { actorProfileId: 'actor-que-llega-por-input' });
+    expect(store.reaccionDe('p1')).toBe('LOVE');
   });
 
   it('lo que el usuario fijó mientras llegaba la lectura manda sobre la lectura', () => {
     const store = armar();
-    community.readPost.mockReturnValue({
-      subscribe: (o: { next: (v: unknown) => void }) => {
-        store.fijar('p1', 'CELEBRATE');
-        o.next({ reactions: { actorReactionType: 'LOVE' } });
-      },
-    });
+    const lectura = new Subject<unknown>();
+    community.readPost.mockReturnValue(lectura);
 
-    store.cargar(['p1']);
+    store.cargar(['p1'], 'yo');
+    store.fijar('p1', 'CELEBRATE');
+    lectura.next({ reactions: { actorReactionType: 'LOVE' } });
+    lectura.complete();
 
     expect(store.reaccionDe('p1')).toBe('CELEBRATE');
+  });
+
+  it('no pide más de tres lecturas a la vez', () => {
+    const store = armar();
+    community.readPost.mockReturnValue(new Subject());
+
+    store.cargar(['a', 'b', 'c', 'd', 'e'], 'yo');
+
+    expect(community.readPost).toHaveBeenCalledTimes(3);
   });
 
   it('si la lectura falla no afirma nada y permite reintentar', () => {
     const store = armar();
     community.readPost.mockReturnValue(throwError(() => new Error('500')));
-    store.cargar(['p1']);
+    store.cargar(['p1'], 'yo');
     expect(store.reaccionDe('p1')).toBeUndefined();
 
     community.readPost.mockReturnValue(of({ reactions: { actorReactionType: 'LIKE' } }));
-    store.cargar(['p1']);
+    store.cargar(['p1'], 'yo');
 
     expect(store.reaccionDe('p1')).toBe('LIKE');
   });
@@ -94,9 +100,27 @@ describe('PostActorStateStore', () => {
     expect(store.reaccionDe('p1')).toBeNull();
   });
 
+  it('restaurar vuelve a lo anterior; si era «no se sabe», lo olvida en vez de afirmar null', () => {
+    const store = armar();
+    store.fijar('p1', 'LOVE');
+
+    store.restaurar('p1', 'LIKE');
+    expect(store.reaccionDe('p1')).toBe('LIKE');
+
+    store.restaurar('p1', null);
+    expect(store.reaccionDe('p1')).toBeNull();
+
+    store.restaurar('p1', undefined);
+    expect(store.reaccionDe('p1')).toBeUndefined();
+
+    // Y como se olvidó, puede volver a pedirse.
+    store.cargar(['p1'], 'yo');
+    expect(community.readPost).toHaveBeenCalledWith('p1', { actorProfileId: 'yo' });
+  });
+
   it('olvidar borra todo (cambio de sesión)', () => {
     const store = armar();
-    store.cargar(['p1']);
+    store.cargar(['p1'], 'yo');
 
     store.olvidar();
 

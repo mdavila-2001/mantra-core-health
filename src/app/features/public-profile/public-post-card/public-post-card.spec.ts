@@ -2,13 +2,17 @@ import { readFileSync } from 'node:fs';
 
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { CommunityClient } from '@core/data-access/community/community.client';
+import type { PostVisibility } from '@core/data-access/community/community.types';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
+import { SessionStore } from '@core/auth/session.store';
+import { OwnProfileStore } from '@core/social/own-profile.store';
+import { PostActorStateStore } from '@core/social/post-actor-state.store';
 
 import { PublicPostCard } from './public-post-card';
 
@@ -230,52 +234,381 @@ describe('PublicPostCard', () => {
   imports: [PublicPostCard],
   template: `
     <app-public-post-card
-      [post]="post"
-      slug="dra-lopez"
+      [post]="post()"
+      [slug]="slug()"
       autorNombre="Dra. López"
       autorIniciales="DL"
       [autorEnlazado]="true"
       [conAcciones]="true"
-      actorProfileId="pp-1"
+      [visibilidad]="visibilidad()"
+      [actorProfileId]="actor()"
     />
   `,
 })
 class HostConAcciones {
-  readonly post = unPost([]);
+  readonly post = signal<PublicPostSummary>(unPost([]));
+  readonly slug = signal('dra-lopez');
+  readonly visibilidad = signal<PostVisibility>('PUBLIC');
+  readonly actor = signal<string | null>('pp-1');
 }
 
-describe('PublicPostCard — «Recomendar» que falla', () => {
-  it('vuelve el botón a su estado y dice por qué, con el código de soporte', async () => {
+/** Un cliente de comunidad con todo lo que la tarjeta y sus stores le piden. */
+function clienteDe(extra: Record<string, unknown> = {}): Record<string, ReturnType<typeof vi.fn>> {
+  return {
+    react: vi.fn(() => of({ id: 'r1', created: true })),
+    unreact: vi.fn(() => of({ removed: true })),
+    readPost: vi.fn(() => of({ reactions: {} })),
+    bookmark: vi.fn(() => of({ id: 'b1' })),
+    unbookmark: vi.fn(() => of({ removed: true })),
+    listBookmarks: vi.fn(() => of({ items: [], count: 0, limit: 100, nextCursor: null })),
+    listFollows: vi.fn(() => of({ items: [], count: 0, limit: 100, nextCursor: null })),
+    follow: vi.fn(() => of({ id: 'f1' })),
+    unfollow: vi.fn(() => of({ removed: true })),
+    readProfileBySlug: vi.fn(() => of({ id: 'perfil-lopez' })),
+    ...extra,
+  } as Record<string, ReturnType<typeof vi.fn>>;
+}
+
+describe('PublicPostCard — la fila de acciones de una red profesional', () => {
+  let fixture: ComponentFixture<HostConAcciones>;
+  let cliente: Record<string, ReturnType<typeof vi.fn>>;
+
+  async function montar(opciones: {
+    reaccionPrevia?: 'LIKE' | 'LOVE' | null | undefined;
+    cliente?: Record<string, unknown>;
+    autenticado?: boolean;
+    miSlug?: string;
+  } = {}): Promise<void> {
+    cliente = clienteDe(opciones.cliente);
     await TestBed.configureTestingModule({
       imports: [HostConAcciones],
       providers: [
-        provideRouter([{ path: 'auth', component: RutaVacia }]),
+        provideRouter([
+          { path: 'auth', component: RutaVacia },
+          { path: 'my-account/profile/edit', component: RutaVacia },
+        ]),
+        { provide: CommunityClient, useValue: cliente },
+        { provide: SessionStore, useValue: { isAuthenticated: signal(opciones.autenticado ?? true) } },
         {
-          provide: CommunityClient,
+          provide: OwnProfileStore,
           useValue: {
-            react: () =>
-              throwError(
-                () =>
-                  new HttpErrorResponse({
-                    status: 500,
-                    error: { code: 'INTERNAL', message: 'x', correlationId: 'corr-like', timestamp: '', path: '' },
-                  }),
-              ),
+            id: signal('pp-1'),
+            perfil: signal({ id: 'pp-1', slug: opciones.miSlug ?? 'yo' }),
           },
         },
       ],
     }).compileComponents();
-    const fixture = TestBed.createComponent(HostConAcciones);
-    await fixture.whenStable();
-    const root = fixture.nativeElement as HTMLElement;
 
-    root.querySelector<HTMLButtonElement>('[data-testid="post-action-like"]')?.click();
-    await fixture.whenStable();
+    // Lo que ya se sabe de la reacción propia, antes de dibujar: la tarjeta no
+    // afirma «presionado» ni «apagado» mientras no lo sabe.
+    if (opciones.reaccionPrevia !== undefined) {
+      TestBed.inject(PostActorStateStore).fijar('post-1', opciones.reaccionPrevia);
+    }
 
-    expect(root.querySelector('[data-testid="post-action-like"]')?.getAttribute('aria-pressed')).toBe('false');
-    expect(root.querySelector('[data-testid="post-action-like-error"]')?.textContent).toBe(
-      'No pudimos guardar su recomendación. (Código de soporte: corr-like)',
-    );
-    fixture.destroy();
+    fixture = TestBed.createComponent(HostConAcciones);
+    await fixture.whenStable();
+  }
+
+  afterEach(() => fixture?.destroy());
+
+  const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const q = (testId: string): HTMLElement | null => root().querySelector(`[data-testid="${testId}"]`);
+  const clic = async (testId: string): Promise<void> => {
+    q(testId)?.click();
+    await fixture.whenStable();
+  };
+
+  it('el artículo se identifica como `post-card-<id>` para los recorridos', async () => {
+    await montar({ reaccionPrevia: null });
+
+    expect(q('post-card-post-1')).not.toBeNull();
+  });
+
+  describe('reaccionar', () => {
+    it('un toque simple deja «Recomendar» (LIKE) con los cuatro campos del contrato y suma uno', async () => {
+      await montar({ reaccionPrevia: null });
+
+      await clic('post-action-like');
+
+      expect(cliente['react']).toHaveBeenCalledWith({
+        actorProfileId: 'pp-1',
+        reactableType: 'POST',
+        reactableRefId: 'post-1',
+        reactionType: 'LIKE',
+      });
+      expect(q('post-reactions')?.textContent).toContain('5');
+      expect(q('post-action-like')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('el selector ofrece las cinco reacciones y elegir otra manda ese tipo', async () => {
+      await montar({ reaccionPrevia: null });
+
+      await clic('reaction-picker-toggle');
+      const opciones = ['LIKE', 'LOVE', 'INSIGHTFUL', 'CELEBRATE', 'SUPPORT'].map((t) => q(`reaction-${t}`));
+      expect(opciones.every((o) => o !== null)).toBe(true);
+
+      await clic('reaction-CELEBRATE');
+
+      expect(cliente['react']).toHaveBeenCalledWith(expect.objectContaining({ reactionType: 'CELEBRATE' }));
+      expect(q('post-action-like-label')?.textContent?.trim()).toBe('Celebro');
+    });
+
+    it('cambiar de tipo NO vuelve a sumar: el servidor hace upsert, una reacción por persona', async () => {
+      await montar({ reaccionPrevia: 'LIKE', cliente: { react: vi.fn(() => of({ id: 'r1', created: false })) } });
+
+      await clic('reaction-picker-toggle');
+      await clic('reaction-LOVE');
+
+      expect(q('post-reactions')?.textContent).toContain('4');
+      expect(q('post-action-like-label')?.textContent?.trim()).toBe('Me encanta');
+    });
+
+    it('si no se sabía qué había reaccionado y el servidor dice que ya existía, corrige el total', async () => {
+      // La lectura del estado propio no contesta: sigue sin saberse qué había reaccionado.
+      await montar({
+        reaccionPrevia: undefined,
+        cliente: { readPost: vi.fn(() => new Subject()), react: vi.fn(() => of({ id: 'r1', created: false })) },
+      });
+
+      await clic('post-action-like');
+
+      // Se sumó de entrada (4 → 5) y la respuesta (`created: false`) lo devuelve a 4.
+      expect(q('post-reactions')?.textContent).toContain('4');
+    });
+
+    it('el total sube de inmediato, antes de que el servidor conteste', async () => {
+      const respuesta = new Subject<{ id: string; created: boolean }>();
+      await montar({ reaccionPrevia: null, cliente: { react: vi.fn(() => respuesta) } });
+
+      await clic('post-action-like');
+
+      expect(q('post-reactions')?.textContent).toContain('5');
+      respuesta.next({ id: 'r1', created: true });
+      respuesta.complete();
+    });
+
+    it('sin doble envío: con una reacción en vuelo un segundo toque no manda otra', async () => {
+      await montar({ reaccionPrevia: null, cliente: { react: vi.fn(() => new Subject()) } });
+
+      await clic('post-action-like');
+      await clic('post-action-like');
+
+      expect(cliente['react']).toHaveBeenCalledTimes(1);
+    });
+
+    it('si el servidor falla, el botón y el total vuelven atrás y se dice por qué con el código de soporte', async () => {
+      await montar({
+        reaccionPrevia: null,
+        cliente: {
+          react: vi.fn(() =>
+            throwError(
+              () =>
+                new HttpErrorResponse({
+                  status: 500,
+                  error: { code: 'INTERNAL', message: 'x', correlationId: 'corr-like', timestamp: '', path: '' },
+                }),
+            ),
+          ),
+        },
+      });
+
+      await clic('post-action-like');
+
+      // Estado anterior conocido (no reaccionó): vuelve a «apagado», no a «no se sabe».
+      expect(q('post-action-like')?.getAttribute('aria-pressed')).toBe('false');
+      expect(q('post-reactions')?.textContent).toContain('4');
+      expect(q('post-action-like-error')?.textContent).toBe(
+        'No pudimos guardar su reacción. (Código de soporte: corr-like)',
+      );
+    });
+
+    it('si no se sabía el estado anterior, tras el fallo sigue sin afirmarse nada (sin aria-pressed)', async () => {
+      await montar({
+        reaccionPrevia: undefined,
+        cliente: {
+          readPost: vi.fn(() => new Subject()),
+          react: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))),
+        },
+      });
+      expect(q('post-action-like')?.hasAttribute('aria-pressed')).toBe(false);
+
+      await clic('post-action-like');
+
+      expect(q('post-action-like')?.hasAttribute('aria-pressed')).toBe(false);
+    });
+  });
+
+  describe('quitar la reacción', () => {
+    it('tocar «Recomendar» cuando ya reaccionó la QUITA con DELETE, no vuelve a mandar el upsert', async () => {
+      await montar({ reaccionPrevia: 'LIKE' });
+      expect(q('post-action-like')?.getAttribute('aria-pressed')).toBe('true');
+
+      await clic('post-action-like');
+
+      expect(cliente['unreact']).toHaveBeenCalledWith({
+        actorProfileId: 'pp-1',
+        reactableType: 'POST',
+        reactableRefId: 'post-1',
+      });
+      expect(cliente['react']).not.toHaveBeenCalled();
+      expect(q('post-reactions')?.textContent).toContain('3');
+      expect(q('post-action-like')?.getAttribute('aria-pressed')).toBe('false');
+      expect(q('post-action-like-label')?.textContent?.trim()).toBe('Recomendar');
+    });
+
+    it('si quitarla falla, la reacción vuelve y se avisa', async () => {
+      await montar({
+        reaccionPrevia: 'LOVE',
+        cliente: { unreact: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 404 }))) },
+      });
+
+      await clic('post-action-like');
+
+      expect(q('post-action-like')?.getAttribute('aria-pressed')).toBe('true');
+      expect(q('post-action-like-label')?.textContent?.trim()).toBe('Me encanta');
+      expect(q('post-reactions')?.textContent).toContain('4');
+      expect(q('post-action-like-error')?.textContent).toContain('No pudimos quitar su reacción.');
+    });
+
+    it('si no había nada que quitar (otra pestaña ya lo hizo), el total no baja de más', async () => {
+      await montar({ reaccionPrevia: 'LIKE', cliente: { unreact: vi.fn(() => of({ removed: false })) } });
+
+      await clic('post-action-like');
+
+      expect(q('post-reactions')?.textContent).toContain('4');
+    });
+  });
+
+  describe('guardar', () => {
+    it('guarda la publicación con el marcador de tipo POST y pasa a «Guardada»', async () => {
+      await montar({ reaccionPrevia: null });
+      expect(q('post-action-save')?.textContent).toContain('Guardar');
+
+      await clic('post-action-save');
+
+      expect(cliente['bookmark']).toHaveBeenCalledWith({
+        profileId: 'pp-1',
+        bookmarkableType: 'POST',
+        bookmarkableRefId: 'post-1',
+      });
+      expect(q('post-action-save')?.textContent).toContain('Guardada');
+      expect(q('post-action-save')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('volver a tocarlo la quita de los guardados', async () => {
+      await montar({
+        reaccionPrevia: null,
+        cliente: {
+          listBookmarks: vi.fn(() =>
+            of({ items: [{ id: 'm1', bookmarkableRefId: 'post-1' }], count: 1, limit: 100, nextCursor: null }),
+          ),
+        },
+      });
+      expect(q('post-action-save')?.textContent).toContain('Guardada');
+
+      await clic('post-action-save');
+
+      expect(cliente['unbookmark']).toHaveBeenCalledWith({
+        profileId: 'pp-1',
+        bookmarkableType: 'POST',
+        bookmarkableRefId: 'post-1',
+      });
+      expect(q('post-action-save')?.textContent).toContain('Guardar');
+    });
+
+    it('si falla guarda nada y lo dice', async () => {
+      await montar({
+        reaccionPrevia: null,
+        cliente: { bookmark: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))) },
+      });
+
+      await clic('post-action-save');
+
+      expect(q('post-action-save')?.textContent).toContain('Guardar');
+      expect(q('post-action-like-error')?.textContent).toContain('No pudimos guardarla.');
+    });
+  });
+
+  describe('sin sesión o sin vitrina (AC-01-17)', () => {
+    it('sin sesión, Recomendar y Guardar mandan a entrar con retorno y no llaman a la API', async () => {
+      await montar({ autenticado: false });
+      fixture.componentInstance.actor.set(null);
+      await fixture.whenStable();
+
+      await clic('post-action-like');
+
+      expect(cliente['react']).not.toHaveBeenCalled();
+      expect(TestBed.inject(Router).url).toContain('/auth');
+    });
+
+    it('con sesión pero sin vitrina pública, Guardar lleva a crearla', async () => {
+      await montar();
+      fixture.componentInstance.actor.set(null);
+      await fixture.whenStable();
+
+      await clic('post-action-save');
+
+      expect(cliente['bookmark']).not.toHaveBeenCalled();
+      expect(TestBed.inject(Router).url).toBe('/my-account/profile/edit');
+    });
+  });
+
+  describe('la cabecera', () => {
+    it('dice «hace N horas» y no una fecha seca', async () => {
+      await montar({ reaccionPrevia: null });
+      fixture.componentInstance.post.set({
+        ...unPost([]),
+        publishedAt: new Date(Date.now() - 2 * 3600 * 1000),
+      });
+      await fixture.whenStable();
+
+      expect(root().querySelector('time')?.textContent).toContain('hace 2 h');
+      // El lector de pantalla igual recibe la fecha completa.
+      expect(root().querySelector('time .solo-lectores')?.textContent).toMatch(/\d{4}/);
+    });
+
+    it('pasada una semana vuelve a la fecha corta', async () => {
+      await montar({ reaccionPrevia: null });
+
+      expect(root().querySelector('time')?.textContent).toContain('2026');
+    });
+
+    it('un post de seguidores lo dice con ícono y con texto para el lector de pantalla', async () => {
+      await montar({ reaccionPrevia: null });
+      fixture.componentInstance.visibilidad.set('FOLLOWERS');
+      await fixture.whenStable();
+
+      expect(q('post-visibility-followers')).not.toBeNull();
+      expect(root().querySelector('.publicacion__meta')?.textContent).toContain('Sólo para quienes siguen a este autor');
+    });
+
+    it('un post privado lo dice también', async () => {
+      await montar({ reaccionPrevia: null });
+      fixture.componentInstance.visibilidad.set('PRIVATE');
+      await fixture.whenStable();
+
+      expect(q('post-visibility-private')).not.toBeNull();
+    });
+
+    it('ofrece «Seguir» al autor, y no en su propia publicación', async () => {
+      await montar({ reaccionPrevia: null });
+      expect(q('follow-button')).not.toBeNull();
+      fixture.destroy();
+      TestBed.resetTestingModule();
+
+      await montar({ reaccionPrevia: null, miSlug: 'dra-lopez' });
+
+      expect(q('follow-button')).toBeNull();
+    });
+  });
+
+  describe('compartir', () => {
+    it('abre un menú con «Copiar enlace» y «Compartir…»', async () => {
+      await montar({ reaccionPrevia: null });
+
+      const disparador = q('post-action-share');
+
+      expect(disparador?.getAttribute('aria-haspopup')).toBeTruthy();
+    });
   });
 });

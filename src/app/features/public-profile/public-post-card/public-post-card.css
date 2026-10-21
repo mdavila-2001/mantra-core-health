@@ -98,7 +98,12 @@
 }
 
 .publicacion__meta time {
-  text-transform: capitalize;
+  /* Sólo la primera letra («Hace 5 d»): `capitalize` ponía «Hace 5 D» y «14 Oct». */
+  text-transform: none;
+}
+
+.publicacion__meta time::first-letter {
+  text-transform: uppercase;
 }
 
 .publicacion__punto {
@@ -183,6 +188,17 @@
   align-self: flex-start;
 }
 
+/* El botón «Seguir» lleva el empuje a la derecha; el menú queda pegado a él. */
+.publicacion__seguir {
+  flex: none;
+  margin-inline-start: auto;
+  align-self: flex-start;
+}
+
+.publicacion__seguir + .publicacion__preferencias {
+  margin-inline-start: 0;
+}
+
 .publicacion__resumen {
   padding: var(--e2) var(--e4);
   border-block-start: 1px solid var(--filete-2);
@@ -206,6 +222,27 @@
   flex: none;
   inline-size: 14px;
   block-size: 14px;
+}
+
+/* Los íconos de los tipos de reacción presentes, solapados como en LinkedIn. */
+.publicacion__iconos {
+  display: inline-flex;
+}
+
+.publicacion__icono {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: var(--r-full);
+  background: var(--sup-inset);
+  border: 1px solid var(--sup-tarjeta);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.publicacion__icono + .publicacion__icono {
+  margin-inline-start: -6px;
 }
 
 /* Los contadores son botones y tienen que verse como el texto que eran: lo que
@@ -297,7 +334,8 @@
 
 .publicacion__acciones {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* «Recomendar» lleva además el chevron del selector: se queda con más ancho. */
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
   gap: var(--e1);
   padding: var(--e1) var(--e2);
   border-block-start: 1px solid var(--filete-2);

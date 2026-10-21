@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { catchError, map, type Observable, of, switchMap } from 'rxjs';
+import { catchError, map, type Observable, of, switchMap, tap } from 'rxjs';
 
 import { CommunityClient } from '../data-access/community/community.client';
 import type { PublicProfileKind } from '../data-access/community/community.types';
@@ -8,6 +8,7 @@ import {
   PUBLIC_PROFILE_PREFIX,
   type PublicProfileDetail,
 } from '../data-access/public-directory/public-directory.types';
+import { ColaAcotada } from './cola-acotada';
 
 /**
  * Lo mínimo para pintar a una persona en una lista: nombre, titular, foto y a
@@ -48,7 +49,7 @@ const SIMULTANEAS = 4;
  * se muestra lo que ya se sabe (nombre sin foto): degradar es mejor que perder
  * a la persona de la lista.
  *
- * Las lecturas se encolan de a {@link SIMULTANEAS}: abrir «Mi red» con
+ * Las lecturas se encolan de a {@link SIMULTANEAS} (`ColaAcotada`): abrir «Mi red» con
  * cincuenta seguidos no puede disparar cien peticiones en el mismo instante.
  */
 @Injectable({ providedIn: 'root' })
@@ -60,8 +61,12 @@ export class ProfileSummaryStore {
   private readonly resumenes = signal<Readonly<Record<string, ResumenDePerfil | null>>>({});
 
   private readonly pedidos = new Set<string>();
-  private readonly cola: string[] = [];
-  private enVuelo = 0;
+
+  /** `slug` → id del perfil; `null` si no se pudo resolver, `undefined` si no se pidió. */
+  private readonly idsPorSlug = signal<Readonly<Record<string, string | null>>>({});
+  private readonly slugsPedidos = new Set<string>();
+
+  private readonly cola = new ColaAcotada(SIMULTANEAS);
 
   /**
    * El resumen de un perfil. Lee una señal: en una plantilla o un `computed`
@@ -73,7 +78,42 @@ export class ProfileSummaryStore {
   resumen(perfilId: string): ResumenDePerfil | null | undefined {
     const conocido = this.resumenes()[perfilId];
     if (conocido === undefined && !this.pedidos.has(perfilId)) {
-      this.pedir(perfilId);
+      this.pedidos.add(perfilId);
+      // Se difiere: `resumen()` se llama dentro de una plantilla y escribir una
+      // señal durante el render es un error de Angular.
+      queueMicrotask(() =>
+        this.cola.encolar(() =>
+          this.leer(perfilId).pipe(
+            tap((resumen) => this.resumenes.update((actuales) => ({ ...actuales, [perfilId]: resumen }))),
+          ),
+        ),
+      );
+    }
+    return conocido;
+  }
+
+  /**
+   * El id del perfil que tiene este `slug`.
+   *
+   * La superficie pública identifica a las personas por `slug` y **no expone
+   * ids internos**; pero seguir, guardar o escribirle a alguien exige su id.
+   * Se resuelve con `GET /community/profiles/by-slug/:slug`, una vez por slug.
+   *
+   * @returns El id; `null` si se intentó y no se pudo; `undefined` mientras se resuelve.
+   */
+  idPorSlug(slug: string): string | null | undefined {
+    const conocido = this.idsPorSlug()[slug];
+    if (conocido === undefined && !this.slugsPedidos.has(slug)) {
+      this.slugsPedidos.add(slug);
+      queueMicrotask(() =>
+        this.cola.encolar(() =>
+          this.community.readProfileBySlug(slug).pipe(
+            map((perfil) => perfil.id),
+            catchError(() => of(null)),
+            tap((id) => this.idsPorSlug.update((actuales) => ({ ...actuales, [slug]: id }))),
+          ),
+        ),
+      );
     }
     return conocido;
   }
@@ -82,26 +122,7 @@ export class ProfileSummaryStore {
   registrar(resumen: ResumenDePerfil): void {
     this.pedidos.add(resumen.id);
     this.resumenes.update((actuales) => ({ ...actuales, [resumen.id]: resumen }));
-  }
-
-  private pedir(perfilId: string): void {
-    this.pedidos.add(perfilId);
-    this.cola.push(perfilId);
-    // Se difiere: `resumen()` se llama dentro de una plantilla y escribir una
-    // señal durante el render es un error de Angular.
-    queueMicrotask(() => this.avanzar());
-  }
-
-  private avanzar(): void {
-    while (this.enVuelo < SIMULTANEAS && this.cola.length > 0) {
-      const id = this.cola.shift()!;
-      this.enVuelo += 1;
-      this.leer(id).subscribe((resumen) => {
-        this.resumenes.update((actuales) => ({ ...actuales, [id]: resumen }));
-        this.enVuelo -= 1;
-        this.avanzar();
-      });
-    }
+    this.idsPorSlug.update((actuales) => ({ ...actuales, [resumen.slug]: resumen.id }));
   }
 
   private leer(perfilId: string): Observable<ResumenDePerfil | null> {

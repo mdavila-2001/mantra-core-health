@@ -427,6 +427,9 @@ export const publicaciones = new Coleccion<PublicacionSimulada>(
       ...(tags.includes('encuesta') ? { pollId: uuid('poll-1') } : {}),
     };
   }),
+  // Sobrevive a la recarga: publicar, reaccionar y volver y encontrarlo ahí es
+  // la comprobación que hace que «publicado» signifique algo.
+  'mock.comunidad.publicaciones',
 );
 
 export interface ComentarioSimulado {
@@ -465,6 +468,8 @@ export const comentarios = new Coleccion<ComentarioSimulado>(
       : [{ id: uuid(`reply-${post.id}`), postId: post.id, authorProfileId: post.authorPublicProfileId, bodyText: 'Sí, y con más razón. Ante la duda, consulten.', parentCommentId: raiz[0].id, createdAt: iso(-i * 2, 14) }];
     return [...raiz, ...respuesta];
   }),
+  // Lo que se comenta o responde también sobrevive a la recarga.
+  'mock.comunidad.comentarios',
 );
 
 /* ---- reseñas ------------------------------------------------------------- */
