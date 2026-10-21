@@ -248,7 +248,11 @@ export class FeedPublicaciones {
     });
   });
 
-  /** Al cerrar sesión se olvida lo personal: nada del usuario anterior queda en pantalla. */
+  /**
+   * Al cerrar sesión se olvida el feed personal: nada del usuario anterior
+   * queda en pantalla. (Las reacciones propias las olvida su store, que es el
+   * dueño: esta pantalla no tiene por qué estar montada cuando cambia la sesión.)
+   */
   private readonly olvidarAlSalir = effect(() => {
     if (this.actor() === null) {
       untracked(() => {
@@ -256,7 +260,6 @@ export class FeedPublicaciones {
         this.cursorSiguiendo.set(null);
         this.cargadoSiguiendo.set(false);
         this.falloSiguiendo.set(false);
-        this.estadoDelActor.olvidar();
       });
     }
   });

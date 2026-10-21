@@ -4,60 +4,14 @@
     <p class="caption">Las publicaciones que marcó para leer después.</p>
   </header>
 
-  @switch (estado()) {
-    @case ('datos') {
-      <ul class="guardados__lista">
-        @for (f of filas(); track f.id) {
-          <li>
-            @switch (f.tipo) {
-              @case ('datos') {
-                @if (denunciando() === f.id) {
-                  <app-report-post [postId]="f.id" (reportado)="cerrarDenuncia()" (cancelado)="cerrarDenuncia()" />
-                } @else {
-                  <app-public-post-card
-                    [post]="f.vista!.post"
-                    [slug]="f.vista!.slug"
-                    [autorNombre]="f.vista!.nombre"
-                    [autorHeadline]="f.vista!.headline"
-                    [autorAvatar]="f.vista!.avatar"
-                    [autorIniciales]="f.vista!.iniciales"
-                    [autorPerfilId]="f.vista!.perfilId"
-                    [visibilidad]="f.vista!.visibilidad"
-                    [reaccionesPorTipo]="f.vista!.reaccionesPorTipo"
-                    [autorEnlazado]="f.vista!.slug !== ''"
-                    [actorProfileId]="actor()"
-                    [conAcciones]="true"
-                    (pedidoDeDenuncia)="abrirDenuncia($event)"
-                    (pedidoDeOcultar)="pedirOcultar()"
-                    (pedidoDeContacto)="pedirContacto($event)"
-                  />
-                }
-              }
-              @case ('perdida') {
-                <div class="guardados__perdida" data-testid="guardado-no-disponible">
-                  <p>Esta publicación ya no está disponible. Puede haberla borrado su autor.</p>
-                  <button type="button" class="guardados__quitar" (click)="quitar(f.id)">Quitar de guardados</button>
-                </div>
-              }
-              @default {
-                <div class="guardados__perdida" aria-busy="true">
-                  <span class="app-skeleton guardados__esqueleto"></span>
-                  <span class="solo-lectores">Cargando publicación…</span>
-                </div>
-              }
-            }
-          </li>
-        }
-      </ul>
-    }
-    @case ('carga') {
-      <div class="guardados__perdida" aria-live="polite" aria-busy="true">
-        <span class="solo-lectores">Cargando sus guardados…</span>
-        <span class="app-skeleton guardados__esqueleto"></span>
-        <span class="app-skeleton guardados__esqueleto"></span>
-      </div>
-    }
-    @case ('vacio') {
+  <app-view-state-host [state]="estado()" (retry)="reintentar()">
+    <div vsh-skeleton class="guardados__perdida" aria-busy="true">
+      <span class="solo-lectores">Cargando sus guardados…</span>
+      <span class="app-skeleton guardados__esqueleto"></span>
+      <span class="app-skeleton guardados__esqueleto"></span>
+    </div>
+
+    <div vsh-empty>
       @if (sinVitrina()) {
         <app-empty-state
           title="Cree su vitrina pública para guardar publicaciones"
@@ -75,15 +29,50 @@
           <a empty-actions class="guardados__quitar" routerLink="/posts">Ver publicaciones</a>
         </app-empty-state>
       }
-    }
-    @case ('error') {
-      <app-empty-state
-        title="No pudimos leer sus guardados"
-        description="Sus publicaciones guardadas no se perdieron. Vuelva a intentarlo."
-        variant="error"
-      >
-        <button empty-actions type="button" class="guardados__quitar" (click)="reintentar()">Reintentar</button>
-      </app-empty-state>
-    }
-  }
+    </div>
+
+    <ul class="guardados__lista">
+      @for (f of filas(); track f.id) {
+        <li>
+          @switch (f.tipo) {
+            @case ('datos') {
+              @if (denunciando() === f.id) {
+                <app-report-post [postId]="f.id" (reportado)="cerrarDenuncia()" (cancelado)="cerrarDenuncia()" />
+              } @else {
+                <app-public-post-card
+                  [post]="f.vista!.post"
+                  [slug]="f.vista!.slug"
+                  [autorNombre]="f.vista!.nombre"
+                  [autorHeadline]="f.vista!.headline"
+                  [autorAvatar]="f.vista!.avatar"
+                  [autorIniciales]="f.vista!.iniciales"
+                  [autorPerfilId]="f.vista!.perfilId"
+                  [visibilidad]="f.vista!.visibilidad"
+                  [reaccionesPorTipo]="f.vista!.reaccionesPorTipo"
+                  [autorEnlazado]="f.vista!.slug !== ''"
+                  [actorProfileId]="actor()"
+                  [conAcciones]="true"
+                  (pedidoDeDenuncia)="abrirDenuncia($event)"
+                  (pedidoDeOcultar)="pedirOcultar()"
+                  (pedidoDeContacto)="pedirContacto($event)"
+                />
+              }
+            }
+            @case ('perdida') {
+              <div class="guardados__perdida" data-testid="guardado-no-disponible">
+                <p>Esta publicación ya no está disponible. Puede haberla borrado su autor.</p>
+                <button type="button" class="guardados__quitar" (click)="quitar(f.id)">Quitar de guardados</button>
+              </div>
+            }
+            @default {
+              <div class="guardados__perdida" aria-busy="true">
+                <span class="app-skeleton guardados__esqueleto"></span>
+                <span class="solo-lectores">Cargando publicación…</span>
+              </div>
+            }
+          }
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
 </div>

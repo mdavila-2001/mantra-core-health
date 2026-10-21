@@ -52,7 +52,15 @@ describe('Network — «Mi red»', () => {
         provideRouter([]),
         {
           provide: FollowStore,
-          useValue: { seguidos, total: () => seguidos().length, cargado, fallo, recargar, sigue: (id: string) => seguidos().includes(id) },
+          useValue: {
+            seguidos,
+            total: () => seguidos().length,
+            cargado,
+            fallo,
+            error: () => (fallo() ? new Error('lectura fallida') : null),
+            recargar,
+            sigue: (id: string) => seguidos().includes(id),
+          },
         },
         {
           provide: OwnProfileStore,
@@ -134,10 +142,11 @@ describe('Network — «Mi red»', () => {
     expect(fixture.nativeElement.querySelector('[aria-busy="true"]')).not.toBeNull();
   });
 
-  it('error: ofrece reintentar y vuelve a leer', () => {
+  it('error (S9): lo dice con código de soporte, ofrece reintentar y vuelve a leer', () => {
     fallo.set(true);
     montar();
 
+    expect(fixture.nativeElement.textContent).toContain('Código de soporte');
     const boton = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(
       (b) => b.textContent?.trim() === 'Reintentar',
     )!;
@@ -145,14 +154,18 @@ describe('Network — «Mi red»', () => {
     expect(recargar).toHaveBeenCalledTimes(1);
   });
 
-  it('un perfil que no se pudo leer sigue apareciendo, para poder dejar de seguirlo', () => {
-    seguidos.set(['z']);
+  it('un id que no se pudo leer como perfil no se lista ni ofrece una baja equivocada: se cuenta aparte', () => {
+    seguidos.set(['a', 'z']);
+    resumenes.set('a', resumen('a', 'Dra. Ana'));
     resumenes.set('z', null);
     montar();
 
-    const fila = q('mi-red-seguido')!;
-    expect(fila.textContent).toContain('Perfil que no pudimos leer');
-    expect(fila.querySelector('[data-testid="boton-seguir"]')).not.toBeNull();
+    const filas = (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="mi-red-seguido"]');
+    expect(filas.length).toBe(1);
+    expect(filas[0]!.textContent).toContain('Dra. Ana');
+    expect(q('mi-red-no-mostrables')!.textContent).toContain('1 seguimiento que no podemos mostrar como perfil');
+    // La pestaña cuenta los perfiles que muestra.
+    expect((fixture.nativeElement as HTMLElement).querySelector('[role="tab"]')!.textContent).toContain('Siguiendo (1)');
   });
 
   it('las sugerencias se piden al abrir la pestaña, no antes, y sin la propia vitrina', () => {
@@ -182,7 +195,7 @@ describe('Network — «Mi red»', () => {
       .mockReturnValueOnce(of({ items: [{ slug: 'x', displayName: 'Xavier', headline: null, avatarUrl: null }] }));
     montar();
     pestanaSugerencias();
-    expect(fixture.nativeElement.textContent).toContain('No pudimos leer las sugerencias');
+    expect(fixture.nativeElement.textContent).toContain('Código de soporte');
 
     Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
       .find((b) => b.textContent?.trim() === 'Reintentar')!

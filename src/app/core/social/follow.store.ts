@@ -48,6 +48,9 @@ export class FollowStore {
 
   readonly fallo = signal(false);
 
+  /** El error de la última lectura, para que la pantalla muestre el código de soporte (M34 S9). */
+  readonly error = signal<unknown>(null);
+
   /** A cuántos sigue. */
   readonly total = computed(() => this.ids().size);
 
@@ -56,6 +59,14 @@ export class FollowStore {
 
   private lectura = 0;
 
+  /**
+   * Lo que la persona cambió **mientras** se leía el conjunto (id → `true` alta,
+   * `false` baja). Al terminar la lectura manda lo leído más estos cambios: así
+   * no se pierde un gesto hecho a mitad de lectura, y un id que el servidor ya
+   * no tiene (una baja hecha en otra pestaña) sale de verdad.
+   */
+  private cambiosEnLectura = new Map<string, boolean>();
+
   private readonly alCambiarElPerfil = effect(() => {
     const id = this.propio.id();
     untracked(() => (id === null ? this.olvidar() : this.cargar(id)));
@@ -63,6 +74,16 @@ export class FollowStore {
 
   /** ¿Sigue a este perfil? Lee una señal: se puede usar en `computed` y en plantillas. */
   sigue(perfilId: string): boolean {
+    return this.ids().has(perfilId);
+  }
+
+  /**
+   * Lo mismo que {@link sigue} pero en tres estados: `null` mientras no se leyó
+   * o si la lectura falló. Con `null` nadie puede afirmar «no lo sigue»: puede
+   * que sí. Es la regla de `BookmarkStore.estaGuardada`.
+   */
+  estado(perfilId: string): boolean | null {
+    if (!this.cargado() || this.fallo()) return null;
     return this.ids().has(perfilId);
   }
 
@@ -136,8 +157,10 @@ export class FollowStore {
 
   private cargar(actor: string): void {
     const esta = ++this.lectura;
+    this.cambiosEnLectura.clear();
     this.cargado.set(false);
     this.fallo.set(false);
+    this.error.set(null);
     this.leerPagina(actor, esta, undefined, new Set(), 0);
   }
 
@@ -159,13 +182,20 @@ export class FollowStore {
             this.leerPagina(actor, esta, pagina.nextCursor, acumulado, paginas + 1);
             return;
           }
-          // Lo que se siguió mientras se leía no se pierde: se une al leído.
-          this.ids.update((actuales) => new Set([...acumulado, ...actuales]));
+          // Manda lo leído; lo que la persona cambió mientras se leía, encima.
+          const leidos = new Set(acumulado);
+          for (const [id, alta] of this.cambiosEnLectura) {
+            if (alta) leidos.add(id);
+            else leidos.delete(id);
+          }
+          this.cambiosEnLectura.clear();
+          this.ids.set(leidos);
           this.cargado.set(true);
         },
-        error: () => {
+        error: (error: unknown) => {
           if (esta !== this.lectura) return;
           this.fallo.set(true);
+          this.error.set(error);
           this.cargado.set(true);
         },
       });
@@ -177,13 +207,16 @@ export class FollowStore {
     this.enCurso.set(new Set());
     this.cargado.set(false);
     this.fallo.set(false);
+    this.error.set(null);
   }
 
   private agregar(perfilId: string): void {
+    this.cambiosEnLectura.set(perfilId, true);
     this.ids.update((actuales) => new Set(actuales).add(perfilId));
   }
 
   private quitar(perfilId: string): void {
+    this.cambiosEnLectura.set(perfilId, false);
     this.ids.update((actuales) => {
       const siguiente = new Set(actuales);
       siguiente.delete(perfilId);

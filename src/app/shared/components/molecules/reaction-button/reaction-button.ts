@@ -51,6 +51,9 @@ const PULSACION_LARGA_MS = 500;
  * `actual` tiene tres valores: un tipo (ya reaccionó), `null` (no reaccionó) y
  * `undefined` (todavía no se sabe). En el último el botón no afirma «presionado».
  */
+/** Numera los paneles para que cada `aria-controls` apunte al suyo. */
+let siguientePanel = 0;
+
 @Component({
   selector: 'app-reaction-button',
   templateUrl: './reaction-button.html',
@@ -96,6 +99,17 @@ export class ReactionButton implements OnDestroy {
 
   protected readonly presionado = computed(() => this.propia() !== null);
 
+  /**
+   * Con sesión pero sin saber todavía la reacción propia (`undefined`), el toque
+   * corto no sabe si es «recomendar» o «quitar»: emitir LIKE pisaba un LOVE que
+   * ya existía (el servidor hace upsert). Mientras tanto el toque corto espera;
+   * elegir una reacción concreta del selector sí vale, porque es explícita.
+   */
+  protected readonly desconocida = computed(() => this.actual() === undefined);
+
+  /** Id del panel, para `aria-controls` del botón que lo abre. */
+  protected readonly idDelPanel = `reacciones-${++siguientePanel}`;
+
   private temporizador: ReturnType<typeof setTimeout> | null = null;
   private suprimirClic = false;
 
@@ -111,7 +125,7 @@ export class ReactionButton implements OnDestroy {
       this.suprimirClic = false;
       return;
     }
-    if (this.ocupado()) return;
+    if (this.ocupado() || this.desconocida()) return;
 
     this.cerrar(false);
     if (this.propia() !== null) {

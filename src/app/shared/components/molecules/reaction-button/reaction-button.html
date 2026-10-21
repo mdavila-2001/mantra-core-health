@@ -9,7 +9,8 @@
     data-testid="post-action-like"
     [class.reaccion__principal--activa]="presionado()"
     [attr.aria-pressed]="actual() === undefined ? null : presionado()"
-    [attr.aria-disabled]="ocupado() ? 'true' : null"
+    [attr.aria-disabled]="ocupado() || desconocida() ? 'true' : null"
+    [attr.aria-busy]="desconocida() ? 'true' : null"
     [attr.aria-haspopup]="'true'"
     (click)="alPrincipal()"
     (pointerdown)="alPulsar($event)"
@@ -32,13 +33,14 @@
     data-testid="reaction-picker-toggle"
     aria-label="Elegir otra reacción"
     [attr.aria-expanded]="abierto()"
+    [attr.aria-controls]="abierto() ? idDelPanel : null"
     (click)="alAlternar()"
   >
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 15 6-6 6 6"/></svg>
   </button>
 
   @if (abierto()) {
-    <div class="reaccion__panel" role="group" aria-label="Reacciones" data-testid="reaction-picker">
+    <div class="reaccion__panel" [id]="idDelPanel" role="group" aria-label="Reacciones" data-testid="reaction-picker">
       @for (reaccion of reacciones; track reaccion.tipo; let i = $index) {
         <button
           #opcion

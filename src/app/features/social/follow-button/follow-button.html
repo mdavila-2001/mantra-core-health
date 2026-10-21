@@ -6,7 +6,7 @@
     [class.seguir--pastilla]="variante() === 'pastilla'"
     [class.seguir--siguiendo]="sigue()"
     data-testid="follow-button"
-    [attr.aria-pressed]="sigue()"
+    [attr.aria-pressed]="presionado()"
     [attr.aria-label]="nombreAccesible()"
     [attr.aria-disabled]="!listo() || ocupado() || pendiente() ? 'true' : null"
     [attr.aria-busy]="pendiente() || ocupado() ? 'true' : null"

@@ -281,6 +281,9 @@ export class PublicPostComments implements OnInit {
     this.directorio.postComments(this.postId(), { limit: TAMANO_DE_PAGINA }).subscribe({
       next: (pagina) => {
         this.comentarios.set(pagina.items);
+        // El `replyCount` releído ya incluye las respuestas de esta sesión:
+        // sumarlas otra vez contaba dos veces.
+        this.respuestasNuevas.set({});
         this.cursor.set(pagina.nextCursor);
         this.cargando.set(false);
       },

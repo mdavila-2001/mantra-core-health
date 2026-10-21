@@ -14,7 +14,7 @@
 .lista {
   list-style: none;
   margin: 0;
-  padding: var(--e2) var(--e4) var(--e4);
+  padding: 0;
   display: grid;
   gap: 0;
   /* Una columna en teléfono; dos desde 780 px, tres desde 1120 px: lo que evita las
@@ -96,10 +96,22 @@
 }
 
 .red-propia__estado {
+  /* El aire lo pone el anfitrión de estados: así la lista, el vacío y el error
+     (S9, con su código de soporte) quedan igual de separados del borde. */
+  display: block;
+  padding: var(--e2) var(--e4) var(--e4);
+}
+
+.red-propia__esqueletos {
   display: flex;
   flex-direction: column;
   gap: var(--e3);
-  padding: var(--e4);
+  padding-block-start: var(--e2);
+}
+
+.red-propia__nota {
+  margin: var(--e3) 0 0;
+  color: var(--tinta-2);
 }
 
 .red-propia__esqueleto {

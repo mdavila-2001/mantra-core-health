@@ -1,4 +1,12 @@
-<form class="redactor" [attr.data-testid]="testidBase()" (submit)="enviar($event)">
+<form
+  #formulario
+  class="redactor"
+  [attr.data-testid]="testidBase()"
+  (submit)="enviar($event)"
+  (focusin)="alEntrar()"
+  (focusout)="alSalir($event)"
+  (pointerdown)="alPulsar()"
+>
   <label class="solo-lectores" [attr.for]="testidBase() + '-' + postId() + '-' + (parentCommentId() ?? 'raiz')">
     {{ parentCommentId() === null ? 'Su comentario' : 'Su respuesta' }}
   </label>
@@ -13,8 +21,8 @@
       [value]="borrador()"
       [disabled]="enviando()"
       (input)="escribir($event)"
-      (focus)="tomarFoco()"
-      (blur)="soltarFoco()"
+      [attr.aria-invalid]="fallo() ? 'true' : null"
+      [attr.aria-describedby]="fallo() ? idDelError() : null"
       (keydown.control.enter)="enviar($event)"
       (keydown.meta.enter)="enviar($event)"
     ></textarea>
@@ -54,7 +62,7 @@
   }
 
   @if (fallo(); as motivo) {
-    <p class="redactor__fallo" role="alert" [attr.data-testid]="testidBase() + '-error'">
+    <p class="redactor__fallo" role="alert" [id]="idDelError()" [attr.data-testid]="testidBase() + '-error'">
       {{ motivo }} Lo escrito sigue ahí: vuelva a intentarlo.
     </p>
   }

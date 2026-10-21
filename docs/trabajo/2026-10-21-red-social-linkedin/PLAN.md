@@ -334,6 +334,20 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 | H9.S1.M8 | `REPORTE.md` con AVANCE en la primera línea, Completado / A medias / Pendiente, No cubierto, Desvíos, Riesgos, Decisiones | existe | — | TODO |
 | H9.S1.M9 | PR contra `mockup` con la plantilla del repo; PR aparte en `mantra-core-health-api` para H2 (orden de despliegue: API primero; el front tolera `author` ausente por H2.S1.M4) | dos PR abiertos y enlazados | URLs en el reporte | TODO |
 
+### H9.S2 — Correcciones de la revisión independiente (`frontend-reviewer`, veredicto RECHAZADO, 21/10)
+
+| ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
+|---|---|---|---|---|
+| H9.S2.M1 | `PostActorStateStore` es dueño de su ciclo: se vacía al cambiar el perfil propio y descarta lecturas de otro actor (HIGH: la reacción de A se veía en la sesión de B) | cambiar de actor deja todo en «no se sabe» y relee | spec del store con cambio de sesión + lectura en vuelo descartada | TODO |
+| H9.S2.M2 | Hilo: el conteo de respuestas nuevas se reinicia al releer (no cuenta dos veces) | responder y después comentar sigue diciendo «1 respuesta» | spec de `public-post-comments` | TODO |
+| H9.S2.M3 | Redactor de comentarios: el selector de adjuntos no se desmonta al tocarlo con el campo vacío; error vinculado con `aria-describedby`; spec propio | se puede adjuntar sin escribir antes | spec nuevo `comment-composer.spec.ts` | TODO |
+| H9.S2.M4 | Mi red no ofrece «dejar de seguir» como perfil sobre un id que no es perfil | filas solo para perfiles leídos; lo demás se cuenta aparte | spec de `network` | TODO |
+| H9.S2.M5 | Seguir con la lectura fallida no afirma «Seguir» (tres estados, como Guardar) | con `fallo()` el botón no dice «no lo sigue» | spec de `follow-button` | TODO |
+| H9.S2.M6 | Recomendar no emite mientras la reacción propia se desconoce (no pisa un LOVE con LIKE) | toque con `undefined` no emite | spec de `reaction-button` | TODO |
+| H9.S2.M7 | Mi red y Guardados con `ViewState<T>` (contrato M34) en vez de estados a mano | los estados salen de `ViewState` | specs de las dos pantallas | TODO |
+| H9.S2.M8 | Guardados: quitar avisa si falla; la pantalla relee al abrirse | fallo visible; relectura al entrar | spec de `saved` | TODO |
+| H9.S2.M9 | Cota a las lecturas por tarjeta (N+1 del estado del actor y del Seguir por slug) | registrado con medida; cota aplicada | conteo de peticiones por página en navegador | TODO |
+
 ---
 
 ## H10 — Rediseño estético e integral, guiado por `marketingskills` (pedido del 21/10/2026)
@@ -419,11 +433,11 @@ Pedido literal: «añadas al plan que hagamos un rediseño ultra estético e int
 | H6 | 8 |
 | H7 | 3 |
 | H8 | 4 |
-| H9 | 9 |
+| H9 | 18 |
 | H10 | 21 |
-| **Total** | **89** |
+| **Total** | **98** |
 
-Avance se informa como `HECHO / 89` (68 del flujo social + 21 del rediseño, agregado el 21/10/2026). Los estados por microtarea de H0–H9 se recalculan en el `REPORTE.md` con su evidencia; esta tabla no se adelanta a ella.
+Avance se informa como `HECHO / 98` (68 del flujo social + 9 correcciones de la revisión + 21 del rediseño, agregados el 21/10/2026). Los estados por microtarea de H0–H9 se recalculan en el `REPORTE.md` con su evidencia; esta tabla no se adelanta a ella.
 
 ---
 

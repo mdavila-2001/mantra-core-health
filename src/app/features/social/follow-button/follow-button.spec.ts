@@ -31,6 +31,9 @@ describe('FollowButton', () => {
     sigue: (id: string) => boolean;
     ocupado: () => boolean;
     cargado: ReturnType<typeof signal<boolean>>;
+    fallo: ReturnType<typeof signal<boolean>>;
+    estado: (id: string) => boolean | null;
+    recargar: ReturnType<typeof vi.fn>;
     seguir: ReturnType<typeof vi.fn>;
     dejarDeSeguir: ReturnType<typeof vi.fn>;
   };
@@ -43,6 +46,9 @@ describe('FollowButton', () => {
       sigue: (id) => sigue().has(id),
       ocupado: () => false,
       cargado: signal(opciones.cargado ?? true),
+      fallo: signal(false),
+      estado: (id) => (!seguimientos.cargado() || seguimientos.fallo() ? null : sigue().has(id)),
+      recargar: vi.fn(),
       seguir: vi.fn((id: string) => {
         sigue.update((s) => new Set(s).add(id));
         return of(undefined);
@@ -104,7 +110,8 @@ describe('FollowButton', () => {
     expect(seguimientos.seguir).toHaveBeenCalledWith('perfil-lopez');
     expect(boton()?.textContent).toContain('Siguiendo');
     expect(boton()?.getAttribute('aria-pressed')).toBe('true');
-    expect(boton()?.getAttribute('aria-label')).toBe('Dejar de seguir a Dra. López');
+    // El nombre no cambia: el estado lo dice `aria-pressed` (no se anuncia dos veces).
+    expect(boton()?.getAttribute('aria-label')).toBe('Seguir a Dra. López');
   });
 
   it('volver a tocarlo deja de seguir', async () => {
@@ -205,5 +212,18 @@ describe('FollowButton', () => {
     expect(seguimientos.seguir).not.toHaveBeenCalled();
     expect(avisos.error).toHaveBeenCalledWith('No pudimos identificar este perfil. Reintente.');
     expect(boton()?.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('si no se pudo leer a quién sigue, no afirma «no lo sigue» ni manda nada: avisa y relee', async () => {
+    await montar();
+    seguimientos.fallo.set(true);
+    await fixture.whenStable();
+
+    expect(boton()?.hasAttribute('aria-pressed')).toBe(false);
+    await clic();
+
+    expect(seguimientos.seguir).not.toHaveBeenCalled();
+    expect(avisos.error).toHaveBeenCalledWith('No pudimos saber si ya sigue a este perfil. Vuelva a intentarlo en unos segundos.');
+    expect(seguimientos.recargar).toHaveBeenCalledTimes(1);
   });
 });

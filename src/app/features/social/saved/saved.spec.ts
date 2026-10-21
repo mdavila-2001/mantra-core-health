@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, type Observable } from 'rxjs';
+
+import { ToastService } from '@shared/components/molecules/toast/toast.service';
 
 import { CommunityClient } from '@core/data-access/community/community.client';
 import { BookmarkStore } from '@core/social/bookmark.store';
@@ -53,14 +55,19 @@ describe('Saved — «Guardados»', () => {
   const fallo = signal(false);
   const perfil = signal<{ id: string } | null>({ id: 'yo' });
   const recargar = vi.fn();
-  const quitar = vi.fn(() => of(undefined));
+  const quitar = vi.fn<(id: string) => Observable<void>>(() => of(undefined));
+  const avisos = { error: vi.fn(), info: vi.fn() };
   let readPost: ReturnType<typeof vi.fn>;
 
   function montar(): void {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: BookmarkStore, useValue: { guardados, cargado, fallo, recargar, quitar } },
+        {
+          provide: BookmarkStore,
+          useValue: { guardados, cargado, fallo, error: () => (fallo() ? new Error('lectura fallida') : null), recargar, quitar },
+        },
+        { provide: ToastService, useValue: avisos },
         { provide: OwnProfileStore, useValue: { id: () => perfil()?.id ?? null, resuelto: signal(true) } },
         { provide: ProfileSummaryStore, useValue: { resumen: () => undefined } },
         { provide: CommunityClient, useValue: { readPost } },
@@ -84,7 +91,9 @@ describe('Saved — «Guardados»', () => {
     fallo.set(false);
     perfil.set({ id: 'yo' });
     recargar.mockClear();
-    quitar.mockClear();
+    quitar.mockReset();
+    quitar.mockImplementation(() => of(undefined));
+    avisos.error.mockClear();
     readPost = vi.fn((id: string) => of(detalle(id, `texto ${id}`)));
   });
 
@@ -118,14 +127,35 @@ describe('Saved — «Guardados»', () => {
     expect(texto()).not.toContain('Todavía no guardó nada');
   });
 
-  it('error: reintentar vuelve a leer', () => {
-    fallo.set(true);
+  it('al abrir relee lo guardado (lo de otra pestaña aparece, lo quitado en otro lado sale)', () => {
     montar();
 
+    expect(recargar).toHaveBeenCalledTimes(1);
+  });
+
+  it('error (S9): código de soporte y reintentar vuelve a leer', () => {
+    fallo.set(true);
+    montar();
+    recargar.mockClear();
+
+    expect(texto()).toContain('Código de soporte');
     Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
       .find((b) => b.textContent?.trim() === 'Reintentar')!
       .click();
     expect(recargar).toHaveBeenCalledTimes(1);
+  });
+
+  it('si quitar falla, lo dice (no se traga el error)', () => {
+    guardados.set(['p1']);
+    readPost = vi.fn(() => throwError(() => new Error('404')));
+    quitar.mockImplementation(() => throwError(() => new Error('500')));
+    montar();
+
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+      .find((b) => b.textContent?.trim() === 'Quitar de guardados')!
+      .click();
+
+    expect(avisos.error).toHaveBeenCalledTimes(1);
   });
 
   it('una publicación que ya no se puede leer queda como fila y deja quitarla', () => {

@@ -83,9 +83,22 @@ export class FollowButton {
     return this.resumenes.idPorSlug(this.slug());
   });
 
-  protected readonly sigue = computed(() => {
+  /**
+   * `true`/`false` si se sabe; `null` si no (la lectura de a quién sigue falló o
+   * no terminó). Con `null` el botón no afirma nada: ni «Seguir» presionable
+   * como si no lo siguiera, ni `aria-pressed`.
+   */
+  private readonly estado = computed<boolean | null>(() => {
     const id = this.destino();
-    return typeof id === 'string' && this.seguimientos.sigue(id);
+    return typeof id === 'string' ? this.seguimientos.estado(id) : null;
+  });
+
+  protected readonly sigue = computed(() => this.estado() === true);
+
+  /** `aria-pressed` sólo cuando se sabe. */
+  protected readonly presionado = computed(() => {
+    const e = this.estado();
+    return e === null ? null : String(e);
   });
 
   /** Con sesión y vitrina, hace falta haber leído a quién sigue y conocer el id. */
@@ -99,10 +112,14 @@ export class FollowButton {
     return typeof id === 'string' && this.seguimientos.ocupado(id);
   });
 
+  /**
+   * El nombre es fijo («Seguir a X») y el estado lo dice `aria-pressed`. Cambiar
+   * el nombre a «Dejar de seguir» además de presionarlo anunciaba el estado dos
+   * veces y daba un nombre distinto al mismo control.
+   */
   protected readonly nombreAccesible = computed(() => {
     const quien = this.nombre().trim();
-    const accion = this.sigue() ? 'Dejar de seguir' : 'Seguir';
-    return quien === '' ? accion : `${accion} a ${quien}`;
+    return quien === '' ? 'Seguir' : `Seguir a ${quien}`;
   });
 
   /** Un toque que llegó antes de que hubiera id o conjunto leído: se ejecuta al llegar. */
@@ -115,6 +132,13 @@ export class FollowButton {
       untracked(() => {
         this.pendiente.set(false);
         this.avisos.error('No pudimos identificar este perfil. Reintente.');
+      });
+      return;
+    }
+    if (this.seguimientos.fallo()) {
+      untracked(() => {
+        this.pendiente.set(false);
+        this.noSeSabe();
       });
       return;
     }
@@ -137,12 +161,22 @@ export class FollowButton {
     }
 
     if (this.ocupado() || this.pendiente()) return;
+    if (this.seguimientos.fallo()) {
+      this.noSeSabe();
+      return;
+    }
     const id = this.destino();
     if (typeof id !== 'string' || !this.seguimientos.cargado()) {
       this.pendiente.set(true);
       return;
     }
     this.ejecutar(id);
+  }
+
+  /** No se pudo leer a quién sigue: no se adivina; se avisa y se vuelve a leer. */
+  private noSeSabe(): void {
+    this.avisos.error('No pudimos saber si ya sigue a este perfil. Vuelva a intentarlo en unos segundos.');
+    this.seguimientos.recargar();
   }
 
   private ejecutar(id: string): void {

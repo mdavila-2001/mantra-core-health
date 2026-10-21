@@ -4,12 +4,17 @@ import { catchError, of, tap } from 'rxjs';
 
 import { CommunityClient } from '@core/data-access/community/community.client';
 import type { PostDetail } from '@core/data-access/community/community.types';
+import { describeApiFailure } from '@core/http/api-failure';
+import { errorToViewState } from '@core/http/error-to-view-state';
 import { BookmarkStore } from '@core/social/bookmark.store';
 import { ColaAcotada } from '@core/social/cola-acotada';
 import { OwnProfileStore } from '@core/social/own-profile.store';
 import { ProfileSummaryStore } from '@core/social/profile-summary.store';
+import { empty, loading, ready } from '@core/view-state/view-state';
+import type { ViewState } from '@core/view-state/view-state.types';
 import { EmptyState } from '@shared/components/molecules/empty-state/empty-state';
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
+import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 import { PublicPostCard } from '../../public-profile/public-post-card/public-post-card';
 import { dePublicacion, type PostVista } from '../../alovida/buscar/feed-publicaciones/feed-publicaciones.vista';
 import { ReportPost } from '../report-post/report-post';
@@ -23,7 +28,6 @@ interface FilaGuardada {
   readonly vista: PostVista | null;
 }
 
-type EstadoGuardados = 'carga' | 'datos' | 'vacio' | 'error';
 
 /**
  * «Guardados»: las publicaciones que la persona marcó para leer después.
@@ -42,7 +46,7 @@ type EstadoGuardados = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-saved',
-  imports: [EmptyState, PublicPostCard, ReportPost, RouterLink],
+  imports: [EmptyState, PublicPostCard, ReportPost, RouterLink, ViewStateHost],
   templateUrl: './saved.html',
   styleUrl: './saved.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,10 +66,17 @@ export class Saved {
 
   protected readonly actor = this.propio.id;
 
-  protected readonly estado = computed<EstadoGuardados>(() => {
-    if (!this.propio.resuelto() || (this.actor() !== null && !this.marcadores.cargado())) return 'carga';
-    if (this.marcadores.fallo()) return 'error';
-    return this.marcadores.guardados().length === 0 ? 'vacio' : 'datos';
+  /** Los estados del M34 (`ViewState`), que dibuja `app-view-state-host`. */
+  protected readonly estado = computed<ViewState<readonly string[]>>(() => {
+    if (!this.propio.resuelto() || (this.actor() !== null && !this.marcadores.cargado())) return loading();
+    if (this.marcadores.fallo()) return errorToViewState(this.marcadores.error());
+    if (this.actor() === null) {
+      return empty({ label: 'Crear mi vitrina', route: '/my-account/profile/edit' }, 'Guardar es una acción de su perfil en la red.');
+    }
+    const ids = this.marcadores.guardados();
+    return ids.length === 0
+      ? empty({ label: 'Ver publicaciones', route: '/posts' }, 'Use «Guardar» en cualquier publicación para encontrarla acá después.')
+      : ready(ids);
   });
 
   protected readonly sinVitrina = computed(() => this.propio.resuelto() && this.actor() === null);
@@ -85,6 +96,12 @@ export class Saved {
       return { id, tipo: 'datos', vista };
     }),
   );
+
+  constructor() {
+    // Al abrir se relee: lo guardado desde otra pestaña u otro dispositivo
+    // aparece, y lo quitado en otro lado sale (el store manda lo leído).
+    this.marcadores.recargar();
+  }
 
   /** Cada id nuevo en el store dispara su lectura, una sola vez. */
   private readonly leerFaltantes = effect(() => {
@@ -131,7 +148,11 @@ export class Saved {
   }
 
   protected quitar(postId: string): void {
-    this.marcadores.quitar(postId).subscribe({ error: () => undefined });
+    this.marcadores.quitar(postId).subscribe({
+      // El store ya volvió el estado atrás; falta decirlo (regla 95.2.3).
+      error: (error: unknown) =>
+        this.avisos.error(describeApiFailure(error, 'No pudimos quitarla de guardados. Vuelva a intentarlo.')),
+    });
   }
 
   protected reintentar(): void {

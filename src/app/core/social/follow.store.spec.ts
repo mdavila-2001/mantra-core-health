@@ -206,6 +206,41 @@ describe('FollowStore', () => {
     expect(cliente.listFollows).toHaveBeenCalledTimes(2);
   });
 
+  it('recargar manda lo leído: un id que el servidor ya no tiene sale (baja hecha en otra pestaña)', () => {
+    const store = armar([pagina(['a', 'b']), pagina(['a'])]);
+    expect(store.sigue('b')).toBe(true);
+
+    store.recargar();
+
+    expect(store.sigue('b')).toBe(false);
+    expect(store.seguidos()).toEqual(['a']);
+  });
+
+  it('lo que la persona siguió mientras se leía no se pierde', () => {
+    const lectura = new Subject<ReturnType<typeof pagina>>();
+    const store = armar();
+    cliente.listFollows.mockReturnValueOnce(lectura);
+    store.recargar();
+
+    store.seguir('c').subscribe();
+    lectura.next(pagina(['a']));
+
+    expect(store.sigue('c')).toBe(true);
+    expect(store.sigue('a')).toBe(true);
+  });
+
+  it('estado(): null mientras no se sabe o si la lectura falló; nunca afirma «no lo sigue» a ciegas', () => {
+    const store = armar();
+    expect(store.estado('a')).toBe(true);
+    expect(store.estado('zzz')).toBe(false);
+
+    cliente.listFollows.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+    store.recargar();
+
+    expect(store.estado('a')).toBeNull();
+    expect(store.error()).toBeInstanceOf(HttpErrorResponse);
+  });
+
   it('sin perfil propio no se puede seguir', () => {
     const store = armar();
     id.set(null);

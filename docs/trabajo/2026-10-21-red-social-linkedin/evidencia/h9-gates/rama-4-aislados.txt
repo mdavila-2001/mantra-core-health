@@ -1,0 +1,77 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                 | Names                                            |  Raw size
+chunk-6BCFNPCI.js                                   | -                                                |   2.16 MB | 
+spec-app-core-mock-handlers-clinical.handlers.js    | spec-app-core-mock-handlers-clinical.handlers    |   1.56 MB | 
+styles.css                                          | styles                                           | 180.89 kB | 
+spec-app-features-billing-representacion-grafica.js | spec-app-features-billing-representacion-grafica | 120.70 kB | 
+chunk-W4C56ET5.js                                   | -                                                |  55.88 kB | 
+chunk-CBHCK6Q3.js                                   | -                                                |  34.96 kB | 
+chunk-JBWBLPNK.js                                   | -                                                |   5.19 kB | 
+spec-app-core-mock-handlers-lab-orden-entrante.js   | spec-app-core-mock-handlers-lab-orden-entrante   |   3.63 kB | 
+spec-app-shared-utils-pdf-export-pdf-logo.js        | spec-app-shared-utils-pdf-export-pdf-logo        |   2.39 kB | 
+chunk-RNZF4IAJ.js                                   | -                                                |   2.23 kB | 
+init-testbed.js                                     | init-testbed                                     |   1.21 kB | 
+setup-test-setup.js                                 | setup-test-setup                                 | 984 bytes | 
+vitest-mock-patch.js                                | vitest-mock-patch                                | 974 bytes | 
+
+                                                    | Initial total                                    |   4.13 MB
+
+Lazy chunk files                                    | Names                                            |  Raw size
+chunk-W7MY4DZ6.js                                   | clinical-pdf                                     |  14.08 kB | 
+chunk-SFWSZEIV.js                                   | from-summary                                     |   7.26 kB | 
+
+Application bundle generation complete. [96.521 seconds] - 2026-10-21T15:52:02.095Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m43 passed[39m[22m[90m (43)[39m
+[2m   Start at [22m 15:52:02
+[2m   Duration [22m 4.32s[2m (transform 2.39s, setup 253ms, import 3.18s, tests 207ms, environment 489ms)[22m
+

@@ -5,3 +5,4 @@
   relaciones: 2806 template-instantiates · 5 imports-available sin instanciar · 71 type-only · 238 dynamic-loads
   nivel: 0 declarado · 629 por-ruta · 5 unresolvedEvidence en 5 componentes
   acreditación: descubiertos 629/629 · con escenario 3/629 · verificados visualmente 3/629 · bloqueados 84/629 · montó e interactuó: se miden en el banco (runtime)
+exit=0

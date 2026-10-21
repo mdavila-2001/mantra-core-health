@@ -1,13 +1,18 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
 import { CommunityClient } from '../data-access/community/community.client';
+import { OwnProfileStore } from './own-profile.store';
 import { PostActorStateStore } from './post-actor-state.store';
 
 describe('PostActorStateStore', () => {
   let community: { readPost: ReturnType<typeof vi.fn> };
+  /** El perfil propio; `null` mientras se lee o sin sesión. */
+  const perfilPropio = signal<string | null>(null);
 
   function armar(): PostActorStateStore {
+    perfilPropio.set(null);
     community = {
       readPost: vi.fn((postId: string) =>
         of({ id: postId, reactions: { actorReactionType: postId === 'p1' ? 'LOVE' : undefined } }),
@@ -16,6 +21,7 @@ describe('PostActorStateStore', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: CommunityClient, useValue: community },
+        { provide: OwnProfileStore, useValue: { id: perfilPropio } },
       ],
     });
     return TestBed.inject(PostActorStateStore);
@@ -118,12 +124,68 @@ describe('PostActorStateStore', () => {
     expect(community.readPost).toHaveBeenCalledWith('p1', { actorProfileId: 'yo' });
   });
 
-  it('olvidar borra todo (cambio de sesión)', () => {
-    const store = armar();
-    store.cargar(['p1'], 'yo');
+  describe('cada dato es de un actor', () => {
+    it('al cerrar sesión se olvida todo, aunque ninguna pantalla lo pida', () => {
+      const store = armar();
+      perfilPropio.set('A');
+      TestBed.tick();
+      store.cargar(['p1'], 'A');
+      expect(store.reaccionDe('p1')).toBe('LOVE');
 
-    store.olvidar();
+      perfilPropio.set(null);
+      TestBed.tick();
 
-    expect(store.reaccionDe('p1')).toBeUndefined();
+      expect(store.reaccionDe('p1')).toBeUndefined();
+      expect(store.imagenesDe('p1')).toBeUndefined();
+    });
+
+    it('la reacción de A no aparece para B, y para B se vuelve a leer con su actor', () => {
+      const store = armar();
+      store.cargar(['p1'], 'A');
+      expect(store.reaccionDe('p1')).toBe('LOVE');
+
+      community.readPost.mockReturnValue(of({ id: 'p1', reactions: {} }));
+      store.cargar(['p1'], 'B');
+
+      expect(community.readPost).toHaveBeenLastCalledWith('p1', { actorProfileId: 'B' });
+      expect(store.reaccionDe('p1')).toBeNull();
+    });
+
+    it('una lectura en vuelo del actor anterior no escribe al llegar', () => {
+      const store = armar();
+      const enVuelo = new Subject<unknown>();
+      community.readPost.mockReturnValueOnce(enVuelo);
+      store.cargar(['p1'], 'A');
+
+      community.readPost.mockReturnValue(new Subject());
+      store.cargar(['p2'], 'B');
+      enVuelo.next({ id: 'p1', reactions: { actorReactionType: 'LOVE' } });
+      enVuelo.complete();
+
+      expect(store.reaccionDe('p1')).toBeUndefined();
+    });
+
+    it('mientras el perfil propio se lee (null) no vacía lo pedido con el actor del input', () => {
+      const store = armar();
+      TestBed.tick();
+      store.cargar(['p1'], 'yo');
+
+      perfilPropio.set('yo');
+      TestBed.tick();
+
+      expect(store.reaccionDe('p1')).toBe('LOVE');
+    });
+
+    it('entrar con otra cuenta sin pasar por null también vacía', () => {
+      const store = armar();
+      perfilPropio.set('A');
+      TestBed.tick();
+      store.cargar(['p1'], 'A');
+
+      perfilPropio.set('B');
+      TestBed.tick();
+
+      expect(store.reaccionDe('p1')).toBeUndefined();
+    });
   });
 });

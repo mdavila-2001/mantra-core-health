@@ -106,7 +106,7 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
   let fixture: ComponentFixture<FeedPublicaciones>;
   let directorio: { feedPublico: ReturnType<typeof vi.fn>; getProfile: ReturnType<typeof vi.fn> };
   let community: { listFeed: ReturnType<typeof vi.fn>; readPost: ReturnType<typeof vi.fn> };
-  let estadoDelActor: { cargar: ReturnType<typeof vi.fn>; imagenesDe: ReturnType<typeof vi.fn>; olvidar: ReturnType<typeof vi.fn> };
+  let estadoDelActor: { cargar: ReturnType<typeof vi.fn>; imagenesDe: ReturnType<typeof vi.fn> };
   let avisos: { info: ReturnType<typeof vi.fn> };
   const actor = signal<string | null>('pp-1');
   const perfil = signal<unknown>({ id: 'pp-1', slug: 'yo', displayName: 'Valeria' });
@@ -141,7 +141,7 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
         }),
       ),
     };
-    estadoDelActor = { cargar: vi.fn(), imagenesDe: vi.fn(() => ['f-1']), olvidar: vi.fn() };
+    estadoDelActor = { cargar: vi.fn(), imagenesDe: vi.fn(() => ['f-1']) };
     avisos = { info: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -357,13 +357,17 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
       expect(community.listFeed).toHaveBeenCalledTimes(1);
     });
 
-    it('al cerrar la sesión olvida lo personal', async () => {
+    it('al cerrar la sesión olvida lo personal: ninguna tarjeta del feed personal queda en pantalla', async () => {
       await montar({ url: '/posts?feed=siguiendo' });
+      expect(todas('tarjeta').map((t) => t.getAttribute('data-id'))).toEqual(['s1', 's2']);
 
       actor.set(null);
       await fixture.whenStable();
 
-      expect(estadoDelActor.olvidar).toHaveBeenCalled();
+      // Las reacciones propias las olvida su store (spec de PostActorStateStore).
+      const ids = todas('tarjeta').map((t) => t.getAttribute('data-id'));
+      expect(ids).not.toContain('s1');
+      expect(ids).not.toContain('s2');
     });
   });
 

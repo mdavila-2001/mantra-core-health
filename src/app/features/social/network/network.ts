@@ -3,20 +3,28 @@ import { RouterLink } from '@angular/router';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type { PublicSearchResult } from '@core/data-access/public-directory/public-directory.types';
+import { errorToViewState } from '@core/http/error-to-view-state';
 import { FollowStore } from '@core/social/follow.store';
 import { OwnProfileStore } from '@core/social/own-profile.store';
-import { ProfileSummaryStore } from '@core/social/profile-summary.store';
+import { ProfileSummaryStore, type ResumenDePerfil } from '@core/social/profile-summary.store';
+import { empty, loading, ready } from '@core/view-state/view-state';
+import type { ViewState } from '@core/view-state/view-state.types';
 import { Card } from '@shared/components/molecules/card/card';
 import { EmptyState } from '@shared/components/molecules/empty-state/empty-state';
 import { Tab } from '@shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '@shared/components/molecules/tabs/tabs';
+import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 import { inicialesDe } from '@shared/text/iniciales';
 import { FollowButton } from '../follow-button/follow-button';
 
 /** Cuántos profesionales se piden para las sugerencias. */
 const MUESTRA = 30;
 
-type EstadoLista = 'carga' | 'datos' | 'vacio' | 'error';
+/** Una fila de «Siguiendo»: el id y su resumen (`undefined` mientras llega). */
+interface FilaSeguido {
+  readonly id: string;
+  readonly resumen: ResumenDePerfil | undefined;
+}
 
 /**
  * «Mi red»: a quién sigue la persona y a quién podría seguir.
@@ -45,7 +53,7 @@ type EstadoLista = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-network',
-  imports: [Card, EmptyState, FollowButton, RouterLink, Tab, Tabs],
+  imports: [Card, EmptyState, FollowButton, RouterLink, Tab, Tabs, ViewStateHost],
   templateUrl: './network.html',
   styleUrl: './network.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,18 +70,40 @@ export class Network {
 
   protected readonly tieneVitrina = computed(() => this.propio.id() !== null);
 
-  protected readonly total = this.seguimientos.total;
-
-  protected readonly estadoSiguiendo = computed<EstadoLista>(() => {
-    if (!this.propio.resuelto() || (this.tieneVitrina() && !this.seguimientos.cargado())) return 'carga';
-    if (this.seguimientos.fallo()) return 'error';
-    return this.seguimientos.total() === 0 ? 'vacio' : 'datos';
-  });
-
-  /** Cada seguido con su resumen (que puede estar todavía llegando). */
-  protected readonly seguidos = computed(() =>
+  /**
+   * Cada seguido con su resumen. Los ids que **no se pudieron leer como
+   * perfil** no se listan: el contrato también devuelve seguimientos de temas o
+   * grupos (los ids no se distinguen sin traducir su concepto), y ofrecer
+   * «dejar de seguir» como perfil sobre uno de esos mandaría una baja
+   * equivocada. Se cuentan aparte, en {@link noMostrables}.
+   */
+  private readonly todos = computed(() =>
     this.seguimientos.seguidos().map((id) => ({ id, resumen: this.resumenes.resumen(id) })),
   );
+
+  protected readonly noMostrables = computed(() => this.todos().filter((f) => f.resumen === null).length);
+
+  /** «Siguiendo» en los estados del M34 (`ViewState`), que dibuja `app-view-state-host`. */
+  protected readonly siguiendo = computed<ViewState<readonly FilaSeguido[]>>(() => {
+    if (!this.propio.resuelto() || (this.tieneVitrina() && !this.seguimientos.cargado())) return loading();
+    if (this.seguimientos.fallo()) return errorToViewState(this.seguimientos.error());
+    if (!this.tieneVitrina()) {
+      return empty(
+        { label: 'Crear mi vitrina', route: '/my-account/profile/edit' },
+        'El contrato de la red exige el perfil de quien sigue.',
+      );
+    }
+    if (this.seguimientos.total() === 0) {
+      return empty({ label: 'Ver sugerencias' }, 'Siga a profesionales para ver lo que publican en su inicio.');
+    }
+    const filas = this.todos().filter((f): f is FilaSeguido => f.resumen !== null);
+    return ready(filas);
+  });
+
+  protected readonly filasSeguidas = computed(() => {
+    const estado = this.siguiendo();
+    return estado.status === 'ready' ? estado.data : [];
+  });
 
   protected iniciales(nombre: string): string {
     return inicialesDe(nombre);
@@ -87,7 +117,8 @@ export class Network {
 
   private readonly muestra = signal<readonly PublicSearchResult[]>([]);
   protected readonly cargandoSugerencias = signal(false);
-  protected readonly falloSugerencias = signal(false);
+  /** El error de la última lectura del directorio, o `null`. */
+  private readonly errorSugerencias = signal<unknown>(null);
   private sugerenciasPedidas = false;
 
   private readonly sugerenciasCargadas = signal(false);
@@ -114,17 +145,18 @@ export class Network {
     untracked(() => this.yaSeguidos.set(fuera));
   });
 
-
   protected readonly sugerencias = computed(() => {
     const fuera = this.yaSeguidos() ?? new Set<string>();
     return this.candidatos().filter((p) => !fuera.has(p.slug));
   });
 
-  protected readonly estadoSugerencias = computed<EstadoLista>(() => {
-    if (this.cargandoSugerencias()) return 'carga';
-    if (!this.falloSugerencias() && this.yaSeguidos() === null) return 'carga';
-    if (this.falloSugerencias()) return 'error';
-    return this.sugerencias().length === 0 ? 'vacio' : 'datos';
+  protected readonly estadoSugerencias = computed<ViewState<readonly PublicSearchResult[]>>(() => {
+    if (this.errorSugerencias() !== null) return errorToViewState(this.errorSugerencias());
+    if (this.cargandoSugerencias() || this.yaSeguidos() === null) return loading();
+    const lista = this.sugerencias();
+    return lista.length === 0
+      ? empty({ label: 'Ver todos los profesionales', route: '/search/practitioners' }, 'Cuando haya más perfiles publicados, aparecen acá.')
+      : ready(lista);
   });
 
   /** La pestaña de sugerencias se pide al abrirla, no antes: nadie la mira hasta entonces. */
@@ -138,7 +170,7 @@ export class Network {
   protected cargarSugerencias(): void {
     this.sugerenciasPedidas = true;
     this.cargandoSugerencias.set(true);
-    this.falloSugerencias.set(false);
+    this.errorSugerencias.set(null);
     this.yaSeguidos.set(null);
     this.sugerenciasCargadas.set(false);
     this.directorio.searchPractitioners({ limit: MUESTRA }).subscribe({
@@ -147,8 +179,8 @@ export class Network {
         this.sugerenciasCargadas.set(true);
         this.cargandoSugerencias.set(false);
       },
-      error: () => {
-        this.falloSugerencias.set(true);
+      error: (error: unknown) => {
+        this.errorSugerencias.set(error);
         this.cargandoSugerencias.set(false);
       },
     });

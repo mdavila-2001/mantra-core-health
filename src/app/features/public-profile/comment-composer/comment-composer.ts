@@ -50,6 +50,7 @@ export class CommentComposer {
   private readonly community = inject(CommunityClient);
 
   private readonly campo = viewChild<ElementRef<HTMLTextAreaElement>>('campo');
+  private readonly formulario = viewChild<ElementRef<HTMLFormElement>>('formulario');
   private readonly selector = viewChild(CommentMediaPicker);
 
   /** La publicación que se comenta. */
@@ -82,12 +83,21 @@ export class CommentComposer {
   protected readonly fallo = signal<string | null>(null);
   protected readonly adjuntos = signal<readonly NewCommentMedia[]>([]);
   private readonly conFoco = signal(false);
+  /** Un puntero apretado dentro del formulario: el foco está por pasar a otro control de adentro. */
+  private pulsandoDentro = false;
 
   protected readonly puedeEnviar = computed(
     () => this.borrador().trim().length > 0 && !this.enviando(),
   );
 
-  /** Los adjuntos se ofrecen en cuanto la persona empieza: no antes, para no cargar la fila. */
+  /**
+   * Los adjuntos se ofrecen en cuanto la persona empieza: no antes, para no cargar la fila.
+   *
+   * «Empezar» es tener el foco en **cualquier parte del formulario**, no sólo en
+   * el campo: con el campo vacío, tocar «Agregar imagen» le quita el foco al
+   * campo antes del clic, y si eso desmontaba el selector el clic se perdía (y
+   * con Tab, el foco caía a la página).
+   */
   protected readonly activo = computed(
     () => this.conFoco() || this.borrador().length > 0 || this.adjuntos().length > 0,
   );
@@ -104,13 +114,28 @@ export class CommentComposer {
     this.borrador.set((evento.target as HTMLTextAreaElement).value);
   }
 
-  protected tomarFoco(): void {
+  protected alEntrar(): void {
+    this.pulsandoDentro = false;
     this.conFoco.set(true);
   }
 
-  protected soltarFoco(): void {
+  protected alPulsar(): void {
+    this.pulsandoDentro = true;
+  }
+
+  protected alSalir(evento: FocusEvent): void {
+    const destino = evento.relatedTarget as Node | null;
+    if (destino !== null && this.formulario()?.nativeElement.contains(destino)) return;
+    // Safari no enfoca los botones al tocarlos: `relatedTarget` llega vacío
+    // aunque el toque sea adentro. El `pointerdown` previo lo delata.
+    if (this.pulsandoDentro) return;
     this.conFoco.set(false);
   }
+
+  /** Id del mensaje de error, para vincularlo al campo (`aria-describedby`). */
+  protected readonly idDelError = computed(
+    () => `${this.testidBase()}-${this.postId()}-${this.parentCommentId() ?? 'raiz'}-error`,
+  );
 
   protected enviar(evento?: Event): void {
     evento?.preventDefault();

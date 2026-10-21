@@ -5,18 +5,14 @@ import { catchError, map, type Observable, of, switchMap } from 'rxjs';
 
 import { CommunityClient } from '../../core/data-access/community/community.client';
 import type { PublicProfileKind } from '../../core/data-access/community/community.types';
+import { PUBLIC_PROFILE_PREFIX } from '../../core/data-access/public-directory/public-directory.types';
 
 /**
- * El prefijo de la ficha pública de cada vertical. `PATIENT` no está: la ficha
- * de un paciente no se publica, y por eso nada puede llevar a ella.
+ * El prefijo de la ficha pública de cada vertical: el mismo mapa que arma las
+ * rutas (`PUBLIC_PROFILE_PREFIX`). `PATIENT` no está en él: la ficha de un
+ * paciente no se publica, y por eso nada puede llevar a ella.
  */
-const PREFIJO_DE_FICHA: Readonly<Partial<Record<PublicProfileKind, string>>> = {
-  PRACTITIONER: 'p',
-  ORGANIZATION: 'o',
-  PHARMACY: 'f',
-  DIAGNOSTIC_UNIT: 'l',
-  INSURER: 's',
-};
+const PREFIJO_DE_FICHA: Readonly<Partial<Record<PublicProfileKind, string>>> = PUBLIC_PROFILE_PREFIX;
 
 /**
  * A dónde lleva una publicación identificada por su id.

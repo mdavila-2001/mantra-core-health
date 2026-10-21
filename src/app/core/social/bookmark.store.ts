@@ -31,10 +31,21 @@ export class BookmarkStore {
   readonly cargado = signal(false);
   readonly fallo = signal(false);
 
+  /** El error de la última lectura, para que la pantalla muestre el código de soporte (M34 S9). */
+  readonly error = signal<unknown>(null);
+
   /** Los ids de las publicaciones guardadas, para armar la pantalla de «Guardados». */
   readonly guardados = computed<readonly string[]>(() => [...this.ids()]);
 
   private lectura = 0;
+
+  /**
+   * Lo que la persona cambió **mientras** se leía el conjunto (id → `true` alta,
+   * `false` baja). Al terminar la lectura manda lo leído más estos cambios: así
+   * no se pierde un gesto hecho a mitad de lectura, y un id que el servidor ya
+   * no tiene (una baja hecha en otra pestaña) sale de verdad.
+   */
+  private cambiosEnLectura = new Map<string, boolean>();
 
   private readonly alCambiarElPerfil = effect(() => {
     const id = this.propio.id();
@@ -104,8 +115,10 @@ export class BookmarkStore {
 
   private cargar(actor: string): void {
     const esta = ++this.lectura;
+    this.cambiosEnLectura.clear();
     this.cargado.set(false);
     this.fallo.set(false);
+    this.error.set(null);
     this.leerPagina(actor, esta, undefined, new Set(), 0);
   }
 
@@ -127,12 +140,19 @@ export class BookmarkStore {
             this.leerPagina(actor, esta, pagina.nextCursor, acumulado, paginas + 1);
             return;
           }
-          this.ids.update((actuales) => new Set([...acumulado, ...actuales]));
+          const leidos = new Set(acumulado);
+          for (const [id, alta] of this.cambiosEnLectura) {
+            if (alta) leidos.add(id);
+            else leidos.delete(id);
+          }
+          this.cambiosEnLectura.clear();
+          this.ids.set(leidos);
           this.cargado.set(true);
         },
-        error: () => {
+        error: (error: unknown) => {
           if (esta !== this.lectura) return;
           this.fallo.set(true);
+          this.error.set(error);
           this.cargado.set(true);
         },
       });
@@ -144,13 +164,16 @@ export class BookmarkStore {
     this.enCurso.set(new Set());
     this.cargado.set(false);
     this.fallo.set(false);
+    this.error.set(null);
   }
 
   private agregar(postId: string): void {
+    this.cambiosEnLectura.set(postId, true);
     this.ids.update((actuales) => new Set(actuales).add(postId));
   }
 
   private sacar(postId: string): void {
+    this.cambiosEnLectura.set(postId, false);
     this.ids.update((actuales) => {
       const siguiente = new Set(actuales);
       siguiente.delete(postId);

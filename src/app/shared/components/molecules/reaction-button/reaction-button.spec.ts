@@ -51,6 +51,29 @@ describe('ReactionButton', () => {
   });
 
   describe('el toque simple', () => {
+    it('mientras la reacción propia no se sabe, el toque corto no emite (no pisa una que ya existía)', async () => {
+      host.actual.set(undefined);
+      await hecho();
+
+      q('post-action-like')?.click();
+
+      expect(host.elegidas).toEqual([]);
+      expect(host.quitadas).toBe(0);
+      expect(q('post-action-like')?.getAttribute('aria-busy')).toBe('true');
+      expect(q('post-action-like')?.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('elegir una reacción concreta del selector sí vale aunque no se sepa la propia: es explícita', async () => {
+      host.actual.set(undefined);
+      await hecho();
+
+      q('reaction-picker-toggle')?.click();
+      await hecho();
+      q('reaction-LOVE')?.click();
+
+      expect(host.elegidas).toEqual(['LOVE']);
+    });
+
     it('sin reacción deja LIKE', async () => {
       q('post-action-like')?.click();
 

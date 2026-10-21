@@ -383,6 +383,36 @@ describe('PublicPostComments', () => {
       expect(botones('comment-replies-toggle')[0]?.textContent).toContain('Ocultar las respuestas');
     });
 
+    it('responder y después comentar no cuenta dos veces la respuesta', async () => {
+      let lecturas = 0;
+      await montar({
+        ...conVitrina,
+        // La primera lectura no tiene respuestas; la relectura (tras comentar) ya trae la de esta sesión.
+        raiz: () => of(pagina([comentario('a', { replyCount: lecturas++ === 0 ? 0 : 1 })])),
+        respuestas: () => of(pagina([comentario('r1')])),
+        crearComentario: (datos) => of({ id: datos['parentCommentId'] ? 'resp-1' : 'raiz-1' }),
+      });
+      botones('comment-reply')[0]?.click();
+      await fixture.whenStable();
+      await escribirRespuesta('Una respuesta');
+      botones('reply-composer-submit')[0]?.click();
+      await fixture.whenStable();
+      // Se cierran para ver el contador.
+      botones('comment-replies-toggle')[0]?.click();
+      await fixture.whenStable();
+      expect(botones('comment-replies-toggle')[0]?.textContent?.trim()).toBe('Ver 1 respuesta');
+
+      const raiz = root().querySelector<HTMLTextAreaElement>('[data-testid="comment-composer-body"]')!;
+      raiz.value = 'Un comentario';
+      raiz.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      botones('comment-composer-submit')[0]?.click();
+      await fixture.whenStable();
+
+      expect(lecturas).toBe(2);
+      expect(botones('comment-replies-toggle')[0]?.textContent?.trim()).toBe('Ver 1 respuesta');
+    });
+
     it('si el servidor falla conserva lo escrito y dice qué hacer', async () => {
       await montar({
         ...conVitrina,
