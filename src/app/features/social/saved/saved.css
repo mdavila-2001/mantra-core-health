@@ -32,7 +32,7 @@
   padding: var(--e4);
   border: 1px solid var(--filete-2);
   border-radius: var(--r-card);
-  background: var(--superficie);
+  background: var(--sup-tarjeta);
 }
 
 .guardados__perdida p {

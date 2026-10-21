@@ -955,7 +955,7 @@ que son sus primeros consumidores.
 | `GET` | `/community/posts/:postId/reactions` | — |
 | `GET` | `/community/feed` | Pestaña «Siguiendo» del inicio de la red social (`/posts`) |
 | `GET` | `/community/notifications` | — |
-| `GET` | `/community/follows` | — (V65-13) |
+| `GET` | `/community/follows` | `FollowStore` («Mi red», botón Seguir) — su perfil lo da `OwnProfileStore` |
 | `GET` | `/community/bookmarks` | — |
 | `GET` | `/community/blocks` | — |
 | `GET` | `/community/groups` | — (V19-07) |
@@ -968,6 +968,8 @@ que son sus primeros consumidores.
 | `POST` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
 | `POST` | `/community/comments` | `MedicalArticles` |
 | `PUT` | `/community/reactions` | `PublicPostCard` (selector de reacciones) |
+| `DELETE` | `/community/reactions` | `PublicPostCard` (quitar la reacción propia; query `actorProfileId`, `reactableType`, `reactableRefId`) |
+| `GET` | `/community/profiles/me/stats` | Perfil mini del inicio de la red (visitas y apariciones en búsquedas) |
 | `DELETE` | `/community/blocks` | `ChatStore` y 12 pantallas más | No |
 | `POST` | `/community/blocks` | `ChatStore` y 12 pantallas más | No |
 | `DELETE` | `/community/bookmarks` | `ChatStore` y 12 pantallas más | No |
