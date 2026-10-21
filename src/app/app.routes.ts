@@ -1531,6 +1531,22 @@ function rutasDeBusquedaPublica(): Routes {
       ],
     },
     {
+      // «Guardados»: lo que la persona marcó para leer después.
+      path: 'saved',
+      canActivate: [authGuard],
+      loadComponent: () =>
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Guardados — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () => import('./features/social/saved/saved').then((m) => m.Saved),
+        },
+      ],
+    },
+    {
       /* TAREA-29 · `/buscar` a secas tiene que seguir abriendo el buscador.
          No alcanza con un `redirectTo` en la tabla del final: el archivo
          GENERADO `features/alovida/alovida.routes.ts` declara su propio `buscar`

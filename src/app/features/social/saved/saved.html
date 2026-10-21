@@ -1,0 +1,81 @@
+<div class="guardados" data-testid="guardados">
+  <header class="guardados__cabecera">
+    <h1>Guardados</h1>
+    <p class="caption">Las publicaciones que marcó para leer después.</p>
+  </header>
+
+  @switch (estado()) {
+    @case ('datos') {
+      <ul class="guardados__lista">
+        @for (f of filas(); track f.id) {
+          <li>
+            @switch (f.tipo) {
+              @case ('datos') {
+                <app-public-post-card
+                  [post]="f.vista!.post"
+                  [slug]="f.vista!.slug"
+                  [autorNombre]="f.vista!.nombre"
+                  [autorHeadline]="f.vista!.headline"
+                  [autorAvatar]="f.vista!.avatar"
+                  [autorIniciales]="f.vista!.iniciales"
+                  [autorPerfilId]="f.vista!.perfilId"
+                  [visibilidad]="f.vista!.visibilidad"
+                  [reaccionesPorTipo]="f.vista!.reaccionesPorTipo"
+                  [autorEnlazado]="f.vista!.slug !== ''"
+                  [actorProfileId]="actor()"
+                />
+              }
+              @case ('perdida') {
+                <div class="guardados__perdida" data-testid="guardado-no-disponible">
+                  <p>Esta publicación ya no está disponible. Puede haberla borrado su autor.</p>
+                  <button type="button" class="guardados__quitar" (click)="quitar(f.id)">Quitar de guardados</button>
+                </div>
+              }
+              @default {
+                <div class="guardados__perdida" aria-busy="true">
+                  <span class="app-skeleton guardados__esqueleto"></span>
+                  <span class="solo-lectores">Cargando publicación…</span>
+                </div>
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+    @case ('carga') {
+      <div class="guardados__perdida" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando sus guardados…</span>
+        <span class="app-skeleton guardados__esqueleto"></span>
+        <span class="app-skeleton guardados__esqueleto"></span>
+      </div>
+    }
+    @case ('vacio') {
+      @if (sinVitrina()) {
+        <app-empty-state
+          title="Cree su vitrina pública para guardar publicaciones"
+          description="Guardar es una acción de su perfil en la red."
+          variant="empty"
+        >
+          <a empty-actions class="guardados__quitar" routerLink="/my-account/profile/edit">Crear mi vitrina</a>
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          title="Todavía no guardó nada"
+          description="Use «Guardar» en cualquier publicación para encontrarla acá después."
+          variant="empty"
+        >
+          <a empty-actions class="guardados__quitar" routerLink="/posts">Ver publicaciones</a>
+        </app-empty-state>
+      }
+    }
+    @case ('error') {
+      <app-empty-state
+        title="No pudimos leer sus guardados"
+        description="Sus publicaciones guardadas no se perdieron. Vuelva a intentarlo."
+        variant="error"
+      >
+        <button empty-actions type="button" class="guardados__quitar" (click)="reintentar()">Reintentar</button>
+      </app-empty-state>
+    }
+  }
+</div>

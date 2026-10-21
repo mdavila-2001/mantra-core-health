@@ -1,0 +1,63 @@
+:host {
+  display: block;
+}
+
+.guardados {
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  margin-inline: auto;
+  display: grid;
+  gap: var(--e4);
+}
+
+.guardados__cabecera h1 {
+  margin: 0;
+}
+
+.guardados__cabecera p {
+  margin: var(--e1) 0 0;
+}
+
+.guardados__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--e3);
+}
+
+.guardados__perdida {
+  display: grid;
+  gap: var(--e3);
+  padding: var(--e4);
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  background: var(--superficie);
+}
+
+.guardados__perdida p {
+  margin: 0;
+}
+
+.guardados__esqueleto {
+  display: block;
+  block-size: 6rem;
+  border-radius: var(--r-card);
+}
+
+.guardados__quitar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-block-size: var(--h-ctrl);
+  padding-inline: var(--e5);
+  border: 1px solid var(--petroleo);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--petroleo);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}

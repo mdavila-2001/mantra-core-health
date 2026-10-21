@@ -1,4 +1,4 @@
-import type { FeedListItem, PostVisibility, ReactionType } from '@core/data-access/community/community.types';
+import type { FeedListItem, PostListItem, PostVisibility, ReactionType } from '@core/data-access/community/community.types';
 import type { PublicFeedPost, PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 import type { ResumenDePerfil } from '@core/social/profile-summary.store';
 import { inicialesDe } from '@shared/text/iniciales';
@@ -72,9 +72,25 @@ export function deSiguiendo(
   autor: ResumenDePerfil | null | undefined,
   imagenes: readonly string[] | undefined,
 ): PostVista | null {
-  const p = entrada.post;
-  if (p === undefined) return null;
+  if (entrada.post === undefined) return null;
+  return dePublicacion(entrada.post, entrada.createdAt, autor, imagenes);
+}
 
+/**
+ * Una publicación de la API de comunidad (la del feed personal o la leída por
+ * id, como en «Guardados»), lista para la tarjeta.
+ *
+ * @param p - La publicación.
+ * @param respaldo - Fecha a usar si todavía no tiene `publishedAt`.
+ * @param autor - Su autor ya resuelto, o `undefined`/`null` mientras no se sabe.
+ * @param imagenes - Los `fileId` de sus imágenes, si se conocen.
+ */
+export function dePublicacion(
+  p: PostListItem,
+  respaldo: Date,
+  autor: ResumenDePerfil | null | undefined,
+  imagenes: readonly string[] | undefined,
+): PostVista {
   const desglose: Partial<Record<ReactionType, number>> = {};
   for (const t of p.reactions.tallies) {
     if (t.reactionType !== undefined) desglose[t.reactionType] = t.count;
@@ -84,7 +100,7 @@ export function deSiguiendo(
     post: {
       id: p.id,
       bodyText: p.bodyText,
-      publishedAt: p.publishedAt ?? entrada.createdAt,
+      publishedAt: p.publishedAt ?? respaldo,
       mediaUrls: (imagenes ?? []).map(urlDeImagenDePublicacion),
       reactionCount: p.reactions.total,
       commentCount: p.commentCount,
