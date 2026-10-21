@@ -13,6 +13,7 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
 import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
+import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
@@ -201,6 +202,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
   'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
+  // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
+  'superadmin/portal': () =>
+    import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
   'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
   'superadmin/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
@@ -1114,6 +1118,7 @@ function pantallaDeGeolocalizacion(
  * hijas, que es justo lo que se quiere.
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
+  'superadmin/portal': PORTAL_RUTAS,
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha

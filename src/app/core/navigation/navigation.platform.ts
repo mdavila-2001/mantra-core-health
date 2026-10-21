@@ -109,6 +109,18 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     module: 'M67 data_catalog',
   },
   {
+    // Portal de inventario (H5): el mapa de sistemas, procesos, catálogo y linaje
+    // que genera la API (`/admin/portal/*`). Roles = los de lectura de esa API.
+    path: 'superadmin/portal',
+    label: 'Portal de inventario',
+    group: 'Superadministración',
+    icon: 'route',
+    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN', 'GOVERNANCE_ADMIN', 'DATA_PLATFORM_ADMIN', 'DPO'],
+    availability: 'disponible',
+    summary: 'El sistema tal como lo ve el código: operaciones, procesos, tablas y linaje.',
+    module: 'M67 data_catalog',
+  },
+  {
     // El árbol de decisión de cada recorrido del usuario, con sus endpoints y
     // sus casos válidos, límite e inválidos. Roles = los de `GET /admin/qa/*`
     // (`QA_LAB_READ_ROLES`): los flujos viven en el QA Lab.

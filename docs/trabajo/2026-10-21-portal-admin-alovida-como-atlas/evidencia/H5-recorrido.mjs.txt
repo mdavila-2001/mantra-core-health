@@ -1,0 +1,71 @@
+// Recorrido de verificación de H5 (no es un spec de la suite): entra con la cuenta de gobernanza
+// del arnés, mira el centro del portal a tres anchos y en claro/oscuro, y registra consola y red.
+import { chromium } from '@playwright/test';
+import { mkdirSync, writeFileSync } from 'node:fs';
+
+const OUT = new URL('.', import.meta.url).pathname;
+const BASE = 'http://localhost:4200';
+const CUENTA = { email: 'gobernanza@alovida.dev', password: 'dev' };
+const VISTAS = [
+  { nombre: 'movil-360', viewport: { width: 360, height: 800 } },
+  { nombre: 'tablet-768', viewport: { width: 768, height: 1024 } },
+  { nombre: 'escritorio-1280', viewport: { width: 1280, height: 800 } },
+];
+const TEMAS = ['light', 'dark'];
+
+const browser = await chromium.launch({
+  executablePath: '/opt/pw-browsers/chromium',
+  args: ['--no-sandbox'],
+});
+const informe = { consola: [], red: [], pasos: [] };
+
+async function entrar(page) {
+  await page.goto(`${BASE}/auth`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  await page.getByTestId('login-identifier').fill(CUENTA.email);
+  await page.getByTestId('login-password').fill(CUENTA.password);
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  if (page.url().includes('/auth/organization')) {
+    await page.getByTestId('tenant-opcion').first().click();
+    await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
+  }
+}
+
+for (const tema of TEMAS) {
+  for (const v of VISTAS) {
+    const context = await browser.newContext({
+      viewport: v.viewport,
+      colorScheme: tema,
+      locale: 'es-BO',
+      timezoneId: 'America/La_Paz',
+    });
+    const page = await context.newPage();
+    page.on('console', (m) => {
+      if (m.type() === 'error' || m.type() === 'warning')
+        informe.consola.push({ vista: `${v.nombre}-${tema}`, tipo: m.type(), texto: m.text().slice(0, 300) });
+    });
+    page.on('pageerror', (e) => informe.consola.push({ vista: `${v.nombre}-${tema}`, tipo: 'pageerror', texto: String(e).slice(0, 300) }));
+    page.on('response', (r) => {
+      if (r.status() >= 400 && r.url().includes('/admin/portal'))
+        informe.red.push({ vista: `${v.nombre}-${tema}`, status: r.status(), url: r.url() });
+    });
+    try {
+      if (tema === 'light' && v.nombre === 'movil-360') await entrar(page);
+      else await entrar(page);
+      await page.goto(`${BASE}/administration/portal`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+      await page.getByTestId('portal-cifras').waitFor({ timeout: 60_000 });
+      const cifras = await page.getByTestId('portal-cifras').innerText();
+      const hayScrollHorizontal = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+      informe.pasos.push({ vista: `${v.nombre}-${tema}`, ok: true, cifras: cifras.replace(/\s+/g, ' ').slice(0, 200), scrollHorizontal: hayScrollHorizontal });
+      await page.screenshot({ path: `${OUT}${v.nombre}-${tema}.png`, fullPage: true });
+    } catch (e) {
+      informe.pasos.push({ vista: `${v.nombre}-${tema}`, ok: false, error: String(e).slice(0, 400) });
+      await page.screenshot({ path: `${OUT}FALLO-${v.nombre}-${tema}.png`, fullPage: true }).catch(() => {});
+    }
+    await context.close();
+  }
+}
+await browser.close();
+writeFileSync(`${OUT}informe.json`, JSON.stringify(informe, null, 2));
+console.log(JSON.stringify(informe.pasos, null, 1));
+console.log('consola:', informe.consola.length, 'red 4xx/5xx del portal:', informe.red.length);

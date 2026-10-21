@@ -1,0 +1,100 @@
+/* ============================================================================
+    DrawerPanel — `<dialog>` modal anclado a la derecha. El `::backdrop` es del
+    navegador: se lo pinta, no se lo reemplaza. A 360 px ocupa toda la pantalla.
+    ========================================================================== */
+
+.drawer {
+  margin: 0;
+  margin-inline-start: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  inline-size: min(100%, 32rem);
+  max-inline-size: 100%;
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+}
+
+.drawer::backdrop {
+  background: rgb(10 28 39 / 55%);
+}
+
+.drawer__panel {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+.drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-block-end: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.drawer__heading {
+  min-inline-size: 0;
+}
+
+.drawer__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.drawer__subtitle {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.drawer__body {
+  flex: 1;
+  min-block-size: 0;
+  padding: var(--sp-5);
+  overflow-y: auto;
+}
+
+.drawer__footer:empty {
+  display: none;
+}
+
+.drawer__footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.drawer[open] .drawer__panel {
+  animation: drawer-entrada var(--dur-base) var(--ease-out);
+}
+
+@keyframes drawer-entrada {
+  from {
+    transform: translateX(2rem);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer[open] .drawer__panel {
+    animation: none;
+  }
+}

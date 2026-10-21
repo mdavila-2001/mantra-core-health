@@ -1,0 +1,36 @@
+<header class="kv__header">
+  <h2 class="kv__title">{{ heading() }}</h2>
+  @if (description()) {
+    <p class="kv__description">{{ description() }}</p>
+  }
+</header>
+<dl class="kv__list">
+  @for (row of rows(); track row.label) {
+    <div class="kv__row">
+      <dt class="kv__label">{{ row.label }}</dt>
+      <dd
+        class="kv__value"
+        [class.kv__value--mono]="row.mono"
+        [class.kv__value--empty]="!hasValue(row)"
+      >
+        @if (hasValue(row)) {
+          <span class="kv__text">{{ row.value }}</span>
+          @if (row.copyable) {
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              data-testid="kv-copiar"
+              [attr.aria-label]="'Copiar ' + row.label"
+              (clicked)="copiar(row)"
+            >
+              {{ copiada() === row.label ? 'Copiado' : 'Copiar' }}
+            </button>
+          }
+        } @else {
+          Sin dato
+        }
+      </dd>
+    </div>
+  }
+</dl>

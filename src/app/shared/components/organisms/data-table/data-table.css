@@ -412,3 +412,44 @@ thead .data-table__cell {
         background: transparent;
     }
 }
+
+/* ─── Encabezado de la tarjeta («REGISTROS · n») ─────────────────────────── */
+.data-table__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.data-table__heading-title {
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.data-table__heading-count {
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill, 999px);
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.data-table__page-summary {
+  margin-inline-end: auto;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* Con alto máximo, la cabecera de columnas se queda arriba al desplazar. */
+.data-table--constrained thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--bg-surface-alt);
+}
