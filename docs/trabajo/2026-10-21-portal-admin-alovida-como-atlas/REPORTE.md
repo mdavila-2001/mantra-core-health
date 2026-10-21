@@ -1,6 +1,6 @@
 # Reporte — Inventario y portal interno de AloVida como AtlasAdminPortal
 
-> **AVANCE: 7 / 73 — 9,6 %.**
+> **AVANCE: 12 / 73 — 16,4 %.**
 
 - Fecha: 2026-10-21 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `claude-marcelo/vigilant-bardeen-gcoocw` en `mantra-core-health` (plan y evidencia) y `mantra-core-health-api` (código); `mantra-core-health-model` sin cambios todavía
 - Peldaño de evidencia alcanzado: **H0 y H1.S1.M1 → `TESTED`**. H1.S1.M1 es un refactor sin superficie visual: se demostró salida idéntica (`diff -r` sobre 67 archivos) y 7 pruebas de la librería nueva. El resto del trabajo sigue en `DISCOVERED`.
@@ -15,6 +15,9 @@
 | H1.S1.M2 | Índice AST (`lib/ast.mjs`) y cruce contrato ↔ código (`lib/handlers.mjs`) con CLI `--solo-ast` | `node tools/inventario/endpoints.mjs --modulo scheduling,audit --solo-ast`; `yarn inventario:test`; equivalencia del generador | PASS — `evidencia/H1-S1-M2-handlers.txt`: 52/52 handlers de los pilotos con servicio resuelto; 1 190/1 190 en toda la API; 12/12 tests; salida del generador sin cambios |
 | H1.S1.M3 | Lector de DTO (`lib/dto.mjs`), payload mínimo y campos estructurados con decorador literal y `fuente` | `yarn inventario:test`; equivalencia del generador; medición sobre 863 operaciones con cuerpo | PASS — `evidencia/H1-S1-M3-M4-dto-y-requerimientos.txt`: 5 678 campos, 1,6 % sin fuente, generador byte-idéntico |
 | H1.S1.M4 | Requerimientos por operación con límites leídos del código (`lib/requerimientos.mjs`) | medición sobre 1 190 operaciones | PASS — 0 listas vacías; 27/27 tests |
+| H1.S2.M1-M3 | Tablas afectadas por operación (`lib/datos.mjs`): 1 240 entidades, 1 164 de 1 190 operaciones con ≥ 1 tabla (97,8 %), confianza por efecto, camino más corto | `yarn inventario:test`; `evidencia/H1-S2-tablas-eventos.txt` | PASS — 42/42; 5 032 DIRECTA · 713 POR_TIPO · 196 POR_SQL · 56 POR_REGISTRO; generador de endpoints byte-idéntico |
+| H1.S2.M4 | Eventos y trabajos por operación | `grep` vs análisis | PASS — 87 sitios en el código, 87 detectados, 0 sin detectar |
+| H1.S2.M5 | Cotejo manual de 10 operaciones contra el código | lectura de archivo:línea | PASS — `evidencia/H1-S2-M5-cotejo-manual.md`: 10/10, con 2 defectos del análisis hallados y corregidos |
 
 ## A medias
 ninguna
