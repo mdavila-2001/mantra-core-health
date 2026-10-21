@@ -1,0 +1,8 @@
+✔ Recientes · la publicación para seguidores queda primera
+✔ Recientes · sin duplicar
+✔ Recientes · no cambió de pestaña — /posts
+✔ Siguiendo · la publicación para seguidores queda primera
+✔ Siguiendo · sin duplicar
+✔ Siguiendo · no cambió de pestaña — /posts?feed=siguiendo
+
+6/6 en verde

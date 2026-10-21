@@ -105,7 +105,7 @@ const pagina = (items: unknown[], nextCursor: string | null = null) => ({ items,
 describe('FeedPublicaciones — el inicio de la red social', () => {
   let fixture: ComponentFixture<FeedPublicaciones>;
   let directorio: { feedPublico: ReturnType<typeof vi.fn>; getProfile: ReturnType<typeof vi.fn> };
-  let community: { listFeed: ReturnType<typeof vi.fn> };
+  let community: { listFeed: ReturnType<typeof vi.fn>; readPost: ReturnType<typeof vi.fn> };
   let estadoDelActor: { cargar: ReturnType<typeof vi.fn>; imagenesDe: ReturnType<typeof vi.fn>; olvidar: ReturnType<typeof vi.fn> };
   let avisos: { info: ReturnType<typeof vi.fn> };
   const actor = signal<string | null>('pp-1');
@@ -125,7 +125,22 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
       feedPublico: vi.fn(opciones.recientes ?? (() => of(pagina([publico('a'), publico('b')])))),
       getProfile: vi.fn(() => of({ avatarUrl: null })),
     };
-    community = { listFeed: vi.fn(opciones.siguiendo ?? (() => of(pagina([entrada('s1'), entrada('s2')])))) };
+    community = {
+      listFeed: vi.fn(opciones.siguiendo ?? (() => of(pagina([entrada('s1'), entrada('s2')])))),
+      readPost: vi.fn((id: string) =>
+        of({
+          id,
+          authorPublicProfileId: 'pp-1',
+          postTypeConceptId: 't',
+          bodyText: 'Para mis seguidores',
+          reactions: { total: 0, tallies: [] },
+          commentCount: 0,
+          media: [],
+          hashtags: [],
+          mentions: [],
+        }),
+      ),
+    };
     estadoDelActor = { cargar: vi.fn(), imagenesDe: vi.fn(() => ['f-1']), olvidar: vi.fn() };
     avisos = { info: vi.fn() };
 
@@ -363,13 +378,45 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
       expect(directorio.feedPublico).toHaveBeenCalledTimes(1);
     });
 
-    it('si se publica estando en Siguiendo, lleva a Recientes: su propia publicación no está en su feed personal', async () => {
+    it('la publicación nueva va primera aunque no sea pública (Recientes sólo trae lo público)', async () => {
+      await montar();
+
+      (q('crear') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(community.readPost).toHaveBeenCalledWith('nuevo');
+      expect(todas('tarjeta')[0]?.getAttribute('data-id')).toBe('nuevo');
+      expect(todas('tarjeta').length).toBe(3);
+    });
+
+    it('publicando en Siguiendo se queda ahí y la ve primera: nadie se sigue a sí mismo', async () => {
       await montar({ url: '/posts?feed=siguiendo' });
 
       (q('crear') as HTMLButtonElement).click();
       await fixture.whenStable();
 
-      expect(TestBed.inject(Router).url).toBe('/posts');
+      expect(TestBed.inject(Router).url).toBe('/posts?feed=siguiendo');
+      expect(todas('tarjeta')[0]?.getAttribute('data-id')).toBe('nuevo');
+    });
+
+    it('si la relectura ya la trae, no la duplica', async () => {
+      await montar();
+      directorio.feedPublico.mockReturnValue(of(pagina([publico('nuevo'), publico('a')])));
+
+      (q('crear') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(todas('tarjeta').filter((t) => t.getAttribute('data-id') === 'nuevo').length).toBe(1);
+    });
+
+    it('si leer la publicación nueva falla, el feed sigue como estaba', async () => {
+      await montar();
+      community.readPost.mockReturnValue(throwError(() => new Error('500')));
+
+      (q('crear') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(todas('tarjeta').length).toBe(2);
     });
   });
 

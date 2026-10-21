@@ -19,7 +19,7 @@
         [perfil]="perfil()"
         [resuelto]="perfilResuelto()"
         [foto]="detalle()?.avatarUrl ?? null"
-        (publicado)="alPublicar()"
+        (publicado)="alPublicar($event)"
       />
     }
 

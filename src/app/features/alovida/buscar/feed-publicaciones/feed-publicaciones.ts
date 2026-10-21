@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
 import { CommunityClient } from '@core/data-access/community/community.client';
-import type { FeedListItem } from '@core/data-access/community/community.types';
+import type { FeedListItem, PostDetail } from '@core/data-access/community/community.types';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type {
   PublicFeedPost,
@@ -22,7 +22,7 @@ import { FeedBanner } from './feed-banner/feed-banner';
 import { FeedCrearPublicacion } from './feed-crear-publicacion/feed-crear-publicacion';
 import { FeedPerfilMini } from './feed-perfil-mini/feed-perfil-mini';
 import { FeedTendencias } from './feed-tendencias/feed-tendencias';
-import { deRecientes, deSiguiendo, type PostVista } from './feed-publicaciones.vista';
+import { dePublicacion, deRecientes, deSiguiendo, type PostVista } from './feed-publicaciones.vista';
 
 /** Cuántas publicaciones se piden por página del feed personal. */
 const PAGINA_SIGUIENDO = 10;
@@ -177,8 +177,33 @@ export class FeedPublicaciones {
   private readonly cargadoSiguiendo = signal(false);
   private readonly cargandoMasSiguiendo = signal(false);
 
-  /** Lo que se dibuja: las dos fuentes normalizadas al mismo modelo. */
+  /**
+   * Lo que la persona publicó en esta visita, leído por id.
+   *
+   * Va **primero** en las dos pestañas, como en una red social: «Recientes» sólo
+   * trae lo público y «Siguiendo» lo de los demás, así que sin esto una
+   * publicación para seguidores o privada desaparecería apenas se publica.
+   */
+  private readonly propias = signal<readonly PostDetail[]>([]);
+
+  /** Lo que se dibuja: las dos fuentes normalizadas al mismo modelo, con lo propio recién publicado arriba. */
   protected readonly vista = computed<readonly PostVista[]>(() => {
+    const base = this.vistaDeLaFuente();
+    const yaEstan = new Set(base.map((v) => v.post.id));
+    const nuevas = this.propias()
+      .filter((p) => !yaEstan.has(p.id))
+      .map((p) =>
+        dePublicacion(
+          p,
+          new Date(),
+          this.resumenes.resumen(p.authorPublicProfileId),
+          p.media.map((m) => m.fileId),
+        ),
+      );
+    return [...nuevas, ...base];
+  });
+
+  private readonly vistaDeLaFuente = computed<readonly PostVista[]>(() => {
     if (this.modo() === 'recientes') {
       return this.recientes().map(deRecientes);
     }
@@ -236,11 +261,15 @@ export class FeedPublicaciones {
     }
   });
 
-  protected alPublicar(): void {
-    // Su publicación está en «Recientes» (es pública por defecto); en «Siguiendo»
-    // no aparece (nadie se sigue a sí mismo). Se lleva a donde se la ve.
-    if (this.modo() === 'siguiendo') this.cambiarModo('recientes');
+  protected alPublicar(postId: string): void {
+    // Se relee «Recientes» (si fue pública, aparece en su lugar) y se lee la
+    // publicación por id para ponerla arriba sea cual sea su visibilidad.
     this.cargarRecientes();
+    this.community.readPost(postId).subscribe({
+      next: (p) => this.propias.update((lista) => [p, ...lista.filter((x) => x.id !== p.id)]),
+      // Si la lectura falla, igual quedó publicada: la relectura del feed la trae si es pública.
+      error: () => undefined,
+    });
   }
 
   protected reintentar(): void {
