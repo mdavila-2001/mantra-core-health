@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4311/auth
+Call log:
+[2m  - navigating to "http://127.0.0.1:4311/auth", waiting until "domcontentloaded"[22m
+
+    at /home/user/mantra-core-health/playwright/red-social/h9-peticiones-por-pagina.mjs:16:9 {
+  log: [
+    '  - navigating to "http://127.0.0.1:4311/auth", waiting until "domcontentloaded"'
+  ],
+  name: 'Error'
+}
+
+Node.js v22.22.0
