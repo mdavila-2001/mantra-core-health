@@ -82,7 +82,8 @@
       "/loyalty",
       "/patients/me/reviews",
       "/patients/me/",
-      "/insurance/patients"
+      "/insurance/patients",
+      "/telemetry"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,
