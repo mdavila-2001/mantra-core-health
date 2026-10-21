@@ -45,6 +45,14 @@
   align-self: flex-start;
 }
 
+/* En teléfono el control reparte la fila entera (así lo dibuja la molécula
+   bajo 30rem); `flex-start` lo encogía al contenido y cortaba «Siguien…». */
+@media (max-width: 30rem) {
+  .red__modo {
+    align-self: stretch;
+  }
+}
+
 /* Desde 900 px entran las sugerencias a la derecha (sin sesión: dos columnas). */
 @media (min-width: 900px) {
   .red {

@@ -95,8 +95,18 @@
 }
 
 .public-nav-rail__icon {
+    position: relative;
     display: inline-flex;
     flex-shrink: 0;
+}
+
+/* El contador «sin leer» va montado sobre la esquina del glifo, como en la
+   barra de una red social: no corre el rótulo ni cambia el ancho del enlace. */
+.public-nav-rail__contador {
+    position: absolute;
+    inset-block-start: calc(var(--sp-2) * -1);
+    inset-inline-end: calc(var(--sp-3) * -1);
+    pointer-events: none;
 }
 
 /* Se mide el HOST `app-nav-icon`, no el `<svg>` de adentro.

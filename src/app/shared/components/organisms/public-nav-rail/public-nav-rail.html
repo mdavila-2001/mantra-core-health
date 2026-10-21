@@ -16,12 +16,23 @@
               [routerLink]="entry.route"
               [class.is-active]="activeRoute() === entry.route"
               [attr.aria-current]="activeRoute() === entry.route ? 'page' : null"
-              [attr.aria-label]="entry.label"
+              [attr.aria-label]="nombre(entry)"
               [appTooltip]="entry.label"
               appTooltipPosition="right"
             >
               <span class="public-nav-rail__icon" aria-hidden="true">
                 <app-nav-icon [name]="entry.icon" />
+                @if (sinLeer(entry.contador) > 0) {
+                  <!-- Sin «0» permanente, como la campana. Fuera del árbol
+                       accesible: el número ya viaja en el nombre del enlace. -->
+                  <app-badge
+                    class="public-nav-rail__contador"
+                    variant="error"
+                    size="sm"
+                    [value]="sinLeer(entry.contador)"
+                    data-testid="public-nav-rail-contador"
+                  />
+                }
               </span>
               <!-- Se ve sólo cuando el rail se acuesta en horizontal (< 900 px),
                    donde hay ancho para el texto y el hover no existe.

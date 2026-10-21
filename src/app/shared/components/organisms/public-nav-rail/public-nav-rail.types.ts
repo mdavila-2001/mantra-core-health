@@ -29,6 +29,8 @@ export interface PublicNavRailEntry {
   readonly label: string;
   /** Del set cerrado de `atoms/nav-icon`. Nunca un `<svg>` suelto. */
   readonly icon: NavIconName;
+  /** Qué contador «sin leer» lleva al lado, si lleva alguno. */
+  readonly contador?: 'avisos' | 'chats';
 }
 
 /** Un grupo de entradas, con su rótulo para el lector de pantalla. */
@@ -93,7 +95,7 @@ export const PUBLIC_NAV_RAIL_SOCIAL: PublicNavRailGroup = {
   entries: [
     { route: '/network', label: 'Mi red', icon: 'people' },
     { route: '/saved', label: 'Guardados', icon: 'folder' },
-    { route: '/messaging', label: 'Mensajes', icon: 'mail' },
-    { route: '/notification-center', label: 'Notificaciones', icon: 'bell' },
+    { route: '/messaging', label: 'Mensajes', icon: 'mail', contador: 'chats' },
+    { route: '/notification-center', label: 'Notificaciones', icon: 'bell', contador: 'avisos' },
   ],
 };

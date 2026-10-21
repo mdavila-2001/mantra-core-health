@@ -7,6 +7,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { signal } from '@angular/core';
 
 import { SessionStore } from '@core/auth/session.store';
+import { ChatStore } from '@core/messaging/chat.store';
+import { NotificationsStore } from '@core/notifications/notifications.store';
 
 import { PublicNavRail } from './public-nav-rail';
 import { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail.types';
@@ -246,6 +248,11 @@ describe('PublicNavRail', () => {
   describe('grupo de la red social', () => {
     const rutas = (): (string | null)[] => enlaces().map((a) => a.getAttribute('data-route'));
 
+    const avisosSinLeer = signal(0);
+    const chatsSinLeer = signal(0);
+    const iniciar = vi.fn();
+    const prepararContador = vi.fn();
+
     async function conSesion(autenticado: boolean): Promise<void> {
       fixture.destroy();
       TestBed.resetTestingModule();
@@ -254,6 +261,8 @@ describe('PublicNavRail', () => {
         providers: [
           provideRouter([{ path: 'posts', component: RutaVacia }]),
           { provide: SessionStore, useValue: { isAuthenticated: signal(autenticado) } },
+          { provide: NotificationsStore, useValue: { sinLeer: avisosSinLeer, iniciar } },
+          { provide: ChatStore, useValue: { sinLeer: chatsSinLeer, prepararContador } },
         ],
       }).compileComponents();
       fixture = TestBed.createComponent(HostComponent);
@@ -281,6 +290,35 @@ describe('PublicNavRail', () => {
       ]);
       expect(todas.indexOf('/network')).toBeGreaterThan(todas.indexOf('/search/symptoms'));
       expect(todas.indexOf('/network')).toBeLessThan(todas.indexOf('/search/medications'));
+    });
+
+    it('sin sesión no pide contadores', async () => {
+      iniciar.mockClear();
+      prepararContador.mockClear();
+      await conSesion(false);
+
+      expect(iniciar).not.toHaveBeenCalled();
+      expect(prepararContador).not.toHaveBeenCalled();
+    });
+
+    it('con sesión muestra lo sin leer y lo dice en el nombre del enlace', async () => {
+      avisosSinLeer.set(0);
+      chatsSinLeer.set(3);
+      await conSesion(true);
+
+      expect(iniciar).toHaveBeenCalled();
+      expect(prepararContador).toHaveBeenCalled();
+      const mensajes = root().querySelector('a[data-route="/messaging"]')!;
+      expect(mensajes.getAttribute('aria-label')).toBe('Mensajes, 3 sin leer');
+      expect(mensajes.querySelector('[data-testid="public-nav-rail-contador"]')?.textContent).toContain('3');
+      // Sin «0» permanente.
+      const avisos = root().querySelector('a[data-route="/notification-center"]')!;
+      expect(avisos.getAttribute('aria-label')).toBe('Notificaciones');
+      expect(avisos.querySelector('[data-testid="public-nav-rail-contador"]')).toBeNull();
+
+      avisosSinLeer.set(8);
+      await fixture.whenStable();
+      expect(avisos.getAttribute('aria-label')).toBe('Notificaciones, 8 sin leer');
     });
   });
 });

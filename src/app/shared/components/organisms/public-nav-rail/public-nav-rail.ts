@@ -31,20 +31,23 @@
     es como se dibuja por debajo de 900 px.
     ========================================================================== */
 
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs/operators';
 
+import { Badge } from '../../atoms/badge/badge';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../atoms/tooltip/tooltip';
 
 import { SessionStore } from '@core/auth/session.store';
+import { ChatStore } from '@core/messaging/chat.store';
+import { NotificationsStore } from '@core/notifications/notifications.store';
 import { PUBLIC_NAV_RAIL_SECTIONS, PUBLIC_NAV_RAIL_SOCIAL } from './public-nav-rail.types';
 
 @Component({
   selector: 'app-public-nav-rail',
-  imports: [NavIcon, RouterLink, Tooltip],
+  imports: [Badge, NavIcon, RouterLink, Tooltip],
   templateUrl: './public-nav-rail.html',
   styleUrl: './public-nav-rail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +63,34 @@ export class PublicNavRail {
     const [secciones, ...resto] = PUBLIC_NAV_RAIL_SECTIONS;
     return [secciones!, PUBLIC_NAV_RAIL_SOCIAL, ...resto];
   });
+
+  private readonly avisos = inject(NotificationsStore);
+  private readonly chats = inject(ChatStore);
+
+  /**
+   * Con sesión, los contadores de Mensajes y Notificaciones: los mismos que la
+   * campana y el ícono de chats del armazón con sesión (mismas fuentes, sin
+   * contar nada acá). Sin sesión no se pide nada: no hay bandeja que leer.
+   */
+  private readonly prepararContadores = effect(() => {
+    if (!this.sesion.isAuthenticated()) return;
+    untracked(() => {
+      this.avisos.iniciar();
+      this.chats.prepararContador();
+    });
+  });
+
+  protected sinLeer(contador: 'avisos' | 'chats' | undefined): number {
+    if (contador === 'avisos') return this.avisos.sinLeer();
+    if (contador === 'chats') return this.chats.sinLeer();
+    return 0;
+  }
+
+  /** «Mensajes, 3 sin leer»: el número viaja en el nombre del enlace, no sólo en el globo. */
+  protected nombre(entry: { readonly label: string; readonly contador?: 'avisos' | 'chats' }): string {
+    const cuantos = this.sinLeer(entry.contador);
+    return cuantos === 0 ? entry.label : `${entry.label}, ${cuantos} sin leer`;
+  }
 
   /** La última navegación terminada, o `null` si todavía no hubo ninguna. */
   private readonly lastNavigation = toSignal(

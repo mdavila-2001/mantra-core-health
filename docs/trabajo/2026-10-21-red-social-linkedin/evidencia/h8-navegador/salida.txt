@@ -1,0 +1,13 @@
+✔ 1440 · Notificaciones dice cuántas sin leer — Notificaciones, 8 sin leer
+✔ 1440 · Mensajes dice cuántos sin leer — Mensajes, 4 sin leer
+✔ 1440 · hay contador visible
+✔ 1440 · sin scroll horizontal de página
+✔ Notificaciones abre el centro de notificaciones
+✔ 390 · Notificaciones dice cuántas sin leer — Notificaciones, 8 sin leer
+✔ 390 · Mensajes dice cuántos sin leer — Mensajes, 4 sin leer
+✔ 390 · hay contador visible
+✔ 390 · sin scroll horizontal de página
+(CSP inline-script aparte: 4)
+✔ sin errores de página ni de consola (salvo CSP)
+
+10/10 en verde
