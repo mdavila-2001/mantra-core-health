@@ -1,2 +1,161 @@
 
 ── h3-inicio ──
+✔ sin sesión · no hay columna de perfil
+✔ sin sesión · no hay «Crear publicación» ni pestañas
+✔ sin sesión · sugerencias a la derecha
+✔ sin sesión · feed a la izquierda de las sugerencias y más del 60 % del ancho — 778/1064
+✔ sin sesión · «Seguir» manda a entrar con retorno
+✔ con sesión · izquierda < centro < derecha — 219 < 477 < 1017
+✔ con sesión · el perfil está a la izquierda
+✔ con sesión · las sugerencias están a la derecha
+✔ el centro es la columna más ancha — 238 | 520 | 266
+✔ perfil mini · visitas a su perfil
+✔ perfil mini · apariciones en búsquedas
+✔ perfil mini · a cuántos sigue — 5
+✔ la lista de entrada es «Recientes»
+✔ hay sugerencias con botón Seguir
+✔ Seguir en sugerencias alterna — Seguir → Siguiendo
+✔ el contador «Siguiendo» del perfil se mueve con el gesto — 5 → 6
+✔ «Siguiendo» muestra publicaciones de a quienes sigue — 10 tarjetas
+✔ los autores tienen nombre (no «Perfil 6490…» ni «…») — Valeria Rojas Mendoza | Valeria Rojas Mendoza | Jorge Andrés Salazar Vaca
+✔ Siguiendo no inventa el ícono de visibilidad — 0
+✔ recargar en ?feed=siguiendo conserva la lista
+✔ y al recargar nunca pinta tarjetas ajenas a «Siguiendo» (sin selector, o con «Recientes») antes de que llegue la lista — -:sin | Siguiendo:sin | Siguiendo:tarjetas
+✔ volver a «Recientes» quita el parámetro
+✔ 390px · sin scroll horizontal
+✔ 768px · sin scroll horizontal
+✔ 1024px · sin scroll horizontal
+✔ 1440px · sin scroll horizontal
+✔ 1920px · sin scroll horizontal
+(CSP inline-script aparte: 0)
+✔ sin errores de página ni de consola (salvo CSP)
+
+28/28 en verde
+
+── h4-modal ──
+✔ el modal se abre y el foco queda adentro
+✔ el modal tiene título accesible «Crear una publicación»
+✔ muestra quién publica
+✔ Publicar está deshabilitado sin texto
+✔ la imagen se sube y aparece su miniatura
+✔ sólo se ofrece «Imagen» (no sticker ni GIF)
+✔ Esc con borrador pregunta si se descarta (hay un segundo diálogo) — dialogs=2
+✔ tras «seguir editando» el modal y el texto siguen
+✔ al publicar el modal se cierra
+✔ la publicación nueva aparece en el feed tras releer
+✔ con su imagen
+✔ tras recargar la publicación sigue ahí
+✔ y su imagen también
+✔ cerrar sin nada escrito no pregunta
+✔ el foco vuelve a la pastilla
+✔ 390px sin scroll horizontal con el modal
+(CSP inline-script aparte: 0)
+✔ sin errores de página ni de consola (salvo CSP)
+
+17/17 en verde
+
+── h5-tarjeta ──
+✔ /feed redirige a /posts — http://127.0.0.1:4400/posts
+✔ el botón arranca en «Recomendar» — Recomendar
+✔ el selector muestra 5 reacciones
+✔ elegir «Celebro» cambia el botón — Celebro
+✔ tras recargar la reacción propia sigue siendo «Celebro» — Celebro
+✔ tocar el botón quita la reacción
+✔ Guardar pasa a «Guardada»
+✔ Seguir/Siguiendo alterna con un toque — Siguiendo → Seguir
+✔ y vuelve con otro toque
+✔ tras recargar sigue «Guardada»
+✔ tras recargar el follow queda como se dejó — Seguir
+✔ el comentario aparece
+✔ «Responder» abre el redactor en línea sin cambiar de URL
+✔ la respuesta aparece bajo el comentario
+(CSP inline-script aparte: 0 en )
+✔ sin errores de página ni de consola (salvo CSP)
+
+15/15 en verde
+
+── h6-red-y-guardados ──
+✔ sin sesión /network manda a entrar
+✔ sin sesión el rail no ofrece Mi red
+✔ con sesión el rail muestra Mi red social — /network,/saved,/messaging,/notification-center
+✔ Mi red · lista a quién sigue — 5
+✔ Mi red · cada fila tiene nombre real (no «…» ni id) — Jorge Andrés Salazar Vaca | María Fernanda Quiroga Añez | Rodrigo Paz Soruco
+✔ Mi red · rail marca «Mi red» como página actual
+✔ Mi red · 1440 sin scroll horizontal
+✔ Sugerencias · hay alguien para seguir — Daniel Aguilar Roca
+✔ Seguir cambia el botón a «Siguiendo»
+✔ la persona aparece en Siguiendo sin recargar
+✔ tras recargar sigue en Siguiendo (persistió)
+✔ Dejar de seguir lo saca de la lista
+✔ dejar de seguir persistió tras recargar
+✔ Guardar queda presionado
+✔ Guardados · la publicación aparece — 0 → 1
+✔ Guardados · es la misma publicación — post-card-de5052aa-02df-467a-ae99-f9100f2fb0c4
+✔ Guardados · tras recargar sigue (persistió)
+✔ y sale de Guardados sin recargar
+✔ quitar también persistió tras recargar
+✔ network · 390 light sin scroll horizontal
+✔ saved · 390 light sin scroll horizontal
+✔ network · 390 dark sin scroll horizontal
+✔ saved · 390 dark sin scroll horizontal
+✔ network · 1440 dark sin scroll horizontal
+✔ saved · 1440 dark sin scroll horizontal
+✔ network · 768 light sin scroll horizontal
+✔ saved · 768 light sin scroll horizontal
+(CSP inline-script aparte: 0)
+✔ sin errores de página ni de consola (salvo CSP)
+
+28/28 en verde
+
+── h6-ficha-seguir ──
+✔ sin sesión «Seguir» manda a entrar con retorno a la ficha
+✔ con sesión la ficha ofrece «Seguir» — Seguir
+✔ al tocarlo pasa a «Siguiendo»
+✔ tras recargar sigue «Siguiendo» (persistió)
+✔ y aparece en Mi red — Ramiro Céspedes Villca
+✔ volver a tocarlo deja de seguir
+✔ en la ficha propia no se dibuja
+(CSP inline-script aparte: 5 · túnel del sandbox aparte: 16, hosts: tile.openstreetmap.org)
+✔ lo único que no carga por red son los mosaicos del mapa (entorno) — tile.openstreetmap.org
+✔ sin errores de página ni de consola (salvo CSP)
+
+9/9 en verde
+
+── h7-avisos ──
+✔ hay avisos sociales en la campana — 4
+✔ los sociales empiezan con el nombre de quien actuó — María Fernanda Quiroga Añez · Comentó: «Excelente explicación, gracias por compartir.» | Jorge Andrés Salazar Vaca · Le gustó su publicación «¿Sabías que la hipertensión no suele dar…»
+✔ ningún título muestra un id
+✔ tocar un aviso de publicación abre la publicación suelta — /p/valeria-rojas/post/de5052aa-02df-467a-ae99-f9100f2fb0c4
+✔ y la publicación se ve
+(CSP inline-script aparte: 0)
+✔ sin errores de página ni de consola (salvo CSP)
+
+6/6 en verde
+
+── h8-rail ──
+✔ 1440 · Notificaciones dice cuántas sin leer — Notificaciones, 8 sin leer
+✔ 1440 · Mensajes dice cuántos sin leer — Mensajes, 4 sin leer
+✔ 1440 · hay contador visible
+✔ 1440 · sin scroll horizontal de página
+✔ Notificaciones abre el centro de notificaciones
+✔ 390 · Notificaciones dice cuántas sin leer — Notificaciones, 8 sin leer
+✔ 390 · Mensajes dice cuántos sin leer — Mensajes, 4 sin leer
+✔ 390 · hay contador visible
+✔ 390 · sin scroll horizontal de página
+(CSP inline-script aparte: 0)
+✔ sin errores de página ni de consola (salvo CSP)
+
+10/10 en verde
+
+── h9-publicacion-propia ──
+✔ Recientes · la publicación para seguidores queda primera
+✔ Recientes · sin duplicar
+✔ Recientes · no cambió de pestaña — /posts
+✔ Siguiendo · la publicación para seguidores queda primera
+✔ Siguiendo · sin duplicar
+✔ Siguiendo · no cambió de pestaña — /posts?feed=siguiendo
+
+6/6 en verde
+
+119/119 en verde
+exit=0
