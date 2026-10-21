@@ -119,6 +119,7 @@ H0 base y evidencia «antes»
               └─ H7 notificaciones y chats conectados
                   └─ H8 barra social del shell público
                       └─ H9 cierre: gates, Playwright, barrido visual, revisión independiente, PR
+                          └─ H10 rediseño estético e integral (franjas S0→S5, pedido del 21/10)
 ```
 
 Regla `NO_BIG_BANG_REWRITE`: cada hito termina compilando, con sus pruebas en verde y con la app usable. Un hito no abre hasta que el anterior esté en `HECHO` o en `A MEDIAS` con su motivo. `NO_SELF_APPROVAL`: H9 lo revisan `visual-reviewer`, `frontend-reviewer` y `regression-auditor`, no quien implementó.
@@ -335,6 +336,76 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 
 ---
 
+## H10 — Rediseño estético e integral, guiado por `marketingskills` (pedido del 21/10/2026)
+
+Pedido literal: «añadas al plan que hagamos un rediseño ultra estético e integral; considerá estas skills: https://github.com/coreyhaines31/marketingskills/».
+
+**Qué aportan esas skills y qué no (hecho, leído en el repo, commit `e85f3cbc`, 19/10/2026, licencia MIT).** Son 60 skills de **marketing y conversión**, no de diseño visual: `cro`, `copywriting`, `copy-editing`, `onboarding`, `signup`, `site-architecture`, `marketing-psychology`, `product-marketing`, `social`, `community-marketing`, `referrals`, `seo-audit`, `schema`, `image`, entre otras. Por eso el rediseño se apoya en **dos patas**:
+
+- **Lo estético** (color, tipografía, espacio, jerarquía, movimiento): las skills del propio repo y de la casa — `project-design-system` (188 tokens, sin Tailwind), `visual-quality-gate`, `frontend-design`, `emil-design-eng`, `apple-design`, `improve-ui`, `visual-hierarchy-composition`, `typography-systems`, `color-systems`, `frontend-motion`.
+- **Lo que hace que la pantalla funcione para quien la usa** (propuesta de valor, textos, confianza, primera experiencia, arquitectura de navegación): las de `marketingskills`, aplicadas a la superficie pública y a la red social.
+
+**Límite ético que no se negocia (producto de salud).** De `marketing-psychology` y `cro` se usa sólo lo honesto: prueba social **verificada** (reseñas reales, matrícula verificada), claridad, reducción de fricción. **Prohibido** en cualquier pantalla: escasez o urgencia artificial («quedan 2 turnos»), FOMO, confirmshaming, conteos inventados, testimonios ficticios, o cualquier patrón que empuje una decisión clínica. Lo pagado sigue diciendo «Espacio pagado» (pie del marco público). Cada afirmación de un texto tiene que poder respaldarse (lo exige también `copywriting`: «Claims must be supportable»).
+
+**Alcance (supuesto A-10):** «integral» = todas las pantallas de la **superficie pública y social** (marco público, `/posts`, `/network`, `/saved`, `/p/:slug` y `/o/:slug`, publicación suelta, buscador y sus 8 verticales, `/auth` y registro, inicio sin sesión) y el **lenguaje visual compartido** (tokens, tipografía, tarjetas, botones), que por construcción alcanza al resto de la app. Las pantallas clínicas internas (historia clínica, recetas, agenda) **sólo heredan** tokens y primitivas; su re-composición queda fuera de H10 y se propone como hito siguiente. Regla `NO_BIG_BANG_REWRITE`: franja por franja, cada una cierra con evidencia de navegador antes de abrir la siguiente.
+
+**CA:** Dado cualquier visitante o profesional en la superficie pública o social, cuando la recorre en 390/768/1440 y en claro/oscuro, entonces ve un lenguaje visual único (mismos tokens, misma escala tipográfica, mismas tarjetas), una propuesta de valor clara en el primer pantallazo sin sesión, textos sin «tics de IA» y sin afirmaciones sin respaldo, un primer uso guiado con sesión (vacíos que orientan, lista de próximos pasos), y ningún patrón de presión; y el comportamiento (autorización, navegación, contratos de API, persistencia, validación) es el mismo que antes del rediseño.
+**DoD:** por franja: `yarn lint` 0 · `yarn typecheck` 0 · specs tocados verdes sin debilitar · `visual-quality-gate` con capturas antes/después 390/768/1440 × claro/oscuro **mirado** y anotado en `evidencia/h10/VISUAL.md` · axe sin críticos · contraste AA medido · `visual-reviewer` y `regression-auditor` firmaron (no quien implementó) · Playwright de la franja verde contra `ng serve`.
+**Estado:** TODO
+
+### H10.S0 — Base: contexto de producto, skills y auditoría «antes»
+
+| ID | Microtarea | CA (binario) | DoD (comando → salida esperada) | Estado |
+|---|---|---|---|---|
+| H10.S0.M1 | Incorporar las skills útiles de `marketingskills` al repo: `cro`, `copywriting`, `copy-editing`, `onboarding`, `signup`, `site-architecture`, `marketing-psychology`, `product-marketing`, `social`, `community-marketing`, `seo-audit`, `schema` copiadas a `.claude/skills/marketing/<nombre>/` con `LICENSE` (MIT) y `PROCEDENCIA.md` (URL, commit `e85f3cbc`, fecha, licencia — regla 97.4.2) y la nota del límite ético de este hito | 12 carpetas + licencia + procedencia | `ls .claude/skills/marketing | wc -l` → 12 · `git grep -n "e85f3cbc" .claude/skills/marketing/PROCEDENCIA.md` → 1 | TODO |
+| H10.S0.M2 | Documento de contexto de producto (`product-marketing` lo pide en `.agents/product-marketing.md`; acá vive en `docs/refactor-profesional/contexto-producto.md`): públicos (paciente, profesional, organización), problema, propuesta de valor, voz (de usted, sobria, clínica), pruebas que se pueden mostrar y las que **no** — todo con fuente en `docs/` o en el código; lo que no tenga fuente queda como pregunta, no como hecho | cada afirmación cita archivo o queda en §9 | revisión: `grep -c "Fuente:" docs/refactor-profesional/contexto-producto.md` ≥ número de afirmaciones | TODO |
+| H10.S0.M3 | Auditoría «antes» con `cro` + `site-architecture` + `seo-audit` sobre las pantallas del alcance: propuesta de valor, jerarquía, CTA, confianza, fricción, navegación, títulos y metadatos | una tabla por pantalla con hallazgo → franja que lo resuelve | `evidencia/h10/auditoria-antes.md` + capturas `evidencia/h10/antes/` (390/1440 × claro/oscuro) | TODO |
+| H10.S0.M4 | Dirección visual: tres alternativas en una página de referencia (paleta derivada de los tokens actuales, escala tipográfica, densidad, radios, sombras, movimiento) comparadas con capturas; se elige una y se registra por qué en `docs/adr/ADR-00XX-rediseno-visual.md` | ADR escrito con la elegida y las descartadas | `ls docs/adr | grep -i rediseno` → 1 | TODO |
+
+### H10.S1 — Lenguaje visual compartido (tokens y primitivas)
+
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H10.S1.M1 | Tokens: ajustar valores (no nombres) de color, tipografía, espacio, radio, sombra y duración según el ADR, en claro y oscuro, en `docs/design-system/tokens.md` y la hoja de tokens; **cero** literales nuevos | contraste AA de cada par texto/fondo | script de contraste sobre los pares documentados → 0 fallos · `yarn build` 0 | TODO |
+| H10.S1.M2 | Primitivas: tarjeta, botón, pastilla, pestañas, avatar, insignia de verificado, esqueleto, estado vacío — una sola versión cada una (buscar duplicados antes: `atomic-design-components`) | ningún componente duplicado nuevo | `git grep -c "border-radius:" src/app/features` no crece · specs de las primitivas verdes | TODO |
+| H10.S1.M3 | Movimiento: entradas, hover, despliegues con las duraciones del ADR y `prefers-reduced-motion` respetado en todos | sin animaciones de layout | spec/E2E con `reducedMotion: 'reduce'` → sin transiciones | TODO |
+
+### H10.S2 — Superficie sin sesión: primer pantallazo y confianza (`cro`, `copywriting`, `schema`)
+
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H10.S2.M1 | `/posts` sin sesión: bloque de bienvenida con propuesta de valor en una línea, para quién es, y dos CTA (Buscar a quién consultar · Crear cuenta), sin tapar el feed | se entiende qué es AloVida sin hacer scroll en 390 | captura 390/1440 · prueba de 5 segundos documentada en `evidencia/h10/` | TODO |
+| H10.S2.M2 | Marco público: header y rail rediseñados (jerarquía, buscador protagonista, estados activos) sin cambiar rutas ni accesibilidad (AC-01-2/3) | carril-01 sigue verde | `yarn pw carril-01-publicaciones-publicas` → passed | TODO |
+| H10.S2.M3 | Ficha pública del profesional: jerarquía de confianza (verificado, especialidad, reseñas reales, cómo contactar) + datos estructurados `Physician`/`MedicalOrganization` (JSON-LD, `schema`) sin datos personales de más | validador de schema sin errores | salida del validador pegada · `carril-05-perfil-doctor` verde | TODO |
+| H10.S2.M4 | Buscador y verticales: tarjetas de resultado con la misma anatomía, filtros legibles, vacíos que orientan | 8 verticales con la misma tarjeta | capturas de las 8 · specs verdes | TODO |
+| H10.S2.M5 | Pasada de `copy-editing` a todos los textos del alcance: sin tics de IA, sin promesas sin respaldo, de usted, rótulos de botón que dicen lo que pasa | lista antes/después revisada | `evidencia/h10/textos.md` con cada cambio y su motivo | TODO |
+
+### H10.S3 — Registro, entrada y primer uso (`signup`, `onboarding`)
+
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H10.S3.M1 | `/auth` y registro: menos fricción visual (un objetivo por paso, errores por campo, datos preservados ante fallo) sin cambiar validación ni contratos | mismos requests que antes | spec + E2E de registro verdes · HAR antes/después idéntico en endpoints | TODO |
+| H10.S3.M2 | Primer uso con sesión en la red: lista «Empiece acá» (crear su vitrina → seguir a 3 profesionales → primera publicación) calculada de datos reales (perfil propio, `FollowStore.total`, publicaciones propias), descartable y persistida | se marca sola al cumplirse cada paso | spec por paso · navegador: cumplir un paso → recarga → sigue marcado | TODO |
+| H10.S3.M3 | Vacíos de `/posts` Siguiendo, `/network`, `/saved` con ilustración/ícono del sistema y próxima acción (ya orientan; se igualan al lenguaje nuevo) | tres vacíos con el mismo patrón | capturas claro/oscuro | TODO |
+
+### H10.S4 — Red social con el lenguaje nuevo (`social`, `community-marketing`)
+
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H10.S4.M1 | Tarjeta de publicación, modal de creación, hilo y selector de reacciones con el lenguaje del ADR (densidad, tipografía de lectura, imágenes con proporción estable) | sin cambios de comportamiento | specs de H3–H5 verdes sin tocar aserciones · capturas | TODO |
+| H10.S4.M2 | Inicio en tres columnas, Mi red y Guardados re-compuestos (holgura ≤ 2 px, `composition-rules` §5) | medición pegada | script de medición → ✔ en 390/768/1440 | TODO |
+| H10.S4.M3 | Ayudas al publicar (`social`): pistas de formato en el redactor (gancho en la primera línea, imagen con texto alternativo, etiquetas) sin bloquear ni puntuar a nadie | pistas visibles y descartables | spec verde | TODO |
+
+### H10.S5 — Cierre del rediseño
+
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H10.S5.M1 | Barrido visual completo antes/después de todas las pantallas del alcance × 390/768/1440 × claro/oscuro × estados, **mirado** | `VISUAL.md` sin pendientes | `visual-quality-gate` corrido | TODO |
+| H10.S5.M2 | Regresión: `yarn lint`, `typecheck`, `build`, `test` completo y Playwright de los carriles del alcance | sólo fallos preexistentes documentados | salidas en `evidencia/h10/` | TODO |
+| H10.S5.M3 | Revisión independiente (`visual-reviewer`, `frontend-reviewer`, `regression-auditor`) y sección H10 en `REPORTE.md` | tres veredictos | `evidencia/h10/revisiones.md` | TODO |
+
+---
+
 ## 5 · Microtareas en números
 
 | Hito | Microtareas |
@@ -349,9 +420,10 @@ Decisión registrada (regla 00 §1.4): se extiende el DTO existente en vez de cr
 | H7 | 3 |
 | H8 | 4 |
 | H9 | 9 |
-| **Total** | **68** |
+| H10 | 21 |
+| **Total** | **89** |
 
-Avance se informa como `HECHO / 68`. Hoy: **0 / 68**.
+Avance se informa como `HECHO / 89` (68 del flujo social + 21 del rediseño, agregado el 21/10/2026). Los estados por microtarea de H0–H9 se recalculan en el `REPORTE.md` con su evidencia; esta tabla no se adelanta a ella.
 
 ---
 
@@ -405,6 +477,9 @@ Para publicar con imagen, reaccionar (y cambiar de tipo), comentar, responder, s
 | A-08 | Roles: ¿los pacientes también ven «Red social» con Inicio/Mi red? Hoy `/posts` es público y la paciente del mock tiene vitrina y seguimientos | Sí para cualquiera con sesión; la barra «Yo» depende de tener vitrina | Marcelo |
 | A-09 | Idioma de los rótulos de reacción (LinkedIn: Recomendar · Celebrar · Apoyar · Me encanta · Interesante · Gracioso). La API tiene 5: LIKE, LOVE, INSIGHTFUL, CELEBRATE, SUPPORT | «Recomendar · Me encanta · Me hizo pensar · Celebro · Apoyo» (de usted, como el resto de la app) | Marcelo |
 
+| A-10 | ¿Qué abarca «integral» en el rediseño? | Superficie pública y social completa + lenguaje visual compartido (tokens y primitivas, que alcanza a toda la app); la re-composición de pantallas clínicas internas queda para el hito siguiente | Marcelo |
+| A-11 | ¿Se copian las skills de `marketingskills` al repo o sólo se consultan? | Se copian las 12 útiles con licencia MIT y procedencia (H10.S0.M1); no se copian las de anuncios, correo frío, SMS, afiliados ni precios, que no tienen superficie en esta app | Marcelo |
+| A-12 | Tácticas de `marketing-psychology` (escasez, urgencia, anclaje) en un producto de salud | No se usan: sólo prueba social verificada, claridad y menos fricción (límite ético de H10) | Marcelo / responsable clínico |
 ---
 
 ## 10 · Cómo retomar este plan en otra sesión
