@@ -1,18 +1,20 @@
-/* La red social: tres columnas, como una red profesional.
+/* La red social: tres columnas, en el orden de LinkedIn.
 
-   Izquierda (tendencias + banners) · centro (crear + feed) · derecha (perfil
-   mini, sólo con sesión). Sin sesión la rejilla tiene DOS columnas y el feed
-   se queda con el ancho de la derecha: nunca una columna vacía reservada
-   (composition-rules §5).
+   Izquierda (quién soy: perfil con sus números), centro (crear + feed) y
+   derecha (a quién seguir + espacios pagados). Sin sesión la rejilla tiene DOS
+   columnas y el feed se queda con el ancho de la izquierda: nunca una columna
+   vacía reservada (composition-rules §5).
 
-   Mobile-first: una columna con el feed primero; desde 900 px entra la
-   izquierda; desde 1200 px, la derecha. Las columnas laterales son pegajosas
-   debajo del header para que acompañen el scroll de un feed largo. */
+   Mobile-first: una columna con el feed primero; desde 900 px entran las
+   sugerencias; desde 1200 px, con sesión, el perfil. Las columnas laterales son
+   pegajosas debajo del header para que acompañen el scroll de un feed largo. */
 
 .red {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'centro' 'izquierda';
+  /* Teléfono: el feed primero y las sugerencias después. La tarjeta de perfil no
+     se dibuja acá: la barra «Crear publicación» ya lleva el avatar. */
+  grid-template-areas: 'centro' 'derecha';
   gap: var(--e5);
   inline-size: 100%;
   max-inline-size: 76rem;
@@ -31,9 +33,7 @@
   gap: var(--e4);
 }
 
-/* Fuera de la rejilla de tres columnas la derecha no se dibuja: debajo de
-   1200 px el perfil propio ya está en la barra de «Crear publicación». */
-.red__derecha { display: none; }
+.red__izquierda { display: none; }
 
 .red__centro {
   display: flex;
@@ -41,25 +41,31 @@
   gap: var(--e4);
 }
 
+.red__modo {
+  align-self: flex-start;
+}
+
+/* Desde 900 px entran las sugerencias a la derecha (sin sesión: dos columnas). */
 @media (min-width: 900px) {
   .red {
-    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
-    grid-template-areas: 'izquierda centro';
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 19rem);
+    grid-template-areas: 'centro derecha';
   }
 
-  .red__izquierda {
+  .red__derecha {
     position: sticky;
     top: calc(var(--h-header) + var(--e4));
   }
 }
 
+/* Desde 1200 px, con sesión, entra a la izquierda quién soy: perfil | feed | sugerencias. */
 @media (min-width: 1200px) {
   .red--con-perfil {
     grid-template-columns: minmax(15rem, 17rem) minmax(0, 1fr) minmax(16rem, 19rem);
     grid-template-areas: 'izquierda centro derecha';
   }
 
-  .red--con-perfil .red__derecha {
+  .red--con-perfil .red__izquierda {
     display: flex;
     position: sticky;
     top: calc(var(--h-header) + var(--e4));

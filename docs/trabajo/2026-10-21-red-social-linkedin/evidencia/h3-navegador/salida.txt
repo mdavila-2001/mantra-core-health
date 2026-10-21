@@ -1,0 +1,30 @@
+✔ sin sesión · no hay columna de perfil
+✔ sin sesión · no hay «Crear publicación» ni pestañas
+✔ sin sesión · sugerencias a la derecha
+✔ sin sesión · feed a la izquierda de las sugerencias y más del 60 % del ancho — 778/1064
+✔ sin sesión · «Seguir» manda a entrar con retorno
+✔ con sesión · izquierda < centro < derecha — 219 < 477 < 1017
+✔ con sesión · el perfil está a la izquierda
+✔ con sesión · las sugerencias están a la derecha
+✔ el centro es la columna más ancha — 238 | 520 | 266
+✔ perfil mini · visitas a su perfil
+✔ perfil mini · apariciones en búsquedas
+✔ perfil mini · a cuántos sigue — 5
+✔ la lista de entrada es «Recientes»
+✔ hay sugerencias con botón Seguir
+✔ Seguir en sugerencias alterna — Seguir → Siguiendo
+✔ el contador «Siguiendo» del perfil se mueve con el gesto — 5 → 6
+✔ «Siguiendo» muestra publicaciones de a quienes sigue — 10 tarjetas
+✔ los autores tienen nombre (no «Perfil 6490…» ni «…») — Valeria Rojas Mendoza | Valeria Rojas Mendoza | Jorge Andrés Salazar Vaca
+✔ Siguiendo no inventa el ícono de visibilidad — 0
+✔ recargar en ?feed=siguiendo conserva la lista
+✔ volver a «Recientes» quita el parámetro
+✔ 390px · sin scroll horizontal
+✔ 768px · sin scroll horizontal
+✔ 1024px · sin scroll horizontal
+✔ 1440px · sin scroll horizontal
+✔ 1920px · sin scroll horizontal
+(CSP inline-script aparte: 2)
+✔ sin errores de página ni de consola (salvo CSP)
+
+27/27 en verde

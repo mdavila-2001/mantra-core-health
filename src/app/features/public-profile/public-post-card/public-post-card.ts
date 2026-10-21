@@ -96,8 +96,12 @@ export class PublicPostCard {
    * El feed público sólo trae publicaciones públicas, así que por defecto es
    * `PUBLIC`; la pestaña «Siguiendo» puede traer las de seguidores y las
    * propias privadas, y la cabecera lo dice con un ícono y un texto.
+   *
+   * `null` es «no se sabe»: la lectura del feed personal trae la visibilidad
+   * como concept id y el cliente no la traduce, y afirmar 🌐 para una
+   * publicación sólo de seguidores sería mentir. Sin dato no se dibuja nada.
    */
-  readonly visibilidad = input<PostVisibility>('PUBLIC');
+  readonly visibilidad = input<PostVisibility | null>('PUBLIC');
 
   /**
    * El id de perfil del autor, si quien monta la tarjeta lo conoce (el feed
@@ -310,6 +314,8 @@ export class PublicPostCard {
 
   protected readonly textoDeVisibilidad = computed(() => {
     switch (this.visibilidad()) {
+      case null:
+        return '';
       case 'FOLLOWERS':
         return 'Sólo para quienes siguen a este autor';
       case 'PRIVATE':

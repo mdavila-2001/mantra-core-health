@@ -59,13 +59,14 @@ export class FollowButton {
   /** Cómo se llama, para el nombre accesible: «Seguir a Dra. Rojas». */
   readonly nombre = input('');
 
-  /** `tarjeta` es el botón compacto de la cabecera; `ficha` el grande de la página de perfil. */
-  readonly variante = input<'tarjeta' | 'ficha'>('tarjeta');
+  /** `tarjeta` es el botón compacto de la cabecera; `ficha` el grande de la página de perfil; `pastilla` el contorno de las listas de sugerencias. */
+  readonly variante = input<'tarjeta' | 'ficha' | 'pastilla'>('tarjeta');
 
   /** Si es el perfil de quien mira, no hay nada que ofrecer. */
   protected readonly esPropio = computed(() => {
     const miPerfil = this.propio.perfil();
-    return miPerfil !== null && miPerfil.slug === this.slug();
+    if (miPerfil === null) return false;
+    return miPerfil.slug === this.slug() || miPerfil.id === this.perfilId();
   });
 
   /**

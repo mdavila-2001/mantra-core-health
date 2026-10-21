@@ -1,5 +1,5 @@
 <section class="tendencias" aria-labelledby="tendencias-titulo" data-testid="feed-tendencias">
-  <h2 id="tendencias-titulo" class="tendencias__titulo">Doctores en tendencia esta semana</h2>
+  <h2 id="tendencias-titulo" class="tendencias__titulo">Profesionales para seguir</h2>
 
   @switch (estado()) {
     @case ('datos') {
@@ -32,6 +32,7 @@
                   Sin reseñas todavía
                 }
               </p>
+              <app-follow-button class="doctor__seguir" variante="pastilla" [slug]="d.slug" [nombre]="d.displayName" />
             </div>
           </li>
         }
@@ -41,7 +42,7 @@
 
     @case ('carga') {
       <div class="tendencias__esqueleto" aria-live="polite" aria-busy="true">
-        <span class="solo-lectores">Cargando los profesionales en tendencia…</span>
+        <span class="solo-lectores">Cargando los profesionales sugeridos…</span>
         <span class="app-skeleton"></span>
         <span class="app-skeleton"></span>
         <span class="app-skeleton"></span>

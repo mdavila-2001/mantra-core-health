@@ -1,132 +1,141 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
 import { CommunityClient } from '@core/data-access/community/community.client';
-import type { OwnPublicProfile } from '@core/data-access/community/community.types';
+import type { FeedListItem } from '@core/data-access/community/community.types';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type {
   PublicFeedPost,
   PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
+import { OwnProfileStore } from '@core/social/own-profile.store';
+import { PostActorStateStore } from '@core/social/post-actor-state.store';
+import { ProfileSummaryStore } from '@core/social/profile-summary.store';
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
-import { inicialesDe } from '@shared/text/iniciales';
-import { ReportPost } from '../../../social/report-post/report-post';
+import { SegmentedControl } from '@shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '@shared/components/molecules/segmented-control/segmented-control.types';
 import { PublicPostCard } from '../../../public-profile/public-post-card/public-post-card';
+import { ReportPost } from '../../../social/report-post/report-post';
 import { FeedBanner } from './feed-banner/feed-banner';
 import { FeedCrearPublicacion } from './feed-crear-publicacion/feed-crear-publicacion';
 import { FeedPerfilMini } from './feed-perfil-mini/feed-perfil-mini';
 import { FeedTendencias } from './feed-tendencias/feed-tendencias';
+import { deRecientes, deSiguiendo, type PostVista } from './feed-publicaciones.vista';
 
-/** En qué estado está la pantalla, para el `@switch` de la plantilla. */
+/** Cuántas publicaciones se piden por página del feed personal. */
+const PAGINA_SIGUIENDO = 10;
+
 type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
 
+/** Qué lista se está mirando. */
+export type ModoDelFeed = 'recientes' | 'siguiendo';
+
 /**
- * **La portada pública: lo último que publicaron todos los profesionales.**
+ * El inicio de la red social (`/posts`), al estilo de una red profesional.
  *
- * ## Por qué es la primera pantalla y no el buscador
+ * ## Tres columnas, en el orden de LinkedIn
  *
- * Quien entra sin sesión no trae todavía el nombre de un médico en la cabeza:
- * un buscador vacío le pide justamente el dato que no tiene. Un compilado de lo
- * último escrito sí se puede leer sin saber nada de antemano, y de cada tarjeta
- * se llega a la ficha de quien la escribió — que es el camino que el buscador
- * pedía adivinar de entrada.
+ * Izquierda: **quién soy** (tarjeta de perfil con sus números y sus accesos).
+ * Centro: **crear publicación** y el feed. Derecha: **a quién seguir** y los
+ * espacios pagados. Sin sesión la izquierda no se reserva (nunca una columna
+ * vacía, `composition-rules.md` §5) y el feed se queda con ese ancho.
  *
- * ## Por qué acumula en vez de paginar con botones
+ * ## Dos listas, y por qué «Recientes» es la de entrada
  *
- * Es un feed: la lectura es continua y hacia abajo. Cada «Ver más
- * publicaciones» concatena la página siguiente al final en vez de reemplazar
- * la lista, así que volver a lo ya leído es subir, no pedir la página anterior.
- * El cursor viene del servidor y es opaco; cuando llega `null`, no hay más.
+ * - **Recientes** (`GET /public/posts`): todo lo público. Funciona siempre.
+ * - **Siguiendo** (`GET /community/feed`): lo de a quién sigue la persona.
+ *   Depende de un reparto asíncrono a `community.feed_items` (un worker aparte)
+ *   que no en todos los entornos corre; cuando no corre, la lista está vacía
+ *   para cualquiera. Por eso no es la de entrada: abrir la red social y ver el
+ *   vacío sería lo primero que se ve.
  *
- * ## Tres columnas, como una red profesional (pedido del 13/09/2026)
+ * La elegida vive en la URL (`?feed=siguiendo`), así que se puede compartir, el
+ * botón «atrás» la respeta y un aviso puede llevar directo a ella.
  *
- * Sin título de página: la red social abre directo en el contenido.
- * Izquierda, «Doctores en tendencia esta semana» y los banners; al centro, la
- * barra de «Crear publicación» y el feed; a la derecha, el perfil propio en
- * miniatura. **Sin sesión no hay columna derecha** —no hay perfil que
- * mostrar— y el feed se queda con ese ancho en vez de dejar un hueco.
+ * Las dos listas se normalizan al mismo modelo (`PostVista`) y se dibujan con la
+ * misma tarjeta.
  */
 @Component({
   selector: 'app-feed-publicaciones',
-  imports: [FeedBanner, FeedCrearPublicacion, FeedPerfilMini, FeedTendencias, PublicPostCard, ReportPost, RouterLink],
+  imports: [
+    FeedBanner,
+    FeedCrearPublicacion,
+    FeedPerfilMini,
+    FeedTendencias,
+    PublicPostCard,
+    ReportPost,
+    RouterLink,
+    SegmentedControl,
+  ],
   templateUrl: './feed-publicaciones.html',
   styleUrl: './feed-publicaciones.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedPublicaciones {
   private readonly directorio = inject(PublicDirectoryClient);
+  private readonly community = inject(CommunityClient);
   private readonly avisos = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
   private readonly sesion = inject(SessionStore);
-  private readonly community = inject(CommunityClient);
+  private readonly propio = inject(OwnProfileStore);
+  private readonly estadoDelActor = inject(PostActorStateStore);
+  private readonly resumenes = inject(ProfileSummaryStore);
 
   /* ---- quien mira ------------------------------------------------------- */
 
   protected readonly conSesion = this.sesion.isAuthenticated;
+  protected readonly perfil = this.propio.perfil;
+  protected readonly perfilResuelto = this.propio.resuelto;
+  protected readonly actor = this.propio.id;
 
-  /** La vitrina propia, o `null` si todavía no la creó (o no hay sesión). */
-  protected readonly perfil = signal<OwnPublicProfile | null>(null);
-  protected readonly perfilResuelto = signal(false);
-  /** La ficha pública propia: la única que trae foto y portada como URL. */
+  /** La ficha pública del profesional (foto, portada, valoración); sólo si ejerce. */
   protected readonly detalle = signal<PublicProfileDetail | null>(null);
 
-  protected readonly actor = computed(() => this.perfil()?.id ?? null);
-
-  /**
-   * La vitrina se pide cuando hay sesión, y **cuando la sesión llega**.
-   *
-   * Al entrar por URL directa la sesión se restaura después de construir la
-   * pantalla (el refresh token va y vuelve); leer `isAuthenticated` una sola
-   * vez en el constructor dejaba la columna derecha vacía justo en ese caso.
-   */
-  private readonly alCambiarSesion = effect(() => {
-    const hay = this.conSesion();
-    untracked(() => (hay ? this.leerPerfil() : this.olvidarPerfil()));
+  private readonly leerDetalle = effect(() => {
+    const propio = this.perfil();
+    untracked(() => {
+      if (propio === null || this.sesion.practitionerProfileId() === null) {
+        this.detalle.set(null);
+        return;
+      }
+      this.directorio.getProfile('PRACTITIONER', propio.slug).subscribe({
+        next: (d) => this.detalle.set(d),
+        error: () => this.detalle.set(null),
+      });
+    });
   });
 
-  private leerPerfil(): void {
-    this.perfilResuelto.set(false);
-    this.community.getOwnProfile().subscribe({
-      next: (propio) => {
-        this.perfil.set(propio);
-        this.perfilResuelto.set(true);
-        // Sólo los profesionales tienen ficha pública bajo `/p`; pedirla para
-        // un paciente sería un 404 garantizado.
-        if (propio !== null && this.sesion.practitionerProfileId() !== null) {
-          this.directorio.getProfile('PRACTITIONER', propio.slug).subscribe({
-            next: (d) => this.detalle.set(d),
-            error: () => this.detalle.set(null),
-          });
-        }
-      },
-      error: () => {
-        this.perfil.set(null);
-        this.perfilResuelto.set(true);
-      },
+  /* ---- qué lista se mira ------------------------------------------------ */
+
+  private readonly parametros = toSignal(this.ruta.queryParamMap, { requireSync: true });
+
+  /** «Siguiendo» exige perfil público: el feed personal se pide con él. */
+  protected readonly puedeVerSiguiendo = computed(() => this.actor() !== null);
+
+  protected readonly modo = computed<ModoDelFeed>(() =>
+    this.parametros().get('feed') === 'siguiendo' && this.puedeVerSiguiendo() ? 'siguiendo' : 'recientes',
+  );
+
+  protected readonly opcionesDeModo: readonly SegmentedOption<ModoDelFeed>[] = [
+    { value: 'recientes', label: 'Recientes' },
+    { value: 'siguiendo', label: 'Siguiendo' },
+  ];
+
+  protected cambiarModo(modo: ModoDelFeed): void {
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { feed: modo === 'siguiendo' ? 'siguiendo' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
-  private olvidarPerfil(): void {
-    this.perfil.set(null);
-    this.detalle.set(null);
-    this.perfilResuelto.set(false);
-  }
+  /* ---- las acciones de dominio del menú (AC-01-15) ----------------------- */
 
-  /** Se publicó desde la barra: se relee el feed desde el principio. */
-  protected alPublicar(): void {
-    this.cargar();
-  }
-
-  /* ---- las tres acciones de dominio del menú (AC-01-15) ------------------ */
-
-  /**
-   * Qué publicación se está denunciando, o `null`.
-   *
-   * El formulario de denuncia reemplaza a la tarjeta en su lugar de la lista:
-   * abrirlo en un modal sacaría de contexto de qué publicación se está
-   * hablando.
-   */
+  /** Qué publicación se está denunciando, o `null`. El formulario reemplaza a la tarjeta en su lugar. */
   protected readonly denunciando = signal<string | null>(null);
 
   protected abrirDenuncia(postId: string): void {
@@ -138,97 +147,197 @@ export class FeedPublicaciones {
   }
 
   /**
-   * «No ver más este tipo de publicaciones» — **sin destino todavía**.
-   *
-   * No hay dónde guardarlo: no existe tabla de preferencias de feed. Lo más
-   * cercano es `community.user_blocks`, que bloquea al **autor** y no es lo
-   * mismo, y `community.topics` / `content_hashtags`, que etiquetan el
-   * contenido. Cuál de esos tres es «este tipo» es la pregunta abierta P-01-3
-   * de la ficha, y hasta que se responda no se modela nada.
-   *
-   * Se avisa en vez de callar: un ítem de menú que no hace nada al tocarlo se
-   * lee como una aplicación rota, y esconderlo iría contra AC-01-15, que exige
-   * las siete entradas.
+   * «No ver más este tipo de publicaciones» — **sin destino todavía**: no existe
+   * tabla de preferencias de feed (P-01-3). Se avisa en vez de callar.
    */
   protected pedirOcultar(): void {
     this.avisos.info('Todavía no puede ajustar qué tipo de publicaciones ve. Está en camino.');
   }
 
-  /**
-   * «Contactarme con este doctor» — **sin destino definido** (P-01-1).
-   *
-   * El pedido no dice por dónde: el chat interno (`community/conversations`,
-   * que existe), una solicitud de consulta, o el teléfono de la ficha. Son tres
-   * implementaciones distintas y elegir una por cuenta propia es decidir el
-   * producto. Mientras tanto se manda a la ficha del profesional, que es donde
-   * están sus vías de contacto reales, y se dice que es eso.
-   */
+  /** «Contactarme con este doctor» — sin destino definido (P-01-1): se manda a la ficha. */
   protected pedirContacto(slug: string): void {
     this.avisos.info('Sus vías de contacto están en su perfil.');
     void this.router.navigate(['/p', slug]);
   }
 
-  protected readonly publicaciones = signal<readonly PublicFeedPost[]>([]);
-  protected readonly cursor = signal<string | null>(null);
-  protected readonly cargando = signal(true);
-  protected readonly cargandoMas = signal(false);
-  protected readonly fallo = signal(false);
+  /* ---- Recientes: el feed público --------------------------------------- */
 
-  protected readonly hayMas = computed(() => this.cursor() !== null);
+  private readonly recientes = signal<readonly PublicFeedPost[]>([]);
+  private readonly cursorRecientes = signal<string | null>(null);
+  private readonly cargandoRecientes = signal(true);
+  private readonly falloRecientes = signal(false);
+  private readonly cargandoMasRecientes = signal(false);
 
-  protected readonly estado = computed<EstadoFeed>(() => {
-    if (this.cargando()) return 'carga';
-    if (this.fallo()) return 'error';
-    return this.publicaciones().length === 0 ? 'vacio' : 'datos';
+  /* ---- Siguiendo: el feed personal -------------------------------------- */
+
+  private readonly entradasSiguiendo = signal<readonly FeedListItem[]>([]);
+  private readonly cursorSiguiendo = signal<string | null>(null);
+  private readonly cargandoSiguiendo = signal(false);
+  private readonly falloSiguiendo = signal(false);
+  private readonly cargadoSiguiendo = signal(false);
+  private readonly cargandoMasSiguiendo = signal(false);
+
+  /** Lo que se dibuja: las dos fuentes normalizadas al mismo modelo. */
+  protected readonly vista = computed<readonly PostVista[]>(() => {
+    if (this.modo() === 'recientes') {
+      return this.recientes().map(deRecientes);
+    }
+    return this.entradasSiguiendo()
+      .map((entrada) =>
+        deSiguiendo(
+          entrada,
+          entrada.post === undefined ? null : this.resumenes.resumen(entrada.post.authorPublicProfileId),
+          entrada.post === undefined ? undefined : this.estadoDelActor.imagenesDe(entrada.post.id),
+        ),
+      )
+      .filter((v): v is PostVista => v !== null);
   });
 
+  protected readonly estado = computed<EstadoFeed>(() => {
+    const siguiendo = this.modo() === 'siguiendo';
+    if (siguiendo ? this.cargandoSiguiendo() : this.cargandoRecientes()) return 'carga';
+    if (siguiendo ? this.falloSiguiendo() : this.falloRecientes()) return 'error';
+    return this.vista().length === 0 ? 'vacio' : 'datos';
+  });
+
+  protected readonly hayMas = computed(() =>
+    this.modo() === 'siguiendo' ? this.cursorSiguiendo() !== null : this.cursorRecientes() !== null,
+  );
+
+  protected readonly cargandoMas = computed(() =>
+    this.modo() === 'siguiendo' ? this.cargandoMasSiguiendo() : this.cargandoMasRecientes(),
+  );
+
   constructor() {
-    this.cargar();
+    this.cargarRecientes();
   }
 
-  /** Las iniciales del autor, para cuando no tiene foto. */
-  protected iniciales(post: PublicFeedPost): string {
-    return inicialesDe(post.authorDisplayName);
+  /** Al entrar en «Siguiendo» por primera vez (o al cambiar de sesión) se pide el feed personal. */
+  private readonly pedirSiguiendo = effect(() => {
+    const quiere = this.modo() === 'siguiendo';
+    const actor = this.actor();
+    untracked(() => {
+      if (quiere && actor !== null && !this.cargadoSiguiendo() && !this.cargandoSiguiendo()) {
+        this.cargarSiguiendo(actor);
+      }
+    });
+  });
+
+  /** Al cerrar sesión se olvida lo personal: nada del usuario anterior queda en pantalla. */
+  private readonly olvidarAlSalir = effect(() => {
+    if (this.actor() === null) {
+      untracked(() => {
+        this.entradasSiguiendo.set([]);
+        this.cursorSiguiendo.set(null);
+        this.cargadoSiguiendo.set(false);
+        this.falloSiguiendo.set(false);
+        this.estadoDelActor.olvidar();
+      });
+    }
+  });
+
+  protected alPublicar(): void {
+    // Su publicación está en «Recientes» (es pública por defecto); en «Siguiendo»
+    // no aparece (nadie se sigue a sí mismo). Se lleva a donde se la ve.
+    if (this.modo() === 'siguiendo') this.cambiarModo('recientes');
+    this.cargarRecientes();
   }
 
   protected reintentar(): void {
-    this.cargar();
+    if (this.modo() === 'siguiendo') {
+      const actor = this.actor();
+      if (actor !== null) this.cargarSiguiendo(actor);
+    } else {
+      this.cargarRecientes();
+    }
   }
 
-  /** La página siguiente se **concatena**: un feed no reemplaza lo ya leído. */
   protected verMas(): void {
-    const desde = this.cursor();
-    if (desde === null || this.cargandoMas()) return;
+    if (this.modo() === 'siguiendo') this.masSiguiendo();
+    else this.masRecientes();
+  }
 
-    this.cargandoMas.set(true);
+  private masRecientes(): void {
+    const desde = this.cursorRecientes();
+    if (desde === null || this.cargandoMasRecientes()) return;
+
+    this.cargandoMasRecientes.set(true);
     this.directorio.feedPublico({ cursor: desde }).subscribe({
       next: (pagina) => {
-        this.publicaciones.update((previas) => [...previas, ...pagina.items]);
-        this.cursor.set(pagina.nextCursor);
-        this.cargandoMas.set(false);
+        this.recientes.update((previas) => [...previas, ...pagina.items]);
+        this.cursorRecientes.set(pagina.nextCursor);
+        this.cargandoMasRecientes.set(false);
       },
       error: () => {
-        // Un fallo al pedir MÁS no borra lo que ya se está leyendo: se corta
-        // la paginación y lo cargado se queda en pantalla.
-        this.cursor.set(null);
-        this.cargandoMas.set(false);
+        // Se deja de ofrecer «ver más»: no es una pantalla de error, sólo se acabó lo que pudo leerse.
+        this.cursorRecientes.set(null);
+        this.cargandoMasRecientes.set(false);
       },
     });
   }
 
-  private cargar(): void {
-    this.cargando.set(true);
-    this.fallo.set(false);
+  private cargarRecientes(): void {
+    this.cargandoRecientes.set(true);
+    this.falloRecientes.set(false);
     this.directorio.feedPublico({}).subscribe({
       next: (pagina) => {
-        this.publicaciones.set(pagina.items);
-        this.cursor.set(pagina.nextCursor);
-        this.cargando.set(false);
+        this.recientes.set(pagina.items);
+        this.cursorRecientes.set(pagina.nextCursor);
+        this.cargandoRecientes.set(false);
       },
       error: () => {
-        this.fallo.set(true);
-        this.cargando.set(false);
+        this.falloRecientes.set(true);
+        this.cargandoRecientes.set(false);
       },
     });
+  }
+
+  private cargarSiguiendo(actor: string): void {
+    this.cargandoSiguiendo.set(true);
+    this.falloSiguiendo.set(false);
+    this.community.listFeed({ profileId: actor, limit: PAGINA_SIGUIENDO }).subscribe({
+      next: (pagina) => {
+        // Sólo las entradas con publicación resuelta: una tarjeta vacía es peor que una entrada que no está.
+        const conPublicacion = pagina.items.filter((e) => e.post !== undefined);
+        this.entradasSiguiendo.set(conPublicacion);
+        this.cursorSiguiendo.set(pagina.nextCursor);
+        this.cargadoSiguiendo.set(true);
+        this.cargandoSiguiendo.set(false);
+        this.leerDetalles(conPublicacion, actor);
+      },
+      error: () => {
+        this.falloSiguiendo.set(true);
+        this.cargandoSiguiendo.set(false);
+      },
+    });
+  }
+
+  private masSiguiendo(): void {
+    const actor = this.actor();
+    const desde = this.cursorSiguiendo();
+    if (actor === null || desde === null || this.cargandoMasSiguiendo()) return;
+
+    this.cargandoMasSiguiendo.set(true);
+    this.community.listFeed({ profileId: actor, limit: PAGINA_SIGUIENDO, cursor: desde }).subscribe({
+      next: (pagina) => {
+        const conPublicacion = pagina.items.filter((e) => e.post !== undefined);
+        this.entradasSiguiendo.update((previas) => [...previas, ...conPublicacion]);
+        this.cursorSiguiendo.set(pagina.nextCursor);
+        this.cargandoMasSiguiendo.set(false);
+        this.leerDetalles(conPublicacion, actor);
+      },
+      error: () => {
+        this.cursorSiguiendo.set(null);
+        this.cargandoMasSiguiendo.set(false);
+      },
+    });
+  }
+
+  /** Pide el detalle de cada publicación del feed personal: de ahí salen sus imágenes y la reacción propia. */
+  private leerDetalles(entradas: readonly FeedListItem[], actor: string): void {
+    this.estadoDelActor.cargar(
+      entradas.flatMap((e) => (e.post === undefined ? [] : [e.post.id])),
+      actor,
+    );
   }
 }

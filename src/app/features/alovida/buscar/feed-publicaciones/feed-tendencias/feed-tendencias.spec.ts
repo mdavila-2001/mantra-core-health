@@ -27,4 +27,14 @@ describe('enTendencia', () => {
     expect(enTendencia(original, 2).map((d) => d.displayName)).toEqual(['C', 'B']);
     expect(original.map((d) => d.displayName)).toEqual(['A', 'B', 'C']);
   });
+
+  it('no se sugiere a sí mismo: «Seguir» a la propia vitrina no tiene sentido', () => {
+    const lista = enTendencia([doctor('Yo', 99, 5), doctor('B', 2, 4)], 5, 'Yo');
+
+    expect(lista.map((d) => d.displayName)).toEqual(['B']);
+  });
+
+  it('sin slug propio (anónimo) no excluye a nadie', () => {
+    expect(enTendencia([doctor('A', 1, 1)], 5, null)).toHaveLength(1);
+  });
 });

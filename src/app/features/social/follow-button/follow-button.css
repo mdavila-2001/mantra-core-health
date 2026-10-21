@@ -55,3 +55,15 @@
   outline: 2px solid var(--petroleo);
   outline-offset: 2px;
 }
+
+/* La pastilla de las listas de sugerencias: contorno, compacta, bajo el texto. */
+.seguir--pastilla {
+  min-block-size: 32px;
+  margin-block-start: var(--e1);
+  padding: 0 var(--e4);
+  border: 1px solid var(--petroleo);
+}
+
+.seguir--pastilla.seguir--siguiendo {
+  border-color: var(--filete);
+}

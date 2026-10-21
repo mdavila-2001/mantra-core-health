@@ -392,6 +392,30 @@ export interface ReactionSummary {
   readonly actorReactionType?: ReactionType;
 }
 
+/** Un día de las estadísticas de la vitrina propia. */
+export interface ProfileStatsDay {
+  /** `YYYY-MM-DD`, en UTC. */
+  readonly date: string;
+  readonly views: number;
+  readonly searchAppearances: number;
+}
+
+/**
+ * Las estadísticas de la vitrina propia (`GET /community/profiles/me/stats`).
+ *
+ * Son visitas, no visitantes únicos: no se guarda quién miró.
+ */
+export interface ProfileStats {
+  /** Cuántos días cubre la ventana (hoy, 7). */
+  readonly windowDays: number;
+  /** Visitas a la ficha pública en la ventana. */
+  readonly views: number;
+  /** Veces que apareció en resultados de búsqueda en la ventana. */
+  readonly searchAppearances: number;
+  /** Del día más viejo al más nuevo. */
+  readonly daily: readonly ProfileStatsDay[];
+}
+
 // ─── Seguimientos, marcadores y bloqueos ─────────────────────────────────────
 
 /** Un seguimiento. Lo seguido puede ser un perfil, un tema o un grupo. */

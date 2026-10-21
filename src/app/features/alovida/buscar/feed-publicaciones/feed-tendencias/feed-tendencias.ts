@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { OwnProfileStore } from '@core/social/own-profile.store';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type { PublicSearchResult } from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
+import { FollowButton } from '../../../../social/follow-button/follow-button';
 
 /** Cuántos profesionales se muestran. Cinco: los que entran sin scroll. */
 const CUANTOS = 5;
@@ -30,8 +32,11 @@ type EstadoTendencias = 'carga' | 'datos' | 'vacio' | 'error';
 export function enTendencia(
   candidatos: readonly PublicSearchResult[],
   cuantos = CUANTOS,
+  excluirSlug: string | null = null,
 ): PublicSearchResult[] {
-  return [...candidatos]
+  return candidatos
+    // Nadie se sugiere a sí mismo: «Seguir» a la propia vitrina no tiene sentido.
+    .filter((c) => c.slug !== excluirSlug)
     .sort(
       (a, b) =>
         b.ratingCount - a.ratingCount ||
@@ -52,19 +57,22 @@ export function enTendencia(
  */
 @Component({
   selector: 'app-feed-tendencias',
-  imports: [RouterLink],
+  imports: [FollowButton, RouterLink],
   templateUrl: './feed-tendencias.html',
   styleUrl: './feed-tendencias.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedTendencias {
   private readonly directorio = inject(PublicDirectoryClient);
+  private readonly propio = inject(OwnProfileStore);
 
   private readonly muestra = signal<readonly PublicSearchResult[]>([]);
   protected readonly cargando = signal(true);
   protected readonly fallo = signal(false);
 
-  protected readonly doctores = computed(() => enTendencia(this.muestra()));
+  protected readonly doctores = computed(() =>
+    enTendencia(this.muestra(), CUANTOS, this.propio.perfil()?.slug ?? null),
+  );
 
   protected readonly estado = computed<EstadoTendencias>(() => {
     if (this.cargando()) return 'carga';

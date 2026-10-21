@@ -271,6 +271,28 @@ export function registrarComunidad(router: MockRouter): void {
     return v === undefined ? null : vitrinaPropia(v);
   });
 
+  /**
+   * `GET /community/profiles/me/stats` — visitas y apariciones de la ventana.
+   *
+   * Deterministas por perfil (misma cifra en cada recarga, distinta entre
+   * perfiles): una maqueta que cambia los números en cada F5 parece rota.
+   * Siete días, como la API.
+   */
+  router.get('/community/profiles/me/stats', (request) => {
+    const propia = vitrinaDeSesion(request);
+    const semilla = [...(propia?.id ?? 'sin-vitrina')].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) % 9973, 7);
+    const daily = Array.from({ length: 7 }, (_, i) => {
+      const fecha = new Date(Date.now() - (6 - i) * 86_400_000).toISOString().slice(0, 10);
+      return { date: fecha, views: 6 + ((semilla + i * 5) % 17), searchAppearances: 14 + ((semilla * 3 + i * 7) % 29) };
+    });
+    return {
+      windowDays: 7,
+      views: daily.reduce((s, d) => s + d.views, 0),
+      searchAppearances: daily.reduce((s, d) => s + d.searchAppearances, 0),
+      daily,
+    };
+  });
+
   router.put('/community/profiles/me', (request) => {
     const datos = cuerpo<{ tenantId: string; slug: string; displayName: string; headline?: string; biography?: string; acceptsReviews?: boolean; visibility?: 'PUBLIC' | 'PRIVATE'; avatarFileId?: string | null; coverFileId?: string | null }>(request);
     const existente = vitrinaDeSesion(request);

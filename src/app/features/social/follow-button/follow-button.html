@@ -3,6 +3,7 @@
     type="button"
     class="seguir"
     [class.seguir--ficha]="variante() === 'ficha'"
+    [class.seguir--pastilla]="variante() === 'pastilla'"
     [class.seguir--siguiendo]="sigue()"
     data-testid="follow-button"
     [attr.aria-pressed]="sigue()"

@@ -5,10 +5,13 @@
 <h1 class="solo-lectores">Red social de AloVida</h1>
 
 <div class="red" [class.red--con-perfil]="conSesion()" data-testid="red-social">
-  <aside class="red__izquierda" aria-label="Tendencias y anuncios">
-    <app-feed-tendencias />
-    <app-feed-banner />
-  </aside>
+  <!-- Izquierda · quién soy. Sólo con sesión: sin ella la columna no se reserva
+       (composition-rules §5) y el feed se queda con ese ancho. -->
+  @if (conSesion()) {
+    <aside class="red__izquierda" aria-label="Su perfil">
+      <app-feed-perfil-mini [perfil]="perfil()" [resuelto]="perfilResuelto()" [detalle]="detalle()" />
+    </aside>
+  }
 
   <div class="red__centro">
     @if (conSesion()) {
@@ -20,30 +23,44 @@
       />
     }
 
+    @if (puedeVerSiguiendo()) {
+      <app-segmented-control
+        class="red__modo"
+        data-testid="feed-modo"
+        ariaLabel="Qué publicaciones ver"
+        [options]="opcionesDeModo"
+        [value]="modo()"
+        (valueChange)="cambiarModo($event)"
+      />
+    }
+
 <section class="app-view-state-host" app-view-state-host>
   @switch (estado()) {
     @case ('datos') {
       <ul class="feed">
-        @for (post of publicaciones(); track post.id) {
+        @for (v of vista(); track v.post.id) {
           <li>
-            <!-- AC-01-15/17 — La tarjeta resuelve sola copiar, compartir,
-                 navegar y mandar a `/auth` con retorno. Lo que toca a la
-                 comunidad sube acá, que es quien tiene el cliente. -->
-            @if (denunciando() === post.id) {
+            <!-- AC-01-15/16/17 — Denunciar abre el formulario EN el lugar de la
+                 tarjeta: abrirlo en un modal sacaría de contexto de qué
+                 publicación se habla. -->
+            @if (denunciando() === v.post.id) {
               <app-report-post
-                [postId]="post.id"
+                [postId]="v.post.id"
                 (reportado)="cerrarDenuncia()"
                 (cancelado)="cerrarDenuncia()"
               />
             } @else {
               <app-public-post-card
-                [post]="post"
-                [slug]="post.authorSlug"
-                [autorNombre]="post.authorDisplayName"
-                [autorHeadline]="post.authorHeadline"
-                [autorAvatar]="post.authorAvatarUrl"
-                [autorIniciales]="iniciales(post)"
-                [autorEnlazado]="true"
+                [post]="v.post"
+                [slug]="v.slug"
+                [autorNombre]="v.nombre"
+                [autorHeadline]="v.headline"
+                [autorAvatar]="v.avatar"
+                [autorIniciales]="v.iniciales"
+                [autorPerfilId]="v.perfilId"
+                [visibilidad]="v.visibilidad"
+                [reaccionesPorTipo]="v.reaccionesPorTipo"
+                [autorEnlazado]="v.slug !== ''"
                 [conAcciones]="true"
                 [actorProfileId]="actor()"
                 (pedidoDeDenuncia)="abrirDenuncia($event)"
@@ -62,7 +79,9 @@
           </button>
         </p>
       } @else {
-        <p class="feed__fin caption">Llegó al final de lo publicado.</p>
+        <p class="feed__fin caption">
+          {{ modo() === 'siguiendo' ? 'Llegó al final de lo que publican las personas que sigue.' : 'Llegó al final de lo publicado.' }}
+        </p>
       }
     }
 
@@ -71,20 +90,32 @@
         <span class="app-empty-state__icono"
           ><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16M4 12h16M4 18.5h10"></path></svg
         ></span>
-        <h2>Todavía no hay publicaciones</h2>
-        <p>
-          Cuando los profesionales empiecen a publicar, lo último va a aparecer acá. Mientras tanto,
-          puede buscarlos por nombre o especialidad.
-        </p>
-        <a app-button data-variante="secundario" routerLink="/search/practitioners"
-          >Ver profesionales</a
-        >
+        @if (modo() === 'siguiendo') {
+          <!-- El vacío orienta (95.2.2): dice por qué está vacío y qué hacer. -->
+          <h2>Todavía no hay publicaciones de quienes sigue</h2>
+          <p>
+            Acá aparece lo que publican los profesionales a quienes sigue. Siga a alguien desde las
+            sugerencias, o mire lo más reciente de toda la red mientras tanto.
+          </p>
+          <button app-button data-variante="primario" type="button" data-testid="feed-ver-recientes" (click)="cambiarModo('recientes')">
+            Ver lo más reciente
+          </button>
+        } @else {
+          <h2>Todavía no hay publicaciones</h2>
+          <p>
+            Cuando los profesionales empiecen a publicar, lo último va a aparecer acá. Mientras tanto,
+            puede buscarlos por nombre o especialidad.
+          </p>
+          <a app-button data-variante="secundario" routerLink="/search/practitioners"
+            >Ver profesionales</a
+          >
+        }
       </div>
     }
 
     @case ('carga') {
       <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
-        <span class="solo-lectores">Cargando las últimas publicaciones…</span>
+        <span class="solo-lectores">{{ modo() === 'siguiendo' ? 'Cargando lo que publican quienes sigue…' : 'Cargando las últimas publicaciones…' }}</span>
         <div class="feed__esqueleto"><span class="app-skeleton"></span></div>
         <div class="feed__esqueleto"><span class="app-skeleton"></span></div>
         <div class="feed__esqueleto"><span class="app-skeleton"></span></div>
@@ -97,7 +128,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar las publicaciones.</strong>
-            <p>El directorio no respondió a tiempo. Vuelva a intentarlo en un momento.</p>
+            <p>{{ modo() === 'siguiendo' ? 'Su lista de seguidos no respondió a tiempo.' : 'El directorio no respondió a tiempo.' }} Vuelva a intentarlo en un momento.</p>
           </div>
         </div>
         <div style="margin-top: var(--e5)">
@@ -111,9 +142,9 @@
 </section>
   </div>
 
-  @if (conSesion()) {
-    <aside class="red__derecha" aria-label="Su perfil">
-      <app-feed-perfil-mini [perfil]="perfil()" [resuelto]="perfilResuelto()" [detalle]="detalle()" />
-    </aside>
-  }
+  <!-- Derecha · a quién seguir y espacios pagados. -->
+  <aside class="red__derecha" aria-label="Sugerencias y anuncios">
+    <app-feed-tendencias />
+    <app-feed-banner />
+  </aside>
 </div>

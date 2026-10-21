@@ -35,8 +35,22 @@ export class PostActorStateStore {
   private readonly community = inject(CommunityClient);
 
   private readonly reacciones = signal<Readonly<Record<string, ReactionType | null>>>({});
+  private readonly imagenes = signal<Readonly<Record<string, readonly string[]>>>({});
   private readonly pedidas = new Set<string>();
   private readonly cola = new ColaAcotada(SIMULTANEAS);
+
+  /**
+   * Los `fileId` de las imágenes de una publicación, o `undefined` mientras no
+   * se leyó su detalle.
+   *
+   * El feed personal (`GET /community/feed`) trae la publicación **sin sus
+   * medios** (`PostListItem`); el detalle, que ya se pide para saber la
+   * reacción propia, sí los trae. Se aprovecha esa misma lectura en vez de
+   * pedir otra.
+   */
+  imagenesDe(postId: string): readonly string[] | undefined {
+    return this.imagenes()[postId];
+  }
 
   /** La reacción propia a una publicación; ver los tres estados arriba. Lee una señal. */
   reaccionDe(postId: string): ReactionType | null | undefined {
@@ -66,9 +80,15 @@ export class PostActorStateStore {
           tap((detalle) =>
             // Una reacción que el usuario dejó mientras llegaba la lectura manda
             // sobre la lectura: es más nueva.
-            this.reacciones.update((actuales) =>
-              id in actuales ? actuales : { ...actuales, [id]: detalle.reactions.actorReactionType ?? null },
-            ),
+            {
+              this.reacciones.update((actuales) =>
+                id in actuales ? actuales : { ...actuales, [id]: detalle.reactions.actorReactionType ?? null },
+              );
+              this.imagenes.update((actuales) => ({
+                ...actuales,
+                [id]: (detalle.media ?? []).map((m) => m.fileId),
+              }));
+            },
           ),
           // Si no se pudo, no se afirma nada: queda «no se sabe» y se puede reintentar.
           catchError(() => {
@@ -108,5 +128,6 @@ export class PostActorStateStore {
     this.pedidas.clear();
     this.cola.vaciar();
     this.reacciones.set({});
+    this.imagenes.set({});
   }
 }

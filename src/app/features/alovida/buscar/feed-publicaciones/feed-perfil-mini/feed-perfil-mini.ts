@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
-import type { OwnPublicProfile } from '@core/data-access/community/community.types';
+import { CommunityClient } from '@core/data-access/community/community.client';
+import type { OwnPublicProfile, ProfileStats } from '@core/data-access/community/community.types';
+import { FollowStore } from '@core/social/follow.store';
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
 
@@ -31,6 +33,33 @@ import { inicialesDe } from '@shared/text/iniciales';
 })
 export class FeedPerfilMini {
   private readonly sesion = inject(SessionStore);
+  private readonly community = inject(CommunityClient);
+  private readonly seguimientos = inject(FollowStore);
+
+  /** A cuántos sigue; `null` mientras no se leyó (no es lo mismo que «a nadie»). */
+  protected readonly siguiendo = computed(() =>
+    this.seguimientos.cargado() && !this.seguimientos.fallo() ? this.seguimientos.total() : null,
+  );
+
+  /**
+   * Visitas y apariciones de los últimos días. `null` mientras llegan o si la
+   * lectura falla: es un adorno de la tarjeta y su ausencia no tapa nada.
+   */
+  protected readonly estadisticas = signal<ProfileStats | null>(null);
+
+  private readonly leerEstadisticas = effect(() => {
+    const hay = this.perfil() !== null;
+    untracked(() => {
+      if (!hay) {
+        this.estadisticas.set(null);
+        return;
+      }
+      this.community.readOwnStats().subscribe({
+        next: (stats) => this.estadisticas.set(stats),
+        error: () => this.estadisticas.set(null),
+      });
+    });
+  });
 
   /** La vitrina propia, o `null` si todavía no la creó. */
   readonly perfil = input<OwnPublicProfile | null>(null);

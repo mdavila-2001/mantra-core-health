@@ -44,6 +44,22 @@
         <dt>Vitrina</dt>
         <dd>{{ esPublica() ? 'Pública' : 'Privada' }}</dd>
       </div>
+      @if (estadisticas(); as e) {
+        <div class="mini__dato" data-testid="feed-perfil-mini-visitas">
+          <dt>Visitas a su perfil ({{ e.windowDays }} días)</dt>
+          <dd>{{ e.views }}</dd>
+        </div>
+        <div class="mini__dato" data-testid="feed-perfil-mini-apariciones">
+          <dt>Apariciones en búsquedas</dt>
+          <dd>{{ e.searchAppearances }}</dd>
+        </div>
+      }
+      @if (siguiendo() !== null) {
+        <div class="mini__dato" data-testid="feed-perfil-mini-siguiendo">
+          <dt>Siguiendo</dt>
+          <dd>{{ siguiendo() }}</dd>
+        </div>
+      }
       @if (detalle(); as d) {
         <div class="mini__dato">
           <dt>Valoración</dt>

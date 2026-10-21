@@ -67,6 +67,7 @@ import type {
   ResolveAppeal,
   NewMessageReaction,
   NewReaction,
+  ProfileStats,
   ReactionResult,
   ReactionTarget,
   NewPost,
@@ -157,6 +158,20 @@ export class CommunityClient {
     return this.http
       .get<WireOwnProfile | null>(this.url('/community/profiles/me'))
       .pipe(map((body) => (body === null ? null : sinNulos(body))));
+  }
+
+  /**
+   * `GET /community/profiles/me/stats` — cuánta gente miró la vitrina propia.
+   *
+   * Visitas a la ficha y apariciones en resultados de búsqueda de los últimos
+   * días. Son **visitas, no visitantes únicos**: el servidor no guarda ningún
+   * rastro de quien miró. Es lo que muestra la tarjeta de perfil del inicio de
+   * la red social («Visitas a su perfil»).
+   *
+   * @returns Los totales de la ventana y su desglose por día.
+   */
+  readOwnStats(): Observable<ProfileStats> {
+    return this.http.get<ProfileStats>(this.url('/community/profiles/me/stats'));
   }
 
   /**
