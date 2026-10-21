@@ -197,6 +197,15 @@ describe('FollowStore', () => {
     expect(store.total()).toBe(0);
   });
 
+  it('recargar vuelve a leer a quién sigue (reintento tras un fallo)', () => {
+    const store = armar();
+    expect(cliente.listFollows).toHaveBeenCalledTimes(1);
+
+    store.recargar();
+
+    expect(cliente.listFollows).toHaveBeenCalledTimes(2);
+  });
+
   it('sin perfil propio no se puede seguir', () => {
     const store = armar();
     id.set(null);

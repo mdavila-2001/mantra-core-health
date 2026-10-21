@@ -26,6 +26,7 @@ import {
 import { AuthService } from '@core/auth/auth.service';
 import { RateEncounterDialog } from '../rate-encounter-dialog/rate-encounter-dialog';
 import { inicialesDe } from '@shared/text/iniciales';
+import { FollowButton } from '../../social/follow-button/follow-button';
 
 /** Cuántas publicaciones se ven por página en la ficha. */
 export const PUBLICACIONES_POR_PAGINA = 3;
@@ -98,6 +99,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
     PublicProfilePager,
     PublicProfileReviews,
     RateEncounterDialog,
+    FollowButton,
   ],
   templateUrl: './public-profile-card.html',
   styleUrl: './public-profile-card.css',

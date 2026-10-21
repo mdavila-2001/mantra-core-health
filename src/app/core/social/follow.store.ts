@@ -128,6 +128,12 @@ export class FollowStore {
     });
   }
 
+  /** Vuelve a leer a quién sigue (el reintento de «Mi red» tras un fallo). */
+  recargar(): void {
+    const actor = this.propio.id();
+    if (actor !== null) this.cargar(actor);
+  }
+
   private cargar(actor: string): void {
     const esta = ++this.lectura;
     this.cargado.set(false);

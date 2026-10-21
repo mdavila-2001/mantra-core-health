@@ -1,0 +1,134 @@
+<h1 class="solo-lectores">Mi red</h1>
+
+<div class="red-propia" data-testid="mi-red">
+  <app-card variant="outlined" padding="none">
+    <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="alCambiarPestana($event)">
+      <app-tab [label]="'Siguiendo' + (estadoSiguiendo() === 'datos' ? ' (' + total() + ')' : '')">
+        @switch (estadoSiguiendo()) {
+          @case ('datos') {
+            <ul class="lista" data-testid="mi-red-siguiendo">
+              @for (s of seguidos(); track s.id) {
+                <li class="persona" data-testid="mi-red-seguido">
+                  @if (s.resumen; as r) {
+                    @if (r.avatarUrl; as foto) {
+                      <img class="persona__avatar" [src]="foto" alt="" width="56" height="56" loading="lazy" />
+                    } @else {
+                      <span class="persona__avatar persona__avatar--iniciales" aria-hidden="true">{{ iniciales(r.displayName) }}</span>
+                    }
+                    <div class="persona__texto">
+                      <p class="persona__nombre">
+                        @if (r.enlace; as destino) {
+                          <a [routerLink]="destino">{{ r.displayName }}</a>
+                        } @else {
+                          {{ r.displayName }}
+                        }
+                      </p>
+                      @if (r.headline) {
+                        <p class="persona__titular">{{ r.headline }}</p>
+                      }
+                    </div>
+                    <app-follow-button variante="pastilla" [slug]="r.slug" [perfilId]="s.id" [nombre]="r.displayName" />
+                  } @else if (s.resumen === null) {
+                    <!-- No se pudo leer a esta persona: se dice, y igual se puede dejar de seguir. -->
+                    <span class="persona__avatar persona__avatar--iniciales" aria-hidden="true">?</span>
+                    <div class="persona__texto">
+                      <p class="persona__nombre">Perfil que no pudimos leer</p>
+                    </div>
+                    <app-follow-button variante="pastilla" slug="" [perfilId]="s.id" nombre="este perfil" />
+                  } @else {
+                    <span class="persona__avatar app-skeleton" aria-hidden="true"></span>
+                    <div class="persona__texto">
+                      <span class="app-skeleton persona__esqueleto"></span>
+                    </div>
+                    <span class="solo-lectores">Cargando a quién sigue…</span>
+                  }
+                </li>
+              }
+            </ul>
+          }
+          @case ('carga') {
+            <div class="red-propia__estado" aria-live="polite" aria-busy="true">
+              <span class="solo-lectores">Cargando a quién sigue…</span>
+              <span class="app-skeleton red-propia__esqueleto"></span>
+              <span class="app-skeleton red-propia__esqueleto"></span>
+              <span class="app-skeleton red-propia__esqueleto"></span>
+            </div>
+          }
+          @case ('vacio') {
+            @if (tieneVitrina()) {
+              <app-empty-state
+                title="Todavía no sigue a nadie"
+                description="Siga a profesionales para ver lo que publican en su inicio. Empiece por las sugerencias."
+                variant="empty"
+              >
+                <button empty-actions type="button" class="red-propia__accion" data-testid="mi-red-ir-sugerencias" (click)="alCambiarPestana(1)">
+                  Ver sugerencias
+                </button>
+              </app-empty-state>
+            } @else {
+              <app-empty-state
+                title="Cree su vitrina pública para seguir a otros"
+                description="El contrato de la red exige el perfil de quien sigue. Se crea desde «Mi perfil»."
+                variant="empty"
+              >
+                <a empty-actions class="red-propia__accion" routerLink="/my-account/profile/edit" data-testid="mi-red-sin-vitrina">
+                  Crear mi vitrina
+                </a>
+              </app-empty-state>
+            }
+          }
+          @case ('error') {
+            <app-empty-state
+              title="No pudimos leer a quién sigue"
+              description="La lista de seguidos no respondió. Sus seguimientos no se perdieron: vuelva a intentarlo."
+              variant="error"
+            >
+              <button empty-actions type="button" class="red-propia__accion" (click)="reintentarSiguiendo()">Reintentar</button>
+            </app-empty-state>
+          }
+        }
+      </app-tab>
+
+      <app-tab label="Sugerencias">
+        @switch (estadoSugerencias()) {
+          @case ('datos') {
+            <ul class="lista" data-testid="mi-red-sugerencias">
+              @for (p of sugerencias(); track p.slug) {
+                <li class="persona">
+                  @if (p.avatarUrl; as foto) {
+                    <img class="persona__avatar" [src]="foto" alt="" width="56" height="56" loading="lazy" />
+                  } @else {
+                    <span class="persona__avatar persona__avatar--iniciales" aria-hidden="true">{{ iniciales(p.displayName) }}</span>
+                  }
+                  <div class="persona__texto">
+                    <p class="persona__nombre"><a [routerLink]="['/p', p.slug]">{{ p.displayName }}</a></p>
+                    @if (p.headline) {
+                      <p class="persona__titular">{{ p.headline }}</p>
+                    }
+                  </div>
+                  <app-follow-button variante="pastilla" [slug]="p.slug" [nombre]="p.displayName" />
+                </li>
+              }
+            </ul>
+          }
+          @case ('carga') {
+            <div class="red-propia__estado" aria-live="polite" aria-busy="true">
+              <span class="solo-lectores">Cargando sugerencias…</span>
+              <span class="app-skeleton red-propia__esqueleto"></span>
+              <span class="app-skeleton red-propia__esqueleto"></span>
+              <span class="app-skeleton red-propia__esqueleto"></span>
+            </div>
+          }
+          @case ('vacio') {
+            <app-empty-state title="Todavía no hay profesionales para sugerir" description="Cuando haya más perfiles publicados, aparecen acá." variant="empty" />
+          }
+          @case ('error') {
+            <app-empty-state title="No pudimos leer las sugerencias" description="El directorio no respondió. Vuelva a intentarlo." variant="error">
+              <button empty-actions type="button" class="red-propia__accion" (click)="cargarSugerencias()">Reintentar</button>
+            </app-empty-state>
+          }
+        }
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>

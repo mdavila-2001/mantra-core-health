@@ -1514,6 +1514,23 @@ function rutasDeBusquedaPublica(): Routes {
       ],
     },
     {
+      // «Mi red»: a quién sigue la persona y a quién podría seguir. Exige sesión
+      // (seguir es acción de un perfil propio); sin ella, a entrar y de vuelta.
+      path: 'network',
+      canActivate: [authGuard],
+      loadComponent: () =>
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Mi red — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () => import('./features/social/network/network').then((m) => m.Network),
+        },
+      ],
+    },
+    {
       /* TAREA-29 · `/buscar` a secas tiene que seguir abriendo el buscador.
          No alcanza con un `redirectTo` en la tabla del final: el archivo
          GENERADO `features/alovida/alovida.routes.ts` declara su propio `buscar`

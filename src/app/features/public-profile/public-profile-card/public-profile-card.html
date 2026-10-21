@@ -160,6 +160,15 @@
                 Enviar mensaje
               </button>
 
+              <!-- «Seguir» está junto a «Enviar mensaje»: son las dos formas de
+                   relacionarse con una ficha. El botón sabe solo qué hacer sin
+                   sesión (entrar con retorno) y no se dibuja en el perfil propio. -->
+              <app-follow-button
+                variante="ficha"
+                [slug]="perfil().slug"
+                [nombre]="perfil().displayName"
+              />
+
               <!-- Lo que se quiere hacer con un lugar es ir. Sólo con punto:
                    un botón que no lleva a ningún lado es peor que ninguno. -->
               @if (esLugar() && pines().length > 0) {
