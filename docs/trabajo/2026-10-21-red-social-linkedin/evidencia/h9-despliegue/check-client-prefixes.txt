@@ -1,0 +1,2 @@
+✓ check-client-prefixes
+  628 operaciones de core/data-access, todas cubiertas por los 79 prefijos

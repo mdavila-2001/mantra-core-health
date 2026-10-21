@@ -1,0 +1,9 @@
+check-api-contract-drift base exit=1
+check-architecture base exit=1
+check-css-tokens base exit=1
+check-doc-coverage base exit=1
+check-doc-links base exit=1
+check-form-pages base exit=1
+check-glossary-corpus base exit=1
+check-tokens base exit=1
+check-usted base exit=1

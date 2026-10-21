@@ -1,0 +1,15 @@
+check-api-contract-drift exit=1
+check-api-prefixes exit=0
+check-architecture exit=1
+check-bundle-budget exit=0
+check-client-prefixes exit=0
+check-contrast exit=0
+check-css-tokens exit=1
+check-doc-coverage exit=1
+check-doc-links exit=1
+check-form-pages exit=1
+check-glossary-corpus exit=1
+check-real-api-config exit=0
+check-route-prefixes exit=0
+check-tokens exit=1
+check-usted exit=1

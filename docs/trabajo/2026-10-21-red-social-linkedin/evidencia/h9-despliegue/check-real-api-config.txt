@@ -1,0 +1,1 @@
+[check-real-api-config] ✓ real-api apaga la maqueta, las demos de campañas, pago y facturación simulada, las pantallas de la bóveda y el SSR; development y production intactos.

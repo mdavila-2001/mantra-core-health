@@ -1,0 +1,30 @@
+
+✗ check-doc-links — 26 enlace(s) roto(s) de 1156
+
+  docs/progress/evidence/lane-31/REPORT.md → destino inexistente: ../../../../trabajo/2026-10-13-corr-31-borrar-consulta-medica/PLAN.md
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-1440.json
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-390.json
+  docs/trabajo/2026-09-23-paciente-closure/PLAN.md → destino inexistente: ../../../../MetaPrompts/PLAN_PACIENTE_01_METAPROMPT_17b41ce468a1_2026-09-23/PATIENT_PLAN_01_METAPROMPT_2026-09-23.md
+  docs/trabajo/2026-09-23-paciente-closure/PLAN.md → destino inexistente: ../../../../MetaPrompts/PLAN_PACIENTE_01_METAPROMPT_17b41ce468a1_2026-09-23/SOURCE.md
+  docs/trabajo/2026-09-23-paciente-closure/PLAN.md → destino inexistente: ../../../../MetaPrompts/PLAN_PACIENTE_01_METAPROMPT_17b41ce468a1_2026-09-23/REPORTE.md
+  docs/trabajo/2026-09-25-encuentro-clinico/c0/evidencia/doble-revision-p1.md → destino inexistente: ../../../../../../AlovidaPromptManager/.agents/skills/critical-double-review/SKILL.md
+  docs/trabajo/2026-09-25-encuentro-clinico/c0/evidencia/doble-revision-p1.md → destino inexistente: ../../../../../../.agents/skills/fable-visual-proof/SKILL.md
+  docs/trabajo/2026-09-25-marcelo-calidad/FICHA-ORIGINAL.md → destino inexistente: ../../CONTRATO-CARGA-MASIVA.md
+  docs/trabajo/2026-09-25-marcelo-calidad/FICHA-ORIGINAL.md → destino inexistente: ../../Daily-Noche-2026-09-25.md
+  docs/trabajo/2026-09-25-marcelo-calidad/PLAN.md → destino inexistente: ../../../../../AlovidaPromptManager/repartos/2026-09-25/PromptNoche/Marcelo/Noche-CargaMasiva.CalidadE2EVisualYGates/E2EPlaywrightCapturasDobleRevisionGatesYSegundoPerfil.md
+  docs/trabajo/2026-09-25-marcelo-calidad/REPORTE.md → destino inexistente: ../../../AlovidaPromptManager/repartos/2026-09-25/PromptNoche/Marcelo/Marcelo-Daily-Noche-2026-09-25.md
+  docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/MATRIX.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/GLOBAL-BASELINE-REPORT.md
+  docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/GLOBAL-BASELINE-REPORT.md
+  docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/LABORATORY_SOURCE.md
+  docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PROVENANCE.json
+  docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/RUN-LOG.md
+  docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/GLOBAL-BASELINE-REPORT.md
+

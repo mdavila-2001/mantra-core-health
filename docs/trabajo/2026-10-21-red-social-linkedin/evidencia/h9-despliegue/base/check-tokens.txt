@@ -1,0 +1,16 @@
+
+✗ check-tokens
+
+  9 token(s) declarados en styles.css y ausentes del catálogo tipado:
+      --heat-1-bg
+      --heat-1-fg
+      --heat-2-bg
+      --heat-2-fg
+      --heat-3-bg
+      --heat-3-fg
+      --heat-4-bg
+      --heat-4-fg
+      --surface-white
+    Un token que solo existe en CSS no aparece al autocompletar, así que
+    nadie lo usa desde código: es cómo el sistema empieza a tener dos fuentes.
+

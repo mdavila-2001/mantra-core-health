@@ -1,0 +1,64 @@
+
+✗ check-doc-coverage — 60 hallazgo(s)
+
+  ruta sin documentar: /auth/register/organization-type (RegisterAccountType)
+  ruta ausente del catálogo: /my-organizations
+  organismo sin mencionar: app-branch-bulk-import (BranchBulkImport)
+  organismo sin mencionar: app-promotion-rule-editor (PromotionRuleEditor)
+  servicio sin mencionar: BoProfessionsCatalog
+  servicio sin mencionar: LanguagesCatalog
+  servicio sin mencionar: TrustedAmbulanceStore
+  servicio sin mencionar: MisStickers
+  servicio sin mencionar: SearchMemoryService
+  servicio sin mencionar: NotificationActionRunner
+  servicio sin mencionar: SymptomObservationsStore
+  servicio sin mencionar: GlossaryPdfService
+  servicio sin mencionar: PersonLossReportStore
+  servicio sin mencionar: ResultUploadQueue
+  servicio sin mencionar: PharmacyScope
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/anexos/B-clinico.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-02-mock-honesto-e-inventario.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-03-enrutado-produccion-y-triage-ia.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-05-archivos-descarga-y-acceso.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-07-alta-y-perfil-del-medico.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-09-altas-laboratorio-imagenologia-hospital.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-16-plan-de-cuidados-plantillas-y-documentos.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-18-formularios-dinamicos.md
+  marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-30-contrato-ci-e2e-y-observabilidad.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-22-ender-simulador-cabecera/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-22-pablo-disciplina-tablas/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-23-continuacion-reserva-cotizaciones/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-23-continuacion-reserva-cotizaciones/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-23-paciente-closure/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-23-paciente-closure/PROGRESS.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c0/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c0/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c4/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c6/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c7/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c7/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c9/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-carrito-y-navegacion/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos-y-contrato-real/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos-y-contrato-real/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-insurance-preventive-campaigns/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-justin-farmacia-tienda/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-marcelo-calidad/FICHA-ORIGINAL.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-marcelo-calidad/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-09-25-registrar-dependiente-por-ci/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-10-04-renombrar-aseguradora-mis-productos/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-10-04-tablas-siniestralidad-y-solicitudes/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-10-04-tablas-siniestralidad-y-solicitudes/REPORTE.md
+  marcador provisional «TODO» en docs/trabajo/2026-10-13-corr-31-borrar-consulta-medica/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-10-17-superadmin/PLAN.md
+  marcador provisional «TODO» en docs/trabajo/2026-10-17-superadmin/REPORTE.md
+  marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/HANDOFF.md
+  marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/MATRIX.md
+  marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/PLAN.md
+  marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/REPORT.md
+  marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/evidence/h1-real-api/REPORT.md
+

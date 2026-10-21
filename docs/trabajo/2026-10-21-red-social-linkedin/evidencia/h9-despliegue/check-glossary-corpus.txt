@@ -1,0 +1,58 @@
+[glosario] 57 problema(s):
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «definition», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «plainSummaryEs», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «imageUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «imageThumbUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «imageAttribution», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «imageLicense», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «imageSourcePage», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:1 (hipertension-arterial) enriquece al curado «hipertension-arterial» pero trae «imageOrigin», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «definition», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «plainSummaryEs», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «imageUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «imageThumbUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «imageAttribution», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «imageLicense», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «imageSourcePage», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:2 (diabetes-mellitus-tipo-2) enriquece al curado «diabetes-mellitus-tipo-2» pero trae «imageOrigin», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «definition», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «plainSummaryEs», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «imageUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «imageThumbUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «imageAttribution», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «imageLicense», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «imageSourcePage», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:3 (asma-bronquial) enriquece al curado «asma-bronquial» pero trae «imageOrigin», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «definition», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «plainSummaryEs», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «imageUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «imageThumbUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «imageAttribution», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «imageLicense», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «imageSourcePage», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:4 (neumonia) enriquece al curado «neumonia» pero trae «imageOrigin», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «definition», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «plainSummaryEs», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «imageUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «imageThumbUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «imageAttribution», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «imageLicense», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «imageSourcePage», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:5 (insuficiencia-cardiaca) enriquece al curado «insuficiencia-cardiaca» pero trae «imageOrigin», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «definition», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «plainSummaryEs», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «imageUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «imageThumbUrl», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «imageAttribution», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «imageLicense», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «imageSourcePage», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:6 (enfermedad-renal-cronica) enriquece al curado «enfermedad-renal-cronica» pero trae «imageOrigin», que es texto revisado y no se pisa
+  - enfermedades-atencion-primaria.ndjson:104 (hiperplasia-prostatica-benigna) etiqueta desconocida «urologic»
+  - enfermedades-atencion-primaria.ndjson:105 (prostatitis) etiqueta desconocida «urologic»
+  - enfermedades-atencion-primaria.ndjson:106 (disfuncion-erectil) etiqueta desconocida «urologic»
+  - enfermedades-atencion-primaria.ndjson:108 (epididimitis) etiqueta desconocida «urologic»
+  - enfermedades-atencion-primaria.ndjson:118 (embarazo-normal) categoría desconocida «other»
+  - enfermedades-atencion-primaria.ndjson:161 (duelo) categoría desconocida «other»
+  - enfermedades-atencion-primaria.ndjson:183 (cancer-de-prostata) etiqueta desconocida «urologic»
+  - analisis-frecuentes.ndjson:64 (psa) etiqueta desconocida «urologic»
+  - analisis-frecuentes.ndjson:115 (ecografia-testicular) etiqueta desconocida «urologic»
