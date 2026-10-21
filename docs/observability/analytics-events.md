@@ -51,9 +51,21 @@ clics ni focos. No se graba el movimiento del ratón. Lo prueban
 ### Envío
 
 Cada 10 s, al llegar a 50 eventos, y al ocultarse o cerrarse la pestaña con
-`keepalive` en lotes de 20. Un 4xx descarta el lote; red caída, 429 o 5xx lo
-reencola (tope 500, se pierden los más viejos) con las mismas claves de
-idempotencia. Al cerrarse la sesión se descarta lo pendiente.
+`keepalive` en lotes de 20 (ese lote sale aunque haya otro en vuelo). Con el
+access token vencido **no** se manda nada al cerrar: el refresco del interceptor
+no lleva `keepalive`, la descarga lo cortaría y la API revocaría la sesión por
+reutilización del refresh token.
+
+- Red caída, 429 o 5xx: se reencola (tope 500) con las mismas claves de
+  idempotencia, con espera creciente de 10 s a 5 min.
+- 400, 403 o 404: se deja de capturar en esa pestaña. Ningún lote más iba a entrar.
+- Cambio de persona en la pestaña: se descarta lo pendiente y se renueva el
+  `sessionId`, porque la API agrupa el recorrido por él. Solo sale un evento
+  cuyo `userId` es el de la sesión actual, y un lote fallido de la persona
+  anterior no se reencola.
+- Volver con «atrás» desde la caché del navegador (bfcache) reabre la página.
+- Una URL que ninguna ruta reconoce viaja con sus segmentos limpios
+  (`/legado/8437` → `/legado/:id`).
 
 ### Cómo se enciende
 
