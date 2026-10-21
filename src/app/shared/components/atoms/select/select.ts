@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   forwardRef,
   inject,
   input,
   model,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
@@ -22,12 +24,8 @@ import type { SelectOption } from './select.types';
 const NO_SELECTION = '';
 
 /**
- * Desplegable sobre `<select>` nativo (teclado y accesibilidad de plataforma
- * gratis) con la flecha del sistema apagada y la del spec dibujada aparte.
- *
- * El `<option>` lleva el **índice**, no el valor: el DOM convierte todo a
- * string, así que un value numérico o un objeto volvería corrompido. Con el
- * índice, el valor emitido es literalmente el que entró en `options`.
+ * Desplegable con soporte buscable integrado y sobre `<select>` nativo (teclado y accesibilidad
+ * de plataforma gratis).
  */
 @Component({
   selector: 'app-select',
@@ -38,6 +36,8 @@ const NO_SELECTION = '';
   host: {
     '[class.app-select-host]': 'true',
     '[class.is-disabled]': 'isDisabled()',
+    '(document:click)': 'handleDocumentClick($event)',
+    '(keydown.escape)': 'closeSearch()',
   },
   providers: [
     {
@@ -48,6 +48,7 @@ const NO_SELECTION = '';
   ],
 })
 export class Select<T> implements ControlValueAccessor {
+  private readonly elementRef = inject(ElementRef);
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   /** Puente con el formulario. Vacío e inofensivo si el desplegable va suelto. */
@@ -58,6 +59,14 @@ export class Select<T> implements ControlValueAccessor {
   readonly disabled = input<boolean>(false);
   readonly placeholder = input<string>('Seleccionar opción');
   readonly hasError = input<boolean>(false);
+  readonly searchable = input<boolean>(true);
+  readonly searchPlaceholder = input<string>('Buscar...');
+
+  /** Búsqueda interactiva */
+  readonly isSearchOpen = signal(false);
+  readonly searchTerm = signal('');
+  readonly activeSearchIndex = signal(-1);
+  readonly searchInputRef = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   /**
    * Nombre accesible para el desplegable que va **suelto**, sin
@@ -122,16 +131,100 @@ export class Select<T> implements ControlValueAccessor {
     this.options().findIndex((option) => option.value === this.value()),
   );
 
+  /** Si la búsqueda interactiva está habilitada */
+  readonly isSearchable = computed(
+    () => this.searchable() && this.options().length >= 3 && !this.isDisabled(),
+  );
+
+  /** Etiqueta de la opción actualmente elegida */
+  readonly selectedOptionLabel = computed(() => {
+    const idx = this.selectedIndex();
+    return idx >= 0 ? this.options()[idx]?.label : null;
+  });
+
+  /** Opciones filtradas en tiempo real por el término de búsqueda */
+  readonly filteredOptions = computed(() => {
+    const query = this.searchTerm().trim().toLowerCase();
+    const opts = this.options();
+    if (!query) return opts;
+    return opts.filter((opt) => opt.label.toLowerCase().includes(query));
+  });
+
+  toggleSearch(event?: MouseEvent): void {
+    if (this.isDisabled()) return;
+    if (this.isSearchable()) {
+      event?.preventDefault();
+      event?.stopPropagation();
+      const open = !this.isSearchOpen();
+      this.isSearchOpen.set(open);
+      if (open) {
+        this.searchTerm.set('');
+        this.activeSearchIndex.set(-1);
+        setTimeout(() => this.searchInputRef()?.nativeElement.focus(), 0);
+      }
+    }
+  }
+
+  closeSearch(): void {
+    this.isSearchOpen.set(false);
+    this.searchTerm.set('');
+    this.activeSearchIndex.set(-1);
+  }
+
+  handleDocumentClick(event: MouseEvent): void {
+    if (this.isSearchOpen() && !this.elementRef.nativeElement.contains(event.target as Node)) {
+      this.closeSearch();
+    }
+  }
+
+  onSearchInput(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.searchTerm.set(val);
+    this.activeSearchIndex.set(-1);
+  }
+
+  onSearchKeydown(event: KeyboardEvent): void {
+    const items = this.filteredOptions();
+    if (items.length === 0) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      const next = (this.activeSearchIndex() + 1) % items.length;
+      this.activeSearchIndex.set(next);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      const prev = (this.activeSearchIndex() - 1 + items.length) % items.length;
+      this.activeSearchIndex.set(prev);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const idx = this.activeSearchIndex();
+      if (idx >= 0 && idx < items.length) {
+        this.chooseOption(items[idx]);
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeSearch();
+    }
+  }
+
+  chooseOption(option: SelectOption<T>): void {
+    if (option.disabled) return;
+    this.commit(option.value);
+    this.closeSearch();
+  }
+
   protected readonly wrapperClasses = computed(() => {
     const classes = ['select-wrapper'];
     if (this.invalid()) {
       classes.push('status-error');
     }
-    if (this.isFocused()) {
+    if (this.isFocused() || this.isSearchOpen()) {
       classes.push('is-focused');
     }
     if (this.isDisabled()) {
       classes.push('is-disabled');
+    }
+    if (this.isSearchable()) {
+      classes.push('is-searchable');
     }
     return classes.join(' ');
   });

@@ -113,10 +113,12 @@ describe('RegisterPatient', () => {
   }
 
   beforeEach(async () => {
+    localStorage.clear();
     await montar();
   });
 
   afterEach(() => {
+    localStorage.clear();
     // Los catálogos los pide el constructor, así que aparecen en TODAS las
     // pruebas. Las que no hablan de ellos los dan por atendidos acá, para que
     // `verify()` siga vigilando las peticiones que cada prueba sí afirma.
@@ -481,9 +483,9 @@ describe('RegisterPatient', () => {
         'name',
         'document',
         'profile',
+        'residence',
         'contact',
         'ambulance',
-        'residence',
         'work',
         'work-location',
         'access',
@@ -524,6 +526,11 @@ describe('RegisterPatient', () => {
       ]);
       expect(porClave('access')).toEqual(['email', 'password']);
       expect(porClave('billing')).toEqual(['billingTaxId', 'billingLegalName']);
+      expect(porClave('ambulance')).toEqual([
+        'trustedAmbulanceService',
+        'trustedAmbulanceName',
+        'trustedAmbulancePhone',
+      ]);
     });
 
     /**
@@ -2330,7 +2337,7 @@ describe('RegisterPatient', () => {
 
       pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-continuar"]')?.click();
       fixture.detectChanges();
-      expect(component.claveVisible()).toBe('work');
+      expect(component.claveVisible()).toBe('contact');
       pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-atras"]')?.click();
       fixture.detectChanges();
       expect(component.claveVisible()).toBe('residence');
@@ -2392,6 +2399,128 @@ describe('RegisterPatient', () => {
       // mundo terminaría escribiendo a mano lo que el catálogo ya tiene.
       expect(Object.keys(OCCUPATION).length).toBeGreaterThan(10);
       expect(Object.keys(EMPLOYER).length).toBeGreaterThan(3);
+    });
+  });
+
+  describe('ocupaciones, orden y normalización dinámicos', () => {
+    it('muestra «Otra ocupación» en primer lugar de la lista', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
+        { value: 'o-2', label: 'Otra ocupación', code: CODIGO_OCUPACION_OTRA },
+        { value: 'o-3', label: 'Minero', code: 'occupation:bo:MINERO' },
+      ]);
+      component.registrarNuevaOcupacion('Diseñador Gráfico');
+      const opciones = component.opcionesOcupacion();
+      expect(opciones.length).toBeGreaterThan(0);
+      expect(opciones[0].code).toBe(CODIGO_OCUPACION_OTRA);
+    });
+
+    it('normaliza texto de nueva ocupación a Title Case y conectores', () => {
+      expect(component.normalizarOcupacion('   ingeniero   de  sistemas  ')).toBe(
+        'Ingeniero de Sistemas',
+      );
+      expect(component.normalizarOcupacion('desarrollador de software frontend')).toBe(
+        'Desarrollador de Software Frontend',
+      );
+    });
+
+    it('identifica ocupaciones similares sin distinguir acentos ni mayúsculas', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-1', label: 'Médico General', code: 'occupation:bo:MEDICO' },
+        { value: 'o-2', label: 'Ingeniero de Sistemas', code: 'occupation:bo:ING_SIS' },
+      ]);
+      const similar = component.buscarOcupacionSimilar('medico general');
+      expect(similar).not.toBeNull();
+      expect(similar?.label.toLowerCase()).toContain('médico');
+    });
+
+    it('agrega dinámicamente una nueva ocupación normalizada a la lista', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-otra', label: 'Otra ocupación', code: CODIGO_OCUPACION_OTRA },
+        { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
+      ]);
+      const antes = component.opcionesOcupacion().length;
+      component.registrarNuevaOcupacion('piloto comercial');
+      const despues = component.opcionesOcupacion();
+      expect(despues.length).toBe(antes + 1);
+      const nueva = despues.find((o) => o.label === 'Piloto Comercial');
+      expect(nueva).toBeDefined();
+      expect(nueva?.code).toBe('occupation:bo:CUSTOM');
+    });
+  });
+
+  describe('ambulancias y auto-filtrado por departamento', () => {
+    it('filtra ambulancias según el departamento de residencia detectado', () => {
+      // Municipio de Santa Cruz de la Sierra: 070101 (prefijo 07 = Santa Cruz)
+      component.elegirMunicipio('070101');
+      expect(component.departamentoDetectado()).toBe('SC');
+
+      const opciones = component.opcionesDeAmbulancia();
+      expect(opciones.length).toBeGreaterThan(0);
+      const nombres = opciones.map((o) => o.label);
+      // Incluye servicios privados verificados de Santa Cruz
+      expect(nombres.some((n) => n.includes('Cardiocruz') || n.includes('UDEM') || n.includes('168'))).toBe(true);
+    });
+
+    it('deriva departamento del emisor de CI si no hay municipio de residencia', () => {
+      component.formPaciente.controls.residenceMunicipalityConceptId.setValue(null);
+      component.municipioPaciente.set(null);
+      // Prefijo 02 = La Paz
+      component.formPaciente.controls.issuerAdministrativeAreaConceptId.setValue('02');
+      expect(component.departamentoDetectado()).toBe('LP');
+
+      const opciones = component.opcionesDeAmbulancia();
+      const nombres = opciones.map((o) => o.label);
+      expect(nombres.some((n) => n.includes('Alerta Médica') || n.includes('SEMAT') || n.includes('168'))).toBe(true);
+    });
+  });
+
+  describe('avance en caché y restauración', () => {
+    it('persiste el avance y los datos del formulario en localStorage', () => {
+      component.formPaciente.controls.name.setValue('Carlos');
+      component.formPaciente.controls.lastName.setValue('Montaño');
+      component.recordarPaso({ titulo: '¿Dónde vive?', clave: 'residence', campos: [] });
+
+      const guardado = localStorage.getItem(component.STORAGE_KEY);
+      expect(guardado).not.toBeNull();
+      const datos = JSON.parse(guardado!);
+      expect(datos.formValores.name).toBe('Carlos');
+      expect(datos.formValores.lastName).toBe('Montaño');
+      expect(datos.pasoClave).toBe('residence');
+    });
+
+    it('restaura el avance previo desde localStorage', () => {
+      const borrador = {
+        version: 1,
+        pasoIndice: 3,
+        pasoClave: 'residence',
+        formValores: {
+          name: 'Ana',
+          lastName: 'Roca',
+          nationalId: '9876543',
+        },
+        nombresExtra: ['María'],
+        empresaSeleccionada: null,
+        ocupacionSeleccionada: null,
+        direccionConfirmada: false,
+        direccionTrabajoConfirmada: false,
+        fechaModificacion: new Date().toISOString(),
+      };
+      localStorage.setItem(component.STORAGE_KEY, JSON.stringify(borrador));
+
+      component.restaurarBorrador();
+
+      expect(component.formPaciente.controls.name.value).toBe('Ana');
+      expect(component.formPaciente.controls.lastName.value).toBe('Roca');
+      expect(component.formPaciente.controls.nationalId.value).toBe('9876543');
+      expect(component.nombresExtra()).toEqual(['María']);
+      expect(component.pasoGuardado()).toBe(3);
+    });
+
+    it('limpia el borrador al completar el registro', () => {
+      localStorage.setItem(component.STORAGE_KEY, '{"version": 1}');
+      component.limpiarBorrador();
+      expect(localStorage.getItem(component.STORAGE_KEY)).toBeNull();
     });
   });
 });

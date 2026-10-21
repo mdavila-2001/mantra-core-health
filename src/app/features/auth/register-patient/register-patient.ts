@@ -439,6 +439,18 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
  * municipio, además, trae su propio estado de «no cargó, reintentá», que un
  * `select` genérico no tiene dónde poner.
  */
+const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
+  ['01', 'CH'],
+  ['02', 'LP'],
+  ['03', 'CB'],
+  ['04', 'OR'],
+  ['05', 'PT'],
+  ['06', 'TJ'],
+  ['07', 'SC'],
+  ['08', 'BE'],
+  ['09', 'PA'],
+]);
+
 @Component({
   selector: 'app-register-patient',
   imports: [
@@ -465,17 +477,81 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
+
+  readonly STORAGE_KEY = 'alovida.registro-paciente.borrador';
+  readonly pasoGuardado = signal<number>(0);
+  readonly ocupacionesPersonalizadas = signal<readonly (SelectOption<string> & { code: string })[]>([]);
 
   readonly departamentosAmbulancia = DEPARTAMENTOS_BOLIVIA.map((department) => ({
     value: department.code,
     label: department.name,
   }));
 
+  /**
+   * Departamento detectado automáticamente a partir de las preguntas anteriores:
+   * 1) Municipio de residencia (elegido en el paso 2 de residencia).
+   * 2) O departamento de emisión del documento (paso 1 de documento).
+   */
+  readonly departamentoDetectado = computed<string | null>(() => {
+    const municipio =
+      this.municipioPaciente() ??
+      this.formPaciente.controls.residenceMunicipalityConceptId.value;
+    const ramas = this.ramasMunicipios();
+    if (municipio) {
+      if (ramas.length > 0) {
+        for (const rama of ramas) {
+          if (
+            rama.municipios.some(
+              (m) =>
+                m.conceptId === municipio ||
+                m.ine === municipio ||
+                m.nombre.toLowerCase() === municipio.toLowerCase(),
+            )
+          ) {
+            return rama.sigla;
+          }
+        }
+      }
+      if (municipio.length >= 2) {
+        const prefijo = municipio.slice(0, 2);
+        const sigla = SIGLA_POR_PREFIJO_INE.get(prefijo);
+        if (sigla) return sigla;
+      }
+    }
+
+    const emisor = this.formPaciente.controls.issuerAdministrativeAreaConceptId.value;
+    if (emisor) {
+      if (ramas.length > 0) {
+        const rama = ramas.find(
+          (r) =>
+            r.conceptId === emisor ||
+            r.sigla.toUpperCase() === emisor.toUpperCase() ||
+            r.nombre.toLowerCase() === emisor.toLowerCase(),
+        );
+        if (rama) return rama.sigla;
+      }
+      if (emisor.length === 2 && SIGLA_POR_PREFIJO_INE.has(emisor)) {
+        return SIGLA_POR_PREFIJO_INE.get(emisor)!;
+      }
+      const mayusc = emisor.toUpperCase();
+      if (['CH', 'LP', 'CB', 'OR', 'PT', 'PO', 'TJ', 'SC', 'BE', 'PA', 'PD'].includes(mayusc)) {
+        return mayusc;
+      }
+      const deptSlug = DEPARTAMENTOS_BOLIVIA.find(
+        (d) => d.code === emisor || d.name.toLowerCase() === emisor.toLowerCase(),
+      );
+      if (deptSlug) return deptSlug.code;
+    }
+
+    return this.formPaciente.controls.trustedAmbulanceDepartment.value ?? null;
+  });
+
   opcionesDeAmbulancia() {
-    const department = this.formPaciente.controls.trustedAmbulanceDepartment.value;
+    const department = this.departamentoDetectado();
     return ambulancesForDepartment(department).map((service) => ({
       value: service.id,
       label: service.name,
@@ -1218,6 +1294,44 @@ export class RegisterPatient {
         ],
       },
       {
+        titulo: '¿Dónde vive?',
+        clave: 'residence',
+        icon: 'home',
+        hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+        campos: [
+          {
+            // El mapa de departamentos y el select de ciudad son UN campo: son
+            // un solo dato —la localidad— con dos formas de llegar a él. El
+            // rótulo va vacío porque el propio `app-location-picker` rotula sus
+            // dos partes; con rótulo acá habría dos nombres para lo mismo.
+            key: 'residenceMunicipalityConceptId',
+            label: '',
+            control: 'custom',
+            required: true,
+            mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
+          },
+          {
+            key: 'homeAddressLines',
+            label: 'Línea de dirección 1 (opcional)',
+            hint: 'Como la escribiría en un sobre.',
+            description:
+              'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
+            control: 'text',
+            autocomplete: 'street-address',
+            placeholder: 'Av. Banzer, 3er anillo #42',
+            testId: 'registro-domicilio-calle',
+            icono: 'route',
+          },
+          {
+            key: 'gpsDomicilio',
+            label: 'Ubicación GPS (opcional)',
+            hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
+            description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
+            control: 'custom',
+          },
+        ],
+      },
+      {
         titulo: '¿Cómo le contactamos?',
         clave: 'contact',
         icon: 'phone',
@@ -1268,16 +1382,8 @@ export class RegisterPatient {
         titulo: 'Su ambulancia de confianza',
         clave: 'ambulance',
         icon: 'phone',
-        hint: 'Opcional. Filtre por departamento o escriba la de su seguro o clínica.',
+        hint: 'Opcional. Ambulancias disponibles según su ubicación o escriba la de su seguro o clínica.',
         campos: [
-          {
-            key: 'trustedAmbulanceDepartment',
-            label: 'Departamento',
-            hint: 'Filtramos los servicios disponibles por departamento.',
-            description: 'Elija dónde necesita una línea local de emergencias.',
-            control: 'custom',
-            icono: 'pin',
-          },
           {
             key: 'trustedAmbulanceService',
             label: 'Servicio de ambulancia',
@@ -1306,44 +1412,6 @@ export class RegisterPatient {
             testId: 'registro-ambulancia-telefono',
             ancho: 'mitad',
             mensajeDeError: 'Ingrese el número completo para el país elegido.',
-          },
-        ],
-      },
-      {
-        titulo: '¿Dónde vive?',
-        clave: 'residence',
-        icon: 'home',
-        hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
-        campos: [
-          {
-            // El mapa de departamentos y el select de ciudad son UN campo: son
-            // un solo dato —la localidad— con dos formas de llegar a él. El
-            // rótulo va vacío porque el propio `app-location-picker` rotula sus
-            // dos partes; con rótulo acá habría dos nombres para lo mismo.
-            key: 'residenceMunicipalityConceptId',
-            label: '',
-            control: 'custom',
-            required: true,
-            mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
-          },
-          {
-            key: 'homeAddressLines',
-            label: 'Línea de dirección 1 (opcional)',
-            hint: 'Como la escribiría en un sobre.',
-            description:
-              'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
-            control: 'text',
-            autocomplete: 'street-address',
-            placeholder: 'Av. Banzer, 3er anillo #42',
-            testId: 'registro-domicilio-calle',
-            icono: 'route',
-          },
-          {
-            key: 'gpsDomicilio',
-            label: 'Ubicación GPS (opcional)',
-            hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
-            description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
-            control: 'custom',
           },
         ],
       },
@@ -2192,9 +2260,106 @@ export class RegisterPatient {
     () => AYUDA_PACIENTE[this.claveVisible()] ?? [],
   );
 
+  /** Guarda el borrador del avance del formulario en caché (localStorage). */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginasPaciente();
+      const clave = this.claveVisible();
+      const indice = paginas.findIndex((p) => p.clave === clave);
+      const raw = this.formPaciente.getRawValue();
+      const borrador = {
+        version: 1,
+        pasoIndice: Math.max(0, indice),
+        pasoClave: clave,
+        formValores: {
+          ...raw,
+          birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
+        },
+        nombresExtra: this.nombresExtra(),
+        empresaSeleccionada: this.empresaSeleccionada(),
+        ocupacionSeleccionada: this.ocupacionSeleccionada(),
+        ocupacionesPersonalizadas: this.ocupacionesPersonalizadas(),
+        gpsDomicilio: this.gpsDomicilio(),
+        direccionConfirmada: this.direccionConfirmada(),
+        gpsTrabajo: this.gpsTrabajo(),
+        direccionTrabajoConfirmada: this.direccionTrabajoConfirmada(),
+        fechaModificacion: new Date().toISOString(),
+      };
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(borrador));
+    } catch {
+      // Ignorar restricciones en almacenamiento local
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const serializado = localStorage.getItem(this.STORAGE_KEY);
+      if (!serializado) return;
+      const datos = JSON.parse(serializado);
+      if (!datos || datos.version !== 1) return;
+
+      if (datos.formValores) {
+        const valores = { ...datos.formValores };
+        if (typeof valores.birthDate === 'string' && valores.birthDate) {
+          const d = new Date(valores.birthDate);
+          if (!Number.isNaN(d.getTime())) {
+            valores.birthDate = d;
+          } else {
+            valores.birthDate = null;
+          }
+        }
+        this.formPaciente.patchValue(valores);
+      }
+
+      if (Array.isArray(datos.nombresExtra)) {
+        this.nombresExtra.set(datos.nombresExtra);
+      }
+      if (datos.empresaSeleccionada !== undefined) {
+        this.empresaSeleccionada.set(datos.empresaSeleccionada);
+      }
+      if (datos.ocupacionSeleccionada !== undefined) {
+        this.ocupacionSeleccionada.set(datos.ocupacionSeleccionada);
+      }
+      if (Array.isArray(datos.ocupacionesPersonalizadas)) {
+        this.ocupacionesPersonalizadas.set(datos.ocupacionesPersonalizadas);
+      }
+      if (datos.gpsDomicilio !== undefined) {
+        this.gpsDomicilio.set(datos.gpsDomicilio);
+      }
+      if (typeof datos.direccionConfirmada === 'boolean') {
+        this.direccionConfirmada.set(datos.direccionConfirmada);
+      }
+      if (datos.gpsTrabajo !== undefined) {
+        this.gpsTrabajo.set(datos.gpsTrabajo);
+      }
+      if (typeof datos.direccionTrabajoConfirmada === 'boolean') {
+        this.direccionTrabajoConfirmada.set(datos.direccionTrabajoConfirmada);
+      }
+      if (typeof datos.pasoIndice === 'number' && datos.pasoIndice >= 0) {
+        this.pasoGuardado.set(datos.pasoIndice);
+      }
+    } catch {
+      // Ignorar si el borrador estaba corrupto
+    }
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      localStorage.removeItem(this.STORAGE_KEY);
+    } catch {
+      // Ignorar
+    }
+  }
+
   /** Lo que el motor avisa al cambiar de página. */
-  protected recordarPaso(pagina: PaginaDeFormulario): void {
+  recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   readonly errorMessage = computed<string | null>(() => {
@@ -2212,6 +2377,8 @@ export class RegisterPatient {
   });
 
   constructor() {
+    this.restaurarBorrador();
+
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarOcupaciones();
@@ -2219,14 +2386,19 @@ export class RegisterPatient {
     this.cargarAseguradoras();
     this.cargarParentescos();
 
-    // El aviso de un envío fallido se va en cuanto se corrige algo.
-    //
-    // Antes lo limpiaba el «Siguiente» de esta pantalla, que ya no es suyo: el
-    // motor lleva su propio avance y no sabe nada de errores de la API. Se ata
-    // entonces a lo único que de verdad significa «estoy corrigiendo» —que el
-    // formulario cambie—, que además cubre el caso que el avance no cubría:
-    // corregir en la misma página donde falló el envío.
     this.limpiarElErrorAlCorregir(this.formPaciente);
+
+    this.formPaciente.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
+
+    this.formPaciente.controls.occupationFreeText.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((valor) => {
+        if (this.ocupacionEsOtra() && valor && valor.trim().length >= 3) {
+          this.registrarNuevaOcupacion(valor);
+        }
+      });
   }
 
   /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide contexto de inyección. */
@@ -2288,28 +2460,122 @@ export class RegisterPatient {
   /**
    * Trae el catálogo de ocupaciones de Bolivia, para «¿en qué trabajás?».
    *
-   * Mismo criterio que los departamentos ante un fallo: el campo es opcional y
-   * el alta sigue.
+   * Garantiza que «Otra ocupación» aparezca al principio de la lista para fácil acceso
+   * y combina las ocupaciones ingresadas dinámicamente por el usuario.
    */
   protected cargarOcupaciones(): void {
     this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
-        // El `code` viaja por lo mismo que en las empresas: es lo que
-        // identifica a la salida «Otra ocupación» sin atarse al texto visible.
-        this.opcionesOcupacion.set(
-          opciones.map((opcion) => ({
-            value: opcion.conceptId,
-            label: opcion.display,
-            code: opcion.code,
-          })),
+        const mapeadas = opciones.map((opcion) => ({
+          value: opcion.conceptId,
+          label: opcion.display,
+          code: opcion.code,
+        }));
+        // Asegurar que «Otra ocupación» aparezca primero
+        const ordenadas = [...mapeadas];
+        const idxOtra = ordenadas.findIndex(
+          (o) =>
+            o.code === CODIGO_OCUPACION_OTRA ||
+            o.code.toLowerCase().includes('otra') ||
+            o.label.toLowerCase().startsWith('otra'),
         );
+        if (idxOtra > 0) {
+          const [otra] = ordenadas.splice(idxOtra, 1);
+          ordenadas.unshift(otra);
+        }
+        // Incorporar las ocupaciones personalizadas registradas previamente
+        const personalizadas = this.ocupacionesPersonalizadas();
+        const combinadas =
+          personalizadas.length > 0
+            ? [ordenadas[0], ...personalizadas, ...ordenadas.slice(1)]
+            : ordenadas;
+        this.opcionesOcupacion.set(combinadas);
       },
       error: () => {
         this.opcionesOcupacion.set([]);
         this.catalogoOcupacionesCaido.set(true);
       },
     });
+  }
+
+  /** Normaliza texto eliminando acentos y espacios superfluos para cotejar similitudes. */
+  private normalizarParaComparar(cadena: string): string {
+    return cadena
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  /**
+   * Normaliza la ocupación ingresada a Title Case con conectores estándar en minúsculas.
+   */
+  normalizarOcupacion(texto: string): string {
+    const limpio = texto.trim().replace(/\s+/g, ' ');
+    if (!limpio) return '';
+    const conectores = new Set(['de', 'del', 'la', 'el', 'en', 'y', 'o', 'a', 'por', 'con']);
+    return limpio
+      .toLowerCase()
+      .split(' ')
+      .map((palabra, idx) => {
+        if (idx > 0 && conectores.has(palabra)) return palabra;
+        return palabra.charAt(0).toUpperCase() + palabra.slice(1);
+      })
+      .join(' ');
+  }
+
+  /**
+   * Busca si existe una ocupación similar en las opciones activas.
+   */
+  buscarOcupacionSimilar(texto: string): (SelectOption<string> & { code: string }) | null {
+    const buscada = this.normalizarParaComparar(texto);
+    if (!buscada) return null;
+    return (
+      this.opcionesOcupacion().find((opcion) => {
+        if (opcion.code === CODIGO_OCUPACION_OTRA) return false;
+        const candidata = this.normalizarParaComparar(opcion.label);
+        return candidata === buscada || candidata.startsWith(buscada);
+      }) ?? null
+    );
+  }
+
+  /**
+   * Registra una nueva ocupación introducida por la persona:
+   * La normaliza, verifica si ya existe una similar, y si es nueva la añade a la lista seleccionable.
+   */
+  registrarNuevaOcupacion(texto: string): void {
+    const normalizada = this.normalizarOcupacion(texto);
+    if (!normalizada) return;
+
+    const similar = this.buscarOcupacionSimilar(normalizada);
+    if (similar) {
+      return;
+    }
+
+    const comparada = this.normalizarParaComparar(normalizada);
+    const yaExiste = this.opcionesOcupacion().some(
+      (o) => this.normalizarParaComparar(o.label) === comparada,
+    );
+    if (!yaExiste) {
+      const nuevaOpcion = {
+        value: `custom:occupation:${encodeURIComponent(normalizada)}`,
+        label: normalizada,
+        code: 'occupation:bo:CUSTOM',
+      };
+      this.ocupacionesPersonalizadas.update((actuales) => [...actuales, nuevaOpcion]);
+      this.opcionesOcupacion.update((actuales) => {
+        if (actuales.length === 0) return [nuevaOpcion];
+        const idxOtra = actuales.findIndex((o) => o.code === CODIGO_OCUPACION_OTRA);
+        if (idxOtra >= 0) {
+          const otra = actuales[idxOtra];
+          const resto = actuales.filter((_, i) => i !== idxOtra);
+          return [otra, nuevaOpcion, ...resto];
+        }
+        return [nuevaOpcion, ...actuales];
+      });
+      this.guardarBorrador();
+    }
   }
 
   /**
@@ -2469,6 +2735,7 @@ export class RegisterPatient {
         this.registered.set(true);
         const { trustedAmbulanceName, trustedAmbulancePhone } = this.formPaciente.getRawValue();
         this.ambulanciaDeConfianza.guardar(trustedAmbulanceName, trustedAmbulancePhone);
+        this.limpiarBorrador();
       },
       error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'patient')),
     });
@@ -2513,7 +2780,11 @@ export class RegisterPatient {
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
     const razonSocial = raw.billingLegalName.trim();
-    const otraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
+    const rawOtraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
+    const otraOcupacion = rawOtraOcupacion ? this.normalizarOcupacion(rawOtraOcupacion) : '';
+    if (otraOcupacion) {
+      this.registrarNuevaOcupacion(otraOcupacion);
+    }
 
     return {
       nationalId: documento,
