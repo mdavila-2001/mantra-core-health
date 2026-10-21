@@ -1,6 +1,6 @@
 # Reporte — Inventario y portal interno de AloVida como AtlasAdminPortal
 
-> **AVANCE: 12 / 73 — 16,4 %.**
+> **AVANCE: 16 / 73 — 21,9 %.**
 
 - Fecha: 2026-10-21 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `claude-marcelo/vigilant-bardeen-gcoocw` en `mantra-core-health` (plan y evidencia) y `mantra-core-health-api` (código); `mantra-core-health-model` sin cambios todavía
 - Peldaño de evidencia alcanzado: **H0 y H1.S1.M1 → `TESTED`**. H1.S1.M1 es un refactor sin superficie visual: se demostró salida idéntica (`diff -r` sobre 67 archivos) y 7 pruebas de la librería nueva. El resto del trabajo sigue en `DISCOVERED`.
@@ -18,6 +18,7 @@
 | H1.S2.M1-M3 | Tablas afectadas por operación (`lib/datos.mjs`): 1 240 entidades, 1 164 de 1 190 operaciones con ≥ 1 tabla (97,8 %), confianza por efecto, camino más corto | `yarn inventario:test`; `evidencia/H1-S2-tablas-eventos.txt` | PASS — 42/42; 5 032 DIRECTA · 713 POR_TIPO · 196 POR_SQL · 56 POR_REGISTRO; generador de endpoints byte-idéntico |
 | H1.S2.M4 | Eventos y trabajos por operación | `grep` vs análisis | PASS — 87 sitios en el código, 87 detectados, 0 sin detectar |
 | H1.S2.M5 | Cotejo manual de 10 operaciones contra el código | lectura de archivo:línea | PASS — `evidencia/H1-S2-M5-cotejo-manual.md`: 10/10, con 2 defectos del análisis hallados y corregidos |
+| H1.S3.M1-M4 | Inventario de endpoints completo: 1 223 operaciones (1 190 del contrato + 33 sólo en el código), con explicación de negocio y de sistema, tablas, DTO y restricciones, requerimientos, payload mínimo, riesgo y pruebas; JSON por módulo y markdown por módulo | `yarn inventario:test` (59 pruebas); `yarn inventario:verificar`; `mkdocs build --strict`; `docs:links` | PASS — `evidencia/H1-S3-inventario-endpoints.txt` |
 
 ## A medias
 ninguna
