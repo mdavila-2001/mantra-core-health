@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { catchError, of, tap } from 'rxjs';
 
 import { CommunityClient } from '@core/data-access/community/community.client';
@@ -9,8 +9,10 @@ import { ColaAcotada } from '@core/social/cola-acotada';
 import { OwnProfileStore } from '@core/social/own-profile.store';
 import { ProfileSummaryStore } from '@core/social/profile-summary.store';
 import { EmptyState } from '@shared/components/molecules/empty-state/empty-state';
+import { ToastService } from '@shared/components/molecules/toast/toast.service';
 import { PublicPostCard } from '../../public-profile/public-post-card/public-post-card';
 import { dePublicacion, type PostVista } from '../../alovida/buscar/feed-publicaciones/feed-publicaciones.vista';
+import { ReportPost } from '../report-post/report-post';
 
 /** Cuántas publicaciones se leen a la vez: las guardadas pueden ser decenas. */
 const SIMULTANEAS = 3;
@@ -40,7 +42,7 @@ type EstadoGuardados = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-saved',
-  imports: [EmptyState, PublicPostCard, RouterLink],
+  imports: [EmptyState, PublicPostCard, ReportPost, RouterLink],
   templateUrl: './saved.html',
   styleUrl: './saved.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +52,8 @@ export class Saved {
   private readonly community = inject(CommunityClient);
   private readonly resumenes = inject(ProfileSummaryStore);
   private readonly propio = inject(OwnProfileStore);
+  private readonly router = inject(Router);
+  private readonly avisos = inject(ToastService);
 
   /** Detalle leído por id; `null` = se intentó y no se pudo. */
   private readonly detalles = signal<Readonly<Record<string, PostDetail | null>>>({});
@@ -101,6 +105,30 @@ export class Saved {
       }
     });
   });
+
+  /* ---- el menú «…» de cada tarjeta: lo mismo que en Inicio ------------- */
+
+  /** Qué publicación se está denunciando; el formulario reemplaza a la tarjeta en su lugar. */
+  protected readonly denunciando = signal<string | null>(null);
+
+  protected abrirDenuncia(postId: string): void {
+    this.denunciando.set(postId);
+  }
+
+  protected cerrarDenuncia(): void {
+    this.denunciando.set(null);
+  }
+
+  /** «No ver más este tipo de publicaciones»: sin destino todavía (P-01-3). Se avisa en vez de callar. */
+  protected pedirOcultar(): void {
+    this.avisos.info('Todavía no puede ajustar qué tipo de publicaciones ve. Está en camino.');
+  }
+
+  /** «Contactarme con este doctor»: sin destino definido (P-01-1), se manda a la ficha. */
+  protected pedirContacto(slug: string): void {
+    this.avisos.info('Sus vías de contacto están en su perfil.');
+    void this.router.navigate(['/p', slug]);
+  }
 
   protected quitar(postId: string): void {
     this.marcadores.quitar(postId).subscribe({ error: () => undefined });

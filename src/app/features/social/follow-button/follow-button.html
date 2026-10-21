@@ -8,7 +8,8 @@
     data-testid="follow-button"
     [attr.aria-pressed]="sigue()"
     [attr.aria-label]="nombreAccesible()"
-    [attr.aria-disabled]="!listo() || ocupado() ? 'true' : null"
+    [attr.aria-disabled]="!listo() || ocupado() || pendiente() ? 'true' : null"
+    [attr.aria-busy]="pendiente() || ocupado() ? 'true' : null"
     (click)="alternar()"
   >
     @if (sigue()) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -13,11 +13,11 @@ import { Saved } from './saved';
 
 @Component({
   selector: 'app-public-post-card',
-  template: '<p data-testid="tarjeta">{{ post().bodyText }}</p>',
+  template: '<p data-testid="tarjeta">{{ post().bodyText }}</p><button type="button" data-testid="denunciar" (click)="pedidoDeDenuncia.emit(post().id)">Denunciar</button>',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class TarjetaFalsa {
-  readonly post = input.required<{ bodyText: string }>();
+  readonly post = input.required<{ id: string; bodyText: string }>();
   readonly slug = input('');
   readonly autorNombre = input('');
   readonly autorHeadline = input<string | null>(null);
@@ -28,6 +28,10 @@ class TarjetaFalsa {
   readonly reaccionesPorTipo = input<unknown>(null);
   readonly autorEnlazado = input(false);
   readonly actorProfileId = input<string | null>(null);
+  readonly conAcciones = input(false);
+  readonly pedidoDeDenuncia = output<string>();
+  readonly pedidoDeOcultar = output<string>();
+  readonly pedidoDeContacto = output<string>();
 }
 
 const detalle = (id: string, texto: string) => ({
@@ -145,5 +149,16 @@ describe('Saved — «Guardados»', () => {
 
     expect(readPost.mock.calls.filter(([id]) => id === 'p1').length).toBe(1);
     expect(readPost).toHaveBeenCalledWith('p2');
+  });
+
+  it('denunciar desde una guardada abre el formulario en su lugar', () => {
+    guardados.set(['p1']);
+    montar();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="denunciar"]')!.click();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-report-post')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="tarjeta"]')).toBeNull();
   });
 });

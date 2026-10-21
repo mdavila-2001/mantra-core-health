@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
@@ -35,6 +35,9 @@ import { ToastService } from '@shared/components/molecules/toast/toast.service';
  *   el perfil de quien sigue y no lo deduce de la sesión.
  * - **El propio perfil**: no se dibuja. Nadie se sigue a sí mismo.
  * - **Con una escritura en vuelo**: el botón se bloquea (sin doble envío).
+ * - **Tocado mientras todavía se resuelve el id** (o se lee a quién sigue): el
+ *   gesto no se pierde. Queda pendiente, el botón lo anuncia como ocupado y se
+ *   ejecuta apenas hay con qué; si el id no se puede resolver, se avisa.
  */
 @Component({
   selector: 'app-follow-button',
@@ -102,6 +105,27 @@ export class FollowButton {
     return quien === '' ? accion : `${accion} a ${quien}`;
   });
 
+  /** Un toque que llegó antes de que hubiera id o conjunto leído: se ejecuta al llegar. */
+  protected readonly pendiente = signal(false);
+
+  private readonly cumplirPendiente = effect(() => {
+    if (!this.pendiente()) return;
+    const id = this.destino();
+    if (id === null) {
+      untracked(() => {
+        this.pendiente.set(false);
+        this.avisos.error('No pudimos identificar este perfil. Reintente.');
+      });
+      return;
+    }
+    if (typeof id === 'string' && this.seguimientos.cargado()) {
+      untracked(() => {
+        this.pendiente.set(false);
+        this.ejecutar(id);
+      });
+    }
+  });
+
   protected alternar(): void {
     if (!this.sesion.isAuthenticated()) {
       void this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
@@ -112,9 +136,16 @@ export class FollowButton {
       return;
     }
 
+    if (this.ocupado() || this.pendiente()) return;
     const id = this.destino();
-    if (typeof id !== 'string' || this.ocupado()) return;
+    if (typeof id !== 'string' || !this.seguimientos.cargado()) {
+      this.pendiente.set(true);
+      return;
+    }
+    this.ejecutar(id);
+  }
 
+  private ejecutar(id: string): void {
     const quitar = this.sigue();
     (quitar ? this.seguimientos.dejarDeSeguir(id) : this.seguimientos.seguir(id)).subscribe({
       error: (error: unknown) =>

@@ -11,19 +11,27 @@
           <li>
             @switch (f.tipo) {
               @case ('datos') {
-                <app-public-post-card
-                  [post]="f.vista!.post"
-                  [slug]="f.vista!.slug"
-                  [autorNombre]="f.vista!.nombre"
-                  [autorHeadline]="f.vista!.headline"
-                  [autorAvatar]="f.vista!.avatar"
-                  [autorIniciales]="f.vista!.iniciales"
-                  [autorPerfilId]="f.vista!.perfilId"
-                  [visibilidad]="f.vista!.visibilidad"
-                  [reaccionesPorTipo]="f.vista!.reaccionesPorTipo"
-                  [autorEnlazado]="f.vista!.slug !== ''"
-                  [actorProfileId]="actor()"
-                />
+                @if (denunciando() === f.id) {
+                  <app-report-post [postId]="f.id" (reportado)="cerrarDenuncia()" (cancelado)="cerrarDenuncia()" />
+                } @else {
+                  <app-public-post-card
+                    [post]="f.vista!.post"
+                    [slug]="f.vista!.slug"
+                    [autorNombre]="f.vista!.nombre"
+                    [autorHeadline]="f.vista!.headline"
+                    [autorAvatar]="f.vista!.avatar"
+                    [autorIniciales]="f.vista!.iniciales"
+                    [autorPerfilId]="f.vista!.perfilId"
+                    [visibilidad]="f.vista!.visibilidad"
+                    [reaccionesPorTipo]="f.vista!.reaccionesPorTipo"
+                    [autorEnlazado]="f.vista!.slug !== ''"
+                    [actorProfileId]="actor()"
+                    [conAcciones]="true"
+                    (pedidoDeDenuncia)="abrirDenuncia($event)"
+                    (pedidoDeOcultar)="pedirOcultar()"
+                    (pedidoDeContacto)="pedirContacto($event)"
+                  />
+                }
               }
               @case ('perdida') {
                 <div class="guardados__perdida" data-testid="guardado-no-disponible">

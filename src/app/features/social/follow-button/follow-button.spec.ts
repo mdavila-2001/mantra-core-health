@@ -168,5 +168,42 @@ describe('FollowButton', () => {
     await montar({ cargado: false });
 
     expect(boton()?.getAttribute('aria-disabled')).toBe('true');
+    await clic();
+    expect(seguimientos.seguir).not.toHaveBeenCalled();
+  });
+
+  it('un toque antes de tiempo no se pierde: se cumple cuando llega lo que faltaba, una sola vez', async () => {
+    await montar({ cargado: false });
+
+    await clic();
+    await clic();
+    expect(boton()?.getAttribute('aria-busy')).toBe('true');
+    expect(seguimientos.seguir).not.toHaveBeenCalled();
+
+    seguimientos.cargado.set(true);
+    await fixture.whenStable();
+
+    expect(seguimientos.seguir).toHaveBeenCalledTimes(1);
+    expect(seguimientos.seguir).toHaveBeenCalledWith('perfil-lopez');
+    expect(boton()?.textContent).toContain('Siguiendo');
+    expect(boton()?.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('si el id todavía se está resolviendo, espera; si no se puede resolver, lo dice', async () => {
+    const id = signal<string | null | undefined>(undefined);
+    await montar();
+    resumenes.idPorSlug.mockImplementation(() => id());
+    fixture.componentInstance.slug.set('otra');
+    await fixture.whenStable();
+
+    await clic();
+    expect(seguimientos.seguir).not.toHaveBeenCalled();
+
+    id.set(null);
+    await fixture.whenStable();
+
+    expect(seguimientos.seguir).not.toHaveBeenCalled();
+    expect(avisos.error).toHaveBeenCalledWith('No pudimos identificar este perfil. Reintente.');
+    expect(boton()?.getAttribute('aria-busy')).toBeNull();
   });
 });

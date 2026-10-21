@@ -1,0 +1,31 @@
+✔ sin sesión /network manda a entrar
+✔ sin sesión el rail no ofrece Mi red
+✔ con sesión el rail muestra Mi red social — /network,/saved,/messaging,/notification-center
+✔ Mi red · lista a quién sigue — 5
+✔ Mi red · cada fila tiene nombre real (no «…» ni id) — Jorge Andrés Salazar Vaca | María Fernanda Quiroga Añez | Rodrigo Paz Soruco
+✔ Mi red · rail marca «Mi red» como página actual
+✔ Mi red · 1440 sin scroll horizontal
+✔ Sugerencias · hay alguien para seguir — Daniel Aguilar Roca
+✔ Seguir cambia el botón a «Siguiendo»
+✔ la persona aparece en Siguiendo sin recargar
+✔ tras recargar sigue en Siguiendo (persistió)
+✔ Dejar de seguir lo saca de la lista
+✔ dejar de seguir persistió tras recargar
+✔ Guardar queda presionado
+✔ Guardados · la publicación aparece — 0 → 1
+✔ Guardados · es la misma publicación — post-card-de5052aa-02df-467a-ae99-f9100f2fb0c4
+✔ Guardados · tras recargar sigue (persistió)
+✔ y sale de Guardados sin recargar
+✔ quitar también persistió tras recargar
+✔ network · 390 light sin scroll horizontal
+✔ saved · 390 light sin scroll horizontal
+✔ network · 390 dark sin scroll horizontal
+✔ saved · 390 dark sin scroll horizontal
+✔ network · 1440 dark sin scroll horizontal
+✔ saved · 1440 dark sin scroll horizontal
+✔ network · 768 light sin scroll horizontal
+✔ saved · 768 light sin scroll horizontal
+(CSP inline-script aparte: 10)
+✔ sin errores de página ni de consola (salvo CSP)
+
+28/28 en verde

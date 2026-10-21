@@ -41,6 +41,8 @@ describe('Network — «Mi red»', () => {
   const perfilPropio = signal<{ id: string; slug: string } | null>({ id: 'yo', slug: 'yo-mismo' });
   const resumenes = new Map<string, unknown>();
   const recargar = vi.fn();
+  /** `slug` → id; lo que no está, todavía se resuelve. */
+  const idsPorSlug = signal<Record<string, string | null>>({});
   let searchPractitioners: ReturnType<typeof vi.fn>;
 
   function montar(): void {
@@ -50,13 +52,16 @@ describe('Network — «Mi red»', () => {
         provideRouter([]),
         {
           provide: FollowStore,
-          useValue: { seguidos, total: () => seguidos().length, cargado, fallo, recargar },
+          useValue: { seguidos, total: () => seguidos().length, cargado, fallo, recargar, sigue: (id: string) => seguidos().includes(id) },
         },
         {
           provide: OwnProfileStore,
           useValue: { perfil: perfilPropio, id: () => perfilPropio()?.id ?? null, resuelto: signal(true) },
         },
-        { provide: ProfileSummaryStore, useValue: { resumen: (id: string) => resumenes.get(id) } },
+        {
+          provide: ProfileSummaryStore,
+          useValue: { resumen: (id: string) => resumenes.get(id), idPorSlug: (slug: string) => idsPorSlug()[slug] },
+        },
         { provide: PublicDirectoryClient, useValue: { searchPractitioners } },
       ],
     });
@@ -68,6 +73,11 @@ describe('Network — «Mi red»', () => {
     fixture.detectChanges();
   }
 
+  const asentar = (): void => {
+    TestBed.tick();
+    fixture.detectChanges();
+  };
+
   const q = (testid: string): HTMLElement | null =>
     (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testid}"]`);
 
@@ -75,6 +85,7 @@ describe('Network — «Mi red»', () => {
     const tabs = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]');
     tabs[1]!.click();
     fixture.detectChanges();
+    asentar();
   };
 
   beforeEach(() => {
@@ -84,6 +95,7 @@ describe('Network — «Mi red»', () => {
     perfilPropio.set({ id: 'yo', slug: 'yo-mismo' });
     resumenes.clear();
     recargar.mockClear();
+    idsPorSlug.set({ otra: 'id-otra', x: 'id-x', ana: 'a', beto: 'b' });
     searchPractitioners = vi.fn(() => of({ items: [] }));
   });
 
@@ -175,8 +187,55 @@ describe('Network — «Mi red»', () => {
     Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
       .find((b) => b.textContent?.trim() === 'Reintentar')!
       .click();
-    fixture.detectChanges();
+    asentar();
 
     expect(q('mi-red-sugerencias')!.textContent).toContain('Xavier');
+  });
+
+  describe('sin quienes ya sigue', () => {
+    const muestra = {
+      items: [
+        { slug: 'ana', displayName: 'Ana Ya Seguida', headline: null, avatarUrl: null },
+        { slug: 'otra', displayName: 'Otra Persona', headline: null, avatarUrl: null },
+      ],
+    };
+
+    it('saca de las sugerencias a quien ya sigue', () => {
+      seguidos.set(['a']);
+      searchPractitioners = vi.fn(() => of(muestra));
+      montar();
+      pestanaSugerencias();
+
+      const lista = q('mi-red-sugerencias')!.textContent ?? '';
+      expect(lista).toContain('Otra Persona');
+      expect(lista).not.toContain('Ana Ya Seguida');
+    });
+
+    it('mientras un id no se resolvió no muestra la lista: no salta al llegar', () => {
+      seguidos.set(['a']);
+      idsPorSlug.set({ otra: 'id-otra' });
+      searchPractitioners = vi.fn(() => of(muestra));
+      montar();
+      pestanaSugerencias();
+
+      expect(q('mi-red-sugerencias')).toBeNull();
+
+      idsPorSlug.set({ otra: 'id-otra', ana: 'a' });
+      asentar();
+
+      expect(q('mi-red-sugerencias')!.textContent).not.toContain('Ana Ya Seguida');
+    });
+
+    it('a quien sigue durante la visita no lo saca de golpe', () => {
+      searchPractitioners = vi.fn(() => of(muestra));
+      montar();
+      pestanaSugerencias();
+      expect(q('mi-red-sugerencias')!.textContent).toContain('Ana Ya Seguida');
+
+      seguidos.set(['a']);
+      asentar();
+
+      expect(q('mi-red-sugerencias')!.textContent).toContain('Ana Ya Seguida');
+    });
   });
 });
