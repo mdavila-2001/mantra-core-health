@@ -1900,3 +1900,355 @@ Not implemented: HTMLCanvasElement's getContext() method: without installing the
 [31m     [31m×[31m llega unos segundos después de abrir la recepción, una sola vez, con quién la pidió[39m[32m 4[2mms[22m[39m
  [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/design-system-sample/design-system-sample.spec.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 2483[2mms[22m[39m
 [31m     [31m×[31m el selector de tema sigue expuesto: es la única UI del ThemeService[39m[33m 363[2mms[22m[39m
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/public-directories/pharmacies-directory.spec.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 93[2mms[22m[39m
+[31m     [31m×[31m los enlaces dibujados apuntan al mismo lugar que el modelo[39m[32m 42[2mms[22m[39m
+Not implemented: navigation to another Document
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+[90mstderr[2m | src/app/features/billing/representacion-grafica.spec.ts[2m > [22m[2mrepresentación gráfica de la factura SIMULADA[2m > [22m[2mel PDF se arma, lleva la marca de agua en cada hoja y el QR si se lo dan
+[22m[39mjsPDF PubSub Error No unicode cmap for font Error: No unicode cmap for font
+    at t.registerTTF (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:431:15550)
+    at new t (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:431:13860)
+    at Function.t.open (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:431:13907)
+    at /home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:417:688
+    at Object.<anonymous> (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:417:796)
+    at _.publish (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:1511)
+    at Object.fe (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:24576)
+    at Object.C.v.addFont (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:45138)
+    at registrarFuentes (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:352:7)
+    at abrirHoja (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:386:14)
+jsPDF PubSub Error No unicode cmap for font Error: No unicode cmap for font
+    at t.registerTTF (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:431:15550)
+    at new t (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:431:13860)
+    at Function.t.open (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:431:13907)
+    at /home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:417:688
+    at Object.<anonymous> (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:417:796)
+    at _.publish (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:1511)
+    at Object.fe (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:24576)
+    at Object.C.v.addFont (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:45138)
+    at registrarFuentes (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:354:7)
+    at abrirHoja (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:386:14)
+jsPDF PubSub Error Cannot read properties of undefined (reading 'widths') TypeError: Cannot read properties of undefined (reading 'widths')
+    at e.pdfEscape16 (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:417:6574)
+    at i (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:417:10929)
+    at Object.<anonymous> (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:417:11275)
+    at _.publish (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:1511)
+    at Object.C.v.__private__.text.v.text [as text] (/home/user/mantra-core-health/node_modules/jspdf/dist/jspdf.node.min.js:86:39192)
+    at escribirLineas (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:1443:9)
+    at escribir (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:1423:3)
+    at escribirEspaciado (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:1459:3)
+    at dibujarMembrete (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:517:3)
+    at abrirHoja (/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/wt-base/src/app/shared/utils/pdf-export/pdf-export.ts:391:12)
+
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/billing/representacion-grafica.spec.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 22[2mms[22m[39m
+[31m     [31m×[31m el PDF se arma, lleva la marca de agua en cada hoja y el QR si se lo dan[39m[32m 14[2mms[22m[39m
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/tokens/design-tokens.types.spec.ts [2m([22m[2m11 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 7[2mms[22m[39m
+[31m       [31m×[31m todo token declarado en styles.css está en el catálogo[39m[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/shared/utils/pdf-export/pdf-logo.spec.ts [2m([22m[2m10 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 8[2mms[22m[39m
+[31m     [31m×[31m empieza vacío y se puede fijar y limpiar[39m[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 78 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/app.routes.spec.ts[2m > [22mrutas del armazón[2m > [22mcada dirección vieja redirige a una ruta que existe
+[31m[1mAssertionError[22m: my-account/identity/cases: expected [ '/dashboard', '/tutorials', …(683) ] to include '/my-account/identity?tab=cases'[39m
+[36m [2m❯[22m src/app/app.routes.spec.ts:[2m253:42[22m[39m
+    [90m251|[39m     [35mfor[39m ([35mconst[39m redireccion [35mof[39m redirecciones) {
+    [90m252|[39m       [34mexpect[39m(redireccion[33m.[39mpathMatch[33m,[39m redireccion[33m.[39mpath)[33m.[39m[34mtoBe[39m([32m'full'[39m)[33m;[39m
+    [90m253|[39m       expect(destinos, redireccion.path).toContain(redireccion.redirec…
+    [90m   |[39m                                          [31m^[39m
+    [90m254|[39m     }
+    [90m255|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/navigation/access-tree.spec.ts[2m > [22mbuildAccessTree[2m > [22mla portada sigue en el registro, para el menú lateral
+[31m[1mAssertionError[22m: expected [ 'SUPERADMIN' ] to be undefined[39m
+
+- Expected:
+undefined
+
++ Received:
+[
+  "SUPERADMIN",
+]
+
+[36m [2m❯[22m src/app/core/navigation/access-tree.spec.ts:[2m209:39[22m[39m
+    [90m207|[39m     [34mexpect[39m(portada[33m?.[39mlabel)[33m.[39m[34mtoBe[39m([32m'Directorios'[39m)[33m;[39m
+    [90m208|[39m     // Fuera del menú NO está: es la sección que ocupa el renglón desd…
+    [90m209|[39m     [34mexpect[39m(portada[33m?.[39mfueraDelMenuPara)[33m.[39m[34mtoBeUndefined[39m()[33m;[39m
+    [90m   |[39m                                       [31m^[39m
+    [90m210|[39m   })[33m;[39m
+    [90m211|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/tokens/design-tokens.types.spec.ts[2m > [22mdesign tokens[2m > [22mfidelidad TS ↔ src/styles.css[2m > [22mtodo token declarado en styles.css está en el catálogo
+[31m[1mAssertionError[22m: expected [ '--surface-white' ] to deeply equal [][39m
+
+- Expected
++ Received
+
+- []
++ [
++   "--surface-white",
++ ]
+
+[36m [2m❯[22m src/app/core/tokens/design-tokens.types.spec.ts:[2m83:25[22m[39m
+    [90m 81|[39m       [35mconst[39m catalogo [33m=[39m [35mnew[39m [33mSet[39m[33m<[39mstring[33m>[39m([33mDESIGN_TOKENS[39m)[33m;[39m
+    [90m 82|[39m       const huerfanos = [...declaradosEnCss].filter((token) => !catalo…
+    [90m 83|[39m       [34mexpect[39m(huerfanos)[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m   |[39m                         [31m^[39m
+    [90m 84|[39m     })[33m;[39m
+    [90m 85|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/billing/representacion-grafica.spec.ts[2m > [22mrepresentación gráfica de la factura SIMULADA[2m > [22mel PDF se arma, lleva la marca de agua en cada hoja y el QR si se lo dan
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'widths')[39m
+[90m [2m❯[22m widths ../../../../../../home/user/mantra-core-health/node_modules/jspdf/src/modules/split_text_to_size.js:[2m56:36[22m[39m
+[90m [2m❯[22m this ../../../../../../home/user/mantra-core-health/node_modules/jspdf/src/modules/split_text_to_size.js:[2m137:15[22m[39m
+[90m [2m❯[22m getStringUnitWidth ../../../../../../home/user/mantra-core-health/node_modules/jspdf/src/jspdf.js:[2m3857:15[22m[39m
+[90m [2m❯[22m findWidth ../../../../../../home/user/mantra-core-health/node_modules/jspdf/src/jspdf.js:[2m3871:28[22m[39m
+[90m [2m❯[22m escribirLineas src/app/shared/utils/pdf-export/pdf-export.ts:[2m1443:9[22m[39m
+[90m [2m❯[22m escribir src/app/shared/utils/pdf-export/pdf-export.ts:[2m1423:3[22m[39m
+[90m [2m❯[22m escribirEspaciado src/app/shared/utils/pdf-export/pdf-export.ts:[2m1459:3[22m[39m
+[90m [2m❯[22m dibujarMembrete src/app/shared/utils/pdf-export/pdf-export.ts:[2m554:5[22m[39m
+[90m [2m❯[22m abrirHoja src/app/shared/utils/pdf-export/pdf-export.ts:[2m391:12[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/design-system-sample/design-system-sample.spec.ts[2m > [22mDesignSystemSample[2m > [22mel selector de tema sigue expuesto: es la única UI del ThemeService
+[31m[1mAssertionError[22m: expected <button …(8)></button>
+…(1) to have a length of 3 but got 2[39m
+
+- Expected
++ Received
+
+- 3
++ 2
+
+[36m [2m❯[22m src/app/features/design-system-sample/design-system-sample.spec.ts:[2m112:47[22m[39m
+    [90m110|[39m     const grupo = root().querySelector('[role="group"][aria-label="Tem…
+    [90m111|[39m
+    [90m112|[39m     [34mexpect[39m(grupo[33m?.[39m[34mquerySelectorAll[39m([32m'button'[39m))[33m.[39m[34mtoHaveLength[39m([34m3[39m)[33m;[39m
+    [90m   |[39m                                               [31m^[39m
+    [90m113|[39m   })[33m;[39m
+    [90m114|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/messaging/messaging.spec.ts[2m > [22mMessaging[2m > [22mno borra la bandeja cuando un tic falla
+[31m[1mAssertionError[22m: expected 'Error:No hay conexión con el servidor…' to contain 'No pudimos cargar sus conversaciones.'[39m
+
+Expected: "No pudimos cargar sus conversaciones."
+Received: "Error:No hay conexión con el servidor. Revise su conexión e intente de nuevo.ChatsBuscar un chat o iniciar uno nuevo Todos  No leídos  Favoritos  Grupos  Archivados 0 Bloqueados 0DQ Dra. Quispe 18/08/2026Hola, ¿cómo sigue?Alovida · Chats Elija una conversación de la izquierda para leerla aquí, o busque a un profesional para empezar una nueva. "
+
+[36m [2m❯[22m src/app/features/messaging/messaging.spec.ts:[2m306:21[22m[39m
+    [90m304|[39m
+    [90m305|[39m     [34mexpect[39m([34mtexto[39m())[33m.[39m[34mtoContain[39m([32m'Dra. Quispe'[39m)[33m;[39m
+    [90m306|[39m     [34mexpect[39m([34mtexto[39m())[33m.[39m[34mtoContain[39m([32m'No pudimos cargar sus conversaciones.'[39m)[33m;[39m
+    [90m   |[39m                     [31m^[39m
+    [90m307|[39m   })[33m;[39m
+    [90m308|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/public-directories/pharmacies-directory.spec.ts[2m > [22mPharmaciesDirectory · la ficha vive dentro del panel[2m > [22mlos enlaces dibujados apuntan al mismo lugar que el modelo
+[31m[1mAssertionError[22m: expected 6 to be 3 // Object.is equality[39m
+
+- Expected
++ Received
+
+- 3
++ 6
+
+[36m [2m❯[22m src/app/features/public-directories/pharmacies-directory.spec.ts:[2m111:28[22m[39m
+    [90m109|[39m     const enlaces = [...pantalla.querySelectorAll<HTMLAnchorElement>('…
+    [90m110|[39m
+    [90m111|[39m     [34mexpect[39m(enlaces[33m.[39mlength)[33m.[39m[34mtoBe[39m([33mFICHAS[39m[33m.[39mlength)[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m112|[39m     [35mfor[39m ([35mconst[39m enlace [35mof[39m enlaces) {
+    [90m113|[39m       // El atributo y no la propiedad: `href` resuelto traería el ori…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/faker/faker.spec.ts[2m > [22mfaker del backend simulado[2m > [22mlos códigos salen del catálogo, nunca inventados[2m > [22mcada ocupación y cada municipio de cada paciente existen
+[31m[1mAssertionError[22m: expected [ 'Fermin Luis Saldias Arandia', …(2) ] to deeply equal [][39m
+
+- Expected
++ Received
+
+- []
++ [
++   "Fermin Luis Saldias Arandia",
++   "Yahely Nuñez Rojas",
++   "Denisse Kenapp Arriaza",
++ ]
+
+[36m [2m❯[22m src/app/core/mock/faker/faker.spec.ts:[2m70:21[22m[39m
+    [90m 68|[39m           (p[33m.[39mmunicipioId [33m!==[39m [32m''[39m [33m&&[39m [33m![39mmunicipios[33m.[39m[34mhas[39m(p[33m.[39mmunicipioId))[33m,[39m
+    [90m 69|[39m       )[33m.[39m[34mmap[39m((p) [33m=>[39m p[33m.[39mdisplayName)[33m;[39m
+    [90m 70|[39m       [34mexpect[39m(malos)[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m   |[39m                     [31m^[39m
+    [90m 71|[39m     })[33m;[39m
+    [90m 72|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/fixtures/fichas-estandar.spec.ts[2m > [22mlas fichas clínicas estándar del simulador[2m > [22mson tantas como los JSON que siembra el backend
+[31m[1mError[22m: ENOENT: no such file or directory, scandir '/tmp/claude-0/-home-user/fc2b9db1-0d64-5348-af25-6b425671ba8d/scratchpad/mantra-core-health-api/src/common/seed/data/clinical-forms'[39m
+[36m [2m❯[22m fichasDelBackend src/app/core/mock/fixtures/fichas-estandar.spec.ts:[2m35:12[22m[39m
+    [90m 33|[39m       [32m'clinical-forms'[39m[33m,[39m
+    [90m 34|[39m     )[33m;[39m
+    [90m 35|[39m     [35mreturn[39m [34mreaddirSync[39m(raiz[33m,[39m { withFileTypes[33m:[39m [35mtrue[39m })
+    [90m   |[39m            [31m^[39m
+    [90m 36|[39m       [33m.[39m[34mfilter[39m((entrada) [33m=>[39m entrada[33m.[39m[34misDirectory[39m())
+    [90m 37|[39m       [33m.[39m[34mflatMap[39m((carpeta) [33m=>[39m
+[90m [2m❯[22m src/app/core/mock/fixtures/fichas-estandar.spec.ts:[2m45:41[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/clinical.handlers.spec.ts[2m > [22mGET /clinical/prescriptions/:id/pdf · la receta sale por el motor de PDF[2m > [22mdevuelve un PDF de verdad, armado por el maquetador, y no la hoja en blanco de antes
+[31m[1mTypeError[22m: buildPrescriptionPdf(...).output is not a function[39m
+[90m [2m❯[22m recetaEnPdf src/app/core/mock/handlers/clinical.handlers.ts:[2m769:98[22m[39m
+[90m [2m❯[22m Object.handler src/app/core/mock/handlers/clinical.handlers.ts:[2m381:23[22m[39m
+[36m [2m❯[22m src/app/core/mock/handlers/clinical.handlers.spec.ts:[2m528:24[22m[39m
+    [90m526|[39m     [34mexpect[39m(creada[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m201[39m)[33m;[39m
+    [90m527|[39m
+    [90m528|[39m     const respuesta = (await pedir('GET', `/clinical/prescriptions/${c…
+    [90m   |[39m                        [31m^[39m
+    [90m529|[39m       body[33m:[39m [33mBlob[39m[33m;[39m
+    [90m530|[39m       headers[33m:[39m [33mRecord[39m[33m<[39mstring[33m,[39m string[33m>[39m[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/lab-orden-entrante.spec.ts[2m > [22mrecepción del laboratorio: la orden entrante y su orden de trabajo[2m > [22mllega unos segundos después de abrir la recepción, una sola vez, con quién la pidió
+[31m[1mAssertionError[22m: expected [ …(8) ] to not include '6322645c-266a-4220-a794-3944f02d987c'[39m
+[36m [2m❯[22m src/app/core/mock/handlers/lab-orden-entrante.spec.ts:[2m46:58[22m[39m
+    [90m 44|[39m
+    [90m 45|[39m   it('llega unos segundos después de abrir la recepción, una sola vez,…
+    [90m 46|[39m     expect(bandeja().map((i) => i.serviceRequestId)).not.toContain(ID_…
+    [90m   |[39m                                                          [31m^[39m
+    [90m 47|[39m
+    [90m 48|[39m     vi[33m.[39m[34madvanceTimersByTime[39m([34m16_000[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/shared/utils/pdf-export/pdf-logo.spec.ts[2m > [22mel logo de la sesión[2m > [22mempieza vacío y se puede fijar y limpiar
+[31m[1mAssertionError[22m: expected { …(4) } to be null[39m
+
+- Expected:
+null
+
++ Received:
+{
+  "alto": 1,
+  "ancho": 3,
+  "dataUrl": "data:image/png;base64,AAAA",
+  "formato": "PNG",
+}
+
+[36m [2m❯[22m src/app/shared/utils/pdf-export/pdf-logo.spec.ts:[2m50:32[22m[39m
+    [90m 48|[39m
+    [90m 49|[39m   [34mit[39m([32m'empieza vacío y se puede fijar y limpiar'[39m[33m,[39m () [33m=>[39m {
+    [90m 50|[39m     [34mexpect[39m([34mlogoDeDocumentos[39m())[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   |[39m                                [31m^[39m
+    [90m 51|[39m
+    [90m 52|[39m     const logo = { dataUrl: 'data:image/png;base64,AAAA', formato: 'PN…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/78]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msin binding declarado no ofrece el formulario y explica por qué
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mcon binding declarado ofrece el formulario
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mno ofrece descarga, demostración ni favoritos y tampoco los consulta
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mno envía sin medicamento elegido: es obligatorio en el DTO
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mmanda los tres obligatorios y el encuentro, y omite lo vacío
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mmanda el diagnóstico elegido como indicación de la receta
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mancla el 422 estructurado de la API al campo Medicamento
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msin diagnóstico elegido la clave no viaja: la receta sintomática es legítima
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mC5: ofrece sólo los diagnósticos confirmados, con la fecha, y «Otro motivo» al final — sin opción vacía
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mmanda dosis, frecuencia y cantidad cuando se cargaron
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mmanda la vía como concepto cuando se eligió
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msin elegir vía, su clave no viaja
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22muna cantidad en blanco no viaja como cero
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mtras prescribir avisa para releer y limpia el formulario
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mmanda inicio y fin de vigencia como fechas ISO cuando están configurados
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mlas indicaciones al paciente viajan separadas de la dosis (v4.1.3)
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mla pauta sugiere la cantidad sin pisar lo tecleado a mano
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22m«Crónico» no aparece elegido al abrir, y al elegirlo borra el fin de vigencia
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22musa selects para las pautas y conserva la frecuencia como texto editable
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msin medicación activa, prescribe sin pedir el chequeo de interacciones
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mcon medicación activa y sin interacciones, prescribe sin confirmar nada
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mcon interacciones encontradas, pide confirmar antes de prescribir
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msi se rechaza la confirmación de interacciones, no prescribe
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msi el chequeo de interacciones falla, prescribe igual
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msi el chequeo falla, avisa que no se revisaron las interacciones, con código de soporte
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel aviso de interacciones sin revisar se va cuando el próximo chequeo responde
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mcon interacciones revisadas sin hallazgos, no aparece el aviso de revisión pendiente
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mfirmar pega contra `sign` sin cuerpo y pide releer
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22memitir sin confirmar no manda nada
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22memitir confirmado pega contra `issue` y pide releer
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22memitir sin firmar muestra el 422 como aviso de precondición, no como error
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mla precondición sobre una receta firmada se cuenta como estado viejo
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22muna receta emitida no ofrece firmar ni emitir: es inmutable
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22magrupa las acciones editables en el menú estándar
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel sello distingue las tres etapas del ciclo
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mbusca dentro del vademécum, sin pedirle nada a la terminología
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mencuentra sin tilde lo que el catálogo escribe con tilde
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mtambién busca por código ATC
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msin texto ofrece el catálogo entero, no una lista vacía
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mal elegir, lee la ficha y ofrece presentaciones y concentraciones
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mcompleta la frecuencia manual con el valor publicado por el medicamento
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mconserva la frecuencia escrita al elegir un medicamento con valor por defecto
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mdeja la frecuencia manual vacía si el medicamento no publica una por defecto
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mignora una frecuencia por defecto malformada
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mreemplaza una sugerencia anterior al elegir otro medicamento
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mignora la ficha que llega tarde para una selección anterior
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mconserva una edición manual posterior a una sugerencia al cambiar de medicamento
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mlos valores del catálogo completan la dosis, pero el texto libre manda
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mun medicamento sin propiedades declaradas cae al texto libre de siempre
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22msi la ficha falla, el medicamento sigue siendo prescribible (con la indicación resuelta)
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mcambiar de medicamento descarta la posología del anterior
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel porqué de la receta[2m > [22mC5: sin diagnóstico ni motivo NO se puede prescribir — la receta siempre se liga a uno de los dos
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel porqué de la receta[2m > [22mun diagnóstico confirmado de la historia alcanza
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel porqué de la receta[2m > [22m«Otro motivo» habilita el campo, y exige texto para poder prescribir
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel porqué de la receta[2m > [22msin diagnóstico, un motivo libre viaja como texto
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel porqué de la receta[2m > [22mcon «Otro motivo» viaja el texto y NO la condición
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel porqué de la receta[2m > [22mcon un diagnóstico elegido viaja la condición y no el texto
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mel porqué de la receta[2m > [22msalir de «Otro motivo» borra el texto
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mtieneCambiosPendientes — contrato de DraftBlock[2m > [22mrecién montado no tiene cambios pendientes
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mtieneCambiosPendientes — contrato de DraftBlock[2m > [22mcon la dosis escrita tiene cambios pendientes
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mtieneCambiosPendientes — contrato de DraftBlock[2m > [22mla vigencia que el bloque completa solo no cuenta como pendiente
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mtieneCambiosPendientes — contrato de DraftBlock[2m > [22melegir una duración rápida sí cuenta, aunque también fije validFrom
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mvincular a un diagnóstico (C5)[2m > [22mabrir el diálogo limpia la selección anterior
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mvincular a un diagnóstico (C5)[2m > [22mvincular a un diagnóstico confirmado manda indicationConditionId y cierra el diálogo
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mvincular a un diagnóstico (C5)[2m > [22mvincular con «Otro motivo» exige texto y manda indicationText
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts[2m > [22mMedicationBlock[2m > [22mvincular a un diagnóstico (C5)[2m > [22mun 422 del servidor se muestra dentro del diálogo, que sigue abierto
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'length')[39m
+[90m [2m❯[22m Object.FormField.invalid.ngDevMode.debugName [as computation] src/app/shared/components/molecules/form-field/form-field.ts:[2m116:54[22m[39m
+[90m [2m❯[22m computation ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:[2m147:24[22m[39m
+[90m [2m❯[22m producerRecomputeValue ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/graph.ts:[2m318:7[22m[39m
+[90m [2m❯[22m producerUpdateValueVersion ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:[2m72:4[22m[39m
+[90m [2m❯[22m Object.ReferenceCombobox.invalid.ngDevMode.debugName [as computation] src/app/shared/components/molecules/reference-combobox/reference-combobox.ts:[2m163:54[22m[39m
+[90m [2m❯[22m computation ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:[2m147:24[22m[39m
+[90m [2m❯[22m producerRecomputeValue ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/graph.ts:[2m318:7[22m[39m
+[90m [2m❯[22m producerUpdateValueVersion ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:[2m72:4[22m[39m
+[90m [2m❯[22m Object.Input2.invalid.ngDevMode.debugName [as computation] src/app/shared/components/atoms/input/input.ts:[2m141:42[22m[39m
+[90m [2m❯[22m computation ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:[2m147:24[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/78]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m13 failed[39m[22m[2m | [22m[1m[32m776 passed[39m[22m[90m (789)[39m
+[2m      Tests [22m [1m[31m78 failed[39m[22m[2m | [22m[1m[32m10812 passed[39m[22m[90m (10890)[39m
+[2m   Start at [22m 15:54:07
+[2m   Duration [22m 326.28s[2m (transform 192.37s, setup 4.48s, import 32.20s, tests 283.29s, environment 609ms)[22m
+
+exit=1

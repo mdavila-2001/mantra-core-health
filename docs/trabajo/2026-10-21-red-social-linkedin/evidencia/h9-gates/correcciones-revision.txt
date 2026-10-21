@@ -1,0 +1,151 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                                                  | Names                                                                                             |  Raw size
+chunk-AQEBBA55.js                                                                                    | -                                                                                                 | 182.72 kB | 
+styles.css                                                                                           | styles                                                                                            | 180.89 kB | 
+chunk-DXWVTGVQ.js                                                                                    | -                                                                                                 | 140.92 kB | 
+spec-app-features-alovida-buscar-feed-publicaciones-feed-publicaciones.js                            | spec-app-features-alovida-buscar-feed-publicaciones-feed-publicaciones                            | 125.62 kB | 
+chunk-BVHFUIJG.js                                                                                    | -                                                                                                 | 123.24 kB | 
+spec-app-shared-components-organisms-public-nav-rail-public-nav-rail.js                              | spec-app-shared-components-organisms-public-nav-rail-public-nav-rail                              | 102.57 kB | 
+spec-app-features-social-network-network.js                                                          | spec-app-features-social-network-network                                                          |  74.14 kB | 
+chunk-GBDEKSCA.js                                                                                    | -                                                                                                 |  65.08 kB | 
+chunk-UVVRMCZ5.js                                                                                    | -                                                                                                 |  62.45 kB | 
+chunk-WTD5PDND.js                                                                                    | -                                                                                                 |  53.03 kB | 
+chunk-A6J7AOUQ.js                                                                                    | -                                                                                                 |  48.08 kB | 
+chunk-OLJ76PMI.js                                                                                    | -                                                                                                 |  45.13 kB | 
+chunk-J2COREZ3.js                                                                                    | -                                                                                                 |  40.15 kB | 
+chunk-2S3YZSGD.js                                                                                    | -                                                                                                 |  37.26 kB | 
+spec-app-features-social-saved-saved.js                                                              | spec-app-features-social-saved-saved                                                              |  31.85 kB | 
+chunk-G4HRSFFO.js                                                                                    | -                                                                                                 |  31.77 kB | 
+chunk-JDJK5HM3.js                                                                                    | -                                                                                                 |  30.21 kB | 
+chunk-SDXM2C3V.js                                                                                    | -                                                                                                 |  29.72 kB | 
+chunk-3VB3V3HN.js                                                                                    | -                                                                                                 |  27.85 kB | 
+chunk-5UKKGVLR.js                                                                                    | -                                                                                                 |  26.54 kB | 
+chunk-7UMBT2TH.js                                                                                    | -                                                                                                 |  25.89 kB | 
+spec-app-features-public-profile-public-post-card-public-post-card.js                                | spec-app-features-public-profile-public-post-card-public-post-card                                |  25.04 kB | 
+chunk-EIQK7HJP.js                                                                                    | -                                                                                                 |  21.95 kB | 
+chunk-47CON2UU.js                                                                                    | -                                                                                                 |  20.67 kB | 
+chunk-ML6ZMIZ6.js                                                                                    | -                                                                                                 |  20.18 kB | 
+chunk-Q7D4AIFG.js                                                                                    | -                                                                                                 |  19.40 kB | 
+spec-app-features-public-profile-public-post-comments-public-post-comments.js                        | spec-app-features-public-profile-public-post-comments-public-post-comments                        |  19.15 kB | 
+chunk-BAGQOEWD.js                                                                                    | -                                                                                                 |  18.51 kB | 
+chunk-TOI3C6ND.js                                                                                    | -                                                                                                 |  18.42 kB | 
+spec-app-features-public-profile-public-profile.js                                                   | spec-app-features-public-profile-public-profile                                                   |  17.92 kB | 
+chunk-HABAFPII.js                                                                                    | -                                                                                                 |  16.75 kB | 
+chunk-UDAZI7YJ.js                                                                                    | -                                                                                                 |  16.62 kB | 
+chunk-A4KPIMEH.js                                                                                    | -                                                                                                 |  14.48 kB | 
+chunk-QHSKV4DE.js                                                                                    | -                                                                                                 |  14.11 kB | 
+chunk-3CNQV3DR.js                                                                                    | -                                                                                                 |  13.27 kB | 
+chunk-JPULAXCE.js                                                                                    | -                                                                                                 |  12.31 kB | 
+chunk-F4G2FSFO.js                                                                                    | -                                                                                                 |  11.85 kB | 
+chunk-5F5RMMPP.js                                                                                    | -                                                                                                 |  11.84 kB | 
+chunk-3NEAN4DS.js                                                                                    | -                                                                                                 |  11.09 kB | 
+chunk-VCZDDXUW.js                                                                                    | -                                                                                                 |  11.06 kB | 
+spec-app-features-social-composer-composer.js                                                        | spec-app-features-social-composer-composer                                                        |  10.87 kB | 
+spec-app-features-public-profile-public-profile-card-public-profile-card.js                          | spec-app-features-public-profile-public-profile-card-public-profile-card                          |  10.66 kB | 
+spec-app-core-notifications-notifications.store.js                                                   | spec-app-core-notifications-notifications.store                                                   |  10.63 kB | 
+spec-app-shared-components-molecules-reaction-button-reaction-button.js                              | spec-app-shared-components-molecules-reaction-button-reaction-button                              |  10.58 kB | 
+chunk-XJJWULEY.js                                                                                    | -                                                                                                 |  10.29 kB | 
+chunk-KQOF3XQO.js                                                                                    | -                                                                                                 |  10.07 kB | 
+spec-app-features-social-follow-button-follow-button.js                                              | spec-app-features-social-follow-button-follow-button                                              |   9.97 kB | 
+spec-app-features-public-profile-public-post-reactions-public-post-reactions.js                      | spec-app-features-public-profile-public-post-reactions-public-post-reactions                      |   9.73 kB | 
+chunk-KZUF6UJP.js                                                                                    | -                                                                                                 |   8.10 kB | 
+spec-app-core-social-follow.store.js                                                                 | spec-app-core-social-follow.store                                                                 |   7.89 kB | 
+spec-app-features-public-profile-public-profile-card-public-profile-card.tabs.js                     | spec-app-features-public-profile-public-profile-card-public-profile-card.tabs                     |   7.74 kB | 
+chunk-RGQ6NSWG.js                                                                                    | -                                                                                                 |   6.99 kB | 
+spec-app-features-social-enlaces-sociales.guard.js                                                   | spec-app-features-social-enlaces-sociales.guard                                                   |   6.98 kB | 
+chunk-NPNZALN7.js                                                                                    | -                                                                                                 |   6.81 kB | 
+spec-app-features-public-profile-comment-composer-comment-composer.js                                | spec-app-features-public-profile-comment-composer-comment-composer                                |   6.67 kB | 
+spec-app-features-public-profile-public-profile-reviews-public-profile-reviews.js                    | spec-app-features-public-profile-public-profile-reviews-public-profile-reviews                    |   6.63 kB | 
+spec-app-features-social-composer-dialog-composer-dialog.js                                          | spec-app-features-social-composer-dialog-composer-dialog                                          |   6.57 kB | 
+spec-app-features-alovida-buscar-feed-publicaciones-feed-crear-publicacion-feed-crear-publicacion.js | spec-app-features-alovida-buscar-feed-publicaciones-feed-crear-publicacion-feed-crear-publicacion |   6.33 kB | 
+spec-app-core-social-post-actor-state.store.js                                                       | spec-app-core-social-post-actor-state.store                                                       |   6.12 kB | 
+spec-app-features-public-profile-rate-encounter-dialog-rate-encounter-dialog.js                      | spec-app-features-public-profile-rate-encounter-dialog-rate-encounter-dialog                      |   5.98 kB | 
+chunk-KRTELMGJ.js                                                                                    | -                                                                                                 |   5.96 kB | 
+spec-app-core-social-profile-summary.store.js                                                        | spec-app-core-social-profile-summary.store                                                        |   5.67 kB | 
+chunk-HZXEPMDQ.js                                                                                    | -                                                                                                 |   5.27 kB | 
+spec-app-features-alovida-buscar-feed-publicaciones-feed-publicaciones.vista.js                      | spec-app-features-alovida-buscar-feed-publicaciones-feed-publicaciones.vista                      |   4.74 kB | 
+spec-app-core-notifications-notification-actions.js                                                  | spec-app-core-notifications-notification-actions                                                  |   4.74 kB | 
+chunk-6WBQSLFF.js                                                                                    | -                                                                                                 |   4.65 kB | 
+chunk-CU3P6UGW.js                                                                                    | -                                                                                                 |   4.15 kB | 
+spec-app-core-social-bookmark.store.js                                                               | spec-app-core-social-bookmark.store                                                               |   3.94 kB | 
+spec-app-features-social-report-post-report-post.js                                                  | spec-app-features-social-report-post-report-post                                                  |   3.86 kB | 
+chunk-D5Q6C54F.js                                                                                    | -                                                                                                 |   3.40 kB | 
+spec-app-features-public-profile-public-profile.resolver.js                                          | spec-app-features-public-profile-public-profile.resolver                                          |   2.99 kB | 
+chunk-65SS45CY.js                                                                                    | -                                                                                                 |   2.98 kB | 
+spec-app-core-social-own-profile.store.js                                                            | spec-app-core-social-own-profile.store                                                            |   2.46 kB | 
+chunk-UEA7KLBS.js                                                                                    | -                                                                                                 |   2.36 kB | 
+spec-app-features-alovida-buscar-feed-publicaciones-feed-tendencias-feed-tendencias.js               | spec-app-features-alovida-buscar-feed-publicaciones-feed-tendencias-feed-tendencias               |   2.30 kB | 
+spec-app-features-public-profile-public-profile-pager-public-profile-pager.js                        | spec-app-features-public-profile-public-profile-pager-public-profile-pager                        |   2.22 kB | 
+chunk-GDH4RNSR.js                                                                                    | -                                                                                                 |   2.21 kB | 
+chunk-ZJVBUBDB.js                                                                                    | -                                                                                                 |   2.15 kB | 
+chunk-CNDKNX2D.js                                                                                    | -                                                                                                 |   1.82 kB | 
+spec-app-core-social-cola-acotada.js                                                                 | spec-app-core-social-cola-acotada                                                                 |   1.77 kB | 
+spec-app-core-notifications-notification-routes.js                                                   | spec-app-core-notifications-notification-routes                                                   |   1.73 kB | 
+init-testbed.js                                                                                      | init-testbed                                                                                      |   1.21 kB | 
+chunk-NEPBROPX.js                                                                                    | -                                                                                                 |   1.17 kB | 
+chunk-OVC5PIJV.js                                                                                    | -                                                                                                 | 995 bytes | 
+setup-test-setup.js                                                                                  | setup-test-setup                                                                                  | 984 bytes | 
+vitest-mock-patch.js                                                                                 | vitest-mock-patch                                                                                 | 974 bytes | 
+chunk-IBTU3FWD.js                                                                                    | -                                                                                                 | 966 bytes | 
+chunk-N3H3YT6Z.js                                                                                    | -                                                                                                 | 755 bytes | 
+chunk-DLPBMKRA.js                                                                                    | -                                                                                                 | 369 bytes | 
+chunk-PAFNS223.js                                                                                    | -                                                                                                 | 282 bytes | 
+
+                                                                                                     | Initial total                                                                                     |   2.04 MB
+
+Application bundle generation complete. [99.466 seconds] - 2026-10-21T16:08:52.334Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m33 passed[39m[22m[90m (33)[39m
+[2m      Tests [22m [1m[32m411 passed[39m[22m[90m (411)[39m
+[2m   Start at [22m 16:08:52
+[2m   Duration [22m 11.15s[2m (transform 2.14s, setup 585ms, import 2.60s, tests 6.95s, environment 683ms)[22m
+
+exit=0

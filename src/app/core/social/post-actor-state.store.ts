@@ -105,10 +105,13 @@ export class PostActorStateStore {
    */
   cargar(postIds: readonly string[], actorProfileId: string): void {
     const actor = actorProfileId;
-    if (actor !== this.actor) {
+    // Sólo se vacía si ya había **otro** actor: la primera vez no hay nada de
+    // nadie más que proteger, y vaciar aquí borraba lo que la tarjeta acababa
+    // de sembrar con `fijar`.
+    if (this.actor !== null && actor !== this.actor) {
       this.olvidar();
-      this.actor = actor;
     }
+    this.actor = actor;
     const esta = this.generacion;
 
     for (const id of postIds) {
