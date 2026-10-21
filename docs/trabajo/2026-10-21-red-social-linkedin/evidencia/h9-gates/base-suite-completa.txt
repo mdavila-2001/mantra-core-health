@@ -1892,3 +1892,11 @@ Not implemented: navigation to another Document
 Not implemented: navigation to another Document
 Not implemented: navigation to another Document
 Not implemented: navigation to another Document
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/handlers/lab-orden-entrante.spec.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 13[2mms[22m[39m
+[31m     [31m×[31m llega unos segundos después de abrir la recepción, una sola vez, con quién la pidió[39m[32m 4[2mms[22m[39m
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/design-system-sample/design-system-sample.spec.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 2483[2mms[22m[39m
+[31m     [31m×[31m el selector de tema sigue expuesto: es la única UI del ThemeService[39m[33m 363[2mms[22m[39m
