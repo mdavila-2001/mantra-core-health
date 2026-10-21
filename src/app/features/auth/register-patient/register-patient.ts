@@ -61,7 +61,6 @@ import {
   MESSAGE_SHORT_PASSWORD,
   passwordValidators,
 } from '../shared-registration/password-policy';
-import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
@@ -275,6 +274,51 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * dos mitades no se pueden separar de un descuido.
  */
 const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
+  identity: [
+    {
+      icono: 'patients',
+      titulo: 'Con su documento va a entrar',
+      texto:
+        'Es su usuario: no tiene que inventar ni recordar otro. Lo pedimos primero para avisarle enseguida si ya tenía cuenta.',
+    },
+    {
+      icono: 'people',
+      titulo: 'Su nombre, como figura en su documento',
+      texto:
+        'Es lo que evita que su historia clínica se mezcle con la de alguien que se llama parecido. Si no lleva segundo nombre o apellido materno, déjelos vacíos.',
+    },
+    {
+      icono: 'stethoscope',
+      titulo: 'Cambia cómo le atienden',
+      texto:
+        'La edad y el sexo deciden dosis, valores de referencia de laboratorio y qué controles le corresponden por edad.',
+    },
+    {
+      icono: 'briefcase',
+      titulo: 'Su oficio también es un dato clínico',
+      texto:
+        'Cada trabajo trae sus riesgos —químicos, esfuerzo, turnos de noche— y su médico los tiene en cuenta.',
+    },
+  ],
+  misc: [
+    {
+      icono: 'lock',
+      titulo: 'Su contraseña, sólo suya',
+      texto:
+        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
+    },
+    {
+      icono: 'umbrella',
+      titulo: 'Para que no pague lo que ya está cubierto',
+      texto:
+        'Con su seguro declarado, la cobertura se aplica cuando reserva o compra, sin que tenga que reclamarla después.',
+    },
+    {
+      icono: 'billing',
+      titulo: 'El NIT es sólo para sus facturas',
+      texto: 'Lo usamos cuando hay que emitir una. Si no lo tiene a mano, déjelo vacío.',
+    },
+  ],
   document: [
     {
       icono: 'patients',
@@ -1175,360 +1219,295 @@ export class RegisterPatient {
    * la función la que hace cumplir el tope, y declararlo a mano sería confiar en
    * que quien agregue el campo trece se acuerde de contar.
    */
-  readonly paginasPaciente = computed<readonly PaginaDeFormulario[]>(() =>
-    paginateFields([
-      {
-        titulo: '¿Cómo se llama?',
-        clave: 'name',
-        icon: 'people',
-        hint: 'Como figura en su documento. Si no tiene alguno, déjelo vacío.',
-        // Nombres y apellidos van juntos en una página, como pide el registro
-        // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
-        // `key` de `name`, para que el motor siga validando el obligatorio y
-        // sepa a qué página volver al enviar— porque son cuatro casillas y el
-        // tope del motor es de cuatro campos por página.
-        campos: [
-          {
-            key: 'name',
-            label: '',
-            control: 'custom',
-            mensajeDeError: 'Ingrese su nombre.',
-          },
-          {
-            key: 'lastName',
-            label: 'Apellido paterno',
-            description: 'El apellido de su papá, como figura en su documento.',
-            control: 'text',
-            required: true,
-            autocomplete: 'family-name',
-            placeholder: 'Mamani',
-            testId: 'registro-apellido-paterno',
-            icono: 'people',
-            ancho: 'mitad',
-            mensajeDeError: 'Ingrese su apellido paterno.',
-          },
-          {
-            key: 'motherLastName',
-            label: 'Apellido materno',
-            hint: 'Si no lleva, déjelo vacío.',
-            description: 'El apellido de su mamá, tal como aparece en su documento.',
-            control: 'text',
-            autocomplete: 'family-name',
-            placeholder: 'Quispe',
-            testId: 'registro-apellido-materno',
-            icono: 'people',
-            ancho: 'mitad',
-          },
-        ],
-      },
-      {
-        titulo: 'Su documento de identidad',
-        clave: 'document',
-        icon: 'patients',
-        hint: 'Con este número va a iniciar sesión.',
-        campos: [
-          {
-            key: 'nationalId',
-            label: 'Documento de identidad',
-            hint: 'Con este número va a iniciar sesión.',
-            description:
-              'El número de su cédula, sin el complemento: el departamento que la emitió va en la casilla de al lado.',
-            control: 'text',
-            required: true,
-            // Es el identificador con el que va a entrar: `username`.
-            autocomplete: 'username',
-            placeholder: '1234567',
-            testId: 'registro-documento',
-            icono: 'patients',
-            // Medio renglón: el número y su expedición son UN documento
-            // escrito en dos casillas. Ver `campoDepartamentoEmisor`.
-            ancho: 'mitad',
-            mensajeDeError: 'Ingrese su documento: letras, números, punto y guion.',
-          },
-          // Pegado al documento porque es un dato DE ese documento: la
-          // terminación «SC», «LP»… que distingue dos cédulas homónimas. Y en
-          // la MISMA LÍNEA, no debajo: separados en dos renglones se leían como
-          // dos preguntas distintas, y la segunda se contestaba mal o no se
-          // contestaba.
-          this.campoDepartamentoEmisor('registro-departamento-ci'),
-        ],
-      },
-      {
-        titulo: 'Cuéntenos un poco sobre usted',
-        clave: 'profile',
-        icon: 'stethoscope',
-        hint: 'La fecha y el sexo deciden dosis, valores de laboratorio y controles por edad.',
-        campos: [
-          {
-            key: 'birthDate',
-            label: 'Fecha de nacimiento',
-            // La edad sale sola de la fecha —el registro del cliente la pide
-            // así (módulo Paciente §1.5)— y se dice acá mismo, debajo del
-            // campo: es la forma de que quien la escribió vea si se equivocó de
-            // año antes de seguir.
-            hint: this.edadEnPalabras() ?? 'Sirve para calcular dosis y valores de referencia.',
-            description:
-              'Con ella calculamos su edad, y con la edad las dosis, los valores de referencia del laboratorio y qué controles le tocan.',
-            control: 'date',
-            required: true,
-            maxDate: 'today',
-            minDate: new Date(1900, 0, 1),
-            mensajeDeError: 'Ingrese su fecha de nacimiento.',
-          },
-          {
-            key: 'sexAtBirth',
-            label: 'Sexo',
-            hint: 'Dato clínico: cambia las dosis, los valores de referencia y los tamizajes.',
-            description:
-              'Es el sexo que registra su documento de identidad. Lo usamos como dato clínico, no para dirigirnos a usted.',
-            control: 'select',
-            required: true,
-            options: OPCIONES_SEXO,
-            placeholder: 'Elija una opción',
-            testId: 'registro-genero',
-            icono: 'heart',
-            mensajeDeError: 'Elija una opción.',
-          },
-          this.campoOcupacion(),
-          ...this.campoOtraOcupacion(),
-        ],
-      },
-      {
-        titulo: '¿Dónde vive?',
-        clave: 'residence',
-        icon: 'home',
-        hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
-        campos: [
-          {
-            // El mapa de departamentos y el select de ciudad son UN campo: son
-            // un solo dato —la localidad— con dos formas de llegar a él. El
-            // rótulo va vacío porque el propio `app-location-picker` rotula sus
-            // dos partes; con rótulo acá habría dos nombres para lo mismo.
-            key: 'residenceMunicipalityConceptId',
-            label: '',
-            control: 'custom',
-            required: true,
-            mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
-          },
-          {
-            key: 'homeAddressLines',
-            label: 'Línea de dirección 1 (opcional)',
-            hint: 'Como la escribiría en un sobre.',
-            description:
-              'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
-            control: 'text',
-            autocomplete: 'street-address',
-            placeholder: 'Av. Banzer, 3er anillo #42',
-            testId: 'registro-domicilio-calle',
-            icono: 'route',
-          },
-          {
-            key: 'gpsDomicilio',
-            label: 'Ubicación GPS (opcional)',
-            hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
-            description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
-            control: 'custom',
-          },
-        ],
-      },
-      {
-        titulo: '¿Cómo le contactamos?',
-        clave: 'contact',
-        icon: 'phone',
-        hint: 'Su celular, y a quién avisamos si hace falta.',
-        campos: [
-          {
-            key: 'phone',
-            label: 'Su celular',
-            hint: 'Elija el país si su número no es de Bolivia.',
-            description:
-              'Es por donde le avisamos de una cita o de un resultado. No se muestra a nadie más.',
-            // `tel` lo dibuja `app-phone-input`: ver el motor.
-            control: 'tel',
-            required: true,
-            autocomplete: 'tel',
-            testId: 'registro-telefono',
-            mensajeDeError: 'Ingrese un número completo para el país elegido.',
-          },
-          {
-            key: 'guardianName',
-            label: 'Contacto de emergencia (opcional)',
-            hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
-            description: 'A quién llamamos si le pasa algo y no puede responder usted.',
-            control: 'text',
-            placeholder: 'Rosa Quispe',
-            testId: 'registro-tutor-nombre',
-            icono: 'people',
-            ancho: 'mitad',
-          },
-          {
-            key: 'guardianPhone',
-            label: 'Su teléfono (opcional)',
-            hint: 'Elija el país si el número no es de Bolivia.',
-            description: 'El número al que llamamos a esa persona. Sin su nombre no se guarda.',
-            control: 'tel',
-            testId: 'registro-tutor-telefono',
-            ancho: 'mitad',
-            mensajeDeError: 'Para guardar el teléfono, cuéntenos también su nombre.',
-          },
-          // La «Relación» que el orden pide junto al contacto de emergencia
-          // (AC-03-11). Va la cuarta y última de la página: el tope del motor
-          // son cuatro campos, así que agregar un quinto acá partiría la
-          // pregunta del contacto en dos páginas.
-          this.campoRelacionDelContacto(),
-        ],
-      },
-      {
-        titulo: 'Su ambulancia de confianza',
-        clave: 'ambulance',
-        icon: 'phone',
-        hint: 'Opcional. Ambulancias disponibles según su ubicación o escriba la de su seguro o clínica.',
-        campos: [
-          {
-            key: 'trustedAmbulanceService',
-            label: 'Servicio de ambulancia',
-            hint: 'Al elegir uno, se completan nombre y teléfono. Puede editarlos.',
-            description: 'El directorio muestra el alcance y la fuente de cada línea.',
-            control: 'custom',
-            icono: 'hospital',
-          },
-          {
-            key: 'trustedAmbulanceName',
-            label: 'Nombre de la ambulancia (opcional)',
-            hint: 'Puede editarlo o escribir la ambulancia de su seguro o clínica.',
-            description: 'Se guarda sólo en este dispositivo.',
-            control: 'text',
-            placeholder: 'Ambulancias de mi seguro',
-            testId: 'registro-ambulancia-nombre',
-            icono: 'heart',
-            ancho: 'mitad',
-          },
-          {
-            key: 'trustedAmbulancePhone',
-            label: 'Teléfono de la ambulancia (opcional)',
-            hint: 'Elija el país si el número no es de Bolivia.',
-            description: 'Con este número, el botón de emergencia llama sin mostrar la lista de números.',
-            control: 'tel',
-            testId: 'registro-ambulancia-telefono',
-            ancho: 'mitad',
-            mensajeDeError: 'Ingrese el número completo para el país elegido.',
-          },
-        ],
-      },
-      {
-        titulo: '¿Dónde trabaja?',
-        clave: 'work',
-        icon: 'briefcase',
-        hint: 'Opcional. Con el nombre de la empresa alcanza.',
-        campos: [this.campoEmpresa(), ...this.campoOtraEmpresa()],
-      },
-      {
-        titulo: 'El lugar donde trabaja',
-        clave: 'work-location',
-        icon: 'building',
-        hint: 'Opcional, y va aparte de la empresa: son dos preguntas distintas.',
-        campos: [
-          {
-            key: 'workMunicipalityConceptId',
-            label: '',
-            control: 'custom',
-          },
-          {
-            key: 'workAddressLines',
-            label: 'Línea de dirección 1 (opcional)',
-            hint: 'Calle y número de su trabajo.',
-            description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
-            control: 'text',
-            placeholder: 'Calle Libertad #120',
-            testId: 'registration-work-address',
-            icono: 'route',
-          },
-          {
-            key: 'gpsTrabajo',
-            label: 'Ubicación GPS (opcional)',
-            hint: 'El punto exacto de su lugar de trabajo.',
-            description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
-            control: 'custom',
-          },
-        ],
-      },
-      {
-        titulo: 'Su acceso',
-        clave: 'access',
-        icon: 'lock',
-        hint: 'Entra con su documento; el correo es por donde recupera la cuenta.',
-        campos: [
-          {
-            key: 'email',
-            label: 'Correo electrónico',
-            hint: 'Por acá recupera su cuenta y le avisamos de sus turnos.',
-            description:
-              'No es con lo que entra —eso es su documento—, pero sin él no hay forma de devolverle el acceso si pierde la contraseña.',
-            // `email` y no `username`: acá el correo NO es con lo que entra.
-            control: 'email',
-            required: true,
-            autocomplete: 'email',
-            placeholder: 'correo@ejemplo.com',
-            testId: 'registro-correo',
-            icono: 'mail',
-            mensajeDeError: 'Ingrese un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            description:
-              'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
-            control: 'password',
-            required: true,
-            autocomplete: 'new-password',
-            placeholder: 'Su contraseña',
-            testId: 'registro-password',
-            icono: 'lock',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
-          },
-        ],
-      },
-      {
-        titulo: 'Su seguro de salud',
-        clave: 'insurance',
-        icon: 'umbrella',
-        hint: 'Opcional. Si tiene los dos, puede declararlos.',
-        campos: [this.campoSeguro('privado'), this.campoSeguro('publico')],
-      },
-      {
-        titulo: 'Datos de facturación',
-        clave: 'billing',
-        icon: 'billing',
-        hint: 'Opcional. Sólo para las facturas que recibe.',
-        campos: [
-          {
-            key: 'billingTaxId',
-            label: 'NIT (opcional)',
-            hint: 'Sólo el número.',
-            description:
-              'Lo usamos cuando hay que emitir una factura. Si no lo tiene a mano, déjelo vacío.',
-            control: 'text',
-            placeholder: '1023456789',
-            testId: 'registro-nit',
-            icono: 'billing',
-            mensajeDeError: 'El NIT es sólo números.',
-          },
-          {
-            key: 'billingLegalName',
-            label: 'Nombre o Razón Social (opcional)',
-            hint: 'A nombre de quién se emite la factura.',
-            description:
-              'Si declara NIT, ingrese el nombre o razón social correspondiente.',
-            control: 'text',
-            placeholder: 'Carlos Roca Aguilera',
-            testId: 'registro-razon-social',
-            icono: 'billing',
-          },
-        ],
-      },
-    ]),
-  );
+  readonly paginasPaciente = computed<readonly PaginaDeFormulario[]>(() => [
+    {
+      titulo: 'Identidad y ocupación',
+      clave: 'identity',
+      icon: 'patients',
+      hint: 'Como figura en su documento. Si no tiene algún dato opcional, déjelo vacío.',
+      campos: [
+        {
+          key: 'name',
+          label: '',
+          control: 'custom',
+          mensajeDeError: 'Ingrese su nombre.',
+        },
+        {
+          key: 'lastName',
+          label: 'Apellido paterno',
+          description: 'El apellido de su papá, como figura en su documento.',
+          control: 'text',
+          required: true,
+          autocomplete: 'family-name',
+          placeholder: 'Mamani',
+          testId: 'registro-apellido-paterno',
+          icono: 'people',
+          ancho: 'mitad',
+          mensajeDeError: 'Ingrese su apellido paterno.',
+        },
+        {
+          key: 'motherLastName',
+          label: 'Apellido materno',
+          hint: 'Si no lleva, déjelo vacío.',
+          description: 'El apellido de su mamá, tal como aparece en su documento.',
+          control: 'text',
+          autocomplete: 'family-name',
+          placeholder: 'Quispe',
+          testId: 'registro-apellido-materno',
+          icono: 'people',
+          ancho: 'mitad',
+        },
+        {
+          key: 'nationalId',
+          label: 'Documento de identidad',
+          hint: 'Con este número va a iniciar sesión.',
+          description:
+            'El número de su cédula, sin el complemento: el departamento que la emitió va en la casilla de al lado.',
+          control: 'text',
+          required: true,
+          autocomplete: 'username',
+          placeholder: '1234567',
+          testId: 'registro-documento',
+          icono: 'patients',
+          ancho: 'mitad',
+          mensajeDeError: 'Ingrese su documento: letras, números, punto y guion.',
+        },
+        this.campoDepartamentoEmisor('registro-departamento-ci'),
+        {
+          key: 'birthDate',
+          label: 'Fecha de nacimiento',
+          hint: this.edadEnPalabras() ?? 'Sirve para calcular dosis y valores de referencia.',
+          description:
+            'Con ella calculamos su edad, y con la edad las dosis, los valores de referencia del laboratorio y qué controles le tocan.',
+          control: 'date',
+          required: true,
+          maxDate: 'today',
+          minDate: new Date(1900, 0, 1),
+          mensajeDeError: 'Ingrese su fecha de nacimiento.',
+          ancho: 'mitad',
+        },
+        {
+          key: 'sexAtBirth',
+          label: 'Sexo',
+          hint: 'Dato clínico: cambia las dosis, los valores de referencia y los tamizajes.',
+          description:
+            'Es el sexo que registra su documento de identidad. Lo usamos como dato clínico, no para dirigirnos a usted.',
+          control: 'select',
+          required: true,
+          options: OPCIONES_SEXO,
+          placeholder: 'Elija una opción',
+          testId: 'registro-genero',
+          icono: 'heart',
+          ancho: 'mitad',
+          mensajeDeError: 'Elija una opción.',
+        },
+        this.campoOcupacion(),
+        ...this.campoOtraOcupacion(),
+      ],
+    },
+    {
+      titulo: 'Lugares donde vive',
+      clave: 'residence',
+      icon: 'home',
+      hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+      campos: [
+        {
+          key: 'residenceMunicipalityConceptId',
+          label: '',
+          control: 'custom',
+          required: true,
+          mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
+        },
+        {
+          key: 'homeAddressLines',
+          label: 'Línea de dirección 1 (opcional)',
+          hint: 'Como la escribiría en un sobre.',
+          description:
+            'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
+          control: 'text',
+          autocomplete: 'street-address',
+          placeholder: 'Av. Banzer, 3er anillo #42',
+          testId: 'registro-domicilio-calle',
+          icono: 'route',
+        },
+        {
+          key: 'gpsDomicilio',
+          label: 'Ubicación GPS (opcional)',
+          hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
+          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
+          control: 'custom',
+        },
+      ],
+    },
+    {
+      titulo: 'Datos de contacto y emergencia',
+      clave: 'contact',
+      icon: 'phone',
+      hint: 'Su celular, a quién avisamos si hace falta y su ambulancia de confianza.',
+      campos: [
+        {
+          key: 'phone',
+          label: 'Su celular',
+          hint: 'Elija el país si su número no es de Bolivia.',
+          description:
+            'Es por donde le avisamos de una cita o de un resultado. No se muestra a nadie más.',
+          control: 'tel',
+          required: true,
+          autocomplete: 'tel',
+          testId: 'registro-telefono',
+          mensajeDeError: 'Ingrese un número completo para el país elegido.',
+        },
+        {
+          key: 'guardianName',
+          label: 'Contacto de emergencia (opcional)',
+          hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
+          description: 'A quién llamamos si le pasa algo y no puede responder usted.',
+          control: 'text',
+          placeholder: 'Rosa Quispe',
+          testId: 'registro-tutor-nombre',
+          icono: 'people',
+          ancho: 'mitad',
+        },
+        {
+          key: 'guardianPhone',
+          label: 'Su teléfono (opcional)',
+          hint: 'Elija el país si el número no es de Bolivia.',
+          description: 'El número al que llamamos a esa persona. Sin su nombre no se guarda.',
+          control: 'tel',
+          testId: 'registro-tutor-telefono',
+          ancho: 'mitad',
+          mensajeDeError: 'Para guardar el teléfono, cuéntenos también su nombre.',
+        },
+        this.campoRelacionDelContacto(),
+        {
+          key: 'trustedAmbulanceService',
+          label: 'Servicio de ambulancia',
+          hint: 'Al elegir uno, se completan nombre y teléfono. Puede editarlos.',
+          description: 'El directorio muestra el alcance y la fuente de cada línea.',
+          control: 'custom',
+          icono: 'hospital',
+        },
+        {
+          key: 'trustedAmbulanceName',
+          label: 'Nombre de la ambulancia (opcional)',
+          hint: 'Puede editarlo o escribir la ambulancia de su seguro o clínica.',
+          description: 'Se guarda sólo en este dispositivo.',
+          control: 'text',
+          placeholder: 'Ambulancias de mi seguro',
+          testId: 'registro-ambulancia-nombre',
+          icono: 'heart',
+          ancho: 'mitad',
+        },
+        {
+          key: 'trustedAmbulancePhone',
+          label: 'Teléfono de la ambulancia (opcional)',
+          hint: 'Elija el país si el número no es de Bolivia.',
+          description: 'Con este número, el botón de emergencia llama sin mostrar la lista de números.',
+          control: 'tel',
+          testId: 'registro-ambulancia-telefono',
+          ancho: 'mitad',
+          mensajeDeError: 'Ingrese el número completo para el país elegido.',
+        },
+      ],
+    },
+    {
+      titulo: 'Empresa y lugar de trabajo',
+      clave: 'work',
+      icon: 'briefcase',
+      hint: 'Opcional. Con el nombre de la empresa o su lugar de trabajo alcanza.',
+      campos: [
+        this.campoEmpresa(),
+        ...this.campoOtraEmpresa(),
+        {
+          key: 'workMunicipalityConceptId',
+          label: '',
+          control: 'custom',
+        },
+        {
+          key: 'workAddressLines',
+          label: 'Línea de dirección 1 (opcional)',
+          hint: 'Calle y número de su trabajo.',
+          description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
+          control: 'text',
+          placeholder: 'Calle Libertad #120',
+          testId: 'registration-work-address',
+          icono: 'route',
+        },
+        {
+          key: 'gpsTrabajo',
+          label: 'Ubicación GPS (opcional)',
+          hint: 'El punto exacto de su lugar de trabajo.',
+          description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
+          control: 'custom',
+        },
+      ],
+    },
+    {
+      titulo: 'Resto de datos (acceso, seguros y facturación)',
+      clave: 'misc',
+      icon: 'lock',
+      hint: 'Su contraseña de acceso, seguros de salud y datos para facturación.',
+      campos: [
+        {
+          key: 'email',
+          label: 'Correo electrónico',
+          hint: 'Por acá recupera su cuenta y le avisamos de sus turnos.',
+          description:
+            'No es con lo que entra —eso es su documento—, pero sin él no hay forma de devolverle el acceso si pierde la contraseña.',
+          control: 'email',
+          required: true,
+          autocomplete: 'email',
+          placeholder: 'correo@ejemplo.com',
+          testId: 'registro-correo',
+          icono: 'mail',
+          mensajeDeError: 'Ingrese un correo válido.',
+          ancho: 'mitad',
+        },
+        {
+          key: 'password',
+          label: 'Contraseña',
+          hint: 'Al menos 8 caracteres.',
+          description:
+            'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
+          control: 'password',
+          required: true,
+          autocomplete: 'new-password',
+          placeholder: 'Su contraseña',
+          testId: 'registro-password',
+          icono: 'lock',
+          mensajeDeError: MESSAGE_SHORT_PASSWORD,
+          ancho: 'mitad',
+        },
+        this.campoSeguro('privado'),
+        this.campoSeguro('publico'),
+        {
+          key: 'billingTaxId',
+          label: 'NIT (opcional)',
+          hint: 'Sólo el número.',
+          description:
+            'Lo usamos cuando hay que emitir una factura. Si no lo tiene a mano, déjelo vacío.',
+          control: 'text',
+          placeholder: '1023456789',
+          testId: 'registro-nit',
+          icono: 'billing',
+          ancho: 'mitad',
+          mensajeDeError: 'El NIT es sólo números.',
+        },
+        {
+          key: 'billingLegalName',
+          label: 'Nombre o Razón Social (opcional)',
+          hint: 'A nombre de quién se emite la factura.',
+          description:
+            'Si declara NIT, ingrese el nombre o razón social correspondiente.',
+          control: 'text',
+          placeholder: 'Carlos Roca Aguilera',
+          testId: 'registro-razon-social',
+          icono: 'billing',
+          ancho: 'mitad',
+        },
+      ],
+    },
+  ]);
 
   /**
    * El campo del departamento que emitió el documento.

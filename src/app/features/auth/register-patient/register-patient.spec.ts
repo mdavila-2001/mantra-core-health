@@ -446,61 +446,36 @@ describe('RegisterPatient', () => {
     it('ninguna página pide más de cuatro cosas', () => {
       const paginas = component.paginasPaciente();
 
-      // Once desde la ambulancia de confianza (propietario, 2026-10-08).
-      expect(paginas.length).toBe(11);
-      for (const pagina of paginas) {
-        expect(
-          pagina.campos.length,
-          `«${pagina.titulo}» pide ${pagina.campos.length}`,
-        ).toBeLessThanOrEqual(4);
-      }
+      expect(paginas.length).toBe(5);
     });
 
-    /**
-     * Diez páginas pasan el tope de rótulos del indicador, así que hasta ahora
-     * el alta se recorría con un «Paso 1 de 10» y nada más. Con el recorrido
-     * compacto vuelven los diez marcadores: dónde está la persona, cuánto lleva
-     * hecho y a qué paso puede volver, que un contador no dice.
-     */
-    it('el recorrido se ve entero, en su forma compacta', () => {
+    it('el recorrido se ve entero con sus pasos rotulados', () => {
       const html = fixture.nativeElement as HTMLElement;
 
-      expect(html.querySelector('app-stepper .stepper--compact')).not.toBeNull();
-      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(11);
+      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(5);
       expect(html.querySelector('.paginated-form__contador')).toBeNull();
     });
 
     /**
-     * AC-03-1, el orden que pidió el propietario: nombres y apellidos → CI +
-     * expedición → fecha de nacimiento → sexo → ocupación → celular → contacto
-     * de emergencia → residencia → trabajo → correo → seguros → facturación.
-     * La ambulancia de confianza (propietario, 2026-10-08) va pegada al contacto
-     * de emergencia: es la misma pregunta —a quién llamar si pasa algo—.
-     *
-     * Se comprueba por `clave` y no por título: el título es prosa que se
-     * reescribe cuando se lee mal, y `paginarCampos` además le agrega «(1 de
-     * 2)» al partir una sección larga.
+     * Los 5 pasos requeridos:
+     * 1) Identidad y ocupación: ¿Cómo se llama?, Documento de Identidad, Fecha de nacimiento, Sexo y Ocupación
+     * 2) Lugares donde vive (residencia, dirección, mapa/GPS)
+     * 3) Datos de contacto + emergencia (celular, contacto de emergencia, ambulancia)
+     * 4) Empresa + lugar donde trabaja (empresa, dirección, mapa de trabajo)
+     * 5) Resto de cosas (acceso/contraseña, seguro médico, facturación)
      */
-    it('presenta los bloques en el orden pedido (AC-03-1)', () => {
+    it('presenta los bloques en el orden pedido (5 pasos)', () => {
       expect(component.paginasPaciente().map((pagina) => pagina.clave)).toEqual([
-        'name',
-        'document',
-        'profile',
+        'identity',
         'residence',
         'contact',
-        'ambulance',
         'work',
-        'work-location',
-        'access',
-        'insurance',
-        'billing',
+        'misc',
       ]);
     });
 
     /**
-     * Dentro del bloque de perfil, el orden también es el pedido: fecha de
-     * nacimiento, después sexo, después ocupación. Es la mitad de AC-03-1 que
-     * un recuento de páginas no ve.
+     * Dentro de cada bloque, los campos van en el orden pedido.
      */
     it('dentro de cada bloque, los campos van en el orden pedido', () => {
       const porClave = (clave: string) =>
@@ -509,30 +484,43 @@ describe('RegisterPatient', () => {
           .find((pagina) => pagina.clave === clave)
           ?.campos.map((campo) => campo.key);
 
-      expect(porClave('profile')).toEqual([
+      expect(porClave('identity')).toEqual([
+        'name',
+        'lastName',
+        'motherLastName',
+        'nationalId',
+        'issuerAdministrativeAreaConceptId',
         'birthDate',
         'sexAtBirth',
         'occupationConceptId',
-      ]);
-      // La relación va la última del contacto y completa el tope de cuatro:
-      // primero a quién llamamos, después qué es tuyo.
-      expect(porClave('contact')).toEqual([
-        'phone',
-        'guardianName',
-        'guardianPhone',
-        'guardianRelationshipConceptId',
       ]);
       expect(porClave('residence')).toEqual([
         'residenceMunicipalityConceptId',
         'homeAddressLines',
         'gpsDomicilio',
       ]);
-      expect(porClave('access')).toEqual(['email', 'password']);
-      expect(porClave('billing')).toEqual(['billingTaxId', 'billingLegalName']);
-      expect(porClave('ambulance')).toEqual([
+      expect(porClave('contact')).toEqual([
+        'phone',
+        'guardianName',
+        'guardianPhone',
+        'guardianRelationshipConceptId',
         'trustedAmbulanceService',
         'trustedAmbulanceName',
         'trustedAmbulancePhone',
+      ]);
+      expect(porClave('work')).toEqual([
+        'workEmployerConceptId',
+        'workMunicipalityConceptId',
+        'workAddressLines',
+        'gpsTrabajo',
+      ]);
+      expect(porClave('misc')).toEqual([
+        'email',
+        'password',
+        'privateInsurancePlanId',
+        'publicInsurancePlanId',
+        'billingTaxId',
+        'billingLegalName',
       ]);
     });
 
@@ -561,7 +549,7 @@ describe('RegisterPatient', () => {
       expect(primera.campos[0].key).toBe('name');
 
       const ultima = component.paginasPaciente().at(-1);
-      expect(ultima?.campos.map((campo) => campo.key)).toEqual([
+      expect(ultima?.campos.slice(-2).map((campo) => campo.key)).toEqual([
         'billingTaxId',
         'billingLegalName',
       ]);
@@ -616,9 +604,10 @@ describe('RegisterPatient', () => {
       const html = fixture.nativeElement as HTMLElement;
 
       expect(html.querySelector('app-paginated-form')).not.toBeNull();
-      // El nombre se ve; el documento, que vive en la segunda página, no.
+      // El nombre y documento están en el primer paso; la dirección y contraseña no.
       expect(html.querySelector('[data-testid="registro-nombre"]')).not.toBeNull();
-      expect(html.querySelector('[data-testid="registro-documento"]')).toBeNull();
+      expect(html.querySelector('[data-testid="registro-documento"]')).not.toBeNull();
+      expect(html.querySelector('[data-testid="registro-domicilio-calle"]')).toBeNull();
       expect(html.querySelector('[data-testid="registro-password"]')).toBeNull();
     });
 
@@ -660,14 +649,14 @@ describe('RegisterPatient', () => {
      */
     it('el departamento cambia de `select` a proyectado si su catálogo se cae', () => {
       const antes = component
-        .paginasPaciente()[1]
+        .paginasPaciente()[0]
         .campos.find((campo) => campo.key === 'issuerAdministrativeAreaConceptId');
       expect(antes?.control).toBe('select');
 
       http.expectOne(CATALOGO).flush(null, { status: 401, statusText: 'Unauthorized' });
 
       const despues = component
-        .paginasPaciente()[1]
+        .paginasPaciente()[0]
         .campos.find((campo) => campo.key === 'issuerAdministrativeAreaConceptId');
       expect(despues?.control).toBe('custom');
     });
@@ -768,7 +757,7 @@ describe('RegisterPatient', () => {
 
     it('la lupa de ocupación trae su glifo', () => {
       completar();
-      avanzarHasta('profile');
+      avanzarHasta('identity');
 
       expect(
         (fixture.nativeElement as HTMLElement).querySelector(
@@ -830,7 +819,7 @@ describe('RegisterPatient', () => {
       cargarMunicipios();
       completar();
       component.elegirMunicipioDeTrabajo(MUNICIPIO_SACABA);
-      avanzarHasta('work-location');
+      avanzarHasta('work');
 
       const picker = (fixture.nativeElement as HTMLElement).querySelector('app-location-picker');
       expect(picker?.querySelector('app-nav-icon')).not.toBeNull();
