@@ -302,7 +302,7 @@ describe('PublicPostCard — la fila de acciones de una red profesional', () => 
     // Lo que ya se sabe de la reacción propia, antes de dibujar: la tarjeta no
     // afirma «presionado» ni «apagado» mientras no lo sabe.
     if (opciones.reaccionPrevia !== undefined) {
-      TestBed.inject(PostActorStateStore).fijar('post-1', opciones.reaccionPrevia);
+      TestBed.inject(PostActorStateStore).fijar('post-1', opciones.reaccionPrevia, 'pp-1');
     }
 
     fixture = TestBed.createComponent(HostConAcciones);

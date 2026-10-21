@@ -70,7 +70,7 @@ describe('PostActorStateStore', () => {
     community.readPost.mockReturnValue(lectura);
 
     store.cargar(['p1'], 'yo');
-    store.fijar('p1', 'CELEBRATE');
+    store.fijar('p1', 'CELEBRATE', 'yo');
     lectura.next({ reactions: { actorReactionType: 'LOVE' } });
     lectura.complete();
 
@@ -101,22 +101,22 @@ describe('PostActorStateStore', () => {
   it('fijar(null) recuerda que la quitó', () => {
     const store = armar();
 
-    store.fijar('p1', null);
+    store.fijar('p1', null, 'yo');
 
     expect(store.reaccionDe('p1')).toBeNull();
   });
 
   it('restaurar vuelve a lo anterior; si era «no se sabe», lo olvida en vez de afirmar null', () => {
     const store = armar();
-    store.fijar('p1', 'LOVE');
+    store.fijar('p1', 'LOVE', 'yo');
 
-    store.restaurar('p1', 'LIKE');
+    store.restaurar('p1', 'LIKE', 'yo');
     expect(store.reaccionDe('p1')).toBe('LIKE');
 
-    store.restaurar('p1', null);
+    store.restaurar('p1', null, 'yo');
     expect(store.reaccionDe('p1')).toBeNull();
 
-    store.restaurar('p1', undefined);
+    store.restaurar('p1', undefined, 'yo');
     expect(store.reaccionDe('p1')).toBeUndefined();
 
     // Y como se olvidó, puede volver a pedirse.
@@ -149,6 +149,25 @@ describe('PostActorStateStore', () => {
 
       expect(community.readPost).toHaveBeenLastCalledWith('p1', { actorProfileId: 'B' });
       expect(store.reaccionDe('p1')).toBeNull();
+    });
+
+    it('un dato sembrado sin dueño no se le atribuye a quien llega después (revisión de seguridad)', () => {
+      const store = armar();
+      // Sembrado antes de que el store conozca a nadie (la tarjeta pide con su input).
+      store.fijar('p1', 'LOVE', 'A');
+
+      store.cargar(['p2'], 'B');
+
+      expect(store.reaccionDe('p1')).toBeUndefined();
+    });
+
+    it('lo sembrado por el mismo actor se conserva al cargar', () => {
+      const store = armar();
+      store.fijar('p1', 'LOVE', 'A');
+
+      store.cargar(['p2'], 'A');
+
+      expect(store.reaccionDe('p1')).toBe('LOVE');
     });
 
     it('una lectura en vuelo del actor anterior no escribe al llegar', () => {

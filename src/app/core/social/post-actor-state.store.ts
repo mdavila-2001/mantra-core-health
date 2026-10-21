@@ -45,7 +45,13 @@ export class PostActorStateStore {
   private readonly community = inject(CommunityClient);
   private readonly propio = inject(OwnProfileStore);
 
-  /** El actor dueño de lo que hay en memoria; `null` si todavía no hay ninguno. */
+  /**
+   * El actor dueño de lo que hay en memoria. Se fija **al escribir** (en
+   * `cargar`, y en `fijar`/`restaurar` con el actor que la tarjeta conoce), no
+   * se deduce después: un dato sembrado sin dueño registrado no se puede
+   * atribuir a nadie, y se trata como ajeno a cualquier actor que llegue.
+   * `null` sólo cuando no hay nada guardado.
+   */
   private actor: string | null = null;
   /** Sube con cada vaciado: una lectura de una generación vieja no escribe. */
   private generacion = 0;
@@ -64,7 +70,13 @@ export class PostActorStateStore {
       const antes = this.ultimoPerfil;
       this.ultimoPerfil = id;
       if (antes === undefined || id === antes) return;
-      if (this.actor !== null && this.actor !== id) this.olvidar();
+      // Pasar de «sin perfil» (`null`) a uno no es cambiar de persona: el perfil
+      // terminó de leerse y lo cargado con ese mismo actor sigue valiendo.
+      if (antes === null && id !== null) {
+        this.reclamar(id);
+        return;
+      }
+      this.olvidar();
     });
   });
 
@@ -105,13 +117,7 @@ export class PostActorStateStore {
    */
   cargar(postIds: readonly string[], actorProfileId: string): void {
     const actor = actorProfileId;
-    // Sólo se vacía si ya había **otro** actor: la primera vez no hay nada de
-    // nadie más que proteger, y vaciar aquí borraba lo que la tarjeta acababa
-    // de sembrar con `fijar`.
-    if (this.actor !== null && actor !== this.actor) {
-      this.olvidar();
-    }
-    this.actor = actor;
+    this.reclamar(actor);
     const esta = this.generacion;
 
     for (const id of postIds) {
@@ -144,7 +150,8 @@ export class PostActorStateStore {
   }
 
   /** Recuerda la reacción tras reaccionar o quitarla desde la tarjeta. */
-  fijar(postId: string, reaccion: ReactionType | null): void {
+  fijar(postId: string, reaccion: ReactionType | null, actorProfileId: string): void {
+    this.reclamar(actorProfileId);
     this.pedidas.add(postId);
     this.reacciones.update((actuales) => ({ ...actuales, [postId]: reaccion }));
   }
@@ -154,7 +161,8 @@ export class PostActorStateStore {
    * Si lo anterior era «no se sabe» (`undefined`) se olvida la publicación y
    * puede volver a pedirse; afirmar `null` sería inventar que no reaccionó.
    */
-  restaurar(postId: string, anterior: ReactionType | null | undefined): void {
+  restaurar(postId: string, anterior: ReactionType | null | undefined, actorProfileId: string): void {
+    this.reclamar(actorProfileId);
     if (anterior === undefined) {
       this.pedidas.delete(postId);
       this.reacciones.update((actuales) => {
@@ -164,6 +172,18 @@ export class PostActorStateStore {
       return;
     }
     this.reacciones.update((actuales) => ({ ...actuales, [postId]: anterior }));
+  }
+
+  /**
+   * Afirma que lo que se escribe ahora es de `actor`. Si había datos de otro
+   * actor, o datos sin dueño registrado, se olvidan antes de seguir: nunca se
+   * mezclan dos personas en el mismo mapa.
+   */
+  private reclamar(actor: string): void {
+    if (this.actor === actor) return;
+    const hayDatos = Object.keys(this.reacciones()).length > 0 || Object.keys(this.imagenes()).length > 0;
+    if (this.actor !== null || hayDatos) this.olvidar();
+    this.actor = actor;
   }
 
   /** Se olvida todo. Lo hace el propio store al cambiar el perfil o el actor. */

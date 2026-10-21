@@ -228,7 +228,7 @@ export class PublicPostCard {
 
     this.errorAlRecomendar.set(null);
     this.reaccionando.set(true);
-    this.estadoDelActor.fijar(id, tipo);
+    this.estadoDelActor.fijar(id, tipo, actor);
     if (sumaba) this.deltaReacciones.update((d) => d + 1);
 
     this.community
@@ -243,7 +243,7 @@ export class PublicPostCard {
           this.reaccionando.set(false);
         },
         error: (error: unknown) => {
-          this.estadoDelActor.restaurar(id, anterior);
+          this.estadoDelActor.restaurar(id, anterior, actor);
           if (sumaba) this.deltaReacciones.update((d) => d - 1);
           this.reaccionando.set(false);
           // El botón vuelve a su estado; sin este aviso, la vuelta parecía un
@@ -266,7 +266,7 @@ export class PublicPostCard {
     const id = this.post().id;
     this.errorAlRecomendar.set(null);
     this.reaccionando.set(true);
-    this.estadoDelActor.fijar(id, null);
+    this.estadoDelActor.fijar(id, null, actor);
     this.deltaReacciones.update((d) => d - 1);
 
     this.community.unreact({ actorProfileId: actor, reactableType: 'POST', reactableRefId: id }).subscribe({
@@ -276,7 +276,7 @@ export class PublicPostCard {
         this.reaccionando.set(false);
       },
       error: (error: unknown) => {
-        this.estadoDelActor.restaurar(id, anterior);
+        this.estadoDelActor.restaurar(id, anterior, actor);
         this.deltaReacciones.update((d) => d + 1);
         this.reaccionando.set(false);
         this.errorAlRecomendar.set(describeApiFailure(error, 'No pudimos quitar su reacción.'));
