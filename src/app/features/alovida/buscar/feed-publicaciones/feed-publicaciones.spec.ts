@@ -109,6 +109,8 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
   let estadoDelActor: { cargar: ReturnType<typeof vi.fn>; imagenesDe: ReturnType<typeof vi.fn> };
   let avisos: { info: ReturnType<typeof vi.fn> };
   const actor = signal<string | null>('pp-1');
+  /** `false` mientras el perfil propio se lee. */
+  const perfilResuelto = signal(true);
   const perfil = signal<unknown>({ id: 'pp-1', slug: 'yo', displayName: 'Valeria' });
 
   async function montar(opciones: {
@@ -119,6 +121,7 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
     siguiendo?: () => unknown;
   } = {}): Promise<void> {
     const conPerfil = opciones.conPerfil ?? true;
+    perfilResuelto.set(true);
     actor.set(conPerfil ? 'pp-1' : null);
     perfil.set(conPerfil ? { id: 'pp-1', slug: 'yo', displayName: 'Valeria' } : null);
     directorio = {
@@ -150,7 +153,7 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
         { provide: PublicDirectoryClient, useValue: directorio },
         { provide: CommunityClient, useValue: community },
         { provide: SessionStore, useValue: { isAuthenticated: signal(opciones.autenticado ?? true), practitionerProfileId: () => null } },
-        { provide: OwnProfileStore, useValue: { perfil, resuelto: signal(true), id: actor } },
+        { provide: OwnProfileStore, useValue: { perfil, resuelto: perfilResuelto, id: actor } },
         { provide: PostActorStateStore, useValue: estadoDelActor },
         {
           provide: ProfileSummaryStore,
@@ -368,6 +371,38 @@ describe('FeedPublicaciones — el inicio de la red social', () => {
       const ids = todas('tarjeta').map((t) => t.getAttribute('data-id'));
       expect(ids).not.toContain('s1');
       expect(ids).not.toContain('s2');
+    });
+  });
+
+  describe('recargar con ?feed=siguiendo mientras el perfil propio se lee', () => {
+    it('no pinta «Recientes» ni el vacío: queda cargando y pide el feed personal al resolver', async () => {
+      await montar({ url: '/posts?feed=siguiendo', conPerfil: false });
+      perfilResuelto.set(false);
+      actor.set(null);
+      await fixture.whenStable();
+
+      expect(todas('tarjeta').length).toBe(0);
+      expect(root().textContent).not.toContain('Todavía no hay publicaciones');
+      expect(community.listFeed).not.toHaveBeenCalled();
+
+      perfilResuelto.set(true);
+      actor.set('pp-1');
+      await fixture.whenStable();
+
+      expect(community.listFeed).toHaveBeenCalledWith({ profileId: 'pp-1', limit: 10 });
+      expect(todas('tarjeta').map((t) => t.getAttribute('data-id'))).toEqual(['s1', 's2']);
+    });
+
+    it('si el perfil resuelve sin vitrina, cae a «Recientes» (no deja la pantalla cargando)', async () => {
+      await montar({ url: '/posts?feed=siguiendo', conPerfil: false });
+      perfilResuelto.set(false);
+      await fixture.whenStable();
+
+      perfilResuelto.set(true);
+      await fixture.whenStable();
+
+      expect(community.listFeed).not.toHaveBeenCalled();
+      expect(todas('tarjeta').length).toBe(2);
     });
   });
 

@@ -115,9 +115,17 @@ export class FeedPublicaciones {
   /** «Siguiendo» exige perfil público: el feed personal se pide con él. */
   protected readonly puedeVerSiguiendo = computed(() => this.actor() !== null);
 
-  protected readonly modo = computed<ModoDelFeed>(() =>
-    this.parametros().get('feed') === 'siguiendo' && this.puedeVerSiguiendo() ? 'siguiendo' : 'recientes',
-  );
+  /**
+   * Con `?feed=siguiendo` en la dirección, «Siguiendo» manda **también mientras
+   * el perfil propio se lee**: sin eso, al recargar se pintaba primero la lista
+   * de «Recientes» y de golpe saltaba a «Siguiendo» (contenido equivocado
+   * durante un instante, visto en el build de producción). Cuando el perfil
+   * termina de leerse y no hay vitrina, cae a «Recientes».
+   */
+  protected readonly modo = computed<ModoDelFeed>(() => {
+    if (this.parametros().get('feed') !== 'siguiendo') return 'recientes';
+    return this.puedeVerSiguiendo() || !this.perfilResuelto() ? 'siguiendo' : 'recientes';
+  });
 
   protected readonly opcionesDeModo: readonly SegmentedOption<ModoDelFeed>[] = [
     { value: 'recientes', label: 'Recientes' },
@@ -220,6 +228,8 @@ export class FeedPublicaciones {
 
   protected readonly estado = computed<EstadoFeed>(() => {
     const siguiendo = this.modo() === 'siguiendo';
+    // «Siguiendo» pedido pero todavía sin saber quién es la persona: se está cargando, no está vacío.
+    if (siguiendo && !this.puedeVerSiguiendo()) return 'carga';
     if (siguiendo ? this.cargandoSiguiendo() : this.cargandoRecientes()) return 'carga';
     if (siguiendo ? this.falloSiguiendo() : this.falloRecientes()) return 'error';
     return this.vista().length === 0 ? 'vacio' : 'datos';

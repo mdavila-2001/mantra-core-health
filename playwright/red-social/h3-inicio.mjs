@@ -80,9 +80,23 @@ const iconosVisibilidad = await p.locator('app-public-post-card [data-testid^="p
 ok('Siguiendo no inventa el ícono de visibilidad', iconosVisibilidad === 0, String(iconosVisibilidad));
 await p.screenshot({ path: `${OUT}/siguiendo-1440.png` });
 
+// Recargar muestreando el DOM: «Recientes» no puede aparecer ni un instante (era un parpadeo real).
+await p.addInitScript(() => {
+  window.__modos = [];
+  const tomar = () => {
+    const marcado = [...document.querySelectorAll('[data-testid="feed-modo"] [aria-pressed="true"], [data-testid="feed-modo"] [aria-checked="true"]')].map((e) => e.textContent.trim());
+    const hay = document.querySelectorAll('app-public-post-card').length;
+    window.__modos.push(`${marcado.join('+') || '-'}:${hay > 0 ? 'tarjetas' : 'sin'}`);
+  };
+  // Un observador ve CADA cambio del DOM: un intervalo se perdía los parpadeos de un cuadro.
+  new MutationObserver(tomar).observe(document, { subtree: true, childList: true, attributes: true });
+});
 await p.reload({ waitUntil: 'domcontentloaded' });
-await p.locator('app-public-post-card').first().waitFor({ timeout: 120000 });
+// La lista se asienta cuando el perfil propio resolvió: se espera por condición, no se lee al instante.
+await p.waitForFunction(() => document.querySelectorAll('app-public-post-card').length > 0 && [...document.querySelectorAll('[data-testid="feed-modo"] [aria-pressed="true"], [data-testid="feed-modo"] [aria-checked="true"]')].some((e) => /Siguiendo/.test(e.textContent)), null, { timeout: 60000 }).catch(() => {});
 ok('recargar en ?feed=siguiendo conserva la lista', p.url().includes('feed=siguiendo') && (await p.locator('app-public-post-card').count()) > 0);
+const modos = await p.evaluate(() => [...new Set(window.__modos)]);
+ok('y al recargar nunca pinta tarjetas ajenas a «Siguiendo» (sin selector, o con «Recientes») antes de que llegue la lista', !modos.some((m) => /Recientes/.test(m) || m === '-:tarjetas'), modos.join(' | '));
 
 // volver a Recientes
 await p.getByTestId('feed-modo').getByRole('radio', { name: 'Recientes' }).click();

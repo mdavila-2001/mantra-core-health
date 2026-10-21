@@ -34,12 +34,10 @@ const boton = (p) => p.locator('app-public-profile-card').getByTestId('follow-bu
  * este trabajo). Acá se espera a que el botón esté vivo antes de tocarlo.
  */
 const hidratada = (p) =>
+  // Sin `window.ng` (sólo existe en desarrollo): Angular quita `ngh` del host al terminar de hidratar.
   p.waitForFunction(() => {
-    try {
-      return !!window.ng.getComponent(document.querySelector('app-public-profile-card app-follow-button'));
-    } catch {
-      return false;
-    }
+    const tarjeta = document.querySelector('app-public-profile-card');
+    return tarjeta !== null && !tarjeta.hasAttribute('ngh') && !document.querySelector('app-public-profile-card app-follow-button')?.hasAttribute('ngh');
   }, null, { timeout: 60000 });
 
 {
@@ -96,7 +94,7 @@ await p.goto(`${BASE}/p/valeria-rojas`, { waitUntil: 'domcontentloaded' });
 await p.locator('app-public-profile-card').waitFor({ timeout: 60000 });
 await p.locator('app-public-profile-card h1').first().waitFor();
 // Del servidor llega sin sesión (con botón); la decisión es del cliente hidratado.
-await p.waitForFunction(() => { try { return !!window.ng.getComponent(document.querySelector('app-public-profile-card')); } catch { return false; } }, null, { timeout: 60000 });
+await hidratada(p);
 await p.waitForFunction(() => !document.querySelector('app-public-profile-card [data-testid="follow-button"]'), null, { timeout: 30000 }).catch(() => {});
 ok('en la ficha propia no se dibuja', (await boton(p).count()) === 0);
 await ctx.close();
