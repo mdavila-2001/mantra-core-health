@@ -88,12 +88,12 @@ Grupos del menú y pantallas que aplican a AloVida (las de crédito, comercios, 
 ## H0 — Encuadre, bóveda del trabajo y módulo piloto
 **CA:** Dado este plan, cuando se abre H1, entonces existe la carpeta del trabajo con `PLAN.md`, `HALLAZGOS.md` (vacío con cabecera) y `evidencia/`, y está elegido el módulo piloto con el que se prueba cada generador antes de correrlo sobre los 65.
 **DoD:** archivos en disco · piloto justificado por escrito.
-**Estado:** EN CURSO
+**Estado:** A MEDIAS — M1 y M2 hechas; M3 (checkpoint con Marcelo) abierta
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
 |---|---|---|---|---|
-| H0.S1.M1 | Crear `docs/trabajo/2026-10-21-portal-admin-alovida-como-atlas/{PLAN.md,HALLAZGOS.md,evidencia/}` en `mantra-core-health` y commitear en la rama | Los archivos existen en la rama remota | `git log --oneline -1 -- docs/trabajo/2026-10-21-portal-admin-alovida-como-atlas` → 1 commit | EN CURSO |
-| H0.S1.M2 | Elegir módulo piloto: **`scheduling`** (tiene flujo crítico documentado en `critical-workflows.md`, máquina de estados, workers, eventos y pruebas de integración `scheduling-agenda.int-spec.ts`) y módulo de control **`audit`** (todo escritura, WORM) | Justificación escrita en `HALLAZGOS.md` §0 | revisión | TODO |
+| H0.S1.M1 | Crear `docs/trabajo/2026-10-21-portal-admin-alovida-como-atlas/{PLAN.md,HALLAZGOS.md,evidencia/}` en `mantra-core-health` y commitear en la rama | Los archivos existen en la rama remota | `git log --oneline -1 -- docs/trabajo/2026-10-21-portal-admin-alovida-como-atlas` → 1 commit | HECHO — `bc60ea30` en `origin/claude-marcelo/vigilant-bardeen-gcoocw` (`evidencia/H0-git.txt`) |
+| H0.S1.M2 | Elegir módulo piloto: **`scheduling`** (tiene flujo crítico documentado en `critical-workflows.md`, máquina de estados, workers, eventos y pruebas de integración `scheduling-agenda.int-spec.ts`) y módulo de control **`audit`** (todo escritura, WORM) | Justificación escrita en `HALLAZGOS.md` §0 | revisión | HECHO — `HALLAZGOS.md` §0 con las rutas que justifican cada piloto |
 | H0.S1.M3 | Checkpoint con Marcelo: resolver las ambigüedades 1–6 (o confirmar los supuestos) | Respuesta registrada en «Ambigüedades» | — | TODO (bloquea sólo H4.S1 y H5.S1; H1–H3 arrancan igual) |
 
 ## H1 — Inventario de endpoints (1 190 operaciones)
