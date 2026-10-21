@@ -41,3 +41,31 @@ preexistentes.
 
 Jerarquía, ritmo, equilibrio y densidad. Los pares «antes / después» lado a lado
 están en [`ANTES_DESPUES.html`](./ANTES_DESPUES.html).
+
+## Después (estado de `cfc6dc43`, capturas en `evidencia/02-despues/`)
+
+Misma medición y mismo spec que el «antes», 26 lotes, 217 pantallas. Capturas en
+WebP. Comparación lado a lado en `ANTES_DESPUES.html`.
+
+| Clase | Antes | Después | Lectura |
+|---|---:|---:|---|
+| `objetivo-chico` | 142 | 35 | Migas corregidas en pantalla táctil |
+| `sin-marca` | 192 | 2 | **Ver la advertencia abajo** |
+| `tabla-ancha` | 16 | 8 | Mejora parcial |
+| `tabla-columnas` | 11 | 19 | **Empeora**: las tarjetas apilan más datos. Se mira en `02-despues/medica/progress-notes-claro.webp` |
+| `muy-larga` | 13 | 15 | **Empeora**: las tarjetas son más altas. Mismo intercambio |
+| `cortado` | 4 | 1 | Mensajería corregida; queda `my-practice` |
+| `desborde` | 1 | 0 | Agenda corregida |
+| `h1` | 4 | 2 | Error y 404 corregidos; queda la portabilidad |
+| `texto-chico` | 46 | 46 | **Sin corregir todavía** |
+
+**Advertencia sobre `sin-marca`.** El criterio cambió entre las dos fases: en
+«antes» se exigía el isotipo en los primeros 140 px; en «después», en toda la
+primera pantalla. Eso infla la mejora de las 16 pantallas sin sesión. En las
+autenticadas el isotipo está en la cabecera, arriba, y la cifra sí es comparable.
+Para cerrar la duda hay que volver a medir «antes» con el criterio nuevo, que
+implica revertir la aplicación a `e08041e0`.
+
+**Lo que esto no prueba.** Las cifras son de medición mecánica. La mejora de
+jerarquía, ritmo y legibilidad se juzga mirando las capturas; ese juicio lo hace
+el revisor independiente, no quien implementó (regla NO_SELF_APPROVAL).

@@ -1,0 +1,627 @@
+[
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "archivo": "dashboard",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ]
+  }
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "archivo": "tutorials",
+  "alto": 3762,
+  "problemas": {}
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "archivo": "messaging",
+  "alto": 844,
+  "problemas": {
+   "texto-chico": [
+    "6 elementos < 12px",
+    "span.conversaciones__cuando 11px ×4",
+    "span.conversaciones__sin-leer 11px ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "archivo": "directories",
+  "alto": 844,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/groups",
+  "componente": "Groups",
+  "archivo": "groups",
+  "alto": 1230,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "archivo": "laboratory-directory",
+  "alto": 844,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "archivo": "clinics-directory",
+  "alto": 122633,
+  "problemas": {
+   "texto-chico": [
+    "2 elementos < 12px",
+    "span.filter-bar__chips-rotulo 11px ×2"
+   ],
+   "muy-larga": [
+    "122633px"
+   ]
+  }
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "archivo": "pharmacies-directory",
+  "alto": 16185,
+  "problemas": {
+   "texto-chico": [
+    "2 elementos < 12px",
+    "span.filter-bar__chips-rotulo 11px ×2"
+   ],
+   "muy-larga": [
+    "16185px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule",
+  "abierta": "/schedule",
+  "componente": "Agenda",
+  "archivo": "schedule",
+  "alto": 2537,
+  "problemas": {
+   "objetivo-chico": [
+    "332×11 Agregar algo en este hueco"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records",
+  "abierta": "/medical-records",
+  "componente": "ClinicalRecord",
+  "archivo": "medical-records",
+  "alto": 1005,
+  "problemas": {}
+ },
+ {
+  "ruta": "/progress-notes",
+  "abierta": "/progress-notes",
+  "componente": "ProgressNotes",
+  "archivo": "progress-notes",
+  "alto": 23506,
+  "problemas": {
+   "tabla-columnas": [
+    "8 columnas visibles"
+   ],
+   "texto-chico": [
+    "1 elementos < 12px",
+    "span.filter-bar__chips-rotulo 11px ×1"
+   ],
+   "muy-larga": [
+    "23506px"
+   ]
+  }
+ },
+ {
+  "ruta": "/diagnostics",
+  "abierta": "/diagnostics",
+  "componente": "Diagnostics",
+  "archivo": "diagnostics",
+  "alto": 2886,
+  "problemas": {
+   "tabla-columnas": [
+    "4 columnas visibles"
+   ]
+  }
+ },
+ {
+  "ruta": "/lab-visits",
+  "abierta": "/lab-visits",
+  "componente": "DoctorVisits",
+  "archivo": "lab-visits",
+  "alto": 1148,
+  "problemas": {
+   "tabla-columnas": [
+    "7 columnas visibles"
+   ]
+  }
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/glossary",
+  "componente": "Glossary",
+  "archivo": "glossary",
+  "alto": 6153,
+  "problemas": {
+   "texto-chico": [
+    "49 elementos < 12px",
+    "span.chip__label 11px ×49"
+   ],
+   "muy-larga": [
+    "6153px"
+   ]
+  }
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/form-builder",
+  "componente": "FormBuilder",
+  "archivo": "form-builder",
+  "alto": 10050,
+  "problemas": {
+   "texto-chico": [
+    "40 elementos < 12px",
+    "span.constructor__especialidad 11px ×39",
+    "span.filter-bar__chips-rotulo 11px ×1"
+   ],
+   "muy-larga": [
+    "10050px"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/my-services",
+  "componente": "MyServices",
+  "archivo": "my-services",
+  "alto": 2238,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/my-quotations",
+  "componente": "QuotationList",
+  "archivo": "my-quotations",
+  "alto": 844,
+  "problemas": {}
+ },
+ {
+  "ruta": "/questionnaires",
+  "abierta": "/questionnaires",
+  "componente": "SurveysHome",
+  "archivo": "questionnaires",
+  "alto": 1251,
+  "problemas": {
+   "objetivo-chico": [
+    "32×21 Abrir: Satisfacción con la consulta",
+    "32×21 Abrir: Experiencia de teleconsulta",
+    "32×21 Abrir: Encuesta post-cirugía",
+    "32×21 Abrir: Encuesta de vacunación 2025"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "archivo": "administration_insurance",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "archivo": "administration_insurance-analytics",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/medical-organization",
+  "abierta": "/administration/medical-organization",
+  "componente": "MedicalOrganization",
+  "archivo": "administration_medical-organization",
+  "alto": 1646,
+  "problemas": {
+   "tabla-columnas": [
+    "5 columnas visibles"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting",
+  "abierta": "/administration/accounting",
+  "componente": "Resumen",
+  "archivo": "administration_accounting",
+  "alto": 4799,
+  "problemas": {
+   "texto-chico": [
+    "14 elementos < 12px",
+    "span.chip__label 11px ×8",
+    "span.comparacion__flecha 9px ×3",
+    "p.patrimonio__rotulo 11px ×3"
+   ],
+   "muy-larga": [
+    "4799px"
+   ]
+  }
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "archivo": "settings",
+  "alto": 1516,
+  "problemas": {
+   "texto-chico": [
+    "1 elementos < 12px",
+    "p.prefs__nota 11.2px ×1"
+   ]
+  }
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "archivo": "notification-center",
+  "alto": 1510,
+  "problemas": {
+   "texto-chico": [
+    "14 elementos < 12px",
+    "span.avisos__categoria 11.2px ×7",
+    "span 11.2px ×7"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-practice",
+  "abierta": "/administration/my-practice",
+  "componente": "MyPractice",
+  "archivo": "administration_my-practice",
+  "alto": 1463,
+  "problemas": {
+   "tabla-columnas": [
+    "6 columnas visibles"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "archivo": "administration_my-organization",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/administration/pharmacy-orders",
+  "componente": "PharmacyInbox",
+  "archivo": "administration_pharmacy-orders",
+  "alto": 1441,
+  "problemas": {
+   "texto-chico": [
+    "7 elementos < 12px",
+    "span.chip__label 11px ×7"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/administration/pharmacy-campaigns",
+  "componente": "PharmacyCampaigns",
+  "archivo": "administration_pharmacy-campaigns",
+  "alto": 844,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/administration/pharmacy-profile",
+  "componente": "PharmacyProfile",
+  "archivo": "administration_pharmacy-profile",
+  "alto": 1420,
+  "problemas": {
+   "texto-chico": [
+    "2 elementos < 12px",
+    "span.chip__label 11px ×2"
+   ],
+   "consola": [
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting/assets-liabilities",
+  "abierta": "/administration/accounting/assets-liabilities",
+  "componente": "AssetsLiabilities",
+  "archivo": "administration_accounting_assets-liabilities",
+  "alto": 1950,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/accounting/cockpit",
+  "abierta": "/administration/accounting/cockpit",
+  "componente": "Cockpit",
+  "archivo": "administration_accounting_cockpit",
+  "alto": 3126,
+  "problemas": {
+   "texto-chico": [
+    "6 elementos < 12px",
+    "p.tile__rotulo 11px ×6"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting/libros",
+  "abierta": "/administration/accounting/libros",
+  "componente": "Accounting",
+  "archivo": "administration_accounting_libros",
+  "alto": 2260,
+  "problemas": {
+   "texto-chico": [
+    "1 elementos < 12px",
+    "span.overline 11px ×1"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "archivo": "administration_getting-started",
+  "alto": 2868,
+  "problemas": {
+   "tabla-ancha": [
+    "14 col, 678px en 390px"
+   ],
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/my-quotations/new",
+  "componente": "QuotationForm",
+  "archivo": "my-quotations_new",
+  "alto": 4195,
+  "problemas": {
+   "tabla-columnas": [
+    "5 columnas visibles"
+   ]
+  }
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/onboarding",
+  "componente": "OnboardingPractitioner",
+  "archivo": "onboarding",
+  "alto": 1242,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/appointment/new",
+  "abierta": "/schedule/appointment/new",
+  "componente": "AppointmentNew",
+  "archivo": "schedule_appointment_new",
+  "alto": 1132,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/blocks",
+  "abierta": "/schedule/blocks",
+  "componente": "Blocks",
+  "archivo": "schedule_blocks",
+  "alto": 915,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/edit",
+  "abierta": "/schedule/edit",
+  "componente": "AgendaCreate",
+  "archivo": "schedule_edit",
+  "alto": 2617,
+  "problemas": {
+   "tabla-ancha": [
+    "6 col, 707px en 390px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/new",
+  "abierta": "/schedule/new",
+  "componente": "AgendaCreate",
+  "archivo": "schedule_new",
+  "alto": 2617,
+  "problemas": {
+   "tabla-ancha": [
+    "6 col, 707px en 390px"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-orders/:orderId",
+  "abierta": "/administration/pharmacy-orders/26bed0b7-301f-4df5-a13a-841e58d1edfc",
+  "componente": "InboxOrder",
+  "archivo": "administration_pharmacy-orders_orderId",
+  "alto": 918,
+  "problemas": {
+   "texto-chico": [
+    "1 elementos < 12px",
+    "span.chip__label 11px ×1"
+   ]
+  }
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "archivo": "clinics-directory_slug",
+  "alto": 1965,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary/:conceptId",
+  "abierta": "/glossary/9b7cb6d6-cb22-4f18-af3d-230218cfa76e",
+  "componente": "GlossaryTerm",
+  "archivo": "glossary_conceptId",
+  "alto": 1309,
+  "problemas": {
+   "texto-chico": [
+    "1 elementos < 12px",
+    "span.chip__label 11px ×1"
+   ]
+  }
+ },
+ {
+  "ruta": "/groups/:groupId",
+  "abierta": "/groups/5163cb71-7f7f-4b73-aa94-ee22c8d7ce14",
+  "componente": "GroupDetail",
+  "archivo": "groups_groupId",
+  "alto": 969,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory/:unitId",
+  "abierta": "",
+  "componente": "LaboratoryDetail",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId",
+  "abierta": "/medical-records/8675f52f-6cfb-4f59-a543-e00ac3241a18",
+  "componente": "PatientChart",
+  "archivo": "medical-records_profileId",
+  "alto": 1416,
+  "problemas": {
+   "tabla-columnas": [
+    "6 columnas visibles"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId/consultation",
+  "abierta": "",
+  "componente": "Consultation",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId/request-access",
+  "abierta": "",
+  "componente": "RequestAccess",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "archivo": "pharmacies-directory_slug",
+  "alto": 3121,
+  "problemas": {
+   "objetivo-chico": [
+    "83×21 Analgésicos",
+    "88×21 Antialérgicos",
+    "82×21 Antibióticos",
+    "98×21 Cardiovascular",
+    "110×21 Sistema nervioso",
+    "88×21 Suplementos"
+   ],
+   "texto-chico": [
+    "17 elementos < 12px",
+    "span.chip__label 11px ×17"
+   ],
+   "consola": [
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+   ]
+  }
+ },
+ {
+  "ruta": "/questionnaires/:surveyId",
+  "abierta": "/questionnaires/bafb1c09-2103-46f3-a56c-4c0aec3d722c",
+  "componente": "SurveyDetailScreen",
+  "archivo": "questionnaires_surveyId",
+  "alto": 5862,
+  "problemas": {
+   "recorte": [
+    "INPUT",
+    "INPUT"
+   ],
+   "muy-larga": [
+    "5862px"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/book/:slotId",
+  "abierta": "",
+  "componente": "BookingNew",
+  "archivo": "",
+  "alto": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta"
+   ]
+  }
+ }
+]
