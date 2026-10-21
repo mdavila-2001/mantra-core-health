@@ -30,6 +30,8 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
   { key: 'obraSocial', header: 'Obra social', priority: 2, sticky: 'end' },
 ];
 
+// Anfitrión de prueba: lee campos mutables a propósito, no es un componente de producto.
+// eslint-disable-next-line @angular-eslint/prefer-on-push-component-change-detection
 @Component({
   imports: [DataTable],
   template: `
@@ -43,6 +45,9 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [sort]="sort()"
       [cursor]="cursor()"
       [maxHeight]="maxHeight()"
+      [heading]="encabezado()"
+      [totalCount]="total()"
+      [pageSummary]="resumen()"
       (sortChanged)="ordenes.push($event)"
       (cursorChanged)="cursores.push($event)"
       (selectionChanged)="selecciones.push($event)"
@@ -61,6 +66,9 @@ class HostComponent {
   readonly sort = signal<SortState | null>(null);
   readonly cursor = signal<CursorState>({});
   readonly maxHeight = signal<string | null>(null);
+  readonly encabezado = signal('');
+  readonly total = signal<number | null>(null);
+  readonly resumen = signal('');
   readonly ordenes: SortState[] = [];
   readonly cursores: string[] = [];
   readonly selecciones: (readonly Paciente[])[] = [];
@@ -312,6 +320,47 @@ describe('DataTable', () => {
       botonPorTexto('Anterior')?.click();
       await fixture.whenStable();
       expect(host.cursores).toEqual(['cur-sig', 'cur-ant']);
+    });
+  });
+
+  describe('encabezado «Registros · n» y resumen de página', () => {
+    it('sin encabezado ni total no dibuja la barra: las pantallas actuales no cambian', () => {
+      expect(root().querySelector('[data-testid="tabla-encabezado"]')).toBeNull();
+    });
+
+    it('muestra el título y el total del filtro vigente', async () => {
+      host.encabezado.set('Registros');
+      host.total.set(338);
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="tabla-encabezado"]')?.textContent).toContain(
+        'Registros',
+      );
+      expect(root().querySelector('[data-testid="tabla-total"]')?.textContent?.trim()).toBe('338');
+    });
+
+    it('un total cero se dice: no es lo mismo que no conocer el total', async () => {
+      host.encabezado.set('Registros');
+      host.total.set(0);
+      await fixture.whenStable();
+      expect(root().querySelector('[data-testid="tabla-total"]')?.textContent?.trim()).toBe('0');
+    });
+
+    it('el resumen de página acompaña a los botones de cursor, no los reemplaza', async () => {
+      host.cursor.set({ nextCursor: 'cur-sig' });
+      host.resumen.set('Página 1 de 7 · 338 registros');
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="tabla-resumen"]')?.textContent).toContain(
+        'Página 1 de 7',
+      );
+      expect(botonPorTexto('Siguiente')).toBeDefined();
+    });
+
+    it('con una sola página no hay paginación ni resumen', async () => {
+      host.resumen.set('Página 1 de 1 · 2 registros');
+      await fixture.whenStable();
+      expect(root().querySelector('[data-testid="tabla-resumen"]')).toBeNull();
     });
   });
 

@@ -880,6 +880,18 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M67 data_catalog',
   },
   {
+    // Portal de inventario (H5): el mapa de sistemas, procesos, catálogo y linaje
+    // que genera la API (`/admin/portal/*`). Los roles son los de lectura de esa API.
+    path: 'administration/portal',
+    label: 'Portal de inventario',
+    group: 'Administración',
+    icon: 'route',
+    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN', 'GOVERNANCE_ADMIN', 'DATA_PLATFORM_ADMIN', 'DPO'],
+    availability: 'disponible',
+    summary: 'El sistema tal como lo ve el código: operaciones, procesos, tablas y linaje.',
+    module: 'M67 data_catalog',
+  },
+  {
     // Analítica de producto y RUM sobre `telemetry` (`/admin/analytics`).
     path: 'administration/web-analytics',
     label: 'Analítica web',

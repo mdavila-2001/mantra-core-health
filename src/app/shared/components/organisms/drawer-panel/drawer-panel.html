@@ -1,0 +1,35 @@
+<!-- El clic en el velo es el atajo de ratón; el equivalente de teclado es
+     `Escape`, que el navegador entrega como `cancel`. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #nativeDrawer
+  class="drawer"
+  data-testid="cajon"
+  [attr.aria-labelledby]="titleId"
+  (cancel)="alCancelar($event)"
+  (click)="alHacerClicEnElVelo($event)"
+>
+  <div class="drawer__panel">
+    <header class="drawer__header">
+      <div class="drawer__heading">
+        <h2 class="drawer__title" [id]="titleId">{{ heading() }}</h2>
+        @if (subheading()) {
+          <p class="drawer__subtitle">{{ subheading() }}</p>
+        }
+      </div>
+      <button app-button variant="ghost" size="sm" data-testid="cajon-cerrar" (clicked)="cerrar()">
+        {{ closeLabel() }}
+      </button>
+    </header>
+
+    <div class="drawer__body">
+      @if (open()) {
+        <ng-content />
+      }
+    </div>
+
+    <footer class="drawer__footer">
+      <ng-content select="[drawer-footer]" />
+    </footer>
+  </div>
+</dialog>
