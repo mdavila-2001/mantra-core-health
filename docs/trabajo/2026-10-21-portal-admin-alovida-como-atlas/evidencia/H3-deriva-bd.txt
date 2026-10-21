@@ -1,0 +1,41 @@
+# H3.S1.M6 — Deriva contra una base construida con el DDL canónico
+
+Fecha: 2026-10-21. Base descartable: PostgreSQL 16.15 local (clúster temporal fuera del repositorio, usuario y base de prueba, sin datos reales). Se apagó al terminar.
+
+## Construcción (SQL/apply_all.sql y SQL/apply_deferred.sql del repo del modelo, sin SQL/patches)
+
+```text
+$ psql -v ON_ERROR_STOP=0 -q -f SQL/apply_all.sql      # 7,5 s
+líneas de error: 0   líneas NOTICE: 41
+$ psql -v ON_ERROR_STOP=0 -q -f SQL/apply_deferred.sql
+líneas de error: 0
+
+$ select version()
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gn
+$ tablas / columnas / FK / índices de la base
+tablas:   1230
+columnas: 16851
+FK:       7069
+índices:  9497  (8 267 del catálogo + 1 230 de las PK)
+```
+
+## Comparación con el catálogo
+
+```text
+$ node tools/inventario/deriva-bd.mjs                       # sin variable
+BLOQUEADO: falta DERIVA_DATABASE_URL (una base construida con SQL/apply_all.sql y apply_deferred.sql del modelo). No se usa DATABASE_URL a propósito.
+exit=2
+$ DERIVA_DATABASE_URL=postgres://salud@127.0.0.1:54329/salud node tools/inventario/deriva-bd.mjs
+{"tablasDelCatalogo":1230,"tablasEnBase":1230,"columnasEnBase":16851,"indicesEnBase":9497,"fkEnBase":7069,"tablasAusentes":0,"columnasAusentes":0,"columnasDeMas":0,"nulabilidad":0,"tipos":0,"indicesAusentes":0,"fkAusentes":0,"tablasDeMas":0,"indicesDeMas":0,"tablasCoinciden":1230}
+exit=0
+```
+
+## Hallazgo: indexes.csv del modelo omite 431 índices
+
+```text
+CREATE INDEX … USING brin|gin|gist en 04_indexes.sql: 431
+de ellos listados en docs/data-catalog/indexes.csv: 0
+sentencias CREATE INDEX en 04_indexes.sql (sin contar las comentadas): 8267  =  7836 del CSV + 431 omitidas
+```
+
+Alcance: la base se construyó con el DDL canónico; no es una base desplegada de verdad. Demuestra que el modelo y su DDL coinciden entre sí (1 230/1 230 tablas, 0 diferencias). No cubre los parches de SQL/patches ni los almacenes de NoSQL/ (Timescale, pgvector).
