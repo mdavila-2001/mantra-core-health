@@ -209,6 +209,9 @@ export class PaginatedForm {
 
   readonly pending = input(false, { transform: booleanAttribute });
 
+  /** Paso inicial en base 0 para reanudar el formulario desde un borrador. */
+  readonly initialStep = input<number>(0);
+
   /**
    * El envío es destructivo y se confirma antes de emitirse.
    *
@@ -432,6 +435,18 @@ export class PaginatedForm {
     // un polígono pide vértices—, y esos declaran `paginas` como un `computed`.
     // Si el formulario encoge, el índice puede quedar apuntando a una página que
     // ya no existe: se ve como una pantalla en blanco con «paso 4 de 3».
+    // Reanuda el formulario desde el paso guardado si se especificó initialStep.
+    let pasoInicialAplicado = false;
+    effect(() => {
+      const inicio = this.initialStep();
+      const activas = this.paginasActivas();
+      if (!pasoInicialAplicado && inicio > 0 && activas.length > inicio) {
+        pasoInicialAplicado = true;
+        this.indice.set(inicio);
+        this.visitedIndex.set(inicio);
+      }
+    });
+
     effect(() => {
       const ultima = Math.max(0, this.paginasActivas().length - 1);
       if (this.indice() > ultima) {
@@ -646,7 +661,7 @@ export class PaginatedForm {
    *   que esté mal, el salto se detiene ahí —con los errores ya pintados— en
    *   vez de llevar a destino saltando la validación.
    */
-  protected goToStep(destino: number): void {
+  goToStep(destino: number): void {
     const actual = this.indice();
     if (destino === actual || destino < 0 || destino >= this.total()) return;
 

@@ -5,19 +5,26 @@
        no queda ningún hueco: no hay envoltorio. -->
   <ng-content select="[slot=icon-start]" />
 
-  <!-- La selección se marca en cada `<option>` con `[selected]`, y NO con un
-       `[value]` sobre el `<select>`.
+  @if (isSearchable()) {
+    <button
+      type="button"
+      class="searchable-display"
+      [class.has-value]="selectedIndex() >= 0"
+      [class.is-placeholder]="selectedIndex() < 0"
+      [disabled]="isDisabled()"
+      [attr.aria-expanded]="isSearchOpen()"
+      [attr.aria-label]="accessibleLabel()"
+      (click)="toggleSearch($event)"
+    >
+      {{ selectedOptionLabel() || placeholder() }}
+    </button>
+  }
 
-       El motivo es de orden de renderizado: en el primer pase, Angular aplica
-       las propiedades del elemento **antes** de crear los `<option>` del `@for`.
-       Escribir `select.value = "1"` cuando esa opción todavía no existe no hace
-       nada, y el navegador se queda en la primera —el placeholder oculto—. El
-       síntoma es un desplegable que dice «Seleccionar opción» aunque tenga
-       valor, y sólo aparece cuando el control **nace** con selección; con un
-       formulario, que la escribe después, no se veía. Lo encontró el recorrido
-       con usuarios reales, en el selector de recurso de la agenda. -->
+  <!-- La selección se marca en cada `<option>` con `[selected]`, y NO con un
+       `[value]` sobre el `<select>`. -->
   <select
     class="native-select"
+    [class.native-select--hidden]="isSearchable()"
     [id]="controlId()"
     [disabled]="isDisabled()"
     [attr.aria-label]="accessibleLabel()"
@@ -28,9 +35,6 @@
     (focus)="handleFocus($event)"
     (blur)="handleBlur($event)"
   >
-    <!-- `hidden` y no `disabled`: el navegador se niega a seleccionar una
-         opción deshabilitada, así que con `disabled` el placeholder nunca
-         llegaba a mostrarse y el select saltaba a la primera opción real. -->
     @if (placeholder()) {
       <option value="" hidden>{{ placeholder() }}</option>
     }
@@ -46,9 +50,46 @@
   </select>
 
   <!-- Flecha del spec: la nativa se apaga con `appearance: none` en el CSS -->
-  <span class="select-arrow" aria-hidden="true">
+  <span class="select-arrow" aria-hidden="true" [class.is-open]="isSearchOpen()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="6 9 12 15 18 9" />
     </svg>
   </span>
+
+  @if (isSearchable() && isSearchOpen()) {
+    <div class="select-search-panel">
+      <div class="select-search-header">
+        <input
+          #searchInput
+          type="search"
+          class="select-search-input"
+          [placeholder]="searchPlaceholder()"
+          [value]="searchTerm()"
+          (input)="onSearchInput($event)"
+          (keydown)="onSearchKeydown($event)"
+        />
+      </div>
+      <ul class="select-search-list" role="listbox">
+        @for (opt of filteredOptions(); track opt.value; let idx = $index) {
+          <li
+            role="option"
+            tabindex="0"
+            class="select-search-item"
+            [attr.aria-selected]="opt.value === value()"
+            [class.is-selected]="opt.value === value()"
+            [class.is-active]="idx === activeSearchIndex()"
+            [class.is-disabled]="opt.disabled"
+            (click)="chooseOption(opt)"
+            (keydown.enter)="chooseOption(opt)"
+            (keydown.space)="chooseOption(opt)"
+          >
+            {{ opt.label }}
+          </li>
+        }
+        @if (filteredOptions().length === 0) {
+          <li class="select-search-empty">No se encontraron opciones</li>
+        }
+      </ul>
+    </div>
+  }
 </div>

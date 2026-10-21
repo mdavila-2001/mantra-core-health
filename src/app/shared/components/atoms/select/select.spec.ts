@@ -200,6 +200,35 @@ describe('Select', () => {
     );
     expect(options.at(-1)?.disabled).toBe(true);
   });
+
+  describe('búsqueda interactiva (searchable select)', () => {
+    it('filtra opciones en tiempo real al escribir en el buscador', async () => {
+      const fixture = crear<string>([
+        { value: 'lp', label: 'La Paz' },
+        { value: 'sc', label: 'Santa Cruz' },
+        { value: 'cb', label: 'Cochabamba' },
+      ]);
+      fixture.componentRef.setInput('searchable', true);
+      await fixture.whenStable();
+
+      fixture.componentInstance.toggleSearch();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.isSearchOpen()).toBe(true);
+
+      fixture.componentInstance.onSearchInput({ target: { value: 'santa' } } as unknown as Event);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.filteredOptions().length).toBe(1);
+      expect(fixture.componentInstance.filteredOptions()[0].label).toBe('Santa Cruz');
+
+      fixture.componentInstance.chooseOption(fixture.componentInstance.filteredOptions()[0]);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.value()).toBe('sc');
+      expect(fixture.componentInstance.isSearchOpen()).toBe(false);
+    });
+  });
 });
 
 @Component({
