@@ -384,6 +384,8 @@ function validateRatio(key, value) {
  * quien mira la pantalla; se prefiere que falle el build.
  */
 function validateUuid(key, value) {
+  // Vacío es válido: deja la captura apagada, como dice `environment.types.ts`.
+  if (value === '') return value;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
     fail(`«${key}» debe ser un uuid (8-4-4-4-12 hexadecimal). Se recibió: ${value}`);
   }
