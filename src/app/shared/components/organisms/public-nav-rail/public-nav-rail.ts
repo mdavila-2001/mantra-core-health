@@ -39,7 +39,8 @@ import { filter, map } from 'rxjs/operators';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../atoms/tooltip/tooltip';
 
-import { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail.types';
+import { SessionStore } from '@core/auth/session.store';
+import { PUBLIC_NAV_RAIL_SECTIONS, PUBLIC_NAV_RAIL_SOCIAL } from './public-nav-rail.types';
 
 @Component({
   selector: 'app-public-nav-rail',
@@ -51,7 +52,14 @@ import { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail.types';
 export class PublicNavRail {
   private readonly router = inject(Router);
 
-  protected readonly groups = PUBLIC_NAV_RAIL_SECTIONS;
+  private readonly sesion = inject(SessionStore);
+
+  /** Con sesión se intercala el grupo de la red social después de las secciones. */
+  protected readonly groups = computed(() => {
+    if (!this.sesion.isAuthenticated()) return PUBLIC_NAV_RAIL_SECTIONS;
+    const [secciones, ...resto] = PUBLIC_NAV_RAIL_SECTIONS;
+    return [secciones!, PUBLIC_NAV_RAIL_SOCIAL, ...resto];
+  });
 
   /** La última navegación terminada, o `null` si todavía no hubo ninguna. */
   private readonly lastNavigation = toSignal(
@@ -91,7 +99,7 @@ export class PublicNavRail {
       return null;
     }
 
-    return this.groups
+    return this.groups()
       .flatMap((group) => group.entries)
       .map((entry) => entry.route)
       .filter((route) => url === route || url.startsWith(`${route}/`))

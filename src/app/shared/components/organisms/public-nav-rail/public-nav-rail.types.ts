@@ -78,3 +78,22 @@ export const PUBLIC_NAV_RAIL_SECTIONS: readonly PublicNavRailGroup[] = [
     ],
   },
 ] as const;
+
+/**
+ * El grupo de la red social: sólo **con sesión**.
+ *
+ * Seguir, guardar y recibir avisos son acciones de un perfil propio; ofrecerlas
+ * a quien no entró sería llevarlo a una pantalla que lo manda a iniciar sesión.
+ * Va entre las secciones y los directorios, como la fila de iconos de la barra
+ * de una red social: Inicio (Publicaciones) · Mi red · Mensajes · Notificaciones.
+ */
+export const PUBLIC_NAV_RAIL_SOCIAL: PublicNavRailGroup = {
+  id: 'social',
+  title: 'Mi red social',
+  entries: [
+    { route: '/network', label: 'Mi red', icon: 'people' },
+    { route: '/saved', label: 'Guardados', icon: 'folder' },
+    { route: '/messaging', label: 'Mensajes', icon: 'mail' },
+    { route: '/notification-center', label: 'Notificaciones', icon: 'bell' },
+  ],
+};

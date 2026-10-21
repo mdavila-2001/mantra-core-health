@@ -1,8 +1,12 @@
 import { readFileSync } from 'node:fs';
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+
+import { signal } from '@angular/core';
+
+import { SessionStore } from '@core/auth/session.store';
 
 import { PublicNavRail } from './public-nav-rail';
 import { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail.types';
@@ -10,12 +14,13 @@ import { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail.types';
 const RAIL_CSS = 'src/app/shared/components/organisms/public-nav-rail/public-nav-rail.css';
 
 /** Destino de prueba: sin rutas reales no hay `NavigationEnd` que leer. */
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class RutaVacia {}
 
 @Component({
   imports: [PublicNavRail],
   template: '<app-public-nav-rail />',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class HostComponent {}
 
@@ -235,6 +240,47 @@ describe('PublicNavRail', () => {
 
       expect(bloque).toContain('position: relative');
       expect(bloque).toContain('overflow-x: auto');
+    });
+  });
+
+  describe('grupo de la red social', () => {
+    const rutas = (): (string | null)[] => enlaces().map((a) => a.getAttribute('data-route'));
+
+    async function conSesion(autenticado: boolean): Promise<void> {
+      fixture.destroy();
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [HostComponent],
+        providers: [
+          provideRouter([{ path: 'posts', component: RutaVacia }]),
+          { provide: SessionStore, useValue: { isAuthenticated: signal(autenticado) } },
+        ],
+      }).compileComponents();
+      fixture = TestBed.createComponent(HostComponent);
+      router = TestBed.inject(Router);
+      await ir('/posts');
+    }
+
+    it('sin sesión no se ofrece: seguir y guardar son de un perfil propio', async () => {
+      await conSesion(false);
+
+      expect(rutas()).not.toContain('/network');
+      expect(rutas()).not.toContain('/saved');
+    });
+
+    it('con sesión aparece entre las secciones y los directorios, en orden', async () => {
+      await conSesion(true);
+
+      expect(root().querySelector('[data-group="social"]')).not.toBeNull();
+      const todas = rutas();
+      expect(todas.slice(todas.indexOf('/network'), todas.indexOf('/network') + 4)).toEqual([
+        '/network',
+        '/saved',
+        '/messaging',
+        '/notification-center',
+      ]);
+      expect(todas.indexOf('/network')).toBeGreaterThan(todas.indexOf('/search/symptoms'));
+      expect(todas.indexOf('/network')).toBeLessThan(todas.indexOf('/search/medications'));
     });
   });
 });
