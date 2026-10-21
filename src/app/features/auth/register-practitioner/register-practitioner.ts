@@ -7,9 +7,14 @@ import {
   Component,
   computed,
   inject,
+  PLATFORM_ID,
   signal,
   type WritableSignal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { HttpResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -633,15 +638,21 @@ function sinTildes(texto: string): string {
     AppInput,
     Select,
     Avatar,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-practitioner.html',
   styleUrls: ['../shared-registration/registration.css', './register-practitioner.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPractitioner {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
   private readonly systemContext = inject(SystemContextClient);
+  private readonly draftService = inject(OnboardingDraftService);
+
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
 
   /* ---- «Otra profesión»: lista normalizada (COB-2023) --------------------
 
@@ -2666,9 +2677,94 @@ export class RegisterPractitioner {
     () => AYUDA_PROFESIONAL[this.claveVisible()] ?? [],
   );
 
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginasProfesional();
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.formProfesional.getRawValue();
+      const extraData = {
+        nombresExtra: this.nombresExtra(),
+        especialidadesExtra: this.especialidadesExtra(),
+        gpsDomicilio: this.gpsDomicilio(),
+        gpsTrabajo: this.gpsTrabajo(),
+        gpsConsultorio: this.gpsConsultorio(),
+      };
+      this.draftService.saveProgress(
+        'practitioner',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'practitioner', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('practitioner');
+      if (!draft) return;
+      if (draft.data) {
+        this.formProfesional.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (Array.isArray(extra['nombresExtra'])) {
+        this.nombresExtra.set(extra['nombresExtra'] as readonly string[]);
+      }
+      if (Array.isArray(extra['especialidadesExtra'])) {
+        this.especialidadesExtra.set(extra['especialidadesExtra'] as readonly string[]);
+      }
+      if (extra['gpsDomicilio'] !== undefined) {
+        this.gpsDomicilio.set(extra['gpsDomicilio'] as Coordinates | null);
+      }
+      if (extra['gpsTrabajo'] !== undefined) {
+        this.gpsTrabajo.set(extra['gpsTrabajo'] as Coordinates | null);
+      }
+      if (extra['gpsConsultorio'] !== undefined) {
+        this.gpsConsultorio.set(extra['gpsConsultorio'] as Coordinates | null);
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'practitioner', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('practitioner');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
   /** Lo que el motor avisa al cambiar de página. */
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   readonly errorMessage = computed<string | null>(() => {
@@ -2686,6 +2782,12 @@ export class RegisterPractitioner {
   });
 
   constructor() {
+    const detectado = this.draftService.detectDraft('practitioner');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    }
+    this.draftService.trackEvent('start', 'practitioner', 0);
+
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarEspecialidades();
@@ -2696,11 +2798,11 @@ export class RegisterPractitioner {
     void this.padron.cargar();
     this.syncCollegeWithProfession();
 
+    this.formProfesional.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
+
     // El aviso de un envío fallido se va en cuanto se corrige algo.
-    //
-    // Se ata a lo único que de verdad significa «estoy corrigiendo» —que el
-    // formulario cambie—, que cubre además el caso que el avance de página no
-    // cubría: corregir en la misma página donde falló el envío.
     this.limpiarElErrorAlCorregir();
   }
 
@@ -2979,6 +3081,8 @@ export class RegisterPractitioner {
           next: () => {
             this.state.set(ready(null));
             this.registered.set(true);
+            this.limpiarBorrador();
+            this.draftService.trackEvent('complete', 'practitioner', 4);
           },
           error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'practitioner')),
         });

@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, PLATFORM_ID, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NgTemplateOutlet } from '@angular/common';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { OrganizationRegistration } from '../../../core/data-access/iam/iam.types';
@@ -180,15 +183,22 @@ function grupoDeGerente() {
     Input,
     PhoneInput,
     InlineNameFields,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterOrganization {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
+  private readonly draftService = inject(OnboardingDraftService);
+
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
+  readonly claveVisible = signal('');
 
   protected readonly claim = 'Gestione su aseguradora en un solo lugar';
   protected readonly tagline =
@@ -647,7 +657,87 @@ export class RegisterOrganization {
     return null;
   });
 
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginas();
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.form.getRawValue();
+      const extraData = {
+        gpsCasaMatriz: this.gpsCasaMatriz(),
+      };
+      this.draftService.saveProgress(
+        'organization',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'organization', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('organization');
+      if (!draft) return;
+      if (draft.data) {
+        this.form.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (extra['gpsCasaMatriz'] !== undefined) {
+        this.gpsCasaMatriz.set(extra['gpsCasaMatriz'] as Coordinates | null);
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'organization', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('organization');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Lo que el motor avisa al cambiar de página. */
+  protected recordarPaso(pagina: PaginaDeFormulario): void {
+    this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
+  }
+
   constructor() {
+    const detectado = this.draftService.detectDraft('organization');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    }
+    this.draftService.trackEvent('start', 'organization', 0);
+
     this.form.controls.ownerName.addValidators((grupo) => {
       const nombre = grupo.getRawValue() as NameValue;
       return joinNames([nombre.middleName, nombre.thirdName, ...nombre.extraNames]).length > 100
@@ -657,6 +747,10 @@ export class RegisterOrganization {
     this.form.controls.ownerName.updateValueAndValidity();
     this.cargarTipoSocietario();
     this.acomodarPaisYTipoSocietario();
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
   }
 
   /**
@@ -938,6 +1032,8 @@ export class RegisterOrganization {
         this.state.set(ready(null));
         this.verificationSent.set(resultado.emailVerificationSent);
         this.registered.set(true);
+        this.limpiarBorrador();
+        this.draftService.trackEvent('complete', 'organization', 4);
       },
       error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'organization')),
     });

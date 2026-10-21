@@ -30,6 +30,8 @@ import type {
   SloStatus,
   Timeseries,
   WebVitals,
+  OnboardingFunnelReport,
+  OnboardingHeatmapReport,
 } from './platform.types';
 
 /** Analítica de producto y RUM (`/admin/analytics`): sólo agregados calculados en el servidor. */
@@ -72,6 +74,22 @@ export class WebAnalyticsClient {
 
   session(id: string): Observable<SessionDetail> {
     return this.http.get<SessionDetail>(this.url(`/admin/analytics/sessions/${id}`));
+  }
+
+  onboardingFunnel(formType: string, range = '7d'): Observable<OnboardingFunnelReport> {
+    return this.http.get<OnboardingFunnelReport>(this.url('/admin/analytics/onboarding/funnel'), {
+      params: queryParams({ formType, range }),
+    });
+  }
+
+  onboardingHeatmap(
+    formType: string,
+    metric: 'interactions' | 'errors' | 'abandonment' = 'errors',
+    range = '7d',
+  ): Observable<OnboardingHeatmapReport> {
+    return this.http.get<OnboardingHeatmapReport>(this.url('/admin/analytics/onboarding/heatmap'), {
+      params: queryParams({ formType, metric, range }),
+    });
   }
 
   private url(path: string): string {

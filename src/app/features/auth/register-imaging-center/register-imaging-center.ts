@@ -1,8 +1,8 @@
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, PLATFORM_ID } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -13,6 +13,9 @@ import { Input as AppInput } from '../../../shared/components/atoms/input/input'
 import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
@@ -444,15 +447,21 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     RegistrationHelp,
     MapLocationPicker,
     NameFields,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-imaging-center.html',
   styleUrls: ['../shared-registration/registration.css', './register-imaging-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterImagingCenter {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly draftService = inject(OnboardingDraftService);
   private readonly router = inject(Router);
   private readonly iam = inject(IamClient);
   private readonly alta = inject(DiagnosisCenterEnrollment);
+
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
 
   /**
    * El código de organización se deriva del nombre y lleva un sufijo propio de
@@ -461,10 +470,90 @@ export class RegisterImagingCenter {
    */
   private readonly sufijoDeCodigo = generateReadableCode(5);
 
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginas;
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.form.getRawValue();
+      const extraData = {
+        gpsCentral: this.gpsCentral(),
+        sucursales: this.sucursales(),
+      };
+      this.draftService.saveProgress(
+        'imaging-center',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'imaging-center', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('imaging-center');
+      if (!draft) return;
+      if (draft.data) {
+        this.form.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (extra['gpsCentral'] !== undefined) {
+        this.gpsCentral.set(extra['gpsCentral'] as Coordinates | null);
+      }
+      if (Array.isArray(extra['sucursales'])) {
+        this.sucursales.set(extra['sucursales'] as readonly SucursalDeclarada[]);
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'imaging-center', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('imaging-center');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
   constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      const detectado = this.draftService.detectDraft('imaging-center');
+      if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+        this.borradorDetectado.set(detectado);
+      }
+      this.draftService.trackEvent('start', 'imaging-center', 0);
+    }
+
     // La constitución de la empresa (y el poder de su representante) se exigen
     // salvo a una unipersonal.
-    this.form.controls.companyType.valueChanges.subscribe((tipo) => {
+    this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
       const constitucion = this.form.controls.constitucionFile;
       const poder = this.form.controls.poderFile;
       if (tipo === 'UNIPERSONAL' || tipo === null) {
@@ -476,6 +565,10 @@ export class RegisterImagingCenter {
       }
       constitucion.updateValueAndValidity();
       poder.updateValueAndValidity();
+    });
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
     });
   }
 
@@ -1113,6 +1206,7 @@ export class RegisterImagingCenter {
 
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   /* --- envío ------------------------------------------------------------- */
@@ -1171,6 +1265,8 @@ export class RegisterImagingCenter {
       )
       .subscribe({
         next: () => {
+          this.limpiarBorrador();
+          this.draftService.trackEvent('complete', 'imaging-center', this.paginas.length);
           this.estado.set(ready(null));
           this.enviada.set(true);
         },

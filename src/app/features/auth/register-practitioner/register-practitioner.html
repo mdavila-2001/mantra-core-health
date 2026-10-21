@@ -35,6 +35,14 @@
           <h1 class="registro__title">Crear cuenta de profesional</h1>
         </div>
 
+        @if (borradorDetectado(); as borrador) {
+          <app-onboarding-draft-banner
+            [draft]="borrador"
+            (resume)="restaurarBorrador(borrador)"
+            (discard)="descartarBorrador()"
+          />
+        }
+
         @if (errorMessage(); as mensaje) {
           <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
             mensaje
@@ -57,6 +65,7 @@
             submitLabel="Crear cuenta"
             [iconOnlyNav]="true"
             [pending]="isSubmitting()"
+            [initialStep]="pasoGuardado()"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
           >
