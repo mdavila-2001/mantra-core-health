@@ -19,10 +19,14 @@ const EVIDENCIA = join(TRABAJO, 'evidencia');
 const SALIDA = join(TRABAJO, 'ANTES_DESPUES.html');
 const ACTORES = ['publicas', 'paciente', 'medica', 'superadmin'];
 const ROTULO = { publicas: 'Sin sesión', paciente: 'Paciente', medica: 'Médica', superadmin: 'Superadmin' };
-/** Mediciones que cuentan como defecto (las demás son informativas). */
+/**
+ * Mediciones que cuentan como defecto (las demás son informativas).
+ * `pestanas-desbordan` queda fuera a propósito: la corrida «antes» no excluía las
+ * pestañas con flechas y dio 15 falsos positivos.
+ */
 const DEFECTOS = [
   'desborde', 'recorte', 'objetivo-chico', 'tabla-ancha', 'tabla-columnas',
-  'pestanas-desbordan', 'cortado', 'texto-chico', 'sin-marca', 'muy-larga', 'h1', 'texto-roto', 'uuid-visible',
+  'cortado', 'texto-chico', 'sin-marca', 'muy-larga', 'h1', 'texto-roto', 'uuid-visible',
 ];
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);

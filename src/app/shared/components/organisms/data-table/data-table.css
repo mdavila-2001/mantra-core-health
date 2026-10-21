@@ -301,3 +301,218 @@ thead .data-table__cell {
 .data-table--constrained .data-table__detail-row {
     display: table-row;
 }
+
+/* ============================================================================
+    Modo tarjeta (teléfono) — cada fila es una tarjeta con «etiqueta · valor».
+
+    Por qué: con 4 columnas «imprescindibles» una tabla no cabe en 390 px. Se
+    medía y se veía así: nombres partidos en cuatro y cinco líneas, códigos
+    cortados («PAC-/20000»), la última columna fuera de la pantalla y el detalle
+    plegado detrás de un triángulo de 10 px. Una fila-tarjeta usa el ancho
+    completo y deja cada dato con su rótulo.
+
+    Es `not (min-width: 780px)` y no un `max-width` con otro número: el corte
+    del sistema se escribe una sola vez (`--bp-md`), y el escritorio queda como
+    estaba porque nada de este bloque lo alcanza.
+
+    Va al final del archivo a propósito: las reglas de `.data-table--constrained`
+    de arriba tienen la misma especificidad y, en pantalla chica, tiene que
+    ganar la tarjeta.
+
+    Lo que NO cambia: el orden de los datos, las columnas secundarias (siguen
+    plegadas al detalle, ahora con un botón «Detalle» visible), el orden por
+    columna (sus botones quedan como una barra «Ordenar por») ni la semántica de
+    tabla (los roles se declaran en la plantilla).
+    ========================================================================== */
+@media not (min-width: 780px) {
+    .data-table__table,
+    .data-table__table thead {
+        display: block;
+    }
+
+    .data-table__table tbody {
+        display: grid;
+        gap: var(--sp-3);
+    }
+
+    /* Encabezado: sin botones de orden no hay nada que mostrar (los rótulos
+       viven en cada dato) pero sigue ahí para los lectores de pantalla. Con
+       ellos, se vuelve una barra de chips. */
+    .data-table__table thead:not(:has(.data-table__sort)),
+    .data-table__table thead th:not(:has(.data-table__sort)) {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .data-table__table thead tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--sp-2);
+        margin-block-end: var(--sp-3);
+    }
+
+    .data-table__table thead tr:has(.data-table__sort)::before {
+        content: 'Ordenar por';
+        font-size: var(--fs-caption);
+        color: var(--text-secondary);
+    }
+
+    .data-table__table thead .data-table__cell:has(.data-table__sort) {
+        display: block;
+        padding: 0;
+        border: none;
+    }
+
+    .data-table__table .data-table__sort {
+        min-block-size: 44px;
+        padding-inline: var(--sp-3);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-full);
+        background: var(--bg-surface);
+    }
+
+    /* La tarjeta. */
+    .data-table__table .data-table__row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--sp-1);
+        padding: var(--sp-3);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-md);
+        background: var(--bg-surface);
+    }
+
+    /* Con detalle abierto, tarjeta y detalle se leen como una sola pieza. */
+    .data-table__table .data-table__row:has(+ .data-table__detail-row) {
+        border-end-start-radius: 0;
+        border-end-end-radius: 0;
+        border-block-end-color: transparent;
+    }
+
+    /* Rótulo a la izquierda, valor a la derecha. El valor puede traer varios
+       hijos (un nombre y su subtítulo, un chip y su nota): el rótulo ocupa la
+       primera columna en todas las filas y todo lo demás cae en la segunda. */
+    .data-table__table tbody .data-table__cell {
+        display: grid;
+        grid-template-columns: minmax(5.5rem, 34%) minmax(0, 1fr);
+        align-items: start;
+        justify-items: start;
+        column-gap: var(--sp-3);
+        padding: var(--sp-1) 0;
+        border-block-end: none;
+        overflow-wrap: anywhere;
+    }
+
+    .data-table__table tbody .data-table__cell::before {
+        content: attr(data-label);
+        grid-column: 1;
+        grid-row: 1 / span 99;
+        padding-block-start: 0.15em;
+        font-size: var(--fs-caption);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+
+    .data-table__table tbody .data-table__cell > * {
+        grid-column: 2;
+    }
+
+    /* Las columnas de menor prioridad siguen plegadas al detalle: el `display`
+       de arriba tiene más especificidad que el `none` de la base y las
+       mostraba (se vio en Evoluciones: «Tipo de cita» y «Canal» a la vista Y
+       en «Detalle»). */
+    .data-table__table tbody .data-table__secondary {
+        display: none;
+    }
+
+    /* La primera columna es la que nombra la fila (el paciente, la
+       organización, la fecha): encabeza la tarjeta, sin rótulo, y separa el
+       resto con un filete. */
+    .data-table__table .data-table__row > .data-table__cell:first-of-type {
+        display: block;
+        margin-block-end: var(--sp-1);
+        padding-block-end: var(--sp-2);
+        border-block-end: 1px solid var(--border-default);
+        font-family: var(--font-display);
+        font-size: var(--fs-h3);
+        line-height: var(--lh-h3);
+        font-weight: 500;
+    }
+
+    .data-table__table .data-table__row > .data-table__cell:first-of-type::before {
+        display: none;
+    }
+
+    /* La columna de acciones no necesita rótulo: es el botón. Va al pie. */
+    .data-table__table tbody .data-table__cell--sticky-end {
+        position: static;
+        display: flex;
+        justify-content: flex-end;
+        margin-block-start: var(--sp-1);
+        padding-block-start: var(--sp-2);
+        border-block-start: 1px solid var(--border-default);
+    }
+
+    .data-table__table tbody .data-table__cell--sticky-end::before {
+        display: none;
+    }
+
+    .data-table__table .data-table__select-cell {
+        display: block;
+        inline-size: auto;
+        padding: 0;
+        border: none;
+    }
+
+    .data-table__table .data-table__detail-toggle-cell {
+        display: flex;
+        justify-content: flex-end;
+        inline-size: auto;
+        padding: 0;
+        border: none;
+    }
+
+    .data-table__table .data-table__detail-toggle {
+        inline-size: auto;
+        min-inline-size: 44px;
+        gap: var(--sp-2);
+        padding-inline: var(--sp-3);
+        border: 1px solid var(--border-default);
+        font-size: var(--fs-caption);
+        font-weight: 600;
+    }
+
+    .data-table__table .data-table__detail-row {
+        display: block;
+        margin-block-start: calc(var(--sp-3) * -1);
+        border: 1px solid var(--border-default);
+        border-block-start: none;
+        border-end-start-radius: var(--r-md);
+        border-end-end-radius: var(--r-md);
+        background: var(--bg-inset);
+    }
+
+    .data-table__table .data-table__detail-row td {
+        display: block;
+        border: none;
+    }
+}
+
+/* El texto «Detalle» solo existe en el modo tarjeta; en escritorio queda el
+   triángulo de siempre (con su nombre accesible, que no cambia). */
+.data-table__detail-toggle-texto {
+    display: none;
+}
+
+@media not (min-width: 780px) {
+    .data-table__detail-toggle-texto {
+        display: inline;
+    }
+}

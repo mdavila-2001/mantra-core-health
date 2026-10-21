@@ -85,7 +85,7 @@
             }
 
             @for (column of columns(); track column.key) {
-              <td [class]="cellClassFor(column)">
+              <td [class]="cellClassFor(column)" [attr.data-label]="column.header">
                 @if (column.cell) {
                   <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {
@@ -103,6 +103,7 @@
                   [attr.aria-label]="'Ver el detalle de ' + rowName(row, indice)"
                   (click)="toggleDetail(row)"
                 >
+                  <span class="data-table__detail-toggle-texto" aria-hidden="true">Detalle</span>
                   <span aria-hidden="true">{{ isExpanded(row) ? '▲' : '▼' }}</span>
                 </button>
               </td>

@@ -330,8 +330,12 @@
 /* --- Angosto ------------------------------------------------------------- */
 
 @media (max-width: 60rem) {
+  /* `minmax(0, 1fr)` y no `1fr`: la pista `1fr` vale `minmax(auto, 1fr)` y se
+     estira hasta el contenido más ancho. Aquí era la vista previa del último
+     mensaje: el panel medía 877 px dentro de 390 y el texto salía cortado por
+     el borde («Si prefe…») sin que la página se pudiera desplazar. */
   .mensajeria {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mensajeria__panel {

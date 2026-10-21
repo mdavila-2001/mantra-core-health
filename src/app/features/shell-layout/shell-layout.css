@@ -32,3 +32,47 @@
     padding-inline: var(--e2);
   }
 }
+
+/*
+ * Marca en la cabecera del teléfono, y Tutoriales / Ajustes plegados al menú de
+ * la cuenta cuando el ancho no alcanza (refactor móvil, 2026-10-21).
+ *
+ * Mobile-first: la base es el teléfono; desde cada corte se deshace.
+ */
+.app-header__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Área táctil de 44 px aunque el dibujo mida 30 × 22. */
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  border-radius: var(--r-md);
+  flex: none;
+}
+
+.app-header__marca:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Tutoriales y Ajustes: fuera de la barra en el teléfono, dentro del menú. */
+.app-header__ajustes--opcional {
+  display: none;
+}
+
+@media (min-width: 560px) {
+  .app-header__ajustes--opcional {
+    display: inline-flex;
+  }
+
+  .app-header__solo-estrecho {
+    display: none;
+  }
+}
+
+/* En escritorio la marca ya está arriba de la barra lateral. */
+@media (min-width: 780px) {
+  .app-header__marca {
+    display: none;
+  }
+}

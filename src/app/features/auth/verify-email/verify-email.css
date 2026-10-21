@@ -54,3 +54,8 @@
 .verificacion__accion {
   width: 100%;
 }
+
+/* La marca encabeza la tarjeta: antes estas pantallas no decían de quién eran. */
+.verificacion__marca {
+  margin-block-end: var(--sp-4);
+}

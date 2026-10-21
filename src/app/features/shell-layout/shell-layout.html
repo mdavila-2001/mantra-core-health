@@ -249,6 +249,17 @@
         <app-back-link class="app-header__volver" fallback="/dashboard" label="Volver" iconOnly />
       }
 
+      <!-- La marca en el teléfono. En escritorio vive arriba de la barra lateral;
+           en un teléfono esa barra es un cajón cerrado y ninguna pantalla
+           autenticada mostraba el isotipo (medido en las 192 del barrido móvil).
+           Sólo el isotipo, sin la palabra: con el menú, la flecha y las acciones
+           no hay lugar para más. Se dibuja con la máscara del propio logo para
+           que tome el color del tema, igual que la píldora de las pantallas de
+           ingreso. Se oculta desde 780 px (`shell-layout.css`). -->
+      <a class="app-header__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
+        <app-brand-mark decorative />
+      </a>
+
       <!-- Acá había un buscador «en toda la organización» **sin un solo
            manejador**: ni `(input)`, ni `(keydown.enter)`, ni formulario. Se
            escribía, se apretaba Enter, y no pasaba nada. Y el tutorial del
@@ -391,7 +402,7 @@
              y el catálogo de íconos ya tiene `teach` y `chat` — copiar el SVG
              de Ajustes a mano habría duplicado un ícono que ya existe. -->
         <a
-          class="app-header__ajustes"
+          class="app-header__ajustes app-header__ajustes--opcional"
           routerLink="/tutorials"
           data-testid="header-tutoriales"
           appTooltip="Tutoriales"
@@ -432,7 +443,7 @@
              abrir en otra pestaña y se puede copiar la dirección, que es lo que
              cualquiera espera de algo que navega. -->
         <a
-          class="app-header__ajustes"
+          class="app-header__ajustes app-header__ajustes--opcional"
           routerLink="/settings"
           data-testid="header-ajustes"
           appTooltip="Ajustes"
@@ -473,6 +484,24 @@
                   <span class="caption">{{ rolesLegibles() }}</span>
                 }
               </p>
+              <!-- En un teléfono no entran todos los íconos del encabezado: Tutoriales
+                   y Ajustes se pliegan acá (`.app-header__ajustes--opcional` los
+                   oculta de la barra) y siguen a un toque. Desde 560 px vuelven a
+                   la barra y estas dos entradas se ocultan. -->
+              <a
+                class="app-menu-item app-header__solo-estrecho"
+                role="menuitem"
+                routerLink="/tutorials"
+                data-testid="cuenta-tutoriales"
+                >Tutoriales</a
+              >
+              <a
+                class="app-menu-item app-header__solo-estrecho"
+                role="menuitem"
+                routerLink="/settings"
+                data-testid="cuenta-ajustes"
+                >Ajustes</a
+              >
               <button
                 class="app-menu-item"
                 type="button"

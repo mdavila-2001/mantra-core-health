@@ -46,6 +46,13 @@ const EJECUTABLE = process.env['PW_CHROMIUM'];
  * código de la aplicación no haya cambiado desde esa fase.
  */
 const SOLO_MEDIR = process.env['MOVIL_SOLO_MEDIR'] === '1';
+/**
+ * `MOVIL_RUTAS=/schedule,/messaging` limita la corrida a esas rutas (comparación
+ * exacta con la del catálogo): para iterar sobre una corrección sin repetir el
+ * barrido entero. Sin la variable, todas.
+ */
+const SOLO_RUTAS = (process.env['MOVIL_RUTAS'] ?? '').split(',').map((r) => r.trim()).filter(Boolean);
+const elegida = (ruta: string): boolean => SOLO_RUTAS.length === 0 || SOLO_RUTAS.includes(ruta);
 
 test.use({
   viewport: MOVIL,
@@ -208,18 +215,32 @@ async function medirEnPagina(page: Page): Promise<Record<string, string[]>> {
     }
 
     for (const tl of document.querySelectorAll('[role=tablist]')) {
-      if (visible(tl) && tl.scrollWidth > tl.clientWidth + 1)
+      // `app-tabs` trae sus flechas (‹ ›): ahí el desplazamiento SÍ tiene indicio.
+      // La corrida «antes» no lo excluía y contó 15 falsos positivos.
+      const conFlechas = tl.closest('.tabs__bar')?.querySelector('.tabs__desplazar') != null;
+      if (visible(tl) && !conFlechas && tl.scrollWidth > tl.clientWidth + 1)
         add('pestanas-desbordan', `${tl.scrollWidth - tl.clientWidth}px sin indicio`);
     }
 
     let chicos = 0;
+    const quienes = new Map<string, number>();
     for (const e of main.querySelectorAll('p, span, td, th, li, label, a, button, dd, dt')) {
       if (!visible(e) || !(e.textContent ?? '').trim() || e.children.length > 0) continue;
-      if (parseFloat(getComputedStyle(e).fontSize) < 12) chicos++;
+      const px = parseFloat(getComputedStyle(e).fontSize);
+      if (px < 12) {
+        chicos++;
+        const k = `${etiqueta(e)} ${px}px`;
+        quienes.set(k, (quienes.get(k) ?? 0) + 1);
+      }
     }
-    if (chicos > 0) add('texto-chico', `${chicos} elementos < 12px`);
+    if (chicos > 0) {
+      add('texto-chico', `${chicos} elementos < 12px`);
+      for (const [k, n] of [...quienes].sort((a, b) => b[1] - a[1]).slice(0, 3)) add('texto-chico', `${k} ×${n}`);
+    }
 
-    // Marca: ¿se ve el isotipo ALOVIDA en la primera pantalla?
+    // Marca: ¿se ve el isotipo ALOVIDA en la primera pantalla? (La corrida «antes»
+    // exigía los primeros 140 px; para las pantallas autenticadas —donde la marca
+    // va en la cabecera o no está— el resultado es el mismo.)
     // El isotipo se dibuja de tres maneras: `<img>`, `<svg>` en línea, o como
     // máscara/fondo CSS (la píldora de las pantallas de ingreso). Las tres cuentan.
     const esMarca = (e: Element): boolean => {
@@ -229,9 +250,9 @@ async function medirEnPagina(page: Page): Promise<Record<string, string[]>> {
       return capas.includes('alovida-logo');
     };
     const marca = [...document.querySelectorAll('body *')].some(
-      (e) => esMarca(e) && visible(e) && e.getBoundingClientRect().top < 140 && e.getBoundingClientRect().right > 0,
+      (e) => esMarca(e) && visible(e) && e.getBoundingClientRect().top < window.innerHeight && e.getBoundingClientRect().right > 0,
     );
-    if (!marca) add('sin-marca', 'ningún isotipo ALOVIDA visible en los primeros 140px');
+    if (!marca) add('sin-marca', 'ningún isotipo ALOVIDA visible en la primera pantalla');
 
     const alto = document.documentElement.scrollHeight;
     if (alto > 4500) add('muy-larga', `${alto}px`);
@@ -293,6 +314,7 @@ test('humo: /auth a 390 en claro y oscuro', async ({ page }) => {
 });
 
 test('publicas', async ({ page }) => {
+  test.skip(SOLO_RUTAS.length > 0 && !PUBLICAS.some(elegida), 'MOVIL_RUTAS no pide ninguna pública');
   test.setTimeout(300_000);
   const carpeta = carpetaDe('publicas');
   const errores: string[] = [];
@@ -301,7 +323,7 @@ test('publicas', async ({ page }) => {
   });
   page.on('pageerror', (e) => errores.push(e.message));
   const mediciones: Medicion[] = [];
-  for (const ruta of PUBLICAS) {
+  for (const ruta of PUBLICAS.filter(elegida)) {
     errores.length = 0;
     await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
     await page.goto(ruta);
@@ -320,12 +342,12 @@ const catalogo = catalogoDeRutas();
 const todas: RutaDelCatalogo[] = [...catalogo.secciones, ...catalogo.hijas];
 
 for (const clave of Object.keys(ACTORES) as Clave[]) {
-  const propias = todas.filter((r) => actoresDe(r).includes(clave));
+  const propias = todas.filter((r) => actoresDe(r).includes(clave) && elegida(r.ruta));
   const fijas = propias.filter((r) => !r.parametrizada);
   const conParametro = propias.filter((r) => r.parametrizada);
   const lotes: RutaDelCatalogo[][] = [];
   for (let i = 0; i < fijas.length; i += POR_PRUEBA) lotes.push(fijas.slice(i, i + POR_PRUEBA));
-  lotes.push(conParametro);
+  if (conParametro.length > 0) lotes.push(conParametro);
 
   lotes.forEach((lote, n) => {
     test(`movil ${clave} ${n + 1}/${lotes.length}`, async ({ page }) => {

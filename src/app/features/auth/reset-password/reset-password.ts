@@ -6,6 +6,7 @@ import { IamClient } from '../../../core/data-access/iam/iam.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { BrandMark } from '../../../shared/components/atoms/brand-mark/brand-mark';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
@@ -25,7 +26,7 @@ const MIN_PASSWORD = 8;
  */
 @Component({
   selector: 'app-reset-password',
-  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, NavIcon, Alert, AnnounceOnAppear],
+  imports: [ReactiveFormsModule, RouterLink, AppButton, BrandMark, Input, Link, FormField, NavIcon, Alert, AnnounceOnAppear],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

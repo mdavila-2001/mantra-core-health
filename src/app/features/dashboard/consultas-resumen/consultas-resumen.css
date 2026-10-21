@@ -86,6 +86,19 @@
 
 .consultas-resumen__tabla-scroll {
   overflow-x: auto;
+  /* Indicio de que hay más columnas: la tabla mide 44 rem y en un teléfono se
+     desplaza de lado sin avisarlo (se veía cortada a las 11:00). Sombra en el
+     borde por donde queda contenido: las dos primeras capas son «tapas» del
+     color de la tarjeta que se mueven con el contenido (`local`) y destapan la
+     sombra fija de las dos últimas sólo cuando hay algo detrás. Sin JavaScript. */
+  background:
+    linear-gradient(to right, var(--bg-surface) 30%, transparent) left center,
+    linear-gradient(to left, var(--bg-surface) 30%, transparent) right center,
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--text-secondary) 35%, transparent), transparent) left center,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--text-secondary) 35%, transparent), transparent) right center;
+  background-repeat: no-repeat;
+  background-size: 2.5rem 100%, 2.5rem 100%, 0.9rem 100%, 0.9rem 100%;
+  background-attachment: local, local, scroll, scroll;
 }
 
 .consultas-resumen__tabla {

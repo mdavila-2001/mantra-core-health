@@ -2,11 +2,22 @@
    acotada. */
 .no-encontrado {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
+    gap: var(--sp-6);
+    /* En un teléfono el contenido iba pegado arriba con más de mil píxeles de
+       fondo vacío debajo: se centra en la pantalla. */
+    min-block-size: 70dvh;
     padding: var(--sp-8) var(--sp-4);
 }
 
 .no-encontrado > * {
     max-width: 60ch;
     width: 100%;
+}
+
+/* La marca no se estira a 60ch como el resto. */
+.no-encontrado > .no-encontrado__marca {
+    width: auto;
 }

@@ -27,6 +27,9 @@ export { Chip } from './chip/chip';
 export { CHIP_REMOVE_KEYS, CHIP_SIZES, CHIP_VARIANTS } from './chip/chip.types';
 export type { ChipSize, ChipVariant } from './chip/chip.types';
 
+export { BrandMark } from './brand-mark/brand-mark';
+export { BRAND_MARK_SIZES, BRAND_MARK_VARIANTS } from './brand-mark/brand-mark.types';
+export type { BrandMarkSize, BrandMarkVariant } from './brand-mark/brand-mark.types';
 export { Divider } from './divider/divider';
 export { DIVIDER_ORIENTATIONS } from './divider/divider.types';
 export type { DividerOrientation } from './divider/divider.types';

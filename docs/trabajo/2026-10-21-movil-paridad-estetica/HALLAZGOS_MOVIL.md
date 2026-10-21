@@ -13,7 +13,7 @@ Cada fila se confirmó **mirando la captura**, no solo por la cifra.
 | `objetivo-chico` | 142 | Las migas de pan miden 32 × 18 px («Panel») y se repiten 113 veces; es **un componente**, no 142 problemas |
 | `texto-chico` | 46 | Textos < 12 px |
 | `tabla-ancha` / `tabla-columnas` | 16 / 11 | Tablas con 4+ columnas «imprescindibles» aplastadas: nombres en 4–5 líneas, códigos partidos («PAC-/20000»), triángulo ▼ como única pista del detalle |
-| `pestanas-desbordan` | 15 | Pestañas que se salen sin indicio de que hay más |
+| ~~`pestanas-desbordan`~~ | ~~15~~ | **Falso positivo, retirado.** `app-tabs` ya trae flechas ‹ › (se ve en `paciente/my-account-claro.webp`); la medición no las excluía. No se corrige nada |
 | `muy-larga` | 13 | Páginas de más de 4 500 px (`/administration/clinical-forms` 7 112 px; Evoluciones llega al tope de 12 000) |
 | `cortado` | 3 | **Mensajería**: panel de 877 px dentro de 390 (lista y conversación lado a lado); `/administration/my-practice` tabla de 489 px |
 | `desborde` | 1 | **Agenda** de la médica: barra de acciones del día de 530 px |
@@ -29,7 +29,7 @@ Cada fila se confirmó **mirando la captura**, no solo por la cifra.
 | 4 | **F12 Mensajería** | Panel de 877 px; mensajes cortados («Si prefe…») | Una sola columna en móvil: lista → conversación, con botón de volver | 2 pantallas |
 | 5 | **F-pub Públicas y estados** | Error, 404, verificar/activar/reenviar/recuperar/restablecer sin logo, contenido pegado arriba con 1 100 px vacíos, anillo de foco grueso sobre el título, «Ir al inicio» de 22 px, sin `<h1>` | Logo + centrado vertical + `<h1>` + objetivo táctil | 9 |
 | 6 | **F-agenda** | Barra de acciones del día cortada («Mover hora…») | Que ajuste a la línea / desplace con indicio | 1 |
-| 7 | **F-tab Pestañas / mapa de calor** | Pestañas y mapa de calor («Cuándo se concentra tu mes») cortados sin indicio | Desplazamiento con sombra-indicio en el borde | 15 |
+| 7 | **F-mapa Mapa de calor** | «Cuándo se concentra tu mes» queda cortado a las 11:00 sin indicio (las pestañas NO: tienen flechas) | Sombra-indicio en el borde de desplazamiento | 1 |
 | 8 | F8 Densidad | Páginas kilométricas | Se vuelve a medir tras F3 (las tablas son la causa de la mayoría) | 13 |
 
 No se tocan (fuera de alcance o ya justificados en `docs/refactor-profesional/trabajo/HALLAZGOS.md`):

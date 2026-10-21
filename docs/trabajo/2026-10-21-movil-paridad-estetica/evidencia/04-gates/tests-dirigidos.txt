@@ -1,0 +1,254 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                             | Names                                                                        |  Raw size
+chunk-2LFCQ4QW.js                                                               | -                                                                            | 312.64 kB | 
+spec-app-features-auth-register-practitioner-register-practitioner.js           | spec-app-features-auth-register-practitioner-register-practitioner           | 310.89 kB | 
+spec-app-features-auth-register-organization-register-organization.js           | spec-app-features-auth-register-organization-register-organization           | 288.69 kB | 
+spec-app-features-auth-register-patient-register-patient.js                     | spec-app-features-auth-register-patient-register-patient                     | 272.17 kB | 
+spec-app-features-agenda-agenda.js                                              | spec-app-features-agenda-agenda                                              | 258.84 kB | 
+spec-app-features-messaging-thread-thread.js                                    | spec-app-features-messaging-thread-thread                                    | 232.88 kB | 
+spec-app-features-shell-layout-shell-layout.js                                  | spec-app-features-shell-layout-shell-layout                                  | 226.88 kB | 
+chunk-T6RSRTE4.js                                                               | -                                                                            | 220.02 kB | 
+spec-app-features-agenda-agenda-create-agenda-create.js                         | spec-app-features-agenda-agenda-create-agenda-create                         | 186.12 kB | 
+chunk-7QJAAV3H.js                                                               | -                                                                            | 173.46 kB | 
+styles.css                                                                      | styles                                                                       | 166.36 kB | 
+chunk-KAMREZOY.js                                                               | -                                                                            | 161.72 kB | 
+chunk-Q5IDYSX5.js                                                               | -                                                                            | 108.06 kB | 
+chunk-Z5H7H372.js                                                               | -                                                                            |  99.30 kB | 
+spec-app-features-agenda-appointment-new-appointment-new.js                     | spec-app-features-agenda-appointment-new-appointment-new                     |  98.07 kB | 
+chunk-T2MLGN6L.js                                                               | -                                                                            |  89.30 kB | 
+spec-app-features-agenda-booking-new-booking-new.js                             | spec-app-features-agenda-booking-new-booking-new                             |  79.91 kB | 
+spec-app-features-auth-register-imaging-center-register-imaging-center.js       | spec-app-features-auth-register-imaging-center-register-imaging-center       |  77.76 kB | 
+chunk-HSMIALMH.js                                                               | -                                                                            |  72.16 kB | 
+chunk-BBE7IUAQ.js                                                               | -                                                                            |  71.79 kB | 
+spec-app-features-auth-register-laboratory-register-laboratory.js               | spec-app-features-auth-register-laboratory-register-laboratory               |  71.17 kB | 
+chunk-LZPFLMO7.js                                                               | -                                                                            |  64.02 kB | 
+chunk-2W7NLRFL.js                                                               | -                                                                            |  57.78 kB | 
+chunk-4Y2EDCUT.js                                                               | -                                                                            |  57.28 kB | 
+chunk-2QYWF55F.js                                                               | -                                                                            |  56.92 kB | 
+spec-app-features-messaging-messaging.js                                        | spec-app-features-messaging-messaging                                        |  56.06 kB | 
+chunk-U752S4HA.js                                                               | -                                                                            |  55.54 kB | 
+chunk-YL43OB3E.js                                                               | -                                                                            |  50.79 kB | 
+chunk-SB5OXE3Q.js                                                               | -                                                                            |  49.80 kB | 
+spec-app-features-dashboard-dashboard.js                                        | spec-app-features-dashboard-dashboard                                        |  45.16 kB | 
+chunk-36TMT2A4.js                                                               | -                                                                            |  45.09 kB | 
+spec-app-features-auth-login-login.js                                           | spec-app-features-auth-login-login                                           |  44.42 kB | 
+chunk-XNXOWLKU.js                                                               | -                                                                            |  43.26 kB | 
+chunk-ILDZOGBL.js                                                               | -                                                                            |  42.56 kB | 
+chunk-LUARR6OT.js                                                               | -                                                                            |  42.00 kB | 
+chunk-3YCSWTXU.js                                                               | -                                                                            |  41.77 kB | 
+spec-app-features-agenda-blocks-blocks.js                                       | spec-app-features-agenda-blocks-blocks                                       |  38.88 kB | 
+chunk-S4GU5WXM.js                                                               | -                                                                            |  36.67 kB | 
+chunk-6BDJYNPX.js                                                               | -                                                                            |  34.65 kB | 
+chunk-HWXPMVDU.js                                                               | -                                                                            |  33.61 kB | 
+chunk-FFMMXOE7.js                                                               | -                                                                            |  33.61 kB | 
+spec-app-features-agenda-my-agenda-my-agenda.js                                 | spec-app-features-agenda-my-agenda-my-agenda                                 |  33.40 kB | 
+chunk-I4G35K4H.js                                                               | -                                                                            |  32.80 kB | 
+chunk-YOXW73HO.js                                                               | -                                                                            |  32.54 kB | 
+chunk-ENIZ6WGC.js                                                               | -                                                                            |  32.15 kB | 
+chunk-FVLBC4Z4.js                                                               | -                                                                            |  30.45 kB | 
+chunk-MFXJLKFV.js                                                               | -                                                                            |  29.39 kB | 
+chunk-PKNFG4VW.js                                                               | -                                                                            |  29.01 kB | 
+chunk-JMOTBYBC.js                                                               | -                                                                            |  28.45 kB | 
+chunk-2HFLC3PJ.js                                                               | -                                                                            |  26.79 kB | 
+chunk-2I2YNSID.js                                                               | -                                                                            |  26.77 kB | 
+spec-app-features-auth-activate-account-activate-account.js                     | spec-app-features-auth-activate-account-activate-account                     |  26.33 kB | 
+spec-app-features-auth-register-account-type-register-account-type.js           | spec-app-features-auth-register-account-type-register-account-type           |  25.71 kB | 
+chunk-OIMLIF42.js                                                               | -                                                                            |  25.65 kB | 
+chunk-HB2PITWT.js                                                               | -                                                                            |  24.51 kB | 
+chunk-MP2NKPNE.js                                                               | -                                                                            |  23.76 kB | 
+spec-app-features-auth-reset-password-reset-password.js                         | spec-app-features-auth-reset-password-reset-password                         |  20.91 kB | 
+spec-app-features-auth-resend-verification-resend-verification.js               | spec-app-features-auth-resend-verification-resend-verification               |  20.79 kB | 
+chunk-QAYUXGSI.js                                                               | -                                                                            |  19.73 kB | 
+chunk-5R2UXWJF.js                                                               | -                                                                            |  19.27 kB | 
+chunk-ILRMGNK2.js                                                               | -                                                                            |  19.25 kB | 
+chunk-MERTRLTM.js                                                               | -                                                                            |  18.69 kB | 
+chunk-DLDRQ5Y2.js                                                               | -                                                                            |  18.51 kB | 
+chunk-KPTQBJDQ.js                                                               | -                                                                            |  18.42 kB | 
+spec-app-features-auth-forgot-password-forgot-password.js                       | spec-app-features-auth-forgot-password-forgot-password                       |  17.37 kB | 
+spec-app-shared-components-organisms-data-table-data-table.js                   | spec-app-shared-components-organisms-data-table-data-table                   |  17.31 kB | 
+chunk-6VY35UVA.js                                                               | -                                                                            |  17.22 kB | 
+chunk-UDAZI7YJ.js                                                               | -                                                                            |  16.62 kB | 
+chunk-KY76WYN7.js                                                               | -                                                                            |  15.02 kB | 
+chunk-WRP4FYTQ.js                                                               | -                                                                            |  14.94 kB | 
+chunk-OUUEACNM.js                                                               | -                                                                            |  14.74 kB | 
+chunk-BTXVLCHR.js                                                               | -                                                                            |  14.66 kB | 
+spec-app-features-agenda-my-agenda-day-view-day-view.js                         | spec-app-features-agenda-my-agenda-day-view-day-view                         |  14.39 kB | 
+chunk-SD563MNY.js                                                               | -                                                                            |  14.36 kB | 
+chunk-KYFCE6DX.js                                                               | -                                                                            |  14.32 kB | 
+chunk-RTLV2HBC.js                                                               | -                                                                            |  14.27 kB | 
+spec-app-features-dashboard-agenda-de-hoy-agenda-de-hoy.js                      | spec-app-features-dashboard-agenda-de-hoy-agenda-de-hoy                      |  14.13 kB | 
+spec-app-features-auth-verify-email-verify-email.js                             | spec-app-features-auth-verify-email-verify-email                             |  14.07 kB | 
+chunk-AQSVVVRC.js                                                               | -                                                                            |  14.07 kB | 
+spec-app-features-agenda-my-agenda-month-view-month-view.js                     | spec-app-features-agenda-my-agenda-month-view-month-view                     |  14.06 kB | 
+chunk-UJFPAV23.js                                                               | -                                                                            |  14.02 kB | 
+spec-app-features-agenda-my-agenda-tarjeta-del-dia-tarjeta-del-dia.js           | spec-app-features-agenda-my-agenda-tarjeta-del-dia-tarjeta-del-dia           |  13.93 kB | 
+spec-app-features-agenda-my-agenda-schedule-grid-schedule-grid.js               | spec-app-features-agenda-my-agenda-schedule-grid-schedule-grid               |  13.35 kB | 
+chunk-6UDW4DHY.js                                                               | -                                                                            |  13.09 kB | 
+chunk-HSQMMK74.js                                                               | -                                                                            |  12.96 kB | 
+chunk-Y7U6ONEC.js                                                               | -                                                                            |  12.55 kB | 
+chunk-FFBERJS4.js                                                               | -                                                                            |  12.51 kB | 
+chunk-5C4SJET2.js                                                               | -                                                                            |  12.28 kB | 
+spec-app-features-auth-tenant-selection-tenant-selection.js                     | spec-app-features-auth-tenant-selection-tenant-selection                     |  12.21 kB | 
+chunk-2VH3U675.js                                                               | -                                                                            |  12.17 kB | 
+chunk-3REQNNNJ.js                                                               | -                                                                            |  11.85 kB | 
+chunk-JVCSKITB.js                                                               | -                                                                            |  11.26 kB | 
+chunk-ROFNBPX4.js                                                               | -                                                                            |  11.06 kB | 
+chunk-WO52ATZA.js                                                               | -                                                                            |  10.61 kB | 
+chunk-CX3D4ZRC.js                                                               | -                                                                            |  10.47 kB | 
+spec-app-features-auth-registro-compartido-ubicacion-picker-ubicacion-picker.js | spec-app-features-auth-registro-compartido-ubicacion-picker-ubicacion-picker |   9.99 kB | 
+chunk-PI5EQY7R.js                                                               | -                                                                            |   9.38 kB | 
+chunk-UOFWKB3E.js                                                               | -                                                                            |   9.29 kB | 
+chunk-GWLMY3O7.js                                                               | -                                                                            |   9.11 kB | 
+chunk-DRJUM6RX.js                                                               | -                                                                            |   8.74 kB | 
+spec-app-features-dashboard-patient-home-patient-home.js                        | spec-app-features-dashboard-patient-home-patient-home                        |   8.73 kB | 
+chunk-LU7QFFQP.js                                                               | -                                                                            |   8.71 kB | 
+chunk-ZXQY7X7L.js                                                               | -                                                                            |   8.67 kB | 
+spec-app-features-dashboard-access-tree-access-tree.js                          | spec-app-features-dashboard-access-tree-access-tree                          |   8.36 kB | 
+spec-app-features-dashboard-consultas-resumen-consultas-resumen.js              | spec-app-features-dashboard-consultas-resumen-consultas-resumen              |   8.35 kB | 
+spec-app-features-agenda-walk-in-walk-in-form.js                                | spec-app-features-agenda-walk-in-walk-in-form                                |   7.92 kB | 
+spec-app-features-agenda-my-agenda-block-form-block-form.js                     | spec-app-features-agenda-my-agenda-block-form-block-form                     |   7.28 kB | 
+spec-app-features-auth-registro-compartido-location-picker-location-picker.js   | spec-app-features-auth-registro-compartido-location-picker-location-picker   |   7.02 kB | 
+chunk-C6SR6TAF.js                                                               | -                                                                            |   6.99 kB | 
+chunk-IF3UA2XM.js                                                               | -                                                                            |   6.71 kB | 
+chunk-UWUKQQXZ.js                                                               | -                                                                            |   6.54 kB | 
+spec-app-features-agenda-my-agenda-week-view-week-view.js                       | spec-app-features-agenda-my-agenda-week-view-week-view                       |   6.43 kB | 
+chunk-K27PXGBD.js                                                               | -                                                                            |   6.08 kB | 
+chunk-7J7KBM7F.js                                                               | -                                                                            |   5.76 kB | 
+spec-app-shared-components-molecules-breadcrumb-breadcrumb.js                   | spec-app-shared-components-molecules-breadcrumb-breadcrumb                   |   5.51 kB | 
+chunk-U4HGI5OF.js                                                               | -                                                                            |   5.32 kB | 
+spec-app-features-messaging-thread-contact-panel-contact-panel.js               | spec-app-features-messaging-thread-contact-panel-contact-panel               |   5.29 kB | 
+chunk-HZXEPMDQ.js                                                               | -                                                                            |   5.27 kB | 
+spec-app-features-not-found-not-found.js                                        | spec-app-features-not-found-not-found                                        |   4.91 kB | 
+spec-app-features-agenda-agenda-create-agenda-turnos.js                         | spec-app-features-agenda-agenda-create-agenda-turnos                         |   4.72 kB | 
+chunk-YIWYE7HJ.js                                                               | -                                                                            |   4.65 kB | 
+chunk-X5KLBDCJ.js                                                               | -                                                                            |   4.49 kB | 
+spec-app-shared-components-organisms-data-table-cursor-history.js               | spec-app-shared-components-organisms-data-table-cursor-history               |   4.12 kB | 
+chunk-N2RT6T26.js                                                               | -                                                                            |   3.97 kB | 
+chunk-MH65JHPL.js                                                               | -                                                                            |   3.77 kB | 
+chunk-BTCXDCZC.js                                                               | -                                                                            |   3.60 kB | 
+chunk-CUODNMKM.js                                                               | -                                                                            |   3.53 kB | 
+chunk-KFA5G2LT.js                                                               | -                                                                            |   3.44 kB | 
+chunk-FVGOV2RB.js                                                               | -                                                                            |   3.41 kB | 
+spec-app-features-messaging-thread-composer-selector-emojis.js                  | spec-app-features-messaging-thread-composer-selector-emojis                  |   3.40 kB | 
+chunk-5ZPVHP4M.js                                                               | -                                                                            |   3.26 kB | 
+chunk-3DLI5RNG.js                                                               | -                                                                            |   3.23 kB | 
+spec-app-features-agenda-booking-status.js                                      | spec-app-features-agenda-booking-status                                      |   3.14 kB | 
+chunk-QYNBLSJC.js                                                               | -                                                                            |   2.85 kB | 
+chunk-WPJNDN4R.js                                                               | -                                                                            |   2.80 kB | 
+spec-app-features-auth-registro-compartido-documentos-legales.js                | spec-app-features-auth-registro-compartido-documentos-legales                |   2.72 kB | 
+spec-app-features-auth-register-organization-codigo-desde-sigla.js              | spec-app-features-auth-register-organization-codigo-desde-sigla              |   2.70 kB | 
+spec-app-shared-components-atoms-brand-mark-brand-mark.js                       | spec-app-shared-components-atoms-brand-mark-brand-mark                       |   2.67 kB | 
+chunk-MKIKCHB4.js                                                               | -                                                                            |   2.63 kB | 
+spec-app-features-messaging-conversation-list-conversation-list.js              | spec-app-features-messaging-conversation-list-conversation-list              |   2.38 kB | 
+chunk-SXO3NU37.js                                                               | -                                                                            |   2.25 kB | 
+spec-app-features-agenda-mi-recurso.js                                          | spec-app-features-agenda-mi-recurso                                          |   2.12 kB | 
+spec-app-features-messaging-thread-composer-sticker-picker-sticker-picker.js    | spec-app-features-messaging-thread-composer-sticker-picker-sticker-picker    |   1.95 kB | 
+chunk-HW52ODC4.js                                                               | -                                                                            |   1.88 kB | 
+chunk-UD22GF4L.js                                                               | -                                                                            |   1.69 kB | 
+spec-app-features-auth-registro-compartido-politica-de-contrasena.js            | spec-app-features-auth-registro-compartido-politica-de-contrasena            |   1.23 kB | 
+init-testbed.js                                                                 | init-testbed                                                                 |   1.21 kB | 
+chunk-AMQ6ERPS.js                                                               | -                                                                            |   1.07 kB | 
+chunk-2OGNAGOT.js                                                               | -                                                                            |   1.00 kB | 
+chunk-OVC5PIJV.js                                                               | -                                                                            | 995 bytes | 
+setup-test-setup.js                                                             | setup-test-setup                                                             | 984 bytes | 
+vitest-mock-patch.js                                                            | vitest-mock-patch                                                            | 974 bytes | 
+chunk-FZQSDKTK.js                                                               | -                                                                            | 880 bytes | 
+chunk-6RTKCTCP.js                                                               | -                                                                            | 742 bytes | 
+chunk-WH6YPFED.js                                                               | -                                                                            | 590 bytes | 
+chunk-4RZI6FIT.js                                                               | -                                                                            | 584 bytes | 
+chunk-CYS7AYDS.js                                                               | -                                                                            | 481 bytes | 
+chunk-NL2ZW4YF.js                                                               | -                                                                            | 406 bytes | 
+chunk-DLPBMKRA.js                                                               | -                                                                            | 369 bytes | 
+chunk-A7PQUTGM.js                                                               | -                                                                            | 313 bytes | 
+chunk-OJXMYDF4.js                                                               | -                                                                            | 286 bytes | 
+chunk-I4T7R4UB.js                                                               | -                                                                            | 246 bytes | 
+chunk-NLXS4FJ2.js                                                               | -                                                                            | 211 bytes | 
+chunk-JMQJ5TVL.js                                                               | -                                                                            | 190 bytes | 
+
+                                                                                | Initial total                                                                |   5.79 MB
+
+Lazy chunk files                                                                | Names                                                                        |  Raw size
+chunk-Y4SF6ERA.js                                                               | index                                                                        |   4.90 MB | 
+chunk-5HQGZZ4E.js                                                               | universidades-por-pais-generated                                             | 429.85 kB | 
+chunk-KE75WORX.js                                                               | symptom-check                                                                | 212.42 kB | 
+chunk-HU4M7TLB.js                                                               | pdf-export                                                                   |  32.50 kB | 
+chunk-CODEZ2C5.js                                                               | setup-notice                                                                 |  18.33 kB | 
+chunk-RE7YUPGZ.js                                                               | consultas-resumen                                                            | 882 bytes | 
+chunk-N3IIY7M5.js                                                               | agenda-de-hoy                                                                | 782 bytes | 
+chunk-IN7JLL4C.js                                                               | selector-emojis                                                              | 188 bytes | 
+
+Application bundle generation complete. [113.178 seconds] - 2026-10-21T15:58:40.491Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. Find more at https://v21.angular.dev/extended-diagnostics/NG8107[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/glossary/glossary-network.html:15:34:
+[37m      15 │ ...<select [value]="titleNode()?.[32mslug[37m ?? ''" (change)="cambiarFoco...
+         ╵                                  [32m~~~~[0m
+
+  Warning occurs in the template of component GlossaryNetwork.
+
+    src/app/features/glossary/glossary-network.ts:60:15:
+[37m      60 │   templateUrl: [32m'./glossary-network.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:103:39:
+[37m      103 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m51 passed[39m[22m[90m (51)[39m
+[2m      Tests [22m [1m[32m1145 passed[39m[22m[90m (1145)[39m
+[2m   Start at [22m 15:58:41
+[2m   Duration [22m 58.87s[2m (transform 37.95s, setup 3.06s, import 24.18s, tests 128.99s, environment 48.22s)[22m
+

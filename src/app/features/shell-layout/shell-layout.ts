@@ -31,6 +31,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
 import { BackLink } from '../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
+import { BrandMark } from '../../shared/components/atoms/brand-mark/brand-mark';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
@@ -83,6 +84,7 @@ const PANEL = '/dashboard';
     NotificationBell,
     BackLink,
     Badge,
+    BrandMark,
     NavIcon,
     Tooltip,
   ],

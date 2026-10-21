@@ -1,6 +1,10 @@
 <!-- `role="alert"`: la persona esperaba contenido y llegó acá; el cambio es la
      noticia y hay que anunciarlo. -->
 <div class="no-encontrado" role="alert" data-testid="no-encontrado">
+  <app-brand-mark class="no-encontrado__marca" />
+  <!-- Esta pantalla ES la página: sin un `<h1>` el lector de pantalla no tenía
+       título que anunciar (el de abajo es el del `app-empty-state`, de nivel menor). -->
+  <h1 class="sr-only">Página no encontrada</h1>
   <app-empty-state
     variant="no-results"
     title="No encontramos lo que buscás"

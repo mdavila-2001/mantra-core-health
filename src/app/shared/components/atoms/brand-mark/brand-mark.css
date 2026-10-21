@@ -1,0 +1,37 @@
+:host {
+  --brand-mark-ancho: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--brand-primary);
+}
+
+:host(.brand-mark--sm) {
+  --brand-mark-ancho: 22px;
+}
+
+:host(.brand-mark--lg) {
+  --brand-mark-ancho: 48px;
+}
+
+/* La proporción es la del `viewBox` del logo (601 × 439). */
+.brand-mark__glifo {
+  flex: none;
+  inline-size: var(--brand-mark-ancho);
+  block-size: calc(var(--brand-mark-ancho) * 0.7311);
+  background: currentColor;
+  -webkit-mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
+  mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
+}
+
+.brand-mark__palabra {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+:host(.brand-mark--lg) .brand-mark__palabra {
+  font-size: var(--fs-h3);
+}

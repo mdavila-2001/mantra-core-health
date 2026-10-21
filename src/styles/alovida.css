@@ -416,6 +416,19 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   outline-offset: 0;
 }
 
+/* Destinos de foco por script (`AnnounceOnAppear`): un título o un aviso al que
+   se mueve el foco sólo para que el lector de pantalla lo anuncie. No es un
+   control, no se llega a él con Tab (`tabindex="-1"`), y el anillo de 4 px
+   alrededor de «Falta el código» hacía parecer que el título era un botón.
+   Es `transparent` y no `none` por lo que dice la nota de arriba: en modo de
+   contraste forzado el sistema repinta el `outline`, y ahí la marca sigue.
+   Va acotado a esta directiva y no a todo `tabindex="-1"` porque las pestañas,
+   los menús y las listas con foco por flechas usan ese mismo atributo y SÍ
+   necesitan su anillo. */
+:where([appAnuncio]):focus-visible {
+  outline-color: transparent;
+}
+
 /* Controles compuestos: el anillo lo dibuja el ENVOLTORIO —que es quien tiene
    el borde, el radio y el tamaño del control—, nunca el elemento nativo de
    adentro. Sin esto se pintan DOS anillos concéntricos: el del envoltorio y

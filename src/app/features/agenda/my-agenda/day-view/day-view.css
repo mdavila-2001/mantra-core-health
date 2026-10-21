@@ -126,8 +126,13 @@
 
 .dia__acciones-barra {
   display: flex;
+  /* Tres acciones («Avisar demora», «Ingreso Mostrador», «Mover horario») no
+     caben en una línea de 390 px: pasan a la siguiente en vez de salirse. Medido
+     en el barrido móvil: la barra llegaba a 530 px y estiraba toda la página. */
+  flex-wrap: wrap;
   gap: var(--sp-2);
   align-items: center;
+  min-inline-size: 0;
 }
 
 .dia__vacio {

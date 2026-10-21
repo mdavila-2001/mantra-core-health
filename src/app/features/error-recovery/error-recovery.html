@@ -1,6 +1,9 @@
 <!-- `role="alert"` y no una región viva pasiva: esto reemplaza al contenido que
      la persona esperaba ver, así que su aparición es la noticia. -->
 <div class="recuperacion" role="alert">
+  <app-brand-mark class="recuperacion__marca" />
+  <!-- Reemplaza a la página entera: necesita su propio título de página. -->
+  <h1 class="sr-only">Algo salió mal</h1>
   <app-alert tone="error" title="Algo salió mal">
     <p>
       No pudimos mostrar esta pantalla. Suele resolverse recargando: si acabamos

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import { RouterLink } from '@angular/router';
 
+import { BrandMark } from '../../../shared/components/atoms/brand-mark/brand-mark';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -21,7 +22,7 @@ type Estado = 'verificando' | 'verificado' | 'sin-token' | 'invalido';
  */
 @Component({
   selector: 'app-verify-email',
-  imports: [AppButton, AnnounceOnAppear, Link, RouterLink],
+  imports: [AppButton, AnnounceOnAppear, BrandMark, Link, RouterLink],
   templateUrl: './verify-email.html',
   styleUrl: './verify-email.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

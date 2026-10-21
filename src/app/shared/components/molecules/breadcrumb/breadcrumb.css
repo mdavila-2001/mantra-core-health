@@ -59,3 +59,18 @@
     background: var(--bg-inset);
     color: var(--text-primary);
 }
+
+/* Área táctil de los escalones (WCAG 2.5.8 pide 24 px; acá ~42).
+   Medido a 390 px: «Panel» era un blanco de 32 × 18 px y se repetía en las ~110
+   pantallas que llevan migas. El relleno vertical se compensa con un margen
+   negativo igual, así la fila no crece ni se mueve nada; y sólo con puntero
+   táctil, porque con ratón el enlace ya es fácil de acertar y el diseño de
+   escritorio queda exactamente como estaba. */
+@media (pointer: coarse) {
+    .breadcrumb__item a {
+        display: inline-flex;
+        align-items: center;
+        padding-block: var(--sp-3);
+        margin-block: calc(var(--sp-3) * -1);
+    }
+}

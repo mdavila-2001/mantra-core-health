@@ -4,6 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { BUILD_INFO, buildLabel } from '../../core/build/build-info';
 import { ErrorReporter } from '../../core/errors/error-reporter';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { BrandMark } from '../../shared/components/atoms/brand-mark/brand-mark';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 
 /**
@@ -25,7 +26,7 @@ import { Alert } from '../../shared/components/molecules/alert/alert';
  */
 @Component({
   selector: 'app-error-recovery',
-  imports: [AppButton, Alert],
+  imports: [AppButton, Alert, BrandMark],
   templateUrl: './error-recovery.html',
   styleUrl: './error-recovery.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

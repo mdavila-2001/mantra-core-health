@@ -72,3 +72,8 @@
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
+
+/* La marca encabeza la tarjeta: antes estas pantallas no decían de quién eran. */
+.activar__marca {
+  margin-block-end: var(--sp-4);
+}

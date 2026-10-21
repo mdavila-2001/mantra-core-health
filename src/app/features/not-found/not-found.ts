@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Link } from '../../shared/components/atoms/link/link';
+import { BrandMark } from '../../shared/components/atoms/brand-mark/brand-mark';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 
 /**
@@ -18,7 +19,7 @@ import { EmptyState } from '../../shared/components/molecules/empty-state/empty-
  */
 @Component({
   selector: 'app-not-found',
-  imports: [EmptyState, Link, RouterLink],
+  imports: [BrandMark, EmptyState, Link, RouterLink],
   templateUrl: './not-found.html',
   styleUrl: './not-found.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
