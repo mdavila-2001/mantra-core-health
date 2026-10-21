@@ -4,11 +4,12 @@ import { DestroyRef, DOCUMENT, effect, inject, Injectable, NgZone, PLATFORM_ID }
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
+import { isAccessTokenExpired } from '../../auth/access-token';
 import { SessionStore } from '../../auth/session.store';
 import { TelemetryClient } from '../../data-access/telemetry/telemetry.client';
 import type { ActivityEvent } from '../../data-access/telemetry/telemetry.types';
 import { routeTemplate } from '../routing/route-template';
-import { describirElemento, esCampo, tipoDeCampo } from './ux-element';
+import { describirElemento, esCampo, limpiarValor, tipoDeCampo } from './ux-element';
 import {
   campoEnfocado,
   clic,
@@ -79,15 +80,40 @@ export class UxAnalytics {
   private sessionId = '';
   private muestreada = false;
   private iniciada = false;
+  /** Fallos reintentables seguidos: alargan la espera antes del próximo envío. */
+  private fallosSeguidos = 0;
+  private pausaHasta = 0;
+  /**
+   * Sube con cada cambio de usuario. Un lote que falla después de que otra
+   * persona inició sesión no se reencola: saldría con el token de ella.
+   */
+  private generacion = 0;
+  /** El `userId` que vio el último cambio de sesión; por él se detecta el relevo. */
+  private ultimoUsuario: string | null = null;
   private readonly repetidos = new DetectorDeClicRepetido();
   private desconectar: (() => void) | null = null;
 
   constructor() {
     // Sin sesión no hay token, y la API rechazaría el lote. Lo acumulado de la
     // sesión que terminó no se puede mandar con la de otra persona: se tira.
+    // Y la sesión del navegador se renueva: en el equipo compartido de un
+    // consultorio, quien entra después en la misma pestaña no puede quedar en
+    // el mismo recorrido (la API agrupa por `sessionId`) ni heredar la página
+    // abierta de quien salió.
     effect(() => {
-      if (!this.session.isAuthenticated()) {
+      const usuario = this.session.userId();
+      if (usuario === this.ultimoUsuario) {
+        return;
+      }
+      const habiaUsuario = this.ultimoUsuario !== null;
+      this.ultimoUsuario = usuario;
+      this.generacion += 1;
+      if (habiaUsuario) {
         this.buffer = [];
+        this.pagina = null;
+        if (this.iniciada) {
+          this.sessionId = this.renovar(CLAVE_SESION);
+        }
       }
     });
 
@@ -126,6 +152,14 @@ export class UxAnalytics {
       this.cerrarPagina(true);
       this.enviar(true);
     };
+    // Volver con «atrás» desde la caché del navegador (bfcache) no dispara un
+    // `NavigationEnd`: la página se reabre a mano, o nada se capturaría hasta
+    // la próxima navegación.
+    const alVolver = (evento: PageTransitionEvent) => {
+      if (evento.persisted && this.pagina === null) {
+        this.alNavegar(this.router.url);
+      }
+    };
 
     let temporizador: ReturnType<typeof setInterval> | null = null;
     this.zone.runOutsideAngular(() => {
@@ -134,6 +168,7 @@ export class UxAnalytics {
       this.document.addEventListener('visibilitychange', alOcultar);
       ventana?.addEventListener('scroll', alDesplazar, { passive: true });
       ventana?.addEventListener('pagehide', alSalir);
+      ventana?.addEventListener('pageshow', alVolver);
       temporizador = setInterval(() => this.enviar(false), this.config.flushIntervalMs);
     });
 
@@ -144,6 +179,7 @@ export class UxAnalytics {
       this.document.removeEventListener('visibilitychange', alOcultar);
       ventana?.removeEventListener('scroll', alDesplazar);
       ventana?.removeEventListener('pagehide', alSalir);
+      ventana?.removeEventListener('pageshow', alVolver);
       if (temporizador !== null) {
         clearInterval(temporizador);
       }
@@ -154,30 +190,69 @@ export class UxAnalytics {
    * Manda lo acumulado. Un lote por vez: con uno en vuelo, el siguiente espera
    * al próximo tick en vez de competir por la misma conexión.
    *
-   * @param keepalive - La pestaña se oculta o se cierra.
+   * @param keepalive - La pestaña se oculta o se cierra. Ese lote sale aunque
+   *   haya otro en vuelo: ocultar y cerrar llegan seguidos, y el abandono que se
+   *   encola al cerrar no tendría otro momento.
    */
   enviar(keepalive: boolean): void {
-    if (this.enVuelo || this.buffer.length === 0 || !this.session.isAuthenticated()) {
+    if (this.buffer.length === 0 || !this.session.isAuthenticated()) {
+      return;
+    }
+    if (!keepalive && (this.enVuelo || Date.now() < this.pausaHasta)) {
+      return;
+    }
+    // Con el access token vencido, `authInterceptor` primero rota el refresh
+    // token, y esa petición no lleva `keepalive`: la página se descarga a la
+    // mitad, `localStorage` se queda con el token viejo y al volver la API lo
+    // toma por reutilización y revoca la sesión. Mejor perder el lote.
+    const claims = this.session.claims();
+    if (keepalive && (claims === null || isAccessTokenExpired(claims))) {
       return;
     }
 
-    const lote = this.buffer.splice(0, keepalive ? this.config.maxKeepaliveBatch : this.config.maxBatch);
+    const generacion = this.generacion;
+    // El efecto que vacía el buffer al cambiar de usuario corre después del
+    // cambio, no en el mismo instante: lo que se capturó para otra persona se
+    // filtra acá también, que es donde se le pone el token.
+    const usuario = this.session.userId();
+    const lote = this.buffer
+      .splice(0, keepalive ? this.config.maxKeepaliveBatch : this.config.maxBatch)
+      .filter((evento) => evento.userId === usuario);
+    if (lote.length === 0) {
+      return;
+    }
     this.enVuelo = true;
     this.client.captureActivityEvents({ events: lote }, keepalive).subscribe({
       next: () => {
         this.enVuelo = false;
+        this.fallosSeguidos = 0;
+        this.pausaHasta = 0;
       },
       error: (error: unknown) => {
         this.enVuelo = false;
+        if (generacion !== this.generacion) {
+          // La sesión con la que se capturó ya no existe: el lote se pierde.
+          return;
+        }
         if (esReintentable(error)) {
           this.buffer = [...lote, ...this.buffer].slice(-this.config.maxBuffer);
+          // Espera creciente (10 s, 20 s, 40 s… hasta 5 min): un 429 o una API
+          // caída no reciben una petición por tick de cada pestaña abierta.
+          this.fallosSeguidos += 1;
+          const espera = Math.min(this.config.flushIntervalMs * 2 ** (this.fallosSeguidos - 1), 5 * 60_000);
+          this.pausaHasta = Date.now() + espera;
+        } else if (esDefinitivo(error)) {
+          // El esquema no existe, el lote no valida o el rol no alcanza: ningún
+          // lote de esta sesión va a entrar. Se deja de capturar.
+          this.buffer = [];
+          this.detener();
         }
       },
     });
   }
 
   private alNavegar(url: string): void {
-    const ruta = routeTemplate(this.router, url);
+    const ruta = normalizarRuta(routeTemplate(this.router, url));
     const anterior = this.pagina?.ruta ?? null;
     if (anterior === ruta) {
       // Cambió solo la consulta o el fragmento: es la misma página.
@@ -327,6 +402,16 @@ export class UxAnalytics {
     }
   }
 
+  /** Descarta el valor guardado y crea otro. */
+  private renovar(clave: string): string {
+    try {
+      this.document.defaultView?.sessionStorage.removeItem(clave);
+    } catch {
+      // Almacenamiento bloqueado: `leerOCrear` ya trabaja en memoria.
+    }
+    return this.leerOCrear(clave, () => nuevoUuid());
+  }
+
   private detener(): void {
     this.desconectar?.();
     this.desconectar = null;
@@ -347,6 +432,26 @@ export function nuevoUuid(): string {
   bytes[8] = (bytes[8]! & 0x3f) | 0x80;
   const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+/**
+ * Cada segmento de la ruta pasa por la misma limpieza que los atributos.
+ *
+ * `routeTemplate` devuelve la URL saneada tal cual cuando ninguna ruta del
+ * Router encaja —un enlace viejo que cae en `**`—, y acá esa ruta se guarda
+ * junto al `userId`. Los `:param` de una plantilla ya resuelta pasan intactos.
+ */
+export function normalizarRuta(ruta: string): string {
+  const segmentos = ruta.split('/').filter((segmento) => segmento !== '');
+  return `/${segmentos.map((segmento) => (segmento.startsWith(':') ? segmento : limpiarValor(segmento))).join('/')}`.slice(
+    0,
+    300,
+  );
+}
+
+/** 400, 403 o 404: el lote no va a entrar nunca, y los siguientes tampoco. */
+function esDefinitivo(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && [400, 403, 404].includes(error.status);
 }
 
 /** Red caída, límite de tasa o fallo del servidor: vale la pena reintentar. */

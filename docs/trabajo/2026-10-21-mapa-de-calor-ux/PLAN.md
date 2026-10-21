@@ -89,6 +89,12 @@ con un esquema registrado y el consentimiento (ver REPORTE.md).
 | H1.S2.M6 | uuid sin `crypto.randomUUID` (HTTP en red local) y arranque blindado | Sin contexto seguro la captura arranca y los ids son uuid v4 | spec `nuevoUuid` verde | HECHO (`evidencia/tests-dirigidos.txt`) |
 | H1.S2.M7 | Recorrido en navegador real contra un doble HTTP de la API | Login → clics → scroll → navegación → cierre llegan al doble con 201 y sin datos de pantalla | `node evidencia/verificar.mjs` | HECHO contra el DOBLE (`evidencia/navegador-ingestas.txt`); contra la API real: pendiente |
 
+### H1.S4 — Hallazgos de la revisión independiente (`frontend-reviewer` y la revisión de seguridad)
+
+| ID | Microtarea | CA (binario) | DoD | Estado |
+|---|---|---|---|---|
+| H1.S4.M1 | Arreglar los hallazgos 1 a 9 y el aislamiento de lotes entre personas | Cada arreglo tiene su prueba y la mutación del aislamiento la detecta | specs dirigidas · typecheck · lint · build · suite | HECHO (`evidencia/tests-dirigidos.txt`, `evidencia/suite-completa.txt`) |
+
 ## Riesgos y bloqueos previstos
 
 | Riesgo | Impacto | Mitigación |

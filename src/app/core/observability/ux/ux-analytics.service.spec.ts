@@ -7,7 +7,7 @@ import { provideRouter, Router } from '@angular/router';
 import { SessionStore } from '../../auth/session.store';
 import type { ActivityEvent, CaptureActivityEvents } from '../../data-access/telemetry/telemetry.types';
 import { UX_ANALYTICS_CONFIG, type UxAnalyticsConfig } from './ux-analytics.config';
-import { nuevoUuid, UxAnalytics } from './ux-analytics.service';
+import { normalizarRuta, nuevoUuid, UxAnalytics } from './ux-analytics.service';
 
 function jwt(payload: Record<string, unknown>): string {
   const b64 = (o: unknown) => {
@@ -20,7 +20,13 @@ function jwt(payload: Record<string, unknown>): string {
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
 
-const TOKEN = jwt({ sub: 'u-1', roles: [], tenants: ['t-1'] });
+// uuid como los de la API real: `@IsUUID` rechaza el lote entero si no lo son.
+const USUARIO_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const USUARIO_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const TENANT = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+const TOKEN = jwt({ sub: USUARIO_A, roles: [], tenants: [TENANT] });
+const TOKEN_B = jwt({ sub: USUARIO_B, roles: [], tenants: [] });
+const TOKEN_VENCIDO = jwt({ sub: USUARIO_A, roles: [], tenants: [TENANT], exp: 1 });
 const ESQUEMA = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 const URL_INGESTA = '/telemetry/activity-events';
 
@@ -56,6 +62,7 @@ describe('UxAnalytics', () => {
         provideRouter([
           { path: 'inicio', component: Pantalla },
           { path: 'pacientes/:pacienteId', component: Pantalla },
+          { path: '**', component: Pantalla },
         ]),
         { provide: UX_ANALYTICS_CONFIG, useValue: { ...CONFIG, ...config } },
       ],
@@ -93,7 +100,23 @@ describe('UxAnalytics', () => {
   afterEach(() => {
     http.verify();
     document.body.innerHTML = '';
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
+
+  async function abrir(config: Partial<UxAnalyticsConfig> = {}, token = TOKEN): Promise<UxAnalytics> {
+    const ux = configurar(config);
+    session.start({ accessToken: token, refreshToken: 'r-1' });
+    TestBed.tick();
+    ux.start();
+    await navegar('/inicio');
+    return ux;
+  }
+
+  function ocultar(): void {
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+  }
 
   describe('nivel correcto', () => {
     it('manda la vista y el clic con la forma del contrato y sin datos de la pantalla', async () => {
@@ -113,8 +136,8 @@ describe('UxAnalytics', () => {
       expect(eventos.map((e) => e.eventName)).toEqual(['pagina_vista', 'clic']);
       for (const evento of eventos) {
         expect(evento.eventSchemaDefinitionId).toBe(ESQUEMA);
-        expect(evento.userId).toBe('u-1');
-        expect(evento.tenantId).toBe('t-1');
+        expect(evento.userId).toBe(USUARIO_A);
+        expect(evento.tenantId).toBe(TENANT);
         expect(evento.routeTemplate).toBe('/pacientes/:pacienteId');
         expect(evento.sessionId).toMatch(/^[0-9a-f-]{36}$/);
       }
@@ -222,6 +245,46 @@ describe('UxAnalytics', () => {
       responder(req);
     });
 
+    it('el lote del cierre sale aunque el del ocultamiento siga en vuelo', async () => {
+      await abrir();
+      clicEn('[data-testid="abrir"]');
+      ocultar();
+      window.dispatchEvent(new Event('pagehide'));
+
+      const lotes = http.match(URL_INGESTA);
+      expect(lotes).toHaveLength(2);
+      expect(lotes.every((req) => req.request.keepalive)).toBe(true);
+      expect(lote(lotes[1]!).map((e) => e.eventName)).toEqual(['pagina_abandonada']);
+      lotes.forEach(responder);
+    });
+
+    it('al volver con «atrás» desde la caché del navegador reabre la página', async () => {
+      const ux = await abrir();
+      window.dispatchEvent(new Event('pagehide'));
+      http.match(URL_INGESTA).forEach(responder);
+
+      const vuelta = new Event('pageshow');
+      Object.defineProperty(vuelta, 'persisted', { value: true });
+      window.dispatchEvent(vuelta);
+      clicEn('[data-testid="abrir"]');
+      ux.enviar(false);
+
+      const req = http.expectOne(URL_INGESTA);
+      expect(lote(req).map((e) => e.eventName)).toEqual(['pagina_vista', 'clic']);
+      responder(req);
+    });
+
+    it('una URL que ninguna ruta reconoce viaja sin sus identificadores', async () => {
+      const ux = await abrir();
+      await navegar('/legado/historial/9d8e7f60-1a2b-4c3d-8e9f-0a1b2c3d4e5f/8437');
+      ux.enviar(false);
+
+      const req = http.expectOne(URL_INGESTA);
+      expect(lote(req).map((e) => e.routeTemplate)).toContain('/legado/historial/:id/:id');
+      expect(JSON.stringify(req.request.body)).not.toMatch(/8437|9d8e7f60/);
+      responder(req);
+    });
+
     it('un clic de teclado se cuenta sin coordenadas', async () => {
       const ux = configurar();
       session.start({ accessToken: TOKEN, refreshToken: 'r-1' });
@@ -303,6 +366,13 @@ describe('UxAnalytics', () => {
       const claves = lote(primero).map((e) => e.eventIdempotencyKey);
       primero.flush(null, { status: 503, statusText: 'Service Unavailable' });
 
+      // Durante la espera no se insiste…
+      ux.enviar(false);
+      http.expectNone(URL_INGESTA);
+
+      // …y pasada la espera sale el mismo lote.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(Date.now() + CONFIG.flushIntervalMs + 1);
       ux.enviar(false);
       const segundo = http.expectOne(URL_INGESTA);
       expect(lote(segundo).map((e) => e.eventIdempotencyKey)).toEqual(claves);
@@ -340,6 +410,57 @@ describe('UxAnalytics', () => {
       expect(lote(req).map((e) => e.eventName)).toEqual(['pagina_vista']);
       responder(req);
     });
+
+    it('con el token vencido no manda nada al cerrar la pestaña', async () => {
+      // El interceptor rotaría el refresh token en una petición sin keepalive
+      // que la descarga corta: al volver, la API revocaría la sesión.
+      const ux = await abrir({}, TOKEN_VENCIDO);
+      clicEn('[data-testid="abrir"]');
+      ocultar();
+      window.dispatchEvent(new Event('pagehide'));
+
+      http.expectNone(URL_INGESTA);
+      // Lo capturado sigue ahí: un envío normal (con el interceptor, que primero
+      // refresca) sí sale. Solo se evita el camino de la descarga.
+      ux.enviar(false);
+      expect(lote(http.expectOne(URL_INGESTA)).length).toBeGreaterThan(0);
+    });
+
+    it('un 404 (esquema borrado) detiene la captura de la sesión', async () => {
+      const ux = await abrir();
+      ux.enviar(false);
+      http.expectOne(URL_INGESTA).flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+
+      clicEn('[data-testid="abrir"]');
+      await navegar('/pacientes/1');
+      ux.enviar(false);
+
+      http.expectNone(URL_INGESTA);
+    });
+
+    it('al cambiar de persona en la pestaña renueva la sesión y no reencola el lote de la anterior', async () => {
+      const ux = await abrir();
+      const sesionDeA = sessionStorage.getItem('mch.ux.session');
+      ux.enviar(false);
+      const deA = http.expectOne(URL_INGESTA);
+
+      session.clear();
+      TestBed.tick();
+      session.start({ accessToken: TOKEN_B, refreshToken: 'r-2' });
+      TestBed.tick();
+      deA.flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+      expect(sessionStorage.getItem('mch.ux.session')).not.toBe(sesionDeA);
+      await navegar('/pacientes/2');
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(Date.now() + 60 * 60_000);
+      ux.enviar(false);
+
+      const deB = http.expectOne(URL_INGESTA);
+      expect(lote(deB).map((e) => [e.eventName, e.userId])).toEqual([['pagina_vista', USUARIO_B]]);
+      expect(lote(deB)[0]?.sessionId).not.toBe(sesionDeA);
+      responder(deB);
+    });
   });
 });
 
@@ -356,5 +477,13 @@ describe('nuevoUuid', () => {
     } finally {
       delete (crypto as { randomUUID?: unknown }).randomUUID;
     }
+  });
+});
+
+describe('normalizarRuta', () => {
+  it('limpia los segmentos y deja intactos los :param', () => {
+    expect(normalizarRuta('/pacientes/:pacienteId')).toBe('/pacientes/:pacienteId');
+    expect(normalizarRuta('/fila-8437/x')).toBe('/fila-:id/x');
+    expect(normalizarRuta('/')).toBe('/');
   });
 });
