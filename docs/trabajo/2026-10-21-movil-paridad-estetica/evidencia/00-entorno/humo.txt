@@ -1,0 +1,4 @@
+Running 2 tests using 1 worker
+  ✓  1 [chromium] › playwright/movil-captura.spec.ts:39:7 › humo: /auth a 390 en tema light (6.0s)
+  ✓  2 [chromium] › playwright/movil-captura.spec.ts:39:7 › humo: /auth a 390 en tema dark (4.2s)
+  2 passed (13.2s)
