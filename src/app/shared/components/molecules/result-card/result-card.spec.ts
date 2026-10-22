@@ -177,6 +177,14 @@ describe('ResultCard', () => {
     expect(link.getAttribute('aria-busy')).toBeNull();
   });
 
+  /* Clínicas, farmacias y aseguradoras no tienen agenda: su botón no puede
+     ofrecer «Revisar disponibilidad». */
+  it('sin acción propia, el botón lleva a la ficha', () => {
+    const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
+    expect(accion.textContent?.trim()).toBe('Ver ficha');
+    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle');
+  });
+
   it('muestra la acción distinta y tampoco la navega dos veces', () => {
     anfitrion.dato.update((dato) => ({
       ...dato,
