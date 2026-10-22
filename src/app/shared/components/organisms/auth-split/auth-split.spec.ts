@@ -19,7 +19,12 @@ class ThemeServiceFalso {
 @Component({
   imports: [AuthSplit],
   template: `
-    <app-auth-split [claim]="claim()" [tagline]="tagline()" [scene]="scene()">
+    <app-auth-split
+      [claim]="claim()"
+      [tagline]="tagline()"
+      [scene]="scene()"
+      [contentWidth]="width()"
+    >
       <p class="proyectado">formulario</p>
     </app-auth-split>
   `,
@@ -29,6 +34,7 @@ class Host {
   readonly claim = signal('Su salud, conectada');
   readonly tagline = signal('La red más grande');
   readonly scene = signal<AuthSplitScene>('split');
+  readonly width = signal<'wide' | 'full'>('wide');
 }
 
 describe('AuthSplit', () => {
@@ -220,6 +226,39 @@ describe('AuthSplit · escena calm', () => {
     expect(el().querySelector('.auth-split__brand .auth-split__ecg-pulse')).not.toBeNull();
   });
 
+  describe('franja de onda de las altas', () => {
+    it('a ancho completo la columna de marca no se pinta, así que la onda sale en una franja propia', () => {
+      host.width.set('full');
+      fixture.detectChanges();
+
+      const banda = el().querySelector('.auth-split__banda');
+      expect(banda?.getAttribute('aria-hidden')).toBe('true');
+      expect(banda?.querySelector('.auth-split__banda-base')).not.toBeNull();
+      expect(banda?.querySelector('.auth-split__banda-pulse')).not.toBeNull();
+    });
+
+    it('la franja dibuja el pulso sobre la MISMA curva que la línea', () => {
+      host.width.set('full');
+      fixture.detectChanges();
+
+      const trazos = Array.from(el().querySelectorAll('.auth-split__banda path'));
+      expect(new Set(trazos.map((t) => t.getAttribute('d'))).size).toBe(1);
+      expect(trazos.every((t) => t.getAttribute('pathLength') === '1000')).toBe(true);
+    });
+
+    it('con la columna de marca visible (ancho `wide`) no hay franja: la onda ya está en la columna', () => {
+      expect(el().querySelector('.auth-split__banda')).toBeNull();
+    });
+
+    it('en las otras escenas tampoco: el escenario ya tiene su latido', () => {
+      host.width.set('full');
+      host.scene.set('stage');
+      fixture.detectChanges();
+
+      expect(el().querySelector('.auth-split__banda')).toBeNull();
+    });
+  });
+
   it('las otras escenas no cambian: el logo blanco sigue siendo una imagen', () => {
     host.scene.set('split');
     fixture.detectChanges();
@@ -245,6 +284,9 @@ describe('AuthSplit · escena calm', () => {
       'auth-split__role',
       'auth-split__ecg-base',
       'auth-split__ecg-pulse',
+      'auth-split__banda',
+      'auth-split__banda-base',
+      'auth-split__banda-pulse',
     ];
 
     for (const clase of clases) {

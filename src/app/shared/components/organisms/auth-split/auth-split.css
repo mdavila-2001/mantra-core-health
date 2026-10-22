@@ -1039,6 +1039,61 @@
   }
 }
 
+/* ==========================================================================
+    La franja de onda de las altas (`calm` a ancho completo).
+
+    Detrás de la barra superior, a todo el ancho, sin ocupar lugar, en los dos
+    temas (el color sale de `--brand-secondary`). Mismas animaciones que la onda
+    de `calm`
+    (`auth-ecg-draw`, `auth-ecg-pulse`): una sola firma, un solo ritmo.
+   ========================================================================== */
+.auth-split__banda {
+  display: none;
+}
+
+.auth-split--calm.auth-split--full .auth-split__banda {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 4.5rem;
+  color: var(--brand-secondary);
+  pointer-events: none;
+}
+
+/* El panel de `calm` pinta su propio fondo y taparía la franja que va detrás.
+   A ancho completo lo dejamos transparente: el blanco (o la superficie oscura)
+   lo sigue poniendo `.auth-split`, así que no cambia nada de lo que se ve. */
+.auth-split--calm.auth-split--full .auth-split__panel {
+  background: transparent;
+}
+
+.auth-split__banda-base,
+.auth-split__banda-pulse {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-split__banda-base {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-opacity: 0.4;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: auth-ecg-draw 1800ms var(--ease-out) 300ms forwards;
+}
+
+.auth-split__banda-pulse {
+  stroke: var(--brand-primary);
+  stroke-width: 2.5;
+  stroke-dasharray: 70 930;
+  stroke-dashoffset: 70;
+  opacity: 0;
+  animation: auth-ecg-pulse 5.2s linear 2.4s infinite;
+}
+
 /* Las puertas de la red: seis azulejos que se asientan de a uno. */
 .auth-split__roles {
   display: flex;
@@ -1096,6 +1151,16 @@
   }
 
   .auth-split__ecg-pulse {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .auth-split__banda-base {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+
+  .auth-split__banda-pulse {
     animation: none !important;
     opacity: 0;
   }

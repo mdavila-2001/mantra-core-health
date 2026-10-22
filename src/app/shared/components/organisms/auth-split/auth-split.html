@@ -300,6 +300,35 @@
     </div>
   }
 
+  <!-- La onda también en las altas. A ancho completo (`contentWidth="full"`) la
+       columna de marca no se pinta, y la firma de la marca desaparecía justo
+       donde la persona más tiempo pasa. Esta franja la trae de vuelta detrás de
+       la barra superior —sin ocupar lugar, el formulario no se corre—: el mismo
+       gesto del acceso, dibujado una vez y con un pulso lento encima. -->
+  @if (scene() === 'calm' && contentWidth() === 'full') {
+    <svg
+      class="auth-split__banda"
+      viewBox="0 0 1440 64"
+      preserveAspectRatio="none"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        class="auth-split__banda-base"
+        pathLength="1000"
+        vector-effect="non-scaling-stroke"
+        d="M0 36H520l16-8 16 14 18-30 20 50 16-26 14 0H900q20-16 40 0H1260l10-6 12 10 12-18 14 30 10-16H1440"
+      />
+      <path
+        class="auth-split__banda-pulse"
+        pathLength="1000"
+        vector-effect="non-scaling-stroke"
+        d="M0 36H520l16-8 16 14 18-30 20 50 16-26 14 0H900q20-16 40 0H1260l10-6 12 10 12-18 14 30 10-16H1440"
+      />
+    </svg>
+  }
+
   <main class="auth-split__panel">
     <div class="auth-split__chrome">
       <!-- La marca también acá, y no solo en la columna de la izquierda: en
