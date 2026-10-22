@@ -53,8 +53,24 @@ export function specialtyPhoto(nombre: string): string {
   return directoryPhoto(diagnosisCenterTheme(nombre) === 'imagen' ? 'imagen' : 'medico', nombre);
 }
 
+/**
+ * Las puertas cuya foto se elige a mano y no por hash.
+ *
+ * La de aseguradoras comparte tema con la de médicos y el hash de las dos
+ * rutas caía en la **misma** foto: dos tarjetas vecinas con la misma imagen.
+ * Se le fija una del mismo tema que habla de cuidado familiar, que es lo que
+ * cubre un seguro de salud.
+ */
+const FIXED_VERTICAL_PHOTO: Readonly<Record<string, string>> = {
+  'insurers-directory': directoryPhoto('medico', 'insurers'),
+};
+
 /** La foto de cada puerta de la portada «Directorios». */
 export function verticalPhoto(ruta: string): string {
+  const fixed = FIXED_VERTICAL_PHOTO[ruta.replace(/^\//u, '')];
+  if (fixed !== undefined) {
+    return fixed;
+  }
   const tema: PhotoTheme = ruta.includes('laboratory')
     ? 'laboratorio'
     : ruta.includes('clinic')
