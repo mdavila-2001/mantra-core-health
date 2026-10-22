@@ -18,7 +18,7 @@
 <app-filter-bar
   [filters]="filtros()"
   [searchLabel]="etiquetaBusqueda()"
-  [searchPlaceholder]="searchPlaceholder()"
+  [searchPlaceholder]="textoDelBuscador()"
   (filtersChanged)="filtrosCambiaron.emit($event)"
 />
 
@@ -77,7 +77,8 @@
         </div>
       </div>
 
-      @for (grupo of grupos(); track grupo.id) {
+      @for (tramo of gruposVisibles(); track tramo.grupo.id) {
+        @let grupo = tramo.grupo;
         <section class="directorio__grupo" [attr.aria-labelledby]="'grupo-' + grupo.id">
           @if (grupo.nombre) {
             <h2 class="directorio__rotulo" [id]="'grupo-' + grupo.id">
@@ -90,7 +91,7 @@
              tarjeta ES el ítem de la lista, así que un lector de pantalla
              anuncia cuántos hay antes de leer el primero. -->
           <ul class="directorio__grilla" [class.directorio__grilla--lista]="vista() === 'lista'">
-            @for (resultado of grupo.resultados; track resultado.id) {
+            @for (resultado of tramo.resultados; track resultado.id) {
               <li
                 app-result-card
                 [resultado]="resultado"
@@ -100,6 +101,18 @@
             }
           </ul>
         </section>
+      }
+
+      <!-- Tope progresivo: ver `TANDA_POR_DEFECTO`. El progreso va en una
+           región viva para que quien usa lector de pantalla sepa que la
+           lista creció sin que el foco salte. -->
+      @if (restantes() > 0) {
+        <div class="directorio__mas">
+          <p class="directorio__progreso" aria-live="polite">{{ textoProgreso() }}</p>
+          <button app-button variant="secondary" type="button" (click)="mostrarMas()">
+            {{ textoMostrarMas() }}
+          </button>
+        </div>
       }
     }
   }

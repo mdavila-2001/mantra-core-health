@@ -272,10 +272,28 @@ def read_network(path: Path, insurer: str, columns: dict[str, Any], points: list
     return offices, skipped
 
 
+# Las listas de prestadores mezclan médicos con establecimientos —«FISIOCENTRO, .»,
+# «SLIMBODY, SRL», «CLINICA, GOOD CENTER»—. Un establecimiento en la guía de
+# médicos se lee como una persona: la regla los reconoce por la forma societaria,
+# por una palabra de institución o por no tener nombre de pila.
+INSTITUTION_NAME = re.compile(
+    r"\b(S\.?\s?R\.?\s?L\.?|LTDA\.?|CENTRO|CENTER|CL[IÍ]NICA|INSTITUTO|CONSULTORIO|POLICL[IÍ]NICO|HOSPITAL|LABORATORIO)\b",
+    re.IGNORECASE,
+)
+
+
+def is_establishment(person: dict) -> bool:
+    full_name = f"{person['surnames']} {person['givenNames']}"
+    has_given_name = re.search(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]", person["givenNames"]) is not None
+    return INSTITUTION_NAME.search(full_name) is not None or not has_given_name
+
+
 def merge_practitioners(offices: list[dict]) -> list[dict]:
     """Un médico por nombre, con todos sus consultorios, redes y especialidades."""
     by_key: dict[str, dict] = {}
     for office in offices:
+        if is_establishment(split_name(office["rawName"])):
+            continue
         key = office["name"].replace(",", "").replace("  ", " ")
         entry = by_key.get(key)
         if entry is None:
@@ -612,6 +630,7 @@ def main() -> None:
             "offices": sum(len(p["offices"]) for p in practitioners),
             "locatedAtInstitution": sum(1 for p in practitioners for o in p["offices"] if o["precision"] == "establecimiento"),
             "skippedOutsideKnownTowns": alianza_skipped + nacional_skipped,
+            "skippedEstablishments": sum(1 for o in alianza + nacional if is_establishment(split_name(o["rawName"]))),
         },
         "warnings": [
             "Los nombres de Nacional Seguros no separan apellidos de nombres; la división es convencional (nameSplit=heuristic).",
