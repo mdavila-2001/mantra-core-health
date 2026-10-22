@@ -58,6 +58,8 @@ export class AppButton {
   readonly variant = input<ButtonVariant>('primary');
   readonly size = input<ButtonSize>('md');
   readonly isLoading = input(false, { transform: booleanAttribute });
+  /** Éxito: la etiqueta se transforma en un check que se dibuja. El botón no responde mientras dura. */
+  readonly isSuccess = input(false, { transform: booleanAttribute });
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly type = input<ButtonType>('button');
 
@@ -66,7 +68,9 @@ export class AppButton {
 
   readonly clicked = output<MouseEvent>();
 
-  readonly isInteractive = computed(() => !this.disabled() && !this.isLoading());
+  readonly isInteractive = computed(
+    () => !this.disabled() && !this.isLoading() && !this.isSuccess(),
+  );
 
   readonly buttonClasses = computed(() => {
     const classes = ['btn', `btn--${this.variant()}`, `btn--${this.size()}`];
@@ -75,6 +79,9 @@ export class AppButton {
     }
     if (this.isLoading()) {
       classes.push('btn--loading');
+    }
+    if (this.isSuccess()) {
+      classes.push('btn--success');
     }
     if (this.disabled()) {
       classes.push('btn--disabled');
@@ -115,7 +122,7 @@ export class AppButton {
 
     if (!hasName) {
       console.warn(
-        '[app-button] iconOnly sin nombre accesible: agregá aria-label al <button>.',
+        '[app-button] iconOnly sin nombre accesible: agregue aria-label al <button>.',
         host,
       );
     }

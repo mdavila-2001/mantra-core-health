@@ -29,8 +29,10 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
@@ -39,7 +41,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { agendaResourcesMy } from '../my-resource';
 
 /**
  * Duraciones ofrecidas, en minutos.
@@ -112,10 +114,12 @@ const DIGITOS_DE_CEDULA = 6;
     DatePicker,
     FormField,
     Input,
+    NavIcon,
     PageHeader,
     ReferenceCombobox,
     RouterLink,
     Select,
+    Tooltip,
   ],
   templateUrl: './appointment-new.html',
   styleUrl: './appointment-new.css',
@@ -192,6 +196,8 @@ export class AppointmentNew {
   protected readonly nuevoTercerNombre = signal('');
   protected readonly nuevoApellidoPaterno = signal('');
   protected readonly nuevoApellidoMaterno = signal('');
+  /** Los nombres agregados con «+ Agregar otro nombre», en el orden en que se escriben. */
+  protected readonly nuevosNombresExtra = signal<readonly string[]>([]);
 
   /**
    * La cédula y el departamento que la expidió.
@@ -296,12 +302,31 @@ export class AppointmentNew {
       this.nuevoCelular().trim() !== '',
   );
 
+  /** Agrega una casilla de nombre, en blanco. */
+  protected agregarNombre(): void {
+    this.nuevosNombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /** Quita una de las casillas agregadas (`indice` empieza en 0). */
+  protected quitarNombre(indice: number): void {
+    this.nuevosNombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /** Escribe en una de las casillas agregadas (`indice` empieza en 0). */
+  protected escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nuevosNombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
   /** El nombre del paciente nuevo tal como se va a ver escrito. */
   protected readonly nombreDelNuevo = computed(() =>
     [
       this.nuevoNombre(),
       this.nuevoSegundoNombre(),
       this.nuevoTercerNombre(),
+      ...this.nuevosNombresExtra(),
       this.nuevoApellidoPaterno(),
       this.nuevoApellidoMaterno(),
     ]
@@ -335,7 +360,8 @@ export class AppointmentNew {
    * deja la columna en nulo—.
    */
   protected readonly modalidad = signal<ModalidadDeAtencion>('PRESENCIAL');
-  protected readonly modalidades = MODALIDADES;
+  protected readonly opcionesDeModalidad: readonly SelectOption<ModalidadDeAtencion>[] =
+    MODALIDADES.map((opcion) => ({ value: opcion.valor, label: opcion.nombre }));
 
   protected readonly opcionesDeDuracion: readonly SelectOption<string>[] =
     DURACIONES.map((minutos) => ({
@@ -396,7 +422,7 @@ export class AppointmentNew {
     const donde = porVideo
       ? ' Va por videollamada.'
       : aDomicilio
-        ? ' Vas a su domicilio.'
+        ? ' Va a su domicilio.'
         : '';
     // Con un paciente nuevo pasan dos cosas y no una, así que se dicen las dos.
     // «Le avisamos al paciente» sería mentira acá: todavía no tiene cuenta por
@@ -415,20 +441,6 @@ export class AppointmentNew {
       this.minutos() !== null &&
       this.agendaElegida() !== null,
   );
-
-  /**
-   * Guarda lo que se escribió en «Minutos exactos», siempre como texto.
-   *
-   * `app-input[type=number]` emite un **número** (lee `target.valueAsNumber`),
-   * y `duracion` es la misma variable que compara `app-select` contra el
-   * `value` de cada atajo con `===`. Sin este cruce a texto, escribir un
-   * atajo acá (30, 60…) dejaba a «Duración» mostrando «Seleccionar opción»
-   * en vez del atajo que en realidad quedó elegido, porque `30 === '30'` es
-   * `false` — las dos mitades del mismo dato dejaban de coincidir.
-   */
-  protected actualizarDuracionLibre(valor: string | number | null): void {
-    this.duracion.set(valor === null ? '' : String(valor));
-  }
 
   /**
    * Busca pacientes por nombre, código o cédula. La molécula ya espera antes de
@@ -520,7 +532,7 @@ export class AppointmentNew {
 
   /** Reintento explícito del catálogo de ocupaciones tras un fallo. */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 
@@ -545,7 +557,7 @@ export class AppointmentNew {
   }
 
   private cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoDeOcupacionesCaido.set(false);
         // El `code` viaja además del identificador: es lo que reconoce a la
@@ -648,7 +660,7 @@ export class AppointmentNew {
           this.guardando.set(false);
           if (error instanceof HttpErrorResponse && error.status === 409) {
             this.error.set(
-              'Ese documento ya está registrado. Buscalo arriba por su cédula y agendale el turno.',
+              'Ese documento ya está registrado. Búsquelo arriba por su cédula y agéndele el turno.',
             );
             return;
           }
@@ -720,7 +732,11 @@ export class AppointmentNew {
    * mandarlo haría rebotar la petición entera con 400.
    */
   private datosDelPacienteNuevo(): WalkInPatient {
-    const otrosNombres = [this.nuevoSegundoNombre(), this.nuevoTercerNombre()]
+    const otrosNombres = [
+      this.nuevoSegundoNombre(),
+      this.nuevoTercerNombre(),
+      ...this.nuevosNombresExtra(),
+    ]
       .map((parte) => parte.trim())
       .filter((parte) => parte !== '')
       .join(' ');
@@ -797,7 +813,7 @@ export class AppointmentNew {
       return;
     }
 
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+    agendaResourcesMy(this.scheduling, tenantId, perfil).subscribe({
       next: (recursos) => {
         this.cargandoAgendas.set(false);
         this.agendas.set(recursos);

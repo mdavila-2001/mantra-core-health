@@ -1,0 +1,3 @@
+✓ check-css-tokens — 418 tokens declarados, ningún var() huérfano
+
+EXIT_CODE=0

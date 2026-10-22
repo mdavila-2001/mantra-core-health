@@ -1,0 +1,110 @@
+{
+  "corteAnterior": "b7785e36",
+  "cortePosterior": "a43ad2b3",
+  "nota": "El corte posterior es la punta de `mockup`, no el commit del PR #583: entre los dos hay 30 commits, de los cuales 8 son merges de pull request y 2 son merges de integración. Ningún número de acá se adjudica a un PR en particular.",
+  "unidades": "milisegundos; las medianas y medias van redondeadas al entero más cercano",
+  "escenarios": {
+    "hasta-los-cupos": {
+      "descripcion": "Directorio → Cardiología → profesional sintética → cupos a la vista, con cuatro activaciones",
+      "cortes": {
+        "antes": {
+          "n": 10,
+          "muestrasMs": [
+            1480,
+            1471,
+            1285,
+            1539,
+            1320,
+            1566,
+            1381,
+            1391,
+            1383,
+            1464
+          ],
+          "minMs": 1285,
+          "medianaMs": 1428,
+          "maxMs": 1566,
+          "rangoMs": 281,
+          "mediaMs": 1428
+        },
+        "despues": {
+          "n": 10,
+          "muestrasMs": [
+            1353,
+            1310,
+            1045,
+            1255,
+            1448,
+            1120,
+            914,
+            936,
+            1095,
+            1031
+          ],
+          "minMs": 914,
+          "medianaMs": 1108,
+          "maxMs": 1448,
+          "rangoMs": 534,
+          "mediaMs": 1151
+        }
+      },
+      "comparacion": {
+        "deltaMedianaMs": 320,
+        "deltaMedianaPorciento": 22.4,
+        "rangosSeSolapan": true,
+        "muestrasPosterioresPorEncimaDeLaMedianaAnterior": 1
+      }
+    },
+    "camino-por-defecto-sin-horarios": {
+      "descripcion": "Directorio → primera especialidad → primer resultado → «Todavía no publicó horarios»",
+      "cortes": {
+        "antes": {
+          "n": 10,
+          "muestrasMs": [
+            1446,
+            1499,
+            1502,
+            1317,
+            1300,
+            1673,
+            1473,
+            1573,
+            1358,
+            1403
+          ],
+          "minMs": 1300,
+          "medianaMs": 1460,
+          "maxMs": 1673,
+          "rangoMs": 373,
+          "mediaMs": 1454
+        },
+        "despues": {
+          "n": 10,
+          "muestrasMs": [
+            807,
+            803,
+            945,
+            872,
+            904,
+            1128,
+            870,
+            1028,
+            1133,
+            880
+          ],
+          "minMs": 803,
+          "medianaMs": 892,
+          "maxMs": 1133,
+          "rangoMs": 330,
+          "mediaMs": 937
+        }
+      },
+      "comparacion": {
+        "deltaMedianaMs": 568,
+        "deltaMedianaPorciento": 38.9,
+        "rangosSeSolapan": false,
+        "muestrasPosterioresPorEncimaDeLaMedianaAnterior": 0
+      }
+    }
+  }
+}

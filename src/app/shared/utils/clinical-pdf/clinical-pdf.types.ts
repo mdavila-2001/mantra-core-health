@@ -69,6 +69,15 @@ export interface DocumentoDeReceta {
   readonly medicamentos: readonly DocumentoMedicamento[];
   /** Indicaciones generales, si las hay. */
   readonly indicaciones?: string;
+  /**
+   * Para qué es la receta (C5): el diagnóstico confirmado, o el motivo
+   * escrito a mano cuando no hay diagnóstico registrado. Opcional porque
+   * quien arma este documento hoy (`patient-chart.ts`, `consultation.ts`,
+   * `medical-record.ts` — fuera de mi alcance esta noche) todavía no lo
+   * puebla, aunque la receta ya trae `indicationConditionId`/`indicationText`
+   * desde v4.1.6. Pendiente de que esos archivos agreguen el campo.
+   */
+  readonly porQueEs?: { readonly tipo: 'diagnostico' | 'motivo'; readonly texto: string };
 }
 
 /** Una línea de un bloque de la historia: «Diagnóstico: Faringitis aguda». */
@@ -203,8 +212,6 @@ export interface HistoriaAtencion {
  */
 export interface DocumentoDeHistoria {
   readonly paciente: DocumentoPaciente;
-  /** Advierte que alguna fuente quedó recortada o no pudo leerse. */
-  readonly avisoDeIntegridad?: string;
   /** Edad ya calculada, en palabras. La aritmética no se hace en el papel. */
   readonly edad?: string;
   /** Organización que emite la copia, si la sesión pertenece a una. */

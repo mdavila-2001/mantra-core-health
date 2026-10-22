@@ -252,6 +252,35 @@ describe('DatePicker', () => {
       expect(inputEl.selectionEnd).toBe(10);
     });
 
+    // Regresión 03/10/2026: vacío, la plantilla ocupa sólo la izquierda del
+    // input y un clic a la derecha dejaba el cursor en el año; «01011990»
+    // tecleado quedaba en «DD/MM/0101» y el alta no avanzaba.
+    it('con el campo vacío, un clic en cualquier punto empieza por el día', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.value).toBe('DD/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+    });
+
+    it('el reajuste diferido del mouseup no pisa un dígito ya tecleado', async () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.focus();
+      inputEl.dispatchEvent(new MouseEvent('mouseup'));
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '0', bubbles: true, cancelable: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(inputEl.value).toBe('0D/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(1);
+    });
+
     it('Tab navega de Día a Mes y de Mes a Año', () => {
       fixture.componentRef.setInput('value', new Date(2026, 6, 15));
       fixture.detectChanges();
@@ -644,6 +673,54 @@ describe('DatePicker', () => {
 
       expect(encabezado().textContent).toContain(nombreDeMes(6));
       expect(encabezado().textContent).toContain('2026');
+    });
+
+    /*
+     * D-05 (22/09/2026): cada botón de acción lleva ícono y nombre. En este
+     * diálogo modal no cabe la excepción del ADR-0012 §3, porque el globo que
+     * exige se cuelga del <body> y queda debajo del modal. El nombre accesible
+     * completo se conserva y contiene lo que se ve.
+     */
+    it('D-05: «Cerrar» y las flechas llevan ícono y nombre a la vista', async () => {
+      await abrir();
+      const calendario = dialog()!;
+      expect(calendario.querySelectorAll('.btn--icon-only')).toHaveLength(0);
+
+      const cerrar = calendario.querySelector<HTMLButtonElement>('.dialog-header button')!;
+      expect(cerrar.textContent?.trim()).toBe('Cerrar');
+      expect(cerrar.querySelector('svg')).not.toBeNull();
+
+      const esperadas: readonly (readonly [string, string])[] = [
+        ['Año anterior', 'Año'],
+        ['Mes anterior', 'Mes'],
+        ['Mes siguiente', 'Mes'],
+        ['Año siguiente', 'Año'],
+      ];
+      for (const [nombre, visible] of esperadas) {
+        const boton = flecha(nombre);
+        expect(boton.textContent?.trim()).toBe(visible);
+        expect(boton.querySelector('svg')).not.toBeNull();
+        expect(boton.getAttribute('aria-label')?.toLowerCase()).toContain(visible.toLowerCase());
+      }
+
+      encabezado().click();
+      await fixture.whenStable();
+      for (const nombre of ['30 años anteriores', '30 años siguientes']) {
+        expect(flecha(nombre).textContent?.trim()).toBe('30 años');
+        expect(flecha(nombre).querySelector('svg')).not.toBeNull();
+      }
+    });
+
+    it('D-05: el mes va antes que las flechas en el orden del teclado', async () => {
+      await abrir();
+      const botones = Array.from(dialog()!.querySelectorAll('.calendar-nav button'));
+      expect(botones[0]).toBe(encabezado());
+      expect(botones.slice(1).map((b) => b.getAttribute('aria-label'))).toEqual([
+        'Año anterior',
+        'Mes anterior',
+        'Mes siguiente',
+        'Año siguiente',
+      ]);
     });
   });
 

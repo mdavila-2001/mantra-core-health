@@ -15,7 +15,7 @@ import type { PatientSettlementFields } from '../insurance/patient-insurance-set
  * terminales al final. Es el value set pedido a Marcelo (la solicitud está en
  * `COORDINACION-AGENTES.md`); mientras el catálogo no exista, estos códigos
  * provisorios son la identidad — jamás se muestran: la etiqueta en castellano
- * vive en `pedido-status.ts` de la pantalla.
+ * vive en `order-status.ts` de la pantalla.
  */
 export const ESTADOS_DE_PEDIDO = [
   'ENVIADO',
@@ -163,8 +163,8 @@ export interface PedidoFarmacia extends PatientSettlementFields {
    */
   readonly paciente: string | null;
   /**
-   * Quién prescribió. `null` hasta FAR-E2: el resumen clínico solo trae el
-   * uuid del perfil, y un uuid no se pinta ni se resuelve desde el front.
+   * Quién prescribió, en palabras («Nombre · Especialidad»), resuelto por el
+   * backend (`prescriber` del pedido). `null` sin receta o sin prescriptor.
    */
   readonly prescriptor: string | null;
   readonly lineas: readonly LineaDePedido[];

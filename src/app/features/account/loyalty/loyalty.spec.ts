@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import type { Provider } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -135,7 +135,7 @@ describe('Loyalty', () => {
       fixture.detectChanges();
 
       expect(cabecera()).toBeNull();
-      expect(texto()).not.toContain('Lo que sumaste con tus compras');
+      expect(texto()).not.toContain('Lo que sumó con sus compras');
       // El cuerpo sigue entero: lo que se apaga es sólo el título repetido.
       expect(texto()).toContain('Todavía no hay un programa');
     });
@@ -192,7 +192,7 @@ describe('Loyalty', () => {
       const fila = fixture.nativeElement.querySelector('.movimientos__fila');
       expect(fila?.textContent).toContain('Actividad en la app');
       expect(fila?.textContent).toContain('+70');
-      expect(texto()).toContain('Sumaste');
+      expect(texto()).toContain('Sumó');
     });
 
     it('«Ver más» sigue por el cursor que emitió el backend', () => {
@@ -204,6 +204,34 @@ describe('Loyalty', () => {
 
       expect(paginas.cursores).toEqual([null, 'cursor-opaco']);
       expect(fixture.nativeElement.querySelectorAll('.movimientos__fila')).toHaveLength(2);
+    });
+
+    it('si los movimientos no llegan, lo dice con el código de soporte y no los da por vacíos', () => {
+      let falla = true;
+      conDatos({
+        misMovimientos: () =>
+          falla
+            ? throwError(
+                () =>
+                  new HttpErrorResponse({
+                    status: 500,
+                    error: { code: 'INTERNAL', message: 'x', correlationId: 'corr-mov', timestamp: '', path: '' },
+                  }),
+              )
+            : of({ movimientos: [movimiento()], nextCursor: null }),
+      });
+
+      expect(porTestId('movimientos-error')?.textContent).toContain(
+        'No pudimos traer sus movimientos. (Código de soporte: corr-mov)',
+      );
+      expect(porTestId('movimientos-vacio')).toBeNull();
+
+      falla = false;
+      porTestId('movimientos-reintentar')?.click();
+      fixture.detectChanges();
+
+      expect(porTestId('movimientos-error')).toBeNull();
+      expect(fixture.nativeElement.querySelectorAll('.movimientos__fila')).toHaveLength(1);
     });
 
     it('no reaparece ninguna demostración', () => {
@@ -236,7 +264,7 @@ describe('Loyalty', () => {
       expect(porTestId('canje-comprobante')).not.toBeNull();
       expect(porTestId('canje-saldo')?.textContent).toContain('340');
       expect(porTestId('canje-caja')?.textContent).toContain(
-        'Mostrá este código en la caja del supermercado',
+        'Muestre este código en la caja del supermercado',
       );
     });
 
@@ -254,7 +282,7 @@ describe('Loyalty', () => {
       fixture.detectChanges();
 
       expect(texto()).toContain('no alcanza para canjear');
-      expect(texto()).not.toContain('Probá de nuevo en un momento');
+      expect(texto()).not.toContain('Pruebe de nuevo en un momento');
     });
 
     it('cualquier otro fallo del canje no se disfraza de saldo', () => {

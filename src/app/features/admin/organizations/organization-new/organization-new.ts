@@ -29,10 +29,11 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
 
@@ -112,7 +113,7 @@ const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
   imports: [
     Alert,
     AnnounceOnAppear,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -128,6 +129,20 @@ export class OrganizationNew {
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  /** Si ya se avisó que la búsqueda de personas no está en la API. */
+  private busquedaNoDisponibleAvisada = false;
+
+  /**
+   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
+   * §2): se dice qué falta, una sola vez y no en cada tecla.
+   */
+  private avisarBusquedaNoDisponible(error: unknown): void {
+    const aviso = unavailableMessageOf(error);
+    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
+    this.busquedaNoDisponibleAvisada = true;
+    this.toast.warning(aviso);
+  }
 
   /** El último escalón se reemplaza: desde el alta, se vuelve al listado. */
   protected readonly breadcrumbs = computed<readonly BreadcrumbItem[]>(() => {
@@ -247,7 +262,7 @@ export class OrganizationNew {
    * son comboboxes con búsqueda contra la API, no controles de texto.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Identificación',
         hint: 'Con qué se la encuentra y cómo se presenta.',
@@ -260,8 +275,8 @@ export class OrganizationNew {
             required: true,
             testId: 'alta-organizacion-codigo',
             mensajeDeError: this.codigoEnConflicto()
-              ? 'Ya existe una organización con este código. Probá con otro.'
-              : 'Escribí el código de la organización.',
+              ? 'Ya existe una organización con este código. Pruebe con otro.'
+              : 'Escriba el código de la organización.',
           },
           {
             key: 'legalName',
@@ -269,7 +284,7 @@ export class OrganizationNew {
             control: 'text' as const,
             required: true,
             testId: 'alta-organizacion-razon',
-            mensajeDeError: 'Escribí la razón social (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba la razón social (hasta 300 caracteres).',
           },
           {
             key: 'tradeName',
@@ -291,8 +306,8 @@ export class OrganizationNew {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeTipo,
-            placeholder: 'Elegí un tipo',
-            mensajeDeError: 'Elegí el tipo de organización.',
+            placeholder: 'Elija un tipo',
+            mensajeDeError: 'Elija el tipo de organización.',
           },
         ],
       },
@@ -305,7 +320,7 @@ export class OrganizationNew {
                 {
                   key: 'pais',
                   label: 'País',
-                  hint: 'Buscá por nombre; el código acompaña para distinguir homónimos.',
+                  hint: 'Busque por nombre; el código acompaña para distinguir homónimos.',
                   control: 'custom' as const,
                   required: true,
                 },
@@ -331,28 +346,28 @@ export class OrganizationNew {
                   label: 'Código de aseguradora',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el código de aseguradora.',
+                  mensajeDeError: 'Escriba el código de aseguradora.',
                 },
                 {
                   key: 'regulatorIdentifier',
                   label: 'NIT',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el NIT ante el regulador.',
+                  mensajeDeError: 'Escriba el NIT ante el regulador.',
                 },
                 {
                   key: 'sigla',
                   label: 'Sigla',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí la sigla (hasta 20 caracteres).',
+                  mensajeDeError: 'Escriba la sigla (hasta 20 caracteres).',
                 },
                 {
                   key: 'address',
                   label: 'Dirección',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+                  mensajeDeError: 'Escriba la dirección (hasta 300 caracteres).',
                 },
               ],
             },
@@ -369,14 +384,14 @@ export class OrganizationNew {
                   label: 'Código de corredor',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el código de corredor.',
+                  mensajeDeError: 'Escriba el código de corredor.',
                 },
                 {
                   key: 'licenseNumber',
                   label: 'Número de licencia',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el número de licencia.',
+                  mensajeDeError: 'Escriba el número de licencia.',
                 },
               ],
             },
@@ -389,7 +404,7 @@ export class OrganizationNew {
           {
             key: 'owner',
             label: 'Usuario owner',
-            hint: 'Buscá por nombre o correo. Debe existir antes del alta.',
+            hint: 'Busque por nombre o correo. Debe existir antes del alta.',
             control: 'custom' as const,
             required: true,
           },
@@ -510,7 +525,7 @@ export class OrganizationNew {
       return state.message ?? 'Sólo una cuenta SUPERADMIN puede dar de alta organizaciones.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -553,11 +568,13 @@ export class OrganizationNew {
         );
         this.buscandoOwner.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         // El combobox muestra «sin resultados»; el error general de la
-        // pantalla se reserva para el envío.
+        // pantalla se reserva para el envío. Salvo que la búsqueda no exista
+        // en la API: eso se dice, una vez.
         this.candidatosOwner.set([]);
         this.buscandoOwner.set(false);
+        this.avisarBusquedaNoDisponible(error);
       },
     });
   }

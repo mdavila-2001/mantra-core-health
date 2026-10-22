@@ -5,7 +5,7 @@ import {
   CARGADOR_DE_LEAFLET,
   type CargadorDeLeaflet,
 } from '../../../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap } from '../../../../../../shared/components/organisms/map/map-pin.types';
 import type { SedeVisible } from '../practitioner-profile-view.types';
 
 /**
@@ -62,8 +62,8 @@ describe('PracticeSitesMap', () => {
   }
 
   /** Los pines que el componente le pasa al mapa. */
-  function pines(fixture: ReturnType<typeof montar>): readonly PinMapa[] {
-    return (fixture.componentInstance as unknown as { pines: () => readonly PinMapa[] }).pines();
+  function pines(fixture: ReturnType<typeof montar>): readonly PinMap[] {
+    return (fixture.componentInstance as unknown as { pines: () => readonly PinMap[] }).pines();
   }
 
   it('pone un pin por sede ubicada, con el mismo número que la lista', () => {
@@ -121,6 +121,6 @@ describe('PracticeSitesMap', () => {
     const fixture = montar([sede(), sede({ id: 'sede-2', punto: null })]);
 
     const pie = (fixture.nativeElement as HTMLElement).querySelector('.sedes__pie');
-    expect(pie?.textContent?.replace(/\s+/g, ' ')).toContain('1 de tus 2 sedes');
+    expect(pie?.textContent?.replace(/\s+/g, ' ')).toContain('1 de sus 2 sedes');
   });
 });

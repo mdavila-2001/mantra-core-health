@@ -127,7 +127,7 @@ for (const formato of FORMATOS) {
       // aparece la puerta que invita a crearla. Lo que no puede pasar es que la
       // pantalla quede en blanco.
       const composer = page.getByTestId(UI.postComposer);
-      const puerta = page.getByText('Todavía no tenés perfil público');
+      const puerta = page.getByText('Todavía no tiene perfil público');
       await expect(composer.or(puerta).first()).toBeVisible({ timeout: 30_000 });
 
       if (await composer.isVisible().catch(() => false)) {

@@ -1,0 +1,2 @@
+$ yarn eslint <los 26 .ts/.html del diff de H2>
+exit=0

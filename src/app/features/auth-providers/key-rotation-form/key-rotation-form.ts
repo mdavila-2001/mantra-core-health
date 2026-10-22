@@ -18,7 +18,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   controlesDeClaveDeFirma,
   leerClaveDeFirma,
@@ -76,7 +76,7 @@ export class KeyRotationForm {
     ...controlesDeClaveDeFirma(),
   });
 
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'De qué proveedor',
       hint: 'La rotación alcanza a sus claves activas.',
@@ -101,7 +101,7 @@ export class KeyRotationForm {
           label: 'Horas de gracia',
           hint: 'Entre 0 y 720. Vacío: el backend aplica 24.',
           control: 'number' as const,
-          mensajeDeError: 'Ingresá un valor entre 0 y 720.',
+          mensajeDeError: 'Ingrese un valor entre 0 y 720.',
         },
       ],
     },
@@ -113,7 +113,7 @@ export class KeyRotationForm {
   protected readonly rotated = signal<KeyRotationResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para rotar claves de firma.'),
+    errorMessageOf(this.state(), 'No tiene permiso para rotar claves de firma.'),
   );
 
   protected submit(): void {

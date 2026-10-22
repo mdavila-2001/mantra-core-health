@@ -133,6 +133,13 @@
   }
 }
 
+/* En el detalle de una cita de la semana van todas a la vista y el modal es
+   angosto: envuelven a cualquier ancho en vez de salirse por el borde. */
+.agenda__acciones.agenda__acciones--detalle {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 /* En la tabla de Consultas, la tabla entra entera en su caja — sin columna fija
    que se pinte encima de Pago (propietario, 18/09) ni scroll lateral que
    esconda la acción.
@@ -289,32 +296,6 @@
   color: var(--text-secondary);
 }
 
-/* ---- paginación de la ventana (ALV-024) ----------------------------------
-   Al pie de la lista, como el cursor de la tabla: el rango a la izquierda dice
-   qué página se mira y las flechas a la derecha la mueven. */
-.agenda__paginacion {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-block-start: var(--sp-4);
-}
-
-.agenda__paginacion-rango {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
-  /* Con «Hoy», el día de la semana llega en minúscula del formato de fecha. */
-  text-transform: capitalize;
-}
-
-.agenda__paginacion-controles {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
 /* «Llegó»: el ícono de registrar llegada, sin botón, en el tono de lo hecho.
    Mide lo mismo que un botón chico para que la fila no salte al registrarla. */
 .agenda__llego {
@@ -357,4 +338,35 @@
     padding: var(--sp-1) var(--sp-2);
     column-gap: var(--sp-1);
   }
+}
+
+/* ---- el sello de reconsulta (C4) ------------------------------------------
+   El motivo, el sello y de qué consulta salió, en la misma celda. En el
+   teléfono caen uno debajo del otro: el sello no compite con el motivo por el
+   ancho, que es lo único que se lee de corrido. */
+.agenda__motivo {
+  display: block;
+}
+
+.agenda__reconsulta-sello {
+  margin-block-start: var(--sp-1);
+}
+
+.agenda__reconsulta-origen {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-overline);
+}
+
+@media (min-width: 48.75rem) {
+  .agenda__reconsulta-sello {
+    margin-block-start: 0;
+    margin-inline-start: var(--sp-2);
+  }
+}
+
+/* Detalle de la semana (modal): las opciones de pago a la vista, que pueden bajar de renglón. */
+.agenda__pago--detalle {
+  flex-wrap: wrap;
+  white-space: normal;
 }

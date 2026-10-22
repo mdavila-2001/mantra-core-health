@@ -114,7 +114,7 @@ describe('bloquesDeFormulario', () => {
 
   it('dice cuántas preguntas son del estándar y cuántas del consultorio', () => {
     expect(texto(bloquesDeFormulario(FORMULARIO))).toContain(
-      '3 preguntas · 2 del estándar y 1 de tu organización',
+      '3 preguntas · 2 del estándar y 1 de su organización',
     );
   });
 
@@ -186,7 +186,7 @@ describe('bloquesDeFormulario', () => {
           campos: [
             {
               key: 'orden',
-              label: 'Ordená estas tres',
+              label: 'Ordene estas tres',
               control: 'grid-checkboxes',
               oneResponsePerColumn: true,
               rows: [{ value: 'a', label: 'Dolor' }],
@@ -209,7 +209,7 @@ describe('bloquesDeFormulario', () => {
       paginas: [
         {
           titulo: 'Antecedentes',
-          campos: [{ key: 'fuma', label: '¿Fumás?', control: 'yes-no' }],
+          campos: [{ key: 'fuma', label: '¿Fuma?', control: 'yes-no' }],
         },
       ],
     });
@@ -230,5 +230,29 @@ describe('bloquesDeFormulario', () => {
 
     expect(bloques.some((bloque) => bloque.kind === 'blank')).toBe(false);
     expect(texto(bloques)).toContain('Este campo se completa en el sistema.');
+  });
+
+  it('un «¿cuál?» dice en papel de qué pregunta depende y con qué respuesta', () => {
+    const conCondicion: FormularioParaPdf = {
+      ...FORMULARIO,
+      paginas: [
+        {
+          titulo: 'Antecedentes',
+          campos: [
+            { key: 'alergias', label: '¿Tiene alergias?', control: 'yes-no' },
+            {
+              key: 'cual',
+              label: '¿A qué?',
+              control: 'text',
+              showWhen: { key: 'alergias', equals: true },
+            },
+          ],
+        },
+      ],
+    };
+
+    const textos = bloquesDeFormulario(conCondicion).map((bloque) => bloque.text);
+
+    expect(textos).toContain('Sólo si en la 1 («¿Tiene alergias?») respondió «Sí».');
   });
 });

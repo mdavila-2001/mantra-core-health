@@ -155,7 +155,7 @@ describe('AttachmentUploader', () => {
   it('sin archivo elegido no manda nada', () => {
     subir();
     http.expectNone((r) => r.url === '/common/files/upload');
-    expect(texto()).toContain('Todavía no seleccionaste archivos');
+    expect(texto()).toContain('Todavía no seleccionó archivos');
   });
 
   /* ═══ El lote — corrección del 10/09/2026 ════════════════════════════════ */

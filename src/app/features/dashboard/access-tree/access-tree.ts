@@ -22,6 +22,7 @@ import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { CommunitiesDialog } from '../../communities/communities-dialog';
 import { ClinicsDirectory } from '../../public-directories/clinics-directory';
+import { InsurersDirectory } from '../../public-directories/insurers-directory';
 import { PharmaciesDirectory } from '../../public-directories/pharmacies-directory';
 import { LaboratoryDirectory } from '../../laboratory-directory/laboratory-directory';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
@@ -65,6 +66,7 @@ import { ContentDialog } from '../../../shared/components/organisms/content-dial
     ContentDialog,
     LaboratoryDirectory,
     NavIcon,
+    InsurersDirectory,
     PharmaciesDirectory,
     RouterLink,
     Tooltip,

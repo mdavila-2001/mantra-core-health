@@ -1,0 +1,6 @@
+{
+  "head": "8b83ada338e083c007a638c1edf0d99361eca06e",
+  "workingTreeDiffSha256": "4d6b38fa65a94d4bffbb6e7761acc6a8dd1e313fe3699c8ab427593b12435ba1",
+  "status": "preliminary production build, includes documented lint repairs",
+  "scope": "tracked diff plus demo proxy and new directed specs already committed in 78982619"
+}

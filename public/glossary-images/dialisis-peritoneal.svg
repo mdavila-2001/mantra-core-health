@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Diálisis peritoneal: llenado, permanencia y drenaje</title>
+  <desc id="d">Tres esquemas de la cavidad abdominal con un catéter peritoneal. En el llenado la solución entra desde una bolsa; en la permanencia el peritoneo funciona como membrana entre los capilares y la solución, y los desechos y el agua pasan a ella; en el drenaje el líquido usado sale a una bolsa. Un corte inferior muestra la barrera capilar, peritoneo y solución.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --blood:#d6453d; --blood-l:#f2a9a3; --dial:#2a7fb8; --dial-l:#a9d3ee; --mem:#8a6bbf; --ok:#1f8a5b; --warn:#b7791f; --bad:#c0392b; --soft:#eef2f7; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --blood:#e0584f; --blood-l:#7d3a36; --dial:#5aaee0; --dial-l:#27465c; --mem:#b79be6; --ok:#4cc38a; --warn:#e3b04b; --bad:#ef7467; --soft:#243140; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lab { font-size: 14px; font-weight: 600; }
+    .sm { font-size: 13px; }
+  </style>
+  <defs>
+    <marker id="ak" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--ink)"/></marker>
+    <marker id="am" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--blood)"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--dial)"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--ok)"/></marker>
+    <marker id="aw" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--warn)"/></marker>
+    <marker id="ax" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--bad)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">Diálisis peritoneal: las tres fases de cada intercambio</text>
+  <rect x="20" y="50" width="240" height="278" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="140" y="76" text-anchor="middle" class="lab">1. Llenado</text>
+  <rect x="95" y="92" width="90" height="170" rx="36" fill="var(--soft)" stroke="var(--ink)" stroke-width="2.5"/>
+  <rect x="106" y="128" width="68" height="122" rx="26" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <clipPath id="c0"><rect x="106" y="128" width="68" height="122" rx="26"/></clipPath>
+  <rect x="106" y="185" width="68" height="65" fill="var(--dial-l)" opacity="0.9" clip-path="url(#c0)"/>
+  <path d="M118 150 q10 -10 20 0 t20 0 M118 168 q10 -10 20 0 t20 0 M118 186 q10 -10 20 0 t20 0" stroke="var(--muted)" stroke-width="2" fill="none" opacity=".8"/>
+  <rect x="205" y="92" width="40" height="46" rx="8" fill="var(--dial-l)" stroke="var(--dial)" stroke-width="2.5"/>
+  <path d="M225 138 V235 H132" stroke="var(--dial)" stroke-width="4" fill="none" stroke-linejoin="round"/>
+  <path d="M225 170 V196" stroke="var(--dial)" stroke-width="4" marker-end="url(#ad)"/>
+  <path d="M208 235 H192" stroke="var(--dial)" stroke-width="4" marker-end="url(#ad)"/>
+  <text x="225" y="84" text-anchor="middle" class="sm muted">Bolsa</text>
+  <text x="140" y="303" text-anchor="middle" class="sm muted" style="font-size:12.5px">La solución entra a la cavidad</text>
+  <text x="140" y="319" text-anchor="middle" class="sm muted" style="font-size:12.5px">por gravedad desde la bolsa</text>
+  <rect x="280" y="50" width="240" height="278" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="400" y="76" text-anchor="middle" class="lab">2. Permanencia</text>
+  <rect x="355" y="92" width="90" height="170" rx="36" fill="var(--soft)" stroke="var(--ink)" stroke-width="2.5"/>
+  <rect x="366" y="128" width="68" height="122" rx="26" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <clipPath id="c1"><rect x="366" y="128" width="68" height="122" rx="26"/></clipPath>
+  <rect x="366" y="135" width="68" height="115" fill="var(--dial-l)" opacity="0.9" clip-path="url(#c1)"/>
+  <path d="M378 150 q10 -10 20 0 t20 0 M378 168 q10 -10 20 0 t20 0 M378 186 q10 -10 20 0 t20 0" stroke="var(--muted)" stroke-width="2" fill="none" opacity=".8"/>
+  <path d="M392 235 H458" stroke="var(--muted)" stroke-width="4" fill="none"/>
+  <rect x="456" y="227" width="14" height="16" rx="3" fill="var(--muted)"/>
+  <text x="480" y="248" class="sm muted">tapón</text>
+  <path d="M364 150 h-18" stroke="var(--blood)" stroke-width="3" marker-start="none" fill="none"/>
+  <path d="M364 185 h-18" stroke="var(--blood)" stroke-width="3" marker-start="none" fill="none"/>
+  <path d="M364 220 h-18" stroke="var(--blood)" stroke-width="3" marker-start="none" fill="none"/>
+  <path d="M342 150 h20" stroke="var(--blood)" stroke-width="3" marker-end="url(#ab)" fill="none"/>
+  <path d="M342 185 h20" stroke="var(--blood)" stroke-width="3" marker-end="url(#ab)" fill="none"/>
+  <path d="M342 220 h20" stroke="var(--blood)" stroke-width="3" marker-end="url(#ab)" fill="none"/>
+  <text x="322" y="140" text-anchor="middle" class="sm" style="fill:var(--blood)">sangre</text>
+  <text x="400" y="303" text-anchor="middle" class="sm muted" style="font-size:12.5px">El peritoneo actúa como membrana</text>
+  <text x="400" y="319" text-anchor="middle" class="sm muted" style="font-size:12.5px">entre la sangre y la solución</text>
+  <rect x="540" y="50" width="240" height="278" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="660" y="76" text-anchor="middle" class="lab">3. Drenaje</text>
+  <rect x="615" y="92" width="90" height="170" rx="36" fill="var(--soft)" stroke="var(--ink)" stroke-width="2.5"/>
+  <rect x="626" y="128" width="68" height="122" rx="26" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <clipPath id="c2"><rect x="626" y="128" width="68" height="122" rx="26"/></clipPath>
+  <rect x="626" y="215" width="68" height="35" fill="var(--warn)" opacity="0.45" clip-path="url(#c2)"/>
+  <path d="M638 150 q10 -10 20 0 t20 0 M638 168 q10 -10 20 0 t20 0 M638 186 q10 -10 20 0 t20 0" stroke="var(--muted)" stroke-width="2" fill="none" opacity=".8"/>
+  <path d="M652 235 H745 V258" stroke="var(--warn)" stroke-width="4" fill="none" stroke-linejoin="round" marker-end="url(#aw)"/>
+  <rect x="725" y="262" width="40" height="30" rx="8" fill="var(--warn)" opacity=".5" stroke="var(--warn)" stroke-width="2.5"/>
+  <text x="745" y="268" text-anchor="middle" class="sm muted"></text>
+  <text x="578" y="172" text-anchor="middle" class="sm muted">líquido</text><text x="578" y="188" text-anchor="middle" class="sm muted">usado</text>
+  <text x="660" y="303" text-anchor="middle" class="sm muted" style="font-size:12.5px">Sale el líquido con desechos</text>
+  <text x="660" y="319" text-anchor="middle" class="sm muted" style="font-size:12.5px">y exceso de agua</text>
+  <rect x="20" y="338" width="760" height="114" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="40" y="360" class="lab">Qué ocurre durante la permanencia (corte de la barrera)</text>
+  <rect x="40" y="372" width="150" height="50" rx="8" fill="var(--blood-l)" opacity=".7"/><text x="115" y="388" text-anchor="middle" class="sm">Capilar (sangre)</text>
+  <rect x="190" y="368" width="44" height="58" rx="6" fill="var(--mem)" opacity=".75"/><text x="212" y="443" text-anchor="middle" class="sm muted" style="font-size:12px">peritoneo</text>
+  <rect x="234" y="372" width="150" height="50" rx="8" fill="var(--dial-l)" opacity=".8"/><text x="309" y="388" text-anchor="middle" class="sm">Solución</text>
+  <path d="M150 402 H300" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#ak)"/>
+  <path d="M150 415 H300" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#ak)"/>
+  <text x="420" y="386" class="sm">Urea, potasio y otros desechos: difusión,</text><text x="420" y="402" class="sm muted">de la sangre hacia la solución.</text>
+  <text x="420" y="422" class="sm">Agua: ósmosis, atraída por el agente</text><text x="420" y="438" class="sm muted">osmótico (glucosa u otro) de la solución.</text>
+  <text x="400" y="468" text-anchor="middle" class="sm muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

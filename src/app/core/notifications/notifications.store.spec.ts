@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../auth/auth.service';
-import { NotificationsStore } from './notifications.store';
+import { INTERVALO_MS, NotificationsStore } from './notifications.store';
 
 /**
  * Lo que estas pruebas fijan.
@@ -40,7 +40,7 @@ describe('NotificationsStore', () => {
       {
         id: 'n-1',
         category: 'CLINICAL',
-        subject: 'Tu receta está lista',
+        subject: 'Su receta está lista',
         bodyText: null,
         destination: { type: 'PRESCRIPTION', id: 'rx-1' },
         payloadJson: null,
@@ -63,7 +63,7 @@ describe('NotificationsStore', () => {
         actorProfileId: null,
         sourceTypeConceptId: 'c-post',
         sourceRefId: 'p-1',
-        previewText: 'Alguien comentó tu publicación',
+        previewText: 'Alguien comentó su publicación',
         isRead: false,
         readAt: null,
         createdAt: '2026-08-18T11:00:00.000Z',
@@ -160,7 +160,7 @@ describe('NotificationsStore', () => {
     });
 
     expect(store.sinLeer()).toBe(1);
-    expect(store.avisos()[0].titulo).toBe('Tu receta está lista');
+    expect(store.avisos()[0].titulo).toBe('Su receta está lista');
     // El fallo de lo social no se le cuenta a nadie: la campana trajo lo que
     // importaba.
     expect(store.error()).toBe('');
@@ -233,5 +233,97 @@ describe('NotificationsStore', () => {
     resolver({ messaging: VACIA });
 
     expect(store.sinLeer()).toBe(0);
+  });
+
+  describe('acciones de la notificación', () => {
+    const conAcciones = {
+      items: [
+        {
+          id: 'n-7',
+          category: 'CLINICAL',
+          subject: 'Le quieren registrar como dependiente',
+          bodyText: null,
+          destination: { type: 'DEPENDENT_LINK_REQUEST', id: 'sol-1' },
+          payloadJson: null,
+          actions: [{ key: 'ACCEPT', label: 'Aceptar', tone: 'primary' }],
+          unread: true,
+          availableAt: '2026-08-18T10:00:00.000Z',
+          readAt: null,
+        },
+      ],
+      count: 1,
+      limit: 8,
+      nextCursor: null,
+      unreadCount: 1,
+    };
+
+    it('lleva a los avisos el destino y las acciones que ofrece el servidor', () => {
+      store.iniciar();
+      resolver({ perfil: null, messaging: conAcciones });
+
+      const aviso = store.avisos()[0]!;
+      expect(aviso.destino).toEqual({ type: 'DEPENDENT_LINK_REQUEST', id: 'sol-1' });
+      expect(aviso.acciones).toEqual([{ key: 'ACCEPT', label: 'Aceptar', tone: 'primary' }]);
+    });
+
+    it('un aviso sin acciones las trae vacías, no ausentes', () => {
+      store.iniciar();
+      resolver({ perfil: null, messaging: paginaMessaging(1) });
+
+      expect(store.avisos()[0]!.acciones).toEqual([]);
+    });
+
+    it('tras una acción marca leída y vuelve a leer las bandejas', () => {
+      store.iniciar();
+      resolver({ perfil: null, messaging: conAcciones });
+
+      store.trasAccion(store.avisos()[0]!);
+      http.expectOne('/notifications/in-app/n-7/read').flush({
+        id: 'n-7',
+        readAt: '2026-08-18T12:00:00.000Z',
+        alreadyRead: false,
+      });
+      resolver({ messaging: VACIA });
+
+      expect(store.sinLeer()).toBe(0);
+      expect(store.avisos().length).toBe(0);
+    });
+
+    it('tras una acción relee aunque marcar falle: la decisión ya se tomó', () => {
+      store.iniciar();
+      resolver({ perfil: null, messaging: conAcciones });
+
+      store.trasAccion(store.avisos()[0]!);
+      http.expectOne('/notifications/in-app/n-7/read').error(new ProgressEvent('error'));
+      resolver({ messaging: VACIA });
+
+      expect(store.avisos().length).toBe(0);
+    });
+  });
+
+  it('TX-18: con la pestaña oculta, el tic se saltea la lectura pero sigue agendando', () => {
+    const oculta = vi.spyOn(document, 'hidden', 'get');
+    try {
+      vi.useFakeTimers();
+      store.iniciar();
+      resolver({ perfil: null, messaging: paginaMessaging(1) });
+      expect(store.sinLeer()).toBe(1);
+
+      oculta.mockReturnValue(true);
+      vi.advanceTimersByTime(INTERVALO_MS);
+      // Pestaña oculta: ni una llamada a `/notifications/me` en este tic.
+      expect(http.match((r) => r.url === '/notifications/me')).toHaveLength(0);
+
+      oculta.mockReturnValue(false);
+      vi.advanceTimersByTime(INTERVALO_MS);
+      // Visible de nuevo: el sondeo retomó solo, sin que nadie llame a nada.
+      const pedidos = http.match((r) => r.url === '/notifications/me');
+      expect(pedidos).toHaveLength(1);
+      pedidos[0]!.flush(paginaMessaging(2));
+      expect(store.sinLeer()).toBe(2);
+    } finally {
+      oculta.mockRestore();
+      vi.useRealTimers();
+    }
   });
 });

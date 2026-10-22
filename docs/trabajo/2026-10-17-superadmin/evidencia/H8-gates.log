@@ -1,0 +1,5 @@
+$ yarn typecheck → exit 0 (sin líneas error TS)
+yarn eslint exit=0
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+build de producción (corrida previa al cambio de host; el literal sigue detrás de ngDevMode): admin@alovidasalud.com en dist: 0 archivos

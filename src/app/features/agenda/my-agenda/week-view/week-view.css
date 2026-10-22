@@ -55,7 +55,9 @@
   border-radius: var(--r-md, 8px);
   background: var(--bg-surface);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  /* SIN `overflow: hidden`: recortaba el globo de la cita contra el borde de
+     la tarjeta del día (2026-09-24). Las esquinas que el recorte redondeaba
+     las redondea ahora el propio botón de la cabecera. */
 }
 
 .semana__dia--hoy {
@@ -74,6 +76,8 @@
   color: inherit;
   cursor: pointer;
   text-align: left;
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
   transition: background-color 150ms ease;
 }
 
@@ -312,6 +316,36 @@
   background: none;
   color: var(--text-secondary);
   font-weight: 600;
+}
+
+/* El «+N turnos más» abre el día: se ve y se comporta como un enlace. */
+.semana__resto-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r-xs, 4px);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.semana__resto-boton svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.semana__resto-boton:hover {
+  color: var(--text-primary);
+  background: var(--bg-active);
+  text-decoration: underline;
+}
+
+.semana__resto-boton:focus-visible {
+  outline: 2px solid var(--c-aqua-500);
+  outline-offset: 2px;
 }
 
 /* Sin agenda: la celda se apaga, no desaparece — la semana sigue teniendo

@@ -5,6 +5,7 @@
 <div
   class="auth-split"
   [class.auth-split--full]="contentWidth() === 'full'"
+  [class.auth-split--plain]="plainSurface()"
   [class.auth-split--stage]="scene() === 'stage'"
   appPointerScene
 >
@@ -308,12 +309,6 @@
                     stroke-linejoin="round"
                     d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
                   />
-                </svg>
-              }
-              @default {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                  <rect x="2.5" y="4" width="19" height="12.5" rx="2" />
-                  <path stroke-linecap="round" d="M9 20h6m-3-3.5V20" />
                 </svg>
               }
             }

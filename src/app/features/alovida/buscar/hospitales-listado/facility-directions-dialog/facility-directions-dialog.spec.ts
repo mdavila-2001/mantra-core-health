@@ -177,7 +177,7 @@ describe('FacilityDirectionsDialog', () => {
     registry.clickHandler?.({ latlng: { lat: -17.79, lng: -63.19 } });
     await fixture.whenStable();
 
-    expect(porTestId('directions-origin')?.textContent).toContain('el punto que marcaste');
+    expect(porTestId('directions-origin')?.textContent).toContain('el punto que marcó');
     expect(porTestId('directions-distance')?.textContent).toContain('en línea recta');
   });
 

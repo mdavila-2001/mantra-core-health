@@ -194,7 +194,7 @@ export class ServicesCatalog {
     if (practiceId === null) {
       this.paginado.llego(null);
       this.resultados.set(
-        empty({ label: 'Elegir una práctica' }, 'Elegí una práctica para ver su catálogo.'),
+        empty({ label: 'Elegir una práctica' }, 'Elija una práctica para ver su catálogo.'),
       );
       return;
     }
@@ -267,7 +267,7 @@ export class ServicesCatalog {
       );
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

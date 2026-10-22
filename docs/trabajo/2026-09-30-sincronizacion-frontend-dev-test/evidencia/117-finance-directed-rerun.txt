@@ -1,0 +1,202 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  596 componentes · 3 otros · 351 pantallas · 138 maquetas · 23 atomos · 46 moleculas · 35 organismos
+  208 con algo que mirar
+  relaciones: 2596 template-instantiates · 5 imports-available sin instanciar · 69 type-only · 229 dynamic-loads
+  nivel: 0 declarado · 596 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 596/596 · con escenario 3/596 · verificados visualmente 3/596 · bloqueados 80/596 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\.worktrees\frontend-hito-2\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                      | Names                                                 |  Raw size
+styles.css                                               | styles                                                | 166.42 kB | 
+chunk-PEIW372Z.js                                        | -                                                     |  17.52 kB | 
+spec-app-core-mock-handlers-finance.handlers.coverage.js | spec-app-core-mock-handlers-finance.handlers.coverage |   8.57 kB | 
+chunk-JBWBLPNK.js                                        | -                                                     |   5.19 kB | 
+init-testbed.js                                          | init-testbed                                          |   1.21 kB | 
+vitest-mock-patch.js                                     | vitest-mock-patch                                     | 974 bytes | 
+setup-test-setup.js                                      | setup-test-setup                                      | 911 bytes | 
+
+                                                         | Initial total                                         | 200.80 kB
+
+Lazy chunk files                                         | Names                                                 |  Raw size
+chunk-J6STNTJ7.js                                        | finance-handlers                                      |   1.76 MB | 
+
+Application bundle generation complete. [125.086 seconds] - 2026-10-01T17:17:22.230Z
+
+node.exe : ▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+En C:\Users\Usuario\AppData\Roaming\npm\corepack.ps1: 24 Carácter: 5
++     & "node$exe"  "$basedir/node_modules/corepack/dist/corepack.js" $ ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 D:/Trabajos Secundarios/Mantra Core Technologies/.worktrees/frontend-hito-2
+
+(node:13024) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |mantra-core-health| src/app/core/mock/handlers/finance.handlers.coverage.spec.ts (3 tests | 3 failed) 4471ms
+     × no incorpora un borrador al balance hasta postearlo y revierte con documento espejo 48ms
+     × compensa partidas abiertas sin volver a cobrarlas y controla cierre del periodo 4ms
+     × preserva centavos en cotizaciones y no permite pagar un pasivo saldado 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |mantra-core-health| src/app/core/mock/handlers/finance.handlers.coverage.spec.ts > contabilidad demo: saldos y 
+transiciones > no incorpora un borrador al balance hasta postearlo y revierte con documento espejo
+AssertionError: expected { items: [ { …(7) }, …(18) ], …(6) } to deeply equal { items: [ { …(7) }, …(18) ], …(6) }
+
+- Expected
++ Received
+
+@@ -4,12 +4,12 @@
+    "items": [
+      {
+        "accountId": "c7cf4fdb-a4a5-43d1-a6c0-1f56b6cc00bc",
+        "balance": "19475.00",
+        "code": "1.1",
+-       "credit": "895.00",
+-       "debit": "20370.00",
++       "credit": "907.34",
++       "debit": "20382.34",
+        "name": "Caja",
+        "normalBalanceConceptId": "de56a07f-7120-428d-ad9d-a1ee6179fbdc",
+      },
+      {
+        "accountId": "c8cf516e-25c2-4196-a6dc-ede84ab27c64",
+@@ -94,12 +94,12 @@
+      },
+      {
+        "accountId": "57bc8150-fa80-47c8-aa54-6078fa48b598",
+        "balance": "17850.00",
+        "code": "4.1",
+-       "credit": "17850.00",
+-       "debit": "0.00",
++       "credit": "17862.34",
++       "debit": "12.34",
+        "name": "Ingresos por consultas",
+        "normalBalanceConceptId": "6314c5f6-f9e8-44b2-a96c-cd7cfb8ae5c8",
+      },
+      {
+        "accountId": "5abc8609-7dd6-4117-aaaa-cc2eb5fc2890",
+@@ -172,10 +172,10 @@
+        "debit": "400.00",
+        "name": "Intereses bancarios",
+        "normalBalanceConceptId": "de56a07f-7120-428d-ad9d-a1ee6179fbdc",
+      },
+    ],
+-   "totalCredit": "182546.66",
+-   "totalDebit": "182546.66",
+-   "transactionsIncluded": 26,
++   "totalCredit": "182571.34",
++   "totalDebit": "182571.34",
++   "transactionsIncluded": 28,
+    "truncated": false,
+  }
+
+ ❯ src/app/core/mock/handlers/finance.handlers.coverage.spec.ts:90:23
+     88|     expect(data<{ items: { role: string }[] }>(request('GET', `/accoun…
+     89|       .toEqual(expect.arrayContaining([expect.objectContaining({ role:…
+     90|     expect(balance()).toEqual(before);
+       |                       ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |mantra-core-health| src/app/core/mock/handlers/finance.handlers.coverage.spec.ts > contabilidad demo: saldos y 
+transiciones > compensa partidas abiertas sin volver a cobrarlas y controla cierre del periodo
+AssertionError: expected 422 to be 412 // Object.is equality
+
+- Expected
++ Received
+
+- 412
++ 422
+
+ ❯ src/app/core/mock/handlers/finance.handlers.coverage.spec.ts:99:105
+     97|     const receivable = open.items.find((item) => item.side === 'RECEIV…
+     98|     expect(Number(receivable.openAmount)).toBeGreaterThan(0);
+     99|     expect(status(request('POST', '/accounting/clearing-documents', { …
+       |                                                                                                         ^
+    100|     const cleared = data<{ clearedItems: number; clearedAmount: string…
+    101|       request('POST', '/accounting/clearing-documents', { openItemIds:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |mantra-core-health| src/app/core/mock/handlers/finance.handlers.coverage.spec.ts > contabilidad demo: saldos y 
+transiciones > preserva centavos en cotizaciones y no permite pagar un pasivo saldado
+AssertionError: expected 422 to be 412 // Object.is equality
+
+- Expected
++ Received
+
+- 412
++ 422
+
+ ❯ src/app/core/mock/handlers/finance.handlers.coverage.spec.ts:155:66
+    153|     expect(data<{ installmentNumber: number; amount: string }>(request…
+    154|       .toMatchObject({ installmentNumber: 2, amount: '5.00' });
+    155|     expect(status(request('POST', `${liabilityPath}/progress`))).toBe(…
+       |                                                                  ^
+    156|     expect(data<{ id: string; outstandingAmount: string }[]>(request('…
+    157|       .find((item) => item.id === liability.id)?.outstandingAmount).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  13:17:23
+   Duration  8.78s (transform 1.53s, setup 819ms, import 125ms, tests 4.47s, environment 2.96s)
+
+EXIT_CODE=1

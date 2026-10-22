@@ -1,0 +1,51 @@
+.expediente {
+  display: grid;
+  gap: var(--sp-4);
+  margin-top: var(--sp-5);
+}
+
+.expediente h2,
+.expediente h3 {
+  margin: 0;
+}
+
+.expediente__datos {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-4);
+  overflow-wrap: anywhere;
+}
+
+.expediente__datos dt,
+.expediente__fecha {
+  color: var(--text-secondary);
+}
+
+.expediente__datos dd {
+  margin: 0;
+}
+
+.expediente__evidencias {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--sp-3);
+}
+
+.expediente__imagen {
+  display: block;
+  width: 100%;
+  max-height: 28rem;
+  object-fit: contain;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.expediente__fecha {
+  margin-bottom: 0;
+  font-size: var(--fs-caption);
+}
+
+.expediente__accion {
+  justify-self: start;
+}

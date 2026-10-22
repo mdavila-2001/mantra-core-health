@@ -1,0 +1,56 @@
+{
+  "route": "/auth",
+  "csp": "default-src 'self'; script-src 'self' 'sha256-Ohy6Wz7NFFGmQaVW/a8g5BXylUJrN/hbRM2QuMglZ6Q=' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; media-src 'self' blob:; base-uri 'self'; form-action 'self'",
+  "errors": [
+    {
+      "message": "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-Ohy6Wz7NFFGmQaVW/a8g5BXylUJrN/hbRM2QuMglZ6Q=' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+      "location": {
+        "url": "http://localhost:4210/auth",
+        "line": 1689,
+        "column": 0,
+        "lineNumber": 1689,
+        "columnNumber": 0
+      }
+    },
+    {
+      "message": "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-Ohy6Wz7NFFGmQaVW/a8g5BXylUJrN/hbRM2QuMglZ6Q=' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+      "location": {
+        "url": "http://localhost:4210/auth",
+        "line": 1690,
+        "column": 0,
+        "lineNumber": 1690,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "scripts": [
+    {
+      "type": "",
+      "id": "",
+      "bytes": 1577,
+      "hash": "HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=",
+      "prefix": "\n      /* Anti-parpadeo: bajo SSR el HTML llega sin data-theme, así qu"
+    },
+    {
+      "type": "text/javascript",
+      "id": "ng-event-dispatch-contract",
+      "bytes": 476,
+      "hash": "VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg=",
+      "prefix": "(()=>{function p(t,n,r,o,e,i,f,m){return{eventType:t,event:n,targetEle"
+    },
+    {
+      "type": "",
+      "id": "",
+      "bytes": 92,
+      "hash": "kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38=",
+      "prefix": "window.__jsaction_bootstrap(document.body,\"ng\",[\"submit\",\"click\",\"inpu"
+    },
+    {
+      "type": "application/json",
+      "id": "ng-state",
+      "bytes": 6770,
+      "hash": "+b2dS6GO8rBA6ZlikObf5o8fQoaIWzD/7ZQhG5Ybkj8=",
+      "prefix": "{\"__nghData__\":[{\"t\":{\"10\":\"t1\",\"26\":\"t2\"},\"c\":{\"10\":[{\"i\":\"t1\",\"r\":1,"
+    }
+  ]
+}

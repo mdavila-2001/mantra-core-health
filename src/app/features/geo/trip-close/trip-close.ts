@@ -76,7 +76,7 @@ export class TripClose {
   protected readonly closed = signal<Trip | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para cerrar viajes.'),
+    errorMessageOf(this.state(), 'No tiene permiso para cerrar viajes.'),
   );
 
   protected submit(): void {

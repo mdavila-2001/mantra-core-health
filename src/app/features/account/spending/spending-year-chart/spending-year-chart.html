@@ -1,0 +1,97 @@
+<div class="year-chart">
+  <!-- Dos series: la leyenda siempre está. El color va en la muestra, nunca en
+       el texto. -->
+  <ul class="year-chart__legend" aria-hidden="true">
+    <li><span class="year-chart__swatch year-chart__swatch--current"></span>{{ currentYear() }}</li>
+    <li><span class="year-chart__swatch year-chart__swatch--previous"></span>{{ previousYear() }}</li>
+  </ul>
+
+  <div class="year-chart__plot">
+    <div class="year-chart__grid" aria-hidden="true">
+      @for (tick of ticks(); track tick.bottom) {
+        <div class="year-chart__gridline" [style.bottom.%]="tick.bottom">
+          <span class="year-chart__tick cifras-tabulares">{{ tick.label }}</span>
+        </div>
+      }
+    </div>
+
+    <ol class="year-chart__months" [attr.aria-label]="'Gasto por mes, ' + currentYear() + ' contra ' + previousYear()">
+      @for (column of columns(); track column.point.monthIndex; let i = $index) {
+        <li
+          class="year-chart__month"
+          tabindex="0"
+          data-testid="spending-year-chart-month"
+          [class.year-chart__month--active]="activeIndex() === i"
+          [attr.aria-label]="column.ariaLabel"
+          (mouseenter)="show(i)"
+          (mouseleave)="hide(i)"
+          (focus)="show(i)"
+          (blur)="hide(i)"
+        >
+          <span class="year-chart__bars" aria-hidden="true">
+            <span
+              class="year-chart__bar year-chart__bar--previous"
+              [style.height.%]="column.previousHeight"
+            ></span>
+            @if (column.currentHeight !== null) {
+              <span
+                class="year-chart__bar year-chart__bar--current"
+                [style.height.%]="column.currentHeight"
+              ></span>
+            } @else {
+              <span class="year-chart__bar year-chart__bar--pending"></span>
+            }
+          </span>
+          <span class="year-chart__label" aria-hidden="true">{{ column.point.shortLabel }}</span>
+        </li>
+      }
+    </ol>
+
+    @if (active(); as column) {
+      <div
+        class="year-chart__tooltip"
+        role="presentation"
+        aria-hidden="true"
+        data-testid="spending-year-chart-tooltip"
+        [style.left.%]="tooltipLeft()"
+      >
+        <p class="year-chart__tooltip-title">{{ column.point.label }}</p>
+        <p class="year-chart__tooltip-row">
+          <span class="year-chart__swatch year-chart__swatch--current"></span>
+          {{ currentYear() }}
+          <strong class="cifras-tabulares">
+            {{ column.point.currentCents === null ? '—' : money(column.point.currentCents) }}
+          </strong>
+        </p>
+        <p class="year-chart__tooltip-row">
+          <span class="year-chart__swatch year-chart__swatch--previous"></span>
+          {{ previousYear() }}
+          <strong class="cifras-tabulares">{{ money(column.point.previousCents) }}</strong>
+        </p>
+        @if (delta(column.point); as texto) {
+          <p class="year-chart__tooltip-delta">{{ texto }}</p>
+        }
+      </div>
+    }
+  </div>
+
+  <table class="sr-only">
+    <caption>Gasto por mes, {{ currentYear() }} contra {{ previousYear() }}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Mes</th>
+        <th scope="col">{{ currentYear() }}</th>
+        <th scope="col">{{ previousYear() }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (column of columns(); track column.point.monthIndex) {
+        <tr>
+          <th scope="row">{{ column.point.label }}</th>
+          <td>{{ column.point.currentCents === null ? 'Todavía no llegó' : money(column.point.currentCents) }}</td>
+          <td>{{ money(column.point.previousCents) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

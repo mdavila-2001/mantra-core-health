@@ -1,0 +1,50 @@
+
+Running 4 tests using 1 worker
+
+corepack.cmd : (node:10408) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 6 Carácter: 1
++ corepack.cmd yarn pw playwright/practitioner-profile-ux.spec.ts playw ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:10408) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › playwright\practitioner-profile-lists.spec.ts:160:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar (45.2s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:160:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('region', { name: /^Títulos y formación/ }).getByRole('table', { name: 'Títulos y formación', exact: true }).getByRole('row').filter({ hasText: /Pendiente/ })
+    Expected: 10
+    Received: 0
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 15000ms
+      - waiting for getByRole('region', { name: /^Títulos y formación/ }).getByRole('table', { name: 'Títulos y formación', exact: true }).getByRole('row').filter({ hasText: /Pendiente/ })
+        33 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      271 |     const table = group.getByRole('table', { name: 'Títulos y formación', exact: true });
+      272 |     await expect(table.getByRole('row')).toHaveCount(11); // Diez datos y encabezado.
+    > 273 |     await expect(table.getByRole('row').filter({ hasText: /Pendiente/ })).toHaveCount(10);
+          |                                                                           ^
+      274 |     await expect(
+      275 |       page.getByRole('tabpanel').getByRole('heading', { name: /^Especialidades/ }),
+      276 |     ).toHaveCount(0);
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:273:75
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-lists-92186-os-datos-reales-al-recargar-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-lists-92186-os-datos-reales-al-recargar-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:160:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar
+  3 did not run
+  1 error was not a part of any test, see above for details

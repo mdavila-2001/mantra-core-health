@@ -1,0 +1,16 @@
+
+Running 1 test using 1 worker
+
+yarn.cmd : (node:21692) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 2 Carácter: 1012
++ ... .0.1:4200'; yarn.cmd pw --config artifacts/playwright.directory.confi ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:21692) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+API real: búsqueda POST, payload mínimo, total/cursor, chat reutilizado y recarga PASS; consola/red sin errores inesperados
+  ok 1 [chromium] › playwright\insurer-patient-directory-real.spec.ts:9:5 › directorio y conversación persistida con API real @real-directory (3.4s)
+
+  1 passed (4.9s)
+EXIT_CODE=0

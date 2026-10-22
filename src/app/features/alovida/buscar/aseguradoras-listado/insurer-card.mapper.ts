@@ -15,7 +15,13 @@ import {
   ratingText,
   type DirectoryCard,
 } from '../centro-card/directory-card.mapper';
-import { dondeQueda, inicialesDe, puntuacionDe, rutaDeFicha } from '../public-result.mapper';
+import {
+  dondeQueda,
+  fotoDelResultado,
+  inicialesDe,
+  puntuacionDe,
+  rutaDeFicha,
+} from '../public-result.mapper';
 
 /** Una aseguradora, con su tarjeta y su desplegable. */
 export type InsurerCard = DirectoryCard;
@@ -79,11 +85,11 @@ export function toInsurerCard(result: PublicSearchResult): InsurerCard {
     titular: result.headline === '' ? null : result.headline,
     donde: dondeQueda(result),
     // Ni `insurance-carriers.dataset.json` ni `insurance.insurance_carriers`
-    // tienen logo o imagen, así que esto llega `null` siempre y la tarjeta
-    // degrada al degradado del tema con las iniciales. Un logo corporativo
-    // tiene dueño: de dónde salen es P-06-2, y no se resuelve poniendo una
-    // imagen de archivo (AC-06-3).
-    portada: result.coverUrl,
+    // tienen logo o imagen. La portada es una foto **ilustrativa** de la
+    // carpeta del directorio; el logo sigue sin resolverse, porque un logo
+    // corporativo tiene dueño (P-06-2) y no se sustituye con una imagen de
+    // archivo (AC-06-3).
+    portada: fotoDelResultado(result),
     logo: result.avatarUrl,
     iniciales: inicialesDe(result.displayName),
     sellos: [

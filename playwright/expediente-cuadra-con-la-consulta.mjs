@@ -19,7 +19,7 @@
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
-const B = 'http://localhost:4300';
+const B = process.env.BASE ?? 'http://localhost:4300';
 const ID = 'c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0';
 const SALIDA = process.env.SALIDA ?? 'artifacts/expediente-cuadra';
 mkdirSync(SALIDA, { recursive: true });
@@ -79,38 +79,70 @@ const leerOpciones = () =>
     os.map((o) => ({ value: o.value, label: o.textContent?.trim() ?? '' })),
   );
 // Las cinco fijas llegan al toque; las plantillas, cuando responde el catálogo.
-const FIJAS = 6; // el placeholder y las cinco entradas fijas
-await pg.waitForFunction(
-  (n) => document.querySelectorAll('[data-testid="consulta-modal"] select option').length > n,
-  FIJAS,
-  { timeout: 30000 },
-);
-const opciones = await leerOpciones();
+// Las entradas fijas (diagnóstico, hojas libres, cirugía, odontología,
+// laboratorio) llegan al toque; las plantillas, cuando responde el catálogo.
+const FIJA = /^(Seleccionar|Diagnóstico —|Hoja en blanco|Formulario libre|Cirugía|Odontología|Laboratorio e imagenología)/;
+let opciones = await leerOpciones();
+for (let intento = 0; intento < 60 && !opciones.some((o) => !FIJA.test(o.label)); intento++) {
+  await pg.waitForTimeout(500);
+  opciones = await leerOpciones();
+}
 log(`opciones del formulario: ${opciones.map((o) => o.label).join(' | ')}`);
 log(`opción de alergia: ${opciones.some((o) => /alergia/i.test(o.label)) ? 'SÍ' : 'no'}`);
 
 // La primera plantilla del catálogo cuyos obligatorios se puedan llenar con
-// texto, números o sí/no (las que piden fecha u odontograma se saltean).
+// texto, números, listas o sí/no (las que piden fecha u odontograma se saltean).
 const completar = modal.getByRole('button', { name: 'Completar formulario' });
 let plantilla = null;
-for (const candidata of opciones.slice(FIJAS)) {
+for (const candidata of opciones.filter((o) => !FIJA.test(o.label))) {
   await selector.selectOption({ label: candidata.label });
   await pg.waitForTimeout(500);
-  const textos = modal.locator('[data-testid="campo-especialidad"] input[type="text"]');
+  const campos = modal.locator('[data-testid="campo-especialidad"]');
+  if ((await campos.locator('textarea, input[type="text"]').count()) === 0) continue;
+  const numeros = campos.locator('input[type="number"]');
+  for (let i = 0; i < (await numeros.count()); i++) await numeros.nth(i).fill('1');
+  const siNo = campos.locator('app-segmented-control');
+  for (let i = 0; i < (await siNo.count()); i++) await siNo.nth(i).locator('button').last().click();
+  const listas = campos.locator('select');
+  for (let i = 0; i < (await listas.count()); i++) {
+    await primeraOpcion(listas.nth(i)).catch(() => undefined);
+  }
+  const grupos = campos.locator('app-checkbox-group');
+  for (let i = 0; i < (await grupos.count()); i++) {
+    // El input nativo va escondido detrás de su caja: se marca por su rótulo.
+    await grupos.nth(i).locator('label').first().click();
+  }
+  // El texto al final: las respuestas de arriba muestran u ocultan los
+  // «¿cuál?», y lo escrito en un campo que después se oculta no se guarda.
+  const textos = campos.locator('textarea:visible, input[type="text"]:visible');
   const cuantos = await textos.count();
   if (cuantos === 0) continue;
   await textos.first().fill(MARCA);
   for (let i = 1; i < cuantos; i++) await textos.nth(i).fill('Sin particularidades');
-  const numeros = modal.locator('[data-testid="campo-especialidad"] input[type="number"]');
-  for (let i = 0; i < (await numeros.count()); i++) await numeros.nth(i).fill('1');
-  const siNo = modal.locator('[data-testid="campo-especialidad"] app-segmented-control');
-  for (let i = 0; i < (await siNo.count()); i++) await siNo.nth(i).locator('button').last().click();
   if (await completar.isEnabled()) {
     plantilla = candidata;
     break;
   }
 }
 log(`plantilla elegida: ${plantilla?.label ?? 'NINGUNA'}`);
+
+// Donde el alta manual de diagnóstico ya no existe, el diagnóstico nace del
+// cierre del formulario («diagnóstico tentativo»): la alergia se carga ahí.
+let rotuloPenicilina = '';
+const cierre = modal.getByTestId('cierre-del-formulario');
+if ((await cierre.count()) > 0) {
+  const tentativo = cierre.locator('select', { has: pg.locator('option', { hasText: /penicilina/i }) });
+  for (let intento = 0; intento < 60 && (await tentativo.count()) === 0; intento++) {
+    await pg.waitForTimeout(500);
+  }
+  rotuloPenicilina = (
+    await tentativo.locator('option').evaluateAll((os) =>
+      os.map((o) => o.textContent?.trim() ?? '').filter((t) => /penicilina/i.test(t)),
+    )
+  )[0];
+  await tentativo.selectOption({ label: rotuloPenicilina });
+  log(`alergia elegida como diagnóstico tentativo del formulario: ${rotuloPenicilina}`);
+}
 await foto('2-formulario-lleno');
 await completar.click();
 try {
@@ -187,6 +219,7 @@ log(`estudio pedido en la consulta: ${estudio}`);
 await modal.getByRole('button', { name: 'Cerrar' }).first().click();
 
 /* ---- 3b. una alergia, cargada como diagnóstico --------------------------- */
+if (rotuloPenicilina === '') {
 await pg.getByTestId('consulta-casilla-diagnosticos').click();
 const dx = modal.locator('select', { has: pg.locator('option', { hasText: /penicilina/i }) });
 await pg.waitForFunction(
@@ -197,7 +230,7 @@ await pg.waitForFunction(
   undefined,
   { timeout: 30000 },
 );
-const rotuloPenicilina = (
+rotuloPenicilina = (
   await dx.locator('option').evaluateAll((os) =>
     os.map((o) => o.textContent?.trim() ?? '').filter((t) => /penicilina/i.test(t)),
   )
@@ -210,28 +243,35 @@ log(`diagnóstico de alergia registrado en la consulta: ${rotuloPenicilina}`);
 if (await modal.isVisible()) {
   await modal.getByRole('button', { name: 'Cerrar' }).first().click();
 }
+}
 
 /* ---- 4. internación ------------------------------------------------------ */
-await pg.getByTestId('consulta-casilla-internacion').click();
-const alta = modal.getByRole('button', { name: 'Dar de alta la internación' });
-const yaInternada = modal.getByText('Esta persona ya está internada.');
-await alta.or(yaInternada).first().waitFor({ timeout: 30000 });
-if ((await alta.count()) > 0) {
-  await alta.click();
-  // Pide confirmación: desde la consulta no se puede anular.
-  await pg.getByRole('button', { name: 'Dar de alta', exact: true }).click();
-  try {
-    await modal.getByTestId('internacion-lista').waitFor({ timeout: 15000 });
-  } catch (e) {
-    await foto('error-internacion');
-    log(`modal de internación:\n${(await modal.innerText()).slice(0, 1500)}`);
-    throw e;
+// Donde la consulta ya no ofrece la internación (se abre desde el
+// expediente), este paso se saltea y se dice.
+if ((await pg.getByTestId('consulta-casilla-internacion').count()) > 0) {
+  await pg.getByTestId('consulta-casilla-internacion').click();
+  const alta = modal.getByRole('button', { name: 'Dar de alta la internación' });
+  const yaInternada = modal.getByText('Esta persona ya está internada.');
+  await alta.or(yaInternada).first().waitFor({ timeout: 30000 });
+  if ((await alta.count()) > 0) {
+    await alta.click();
+    // Pide confirmación: desde la consulta no se puede anular.
+    await pg.getByRole('button', { name: 'Dar de alta', exact: true }).click();
+    try {
+      await modal.getByTestId('internacion-lista').waitFor({ timeout: 15000 });
+    } catch (e) {
+      await foto('error-internacion');
+      log(`modal de internación:\n${(await modal.innerText()).slice(0, 1500)}`);
+      throw e;
+    }
+    log('internación dada de alta en la consulta: sí');
+  } else {
+    log('internación: ya había una abierta');
   }
-  log('internación dada de alta en la consulta: sí');
+  await modal.getByRole('button', { name: 'Cerrar' }).first().click();
 } else {
-  log('internación: ya había una abierta');
+  log('internación: esta consulta no la ofrece');
 }
-await modal.getByRole('button', { name: 'Cerrar' }).first().click();
 
 /* ---- 5. el expediente, recargado ----------------------------------------- */
 await pg.goto(`${B}/medical-records/${ID}`, { waitUntil: 'domcontentloaded' });
@@ -241,7 +281,12 @@ const pestanas = await pg.getByRole('tab').allInnerTexts();
 log(`pestañas del expediente: ${pestanas.map((p) => p.trim()).join(' | ')}`);
 log(`pestaña de alergias: ${pestanas.some((p) => /alergia/i.test(p)) ? 'SÍ' : 'no'}`);
 log(`botón «Nueva alergia»: ${await pg.getByTestId('expediente-nueva-alergia').count()}`);
-const banda = pg.locator('.expediente__alergias');
+// La banda fija o, donde se reemplazó, el aviso (toast) al abrir.
+const banda = pg
+  .locator('.expediente__alergias')
+  .or(pg.locator('app-toast').filter({ hasText: /alergia/i }))
+  .first();
+await banda.waitFor({ timeout: 15000 }).catch(() => undefined);
 log(`banda de alergias: ${(await banda.count()) > 0 ? (await banda.innerText()).replace(/\s+/g, ' ') : 'NO HAY'}`);
 log(`la alergia cargada como diagnóstico está en la banda: ${(await banda.innerText().catch(() => '')).match(/penicilina/i) ? 'SÍ' : 'NO'}`);
 await foto('3-expediente');

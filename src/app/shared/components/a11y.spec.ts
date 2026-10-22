@@ -129,7 +129,7 @@ class GrupoDeOpciones {}
   imports: [Alert],
   template: `
     <app-alert tone="error" title="No pudimos guardar" [dismissible]="true">
-      Revisá la conexión e intentá de nuevo.
+      Revise la conexión e intente de nuevo.
     </app-alert>
   `,
 })
@@ -256,7 +256,7 @@ class FormularioPorPartes {
   readonly paginas = [
     {
       titulo: 'Identidad',
-      hint: 'Los datos de tu documento.',
+      hint: 'Los datos de su documento.',
       campos: [
         { key: 'documento', label: 'Documento', control: 'text' as const, required: true },
         { key: 'correo', label: 'Correo', control: 'email' as const },

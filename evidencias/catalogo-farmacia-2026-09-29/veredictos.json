@@ -1,0 +1,122 @@
+[
+  {
+    "nombre": "la cuenta de farmacia tiene «Catálogo de productos» en su menú",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "entra directo a su catálogo, sin preguntar de qué farmacia",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "la tarjeta está centrada (≤ 2 px de diferencia)",
+    "cond": true,
+    "detalle": "izq 40 · der 40"
+  },
+  {
+    "nombre": "la tarjeta ocupa ≥ 85 % del área",
+    "cond": true,
+    "detalle": "1120 de 1200 px"
+  },
+  {
+    "nombre": "indicadores arriba: publicados, disponibles, sin stock, bajo receta",
+    "cond": true,
+    "detalle": "Productos publicados 15 en tu catálogo Disponibles12los ven los pacientesSin stock3no se ofrecen hasta que los marques disponiblesBajo receta11 todos con precio"
+  },
+  {
+    "nombre": "la lista muestra precio y disponibilidad",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el alta quedó persistida con precio y categoría",
+    "cond": true,
+    "detalle": "{\"price\":\"26.50\",\"category\":\"Medicamentos\"}"
+  },
+  {
+    "nombre": "el genérico se enlazó al vademécum (aparece al buscar la receta)",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "tras recargar, el alta sigue con su precio",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "«sin stock» quedó persistido",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "tras recargar, el producto sigue «Sin stock»",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "la edición quedó persistida (precio nuevo y otra vez disponible)",
+    "cond": true,
+    "detalle": "{\"price\":\"24.90\",\"sinStock\":false}"
+  },
+  {
+    "nombre": "la revisión separa nuevos, a actualizar y a corregir",
+    "cond": true,
+    "detalle": "3 productos nuevos 1 se actualiza (ya estaban) 1 fila a corregir de carga-de-prueba.csv"
+  },
+  {
+    "nombre": "las tildes de Excel llegan intactas",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "crea 3 y actualiza 1",
+    "cond": true,
+    "detalle": "3 productos publicados 1 actualizado 0 rechazados por la API 1 no enviados por errores del archivo"
+  },
+  {
+    "nombre": "«agotado» en el CSV entra como sin stock",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "la fila del código existente actualizó marca y precio sin borrar lo demás",
+    "cond": true,
+    "detalle": "{\"brand\":\"Ibuprofeno Evidencia Actualizado\",\"price\":\"19.90\",\"strength\":\"400 mg\"}"
+  },
+  {
+    "nombre": "tras recargar, están los importados con precio y los inválidos no",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el retiro quedó persistido como borrado lógico",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "390px: el catálogo no se sale de la pantalla",
+    "cond": true,
+    "detalle": "tarjeta hasta 378 de 390px"
+  },
+  {
+    "nombre": "768px: el catálogo no se sale de la pantalla",
+    "cond": true,
+    "detalle": "tarjeta hasta 748 de 768px"
+  },
+  {
+    "nombre": "1440px: el catálogo no se sale de la pantalla",
+    "cond": true,
+    "detalle": "tarjeta hasta 1400 de 1440px"
+  },
+  {
+    "nombre": "sin errores de página",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el simulador atendió todo (sin «sin manejador»)",
+    "cond": true,
+    "detalle": ""
+  }
+]

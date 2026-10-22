@@ -30,6 +30,61 @@ describe('MyOrganizations — Carril 18', () => {
     flushInicial();
   });
 
+  /* ---- una caída no es «no tiene organizaciones» (regla 14, 2026-10-08) ---- */
+
+  it('si las vinculaciones no llegan, no dice «Todavía no tiene vinculaciones»: muestra el error con reintento', () => {
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/practitioners/me/role-assignments')
+      .flush(
+        { code: 'INTERNAL', message: 'boom', correlationId: 'corr-vinc', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    http.expectOne((r) => r.url === '/practices').flush([]);
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).not.toContain('Todavía no tiene vinculaciones');
+    const estado = (
+      fixture.componentInstance as unknown as { estadoDeLaTabla: () => { status: string } }
+    ).estadoDeLaTabla();
+    expect(estado.status).toBe('error');
+
+    // El reintento vuelve a preguntar y, si responde vacío, recién ahí es vacío.
+    (fixture.componentInstance as unknown as { reintentarVinculaciones: () => void })
+      .reintentarVinculaciones();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Todavía no tiene vinculaciones',
+    );
+  });
+
+  it('si la lista de organizaciones no llega, lo dice y ofrece volver a cargarla', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
+    http
+      .expectOne((r) => r.url === '/practices')
+      .flush(
+        { code: 'DEPENDENCY_UNAVAILABLE', message: 'El servicio contable no responde.', correlationId: 'c-org', timestamp: '', path: '' },
+        { status: 503, statusText: 'Service Unavailable' },
+      );
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="organizaciones-no-cargaron"]',
+    );
+    expect(aviso?.textContent).toContain('El servicio contable no responde. (Código de soporte: c-org)');
+    expect(aviso?.getAttribute('role')).toBe('status');
+
+    (fixture.componentInstance as unknown as { cargarOrganizaciones: () => void }).cargarOrganizaciones();
+    http.expectOne((r) => r.url === '/practices').flush([{ id: 'p-1', name: 'Hospital Central' }]);
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="organizaciones-no-cargaron"]'),
+    ).toBeNull();
+  });
+
   it('sin organización elegida, "solicitar" no manda nada', () => {
     fixture.detectChanges();
     flushInicial();

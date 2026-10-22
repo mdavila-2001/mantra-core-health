@@ -72,9 +72,11 @@
   width: 100%;
   height: 100%;
   padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
+  /* Sobre la bandeja tonal de `dashboard.html` la zona es la superficie clara
+     y sin trazo: se lee por tono. El color de la zona reaparece al apuntar. */
+  border: 1px solid transparent;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
   color: inherit;
   font: inherit;
   text-align: start;
@@ -82,7 +84,7 @@
   /* `translate` y no `transform`: la propiedad individual no pisa nada de lo
      que la animación de entrada haga con el resto de la transformación. */
   transition:
-    translate var(--dur-fast) var(--ease-standard),
+    translate var(--spring-suave-dur) var(--spring-suave),
     border-color var(--dur-fast) var(--ease-standard),
     box-shadow var(--dur-fast) var(--ease-standard),
     background-color var(--dur-fast) var(--ease-standard);
@@ -116,8 +118,8 @@
   color: var(--zona-fg);
   box-shadow: inset 0 0 0 1px var(--zona-bd);
   transition:
-    scale var(--dur-fast) var(--ease-spring),
-    rotate var(--dur-fast) var(--ease-spring);
+    scale var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
 
 .arbol__zona-icono app-nav-icon {
@@ -127,8 +129,7 @@
 
 .arbol__zona:hover .arbol__zona-icono,
 .arbol__zona:focus-visible .arbol__zona-icono {
-  scale: 1.06;
-  rotate: -3deg;
+  scale: 1.04;
 }
 
 .arbol__zona-texto {
@@ -335,7 +336,9 @@
   border-radius: var(--r-sm);
   background: var(--zona-bg);
   color: var(--zona-fg);
-  transition: scale var(--dur-fast) var(--ease-spring);
+  transition:
+    scale var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
 
 .arbol__acceso-icono app-nav-icon {
@@ -352,7 +355,7 @@ a.arbol__acceso:focus-visible {
 
 a.arbol__acceso:hover .arbol__acceso-icono,
 a.arbol__acceso:focus-visible .arbol__acceso-icono {
-  scale: 1.08;
+  scale: 1.04;
 }
 
 a.arbol__acceso:active {

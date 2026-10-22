@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Categorías de las lesiones por presión</title>
+  <desc id="d">Seis cortes esquemáticos de la piel y los tejidos profundos. Categoría 1: eritema que no palidece con piel íntegra. Categoría 2: pérdida parcial del espesor de la piel. Categoría 3: pérdida total de la piel con grasa visible. Categoría 4: pérdida total del tejido con músculo o hueso expuestos. No clasificable: lecho cubierto de esfacelo o escara. Lesión de tejidos profundos: zona púrpura bajo piel íntegra.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="t">Clasificación de las lesiones por presión (NPIAP/EPUAP)</text>
+  <rect x="24" y="52" width="248" height="186" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="48" y="68" width="200" height="8" fill="var(--skin)"/>
+  <rect x="48" y="76" width="200" height="20" fill="var(--fat)"/>
+  <rect x="48" y="96" width="200" height="24" fill="var(--mus)"/>
+  <rect x="48" y="120" width="200" height="14" fill="var(--bone)"/>
+  <rect x="108" y="68" width="80" height="8" fill="var(--d)"/>
+  <path d="M108 76 Q148 90 188 76" fill="var(--d)" fill-opacity=".35"/>
+  <text x="148" y="164" text-anchor="middle" class="h">Categoría 1</text>
+  <text x="148" y="186" text-anchor="middle" class="n">Eritema que no palidece</text>
+  <text x="148" y="206" text-anchor="middle" class="n m">Piel íntegra con enrojecimiento</text>
+  <rect x="276" y="52" width="248" height="186" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="300" y="68" width="200" height="8" fill="var(--skin)"/>
+  <rect x="300" y="76" width="200" height="20" fill="var(--fat)"/>
+  <rect x="300" y="96" width="200" height="24" fill="var(--mus)"/>
+  <rect x="300" y="120" width="200" height="14" fill="var(--bone)"/>
+  <path d="M366 68 L374 74 H426 L434 68 Z" fill="var(--d-l)" stroke="var(--d)" stroke-width="1.5"/>
+  <text x="400" y="164" text-anchor="middle" class="h">Categoría 2</text>
+  <text x="400" y="186" text-anchor="middle" class="n">Pérdida parcial del espesor</text>
+  <text x="400" y="206" text-anchor="middle" class="n m">Dermis expuesta, sin grasa visible</text>
+  <rect x="528" y="52" width="248" height="186" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="552" y="68" width="200" height="8" fill="var(--skin)"/>
+  <rect x="552" y="76" width="200" height="20" fill="var(--fat)"/>
+  <rect x="552" y="96" width="200" height="24" fill="var(--mus)"/>
+  <rect x="552" y="120" width="200" height="14" fill="var(--bone)"/>
+  <path d="M612 68 L624 92 H680 L692 68 Z" fill="var(--d-l)" stroke="var(--d)" stroke-width="1.5"/>
+  <text x="652" y="164" text-anchor="middle" class="h">Categoría 3</text>
+  <text x="652" y="186" text-anchor="middle" class="n">Pérdida total de la piel</text>
+  <text x="652" y="206" text-anchor="middle" class="n m">Se ve grasa; puede haber cavidad</text>
+  <rect x="24" y="248" width="248" height="186" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="48" y="264" width="200" height="8" fill="var(--skin)"/>
+  <rect x="48" y="272" width="200" height="20" fill="var(--fat)"/>
+  <rect x="48" y="292" width="200" height="24" fill="var(--mus)"/>
+  <rect x="48" y="316" width="200" height="14" fill="var(--bone)"/>
+  <path d="M104 264 L122 316 H174 L192 264 Z" fill="var(--d-l)" stroke="var(--d)" stroke-width="1.5"/>
+  <text x="148" y="360" text-anchor="middle" class="h">Categoría 4</text>
+  <text x="148" y="382" text-anchor="middle" class="n">Pérdida total del tejido</text>
+  <text x="148" y="402" text-anchor="middle" class="n m">Músculo, tendón o hueso expuestos</text>
+  <rect x="276" y="248" width="248" height="186" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="300" y="264" width="200" height="8" fill="var(--skin)"/>
+  <rect x="300" y="272" width="200" height="20" fill="var(--fat)"/>
+  <rect x="300" y="292" width="200" height="24" fill="var(--mus)"/>
+  <rect x="300" y="316" width="200" height="14" fill="var(--bone)"/>
+  <path d="M356 264 L374 304 H426 L444 264 Z" fill="var(--c-l)" stroke="var(--c)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="400" y="288" text-anchor="middle" class="h" style="fill:var(--c)">?</text>
+  <text x="400" y="360" text-anchor="middle" class="h">No clasificable</text>
+  <text x="400" y="382" text-anchor="middle" class="n">Profundidad no determinable</text>
+  <text x="400" y="402" text-anchor="middle" class="n m">Lecho cubierto de esfacelo o escara</text>
+  <rect x="528" y="248" width="248" height="186" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="552" y="264" width="200" height="8" fill="var(--skin)"/>
+  <rect x="552" y="272" width="200" height="20" fill="var(--fat)"/>
+  <rect x="552" y="292" width="200" height="24" fill="var(--mus)"/>
+  <rect x="552" y="316" width="200" height="14" fill="var(--bone)"/>
+  <ellipse cx="652" cy="300" rx="36" ry="13" fill="var(--p)" fill-opacity=".75"/>
+  <text x="652" y="360" text-anchor="middle" class="h">Tejido profundo</text>
+  <text x="652" y="382" text-anchor="middle" class="n">Daño bajo piel íntegra</text>
+  <text x="652" y="402" text-anchor="middle" class="n m">Zona púrpura o granate persistente</text>
+  <text x="400" y="458" text-anchor="middle" class="n m">Cortes esquemáticos, sin escala. Capas: piel, grasa, músculo y hueso. Ilustración original de AloVida.</text>
+</svg>

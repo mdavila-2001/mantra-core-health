@@ -5,6 +5,7 @@ import {
   computed,
   DOCUMENT,
   effect,
+  HostListener,
   inject,
   signal,
   untracked,
@@ -14,7 +15,9 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { PdfBrandingService } from '../../core/pdf-branding/pdf-branding.service';
 import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
+import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -29,6 +32,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { PanicButton } from '../emergency/panic-button/panic-button';
 import { BackLink } from '../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
@@ -37,6 +41,8 @@ import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ChatStore } from '../../core/messaging/chat.store';
+import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
+import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -69,6 +75,13 @@ const PANEL = '/dashboard';
  * > las superficies que quedaron en el merge — `LOGIN_ROUTE` del interceptor y el `AuthService`
  * > nuestro, del que deriva `user` y `tenants` en vez de pedirle métodos que no tiene.
  */
+/** Cómo se rotula, en el menú de la cuenta, cada tipo de organización con cuenta propia. */
+const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
+  PHARMACY: 'Farmacia',
+  DIAGNOSTIC_CENTER: 'Laboratorio o centro de diagnóstico',
+  PAYER: 'Aseguradora',
+};
+
 @Component({
   selector: 'app-shell-layout',
   imports: [
@@ -81,6 +94,7 @@ const PANEL = '/dashboard';
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    PanicButton,
     BackLink,
     Badge,
     NavIcon,
@@ -92,6 +106,8 @@ const PANEL = '/dashboard';
 })
 export class ShellLayout {
   private readonly auth = inject(AuthService);
+  // Sólo se instancia: mantiene listo el logo del consultorio para los PDF.
+  private readonly membretePdf = inject(PdfBrandingService);
   private readonly router = inject(Router);
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
@@ -132,6 +148,31 @@ export class ShellLayout {
    */
   protected readonly anuncio = signal('');
 
+  /** En móvil, agrupa destinos secundarios del encabezado sin perderlos. */
+  protected readonly accesosRapidosAbiertos = signal(false);
+
+  protected alternarAccesosRapidos(): void {
+    this.accesosRapidosAbiertos.update((abiertos) => !abiertos);
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected cerrarAccesosRapidosAlTocarFuera(evento: MouseEvent): void {
+    const anclaje = this.document.querySelector<HTMLElement>('.app-header__rapidos');
+    if (this.accesosRapidosAbiertos() && anclaje && !anclaje.contains(evento.target as Node)) {
+      this.accesosRapidosAbiertos.set(false);
+    }
+  }
+
+  protected cerrarAccesosRapidos(evento?: Event): void {
+    if (!this.accesosRapidosAbiertos()) return;
+    this.accesosRapidosAbiertos.set(false);
+    if (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+      this.document.querySelector<HTMLElement>('[data-testid="header-mas"]')?.focus();
+    }
+  }
+
   /** La URL de la pantalla, sin parámetros de consulta ni fragmento. */
   private readonly urlActual = signal('');
 
@@ -157,6 +198,27 @@ export class ShellLayout {
     const cuantos = this.chatsSinLeer();
     if (cuantos === 0) return 'Chats';
     return `Chats, ${cuantos} ${cuantos === 1 ? 'mensaje sin leer' : 'mensajes sin leer'}`;
+  });
+
+  /**
+   * El carrito de farmacia (H4.S1, carril 41/46): sólo el paciente lo ve — es
+   * su compra, no una herramienta de la médica ni del resto de los roles.
+   */
+  private readonly cart = inject(CartStore);
+  protected readonly unidadesDelCarrito = this.cart.unitCount;
+  protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
+  protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
+  protected readonly pharmacyTestids = PHARMACY_TESTIDS;
+
+  /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
+  protected readonly etiquetaCarrito = computed(() => {
+    const unidades = this.unidadesDelCarrito();
+    const farmacia = this.cart.cart()?.site.pharmacyName;
+    if (unidades === 0 || farmacia === undefined) {
+      return 'Carrito';
+    }
+    const sustantivo = unidades === 1 ? 'unidad' : 'unidades';
+    return `Carrito, ${unidades} ${sustantivo} en ${farmacia}`;
   });
 
   constructor() {
@@ -192,6 +254,7 @@ export class ShellLayout {
       )
       .subscribe(() => {
         this.urlActual.set(this.rutaLimpia());
+        this.accesosRapidosAbiertos.set(false);
         this.anuncio.set(
           `${this.navigation.currentSection()?.label ?? 'Pantalla'} cargada`,
         );
@@ -414,7 +477,9 @@ export class ShellLayout {
     return {
       // El guard no deja llegar acá sin sesión; el userId es el último recurso
       // para que el header nunca quede sin nombre.
-      displayName: this.auth.displayName() ?? this.auth.userId() ?? '',
+      // La cuenta de una organización se muestra como la organización, no como
+      // la persona que la registró: avatar, nombre y menú salen del tenant.
+      displayName: this.nombreDeLaCuenta(),
       roles: this.auth.roles(),
     };
   });
@@ -445,7 +510,24 @@ export class ShellLayout {
     // de UX), y una novena entrada que además es una herramienta de quien
     // construye la rompe. Quien la usa de verdad —diseño y desarrollo— entra
     // por `/design-system`, que sigue en pie.
-    if (esPaciente(roles) || roles.includes('PRACTITIONER')) {
+    //
+    // Tampoco la aseguradora (2026-09-25, pedido del propietario, junto con
+    // `navigation.map.ts`): es una sesión `USER` con tenant `PAYER`, y
+    // «Sistema de diseño» es tan ajena a su trabajo como al del médico. No se
+    // generaliza a «toda cuenta sin rol de plataforma» —eso habría sido tocar
+    // también farmacia, el visitador y cualquier `USER` sin organización, que
+    // el pedido no incluía—: se agrega sólo la condición de tipo que el
+    // registro de procesos pide cerrar.
+    //
+    // Ni la farmacia (2026-09-29): su menú es el del mostrador y nada más.
+    // Ni el laboratorio (2026-09-30), por lo mismo.
+    if (
+      esPaciente(roles) ||
+      roles.includes('PRACTITIONER') ||
+      this.auth.activeTenantType() === 'PAYER' ||
+      this.auth.activeTenantType() === 'PHARMACY' ||
+      this.auth.activeTenantType() === 'DIAGNOSTIC_CENTER'
+    ) {
       return menu;
     }
     const vitrina = { label: 'Sistema de diseño', route: '/design-system', icon: 'settings' } as const;
@@ -498,9 +580,21 @@ export class ShellLayout {
    * Van traducidos por el diccionario: el código crudo (`PATIENT`, `SECURITY_ADMIN`) es
    * vocabulario de sistema, y un rol sin etiqueta se omite antes que pintarse crudo.
    */
-  protected readonly rolesLegibles = computed(() =>
-    etiquetasDeRoles(this.user()?.roles ?? []).join(' · '),
-  );
+  protected readonly rolesLegibles = computed(() => {
+    if (this.auth.isOrganizationAccount()) {
+      // «USER» no le dice nada a una farmacia: se rotula con lo que es.
+      return TIPO_DE_ORGANIZACION_LEGIBLE[this.auth.activeTenantType() ?? ''] ?? 'Organización';
+    }
+    return etiquetasDeRoles(this.user()?.roles ?? []).join(' · ');
+  });
+
+  private nombreDeLaCuenta(): string {
+    const tenantId = this.activeTenantId();
+    if (this.auth.isOrganizationAccount() && tenantId) {
+      return this.auth.tenantName(tenantId);
+    }
+    return this.auth.displayName() ?? this.auth.userId() ?? '';
+  }
 
   /**
    * El enlace de salto mueve el foco al contenido en vez de sólo desplazar la

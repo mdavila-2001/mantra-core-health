@@ -60,3 +60,6 @@ dd {
   white-space: pre-wrap;
   margin-block-start: var(--sp-2);
 }
+.settlement__clause-badge {
+  white-space: normal;
+}

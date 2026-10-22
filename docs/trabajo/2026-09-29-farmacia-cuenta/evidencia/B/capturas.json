@@ -1,0 +1,226 @@
+[
+  {
+    "pantalla": "Resumen",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "resumen-375-claro.png"
+  },
+  {
+    "pantalla": "Productos",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "productos-375-claro.png"
+  },
+  {
+    "pantalla": "Categorías",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "categorías-375-claro.png"
+  },
+  {
+    "pantalla": "Importación masiva",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "importación-masiva-375-claro.png"
+  },
+  {
+    "pantalla": "Inventario",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "inventario-375-claro.png"
+  },
+  {
+    "pantalla": "Solicitudes de retiro",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "solicitudes-de-retiro-375-claro.png"
+  },
+  {
+    "pantalla": "Promociones",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "promociones-375-claro.png"
+  },
+  {
+    "pantalla": "Ficha de la farmacia",
+    "corte": "375-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": true,
+    "archivo": "ficha-de-la-farmacia-375-claro.png"
+  },
+  {
+    "pantalla": "Resumen",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "resumen-768-claro.png"
+  },
+  {
+    "pantalla": "Productos",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "productos-768-claro.png"
+  },
+  {
+    "pantalla": "Categorías",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "categorías-768-claro.png"
+  },
+  {
+    "pantalla": "Importación masiva",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "importación-masiva-768-claro.png"
+  },
+  {
+    "pantalla": "Inventario",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "inventario-768-claro.png"
+  },
+  {
+    "pantalla": "Solicitudes de retiro",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "solicitudes-de-retiro-768-claro.png"
+  },
+  {
+    "pantalla": "Promociones",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "promociones-768-claro.png"
+  },
+  {
+    "pantalla": "Ficha de la farmacia",
+    "corte": "768-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "ficha-de-la-farmacia-768-claro.png"
+  },
+  {
+    "pantalla": "Resumen",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "resumen-1440-claro.png"
+  },
+  {
+    "pantalla": "Productos",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "productos-1440-claro.png"
+  },
+  {
+    "pantalla": "Categorías",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "categorías-1440-claro.png"
+  },
+  {
+    "pantalla": "Importación masiva",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "importación-masiva-1440-claro.png"
+  },
+  {
+    "pantalla": "Inventario",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "inventario-1440-claro.png"
+  },
+  {
+    "pantalla": "Solicitudes de retiro",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "solicitudes-de-retiro-1440-claro.png"
+  },
+  {
+    "pantalla": "Promociones",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "promociones-1440-claro.png"
+  },
+  {
+    "pantalla": "Ficha de la farmacia",
+    "corte": "1440-claro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "ficha-de-la-farmacia-1440-claro.png"
+  },
+  {
+    "pantalla": "Resumen",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "resumen-1440-oscuro.png"
+  },
+  {
+    "pantalla": "Productos",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "productos-1440-oscuro.png"
+  },
+  {
+    "pantalla": "Categorías",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "categorías-1440-oscuro.png"
+  },
+  {
+    "pantalla": "Importación masiva",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "importación-masiva-1440-oscuro.png"
+  },
+  {
+    "pantalla": "Inventario",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "inventario-1440-oscuro.png"
+  },
+  {
+    "pantalla": "Solicitudes de retiro",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "solicitudes-de-retiro-1440-oscuro.png"
+  },
+  {
+    "pantalla": "Promociones",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "promociones-1440-oscuro.png"
+  },
+  {
+    "pantalla": "Ficha de la farmacia",
+    "corte": "1440-oscuro",
+    "scrollHorizontal": false,
+    "desbordaLaCabecera": false,
+    "archivo": "ficha-de-la-farmacia-1440-oscuro.png"
+  }
+]

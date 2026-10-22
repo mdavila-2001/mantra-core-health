@@ -36,7 +36,7 @@
   }
 </fieldset>
 
-@if (!hayRegistro()) {
+@if (showEmptyMessage() && !hayRegistro()) {
   <p class="odontograma__vacio">
     Todavía no hay nada registrado en esta boca.
   </p>

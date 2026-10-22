@@ -10,7 +10,6 @@ import {
   subirArchivo,
   subirLosCincoDocumentos,
 } from './helpers/documentos-legales';
-import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -190,8 +189,6 @@ test.describe('alta pública de aseguradora — documentación legal en PDF (sub
     await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await completarCuentaDelOwner(page, { email: 'admin@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-documentos');

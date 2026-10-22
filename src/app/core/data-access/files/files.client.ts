@@ -135,6 +135,14 @@ export class FilesClient {
    * emitir veinte al abrir una ficha deja veinte enlaces vivos a datos clínicos
    * de los que diecinueve nadie usó.
    *
+   * **No sirve para abrir en una pestaña nueva** (`window.open`): la ruta que
+   * apunta exige `Authorization` y la pestaña sale sin token (401), y para quien
+   * no subió el archivo ni siquiera con token (403). Un resultado o un documento
+   * clínico se baja por la ruta de su contexto —`DiagnosticsClient.
+   * downloadOwnResultFile`, `ChartDocumentsClient.downloadFile`— con `HttpClient`.
+   * Un 422 con `details.reason = SCAN_PENDING` significa «en análisis»: ver
+   * {@link isScanPending}.
+   *
    * @param fileId - El archivo a descargar.
    */
   downloadUrl(fileId: string): Observable<DownloadUrl> {

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Escala de Hounsfield y ventanas de visualización</title>
+  <desc id="d">Eje horizontal de unidades Hounsfield desde menos 1000 hasta más 1400. Se marcan el aire en menos 1000, el pulmón aireado, la grasa cerca de menos 100, el agua en cero, los tejidos blandos y la sangre fresca con valores positivos bajos, el hueso esponjoso y el hueso cortical con valores altos. Debajo, tres barras en degradado de grises muestran el rango que abarcan las ventanas de pulmón, de partes blandas y de hueso.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --c1:#2f6fb5; --c2:#1f8a5b; --c3:#b26a00; --c4:#8e44ad; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --c1:#6aa9ec; --c2:#4cc38a; --c3:#f2b94a; --c4:#c79be0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lbl { font-size: 13px; font-weight: 600; }
+    .small { font-size: 12.5px; }
+    .tick { font-size: 12px; }
+  </style>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="16" y="16" width="768" height="448" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="40" y="50" class="title">Escala de Hounsfield (UH) y ventanas</text>
+  <text x="40" y="70" class="small muted">Valores aproximados y orientativos: varían con el equipo y la técnica.</text>
+
+  <!-- marcadores de materiales -->
+  <g stroke-width="2" fill="none">
+    <path d="M60 210 V150" stroke="var(--muted)"/>
+    <path d="M116 210 V124" stroke="var(--c1)"/>
+    <path d="M315 210 V150" stroke="var(--c3)"/>
+    <path d="M343 210 V100" stroke="var(--c1)"/>
+    <path d="M354 210 V128" stroke="var(--c2)"/>
+    <path d="M360 210 V152" stroke="var(--c4)"/>
+    <path d="M428 210 V178" stroke="var(--muted)"/>
+    <path d="M542 210 V100" stroke="var(--muted)"/>
+  </g>
+  <text x="66" y="154" class="lbl">Aire: −1000</text>
+  <text x="122" y="128" class="lbl" style="fill:var(--c1)">Pulmón aireado: ≈ −800</text>
+  <text x="309" y="154" text-anchor="end" class="lbl" style="fill:var(--c3)">Grasa: ≈ −100</text>
+  <text x="337" y="104" text-anchor="end" class="lbl" style="fill:var(--c1)">Agua: 0</text>
+  <text x="360" y="132" class="lbl" style="fill:var(--c2)">Tejidos blandos: ≈ +40</text>
+  <text x="366" y="156" class="lbl" style="fill:var(--c4)">Sangre fresca: ≈ +60</text>
+  <text x="434" y="178" class="lbl">Hueso esponjoso</text>
+  <text x="434" y="194" class="lbl">≈ +300</text>
+  <text x="548" y="104" class="lbl">Hueso cortical: &gt; +700</text>
+
+  <!-- eje -->
+  <path d="M60 210 H740" stroke="var(--ink)" stroke-width="2"/>
+  <g stroke="var(--ink)" stroke-width="2">
+    <path d="M60 204 v12"/><path d="M201 204 v12"/><path d="M343 204 v12"/><path d="M485 204 v12"/><path d="M626 204 v12"/><path d="M740 204 v12"/>
+  </g>
+  <g class="tick" text-anchor="middle">
+    <text x="60" y="232" class="tick">−1000</text>
+    <text x="201" y="232" class="tick">−500</text>
+    <text x="343" y="232" class="tick">0</text>
+    <text x="485" y="232" class="tick">+500</text>
+    <text x="626" y="232" class="tick">+1000</text>
+    <text x="740" y="232" class="tick">+1400</text>
+  </g>
+
+  <!-- ventanas -->
+  <text x="60" y="270" class="lbl" style="fill:var(--c1)">Ventana de pulmón (nivel ≈ −600, ancho ≈ 1500)</text>
+  <rect x="60" y="276" width="325" height="20" fill="url(#g)" stroke="var(--line)"/>
+  <text x="60" y="326" class="lbl" style="fill:var(--c2)">Ventana de partes blandas (nivel ≈ 40, ancho ≈ 400)</text>
+  <rect x="315" y="332" width="114" height="20" fill="url(#g)" stroke="var(--line)"/>
+  <text x="60" y="382" class="lbl" style="fill:var(--c3)">Ventana ósea (nivel ≈ 400, ancho ≈ 2000)</text>
+  <rect x="173" y="388" width="567" height="20" fill="url(#g)" stroke="var(--line)"/>
+  <path d="M343 276 V296 M343 332 V352 M343 388 V408" stroke="var(--ink)" stroke-width="2" opacity=".7"/>
+  <text x="349" y="424" class="small muted">0 UH</text>
+  <text x="40" y="438" class="small muted">Dentro de cada barra, de negro a blanco: lo que cae fuera del rango se ve todo negro o todo blanco.</text>
+  <text x="40" y="456" class="small muted">Ilustración original de AloVida.</text>
+</svg>

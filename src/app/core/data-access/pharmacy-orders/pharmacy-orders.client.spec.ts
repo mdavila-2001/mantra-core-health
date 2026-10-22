@@ -6,6 +6,8 @@ import { pharmacyOrderFromDto, UnsupportedPharmacyOrderLineError } from './pharm
 import { PharmacyOrdersClient } from './pharmacy-orders.client';
 import type { PharmacyOrderDto } from './pharmacy-orders.dto';
 import type { BorradorDePedido, PedidoFarmacia } from './pharmacy-orders.types';
+import { CartStore } from '../pharmacy-cart/cart.store';
+import type { CartSite } from '../pharmacy-cart/pharmacy-cart.types';
 
 const ORDER_ID = '00000000-0000-4000-8000-000000000001';
 const SITE_ID = '00000000-0000-4000-8000-000000000002';
@@ -136,6 +138,36 @@ describe('PharmacyOrdersClient real HTTP contract', () => {
       fulfilledQuantity: 0,
     });
     expect(client.borradorPreparado()).toBeNull();
+  });
+
+  it('H5.S2: a successful enviar() also clears CartStore, not just the draft', () => {
+    const cart = TestBed.inject(CartStore);
+    const sede: CartSite = {
+      pharmacyId: PHARMACY_ID,
+      pharmacyName: 'Farmacia Uno',
+      siteId: SITE_ID,
+      siteName: 'Sucursal Centro',
+      addressText: null,
+    };
+    cart.add(sede, {
+      productId: PRODUCT_A,
+      name: 'Marca A',
+      presentation: '500 mg',
+      unitAmount: '21.25',
+      currency: 'BOB',
+      requiresPrescription: false,
+      medicationConceptId: null,
+    }, 2);
+    expect(cart.unitCount()).toBe(2);
+
+    const prepared = draft();
+    client.prepararBorrador(prepared);
+    client.enviar({ borrador: prepared, modalidad: 'RETIRO', direccionDeEntrega: null }).subscribe();
+
+    http.expectOne('/pharmacy/orders').flush(orderDto());
+
+    expect(cart.unitCount()).toBe(0);
+    expect(cart.cart()).toBeNull();
   });
 
   it('does not silently drop a line whose productId is null', () => {
@@ -370,6 +402,34 @@ describe('PharmacyOrdersClient real HTTP contract', () => {
       { status: 422, statusText: 'Unprocessable Entity' },
     );
     expect(received).toBeInstanceOf(HttpErrorResponse);
+  });
+
+  it('names the prescriber with the specialty, or only the name, never a lone specialty', () => {
+    expect(
+      pharmacyOrder(
+        orderDto({ prescriber: { name: 'Dra. Mariana Suárez', specialty: 'Cardiología' } }),
+      ).prescriptor,
+    ).toBe('Dra. Mariana Suárez · Cardiología');
+    expect(
+      pharmacyOrder(orderDto({ prescriber: { name: 'Dr. Luis Paz', specialty: null } }))
+        .prescriptor,
+    ).toBe('Dr. Luis Paz');
+    expect(
+      pharmacyOrder(orderDto({ prescriber: { name: null, specialty: 'Cardiología' } }))
+        .prescriptor,
+    ).toBeNull();
+    expect(pharmacyOrder(orderDto({ prescriber: null })).prescriptor).toBeNull();
+  });
+
+  it('carries the stored delivery address, and tolerates a backend without the field', () => {
+    expect(
+      pharmacyOrder(orderDto({ deliveryAddressText: 'Calle Sucre 120, Cochabamba' }))
+        .direccionDeEntrega,
+    ).toBe('Calle Sucre 120, Cochabamba');
+    const { deliveryAddressText: _omitted, prescriber: _alsoOmitted, ...older } = orderDto();
+    const adapted = pharmacyOrder(older as PharmacyOrderDto);
+    expect(adapted.direccionDeEntrega).toBeNull();
+    expect(adapted.prescriptor).toBeNull();
   });
 
   it('rejects an unknown backend state instead of inventing a visual state', () => {

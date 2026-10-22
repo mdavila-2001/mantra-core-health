@@ -31,8 +31,8 @@
   }
 
   @if (altaPendiente(); as alta) {
-    <app-alert tone="warning" title="Completá tu perfil para recibir pacientes">
-      Llevás {{ alta.cumplidas }} de {{ alta.total }} pasos. Hasta terminarlos no aparecés cuando
+    <app-alert tone="warning" title="Complete su perfil para recibir pacientes">
+      Lleva {{ alta.cumplidas }} de {{ alta.total }} pasos. Hasta terminarlos no aparece cuando
       alguien busca un profesional.
       <a app-button variant="primary" size="sm" [routerLink]="['/onboarding']">
         Ver qué me falta
@@ -64,7 +64,7 @@
        panel viaja en el paquete inicial. -->
   @if (atiendePacientes()) {
     @defer (on immediate) {
-      <app-agenda-de-hoy class="panel__hoy" />
+      <app-today-agenda class="panel__hoy" />
     }
   }
 
@@ -74,16 +74,18 @@
        una sección nueva aparece acá sola, y una que se apaga desaparece de los
        dos lados a la vez. Con el resumen al lado, que el menú no tiene espacio
        para mostrar. -->
+    <!-- Sin caja alrededor (`panel__sin-caja`): las zonas de adentro SON las
+         tarjetas, y un recuadro alrededor de recuadros era «caja dentro de
+         caja». El título y la nota quedan sobre la página. -->
     <app-card
-      variant="outlined"
-      padding="lg"
-      class="panel__bloque--ancho"
+      variant="flat"
+      padding="none"
+      class="panel__bloque--ancho panel__sin-caja"
       data-testid="panel-accesos"
     >
-      <h2 class="panel__card-title">Tus accesos</h2>
+      <h2 class="panel__card-title">Sus herramientas</h2>
       <p class="panel__nota">
-        Lo que tu cuenta habilita en esta organización, repartido por lo que vas a hacer con ello.
-        Abrí una zona para ver sus secciones.
+        Ordenadas según lo que necesita hacer. Abra un grupo para ver sus opciones.
       </p>
 
       <!-- ALV-018 ponía acá un atajo «Ver mi agenda de hoy». Se retira con el
@@ -107,7 +109,7 @@
          que reportar (mismo criterio que la franja de arriba). -->
     @if (atiendePacientes()) {
       @defer (on immediate) {
-        <app-consultas-resumen class="panel__bloque--ancho" />
+        <app-consultations-summary class="panel__bloque--ancho" />
       }
     }
 

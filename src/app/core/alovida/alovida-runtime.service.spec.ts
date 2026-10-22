@@ -399,6 +399,141 @@ describe('AlovidaRuntimeService', () => {
       expect(document.documentElement.classList.contains('nav-abierto')).toBe(false);
     });
 
+    describe('cajón abierto: diálogo modal con el fondo inerte', () => {
+      /**
+       * El marco real: el nav y el contenido en ramas distintas —como en
+       * `shell-layout.html`, donde el header y el `<main>` viven dentro de
+       * `.app-main`— y una región viva suelta, como el anunciador de rutas.
+       */
+      function montarMarcoCompleto() {
+        document.body.innerHTML = `
+          <a class="salto" href="#contenido">Saltar al contenido</a>
+          <output aria-live="polite"></output>
+          <div class="app-shell">
+            <nav class="app-side-nav" aria-label="Navegación principal">
+              <a class="app-side-nav__item" href="#x">Inicio</a>
+            </nav>
+            <div class="app-main">
+              <header class="app-header">
+                <label class="app-header__buscador"><input type="search" /></label>
+                <div class="app-header__derecha"></div>
+              </header>
+              <main id="contenido"><button type="button">Guardar</button></main>
+            </div>
+          </div>
+          <div class="avisos"><div aria-live="assertive"></div></div>
+        `;
+      }
+
+      const nav = () => document.querySelector('.app-side-nav') as HTMLElement;
+      const inerte = (selector: string) =>
+        document.querySelector(selector)?.hasAttribute('inert') ?? false;
+
+      function abrirCajon() {
+        montarMarcoCompleto();
+        declararMatchMedia(true);
+        servicio.refrescar();
+        document.querySelector<HTMLElement>('.app-nav-toggle')?.click();
+      }
+
+      function esperarFondoLibre() {
+        expect(document.documentElement.classList.contains('nav-abierto')).toBe(false);
+        expect(nav().hasAttribute('role')).toBe(false);
+        expect(nav().hasAttribute('aria-modal')).toBe(false);
+        expect(document.querySelectorAll('[inert]')).toHaveLength(1);
+        // Lo único inerte que queda es el propio nav, escondido fuera de pantalla.
+        expect(nav().hasAttribute('inert')).toBe(true);
+      }
+
+      it('se anuncia como diálogo modal y vuelve inerte el header, el <main> y el salto', () => {
+        abrirCajon();
+
+        expect(nav().getAttribute('role')).toBe('dialog');
+        expect(nav().getAttribute('aria-modal')).toBe('true');
+        expect(nav().hasAttribute('inert')).toBe(false);
+        expect(inerte('.app-main')).toBe(true);
+        expect(inerte('.salto')).toBe(true);
+      });
+
+      it('no inertiza el velo ni las regiones vivas: un aviso tiene que poder llegar', () => {
+        abrirCajon();
+
+        expect(inerte('.app-nav-velo')).toBe(false);
+        expect(inerte('output')).toBe(false);
+        expect(inerte('.avisos')).toBe(false);
+      });
+
+      it('Escape lo cierra, libera el fondo y devuelve el foco al botón', () => {
+        abrirCajon();
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+        esperarFondoLibre();
+        expect(document.activeElement).toBe(document.querySelector('.app-nav-toggle'));
+      });
+
+      it('el velo lo cierra y libera el fondo', () => {
+        abrirCajon();
+
+        document.querySelector<HTMLElement>('.app-nav-velo')?.click();
+
+        esperarFondoLibre();
+      });
+
+      it('elegir un ítem lo cierra y libera el fondo', () => {
+        abrirCajon();
+
+        document.querySelector<HTMLElement>('.app-side-nav__item')?.click();
+
+        esperarFondoLibre();
+      });
+
+      it('una navegación que no salió del menú también lo cierra', () => {
+        abrirCajon();
+
+        servicio.refrescar();
+
+        esperarFondoLibre();
+      });
+
+      it('al pasar a escritorio deja de ser modal', () => {
+        montarMarcoCompleto();
+        const oyentes = declararMatchMedia(true);
+        servicio.refrescar();
+        document.querySelector<HTMLElement>('.app-nav-toggle')?.click();
+
+        declararMatchMedia(false);
+        oyentes.get('(max-width: 900px)')?.({ matches: false } as MediaQueryListEvent);
+
+        expect(nav().hasAttribute('role')).toBe(false);
+        expect(inerte('.app-main')).toBe(false);
+      });
+
+      it('al cerrar no quita un inert que no puso él', () => {
+        montarMarcoCompleto();
+        document.querySelector('.salto')?.setAttribute('inert', '');
+        declararMatchMedia(true);
+        servicio.refrescar();
+        const boton = document.querySelector<HTMLElement>('.app-nav-toggle') as HTMLElement;
+
+        boton.click();
+        boton.click();
+
+        expect(inerte('.salto')).toBe(true);
+        expect(inerte('.app-main')).toBe(false);
+      });
+
+      it('en escritorio el nav nunca es un diálogo', () => {
+        montarMarcoCompleto();
+        servicio.refrescar();
+
+        document.querySelector<HTMLElement>('.app-nav-toggle')?.click();
+
+        expect(nav().hasAttribute('role')).toBe(false);
+        expect(inerte('.app-main')).toBe(false);
+      });
+    });
+
     it('el buscador compacto despliega el campo y lo enfoca', () => {
       montarMarco();
       servicio.refrescar();

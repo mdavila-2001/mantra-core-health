@@ -1,10 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
 import { PaginatedForm } from './paginated-form';
-import { CampoPersonalizado } from './campo-personalizado';
+import { CustomField } from './custom-field';
 import type { PaginaDeFormulario } from '../../../forms/paginated/paginated-form.types';
 
 /**
@@ -38,7 +38,7 @@ const PAGINAS: readonly PaginaDeFormulario[] = [
 ];
 
 @Component({
-  imports: [PaginatedForm, CampoPersonalizado],
+  imports: [PaginatedForm, CustomField],
   template: `
     <app-paginated-form
       [paginas]="paginas()"
@@ -85,15 +85,15 @@ const PAGINAS_CON_ADORNOS: readonly PaginaDeFormulario[] = [
         control: 'text',
         required: true,
         icono: 'patients',
-        hint: 'Con este número vas a iniciar sesión.',
-        description: 'El número de tu cédula de identidad, sin puntos ni guiones.',
+        hint: 'Con este número va a iniciar sesión.',
+        description: 'El número de su cédula de identidad, sin puntos ni guiones.',
       },
       {
         key: 'genero',
         label: 'Género',
         control: 'select',
         icono: 'people',
-        description: 'Como figura en tu documento.',
+        description: 'Como figura en su documento.',
         options: [
           { value: 'f', label: 'Femenino' },
           { value: 'm', label: 'Masculino' },
@@ -231,6 +231,54 @@ describe('PaginatedForm', () => {
 
     it('«Atrás» no aparece en la primera página', () => {
       expect(fixture.debugElement.query(By.css('[data-testid="paginated-form-atras"]'))).toBeNull();
+    });
+  });
+
+  describe('los campos condicionales («¿cuál?»)', () => {
+    /** «Documento» decide si se pregunta el correo, que vive solo en su página. */
+    const CONDICIONALES: readonly PaginaDeFormulario[] = [
+      { titulo: 'Identidad', campos: [{ key: 'documento', label: 'Documento', control: 'text' }] },
+      {
+        titulo: 'Detalle',
+        campos: [
+          {
+            key: 'correo',
+            label: 'Correo',
+            control: 'email',
+            required: true,
+            showWhen: { key: 'documento', equals: 'si' },
+          },
+        ],
+      },
+      { titulo: 'Acceso', campos: [{ key: 'clave', label: 'Contraseña', control: 'password' }] },
+    ];
+
+    it('una página cuyos campos están todos ocultos se salta, y su obligatorio no frena', () => {
+      host.paginas.set(CONDICIONALES);
+      host.form.controls.documento.setValue('no');
+      fixture.detectChanges();
+
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(titulo()).toBe('Acceso');
+      expect(host.form.controls.correo.disabled).toBe(true);
+    });
+
+    it('con la respuesta que lo abre, el campo aparece en su página y vuelve a exigir', () => {
+      host.paginas.set(CONDICIONALES);
+      host.form.controls.documento.setValue('si');
+      fixture.detectChanges();
+
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(titulo()).toBe('Detalle');
+      expect(host.form.controls.correo.enabled).toBe(true);
+      botonContinuar().click();
+      fixture.detectChanges();
+      // Vacío y obligatorio: no deja pasar.
+      expect(titulo()).toBe('Detalle');
     });
   });
 
@@ -438,7 +486,7 @@ describe('PaginatedForm', () => {
     it('un paso al que nunca se llegó no se abre, y lo dice', () => {
       const siguiente = pasos()[1];
       expect(siguiente.getAttribute('aria-disabled')).toBe('true');
-      expect(siguiente.getAttribute('aria-label')).toContain('Todavía no llegaste');
+      expect(siguiente.getAttribute('aria-label')).toContain('Todavía no llegó');
 
       siguiente.click();
       fixtureC.detectChanges();
@@ -654,7 +702,7 @@ describe('PaginatedForm', () => {
 
       // El hint sigue abajo del campo, visible y sin puntero de por medio.
       expect(hint).not.toBeNull();
-      expect(hint!.textContent).toContain('Con este número vas a iniciar sesión');
+      expect(hint!.textContent).toContain('Con este número va a iniciar sesión');
       expect(descripcion).not.toBeNull();
 
       // Y las dos describen al control: el hint no perdió su aria-describedby.
@@ -668,7 +716,7 @@ describe('PaginatedForm', () => {
         .nativeElement as HTMLInputElement;
 
       expect(input.placeholder).toBe(
-        'El número de tu cédula de identidad, sin puntos ni guiones.',
+        'El número de su cédula de identidad, sin puntos ni guiones.',
       );
     });
   });
@@ -709,6 +757,7 @@ const PAGINA_DE_CASILLAS: readonly PaginaDeFormulario[] = [
 ];
 
 @Component({
+  selector: 'app-host-de-casillas',
   imports: [PaginatedForm],
   template: `
     <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
@@ -810,7 +859,7 @@ const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
   {
     titulo: 'Antecedentes',
     campos: [
-      { key: 'fuma', label: '¿Fumás?', control: 'yes-no', required: true },
+      { key: 'fuma', label: '¿Fuma?', control: 'yes-no', required: true },
       {
         key: 'frecuencia',
         label: '¿Con qué frecuencia?',
@@ -829,6 +878,7 @@ const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
 ];
 
 @Component({
+  selector: 'app-host-de-si-no',
   imports: [PaginatedForm],
   template: `
     <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
@@ -906,5 +956,84 @@ describe('PaginatedForm · sí/no en botones y cuadrículas', () => {
     expect(fixture.componentInstance.form.controls.frecuencia.value).toEqual({
       Tos: 'A veces',
     });
+  });
+});
+
+
+@Component({
+  imports: [PaginatedForm, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <app-paginated-form
+        [form]="identity"
+        [paginas]="pages"
+        [embedded]="true"
+        label="Identidad"
+        (enviado)="childSubmissions = childSubmissions + 1"
+      />
+      <button type="submit" data-testid="parent-submit">Guardar identidad</button>
+    </form>
+  `,
+})
+class EmbeddedHost {
+  readonly identity = new FormGroup({
+    firstName: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    lastName: new FormControl('', { nonNullable: true, validators: Validators.required }),
+  });
+  readonly form = new FormGroup({ identity: this.identity });
+  readonly pages: readonly PaginaDeFormulario[] = [
+    { titulo: 'Nombre', campos: [{ key: 'firstName', label: 'Nombre', control: 'text' }] },
+    { titulo: 'Apellido', campos: [{ key: 'lastName', label: 'Apellido', control: 'text' }] },
+  ];
+  submissions = 0;
+  childSubmissions = 0;
+
+  save(): void {
+    if (this.form.valid) this.submissions += 1;
+  }
+}
+
+describe('PaginatedForm dentro de un formulario padre', () => {
+  it('no anida formularios ni envia al navegar; el padre conserva validacion y envio', () => {
+    const fixture = TestBed.createComponent(EmbeddedHost);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const host = fixture.componentInstance;
+    expect(root.querySelectorAll('form')).toHaveLength(1);
+    const next = root.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!;
+    expect(next.type).toBe('button');
+    next.click();
+    fixture.detectChanges();
+    expect(root.querySelector('h2')?.textContent).toContain('Nombre');
+    expect(host.identity.controls.firstName.touched).toBe(true);
+
+    host.identity.controls.firstName.setValue('Ana');
+    next.click();
+    fixture.detectChanges();
+    expect(root.querySelector('h2')?.textContent).toContain('Apellido');
+    expect(root.querySelector('app-paginated-form button[type="submit"]')).toBeNull();
+    expect(host.submissions).toBe(0);
+    expect(host.childSubmissions).toBe(0);
+
+    root.querySelector<HTMLButtonElement>('[data-testid="parent-submit"]')!.click();
+    expect(host.submissions).toBe(0);
+    host.identity.controls.lastName.setValue('Rojas');
+    root.querySelector<HTMLButtonElement>('[data-testid="parent-submit"]')!.click();
+    expect(host.submissions).toBe(1);
+    expect(host.form.getRawValue()).toEqual({ identity: { firstName: 'Ana', lastName: 'Rojas' } });
+  });
+
+  it('Enter en un campo embebido avanza dentro del grupo sin enviar al padre', () => {
+    const fixture = TestBed.createComponent(EmbeddedHost);
+    fixture.detectChanges();
+    fixture.componentInstance.identity.controls.firstName.setValue('Ana');
+    const root = fixture.nativeElement as HTMLElement;
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    root.querySelector('input')!.dispatchEvent(enter);
+    fixture.detectChanges();
+    expect(enter.defaultPrevented).toBe(true);
+    expect(root.querySelector('h2')?.textContent).toContain('Apellido');
+    expect(fixture.componentInstance.submissions).toBe(0);
+    expect(fixture.componentInstance.childSubmissions).toBe(0);
   });
 });

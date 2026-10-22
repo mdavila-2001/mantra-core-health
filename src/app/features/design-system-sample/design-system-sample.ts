@@ -58,6 +58,7 @@ import { EmptyState } from '../../shared/components/molecules/empty-state/empty-
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { Menu } from '../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { ReferenceCombobox } from '@shared/components/molecules/reference-combobox/reference-combobox';
@@ -114,6 +115,7 @@ const DEMO_UPLOAD_STEP = 12;
     Alert,
     Menu,
     MenuItem,
+    NavIcon,
     MenuTrigger,
     Tabs,
     Tab,
@@ -169,11 +171,12 @@ export class DesignSystemSample {
   protected readonly themeOptions: readonly { mode: ThemeMode; label: string }[] = [
     { mode: 'light', label: 'Claro' },
     { mode: 'dark', label: 'Oscuro' },
-    { mode: 'system', label: 'Sistema' },
   ];
 
   protected readonly savingDemo = signal(false);
   protected readonly searchingDemo = signal(false);
+  /** Tras la carga simulada, el botón se confirma 1,6 s con el check. */
+  protected readonly savedDemo = signal(false);
 
   /* Señales para pruebas de controles de formulario */
   protected readonly textVal = signal('Juan Pérez');
@@ -321,6 +324,10 @@ export class DesignSystemSample {
 
   protected simulateSave(): void {
     this.runDemoLoading(this.savingDemo);
+    setTimeout(() => {
+      this.savedDemo.set(true);
+      setTimeout(() => this.savedDemo.set(false), 1600);
+    }, DEMO_LOADING_MS);
   }
 
   protected simulateSearch(): void {

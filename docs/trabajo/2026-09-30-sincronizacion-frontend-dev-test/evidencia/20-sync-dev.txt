@@ -1,0 +1,7 @@
+warning: in the working copy of 'docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/16-stage-test.txt', LF will be replaced by CRLF the next time Git touches it
+Auto-merging .gitignore
+Auto-merging package.json
+Merge made by the 'ort' strategy.
+ .gitignore   | 1 +
+ package.json | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)

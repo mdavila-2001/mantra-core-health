@@ -8,7 +8,7 @@ import {
   validation,
 } from '../view-state/view-state';
 import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
-import { readApiError, type ApiErrorBody } from './api-error';
+import { readApiError, readFieldViolations, type ApiErrorBody } from './api-error';
 
 /**
  * A dónde lleva la puerta cuando falta verificar la identidad.
@@ -57,13 +57,17 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
     return unexpectedError(correlationOf(error, null), 'No pudimos completar la operación.');
   }
 
+  // Sólo el id que mandó la API: en S4 y S5 es opcional, así que no se inventa
+  // un «sin-id» que nadie podría buscar.
+  const requestId = body.correlationId;
+
   switch (body.code) {
     // --- S4 · validación o conflicto ---------------------------------------
     case 'VALIDATION_FAILED':
-      return validation(issuesOf(body));
+      return validation(issuesOf(body), undefined, requestId);
 
     case 'CONFLICT':
-      return validation([{ message: body.message, code: body.code }]);
+      return validation([{ message: body.message, code: body.code }], undefined, requestId);
 
     /**
      * Escritura concurrente: para la persona es «alguien cambió esto mientras
@@ -73,21 +77,23 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
     case 'CONCURRENCY_CONFLICT':
       return validation([
         {
-          message: body.message || 'Otra persona modificó este dato mientras lo editabas.',
+          message: body.message || 'Otra persona modificó este dato mientras lo editaba.',
           code: body.code,
         },
-      ]);
+      ], undefined, requestId);
 
     case 'PRECONDITION_FAILED':
-      return validation([{ message: body.message, code: body.code }]);
+      return validation([{ message: body.message, code: body.code }], undefined, requestId);
 
     case 'PAYLOAD_TOO_LARGE':
-      return validation([
-        { message: body.message || 'El archivo es demasiado grande.', code: body.code },
-      ]);
+      return validation(
+        [{ message: body.message || 'El archivo es demasiado grande.', code: body.code }],
+        undefined,
+        requestId,
+      );
 
     case 'RATE_LIMITED':
-      return validation([{ message: body.message, code: body.code }], retryAfterOf(error));
+      return validation([{ message: body.message, code: body.code }], retryAfterOf(error), requestId);
 
     // --- S5 · prohibido ----------------------------------------------------
     /**
@@ -96,7 +102,7 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
      * donde tampoco va a poder.
      */
     case 'FORBIDDEN':
-      return forbidden({ message: body.message });
+      return forbidden({ message: body.message, ...(requestId === undefined ? {} : { requestId }) });
 
     /**
      * La puerta. Mismo 403, estado opuesto: hay algo que la persona puede hacer,
@@ -104,8 +110,9 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
      */
     case 'IDENTITY_VERIFICATION_REQUIRED':
       return forbidden({
-        message: body.message || 'Necesitás verificar tu identidad para continuar.',
+        message: body.message || 'Necesita verificar su identidad para continuar.',
         nextAction: { label: 'Verificar identidad', route: IDENTITY_VERIFICATION_ROUTE },
+        ...(requestId === undefined ? {} : { requestId }),
       });
 
     // --- S6 · no encontrado, sin filtrar existencia -------------------------
@@ -122,7 +129,7 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
     case 'DEPENDENCY_UNAVAILABLE':
       return unexpectedError(
         correlationOf(error, body),
-        'Un servicio no está disponible en este momento. Reintentá en unos minutos.',
+        'Un servicio no está disponible en este momento. Reintente en unos minutos.',
       );
 
     /**
@@ -157,6 +164,15 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
  * > cualquier endpoint que use esa forma.
  */
 function issuesOf(body: ApiErrorBody): readonly ViewStateIssue[] {
+  // Primero la forma estructurada (`details.fields`, desde el 2026-10-08): trae
+  // la ruta exacta del campo, incluidos los anidados, y no hay que adivinarla.
+  const fields = readFieldViolations(body);
+  if (fields.length > 0) {
+    return fields.flatMap(({ field, messages }) =>
+      (messages.length > 0 ? messages : [body.message]).map((message) => ({ field, message, code: body.code })),
+    );
+  }
+
   const messages = body.details?.['violations'] ?? body.details?.['messages'];
 
   if (Array.isArray(messages) && messages.length > 0) {

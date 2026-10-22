@@ -1,0 +1,2 @@
+# corepack yarn typecheck
+errores TS: 0

@@ -74,7 +74,7 @@
           </svg>
           <!-- Dice además para qué sirve: un «no hay nada» a secas en una cuenta
                recién creada se lee como que la campana no anda. -->
-          Estás al día. Acá te vamos a avisar de tus turnos, recetas y mensajes.
+          Está al día. Acá le vamos a avisar de sus citas, recetas y mensajes.
         </p>
       } @else {
         <ul class="campana__lista">
@@ -111,6 +111,15 @@
                   <span class="campana__item-fecha">{{ aviso.fecha | date: 'short' }}</span>
                 </p>
               }
+
+              <!-- Fuera del botón de la fila: un botón dentro de otro no es HTML
+                   válido, y el clic de «Aceptar» no debe además abrir la pantalla. -->
+              <app-notification-actions
+                class="campana__acciones"
+                [actions]="aviso.acciones"
+                [destination]="aviso.destino"
+                (executed)="alEjecutarAccion(aviso)"
+              />
             </li>
           }
         </ul>

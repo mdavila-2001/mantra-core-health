@@ -118,6 +118,13 @@ export interface ValidationViewState {
   readonly issues: readonly ViewStateIssue[];
   /** Presente cuando la API pidió esperar (429): segundos hasta poder reintentar. */
   readonly retryAfterSeconds?: number;
+  /**
+   * El `correlationId` de la API, cuando el estado viene de una respuesta.
+   * Opcional a diferencia de S9: un error de lo ingresado lo resuelve la
+   * persona, pero un conflicto o un rechazo de negocio se reportan, y sin el
+   * código no hay cómo encontrarlos en el servidor.
+   */
+  readonly requestId?: string;
 }
 
 /**
@@ -132,6 +139,13 @@ export interface ForbiddenViewState {
   readonly status: 'forbidden';
   readonly message?: string;
   readonly nextAction?: ViewStateNextAction;
+  /**
+   * El `correlationId` de la API, cuando el estado viene de una respuesta.
+   * Opcional a diferencia de S9: un error de lo ingresado lo resuelve la
+   * persona, pero un conflicto o un rechazo de negocio se reportan, y sin el
+   * código no hay cómo encontrarlos en el servidor.
+   */
+  readonly requestId?: string;
 }
 
 /**

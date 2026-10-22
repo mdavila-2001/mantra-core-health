@@ -43,8 +43,8 @@ export const BANNERS: readonly BannerPublicitario[] = [
   {
     id: 'alovida-vitrina',
     rotulo: 'AloVida',
-    titulo: '¿Sos profesional de la salud?',
-    texto: 'Creá tu vitrina pública y publicá para tus pacientes desde el primer día.',
+    titulo: '¿Es profesional de la salud?',
+    texto: 'Cree su vitrina pública y publique para sus pacientes desde el primer día.',
     accion: 'Crear mi cuenta',
     enlace: ['/auth', 'register'],
     tono: 'aguamarina',

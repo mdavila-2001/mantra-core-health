@@ -168,6 +168,27 @@
   font-size: var(--fs-caption);
 }
 
+.compra__promo-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.compra__mas-promos {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.compra__mas-promos > summary {
+  cursor: pointer;
+  padding-block: var(--sp-1);
+}
+
+.compra__mas-promos > .compra__promos {
+  margin-block-start: var(--sp-1);
+}
+
 /* El orden y la variante con seguro (T-E2): una barra que se apila en móvil. */
 .compra__controles {
   display: flex;
@@ -207,4 +228,12 @@
 .volver-al-origen {
   justify-self: start;
   align-self: flex-start;
+}
+
+/* Lo que no se pudo agregar al carrito (carril 43 · H5): va arriba de la
+   lista, no dentro de la tarjeta de la sede — habla del volcado entero. */
+.compra__aviso-carrito {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }

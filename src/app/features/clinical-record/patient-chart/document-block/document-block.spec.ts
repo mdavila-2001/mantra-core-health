@@ -178,6 +178,19 @@ describe('DocumentBlock', () => {
     req.flush(RESPUESTA);
   });
 
+  /** BR-16 (CL-36): el selector manda el uuid real del catálogo, no un booleano inventado. */
+  it('manda patientVisibilityConceptId cuando se elige visibilidad', () => {
+    dibujar();
+    señal<string | number | null>('titulo').set('Laboratorio completo');
+    señal<string | null>('visibilidad').set('vis-patient');
+
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/charts/documents');
+    expect(req.request.body.patientVisibilityConceptId).toBe('vis-patient');
+    req.flush(RESPUESTA);
+  });
+
   it('el rótulo del botón dice cuántos archivos van', () => {
     dibujar();
     expect(interno<() => string>('rotuloDeEnvio')()).toBe('Registrar documento');
@@ -234,6 +247,64 @@ describe('DocumentBlock', () => {
       req.flush(RESPUESTA);
 
       expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+  });
+
+  /**
+   * CL-28: la subida y el vinculo son dos casos de uso. Si `POST /charts/documents`
+   * falla con los archivos ya subidos, «Reintentar» reenvia los mismos `fileId` y
+   * **no** vuelve a subirlos (quedaban huerfanos y duplicados).
+   */
+  describe('reintento sin re-subir (CL-28)', () => {
+    it('si el alta falla, el reintento reenvia los mismos fileId sin subir de nuevo', () => {
+      dibujar();
+      señal<string | number | null>('titulo').set('Laboratorio completo');
+      señal<readonly File[]>('archivos').set([archivo('informe.pdf'), archivo('anexo.pdf')]);
+
+      interno<() => void>('registrar')();
+      const subidas = http.match('/common/files/upload');
+      expect(subidas.length).toBe(2);
+      subidas[0]!.flush({ id: 'file-1' });
+      subidas[1]!.flush({ id: 'file-2' });
+      http
+        .expectOne('/charts/documents')
+        .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+
+      expect(interno<() => string>('rotuloDeEnvio')()).toContain('Reintentar');
+
+      interno<() => void>('registrar')();
+      // Ninguna subida nueva.
+      http.expectNone('/common/files/upload');
+      const req = http.expectOne('/charts/documents');
+      expect(req.request.body.files).toEqual([
+        { fileId: 'file-1', contentRole: 'PRIMARY', ordinal: 0 },
+        { fileId: 'file-2', contentRole: 'ATTACHMENT', ordinal: 1 },
+      ]);
+      req.flush(RESPUESTA);
+      expect(interno<() => string>('rotuloDeEnvio')()).toBe('Registrar documento');
+    });
+
+    it('si una subida falla y otra salio bien, el reintento sube solo la que falta', () => {
+      dibujar();
+      señal<string | number | null>('titulo').set('Laboratorio completo');
+      señal<readonly File[]>('archivos').set([archivo('informe.pdf'), archivo('anexo.pdf')]);
+
+      interno<() => void>('registrar')();
+      const subidas = http.match('/common/files/upload');
+      subidas[0]!.flush({ id: 'file-1' });
+      subidas[1]!.error(new ProgressEvent('error'));
+      http.expectNone('/charts/documents');
+
+      interno<() => void>('registrar')();
+      // Solo el segundo vuelve a subirse.
+      const segunda = http.expectOne('/common/files/upload');
+      segunda.flush({ id: 'file-2' });
+      const req = http.expectOne('/charts/documents');
+      expect(req.request.body.files).toEqual([
+        { fileId: 'file-1', contentRole: 'PRIMARY', ordinal: 0 },
+        { fileId: 'file-2', contentRole: 'ATTACHMENT', ordinal: 1 },
+      ]);
+      req.flush(RESPUESTA);
     });
   });
 });

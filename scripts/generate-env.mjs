@@ -70,6 +70,15 @@ const MANIFEST = [
     legacyKey: 'API_BASE_URL',
   },
 
+  // Servicio de triage por IA. Relativo (`/ai`) o absoluto, con las mismas
+  // reglas que el endpoint de trazas: sin credenciales y sin query. El servicio
+  // es público, así que no hay secreto que pueda viajar en esta variable.
+  {
+    key: 'PUBLIC_AI_BASE_URL',
+    field: 'aiBaseUrl',
+    validate: validateTracesEndpoint,
+  },
+
   // --- Telemetría ----------------------------------------------------------
   //
   // Ninguna de estas seis es un secreto, y no puede serlo: el endpoint de
@@ -109,6 +118,32 @@ const MANIFEST = [
   {
     key: 'PUBLIC_TELEMETRY_SAMPLE_RATIO',
     group: 'telemetry',
+    field: 'sampleRatio',
+    literal: true,
+    validate: validateRatio,
+  },
+
+  // --- Captura de interacciones (mapas de calor) ---------------------------
+  //
+  // Tampoco son secretos: el id del esquema identifica un registro público del
+  // catálogo de telemetría, no autoriza nada. La ingesta la protege la API
+  // —token de sesión, consentimiento e idempotencia—.
+  {
+    key: 'PUBLIC_UX_ANALYTICS_ENABLED',
+    group: 'uxAnalytics',
+    field: 'enabled',
+    literal: true,
+    validate: validateBoolean,
+  },
+  {
+    key: 'PUBLIC_UX_ANALYTICS_EVENT_SCHEMA_ID',
+    group: 'uxAnalytics',
+    field: 'eventSchemaDefinitionId',
+    validate: validateUuid,
+  },
+  {
+    key: 'PUBLIC_UX_ANALYTICS_SAMPLE_RATIO',
+    group: 'uxAnalytics',
     field: 'sampleRatio',
     literal: true,
     validate: validateRatio,
@@ -154,6 +189,39 @@ const MANIFEST = [
   {
     key: 'PUBLIC_CAMPAIGNS_DEMO',
     field: 'campaignsDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Enciende la facturación SIMULADA (FACT-SIAT-MOCK): el motor fiscal del
+  // backend simulado. No es un secreto ni una credencial —el simulador no usa
+  // ninguna—: decide si las rutas `/billing/simulated/*` responden.
+  {
+    key: 'PUBLIC_BILLING_SIAT_DEMO',
+    field: 'billingSiatDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Registra las pantallas portadas de la bóveda, que pintan datos de ejemplo.
+  // Apagada, esas rutas no existen: las que tienen pantalla real redirigen a
+  // ella y el resto da 404. Contra la API real se fija en `false` en el propio
+  // archivo de entorno, sin leer esta variable.
+  {
+    key: 'PUBLIC_DESIGN_MOCKUPS',
+    field: 'designMockups',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Cómo se pide el refresco de sesión: con la cookie `httpOnly` de la API
+  // (`true`) o con el token en el cuerpo (`false`, por defecto). Es un booleano
+  // de despliegue, no un secreto: el nombre lleva «COOKIE» y por eso figura en
+  // `PUBLIC_NAME_EXEMPTIONS`. Tiene que coincidir con `AUTH_REFRESH_COOKIE_ENABLED`
+  // de la API o la sesión se pierde al recargar.
+  {
+    key: 'PUBLIC_REFRESH_COOKIE',
+    field: 'refreshCookie',
     literal: true,
     validate: validateBoolean,
   },
@@ -209,9 +277,15 @@ function parseDotEnv(text) {
   return values;
 }
 
+/**
+ * Claves cuyo nombre se parece a un secreto pero no lo es. Cada una tiene que
+ * ser un booleano validado y estar justificada en el manifiesto.
+ */
+const PUBLIC_NAME_EXEMPTIONS = new Set(['PUBLIC_REFRESH_COOKIE']);
+
 /** Falla si el nombre de una clave del manifiesto promete un secreto. */
 function assertPublicName(key) {
-  if (SECRET_LOOKING_NAME.test(key)) {
+  if (!PUBLIC_NAME_EXEMPTIONS.has(key) && SECRET_LOOKING_NAME.test(key)) {
     fail(
       `«${key}» no puede estar en el MANIFIESTO de scripts/generate-env.mjs.\n` +
         `El nombre indica un secreto, y todo lo que pasa por acá se empaqueta en\n` +
@@ -301,6 +375,21 @@ function validateRatio(key, value) {
     );
   }
   return ratio;
+}
+
+/**
+ * Identificador de un registro de la API.
+ *
+ * Un id mal copiado haría que la API rechace cada lote con 404 en silencio para
+ * quien mira la pantalla; se prefiere que falle el build.
+ */
+function validateUuid(key, value) {
+  // Vacío es válido: deja la captura apagada, como dice `environment.types.ts`.
+  if (value === '') return value;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+    fail(`«${key}» debe ser un uuid (8-4-4-4-12 hexadecimal). Se recibió: ${value}`);
+  }
+  return value.toLowerCase();
 }
 
 /**

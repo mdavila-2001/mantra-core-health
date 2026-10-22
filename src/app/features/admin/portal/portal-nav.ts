@@ -1,6 +1,6 @@
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 
-/** Una pantalla del portal. `path` es relativo a `administration/portal`. */
+/** Una pantalla del portal. `path` es relativo a `superadmin/portal`. */
 export interface PortalNavItem {
   readonly label: string;
   readonly path: string;
@@ -17,7 +17,7 @@ export interface PortalNavGroup {
   readonly items: readonly PortalNavItem[];
 }
 
-export const PORTAL_BASE = '/administration/portal';
+export const PORTAL_BASE = '/superadmin/portal';
 
 /**
  * Los grupos del portal. Es el único lugar que dice qué pantallas hay y dónde

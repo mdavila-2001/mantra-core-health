@@ -1,0 +1,6 @@
+node scripts/check-api-prefixes.mjs
+✓ check-api-prefixes
+  75 prefijos, iguales en las 3 fuentes
+  /access-requests  /accounting  /admin/analytics  /admin/catalog  /admin/content-packs  /admin/ops  /admin/qa  /admin/tenants  /ai  /auth-providers  /authz  /billing/service-catalog  /cds  /charts  /clinical  /common  /community  /consent  /delegated-access  /delegated-permission-sets  /dental-procedures  /diagnostic-results  /diagnostic-study-offerings  /diagnostic-units  /diagnostics/accessions  /diagnostics/containers  /diagnostics/patients  /diagnostics/reports  /diagnostics/specimens  /diagnostics/work-orders  /forms  /geo  /health-context  /iam  /identity  /insurance-brokers  /insurance-campaigns  /insurance-carrier-catalog  /insurance-carriers  /insurance-claims  /insurance-marketplace  /insurance-plans  /insurance-products  /insurance/analytics  /insurance/portability  /loyalty  /notifications  /org  /otel  /patients/me  /patients/me/reviews  /pharma-labs  /pharmacies  /pharmacy  /pharmacy-inventory  /practices  /practitioner-delegates  /practitioners  /prescription-favorites  /price-schedules  /procedure-cases  /profiles  /public  /quotations  /scheduling  /socket.io  /study-prices  /surveys  /system-context  /tenants  /terminology  /visit-agenda  /visit-records  /visit-requests  /visit-surveys
+
+EXIT_CODE=0

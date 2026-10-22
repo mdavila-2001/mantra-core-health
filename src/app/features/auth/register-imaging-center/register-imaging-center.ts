@@ -1,7 +1,9 @@
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -15,29 +17,48 @@ import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
+import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+  RegistrationHelp,
+  type HelpCard,
+} from '../../../shared/components/organisms/registration-help/registration-help';
+import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
 import {
-  MAX_ATTACHMENT_BYTES,
-  SUPPORT_FILE_FORMATS,
-} from '../registro-compartido/credenciales-del-medico';
-import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+  NOTICE_REWRITE_ADDRESS,
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { generateReadableCode } from '../../../core/readable-code/readable-code';
+import { IamClient } from '../../../core/data-access/iam/iam.client';
+import type {
+  DiagnosticCenterRegistration,
+  OrganizationContactPerson,
+  OrganizationExecutives,
+} from '../../../core/data-access/iam/iam.types';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
+import { codeFromAcronym } from '../register-organization/code-from-acronym';
+import {
+  DIAGNOSIS_CATALOG_NOTICE,
+  DiagnosisCenterEnrollment,
+  DIAGNOSIS_CODES,
+  IncompleteCatalog,
+  type DiagnosisCatalogs,
+} from '../shared-registration/diagnostic-center-enrollment';
+import { NameFields } from '../shared-registration/name-fields/name-fields';
+import { nameGroup, completeName } from '../shared-registration/name-fields/person-name';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -85,7 +106,26 @@ export const TIPOS_DE_SOCIEDAD: readonly SelectOption<string>[] = [
 ];
 
 /**
+ * Cada modalidad de la lista → el código de su concepto en el catálogo
+ * `diagnostic-modality` (BR-09). El valor del formulario sigue siendo la
+ * etiqueta que ve la persona; el concepto se resuelve por código al enviar.
+ */
+const CODIGO_DE_MODALIDAD: Readonly<Record<string, string>> = {
+  'Rayos X': DIAGNOSIS_CODES.modalidades.rayosX,
+  Ecografía: DIAGNOSIS_CODES.modalidades.ecografia,
+  'Tomografía computarizada': DIAGNOSIS_CODES.modalidades.tomografia,
+  'Resonancia magnética': DIAGNOSIS_CODES.modalidades.resonancia,
+  Mamografía: DIAGNOSIS_CODES.modalidades.mamografia,
+  'Densitometría ósea': DIAGNOSIS_CODES.modalidades.densitometria,
+};
+
+/**
  * Los estudios que puede hacer el centro.
+ *
+ * **Actualización (BR-09):** las seis modalidades tienen concepto en la API
+ * (`DU_MODALITY_*`) y el alta las manda como conceptos, resueltos por código
+ * desde el catálogo público `diagnostic-modality`. Lo que sigue documenta el
+ * estado anterior a la conexión.
  *
  * ## Por qué existe esta pregunta, si los dieciocho puntos no la hacen
  *
@@ -135,7 +175,10 @@ export interface SucursalDeclarada {
   readonly id: string;
   readonly nombre: string;
   readonly direccion: string;
-  readonly gps: Coordenadas | null;
+  readonly descripcion: string;
+  /** El enlace de mapa que pegó la persona o que trajo la carga en lote. */
+  readonly urlUbicacion: string;
+  readonly gps: Coordinates | null;
 }
 
 /**
@@ -156,11 +199,23 @@ export type ClaveDeAdjunto =
   | 'seprecFile'
   | 'licenciaFile'
   | 'sedesFile'
-  | 'poderFile'
-  | 'radioproteccionFile';
+  | 'poderFile';
 
-/** Formatos que se aceptan. El proceso pide PDF; se acepta la foto del papel. */
-const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
+/** Cómo conoce la API cada papel del alta: por el nombre de su `fileId`. */
+type ClaveDeDocumentoDelAlta =
+  | 'taxIdentifierFileId'
+  | 'commerceRegistryFileId'
+  | 'operatingLicenseFileId'
+  | 'healthAuthorityCertificateFileId'
+  | 'constitutionFileId'
+  | 'powerOfAttorneyFileId';
+
+/**
+ * Formatos que se aceptan: **sólo PDF**. La pre-carga del alta
+ * (`POST /iam/auth/upload-registration-document`) rechaza cualquier otro tipo, y
+ * ofrecer una foto que la API va a devolver es hacer perder el papel al final.
+ */
+const FORMATOS_DE_RESPALDO = 'application/pdf';
 
 /** Cinco megas, el mismo tope que las otras altas: la misma constante. */
 const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
@@ -178,13 +233,13 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * Mismo mecanismo que las otras altas largas: la columna cambia con el paso,
  * porque «¿por qué me piden ESTO?» es una pregunta distinta en cada página.
  */
-const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   empresa: [
     {
       icono: 'building',
       titulo: 'La empresa, no el local',
       texto:
-        'Acá va la razón social tal como figura en tu matrícula de comercio. Los locales donde atendés se cargan más adelante, cada uno con su punto en el mapa.',
+        'Acá va la razón social tal como figura en su matrícula de comercio. Los locales donde atiende se cargan más adelante, cada uno con su punto en el mapa.',
     },
     {
       icono: 'labels',
@@ -196,15 +251,15 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   estudios: [
     {
       icono: 'scan',
-      titulo: 'Es lo que te hace aparecer en la orden correcta',
+      titulo: 'Es lo que le hace aparecer en la orden correcta',
       texto:
-        'Cuando llega una orden médica, la app ofrece sólo los centros que pueden hacer ese estudio. Si no marcás ninguno, tu centro no entra en ninguna búsqueda.',
+        'Cuando llega una orden médica, la app ofrece sólo los centros que pueden hacer ese estudio. Si no marca ninguno, su centro no entra en ninguna búsqueda.',
     },
     {
       icono: 'sliders',
-      titulo: 'Marcá lo que hacés hoy',
+      titulo: 'Marque lo que hace hoy',
       texto:
-        'No hace falta que esté todo: el detalle por estudio, con sus precios y sus equipos, se carga después desde tu panel. Acá alcanza con las áreas grandes.',
+        'No hace falta que esté todo: el detalle por estudio, con sus precios y sus equipos, se carga después desde su panel. Acá alcanza con las áreas grandes.',
     },
   ],
   documentos: [
@@ -212,29 +267,29 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'folder',
       titulo: 'Tres papeles frenan, tres no',
       texto:
-        'Sin SEPREC, licencia de funcionamiento y certificado del SEDES no podemos publicar un centro: son los que prueban que está registrado y habilitado para operar. Los otros tres los podés traer después.',
+        'Sin SEPREC, licencia de funcionamiento y certificado del SEDES no podemos publicar un centro: son los que prueban que está registrado y habilitado para operar. Los otros tres los puede traer después.',
     },
     {
       icono: 'shield',
       titulo: 'Quién los ve',
       texto:
-        'Los mira el equipo que aprueba el alta. No se publican en tu ficha ni los ve un paciente.',
+        'Los mira el equipo que aprueba el alta. No se publican en su ficha ni los ve un paciente.',
     },
   ],
   radioproteccion: [
     {
       icono: 'shield',
-      titulo: 'Sólo si usás radiación ionizante',
+      titulo: 'Sólo si usa radiación ionizante',
       texto:
-        'Rayos X, tomografía y mamografía la usan; la ecografía y la resonancia, no. Si tenés la autorización, adjuntala: es lo que el equipo de verificación va a pedir primero.',
+        'Rayos X, tomografía y mamografía la usan; la ecografía y la resonancia, no. Si tiene la autorización, adjúntela: es lo que el equipo de verificación va a pedir primero.',
     },
   ],
   ubicacion: [
     {
       icono: 'pin',
-      titulo: 'El punto es lo que te hace aparecer',
+      titulo: 'El punto es lo que le hace aparecer',
       texto:
-        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa tu centro queda fuera de esa lista, aunque la dirección esté escrita.',
+        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa su centro queda fuera de esa lista, aunque la dirección esté escrita.',
     },
   ],
   sucursales: [
@@ -252,6 +307,12 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto:
         'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
     },
+    {
+      icono: 'folder',
+      titulo: 'El poder va con quien lo firma',
+      texto:
+        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+    },
   ],
   'gerencia-general': [
     {
@@ -266,7 +327,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'chart',
       titulo: 'A quién le llega la liquidación',
       texto:
-        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo dejás vacío, va al del representante legal.',
+        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo deja vacío, va al del representante legal.',
     },
   ],
   'gerencia-marketing': [
@@ -365,6 +426,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-imaging-center',
   imports: [
+    BranchBulkImport,
     FileInput,
     NgTemplateOutlet,
     RouterLink,
@@ -378,16 +440,44 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AnnounceOnAppear,
     Alert,
     PaginatedForm,
-    CampoPersonalizado,
-    RegistroAyuda,
-    UbicacionPicker,
+    CustomField,
+    RegistrationHelp,
+    MapLocationPicker,
+    NameFields,
   ],
   templateUrl: './register-imaging-center.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-imaging-center.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-imaging-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterImagingCenter {
   private readonly router = inject(Router);
+  private readonly iam = inject(IamClient);
+  private readonly alta = inject(DiagnosisCenterEnrollment);
+
+  /**
+   * El código de organización se deriva del nombre y lleva un sufijo propio de
+   * esta pantalla (único en la plataforma; fijo por instancia, así un reintento
+   * manda el mismo).
+   */
+  private readonly sufijoDeCodigo = generateReadableCode(5);
+
+  constructor() {
+    // La constitución de la empresa (y el poder de su representante) se exigen
+    // salvo a una unipersonal.
+    this.form.controls.companyType.valueChanges.subscribe((tipo) => {
+      const constitucion = this.form.controls.constitucionFile;
+      const poder = this.form.controls.poderFile;
+      if (tipo === 'UNIPERSONAL' || tipo === null) {
+        constitucion.removeValidators(Validators.required);
+        poder.removeValidators(Validators.required);
+      } else {
+        constitucion.addValidators(Validators.required);
+        poder.addValidators(Validators.required);
+      }
+      constitucion.updateValueAndValidity();
+      poder.updateValueAndValidity();
+    });
+  }
 
   protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
 
@@ -417,8 +507,13 @@ export class RegisterImagingCenter {
       validators: [Validators.required],
     }),
     // --- 1.1.2, 1.2.1, 1.3, 1.4, 1.5 · los papeles -------------------------
+    // La constitución es obligatoria salvo para una unipersonal (ver el constructor).
     constitucionFile: new FormControl<AdjuntoDeclarado | null>(null),
-    nitFile: new FormControl<AdjuntoDeclarado | null>(null),
+    // El NIT en PDF es obligatorio: la API pide los cuatro papeles de la empresa
+    // juntos (`legalDocuments` es todo o nada).
+    nitFile: new FormControl<AdjuntoDeclarado | null>(null, {
+      validators: [Validators.required],
+    }),
     seprecFile: new FormControl<AdjuntoDeclarado | null>(null, {
       validators: [Validators.required],
     }),
@@ -428,38 +523,29 @@ export class RegisterImagingCenter {
     sedesFile: new FormControl<AdjuntoDeclarado | null>(null, {
       validators: [Validators.required],
     }),
-    /**
-     * La autorización para operar equipos que emiten radiación ionizante.
-     *
-     * **No sale de la fuente**: los dieciocho puntos son los mismos del
-     * laboratorio de sangre, y un laboratorio no irradia a nadie. Está porque
-     * un centro de rayos, tomografía o mamografía sí, y es la diferencia real
-     * entre los dos módulos: es el papel que un verificador va a pedir primero.
-     *
-     * **Es opcional a propósito, y son dos motivos distintos.** Uno: un centro
-     * que sólo hace ecografía y resonancia no la necesita, así que exigirla lo
-     * dejaría afuera. Dos: es un agregado, y un agregado no puede frenar un
-     * alta hasta que el propietario diga que corresponde. La pregunta está
-     * escrita en el `.md` de traspaso.
-     */
-    radioproteccionFile: new FormControl<AdjuntoDeclarado | null>(null),
+    // La autorización de radioprotección no viaja en el alta: la API no tiene
+    // dónde guardarla (`legalDocuments` no la declara) y ofrecer un papel que se
+    // tira es peor que no pedirlo. Se pide después, desde el panel (D-BR09-1).
     // --- 1.6 · dirección legal de la central -------------------------------
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
     // --- 1.8 · representante legal -----------------------------------------
-    legalRepName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
-    }),
+    // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
+    legalRepName: nameGroup(true),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),
+    // La API exige el documento del representante legal (4 a 50 caracteres).
+    legalRepIdNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(4), Validators.maxLength(50)],
+    }),
     poderFile: new FormControl<AdjuntoDeclarado | null>(null),
     // --- 1.9 a 1.17 · los tres cargos, todos opcionales --------------------
-    generalManagerName: new FormControl('', { nonNullable: true }),
+    generalManagerName: nameGroup(false),
     generalManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -468,7 +554,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    salesManagerName: new FormControl('', { nonNullable: true }),
+    salesManagerName: nameGroup(false),
     salesManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -477,7 +563,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    marketingManagerName: new FormControl('', { nonNullable: true }),
+    marketingManagerName: nameGroup(false),
     marketingManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -489,7 +575,7 @@ export class RegisterImagingCenter {
     // --- la cuenta ---------------------------------------------------------
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
   });
 
@@ -504,12 +590,12 @@ export class RegisterImagingCenter {
    * un alta con cuatro cajas de «adjuntá un archivo» es la forma más rápida de
    * que alguien la deje para después y no vuelva.
    */
-  readonly paginas = paginarCampos([
+  readonly paginas = paginateFields([
     {
       titulo: 'La empresa',
       clave: 'empresa',
       icon: 'building' as const,
-      hint: 'Los datos con los que figura en tu matrícula de comercio.',
+      hint: 'Los datos con los que figura en su matrícula de comercio.',
       campos: [
         {
           key: 'legalName',
@@ -519,19 +605,19 @@ export class RegisterImagingCenter {
           icono: 'building' as const,
           placeholder: 'Centro de Imagenología del Oriente S.R.L.',
           testId: 'registro-imagen-razon-social',
-          mensajeDeError: 'Escribí el nombre o la razón social de la empresa.',
+          mensajeDeError: 'Escriba el nombre o la razón social de la empresa.',
         },
         {
           key: 'companyType',
           label: 'Tipo de sociedad',
-          hint: 'El que figura en tu matrícula de comercio.',
+          hint: 'El que figura en su matrícula de comercio.',
           control: 'select' as const,
           options: TIPOS_DE_SOCIEDAD,
           required: true,
           icono: 'labels' as const,
-          placeholder: 'Elegí el tipo de sociedad',
+          placeholder: 'Elija el tipo de sociedad',
           testId: 'registro-imagen-tipo-sociedad',
-          mensajeDeError: 'Elegí el tipo de sociedad.',
+          mensajeDeError: 'Elija el tipo de sociedad.',
         },
         {
           key: 'taxId',
@@ -542,26 +628,25 @@ export class RegisterImagingCenter {
           icono: 'billing' as const,
           placeholder: '1023456789',
           testId: 'registro-imagen-nit',
-          mensajeDeError: 'Escribí el NIT: sólo números, al menos cuatro dígitos.',
+          mensajeDeError: 'Escriba el NIT: sólo números, al menos cuatro dígitos.',
         },
       ],
     },
     {
-      titulo: 'Qué estudios hacés',
+      titulo: 'Qué estudios hace',
       clave: 'estudios',
       icon: 'scan' as const,
-      hint: 'Marcá todos los que tu centro pueda realizar hoy.',
+      hint: 'Marque todos los que su centro pueda realizar hoy.',
       campos: [
         {
           key: 'modalidades',
           label: 'Estudios que realiza el centro',
-          hint: 'Si hacés alguno que no está en la lista, agregalo en «Otro».',
+          hint: 'Marque los estudios de la lista. Uno que no esté hoy no se puede registrar en el alta.',
           control: 'checkboxes' as const,
           options: MODALIDADES,
-          otro: true,
           required: true,
           testId: 'registro-imagen-modalidades',
-          mensajeDeError: 'Marcá al menos un estudio: es lo que hace que tu centro aparezca.',
+          mensajeDeError: 'Marque al menos un estudio: es lo que hace que su centro aparezca.',
         },
       ],
     },
@@ -569,7 +654,7 @@ export class RegisterImagingCenter {
       titulo: 'Los papeles de la empresa',
       clave: 'documentos',
       icon: 'folder' as const,
-      hint: 'PDF, JPG o PNG. Hasta 5 MB por archivo.',
+      hint: 'Sólo PDF. Hasta 5 MB por archivo.',
       campos: [
         {
           key: 'seprecFile',
@@ -578,16 +663,16 @@ export class RegisterImagingCenter {
           hint: 'La matrícula de comercio vigente.',
           control: 'custom' as const,
           required: true,
-          mensajeDeError: 'Adjuntá el SEPREC: sin la matrícula no podemos publicar el centro.',
+          mensajeDeError: 'Adjunte el SEPREC: sin la matrícula no podemos publicar el centro.',
         },
         {
           key: 'licenciaFile',
           ancho: 'mitad' as const,
           label: 'Licencia de funcionamiento',
-          hint: 'La que emite tu municipio.',
+          hint: 'La que emite su municipio.',
           control: 'custom' as const,
           required: true,
-          mensajeDeError: 'Adjuntá la licencia de funcionamiento.',
+          mensajeDeError: 'Adjunte la licencia de funcionamiento.',
         },
         {
           key: 'sedesFile',
@@ -597,42 +682,30 @@ export class RegisterImagingCenter {
           control: 'custom' as const,
           required: true,
           mensajeDeError:
-            'Adjuntá el certificado del SEDES: es lo que habilita a un centro a atender.',
+            'Adjunte el certificado del SEDES: es lo que habilita a un centro a atender.',
         },
         {
           key: 'nitFile',
           ancho: 'mitad' as const,
-          label: 'NIT en PDF (opcional)',
-          hint: 'El respaldo del número que escribiste antes.',
+          label: 'NIT en PDF',
+          hint: 'El respaldo del número que escribió antes.',
           control: 'custom' as const,
+          required: true,
+          mensajeDeError: 'Adjunte el NIT en PDF: viaja junto con los demás papeles.',
         },
       ],
     },
     {
-      titulo: 'Constitución, poder y radioprotección',
+      // El poder se pide en la página del representante, junto a quien lo firma.
+      titulo: 'Constitución de la empresa',
       clave: 'radioproteccion',
       icon: 'shield' as const,
-      hint: 'Los tres son opcionales: una unipersonal no tiene los dos primeros, y el tercero depende de qué equipos uses.',
+      hint: 'Una empresa unipersonal no la tiene; el resto de las sociedades sí. La autorización de radioprotección se pide después, desde su panel.',
       campos: [
         {
           key: 'constitucionFile',
-          ancho: 'mitad' as const,
-          label: 'Constitución de la empresa (opcional)',
-          hint: 'La escritura con la que se constituyó la sociedad.',
-          control: 'custom' as const,
-        },
-        {
-          key: 'poderFile',
-          ancho: 'mitad' as const,
-          label: 'Poder del representante legal (opcional)',
-          hint: 'No hace falta si el titular se representa a sí mismo.',
-          control: 'custom' as const,
-        },
-        {
-          key: 'radioproteccionFile',
-          ancho: 'mitad' as const,
-          label: 'Autorización de radioprotección (opcional)',
-          hint: 'La que habilita a operar equipos con radiación ionizante. No la necesitás si sólo hacés ecografía o resonancia.',
+          label: 'Constitución de la empresa',
+          hint: 'La escritura con la que se constituyó la sociedad. Una unipersonal no la tiene.',
           control: 'custom' as const,
         },
       ],
@@ -645,27 +718,27 @@ export class RegisterImagingCenter {
         {
           key: 'addressLines',
           label: 'Dirección legal de la central',
-          hint: 'Calle, número y zona. Es la que figura en tus papeles.',
+          hint: 'Calle, número y zona. Es la que figura en sus papeles.',
           control: 'text' as const,
           required: true,
           icono: 'pin' as const,
           placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
           testId: 'registro-imagen-direccion',
-          mensajeDeError: 'Escribí la dirección legal de la central.',
+          mensajeDeError: 'Escriba la dirección legal de la central.',
         },
         {
           key: 'gpsCentral',
           label: 'Ubicación en el mapa (opcional)',
-          hint: 'Sin el punto, tu centro no aparece cuando alguien busca el más cercano.',
+          hint: 'Sin el punto, su centro no aparece cuando alguien busca el más cercano.',
           control: 'custom' as const,
         },
       ],
     },
     {
-      titulo: 'Tus sucursales',
+      titulo: 'Sus sucursales',
       clave: 'sucursales',
       icon: 'hospital' as const,
-      hint: 'Si sólo atendés en la central, seguí de largo.',
+      hint: 'Se cargan desde su panel cuando la cuenta esté verificada: hoy no viajan con el alta.',
       campos: [
         {
           key: 'sucursales',
@@ -680,25 +753,40 @@ export class RegisterImagingCenter {
       icon: 'shield' as const,
       campos: [
         {
+          // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
+          // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
           key: 'legalRepName',
-          label: 'Nombre del representante legal',
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
+        },
+        {
+          key: 'legalRepIdNumber',
+          label: 'Documento de identidad del representante',
+          hint: 'Cédula de identidad o documento equivalente.',
           control: 'text' as const,
           required: true,
           icono: 'people' as const,
-          autocomplete: 'name',
-          testId: 'registro-imagen-representante',
-          mensajeDeError: 'Escribí el nombre del representante legal.',
+          testId: 'registro-imagen-representante-documento',
+          mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
         },
         {
           key: 'legalRepEmail',
           label: 'Correo del representante legal',
-          hint: 'Con este correo vas a entrar a la plataforma.',
+          hint: 'Con este correo va a entrar a la plataforma.',
           control: 'email' as const,
           required: true,
           icono: 'mail' as const,
           autocomplete: 'username',
           testId: 'registro-imagen-representante-correo',
-          mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
+          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
+        },
+        // El poder (1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
+        {
+          key: 'poderFile',
+          label: 'Poder del representante legal (opcional)',
+          hint: 'No hace falta si el titular se representa a sí mismo.',
+          control: 'custom' as const,
         },
       ],
     },
@@ -706,13 +794,13 @@ export class RegisterImagingCenter {
       titulo: 'Gerencia general',
       clave: 'gerencia-general',
       icon: 'briefcase' as const,
-      hint: 'Todo este paso es opcional: podés completarlo después.',
+      hint: 'Todo este paso es opcional: puede completarlo después.',
       campos: [
         {
           key: 'generalManagerName',
-          label: 'Nombre del gerente general',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-imagen-gerente-general',
         },
         {
@@ -728,7 +816,7 @@ export class RegisterImagingCenter {
           control: 'email' as const,
           icono: 'mail' as const,
           testId: 'registro-imagen-gerente-general-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
         },
       ],
     },
@@ -740,9 +828,9 @@ export class RegisterImagingCenter {
       campos: [
         {
           key: 'salesManagerName',
-          label: 'Nombre del gerente comercial',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-imagen-gerente-comercial',
         },
         {
@@ -758,7 +846,7 @@ export class RegisterImagingCenter {
           control: 'email' as const,
           icono: 'mail' as const,
           testId: 'registro-imagen-gerente-comercial-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
         },
       ],
     },
@@ -770,9 +858,9 @@ export class RegisterImagingCenter {
       campos: [
         {
           key: 'marketingManagerName',
-          label: 'Nombre del gerente de marketing',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-imagen-gerente-marketing',
         },
         {
@@ -788,15 +876,15 @@ export class RegisterImagingCenter {
           control: 'email' as const,
           icono: 'mail' as const,
           testId: 'registro-imagen-gerente-marketing-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
         },
       ],
     },
     {
-      titulo: 'Tu acceso',
+      titulo: 'Su acceso',
       clave: 'acceso',
       icon: 'lock' as const,
-      hint: 'Entrás con el correo del representante legal y esta contraseña.',
+      hint: 'Entra con el correo del representante legal y esta contraseña.',
       campos: [
         {
           key: 'password',
@@ -807,7 +895,7 @@ export class RegisterImagingCenter {
           icono: 'lock' as const,
           autocomplete: 'new-password',
           testId: 'registro-imagen-password',
-          mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+          mensajeDeError: MESSAGE_SHORT_PASSWORD,
         },
       ],
     },
@@ -857,10 +945,10 @@ export class RegisterImagingCenter {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en las otras altas: `app-ubicacion-picker` emite
+   * Fuera del formulario, como en las otras altas: `app-map-location-picker` emite
    * **sólo lo confirmado** y se guarda para sí el estado intermedio.
    */
-  readonly gpsCentral = signal<Coordenadas | null>(null);
+  readonly gpsCentral = signal<Coordinates | null>(null);
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -877,11 +965,15 @@ export class RegisterImagingCenter {
     () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
   );
   private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
   vaciarDireccionPorElMapa(): void {
-    this.form.controls.addressLines.setValue('');
+    const direccion = this.form.controls.addressLines;
+    direccion.setValue('');
+    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
+    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
+    direccion.markAsUntouched();
     this.direccionVaciadaPorElMapa.set(true);
   }
 
@@ -896,12 +988,11 @@ export class RegisterImagingCenter {
     return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
   }
 
-  protected readonly idsUbicacionCentral: IdsDePrueba = {
+  protected readonly idsUbicacionCentral: TestIds = {
     mapa: 'registro-imagen-central-map',
     confirmada: 'registro-imagen-central-location-confirmed',
     avisoGeocodificacion: 'registro-imagen-central-geocoding-notice',
     quitar: 'registro-imagen-central-location-remove',
-    sinConfirmar: 'registro-imagen-central-location-unconfirmed',
     confirmar: 'registro-imagen-central-location-confirm',
     usarUbicacion: 'registro-imagen-central-location-use',
     marcarEnMapa: 'registro-imagen-central-location-pick',
@@ -924,7 +1015,7 @@ export class RegisterImagingCenter {
   agregarSucursal(): void {
     const id = `sucursal-${this.proximaSucursal}`;
     this.proximaSucursal += 1;
-    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', gps: null }]);
+    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null }]);
   }
 
   quitarSucursal(id: string): void {
@@ -946,7 +1037,50 @@ export class RegisterImagingCenter {
     this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
   }
 
-  fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {
+  escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {
+    this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
+  }
+
+  escribirUrlDeSucursal(id: string, url: string | number | null): void {
+    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /* --- carga en lote ------------------------------------------------------ */
+
+  /** Si está abierto el diálogo «Subir sucursales en lote». */
+  readonly cargaEnLoteAbierta = signal(false);
+
+  /** Los nombres ya escritos: el archivo no puede repetirlos. */
+  readonly nombresDeSucursales = computed(() =>
+    this.sucursales()
+      .map((sucursal) => sucursal.nombre)
+      .filter((nombre) => nombre.trim() !== ''),
+  );
+
+  /**
+   * Suma al final las sucursales del archivo. Cada una nace con su pin si el
+   * enlace traía el punto escrito; si no, se marca a mano como cualquier otra.
+   */
+  agregarSucursalesEnLote(lote: readonly BranchDraft[]): void {
+    const nuevas = lote.map((borrador): SucursalDeclarada => {
+      const id = `sucursal-${this.proximaSucursal}`;
+      this.proximaSucursal += 1;
+      return {
+        id,
+        nombre: borrador.name,
+        direccion: borrador.address,
+        descripcion: borrador.description,
+        urlUbicacion: borrador.locationUrl,
+        gps:
+          borrador.coordinates === null
+            ? null
+            : { lat: borrador.coordinates.latitude, lng: borrador.coordinates.longitude },
+      };
+    });
+    this.sucursales.update((lista) => [...lista, ...nuevas]);
+  }
+
+  fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
     this.actualizarSucursal(id, { gps });
   }
 
@@ -957,13 +1091,12 @@ export class RegisterImagingCenter {
   }
 
   /** Los identificadores de prueba del mapa de una sucursal. */
-  idsDeSucursal(id: string): IdsDePrueba {
+  idsDeSucursal(id: string): TestIds {
     return {
       mapa: `registro-imagen-${id}-map`,
       confirmada: `registro-imagen-${id}-location-confirmed`,
       avisoGeocodificacion: `registro-imagen-${id}-geocoding-notice`,
       quitar: `registro-imagen-${id}-location-remove`,
-      sinConfirmar: `registro-imagen-${id}-location-unconfirmed`,
       confirmar: `registro-imagen-${id}-location-confirm`,
       usarUbicacion: `registro-imagen-${id}-location-use`,
       marcarEnMapa: `registro-imagen-${id}-location-pick`,
@@ -974,7 +1107,7 @@ export class RegisterImagingCenter {
 
   private readonly claveVisible = signal('empresa');
 
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA[this.claveVisible()] ?? [],
   );
 
@@ -984,24 +1117,196 @@ export class RegisterImagingCenter {
 
   /* --- envío ------------------------------------------------------------- */
 
-  /** Si la solicitud ya se dio por enviada. */
+  /** Si el alta ya se envió y la API la aceptó. */
   readonly enviada = signal(false);
 
+  /** El estado del envío: en curso, con su error o en reposo. */
+  readonly estado = signal<ViewState<null>>(ready(null));
+  readonly enviando = computed(() => this.estado().status === 'loading');
+
+  /** El aviso de un envío fallido, con la referencia que soporte necesita. */
+  readonly mensajeDeError = computed<string | null>(() => {
+    const estado = this.estado();
+    if (estado.status === 'validation') {
+      return estado.issues[0]?.message ?? null;
+    }
+    if (estado.status === 'offline') {
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
+    }
+    if (estado.status === 'error') {
+      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
+    }
+    return null;
+  });
+
   /**
-   * Cierra el alta **sin salir a la red**.
+   * Da de alta el centro: lee el catálogo, sube los PDF (en serie y antes
+   * del alta) y llama a `POST /iam/auth/register-organization` con
+   * `tenantType: 'DIAGNOSTIC_CENTER'`. La cuenta queda pendiente de
+   * verificación; recién con la respuesta se dice que quedó registrada.
    *
-   * No es un atajo de la maqueta que después haya que acordarse de cambiar: hoy
-   * **no existe** un endpoint de alta de centro de diagnóstico, igual que no
-   * existe el del laboratorio de sangre. Cuando el backend tenga el alta, lo
-   * que cambia es este método — el formulario, sus reglas y sus papeles ya
-   * están.
+   * Si una subida falla, el alta no se envía y las que ya salieron se conservan
+   * para el reintento (`AltaDeCentroDiagnostico`).
    */
   submit(): void {
+    if (this.enviando()) {
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    this.enviada.set(true);
+    this.estado.set(loading());
+    this.alta
+      .catalogs()
+      .pipe(
+        // Los conceptos se resuelven antes de subir nada: si el catálogo no trae
+        // uno, no quedan PDF subidos a una alta que no va a salir.
+        map((catalogos) => this.conceptos(catalogos)),
+        switchMap((conceptos) =>
+          this.alta
+            .uploadDocuments(this.archivosDelAlta())
+            .pipe(switchMap((ids) => this.iam.registerOrganization(this.datos(conceptos, ids)))),
+        ),
+      )
+      .subscribe({
+        next: () => {
+          this.estado.set(ready(null));
+          this.enviada.set(true);
+        },
+        error: (error: unknown) => this.estado.set(this.fallaDelEnvio(error)),
+      });
+  }
+
+  /** Los PDF elegidos, por el nombre con el que el alta los conoce. */
+  private archivosDelAlta() {
+    const uno = (clave: ClaveDeAdjunto): File | undefined => this.attachmentFiles()[clave]?.[0];
+    return {
+      taxIdentifierFileId: uno('nitFile'),
+      commerceRegistryFileId: uno('seprecFile'),
+      operatingLicenseFileId: uno('licenciaFile'),
+      healthAuthorityCertificateFileId: uno('sedesFile'),
+      constitutionFileId: uno('constitucionFile'),
+      powerOfAttorneyFileId: uno('poderFile'),
+    };
+  }
+
+  /** Los ids de concepto que el alta necesita, por su código. Falla si el catálogo no trae alguno. */
+  private conceptos(catalogos: DiagnosisCatalogs) {
+    const concepto = DiagnosisCenterEnrollment.concept;
+    return {
+      pais: concepto(catalogos.pais, DIAGNOSIS_CODES.pais),
+      jurisdiccion: concepto(catalogos.jurisdiccion, DIAGNOSIS_CODES.jurisdiccionNacional),
+      tipoDeUnidad: concepto(catalogos.tipoDeUnidad, DIAGNOSIS_CODES.imagenes),
+      modalidades: this.form.controls.modalidades.value.map((etiqueta) =>
+        concepto(catalogos.modalidad, CODIGO_DE_MODALIDAD[etiqueta] ?? etiqueta),
+      ),
+    };
+  }
+
+  /** El cuerpo del alta, con los ids del catálogo y de los PDF ya resueltos. */
+  private datos(
+    conceptos: ReturnType<RegisterImagingCenter['conceptos']>,
+    ids: Partial<Record<ClaveDeDocumentoDelAlta, string>>,
+  ): DiagnosticCenterRegistration {
+    const raw = this.form.getRawValue();
+    const gps = this.gpsCentral();
+    const gerencias = this.gerencias();
+    const nombre = raw.legalName.trim();
+    const { taxIdentifierFileId, commerceRegistryFileId } = ids;
+    const { operatingLicenseFileId, healthAuthorityCertificateFileId } = ids;
+    // Los cuatro papeles no opcionales los exige el formulario; si alguno faltara
+    // acá es que la subida no lo devolvió, y eso frena el envío en vez de mandar
+    // un bloque incompleto que la API rechazaría entero.
+    if (
+      taxIdentifierFileId === undefined ||
+      commerceRegistryFileId === undefined ||
+      operatingLicenseFileId === undefined ||
+      healthAuthorityCertificateFileId === undefined
+    ) {
+      throw new Error('Faltan papeles por adjuntar.');
+    }
+    return {
+      tenantType: 'DIAGNOSTIC_CENTER',
+      code: `${codeFromAcronym(nombre).slice(0, 60)}_${this.sufijoDeCodigo}`,
+      legalName: nombre,
+      legalEntityType: raw.companyType ?? '',
+      timeZone: 'America/La_Paz',
+      countryConceptId: conceptos.pais,
+      jurisdictionConceptId: conceptos.jurisdiccion,
+      diagnosticUnit: {
+        diagnosticUnitTypeConceptId: conceptos.tipoDeUnidad,
+        modalityConceptIds: conceptos.modalidades,
+        primarySite: {
+          name: 'Central',
+          timeZone: 'America/La_Paz',
+          address: {
+            lines: [raw.addressLines.trim()],
+            // El punto viaja sólo si se confirmó sobre el mapa.
+            ...(gps === null ? {} : { latitude: gps.lat, longitude: gps.lng }),
+          },
+        },
+      },
+      owner: {
+        email: raw.legalRepEmail.trim(),
+        password: raw.password,
+        displayName: completeName(raw.legalRepName),
+      },
+      legalDocuments: {
+        ...(ids.constitutionFileId === undefined
+          ? {}
+          : { constitutionFileId: ids.constitutionFileId }),
+        taxIdentifierFileId,
+        commerceRegistryFileId,
+        operatingLicenseFileId,
+        healthAuthorityCertificateFileId,
+      },
+      legalRepresentative: {
+        fullName: completeName(raw.legalRepName),
+        idNumber: raw.legalRepIdNumber.trim(),
+        email: raw.legalRepEmail.trim(),
+        ...(ids.powerOfAttorneyFileId === undefined
+          ? {}
+          : { powerOfAttorneyFileId: ids.powerOfAttorneyFileId }),
+      },
+      // Las gerencias son un bloque de a tres: con menos, la API lo rechaza
+      // entero. Viajan sólo si están las tres completas.
+      ...(gerencias === null ? {} : { executives: gerencias }),
+    };
+  }
+
+  /** Las tres gerencias, o `null` si alguna no está completa (nombre, celular y correo). */
+  private gerencias(): OrganizationExecutives | null {
+    const raw = this.form.getRawValue();
+    const contacto = (
+      fullName: string,
+      phone: string,
+      email: string,
+    ): OrganizationContactPerson | null =>
+      fullName.trim() === '' || phone.trim() === '' || email.trim() === ''
+        ? null
+        : { fullName: fullName.trim(), phone: phone.trim(), email: email.trim() };
+    const general = contacto(completeName(raw.generalManagerName), raw.generalManagerPhone, raw.generalManagerEmail);
+    const comercial = contacto(completeName(raw.salesManagerName), raw.salesManagerPhone, raw.salesManagerEmail);
+    const marketing = contacto(
+      completeName(raw.marketingManagerName),
+      raw.marketingManagerPhone,
+      raw.marketingManagerEmail,
+    );
+    return general === null || comercial === null || marketing === null
+      ? null
+      : { generalManager: general, commercialManager: comercial, marketingManager: marketing };
+  }
+
+  /** Traduce lo que falló a un estado que la pantalla sabe decir. */
+  private fallaDelEnvio(error: unknown): ViewState<null> {
+    if (error instanceof IncompleteCatalog) {
+      return validation([{ field: 'catalogos', message: DIAGNOSIS_CATALOG_NOTICE }]);
+    }
+    if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
+      return validation([{ field: 'alta', message: error.message }]);
+    }
+    return registrationErrorToViewState(error, 'organization');
   }
 
   goToLogin(): void {

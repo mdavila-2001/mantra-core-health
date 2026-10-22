@@ -12,6 +12,7 @@ import type {
   Evidence,
   Impact,
 } from '../../../../core/data-access/admin-portal/data-catalog.types';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -49,7 +50,7 @@ const CAMPO_FALTANTE: Readonly<Record<string, string>> = {
 /**
  * Ficha de una tabla o vista del catálogo: hechos técnicos observados, la
  * justificación de negocio con su estado de revisión, columnas, evidencia,
- * historial, impacto estructural y cambios detectados. Una sola tarjeta con
+ * historial, relaciones entre tablas y cambios detectados. Una sola tarjeta con
  * pestañas (regla de composición §5).
  */
 @Component({
@@ -96,6 +97,13 @@ export class CatalogObjectDetail {
   protected readonly anadiendoEvidencia = signal(false);
   protected readonly aviso = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
+  /*
+   * Una lista vacía de evidencia, historial o cambios es una afirmación («no
+   * hay»). Si la lectura falló, se dice eso en su lugar.
+   */
+  protected readonly errorDeEvidencia = signal<string | null>(null);
+  protected readonly errorDeHistorial = signal<string | null>(null);
+  protected readonly errorDeCambios = signal<string | null>(null);
 
   protected readonly objeto = computed(() => {
     const d = this.detalle();
@@ -108,7 +116,7 @@ export class CatalogObjectDetail {
   });
 
   protected readonly breadcrumbs = computed(() => [
-    { label: 'Catálogo de datos', routerLink: '/administration/data-catalog' },
+    { label: 'Catálogo de datos', routerLink: '/superadmin/data-catalog' },
     { label: this.titulo() },
   ]);
 
@@ -127,21 +135,53 @@ export class CatalogObjectDetail {
     ];
   });
 
+  /** «Negocio»: qué es la tabla, dicho para quien no lee el esquema. */
   protected readonly hechosNegocio = computed<readonly Hecho[]>(() => {
     const c = this.objeto()?.annotation?.content;
     if (!c) return [];
     return [
       { etiqueta: 'Nombre de negocio', valor: c.businessName },
-      { etiqueta: 'Propósito', valor: c.purpose },
+      { etiqueta: 'Qué es', valor: c.definition },
+      { etiqueta: 'Para qué sirve', valor: c.purpose },
+    ];
+  });
+
+  /** «Por qué existe»: la justificación, el grano de fila y qué pasa si se elimina. */
+  protected readonly hechosExistencia = computed<readonly Hecho[]>(() => {
+    const c = this.objeto()?.annotation?.content;
+    if (!c) return [];
+    return [
       { etiqueta: 'Por qué existe', valor: c.existenceRationale },
       { etiqueta: 'Qué significa una fila', valor: c.rowGrain },
       { etiqueta: 'Qué pasa si se elimina', valor: c.deletionImpact },
+    ];
+  });
+
+  /** Quién responde por ella y qué tan sensible es. */
+  protected readonly hechosGobierno = computed<readonly Hecho[]>(() => {
+    const c = this.objeto()?.annotation?.content;
+    if (!c) return [];
+    return [
       { etiqueta: 'Dueño de negocio', valor: c.businessOwner },
       { etiqueta: 'Steward', valor: c.dataSteward },
       { etiqueta: 'Responsable técnico', valor: c.technicalOwner },
       { etiqueta: 'Sensibilidad', valor: sensitivityLabel(c.sensitivity) },
     ];
   });
+
+  /** La ficha se importó de la bóveda y todavía ninguna persona la tocó. */
+  protected readonly esImportada = computed(() => this.objeto()?.annotation?.origin === 'IMPORTED_VAULT');
+
+  /** El texto salió de una plantilla generada: sirve de borrador, no explica por qué existe. */
+  protected readonly esPlantilla = computed(() =>
+    (this.objeto()?.annotation?.content.openQuestions ?? []).some((q) => /plantilla/i.test(q.question)),
+  );
+
+  /** La parte «Sistema» de la nota de la bóveda, guardada como evidencia. */
+  protected readonly notaDeBoveda = computed(() => this.evidencia().find((e) => e.kind === 'VAULT_NOTE' && e.excerpt) ?? null);
+
+  /** Notas de la bóveda de las claves foráneas, por columna, leídas al pedirlas. */
+  protected readonly notasFk = signal<Readonly<Record<string, ViewState<readonly Evidence[]>>>>({});
 
   protected readonly faltantes = computed(() =>
     (this.objeto()?.coverage.missingFields ?? []).map((f) => CAMPO_FALTANTE[f] ?? f),
@@ -168,10 +208,47 @@ export class CatalogObjectDetail {
       next: (c) => this.columnas.set(ready(c)),
       error: (e: unknown) => this.columnas.set(errorToViewState<readonly CatalogColumn[]>(e)),
     });
-    this.catalog.listEvidence(this.objectId).subscribe({ next: (e) => this.evidencia.set(e), error: () => undefined });
-    this.catalog.history(this.objectId).subscribe({ next: (h) => this.historial.set(h), error: () => undefined });
-    this.catalog.changes(this.objectId).subscribe({ next: (p) => this.cambios.set(p.items), error: () => undefined });
+    this.leerEvidencia();
+    this.leerHistorial();
+    this.leerCambios();
     this.cargarImpacto();
+  }
+
+  protected leerEvidencia(): void {
+    this.errorDeEvidencia.set(null);
+    this.catalog.listEvidence(this.objectId).subscribe({
+      next: (e) => this.evidencia.set(e),
+      error: (e: unknown) =>
+        this.errorDeEvidencia.set(describeApiFailure(e, 'No pudimos traer la evidencia de este objeto.')),
+    });
+  }
+
+  protected leerHistorial(): void {
+    this.errorDeHistorial.set(null);
+    this.catalog.history(this.objectId).subscribe({
+      next: (h) => this.historial.set(h),
+      error: (e: unknown) =>
+        this.errorDeHistorial.set(describeApiFailure(e, 'No pudimos traer el historial de la ficha.')),
+    });
+  }
+
+  protected leerCambios(): void {
+    this.errorDeCambios.set(null);
+    this.catalog.changes(this.objectId).subscribe({
+      next: (p) => this.cambios.set(p.items),
+      error: (e: unknown) =>
+        this.errorDeCambios.set(describeApiFailure(e, 'No pudimos traer los cambios estructurales.')),
+    });
+  }
+
+  /** Lee la evidencia de una columna la primera vez que se pide; después sólo se muestra. */
+  protected verNotaFk(columnId: string): void {
+    if (this.notasFk()[columnId]) return;
+    this.notasFk.update((n) => ({ ...n, [columnId]: loading() }));
+    this.catalog.listColumnEvidence(columnId).subscribe({
+      next: (e) => this.notasFk.update((n) => ({ ...n, [columnId]: ready(e) })),
+      error: (e: unknown) => this.notasFk.update((n) => ({ ...n, [columnId]: errorToViewState<readonly Evidence[]>(e) })),
+    });
   }
 
   protected cargarImpacto(): void {
@@ -205,8 +282,11 @@ export class CatalogObjectDetail {
   protected evidenciaAnadida(): void {
     this.anadiendoEvidencia.set(false);
     this.aviso.set('Evidencia añadida.');
-    this.catalog.listEvidence(this.objectId).subscribe({ next: (e) => this.evidencia.set(e) });
-    this.catalog.getObject(this.objectId).subscribe({ next: (d) => this.detalle.set(ready(d)) });
+    this.leerEvidencia();
+    this.catalog.getObject(this.objectId).subscribe({
+      next: (d) => this.detalle.set(ready(d)),
+      error: (e: unknown) => this.detalle.set(errorToViewState<ObjectDetailData>(e)),
+    });
   }
 
   /** Aprobar o rechazar la revisión vigente. El servidor decide si quien revisa puede. */
@@ -218,7 +298,7 @@ export class CatalogObjectDetail {
       comentario = await this.dialogs.confirmWithReason(
         {
           title: 'Rechazar la ficha',
-          message: `Vas a rechazar la revisión ${ficha.currentRevisionNo}. Quien la escribió verá tu comentario.`,
+          message: `Va a rechazar la revisión ${ficha.currentRevisionNo}. Quien la escribió verá su comentario.`,
           confirmLabel: 'Rechazar',
           cancelLabel: 'Volver',
           destructive: true,
@@ -229,7 +309,7 @@ export class CatalogObjectDetail {
     } else {
       const ok = await this.dialogs.confirm({
         title: 'Aprobar la ficha',
-        message: `Vas a aprobar la revisión ${ficha.currentRevisionNo}. Si alguien la edita después, vuelve a necesitar revisión.`,
+        message: `Va a aprobar la revisión ${ficha.currentRevisionNo}. Si alguien la edita después, vuelve a necesitar revisión.`,
         confirmLabel: 'Aprobar',
         cancelLabel: 'Volver',
       });
@@ -253,11 +333,11 @@ export class CatalogObjectDetail {
           this.error.set(
             api.status === 403
               ? esAutoRevision(api)
-                ? 'No podés revisar una revisión que escribiste vos: tiene que hacerlo otra persona.'
-                : 'Tu rol no permite revisar fichas.'
+                ? 'No puede revisar una revisión que escribió usted: tiene que hacerlo otra persona.'
+                : 'Su rol no permite revisar fichas.'
               : api.status === 409
-                ? 'La ficha cambió mientras la revisabas. Recargá y revisá la versión vigente.'
-                : (api.message ?? 'No se pudo registrar la revisión.'),
+                ? 'La ficha cambió mientras la revisaba. Recargue y revise la versión vigente.'
+                : describeApiFailure(e, 'No se pudo registrar la revisión.'),
           );
         },
       });

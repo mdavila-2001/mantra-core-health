@@ -1,0 +1,98 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  611 componentes · 3 otros · 361 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos
+  208 con algo que mirar
+  relaciones: 2712 template-instantiates · 5 imports-available sin instanciar · 68 type-only · 233 dynamic-loads
+  nivel: 0 declarado · 611 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 611/611 · con escenario 3/611 · verificados visualmente 3/611 · bloqueados 81/611 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                                                         | Names                                                                                    |  Raw size
+spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js | spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit |   1.75 MB |
+chunk-YGIRYZ44.js                                                                           | -                                                                                        | 173.83 kB |
+styles.css                                                                                  | styles                                                                                   | 166.42 kB |
+chunk-KAEWIBJH.js                                                                           | -                                                                                        |  34.97 kB |
+chunk-JBWBLPNK.js                                                                           | -                                                                                        |   5.19 kB |
+init-testbed.js                                                                             | init-testbed                                                                             |   1.21 kB |
+vitest-mock-patch.js                                                                        | vitest-mock-patch                                                                        | 974 bytes |
+setup-test-setup.js                                                                         | setup-test-setup                                                                         | 911 bytes |
+chunk-RZMBRUBG.js                                                                           | -                                                                                        | 369 bytes |
+
+                                                                                            | Initial total                                                                            |   2.13 MB
+
+Lazy chunk files                                                                            | Names                                                                                    |  Raw size
+chunk-QMSF3JFK.js                                                                           | bolivia-municipalities-geometry                                                          | 107.84 kB |
+chunk-542ST6AM.js                                                                           | map                                                                                      | 254 bytes |
+chunk-GNTCDIP2.js                                                                           | location-picker                                                                          | 188 bytes |
+
+Application bundle generation complete. [56.295 seconds] - 2026-10-02T18:25:31.403Z
+
+corepack.cmd : ▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+En línea: 2 Carácter: 1
++ corepack.cmd yarn test --include="src/app/features/account/my-profile ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 C:/Alovida/mantra-core-health
+
+(node:8936) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+
+ Test Files  1 passed (1)
+      Tests  189 passed (189)
+   Start at  14:25:32
+   Duration  6.73s (transform 1.73s, setup 348ms, import 1.97s, tests 3.35s, environment 915ms)
+

@@ -1,0 +1,294 @@
+diff --git a/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md b/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md
+index e587946a..389bc234 100644
+--- a/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md
++++ b/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md
+@@ -94,7 +94,7 @@ Las rutas representan plantillas, sin identificadores ni datos de personas. Una
+ [claims-e2e]: ../../../playwright/carril-adjudicacion-clausulas.spec.ts
+ [campaigns-e2e]: ../../../playwright/carril-insurance-campaigns.spec.ts
+ [notification-test]: ../../../src/app/core/notifications/notification-actions.spec.ts
+-[bell-test]: ../../../src/app/shared/components/organisms/notification-bell/notification-bell.acciones.spec.ts
++[bell-test]: ../../../src/app/features/account/dependents/notification-bell-actions.spec.ts
+ [dependent-test]: ../../../src/app/features/account/dependents/dependent-form-dialog.spec.ts
+ [dependents-e2e]: ../../../playwright/b1-dependientes.spec.ts
+ [glossary-test]: ../../../src/app/features/glossary/glossary.spec.ts
+diff --git a/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/PLAN.md b/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/PLAN.md
+index 2506f795..41ff3bc3 100644
+--- a/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/PLAN.md
++++ b/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/PLAN.md
+@@ -115,3 +115,7 @@ Correccion H2.S2.M4/M7: el builder Angular instalado rechaza `vi.mock` con rutas
+ | H2.S2.M11 | Medios reales en proxy de desarrollo | Dado mockBackend=false, cuando se pida public/media, entonces proxy reenvia a API y no devuelve SVG sintetico; demo conserva su recurso. | check-real-api-config y observacion de red real/demo | EN CURSO |
+ 
+ | H2.S2.M12 | Limite de workers Vitest instalado | Dado Vitest4 sin poolOptions en sus tipos, cuando se configure maxWorkers=4, entonces se conserva el limite previsto para evitar agotamiento en regresion. | test:coverage ejecutado con configuracion soportada, sin bajar umbrales | EN CURSO |
++
++| H2.S2.M13 | Actualizacion externa dev #796 | Dado dev actualizado durante ejecucion, cuando se incorpore 1b1bcaaf, entonces se conserva cache lint aprobada y PR comparable con dev actual sin reemplazar entradas originales. | Merge ancestry 1b1bcaaf y lint en verde | EN CURSO |
++
++| H2.S2.M14 | Cinco fallos de lint integrado | Dado lint con cinco errores, cuando se restaure la serie solo demo, se quite import muerto, se ubique la prueba de dominio en features y el evento en el control, entonces lint y pruebas afectadas pasan sin desactivar reglas. | yarn lint -> 0; suites perfiles/dependientes/campana en verde | EN CURSO |
+diff --git a/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/16-stage-test.txt b/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/16-stage-test.txt
+index e69de29b..a100fa2b 100644
+--- a/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/16-stage-test.txt
++++ b/docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/16-stage-test.txt
+@@ -0,0 +1,20 @@
++warning: in the working copy of 'playwright/consulta-formulario-medico.spec.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/auth/register-laboratory/register-laboratory.html', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/auth/register-laboratory/register-laboratory.spec.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/auth/register-laboratory/register-laboratory.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/auth/register-practitioner/register-practitioner.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/additional-fields/additional-fields.css', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/additional-fields/additional-fields.html', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/additional-fields/additional-fields.spec.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/additional-fields/additional-fields.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/patient-chart.css', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.html', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.spec.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'src/app/features/symptom-check/symptom-check.spec.ts', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/historical-test/PENDIENTES-BACKEND.md', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'playwright/hito2-laboratory-insurance.spec.ts', LF will be replaced by CRLF the next time Git touches it
+diff --git a/src/app/core/mock/handlers/profiles-propios.handlers.spec.ts b/src/app/core/mock/handlers/profiles-propios.handlers.spec.ts
+index 76fa25e8..aab0f9f0 100644
+--- a/src/app/core/mock/handlers/profiles-propios.handlers.spec.ts
++++ b/src/app/core/mock/handlers/profiles-propios.handlers.spec.ts
+@@ -1,5 +1,6 @@
+ import { HttpHeaders } from '@angular/common/http';
+ 
++import { environment } from '../../../../environments/environment';
+ import { registrarPerfiles } from './profiles.handlers';
+ import { registrarAuth } from './auth.handlers';
+ import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
+@@ -51,6 +52,23 @@ describe('handlers del perfil propio y del alta de organización', () => {
+     expect(perfil().activity.quality).toBeUndefined();
+   });
+ 
++  it('explicit demo preserves the monthly series and quality indicators', () => {
++    const originalMockBackend = environment.mockBackend;
++    try {
++      Object.assign(environment, { mockBackend: true });
++      const activity = perfil().activity as {
++        monthlyEncounters: { count: number; insuredCount: number }[];
++        quality: { notesWithin24h: number };
++      };
++      expect(activity.monthlyEncounters).toHaveLength(12);
++      expect(activity.monthlyEncounters.reduce((total, month) => total + month.count, 0)).toBe(312);
++      expect(activity.monthlyEncounters.reduce((total, month) => total + month.insuredCount, 0)).toBe(194);
++      expect(activity.quality.notesWithin24h).toBe(275);
++    } finally {
++      Object.assign(environment, { mockBackend: originalMockBackend });
++    }
++  });
++
+   it('PATCH de una especialidad con `isPrimary` responde 400: tiene su propia ruta', () => {
+     const { id } = perfil().specialties[0]!;
+ 
+diff --git a/src/app/core/mock/handlers/profiles.handlers.ts b/src/app/core/mock/handlers/profiles.handlers.ts
+index 34502f7a..0690b89b 100644
+--- a/src/app/core/mock/handlers/profiles.handlers.ts
++++ b/src/app/core/mock/handlers/profiles.handlers.ts
+@@ -1,3 +1,4 @@
++import { environment } from '../../../../environments/environment';
+ import {
+   ESTABLECIMIENTO,
+   ESTADO,
+@@ -502,9 +503,11 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
+             medicationRequests: 208,
+             clinicalNotes: 275,
+             documents: 41,
+-            // Sin `monthlyEncounters` ni `quality`: la API real no los envía, y el
+-            // simulador no fabrica métricas que ella no calcula (ID-14). La
+-            // ficha muestra entonces su estado vacío explícito.
++            // Datos sinteticos solo en demo explicita. ID-14 conserva el
++            // estado vacio cuando se inspecciona el contrato de API real.
++            ...(environment.mockBackend
++              ? { monthlyEncounters: serieMensualDemo(), quality: CALIDAD_DEMO }
++              : {}),
+           },
+     createdAt: iso(-500),
+   };
+diff --git a/src/app/core/mock/mock-banner.ts b/src/app/core/mock/mock-banner.ts
+index 464a7ae8..f8980f90 100644
+--- a/src/app/core/mock/mock-banner.ts
++++ b/src/app/core/mock/mock-banner.ts
+@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+ import { RouterLink } from '@angular/router';
+ 
+ import { MOCK_USERS } from './mock-session';
+-import { environment } from '../../../environments/environment';
+ 
+ /**
+  * El aviso de la rama `mockup`: recuerda que no hay API detrás y muestra las
+diff --git a/src/app/features/account/dependents/dependent-form-dialog.html b/src/app/features/account/dependents/dependent-form-dialog.html
+index fb60212e..0313631a 100644
+--- a/src/app/features/account/dependents/dependent-form-dialog.html
++++ b/src/app/features/account/dependents/dependent-form-dialog.html
+@@ -31,7 +31,7 @@
+       </app-form-field>
+     } @else {
+       <!-- Enter en el buscador busca; no debe además enviar el formulario. -->
+-      <div class="dependents-form__busqueda" (keydown.enter)="$event.preventDefault()">
++      <div class="dependents-form__busqueda">
+         <app-search-field
+           label="Buscar por nombre"
+           placeholder="Nombre y apellido"
+@@ -39,6 +39,7 @@
+           [loading]="buscando()"
+           data-testid="dependent-name-search"
+           (searched)="buscar($event)"
++          (keydown.enter)="$event.preventDefault()"
+         />
+ 
+         @if (errorBusqueda(); as mensaje) {
+diff --git a/src/app/shared/components/organisms/notification-bell/notification-bell.acciones.spec.ts b/src/app/shared/components/organisms/notification-bell/notification-bell.acciones.spec.ts
+deleted file mode 100644
+index 975ec3a2..00000000
+--- a/src/app/shared/components/organisms/notification-bell/notification-bell.acciones.spec.ts
++++ /dev/null
+@@ -1,146 +0,0 @@
+-import { provideHttpClient } from '@angular/common/http';
+-import {
+-  HttpTestingController,
+-  provideHttpClientTesting,
+-} from '@angular/common/http/testing';
+-import { signal } from '@angular/core';
+-import { TestBed, type ComponentFixture } from '@angular/core/testing';
+-import { provideRouter, Router } from '@angular/router';
+-
+-import { AuthService } from '../../../../core/auth/auth.service';
+-import { provideDependentLinkNotificationActions } from '../../../../features/account/dependents/dependent-link-notification-actions';
+-import { ToastService } from '../../molecules/toast/toast.service';
+-import { NotificationBell } from './notification-bell';
+-
+-/**
+- * «Aceptar» desde la campana, de punta a punta: con el manejador REAL de
+- * dependientes registrado, sin abrir la pantalla de Dependientes.
+- *
+- * Lo que fija: la notificación con acciones vigentes dibuja sus botones; aceptar
+- * llama a la misma API que la bandeja de Dependientes, deja un aviso, lee de
+- * nuevo la bandeja y NO navega; y una notificación sin acciones no dibuja
+- * ninguno.
+- */
+-describe('NotificationBell · acciones de la notificación', () => {
+-  let fixture: ComponentFixture<NotificationBell>;
+-  let http: HttpTestingController;
+-
+-  const CON_ACCIONES = {
+-    id: 'n-9',
+-    category: 'CLINICAL',
+-    subject: 'Te quieren registrar como dependiente',
+-    bodyText: 'Ana pide registrarte como su dependiente.',
+-    destination: { type: 'DEPENDENT_LINK_REQUEST', id: 'sol-1' },
+-    payloadJson: null,
+-    actions: [
+-      { key: 'ACCEPT', label: 'Aceptar', tone: 'primary' },
+-      { key: 'REJECT', label: 'Rechazar', tone: 'neutral' },
+-    ],
+-    unread: true,
+-    availableAt: '2026-08-18T10:00:00.000Z',
+-    readAt: null,
+-  };
+-
+-  const pagina = (items: object[], unreadCount: number) => ({
+-    items,
+-    count: items.length,
+-    limit: 8,
+-    nextCursor: null,
+-    unreadCount,
+-  });
+-
+-  /** Contesta lo pendiente; la bandeja de mensajes con lo que se le indique. */
+-  const resolver = (cuerpo: object): void => {
+-    for (let vuelta = 0; vuelta < 5; vuelta += 1) {
+-      const pendientes = http.match(() => true);
+-      if (pendientes.length === 0) return;
+-      for (const pedido of pendientes) {
+-        pedido.flush(pedido.request.url === '/notifications/me' ? cuerpo : null);
+-      }
+-    }
+-  };
+-
+-  const consultar = (testid: string): HTMLElement | null =>
+-    fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+-
+-  beforeEach(() => {
+-    TestBed.configureTestingModule({
+-      providers: [
+-        provideHttpClient(),
+-        provideHttpClientTesting(),
+-        provideRouter([{ path: '**', children: [] }]),
+-        provideDependentLinkNotificationActions(),
+-        { provide: AuthService, useValue: { isAuthenticated: signal(true) } },
+-      ],
+-    });
+-    http = TestBed.inject(HttpTestingController);
+-    fixture = TestBed.createComponent(NotificationBell);
+-    fixture.detectChanges();
+-    resolver(pagina([CON_ACCIONES], 1));
+-    consultar('campana')?.click();
+-    resolver(pagina([CON_ACCIONES], 1));
+-    fixture.detectChanges();
+-  });
+-
+-  afterEach(() => {
+-    http.match(() => true).forEach((pedido) => pedido.flush(pagina([], 0)));
+-    http.verify();
+-  });
+-
+-  it('dibuja Aceptar y Rechazar bajo la notificación', () => {
+-    expect(consultar('notificacion-accion-accept')?.textContent).toContain('Aceptar');
+-    expect(consultar('notificacion-accion-reject')?.textContent).toContain('Rechazar');
+-  });
+-
+-  it('Aceptar llama a la API de aceptación, avisa, relee la bandeja y no navega', () => {
+-    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
+-    const toast = TestBed.inject(ToastService);
+-
+-    consultar('notificacion-accion-accept')?.click();
+-
+-    http
+-      .expectOne('/profiles/patients/me/dependent-requests/sol-1/accept')
+-      .flush({ id: 'sol-1', status: 'ACCEPTED' });
+-    // Se da por leída (responder es haberla leído) y se vuelve a pedir la bandeja.
+-    http.expectOne('/notifications/in-app/n-9/read').flush({
+-      id: 'n-9',
+-      readAt: '2026-08-18T12:00:00.000Z',
+-      alreadyRead: false,
+-    });
+-    resolver(pagina([{ ...CON_ACCIONES, actions: undefined, unread: false }], 0));
+-    fixture.detectChanges();
+-
+-    expect(toast.toasts()[0]!.message).toContain('Aceptaste');
+-    expect(navegar).not.toHaveBeenCalled();
+-    // La decisión ya está tomada: la bandeja ya no ofrece los botones.
+-    expect(consultar('notificacion-accion-accept')).toBeNull();
+-    expect(consultar('campana-item')).not.toBeNull();
+-  });
+-
+-  it('Rechazar llama a la API de rechazo', () => {
+-    consultar('notificacion-accion-reject')?.click();
+-
+-    http
+-      .expectOne('/profiles/patients/me/dependent-requests/sol-1/reject')
+-      .flush({ id: 'sol-1', status: 'REJECTED' });
+-    http.expectOne('/notifications/in-app/n-9/read').flush({
+-      id: 'n-9',
+-      readAt: '2026-08-18T12:00:00.000Z',
+-      alreadyRead: false,
+-    });
+-    resolver(pagina([], 0));
+-  });
+-
+-  it('si la API falla no da la notificación por resuelta', () => {
+-    consultar('notificacion-accion-accept')?.click();
+-
+-    http
+-      .expectOne('/profiles/patients/me/dependent-requests/sol-1/accept')
+-      .flush({}, { status: 500, statusText: 'Server Error' });
+-    fixture.detectChanges();
+-
+-    http.expectNone('/notifications/in-app/n-9/read');
+-    expect(TestBed.inject(ToastService).toasts()[0]!.type).toBe('error');
+-    expect(consultar('notificacion-accion-accept')).not.toBeNull();
+-  });
+-});

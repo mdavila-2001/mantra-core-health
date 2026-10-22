@@ -17,7 +17,7 @@ function respuestaCon(answer: SurveyResponse['answers'][number]): SurveyResponse
 const preguntaEscala: SurveyQuestion = {
   id: 'q-escala',
   position: 1,
-  questionText: '¿Qué tan satisfecho quedaste?',
+  questionText: '¿Qué tan satisfecho quedó?',
   answerType: 'SCALE',
   required: true,
   scaleMin: 1,
@@ -27,7 +27,7 @@ const preguntaEscala: SurveyQuestion = {
 const preguntaOpcion: SurveyQuestion = {
   id: 'q-opcion',
   position: 2,
-  questionText: '¿Qué mejorarías?',
+  questionText: '¿Qué mejoraría?',
   answerType: 'SINGLE_CHOICE',
   required: false,
   options: ['Puntualidad', 'Trato', 'Instalaciones'],
@@ -36,7 +36,7 @@ const preguntaOpcion: SurveyQuestion = {
 const preguntaBooleana: SurveyQuestion = {
   id: 'q-bool',
   position: 3,
-  questionText: '¿Volverías a atenderte?',
+  questionText: '¿Volvería a atenderle?',
   answerType: 'BOOLEAN',
   required: true,
 };
@@ -44,7 +44,7 @@ const preguntaBooleana: SurveyQuestion = {
 const preguntaTexto: SurveyQuestion = {
   id: 'q-texto',
   position: 4,
-  questionText: 'Contanos más',
+  questionText: 'Cuéntenos más',
   answerType: 'TEXT',
   required: false,
 };

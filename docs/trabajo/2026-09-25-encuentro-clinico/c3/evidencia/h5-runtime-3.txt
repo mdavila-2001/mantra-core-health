@@ -1,0 +1,1 @@
+[pw-guard] Iniciando yarn dev en :4213; log D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\artifacts\pw-guard\serve-4213.log

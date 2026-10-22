@@ -26,6 +26,7 @@ class DialogServiceFalso {
       [disabled]="disabled()"
       [destructive]="destructive()"
       [correctionOnly]="correctionOnly()"
+      [showSubmit]="showSubmit()"
       (submitted)="envios.push(1)"
       (cancelled)="cancelaciones.push(1)"
     />
@@ -38,6 +39,7 @@ class HostComponent {
   readonly disabled = signal(false);
   readonly destructive = signal(false);
   readonly correctionOnly = signal(false);
+  readonly showSubmit = signal(true);
   readonly envios: number[] = [];
   readonly cancelaciones: number[] = [];
 }
@@ -215,6 +217,130 @@ describe('FormActions', () => {
 
       expect(host.cancelaciones).toHaveLength(1);
       expect(dialogs.pedidos).toHaveLength(0);
+    });
+  });
+
+  describe('sólo cancelar (`showSubmit` apagado)', () => {
+    it('no dibuja el primario y deja «Cancelar»', async () => {
+      host.cancelLabel.set('Cancelar edición');
+      host.showSubmit.set(false);
+      await fixture.whenStable();
+
+      expect(root().querySelector('button[type="submit"]')).toBeNull();
+      expect(root().textContent).toContain('Cancelar edición');
+    });
+  });
+
+  /**
+   * «Si le doy Escape se cancelan los cambios», en toda pantalla de edición
+   * (pedido del propietario, 30/09/2026).
+   */
+  describe('Escape es «Cancelar»', () => {
+    function escape(destino: EventTarget = document): KeyboardEvent {
+      const evento = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      destino.dispatchEvent(evento);
+      return evento;
+    }
+
+    function primerBoton(): HTMLButtonElement {
+      const boton = root().querySelector('button');
+      if (boton === null) {
+        throw new Error('no hay botones en la barra');
+      }
+      return boton;
+    }
+
+    afterEach(() => {
+      document.querySelectorAll('dialog').forEach((dialogo) => dialogo.remove());
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
+
+    it('con el foco en el formulario, cancela y se queda con la tecla', async () => {
+      host.cancelLabel.set('Cancelar');
+      await fixture.whenStable();
+      primerBoton().focus();
+
+      const evento = escape(primerBoton());
+
+      expect(host.cancelaciones).toHaveLength(1);
+      expect(evento.defaultPrevented).toBe(true);
+    });
+
+    it('con el foco suelto y una sola barra en la página, también cancela', async () => {
+      host.cancelLabel.set('Cancelar');
+      await fixture.whenStable();
+
+      escape();
+
+      expect(host.cancelaciones).toHaveLength(1);
+    });
+
+    it('en una pestaña de sólo «Cancelar» también cancela', async () => {
+      host.cancelLabel.set('Cancelar edición');
+      host.showSubmit.set(false);
+      await fixture.whenStable();
+
+      escape();
+
+      expect(host.cancelaciones).toHaveLength(1);
+    });
+
+    it('sin «Cancelar» no hace nada', async () => {
+      await fixture.whenStable();
+
+      const evento = escape();
+
+      expect(host.cancelaciones).toHaveLength(0);
+      expect(evento.defaultPrevented).toBe(false);
+    });
+
+    it('si un desplegable ya atendió la tecla, no tira el formulario', async () => {
+      host.cancelLabel.set('Cancelar');
+      await fixture.whenStable();
+      primerBoton().focus();
+
+      const evento = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      primerBoton().addEventListener('keydown', (e) => e.preventDefault(), { once: true });
+      primerBoton().dispatchEvent(evento);
+
+      expect(host.cancelaciones).toHaveLength(0);
+    });
+
+    it('con un diálogo abierto encima, el Escape es del diálogo', async () => {
+      host.cancelLabel.set('Cancelar');
+      await fixture.whenStable();
+      const dialogo = document.createElement('dialog');
+      dialogo.setAttribute('open', '');
+      document.body.appendChild(dialogo);
+
+      escape();
+
+      expect(host.cancelaciones).toHaveLength(0);
+    });
+
+    it('mientras se envía no cancela', async () => {
+      host.cancelLabel.set('Cancelar');
+      host.pending.set(true);
+      await fixture.whenStable();
+
+      escape();
+
+      expect(host.cancelaciones).toHaveLength(0);
+    });
+
+    it('con el foco en otro formulario de la página, no cancela este', async () => {
+      host.cancelLabel.set('Cancelar');
+      await fixture.whenStable();
+      const otro = document.createElement('form');
+      const campo = document.createElement('input');
+      otro.appendChild(campo);
+      document.body.appendChild(otro);
+      campo.focus();
+
+      escape(campo);
+      otro.remove();
+
+      expect(host.cancelaciones).toHaveLength(0);
     });
   });
 });

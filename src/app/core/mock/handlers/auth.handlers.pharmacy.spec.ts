@@ -1,0 +1,131 @@
+import { HttpHeaders } from '@angular/common/http';
+
+import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
+import { registrarAuth } from './auth.handlers';
+
+/**
+ * El alta pública de farmacia contra el simulador (carril de farmacia,
+ * 2026-09-29): `POST /iam/auth/register-organization` con
+ * `tenantType: 'PHARMACY'` + el bloque `pharmacy.branches` que el cliente
+ * inventa (ver el JSDoc de `PharmacyOrganizationRegistration` en
+ * `iam.types.ts` y `PENDIENTES-BACKEND.md`, P49). Se ejercita el router
+ * directo, como hace `diagnostic-registration.handlers.spec.ts`, para no
+ * depender del `HttpClient` real ni de la pantalla.
+ */
+describe('alta pública de farmacia en el simulador', () => {
+  const router = new MockRouter();
+  registrarAuth(router);
+
+  function call(method: MockMethod, path: string, body: unknown = null) {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    const result = match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      // El alta es anónima: nadie inició sesión todavía.
+      user: null,
+    });
+    return isMockReply(result) ? result : { status: 200, body: result };
+  }
+
+  const CUERPO_MINIMO = {
+    organization: {
+      code: 'FARM-1023456789',
+      legalName: 'Farmacia San Martín S.R.L.',
+      legalEntityType: 'SRL',
+      tenantType: 'PHARMACY',
+      legalRepresentative: { fullName: 'Mariana Siles', email: 'legal@farmacia.test' },
+    },
+    owner: { email: 'legal@farmacia.test', password: 'secreto12', displayName: 'Mariana Siles' },
+  };
+
+  it('correcto — acepta tenantType PHARMACY y devuelve lo mismo que para la aseguradora', () => {
+    const { status, body } = call('POST', '/iam/auth/register-organization', CUERPO_MINIMO);
+
+    expect(status).toBe(200);
+    expect(body).toMatchObject({
+      code: 'FARM-1023456789',
+      status: 'PENDING_VERIFICATION',
+      emailVerificationSent: true,
+    });
+    expect(typeof (body as { tenantId: string }).tenantId).toBe('string');
+  });
+
+  it('límite — legalRepresentative sin idNumber ni powerOfAttorneyFileId no es un 400', () => {
+    // A diferencia de la aseguradora, el registro de procesos de farmacia no
+    // pide la cédula del representante: el simulador lo relaja a propósito
+    // (ver el comentario del handler).
+    const { status } = call('POST', '/iam/auth/register-organization', CUERPO_MINIMO);
+
+    expect(status).toBe(200);
+  });
+
+  it('límite — pharmacy.latitude y pharmacy.longitude juntas, en rango, pasan', () => {
+    const cuerpo = {
+      ...CUERPO_MINIMO,
+      organization: { ...CUERPO_MINIMO.organization, pharmacy: { latitude: -17.78, longitude: -63.18 } },
+    };
+
+    const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
+
+    expect(status).toBe(200);
+  });
+
+  it('inválido — pharmacy.latitude sin longitude es 400, igual que en el bloque payer', () => {
+    const cuerpo = {
+      ...CUERPO_MINIMO,
+      organization: { ...CUERPO_MINIMO.organization, pharmacy: { latitude: -17.78 } },
+    };
+
+    const { status, body } = call('POST', '/iam/auth/register-organization', cuerpo);
+
+    expect(status).toBe(400);
+    expect((body as { details: { messages: string[] } }).details.messages).toContain(
+      'organization.pharmacy.longitude must be a number',
+    );
+  });
+
+  it('inválido — una coordenada fuera de rango en pharmacy.branches es 400', () => {
+    const cuerpo = {
+      ...CUERPO_MINIMO,
+      organization: {
+        ...CUERPO_MINIMO.organization,
+        pharmacy: { branches: [{ name: 'Sucursal Norte', latitude: 200, longitude: -63.18 }] },
+      },
+    };
+
+    const { status, body } = call('POST', '/iam/auth/register-organization', cuerpo);
+
+    expect(status).toBe(400);
+    expect((body as { details: { messages: string[] } }).details.messages).toContain(
+      'organization.pharmacy.branches.0.latitude must not be greater than 90',
+    );
+  });
+
+  it('inválido — un tipo societario fuera del diccionario sigue siendo 400', () => {
+    const cuerpo = {
+      ...CUERPO_MINIMO,
+      organization: { ...CUERPO_MINIMO.organization, legalEntityType: 'NO_EXISTE' },
+    };
+
+    const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
+
+    expect(status).toBe(400);
+  });
+
+  it('inválido — el correo del owner repetido es 409, no un 200 silencioso', () => {
+    const cuerpo = {
+      ...CUERPO_MINIMO,
+      // La cuenta de demostración del paciente ya existe en `MOCK_USERS`.
+      owner: { ...CUERPO_MINIMO.owner, email: 'paciente@alovida.mock' },
+    };
+
+    const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
+
+    expect(status).toBe(409);
+  });
+});

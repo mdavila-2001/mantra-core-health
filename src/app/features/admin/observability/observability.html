@@ -1,0 +1,143 @@
+<app-page-header
+  title="Observabilidad"
+  subtitle="Qué recibió la API, cuántas solicitudes salieron bien o mal, qué tan rápido respondió y quién la usa. Calculado en el servidor sobre una ventana acotada."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="observabilidad">
+  <section class="observabilidad__ventana" aria-label="Ventana de análisis">
+    <app-segmented-control ariaLabel="Ventana de tiempo" [options]="opcionesRango" [value]="rango()" (valueChange)="cambiarRango($event)" />
+    <button app-button variant="secondary" size="sm" (clicked)="cargar()" data-testid="observability-refresh">Actualizar</button>
+    <span class="observabilidad__ayuda">«Hoy» empieza a las 00:00 UTC (las 20:00 del día anterior en La Paz).</span>
+  </section>
+
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="observability-tabs">
+      <app-tab label="Resumen">
+        <app-view-state-host [state]="estadoResumen()" (retry)="cargar()">
+          @if (estadoResumen(); as estado) {
+            @if (estado.status === 'ready') {
+              @let m = estado.data.measured;
+              <div class="observabilidad__totales" data-testid="observability-totals">
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor" data-testid="observability-requests">{{ entero(m.requests) }}</span>
+                  <span class="observabilidad__rotulo">Solicitudes</span>
+                  <span class="observabilidad__ayuda">Peticiones HTTP que terminaron en la API en la ventana.</span>
+                </div>
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor" data-testid="observability-succeeded">{{ entero(m.succeeded) }}</span>
+                  <span class="observabilidad__rotulo">Exitosas</span>
+                  <span class="observabilidad__ayuda">Respuestas 2xx y 3xx · {{ porcentaje(m.successRatio) }} del total.</span>
+                </div>
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor" data-testid="observability-failed">{{ entero(m.failed.client4xx + m.failed.server5xx) }}</span>
+                  <span class="observabilidad__rotulo">Fallidas</span>
+                  <span class="observabilidad__ayuda">{{ entero(m.failed.client4xx) }} del cliente (4xx) · {{ entero(m.failed.server5xx) }} del servidor (5xx).</span>
+                </div>
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor" data-testid="observability-p95">{{ milis(m.latencyMs.p95, m.latencyMs.approximate) }}</span>
+                  <span class="observabilidad__rotulo">Latencia p95</span>
+                  <span class="observabilidad__ayuda">
+                    Estimada desde un histograma. Promedio {{ milis(m.latencyMs.avg) }} · p50 {{ milis(m.latencyMs.p50, m.latencyMs.approximate) }} · máx. {{ milis(m.latencyMs.max) }}.
+                  </span>
+                </div>
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor" data-testid="observability-active">{{ entero(m.activeUsers.usersActiveNow) }}</span>
+                  <span class="observabilidad__rotulo">Usuarios activos ahora</span>
+                  <span class="observabilidad__ayuda">{{ entero(m.activeUsers.sessionsActiveNow) }} sesiones vigentes. Ver la pestaña «Usuarios activos».</span>
+                </div>
+              </div>
+
+              <figure class="observabilidad__serie" aria-label="Solicitudes por intervalo">
+                <div class="observabilidad__barras" role="img" [attr.aria-label]="describirSerie(estado.data.series)" data-testid="observability-series">
+                  @for (p of estado.data.series; track p.bucket) {
+                    <div
+                      class="observabilidad__barra"
+                      [title]="(p.bucket | date: 'dd/MM HH:mm' : 'UTC') + ' UTC · ' + p.requests + ' solicitudes · ' + (p.failed4xx + p.failed5xx) + ' fallidas'"
+                    >
+                      <span class="observabilidad__barra-total" [style.block-size]="alto(p.requests)">
+                        <span class="observabilidad__barra-fallo" [style.block-size]="parteFallida(p.requests, p.failed4xx + p.failed5xx)"></span>
+                      </span>
+                    </div>
+                  }
+                </div>
+                <figcaption class="observabilidad__ayuda">
+                  Solicitudes por {{ estado.data.window.interval === 'hour' ? 'hora' : 'día' }} (UTC). La parte rayada de cada barra son las fallidas.
+                  Ventana {{ estado.data.window.from | date: 'dd/MM HH:mm' : 'UTC' }} – {{ estado.data.window.to | date: 'dd/MM HH:mm' : 'UTC' }} UTC.
+                  @if (m.lastDataAt) {
+                    Último dato volcado a las {{ m.lastDataAt | date: 'HH:mm' : 'UTC' }} UTC.
+                  }
+                </figcaption>
+              </figure>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Endpoints">
+        <app-data-table
+          [state]="filas()"
+          [columns]="columnas"
+          [trackBy]="porId"
+          [rowLabel]="nombreDeFila"
+          [sort]="ordenActual()"
+          stackedOnMobile
+          fitContainer
+          caption="Endpoints tocados en la ventana, por plantilla de ruta"
+          data-testid="observability-endpoints"
+          (sortChanged)="ordenar($event)"
+          (retry)="cargar()"
+        />
+        @if (endpoints(); as estado) {
+          @if (estado.status === 'ready') {
+            <p class="observabilidad__ayuda">{{ estado.data.note }}</p>
+            @if (estado.data.truncated) {
+              <app-alert tone="info">Se muestran los primeros 50 endpoints según el orden elegido; hay más.</app-alert>
+            }
+          }
+        }
+      </app-tab>
+
+      <app-tab label="Usuarios activos">
+        <app-view-state-host [state]="resumen()" (retry)="cargar()">
+          @if (resumen(); as estado) {
+            @if (estado.status === 'ready') {
+              @let u = estado.data.measured.activeUsers;
+              <div class="observabilidad__totales" data-testid="observability-users">
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor">{{ entero(u.sessionsActiveNow) }}</span>
+                  <span class="observabilidad__rotulo">Sesiones vigentes ahora</span>
+                </div>
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor">{{ entero(u.usersActiveNow) }}</span>
+                  <span class="observabilidad__rotulo">Usuarios con sesión vigente</span>
+                </div>
+                <div class="observabilidad__total">
+                  <span class="observabilidad__valor">{{ entero(u.usersActiveInWindow) }}</span>
+                  <span class="observabilidad__rotulo">Usuarios que abrieron sesión en la ventana</span>
+                </div>
+              </div>
+              <p class="observabilidad__ayuda" data-testid="observability-users-definition">{{ u.definition }}</p>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="No medido">
+        <app-view-state-host [state]="resumen()" (retry)="cargar()">
+          @if (resumen(); as estado) {
+            @if (estado.status === 'ready') {
+              <app-alert tone="info" title="Esto no está medido (no es cero)">
+                <ul class="observabilidad__no-medido" data-testid="observability-not-measured">
+                  @for (n of estado.data.notMeasured; track n.metric) {
+                    <li><strong>{{ noMedido(n.metric) }}:</strong> {{ n.reason }}</li>
+                  }
+                </ul>
+              </app-alert>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>

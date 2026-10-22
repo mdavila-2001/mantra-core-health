@@ -268,6 +268,10 @@
              selector de organización y del tema— porque es la única que trae
              información nueva: las otras dos son preferencias, y una preferencia
              no compite por la atención con «tu receta está lista». -->
+        <!-- Emergencia a un toque, para todos (propietario, 2026-10-08): con
+             ambulancia de confianza llama directo; si no, abre los números
+             oficiales. Va antes que la campana: una urgencia no compite. -->
+        <app-panic-button />
         <app-notification-bell />
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
@@ -286,7 +290,7 @@
               aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="menu-pacientes"
-              [attr.aria-label]="'Atendiendo a: ' + (nombreDelPacienteActivo() ?? 'vos') + '. Cambiar de persona'"
+              [attr.aria-label]="'Atendiendo a: ' + (nombreDelPacienteActivo() ?? 'usted') + '. Cambiar de persona'"
             >
               <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
               <span>{{ nombreDelPacienteActivo() }}</span>
@@ -378,6 +382,49 @@
           </span>
         </button>
 
+        <!-- En móvil estos destinos forman un menú legible. En escritorio se
+             presentan en línea, con el mismo enlace y sin duplicar rutas. -->
+        <div
+          class="app-header__rapidos"
+          tabindex="-1"
+          [class.is-open]="accesosRapidosAbiertos()"
+          (keydown.escape)="cerrarAccesosRapidos($event)"
+        >
+          <button
+            type="button"
+            class="app-header__rapidos-boton"
+            data-testid="header-mas"
+            aria-controls="header-accesos-rapidos"
+            [attr.aria-expanded]="accesosRapidosAbiertos()"
+            aria-label="Más accesos"
+            (click)="alternarAccesosRapidos()"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <circle cx="5" cy="12" r="1.7" />
+              <circle cx="12" cy="12" r="1.7" />
+              <circle cx="19" cy="12" r="1.7" />
+            </svg>
+          </button>
+          <nav
+            class="app-header__rapidos-lista"
+            id="header-accesos-rapidos"
+            aria-label="Accesos rápidos"
+          >
+            <a
+              app-button
+              data-variante="secundario"
+              data-tam="sm"
+              class="app-header__red-social"
+              routerLink="/posts"
+              data-testid="header-red-social"
+              appTooltip="Red social"
+              appTooltipPosition="bottom"
+              aria-label="Red social"
+            >
+              <app-nav-icon name="people" />
+              <span class="app-header__red-social-texto">Red social</span>
+            </a>
+
         <!-- Tutoriales y Chats (N-01, 2026-09-22). Calcados de «Ajustes» de
              abajo: `<a routerLink>` con `aria-label` y `appTooltip` (ADR-0012
              §3), nunca un `<button>`, porque los dos llevan a una pantalla.
@@ -399,6 +446,7 @@
           aria-label="Tutoriales"
         >
           <app-nav-icon name="teach" />
+          <span class="app-header__rapidos-label">Tutoriales</span>
         </a>
 
         <a
@@ -410,6 +458,7 @@
           [attr.aria-label]="etiquetaChats()"
         >
           <app-nav-icon name="chat" />
+          <span class="app-header__rapidos-label">Chats</span>
           @if (chatsSinLeer() > 0) {
             <!-- Sin «0» permanente, igual que la campana. Fuera del árbol
                  accesible: el número ya viaja en el nombre del enlace. -->
@@ -423,6 +472,99 @@
             />
           }
         </a>
+
+        <!-- Mis facturas (propietario, 30/09/2026): las facturas emitidas, para
+             TODAS las cuentas —paciente, médico y organizaciones—, por eso va
+             fuera del bloque del paciente. Qué facturas ve cada una (las que
+             le emitieron o las que emitió) lo decide la pantalla con la
+             sesión; el ícono es el mismo. Comprobante con borde dentado y no
+             la billetera de «Mis gastos»: una es un papel, la otra dinero. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/my-account/invoices"
+          data-testid="header-facturas"
+          appTooltip="Mis facturas"
+          appTooltipPosition="bottom"
+          aria-label="Mis facturas"
+        >
+          <app-nav-icon name="receipt" />
+          <span class="app-header__rapidos-label">Mis facturas</span>
+        </a>
+
+        <!-- Mis solicitudes (propietario, 01/10/2026): lo que decidió la
+             aseguradora, para TODAS las cuentas —paciente, médico,
+             laboratorio e imagenología—, como «Mis facturas». Qué
+             solicitudes ve cada una lo decide el backend con la sesión.
+             Paraguas: el mismo ícono que dice «seguro» en el resto del menú. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/my-account/requests"
+          data-testid="header-solicitudes"
+          appTooltip="Mis solicitudes"
+          appTooltipPosition="bottom"
+          aria-label="Mis solicitudes"
+        >
+          <app-nav-icon name="umbrella" />
+          <span class="app-header__rapidos-label">Mis solicitudes</span>
+        </a>
+
+        <!-- El carrito de farmacia (H4.S1, carril 41/46). Es la compra del
+             paciente, no una herramienta de la médica ni de otro rol: sólo se
+             ofrece con `esPacienteDelCarrito()`. Mismo bloque que Chats, con
+             `name="bag"` y el contador del `CartStore`. -->
+        @if (esPacienteDelCarrito()) {
+          <!-- Mis gastos: la billetera abre el tablero de lo que el paciente
+               gastó en su salud (propietario, 27/09/2026). Primera de las tres
+               porque es la única que no es una compra. -->
+          <a
+            class="app-header__ajustes"
+            routerLink="/my-account/spending"
+            data-testid="header-gastos"
+            appTooltip="Mis gastos"
+            appTooltipPosition="bottom"
+            aria-label="Mis gastos"
+          >
+            <app-nav-icon name="wallet" />
+            <span class="app-header__rapidos-label">Mis gastos</span>
+          </a>
+
+          <!-- Promociones: arriba y no en el menú lateral (cliente, 25/09/2026). -->
+          <a
+            class="app-header__ajustes"
+            routerLink="/my-account/promotions"
+            data-testid="header-promociones"
+            appTooltip="Promociones"
+            appTooltipPosition="bottom"
+            aria-label="Promociones"
+          >
+            <app-nav-icon name="tag" />
+            <span class="app-header__rapidos-label">Promociones</span>
+          </a>
+
+          <a
+            class="app-header__ajustes"
+            [routerLink]="pharmacyCartRoute"
+            [attr.data-testid]="pharmacyTestids.headerCart"
+            appTooltip="Carrito"
+            appTooltipPosition="bottom"
+            [attr.aria-label]="etiquetaCarrito()"
+          >
+            <app-nav-icon name="bag" />
+            <span class="app-header__rapidos-label">Carrito</span>
+            @if (unidadesDelCarrito() > 0) {
+              <!-- Sin «0» permanente, igual que Chats. Fuera del árbol
+                   accesible: el número ya viaja en el nombre del enlace. -->
+              <app-badge
+                class="app-header__chats-badge"
+                variant="error"
+                size="sm"
+                [value]="unidadesDelCarrito()"
+                aria-hidden="true"
+                [attr.data-testid]="pharmacyTestids.headerCartBadge"
+              />
+            }
+          </a>
+        }
 
         <!-- Ajustes. El tema es una preferencia entre varias —avisos, permisos
              del navegador— y las tres viven juntas en Ajustes; el interruptor
@@ -440,7 +582,11 @@
           aria-label="Ajustes"
         >
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span class="app-header__rapidos-label">Ajustes</span>
         </a>
+
+          </nav>
+        </div>
 
         @if (user(); as persona) {
           <div class="menu-anclaje">
@@ -473,6 +619,16 @@
                   <span class="caption">{{ rolesLegibles() }}</span>
                 }
               </p>
+              <!-- ID-24: cambiar la contraseña y cerrar sesiones. Es de cualquier
+                   persona con sesión; vive acá y no en el menú lateral. -->
+              <a
+                class="app-menu-item"
+                role="menuitem"
+                routerLink="/my-account/security"
+                data-testid="header-seguridad"
+              >
+                Seguridad de la cuenta
+              </a>
               <button
                 class="app-menu-item"
                 type="button"

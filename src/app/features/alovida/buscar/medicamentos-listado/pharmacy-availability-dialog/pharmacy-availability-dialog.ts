@@ -12,7 +12,7 @@ import {
 import type { OfertaDeFarmacia } from '@core/data-access/public-marketplace/public-marketplace.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMap, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 
 import { formatDistance, formatMoney } from '../medication-card.mapper';
@@ -132,7 +132,7 @@ export class PharmacyAvailabilityDialog {
     this.visibleOffers().filter(hasCoordinates),
   );
 
-  protected readonly pins = computed<readonly PinMapa[]>(() =>
+  protected readonly pins = computed<readonly PinMap[]>(() =>
     this.mappableOffers().map((offer) => {
       const subtitle = pinSubtitle(offer);
       return {
@@ -156,7 +156,7 @@ export class PharmacyAvailabilityDialog {
     const marked = count === 1 ? '1 farmacia marcada' : `${count} farmacias marcadas`;
     const label = this.originLabel();
     const framing =
-      label === null ? '' : ` El mapa abre centrado en ${label}; alejá para ver el resto.`;
+      label === null ? '' : ` El mapa abre centrado en ${label}; aleje para ver el resto.`;
     return `${marked} en el mapa.${framing} La lista completa, con dirección, precio y distancia en línea recta, está debajo.`;
   });
 

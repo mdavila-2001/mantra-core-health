@@ -417,11 +417,34 @@ export interface DocumentFlowNode {
   readonly status: WorkflowStatus;
 }
 
-/** Lo que devuelve compensar un grupo de partidas. */
+/**
+ * Cuerpo de `POST /accounting/clearing-documents` (`CreateClearingDto`).
+ *
+ * La compensación es un asiento: debe el banco y haber la cuenta de
+ * reconciliación de la partida. Por eso pide la cuenta de banco y la fecha,
+ * y el importe de cada partida —una compensación puede ser parcial—.
+ */
+export interface ClearingRequest {
+  /** La organización de la práctica: la de la sesión. */
+  readonly tenantId?: string;
+  readonly practiceId: string;
+  /** Cuenta del mayor donde entra (o de donde sale) el dinero. */
+  readonly bankAccountId: string;
+  /** `AAAA-MM-DD`. */
+  readonly clearingDate: string;
+  readonly items: readonly {
+    readonly openItemId: string;
+    /** Texto decimal, como todo importe. */
+    readonly clearedAmount: string;
+  }[];
+}
+
+/** Lo que devuelve compensar un grupo de partidas (`ClearingResponseDto`). */
 export interface ClearingResult {
-  readonly clearingDocumentId: string;
+  readonly id: string;
+  readonly clearingNumber: string;
+  readonly transactionId: string;
   readonly clearedItems: number;
-  readonly clearedAmount: string;
 }
 
 /** Un activo fijo con su clase, su amortización acumulada y su valor neto. */
@@ -474,12 +497,39 @@ export interface AccrualRegister {
   readonly periodCharge: string;
 }
 
-/** Lo que devuelve una corrida: su documento y cuánto movió. */
-export interface RunResult {
-  readonly amount: string;
-  readonly periodName: string;
-  readonly transactionNumber?: string;
-  readonly transactionNumbers?: readonly string[];
-  readonly assets?: number;
-  readonly objects?: number;
+/** Cuerpo de `POST /accounting/depreciation/run` (`RunDepreciationDto`). */
+export interface DepreciationRunRequest {
+  readonly practiceId: string;
+  /** Período ABIERTO donde se asienta. */
+  readonly fiscalPeriodId: string;
+  /** Debe: gasto por amortización. */
+  readonly depreciationExpenseAccountId: string;
+  /** Haber: amortización acumulada. */
+  readonly accumulatedDepreciationAccountId: string;
+  /** `AAAA-MM-DD`. */
+  readonly postingDate: string;
+}
+
+/** Lo que devuelve la corrida de amortización (`DepreciationRunResponseDto`). */
+export interface DepreciationRunResult {
+  readonly depreciatedAssets: number;
+  readonly transactionIds: readonly string[];
+}
+
+/**
+ * Cuerpo de `POST /accounting/accruals/run` (`RunAccrualsDto`): **un** objeto
+ * de devengo por vez. Las cuentas no viajan: las declara el propio objeto.
+ */
+export interface AccrualRunRequest {
+  readonly accrualObjectId: string;
+  readonly fiscalPeriodId: string;
+  readonly practiceId: string;
+  /** `AAAA-MM-DD`. */
+  readonly postingDate: string;
+}
+
+/** Lo que devuelve la corrida de un devengo (`AccrualRunResponseDto`). */
+export interface AccrualRunResult {
+  readonly postedLines: number;
+  readonly transactionIds: readonly string[];
 }

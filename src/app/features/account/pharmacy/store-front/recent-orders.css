@@ -1,0 +1,60 @@
+.pedidos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pedidos__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.pedidos__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.pedidos__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pedido {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-raised);
+}
+
+@media (min-width: 780px) {
+  .pedido {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    column-gap: var(--sp-4);
+  }
+}
+
+.pedido__farmacia {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pedido__sede,
+.pedido__cuando {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.pedidos__vacio,
+.pedidos__sin-perfil {
+  margin: 0;
+  color: var(--text-secondary);
+}

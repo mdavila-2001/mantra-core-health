@@ -1,0 +1,24 @@
+$ gh pr view 674 --json number,url,isDraft,mergeable,mergeStateStatus,baseRefName,headRefName
+{"baseRefName":"mockup","headRefName":"claude/clinica-c6-historia-paciente","isDraft":false,
+ "mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":674,
+ "url":"https://github.com/mdavila-2001/mantra-core-health/pull/674"}
+
+$ gh pr checks 674 --watch --fail-fast     (9 minutos de espera)
+dependencias  pending  0  .../job/108010278024
+e2e           pending  0  .../job/108010277880
+verificar     pending  0  .../job/108010278033
+
+LECTURA HONESTA (regla 35.2):
+· mergeable = MERGEABLE  → sin conflictos con `mockup`. ✔
+· isDraft = false        → es una entrega, no un borrador. ✔
+· baseRefName = mockup   → contra la rama correcta, no `dev` ni `master`. ✔
+· mergeStateStatus = UNSTABLE → NO es un check en rojo: los tres siguen en
+  `pending` con 0 segundos de ejecución después de nueve minutos, es decir, no
+  llegaron a arrancar. Coincide con lo que el propio `CLAUDE.md` del repo
+  declara: «El CI propio está caído; los check-*.mjs se corren a mano».
+  Se corrieron a mano y están en `03-gates.txt` (los cuatro en exit 0).
+· Clasificación del fallo (regla 80.4): ENVIRONMENT, con esta evidencia.
+  No se tocó ningún check ni se forzó nada.
+
+$ git diff origin/mockup --stat -- src/app/features/account/medical-record/where-to-buy
+(vacío — el carril de Farmacia no fue tocado)

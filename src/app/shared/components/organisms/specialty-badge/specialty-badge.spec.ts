@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 
+import { reflectComponentType } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { SpecialtyBadge } from './specialty-badge';
@@ -47,31 +48,50 @@ describe('SpecialtyBadge', () => {
     });
   });
 
-  describe('tonos: sólo dos, y del mapa compartido', () => {
-    it('la principal toma el tono de marca', async () => {
-      await setInputs({ principal: true });
-      expect(host().classList).toContain('tone--primary');
-    });
+  describe('tono: uno solo, igual para todas (D-01)', () => {
+    /** Las combinaciones que podrían cambiar el tono o sumar una marca. */
+    const VARIANTES: readonly Record<string, unknown>[] = [
+      {},
+      { estado: 'Verificada', sello: 'approved' },
+      { estado: 'En revisión', sello: 'pending' },
+    ];
 
-    it('el resto va en el secundario de marca, no en un color sorteado', async () => {
-      await setInputs({ principal: false });
+    it('va en el secundario de marca, no en un color sorteado', () => {
       expect(host().classList).toContain('tone--secondary');
     });
 
     it('nunca en gris: el cliente pidió dejar de ver el neutro', async () => {
-      for (const principal of [true, false]) {
-        await setInputs({ principal });
+      for (const variante of VARIANTES) {
+        await setInputs(variante);
         expect(host().classList).not.toContain('tone--neutral');
       }
     });
 
-    it('nunca en un tono que signifique un estado', async () => {
-      for (const principal of [true, false]) {
-        await setInputs({ principal });
+    it('un solo tono y siempre el mismo, sea cual sea la especialidad', async () => {
+      for (const variante of VARIANTES) {
+        await setInputs(variante);
         const tonos = [...host().classList].filter((c) => c.startsWith('tone--'));
-        expect(tonos).toHaveLength(1);
-        expect(['tone--primary', 'tone--secondary']).toContain(tonos[0]);
+        expect(tonos).toEqual(['tone--secondary']);
       }
+    });
+
+    it('ninguna se distingue como principal: la insignia no tiene con qué', async () => {
+      const entradas = reflectComponentType(SpecialtyBadge)?.inputs.map((i) => i.propName);
+      expect(entradas).not.toContain('principal');
+      for (const variante of VARIANTES) {
+        await setInputs(variante);
+        expect(texto()).not.toMatch(/principal/i);
+      }
+    });
+
+    it('tampoco se distingue la certificada: la insignia no tiene con qué (24/09/2026)', () => {
+      const entradas = reflectComponentType(SpecialtyBadge)?.inputs.map((i) => i.propName);
+      expect(entradas).not.toContain('certificada');
+      // El único dibujo es el ícono de la especialidad: ninguna marca aparte.
+      const fueraDelIcono = [...host().querySelectorAll('svg')].filter(
+        (svg) => svg.closest('app-specialty-icon') === null,
+      );
+      expect(fueraDelIcono).toHaveLength(0);
     });
 
     it('no declara un solo color propio: todo entra por el mapa de tonos', () => {
@@ -81,30 +101,6 @@ describe('SpecialtyBadge', () => {
       expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
       expect(css).not.toMatch(/\b(rgb|hsl)a?\(/);
       expect(css).toContain("@import '../../tone/tone.css'");
-    });
-  });
-
-  describe('nada se dice sólo con color', () => {
-    it('«principal» lleva la palabra, no sólo el tono', async () => {
-      await setInputs({ principal: true });
-      expect(texto()).toContain('Principal');
-    });
-
-    it('la que no es principal no la lleva', async () => {
-      await setInputs({ principal: false });
-      expect(texto()).not.toContain('Principal');
-    });
-
-    it('«certificada» lleva glifo y texto para quien no ve la pantalla', async () => {
-      await setInputs({ certificada: true });
-      const marca = host().querySelector('.specialty-badge__certificada');
-      expect(marca?.querySelector('svg')).not.toBeNull();
-      expect(marca?.querySelector('.sr-only')?.textContent).toContain('Certificada');
-    });
-
-    it('sin certificar no dibuja la marca', async () => {
-      await setInputs({ certificada: false });
-      expect(host().querySelector('.specialty-badge__certificada')).toBeNull();
     });
   });
 

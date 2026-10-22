@@ -1,6 +1,6 @@
 import { reservas } from '../fixtures/agenda';
-import { ESTADO } from '../fixtures/conceptos';
-import { PACIENTE } from '../fixtures/personas';
+import { STATUS } from '../fixtures/concepts';
+import { PACIENTE } from '../fixtures/people';
 import { notFound, type MockRouter } from '../mock-router';
 import { plantillasVigentes } from './clinical.handlers';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
@@ -45,7 +45,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
   {
     id: uuid('survey-satisfaccion'),
     title: 'Satisfacción con la consulta',
-    description: 'Tres minutos para contarnos cómo fue tu atención.',
+    description: 'Tres minutos para contarnos cómo fue su atención.',
     status: 'ACTIVE',
     latestVersionNumber: 2,
     latestVersionId: uuid('survey-satisfaccion-v2'),
@@ -54,10 +54,10 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     effectiveFrom: isoDia(-60),
     effectiveTo: null,
     questions: [
-      pregunta('sat', 1, '¿Cómo calificarías la atención recibida?', 'SCALE', { scaleMin: 1, scaleMax: 5 }),
-      pregunta('sat', 2, '¿Te atendieron a la hora acordada?', 'BOOLEAN'),
+      pregunta('sat', 1, '¿Cómo calificaría la atención recibida?', 'SCALE', { scaleMin: 1, scaleMax: 5 }),
+      pregunta('sat', 2, '¿Le atendieron a la hora acordada?', 'BOOLEAN'),
       pregunta('sat', 3, '¿Qué fue lo mejor de la consulta?', 'SINGLE_CHOICE', { options: ['La explicación', 'El trato', 'La puntualidad', 'Las instalaciones'] }),
-      pregunta('sat', 4, '¿Qué mejorarías?', 'MULTIPLE_CHOICE', { options: ['Tiempo de espera', 'Claridad de las indicaciones', 'Comodidad del consultorio', 'Nada'] }),
+      pregunta('sat', 4, '¿Qué mejoraría?', 'MULTIPLE_CHOICE', { options: ['Tiempo de espera', 'Claridad de las indicaciones', 'Comodidad del consultorio', 'Nada'] }),
       pregunta('sat', 5, 'Comentarios', 'TEXT'),
     ],
   },
@@ -75,7 +75,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     questions: [
       pregunta('tele', 1, '¿La conexión fue estable?', 'BOOLEAN'),
       pregunta('tele', 2, 'Calidad del audio y video', 'SCALE', { scaleMin: 1, scaleMax: 5 }),
-      pregunta('tele', 3, '¿Preferís teleconsulta o presencial para el próximo control?', 'SINGLE_CHOICE', { options: ['Teleconsulta', 'Presencial', 'Indistinto'] }),
+      pregunta('tele', 3, '¿Prefiere teleconsulta o presencial para el próximo control?', 'SINGLE_CHOICE', { options: ['Teleconsulta', 'Presencial', 'Indistinto'] }),
     ],
   },
   {
@@ -89,7 +89,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     responseWindowDays: 14,
     effectiveFrom: null,
     effectiveTo: null,
-    questions: [pregunta('post', 1, '¿Tuviste dolor en la primera semana?', 'SCALE', { scaleMin: 0, scaleMax: 10 })],
+    questions: [pregunta('post', 1, '¿Tuvo dolor en la primera semana?', 'SCALE', { scaleMin: 0, scaleMax: 10 })],
   },
   {
     id: uuid('survey-inactiva'),
@@ -102,7 +102,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     responseWindowDays: 7,
     effectiveFrom: isoDia(-400),
     effectiveTo: isoDia(-100),
-    questions: [pregunta('vac', 1, '¿Recibiste la vacuna antigripal?', 'BOOLEAN')],
+    questions: [pregunta('vac', 1, '¿Recibió la vacuna antigripal?', 'BOOLEAN')],
   },
 ]);
 
@@ -214,7 +214,7 @@ export function registrarEncuestas(router: MockRouter): void {
   /** Rechaza tocar una versión publicada, con el mismo código que el backend. */
   const soloBorrador = (e: EncuestaSimulada) =>
     e.published
-      ? { status: 422, body: { message: 'La versión ya está publicada: creá una versión nueva para corregir el cuestionario.' } }
+      ? { status: 422, body: { message: 'La versión ya está publicada: cree una versión nueva para corregir el cuestionario.' } }
       : null;
 
   router.patch('/surveys/templates/:id', (request) => {
@@ -355,15 +355,15 @@ export function registrarEncuestas(router: MockRouter): void {
       resourceId: uuid(`encounter-${PACIENTE.id}-0`),
       resourceTypeConceptId: TIPO_RECURSO_ENCUENTRO,
       schemaVersion: 1,
-      stateConceptId: ESTADO['ST-CLOSED']!,
+      stateConceptId: STATUS['ST-CLOSED']!,
       closedAt: iso(-2, 10),
       createdAt: iso(-2, 9),
       userId: PACIENTE.userId,
       values: [
-        { id: uuid('fv-1'), fieldId: uuid('field-pa-sis'), dataType: 'integer', fieldName: 'Presión sistólica', value: 124, ordinal: 1, masked: false, valueStatusConceptId: ESTADO['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
-        { id: uuid('fv-2'), fieldId: uuid('field-pa-dia'), dataType: 'integer', fieldName: 'Presión diastólica', value: 80, ordinal: 2, masked: false, valueStatusConceptId: ESTADO['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
-        { id: uuid('fv-3'), fieldId: uuid('field-nyha'), dataType: 'string', fieldName: 'Clase funcional NYHA', value: 'I', ordinal: 3, masked: false, valueStatusConceptId: ESTADO['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
-        { id: uuid('fv-4'), fieldId: uuid('field-nota'), dataType: 'text', fieldName: 'Observaciones', value: 'Paciente asintomática, buena adherencia.', ordinal: 4, masked: false, valueStatusConceptId: ESTADO['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
+        { id: uuid('fv-1'), fieldId: uuid('field-pa-sis'), dataType: 'integer', fieldName: 'Presión sistólica', value: 124, ordinal: 1, masked: false, valueStatusConceptId: STATUS['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
+        { id: uuid('fv-2'), fieldId: uuid('field-pa-dia'), dataType: 'integer', fieldName: 'Presión diastólica', value: 80, ordinal: 2, masked: false, valueStatusConceptId: STATUS['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
+        { id: uuid('fv-3'), fieldId: uuid('field-nyha'), dataType: 'string', fieldName: 'Clase funcional NYHA', value: 'I', ordinal: 3, masked: false, valueStatusConceptId: STATUS['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
+        { id: uuid('fv-4'), fieldId: uuid('field-nota'), dataType: 'text', fieldName: 'Observaciones', value: 'Paciente asintomática, buena adherencia.', ordinal: 4, masked: false, valueStatusConceptId: STATUS['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: iso(-2, 9) },
       ],
     },
     {
@@ -371,10 +371,10 @@ export function registrarEncuestas(router: MockRouter): void {
       resourceId: uuid(`encounter-${PACIENTE.id}-1`),
       resourceTypeConceptId: TIPO_RECURSO_ENCUENTRO,
       schemaVersion: 1,
-      stateConceptId: ESTADO['ST-DRAFT']!,
+      stateConceptId: STATUS['ST-DRAFT']!,
       createdAt: iso(-47, 9),
       userId: PACIENTE.userId,
-      values: [{ id: uuid('fv-5'), fieldId: uuid('field-pa-sis'), dataType: 'integer', fieldName: 'Presión sistólica', value: 130, ordinal: 1, masked: false, valueStatusConceptId: ESTADO['ST-DRAFT']!, valueVersion: 1, effectiveFrom: iso(-47, 9) }],
+      values: [{ id: uuid('fv-5'), fieldId: uuid('field-pa-sis'), dataType: 'integer', fieldName: 'Presión sistólica', value: 130, ordinal: 1, masked: false, valueStatusConceptId: STATUS['ST-DRAFT']!, valueVersion: 1, effectiveFrom: iso(-47, 9) }],
     },
   ]);
   // Sobrevive a F5 como los encuentros que la cuelgan: si no, el formulario
@@ -385,7 +385,7 @@ export function registrarEncuestas(router: MockRouter): void {
 
   router.post('/forms/instances', (request) => {
     const datos = cuerpo<{ resourceId: string; resourceTypeConceptId?: string; schemaVersion?: number }>(request);
-    const nueva = instancias.agregar({ id: nuevoId('form-instance'), resourceId: datos.resourceId ?? '', resourceTypeConceptId: datos.resourceTypeConceptId ?? TIPO_RECURSO_ENCUENTRO, schemaVersion: datos.schemaVersion ?? 1, stateConceptId: ESTADO['ST-DRAFT']!, createdAt: ahora(), userId: request.user?.id ?? '', values: [] });
+    const nueva = instancias.agregar({ id: nuevoId('form-instance'), resourceId: datos.resourceId ?? '', resourceTypeConceptId: datos.resourceTypeConceptId ?? TIPO_RECURSO_ENCUENTRO, schemaVersion: datos.schemaVersion ?? 1, stateConceptId: STATUS['ST-DRAFT']!, createdAt: ahora(), userId: request.user?.id ?? '', values: [] });
     return { status: 201, body: { id: nueva.id, schemaVersion: nueva.schemaVersion, state: 'OPEN' } };
   });
 
@@ -393,22 +393,22 @@ export function registrarEncuestas(router: MockRouter): void {
     const i = instancias.get(request.params['id']!);
     if (i === undefined) return notFound('Instancia no encontrada');
     const datos = cuerpo<{ values?: { fieldId: string; dataType: string; value: unknown; ordinal?: number }[] }>(request);
-    const nuevos = (datos.values ?? []).map((v, k) => ({ id: nuevoId('fv'), fieldId: v.fieldId, dataType: v.dataType, fieldName: `Campo ${k + 1}`, value: v.value, ordinal: v.ordinal ?? i.values.length + k + 1, masked: false, valueStatusConceptId: ESTADO['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: ahora() }));
+    const nuevos = (datos.values ?? []).map((v, k) => ({ id: nuevoId('fv'), fieldId: v.fieldId, dataType: v.dataType, fieldName: `Campo ${k + 1}`, value: v.value, ordinal: v.ordinal ?? i.values.length + k + 1, masked: false, valueStatusConceptId: STATUS['ST-COMPLETED']!, valueVersion: 1, effectiveFrom: ahora() }));
     instancias.actualizar(i.id, { values: [...i.values, ...nuevos] });
     return { status: 201, body: { captured: nuevos.length } };
   });
 
   router.post('/forms/instances/:id/close', ({ params }) => {
     const i = instancias.get(params['id']!);
-    if (i !== undefined) instancias.actualizar(i.id, { stateConceptId: ESTADO['ST-CLOSED']!, closedAt: ahora() });
+    if (i !== undefined) instancias.actualizar(i.id, { stateConceptId: STATUS['ST-CLOSED']!, closedAt: ahora() });
     return { ok: true };
   });
 
   router.get('/forms/instances', ({ query }) => {
-    // El contrato filtra por `?encounter=` (ver `FormsClient`). Leer
-    // `encounterId` dejaba la lista siempre vacía: el formulario completado en
-    // la consulta no volvía a aparecer en ninguna lectura.
-    const encounterId = query.get('encounter') ?? '';
+    // El cliente manda `encounter`; `encounterId` queda por compatibilidad.
+    // Sólo con el segundo, la consulta nunca encontraba el formulario ya
+    // respondido y ofrecía llenarlo de nuevo.
+    const encounterId = query.get('encounter') ?? query.get('encounterId') ?? '';
     const items = instancias.filtrar((i) => i.resourceId === encounterId).map(item);
     return { encounterId, items, limit: 50, truncated: false };
   });

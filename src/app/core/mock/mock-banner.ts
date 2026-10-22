@@ -34,7 +34,7 @@ import { MOCK_USERS } from './mock-session';
       </div>
       @if (!plegado()) {
         <p class="mock__texto">
-          <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
+          <strong>Modo demo:</strong> sin backend. Todo lo que ve sale de datos de prueba en memoria y
           los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
         </p>
         <p class="mock__texto">
@@ -50,27 +50,25 @@ import { MOCK_USERS } from './mock-session';
     </aside>
   `,
   styles: `
-    /* Abajo a la IZQUIERDA, pegado al borde del contenido.
-
-       Estaba abajo a la derecha, que es exactamente donde el chat clava su
-       botón de enviar: el cartel se lo comía y en la maqueta no se podía
-       mandar un mensaje. Es la única esquina que una pantalla puede reclamar
-       —una acción fija al pie va a la derecha—, así que el cartel se corre.
-
-       Se apoya después del menú para no taparle los ítems; en angosto, donde
-       el menú no está fijo, vuelve al borde. */
+    /* Franja libre debajo del header y antes del contenido. El dashboard usa
+       el pie para el campo de síntomas; fijar el aviso en una esquina inferior
+       terminaba tapándolo. Alineado a la derecha, queda fuera de la navegación
+       lateral y por encima del inicio del contenido. En angosto se conserva la
+       ubicación responsive existente, debajo del header. */
     .mock {
       position: fixed;
-      inset-inline-start: calc(var(--w-nav, 240px) + 12px);
-      inset-block-end: 12px;
+      inset-inline-start: auto;
+      inset-inline-end: 12px;
+      inset-block-start: calc(var(--h-header, 56px) + 8px);
+      inset-block-end: auto;
       z-index: 9999;
       max-inline-size: 22rem;
       padding: 10px 12px;
       border-radius: 10px;
-      background: #1f2937;
-      color: #f9fafb;
+      background: var(--brand-primary);
+      color: var(--text-inverse);
       font: 12px/1.4 system-ui, sans-serif;
-      box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+      box-shadow: var(--shadow-lg);
     }
     .mock__corto { display: none; }
     /* En angosto no hay esquina libre abajo: el chat clava ahí el campo de
@@ -108,9 +106,6 @@ import { MOCK_USERS } from './mock-session';
       .mock--plegado {
         inset-block-start: calc(var(--h-header, 56px) + 2px);
       }
-      .mock--plegado {
-        inset-block-start: calc(var(--h-header, 56px) + 2px);
-      }
       .mock__boton {
         padding: 5px 10px;
         font-size: 11px;
@@ -126,6 +121,22 @@ import { MOCK_USERS } from './mock-session';
       /* El stock de componentes es una herramienta de escritorio. */
       .mock--plegado .mock__boton--stock {
         display: none;
+      }
+    }
+    @media (max-width: 640px) {
+      /* En teléfono, el título y su bajada ocupan el primer bloque debajo del
+         header. Esta franja separa esa presentación de las secciones de cada
+         pantalla y mantiene la pastilla fuera de ambos. */
+      .mock,
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 180px);
+      }
+    }
+    @media (max-width: 360px) {
+      /* En el ancho mínimo título y bajada envuelven más líneas. */
+      .mock,
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 204px);
       }
     }
     .mock--plegado {
@@ -150,6 +161,14 @@ import { MOCK_USERS } from './mock-session';
       text-decoration: none;
       white-space: nowrap;
     }
+    .mock__boton:hover {
+      filter: brightness(0.94);
+    }
+    .mock__boton:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 5px #111827;
+    }
     .mock__boton--stock {
       background: #38bdf8;
     }
@@ -167,9 +186,14 @@ import { MOCK_USERS } from './mock-session';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MockBanner {
+  /**
+   * En backend real el banner de datos de prueba / demo se desactiva completamente.
+   */
+  protected readonly activo = false;
   protected readonly plegado = signal(true);
   protected readonly cuentas = MOCK_USERS.map((u) => ({
     email: u.email,
     rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : 'administrador',
   }));
 }
+

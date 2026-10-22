@@ -10,6 +10,7 @@ import type {
   AssetSummary,
   LiabilitySummary,
 } from '../../core/data-access/assets-liabilities/assets-liabilities.types';
+import { describeApiFailure } from '../../core/http/api-failure';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -25,7 +26,7 @@ import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf } from '../../shared/forms/form-support';
 
 /**
@@ -162,7 +163,7 @@ export class AssetsLiabilities {
    * Las dos últimas sólo se entienden con las cuentas ya elegidas.
    */
   protected readonly paginasDeActivo = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué se compró',
         campos: [
@@ -180,7 +181,7 @@ export class AssetsLiabilities {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeCuenta(),
-            placeholder: 'Elegí una cuenta',
+            placeholder: 'Elija una cuenta',
           },
           {
             key: 'offsetAccountId',
@@ -188,7 +189,7 @@ export class AssetsLiabilities {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeCuenta(),
-            placeholder: 'Elegí una cuenta',
+            placeholder: 'Elija una cuenta',
           },
         ],
       },
@@ -284,8 +285,26 @@ export class AssetsLiabilities {
   protected readonly avanceDeActivoEnCurso = signal<string | null>(null);
   protected readonly errorDeAvanceDeActivo = signal<string | null>(null);
 
+  protected readonly errorDeAutomatizacionDeActivo = signal<string | null>(null);
+
+  /**
+   * Si el PATCH falla, el interruptor ya quedó movido en pantalla —`checked` es
+   * un `model` del átomo— y `[checked]` no vuelve a empujar el valor viejo
+   * porque el dato no cambió. Releer la lista lo devuelve a lo que dice el
+   * servidor, que es la posición real (con un corte de red ni siquiera se sabe
+   * si el cambio llegó a aplicarse).
+   */
   protected alternarAutomatizacionDeActivo(asset: AssetSummary, automated: boolean): void {
-    this.client.setAssetAutomation(asset.id, automated).subscribe({ next: () => this.reintentar() });
+    this.errorDeAutomatizacionDeActivo.set(null);
+    this.client.setAssetAutomation(asset.id, automated).subscribe({
+      next: () => this.reintentar(),
+      error: (error: unknown) => {
+        this.errorDeAutomatizacionDeActivo.set(
+          describeApiFailure(error, `No se pudo cambiar la automatización de «${asset.name}». Intente de nuevo.`),
+        );
+        this.reintentar();
+      },
+    });
   }
 
   protected registrarAvanceDeActivo(asset: AssetSummary): void {
@@ -293,7 +312,7 @@ export class AssetsLiabilities {
     const accumulatedDepreciationAccountId = this.cuentaDeDepreciacionAcumulada();
     if (depreciationExpenseAccountId === null || accumulatedDepreciationAccountId === null) {
       this.errorDeAvanceDeActivo.set(
-        'Elegí primero la cuenta de gasto por depreciación y la de depreciación acumulada.',
+        'Elija primero la cuenta de gasto por depreciación y la de depreciación acumulada.',
       );
       return;
     }
@@ -355,7 +374,7 @@ export class AssetsLiabilities {
    * plan de cuotas.
    */
   protected readonly paginasDePasivo = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué se debe',
         campos: [
@@ -378,7 +397,7 @@ export class AssetsLiabilities {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeCuenta(),
-            placeholder: 'Elegí una cuenta',
+            placeholder: 'Elija una cuenta',
           },
         ],
       },
@@ -474,15 +493,27 @@ export class AssetsLiabilities {
   protected readonly avanceDePasivoEnCurso = signal<string | null>(null);
   protected readonly errorDeAvanceDePasivo = signal<string | null>(null);
 
+  protected readonly errorDeAutomatizacionDePasivo = signal<string | null>(null);
+
+  /** Mismo motivo que `alternarAutomatizacionDeActivo`: el fallo relee para devolver el interruptor. */
   protected alternarAutomatizacionDePasivo(liability: LiabilitySummary, automated: boolean): void {
-    this.client.setLiabilityAutomation(liability.id, automated).subscribe({ next: () => this.reintentar() });
+    this.errorDeAutomatizacionDePasivo.set(null);
+    this.client.setLiabilityAutomation(liability.id, automated).subscribe({
+      next: () => this.reintentar(),
+      error: (error: unknown) => {
+        this.errorDeAutomatizacionDePasivo.set(
+          describeApiFailure(error, `No se pudo cambiar la automatización de «${liability.name}». Intente de nuevo.`),
+        );
+        this.reintentar();
+      },
+    });
   }
 
   protected registrarAvanceDePasivo(liability: LiabilitySummary): void {
     const bankAccountId = this.cuentaDeBanco();
     const interestExpenseAccountId = this.cuentaDeGastoPorInteres();
     if (bankAccountId === null || interestExpenseAccountId === null) {
-      this.errorDeAvanceDePasivo.set('Elegí primero la cuenta de banco y la de gasto por interés.');
+      this.errorDeAvanceDePasivo.set('Elija primero la cuenta de banco y la de gasto por interés.');
       return;
     }
     this.errorDeAvanceDePasivo.set(null);

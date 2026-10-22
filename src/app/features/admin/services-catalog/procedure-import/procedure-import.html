@@ -12,7 +12,7 @@
 <form class="importar__practica" (submit)="$event.preventDefault()">
   <app-form-field
     label="Importar al catálogo de"
-    hint="El servicio nace en la práctica que elijas."
+    hint="El servicio nace en la práctica que elija."
   >
     <app-select
       data-testid="importar-practica"
@@ -27,7 +27,7 @@
   <!-- Sin práctica se puede mirar el arancel, pero no importar. Decirlo antes
        evita que alguien recorra 4408 entradas para descubrirlo al tocar. -->
   <app-alert variant="info" data-testid="importar-sin-practica">
-    Todavía no hay una práctica a la que importar. Podés recorrer el arancel
+    Todavía no hay una práctica a la que importar. Puede recorrer el arancel
     igual.
   </app-alert>
 }
@@ -40,7 +40,7 @@
   [collapsible]="true"
   [expandAll]="hayFiltro()"
   searchLabel="Buscar un procedimiento por nombre"
-  noMatchesText="Ningún procedimiento del arancel coincide. Probá con otra palabra o quitá la especialidad."
+  noMatchesText="Ningún procedimiento del arancel coincide. Pruebe con otra palabra o quite la especialidad."
   (filtersChanged)="filtrar($event)"
   (moreRequested)="traerMas()"
   (retry)="reintentar()"
@@ -80,7 +80,7 @@
       <div class="procedimiento__accion">
         @if (estaImportado(procedimiento)) {
           <!-- Ya está: no se ofrece importarlo de nuevo, se dice dónde está. -->
-          <app-badge variant="success" size="sm">Ya está en tu catálogo</app-badge>
+          <app-badge variant="success" size="sm">Ya está en su catálogo</app-badge>
         } @else {
           <button
             app-button

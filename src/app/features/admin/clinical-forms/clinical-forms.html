@@ -1,6 +1,6 @@
 <app-page-header
   title="Formularios clínicos"
-  subtitle="Armá la plantilla de campos propios de tu especialidad."
+  subtitle="Arme la plantilla de campos propios de su especialidad."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -18,7 +18,7 @@
           [(value)]="especialidad"
           [options]="opcionesDeEspecialidad()"
           [loading]="buscandoEspecialidad()"
-          placeholder="Buscá una especialidad"
+          placeholder="Busque una especialidad"
           (searched)="buscarEspecialidad($event)"
           (selectionChange)="onEspecialidadElegida()"
         />

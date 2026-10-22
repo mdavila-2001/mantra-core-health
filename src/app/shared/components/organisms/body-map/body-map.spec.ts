@@ -1,7 +1,11 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { BodyMap, ZONAS_CON_SILUETA, type ZonaElegible } from './body-map';
-import { VISTAS_DEL_CUERPO } from './body-zones.geometry';
+import {
+  VISTAS_DEL_CUERPO,
+  VISTAS_DEL_CUERPO_FEMENINA,
+  VISTAS_DEL_CUERPO_MASCULINA,
+} from './body-zones.geometry';
 
 /**
  * Las zonas con forma, tal como las entrega `symptom-check` a partir de su
@@ -176,6 +180,83 @@ describe('BodyMap', () => {
     expect(formaDe('gluteos').getAttribute('aria-pressed')).toBe('true');
   });
 
+  /**
+   * El error que reportó el cliente (24/09/2026): con una zona de la cara
+   * elegida, «Frente» y «Espalda» no hacían nada, porque la figura volvía sola
+   * a la única vista que tenía esa zona. La vista que elige la persona manda.
+   */
+  it('desde la cara se puede volver a frente y a espalda con una zona de la cara elegida', () => {
+    formaDe('cabeza').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    formaDe('ojos').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    expect(component.value()).toBe('ojos');
+
+    pasarA('Frente');
+    expect(vistaPuesta()).toBe('frente');
+    pasarA('Espalda');
+    expect(vistaPuesta()).toBe('espalda');
+    pasarA('Cara');
+    expect(vistaPuesta()).toBe('cara');
+    // Lo elegido no se pierde al mirar otra vista: sigue dicho en palabras.
+    expect(component.value()).toBe('ojos');
+  });
+
+  it('después de cambiar de vista a mano, elegir desde afuera vuelve a dar vuelta la figura', () => {
+    pasarA('Espalda');
+    fixture.componentRef.setInput('value', 'pecho');
+    fixture.detectChanges();
+
+    expect(vistaPuesta()).toBe('frente');
+  });
+
+  /* ---- Lo que se contó ---- */
+
+  it('las zonas marcadas por lo que se contó se ven, se anuncian y se nombran, sin quedar elegidas', () => {
+    fixture.componentRef.setInput('marcadas', ['rodillas', 'gluteos', 'piel']);
+    fixture.detectChanges();
+
+    const rodillas = formaDe('rodillas');
+    expect(rodillas.closest('g')?.classList).toContain('body-map__zona--marcada');
+    expect(rodillas.getAttribute('aria-label')).toBe('Rodillas (por lo que contó)');
+    expect(rodillas.getAttribute('aria-pressed')).toBe('false');
+    expect(component.value()).toBeNull();
+    // Nombra también la que no se ve de frente (glúteos) y la que no tiene forma (piel).
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
+      'Glúteos y cola, Rodillas y Piel y pelo',
+    );
+    expect(formaDe('pecho').closest('g')?.classList).not.toContain('body-map__zona--marcada');
+  });
+
+  it('sin nada contado no hay leyenda de marcadas', () => {
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')).toBeNull();
+  });
+
+  /* ---- Apuntar antes de tocar ---- */
+
+  it('apuntar una zona la nombra arriba, y cambiar de vista borra el nombre', () => {
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')?.textContent?.trim()).toBe('Pecho y respiración');
+
+    // La forma se va con la vista y no avisa que el puntero salió.
+    pasarA('Espalda');
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+  });
+
+  it('dejar la zona borra el nombre, y la elegida no se repite arriba', () => {
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    formaDe('pecho').dispatchEvent(new Event('pointerleave'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+
+    formaDe('pecho').dispatchEvent(new MouseEvent('click'));
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+  });
+
   it('con zonas de una sola vista no hay selector de vista', () => {
     fixture.componentRef.setInput('zonas', [{ id: 'pecho', nombre: 'Pecho' }]);
     fixture.detectChanges();
@@ -225,7 +306,7 @@ describe('BodyMap', () => {
    */
   it('dice en palabras cuál quedó elegida', () => {
     const linea = html.querySelector('[data-testid="body-map-elegida"]');
-    expect(linea?.textContent).toContain('Tocá una parte del cuerpo');
+    expect(linea?.textContent).toContain('Toque una parte del cuerpo');
 
     formaDe('intima').dispatchEvent(new MouseEvent('click'));
     fixture.detectChanges();
@@ -249,7 +330,7 @@ describe('BodyMap', () => {
 
     expect(html.querySelectorAll('[aria-pressed="true"]')).toHaveLength(0);
     expect(html.querySelector('[data-testid="body-map-elegida"]')?.textContent).toContain(
-      'Tocá una parte del cuerpo',
+      'Toque una parte del cuerpo',
     );
   });
 
@@ -259,5 +340,56 @@ describe('BodyMap', () => {
     fixture.detectChanges();
 
     expect(html.querySelector('svg')).toBeNull();
+  });
+});
+
+/**
+ * El sexo de la silueta (P-04, 2026-09-25): `symptom-check` lo pasa según el
+ * propio perfil, y sin ese dato se dibuja la neutra de siempre. Acá sólo se
+ * prueba que `BodyMap` elige el arreglo de vistas que corresponde; el ancho
+ * de hombro/cintura/cadera de cada uno lo prueba `gen-body-zones.py` al
+ * generarlo.
+ */
+describe('BodyMap · el sexo de la silueta', () => {
+  let fixture: ComponentFixture<BodyMap>;
+  let html: HTMLElement;
+
+  function dDePecho(vistas: typeof VISTAS_DEL_CUERPO): string {
+    const frente = vistas.find((vista) => vista.id === 'frente');
+    const pecho = frente?.zonas.find((zona) => zona.id === 'pecho');
+    if (pecho === undefined) throw new Error('la vista de frente no trae «pecho»');
+    return pecho.d;
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [BodyMap] });
+    fixture = TestBed.createComponent(BodyMap);
+    fixture.componentRef.setInput('zonas', ZONAS);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  function dDibujado(id: string): string | null {
+    return html.querySelector(`[data-testid="body-map-${id}"]`)?.getAttribute('d') ?? null;
+  }
+
+  it('sin `sexo`, dibuja la silueta neutra', () => {
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO));
+  });
+
+  it('con `sexo` "MALE", dibuja la silueta masculina', () => {
+    fixture.componentRef.setInput('sexo', 'MALE');
+    fixture.detectChanges();
+
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_MASCULINA));
+    expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
+  });
+
+  it('con `sexo` "FEMALE", dibuja la silueta femenina', () => {
+    fixture.componentRef.setInput('sexo', 'FEMALE');
+    fixture.detectChanges();
+
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_FEMENINA));
+    expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
   });
 });

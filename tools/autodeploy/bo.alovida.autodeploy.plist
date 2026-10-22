@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Agente de usuario que vigila `origin/mockup` y redespliega el VPS.
+
+  Se instala con `launchctl`, no con cron: launchd lo arranca solo al iniciar
+  sesión y lo vuelve a poner en pie si muere, que es lo que hace falta para
+  algo que tiene que funcionar sin que nadie se acuerde de él.
+
+  `StartInterval` 180 = cada tres minutos. El guion sale en silencio cuando la
+  rama no se movió, así que el coste real de una pasada es un `git ls-remote`.
+
+  Instalar:
+    launchctl load -w ~/Library/LaunchAgents/bo.alovida.autodeploy.plist
+  Quitar:
+    launchctl unload -w ~/Library/LaunchAgents/bo.alovida.autodeploy.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>bo.alovida.autodeploy</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>RUTA_DEL_GUION</string>
+  </array>
+
+  <key>StartInterval</key>
+  <integer>180</integer>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- El guion ya lleva su propio diario; esto recoge lo que se le escape. -->
+  <key>StandardOutPath</key>
+  <string>RUTA_DEL_DIARIO</string>
+  <key>StandardErrorPath</key>
+  <string>RUTA_DEL_DIARIO</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+</dict>
+</plist>

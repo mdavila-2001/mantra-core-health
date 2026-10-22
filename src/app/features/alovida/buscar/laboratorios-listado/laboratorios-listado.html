@@ -2,20 +2,20 @@
       <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg></span>
       <div class="app-page-header__texto">
         <div class="app-page-header__titulo"><h1>Laboratorios y centros de imagen</h1></div>
-        <p class="caption">Dónde hacerte el estudio que te pidieron: qué análisis ofrece cada centro, qué requisitos previos tiene —ayuno, orden médica, suspender un medicamento—, cuánto cuesta y en cuánto tiempo entrega el resultado.</p>
+        <p class="caption">Dónde hacerse el estudio que le pidieron: qué análisis ofrece cada centro, qué requisitos previos tiene —ayuno, orden médica, suspender un medicamento—, cuánto cuesta y en cuánto tiempo entrega el resultado.</p>
       </div>
 
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá por estudio, análisis o nombre del centro</span>
+        <span class="solo-lectores">Busque por estudio, análisis o nombre del centro</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
         <input
           class="app-input"
           app-input=""
           type="search"
           name="q"
-          placeholder="Buscá por estudio, análisis o nombre del centro"
+          placeholder="Busque por estudio, análisis o nombre del centro"
           [value]="busqueda.texto()"
           (input)="alEscribir($any($event.target).value)"
         />
@@ -70,8 +70,8 @@
       <div class="app-empty-state" app-empty-state="">
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg></span>
         <h2>Ningún centro cercano ofrece ese estudio</h2>
-        <p>Los estudios de alta complejidad —resonancia, medicina nuclear, genética— se concentran en pocos centros y suelen estar solo en las ciudades grandes. Ampliá la distancia, o buscá el nombre exacto del estudio tal como figura en tu orden médica: los nombres comerciales cambian entre centros.</p>
-        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+        <p>Los estudios de alta complejidad —resonancia, medicina nuclear, genética— se concentran en pocos centros y suelen estar solo en las ciudades grandes. Amplíe la distancia, o busque el nombre exacto del estudio tal como figura en su orden médica: los nombres comerciales cambian entre centros.</p>
+        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Pruebe con otra búsqueda</a>
       </div>
       </div>
         }
@@ -99,7 +99,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos completar la búsqueda de centros de diagnóstico.</strong>
-            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+            <p>El directorio no respondió a tiempo. Vuelva a intentarlo en un momento; su búsqueda se mantiene escrita.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

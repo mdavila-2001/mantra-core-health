@@ -17,7 +17,7 @@ import { SearchField } from '../../molecules/search-field/search-field';
 import { Select } from '../../atoms/select/select';
 import type { SelectOption } from '../../atoms/select/select.types';
 
-/** Clave del término de búsqueda en la URL. */
+/** Clave por omisión del término de búsqueda en la URL (ver `FilterBar.searchParam`). */
 export const SEARCH_PARAM = 'q';
 
 /**
@@ -29,6 +29,12 @@ export interface FilterDef {
   /** Clave estable; es la que viaja a la URL y al backend. */
   readonly key: string;
   readonly label: string;
+  /**
+   * Lo que dice el desplegable mientras no hay nada elegido. Por omisión, el
+   * `label`. Hace falta cuando «sin elegir» significa algo —«Todos los
+   * directorios»— y el rótulo del chip activo es otra cosa («Directorio: …»).
+   */
+  readonly placeholder?: string;
   /** Opciones del value set. Vacío ⇒ el filtro se muestra deshabilitado. */
   readonly options: readonly SelectOption<string>[];
   /** Motivo visible cuando el value set no está disponible. */
@@ -89,8 +95,9 @@ export interface ActiveFilter {
  * etiquetas son presentación y cambian con el value set o el idioma.
  *
  * **Receta de buscador multicampo** (ADR-0015, regla 5): el organismo emite
- * un único término normalizado bajo `q` — filtrar por varios campos a la vez
- * es responsabilidad del consumidor, no de la barra:
+ * un único término normalizado bajo su clave de búsqueda (`q` por omisión) —
+ * filtrar por varios campos a la vez es responsabilidad del consumidor, no de
+ * la barra:
  *
  * ```ts
  * const termino = normalizar(this.filtersChanged$().q ?? '');
@@ -120,6 +127,7 @@ export interface ActiveFilter {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'filter-bar',
+    '[class.filter-bar--wrap]': 'wrap()',
   },
 })
 export class FilterBar {
@@ -128,6 +136,16 @@ export class FilterBar {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly filters = input<readonly FilterDef[]>([]);
+
+  /**
+   * Deja que los controles bajen de renglón en vez de encogerse.
+   *
+   * Opt-in: con cinco o más filtros por encabezado («Solicitudes recibidas»)
+   * la fila única dejaba el buscador en un puñado de píxeles y cortaba los
+   * rótulos de los desplegables. Los consumidores con pocos filtros no lo
+   * necesitan y siguen exactamente igual.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
   readonly searchLabel = input<string>('Buscar en el listado');
 
   /**
@@ -148,7 +166,39 @@ export class FilterBar {
    */
   readonly searchLoading = input(false, { transform: booleanAttribute });
 
-  /** Los códigos activos, incluido el término de búsqueda bajo `q`. */
+  /**
+   * La clave del término de búsqueda en la URL. Por omisión, {@link SEARCH_PARAM}.
+   *
+   * Existe para que dos barras convivan en una misma pantalla: con una sola
+   * clave, lo que se escribe en el buscador de una tabla filtra también la
+   * otra, y las dos muestran el mismo texto. La barra lee, escribe, limpia y
+   * emite el término bajo esta clave; los filtros ya viajan con la suya
+   * (`FilterDef.key`).
+   */
+  readonly searchParam = input<string>(SEARCH_PARAM);
+
+  /**
+   * `false` saca el término de búsqueda de la URL: la barra lo muestra desde
+   * {@link searchValue} y lo avisa por {@link searchChanged}, sin navegar.
+   *
+   * Existe para las pantallas donde lo que se tipea es un dato de una persona
+   * —el nombre o el documento de un paciente—: en la URL queda en el
+   * historial del navegador, en los logs del servidor que la sirve y en el
+   * `Referer`. Los filtros de catálogo (`FilterDef`) siguen en la URL: un
+   * código de catálogo no identifica a nadie.
+   */
+  readonly searchInUrl = input(true, { transform: booleanAttribute });
+
+  /** El término vigente cuando {@link searchInUrl} es `false`; lo guarda quien consume. */
+  readonly searchValue = input<string>('');
+
+  /**
+   * El término nuevo cuando {@link searchInUrl} es `false` (incluido `''` al
+   * limpiar). Con la búsqueda en la URL no se emite: la URL ya es el aviso.
+   */
+  readonly searchChanged = output<string>();
+
+  /** Los códigos activos, incluido el término de búsqueda bajo {@link searchParam}. */
   readonly filtersChanged = output<Readonly<Record<string, string>>>();
 
   /**
@@ -160,7 +210,9 @@ export class FilterBar {
     { initialValue: {} as Record<string, string> },
   );
 
-  protected readonly searchTerm = computed(() => this.params()[SEARCH_PARAM] ?? '');
+  protected readonly searchTerm = computed(() =>
+    this.searchInUrl() ? (this.params()[this.searchParam()] ?? '') : this.searchValue(),
+  );
 
   /** Los filtros con opciones; sin ellas el value set no llegó. */
   protected isAvailable(filter: FilterDef): boolean {
@@ -249,12 +301,19 @@ export class FilterBar {
 
   /** Mientras se tipea se reemplaza la entrada del historial: no se ensucia. */
   protected onSearch(term: string): void {
-    this.applyParams({ [SEARCH_PARAM]: term || null }, true);
+    if (!this.searchInUrl()) {
+      this.searchChanged.emit(term);
+      this.emitCurrent(term);
+      return;
+    }
+    this.applyParams({ [this.searchParam()]: term || null }, true);
   }
 
   /** Elegir un filtro es una decisión: queda en el historial. */
   protected onFilterChange(filter: FilterDef, code: string | null): void {
-    this.applyParams({ [filter.key]: code }, false);
+    // Una opción con valor vacío es «ninguno»: se quita de la URL en vez de
+    // dejar `?clave=` colgando.
+    this.applyParams({ [filter.key]: code === '' ? null : code }, false);
   }
 
   protected removeFilter(active: ActiveFilter): void {
@@ -262,14 +321,23 @@ export class FilterBar {
   }
 
   protected clearAll(): void {
-    const vacios: Record<string, null> = { [SEARCH_PARAM]: null };
+    // La clave de búsqueda se limpia de la URL también fuera de ella: si un
+    // enlace viejo la trajo, «limpiar» tiene que sacarla.
+    const vacios: Record<string, null> = { [this.searchParam()]: null };
     for (const filter of this.filters()) {
       vacios[filter.key] = null;
     }
-    this.applyParams(vacios, false);
+    if (!this.searchInUrl()) {
+      this.searchChanged.emit('');
+    }
+    this.applyParams(vacios, false, this.searchInUrl() ? undefined : '');
   }
 
-  private applyParams(changes: Record<string, string | null>, replaceUrl: boolean): void {
+  private applyParams(
+    changes: Record<string, string | null>,
+    replaceUrl: boolean,
+    termOverride?: string,
+  ): void {
     void this.router
       .navigate([], {
         relativeTo: this.route,
@@ -277,14 +345,19 @@ export class FilterBar {
         queryParamsHandling: 'merge',
         replaceUrl,
       })
-      .then(() => this.emitCurrent());
+      .then(() => this.emitCurrent(termOverride));
   }
 
-  private emitCurrent(): void {
+  /**
+   * @param termOverride - El término recién elegido cuando no vive en la URL:
+   *   {@link searchValue} todavía trae el anterior hasta que quien consume lo
+   *   actualice.
+   */
+  private emitCurrent(termOverride?: string): void {
     const activos: Record<string, string> = {};
-    const term = this.searchTerm();
+    const term = termOverride ?? this.searchTerm();
     if (term) {
-      activos[SEARCH_PARAM] = term;
+      activos[this.searchParam()] = term;
     }
     for (const active of this.activeFilters()) {
       // El CÓDIGO, no la etiqueta: es lo único estable.

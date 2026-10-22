@@ -27,6 +27,13 @@ import {
   BoOccupationsCatalog,
   CODIGO_OCUPACION_OTRA,
 } from '../../../core/data-access/terminology/bo-occupations.service';
+import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
+import {
+  AMBULANCE_DIRECTORY_SEED,
+  DEPARTAMENTOS_BOLIVIA,
+  ambulancesForDepartment,
+  isSeededAmbulancePhone,
+} from '../../../core/emergency/ambulance-directory.seed';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   BoMunicipalitiesCatalog,
@@ -37,42 +44,42 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
-import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
+import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { AVISO_REESCRIBIR_DIRECCION } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { NOTICE_REWRITE_ADDRESS } from '../shared-registration/map-location-picker/map-location-picker';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+  RegistrationHelp,
+  type HelpCard,
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppMap } from '../../../shared/components/organisms/map/map';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Select } from '../../../shared/components/atoms/select/select';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
-import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap } from '../../../shared/components/organisms/map/map-pin.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
@@ -118,16 +125,6 @@ interface DestinoDeUbicacion {
 }
 
 /**
- * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
- *
- * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
- * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
- * manzana. Tocar el plano corre el pin al punto exacto.
- */
-const AVISO_MOVER_PIN =
-  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
-
-/**
  * El identificador del pin del domicilio en el mapa.
  *
  * `app-map` habla de sus pines por `id` y exige uno; acá hay un solo pin, así
@@ -158,24 +155,7 @@ const PIN_TRABAJO = 'trabajo';
  * un campo vacío, porque nadie la vuelve a mirar.
  */
 const AVISO_SIN_GEOCODIFICACION =
-  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
-
-/**
- * Lo que se le dice a quien capturó un punto y no lo confirmó.
- *
- * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
- * mapa (`datosPaciente`), y eso está bien —el GPS acierta la manzana, no la
- * puerta, y entre «esto es lo que encontramos» y «esta es mi dirección» tiene
- * que haber alguien mirando el plano—; lo que estaba mal es que quien se
- * quedaba a medias avanzaba de página creyendo que su ubicación ya estaba
- * guardada, y nadie se lo decía.
- *
- * El aviso **no bloquea ni confirma por su cuenta**: la confirmación sigue
- * siendo un acto de la persona. Sólo deja de ser silenciosa la consecuencia de
- * no hacerla.
- */
-const AVISO_UBICACION_SIN_CONFIRMAR =
-  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
+  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escríbala usted arriba.';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -283,7 +263,7 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * a intromisión. Eso es de lo que más hace abandonar un registro.
  *
  * Va **al costado** y no dentro del formulario: no alarga la página, no compite
- * con los campos y se lee sólo si hace falta. Ver `app-registro-ayuda`.
+ * con los campos y se lee sólo si hace falta. Ver `app-registration-help`.
  *
  * ## Por qué es un mapa por clave y no una lista
  *
@@ -293,13 +273,58 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * clave la declara la propia página (`PaginaDeFormulario.clave`), así que las
  * dos mitades no se pueden separar de un descuido.
  */
-const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
+  identity: [
+    {
+      icono: 'patients',
+      titulo: 'Con su documento va a entrar',
+      texto:
+        'Es su usuario: no tiene que inventar ni recordar otro. Lo pedimos primero para avisarle enseguida si ya tenía cuenta.',
+    },
+    {
+      icono: 'people',
+      titulo: 'Su nombre, como figura en su documento',
+      texto:
+        'Es lo que evita que su historia clínica se mezcle con la de alguien que se llama parecido. Si no lleva segundo nombre o apellido materno, déjelos vacíos.',
+    },
+    {
+      icono: 'stethoscope',
+      titulo: 'Cambia cómo le atienden',
+      texto:
+        'La edad y el sexo deciden dosis, valores de referencia de laboratorio y qué controles le corresponden por edad.',
+    },
+    {
+      icono: 'briefcase',
+      titulo: 'Su oficio también es un dato clínico',
+      texto:
+        'Cada trabajo trae sus riesgos —químicos, esfuerzo, turnos de noche— y su médico los tiene en cuenta.',
+    },
+  ],
+  misc: [
+    {
+      icono: 'lock',
+      titulo: 'Su contraseña, sólo suya',
+      texto:
+        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
+    },
+    {
+      icono: 'umbrella',
+      titulo: 'Para que no pague lo que ya está cubierto',
+      texto:
+        'Con su seguro declarado, la cobertura se aplica cuando reserva o compra, sin que tenga que reclamarla después.',
+    },
+    {
+      icono: 'billing',
+      titulo: 'El NIT es sólo para sus facturas',
+      texto: 'Lo usamos cuando hay que emitir una. Si no lo tiene a mano, déjelo vacío.',
+    },
+  ],
   document: [
     {
       icono: 'patients',
-      titulo: 'Con tu documento vas a entrar',
+      titulo: 'Con su documento va a entrar',
       texto:
-        'Es tu usuario: no tenés que inventar ni recordar otro. Lo pedimos primero para avisarte enseguida si ya tenías cuenta.',
+        'Es su usuario: no tiene que inventar ni recordar otro. Lo pedimos primero para avisarle enseguida si ya tenía cuenta.',
     },
     {
       icono: 'pin',
@@ -311,57 +336,57 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   name: [
     {
       icono: 'people',
-      titulo: 'Tu nombre, como figura en tu documento',
+      titulo: 'Su nombre, como figura en su documento',
       texto:
-        'Es lo que evita que tu historia clínica se mezcle con la de alguien que se llama parecido. Si no llevás segundo nombre o apellido materno, dejalos vacíos.',
+        'Es lo que evita que su historia clínica se mezcle con la de alguien que se llama parecido. Si no lleva segundo nombre o apellido materno, déjelos vacíos.',
     },
   ],
   profile: [
     {
       icono: 'stethoscope',
-      titulo: 'Cambia cómo te atienden',
+      titulo: 'Cambia cómo le atienden',
       texto:
-        'La edad y el sexo deciden dosis, valores de referencia de laboratorio y qué controles te corresponden por edad.',
+        'La edad y el sexo deciden dosis, valores de referencia de laboratorio y qué controles le corresponden por edad.',
     },
     {
       icono: 'briefcase',
-      titulo: 'Tu oficio también es un dato clínico',
+      titulo: 'Su oficio también es un dato clínico',
       texto:
-        'Cada trabajo trae sus riesgos —químicos, esfuerzo, turnos de noche— y tu médico los tiene en cuenta.',
+        'Cada trabajo trae sus riesgos —químicos, esfuerzo, turnos de noche— y su médico los tiene en cuenta.',
     },
   ],
   residence: [
     {
       icono: 'pin',
-      titulo: 'Para mostrarte lo que tenés cerca',
+      titulo: 'Para mostrarle lo que tiene cerca',
       texto:
-        'Farmacias, laboratorios y consultorios de tu zona, en vez de los del otro lado de la ciudad.',
+        'Farmacias, laboratorios y consultorios de su zona, en vez de los del otro lado de la ciudad.',
     },
     {
       icono: 'package',
       titulo: 'El mapa es opcional',
       texto:
-        'Si marcás tu punto en el mapa y lo confirmás, la entrega de tus medicamentos llega sin que tengas que explicar dónde vivís. Si no, tu alta sigue igual.',
+        'Si marca su punto en el mapa y lo confirma, la entrega de sus medicamentos llega sin que tenga que explicar dónde vive. Si no, su alta sigue igual.',
     },
     {
       icono: 'route',
-      titulo: 'La calle la escribís vos',
+      titulo: 'La calle la escribe usted',
       texto:
-        'El punto del mapa no se convierte solo en el nombre de una calle: eso necesita un servicio que hoy no tenemos. Por eso la línea de dirección se escribe a mano, y por eso nunca vas a encontrar ahí algo que no hayas escrito.',
+        'El punto del mapa no se convierte solo en el nombre de una calle: eso necesita un servicio que hoy no tenemos. Por eso la línea de dirección se escribe a mano, y por eso nunca va a encontrar ahí algo que no haya escrito.',
     },
   ],
   work: [
     {
       icono: 'building',
-      titulo: 'Para qué sirve dónde trabajás',
+      titulo: 'Para qué sirve dónde trabaja',
       texto:
-        'Para los convenios con empresas y para los controles de salud laboral: cada oficio y cada lugar traen sus riesgos, y tu médico los tiene en cuenta.',
+        'Para los convenios con empresas y para los controles de salud laboral: cada oficio y cada lugar traen sus riesgos, y su médico los tiene en cuenta.',
     },
     {
       icono: 'note',
-      titulo: 'Si no está en la lista, escribila',
+      titulo: 'Si no está en la lista, escríbala',
       texto:
-        'La lista tiene las empresas más grandes del país. Si la tuya no aparece, elegí «Otra empresa» y ponés el nombre vos.',
+        'La lista tiene las empresas más grandes del país. Si la suya no aparece, elija «Otra empresa» y pone el nombre usted.',
     },
   ],
   'work-location': [
@@ -369,56 +394,56 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'pin',
       titulo: 'Todo esto es opcional',
       texto:
-        'Si tu trabajo queda lejos de tu casa, saberlo nos deja mostrarte farmacias y laboratorios cerca de los dos sitios, no sólo de uno.',
+        'Si su trabajo queda lejos de su casa, saberlo nos deja mostrarle farmacias y laboratorios cerca de los dos sitios, no sólo de uno.',
     },
     {
       icono: 'route',
-      titulo: 'La calle la escribís vos',
+      titulo: 'La calle la escribe usted',
       texto:
-        'Igual que en tu domicilio: el punto del mapa se guarda tal cual, pero el nombre de la calle lo ponés vos.',
+        'Igual que en su domicilio: el punto del mapa se guarda tal cual, pero el nombre de la calle lo pone usted.',
     },
   ],
   insurance: [
     {
       icono: 'umbrella',
-      titulo: 'Para que no pagues lo que ya está cubierto',
+      titulo: 'Para que no pague lo que ya está cubierto',
       texto:
-        'Con tu seguro declarado, la cobertura se aplica cuando reservás o comprás, sin que tengas que reclamarla después.',
+        'Con su seguro declarado, la cobertura se aplica cuando reserva o compra, sin que tenga que reclamarla después.',
     },
   ],
   billing: [
     {
       icono: 'billing',
-      titulo: 'El NIT es sólo para tus facturas',
-      texto: 'Lo usamos cuando hay que emitir una. Si no lo tenés a mano, dejalo vacío.',
+      titulo: 'El NIT es sólo para sus facturas',
+      texto: 'Lo usamos cuando hay que emitir una. Si no lo tiene a mano, déjelo vacío.',
     },
   ],
   contact: [
     {
       icono: 'phone',
-      titulo: 'Tu celular hace falta',
+      titulo: 'Su celular hace falta',
       texto:
-        'Es por donde te avisamos de un turno, de un resultado listo o de un cambio de hora. No se muestra en ninguna ficha ni se comparte.',
+        'Es por donde le avisamos de una cita, de un resultado listo o de un cambio de hora. No se muestra en ninguna ficha ni se comparte.',
     },
     {
       icono: 'people',
       titulo: 'A quién avisamos si hace falta',
       texto:
-        'El contacto de emergencia es opcional: la persona a la que llamamos en una urgencia, o quien te acompaña si sos menor de edad. Sólo se usa para eso.',
+        'El contacto de emergencia es opcional: la persona a la que llamamos en una urgencia, o quien le acompaña si es menor de edad. Sólo se usa para eso.',
     },
   ],
   access: [
     {
       icono: 'lock',
-      titulo: 'Tu contraseña, sólo tuya',
+      titulo: 'Su contraseña, sólo suya',
       texto:
-        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca te la vamos a pedir por teléfono ni por correo.',
+        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
     },
     {
       icono: 'mail',
-      titulo: 'Entrás con tu documento, no con el correo',
+      titulo: 'Entra con su documento, no con el correo',
       texto:
-        'El correo hace falta igual: es la única forma de devolverte el acceso si perdés la contraseña, y por donde te llegan los avisos de tus turnos.',
+        'El correo hace falta igual: es la única forma de devolverle el acceso si pierde la contraseña, y por donde le llegan los avisos de sus turnos.',
     },
   ],
 };
@@ -433,8 +458,8 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * una con campos extra —el paciente entra con su documento y el correo le es
  * opcional; el profesional entra con su correo y sin habilitación comprobable
  * no hay alta—, así que lo único que compartían de verdad era el cascarón. Hoy
- * eso es CSS (`../registro-compartido/registro.css`) y un organismo
- * (`app-registro-ayuda`), y el alta de profesional es `register-practitioner`,
+ * eso es CSS (`../shared-registration/registration.css`) y un organismo
+ * (`app-registration-help`), y el alta de profesional es `register-practitioner`,
  * con su propia ruta.
  *
  * ## Por qué va por el motor
@@ -458,6 +483,18 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * municipio, además, trae su propio estado de «no cargó, reintentá», que un
  * `select` genérico no tiene dónde poner.
  */
+const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
+  ['01', 'CH'],
+  ['02', 'LP'],
+  ['03', 'CB'],
+  ['04', 'OR'],
+  ['05', 'PT'],
+  ['06', 'TJ'],
+  ['07', 'SC'],
+  ['08', 'BE'],
+  ['09', 'PA'],
+]);
+
 @Component({
   selector: 'app-register-patient',
   imports: [
@@ -471,20 +508,118 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     ReferenceCombobox,
-    RegistroAyuda,
+    RegistrationHelp,
     AppMap,
     FormField,
+    Select,
     AppInput,
   ],
   templateUrl: './register-patient.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-patient.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-patient.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
+
+  readonly STORAGE_KEY = 'alovida.registro-paciente.borrador';
+  readonly pasoGuardado = signal<number>(0);
+  readonly ocupacionesPersonalizadas = signal<readonly (SelectOption<string> & { code: string })[]>([]);
+
+  readonly departamentosAmbulancia = DEPARTAMENTOS_BOLIVIA.map((department) => ({
+    value: department.code,
+    label: department.name,
+  }));
+
+  /**
+   * Departamento detectado automáticamente a partir de las preguntas anteriores:
+   * 1) Municipio de residencia (elegido en el paso 2 de residencia).
+   * 2) O departamento de emisión del documento (paso 1 de documento).
+   */
+  readonly departamentoDetectado = computed<string | null>(() => {
+    const municipio =
+      this.municipioPaciente() ??
+      this.formPaciente.controls.residenceMunicipalityConceptId.value;
+    const ramas = this.ramasMunicipios();
+    if (municipio) {
+      if (ramas.length > 0) {
+        for (const rama of ramas) {
+          if (
+            rama.municipios.some(
+              (m) =>
+                m.conceptId === municipio ||
+                m.ine === municipio ||
+                m.nombre.toLowerCase() === municipio.toLowerCase(),
+            )
+          ) {
+            return rama.sigla;
+          }
+        }
+      }
+      if (municipio.length >= 2) {
+        const prefijo = municipio.slice(0, 2);
+        const sigla = SIGLA_POR_PREFIJO_INE.get(prefijo);
+        if (sigla) return sigla;
+      }
+    }
+
+    const emisor = this.formPaciente.controls.issuerAdministrativeAreaConceptId.value;
+    if (emisor) {
+      if (ramas.length > 0) {
+        const rama = ramas.find(
+          (r) =>
+            r.conceptId === emisor ||
+            r.sigla.toUpperCase() === emisor.toUpperCase() ||
+            r.nombre.toLowerCase() === emisor.toLowerCase(),
+        );
+        if (rama) return rama.sigla;
+      }
+      if (emisor.length === 2 && SIGLA_POR_PREFIJO_INE.has(emisor)) {
+        return SIGLA_POR_PREFIJO_INE.get(emisor)!;
+      }
+      const mayusc = emisor.toUpperCase();
+      if (['CH', 'LP', 'CB', 'OR', 'PT', 'PO', 'TJ', 'SC', 'BE', 'PA', 'PD'].includes(mayusc)) {
+        return mayusc;
+      }
+      const deptSlug = DEPARTAMENTOS_BOLIVIA.find(
+        (d) => d.code === emisor || d.name.toLowerCase() === emisor.toLowerCase(),
+      );
+      if (deptSlug) return deptSlug.code;
+    }
+
+    return this.formPaciente.controls.trustedAmbulanceDepartment.value ?? null;
+  });
+
+  opcionesDeAmbulancia() {
+    const department = this.departamentoDetectado();
+    return ambulancesForDepartment(department).map((service) => ({
+      value: service.id,
+      label: service.name,
+      description: `${service.scope} · ${service.phone}`,
+    }));
+  }
+
+  elegirDepartamentoAmbulancia(departmentCode: string | null): void {
+    const anterior = this.formPaciente.controls.trustedAmbulanceService.value;
+    this.formPaciente.controls.trustedAmbulanceDepartment.setValue(departmentCode);
+    this.formPaciente.controls.trustedAmbulanceService.setValue(null);
+    if (anterior) {
+      this.formPaciente.controls.trustedAmbulanceName.setValue('');
+      this.formPaciente.controls.trustedAmbulancePhone.setValue('');
+    }
+  }
+
+  elegirServicioAmbulancia(serviceId: string | null): void {
+    this.formPaciente.controls.trustedAmbulanceService.setValue(serviceId);
+    const service = AMBULANCE_DIRECTORY_SEED.find((entry) => entry.id === serviceId);
+    if (!service) return;
+    this.formPaciente.controls.trustedAmbulanceName.setValue(service.name);
+    this.formPaciente.controls.trustedAmbulancePhone.setValue(service.phone);
+  }
 
   readonly formPaciente = new FormGroup(
     {
@@ -528,7 +663,7 @@ export class RegisterPatient {
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
         nonNullable: true,
-        validators: [...validadoresDeContrasena],
+        validators: [...passwordValidators],
       }),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
@@ -610,6 +745,22 @@ export class RegisterPatient {
       // Sin parentesco declarado la API escribe «tutor o representante legal»,
       // que es lo que escribía siempre.
       guardianRelationshipConceptId: new FormControl<string | null>(null),
+      // La ambulancia de confianza (propietario, 2026-10-08). NO viaja al servidor —el modelo no
+      // tiene dónde guardarla—: se guarda en este dispositivo al registrarse (`TrustedAmbulanceStore`).
+      trustedAmbulanceName: new FormControl('', { nonNullable: true }),
+      trustedAmbulancePhone: new FormControl('', {
+        nonNullable: true,
+        validators: [
+          (control) =>
+            isSeededAmbulancePhone(String(control.value ?? ''))
+              ? null
+              : telefonoCompleto(control),
+        ],
+      }),
+      // Filtros locales del seed: no contienen información de paciente y no
+      // viajan a la API. Nombre y teléfono se guardan sólo en este equipo.
+      trustedAmbulanceDepartment: new FormControl<string | null>(null),
+      trustedAmbulanceService: new FormControl<string | null>(null),
       // Los seguros declarados: el valor es el **plan**, no la compañía.
       privateInsurancePlanId: new FormControl<string | null>(null),
       publicInsurancePlanId: new FormControl<string | null>(null),
@@ -808,7 +959,7 @@ export class RegisterPatient {
   readonly errorDeMunicipio = computed<string>(() => {
     const control = this.formPaciente.controls.residenceMunicipalityConceptId;
     void this.municipioPaciente();
-    return control.touched && control.invalid ? 'Elegí tu ciudad o municipio.' : '';
+    return control.touched && control.invalid ? 'Elija su ciudad o municipio.' : '';
   });
 
   /**
@@ -854,7 +1005,7 @@ export class RegisterPatient {
    * Vacío mientras no haya punto: el mapa acepta la lista vacía y se queda en
    * su vista por defecto, que es lo que corresponde antes de pedir nada.
    */
-  readonly pinesDomicilio = computed<readonly PinMapa[]>(() => {
+  readonly pinesDomicilio = computed<readonly PinMap[]>(() => {
     const punto = this.gpsDomicilio();
     if (punto === null) return [];
     return [
@@ -863,10 +1014,10 @@ export class RegisterPatient {
         lat: punto.lat,
         lng: punto.lng,
         titulo: this.direccionConfirmada()
-          ? 'Tu dirección'
+          ? 'Su dirección'
           : this.gpsDomicilioDelNavegador()
-            ? 'Acá te encontramos'
-            : 'El punto que marcaste',
+            ? 'Acá le encontramos'
+            : 'El punto que marcó',
       },
     ];
   });
@@ -910,7 +1061,7 @@ export class RegisterPatient {
     () => this.gpsTrabajo() !== null || this.marcandoTrabajo(),
   );
 
-  readonly pinesTrabajo = computed<readonly PinMapa[]>(() => {
+  readonly pinesTrabajo = computed<readonly PinMap[]>(() => {
     const punto = this.gpsTrabajo();
     if (punto === null) return [];
     return [
@@ -919,10 +1070,10 @@ export class RegisterPatient {
         lat: punto.lat,
         lng: punto.lng,
         titulo: this.direccionTrabajoConfirmada()
-          ? 'Tu lugar de trabajo'
+          ? 'Su lugar de trabajo'
           : this.gpsTrabajoDelNavegador()
-            ? 'Acá te encontramos'
-            : 'El punto que marcaste',
+            ? 'Acá le encontramos'
+            : 'El punto que marcó',
       },
     ];
   });
@@ -933,16 +1084,10 @@ export class RegisterPatient {
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
 
-  /** El aviso del punto capturado sin confirmar. Ver la constante. */
-  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
-
-  /** La pista de que tocar el mapa corre el pin. Ver la constante. */
-  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
-
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
    *
-   * Es la misma regla que `app-ubicacion-picker` avisa con `puntoElegido`,
+   * Es la misma regla que `app-map-location-picker` avisa con `puntoElegido`,
    * aplicada a las dos copias en línea de esta pantalla: tocar el mapa deja
    * «Línea de dirección 1» en blanco y lo dice al lado. El aviso acompaña al
    * campo vacío, no a la persona: en cuanto vuelve a escribir, se va solo.
@@ -963,7 +1108,7 @@ export class RegisterPatient {
   readonly trabajoPorReescribir = computed(
     () => this.trabajoVaciadoPorElMapa() && this.trabajoEscrito().trim() === '',
   );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -1074,323 +1219,295 @@ export class RegisterPatient {
    * la función la que hace cumplir el tope, y declararlo a mano sería confiar en
    * que quien agregue el campo trece se acuerde de contar.
    */
-  readonly paginasPaciente = computed<readonly PaginaDeFormulario[]>(() =>
-    paginarCampos([
-      {
-        titulo: '¿Cómo te llamás?',
-        clave: 'name',
-        icon: 'people',
-        hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
-        // Nombres y apellidos van juntos en una página, como pide el registro
-        // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
-        // `key` de `name`, para que el motor siga validando el obligatorio y
-        // sepa a qué página volver al enviar— porque son cuatro casillas y el
-        // tope del motor es de cuatro campos por página.
-        campos: [
-          {
-            key: 'name',
-            label: '',
-            control: 'custom',
-            mensajeDeError: 'Ingresá tu nombre.',
-          },
-          {
-            key: 'lastName',
-            label: 'Apellido paterno',
-            description: 'El apellido de tu papá, como figura en tu documento.',
-            control: 'text',
-            required: true,
-            autocomplete: 'family-name',
-            placeholder: 'Mamani',
-            testId: 'registro-apellido-paterno',
-            icono: 'people',
-            ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu apellido paterno.',
-          },
-          {
-            key: 'motherLastName',
-            label: 'Apellido materno',
-            hint: 'Si no llevás, dejalo vacío.',
-            description: 'El apellido de tu mamá, tal como aparece en tu documento.',
-            control: 'text',
-            autocomplete: 'family-name',
-            placeholder: 'Quispe',
-            testId: 'registro-apellido-materno',
-            icono: 'people',
-            ancho: 'mitad',
-          },
-        ],
-      },
-      {
-        titulo: 'Tu documento de identidad',
-        clave: 'document',
-        icon: 'patients',
-        hint: 'Con este número vas a iniciar sesión.',
-        campos: [
-          {
-            key: 'nationalId',
-            label: 'Documento de identidad',
-            hint: 'Con este número vas a iniciar sesión.',
-            description:
-              'El número de tu cédula, sin el complemento: el departamento que la emitió va en la casilla de al lado.',
-            control: 'text',
-            required: true,
-            // Es el identificador con el que va a entrar: `username`.
-            autocomplete: 'username',
-            placeholder: '1234567',
-            testId: 'registro-documento',
-            icono: 'patients',
-            // Medio renglón: el número y su expedición son UN documento
-            // escrito en dos casillas. Ver `campoDepartamentoEmisor`.
-            ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu documento: letras, números, punto y guion.',
-          },
-          // Pegado al documento porque es un dato DE ese documento: la
-          // terminación «SC», «LP»… que distingue dos cédulas homónimas. Y en
-          // la MISMA LÍNEA, no debajo: separados en dos renglones se leían como
-          // dos preguntas distintas, y la segunda se contestaba mal o no se
-          // contestaba.
-          this.campoDepartamentoEmisor('registro-departamento-ci'),
-        ],
-      },
-      {
-        titulo: 'Contanos un poco sobre vos',
-        clave: 'profile',
-        icon: 'stethoscope',
-        hint: 'La fecha y el sexo deciden dosis, valores de laboratorio y controles por edad.',
-        campos: [
-          {
-            key: 'birthDate',
-            label: 'Fecha de nacimiento',
-            // La edad sale sola de la fecha —el registro del cliente la pide
-            // así (módulo Paciente §1.5)— y se dice acá mismo, debajo del
-            // campo: es la forma de que quien la escribió vea si se equivocó de
-            // año antes de seguir.
-            hint: this.edadEnPalabras() ?? 'Sirve para calcular dosis y valores de referencia.',
-            description:
-              'Con ella calculamos tu edad, y con la edad las dosis, los valores de referencia del laboratorio y qué controles te tocan.',
-            control: 'date',
-            required: true,
-            maxDate: 'today',
-            minDate: new Date(1900, 0, 1),
-            mensajeDeError: 'Ingresá tu fecha de nacimiento.',
-          },
-          {
-            key: 'sexAtBirth',
-            label: 'Sexo',
-            hint: 'Dato clínico: cambia las dosis, los valores de referencia y los tamizajes.',
-            description:
-              'Es el sexo que registra tu documento de identidad. Lo usamos como dato clínico, no para dirigirnos a vos.',
-            control: 'select',
-            required: true,
-            options: OPCIONES_SEXO,
-            placeholder: 'Elegí una opción',
-            testId: 'registro-genero',
-            icono: 'heart',
-            mensajeDeError: 'Elegí una opción.',
-          },
-          this.campoOcupacion(),
-          ...this.campoOtraOcupacion(),
-        ],
-      },
-      {
-        titulo: '¿Cómo te contactamos?',
-        clave: 'contact',
-        icon: 'phone',
-        hint: 'Tu celular, y a quién avisamos si hace falta.',
-        campos: [
-          {
-            key: 'phone',
-            label: 'Tu celular',
-            hint: 'Elegí el país si tu número no es de Bolivia.',
-            description:
-              'Es por donde te avisamos de un turno o de un resultado. No se muestra a nadie más.',
-            // `tel` lo dibuja `app-phone-input`: ver el motor.
-            control: 'tel',
-            required: true,
-            autocomplete: 'tel',
-            testId: 'registro-telefono',
-            mensajeDeError: 'Ingresá un número completo para el país elegido.',
-          },
-          {
-            key: 'guardianName',
-            label: 'Contacto de emergencia (opcional)',
-            hint: 'A quién llamamos si pasa algo, o quién te acompaña si sos menor.',
-            description: 'A quién llamamos si te pasa algo y no podés responder vos.',
-            control: 'text',
-            placeholder: 'Rosa Quispe',
-            testId: 'registro-tutor-nombre',
-            icono: 'people',
-            ancho: 'mitad',
-          },
-          {
-            key: 'guardianPhone',
-            label: 'Su teléfono (opcional)',
-            hint: 'Elegí el país si el número no es de Bolivia.',
-            description: 'El número al que llamamos a esa persona. Sin su nombre no se guarda.',
-            control: 'tel',
-            testId: 'registro-tutor-telefono',
-            ancho: 'mitad',
-            mensajeDeError: 'Para guardar el teléfono, contanos también su nombre.',
-          },
-          // La «Relación» que el orden pide junto al contacto de emergencia
-          // (AC-03-11). Va la cuarta y última de la página: el tope del motor
-          // son cuatro campos, así que agregar un quinto acá partiría la
-          // pregunta del contacto en dos páginas.
-          this.campoRelacionDelContacto(),
-        ],
-      },
-      {
-        titulo: '¿Dónde vivís?',
-        clave: 'residence',
-        icon: 'home',
-        hint: 'Tu localidad hace falta; la calle y el punto del mapa son opcionales.',
-        campos: [
-          {
-            // El mapa de departamentos y el select de ciudad son UN campo: son
-            // un solo dato —la localidad— con dos formas de llegar a él. El
-            // rótulo va vacío porque el propio `app-location-picker` rotula sus
-            // dos partes; con rótulo acá habría dos nombres para lo mismo.
-            key: 'residenceMunicipalityConceptId',
-            label: '',
-            control: 'custom',
-            required: true,
-            mensajeDeError: 'Elegí tu departamento en el mapa y después tu ciudad.',
-          },
-          {
-            key: 'homeAddressLines',
-            label: 'Línea de dirección 1 (opcional)',
-            hint: 'Como se lo dirías a quien te trae algo a casa.',
-            description:
-              'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
-            control: 'text',
-            autocomplete: 'street-address',
-            placeholder: 'Av. Banzer, 3er anillo #42',
-            testId: 'registro-domicilio-calle',
-            icono: 'route',
-          },
-          {
-            key: 'gpsDomicilio',
-            label: 'Ubicación GPS (opcional)',
-            hint: 'Si la compartís, el delivery llega sin llamarte.',
-            description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
-            control: 'custom',
-          },
-        ],
-      },
-      {
-        titulo: '¿Dónde trabajás?',
-        clave: 'work',
-        icon: 'briefcase',
-        hint: 'Opcional. Con el nombre de la empresa alcanza.',
-        campos: [this.campoEmpresa(), ...this.campoOtraEmpresa()],
-      },
-      {
-        titulo: 'El lugar donde trabajás',
-        clave: 'work-location',
-        icon: 'building',
-        hint: 'Opcional, y va aparte de la empresa: son dos preguntas distintas.',
-        campos: [
-          {
-            key: 'workMunicipalityConceptId',
-            label: '',
-            control: 'custom',
-          },
-          {
-            key: 'workAddressLines',
-            label: 'Línea de dirección 1 (opcional)',
-            hint: 'Calle y número de tu trabajo.',
-            description: 'Sirve para ubicar tu lugar de trabajo cuando la empresa tiene varias sedes.',
-            control: 'text',
-            placeholder: 'Calle Libertad #120',
-            testId: 'registration-work-address',
-            icono: 'route',
-          },
-          {
-            key: 'gpsTrabajo',
-            label: 'Ubicación GPS (opcional)',
-            hint: 'El punto exacto de tu lugar de trabajo.',
-            description: 'El punto exacto de tu trabajo en el mapa. Se confirma aparte del de tu casa.',
-            control: 'custom',
-          },
-        ],
-      },
-      {
-        titulo: 'Tu acceso',
-        clave: 'access',
-        icon: 'lock',
-        hint: 'Entrás con tu documento; el correo es por donde recuperás la cuenta.',
-        campos: [
-          {
-            key: 'email',
-            label: 'Correo electrónico',
-            hint: 'Por acá recuperás tu cuenta y te avisamos de tus turnos.',
-            description:
-              'No es con lo que entrás —eso es tu documento—, pero sin él no hay forma de devolverte el acceso si perdés la contraseña.',
-            // `email` y no `username`: acá el correo NO es con lo que entra.
-            control: 'email',
-            required: true,
-            autocomplete: 'email',
-            placeholder: 'correo@ejemplo.com',
-            testId: 'registro-correo',
-            icono: 'mail',
-            mensajeDeError: 'Ingresá un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            description:
-              'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca te la vamos a pedir por teléfono ni por correo.',
-            control: 'password',
-            required: true,
-            autocomplete: 'new-password',
-            placeholder: 'Tu contraseña',
-            testId: 'registro-password',
-            icono: 'lock',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
-          },
-        ],
-      },
-      {
-        titulo: 'Tu seguro de salud',
-        clave: 'insurance',
-        icon: 'umbrella',
-        hint: 'Opcional. Si tenés los dos, podés declararlos.',
-        campos: [this.campoSeguro('privado'), this.campoSeguro('publico')],
-      },
-      {
-        titulo: 'Datos de facturación',
-        clave: 'billing',
-        icon: 'billing',
-        hint: 'Opcional. Sólo para las facturas que recibís.',
-        campos: [
-          {
-            key: 'billingTaxId',
-            label: 'NIT (opcional)',
-            hint: 'Sólo el número.',
-            description:
-              'Lo usamos cuando hay que emitir una factura. Si no lo tenés a mano, dejalo vacío.',
-            control: 'text',
-            placeholder: '1023456789',
-            testId: 'registro-nit',
-            icono: 'billing',
-            mensajeDeError: 'El NIT es sólo números.',
-          },
-          {
-            key: 'billingLegalName',
-            label: 'Nombre o Razón Social (opcional)',
-            hint: 'A nombre de quién se emite la factura.',
-            description:
-              'Si declarás NIT, ingresá el nombre o razón social correspondiente.',
-            control: 'text',
-            placeholder: 'Carlos Roca Aguilera',
-            testId: 'registro-razon-social',
-            icono: 'billing',
-          },
-        ],
-      },
-    ]),
-  );
+  readonly paginasPaciente = computed<readonly PaginaDeFormulario[]>(() => [
+    {
+      titulo: 'Identidad y ocupación',
+      clave: 'identity',
+      icon: 'patients',
+      hint: 'Como figura en su documento. Si no tiene algún dato opcional, déjelo vacío.',
+      campos: [
+        {
+          key: 'name',
+          label: '',
+          control: 'custom',
+          mensajeDeError: 'Ingrese su nombre.',
+        },
+        {
+          key: 'lastName',
+          label: 'Apellido paterno',
+          description: 'El apellido de su papá, como figura en su documento.',
+          control: 'text',
+          required: true,
+          autocomplete: 'family-name',
+          placeholder: 'Mamani',
+          testId: 'registro-apellido-paterno',
+          icono: 'people',
+          ancho: 'mitad',
+          mensajeDeError: 'Ingrese su apellido paterno.',
+        },
+        {
+          key: 'motherLastName',
+          label: 'Apellido materno',
+          hint: 'Si no lleva, déjelo vacío.',
+          description: 'El apellido de su mamá, tal como aparece en su documento.',
+          control: 'text',
+          autocomplete: 'family-name',
+          placeholder: 'Quispe',
+          testId: 'registro-apellido-materno',
+          icono: 'people',
+          ancho: 'mitad',
+        },
+        {
+          key: 'nationalId',
+          label: 'Documento de identidad',
+          hint: 'Con este número va a iniciar sesión.',
+          description:
+            'El número de su cédula, sin el complemento: el departamento que la emitió va en la casilla de al lado.',
+          control: 'text',
+          required: true,
+          autocomplete: 'username',
+          placeholder: '1234567',
+          testId: 'registro-documento',
+          icono: 'patients',
+          ancho: 'mitad',
+          mensajeDeError: 'Ingrese su documento: letras, números, punto y guion.',
+        },
+        this.campoDepartamentoEmisor('registro-departamento-ci'),
+        {
+          key: 'birthDate',
+          label: 'Fecha de nacimiento',
+          hint: this.edadEnPalabras() ?? 'Sirve para calcular dosis y valores de referencia.',
+          description:
+            'Con ella calculamos su edad, y con la edad las dosis, los valores de referencia del laboratorio y qué controles le tocan.',
+          control: 'date',
+          required: true,
+          maxDate: 'today',
+          minDate: new Date(1900, 0, 1),
+          mensajeDeError: 'Ingrese su fecha de nacimiento.',
+          ancho: 'mitad',
+        },
+        {
+          key: 'sexAtBirth',
+          label: 'Sexo',
+          hint: 'Dato clínico: cambia las dosis, los valores de referencia y los tamizajes.',
+          description:
+            'Es el sexo que registra su documento de identidad. Lo usamos como dato clínico, no para dirigirnos a usted.',
+          control: 'select',
+          required: true,
+          options: OPCIONES_SEXO,
+          placeholder: 'Elija una opción',
+          testId: 'registro-genero',
+          icono: 'heart',
+          ancho: 'mitad',
+          mensajeDeError: 'Elija una opción.',
+        },
+        this.campoOcupacion(),
+        ...this.campoOtraOcupacion(),
+      ],
+    },
+    {
+      titulo: 'Lugares donde vive',
+      clave: 'residence',
+      icon: 'home',
+      hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+      campos: [
+        {
+          key: 'residenceMunicipalityConceptId',
+          label: '',
+          control: 'custom',
+          required: true,
+          mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
+        },
+        {
+          key: 'homeAddressLines',
+          label: 'Línea de dirección 1 (opcional)',
+          hint: 'Como la escribiría en un sobre.',
+          description:
+            'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
+          control: 'text',
+          autocomplete: 'street-address',
+          placeholder: 'Av. Banzer, 3er anillo #42',
+          testId: 'registro-domicilio-calle',
+          icono: 'route',
+        },
+        {
+          key: 'gpsDomicilio',
+          label: 'Ubicación GPS (opcional)',
+          hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
+          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
+          control: 'custom',
+        },
+      ],
+    },
+    {
+      titulo: 'Datos de contacto y emergencia',
+      clave: 'contact',
+      icon: 'phone',
+      hint: 'Su celular, a quién avisamos si hace falta y su ambulancia de confianza.',
+      campos: [
+        {
+          key: 'phone',
+          label: 'Su celular',
+          hint: 'Elija el país si su número no es de Bolivia.',
+          description:
+            'Es por donde le avisamos de una cita o de un resultado. No se muestra a nadie más.',
+          control: 'tel',
+          required: true,
+          autocomplete: 'tel',
+          testId: 'registro-telefono',
+          mensajeDeError: 'Ingrese un número completo para el país elegido.',
+        },
+        {
+          key: 'guardianName',
+          label: 'Contacto de emergencia (opcional)',
+          hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
+          description: 'A quién llamamos si le pasa algo y no puede responder usted.',
+          control: 'text',
+          placeholder: 'Rosa Quispe',
+          testId: 'registro-tutor-nombre',
+          icono: 'people',
+          ancho: 'mitad',
+        },
+        {
+          key: 'guardianPhone',
+          label: 'Su teléfono (opcional)',
+          hint: 'Elija el país si el número no es de Bolivia.',
+          description: 'El número al que llamamos a esa persona. Sin su nombre no se guarda.',
+          control: 'tel',
+          testId: 'registro-tutor-telefono',
+          ancho: 'mitad',
+          mensajeDeError: 'Para guardar el teléfono, cuéntenos también su nombre.',
+        },
+        this.campoRelacionDelContacto(),
+        {
+          key: 'trustedAmbulanceService',
+          label: 'Servicio de ambulancia',
+          hint: 'Al elegir uno, se completan nombre y teléfono. Puede editarlos.',
+          description: 'El directorio muestra el alcance y la fuente de cada línea.',
+          control: 'custom',
+          icono: 'hospital',
+        },
+        {
+          key: 'trustedAmbulanceName',
+          label: 'Nombre de la ambulancia (opcional)',
+          hint: 'Puede editarlo o escribir la ambulancia de su seguro o clínica.',
+          description: 'Se guarda sólo en este dispositivo.',
+          control: 'text',
+          placeholder: 'Ambulancias de mi seguro',
+          testId: 'registro-ambulancia-nombre',
+          icono: 'heart',
+          ancho: 'mitad',
+        },
+        {
+          key: 'trustedAmbulancePhone',
+          label: 'Teléfono de la ambulancia (opcional)',
+          hint: 'Elija el país si el número no es de Bolivia.',
+          description: 'Con este número, el botón de emergencia llama sin mostrar la lista de números.',
+          control: 'tel',
+          testId: 'registro-ambulancia-telefono',
+          ancho: 'mitad',
+          mensajeDeError: 'Ingrese el número completo para el país elegido.',
+        },
+      ],
+    },
+    {
+      titulo: 'Empresa y lugar de trabajo',
+      clave: 'work',
+      icon: 'briefcase',
+      hint: 'Opcional. Con el nombre de la empresa o su lugar de trabajo alcanza.',
+      campos: [
+        this.campoEmpresa(),
+        ...this.campoOtraEmpresa(),
+        {
+          key: 'workMunicipalityConceptId',
+          label: '',
+          control: 'custom',
+        },
+        {
+          key: 'workAddressLines',
+          label: 'Línea de dirección 1 (opcional)',
+          hint: 'Calle y número de su trabajo.',
+          description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
+          control: 'text',
+          placeholder: 'Calle Libertad #120',
+          testId: 'registration-work-address',
+          icono: 'route',
+        },
+        {
+          key: 'gpsTrabajo',
+          label: 'Ubicación GPS (opcional)',
+          hint: 'El punto exacto de su lugar de trabajo.',
+          description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
+          control: 'custom',
+        },
+      ],
+    },
+    {
+      titulo: 'Resto de datos (acceso, seguros y facturación)',
+      clave: 'misc',
+      icon: 'lock',
+      hint: 'Su contraseña de acceso, seguros de salud y datos para facturación.',
+      campos: [
+        {
+          key: 'email',
+          label: 'Correo electrónico',
+          hint: 'Por acá recupera su cuenta y le avisamos de sus turnos.',
+          description:
+            'No es con lo que entra —eso es su documento—, pero sin él no hay forma de devolverle el acceso si pierde la contraseña.',
+          control: 'email',
+          required: true,
+          autocomplete: 'email',
+          placeholder: 'correo@ejemplo.com',
+          testId: 'registro-correo',
+          icono: 'mail',
+          mensajeDeError: 'Ingrese un correo válido.',
+          ancho: 'mitad',
+        },
+        {
+          key: 'password',
+          label: 'Contraseña',
+          hint: 'Al menos 8 caracteres.',
+          description:
+            'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
+          control: 'password',
+          required: true,
+          autocomplete: 'new-password',
+          placeholder: 'Su contraseña',
+          testId: 'registro-password',
+          icono: 'lock',
+          mensajeDeError: MESSAGE_SHORT_PASSWORD,
+          ancho: 'mitad',
+        },
+        this.campoSeguro('privado'),
+        this.campoSeguro('publico'),
+        {
+          key: 'billingTaxId',
+          label: 'NIT (opcional)',
+          hint: 'Sólo el número.',
+          description:
+            'Lo usamos cuando hay que emitir una factura. Si no lo tiene a mano, déjelo vacío.',
+          control: 'text',
+          placeholder: '1023456789',
+          testId: 'registro-nit',
+          icono: 'billing',
+          ancho: 'mitad',
+          mensajeDeError: 'El NIT es sólo números.',
+        },
+        {
+          key: 'billingLegalName',
+          label: 'Nombre o Razón Social (opcional)',
+          hint: 'A nombre de quién se emite la factura.',
+          description:
+            'Si declara NIT, ingrese el nombre o razón social correspondiente.',
+          control: 'text',
+          placeholder: 'Carlos Roca Aguilera',
+          testId: 'registro-razon-social',
+          icono: 'billing',
+          ancho: 'mitad',
+        },
+      ],
+    },
+  ]);
 
   /**
    * El campo del departamento que emitió el documento.
@@ -1409,10 +1526,10 @@ export class RegisterPatient {
       key: 'issuerAdministrativeAreaConceptId',
       label: 'Departamento de emisión',
       required: true,
-      hint: 'El «SC», «LP»... de tu cédula.',
+      hint: 'El «SC», «LP»... de su cédula.',
       description:
-        'El departamento que emitió tu cédula: distingue dos documentos con el mismo número.',
-      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
+        'El departamento que emitió su cédula: distingue dos documentos con el mismo número.',
+      mensajeDeError: 'Elija el departamento que expidió su cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -1425,7 +1542,7 @@ export class RegisterPatient {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Elegí el departamento',
+          placeholder: 'Elija el departamento',
           testId,
           icono: 'pin',
           // La otra mitad del renglón del documento. Ver la página que lo usa.
@@ -1462,8 +1579,8 @@ export class RegisterPatient {
   private campoRelacionDelContacto(): CampoDeFormulario {
     const base = {
       key: 'guardianRelationshipConceptId',
-      label: 'Su relación con vos (opcional)',
-      hint: 'Qué es tuyo el contacto de emergencia: madre, pareja, una amistad…',
+      label: 'Su relación con usted (opcional)',
+      hint: 'Qué es suyo el contacto de emergencia: madre, pareja, una amistad…',
       description: 'Sirve para saber cómo presentarnos cuando llamemos a esa persona.',
     } as const;
 
@@ -1495,8 +1612,8 @@ export class RegisterPatient {
     const base = {
       key: 'occupationConceptId',
       label: 'Ocupación (opcional)',
-      hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
-      description: 'Tu oficio le dice a tu médico qué riesgos son propios de tu trabajo.',
+      hint: 'En qué trabaja. Ayuda a su médico con los riesgos propios de cada oficio.',
+      description: 'Su oficio le dice a su médico qué riesgos son propios de su trabajo.',
     } as const;
 
     // Siempre `custom`: son cientos de ocupaciones y el registro del cliente
@@ -1534,9 +1651,9 @@ export class RegisterPatient {
     return [
       {
         key: 'occupationFreeText',
-        label: '¿Cuál?',
-        hint: 'Escribí tu oficio como lo dirías vos.',
-        description: 'El oficio que no encontraste en la lista: se guarda tal cual lo escribas.',
+        label: 'Especifique su ocupación',
+        hint: 'Escriba su oficio como lo diría usted.',
+        description: 'El oficio que no encontró en la lista: se guarda tal cual lo escriba.',
         control: 'text',
         placeholder: 'Apicultor',
         testId: 'registro-ocupacion-otra',
@@ -1548,8 +1665,8 @@ export class RegisterPatient {
   private campoEmpresa(): CampoDeFormulario {
     return {
       key: 'workEmployerConceptId',
-      label: 'Empresa donde trabajás (opcional)',
-      hint: 'Buscá el nombre. Si no está, elegí «Otra empresa» y la escribís.',
+      label: 'Empresa donde trabaja (opcional)',
+      hint: 'Busque el nombre. Si no está, elija «Otra empresa» y la escribe.',
       description: 'Sirve para los convenios con empresas y los controles de salud laboral.',
       control: 'custom',
     };
@@ -1568,7 +1685,7 @@ export class RegisterPatient {
       {
         key: 'workEmployerFreeText',
         label: '¿En cuál?',
-        hint: 'Escribí el nombre como lo conocés.',
+        hint: 'Escriba el nombre como lo conoce.',
         description: 'El nombre de la empresa que no está en la lista, como figura en su cartel.',
         control: 'text',
         placeholder: 'Ferretería San Martín',
@@ -1594,15 +1711,15 @@ export class RegisterPatient {
       ? {
           key: 'privateInsurancePlanId',
           label: 'Seguro privado (opcional)',
-          hint: 'La compañía con la que tenés tu póliza de salud.',
-          description: 'Con tu póliza declarada, la cobertura se aplica cuando reservás o comprás.',
+          hint: 'La compañía con la que tiene su póliza de salud.',
+          description: 'Con su póliza declarada, la cobertura se aplica cuando reserva o compra.',
         }
       : {
           key: 'publicInsurancePlanId',
           label: 'Seguro público (opcional)',
-          hint: 'La caja o el seguro estatal al que estás afiliado.',
+          hint: 'La caja o el seguro estatal al que está afiliado.',
           description:
-            'La caja o el seguro del Estado al que aportás por tu trabajo o el de tu familia.',
+            'La caja o el seguro del Estado al que aporta por su trabajo o el de su familia.',
         };
 
     return this.catalogoAseguradorasCaido()
@@ -1700,7 +1817,7 @@ export class RegisterPatient {
     if (!cumplioEsteAno) edad -= 1;
 
     if (edad < 0 || edad > 130) return null;
-    return edad === 1 ? 'Tenés 1 año.' : `Tenés ${edad} años.`;
+    return edad === 1 ? 'Tiene 1 año.' : `Tiene ${edad} años.`;
   });
 
   /**
@@ -2105,7 +2222,7 @@ export class RegisterPatient {
    * correo», y mientras las dos vivían en el mismo componente esto era un
    * `computed` sobre el tipo de cuenta.
    */
-  readonly accessHint = 'tu documento';
+  readonly accessHint = 'su documento';
 
   /**
    * La clave de la página que se está contestando, tal como la avisa el motor.
@@ -2118,13 +2235,110 @@ export class RegisterPatient {
   readonly claveVisible = signal('');
 
   /** Las tarjetas del costado: por qué te pedimos lo de ESTE paso. */
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA_PACIENTE[this.claveVisible()] ?? [],
   );
 
+  /** Guarda el borrador del avance del formulario en caché (localStorage). */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginasPaciente();
+      const clave = this.claveVisible();
+      const indice = paginas.findIndex((p) => p.clave === clave);
+      const raw = this.formPaciente.getRawValue();
+      const borrador = {
+        version: 1,
+        pasoIndice: Math.max(0, indice),
+        pasoClave: clave,
+        formValores: {
+          ...raw,
+          birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
+        },
+        nombresExtra: this.nombresExtra(),
+        empresaSeleccionada: this.empresaSeleccionada(),
+        ocupacionSeleccionada: this.ocupacionSeleccionada(),
+        ocupacionesPersonalizadas: this.ocupacionesPersonalizadas(),
+        gpsDomicilio: this.gpsDomicilio(),
+        direccionConfirmada: this.direccionConfirmada(),
+        gpsTrabajo: this.gpsTrabajo(),
+        direccionTrabajoConfirmada: this.direccionTrabajoConfirmada(),
+        fechaModificacion: new Date().toISOString(),
+      };
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(borrador));
+    } catch {
+      // Ignorar restricciones en almacenamiento local
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const serializado = localStorage.getItem(this.STORAGE_KEY);
+      if (!serializado) return;
+      const datos = JSON.parse(serializado);
+      if (!datos || datos.version !== 1) return;
+
+      if (datos.formValores) {
+        const valores = { ...datos.formValores };
+        if (typeof valores.birthDate === 'string' && valores.birthDate) {
+          const d = new Date(valores.birthDate);
+          if (!Number.isNaN(d.getTime())) {
+            valores.birthDate = d;
+          } else {
+            valores.birthDate = null;
+          }
+        }
+        this.formPaciente.patchValue(valores);
+      }
+
+      if (Array.isArray(datos.nombresExtra)) {
+        this.nombresExtra.set(datos.nombresExtra);
+      }
+      if (datos.empresaSeleccionada !== undefined) {
+        this.empresaSeleccionada.set(datos.empresaSeleccionada);
+      }
+      if (datos.ocupacionSeleccionada !== undefined) {
+        this.ocupacionSeleccionada.set(datos.ocupacionSeleccionada);
+      }
+      if (Array.isArray(datos.ocupacionesPersonalizadas)) {
+        this.ocupacionesPersonalizadas.set(datos.ocupacionesPersonalizadas);
+      }
+      if (datos.gpsDomicilio !== undefined) {
+        this.gpsDomicilio.set(datos.gpsDomicilio);
+      }
+      if (typeof datos.direccionConfirmada === 'boolean') {
+        this.direccionConfirmada.set(datos.direccionConfirmada);
+      }
+      if (datos.gpsTrabajo !== undefined) {
+        this.gpsTrabajo.set(datos.gpsTrabajo);
+      }
+      if (typeof datos.direccionTrabajoConfirmada === 'boolean') {
+        this.direccionTrabajoConfirmada.set(datos.direccionTrabajoConfirmada);
+      }
+      if (typeof datos.pasoIndice === 'number' && datos.pasoIndice >= 0) {
+        this.pasoGuardado.set(datos.pasoIndice);
+      }
+    } catch {
+      // Ignorar si el borrador estaba corrupto
+    }
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      localStorage.removeItem(this.STORAGE_KEY);
+    } catch {
+      // Ignorar
+    }
+  }
+
   /** Lo que el motor avisa al cambiar de página. */
-  protected recordarPaso(pagina: PaginaDeFormulario): void {
+  recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   readonly errorMessage = computed<string | null>(() => {
@@ -2133,7 +2347,7 @@ export class RegisterPatient {
       return state.issues[0]?.message ?? null;
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -2142,6 +2356,8 @@ export class RegisterPatient {
   });
 
   constructor() {
+    this.restaurarBorrador();
+
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarOcupaciones();
@@ -2149,14 +2365,19 @@ export class RegisterPatient {
     this.cargarAseguradoras();
     this.cargarParentescos();
 
-    // El aviso de un envío fallido se va en cuanto se corrige algo.
-    //
-    // Antes lo limpiaba el «Siguiente» de esta pantalla, que ya no es suyo: el
-    // motor lleva su propio avance y no sabe nada de errores de la API. Se ata
-    // entonces a lo único que de verdad significa «estoy corrigiendo» —que el
-    // formulario cambie—, que además cubre el caso que el avance no cubría:
-    // corregir en la misma página donde falló el envío.
     this.limpiarElErrorAlCorregir(this.formPaciente);
+
+    this.formPaciente.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
+
+    this.formPaciente.controls.occupationFreeText.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((valor) => {
+        if (this.ocupacionEsOtra() && valor && valor.trim().length >= 3) {
+          this.registrarNuevaOcupacion(valor);
+        }
+      });
   }
 
   /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide contexto de inyección. */
@@ -2218,28 +2439,122 @@ export class RegisterPatient {
   /**
    * Trae el catálogo de ocupaciones de Bolivia, para «¿en qué trabajás?».
    *
-   * Mismo criterio que los departamentos ante un fallo: el campo es opcional y
-   * el alta sigue.
+   * Garantiza que «Otra ocupación» aparezca al principio de la lista para fácil acceso
+   * y combina las ocupaciones ingresadas dinámicamente por el usuario.
    */
   protected cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
-        // El `code` viaja por lo mismo que en las empresas: es lo que
-        // identifica a la salida «Otra ocupación» sin atarse al texto visible.
-        this.opcionesOcupacion.set(
-          opciones.map((opcion) => ({
-            value: opcion.conceptId,
-            label: opcion.display,
-            code: opcion.code,
-          })),
+        const mapeadas = opciones.map((opcion) => ({
+          value: opcion.conceptId,
+          label: opcion.display,
+          code: opcion.code,
+        }));
+        // Asegurar que «Otra ocupación» aparezca primero
+        const ordenadas = [...mapeadas];
+        const idxOtra = ordenadas.findIndex(
+          (o) =>
+            o.code === CODIGO_OCUPACION_OTRA ||
+            o.code.toLowerCase().includes('otra') ||
+            o.label.toLowerCase().startsWith('otra'),
         );
+        if (idxOtra > 0) {
+          const [otra] = ordenadas.splice(idxOtra, 1);
+          ordenadas.unshift(otra);
+        }
+        // Incorporar las ocupaciones personalizadas registradas previamente
+        const personalizadas = this.ocupacionesPersonalizadas();
+        const combinadas =
+          personalizadas.length > 0
+            ? [ordenadas[0], ...personalizadas, ...ordenadas.slice(1)]
+            : ordenadas;
+        this.opcionesOcupacion.set(combinadas);
       },
       error: () => {
         this.opcionesOcupacion.set([]);
         this.catalogoOcupacionesCaido.set(true);
       },
     });
+  }
+
+  /** Normaliza texto eliminando acentos y espacios superfluos para cotejar similitudes. */
+  private normalizarParaComparar(cadena: string): string {
+    return cadena
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  /**
+   * Normaliza la ocupación ingresada a Title Case con conectores estándar en minúsculas.
+   */
+  normalizarOcupacion(texto: string): string {
+    const limpio = texto.trim().replace(/\s+/g, ' ');
+    if (!limpio) return '';
+    const conectores = new Set(['de', 'del', 'la', 'el', 'en', 'y', 'o', 'a', 'por', 'con']);
+    return limpio
+      .toLowerCase()
+      .split(' ')
+      .map((palabra, idx) => {
+        if (idx > 0 && conectores.has(palabra)) return palabra;
+        return palabra.charAt(0).toUpperCase() + palabra.slice(1);
+      })
+      .join(' ');
+  }
+
+  /**
+   * Busca si existe una ocupación similar en las opciones activas.
+   */
+  buscarOcupacionSimilar(texto: string): (SelectOption<string> & { code: string }) | null {
+    const buscada = this.normalizarParaComparar(texto);
+    if (!buscada) return null;
+    return (
+      this.opcionesOcupacion().find((opcion) => {
+        if (opcion.code === CODIGO_OCUPACION_OTRA) return false;
+        const candidata = this.normalizarParaComparar(opcion.label);
+        return candidata === buscada || candidata.startsWith(buscada);
+      }) ?? null
+    );
+  }
+
+  /**
+   * Registra una nueva ocupación introducida por la persona:
+   * La normaliza, verifica si ya existe una similar, y si es nueva la añade a la lista seleccionable.
+   */
+  registrarNuevaOcupacion(texto: string): void {
+    const normalizada = this.normalizarOcupacion(texto);
+    if (!normalizada) return;
+
+    const similar = this.buscarOcupacionSimilar(normalizada);
+    if (similar) {
+      return;
+    }
+
+    const comparada = this.normalizarParaComparar(normalizada);
+    const yaExiste = this.opcionesOcupacion().some(
+      (o) => this.normalizarParaComparar(o.label) === comparada,
+    );
+    if (!yaExiste) {
+      const nuevaOpcion = {
+        value: `custom:occupation:${encodeURIComponent(normalizada)}`,
+        label: normalizada,
+        code: 'occupation:bo:CUSTOM',
+      };
+      this.ocupacionesPersonalizadas.update((actuales) => [...actuales, nuevaOpcion]);
+      this.opcionesOcupacion.update((actuales) => {
+        if (actuales.length === 0) return [nuevaOpcion];
+        const idxOtra = actuales.findIndex((o) => o.code === CODIGO_OCUPACION_OTRA);
+        if (idxOtra >= 0) {
+          const otra = actuales[idxOtra];
+          const resto = actuales.filter((_, i) => i !== idxOtra);
+          return [otra, nuevaOpcion, ...resto];
+        }
+        return [nuevaOpcion, ...actuales];
+      });
+      this.guardarBorrador();
+    }
   }
 
   /**
@@ -2290,7 +2605,7 @@ export class RegisterPatient {
 
   /** Reintenta la lectura del catálogo de ocupaciones. Ver `reintentarDepartamentos`. */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 
@@ -2397,8 +2712,11 @@ export class RegisterPatient {
         this.state.set(ready(null));
         this.verificationSent.set(resultado.emailVerificationSent);
         this.registered.set(true);
+        const { trustedAmbulanceName, trustedAmbulancePhone } = this.formPaciente.getRawValue();
+        this.ambulanciaDeConfianza.guardar(trustedAmbulanceName, trustedAmbulancePhone);
+        this.limpiarBorrador();
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'patient')),
     });
   }
 
@@ -2441,7 +2759,11 @@ export class RegisterPatient {
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
     const razonSocial = raw.billingLegalName.trim();
-    const otraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
+    const rawOtraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
+    const otraOcupacion = rawOtraOcupacion ? this.normalizarOcupacion(rawOtraOcupacion) : '';
+    if (otraOcupacion) {
+      this.registrarNuevaOcupacion(otraOcupacion);
+    }
 
     return {
       nationalId: documento,
@@ -2450,14 +2772,18 @@ export class RegisterPatient {
       ...(nombresAdicionales === '' ? {} : { middleName: nombresAdicionales }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       password: raw.password,
-      // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
-      // y una cadena vacía no es lo mismo que la ausencia del campo.
-      ...(correo === '' ? {} : { email: correo }),
+      // Los cinco campos que la API exige (correo, nacimiento, teléfono, sexo al
+      // nacer y departamento emisor) van siempre y el tipo lo impone: el control
+      // los valida, así que `submit()` no llega acá sin ellos. El vacío es la
+      // red por si alguien llamara a este método sin esa comprobación: hace que
+      // la API conteste 400 nombrando el campo, en vez de un cuerpo al que le
+      // falta una propiedad obligatoria (mismo criterio que el municipio).
+      email: correo,
       // El departamento emisor viaja atado al documento: sin CI no hay
       // identificador al que atarlo, y el backend lo escribe en la fila del
       // identificador, no en la persona. Acá el documento es obligatorio, así
       // que la única condición real es haber elegido departamento.
-      ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
+      issuerAdministrativeAreaConceptId: departamento ?? '',
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, para que el par no pueda llegar incoherente.
       //
@@ -2468,9 +2794,10 @@ export class RegisterPatient {
       // conteste 400 nombrando el campo, en vez de un cuerpo al que le falta
       // una propiedad obligatoria.
       residenceMunicipalityConceptId: municipio ?? '',
-      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
-      ...(telefono === '' ? {} : { phone: telefono }),
-      ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      birthDate: fechaNacimiento === null ? '' : fechaIso(fechaNacimiento),
+      phone: telefono,
+      // `''` no es un código válido: la API responde 400 nombrando el campo.
+      sexAtBirth: sexoAlNacer ?? ('' as BirthSexCode),
       // Con «Otra ocupación» viaja el oficio escrito y NO el concepto: el
       // backend descarta el texto libre en cuanto recibe un concepto
       // (`occupationFreeText: dto.occupationConceptId ? undefined : …`), y de
@@ -2486,7 +2813,10 @@ export class RegisterPatient {
       // Trabajo: la empresa **y** dónde queda. Los cuatro campos de ubicación
       // vuelven al alta por AC-03-1; el DTO nunca dejó de aceptarlos. Ver el
       // JSDoc de `workMunicipalityConceptId` en el `FormGroup`.
-      ...(empresa === null ? {} : { workEmployerConceptId: empresa }),
+      // Con «Otra empresa» viaja el texto escrito y NO el concepto, igual que la
+      // ocupación: el backend descarta el texto libre en cuanto recibe un
+      // concepto, y «Otra» no nombra a ninguna empresa (ID-11).
+      ...(empresa === null || this.empresaEsOtra() ? {} : { workEmployerConceptId: empresa }),
       ...(municipioTrabajo === null ? {} : { workMunicipalityConceptId: municipioTrabajo }),
       ...(calleTrabajo === '' ? {} : { workAddressLines: calleTrabajo }),
       ...(gpsTrabajo === null

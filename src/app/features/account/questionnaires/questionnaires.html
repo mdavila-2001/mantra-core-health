@@ -1,6 +1,6 @@
 <app-page-header
   title="Mis cuestionarios"
-  subtitle="Respondé los cuestionarios de las consultas que ya tuviste."
+  subtitle="Responda los cuestionarios de las consultas que ya tuvo."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -23,7 +23,7 @@
     @if (seccion() === 1) {
 @if (pendientes() > 0) {
   <p class="cuestionarios__resumen" data-testid="cuestionarios-pendientes">
-    Tenés {{ pendientes() }}
+    Tiene {{ pendientes() }}
     {{ pendientes() === 1 ? 'cuestionario pendiente' : 'cuestionarios pendientes' }}.
   </p>
 }
@@ -47,7 +47,7 @@
 
                   @if (cuestionario.estado === 'PENDING' && cuestionario.vence) {
                     <p class="cuestionarios__plazo">
-                      Podés responderlo hasta el
+                      Puede responderlo hasta el
                       {{ cuestionario.vence | date: 'd MMM y' }}.
                     </p>
                   } @else if (cuestionario.estado === 'ANSWERED' && cuestionario.respondido) {

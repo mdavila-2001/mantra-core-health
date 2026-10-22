@@ -12,8 +12,8 @@
   }
 
   @if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      El documento queda bajo la custodia de una organización. Elegí una en el encabezado para poder
+    <app-alert tone="info" title="Elija una organización">
+      El documento queda bajo la custodia de una organización. Elija una en el encabezado para poder
       registrarlo.
     </app-alert>
   } @else {
@@ -39,6 +39,18 @@
           [target]="targetCategoria"
           [(value)]="categoria"
           placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Visible para el paciente"
+        hint="Opcional. Sin elegir, sólo lo ve el profesional."
+      >
+        <app-concept-select
+          data-testid="documento-visibilidad"
+          [target]="targetVisibilidad"
+          [(value)]="visibilidad"
+          placeholder="Sólo para el profesional"
         />
       </app-form-field>
 
@@ -72,7 +84,7 @@
       <app-form-field
         class="app-form-grid__ancho"
         label="¿Viene de afuera?"
-        hint="Marcá si lo emitió otra institución. Cambia cómo se lee su autoría en la historia."
+        hint="Marque si lo emitió otra institución. Cambia cómo se lee su autoría en la historia."
       >
         <app-switch [(checked)]="esExterno" label="Documento externo" />
       </app-form-field>

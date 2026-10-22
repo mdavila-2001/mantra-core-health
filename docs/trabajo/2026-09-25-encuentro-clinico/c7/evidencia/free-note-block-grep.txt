@@ -1,0 +1,37 @@
+src/app/features/clinical-record/consultation/consultation.html:228:        <app-free-note-block
+src/app/features/clinical-record/consultation/consultation.ts:61:import { FreeNoteBlock } from '../patient-chart/free-note-block/free-note-block';
+src/app/features/clinical-record/consultation/consultation.ts:280:    FreeNoteBlock,
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.html:2:     retirada. Ver el JSDoc de `free-note-block.ts` para el bloqueo real que
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.spec.ts:7:import { FreeNoteBlock } from './free-note-block';
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.spec.ts:11: * `FreeNoteBlock` — envoltorio `@deprecated` (C7, 2026-09-25).
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.spec.ts:17: * clase por su nombre viejo — ver el JSDoc de `free-note-block.ts`.
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.spec.ts:22: *    escuchándolo en `<app-free-note-block>`.
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.spec.ts:26:describe('FreeNoteBlock (envoltorio deprecado sobre MeasurementGrid)', () => {
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.spec.ts:27:  let fixture: ComponentFixture<FreeNoteBlock>;
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.spec.ts:35:    fixture = TestBed.createComponent(FreeNoteBlock);
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts:25: * `FreeNoteBlock` y la usa en su plantilla (`patient-chart.ts:74,322`,
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts:26: * `<app-free-note-block>` en `patient-chart.html:461`). Borrar la clase
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts:33:  selector: 'app-free-note-block',
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts:35:  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => FreeNoteBlock) }],
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts:36:  templateUrl: './free-note-block.html',
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts:37:  styleUrl: './free-note-block.css',
+src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts:40:export class FreeNoteBlock implements DraftBlock {
+src/app/features/clinical-record/patient-chart/measurement-grid/measurement-grid.ts:277:   * guardó (C7). Pública porque el envoltorio `FreeNoteBlock` la usa para su
+src/app/features/clinical-record/patient-chart/patient-chart.html:461:        <app-free-note-block
+src/app/features/clinical-record/patient-chart/patient-chart.ts:74:import { FreeNoteBlock } from './free-note-block/free-note-block';
+src/app/features/clinical-record/patient-chart/patient-chart.ts:322:    FreeNoteBlock,
+src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.html:277:      <app-free-note-block [patientProfileId]="patientProfileId()" [encounterId]="encounterId()" />
+src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.ts:18:import { FreeNoteBlock } from '../free-note-block/free-note-block';
+src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.ts:220:    FreeNoteBlock,
+src/app/features/component-stock/component-index.generated.ts:17251:        "FreeNoteBlock",
+src/app/features/component-stock/component-index.generated.ts:17272:        "FreeNoteBlock",
+src/app/features/component-stock/component-index.generated.ts:17996:    "clave": "features/clinical-record/patient-chart/free-note-block/free-note-block",
+src/app/features/component-stock/component-index.generated.ts:18001:    "clase": "FreeNoteBlock",
+src/app/features/component-stock/component-index.generated.ts:18002:    "selector": "app-free-note-block",
+src/app/features/component-stock/component-index.generated.ts:18003:    "path": "src/app/features/clinical-record/patient-chart/free-note-block/free-note-block.ts",
+src/app/features/component-stock/component-index.generated.ts:18064:    cargar: () => import('../clinical-record/patient-chart/free-note-block/free-note-block').then((m) => m.FreeNoteBlock as Type<unknown>),
+src/app/features/component-stock/component-index.generated.ts:18110:      "FreeNoteBlock"
+src/app/features/component-stock/component-index.generated.ts:18479:        "FreeNoteBlock",
+src/app/features/component-stock/component-index.generated.ts:18498:        "FreeNoteBlock",
+src/app/features/component-stock/component-index.generated.ts:18741:        "FreeNoteBlock",
+src/app/features/component-stock/component-index.generated.ts:18761:        "FreeNoteBlock",

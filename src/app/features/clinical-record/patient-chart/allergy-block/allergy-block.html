@@ -33,8 +33,8 @@
   }
 
   @if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      La alergia queda bajo la custodia de una organización. Elegí una en el encabezado para poder
+    <app-alert tone="info" title="Elija una organización">
+      La alergia queda bajo la custodia de una organización. Elija una en el encabezado para poder
       registrarla.
     </app-alert>
   } @else {
@@ -62,7 +62,7 @@
           data-testid="alergia-sustancia"
           [target]="targetSustancia"
           [(value)]="sustancia"
-          placeholder="Elegí una sustancia"
+          placeholder="Elija una sustancia"
         />
       </app-form-field>
 

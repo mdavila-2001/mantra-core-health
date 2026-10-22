@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -14,7 +22,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record/medical-record.routes';
-import { etiquetaDeModalidad, toPedidoStatusPresentation } from './pedido-status';
+import { modalityLabel, toOrderStatusPresentation } from './order-status';
 import { displayCurrency } from '../../../core/money/display-currency';
 
 /**
@@ -22,7 +30,7 @@ import { displayCurrency } from '../../../core/money/display-currency';
  * envío al retiro.
  *
  * La lista dice el estado **en palabras y con el tono del sistema**
- * (`pedido-status.ts`); el recorrido completo —línea de tiempo, decisión de
+ * (`order-status.ts`); el recorrido completo —línea de tiempo, decisión de
  * sustitución, código de retiro— vive en el detalle. Los datos salen del
  * cliente contract-first de `core/data-access/pharmacy-orders/`, que hasta
  * FAR-E1 es un mock en memoria: la pantalla no sabe ni le importa.
@@ -39,6 +47,16 @@ import { displayCurrency } from '../../../core/money/display-currency';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyOrders {
+  /**
+   * `true` cuando esta pantalla vive **dentro** de «Farmacia», como una de
+   * sus pestañas (`PharmacyHub`).
+   *
+   * Lo único que cambia es el membrete: adentro lo pone el contenedor. La
+   * ruta propia (`/my-account/pharmacy-orders`) sigue existiendo tal cual —
+   * el detalle, el checkout y las notificaciones vuelven ahí—, y ahí el
+   * membrete se dibuja como siempre.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
 
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
@@ -80,7 +98,7 @@ export class PharmacyOrders {
               // La salida es la historia clínica: un pedido nace de una receta,
               // así que la puerta correcta es donde viven las recetas.
               { label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE },
-              'Todavía no enviaste ningún pedido. Desde una receta de tu historia clínica podés ver qué farmacias la tienen y mandarles tu pedido.',
+              'Todavía no envió ningún pedido. Desde una receta de su historia clínica puede ver qué farmacias la tienen y mandarles su pedido.',
             ),
           );
           return;
@@ -93,10 +111,10 @@ export class PharmacyOrders {
   }
 
   protected estadoDe(pedido: PedidoFarmacia) {
-    return toPedidoStatusPresentation(pedido.estado);
+    return toOrderStatusPresentation(pedido.estado);
   }
 
   protected modalidadDe(pedido: PedidoFarmacia): string {
-    return etiquetaDeModalidad(pedido.modalidad);
+    return modalityLabel(pedido.modalidad);
   }
 }

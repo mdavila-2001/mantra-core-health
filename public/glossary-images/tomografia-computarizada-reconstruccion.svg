@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">De las proyecciones a la imagen en tomografía computarizada</title>
+  <desc id="d">Cuatro pasos. Primero un objeto con dos estructuras densas. Segundo, las proyecciones medidas desde distintos ángulos. Tercero, la retroproyección simple, que produce una imagen borrosa con estelas. Cuarto, la imagen final nítida tras el filtrado o la reconstrucción iterativa.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --obj:#c9d6e6; --dense:#1c2733; --ray:#e8a317; --acc:#2f6fb5; --prof:#1f8a5b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --obj:#2e4156; --dense:#e8eef5; --ray:#f2b94a; --acc:#6aa9ec; --prof:#4cc38a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .head { font-size: 15px; font-weight: 700; }
+    .small { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="24" y="40" class="title">Cómo se calcula la imagen de un corte</text>
+  <rect x="20" y="64" width="176" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="108.0" y="92" text-anchor="middle" class="head">1. Objeto</text>
+  <rect x="48.0" y="140.0" width="120.0" height="120.0" rx="10.0" fill="var(--obj)" stroke="var(--line)"/>
+  <circle cx="88.0" cy="186" r="18" fill="var(--dense)" opacity="0.85"/>
+  <circle cx="132.0" cy="220" r="10" fill="var(--dense)" opacity="0.85"/>
+  <path d="M200 192 l8 8 l-8 8" fill="none" stroke="var(--acc)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="212" y="64" width="176" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="300.0" y="92" text-anchor="middle" class="head">2. Proyecciones</text>
+  <rect x="260.4" y="160.4" width="79.2" height="79.2" rx="6.6000000000000005" fill="var(--obj)" stroke="var(--line)"/>
+  <circle cx="286.8" cy="190.76" r="11.88" fill="var(--dense)" opacity=".85"/>
+  <circle cx="315.84" cy="213.2" r="6.6000000000000005" fill="var(--dense)" opacity=".85"/>
+  <path d="M222.0 167 H258.0" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M342.0 167 H360.0" stroke="var(--ray)" stroke-width="1.5" opacity=".6"/>
+  <path d="M222.0 178 H258.0" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M342.0 178 H360.0" stroke="var(--ray)" stroke-width="1.5" opacity=".6"/>
+  <path d="M222.0 189 H258.0" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M342.0 189 H360.0" stroke="var(--ray)" stroke-width="1.5" opacity=".6"/>
+  <path d="M222.0 200 H258.0" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M342.0 200 H360.0" stroke="var(--ray)" stroke-width="1.5" opacity=".6"/>
+  <path d="M222.0 211 H258.0" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M342.0 211 H360.0" stroke="var(--ray)" stroke-width="1.5" opacity=".6"/>
+  <path d="M222.0 222 H258.0" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M342.0 222 H360.0" stroke="var(--ray)" stroke-width="1.5" opacity=".6"/>
+  <path d="M222.0 233 H258.0" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M342.0 233 H360.0" stroke="var(--ray)" stroke-width="1.5" opacity=".6"/>
+  <path d="M252.0 160 l12 0" stroke="none"/>
+  <polyline fill="none" stroke="var(--prof)" stroke-width="2.5" points="366.0,164.0 366.0,166.0 366.0,168.0 366.0,170.0 366.0,172.0 366.0,174.0 366.0,176.0 366.0,178.0 370.6,180.0 373.2,182.0 374.8,184.0 375.8,186.0 376.4,188.0 376.6,190.0 376.6,192.0 376.3,194.0 375.6,196.0 374.5,198.0 372.7,200.0 369.4,202.0 366.0,204.0 366.0,206.0 369.6,208.0 371.2,210.0 371.9,212.0 371.9,214.0 371.4,216.0 370.1,218.0 366.0,220.0 366.0,222.0 366.0,224.0 366.0,226.0 366.0,228.0 366.0,230.0 366.0,232.0 366.0,234.0 366.0,236.0"/>
+  <path d="M267.0 116 V154" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M278.0 116 V154" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M289.0 116 V154" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M300.0 116 V154" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M311.0 116 V154" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M322.0 116 V154" stroke="var(--ray)" stroke-width="2"/>
+  <path d="M333.0 116 V154" stroke="var(--ray)" stroke-width="2"/>
+  <polyline fill="none" stroke="var(--prof)" stroke-width="2.5" points="264.0,286.0 266.0,286.0 268.0,286.0 270.0,286.0 272.0,286.0 274.0,286.0 276.0,277.1 278.0,271.6 280.0,268.5 282.0,266.4 284.0,265.2 286.0,264.7 288.0,264.7 290.0,265.4 292.0,266.8 294.0,269.0 296.0,272.5 298.0,278.9 300.0,286.0 302.0,286.0 304.0,286.0 306.0,286.0 308.0,286.0 310.0,280.5 312.0,276.3 314.0,274.6 316.0,274.1 318.0,274.8 320.0,276.8 322.0,281.7 324.0,286.0 326.0,286.0 328.0,286.0 330.0,286.0 332.0,286.0 334.0,286.0 336.0,286.0"/>
+  <path d="M392 192 l8 8 l-8 8" fill="none" stroke="var(--acc)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="404" y="64" width="176" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="492.0" y="92" text-anchor="middle" class="head">3. Retroproyección</text>
+  <rect x="432.0" y="140.0" width="120.0" height="120.0" rx="10.0" fill="var(--obj)" stroke="var(--line)"/>
+  <clipPath id="c"><rect x="432.0" y="140" width="120" height="120" rx="10"/></clipPath><g clip-path="url(#c)" stroke="var(--dense)" stroke-linecap="round" fill="none">
+  <path d="M382.0 186.0 L562.0 186.0" stroke-width="16.2" opacity=".07"/>
+  <path d="M387.4 155.2 L556.6 216.8" stroke-width="16.2" opacity=".07"/>
+  <path d="M403.1 128.1 L540.9 243.9" stroke-width="16.2" opacity=".07"/>
+  <path d="M427.0 108.1 L517.0 263.9" stroke-width="16.2" opacity=".07"/>
+  <path d="M456.4 97.4 L487.6 274.6" stroke-width="16.2" opacity=".07"/>
+  <path d="M487.6 97.4 L456.4 274.6" stroke-width="16.2" opacity=".07"/>
+  <path d="M517.0 108.1 L427.0 263.9" stroke-width="16.2" opacity=".07"/>
+  <path d="M540.9 128.1 L403.1 243.9" stroke-width="16.2" opacity=".07"/>
+  <path d="M556.6 155.2 L387.4 216.8" stroke-width="16.2" opacity=".07"/>
+  <path d="M426.0 220.0 L606.0 220.0" stroke-width="9.0" opacity=".07"/>
+  <path d="M431.4 189.2 L600.6 250.8" stroke-width="9.0" opacity=".07"/>
+  <path d="M447.1 162.1 L584.9 277.9" stroke-width="9.0" opacity=".07"/>
+  <path d="M471.0 142.1 L561.0 297.9" stroke-width="9.0" opacity=".07"/>
+  <path d="M500.4 131.4 L531.6 308.6" stroke-width="9.0" opacity=".07"/>
+  <path d="M531.6 131.4 L500.4 308.6" stroke-width="9.0" opacity=".07"/>
+  <path d="M561.0 142.1 L471.0 297.9" stroke-width="9.0" opacity=".07"/>
+  <path d="M584.9 162.1 L447.1 277.9" stroke-width="9.0" opacity=".07"/>
+  <path d="M600.6 189.2 L431.4 250.8" stroke-width="9.0" opacity=".07"/>
+  </g>
+  <circle cx="472.0" cy="186" r="18" fill="var(--dense)" opacity=".35"/>
+  <circle cx="516.0" cy="220" r="10" fill="var(--dense)" opacity=".3"/>
+  <path d="M584 192 l8 8 l-8 8" fill="none" stroke="var(--acc)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="596" y="64" width="176" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="684.0" y="92" text-anchor="middle" class="head">4. Imagen final</text>
+  <rect x="624.0" y="140.0" width="120.0" height="120.0" rx="10.0" fill="var(--obj)" stroke="var(--line)"/>
+  <circle cx="664.0" cy="186" r="18" fill="var(--dense)" opacity="0.85"/>
+  <circle cx="708.0" cy="220" r="10" fill="var(--dense)" opacity="0.85"/>
+  <text x="108.0" y="322" text-anchor="middle" class="small">Un corte del cuerpo con</text>
+  <text x="108.0" y="340" text-anchor="middle" class="small">dos estructuras más</text>
+  <text x="108.0" y="358" text-anchor="middle" class="small">densas (los círculos).</text>
+  <text x="300.0" y="322" text-anchor="middle" class="small">El escáner mide cuánta</text>
+  <text x="300.0" y="340" text-anchor="middle" class="small">radiación atraviesa el</text>
+  <text x="300.0" y="358" text-anchor="middle" class="small">objeto por miles de</text>
+  <text x="300.0" y="376" text-anchor="middle" class="small">líneas y ángulos (en</text>
+  <text x="300.0" y="394" text-anchor="middle" class="small">verde, el perfil medido).</text>
+  <text x="492.0" y="322" text-anchor="middle" class="small">Cada medida se reparte</text>
+  <text x="492.0" y="340" text-anchor="middle" class="small">de vuelta por su línea:</text>
+  <text x="492.0" y="358" text-anchor="middle" class="small">sale la forma, pero</text>
+  <text x="492.0" y="376" text-anchor="middle" class="small">borrosa y con estelas.</text>
+  <text x="684.0" y="322" text-anchor="middle" class="small">El filtro o la</text>
+  <text x="684.0" y="340" text-anchor="middle" class="small">reconstrucción iterativa</text>
+  <text x="684.0" y="358" text-anchor="middle" class="small">quitan las estelas y</text>
+  <text x="684.0" y="376" text-anchor="middle" class="small">dan una imagen nítida.</text>
+  <text x="400" y="452" text-anchor="middle" class="small muted">Esquema conceptual simplificado (dos estructuras en un corte). Ilustración original de AloVida.</text>
+  </svg>

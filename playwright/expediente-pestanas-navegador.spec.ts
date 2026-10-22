@@ -86,7 +86,7 @@ test.describe('Expediente · pestañas con marco de ventana', () => {
 
     /* ---- 3. lo que se escribe no está acá --------------------------------- */
 
-    await expect(page.getByRole('heading', { name: 'Qué vas a registrar' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Qué va a registrar' })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Encuentro', exact: true })).toHaveCount(0);
 
     /* ---- angosto: el marco aguanta y sigue sin desbordar ------------------ */
@@ -112,7 +112,7 @@ test.describe('Expediente · pestañas con marco de ventana', () => {
     await estable(page);
 
     await expect(page.getByTestId('consulta-encuentro')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Qué vas a registrar' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Qué va a registrar' })).toBeVisible();
     await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(9);
     expect(await desbordeHorizontal(page)).toBe(0);
 

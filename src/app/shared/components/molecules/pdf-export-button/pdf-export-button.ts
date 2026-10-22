@@ -119,7 +119,7 @@ export class PdfExportButton {
         ...(this.subtitle() === '' ? {} : { subtitle: this.subtitle() }),
         ...(this.kind() === '' ? {} : { kind: this.kind() }),
       })
-      .catch(() => this.error.set('No pudimos generar el PDF. Reintentá.'));
+      .catch(() => this.error.set('No pudimos generar el PDF. Reintente.'));
   }
 
   /**

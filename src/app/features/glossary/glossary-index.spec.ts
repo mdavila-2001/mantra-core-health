@@ -73,6 +73,20 @@ describe('porInicial', () => {
     expect(grupos[0].terminos.map((t) => t.display)).toEqual(['Aftas', 'Anemia', 'Asma']);
   });
 
+  it('dentro del tramo van primero los términos en castellano y después los que sólo están en inglés', () => {
+    const grupos = porInicial([
+      { ...termino('Acute nephritic syndrome'), translated: false },
+      termino('Asma'),
+      termino('Anemia'),
+    ]);
+
+    expect(grupos[0].terminos.map((t) => t.display)).toEqual([
+      'Anemia',
+      'Asma',
+      'Acute nephritic syndrome',
+    ]);
+  });
+
   it('la Ñ se ordena entre la N y la O, no al final del abecedario', () => {
     const grupos = porInicial([termino('Ovario'), termino('Ñandú'), termino('Nefritis')]);
 

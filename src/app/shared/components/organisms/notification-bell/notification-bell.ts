@@ -13,6 +13,7 @@ import {
   type AvisoUnificado,
 } from '../../../../core/notifications/notifications.store';
 import { Badge } from '../../atoms/badge/badge';
+import { NotificationActions } from '../../molecules/notification-actions/notification-actions';
 
 /**
  * La campana del header — carril P1.
@@ -38,7 +39,7 @@ import { Badge } from '../../atoms/badge/badge';
  */
 @Component({
   selector: 'app-notification-bell',
-  imports: [Badge, DatePipe, RouterLink],
+  imports: [Badge, DatePipe, NotificationActions, RouterLink],
   templateUrl: './notification-bell.html',
   styleUrl: './notification-bell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,8 +59,8 @@ export class NotificationBell {
 
   protected readonly etiqueta = computed(() =>
     this.sinLeer() === 0
-      ? 'Notificaciones. No tenés ninguna sin leer'
-      : `Notificaciones. Tenés ${this.sinLeer()} sin leer`,
+      ? 'Notificaciones. No tiene ninguna sin leer'
+      : `Notificaciones. Tiene ${this.sinLeer()} sin leer`,
   );
 
   constructor() {
@@ -85,6 +86,11 @@ export class NotificationBell {
 
   protected marcarTodas(): void {
     this.store.marcarTodasLeidas();
+  }
+
+  /** Una acción de la notificación terminó: se da por leída y se relee la bandeja. */
+  protected alEjecutarAccion(aviso: AvisoUnificado): void {
+    this.store.trasAccion(aviso);
   }
 
   /**

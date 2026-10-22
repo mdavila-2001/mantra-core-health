@@ -1,0 +1,10 @@
+## mantra-core-health-api
+710e6f1a 2026-09-25 23:09:37 -0400 Justin David Saldias Merge pull request #469 from mdavila-2001/marcelo/feat-insurance-preventive-campaigns-api
+## mantra-core-health
+10f3ca16 2026-09-26 00:21:41 -0400 Justin David Saldias Merge pull request #710 from mdavila-2001/marcelo/feat-insurance-preventive-campaigns
+## mantra-core-health-model
+83b1d6c 2026-09-26 10:56:18 -0400 Justin David Saldias Merge pull request #35 from mantra-core-technologies/legion/cierre-modelo-wip
+## Mantra Core Health Vault
+378c960e 2026-09-26 03:06:45 -0400 Justin David Saldias Merge pull request #83 from mdavila-2001/justin/m1-fk-notas-modulos-67-68
+## front origin/mockup
+d1c21f64 2026-09-26 18:14:38 -0400 Justin David Saldias Merge pull request #723 from mdavila-2001/justin/formulario-absorbe-nota-2026-09-26

@@ -1,0 +1,6 @@
+## modelo PR 31
+{"headRefName":"marcelo/feat-insurance-preventive-campaigns-model","mergedAt":"2026-09-26T03:10:14Z","mergedBy":{"id":"U_kgDOCCUMXg","is_bot":false,"login":"Jsaldias39","name":"Justin David Saldias"},"number":31,"state":"MERGED","title":"feat(insurance): campañas preventivas de aseguradora — modelo y DDL (Tarea 4)"}
+## API PR 469
+{"headRefName":"marcelo/feat-insurance-preventive-campaigns-api","mergedAt":"2026-09-26T03:09:38Z","mergedBy":{"id":"U_kgDOCCUMXg","is_bot":false,"login":"Jsaldias39","name":"Justin David Saldias"},"number":469,"state":"MERGED","title":"feat(insurance): campañas preventivas para mitigación de siniestros (Tarea 4 API)"}
+## front PR 710
+{"headRefName":"marcelo/feat-insurance-preventive-campaigns","mergedAt":"2026-09-26T04:21:41Z","mergedBy":{"id":"U_kgDOCCUMXg","is_bot":false,"login":"Jsaldias39","name":"Justin David Saldias"},"number":710,"state":"MERGED","title":"feat(insurance): consola de campañas preventivas y widget para afiliados (Tarea 4 Front)"}

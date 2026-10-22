@@ -1,0 +1,5 @@
+/tmp/t2.txt:[2m Test Files [22m [1m[32m48 passed[39m[22m[90m (48)[39m
+/tmp/t2.txt:[2m      Tests [22m [1m[32m1038 passed[39m[22m[90m (1038)[39m
+/tmp/t3.txt:[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+/tmp/t3.txt:[2m      Tests [22m [1m[32m22 passed[39m[22m[90m (22)[39m
+typecheck app: exit 0 · typecheck specs: exit 0 · eslint archivos tocados: 5 errores preexistentes (host de specs sin OnPush), 0 nuevos

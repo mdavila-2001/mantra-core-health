@@ -1,0 +1,24 @@
+Clasificación de los checks del PR #815 (regla 80.4)
+
+Corrida 36895150605: verificar = fail · e2e = fail · dependencias = pass.
+
+verificar / paso «Tipos»: FAIL · clase ENVIRONMENT (defecto del workflow, previo a este cambio)
+- Anotación del propio CI: «Cannot find module './component-index.generated' or its corresponding type
+  declarations» (component-stock.ts#29) y «Parameter 'c' implicitly has an 'any' type» (component-stock.ts#154).
+- Causa: el paso corre `yarn tsc -p tsconfig.app.json --noEmit` sin generar antes `component-index.generated.ts`,
+  que está en .gitignore y lo genera `yarn stock:generate`. `yarn typecheck` sí lo genera; el CI no.
+- Reproducido en local: evidencia/18 (el mismo comando sin el archivo generado sale con exit=2 y TS2307).
+- Mismo paso, mismo fallo, en el push a dev (corrida 36880592217) y en los PR 36880505839 y 36873435646,
+  que no contienen este cambio.
+- En verde en el mismo job sobre este PR: Instalación reproducible · Entorno público · Lint.
+
+e2e / paso «Suite crítica»: FAIL · clase EXTERNAL (previo; causa raíz NO investigada)
+- «Process completed with exit code 9», idéntico al del push a dev (corrida 36880592217).
+- Pasos previos en verde: Binario de Cypress · Entorno público · Tipos de la suite · Versión de Chrome · Humo.
+  Se saltan: Accesibilidad y Regresión completa.
+
+dependencias: PASS.
+
+Qué lo destraba (fuera del alcance de este hito, infraestructura compartida):
+1. agregar `yarn stock:generate` antes del paso «Tipos» de .github/workflows/ci.yml;
+2. investigar la «Suite crítica» (exit 9) sobre dev.

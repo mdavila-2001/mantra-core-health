@@ -1,0 +1,10 @@
+$ git rev-parse HEAD
+2439b79fc65b7c8764534e25188cd254c2d512b0
+$ git branch --show-current
+marcelo/fix-homologacion-metodos-http
+$ git log -1 --oneline
+2439b79f Merge pull request #812 from mdavila-2001/marcelo/feat-sincronizacion-mockup-dev-test
+$ git rev-parse origin/dev
+2439b79fc65b7c8764534e25188cd254c2d512b0
+$ git rev-parse --abbrev-ref --symbolic-full-name @{u}
+fatal: no upstream configured for branch 'marcelo/fix-homologacion-metodos-http'

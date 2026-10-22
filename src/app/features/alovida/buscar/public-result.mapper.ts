@@ -17,7 +17,8 @@
     ========================================================================== */
 
 import type { SearchResultItem } from '@shared/components/molecules';
-import { inicialesDe } from '@shared/text/iniciales';
+import { initialsOf } from '@shared/text/initials';
+import { directoryPhoto, diagnosisCenterTheme } from '@shared/utils/directory-photo';
 
 import type { CentroAtributo, CentroTarjeta } from './centro-card/centro-card.types';
 import {
@@ -29,7 +30,7 @@ import {
 // Se reexporta porque las pantallas del buscador la importan de acá desde el
 // carril P4. La implementación se mudó a `shared/text` al descubrirse que el
 // directorio de médicos tenía una copia que no descartaba el tratamiento.
-export { inicialesDe } from '@shared/text/iniciales';
+export { initialsOf as inicialesDe } from '@shared/text/initials';
 
 /** Cómo se rotula cada vertical en la insignia junto al nombre. */
 const ROTULO_POR_TIPO: Readonly<Record<PublicResultKind, string>> = {
@@ -107,6 +108,48 @@ export interface OpcionesDeTarjeta {
 }
 
 /**
+ * La foto de la tarjeta: la del establecimiento si la API la sirve, y si no
+ * una ilustrativa del tipo de lugar. Ver `fotoDeDirectorio`.
+ *
+ * `coverUrl` de las vitrinas simuladas es una banda de marca sin contenido, no
+ * una foto, así que sólo cuenta cuando no es un `data:` — la de verdad llegará
+ * como URL de archivo.
+ */
+function fotoDeTarjeta(resultado: PublicSearchResult): { photoUrl?: string } {
+  const foto = fotoDelResultado(resultado);
+  return foto === null ? {} : { photoUrl: foto };
+}
+
+/**
+ * La foto que corresponde a una ficha, o `null` si su tipo no la lleva.
+ *
+ * Una aseguradora no tiene un lugar que fotografiar: se ilustra con una
+ * recepción de centro de salud, que es lo que el paciente asocia con «mi
+ * seguro». Un medicamento se ilustra con la góndola de una farmacia.
+ */
+export function fotoDelResultado(resultado: PublicSearchResult): string | null {
+  const propia = resultado.coverUrl;
+  if (propia !== null && propia !== '' && !propia.startsWith('data:')) {
+    return propia;
+  }
+  const clave = `${resultado.kind}:${resultado.slug}`;
+  switch (resultado.kind) {
+    case 'PHARMACY':
+    case 'MEDICATION':
+      return directoryPhoto('farmacia', clave);
+    case 'ORGANIZATION':
+    case 'INSURER':
+      return directoryPhoto('clinica', clave);
+    case 'PRACTITIONER':
+      return directoryPhoto('medico', clave);
+    case 'DIAGNOSTIC_UNIT':
+      return directoryPhoto(diagnosisCenterTheme(resultado.headline ?? ''), clave);
+    default:
+      return null;
+  }
+}
+
+/**
  * Traduce una fila del directorio a la tarjeta de la maqueta.
  *
  * ## Lo que no inventa
@@ -164,8 +207,9 @@ export function aTarjeta(
     id: `${resultado.kind}:${resultado.slug}`,
     title: resultado.displayName,
     link: (opciones.ruta ?? rutaDeFicha)(resultado),
-    figureText: inicialesDe(resultado.displayName),
+    figureText: initialsOf(resultado.displayName),
     ...(resultado.avatarUrl === null ? {} : { figureImageUrl: resultado.avatarUrl }),
+    ...fotoDeTarjeta(resultado),
     // El titular es el subtítulo, no la primera línea de contexto: es qué es
     // esto. Ver el JSDoc de `subtitle`.
     ...(resultado.headline === null || resultado.headline === ''
@@ -221,7 +265,7 @@ function turnoDe(resultado: PublicSearchResult): string | null {
   if (!anio || !mes || !dia) return 'Con agenda publicada';
   const fecha = new Date(anio, mes - 1, dia);
   const corta = fecha.toLocaleDateString('es-BO', { day: 'numeric', month: 'short' });
-  return `Turno desde el ${corta}`;
+  return `Citas desde el ${corta}`;
 }
 
 /**
@@ -260,9 +304,9 @@ export function aCentro(resultado: PublicSearchResult): CentroTarjeta {
     link: rutaDeFicha(resultado),
     titular: resultado.headline === '' ? null : resultado.headline,
     donde: dondeQueda(resultado),
-    portada: resultado.coverUrl,
+    portada: fotoDelResultado(resultado),
     logo: resultado.avatarUrl,
-    iniciales: inicialesDe(resultado.displayName),
+    iniciales: initialsOf(resultado.displayName),
     // El sello dice «Declarado» cuando no está verificado, y no se calla: una
     // tarjeta sin sello se leería como verificada por omisión.
     sellos: [

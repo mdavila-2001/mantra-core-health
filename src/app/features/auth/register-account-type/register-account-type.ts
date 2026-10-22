@@ -40,42 +40,54 @@ interface TipoDeCuenta {
  * papeles distintos y equipos distintos. Una sola tarjeta «Laboratorio o centro
  * de estudios» obligaría a preguntar cuál de las dos es adentro del formulario,
  * que es la misma decisión movida a un peor lugar.
+ *
+ * **«Farmacia» es la sexta, y la primera que sí sale a la red** después de la
+ * aseguradora: `POST /iam/auth/register-organization` con
+ * `tenantType: 'PHARMACY'` — ver el JSDoc de `RegisterPharmacy`. Va última
+ * porque es la más nueva; no hay otro criterio de orden entre las seis.
  */
 const TIPOS: readonly TipoDeCuenta[] = [
   {
     icono: 'patient',
     titulo: 'Paciente',
-    detalle: 'Tu historia clínica, tus turnos y tus estudios, siempre con vos.',
+    detalle: 'Su historia clínica, sus citas y sus estudios, siempre con usted.',
     ruta: '/auth/register/patient',
     testId: 'tipo-paciente',
   },
   {
     icono: 'practitioner',
     titulo: 'Médico',
-    detalle: 'Atendé, recetá y llevá tu agenda. Necesitás matrícula y colegio.',
+    detalle: 'Atienda, recete y lleve su agenda. Necesita matrícula y colegio.',
     ruta: '/auth/register/practitioner',
     testId: 'tipo-profesional',
   },
   {
     icono: 'insurer',
     titulo: 'Aseguradora',
-    detalle: 'Registrá tu organización y administrá el padrón de tus afiliados.',
+    detalle: 'Registre su organización y administre el padrón de sus afiliados.',
     ruta: '/auth/register/organization',
     testId: 'tipo-aseguradora',
   },
   {
     icono: 'laboratory',
     titulo: 'Laboratorio',
-    detalle: 'Recibí las órdenes médicas de la red y entregá los resultados por la app.',
+    detalle: 'Reciba las órdenes médicas de la red y entregue los resultados por la app.',
     ruta: '/auth/register/laboratory',
     testId: 'tipo-laboratorio',
   },
   {
     icono: 'imaging',
     titulo: 'Imagenología',
-    detalle: 'Rayos X, ecografía, tomografía y resonancia. Recibí las órdenes de la red.',
+    detalle: 'Rayos X, ecografía, tomografía y resonancia. Reciba las órdenes de la red.',
     ruta: '/auth/register/imaging-center',
     testId: 'tipo-imagenologia',
+  },
+  {
+    icono: 'pharmacy',
+    titulo: 'Farmacia',
+    detalle: 'Publique su catálogo, reciba pedidos con receta y atienda desde un solo lugar.',
+    ruta: '/auth/register/pharmacy',
+    testId: 'tipo-farmacia',
   },
 ];
 

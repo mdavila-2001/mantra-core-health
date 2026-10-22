@@ -24,6 +24,8 @@ Las capturas actuales muestran `Demo` debajo del encabezado en pantallas angosta
 
 La auditoría global anterior de 54 rutas y 216 celdas se hizo sobre la base antigua `b7785e362a7ccfbbd0665b1863eab92b65ea4137`; es histórica, no se repitió sobre el `HEAD` actual y sus fotos globales no se declaran revisadas.
 
+La regresión y su evidencia quedaron en el PR [#607](https://github.com/mdavila-2001/mantra-core-health/pull/607), mergeado a `mockup`.
+
 ## Alcance funcional pendiente
 
 H1 oferta, H2 disponibilidad/reserva/preparación, H3 cobertura, H4 resultados/factura, H5 beneficios y H6 persistencia multiusuario no quedan certificados por la maqueta. `AGENTS.md` restringe esta ejecución a lo visual y prohíbe tocar API/modelo/`.env`/`proxy.conf.json`; los acuerdos comerciales y dependencias de otros módulos tampoco están disponibles. En esta base, «Promociones» sólo habla de farmacias y la pantalla de Puntos ya no tiene ruta activa. La evidencia actual no afirma disponibilidad de horarios de laboratorio, pólizas reales, entrega de notificaciones, factura externa, canje ni persistencia.

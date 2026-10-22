@@ -46,7 +46,18 @@ function padded(bytes: Uint8Array): Uint8Array {
 
 /** SHA-256 de un texto UTF-8, en hexadecimal minúscula. */
 export function sha256Hex(text: string): string {
-  const message = padded(new TextEncoder().encode(text));
+  return sha256HexBytes(new TextEncoder().encode(text));
+}
+
+/**
+ * SHA-256 de bytes arbitrarios, en hexadecimal minúscula.
+ *
+ * Existe por la facturación simulada (FACT-SIAT-MOCK): el `hashArchivo` del
+ * SIAT es el SHA-256 del XML **ya comprimido con gzip**, que son bytes y no
+ * texto UTF-8. `sha256Hex` es este mismo cálculo sobre la codificación UTF-8.
+ */
+export function sha256HexBytes(bytes: Uint8Array): string {
+  const message = padded(bytes);
   // Tipado explícito: `H0` es `as const` (8 literales), y sin esto `h`
   // heredaría ese tipo de tupla estrecha — cualquier suma calculada que se le
   // reasigne después deja de encajar en esos 8 valores exactos.

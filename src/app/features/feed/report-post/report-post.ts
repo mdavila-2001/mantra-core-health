@@ -118,7 +118,7 @@ export class ReportPost {
         },
         error: () => {
           this.enviando.set(false);
-          this.error.set('No pudimos enviar el reporte. Reintentá.');
+          this.error.set('No pudimos enviar el reporte. Reintente.');
         },
       });
   }

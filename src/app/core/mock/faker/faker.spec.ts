@@ -1,5 +1,5 @@
-import { conceptoPorId, ESPECIALIDAD, MUNICIPIO, OBSERVACION, OCUPACION } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from '../fixtures/personas';
+import { conceptById, SPECIALTY, MUNICIPALITY, OBSERVATION, OCCUPATION } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, PROFESSIONALS_REGISTERED_DEMO } from '../fixtures/people';
 import { IDS } from '../mock-session';
 
 import * as fk from './index';
@@ -50,19 +50,19 @@ describe('faker del backend simulado', () => {
 
   describe('los códigos salen del catálogo, nunca inventados', () => {
     it('cada especialidad de cada profesional existe en la terminología', () => {
-      const validos = new Set(Object.values(ESPECIALIDAD));
-      const invalidas = PROFESIONALES.flatMap((p) =>
+      const validos = new Set(Object.values(SPECIALTY));
+      const invalidas = PROFESSIONALS.flatMap((p) =>
         p.especialidades.filter((id) => !validos.has(id)).map((id) => `${p.displayName}: ${id}`),
       );
       expect(invalidas).toEqual([]);
     });
 
     it('cada ocupación y cada municipio de cada paciente existen', () => {
-      const ocupaciones = new Set(Object.values(OCUPACION));
-      const municipios = new Set(Object.values(MUNICIPIO));
+      const ocupaciones = new Set(Object.values(OCCUPATION));
+      const municipios = new Set(Object.values(MUNICIPALITY));
       // Vacío es «la planilla no lo declara» (personas de USUARIO_PACIENTES):
       // no es un código inventado. Lo que sí viaja tiene que existir.
-      const malos = PACIENTES.filter(
+      const malos = PATIENTS.filter(
         (p) =>
           (p.ocupacionId !== '' && !ocupaciones.has(p.ocupacionId)) ||
           (p.municipioId !== '' && !municipios.has(p.municipioId)),
@@ -73,27 +73,27 @@ describe('faker del backend simulado', () => {
     it('los conceptos clínicos que genera se resuelven', () => {
       const f = fk.conSemilla('clinico');
       for (let i = 0; i < 25; i++) {
-        expect(conceptoPorId(fk.diagnosticoId(f))).toBeDefined();
-        expect(conceptoPorId(fk.medicamentoId(f))).toBeDefined();
-        expect(conceptoPorId(fk.viaId(f))).toBeDefined();
-        expect(conceptoPorId(fk.unidadId(f))).toBeDefined();
+        expect(conceptById(fk.diagnosticoId(f))).toBeDefined();
+        expect(conceptById(fk.medicamentoId(f))).toBeDefined();
+        expect(conceptById(fk.viaId(f))).toBeDefined();
+        expect(conceptById(fk.unidadId(f))).toBeDefined();
       }
     });
   });
 
   describe('las personas escritas a mano no se mueven', () => {
     it('la médica y la paciente con las que se entra conservan sus identificadores', () => {
-      expect(MEDICA.id).toBe(IDS.medica.practitionerProfileId);
-      expect(MEDICA.slug).toBe('valeria-rojas');
+      expect(MEDICAL.id).toBe(IDS.medica.practitionerProfileId);
+      expect(MEDICAL.slug).toBe('valeria-rojas');
       expect(PACIENTE.id).toBe(IDS.paciente.patientProfileId);
     });
 
     it('los índices que otros fixtures usan siguen apuntando a los mismos', () => {
-      // `agenda.ts` usa PROFESIONALES[6] y .slice(1, 5); `clinica.ts`, los
+      // `agenda.ts` usa PROFESIONALES[6] y .slice(1, 5); `clinic.ts`, los
       // primeros seis. Si el generador se colara delante, las agendas y las
       // recetas cambiarían de dueño sin que nada fallara.
-      expect(PROFESIONALES[6]!.slug).toBe('daniel-aguilar');
-      expect(PROFESIONALES.slice(1, 5).map((p) => p.slug)).toEqual([
+      expect(PROFESSIONALS[6]!.slug).toBe('daniel-aguilar');
+      expect(PROFESSIONALS.slice(1, 5).map((p) => p.slug)).toEqual([
         'jorge-salazar',
         'maria-quiroga',
         'rodrigo-paz',
@@ -109,34 +109,34 @@ describe('faker del backend simulado', () => {
       // USUARIO_MEDICOS; 120 pacientes de la maqueta más los 92 de
       // USUARIO_PACIENTES (`registered-people.ts`). Y, desde D-H3-PROV-01
       // (23/09/2026), los 13 profesionales de demostración con agenda simulada.
-      expect(PROFESIONALES_DEMO_REGISTRADOS.length).toBe(13);
-      expect(PROFESIONALES.length).toBe(15 + 763 + 13 + PROFESIONALES_DEMO_REGISTRADOS.length);
-      expect(PACIENTES.length).toBe(120 + 92);
+      expect(PROFESSIONALS_REGISTERED_DEMO.length).toBe(13);
+      expect(PROFESSIONALS.length).toBe(15 + 763 + 13 + PROFESSIONALS_REGISTERED_DEMO.length);
+      expect(PATIENTS.length).toBe(120 + 92);
     });
 
     it('no repite identificadores ni slugs', () => {
-      const ids = PROFESIONALES.map((p) => p.id).concat(PACIENTES.map((p) => p.id));
+      const ids = PROFESSIONALS.map((p) => p.id).concat(PATIENTS.map((p) => p.id));
       expect(new Set(ids).size).toBe(ids.length);
 
-      const slugs = PROFESIONALES.map((p) => p.slug);
+      const slugs = PROFESSIONALS.map((p) => p.slug);
       expect(new Set(slugs).size).toBe(slugs.length);
     });
 
     it('reparte edades, ciudades y coberturas en vez de clonar una sola persona', () => {
       // Sólo los generados: los reales viajan sin fecha de nacimiento.
-      const edades = PACIENTES.filter((p) => p.origen === undefined).map((p) => fk.edadDe(p.birthDate));
+      const edades = PATIENTS.filter((p) => p.origen === undefined).map((p) => fk.edadDe(p.birthDate));
       expect(Math.min(...edades)).toBeLessThan(12);
       expect(Math.max(...edades)).toBeGreaterThan(70);
 
-      expect(new Set(PACIENTES.map((p) => p.municipioId)).size).toBeGreaterThan(3);
-      expect(PACIENTES.filter((p) => p.aseguradora !== undefined).length).toBeGreaterThan(20);
-      expect(new Set(PROFESIONALES.map((p) => p.professionalTitle)).size).toBeGreaterThan(10);
+      expect(new Set(PATIENTS.map((p) => p.municipioId)).size).toBeGreaterThan(3);
+      expect(PATIENTS.filter((p) => p.aseguradora !== undefined).length).toBeGreaterThan(20);
+      expect(new Set(PROFESSIONALS.map((p) => p.professionalTitle)).size).toBeGreaterThan(10);
     });
 
     it('los teléfonos y las cédulas tienen forma boliviana', () => {
       // Los generados. Los de USUARIO_PACIENTES no traen celular ni cédula:
       // son personas reales y el repositorio es público.
-      const malos = PACIENTES.filter((p) => p.origen === undefined).filter(
+      const malos = PATIENTS.filter((p) => p.origen === undefined).filter(
         (p) => !/^\+591 [67]\d{7}$/.test(p.phone) || !/^\d{7}$/.test(p.nationalId),
       ).map((p) => `${p.displayName}: ${p.phone} · ${p.nationalId}`);
       expect(malos).toEqual([]);
@@ -146,13 +146,13 @@ describe('faker del backend simulado', () => {
   describe('los signos vitales son plausibles para la edad', () => {
     it('un lactante no pesa lo que un adulto', () => {
       const f = fk.conSemilla('vitales-bebe');
-      const peso = fk.signosVitales(f, 1).find((s) => s.observationConceptId === OBSERVACION['OBS-WEIGHT'])!;
+      const peso = fk.signosVitales(f, 1).find((s) => s.observationConceptId === OBSERVATION['OBS-WEIGHT'])!;
       expect(Number(peso.value)).toBeLessThan(20);
 
       const adulto = fk.conSemilla('vitales-adulto');
       const pesoAdulto = fk
         .signosVitales(adulto, 40)
-        .find((s) => s.observationConceptId === OBSERVACION['OBS-WEIGHT'])!;
+        .find((s) => s.observationConceptId === OBSERVATION['OBS-WEIGHT'])!;
       expect(Number(pesoAdulto.value)).toBeGreaterThan(45);
     });
 

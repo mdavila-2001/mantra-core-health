@@ -212,7 +212,7 @@ export class QuotationForm {
   protected readonly pacienteElegido = signal<PatientListItem | null>(null);
   protected readonly busquedaDePaciente = signal('');
   protected readonly resultadosDePacientes = signal<ViewState<readonly PatientListItem[]>>(
-    empty({ label: 'Escribí para buscar' }, 'Buscá un paciente por nombre o código.'),
+    empty({ label: 'Escriba para buscar' }, 'Busque un paciente por nombre o código.'),
   );
 
   protected readonly columnasDePacientes = computed<readonly ColumnDef<PatientListItem>[]>(() => [
@@ -229,7 +229,7 @@ export class QuotationForm {
     this.busquedaDePaciente.set(texto);
     if (texto.trim() === '') {
       this.resultadosDePacientes.set(
-        empty({ label: 'Escribí para buscar' }, 'Buscá un paciente por nombre o código.'),
+        empty({ label: 'Escriba para buscar' }, 'Busque un paciente por nombre o código.'),
       );
       return;
     }
@@ -319,7 +319,7 @@ export class QuotationForm {
     const practiceId = this.practicaElegida();
     if (practiceId === null) {
       this.resultadosDeServicios.set(
-        empty({ label: 'Elegir una práctica' }, 'Elegí una práctica para ver su catálogo.'),
+        empty({ label: 'Elegir una práctica' }, 'Elija una práctica para ver su catálogo.'),
       );
       return;
     }
@@ -404,10 +404,10 @@ export class QuotationForm {
     const anticipo = this.anticipo() ?? 0;
     const cuotas = this.plazoEnCuotas();
     if (precio === null || precio <= 0) {
-      return 'Elegí un servicio o escribí el precio para armar el plan.';
+      return 'Elija un servicio o escriba el precio para armar el plan.';
     }
     if (this.vencimientoInicial() === null) {
-      return 'Elegí la fecha de atención o la del primer vencimiento.';
+      return 'Elija la fecha de atención o la del primer vencimiento.';
     }
     if (anticipo < 0 || anticipo > precio) {
       return 'El anticipo no puede ser negativo ni pasar el precio.';
@@ -440,8 +440,8 @@ export class QuotationForm {
     }
     const monto = FORMATO_MONTO.format(fromCents(Math.abs(centavos)));
     return centavos > 0
-      ? `Faltan ${monto} para cubrir el precio. Repartilo en otra cuota o soltá un monto fijado.`
-      : `Las cuotas pasan el precio por ${monto}. Bajá algún monto fijado.`;
+      ? `Faltan ${monto} para cubrir el precio. Repártalo en otra cuota o suelte un monto fijado.`
+      : `Las cuotas pasan el precio por ${monto}. Baje algún monto fijado.`;
   });
 
   protected readonly planCierra = computed(
@@ -608,7 +608,7 @@ export class QuotationForm {
     const paciente = this.pacienteElegido();
     const servicio = this.servicioElegido();
     if (paciente === null || servicio === null) {
-      this.toasts.warning('Elegí un paciente y un servicio antes de exportar.');
+      this.toasts.warning('Elija un paciente y un servicio antes de exportar.');
       return;
     }
 
@@ -660,14 +660,14 @@ export class QuotationForm {
       Number.isNaN(precio)
     ) {
       this.errorAlGuardar.set(
-        'Completá paciente, servicio, fecha de atención y validez de la oferta.',
+        'Complete paciente, servicio, fecha de atención y validez de la oferta.',
       );
       return;
     }
 
     if (!this.planCierra()) {
       this.errorAlGuardar.set(
-        this.descuadre() ?? this.faltaParaElPlan() ?? 'Revisá las fechas y montos de las cuotas.',
+        this.descuadre() ?? this.faltaParaElPlan() ?? 'Revise las fechas y montos de las cuotas.',
       );
       return;
     }
@@ -720,5 +720,5 @@ function mensajeDelServidor(error: unknown): string {
       return cuerpo.message;
     }
   }
-  return 'No pudimos guardar la cotización. Probá de nuevo.';
+  return 'No pudimos guardar la cotización. Pruebe de nuevo.';
 }

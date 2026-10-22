@@ -149,6 +149,6 @@ export class LastPosition {
 function estadoInicial(): ViewState<UltimaPosicion> {
   return empty(
     { label: 'Dar de alta un sujeto', route: `${BASE}/subjects/new` },
-    'El módulo no expone un listado de sujetos: pegá el identificador para ver su última posición.',
+    'El módulo no expone un listado de sujetos: pegue el identificador para ver su última posición.',
   );
 }

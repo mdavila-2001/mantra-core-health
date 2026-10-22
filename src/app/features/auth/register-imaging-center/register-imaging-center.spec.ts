@@ -5,6 +5,14 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
+import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
+import { DIAGNOSIS_CODES } from '../shared-registration/diagnostic-center-enrollment';
+import {
+  altaPendiente,
+  atenderSubida,
+  idDeConcepto,
+  responderCatalogos,
+} from '../../../../testing/alta-de-centro-diagnostico';
 import {
   MODALIDADES,
   RegisterImagingCenter,
@@ -15,16 +23,18 @@ import {
     Lo que esta pantalla promete, y por lo tanto lo que se prueba:
 
     1. Que pregunta los dieciocho puntos del módulo de análisis médicos y
-       ninguno inventado — con los dos agregados declarados y probados COMO
-       agregados: los estudios (que frenan) y la radioprotección (que no).
+       ninguno inventado — con el agregado de los estudios (que frena). La
+       radioprotección salió del alta: la API no tiene dónde guardarla.
     2. Que frena lo que sin ello no hay centro publicable, y NO frena el resto
        — sobre todo los cargos, que el propietario pidió opcionales.
-    3. Que es la maqueta: no sale una sola petición a la red.
+    3. Que el envío es real: lee el catálogo, sube los PDF en serie y llama a
+       `register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`, con las
+       modalidades como conceptos.
     ========================================================================== */
 
-/** Un archivo, con lo único que el componente le mira. */
+/** Un archivo de verdad: la subida lo mete en un `FormData`, que no acepta un doble. */
 function archivo(nombre: string, tipo: string, bytes: number): File {
-  return { name: nombre, type: tipo, size: bytes } as unknown as File;
+  return new File([new Uint8Array(bytes)], nombre, { type: tipo });
 }
 
 
@@ -53,27 +63,45 @@ describe('RegisterImagingCenter', () => {
   });
 
   afterEach(() => {
-    // La afirmación central de la maqueta: NINGUNA petición salió. Está en el
-    // `afterEach` a propósito, así vale para todas las pruebas de este archivo
-    // y no sólo para la que se acuerde de escribirla.
+    // Ninguna petición queda sin atender: está en el `afterEach` a propósito, así
+    // vale para todas las pruebas de este archivo.
     http.verify();
   });
 
   /** Deja el formulario en el mínimo con el que se puede enviar. */
-  function completarLoObligatorio(): void {
+  function completarLoObligatorio(tipo = 'UNIPERSONAL'): void {
     component.form.patchValue({
       legalName: 'Centro de Imagenología del Oriente S.R.L.',
-      companyType: 'SRL',
+      companyType: tipo,
       taxId: '1023456789',
-      modalidades: ['Rayos X', 'Ecografía'],
+      modalidades: ['Tomografía computarizada', 'Resonancia magnética'],
       addressLines: 'Av. Cañoto esq. Ballivián 234',
-      legalRepName: 'Ana Paz Rojas',
+      legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
       legalRepEmail: 'ana.paz@imagenoriente.test',
+      legalRepIdNumber: '4872190',
       password: 'secreto12',
     });
-    component.form.controls.seprecFile.setValue({ archivo: 'seprec.pdf', pesoBytes: 1000 });
-    component.form.controls.licenciaFile.setValue({ archivo: 'licencia.pdf', pesoBytes: 1000 });
-    component.form.controls.sedesFile.setValue({ archivo: 'sedes.pdf', pesoBytes: 1000 });
+    component.updateAttachment('nitFile', [archivo('nit.pdf', 'application/pdf', 10)]);
+    component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
+    component.updateAttachment('licenciaFile', [archivo('licencia.pdf', 'application/pdf', 10)]);
+    component.updateAttachment('sedesFile', [archivo('sedes.pdf', 'application/pdf', 10)]);
+  }
+
+  /** Atiende el envío completo: catálogo, una subida por papel y el alta. */
+  function atenderElEnvio(papeles: number, respuesta: object = { tenantId: 't', code: 'c' }) {
+    responderCatalogos(http);
+    for (let i = 0; i < papeles; i += 1) {
+      atenderSubida(http);
+    }
+    const alta = altaPendiente(http);
+    alta.flush({
+      ownerUserId: 'u',
+      status: 's',
+      emailVerificationSent: true,
+      diagnosticUnitId: 'du',
+      ...respuesta,
+    });
+    return { cuerpo: alta.request.body };
   }
 
   /* --- lo que pregunta --------------------------------------------------- */
@@ -109,11 +137,14 @@ describe('RegisterImagingCenter', () => {
       .find((c) => c.key === 'modalidades');
 
     expect(campo?.control).toBe('checkboxes');
-    // «Otro» con texto libre: la lista tiene seis y hay más estudios que seis.
-    expect(campo?.otro).toBe(true);
+    // Sin «Otro» con texto libre: una modalidad fuera de la lista no tiene
+    // concepto en la API (responde 422), así que el alta no la ofrece.
+    expect(campo?.otro).toBeUndefined();
   });
 
-  it('pregunta los seis papeles del proceso más la radioprotección, y ninguno más', () => {
+  it('pregunta los seis papeles del alta y ninguno más: la radioprotección salió', () => {
+    // La API no tiene dónde guardarla (`legalDocuments` no la declara): ofrecer
+    // un papel que se tira es peor que no pedirlo. Se pide desde el panel.
     const papeles = Object.keys(component.form.controls).filter((clave) => clave.endsWith('File'));
 
     expect(papeles.sort()).toEqual([
@@ -121,7 +152,6 @@ describe('RegisterImagingCenter', () => {
       'licenciaFile',
       'nitFile',
       'poderFile',
-      'radioproteccionFile',
       'sedesFile',
       'seprecFile',
     ]);
@@ -148,9 +178,100 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
+    atenderElEnvio(4);
 
     expect(component.form.valid).toBe(true);
     expect(component.enviada()).toBe(true);
+  });
+
+  /* --- el envío real ----------------------------------------------------- */
+
+  it('manda DIAGNOSTIC_CENTER de imágenes, con las modalidades como conceptos y sin `payer`', () => {
+    completarLoObligatorio();
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(4);
+
+    expect(cuerpo.organization).toMatchObject({
+      tenantType: 'DIAGNOSTIC_CENTER',
+      legalEntityType: 'UNIPERSONAL',
+      countryConceptId: idDeConcepto(DIAGNOSIS_CODES.pais),
+      diagnosticUnit: {
+        diagnosticUnitTypeConceptId: idDeConcepto(DIAGNOSIS_CODES.imagenes),
+        modalityConceptIds: [
+          idDeConcepto(DIAGNOSIS_CODES.modalidades.tomografia),
+          idDeConcepto(DIAGNOSIS_CODES.modalidades.resonancia),
+        ],
+      },
+    });
+    expect(cuerpo.organization.payer).toBeUndefined();
+  });
+
+  it.each(Object.entries({
+    'Rayos X': 'rayosX',
+    Ecografía: 'ecografia',
+    'Tomografía computarizada': 'tomografia',
+    'Resonancia magnética': 'resonancia',
+    Mamografía: 'mamografia',
+    'Densitometría ósea': 'densitometria',
+  }))('la modalidad «%s» viaja como su concepto', (etiqueta, clave) => {
+    completarLoObligatorio();
+    component.form.controls.modalidades.setValue([etiqueta]);
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(4);
+
+    expect(cuerpo.organization.diagnosticUnit.modalityConceptIds).toEqual([
+      idDeConcepto(
+        DIAGNOSIS_CODES.modalidades[clave as keyof typeof DIAGNOSIS_CODES.modalidades],
+      ),
+    ]);
+  });
+
+  it('cada modalidad de la lista tiene su concepto en el catálogo', () => {
+    // Si una etiqueta nueva entra en la lista sin código, el envío diría
+    // «catálogo incompleto» en producción: acá falla antes.
+    expect(MODALIDADES.map((m) => m.value)).toEqual([
+      'Rayos X',
+      'Ecografía',
+      'Tomografía computarizada',
+      'Resonancia magnética',
+      'Mamografía',
+      'Densitometría ósea',
+    ]);
+  });
+
+  it('una SRL sin constitución ni poder no sale', () => {
+    completarLoObligatorio('SRL');
+
+    component.submit();
+
+    expect(component.form.controls.constitucionFile.invalid).toBe(true);
+    expect(component.enviada()).toBe(false);
+  });
+
+  it('si el catálogo no trae una modalidad, no sube ni manda nada', () => {
+    completarLoObligatorio();
+
+    component.submit();
+    responderCatalogos(http, [DIAGNOSIS_CODES.modalidades.resonancia]);
+
+    http.expectNone((p) => p.url.endsWith('/iam/auth/upload-registration-document'));
+    http.expectNone((p) => p.url.endsWith('/iam/auth/register-organization'));
+    expect(component.enviada()).toBe(false);
+    expect(component.mensajeDeError()).toContain('No pudimos cargar los catálogos');
+  });
+
+  it('una subida sin confirmar frena el alta y dice por qué', () => {
+    completarLoObligatorio();
+
+    component.submit();
+    responderCatalogos(http);
+    atenderSubida(http, true);
+
+    http.expectNone((p) => p.url.endsWith('/iam/auth/register-organization'));
+    expect(component.enviada()).toBe(false);
+    expect(component.mensajeDeError()).toContain('No pudimos confirmar la carga del PDF');
   });
 
   it('sin ningún estudio marcado no hay centro que ofrecer: frena el alta', () => {
@@ -177,37 +298,58 @@ describe('RegisterImagingCenter', () => {
     },
   );
 
-  it.each(['constitucionFile', 'nitFile', 'poderFile'] as const)(
+  it.each(['constitucionFile', 'poderFile'] as const)(
     '%s no frena: una unipersonal no tiene constitución ni poder',
     (clave) => {
       completarLoObligatorio();
       component.form.controls[clave].setValue(null);
 
       component.submit();
+      atenderElEnvio(4);
 
       expect(component.enviada()).toBe(true);
     },
   );
 
-  it('la radioprotección no frena: un centro de ecografía y resonancia no irradia', () => {
-    // Y además es un agregado: no sale de los dieciocho puntos de la fuente, y
-    // un agregado no puede frenar un alta hasta que el propietario lo decida.
+  it('el poder se pide en la página del representante, no con la constitución', () => {
+    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
+
+    // El documento de identidad lo exige la API (`legalRepresentative.idNumber`).
+    expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
+      'legalRepName',
+      'legalRepIdNumber',
+      'legalRepEmail',
+      'poderFile',
+    ]);
+    expect(pagina('radioproteccion')?.campos.map((c) => c.key)).not.toContain('poderFile');
+  });
+
+  it('el NIT en PDF frena el alta: viaja junto con los otros papeles', () => {
     completarLoObligatorio();
-    component.form.controls.modalidades.setValue(['Ecografía', 'Resonancia magnética']);
-    component.form.controls.radioproteccionFile.setValue(null);
+    component.updateAttachment('nitFile', []);
 
     component.submit();
 
-    expect(component.enviada()).toBe(true);
+    expect(component.enviada()).toBe(false);
+  });
+
+  it('el documento del representante es obligatorio: la API lo exige', () => {
+    completarLoObligatorio();
+    component.form.controls.legalRepIdNumber.setValue('');
+
+    component.submit();
+
+    expect(component.enviada()).toBe(false);
   });
 
   it('los datos de los tres cargos son opcionales', () => {
     completarLoObligatorio();
 
     component.submit();
+    atenderElEnvio(4);
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
-    expect(component.form.controls.generalManagerName.value).toBe('');
+    expect(component.form.controls.generalManagerName.value.name).toBe('');
     expect(component.form.controls.salesManagerEmail.value).toBe('');
     expect(component.form.controls.marketingManagerPhone.value).toBe('');
     expect(component.enviada()).toBe(true);
@@ -234,9 +376,9 @@ describe('RegisterImagingCenter', () => {
   /* --- los adjuntos ------------------------------------------------------ */
 
   it('guarda el archivo elegido con su nombre y su peso', () => {
-    component.updateAttachment('radioproteccionFile', [PDF()]);
+    component.updateAttachment('sedesFile', [PDF()]);
 
-    expect(component.adjuntoDe('radioproteccionFile')).toEqual({
+    expect(component.adjuntoDe('sedesFile')).toEqual({
       archivo: 'sedes.pdf',
       pesoBytes: 120_000,
     });
@@ -274,6 +416,8 @@ describe('RegisterImagingCenter', () => {
       {
         id: primera!.id,
         nombre: 'Equipetrol',
+        descripcion: '',
+        urlUbicacion: '',
         direccion: 'Av. San Martín 456',
         gps: { lat: -17.78, lng: -63.18 },
       },
@@ -307,15 +451,18 @@ describe('RegisterImagingCenter', () => {
 
   /* --- la pantalla ------------------------------------------------------- */
 
-  it('al enviarse muestra que quedó una solicitud, no una cuenta creada', async () => {
+  it('al enviarse muestra que quedó una solicitud pendiente de aprobación', async () => {
     completarLoObligatorio();
 
     component.submit();
+    atenderElEnvio(4);
     await fixture.whenStable();
+    fixture.detectChanges();
 
     const exito = fixture.debugElement.query(By.css('[data-testid="registro-imagen-exito"]'));
     expect(exito).not.toBeNull();
-    // El texto no puede prometer una cuenta: todavía no hay backend que la cree.
+    // Dice «solicitud» porque la cuenta queda pendiente de verificación: ya existe
+    // pero el centro no se publica hasta aprobarla.
     expect((exito.nativeElement as HTMLElement).textContent).toContain('solicitud');
   });
 
@@ -323,5 +470,84 @@ describe('RegisterImagingCenter', () => {
     const form = fixture.debugElement.query(By.css('[data-testid="registro-form-imagenologia"]'));
 
     expect(form).not.toBeNull();
+  });
+
+  /* --- el mapa vacía la dirección de la central (D-06) ------------------- */
+
+  describe('el mapa vacía la dirección de la central', () => {
+    /** Avanza el asistente hasta la página cuyo título contiene `fragmento`. */
+    function avanzarHasta(fragmento: string): void {
+      for (let paso = 0; paso < 12; paso += 1) {
+        const titulo =
+          fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+        if (titulo.includes(fragmento)) return;
+        fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
+        fixture.detectChanges();
+      }
+      throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
+    }
+
+    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
+    function direccionEscritaYDejada(): HTMLInputElement {
+      fixture.detectChanges();
+      completarLoObligatorio();
+      fixture.detectChanges();
+      avanzarHasta('Dónde está la central');
+      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="registro-imagen-direccion"]',
+      );
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+      return campo;
+    }
+
+    function tocarElMapa(): void {
+      const mapa = fixture.debugElement.query(By.directive(MapLocationPicker));
+      (mapa.componentInstance as MapLocationPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
+      fixture.detectChanges();
+    }
+
+    function errorDe(campo: HTMLElement): string {
+      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
+    }
+
+    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
+      const campo = direccionEscritaYDejada();
+      expect(component.form.controls.addressLines.touched).toBe(true);
+
+      tocarElMapa();
+
+      expect(campo.value).toBe('');
+      expect(errorDe(campo)).toBe('');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
+      ).not.toBeNull();
+    });
+
+    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
+      ).not.toBeNull();
+    });
+
+    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
+        'Dónde está la central',
+      );
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
+    });
   });
 });

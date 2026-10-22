@@ -15,22 +15,14 @@
 
     <app-form-field
       label="Documentos requeridos"
-      hint="Seleccioná todos los que debe presentar el prestador."
+      hint="Seleccione todos los que debe presentar el prestador."
     >
-      <div class="insurance-form__checks">
-        <app-checkbox formControlName="firmaMedico" label="Firma del médico tratante" />
-        <app-checkbox formControlName="selloMedico" label="Sello profesional y matrícula" />
-        <app-checkbox formControlName="ordenMedica" label="Orden médica justificativa" />
-        <app-checkbox
-          formControlName="informeClinico"
-          label="Informe clínico o resumen de historia"
-        />
-      </div>
+      <app-checkbox-group formControlName="requiredDocuments" [options]="documentOptions" />
     </app-form-field>
 
     <app-form-field
       label="Cláusula de exclusión"
-      hint="Dejala vacía para eliminar la exclusión vigente."
+      hint="Déjela vacía para eliminar la exclusión vigente."
       [errorMessage]="
         form.controls.exclusionNotes.touched && form.controls.exclusionNotes.invalid
           ? 'La exclusión no puede superar 1.000 caracteres.'

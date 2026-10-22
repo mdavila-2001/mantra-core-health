@@ -20,6 +20,7 @@ import {
   type Membresia,
   type MovimientoDePuntos,
 } from '../../../core/data-access/loyalty/loyalty.types';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
@@ -33,12 +34,12 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders/pharmacy-orders.routes';
 import {
-  etiquetaDeMotivo,
-  movimientoEnPalabras,
-  signoDe,
-  tonoDeMovimiento,
-  unidadDePuntos,
-} from './punto-motivo';
+  reasonLabel,
+  movementInWords,
+  signOf,
+  movementTone,
+  pointsUnit,
+} from './point-reason';
 import { RedeemCode } from './redeem-code/redeem-code';
 
 /** En qué parte de la billetera está la persona. */
@@ -114,6 +115,11 @@ export class Loyalty {
   protected readonly movimientos = signal<readonly MovimientoDePuntos[]>([]);
   protected readonly cursor = signal<string | null>(null);
   protected readonly cargandoMas = signal(false);
+  /**
+   * Por qué no se pudieron traer los movimientos, o `null`. Sin esto, una
+   * lectura caída se pintaba como «Todavía no hay movimientos».
+   */
+  protected readonly errorDeMovimientos = signal<string | null>(null);
 
   protected readonly paso = signal<PasoDeLaBilletera>('saldo');
 
@@ -163,7 +169,7 @@ export class Loyalty {
               { label: 'Ver mis pedidos', route: MIS_PEDIDOS_ROUTE },
               // Ahora sí lo sabemos: la lectura real responde `enrolled: false`
               // cuando la persona no tiene membresía en el programa del tenant.
-              `Todavía no hay un programa de ${this.nombreDelPrograma} activo para tu cuenta. Cuando lo haya, vas a sumar puntos con cada compra en las farmacias de la red.`,
+              `Todavía no hay un programa de ${this.nombreDelPrograma} activo para su cuenta. Cuando lo haya, va a sumar puntos con cada compra en las farmacias de la red.`,
             ),
           );
           return;
@@ -177,9 +183,14 @@ export class Loyalty {
 
   /** La primera página del ledger; «Ver más» sigue desde el cursor. */
   protected cargarMovimientos(): void {
-    this.loyalty.misMovimientos(null).subscribe((pagina) => {
-      this.movimientos.set(pagina.movimientos);
-      this.cursor.set(pagina.nextCursor);
+    this.errorDeMovimientos.set(null);
+    this.loyalty.misMovimientos(null).subscribe({
+      next: (pagina) => {
+        this.movimientos.set(pagina.movimientos);
+        this.cursor.set(pagina.nextCursor);
+      },
+      error: (error: unknown) =>
+        this.errorDeMovimientos.set(describeApiFailure(error, 'No pudimos traer sus movimientos.')),
     });
   }
 
@@ -189,13 +200,18 @@ export class Loyalty {
       return;
     }
     this.cargandoMas.set(true);
+    this.errorDeMovimientos.set(null);
     this.loyalty.misMovimientos(desde).subscribe({
       next: (pagina) => {
         this.movimientos.set([...this.movimientos(), ...pagina.movimientos]);
         this.cursor.set(pagina.nextCursor);
         this.cargandoMas.set(false);
       },
-      error: () => this.cargandoMas.set(false),
+      // Lo ya leído se queda; el aviso explica por qué no llegó lo siguiente.
+      error: (error: unknown) => {
+        this.cargandoMas.set(false);
+        this.errorDeMovimientos.set(describeApiFailure(error, 'No pudimos traer más movimientos.'));
+      },
     });
   }
 
@@ -225,18 +241,18 @@ export class Loyalty {
     }
     const cifra = cifraDe(this.puntosACanjear());
     if (cifra === null || cifra <= 0) {
-      this.errorDeCanje.set('Escribí cuántos puntos querés canjear.');
+      this.errorDeCanje.set('Escriba cuántos puntos quiere canjear.');
       return;
     }
     // Los puntos son unidades enteras: el ledger no guarda medios puntos.
     // Truncar en silencio canjearía una cantidad distinta de la pedida, así
     // que se rechaza y se dice por qué.
     if (!Number.isInteger(cifra)) {
-      this.errorDeCanje.set('Los puntos son enteros: escribí una cantidad sin decimales.');
+      this.errorDeCanje.set('Los puntos son enteros: escriba una cantidad sin decimales.');
       return;
     }
     if (cifra > Number(cuenta.saldo)) {
-      this.errorDeCanje.set(`Te alcanza para canjear hasta ${cuenta.saldo} puntos.`);
+      this.errorDeCanje.set(`Le alcanza para canjear hasta ${cuenta.saldo} puntos.`);
       return;
     }
 
@@ -259,7 +275,7 @@ export class Loyalty {
           this.errorDeCanje.set(
             error instanceof SaldoInsuficienteError
               ? error.message
-              : 'No pudimos registrar el canje. Probá de nuevo en un momento.',
+              : 'No pudimos registrar el canje. Pruebe de nuevo en un momento.',
           );
         },
       });
@@ -267,23 +283,23 @@ export class Loyalty {
 
   /** «1 punto», no «1 puntos», cuando la cifra va destacada aparte. */
   protected unidadDe(cifra: string): string {
-    return unidadDePuntos(cifra);
+    return pointsUnit(cifra);
   }
 
   protected etiquetaDe(movimiento: MovimientoDePuntos): string {
-    return etiquetaDeMotivo(movimiento.motivo);
+    return reasonLabel(movimiento.motivo);
   }
 
   protected tonoDe(movimiento: MovimientoDePuntos): 'success' | 'secondary' {
-    return tonoDeMovimiento(movimiento.direccion);
+    return movementTone(movimiento.direccion);
   }
 
   protected signoDe(movimiento: MovimientoDePuntos): string {
-    return signoDe(movimiento.direccion);
+    return signOf(movimiento.direccion);
   }
 
   protected enPalabras(movimiento: MovimientoDePuntos): string {
-    return movimientoEnPalabras(movimiento.direccion, movimiento.puntos, movimiento.motivo);
+    return movementInWords(movimiento.direccion, movimiento.puntos, movimiento.motivo);
   }
 }
 

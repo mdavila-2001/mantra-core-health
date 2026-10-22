@@ -640,10 +640,15 @@
     animation: auth-entra var(--dur-slow) var(--ease-out) 140ms both;
   }
 
-  /* La única columna que scrollea. */
+  /* La única columna que scrollea. Solo en vertical: con `overflow-y: auto` a
+     secas el eje X pasa a `auto` también (una propiedad que no es `visible`
+     arrastra a la otra), y el resplandor de la tarjeta en `scene="stage"`
+     —que sobresale `22 %` por cada lado— le armaba una barra horizontal al
+     panel. Es un degradado difuso: recortarlo en el borde no se nota. */
   .auth-split__panel {
     padding: var(--sp-6);
     min-height: 0;
+    overflow-x: hidden;
     overflow-y: auto;
   }
 
@@ -869,6 +874,34 @@
   .auth-split--stage .auth-split__panel {
     padding: var(--sp-6) clamp(var(--sp-6), 4vw, var(--sp-16));
   }
+}
+
+/* Las altas públicas usan una superficie tranquila en claro. El acceso y el
+   resto de escenas conservan su identidad visual; la variante se activa solo
+   donde la vista enlaza plainSurface. En oscuro no hay reglas para esta clase,
+   así que conserva el escenario que ya tenía. */
+:host-context(:root[data-tema='claro']) .auth-split--plain {
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--bg-surface);
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__stage,
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__brand,
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__aurora {
+  display: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__panel {
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__slot--wide {
+  max-width: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__slot::before {
+  display: none;
+  content: none;
 }
 
 /* Con «reducir movimiento» se apagan también las dos piezas de esta plantilla

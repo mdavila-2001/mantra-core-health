@@ -1,0 +1,15 @@
+
+Running 10 tests using 1 worker
+
+  ok  1 [chromium] › playwright\carril-insurance-portability.spec.ts:126:9 › portabilidad de póliza (maqueta) 1440 › exporta el PDF, muestra el sello y lo verifica públicamente (27.9s)
+  ok  2 [chromium] › playwright\carril-insurance-portability.spec.ts:246:9 › portabilidad de póliza (maqueta) 1440 › la verificación pública funciona sin sesión y distingue sus tres estados (7.1s)
+  ok  3 [chromium] › playwright\carril-insurance-portability.spec.ts:272:9 › portabilidad de póliza (maqueta) 1440 › el diálogo se abre y se cierra con el teclado, y el foco vuelve al botón (12.6s)
+  ok  4 [chromium] › playwright\carril-insurance-portability.spec.ts:325:9 › portabilidad de póliza (maqueta) 1440 › elegir JSON descarga un archivo cuyo SHA-256 coincide con el sello mostrado (13.4s)
+  ok  5 [chromium] › playwright\carril-insurance-portability.spec.ts:349:9 › portabilidad de póliza (maqueta) 1440 › actuando por un dependiente, exporta el historial del TITULAR y avisa que es un trámite personal (17.8s)
+  ok  6 [chromium] › playwright\carril-insurance-portability.spec.ts:126:9 › portabilidad de póliza (maqueta) 390 › exporta el PDF, muestra el sello y lo verifica públicamente (30.1s)
+  ok  7 [chromium] › playwright\carril-insurance-portability.spec.ts:246:9 › portabilidad de póliza (maqueta) 390 › la verificación pública funciona sin sesión y distingue sus tres estados (6.7s)
+  ok  8 [chromium] › playwright\carril-insurance-portability.spec.ts:272:9 › portabilidad de póliza (maqueta) 390 › el diálogo se abre y se cierra con el teclado, y el foco vuelve al botón (13.0s)
+  ok  9 [chromium] › playwright\carril-insurance-portability.spec.ts:325:9 › portabilidad de póliza (maqueta) 390 › elegir JSON descarga un archivo cuyo SHA-256 coincide con el sello mostrado (13.2s)
+  ok 10 [chromium] › playwright\carril-insurance-portability.spec.ts:349:9 › portabilidad de póliza (maqueta) 390 › actuando por un dependiente, exporta el historial del TITULAR y avisa que es un trámite personal (16.2s)
+
+  10 passed (2.7m)

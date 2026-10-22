@@ -13,7 +13,7 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, UUID_ERROR, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -52,21 +52,21 @@ export class ContextForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Dónde vive',
       hint: 'País, dominio y clave forman la identidad del contexto: la combinación repetida es un duplicado.',
       campos: [
         { key: 'countryConceptId', label: 'País', hint: 'Identificador del concepto de país (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
         { key: 'contextDomainConceptId', label: 'Dominio del contexto', hint: 'Identificador del concepto de dominio (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
-        { key: 'contextKey', label: 'Clave del contexto', hint: 'La clave dentro del dominio, como cobertura.publica. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí la clave del contexto (máx. 200 caracteres).' },
+        { key: 'contextKey', label: 'Clave del contexto', hint: 'La clave dentro del dominio, como cobertura.publica. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escriba la clave del contexto (máx. 200 caracteres).' },
       ],
     },
     {
       titulo: 'Cómo se presenta',
       hint: 'El título es el que se lee en los reportes.',
       campos: [
-        { key: 'title', label: 'Título', control: 'text', required: true, mensajeDeError: 'Escribí el título del contexto (máx. 300 caracteres).' },
+        { key: 'title', label: 'Título', control: 'text', required: true, mensajeDeError: 'Escriba el título del contexto (máx. 300 caracteres).' },
         { key: 'description', label: 'Descripción', hint: 'Opcional.', control: 'textarea' },
       ],
     },
@@ -99,7 +99,7 @@ export class ContextForm {
   protected readonly created = signal<ContextCreated | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para crear contextos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para crear contextos.'),
   );
 
   protected submit(): void {

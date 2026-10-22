@@ -90,6 +90,26 @@ describe('decodeAccessToken', () => {
     expect(claims?.tenantNames?.['t-1']).toBe('Hospital Central');
   });
 
+  it('lee `tenantTypes` cuando el token lo trae, junto con `tenantNames`', () => {
+    const claims = decodeAccessToken(
+      makeToken({
+        sub: 'u-1',
+        tenants: ['t-1'],
+        tenantNames: { 't-1': 'Seguros Andina' },
+        tenantTypes: { 't-1': 'PAYER' },
+      }),
+    );
+
+    expect(claims?.tenantNames?.['t-1']).toBe('Seguros Andina');
+    expect(claims?.tenantTypes?.['t-1']).toBe('PAYER');
+  });
+
+  it('sin `tenantTypes` en el token, el claim queda ausente', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', tenants: ['t-1'] }));
+
+    expect(claims?.tenantTypes).toBeUndefined();
+  });
+
   /**
    * El perfil profesional de la sesión. Es lo que identifica su agenda entre
    * las de la organización: sin él, la agenda cae en la del primer recurso.
@@ -125,9 +145,27 @@ describe('decodeAccessToken', () => {
     expect(claims?.hpid).toBeUndefined();
   });
 
-  it('lee `ownTenantId` y descarta uno vacío', () => {
-    expect(decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: 't-9' }))?.ownTenantId).toBe('t-9');
-    expect(decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: '' }))?.ownTenantId).toBeUndefined();
+  it('ya no lee `ownTenantId`: la API no lo firma (TX-11)', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: 't-9' }));
+
+    expect(claims).not.toBeNull();
+    expect(claims).not.toHaveProperty('ownTenantId');
+  });
+
+  it('lee `scopedRoles` (tenant -> códigos) y descarta lo que no es lista', () => {
+    const claims = decodeAccessToken(
+      makeToken({
+        sub: 'u-1',
+        scopedRoles: { 't-1': ['RECEPTIONIST'], 't-2': 'no-es-lista', 't-3': [] },
+      }),
+    );
+
+    expect(claims?.scopedRoles).toEqual({ 't-1': ['RECEPTIONIST'] });
+  });
+
+  it('un `scopedRoles` que no es un mapa, o queda vacío, es ausente', () => {
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', scopedRoles: ['x'] }))?.scopedRoles).toBeUndefined();
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', scopedRoles: {} }))?.scopedRoles).toBeUndefined();
   });
 
   it('descarta un `tenantNames` que no sea un mapa de textos', () => {
@@ -136,6 +174,20 @@ describe('decodeAccessToken', () => {
     );
 
     expect(claims?.tenantNames).toBeUndefined();
+  });
+
+  it('descarta un `tenantTypes` que no sea un mapa de textos', () => {
+    const claims = decodeAccessToken(
+      makeToken({ sub: 'u-1', tenantTypes: ['no', 'es', 'un', 'mapa'] }),
+    );
+
+    expect(claims?.tenantTypes).toBeUndefined();
+  });
+
+  it('un `tenantTypes` vacío es lo mismo que ausente', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', tenantTypes: {} }));
+
+    expect(claims?.tenantTypes).toBeUndefined();
   });
 
   describe('devuelve null en vez de lanzar', () => {

@@ -117,12 +117,31 @@ export interface CatalogObjectsQuery {
   readonly limit?: number;
 }
 
+/**
+ * Lo que la bóveda SALUD dice del módulo dueño de un schema. Es lectura del modelo,
+ * no una ficha revisable.
+ */
+export interface SchemaDescription {
+  readonly moduleNumber: number;
+  readonly moduleCode: string;
+  readonly title: string;
+  readonly domain: string | null;
+  /** `null` si la nota del módulo no trae «Propósito de negocio»: no se inventa uno. */
+  readonly business: string | null;
+  /** Armada sólo con las métricas de la nota; `null` si no las trae. */
+  readonly system: string | null;
+  /** Ruta de la nota en la bóveda. */
+  readonly source: string;
+}
+
 export interface SchemaSummary {
   readonly schemaName: string;
   readonly objects: number;
   readonly notObserved: number;
   readonly annotated: number;
   readonly approved: number;
+  /** `null` si ningún módulo de la bóveda declara el schema. */
+  readonly description: SchemaDescription | null;
 }
 
 export interface Governance {
@@ -311,6 +330,12 @@ export interface AnnotationPatch {
   readonly existenceRationale?: string | null;
   readonly rowGrain?: string | null;
   readonly alternativesRationale?: string | null;
+  // AG-44: el backend ya acepta estos tres campos en `UpsertAnnotationDto`;
+  // faltaban acá, así que ningún formulario podía editarlos sin que la API
+  // devolviera 400 por campo desconocido.
+  readonly processSupported?: string | null;
+  readonly sourceOfTruth?: string | null;
+  readonly producers?: readonly string[];
   readonly deletionImpact?: string | null;
   readonly businessOwner?: string | null;
   readonly dataSteward?: string | null;

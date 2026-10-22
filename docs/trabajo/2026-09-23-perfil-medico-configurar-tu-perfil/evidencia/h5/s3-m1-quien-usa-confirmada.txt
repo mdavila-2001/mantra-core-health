@@ -1,0 +1,77 @@
+$ git grep -n -E "direccion-confirmada|location-confirmed|confirmada|Listo, guardamos" origin/mockup -- "src/**/*.spec.ts" "playwright/**" "cypress/**" "src/**/*.html" "src/**/*.ts"
+playwright/carril-registro-aseguradora-gps.spec.ts:104:      page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
+playwright/carril-registro-aseguradora-gps.spec.ts:147:      page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
+playwright/carril-registro-aseguradora-gps.spec.ts:162:      page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
+playwright/carril-registro-aseguradora-gps.spec.ts:221:      page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
+playwright/carril-registro-aseguradora-gps.spec.ts:258:      page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
+playwright/carril-registro-aseguradora-gps.spec.ts:268:        page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
+playwright/registro-empresa-y-mapa.spec.ts:69:    await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
+playwright/registro-persistencia.spec.ts:145:  await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
+playwright/registro-ubicacion-en-mapa.mjs:180:    await pagina.getByTestId(ids.confirmada).waitFor({ timeout: 5_000 }).then(() => true).catch(() => false),
+playwright/registro-ubicacion-en-mapa.mjs:189:    (await pagina.getByTestId(ids.confirmada).count()) === 0 &&
+playwright/registro-ubicacion-en-mapa.mjs:193:  await pagina.getByTestId(ids.confirmada).waitFor();
+playwright/registro-ubicacion-en-mapa.mjs:253:    confirmada: 'registro-direccion-confirmada',
+playwright/registro-ubicacion-en-mapa.mjs:270:    confirmada: 'registration-work-location-confirmed',
+playwright/registro-ubicacion-en-mapa.mjs:281:    confirmada: "registration-practitioner-home-location-confirmed",
+playwright/registro-ubicacion-en-mapa.mjs:293:    confirmada: "registration-practitioner-office-location-confirmed",
+src/app/core/data-access/scheduling/scheduling.types.ts:1000: * confirmada: quien llegó al mostrador ya está ahí— y el encuentro clínico ya
+src/app/core/messaging/chat.store.spec.ts:222:    // Una sola burbuja, ya confirmada: la pendiente se reemplaza, no se suma.
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.ts:307:    confirmada: 'perfil-domicilio-confirmada',
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.ts:318:    confirmada: 'perfil-trabajo-confirmada',
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:432:    confirmada: 'edicion-domicilio-confirmada',
+src/app/features/agenda/agenda.spec.ts:2150:      // Y la cita sigue confirmada: un 409 no la deja «en curso» en la pantalla.
+src/app/features/agenda/walk-in/walk-in-form.ts:82: *   transacción**. La reserva nace `IN_PROGRESS`, no confirmada: quien llegó al
+src/app/features/auth/register-imaging-center/register-imaging-center.ts:863:    confirmada: 'registro-imagen-central-location-confirmed',
+src/app/features/auth/register-imaging-center/register-imaging-center.ts:925:      confirmada: `registro-imagen-${id}-location-confirmed`,
+src/app/features/auth/register-laboratory/register-laboratory.ts:717:    confirmada: 'registro-lab-central-location-confirmed',
+src/app/features/auth/register-laboratory/register-laboratory.ts:780:      confirmada: `registro-lab-${id}-location-confirmed`,
+src/app/features/auth/register-organization/register-organization.spec.ts:612:          '[data-testid="registro-organizacion-casa-matriz-location-confirmed"]',
+src/app/features/auth/register-organization/register-organization.ts:822:    confirmada: 'registro-organizacion-casa-matriz-location-confirmed',
+src/app/features/auth/register-patient/register-patient.html:340:                      data-testid="registro-direccion-confirmada"
+src/app/features/auth/register-patient/register-patient.html:342:                      Listo, guardamos esta dirección.
+src/app/features/auth/register-patient/register-patient.html:603:                      data-testid="registration-work-location-confirmed"
+src/app/features/auth/register-patient/register-patient.html:605:                      Listo, guardamos este punto.
+src/app/features/auth/register-patient/register-patient.ts:111:  readonly confirmada: WritableSignal<boolean>;
+src/app/features/auth/register-patient/register-patient.ts:1949:      confirmada: this.direccionConfirmada,
+src/app/features/auth/register-patient/register-patient.ts:1961:      confirmada: this.direccionTrabajoConfirmada,
+src/app/features/auth/register-patient/register-patient.ts:1976:    destino.confirmada.set(false);
+src/app/features/auth/register-patient/register-patient.ts:2003:    destino.confirmada.set(false);
+src/app/features/auth/register-practitioner/register-practitioner.ts:1141:    confirmada: 'registration-practitioner-office-location-confirmed',
+src/app/features/auth/register-practitioner/register-practitioner.ts:1153:    confirmada: 'registration-practitioner-home-location-confirmed',
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.html:55:      <p appAnuncio class="registro__ubicacion-estado" [attr.data-testid]="ids().confirmada">
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.html:56:        Listo, guardamos esta dirección.
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:14:  confirmada: 'confirmada',
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:86:    expect(component.confirmada()).toBe(false);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:104:    expect(component.confirmada()).toBe(false);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:134:    expect(raiz().querySelector(`[data-testid="${IDS.confirmada}"]`)).toBeNull();
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:153:    expect(component.confirmada()).toBe(true);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:162:    expect(component.confirmada()).toBe(false);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:177:    expect(component.confirmada()).toBe(false);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:198:    expect(component.confirmada()).toBe(false);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.spec.ts:213:    expect(component.confirmada()).toBe(true);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.ts:39:  readonly confirmada: string;
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.ts:159:      this.confirmada.set(true);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.ts:274:        titulo: this.confirmada()
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.ts:355:    this.confirmada.set(true);
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.ts:367:    if (!this.confirmada()) return;
+src/app/features/auth/registro-compartido/ubicacion-picker/ubicacion-picker.ts:368:    this.confirmada.set(false);
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:42:  confirmada: 'c-confirmada',
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:50:  [ESTADO.confirmada]: 'BOOKING_CONFIRMED',
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:236:      { id: 'b-manana', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:239:      { id: 'b-tarde', desde: hoyALas(16), hasta: hoyALas(16, 20), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:250:      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:272:      { id: 'b-proxima', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:287:      { id: 'b-proxima', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:320:      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:321:      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:333:      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:336:      { id: 'b-2', desde: hoyALas(16), hasta: hoyALas(16, 20), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:384:      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(10), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:385:      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(11, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:405:      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(9), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:406:      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(12), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:421:      { id: 'b-1', desde: hoyALas(8), hasta: hoyALas(9), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:422:      { id: 'b-2', desde: hoyALas(11), hasta: hoyALas(12), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:449:      { id: 'b-4', desde: hoyALas(11), hasta: hoyALas(11, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:469:      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.confirmada },
+src/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.spec.ts:488:      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada, paciente: 'Luis Rojas' },

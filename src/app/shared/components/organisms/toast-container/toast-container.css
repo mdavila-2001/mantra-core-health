@@ -15,7 +15,6 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--sp-2);
     pointer-events: none;
     /* base = móvil: el aviso ocupa el ancho (380 px no entran en 360 de pantalla) */
     max-width: none;
@@ -34,4 +33,19 @@
         /* no se desborda en escritorio */
         max-width: min(380px, calc(100vw - var(--sp-8)));
     }
+}
+
+/* Las dos regiones vivas apilan como antes apilaba el host. No se ocultan
+   vacías: una región con `display: none` sale del árbol de accesibilidad, y al
+   volver con el aviso ya adentro no se anuncia. Vacías miden cero; el aire
+   entre las dos sólo aparece cuando las dos tienen algo. */
+.toast-region {
+    display: flex;
+    flex-direction: column;
+    align-items: inherit;
+    gap: var(--sp-2);
+}
+
+.toast-region:not(:empty) + .toast-region:not(:empty) {
+    margin-top: var(--sp-2);
 }

@@ -1,0 +1,19 @@
+﻿git rev-parse HEAD
+b84f74aaf3a359de93c53ab05941e2ec7ac5d0c1
+git branch --show-current
+marcelo/fix-perfil-medico-ux-credenciales-especialidades
+git merge-base --is-ancestor b84f74aa HEAD
+EXIT_CODE=0
+git diff b84f74aa -- src/environments/
+EXIT_CODE=0
+rg -n -g environment*.ts mockBackend: src/environments
+src/environments\environment.e2e-real.ts:13:  mockBackend: false,
+src/environments\environment.development.ts:15:  mockBackend: false,
+src/environments\environment.production-api.ts:15:  mockBackend: false,
+src/environments\environment.demo.ts:14:  mockBackend: true,
+src/environments\environment.ts:15:  mockBackend: false,
+src/environments\environment.real-api.ts:13:  mockBackend: false,
+src/environments\environment.types.ts:231:  readonly mockBackend: boolean;
+git status --short -- .vscode/settings.json docs/trabajo/2026-10-02-sincronizacion-dev-mockup
+?? .vscode/settings.json
+?? docs/trabajo/2026-10-02-sincronizacion-dev-mockup/

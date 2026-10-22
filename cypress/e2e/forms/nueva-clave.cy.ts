@@ -22,7 +22,7 @@ describe('Formularios · nueva contraseña', () => {
 
     ResetPasswordPage.cambiarPassword('contrasena-nueva-de-prueba');
 
-    ResetPasswordPage.esperarConfirmacion().should('match', /ya podés entrar con la nueva/i);
+    ResetPasswordPage.esperarConfirmacion().should('match', /ya puede entrar con la nueva/i);
   });
 
   it('la pantalla dice cuántas sesiones se cerraron', () => {
@@ -51,7 +51,7 @@ describe('Formularios · nueva contraseña', () => {
 
     ResetPasswordPage.cambiarPassword('contrasena-nueva-de-prueba');
 
-    ResetPasswordPage.esperarError().should('match', /venció|ya se usó|revisá/i);
+    ResetPasswordPage.esperarError().should('match', /venció|ya se usó|revise/i);
   });
 
   it('desde la confirmación se entra con la contraseña nueva', () => {

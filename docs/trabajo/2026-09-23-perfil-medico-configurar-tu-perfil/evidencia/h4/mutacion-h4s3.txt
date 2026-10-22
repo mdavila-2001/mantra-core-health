@@ -1,0 +1,261 @@
+Using Vitest configuration file: <repo>\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                                              [2m | [22m[1mNames[22m                                                                                         [2m | [22m [1mRaw size[22m
+[32mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js[39m      [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit[22m      [2m | [22m  [36m1.55 MB[39m[2m | [22m
+[32mstyles.css[39m                                                                                       [2m | [22m[2mstyles[22m                                                                                        [2m | [22m[36m166.29 kB[39m[2m | [22m
+[32mchunk-FGXNNO3T.js[39m                                                                                [2m | [22m[2m-[22m                                                                                             [2m | [22m[36m121.26 kB[39m[2m | [22m
+[32mchunk-SOTNGF5F.js[39m                                                                                [2m | [22m[2m-[22m                                                                                             [2m | [22m [36m22.65 kB[39m[2m | [22m
+[32mchunk-VZ7IINMO.js[39m                                                                                [2m | [22m[2m-[22m                                                                                             [2m | [22m  [36m7.07 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.logic.js[39m[2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.logic[22m[2m | [22m  [36m5.39 kB[39m[2m | [22m
+[32mchunk-JBWBLPNK.js[39m                                                                                [2m | [22m[2m-[22m                                                                                             [2m | [22m  [36m5.19 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                                                  [2m | [22m[2minit-testbed[22m                                                                                  [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                                             [2m | [22m[2mvitest-mock-patch[22m                                                                             [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                                              [2m | [22m[2msetup-test-setup[22m                                                                              [2m | [22m[36m911 bytes[39m[2m | [22m
+
+[1m [22m                                                                                                [2m | [22m[1mInitial total[22m                                                                                 [2m | [22m  [1m1.88 MB[22m
+
+[1mLazy chunk files[22m                                                                                 [2m | [22m[1mNames[22m                                                                                         [2m | [22m [1mRaw size[22m
+[32mchunk-QSRNX3GK.js[39m                                                                                [2m | [22m[2mmap[22m                                                                                           [2m | [22m[36m224 bytes[39m[2m | [22m
+[32mchunk-A6CZD63C.js[39m                                                                                [2m | [22m[2mlocation-picker[22m                                                                               [2m | [22m[36m158 bytes[39m[2m | [22m
+
+Application bundle generation complete. [79.674 seconds] - 2026-09-24T13:54:23.031Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:39:
+[37m      99 │ ...: [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+         ╵                                  [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:62:
+[37m      99 │ ... AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+         ╵                                                [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m<repo>[39m
+
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.spec.ts [2m([22m[2m18 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 28[2mms[22m[39m
+[31m       [31m×[31m con doce filas y diez por página, la primera trae diez y la segunda dos[39m[32m 10[2mms[22m[39m
+[31m       [31m×[31m una página que ya no existe muestra la última, como el paginador[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m una página imposible (0 o NaN) muestra la primera[39m[32m 2[2mms[22m[39m
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts [2m([22m[2m136 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 4371[2mms[22m[39m
+[31m       [31m×[31m con doce títulos se ven diez y el paginador dice «1–10 de 12»; la página 2 trae los otros dos[39m[32m 148[2mms[22m[39m
+[31m       [31m×[31m el filtro «Estado» de especialidades separa lo pendiente de lo verificado[39m[32m 19[2mms[22m[39m
+[31m       [31m×[31m la búsqueda y el estado arrancan con lo que ya trae la URL[39m[32m 12[2mms[22m[39m
+[31m       [31m×[31m las acciones de cada fila: lo verificado sólo se descarga; lo pendiente se edita y se retira[39m[32m 10[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 7 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.spec.ts[2m > [22mpractitioner-profile-edit.logic[2m > [22mfilasDeLaPagina[2m > [22mcon doce filas y diez por página, la primera trae diez y la segunda dos
+[31m[1mAssertionError[22m: expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …(2) ] to deeply equal [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ][39m
+
+- Expected
++ Received
+
+@@ -7,6 +7,8 @@
+    6,
+    7,
+    8,
+    9,
+    10,
++   11,
++   12,
+  ]
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.spec.ts:[2m93:44[22m[39m
+    [90m 91|[39m
+    [90m 92|[39m     it('con doce filas y diez por página, la primera trae diez y la se…
+    [90m 93|[39m       expect(filasDeLaPagina(doce, 1, 10)).toEqual([1, 2, 3, 4, 5, 6, …
+    [90m   |[39m                                            [31m^[39m
+    [90m 94|[39m       [34mexpect[39m([34mfilasDeLaPagina[39m(doce[33m,[39m [34m2[39m[33m,[39m [34m10[39m))[33m.[39m[34mtoEqual[39m([[34m11[39m[33m,[39m [34m12[39m])[33m;[39m
+    [90m 95|[39m     })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.spec.ts[2m > [22mpractitioner-profile-edit.logic[2m > [22mfilasDeLaPagina[2m > [22muna página que ya no existe muestra la última, como el paginador
+[31m[1mAssertionError[22m: expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …(2) ] to deeply equal [ 11, 12 ][39m
+
+- Expected
++ Received
+
+  [
++   1,
++   2,
++   3,
++   4,
++   5,
++   6,
++   7,
++   8,
++   9,
++   10,
+    11,
+    12,
+  ]
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.spec.ts:[2m98:44[22m[39m
+    [90m 96|[39m
+    [90m 97|[39m     it('una página que ya no existe muestra la última, como el paginad…
+    [90m 98|[39m       [34mexpect[39m([34mfilasDeLaPagina[39m(doce[33m,[39m [34m3[39m[33m,[39m [34m10[39m))[33m.[39m[34mtoEqual[39m([[34m11[39m[33m,[39m [34m12[39m])[33m;[39m
+    [90m   |[39m                                            [31m^[39m
+    [90m 99|[39m       [34mexpect[39m([34mfilasDeLaPagina[39m([[34m1[39m[33m,[39m [34m2[39m][33m,[39m [34m2[39m[33m,[39m [34m10[39m))[33m.[39m[34mtoEqual[39m([[34m1[39m[33m,[39m [34m2[39m])[33m;[39m
+    [90m100|[39m     })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.spec.ts[2m > [22mpractitioner-profile-edit.logic[2m > [22mfilasDeLaPagina[2m > [22muna página imposible (0 o NaN) muestra la primera
+[31m[1mAssertionError[22m: expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …(2) ] to have a length of 10 but got 12[39m
+
+- Expected
++ Received
+
+- 10
++ 12
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.spec.ts:[2m103:44[22m[39m
+    [90m101|[39m
+    [90m102|[39m     [34mit[39m([32m'una página imposible (0 o NaN) muestra la primera'[39m[33m,[39m () [33m=>[39m {
+    [90m103|[39m       [34mexpect[39m([34mfilasDeLaPagina[39m(doce[33m,[39m [34m0[39m[33m,[39m [34m10[39m))[33m.[39m[34mtoHaveLength[39m([34m10[39m)[33m;[39m
+    [90m   |[39m                                            [31m^[39m
+    [90m104|[39m       [34mexpect[39m([34mfilasDeLaPagina[39m(doce[33m,[39m [33mNumber[39m[33m.[39m[33mNaN[39m[33m,[39m [34m10[39m)[[34m0[39m])[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+    [90m105|[39m     })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts[2m > [22mPractitionerProfileEdit[2m > [22mlas tres tablas: paginación, filtro «Estado» y acciones de fila (H4.S3)[2m > [22mcon doce títulos se ven diez y el paginador dice «1–10 de 12»; la página 2 trae los otros dos
+[31m[1mAssertionError[22m: expected …(12) to have a length of 10 but got 12[39m
+
+- Expected
++ Received
+
+- 10
++ 12
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:[2m2106:9[22m[39m
+    [90m2104|[39m       expect(
+    [90m2105|[39m         tabla.querySelectorAll('[data-testid="tabla-formacion"] tbody …
+    [90m2106|[39m       ).toHaveLength(10);
+    [90m   |[39m         [31m^[39m
+    [90m2107|[39m       expect(tabla.querySelector('[data-testid="paginacion-formacion"]…
+    [90m2108|[39m         '1–10 de 12',
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts[2m > [22mPractitionerProfileEdit[2m > [22mlas tres tablas: paginación, filtro «Estado» y acciones de fila (H4.S3)[2m > [22mel filtro «Estado» de especialidades separa lo pendiente de lo verificado
+[31m[1mAssertionError[22m: expected [ 'spec-ok', 'spec-pend' ] to deeply equal [ 'spec-pend' ][39m
+
+- Expected
++ Received
+
+  [
++   "spec-ok",
+    "spec-pend",
+  ]
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:[2m2156:50[22m[39m
+    [90m2154|[39m
+    [90m2155|[39m       filtrar({ estadoEspecialidad: 'pendiente' });
+    [90m2156|[39m       expect(enLaPagina('estadoEspecialidades')).toEqual(['spec-pend']…
+    [90m   |[39m                                                  [31m^[39m
+    [90m2157|[39m
+    [90m2158|[39m       filtrar({ estadoEspecialidad: 'verificado' });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts[2m > [22mPractitionerProfileEdit[2m > [22mlas tres tablas: paginación, filtro «Estado» y acciones de fila (H4.S3)[2m > [22mla búsqueda y el estado arrancan con lo que ya trae la URL
+[31m[1mAssertionError[22m: expected [ 'spec-ok', 'spec-pend' ] to deeply equal [ 'spec-pend' ][39m
+
+- Expected
++ Received
+
+  [
++   "spec-ok",
+    "spec-pend",
+  ]
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:[2m2185:50[22m[39m
+    [90m2183|[39m       montarYCargar(CON_ESTADOS);
+    [90m2184|[39m
+    [90m2185|[39m       expect(enLaPagina('estadoEspecialidades')).toEqual(['spec-pend']…
+    [90m   |[39m                                                  [31m^[39m
+    [90m2186|[39m       expect(enLaPagina('estadoMatriculas')).toEqual(['lic-activa']);
+    [90m2187|[39m     });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts[2m > [22mPractitionerProfileEdit[2m > [22mlas tres tablas: paginación, filtro «Estado» y acciones de fila (H4.S3)[2m > [22mlas acciones de cada fila: lo verificado sólo se descarga; lo pendiente se edita y se retira
+[31m[1mAssertionError[22m: expected [ 'editar', 'descargar' ] to deeply equal [ 'descargar' ][39m
+
+- Expected
++ Received
+
+  [
++   "editar",
+    "descargar",
+  ]
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:[2m2242:46[22m[39m
+    [90m2240|[39m       expect(codigos(porId('c-pend-archivo'))).toEqual(['editar', 'des…
+    [90m2241|[39m       expect(codigos(porId('c-pend'))).toEqual(['editar', 'retirar']);
+    [90m2242|[39m       expect(codigos(porId('c-ok-archivo'))).toEqual(['descargar']);
+    [90m   |[39m                                              [31m^[39m
+    [90m2243|[39m       expect(codigos(porId('c-ok'))).toEqual([]);
+    [90m2244|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m147 passed[39m[22m[90m (154)[39m
+[2m   Start at [22m 09:54:23
+[2m   Duration [22m 9.39s[2m (transform 3.48s, setup 1.15s, import 4.47s, tests 4.40s, environment 2.29s)[22m
+
+exit=1

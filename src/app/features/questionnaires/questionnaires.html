@@ -1,6 +1,6 @@
 <app-page-header
   title="Encuestas"
-  subtitle="Creá encuestas para tus pacientes y revisá lo que respondieron."
+  subtitle="Cree encuestas para sus pacientes y revise lo que respondieron."
   [breadcrumbs]="breadcrumbs()"
 >
   <button
@@ -79,7 +79,7 @@
   <app-empty-state
     vsh-empty
     variant="empty"
-    title="Todavía no tenés encuestas"
+    title="Todavía no tiene encuestas"
     [description]="mensajeVacio()"
     data-testid="encuestas-sin-encuestas"
   >
@@ -97,7 +97,7 @@
         <app-search-field
           class="encuestas__buscador"
           data-testid="encuestas-buscar"
-          label="Buscar entre tus encuestas"
+          label="Buscar entre sus encuestas"
           placeholder="Buscar por título o consigna"
           [(value)]="busqueda"
         />
@@ -134,7 +134,7 @@
         <app-empty-state
           variant="no-results"
           title="Ninguna encuesta coincide con el filtro"
-          description="Probá con otro título, otra consigna u otro estado."
+          description="Pruebe con otro título, otra consigna u otro estado."
           data-testid="encuestas-sin-resultados"
         >
           <button

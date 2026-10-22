@@ -1,0 +1,39 @@
+:host {
+  display: inline-flex;
+}
+
+.panico__dialogo {
+  inline-size: min(32rem, calc(100vw - 2 * var(--sp-4)));
+  max-block-size: calc(100dvh - 2 * var(--sp-4));
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.panico__dialogo::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.panico__panel {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.panico__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.panico__texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.panico__cierre {
+  display: flex;
+  justify-content: flex-end;
+}

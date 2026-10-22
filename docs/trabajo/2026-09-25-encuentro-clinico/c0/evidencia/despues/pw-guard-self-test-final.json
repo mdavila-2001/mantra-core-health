@@ -1,0 +1,220 @@
+{
+  "outcome": "PASSED",
+  "attempt": 10,
+  "failedTests": [],
+  "attempts": [],
+  "selfTest": {
+    "passed": 3,
+    "failed": 0,
+    "scenarios": [
+      {
+        "outcome": "PASSED",
+        "attempt": 2,
+        "failedTests": [],
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "STALL",
+            "reason": "sin líneas de salida",
+            "code": 1,
+            "signal": null,
+            "pid": 32524,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201513-self-test-stall-intento-1.log",
+            "cleanupConfirmed": true,
+            "failedTests": [],
+            "completedTests": 0,
+            "assertionFailure": false,
+            "durationSeconds": 6.21
+          },
+          {
+            "attempt": 2,
+            "outcome": "PASSED",
+            "code": 0,
+            "signal": null,
+            "pid": 20944,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201513-self-test-stall-intento-2.log",
+            "cleanupConfirmed": true,
+            "failedTests": [],
+            "completedTests": 0,
+            "assertionFailure": false,
+            "durationSeconds": 3.04
+          }
+        ]
+      },
+      {
+        "outcome": "PASSED",
+        "attempt": 1,
+        "failedTests": [],
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "PASSED",
+            "code": 0,
+            "signal": null,
+            "pid": 24360,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201523-self-test-exited-parent-intento-1.log",
+            "cleanupConfirmed": true,
+            "failedTests": [],
+            "completedTests": 0,
+            "assertionFailure": false,
+            "durationSeconds": 3.02
+          }
+        ]
+      },
+      {
+        "outcome": "PASSED",
+        "attempt": 1,
+        "failedTests": [],
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "PASSED",
+            "code": 0,
+            "signal": null,
+            "pid": 32812,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201526-self-test-success-intento-1.log",
+            "cleanupConfirmed": true,
+            "failedTests": [],
+            "completedTests": 2,
+            "assertionFailure": false,
+            "durationSeconds": 3.65
+          }
+        ]
+      },
+      {
+        "outcome": "FAILED",
+        "attempt": 1,
+        "failedTests": [
+          "fallo",
+          "fallo ASCII"
+        ],
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "FAILED",
+            "reason": "aserción o error determinista",
+            "code": 1,
+            "signal": null,
+            "pid": 17008,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201529-self-test-failure-intento-1.log",
+            "cleanupConfirmed": true,
+            "failedTests": [
+              "fallo",
+              "fallo ASCII"
+            ],
+            "completedTests": 2,
+            "assertionFailure": true,
+            "durationSeconds": 3.45
+          }
+        ]
+      },
+      {
+        "outcome": "FAILED",
+        "attempt": 1,
+        "failedTests": [
+          "fallo antes del cuelgue"
+        ],
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "FAILED",
+            "reason": "fallo registrado antes de STALL",
+            "code": 1,
+            "signal": null,
+            "pid": 32676,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201533-self-test-assertion-stall-intento-1.log",
+            "cleanupConfirmed": true,
+            "failedTests": [
+              "fallo antes del cuelgue"
+            ],
+            "completedTests": 1,
+            "assertionFailure": true,
+            "durationSeconds": 6.68
+          }
+        ]
+      },
+      {
+        "outcome": "UNAVAILABLE",
+        "attempt": 1,
+        "message": "salud sintética: servidor terminó",
+        "failedTests": [],
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "INFRASTRUCTURE",
+            "reason": "conexión rechazada",
+            "code": 1,
+            "signal": null,
+            "pid": 33948,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201540-self-test-health-error-intento-1.log",
+            "cleanupConfirmed": true,
+            "failedTests": [],
+            "completedTests": 0,
+            "assertionFailure": false,
+            "durationSeconds": 3.1
+          }
+        ]
+      },
+      {
+        "outcome": "FAILED",
+        "attempt": 3,
+        "failedTests": [
+          "fallo",
+          "fallo ASCII"
+        ],
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "FAILED",
+            "reason": "aserción o error determinista",
+            "code": 1,
+            "signal": null,
+            "pid": 27208,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201543-self-test-one-assertion-repeat-intento-1.log",
+            "cleanupConfirmed": true,
+            "failedTests": [
+              "fallo",
+              "fallo ASCII"
+            ],
+            "completedTests": 2,
+            "assertionFailure": true,
+            "durationSeconds": 2.66
+          },
+          {
+            "attempt": 2,
+            "outcome": "INFRASTRUCTURE",
+            "reason": "conexión rechazada",
+            "code": 1,
+            "signal": null,
+            "pid": 9868,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201543-self-test-one-assertion-repeat-intento-2.log",
+            "cleanupConfirmed": true,
+            "failedTests": [],
+            "completedTests": 0,
+            "assertionFailure": false,
+            "durationSeconds": 3.5
+          },
+          {
+            "attempt": 3,
+            "outcome": "FAILED",
+            "reason": "aserción o error determinista",
+            "code": 1,
+            "signal": null,
+            "pid": 36188,
+            "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-201543-self-test-one-assertion-repeat-intento-3.log",
+            "cleanupConfirmed": true,
+            "failedTests": [
+              "fallo",
+              "fallo ASCII"
+            ],
+            "completedTests": 2,
+            "assertionFailure": true,
+            "durationSeconds": 4.45
+          }
+        ]
+      }
+    ]
+  },
+  "durationSeconds": 39.78,
+  "exitCode": 0
+}

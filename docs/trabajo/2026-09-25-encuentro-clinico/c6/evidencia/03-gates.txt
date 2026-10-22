@@ -1,0 +1,44 @@
+$ corepack yarn typecheck
+(sin salida: 0 errores)
+
+$ corepack yarn lint
+C:\...\wt-clinica-c6\playwright\auditoria-qa-mockup.spec.ts
+   1:29  error  'Page' is defined but never used...
+  17:20  error  Array type using 'Array<T>' is forbidden...
+  18:21  error  Array type using 'Array<T>' is forbidden...
+C:\...\wt-clinica-c6\playwright\carril-insurance-whatsapp.spec.ts
+  70:10  error  'esRuidoDelServidorDeDesarrollo' is defined but never used...
+C:\...\src\app\features\insurance\...\insurance-contact-channels.spec.ts
+  135:75  error  Unexpected empty arrow function
+C:\...\src\app\shared\components\molecules\patient-coverage-card\patient-coverage-card.spec.ts
+  114:71  error  Unexpected empty arrow function
+✖ 6 problems (6 errors, 0 warnings)
+
+LOS 6 SON PREEXISTENTES: ninguno está en un archivo que este carril tocó
+(`git diff --name-only origin/mockup` no los lista). Cero rojos nuevos.
+
+$ node scripts/check-tokens.mjs
+✓ check-tokens
+  212 tokens, iguales en styles.css y en el catálogo tipado
+exit=0
+
+$ node scripts/check-css-tokens.mjs
+✗ 4 token(s) sin declarar — `--s`, `--fs-title`, `--x`, `--dur`
+  en auth-stage.css y pharmacy-shop.css. NINGUNO de este carril.
+exit=0
+
+$ node scripts/check-architecture.mjs   → exit=0
+$ node scripts/check-client-prefixes.mjs → exit=0
+
+$ corepack yarn stock:generate
+✓ 550 componentes · 35 organismos   (incluye `app-encounter-timeline`)
+
+--- NO EJECUTADO, y por qué ---
+· Playwright (`playwright/clinica-c6-historia-paciente.spec.ts`): `scripts/pw-guard.mjs`
+  no existe en este árbol (era de C0) y el carril tiene prohibido levantar un servidor
+  mientras corren otros agentes en paralelo. Peldaño del archivo: WRITTEN.
+· Capturas de los cinco viewports, claro/oscuro, y la medición de la Regla 8 (≤2px, ≥85%):
+  exigen navegador. No se tomaron y no se inventaron.
+· Render del PDF con pdf.js: exige navegador. Sólo se probó el contenido del documento
+  (los bloques), que es lo que este carril decide; maquetarlo es de `pdf-export.ts`.
+· La suite completa (`yarn test`) y `yarn build`: prohibidos por el límite de recursos.

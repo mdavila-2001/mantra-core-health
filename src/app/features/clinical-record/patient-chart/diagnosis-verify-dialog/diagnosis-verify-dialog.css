@@ -1,0 +1,12 @@
+/* El formulario de la decisión, dentro del modal: una sola columna a lo ancho
+   del panel, con el ritmo de los demás formularios clínicos. La tarjeta, el
+   fondo y el pie los pone `content-dialog`. */
+
+:host {
+  display: contents;
+}
+
+.verificar {
+  display: grid;
+  gap: var(--sp-4);
+}

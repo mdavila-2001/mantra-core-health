@@ -9,8 +9,61 @@
   display: block;
 }
 
-.directorio__cuenta {
+.directorio__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
   margin: 0 0 var(--sp-4);
+}
+
+.directorio__vistas {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.directorio__vista {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  /* 44 px de alto: es un control táctil, y en el teléfono es lo primero que se
+     toca al abrir el directorio. */
+  min-block-size: 40px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: calc(var(--r-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.directorio__vista svg {
+  fill: currentColor;
+}
+
+.directorio__vista:hover {
+  color: var(--text-primary);
+}
+
+.directorio__vista[aria-pressed='true'] {
+  background: var(--brand-primary);
+  color: var(--text-on-brand, #fff);
+}
+
+.directorio__vista:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.directorio__cuenta {
+  margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -55,27 +108,50 @@
   inset-block-start: 0;
   z-index: 2;
   display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin: 0 0 var(--sp-3);
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--border-subtle, var(--border-default));
-  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--border-default) 65%, transparent);
+  border-radius: var(--r-lg);
   /* Opaco: si no, las tarjetas se leen a través del encabezado al desplazar.
        `surface-alt` y no `surface`: con el mismo fondo que las tarjetas, el
        rótulo se leería como una tarjeta más de la grilla. */
-  background: var(--bg-surface-alt);
+  background: color-mix(in srgb, var(--bg-surface-alt) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+.directorio__rotulo::before {
+  content: '';
+  display: inline-block;
+  inline-size: 4px;
+  block-size: 1.25rem;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+  flex-shrink: 0;
 }
 
 .directorio__cantidad {
-  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--brand-primary) 12%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 25%, transparent);
+  color: var(--brand-primary);
   font-family: var(--font-mono);
   font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
-  font-weight: 400;
+  font-weight: 700;
+  margin-inline-start: auto;
 }
 
 /* La grilla, que es el pedido concreto del cliente («Grilla de directorio de
@@ -93,6 +169,13 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* La lista es la misma `ul` con una sola columna: la tarjeta sabe dibujarse
+   horizontal (`vista`), acá sólo se le da el ancho entero. */
+.directorio__grilla--lista {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
 }
 
 /* La bajada cuando el directorio va embebido en un modal: el título ya lo puso

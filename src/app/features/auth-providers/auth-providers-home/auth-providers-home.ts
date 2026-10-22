@@ -33,7 +33,7 @@ const BASE = '/administration/identity-providers';
   selector: 'app-auth-providers-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './auth-providers-home.html',
-  styleUrl: '../../portada.css',
+  styleUrl: '../../cover.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthProvidersHome {

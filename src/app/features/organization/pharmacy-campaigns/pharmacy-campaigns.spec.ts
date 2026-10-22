@@ -1,11 +1,14 @@
-import { provideHttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
+import { vi } from 'vitest';
 
 import type { PharmacyDirectoryPage } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { PharmacyCampaignsClient } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PharmacyCampaigns } from './pharmacy-campaigns';
 
 /**
@@ -17,7 +20,7 @@ import { PharmacyCampaigns } from './pharmacy-campaigns';
  * del formulario vuelven **todos juntos**; y una campaña publicada queda
  * visible para el paciente en el mismo instante.
  *
- * Corren con la demo encendida, que es el default de desarrollo.
+ * Activan la demo de campañas explícitamente y restauran el entorno tras cada caso.
  */
 const FARMACIA = { id: '7f1c9a52-6d3e-4b18-9c47-2a5e8f0b1d63', name: 'Farmacia del Centro' };
 
@@ -27,6 +30,11 @@ const DIRECTORIO: PharmacyDirectoryPage = {
 };
 
 describe('PharmacyCampaigns', () => {
+  const originalCampaignsDemo = environment.campaignsDemo;
+
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: originalCampaignsDemo }));
+
   let fixture: ComponentFixture<PharmacyCampaigns>;
   let http: HttpTestingController;
   let client: PharmacyCampaignsClient;
@@ -104,7 +112,7 @@ describe('PharmacyCampaigns', () => {
     fixture.detectChanges();
 
     const fallos = elemento('[data-testid="campanas-fallos"]');
-    expect(fallos?.textContent).toContain('Elegí desde qué día');
+    expect(fallos?.textContent).toContain('Elija desde qué día');
     expect(fallos?.textContent).not.toContain('anterior a la de inicio');
     // Y los otros dos siguen dichos: tres problemas, un solo intento.
     expect(fallos?.querySelectorAll('li')).toHaveLength(3);
@@ -165,6 +173,59 @@ describe('PharmacyCampaigns', () => {
     // Y aparece en la lista de la propia farmacia, no sólo en el cliente.
     expect(await firstValueFrom(client.campanasDeFarmacia(FARMACIA.id))).toHaveLength(1);
     expect(texto()).toContain('Cuidado diario');
+  });
+
+  /* -- Los fallos dicen su causa (2026-10-08) ------------------------------ */
+
+  function ultimoAviso(): string | undefined {
+    return TestBed.inject(ToastService).toasts().at(-1)?.message;
+  }
+
+  it('si publicar falla, dice el motivo de la API y deja el borrador como estaba', () => {
+    montar();
+    vi.spyOn(client, 'crear').mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: {
+              code: 'CONFLICT',
+              message: 'Ya hay una campaña con ese título en esas fechas.',
+              correlationId: 'c-camp',
+            },
+          }),
+      ),
+    );
+    const componente = fixture.componentInstance as unknown as {
+      titulo: { (): string; set: (valor: string) => void };
+      publicar: () => void;
+    };
+    componente.titulo.set('Cuidado diario');
+    componente.publicar();
+    fixture.detectChanges();
+
+    expect(ultimoAviso()).toBe(
+      'Ya hay una campaña con ese título en esas fechas. (Código de soporte: c-camp)',
+    );
+    expect(componente.titulo()).toBe('Cuidado diario');
+  });
+
+  it('si la búsqueda en el catálogo falla, no dice «no hay productos con ese nombre»', () => {
+    montar();
+    (fixture.componentInstance as unknown as { buscarEnElCatalogo: (t: string) => void })
+      .buscarEnElCatalogo('metformina');
+    http
+      .expectOne((peticion) => peticion.params.get('search') === 'metformina')
+      .flush(
+        { code: 'INTERNAL', message: 'boom', correlationId: 'c-cat' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    fixture.detectChanges();
+
+    expect(texto()).not.toContain('No hay productos de su catálogo con ese nombre');
+    expect(ultimoAviso()).toBe(
+      'No se pudo consultar el catálogo. Pruebe de nuevo. (Código de soporte: c-cat)',
+    );
   });
 
   it('publica cuando el campo numérico devuelve un número, no su texto', async () => {

@@ -1,0 +1,77 @@
+✓ check-contrast
+
+  ── src/styles.css · ALOVIDA v1.0
+  ✓ claro              --text-primary       sobre --bg-surface          14.90:1  (mín. 4.5)
+  ✓ claro              --text-secondary     sobre --bg-surface           8.02:1  (mín. 4.5)
+  · claro              --text-muted         sobre --bg-surface           4.27:1  (mín. 4.5)  ← E1
+  ✓ claro              --brand-primary      sobre --bg-surface           8.03:1  (mín. 4.5)
+  ✓ claro              --border-strong      sobre --bg-surface           3.70:1  (mín. 3)
+  ✓ claro              --st-success-fg      sobre --st-success-bg        6.75:1  (mín. 4.5)
+  ✓ claro              --st-warning-fg      sobre --st-warning-bg        7.49:1  (mín. 4.5)
+  ✓ claro              --st-error-fg        sobre --st-error-bg          7.53:1  (mín. 4.5)
+  ✓ claro              --st-info-fg         sobre --st-info-bg           5.01:1  (mín. 4.5)
+  ✓ claro              --st-primary-fg      sobre --st-primary-bg        9.49:1  (mín. 4.5)
+  ✓ claro              --st-secondary-fg    sobre --st-secondary-bg      6.63:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+  ✓ oscuro · sistema   --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+  · oscuro · sistema   --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+  ✓ oscuro · sistema   --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+  ✓ oscuro · manual    --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+  · oscuro · manual    --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+  ✓ oscuro · manual    --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+
+  ── src/styles/alovida.css · ALOVIDA v1.1 (bóveda)
+  ✓ claro              --tinta              sobre --sup-tarjeta         14.90:1  (mín. 4.5)
+  ✓ claro              --tinta              sobre --sup-pagina          14.90:1  (mín. 4.5)
+  ✓ claro              --tinta              sobre --sup-inset           14.02:1  (mín. 4.5)
+  ✓ claro              --tinta-2            sobre --sup-tarjeta          8.02:1  (mín. 4.5)
+  ✓ claro              --tinta-2            sobre --sup-pagina           8.02:1  (mín. 4.5)
+  · claro              --tinta-3            sobre --sup-tarjeta          4.27:1  (mín. 4.5)  ← R1
+  · claro              --tinta-3            sobre --sup-pagina           4.27:1  (mín. 4.5)  ← R1
+  ✓ claro              --tinta-marca        sobre --sup-tarjeta         11.31:1  (mín. 4.5)
+  ✓ claro              --petroleo           sobre --sup-pagina           8.03:1  (mín. 4.5)
+  ✓ claro              --petroleo           sobre --sup-tarjeta          8.03:1  (mín. 4.5)
+  ✓ claro              --borde-ctrl         sobre --sup-tarjeta          3.70:1  (mín. 3)
+  ✓ claro              --borde-ctrl         sobre --sup-inset            3.48:1  (mín. 3)
+  ✓ claro              --ok-tinta           sobre --ok-bg                4.78:1  (mín. 4.5)
+  ✓ claro              --aviso-tinta        sobre --aviso-bg             7.49:1  (mín. 4.5)
+  ✓ claro              --error-tinta        sobre --error-bg             5.49:1  (mín. 4.5)
+  ✓ claro              --info-tinta         sobre --info-bg              5.01:1  (mín. 4.5)
+  ✓ claro              --neutro-tinta       sobre --neutro-bg            7.37:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-tarjeta         13.01:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-pagina          14.33:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-inset           13.69:1  (mín. 4.5)
+  ✓ oscuro             --tinta-2            sobre --sup-tarjeta          9.07:1  (mín. 4.5)
+  ✓ oscuro             --tinta-2            sobre --sup-pagina           9.99:1  (mín. 4.5)
+  ✓ oscuro             --tinta-3            sobre --sup-tarjeta          5.43:1  (mín. 4.5)
+  ✓ oscuro             --tinta-3            sobre --sup-pagina           5.98:1  (mín. 4.5)
+  ✓ oscuro             --tinta-marca        sobre --sup-tarjeta         12.43:1  (mín. 4.5)
+  · oscuro             --petroleo           sobre --sup-pagina           3.41:1  (mín. 4.5)  ← R3
+  · oscuro             --petroleo           sobre --sup-tarjeta          3.09:1  (mín. 4.5)  ← R3
+  · oscuro             --borde-ctrl         sobre --sup-tarjeta          2.47:1  (mín. 3)  ← R2
+  · oscuro             --borde-ctrl         sobre --sup-inset            2.60:1  (mín. 3)  ← R2
+  ✓ oscuro             --ok-tinta           sobre --ok-bg                7.89:1  (mín. 4.5)
+  ✓ oscuro             --aviso-tinta        sobre --aviso-bg             7.83:1  (mín. 4.5)
+  ✓ oscuro             --error-tinta        sobre --error-bg             7.40:1  (mín. 4.5)
+  ✓ oscuro             --info-tinta         sobre --info-bg              8.19:1  (mín. 4.5)
+  ✓ oscuro             --neutro-tinta       sobre --neutro-bg            8.72:1  (mín. 4.5)
+
+  67 combinaciones medidas en 2 hojas · las excepciones E1–E3 (v1.0) y R1–R2 (bóveda) se esperan, no se ignoran
+  R3 NO es un límite aceptado: --petroleo en oscuro está sobrecargado (enlace y relleno de botón) y hay que partirlo en dos. Es tarea abierta del diseñador.
+
+EXIT_CODE: 0

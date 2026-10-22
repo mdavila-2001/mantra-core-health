@@ -65,13 +65,13 @@
    es el que hace la diferencia: un borde continuo lo volvería pulsable a la
    vista y no lo es. */
 .view-state-host__next-action {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: var(--sp-2) var(--sp-4);
-    border: 1px dashed var(--border-strong);
-    border-radius: var(--r-full);
-    background: var(--bg-inset);
+    display: block;
+    text-align: center;
+    padding: var(--sp-1) 0;
+    /* Texto con flecha y nada más: sin recuadro (ni punteado), para que no
+       parezca un botón que no es. */
+    border: 0;
+    background: transparent;
     color: var(--text-secondary);
     font-family: var(--font-body);
     font-size: var(--fs-caption);

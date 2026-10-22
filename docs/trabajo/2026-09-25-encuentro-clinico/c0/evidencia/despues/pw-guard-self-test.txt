@@ -1,0 +1,49 @@
+COMMAND: node --check scripts/pw-guard.mjs
+EXIT_CODE: 0
+COMMAND: node scripts/pw-guard.mjs --self-test
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185243-self-test-stall-intento-1.log
+[pw-guard] CHILD_READY
+[pw-guard] Intento 2; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185243-self-test-stall-intento-2.log
+[pw-guard] STALL: sin líneas de salida; relanzando.
+[pw-guard] CHILD_READY
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185254-self-test-exited-parent-intento-1.log
+[pw-guard] CHILD_READY
+PASS: silencio: mata árbol y relanza
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185257-self-test-success-intento-1.log
+[pw-guard] CHILD_READY
+[32m✓ 1 correcto[0m
+ok 2 correcto ASCII
+PASS: salida 0: acepta reporter Unicode, ASCII y chunks
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185300-self-test-failure-intento-1.log
+[pw-guard] CHILD_READY
+✘ 1 fallo
+[31mx 2 fallo ASCII[0m
+Error: expect(locator).toBeVisible()
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185303-self-test-assertion-stall-intento-1.log
+[pw-guard] CHILD_READY
+✘ 1 fallo antes del cuelgue
+Error: expect(locator).toBeVisible()
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185311-self-test-health-error-intento-1.log
+[pw-guard] CHILD_READY
+Error: connect ECONNREFUSED 127.0.0.1
+[pw-guard] INFRASTRUCTURE: conexión rechazada; relanzando.
+[pw-guard] salud sintética: servidor terminó
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185315-self-test-one-assertion-repeat-intento-1.log
+[pw-guard] CHILD_READY
+✘ 1 fallo
+[31mx 2 fallo ASCII[0m
+Error: expect(locator).toBeVisible()
+[pw-guard] Repetición explícita de aserciones (--retry-failures).
+[pw-guard] Intento 2; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185315-self-test-one-assertion-repeat-intento-2.log
+[pw-guard] CHILD_READY
+Error: connect ECONNREFUSED 127.0.0.1
+[pw-guard] INFRASTRUCTURE: conexión rechazada; relanzando.
+[pw-guard] Intento 3; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-185315-self-test-one-assertion-repeat-intento-3.log
+[pw-guard] CHILD_READY
+✘ 1 fallo
+[31mx 2 fallo ASCII[0m
+Error: expect(locator).toBeVisible()
+PASS: aserción: salida 1 sin relanzar
+pw-guard self-test: 3 PASS, 0 FAIL
+RESUMEN: outcome=PASSED intentos=10 duracion=43.36s
+EXIT_CODE: 0

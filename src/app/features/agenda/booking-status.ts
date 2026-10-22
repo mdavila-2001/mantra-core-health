@@ -130,6 +130,16 @@ export interface BookingStatusPresentation {
   readonly code: string;
 }
 
+/**
+ * Estados en los que una solicitud espera respuesta del profesional
+ * (corrección #11). Compartido por la lista de `/schedule` y por «Horarios de
+ * otros servicios»: los dos ofrecen aceptar o rechazar sobre los mismos.
+ */
+export const AWAITING_RESPONSE_CODES: ReadonlySet<string> = new Set([
+  'BOOKING_REQUESTED',
+  'BOOKING_PENDING_CONFIRMATION',
+]);
+
 /** El código sin el prefijo de módulo (`scheduling:X` → `X`). */
 export function sufijoDeCodigo(code: string): string {
   return code.includes(':') ? code.slice(code.lastIndexOf(':') + 1) : code;
@@ -143,6 +153,21 @@ export function sufijoDeCodigo(code: string): string {
  */
 export function statusVariantOf(code: string): StatusSealVariant {
   return VARIANTE_POR_CODIGO[sufijoDeCodigo(code)] ?? UNKNOWN_STATUS_VARIANT;
+}
+
+/**
+ * La palabra de un estado a partir de su código, con o sin prefijo de módulo.
+ *
+ * Es la pareja de {@link statusVariantOf} para las vistas del calendario, que
+ * ya tienen el código resuelto. El día y la semana mostraban el `display` del
+ * catálogo tal cual —«Booking in progress»—, y quien atiende lo leía como «la
+ * reserva todavía se está procesando» sobre una consulta que ya había empezado.
+ *
+ * @param code - El código del catálogo, o `''` si no se resolvió.
+ * @param textoDeReserva - Qué decir cuando el código no tiene palabra conocida.
+ */
+export function statusLabelOf(code: string, textoDeReserva: string): string {
+  return ETIQUETA_POR_CODIGO[sufijoDeCodigo(code)] ?? textoDeReserva;
 }
 
 /**

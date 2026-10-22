@@ -150,7 +150,7 @@ describe('Textarea', () => {
       await setInputs({ maxLength: 10 });
       await escribir('123456789');
 
-      expect(avisoVivo()).toBe('Te estás acercando al límite de 10 caracteres.');
+      expect(avisoVivo()).toBe('Se está acercando al límite de 10 caracteres.');
     });
 
     it('las teclas intermedias de la misma banda no cambian el anuncio', async () => {
@@ -169,7 +169,7 @@ describe('Textarea', () => {
       await setInputs({ maxLength: 10 });
       await escribir('1234567890');
 
-      expect(avisoVivo()).toBe('Alcanzaste el límite de 10 caracteres.');
+      expect(avisoVivo()).toBe('Alcanzó el límite de 10 caracteres.');
     });
 
     it('el techo, que no cambia, es lo que describe al control', async () => {

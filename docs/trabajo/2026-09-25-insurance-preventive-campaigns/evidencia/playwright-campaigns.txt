@@ -1,0 +1,26 @@
+
+Running 21 tests using 1 worker
+
+  ok  1 [chromium] › playwright\carril-insurance-campaigns.spec.ts:140:9 › campañas preventivas · escritorio (1440 px) › CA-4.1: la aseguradora crea CMP-CARDIO-E2E con sus aliados y queda Activa (8.7s)
+  ok  2 [chromium] › playwright\carril-insurance-campaigns.spec.ts:193:9 › campañas preventivas · escritorio (1440 px) › CA-4.6: el formulario avisa apenas se escribe algo inválido y no envía (6.3s)
+  ok  3 [chromium] › playwright\carril-insurance-campaigns.spec.ts:228:9 › campañas preventivas · escritorio (1440 px) › CA-4.3/4.4: la consola muestra el estado de cada una y sólo las de su aseguradora (6.6s)
+  ok  4 [chromium] › playwright\carril-insurance-campaigns.spec.ts:253:9 › campañas preventivas · escritorio (1440 px) › CA-4.2 y CA-4.3: el afiliado ve la tarjeta «100% Cubierto» y ninguna que no le corresponde (6.2s)
+  ok  5 [chromium] › playwright\carril-insurance-campaigns.spec.ts:290:9 › campañas preventivas · escritorio (1440 px) › el botón lleva a agendar con la campaña como contexto (6.4s)
+  ok  6 [chromium] › playwright\carril-insurance-campaigns.spec.ts:316:9 › campañas preventivas · escritorio (1440 px) › la pestaña de seguros de «Mi cuenta» muestra el mismo beneficio (8.0s)
+  ok  7 [chromium] › playwright\carril-insurance-campaigns.spec.ts:330:9 › campañas preventivas · escritorio (1440 px) › CA-4.7: un paciente no llega a la consola de la aseguradora (5.4s)
+  ok  8 [chromium] › playwright\carril-insurance-campaigns.spec.ts:140:9 › campañas preventivas · tablet (768 px) › CA-4.1: la aseguradora crea CMP-CARDIO-E2E con sus aliados y queda Activa (7.4s)
+  ok  9 [chromium] › playwright\carril-insurance-campaigns.spec.ts:193:9 › campañas preventivas · tablet (768 px) › CA-4.6: el formulario avisa apenas se escribe algo inválido y no envía (6.1s)
+  ok 10 [chromium] › playwright\carril-insurance-campaigns.spec.ts:228:9 › campañas preventivas · tablet (768 px) › CA-4.3/4.4: la consola muestra el estado de cada una y sólo las de su aseguradora (5.8s)
+  ok 11 [chromium] › playwright\carril-insurance-campaigns.spec.ts:253:9 › campañas preventivas · tablet (768 px) › CA-4.2 y CA-4.3: el afiliado ve la tarjeta «100% Cubierto» y ninguna que no le corresponde (5.7s)
+  ok 12 [chromium] › playwright\carril-insurance-campaigns.spec.ts:290:9 › campañas preventivas · tablet (768 px) › el botón lleva a agendar con la campaña como contexto (6.3s)
+  ok 13 [chromium] › playwright\carril-insurance-campaigns.spec.ts:316:9 › campañas preventivas · tablet (768 px) › la pestaña de seguros de «Mi cuenta» muestra el mismo beneficio (6.7s)
+  ok 14 [chromium] › playwright\carril-insurance-campaigns.spec.ts:330:9 › campañas preventivas · tablet (768 px) › CA-4.7: un paciente no llega a la consola de la aseguradora (5.0s)
+  ok 15 [chromium] › playwright\carril-insurance-campaigns.spec.ts:140:9 › campañas preventivas · movil (390 px) › CA-4.1: la aseguradora crea CMP-CARDIO-E2E con sus aliados y queda Activa (7.1s)
+  ok 16 [chromium] › playwright\carril-insurance-campaigns.spec.ts:193:9 › campañas preventivas · movil (390 px) › CA-4.6: el formulario avisa apenas se escribe algo inválido y no envía (5.8s)
+  ok 17 [chromium] › playwright\carril-insurance-campaigns.spec.ts:228:9 › campañas preventivas · movil (390 px) › CA-4.3/4.4: la consola muestra el estado de cada una y sólo las de su aseguradora (6.2s)
+  ok 18 [chromium] › playwright\carril-insurance-campaigns.spec.ts:253:9 › campañas preventivas · movil (390 px) › CA-4.2 y CA-4.3: el afiliado ve la tarjeta «100% Cubierto» y ninguna que no le corresponde (5.6s)
+  ok 19 [chromium] › playwright\carril-insurance-campaigns.spec.ts:290:9 › campañas preventivas · movil (390 px) › el botón lleva a agendar con la campaña como contexto (5.8s)
+  ok 20 [chromium] › playwright\carril-insurance-campaigns.spec.ts:316:9 › campañas preventivas · movil (390 px) › la pestaña de seguros de «Mi cuenta» muestra el mismo beneficio (6.8s)
+  ok 21 [chromium] › playwright\carril-insurance-campaigns.spec.ts:330:9 › campañas preventivas · movil (390 px) › CA-4.7: un paciente no llega a la consola de la aseguradora (4.7s)
+
+  21 passed (2.2m)

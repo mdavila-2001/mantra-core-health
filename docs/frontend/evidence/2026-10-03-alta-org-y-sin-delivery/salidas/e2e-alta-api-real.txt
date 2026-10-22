@@ -1,0 +1,12 @@
+# Alta de aseguradora contra la API REAL (Chromium, --workers=1, E2E_API_REAL=1). Corrida final sobre la rama de test.
+  ✓   1 [chromium] › playwright/registro-organizacion-api-real.spec.ts:144:7 › alta de aseguradora contra la API real › válido: el alta completa responde 201 y llega a la pantalla de éxito (3.5s)
+  ✓   2 [chromium] › playwright/registro-organizacion-api-real.spec.ts:158:7 › alta de aseguradora contra la API real › válido: «Ir a iniciar sesión» lleva a la pantalla de acceso (2.8s)
+  ✓   3 [chromium] › playwright/registro-organizacion-api-real.spec.ts:169:7 › alta de aseguradora contra la API real › visual: la pantalla de éxito se ve bien en móvil y en modo oscuro, y el botón sigue vivo (2.8s)
+  ✓   4 [chromium] › playwright/registro-organizacion-api-real.spec.ts:194:7 › alta de aseguradora contra la API real › límite: el código más corto que acepta el DTO (3 caracteres) se registra (2.5s)
+  ✓   5 [chromium] › playwright/registro-organizacion-api-real.spec.ts:208:7 › alta de aseguradora contra la API real › límite: quitar un PDF y volver a subirlo no rompe el alta (1.3s)
+  ✓   6 [chromium] › playwright/registro-organizacion-api-real.spec.ts:224:7 › alta de aseguradora contra la API real › límite: volver atrás conserva lo escrito (1.3s)
+  ✓   7 [chromium] › playwright/registro-organizacion-api-real.spec.ts:237:7 › alta de aseguradora contra la API real › error: un código de organización repetido responde 409 y el mensaje nombra la sigla (4.8s)
+  ✓   8 [chromium] › playwright/registro-organizacion-api-real.spec.ts:256:7 › alta de aseguradora contra la API real › error: un correo ya registrado responde 409 y no pierde lo escrito (5.1s)
+  ✓   9 [chromium] › playwright/registro-organizacion-api-real.spec.ts:275:7 › alta de aseguradora contra la API real › error: un archivo que dice ser PDF y no lo es lo rechaza el servidor, sin 5xx (954ms)
+  ✓  10 [chromium] › playwright/registro-organizacion-api-real.spec.ts:301:7 › alta de aseguradora contra la API real › error: sin los documentos obligatorios «Continuar» no avanza (1.4s)
+  10 passed (27.4s)

@@ -15,7 +15,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -53,13 +53,13 @@ export class AuthorityForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Qué autoridad',
       hint: 'Cómo se identifica el registro oficial.',
       campos: [
-        { key: 'authorityCode', label: 'Código de la autoridad', hint: 'Único; hasta 100 caracteres. Por ejemplo, RENAPER.', control: 'text', required: true, mensajeDeError: 'Ingresá el código (hasta 100 caracteres).' },
-        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Ingresá el nombre (hasta 200 caracteres).' },
+        { key: 'authorityCode', label: 'Código de la autoridad', hint: 'Único; hasta 100 caracteres. Por ejemplo, RENAPER.', control: 'text', required: true, mensajeDeError: 'Ingrese el código (hasta 100 caracteres).' },
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Ingrese el nombre (hasta 200 caracteres).' },
       ],
     },
     {
@@ -107,7 +107,7 @@ export class AuthorityForm {
   protected readonly registered = signal<RegisteredAuthority | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected submit(): void {

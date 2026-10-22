@@ -1,0 +1,81 @@
+.resultados {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mobile-first: la fila se apila y cada parte se lee sola. Desde tableta pasa
+   a columnas —qué, dónde, precio, distancia, acciones—, que es cuando el
+   precio de dos sedes se puede comparar de un vistazo. */
+.resultado {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-raised);
+}
+
+@media (min-width: 780px) {
+  .resultado {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) auto auto auto;
+    align-items: center;
+    column-gap: var(--sp-4);
+  }
+}
+
+.resultado__nombre {
+  margin: 0;
+  font-weight: 600;
+}
+
+.resultado__presentacion,
+.resultado__sede,
+.resultado__direccion {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.resultado__farmacia {
+  margin: 0;
+}
+
+.resultado__precio {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: end;
+}
+
+.resultado__distancia {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.resultado__precio--ausente,
+.resultado__distancia--ausente {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
+.resultado__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.resultado__receta {
+  font-size: var(--fs-caption);
+}
+
+.resultados__aviso {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

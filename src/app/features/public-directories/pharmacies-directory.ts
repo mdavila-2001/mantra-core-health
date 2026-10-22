@@ -37,7 +37,7 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
   selector: 'app-pharmacies-directory',
   imports: [AppButton, DepartmentMap, DirectoryPage],
   templateUrl: './pharmacies-directory.html',
-  styleUrl: './mapa-directorio.css',
+  styleUrl: './directory-map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmaciesDirectory extends PublicDirectoryListing {

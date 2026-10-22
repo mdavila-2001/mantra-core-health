@@ -152,7 +152,7 @@ export const LEGAL_DOCUMENTS_DICTIONARY: Readonly<Record<LegalDocumentRole, Lega
       },
       byCountry: {
         BO: {
-          es: { label: 'Licencia de funcionamiento municipal', hint: 'La que emite tu gobierno municipal.' },
+          es: { label: 'Licencia de funcionamiento municipal', hint: 'La que emite su gobierno municipal.' },
           en: { label: 'Municipal operating license', hint: 'Issued by the local municipal government.' },
           pt: { label: 'Licença municipal de funcionamento', hint: 'Emitida pelo governo municipal.' },
         },

@@ -52,3 +52,6 @@ export const MOTIVO_QUERY_PARAM = 'motivo';
  * corriente y no rompe nada: el encuentro se abre igual, sin el vínculo.
  */
 export const CITA_QUERY_PARAM = 'cita';
+
+/** Reserva de agenda de origen para Reconsulta; distinta de la cita clínica del check-in. */
+export const BOOKING_QUERY_PARAM = 'booking';

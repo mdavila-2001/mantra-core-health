@@ -30,8 +30,12 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
   { key: 'obraSocial', header: 'Obra social', priority: 2, sticky: 'end' },
 ];
 
+const FILAS_CON_HUECO: readonly Paciente[] = [
+  { id: 'p-1', apellido: 'Peña', documento: '4821133', obraSocial: '' },
+];
+
 // Anfitrión de prueba: lee campos mutables a propósito, no es un componente de producto.
-// eslint-disable-next-line @angular-eslint/prefer-on-push-component-change-detection
+ 
 @Component({
   imports: [DataTable],
   template: `
@@ -45,6 +49,8 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [sort]="sort()"
       [cursor]="cursor()"
       [maxHeight]="maxHeight()"
+      [fitContainer]="fitContainer()"
+      [stackedOnMobile]="apilada()"
       [heading]="encabezado()"
       [totalCount]="total()"
       [pageSummary]="resumen()"
@@ -66,6 +72,8 @@ class HostComponent {
   readonly sort = signal<SortState | null>(null);
   readonly cursor = signal<CursorState>({});
   readonly maxHeight = signal<string | null>(null);
+  readonly fitContainer = signal(false);
+  readonly apilada = signal(false);
   readonly encabezado = signal('');
   readonly total = signal<number | null>(null);
   readonly resumen = signal('');
@@ -177,6 +185,28 @@ describe('DataTable', () => {
       expect(root().querySelectorAll('tbody tr.data-table__row')).toHaveLength(2);
       expect(root().textContent).toContain('Peña');
       expect(root().textContent).toContain('4821133');
+    });
+
+    /**
+     * Las celdas de control —la casilla de selección y el botón del detalle—
+     * se marcan para que la exportación a PDF las salte: en el papel no hay
+     * nada que seleccionar ni desplegar. Las celdas de datos no llevan la marca.
+     */
+    it('marca las celdas de control para que el PDF las ignore, y sólo ésas', async () => {
+      host.selectable.set(true);
+      await fixture.whenStable();
+
+      const ignoradas = [...root().querySelectorAll('[data-pdf-ignore]')];
+      expect(ignoradas.length).toBeGreaterThan(0);
+      for (const celda of ignoradas) {
+        expect(
+          celda.classList.contains('data-table__select-cell') ||
+            celda.classList.contains('data-table__detail-toggle-cell'),
+        ).toBe(true);
+      }
+      for (const celda of root().querySelectorAll('.data-table__cell')) {
+        expect(celda.hasAttribute('data-pdf-ignore')).toBe(false);
+      }
     });
   });
 
@@ -485,6 +515,57 @@ describe('DataTable', () => {
 
       expect(css).toContain('.data-table--constrained .data-table__secondary');
       expect(css).toContain('.data-table--constrained .data-table__detail-row');
+    });
+  });
+
+  describe('pliegue por el ancho de la caja, opt-in (modales)', () => {
+    it('por omisión no cambia nada: la tabla no es un container', () => {
+      expect(root().querySelector('app-data-table')?.classList).not.toContain('data-table--fit-container');
+    });
+
+    it('activo, marca el host y el CSS pliega las secundarias por debajo de 52rem de caja', async () => {
+      host.fitContainer.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList).toContain('data-table--fit-container');
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('container: data-table / inline-size');
+      expect(css).toContain('@container data-table (width < 52rem)');
+      expect(css).toContain(':host(.data-table--fit-container) .data-table__detail-row');
+    });
+  });
+  describe('modo apilado en teléfono (stackedOnMobile)', () => {
+    it('no marca el host ni cambia nada si no se pide', () => {
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--apilada')).toBe(false);
+    });
+
+    it('marca el host y rotula cada celda con el encabezado de su columna', async () => {
+      host.apilada.set(true);
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--apilada')).toBe(true);
+      const celdas = [...root().querySelectorAll<HTMLTableCellElement>('tbody tr.data-table__row:first-child > td[data-label]')];
+      expect(celdas.map((celda) => celda.dataset['label'])).toEqual(['Apellido', 'Documento', 'Obra social']);
+    });
+
+    it('marca la celda sin valor para que el apilado la oculte, y la columna de acción para quitarle la etiqueta', async () => {
+      host.state.set(ready(FILAS_CON_HUECO));
+      host.apilada.set(true);
+      await fixture.whenStable();
+
+      const celdas = [...root().querySelectorAll<HTMLTableCellElement>('tbody tr.data-table__row:first-child > td[data-label]')];
+      expect(celdas.map((celda) => celda.classList.contains('data-table__cell--vacia'))).toEqual([false, false, true]);
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('td.data-table__cell--vacia');
+      expect(css).toContain('td.data-table__cell--accion::before');
+    });
+
+    it('el CSS apila sólo por debajo de 40rem y sólo si la pantalla lo pidió', () => {
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('@media not all and (min-width: 40.0625rem)');
+      expect(css).toContain(':host(.data-table--apilada) .data-table__row > td::before');
+      expect(css).toContain('content: attr(data-label)');
     });
   });
 });

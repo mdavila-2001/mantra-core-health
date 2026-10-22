@@ -1,0 +1,16 @@
+gh.exe : GraphQL: Your token has not been granted the required scopes to execute this query. The 'login' field
+requires one of the following scopes: ['read:org'], but your token has only been granted the: ['read:user', 'repo',
+'user:email', 'workflow'] scopes. Please modify your token's scopes at: https://github.com/settings/tokens., Your
+token has not been granted the required scopes to execute this query. The 'name' field requires one of the following
+scopes: ['read:org', 'read:discussion'], but your token has only been granted the: ['read:user', 'repo', 'user:email',
+'workflow'] scopes. Please modify your token's scopes at: https://github.com/settings/tokens., Your token has not been
+granted the required scopes to execute this query. The 'slug' field requires one of the following scopes: ['read:org',
+'read:discussion'], but your token has only been granted the: ['read:user', 'repo', 'user:email', 'workflow'] scopes.
+Please modify your token's scopes at: https://github.com/settings/tokens.
+En línea: 2 Carácter: 331
++ ... g(9); try { & C:\Alovida\.tools\github-cli\bin\gh.exe pr view 868 --r ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (GraphQL: Your t...ettings/tokens.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+EXIT_CODE=1

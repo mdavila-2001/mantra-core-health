@@ -24,9 +24,9 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe } from '../../../shared/forms/form-support';
 import { SetItemsEditor } from '../set-items-editor/set-items-editor';
 
@@ -56,7 +56,7 @@ const MAX_DESCRIPTION = 1000;
     Alert,
     AnnounceOnAppear,
     AppButton,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
     SetItemsEditor,
@@ -105,7 +105,7 @@ export class PermissionSetForm {
    * organización salen del token, así que las páginas son un `computed`.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Identidad del set',
         hint: 'A qué organización pertenece y cómo se lo nombra.',
@@ -116,10 +116,10 @@ export class PermissionSetForm {
             control: 'select' as const,
             required: true,
             options: this.organizaciones(),
-            placeholder: 'Elegí la organización',
+            placeholder: 'Elija la organización',
             mensajeDeError: this.sinOrganizaciones()
-              ? 'Tu sesión no tiene organizaciones a cargo, así que no hay dónde publicar un set.'
-              : 'Elegí la organización propietaria.',
+              ? 'Su sesión no tiene organizaciones a cargo, así que no hay dónde publicar un set.'
+              : 'Elija la organización propietaria.',
           },
           {
             key: 'code',
@@ -127,14 +127,14 @@ export class PermissionSetForm {
             hint: 'Único dentro de la organización; si ya existe, el backend responde 409.',
             control: 'text' as const,
             required: true,
-            mensajeDeError: 'Escribí un código de hasta 100 caracteres.',
+            mensajeDeError: 'Escriba un código de hasta 100 caracteres.',
           },
           {
             key: 'name',
             label: 'Nombre legible',
             control: 'text' as const,
             required: true,
-            mensajeDeError: 'Escribí un nombre de hasta 200 caracteres.',
+            mensajeDeError: 'Escriba un nombre de hasta 200 caracteres.',
           },
           {
             key: 'delegateType',
@@ -188,7 +188,7 @@ export class PermissionSetForm {
   protected readonly published = signal<PermissionSetVersion | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para publicar sets de permisos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para publicar sets de permisos.'),
   );
 
   protected submit(): void {

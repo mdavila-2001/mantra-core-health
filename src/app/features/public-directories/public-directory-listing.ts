@@ -19,7 +19,7 @@ import {
 } from '@core/data-access/terminology/bo-municipalities.service';
 import type { DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
@@ -162,7 +162,7 @@ export abstract class PublicDirectoryListing {
   );
 
   /** De cada ciudad publicada al `conceptId` de su departamento. */
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /**
    * Los parámetros de la URL, que son **la** fuente de los tres cortes en
@@ -215,7 +215,7 @@ export abstract class PublicDirectoryListing {
     const porCiudad = this.porCiudad();
     const cuenta = new Map<string, number>();
     for (const fila of this.paraElMapa()) {
-      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
+      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizePlace(fila.city));
       if (conceptId === undefined) continue;
       cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
     }
@@ -240,7 +240,7 @@ export abstract class PublicDirectoryListing {
     if (cuantos === 0) {
       return `Todavía no hay nada publicado en ${nombre}.`;
     }
-    return `${cuantos} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /**
@@ -292,7 +292,7 @@ export abstract class PublicDirectoryListing {
 
   protected readonly aviso = computed(() =>
     this.recortada()
-      ? `Se muestran los primeros resultados. Usá el buscador para encontrar ${this.queSonEnSingular} que no aparezca en la lista.`
+      ? `Se muestran los primeros resultados. Use el buscador para encontrar ${this.queSonEnSingular} que no aparezca en la lista.`
       : null,
   );
 
@@ -333,7 +333,7 @@ export abstract class PublicDirectoryListing {
     }
     const porCiudad = this.porCiudad();
     return todas.filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizarLugar(fila.city)) === departamento,
+      (fila) => fila.city !== null && porCiudad.get(normalizePlace(fila.city)) === departamento,
     );
   });
 
@@ -516,8 +516,8 @@ export abstract class PublicDirectoryListing {
       return null;
     }
     return this.departamentoElegido() === null
-      ? 'Ninguno de los resultados coincide con los filtros que pusiste. Probá quitando alguno.'
-      : 'No hay nada publicado en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.';
+      ? 'Ninguno de los resultados coincide con los filtros que puso. Pruebe quitando alguno.'
+      : 'No hay nada publicado en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.';
   });
 
   /**

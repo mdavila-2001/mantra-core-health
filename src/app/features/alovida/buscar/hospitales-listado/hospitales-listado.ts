@@ -28,7 +28,7 @@ import {
   DepartmentMap,
   type DepartamentoElegible,
 } from '@shared/components/organisms/department-map/department-map';
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { CentroCard } from '../centro-card/centro-card';
 import { toFacilityCard, type FacilityCard } from './facility-card.mapper';
@@ -140,7 +140,7 @@ type EstadoDeBusqueda = 'carga' | 'datos' | 'vacio' | 'error';
   styleUrls: [
     './hospitales-listado.css',
     '../centro-card/centro-grid.css',
-    '../../../public-directories/mapa-directorio.css',
+    '../../../public-directories/directory-map.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -240,7 +240,7 @@ export class BuscarHospitalesListado {
     })),
   );
 
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /**
    * Cuántos centros tiene cada departamento, **sin** el corte del propio mapa.
@@ -256,7 +256,7 @@ export class BuscarHospitalesListado {
     // es «cuántas clínicas privadas hay ahí si voy», no cuántas fichas de
     // cualquier clase.
     for (const fila of this.deLaCategoria()) {
-      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
+      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizePlace(fila.city));
       if (conceptId === undefined) continue;
       cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
     }
@@ -280,7 +280,7 @@ export class BuscarHospitalesListado {
     if (cuantos === 0) {
       return `Todavía no hay centros publicados en ${nombre}.`;
     }
-    return `${cuantos} ${cuantos === 1 ? 'centro' : 'centros'} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} ${cuantos === 1 ? 'centro' : 'centros'} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /* ---- los cortes en memoria --------------------------------------------- */
@@ -317,12 +317,12 @@ export class BuscarHospitalesListado {
     const departamento = this.departamentoElegido();
     const porCiudad = this.porCiudad();
     const ciudad = this.ciudad();
-    const buscada = ciudad === null ? null : normalizarLugar(ciudad);
+    const buscada = ciudad === null ? null : normalizePlace(ciudad);
     const cuenta = new Map<string, { label: string; total: number }>();
     for (const fila of this.todos()) {
       const categoria = fila.category;
       if (categoria === null) continue;
-      const lugar = fila.city === null ? null : normalizarLugar(fila.city);
+      const lugar = fila.city === null ? null : normalizePlace(fila.city);
       if (departamento !== null && (lugar === null || porCiudad.get(lugar) !== departamento)) {
         continue;
       }
@@ -351,7 +351,7 @@ export class BuscarHospitalesListado {
     }
     const porCiudad = this.porCiudad();
     return todas.filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizarLugar(fila.city)) === departamento,
+      (fila) => fila.city !== null && porCiudad.get(normalizePlace(fila.city)) === departamento,
     );
   });
 
@@ -382,9 +382,9 @@ export class BuscarHospitalesListado {
     if (ciudad === null) {
       return this.delDepartamento();
     }
-    const buscada = normalizarLugar(ciudad);
+    const buscada = normalizePlace(ciudad);
     return this.delDepartamento().filter(
-      (fila) => fila.city !== null && normalizarLugar(fila.city) === buscada,
+      (fila) => fila.city !== null && normalizePlace(fila.city) === buscada,
     );
   });
 
@@ -426,7 +426,7 @@ export class BuscarHospitalesListado {
 
   protected readonly aviso = computed(() =>
     this.recortada()
-      ? 'Se muestran los primeros resultados. Usá el buscador para encontrar un centro que no aparezca en la lista.'
+      ? 'Se muestran los primeros resultados. Use el buscador para encontrar un centro que no aparezca en la lista.'
       : null,
   );
 

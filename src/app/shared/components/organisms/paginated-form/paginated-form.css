@@ -83,6 +83,14 @@
   }
 }
 
+/* El «¿cuál?» que abre un «sí»: con sangría y un filete del color de marca a
+   la izquierda, para que se lea como continuación de la pregunta de arriba y no
+   como una pregunta nueva. Usa tokens, así que vale igual en modo oscuro. */
+.paginated-form__campo--dependiente {
+  padding-inline-start: var(--sp-4, 1rem);
+  border-inline-start: 2px solid var(--c-aqua-300, currentColor);
+}
+
 .paginated-form__titulo {
   margin: 0;
   font-family: var(--font-display);

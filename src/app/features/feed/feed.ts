@@ -180,7 +180,7 @@ export class Feed {
       },
       error: () => {
         this.perfilResuelto.set(true);
-        this.error.set('No pudimos saber si tenés perfil público.');
+        this.error.set('No pudimos saber si tiene perfil público.');
       },
     });
 
@@ -286,7 +286,7 @@ export class Feed {
         error: () => {
           this.cargando.set(false);
           this.cargoAlgunaVez.set(true);
-          this.error.set('No pudimos cargar el muro. Reintentá.');
+          this.error.set('No pudimos cargar el muro. Reintente.');
         },
       });
   }

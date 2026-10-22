@@ -6,7 +6,7 @@ import type { MetricTone } from './metric-card.types';
 import { MetricCard } from './metric-card';
 
 // Anfitrión de prueba: lee campos mutables a propósito, no es un componente de producto.
-// eslint-disable-next-line @angular-eslint/prefer-on-push-component-change-detection
+ 
 @Component({
   imports: [MetricCard],
   template: `<app-metric-card

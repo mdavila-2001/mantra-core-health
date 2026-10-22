@@ -9,6 +9,7 @@ import {
   PLATFORM_ID,
   ViewEncapsulation,
   afterNextRender,
+  computed,
   effect,
   inject,
   input,
@@ -19,37 +20,14 @@ import {
 } from '@angular/core';
 import type * as Leaflet from 'leaflet';
 
-import type { PinMapa, PuntoGeo } from './pin-mapa.types';
+import { nextControlId } from '@shared/forms/form-control.context';
+import type { PinMap, PuntoGeo } from './map-pin.types';
+import { construirPopup, pinAccessibleName } from './map-popup';
+import { DEMO_ATTRIBUTION, DEMO_TILES } from './map-tiles';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinceIn } from './provinces';
 
-/**
- * Mosaicos del servidor comunitario de OpenStreetMap, sin clave de API.
- *
- * **Por qué ya no son los de CARTO** (19/09/2026): CARTO dejó de servir sus
- * basemaps de forma anónima y ahora estampa «API KEY REQUIRED ·
- * carto.com/basemaps/apikey» **en diagonal sobre cada mosaico**. No es un
- * fallo de carga que se vea en la consola: el mosaico llega con 200 y con la
- * marca de agua pintada encima, así que TODOS los mapas del producto —el de
- * los directorios, «Dónde comprar», las sedes del perfil— se veían rotos y
- * nada lo delataba salvo mirarlos. Medido pidiendo el mismo mosaico de Santa
- * Cruz a los dos proveedores: CARTO 26 441 B con la marca, OSM 34 984 B
- * limpio.
- *
- * El comentario que estaba acá decía que OSM «bloquea las solicitudes de esta
- * aplicación por su política de uso». No se sostiene: el mismo mosaico, con el
- * agente y el referente del navegador, responde 200 y se lee. La política de
- * OSM pide atribución visible y uso moderado —las dos se cumplen—, y es
- * además la decisión ya escrita del proyecto: Leaflet + OpenStreetMap sin
- * clave, que es lo que la CSP del servidor permitía antes de que alguien la
- * abriera a CARTO.
- *
- * Un solo host: el servidor de OSM ya no reparte por subdominios `a`/`b`/`c`,
- * así que la plantilla no lleva `{s}` ni la capa `subdomains`.
- */
-const DEMO_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-/** La atribución de OSM es condición de uso, no un adorno. */
-const DEMO_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+/** El constructor del popup vive en `map-popup.ts`; se reexporta porque es API del organismo. */
+export { construirPopup };
 
 const ZOOM_MAXIMO = 19;
 
@@ -67,9 +45,40 @@ const MARGEN_DE_ENCUADRE: Leaflet.PointTuple = [32, 32];
 const CENTRO_POR_DEFECTO: Leaflet.LatLngTuple = [-17.7833, -63.1821];
 const ZOOM_POR_DEFECTO = 12;
 
+/**
+ * Desde qué zoom se escriben los nombres de las provincias sobre el mapa. Más
+ * lejos se pisan unas con otras —en 8 ya se encima el valle de Cochabamba,
+ * medido en pantalla el 24/09/2026— y el plano se vuelve ilegible; los
+ * límites se dibujan siempre, y la provincia del centro la dice el rótulo fijo.
+ */
+const ZOOM_DE_NOMBRES_DE_PROVINCIA = 9;
+
+/**
+ * El panel propio de las provincias: por encima de los mosaicos (200) y por
+ * debajo de los pines (600), para que un límite o un nombre nunca tape un pin.
+ */
+const PANEL_DE_PROVINCIAS = 'provincias';
+const Z_DEL_PANEL_DE_PROVINCIAS = '350';
+
+/**
+ * Cuántos píxeles corre el pin cada flecha, en un mapa que espera un punto.
+ * A zoom de calle (17) son unos 12 m: lo justo para pasar de la vereda a la
+ * puerta. Con Mayúsculas, cinco veces más.
+ */
+const KEYBOARD_STEP_PX = 10;
+const KEYBOARD_LONG_STEP_PX = 50;
+
+/** Hacia dónde corre el pin cada flecha, en píxeles de pantalla. */
+const KEYBOARD_DIRECTIONS: Readonly<Record<string, readonly [number, number]>> = {
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+};
+
 /** El `<link>` del CSS de Leaflet, compartido entre todas las instancias. */
 const ID_DE_ESTILOS = 'leaflet-css';
-const RUTA_DE_ESTILOS = 'assets/leaflet/leaflet.css';
+const RUTA_DE_ESTILOS = '/assets/leaflet/leaflet.css';
 
 /** El namespace de Leaflet, venga como ESM o como CJS interoperado. */
 type ModuloLeaflet = typeof Leaflet & { readonly default?: typeof Leaflet };
@@ -85,51 +94,6 @@ export const CARGADOR_DE_LEAFLET = new InjectionToken<CargadorDeLeaflet>('CARGAD
   providedIn: 'root',
   factory: () => () => import('leaflet'),
 });
-
-/**
- * El contenido del popup, armado con DOM propio: Leaflet vive fuera del
- * template de Angular, así que acá no hay proyección de contenido — el CTA
- * entra como etiqueta y sale como callback. Todo texto va por `textContent`:
- * los nombres vienen de datos y jamás se interpolan como HTML.
- */
-export function construirPopup(
-  documento: Document,
-  pin: PinMapa,
-  alElegir: () => void,
-): HTMLElement {
-  const caja = documento.createElement('div');
-  caja.className = 'mapa__popup';
-
-  const titulo = documento.createElement('strong');
-  titulo.className = 'mapa__popup-titulo';
-  titulo.textContent = pin.titulo;
-  caja.appendChild(titulo);
-
-  if (pin.estado !== undefined) {
-    const estado = documento.createElement('span');
-    estado.className = `mapa__popup-estado mapa__popup-estado--${pin.estado.tono}`;
-    estado.textContent = pin.estado.etiqueta;
-    caja.appendChild(estado);
-  }
-
-  if (pin.subtitulo !== undefined) {
-    const detalle = documento.createElement('p');
-    detalle.className = 'mapa__popup-detalle';
-    detalle.textContent = pin.subtitulo;
-    caja.appendChild(detalle);
-  }
-
-  if (pin.ctaEtiqueta !== undefined) {
-    const cta = documento.createElement('button');
-    cta.type = 'button';
-    cta.className = 'mapa__popup-cta';
-    cta.textContent = pin.ctaEtiqueta;
-    cta.addEventListener('click', alElegir);
-    caja.appendChild(cta);
-  }
-
-  return caja;
-}
 
 /**
  * **El mapa compartido** (carril FAR-I1): Leaflet + OpenStreetMap como
@@ -148,8 +112,20 @@ export function construirPopup(
  *
  * Nada existe solo acá: la pantalla que lo monta mantiene la lista con el
  * mismo dato (y `etiqueta` debe decirlo). La selección cruzada viaja por
- * `seleccionado` (two-way) y el CTA del popup por `pinElegido` — los pines
- * no participan del orden de tabulación: el camino por teclado es la lista.
+ * `seleccionado` (two-way) y el CTA del popup por `pinElegido`.
+ *
+ * ## Con el teclado (WCAG 2.1.1)
+ *
+ * Los pines son botones: entran al orden de `Tab`, se nombran con su título y
+ * su estado, y Enter o Espacio los eligen y abren su popup, igual que el clic
+ * (Escape lo cierra). Antes llevaban `keyboard: false` y el único camino era la
+ * lista, que no todas las pantallas tienen al lado del mapa.
+ *
+ * El plano enfocado se mueve con las flechas y se acerca o aleja con + y −
+ * (lo trae Leaflet; acá se lo describe y se le ponen nombres en castellano a
+ * los botones del zoom). Cuando el mapa **espera un punto** (`seleccionable`),
+ * las flechas no mueven el plano sino **el pin**, y Enter lo pone en el centro:
+ * marcar un lugar ya no exige un puntero.
  */
 @Component({
   selector: 'app-map',
@@ -162,7 +138,7 @@ export function construirPopup(
   encapsulation: ViewEncapsulation.None,
 })
 export class AppMap implements OnDestroy {
-  readonly pines = input.required<readonly PinMapa[]>();
+  readonly pines = input.required<readonly PinMap[]>();
 
   /** Nombre accesible del mapa; debe remitir a la lista que repite el dato. */
   readonly etiqueta = input.required<string>();
@@ -202,15 +178,29 @@ export class AppMap implements OnDestroy {
   private readonly documento = inject(DOCUMENT);
   private readonly injector = inject(Injector);
   private readonly cargarLeaflet = inject(CARGADOR_DE_LEAFLET);
+  private readonly cargarProvincias = inject(CARGADOR_DE_PROVINCIAS);
   private readonly lienzo = viewChild.required<ElementRef<HTMLElement>>('lienzo');
 
   protected readonly listo = signal(false);
+
+  /** El id de la ayuda de teclado del plano, para su `aria-describedby`. */
+  protected readonly ayudaId = nextControlId('map-keys');
+
+  /** Qué hacen las teclas sobre el plano enfocado; cambia si espera un punto. */
+  protected readonly ayudaDeTeclado = computed(() =>
+    this.seleccionable()
+      ? 'Con el mapa enfocado, las flechas mueven el pin (con Mayúsculas, más lejos), Enter lo pone en el centro del mapa, y + y − acercan o alejan.'
+      : 'Con el mapa enfocado, las flechas lo mueven y + y − acercan o alejan. Con Tab se recorren los lugares marcados; Enter abre su detalle.',
+  );
+
+  /** «Provincia X · Departamento» del punto que está en el centro del mapa. */
+  protected readonly provinciaAlCentro = signal<string | null>(null);
 
   private leaflet: typeof Leaflet | null = null;
   private mapa: Leaflet.Map | null = null;
   private capaDePines: Leaflet.LayerGroup | null = null;
   private readonly marcadores = new Map<string, Leaflet.Marker>();
-  private pinesDibujados: readonly PinMapa[] | null = null;
+  private pinesDibujados: readonly PinMap[] | null = null;
   private destruido = false;
   private observadorDeTamano: ResizeObserver | null = null;
   /** Si el lienzo llegó a medir algo alguna vez. Ver {@link vigilarElTamano}. */
@@ -223,14 +213,30 @@ export class AppMap implements OnDestroy {
     // Montar exige el lienzo ya pintado — el mismo motivo por el que el menú
     // difiere su medición (`menu.ts`): acá `L.map(el)` necesita el elemento.
     afterNextRender(() => void this.montar(), { injector: this.injector });
+    let ultimoCentro: PuntoGeo | null = null;
+    let ultimoZoom: number | null = null;
+
     effect(() => {
       const pines = this.pines();
       const elegido = this.seleccionado();
-      if (this.mapa === null) {
+      const centro = this.centro();
+      const zoom = this.zoom();
+      const mapa = this.mapa;
+      const L = this.leaflet;
+
+      if (mapa === null || L === null) {
         return;
       }
       if (pines !== this.pinesDibujados) {
         this.dibujar(pines);
+      }
+      if (
+        (centro !== null && (centro.lat !== ultimoCentro?.lat || centro.lng !== ultimoCentro?.lng)) ||
+        (zoom !== null && zoom !== ultimoZoom)
+      ) {
+        ultimoCentro = centro;
+        ultimoZoom = zoom;
+        this.encuadrar(L, mapa, pines);
       }
       this.resaltar(elegido);
     });
@@ -268,13 +274,27 @@ export class AppMap implements OnDestroy {
     // `map.css`, escrita donde el orden de carga no la puede perder.
     lienzo.style.position = 'absolute';
     lienzo.style.inset = '0';
-    const mapa = L.map(lienzo, { maxZoom: ZOOM_MAXIMO });
+    // El zoom propio sólo para ponerle nombres en castellano («Zoom in» no le
+    // dice nada a quien usa un lector en español). Si el control no existe —el
+    // doble de las pruebas—, queda el de Leaflet.
+    const ownZoom = typeof L.control?.zoom === 'function';
+    const mapa = L.map(lienzo, { maxZoom: ZOOM_MAXIMO, zoomControl: !ownZoom });
+    if (ownZoom) {
+      L.control.zoom({ zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(mapa);
+    }
     mapa.setView(CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO);
     L.tileLayer(DEMO_TILES, {
       attribution: DEMO_ATTRIBUTION,
       maxZoom: ZOOM_MAXIMO,
     }).addTo(mapa);
     this.mapa = mapa;
+    // El plano es enfocable (Leaflet le pone `tabindex="0"`) y maneja sus
+    // propias teclas: se lo nombra y se describe qué hacen.
+    lienzo.setAttribute('role', 'application');
+    lienzo.setAttribute('aria-roledescription', 'mapa');
+    lienzo.setAttribute('aria-label', this.etiqueta());
+    lienzo.setAttribute('aria-describedby', this.ayudaId);
+    lienzo.addEventListener('keydown', (evento) => this.alTeclearEnElPlano(evento, L, mapa));
     // El bus de eventos de Leaflet no existe en el doble de `map.spec.ts` ni
     // en jsdom: el mismo resguardo que usa `dialog.ts` con `showModal()`.
     if (typeof mapa.on === 'function') {
@@ -287,6 +307,111 @@ export class AppMap implements OnDestroy {
     this.dibujar(this.pines());
     this.resaltar(this.seleccionado());
     this.vigilarElTamano(lienzo);
+    void this.dibujarProvincias(L, mapa, lienzo);
+  }
+
+  /**
+   * El pin, con el teclado, en un mapa que espera un punto.
+   *
+   * Sólo con el foco en el plano mismo —no en un pin ni en el zoom— y sólo si
+   * `seleccionable`: en los demás mapas las flechas siguen moviendo el plano,
+   * como siempre. Se frena la propagación porque el manejador de Leaflet
+   * escucha en el documento y, si no, además de correr el pin movería el mapa.
+   *
+   * Las flechas corren el pin desde donde está (`centro`, que quien espera un
+   * punto fija en el punto elegido) o, sin pin, desde el centro del plano;
+   * Enter y Espacio lo ponen en el centro. Sale por el mismo `pointPicked` que
+   * el clic: para quien lo escucha, es otro toque sobre el plano.
+   */
+  private alTeclearEnElPlano(evento: KeyboardEvent, L: typeof Leaflet, mapa: Leaflet.Map): void {
+    if (!this.seleccionable() || evento.target !== evento.currentTarget) return;
+    if (evento.altKey || evento.ctrlKey || evento.metaKey) return;
+    if (typeof mapa.getCenter !== 'function') return;
+
+    if (evento.key === 'Enter' || evento.key === ' ') {
+      evento.preventDefault();
+      evento.stopPropagation();
+      const centro = mapa.getCenter();
+      this.pointPicked.emit({ lat: centro.lat, lng: centro.lng });
+      return;
+    }
+
+    const delta = KEYBOARD_DIRECTIONS[evento.key];
+    if (delta === undefined) return;
+    evento.preventDefault();
+    evento.stopPropagation();
+
+    const origin = this.centro() ?? mapa.getCenter();
+    const paso = evento.shiftKey ? KEYBOARD_LONG_STEP_PX : KEYBOARD_STEP_PX;
+    const onScreen = mapa.latLngToContainerPoint([origin.lat, origin.lng]);
+    const destino = mapa.containerPointToLatLng(
+      L.point(onScreen.x + delta[0] * paso, onScreen.y + delta[1] * paso),
+    );
+    this.pointPicked.emit({ lat: destino.lat, lng: destino.lng });
+  }
+
+  /**
+   * Los límites de las 112 provincias, sus nombres, y cuál es la del centro.
+   *
+   * Llega después del mapa y no lo demora: los mosaicos y los pines ya están
+   * cuando el archivo termina de bajar. Si no baja, el mapa queda como era.
+   *
+   * Nada de esto es interactivo: un clic sobre un límite tiene que seguir
+   * llegando al mapa, que es lo que usa «marcá en el mapa dónde vivís».
+   */
+  private async dibujarProvincias(
+    L: typeof Leaflet,
+    mapa: Leaflet.Map,
+    lienzo: HTMLElement,
+  ): Promise<void> {
+    if (typeof L.geoJSON !== 'function' || typeof mapa.createPane !== 'function') {
+      return;
+    }
+    const provincias = await this.cargarProvincias();
+    if (provincias === null || this.destruido || this.mapa !== mapa) {
+      return;
+    }
+
+    const panel = mapa.createPane(PANEL_DE_PROVINCIAS);
+    panel.style.zIndex = Z_DEL_PANEL_DE_PROVINCIAS;
+    panel.style.pointerEvents = 'none';
+
+    // `L.geoJSON` pide el tipo de `@types/geojson`; el nuestro es el mismo
+    // contrato escrito en `provinces.ts`, sin depender de ese paquete.
+    L.geoJSON(provincias as unknown as Parameters<typeof L.geoJSON>[0], {
+      pane: PANEL_DE_PROVINCIAS,
+      interactive: false,
+      style: () => ({ className: 'mapa__provincia', weight: 1.5, fill: false }),
+    }).addTo(mapa);
+
+    for (const { properties } of provincias.features) {
+      const nombre = this.documento.createElement('span');
+      nombre.className = 'mapa__provincia-nombre';
+      nombre.textContent = properties.nombre;
+      L.marker([properties.rotulo[1], properties.rotulo[0]], {
+        pane: PANEL_DE_PROVINCIAS,
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({ className: 'mapa__provincia-rotulo', html: nombre, iconSize: [0, 0] }),
+      }).addTo(mapa);
+    }
+
+    const alMoverse = (): void => {
+      lienzo.classList.toggle(
+        'mapa__lienzo--con-nombres',
+        mapa.getZoom() >= ZOOM_DE_NOMBRES_DE_PROVINCIA,
+      );
+      this.provinciaAlCentro.set(this.nombrarProvincia(provincias, mapa.getCenter()));
+    };
+    mapa.on('moveend', alMoverse);
+    alMoverse();
+  }
+
+  private nombrarProvincia(provincias: ProvinciasDeBolivia, centro: PuntoGeo): string | null {
+    const provincia = provinceIn(provincias, centro);
+    return provincia === null
+      ? null
+      : `Provincia ${provincia.properties.nombre} · ${provincia.properties.departamento}`;
   }
 
   /**
@@ -335,7 +460,7 @@ export class AppMap implements OnDestroy {
     this.documento.head.appendChild(enlace);
   }
 
-  private dibujar(pines: readonly PinMapa[]): void {
+  private dibujar(pines: readonly PinMap[]): void {
     const L = this.leaflet;
     const mapa = this.mapa;
     if (L === null || mapa === null) {
@@ -346,28 +471,63 @@ export class AppMap implements OnDestroy {
     this.marcadores.clear();
 
     const capa = L.layerGroup();
+    const isSeleccionable = this.seleccionable();
     for (const pin of pines) {
       const marcador = L.marker([pin.lat, pin.lng], {
         icon: this.iconoDe(L, pin),
         alt: pin.titulo,
-        // El camino por teclado es la lista: los pines no entran al tab order.
-        keyboard: false,
+        // Un pin es un botón: elige el lugar y abre su popup. Con `keyboard`
+        // Leaflet le da `tabindex="0"` y `role="button"`, y Enter abre el popup.
+        keyboard: true,
+        draggable: isSeleccionable,
       });
+      if (isSeleccionable && typeof marcador.on === 'function') {
+        marcador.on('dragend', () => {
+          const pos = typeof (marcador as unknown as { getLatLng?: () => Leaflet.LatLng }).getLatLng === 'function'
+            ? (marcador as unknown as { getLatLng: () => Leaflet.LatLng }).getLatLng()
+            : null;
+          if (pos) {
+            this.pointPicked.emit({ lat: pos.lat, lng: pos.lng });
+          }
+        });
+      }
       marcador.bindPopup(
         construirPopup(this.documento, pin, () => this.pinElegido.emit(pin.id)),
       );
-      marcador.on('click', () => this.seleccionado.set(pin.id));
+      marcador.on('click', () => {
+        this.seleccionado.set(pin.id);
+        if (isSeleccionable) {
+          this.pointPicked.emit({ lat: pin.lat, lng: pin.lng });
+        }
+      });
+      // Enter lo resuelve Leaflet para el popup, pero no dispara `click`: la
+      // selección cruzada se hace acá. Espacio, como en cualquier botón, hace
+      // lo mismo que Enter.
+      marcador.on('keydown', (evento: Leaflet.LeafletKeyboardEvent) => {
+        const tecla = evento.originalEvent.key;
+        if (tecla !== 'Enter' && tecla !== ' ') return;
+        if (tecla === ' ') {
+          evento.originalEvent.preventDefault();
+          marcador.openPopup();
+        }
+        this.seleccionado.set(pin.id);
+      });
       marcador.addTo(capa);
       this.marcadores.set(pin.id, marcador);
     }
     capa.addTo(mapa);
+    // El ícono existe recién ahora, al entrar la capa al mapa. Un `divIcon` no
+    // tiene `alt`: el nombre accesible va escrito en el propio elemento.
+    for (const pin of pines) {
+      this.marcadores.get(pin.id)?.getElement()?.setAttribute('aria-label', pinAccessibleName(pin));
+    }
 
     this.capaDePines = capa;
     this.pinesDibujados = pines;
     this.encuadrar(L, mapa, pines);
   }
 
-  private encuadrar(L: typeof Leaflet, mapa: Leaflet.Map, pines: readonly PinMapa[]): void {
+  private encuadrar(L: typeof Leaflet, mapa: Leaflet.Map, pines: readonly PinMap[]): void {
     const centro = this.centro();
     if (centro !== null) {
       mapa.setView([centro.lat, centro.lng], this.zoom() ?? ZOOM_POR_DEFECTO);
@@ -386,16 +546,32 @@ export class AppMap implements OnDestroy {
     );
   }
 
-  private iconoDe(L: typeof Leaflet, pin: PinMapa): Leaflet.DivIcon {
+  private iconoDe(L: typeof Leaflet, pin: PinMap): Leaflet.DivIcon {
     const cara = this.documento.createElement('span');
-    cara.className = `mapa__pin mapa__pin--${pin.estado?.tono ?? 'neutral'}`;
-    cara.textContent = pin.codigo ?? '';
+    cara.setAttribute('aria-hidden', 'true');
+    const tieneCodigo = pin.codigo !== undefined && pin.codigo !== '';
+    if (tieneCodigo) {
+      cara.className = `mapa__pin mapa__pin--${pin.estado?.tono ?? 'neutral'}`;
+      cara.textContent = pin.codigo ?? '';
+      return L.divIcon({
+        className: 'mapa__marcador',
+        html: cara,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -18],
+      });
+    }
+
+    cara.className = `mapa__pin mapa__pin--ubicacion mapa__pin--${pin.estado?.tono ?? 'neutral'}`;
+    const centroPunto = this.documento.createElement('span');
+    centroPunto.className = 'mapa__pin-centro';
+    cara.appendChild(centroPunto);
     return L.divIcon({
       className: 'mapa__marcador',
       html: cara,
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-      popupAnchor: [0, -18],
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
     });
   }
 

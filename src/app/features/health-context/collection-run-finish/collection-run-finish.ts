@@ -16,7 +16,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   errorMessageOf,
   objetoJson,
@@ -71,7 +71,7 @@ export class CollectionRunFinish {
    * después, y en las demás es una nota suelta.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué corrida',
         hint: 'Una corrida se cierra una sola vez: es un log, no un estado que va y vuelve.',
@@ -154,7 +154,7 @@ export class CollectionRunFinish {
   protected readonly finished = signal<RunFinished | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para cerrar corridas.'),
+    errorMessageOf(this.state(), 'No tiene permiso para cerrar corridas.'),
   );
 
   /** El resultado, como señal, para que las preguntas reaccionen a él. */

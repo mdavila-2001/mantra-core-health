@@ -18,26 +18,26 @@ import {
 } from '@angular/forms';
 
 import { Input } from '../../atoms/input/input';
-import { PaisBandera } from './pais-bandera';
+import { CountryFlag } from './country-flag';
 import {
-  PAISES_TELEFONO,
-  PAIS_POR_DEFECTO,
-  agrupar,
-  ejemploDe,
-  esTelefonoCompleto,
-  nacionalDelNumero,
-  paisDelNumero,
-  type PaisTelefono,
-} from './phone-input.paises';
+  PHONE_COUNTRIES,
+  COUNTRY_BY_DEFAULT,
+  group,
+  exampleOf,
+  isCompletePhone,
+  numberNational,
+  numberCountry,
+  type PhoneCountry,
+} from './phone-input.countries';
 
-export { PAISES_TELEFONO, PAIS_POR_DEFECTO } from './phone-input.paises';
-export type { IsoPais, PaisTelefono } from './phone-input.paises';
+export { PHONE_COUNTRIES as PAISES_TELEFONO, COUNTRY_BY_DEFAULT as PAIS_POR_DEFECTO } from './phone-input.countries';
+export type { IsoCountry as IsoPais, PhoneCountry as PaisTelefono } from './phone-input.countries';
 
 /** Prefijo internacional de Bolivia, el país por defecto del campo. */
-export const PREFIJO_BOLIVIA = PAIS_POR_DEFECTO.prefijo;
+export const PREFIJO_BOLIVIA = COUNTRY_BY_DEFAULT.prefijo;
 
 /** Cuántos dígitos tiene un número boliviano. */
-export const DIGITOS_TELEFONO_BOLIVIA = PAIS_POR_DEFECTO.digitos;
+export const DIGITOS_TELEFONO_BOLIVIA = COUNTRY_BY_DEFAULT.digitos;
 
 /** Ver `idLista`: un id por instancia, para que `aria-controls` apunte bien. */
 let siguienteId = 0;
@@ -63,7 +63,7 @@ let siguienteId = 0;
  */
 export function telefonoCompleto(control: AbstractControl): ValidationErrors | null {
   const valor = control.value;
-  if (typeof valor !== 'string' || esTelefonoCompleto(valor)) {
+  if (typeof valor !== 'string' || isCompletePhone(valor)) {
     return null;
   }
   return { telefonoIncompleto: true };
@@ -100,7 +100,7 @@ export function telefonoCompleto(control: AbstractControl): ValidationErrors | n
  * sigue exponiendo un `ControlValueAccessor` de string y sigue abriendo en
  * Bolivia; lo único nuevo es que se puede cambiar.
  *
- * El catálogo es corto y cerrado a propósito — ver `phone-input.paises.ts`.
+ * El catálogo es corto y cerrado a propósito — ver `phone-input.countries.ts`.
  *
  * ## Lo que se guarda no es lo que se ve
  *
@@ -120,7 +120,7 @@ export function telefonoCompleto(control: AbstractControl): ValidationErrors | n
  */
 @Component({
   selector: 'app-phone-input',
-  imports: [Input, PaisBandera],
+  imports: [Input, CountryFlag],
   templateUrl: './phone-input.html',
   styleUrl: './phone-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -148,14 +148,14 @@ export class PhoneInput implements ControlValueAccessor {
   /** Ver `Input.testId`: el `<input>` real vive dos componentes más adentro. */
   readonly testId = input<string | null>(null);
 
-  protected readonly paises = PAISES_TELEFONO;
+  protected readonly paises = PHONE_COUNTRIES;
   protected readonly idLista = `paises-${(siguienteId += 1)}`;
 
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly lista = viewChild<ElementRef<HTMLElement>>('lista');
 
   /** El país elegido. Abre en Bolivia; `writeValue` lo corrige si el valor trae otro. */
-  protected readonly pais = signal<PaisTelefono>(PAIS_POR_DEFECTO);
+  protected readonly pais = signal<PhoneCountry>(COUNTRY_BY_DEFAULT);
 
   /** Los dígitos tecleados, sin prefijo y sin separadores. */
   private readonly digitos = signal('');
@@ -171,10 +171,10 @@ export class PhoneInput implements ControlValueAccessor {
   protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
 
   /** Lo que ve la persona: los dígitos agrupados como agrupa su país. */
-  protected readonly texto = computed(() => agrupar(this.digitos(), this.pais().grupos));
+  protected readonly texto = computed(() => group(this.digitos(), this.pais().grupos));
 
   protected readonly placeholderEfectivo = computed(
-    () => this.placeholder() ?? ejemploDe(this.pais()),
+    () => this.placeholder() ?? exampleOf(this.pais()),
   );
 
   private onChange: (value: string) => void = () => undefined;
@@ -195,9 +195,9 @@ export class PhoneInput implements ControlValueAccessor {
 
   writeValue(value: string | null): void {
     const crudo = value ?? '';
-    const pais = paisDelNumero(crudo);
+    const pais = numberCountry(crudo);
     this.pais.set(pais);
-    this.digitos.set(nacionalDelNumero(crudo, pais));
+    this.digitos.set(numberNational(crudo, pais));
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -227,7 +227,7 @@ export class PhoneInput implements ControlValueAccessor {
    * mismo valor guardado.
    */
   protected alEscribir(valor: string | number | null): void {
-    this.digitos.set(nacionalDelNumero(String(valor ?? ''), this.pais()));
+    this.digitos.set(numberNational(String(valor ?? ''), this.pais()));
     this.emitir();
   }
 
@@ -261,7 +261,7 @@ export class PhoneInput implements ControlValueAccessor {
    * que admite ocho produce un teléfono que no existe, y el recorte al menos se
    * ve en el campo en el momento de hacerlo.
    */
-  protected elegir(pais: PaisTelefono): void {
+  protected elegir(pais: PhoneCountry): void {
     this.pais.set(pais);
     this.digitos.update((d) => d.slice(0, pais.digitos));
     this.abierto.set(false);

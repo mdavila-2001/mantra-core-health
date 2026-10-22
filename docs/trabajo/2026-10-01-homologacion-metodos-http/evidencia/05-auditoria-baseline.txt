@@ -1,0 +1,27 @@
+$ python compare_mock_api.py
+Total mock routes extracted: 649
+Total API routes extracted from controllers: 1437
+Matched: 571
+Method Mismatch: 7
+Missing in Backend: 71
+Saved results to D:\Trabajos Secundarios\Mantra Core Technologies\mock_vs_test_api_comparison.json
+exit=0
+
+$ python summarize_missing.py (sólo la sección de mismatches)
+--- METHOD MISMATCHES (7) ---
+Mock: PUT /auth-providers/identity-providers/:id/protocol-configs (admin-modules.handlers.ts:171)
+  Backend expects: ['POST'] in modules\auth_providers\controllers\auth-providers.controller.ts
+Mock: POST /community/reactions (community.handlers.ts:384)
+  Backend expects: ['PUT'] in modules\community\controllers\community-social.controller.ts
+Mock: POST /charts/notes/:id/versions (medical-notes.handlers.ts:276)
+  Backend expects: ['PUT'] in modules\chart\controllers\chart-notes.controller.ts
+Mock: PATCH /notifications/preferences/me (notifications.handlers.ts:209)
+  Backend expects: ['GET', 'PUT'] in modules\messaging\controllers\messaging.controller.ts
+Mock: PATCH /pharmacies/:pharmacyId/products/:productId (pharmacy.handlers.ts:844)
+  Backend expects: ['DELETE'] in modules\pharmacy\controllers\pharmacy.controller.ts
+Mock: GET /practitioners/me/sites (practice.handlers.ts:390)
+  Backend expects: ['POST'] in modules\practice\controllers\practitioner-sites.controller.ts
+Mock: POST /scheduling/bookings/:id/payment-state (scheduling.handlers.ts:391)
+  Backend expects: ['PUT', 'GET'] in modules\scheduling\controllers\scheduling-bookings.controller.ts
+
+--- MISSING IN BACKEND BY DOMAIN / FILE (72) ---

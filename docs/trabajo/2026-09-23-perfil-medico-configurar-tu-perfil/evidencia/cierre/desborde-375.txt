@@ -1,0 +1,20 @@
+Trayectoria: scrollWidth=375 ancho=375 · 3 fuera
+   span.app-header__account-name right=563 w=172
+   button.tabs__tab right=463 w=95
+   span.tabs__rotulo right=447 w=63
+Credenciales: scrollWidth=375 ancho=375 · 3 fuera
+   span.app-header__account-name right=563 w=172
+   button.tabs__tab right=412 w=95
+   span.tabs__rotulo right=396 w=63
+Datos personales: scrollWidth=375 ancho=375 · 11 fuera
+   span.app-header__account-name right=563 w=172
+   button.tabs__tab right=425 w=111
+   span.tabs__rotulo right=409 w=79
+   button.tabs__tab right=558 w=130
+   span.tabs__rotulo right=542 w=98
+   button.tabs__tab right=670 w=108
+   span.tabs__rotulo right=654 w=76
+   button.tabs__tab right=794 w=120
+   span.tabs__rotulo right=778 w=88
+   button.tabs__tab right=893 w=95
+   span.tabs__rotulo right=877 w=63

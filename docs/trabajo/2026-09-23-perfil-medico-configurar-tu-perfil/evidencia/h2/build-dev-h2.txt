@@ -1,0 +1,3 @@
+$ yarn ng build --configuration development
+exit 0 · Application bundle generation complete. [113.771 seconds]
+errores: 0 · avisos: 8 (los 8 son NG8113, un import que la plantilla no usa, en 6 archivos que H2 no toca: medical-articles, questionnaires ×2, groups, nearby-places, symptom-check)

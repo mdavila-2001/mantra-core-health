@@ -146,7 +146,7 @@ test('edits a credential in the real profile editor, preserves its type and PDF,
   const initialSummaryResponse = await initialSummaryPromise;
   expect(initialSummaryResponse.status()).toBe(200);
   const initialSummary = await initialSummaryResponse.json();
-  const ownedCredentials = (initialSummary.credentials as Array<Record<string, unknown>>).filter((credential) =>
+  const ownedCredentials = (initialSummary.credentials as Record<string, unknown>[]).filter((credential) =>
     expectedNumbers.includes(String(credential['number'])),
   );
   expect(ownedCredentials).toHaveLength(8);
@@ -202,13 +202,13 @@ test('edits a credential in the real profile editor, preserves its type and PDF,
   const summaryWithSpecialtyCredentialsResponse = await summaryWithSpecialtyCredentialsResponsePromise;
   expect(summaryWithSpecialtyCredentialsResponse.status()).toBe(200);
   const summaryWithSpecialtyCredentials = await summaryWithSpecialtyCredentialsResponse.json();
-  const specialtyCredentials = (summaryWithSpecialtyCredentials.credentials as Array<Record<string, unknown>>).filter((row) =>
+  const specialtyCredentials = (summaryWithSpecialtyCredentials.credentials as Record<string, unknown>[]).filter((row) =>
     specialtyCredentialIds.includes(String(row['id'])),
   );
   expect(specialtyCredentials).toHaveLength(2);
   expect(specialtyCredentials.map((row) => row['number']).sort()).toEqual([...specialtyNumbers].sort());
   expect(specialtyCredentials.every((row) => typeof row['fileId'] === 'string')).toBe(true);
-  const principalDegreeCredential = (summaryWithSpecialtyCredentials.credentials as Array<Record<string, unknown>>).find((row) => row['id'] === principalDegreeCredentialId);
+  const principalDegreeCredential = (summaryWithSpecialtyCredentials.credentials as Record<string, unknown>[]).find((row) => row['id'] === principalDegreeCredentialId);
   expect(principalDegreeCredential).toMatchObject({ number: principalDegreeNumber, issuingInstitutionText: 'Universidad sintética de Medicina' });
   expect(typeof principalDegreeCredential?.['fileId']).toBe('string');
   const addedCredentialFileIds = new Map([
@@ -249,13 +249,13 @@ test('edits a credential in the real profile editor, preserves its type and PDF,
   const updatedSummaryResponse = await updatedSummaryPromise;
   expect(updatedSummaryResponse.status()).toBe(200);
   const updatedSummary = await updatedSummaryResponse.json();
-  const updatedCredentials = (updatedSummary.credentials as Array<Record<string, unknown>>).filter((credential) =>
+  const updatedCredentials = (updatedSummary.credentials as Record<string, unknown>[]).filter((credential) =>
     ownedCredentials.some((original) => original['id'] === credential['id']),
   );
   expect(updatedCredentials).toHaveLength(8);
   expect(new Set(updatedCredentials.map((credential) => credential['fileId'])).size).toBe(8);
   expect(updatedSummary.credentials).toHaveLength(11);
-  expect(new Set((updatedSummary.credentials as Array<Record<string, unknown>>).map((credential) => credential['fileId'])).size).toBe(11);
+  expect(new Set((updatedSummary.credentials as Record<string, unknown>[]).map((credential) => credential['fileId'])).size).toBe(11);
   expect(updatedSummary.specialties).toHaveLength(3);
 
   const reloadSummaryPromise = page.waitForResponse((response) => ownSummaryUrl(response.url()));
@@ -263,21 +263,21 @@ test('edits a credential in the real profile editor, preserves its type and PDF,
   const reloadSummaryResponse = await reloadSummaryPromise;
   expect(reloadSummaryResponse.status()).toBe(200);
   const reloadedSummary = await reloadSummaryResponse.json();
-  const reloadedCredentials = (reloadedSummary.credentials as Array<Record<string, unknown>>).filter((credential) =>
+  const reloadedCredentials = (reloadedSummary.credentials as Record<string, unknown>[]).filter((credential) =>
     ownedCredentials.some((original) => original['id'] === credential['id']),
   );
   expect(reloadedCredentials).toHaveLength(8);
   expect(new Set(reloadedCredentials.map((credential) => credential['fileId'])).size).toBe(8);
   expect(reloadedSummary.credentials).toHaveLength(11);
-  const reloadedSpecialtyCredentials = (reloadedSummary.credentials as Array<Record<string, unknown>>).filter((row) =>
+  const reloadedSpecialtyCredentials = (reloadedSummary.credentials as Record<string, unknown>[]).filter((row) =>
     specialtyCredentialIds.includes(String(row['id'])),
   );
   expect(reloadedSpecialtyCredentials).toHaveLength(2);
   expect(reloadedSpecialtyCredentials.map((row) => row['fileId']).sort()).toEqual(specialtyCredentials.map((row) => row['fileId']).sort());
   for (const [id, fileId] of addedCredentialFileIds) {
-    expect((reloadedSummary.credentials as Array<Record<string, unknown>>).find((row) => row['id'] === id)?.['fileId']).toBe(fileId);
+    expect((reloadedSummary.credentials as Record<string, unknown>[]).find((row) => row['id'] === id)?.['fileId']).toBe(fileId);
   }
-  expect(new Set((reloadedSummary.credentials as Array<Record<string, unknown>>).map((credential) => credential['fileId'])).size).toBe(11);
+  expect(new Set((reloadedSummary.credentials as Record<string, unknown>[]).map((credential) => credential['fileId'])).size).toBe(11);
   expect(reloadedSummary.specialties).toHaveLength(3);
   expect(reloadedCredentials.find((credential) => credential['id'] === credentialId)).toMatchObject({
     credentialTypeConceptId: originalType,
@@ -341,7 +341,7 @@ test('edits a credential in the real profile editor, preserves its type and PDF,
   const ownerAfterForeignAttemptResponse = await ownerAfterForeignAttemptPromise;
   expect(ownerAfterForeignAttemptResponse.status()).toBe(200);
   const ownerAfterForeignAttempt = await ownerAfterForeignAttemptResponse.json();
-  expect((ownerAfterForeignAttempt.credentials as Array<Record<string, unknown>>).find((row) => row['id'] === credentialId)).toMatchObject({
+  expect((ownerAfterForeignAttempt.credentials as Record<string, unknown>[]).find((row) => row['id'] === credentialId)).toMatchObject({
     number: newNumber,
     fileId: originalFileId,
   });

@@ -54,3 +54,9 @@
 .verificacion__accion {
   width: 100%;
 }
+
+/* El reintento vive dentro del membrete, debajo de la explicación del fallo. */
+.verificacion__reintento {
+  width: 100%;
+  margin-top: var(--sp-4);
+}

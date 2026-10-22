@@ -1,13 +1,13 @@
 <app-card variant="outlined" padding="lg" class="observacion">
-  <h2 class="observacion__titulo">Observación</h2>
+  <h2 class="observacion__titulo">Medición</h2>
 
   @if (errorDeLaObservacion(); as mensaje) {
     <app-alert tone="error" data-testid="observacion-error">{{ mensaje }}</app-alert>
   }
 
   @if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      La medición queda bajo la custodia de una organización. Elegí una en el encabezado para poder
+    <app-alert tone="info" title="Elija una organización">
+      La medición queda bajo la custodia de una organización. Elija una en el encabezado para poder
       registrarla.
     </app-alert>
   } @else {
@@ -25,14 +25,14 @@
           data-testid="observacion-medicion"
           [target]="targetMedicion"
           [(value)]="medicion"
-          placeholder="Elegí una medición"
+          placeholder="Elija una medición"
         />
       </app-form-field>
 
       @if (opcionesDeCita().length > 1) {
         <app-form-field
           icon="calendar"
-          label="¿En qué cita se tomó?"
+          label="¿En qué consulta se tomó?"
           hint="Opcional. La consulta donde se midió, incluidas las ya finalizadas."
         >
           <app-select
@@ -50,8 +50,8 @@
            de si llenar las dos suma información. -->
       <app-form-field
         label="Valor"
-        hint="El número medido. Si la observación no tiene número, dejalo vacío y escribila abajo."
-        [errorMessage]="numeroInvalido() ? 'Escribí sólo el número; la unidad se elige al lado.' : ''"
+        hint="El número medido. Si la observación no tiene número, déjelo vacío y escríbala abajo."
+        [errorMessage]="numeroInvalido() ? 'Escriba sólo el número; la unidad se elige al lado.' : ''"
       >
         <app-input
           type="text"
@@ -85,7 +85,7 @@
           [rows]="2"
           [(value)]="valorEnPalabras"
           data-testid="observacion-texto"
-          placeholder="Lo observado, con tus palabras"
+          placeholder="Lo observado, con sus palabras"
         />
       </app-form-field>
 
@@ -116,7 +116,7 @@
       </app-form-field>
 
       <app-form-actions
-        submitLabel="Registrar observación"
+        submitLabel="Registrar una medición"
         [pending]="registrando()"
         [disabled]="!puedeRegistrar()"
         (submitted)="registrar()"

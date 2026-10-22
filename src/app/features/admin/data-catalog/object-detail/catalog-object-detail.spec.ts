@@ -92,10 +92,13 @@ describe('CatalogObjectDetail', () => {
 
   afterEach(() => http.verify({ ignoreCancelled: true }));
 
-  function responderCarga(): void {
-    http.expectOne('/admin/catalog/objects/o1').flush(DETALLE);
-    http.expectOne('/admin/catalog/objects/o1/columns').flush({ objectId: 'o1', items: [] });
-    http.expectOne('/admin/catalog/objects/o1/evidence').flush([]);
+  function responderCarga(
+    detalle: object = DETALLE,
+    extra: { columnas?: object[]; evidencia?: object[] } = {},
+  ): void {
+    http.expectOne('/admin/catalog/objects/o1').flush(detalle);
+    http.expectOne('/admin/catalog/objects/o1/columns').flush({ objectId: 'o1', items: extra.columnas ?? [] });
+    http.expectOne('/admin/catalog/objects/o1/evidence').flush(extra.evidencia ?? []);
     http.expectOne('/admin/catalog/objects/o1/history').flush({ revisions: [], decisions: [] });
     http.expectOne((r) => r.url === '/admin/catalog/objects/o1/changes').flush({ items: [], nextCursor: null, limit: 50 });
     http.expectOne((r) => r.url === '/admin/catalog/objects/o1/impact').flush({
@@ -130,7 +133,7 @@ describe('CatalogObjectDetail', () => {
       { status: 403, statusText: 'Forbidden' },
     );
     fixture.detectChanges();
-    expect(texto()).toContain('No podés revisar una revisión que escribiste vos');
+    expect(texto()).toContain('No puede revisar una revisión que escribió usted');
   });
 
   it('un 403 sin violación de segregación es un problema de rol, no de autoría', async () => {
@@ -141,8 +144,8 @@ describe('CatalogObjectDetail', () => {
       .expectOne('/admin/catalog/annotations/a1/review')
       .flush({ code: 'FORBIDDEN', message: 'x' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
-    expect(texto()).toContain('Tu rol no permite revisar fichas.');
-    expect(texto()).not.toContain('escribiste vos');
+    expect(texto()).toContain('Su rol no permite revisar fichas.');
+    expect(texto()).not.toContain('escribió usted');
   });
 
   it('rechazar exige motivo y lo envía', async () => {
@@ -162,6 +165,140 @@ describe('CatalogObjectDetail', () => {
     dialogs.confirmWithReason.mockResolvedValue(null);
     await (fixture.componentInstance as unknown as { revisar(d: string): Promise<void> }).revisar('REJECTED');
     http.expectNone('/admin/catalog/annotations/a1/review');
+  });
+
+  it('si la evidencia no llega, no se afirma «Sin evidencia»: se dice el fallo y se puede releer', () => {
+    http.expectOne('/admin/catalog/objects/o1').flush(DETALLE);
+    http.expectOne('/admin/catalog/objects/o1/columns').flush({ objectId: 'o1', items: [] });
+    http
+      .expectOne('/admin/catalog/objects/o1/evidence')
+      .flush(
+        { code: 'INTERNAL', message: 'x', correlationId: 'corr-evi', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    http.expectOne('/admin/catalog/objects/o1/history').flush({ revisions: [], decisions: [] });
+    http.expectOne((r) => r.url === '/admin/catalog/objects/o1/changes').flush({ items: [], nextCursor: null, limit: 50 });
+    http.match((r) => r.url === '/admin/catalog/objects/o1/impact').forEach((r) => r.flush(null));
+
+    const c = fixture.componentInstance as unknown as {
+      errorDeEvidencia: () => string | null;
+      errorDeHistorial: () => string | null;
+      leerEvidencia: () => void;
+    };
+    expect(c.errorDeEvidencia()).toBe(
+      'No pudimos traer la evidencia de este objeto. (Código de soporte: corr-evi)',
+    );
+    expect(c.errorDeHistorial()).toBeNull();
+
+    c.leerEvidencia();
+    expect(c.errorDeEvidencia()).toBeNull();
+    http.expectOne('/admin/catalog/objects/o1/evidence').flush([]);
+  });
+
+  describe('lo que aporta la bóveda', () => {
+    const IMPORTADA = {
+      ...DETALLE,
+      annotation: {
+        ...FICHA,
+        reviewStatus: 'DRAFT',
+        origin: 'IMPORTED_VAULT',
+        currentRevisionNo: 1,
+        approvedRevisionNo: null,
+        approvalIsCurrent: false,
+        content: {
+          ...FICHA.content,
+          businessName: null,
+          definition: 'conditions es un registro central de negocio del módulo 08 · clinical.',
+          purpose: 'Cuando un médico registra un diagnóstico, ese registro usa conditions.',
+          existenceRationale: 'Si esta tabla se eliminara, el negocio perdería el registro mismo de la historia clínica.',
+          rowGrain: null,
+          openQuestions: [{ field: 'definition', question: 'Texto de plantilla generado por la bóveda: redactar qué es esta tabla.' }],
+        },
+      },
+    };
+    const abrirPestana = (i: number) => {
+      (fixture.componentInstance as unknown as { pestana: { set(n: number): void } }).pestana.set(i);
+      fixture.detectChanges();
+    };
+    const el = () => fixture.nativeElement as HTMLElement;
+
+    it('una ficha importada lo dice, avisa que es plantilla y no ofrece aprobarla', () => {
+      responderCarga(IMPORTADA);
+      expect(el().querySelector('[data-testid="object-origin"]')!.textContent).toContain('Importado de la bóveda · pendiente de revisión');
+      expect(el().querySelector('[data-testid="object-template-warning"]')!.textContent).toContain('no explica por qué existe');
+      expect(el().querySelector('[data-testid="object-approve"]')).toBeNull();
+    });
+
+    it('una ficha escrita a mano no muestra ni el origen ni el aviso de plantilla', () => {
+      responderCarga();
+      expect(el().querySelector('[data-testid="object-origin"]')).toBeNull();
+      expect(el().querySelector('[data-testid="object-template-warning"]')).toBeNull();
+    });
+
+    it('separa Negocio, Por qué existe y Sistema', () => {
+      responderCarga(IMPORTADA, {
+        evidencia: [
+          { id: 'e1', kind: 'VAULT_NOTE', reference: 'SALUD/Entidades/E clinical.conditions.md', excerpt: 'La tabla declara 14 campos y 6 claves foráneas.', sourceRevision: 'sha256:3f9a' },
+        ],
+      });
+      const t = texto();
+      expect(t).toContain('Negocio');
+      expect(t).toContain('Qué es');
+      expect(t).toContain('conditions es un registro central de negocio');
+      expect(t).toContain('Por qué existe');
+      expect(t).toContain('Si esta tabla se eliminara');
+      expect(t).toContain('Sistema');
+      expect(el().querySelector('[data-testid="object-vault-system"]')!.textContent).toContain('La tabla declara 14 campos');
+    });
+
+    const COLUMNAS = [
+      { id: 'c1', columnName: 'user_id', ordinal: 2, nativeType: 'uuid', isNullable: false, defaultExpression: null, isPrimaryKey: false, isUnique: false, foreignKey: { constraintName: 'fk', sourceColumns: ['user_id'], targetSchema: 'iam', targetTable: 'users', targetColumns: ['id'] }, comment: null, observationStatus: 'OBSERVED', annotation: null },
+    ];
+    const pulsarNota = () => {
+      el().querySelector<HTMLButtonElement>('[data-testid="object-fk-note"]')!.click();
+      fixture.detectChanges();
+    };
+
+    it('la nota de una clave foránea se lee al pedirla, una sola vez', () => {
+      responderCarga(DETALLE, { columnas: COLUMNAS });
+      abrirPestana(1);
+      expect(el().querySelector('[data-testid="object-fk-note-text"]')).toBeNull();
+      pulsarNota();
+      http.expectOne('/admin/catalog/columns/c1/evidence').flush([
+        { id: 'n1', kind: 'VAULT_NOTE', reference: 'SALUD/FK/FK x.md', excerpt: 'Apunta a → iam.users (convención · usuario)', sourceRevision: 'r', createdAt: '2026-10-17T10:00:00.000Z' },
+      ]);
+      fixture.detectChanges();
+      expect(el().querySelector('[data-testid="object-fk-note-text"]')!.textContent).toContain('Apunta a → iam.users (convención · usuario)');
+      pulsarNota();
+      http.expectNone('/admin/catalog/columns/c1/evidence');
+    });
+
+    it('una clave sin nota en la bóveda lo dice', () => {
+      responderCarga(DETALLE, { columnas: COLUMNAS });
+      abrirPestana(1);
+      pulsarNota();
+      http.expectOne('/admin/catalog/columns/c1/evidence').flush([]);
+      fixture.detectChanges();
+      expect(el().querySelector('[data-testid="object-fk-note-text"]')!.textContent).toContain('La bóveda no tiene una nota de esta clave foránea');
+    });
+
+    it('si la lectura de la nota falla, no queda como si no hubiera nota', () => {
+      responderCarga(DETALLE, { columnas: COLUMNAS });
+      abrirPestana(1);
+      pulsarNota();
+      http.expectOne('/admin/catalog/columns/c1/evidence').flush({ code: 'INTERNAL' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      expect(texto()).toContain('No pudimos leer la nota');
+      expect(texto()).not.toContain('La bóveda no tiene una nota');
+    });
+
+    it('la pestaña de impacto ahora se llama «Relaciones» y aclara de dónde salen', () => {
+      responderCarga();
+      abrirPestana(4);
+      expect(texto()).toContain('Relaciones');
+      expect(texto()).toContain('claves foráneas observadas en la base');
+      expect(texto()).toContain('No son relaciones de negocio declaradas');
+    });
   });
 });
 

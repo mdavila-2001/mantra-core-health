@@ -33,7 +33,7 @@
            recuperar el movimiento más tarde. Dejarlo habría sido asustar con un
            límite que el sistema ya no tiene. -->
       <app-alert tone="info" class="fusion__aviso">
-        Si te equivocaste, podés deshacerlo acá mismo. También más tarde: el movimiento queda
+        Si se equivocó, puede deshacerlo acá mismo. También más tarde: el movimiento queda
         registrado y se puede recuperar desde el historial de fusiones.
       </app-alert>
 
@@ -73,7 +73,7 @@
     >
       <app-form-field
         label="Paciente que sobrevive"
-        hint="Buscá por nombre o por código de paciente."
+        hint="Busque por nombre o por código de paciente."
         [required]="true"
       >
         <app-reference-combobox
@@ -96,7 +96,7 @@
         label="Paciente que se fusiona"
         hint="Es el duplicado: el registro que no debería haber existido."
         [required]="true"
-        [errorMessage]="mismoPaciente() ? 'Elegiste dos veces el mismo paciente.' : ''"
+        [errorMessage]="mismoPaciente() ? 'Eligió dos veces el mismo paciente.' : ''"
       >
         <app-reference-combobox
           [selected]="absorbido()"

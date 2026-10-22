@@ -32,12 +32,20 @@ dl {
    la vista en vez de leerse entero.
 
    `minmax(0, …)` en el valor para que un texto largo sin espacios no empuje la
-   columna del campo fuera de la card. */
+   columna del campo fuera de la card.
+
+   `align-items: start` y no `baseline` (2026-09-26): con un valor que rompe a
+   varias líneas —un texto largo sin espacios, como un correo— la alineación
+   por línea de base hizo que algunos navegadores calcularan mal el alto de la
+   fila, y la fila siguiente se dibujaba encimada sobre la última línea de la
+   anterior. `start` alinea por el borde de arriba de cada celda, sin ese
+   cálculo cruzado entre `dt` y `dd`, y sigue leyéndose igual con un valor de
+   una sola línea. */
 :host(.lista-hechos--filas) .lista-hechos__par {
     display: grid;
     grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
     gap: var(--sp-3);
-    align-items: baseline;
+    align-items: start;
     padding-block: var(--sp-2);
 }
 
@@ -95,11 +103,15 @@ dl {
 
 .lista-hechos__valor {
     margin: 0;
+    min-inline-size: 0;
     color: var(--text-primary);
     font-size: var(--fs-body);
     line-height: var(--lh-body);
-    /* Un código o un modelo sin espacios no debe desbordar la card. */
+    /* Un código o un modelo sin espacios no debe desbordar la card.
+       `word-break` es el respaldo para el navegador que no calcule bien el
+       primer corte de `overflow-wrap: anywhere` en una celda de grilla. */
     overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 /* En columnas el valor es lo que se compara entre tarjetas, así que pesa más;

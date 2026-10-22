@@ -7,6 +7,7 @@ import { Avatar } from '../../atoms/avatar/avatar';
 import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Menu } from '../../molecules/menu/menu';
 import { MenuItem } from '../../molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../molecules/menu/menu-trigger/menu-trigger';
 import { TenantSwitcher } from '../tenant-switcher/tenant-switcher';
 import type { TenantOption } from '../tenant-switcher/tenant-switcher.types';
@@ -34,7 +35,7 @@ import type { HeaderUser } from './header.types';
   // igual que `button[app-button]` y `a[app-link]`. Un `<app-header>` suelto
   // no es ningún landmark y obligaría a envolverlo en cada pantalla.
   selector: 'header[app-header]',
-  imports: [AppButton, Avatar, Menu, MenuItem, MenuTrigger, TenantSwitcher, Tooltip],
+  imports: [AppButton, Avatar, Menu, MenuItem, MenuTrigger, NavIcon, TenantSwitcher, Tooltip],
   templateUrl: './header.html',
   styleUrl: './header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,9 +83,9 @@ export class Header {
     this.tenantChanged.emit(tenantId);
   }
 
-  /** Ciclo claro → oscuro → sistema, el mismo orden que la vitrina. */
+  /** Ciclo claro ↔ oscuro. */
   protected cycleTheme(): void {
-    const orden: readonly ThemeMode[] = ['light', 'dark', 'system'];
+    const orden: readonly ThemeMode[] = ['light', 'dark'];
     const actual = orden.indexOf(this.theme());
     this.themeService.setTheme(orden[(actual + 1) % orden.length]);
   }

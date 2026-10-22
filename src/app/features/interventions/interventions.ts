@@ -382,5 +382,5 @@ function mensajeDe(error: unknown): string {
   if (estado === 403) {
     return 'Sólo el propio integrante puede responder a su participación.';
   }
-  return 'No pudimos registrar la respuesta. Volvé a intentarlo.';
+  return 'No pudimos registrar la respuesta. Vuelva a intentarlo.';
 }

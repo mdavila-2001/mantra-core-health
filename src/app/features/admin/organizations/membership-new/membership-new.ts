@@ -30,6 +30,7 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
@@ -100,6 +101,20 @@ export class MembershipNew {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 
+  /** Si ya se avisó que la búsqueda de personas no está en la API. */
+  private busquedaNoDisponibleAvisada = false;
+
+  /**
+   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
+   * §2): se dice qué falta, una sola vez y no en cada tecla.
+   */
+  private avisarBusquedaNoDisponible(error: unknown): void {
+    const aviso = unavailableMessageOf(error);
+    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
+    this.busquedaNoDisponibleAvisada = true;
+    this.toast.warning(aviso);
+  }
+
   /**
    * La organización a la que se suma la persona, del segmento `:tenantId`.
    *
@@ -165,10 +180,10 @@ export class MembershipNew {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message || 'Necesitás administrar esta organización para sumar a alguien.';
+      return state.message || 'Necesita administrar esta organización para sumar a alguien.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -226,9 +241,10 @@ export class MembershipNew {
         );
         this.buscando.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.candidatos.set([]);
         this.buscando.set(false);
+        this.avisarBusquedaNoDisponible(error);
       },
     });
   }
@@ -288,7 +304,7 @@ export class MembershipNew {
         this.state.set(ready(null));
         this.toast.warning(
           'La persona quedó incorporada, pero no pudimos asignarle la sede. ' +
-            'Completá la asignación desde la ficha de la organización.',
+            'Complete la asignación desde la ficha de la organización.',
           'Falta la sede',
         );
         void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

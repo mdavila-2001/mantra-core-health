@@ -1,0 +1,179 @@
+/* Importación masiva del catálogo de la farmacia. Una sola tarjeta centrada y
+   a lo ancho (composition-rules §5), sin tope propio de ancho. Mobile-first. */
+
+:host {
+  display: block;
+}
+
+.import {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.import__pharmacy {
+  margin-block-end: var(--sp-4);
+}
+
+.import__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.import__subtitle {
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.import__secondary {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+span.import__secondary {
+  display: block;
+}
+
+.import__inline {
+  display: inline;
+}
+
+.import__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.import__message {
+  overflow-wrap: anywhere;
+}
+
+/* ─── 1 · Subir archivo ─────────────────────────────────────────────────── */
+
+.import__upload {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+}
+
+.import__upload-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.import__upload-main .import__subtitle {
+  margin: 0;
+}
+
+.import__help {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.import__help .import__subtitle {
+  margin: 0;
+}
+
+.import__columns {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.import__columns div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.import__columns dt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+.import__columns dd {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* ─── Cifras, muestra, avance y pie ─────────────────────────────────────── */
+
+.import__figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-6);
+}
+
+.import__figures p {
+  margin: 0;
+}
+
+.import__figures strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.import__sample ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.import__sample li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.import__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.import__progress p {
+  margin: 0;
+}
+
+.import__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+/* ─── Anchos ────────────────────────────────────────────────────────────── */
+
+@media (min-width: 1120px) {
+  .import__upload {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}

@@ -146,14 +146,14 @@
 /* --- Motas: suben despacio, se encienden a mitad de camino y se apagan. --- */
 .auth-stage__mote {
   position: absolute;
-  left: var(--x);
+  left: var(--x, 13%);
   bottom: -2%;
-  width: var(--s);
-  height: var(--s);
+  width: var(--s, 2px);
+  height: var(--s, 2px);
   border-radius: 50%;
   background: radial-gradient(circle, #ffffff, var(--c-aqua-200) 45%, transparent 72%);
   opacity: 0;
-  animation: auth-stage-mote-rise var(--dur) linear var(--d) infinite;
+  animation: auth-stage-mote-rise var(--dur, 17s) linear var(--d) infinite;
 }
 
 @keyframes auth-stage-mote-rise {

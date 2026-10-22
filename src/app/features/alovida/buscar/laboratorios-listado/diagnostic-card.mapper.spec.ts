@@ -52,7 +52,8 @@ describe('toDiagnosticCard', () => {
   it('sin imagen degrada al degradado del tema y las iniciales (AC-06-3)', () => {
     const { card } = toDiagnosticCard(laboratorio());
 
-    expect(card.portada).toBeNull();
+    // La portada es una foto ilustrativa de la carpeta del directorio (no del establecimiento).
+    expect(card.portada).toMatch(/^\/alovida\/directorio\/[a-z]+-\d{2}\.jpg$/);
     expect(card.logo).toBeNull();
     expect(card.iniciales).toBe('LC');
   });

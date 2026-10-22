@@ -348,3 +348,58 @@
     display: none;
   }
 }
+
+/* --- Bloqueados ----------------------------------------------------------- */
+
+.mensajeria__bloqueados {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mensajeria__bloqueado {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+}
+
+.mensajeria__bloqueado-texto {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.mensajeria__bloqueado-nombre {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mensajeria__bloqueado-detalle {
+  color: var(--tinta-3);
+  font-size: var(--fs-caption);
+}
+
+.mensajeria__desbloquear {
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mensajeria__desbloquear:hover {
+  background: var(--sup-inset);
+}
+
+.mensajeria__desbloquear:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}

@@ -27,7 +27,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { agendaResourcesMy } from '../my-resource';
 import {
   BlockForm,
   type BloqueoEnEdicion,
@@ -173,8 +173,8 @@ export class Blocks {
           this.editando.set(null);
           this.toast.success(
             res.blockedSlots > 0
-              ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'turno' : 'turnos'} que quedaron dentro.`
-              : 'Los turnos que ya estaban cerrados siguen cerrados.',
+              ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'horario' : 'horarios'} que quedaron dentro.`
+              : 'Los horarios que ya estaban cerrados siguen cerrados.',
             'Bloqueo corregido',
           );
           this.cargar();
@@ -183,7 +183,7 @@ export class Blocks {
           this.guardando.set(false);
           this.toast.error(
             errorToViewState(error).status === 'forbidden'
-              ? 'Esa agenda no es tuya.'
+              ? 'Esa agenda no es suya.'
               : 'No se pudo guardar el cambio.',
             'No se guardó',
           );
@@ -214,7 +214,7 @@ export class Blocks {
           this.guardando.set(false);
           this.toast.error(
             errorToViewState(error).status === 'forbidden'
-              ? 'Esa agenda no es tuya.'
+              ? 'Esa agenda no es suya.'
               : 'No se pudo crear el bloqueo.',
             'No se creó',
           );
@@ -250,14 +250,14 @@ export class Blocks {
     }
 
     this.estado.set(loading());
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+    agendaResourcesMy(this.scheduling, tenantId, perfil).subscribe({
       next: (recursos) => {
         const recurso = recursos[0];
         if (recurso === undefined) {
           this.estado.set(
             empty(
               { label: 'Publicar mi agenda', route: '/schedule/new' },
-              'Todavía no publicaste tu agenda: no hay nada que bloquear.',
+              'Todavía no publicó su agenda: no hay nada que bloquear.',
             ),
           );
           return;
@@ -309,8 +309,8 @@ export class Blocks {
                 // no desde una dirección propia (ver el comentario de
                 // `creando`). `ViewStateNextAction` sin ruta se pinta como
                 // texto, así que la etiqueta queda en modo indicación.
-                { label: 'Usá «Bloquear días u horarios», arriba' },
-                'No tenés ningún bloqueo. Cuando cierres un rato, aparece acá.',
+                { label: 'Use «Bloquear días u horarios», arriba' },
+                'No tiene ningún bloqueo. Cuando cierre un rato, aparece acá.',
               )
             : ready(filas),
         );
@@ -369,7 +369,7 @@ export class Blocks {
     const seguro = await this.dialogs.confirm({
       title: 'Quitar este bloqueo',
       message:
-        'El rato deja de estar cerrado. Los turnos que se cerraron al crearlo no vuelven solos: ' +
+        'El rato deja de estar cerrado. Los horarios que se cerraron al crearlo no vuelven solos: ' +
         'hay que volver a publicar el horario para abrirlos.',
       details: [
         { label: 'Motivo', value: bloqueo.motivo },
@@ -392,7 +392,7 @@ export class Blocks {
         this.borrando.set(null);
         this.toast.error(
           errorToViewState(error).status === 'forbidden'
-            ? 'Esa agenda no es tuya.'
+            ? 'Esa agenda no es suya.'
             : 'No se pudo quitar el bloqueo.',
           'No se quitó',
         );

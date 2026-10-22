@@ -1,14 +1,17 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
+import { getDebugNode, type WritableSignal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { CODIGO_OCUPACION_OTRA } from '../../../../core/data-access/terminology/bo-occupations.service';
 import { PatientProfileEdit } from './patient-profile-edit';
-import { UbicacionPicker } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import type { Select } from '../../../../shared/components/atoms/select/select';
+import { selectOptionLabels } from '../../../../../testing/select';
+import { MapLocationPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 
 /**
  * Editar los datos propios del paciente.
@@ -74,7 +77,7 @@ const MUNICIPIOS = [
   },
 ];
 
-/** Dos ocupaciones del catálogo `VS_BO_OCCUPATION`, con sus conceptos reales. */
+/** Ocupaciones del catálogo `VS_BO_OCCUPATION`, incluida su salida a texto libre. */
 const OCUPACIONES = [
   {
     conceptId: 'oc-docente',
@@ -86,6 +89,12 @@ const OCUPACIONES = [
     conceptId: 'oc-albanil',
     code: 'occupation:BUILDER',
     display: 'Albañil',
+    codeSystemVersionId: 'csv-1',
+  },
+  {
+    conceptId: 'oc-otra',
+    code: CODIGO_OCUPACION_OTRA,
+    display: 'Otra ocupación',
     codeSystemVersionId: 'csv-1',
   },
 ];
@@ -231,17 +240,27 @@ describe('PatientProfileEdit', () => {
     return 0;
   }
 
-  /** El `<select>` real de un campo, que vive dentro del átomo. */
-  function desplegable(testId: string): HTMLSelectElement | null {
+  /** El `app-select` de un campo, en su pestaña. */
+  function desplegable(testId: string): HTMLElement | null {
     abrirPestana(pestanaDe(testId));
-    return (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
-      `[data-testid="${testId}"] select`,
+    const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      `[data-testid="${testId}"]`,
     );
+    return campo?.matches('app-select') ? campo : (campo?.querySelector('app-select') ?? null);
   }
 
-  /** Las etiquetas que ofrece un desplegable, marcador incluido. */
-  function opcionesDe(testId: string): readonly string[] {
-    return [...(desplegable(testId)?.options ?? [])].map((opcion) => opcion.text.trim());
+  /**
+   * Las etiquetas que ofrece un desplegable, marcador incluido. El marcador ya
+   * no es una fila de la lista: es lo que el campo muestra sin elección, y sale
+   * de su `placeholder`.
+   */
+  async function opcionesDe(testId: string): Promise<readonly string[]> {
+    const host = desplegable(testId);
+    if (host === null) {
+      return [];
+    }
+    const marcador = (getDebugNode(host)?.componentInstance as Select<unknown>).placeholder();
+    return [marcador, ...(await selectOptionLabels(fixture, host))];
   }
 
   /** El `<input>` real del teléfono, que vive dentro de `app-phone-input`. */
@@ -303,24 +322,37 @@ describe('PatientProfileEdit', () => {
   }
 
   /**
-   * N-03: «Mis puntos» es la quinta pestaña de la ficha. El editor la lleva
-   * en la tira, apagada, para que pulsar el lápiz no mueva de lugar a las
-   * demás; ahí no hay nada que editar.
+   * N-03: «Mis puntos» es la billetera del programa de fidelidad, no un dato
+   * declarado, y no hay nada que editar ahí. Desde el 25/09/2026 (pedido del
+   * propietario) el editor ya no la muestra apagada: la saca de la tira.
    */
-  it('lleva «Mis puntos» en la tira, apagada: no hay nada que editar ahí', () => {
+  it('no lleva «Mis puntos» en la tira: no hay nada que editar ahí', () => {
     montarPintadoYCargado();
 
     const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
       '[role="tab"]',
     );
-    expect(pestanas.length).toBe(5);
-    expect(pestanas[4].textContent).toContain('Mis puntos');
-    expect(pestanas[4].disabled).toBe(true);
-    expect(pestanas[4].getAttribute('aria-disabled')).toBe('true');
-    // Pulsarla no abre nada: la abierta sigue siendo la primera.
-    pestanas[4].click();
-    fixture.detectChanges();
-    expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+    expect([...pestanas].map((p) => p.textContent?.trim())).not.toContain('Mis puntos');
+  });
+
+  it('«Seguros» y «Tutores» no se editan desde los datos personales', () => {
+    montarPintadoYCargado({
+      coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
+      guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
+    });
+
+    const pestanas = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+    expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+      'Datos personales',
+      'Contacto',
+      'Facturación',
+    ]);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Alianza Vida Seguros',
+    );
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Carlos Mamani');
   });
 
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {
@@ -334,6 +366,41 @@ describe('PatientProfileEdit', () => {
     expect(telefono().value).toBe('+591 70055555');
     expect(señal<string>('telefono')()).toBe('+591 70055555');
     expect(señal<string | null>('sexoAlNacer')()).toBe('FEMALE');
+  });
+
+  it('muestra el correo guardado y aclara que cambiarlo requiere verificación', () => {
+    montarPintadoYCargado({ email: 'ana@example.test' });
+
+    expect(notaDelCampo('perfil-correo', '.form-field-hint')).toContain(
+      'verificar el nuevo antes de soltar el viejo',
+    );
+    const email = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '[data-testid="perfil-correo"] input',
+    );
+    expect(email?.value).toBe('ana@example.test');
+    expect(email?.disabled).toBe(true);
+  });
+
+  it('recupera y guarda NIT y razón social con los campos fiscales del perfil', () => {
+    montarYCargar({ taxId: '1020304056', taxHolderName: 'Consultorio Ejemplo' });
+
+    expect(señal<string>('nit')()).toBe('1020304056');
+    expect(señal<string>('razonSocial')()).toBe('Consultorio Ejemplo');
+
+    señal<string>('nit').set('9988776655');
+    señal<string>('razonSocial').set('Centro Médico Ejemplo S.R.L.');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({
+      taxId: '9988776655',
+      taxHolderName: 'Centro Médico Ejemplo S.R.L.',
+    });
+    req.flush({
+      ...PERFIL_BASE,
+      taxId: '9988776655',
+      taxHolderName: 'Centro Médico Ejemplo S.R.L.',
+    });
   });
 
   /**
@@ -520,17 +587,17 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
       const raiz = fixture.nativeElement as HTMLElement;
       const [domicilio, trabajo] = fixture.debugElement
-        .queryAll(By.directive(UbicacionPicker))
-        .map((el) => el.componentInstance as UbicacionPicker);
+        .queryAll(By.directive(MapLocationPicker))
+        .map((el) => el.componentInstance as MapLocationPicker);
       expect(señal<string>('domicilio')()).toBe('Av. Banzer 3er anillo');
 
-      domicilio.fijarPunto({ lat: -17.79, lng: -63.19 });
+      domicilio.pinPunto({ lat: -17.79, lng: -63.19 });
       fixture.detectChanges();
 
       expect(señal<string>('domicilio')()).toBe('');
-      expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent).toContain(
-        'Volvé a escribir la dirección para este punto',
-      );
+      expect(
+        raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent,
+      ).toContain('Vuelva a escribir la dirección para este punto');
       // El trabajo no se entera: cada mapa vacía sólo su campo.
       expect(señal<string>('direccionTrabajo')()).toBe('Calle Ayacucho 241');
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).toBeNull();
@@ -540,10 +607,29 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
       expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')).toBeNull();
 
-      trabajo.fijarPunto({ lat: -17.8, lng: -63.2 });
+      trabajo.pinPunto({ lat: -17.8, lng: -63.2 });
       fixture.detectChanges();
       expect(señal<string>('direccionTrabajo')()).toBe('');
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).not.toBeNull();
+    });
+
+    it('manda domicilio y trabajo en campos separados', () => {
+      montarYCargar(CON_DIRECCIONES);
+
+      señal<string>('domicilio').set('Av. Busch 100');
+      señal<string>('direccionTrabajo').set('Calle Ayacucho 241, La Paz');
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({
+        homeAddressLines: 'Av. Busch 100',
+        workAddressLines: 'Calle Ayacucho 241, La Paz',
+      });
+      req.flush({
+        ...PERFIL_BASE,
+        homeAddress: { lines: 'Av. Busch 100' },
+        workAddress: { lines: 'Calle Ayacucho 241, La Paz' },
+      });
     });
 
     it('los dos mapas se dibujan en la pestaña de ubicación', () => {
@@ -552,10 +638,16 @@ describe('PatientProfileEdit', () => {
       abrirPestana(pestanaDe('perfil-domicilio'));
       fixture.detectChanges();
 
-      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll(
-        'app-ubicacion-picker',
-      );
+      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll('app-map-location-picker');
       expect(mapas).toHaveLength(2);
+    });
+
+    it('pide ciudad y país cuando el trabajo queda fuera de Bolivia', () => {
+      montarPintadoYCargado(CON_DIRECCIONES);
+
+      expect(notaDelCampo('perfil-trabajo', '.form-field-hint')).toBe(
+        'Si trabaja fuera de Bolivia, sume ciudad y país a la dirección.',
+      );
     });
   });
 
@@ -634,7 +726,7 @@ describe('PatientProfileEdit', () => {
 
     expect(señal<string>('nombre')()).toBe('Ana María');
     expect(interno<() => boolean>('guardando')()).toBe(false);
-    expect(toasts.toasts().at(-1)?.message).toBe('Tus datos quedaron actualizados.');
+    expect(toasts.toasts().at(-1)?.message).toBe('Sus datos quedaron actualizados.');
   });
 
   it('si el guardado falla lo dice y deja el formulario intacto para reintentar', () => {
@@ -644,9 +736,100 @@ describe('PatientProfileEdit', () => {
     interno<() => void>('guardar')();
     pedidoDeGuardado().error(new ProgressEvent('error'), { status: 500 });
 
-    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Probá de nuevo.');
+    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo.');
     expect(interno<() => boolean>('guardando')()).toBe(false);
     expect(señal<string>('nombre')()).toBe('Ana María');
+  });
+
+  /* ---- el rechazo del servidor, dicho donde se comete (2026-10-08) -------- */
+
+  /** Un rechazo de validación con la forma estructurada (`details.fields`). */
+  function rechazoPorCampo(field: string, mensaje: string): object {
+    return {
+      code: 'VALIDATION_FAILED',
+      message: 'Error de validación',
+      correlationId: 'corr-pac',
+      details: { fields: [{ field, constraints: ['isValid'], messages: [mensaje] }] },
+      timestamp: '2026-10-08T00:00:00.000Z',
+      path: '/profiles/patients/me',
+    };
+  }
+
+  it('un campo rechazado en otra pestaña queda pegado a él, y la pantalla lo lleva ahí', () => {
+    montarPintadoYCargado();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+    fixture.detectChanges();
+
+    expect(señal<number>('pestana')()).toBe(2);
+    expect(toasts.toasts().at(-1)?.message).toBe(
+      'Revise los campos marcados en «Facturación» y vuelva a guardar.',
+    );
+    // Se pinta debajo del NIT, no en otro campo.
+    const campos = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-form-field')];
+    const nit = campos.find((c) => (c.textContent ?? '').includes('NIT'));
+    const razon = campos.find((c) => (c.textContent ?? '').includes('Razón social'));
+    expect(nit?.textContent).toContain('El NIT no figura en el padrón.');
+    expect(razon?.textContent).not.toContain('padrón');
+    // Lo escrito en otra pestaña sigue ahí.
+    expect(señal<string>('nombre')()).toBe('Ana María');
+  });
+
+  it('un rechazo de un campo que la pantalla no muestra lleva su mensaje en el aviso', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('email', 'El correo no se cambia desde aquí.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+
+    expect(toasts.toasts().at(-1)?.message).toBe('El correo no se cambia desde aquí.');
+  });
+
+  it('un 500 lleva el código de soporte con el que se encuentra en el registro', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-500',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles/patients/me',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(toasts.toasts().at(-1)?.message).toBe(
+      'No pudimos guardar los cambios. Pruebe de nuevo. (Código de soporte: corr-500)',
+    );
+  });
+
+  it('un guardado nuevo limpia los rechazos del anterior', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('name', 'El nombre tiene caracteres no válidos.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+    expect(interno<(c: string) => string>('errorDelServidor')('name')).toContain('no válidos');
+
+    señal<string>('nombre').set('Ana Lucía');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush({ ...PERFIL_BASE, name: 'Ana Lucía' });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('name')).toBe('');
   });
 
   /* ---- validación mínima --------------------------------------------------- */
@@ -849,12 +1032,21 @@ describe('PatientProfileEdit', () => {
     expect(filtradas.map((o) => o.label)).toEqual(['Albañil']);
   });
 
+  it('buscar «otro» encuentra la salida transversal con ese mismo rótulo', () => {
+    montarPintadoYCargado();
+
+    señal<string>('busquedaOcupacion').set('otro');
+
+    const filtradas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
+    expect(filtradas.map((o) => o.label)).toEqual(['Otro']);
+  });
+
   /** Sin nada escrito se ofrecen todas: la lupa no esconde el catálogo. */
   it('sin búsqueda ofrece el catálogo entero', () => {
     montarPintadoYCargado();
 
     const todas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
-    expect(todas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
+    expect(todas.map((o) => o.label)).toEqual(['Docente', 'Albañil', 'Otro']);
   });
 
   /**
@@ -884,18 +1076,16 @@ describe('PatientProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, occupationConceptId: undefined });
   });
 
-  /**
-   * Las altas anteriores al catálogo guardaron texto libre. El desplegable no
-   * puede preseleccionarlo —no es un concepto— y dejarlo mudo haría creer que
-   * la persona nunca declaró su ocupación, así que la ayuda del campo lo dice.
-   */
-  it('la ocupación escrita antes del catálogo se dice en la ayuda del campo', () => {
+  it('una ocupación libre guardada abre «Otro» y permite editar el texto', () => {
     montarPintadoYCargado({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
 
-    expect(señal<string | null>('ocupacionConceptId')()).toBeNull();
-    expect(notaDelCampo('perfil-ocupacion', '.form-field-hint')).toBe(
-      'Registrada como «Panadera». Elegí una opción del catálogo para reemplazarla.',
-    );
+    expect(señal<string | null>('ocupacionConceptId')()).toBe('oc-otra');
+    expect(señal<string>('ocupacionTextoLibre')()).toBe('Panadera');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+        '[data-testid="perfil-ocupacion-otra"]',
+      )?.value,
+    ).toBe('Panadera');
   });
 
   /** Y no se manda sola: quien no toca el desplegable conserva su texto libre. */
@@ -908,6 +1098,43 @@ describe('PatientProfileEdit', () => {
     const req = pedidoDeGuardado();
     expect(req.request.body).toEqual({ name: 'Ana María' });
     req.flush({ ...PERFIL_BASE, name: 'Ana María' });
+  });
+
+  it('elegir «Otro» manda el oficio escrito libremente y quita el concepto anterior', () => {
+    montarYCargar();
+
+    interno<(opcion: { value: string; label: string }) => void>('elegirOcupacion')({
+      value: 'oc-otra',
+      label: 'Otro',
+    });
+    señal<string>('ocupacionTextoLibre').set('Apicultora');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({
+      occupationConceptId: '',
+      occupationFreeText: 'Apicultora',
+    });
+    req.flush({
+      ...PERFIL_BASE,
+      occupationConceptId: undefined,
+      occupationFreeText: 'Apicultora',
+    });
+  });
+
+  it('al cambiar «Otro» por una ocupación catalogada deja de mandar texto libre', () => {
+    montarYCargar({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
+
+    interno<(opcion: { value: string; label: string }) => void>('elegirOcupacion')({
+      value: 'oc-albanil',
+      label: 'Albañil',
+    });
+    expect(señal<string>('ocupacionTextoLibre')()).toBe('');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ occupationConceptId: 'oc-albanil' });
+    req.flush({ ...PERFIL_BASE, occupationConceptId: 'oc-albanil' });
   });
 
   it('si el catálogo de ocupaciones se cae lo dice, y reintentar vuelve a tocar la red', () => {
@@ -933,7 +1160,7 @@ describe('PatientProfileEdit', () => {
     // Ya no hay `<option>` que contar: la ocupación es una lupa. Lo que importa
     // del reintento es que el catálogo volvió a estar disponible para buscar.
     const recuperadas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
-    expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
+    expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil', 'Otro']);
   });
 
   /* ---- el sexo, con las mismas opciones que el alta ----------------------- */
@@ -942,10 +1169,10 @@ describe('PatientProfileEdit', () => {
    * Dos opciones, las del alta. Ofrecer más acá dejaría corregir los datos con
    * un valor que el alta no admite, y esa diferencia no la explica nada.
    */
-  it('el sexo se ofrece con las dos opciones del alta', () => {
+  it('el sexo se ofrece con las dos opciones del alta', async () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-genero')).toEqual(['Elegí una opción', 'Masculino', 'Femenino']);
+    expect(await opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
   });
 
   /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */
@@ -972,5 +1199,30 @@ describe('PatientProfileEdit', () => {
 
     expect(interno<() => boolean>('puedeGuardar')()).toBe(false);
     http.expectNone('/profiles/patients/me');
+  });
+
+  /* ---- el departamento que emitió el documento (ID-22) -------------------- */
+
+  it('el departamento emisor se corrige y viaja sólo si cambió; el número nunca', () => {
+    montarYCargar({ nationalId: '5414404', issuerAdministrativeAreaConceptId: 'dep-scz' });
+
+    señal<string | null>('departamentoEmisor').set('dep-lpz');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ issuerAdministrativeAreaConceptId: 'dep-lpz' });
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('nationalId');
+    req.flush({ ...PERFIL_BASE, issuerAdministrativeAreaConceptId: 'dep-lpz' });
+  });
+
+  it('sin tocar el departamento emisor, no viaja', () => {
+    montarYCargar({ issuerAdministrativeAreaConceptId: 'dep-scz' });
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ name: 'Ana María' });
+    req.flush({ ...PERFIL_BASE, name: 'Ana María' });
   });
 });

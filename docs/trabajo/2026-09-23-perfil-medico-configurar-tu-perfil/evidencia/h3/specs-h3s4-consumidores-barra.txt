@@ -1,0 +1,114 @@
+Using Vitest configuration file: <repo>\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                           [2m | [22m[1mNames[22m                                                                      [2m | [22m [1mRaw size[22m
+[32mspec-app-features-form-builder-form-builder.js[39m                                [2m | [22m[2mspec-app-features-form-builder-form-builder[22m                                [2m | [22m[36m658.82 kB[39m[2m | [22m
+[32mspec-app-features-my-services-my-services.js[39m                                  [2m | [22m[2mspec-app-features-my-services-my-services[22m                                  [2m | [22m[36m204.41 kB[39m[2m | [22m
+[32mstyles.css[39m                                                                    [2m | [22m[2mstyles[22m                                                                     [2m | [22m[36m166.29 kB[39m[2m | [22m
+[32mchunk-OUX7YXXI.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m[36m163.81 kB[39m[2m | [22m
+[32mspec-app-features-glossary-glossary.js[39m                                        [2m | [22m[2mspec-app-features-glossary-glossary[22m                                        [2m | [22m[36m121.73 kB[39m[2m | [22m
+[32mchunk-D3YO5RFM.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m89.95 kB[39m[2m | [22m
+[32mspec-app-features-progress-notes-progress-notes.js[39m                            [2m | [22m[2mspec-app-features-progress-notes-progress-notes[22m                            [2m | [22m [36m73.50 kB[39m[2m | [22m
+[32mchunk-SZ3EKWRS.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m58.35 kB[39m[2m | [22m
+[32mchunk-ZYENHH2W.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m54.78 kB[39m[2m | [22m
+[32mchunk-RBOXPLVV.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m51.35 kB[39m[2m | [22m
+[32mspec-app-features-directory-practitioners-directory-practitioners-directory.js[39m[2m | [22m[2mspec-app-features-directory-practitioners-directory-practitioners-directory[22m[2m | [22m [36m47.90 kB[39m[2m | [22m
+[32mchunk-5ZYHM2H3.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m47.70 kB[39m[2m | [22m
+[32mspec-app-features-admin-patients-patient-list-patient-list.js[39m                 [2m | [22m[2mspec-app-features-admin-patients-patient-list-patient-list[22m                 [2m | [22m [36m43.76 kB[39m[2m | [22m
+[32mchunk-QE4MA7EU.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m42.19 kB[39m[2m | [22m
+[32mchunk-QPG6J7FM.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m41.77 kB[39m[2m | [22m
+[32mchunk-AOQ7ODTF.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m41.76 kB[39m[2m | [22m
+[32mchunk-WDM6MML7.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m41.56 kB[39m[2m | [22m
+[32mchunk-LIOFFSXT.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m36.75 kB[39m[2m | [22m
+[32mchunk-3EYSTGKC.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m35.49 kB[39m[2m | [22m
+[32mspec-app-shared-components-organisms-specialty-browser-specialty-browser.js[39m   [2m | [22m[2mspec-app-shared-components-organisms-specialty-browser-specialty-browser[22m   [2m | [22m [36m35.32 kB[39m[2m | [22m
+[32mchunk-GVITWIP6.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m32.39 kB[39m[2m | [22m
+[32mchunk-46EBKQNV.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m26.70 kB[39m[2m | [22m
+[32mspec-app-features-directories-overview-directories-overview.js[39m                [2m | [22m[2mspec-app-features-directories-overview-directories-overview[22m                [2m | [22m [36m24.50 kB[39m[2m | [22m
+[32mchunk-YBJS7NZT.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m22.10 kB[39m[2m | [22m
+[32mchunk-UY73JEFE.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m20.91 kB[39m[2m | [22m
+[32mspec-app-features-public-directories-clinics-directory.js[39m                     [2m | [22m[2mspec-app-features-public-directories-clinics-directory[22m                     [2m | [22m [36m19.36 kB[39m[2m | [22m
+[32mspec-app-features-public-directories-pharmacies-directory.js[39m                  [2m | [22m[2mspec-app-features-public-directories-pharmacies-directory[22m                  [2m | [22m [36m15.79 kB[39m[2m | [22m
+[32mchunk-VEUTGKSH.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m14.68 kB[39m[2m | [22m
+[32mchunk-EXCFXFOA.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m14.54 kB[39m[2m | [22m
+[32mchunk-AITANJHJ.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m14.39 kB[39m[2m | [22m
+[32mchunk-THZUFRU3.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m11.26 kB[39m[2m | [22m
+[32mspec-app-features-laboratory-directory-laboratory-directory.js[39m                [2m | [22m[2mspec-app-features-laboratory-directory-laboratory-directory[22m                [2m | [22m [36m10.57 kB[39m[2m | [22m
+[32mchunk-3TRTP3SE.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m [36m10.48 kB[39m[2m | [22m
+[32mchunk-OBPNA6I3.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m  [36m9.14 kB[39m[2m | [22m
+[32mchunk-JBWBLPNK.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m  [36m5.19 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                               [2m | [22m[2minit-testbed[22m                                                               [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                          [2m | [22m[2mvitest-mock-patch[22m                                                          [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                           [2m | [22m[2msetup-test-setup[22m                                                           [2m | [22m[36m911 bytes[39m[2m | [22m
+[32mchunk-PJVXQR2M.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m[36m755 bytes[39m[2m | [22m
+[32mchunk-ORGD43PW.js[39m                                                             [2m | [22m[2m-[22m                                                                          [2m | [22m[36m668 bytes[39m[2m | [22m
+
+[1m [22m                                                                             [2m | [22m[1mInitial total[22m                                                              [2m | [22m  [1m2.31 MB[22m
+
+Application bundle generation complete. [69.716 seconds] - 2026-09-24T02:45:36.713Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:39:
+[37m      99 │ ...: [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+         ╵                                  [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:62:
+[37m      99 │ ... AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+         ╵                                                [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m<repo>[39m
+
+
+[2m Test Files [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+[2m      Tests [22m [1m[32m219 passed[39m[22m[90m (219)[39m
+[2m   Start at [22m 22:45:37
+[2m   Duration [22m 9.53s[2m (transform 3.51s, setup 1.48s, import 7.60s, tests 14.87s, environment 11.72s)[22m
+

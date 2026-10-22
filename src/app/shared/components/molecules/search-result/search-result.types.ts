@@ -90,6 +90,14 @@ export interface SearchResultItem {
   /** Imagen del cuadrado. Gana sobre `figureText` si viene. */
   readonly figureImageUrl?: string;
   /**
+   * Foto de la tarjeta, distinta de la figura de 56 px.
+   *
+   * La figura es la identidad —iniciales o logo— y esta es la **imagen** con la
+   * que un directorio se hojea: en grilla va arriba, a todo el ancho; en lista,
+   * a la izquierda. Opcional: sin ella la tarjeta es la de siempre.
+   */
+  readonly photoUrl?: string;
+  /**
    * Qué es esto, en una línea: «Hospital público de segundo nivel», «Farmacia ·
    * entrega a domicilio», «Cardióloga · Clínica Los Olivos».
    *
@@ -129,6 +137,15 @@ export interface SearchResultItem {
    * mismo destino. Los directorios que no la declaran no cambian en nada.
    */
   readonly action?: SearchResultAction;
+  /** Calificación y número de valoraciones o reseñas. */
+  readonly rating?: SearchResultRating;
+}
+
+/** Calificación y número de valoraciones de un resultado. */
+export interface SearchResultRating {
+  readonly average: number;
+  readonly count: number;
+  readonly label?: string;
 }
 
 /** Un enlace de acción dentro de la tarjeta. */

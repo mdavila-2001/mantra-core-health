@@ -1,0 +1,53 @@
+
+Running 14 tests using 1 worker
+
+
+
+yarn.cmd : (node:12952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 2 Carácter: 44
++ ... .0.1:4200'; yarn.cmd playwright test --config artifacts/playwright.di ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:12952) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 390px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 390px
+UI 390px: consola/red sin errores inesperados
+
+[2/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 649px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 649px
+UI 649px: consola/red sin errores inesperados
+
+[3/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 650px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 650px
+UI 650px: consola/red sin errores inesperados
+
+[4/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 768px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 768px
+UI 768px: consola/red sin errores inesperados
+
+[5/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1023px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1023px
+UI 1023px: consola/red sin errores inesperados
+
+[6/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1024px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1024px
+UI 1024px: consola/red sin errores inesperados
+
+[7/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1440px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1440px
+UI 1440px: consola/red sin errores inesperados
+
+[8/14] [chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1920px
+[chromium] › playwright\insurer-patient-directory.spec.ts:144:9 › Directorio de pacientes @ui-mock › tarjetas/tabla y mensajería a 1920px
+UI 1920px: consola/red sin errores inesperados
+
+[9/14] [chromium] › playwright\insurer-patient-directory.spec.ts:194:9 › Directorio de pacientes @ui-mock › estado loading
+[10/14] [chromium] › playwright\insurer-patient-directory.spec.ts:194:9 › Directorio de pacientes @ui-mock › estado empty
+[11/14] [chromium] › playwright\insurer-patient-directory.spec.ts:194:9 › Directorio de pacientes @ui-mock › estado error
+[12/14] [chromium] › playwright\insurer-patient-directory.spec.ts:194:9 › Directorio de pacientes @ui-mock › estado forbidden
+[13/14] [chromium] › playwright\insurer-patient-directory.spec.ts:220:7 › Directorio de pacientes @ui-mock › búsqueda, chips, reinicio y paginación sin filtros en URL
+[14/14] [chromium] › playwright\insurer-patient-directory.spec.ts:242:7 › Directorio de pacientes @ui-mock › error de conversación conserva la búsqueda y permite reintentar
+  14 passed (28.9s)
+EXIT_CODE=0

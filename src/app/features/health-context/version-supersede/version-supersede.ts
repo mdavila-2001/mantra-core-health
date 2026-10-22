@@ -91,7 +91,7 @@ export class VersionSupersede {
   protected readonly superseded = signal<VersionSuperseded | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para retirar versiones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para retirar versiones.'),
   );
 
   /** El reemplazo solo existe —y solo se exige— en el modo con reemplazo. */

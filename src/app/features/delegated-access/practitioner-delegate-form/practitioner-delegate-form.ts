@@ -18,7 +18,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const DELEGATE_ROLES: readonly DelegateRole[] = ['ASSISTANT', 'SECRETARY', 'NURSE'];
@@ -64,7 +64,7 @@ export class PractitionerDelegateForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Quién delega y en quién',
       hint: 'Las tres referencias son obligatorias y se pegan como identificador.',
@@ -76,7 +76,7 @@ export class PractitionerDelegateForm {
     },
     {
       titulo: 'Alcance',
-      hint: 'Qué rol cumple el delegado y hasta dónde llega. Lo que no elijas lo completa el backend.',
+      hint: 'Qué rol cumple el delegado y hasta dónde llega. Lo que no elija lo completa el backend.',
       campos: [
         { key: 'delegateRole', label: 'Rol del delegado', control: 'radio', options: [{ value: 'ASSISTANT', label: 'Asistente' }, { value: 'SECRETARY', label: 'Secretaría' }, { value: 'NURSE', label: 'Enfermería' }] },
         { key: 'patientScope', label: 'Alcance de pacientes', control: 'radio', options: [{ value: 'ASSIGNED', label: 'Solo los asignados' }, { value: 'ALL', label: 'Todos' }] },
@@ -125,7 +125,7 @@ export class PractitionerDelegateForm {
   protected readonly created = signal<CreatedResource | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para crear delegaciones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para crear delegaciones.'),
   );
 
   protected submit(): void {

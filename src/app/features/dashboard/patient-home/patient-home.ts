@@ -1,17 +1,19 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, of, type OperatorFunction } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -19,6 +21,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
 import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.routes';
 import { SymptomCheck } from '../../symptom-check/symptom-check';
+import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 
 /** Cuántas filas se piden de la historia: acá sólo se muestra lo último. */
 const TOPE = 20;
@@ -90,7 +93,17 @@ const SIN_AGENDA: DondeYConQuien = { profesional: '', lugar: '' };
  */
 @Component({
   selector: 'app-patient-home',
-  imports: [AppButtonLink, Card, DatePipe, NavIcon, PageHeader, RouterLink, SymptomCheck],
+  imports: [
+    AppButton,
+    AppButtonLink,
+    Card,
+    DatePipe,
+    NavIcon,
+    PageHeader,
+    PatientCampaignsWidget,
+    RouterLink,
+    SymptomCheck,
+  ],
   templateUrl: './patient-home.html',
   styleUrl: './patient-home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,7 +119,25 @@ export class PatientHome {
   /** El nombre con el que saludar. Vacío si el token no lo trae. */
   protected readonly nombre = computed(() => this.auth.displayName() ?? '');
 
+  /** Perfil del paciente en sesión: lo necesita el widget de beneficios del seguro. */
+  protected readonly profileId = this.auth.patientProfileId;
+
   protected readonly estado = signal<ViewState<Resumen>>(loading());
+
+  /**
+   * Por qué no se pudieron leer las citas, o `null` si se leyeron.
+   *
+   * Sin esto, un fallo de la lectura de citas dejaba `proximoTurno` en `null`
+   * y la banda decía «No tiene citas pedidas»: la respuesta contraria para
+   * quien tiene consulta mañana.
+   */
+  protected readonly falloDeCitas = signal<string | null>(null);
+
+  /** Lo mismo para la historia: sin ella, «Todavía no le recetaron nada» mentía. */
+  protected readonly falloDeHistoria = signal<string | null>(null);
+
+  /** Cuando no se pudo leer nada: el motivo, con el código de soporte. */
+  protected readonly falloGeneral = signal<string | null>(null);
 
   /** Lo cargado, o el vacío de quien todavía no tiene nada. */
   protected readonly resumen = computed<Resumen>(() => {
@@ -135,13 +166,16 @@ export class PatientHome {
   protected readonly estadoDeLaCita = computed<'loading' | 'error' | 'empty' | 'ready'>(() => {
     const actual = this.estado();
     if (actual.status === 'loading') return 'loading';
-    if (actual.status === 'error') return 'error';
+    if (actual.status === 'error' || this.falloDeCitas() !== null) return 'error';
     return this.resumen().proximoTurno === null ? 'empty' : 'ready';
   });
 
   /** Quien no tiene nada todavía ve una invitación, no una pantalla vacía. */
   protected readonly primeraVez = computed(() => {
     const datos = this.resumen();
+    // Una lectura caída no es «todavía no pasó nada»: invitar a pedir la
+    // primera cita a quien ya tiene varias sería afirmar lo que no se sabe.
+    if (this.falloDeCitas() !== null || this.falloDeHistoria() !== null) return false;
     return (
       datos.proximoTurno === null && datos.ultimaReceta === null && datos.ultimaAtencion === null
     );
@@ -155,32 +189,57 @@ export class PatientHome {
    * Las dos lecturas del panel, en paralelo y tolerantes.
    *
    * Si una falla, la otra se muestra igual: media pantalla útil es mejor que un
-   * error que tapa lo que sí se pudo leer. El caso en que las dos fallan sí se
-   * dice, porque entonces no hay nada que mirar.
+   * error que tapa lo que sí se pudo leer. Pero el fallo de cada una se dice
+   * en su lugar —nunca como un vacío—, y si fallan las dos es el error del
+   * panel, con el motivo y el código de soporte.
    */
-  private cargar(): void {
+  protected cargar(): void {
     const perfil = this.auth.patientProfileId();
     if (perfil === null) {
       this.estado.set(
         empty(
-          { label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE },
-          'Tu cuenta todavía no tiene una ficha de paciente.',
+          { label: 'Ir a mis citas', route: MIS_TURNOS_ROUTE },
+          'Su cuenta todavía no tiene una ficha de paciente.',
         ),
       );
       return;
     }
 
     this.estado.set(loading());
+    this.falloDeCitas.set(null);
+    this.falloDeHistoria.set(null);
+    this.falloGeneral.set(null);
     forkJoin({
       turnos: this.scheduling
         .searchBookings({ patientProfileId: perfil, limit: TOPE })
-        .pipe(catchError(() => of(null))),
-      historia: this.clinical.getSummary(perfil, TOPE).pipe(catchError(() => of(null))),
+        .pipe(tolerante()),
+      historia: this.clinical.getSummary(perfil, TOPE).pipe(tolerante()),
     }).subscribe({
-      next: ({ turnos, historia }) => {
-        if (turnos === null && historia === null) {
-          this.estado.set(errorToViewState(new Error('sin datos')));
+      next: (lecturas) => {
+        const turnos = lecturas.turnos.datos;
+        const historia = lecturas.historia.datos;
+        if (lecturas.turnos.fallo !== null && lecturas.historia.fallo !== null) {
+          this.falloGeneral.set(
+            describeApiFailure(
+              lecturas.turnos.fallo.error,
+              'No pudimos cargar su información en este momento.',
+            ),
+          );
+          this.estado.set(errorToViewState(lecturas.turnos.fallo.error));
           return;
+        }
+        if (lecturas.turnos.fallo !== null) {
+          this.falloDeCitas.set(
+            describeApiFailure(lecturas.turnos.fallo.error, 'No pudimos traer su próxima cita.'),
+          );
+        }
+        if (lecturas.historia.fallo !== null) {
+          this.falloDeHistoria.set(
+            describeApiFailure(
+              lecturas.historia.fallo.error,
+              'No pudimos traer su última receta ni su última atención.',
+            ),
+          );
         }
         const proximoTurno = proximo(turnos?.items ?? []);
         this.estado.set(
@@ -223,6 +282,21 @@ export class PatientHome {
         });
       });
   }
+}
+
+/** Una lectura del panel: lo que trajo, o el fallo que la dejó sin datos. */
+interface Lectura<T> {
+  readonly datos: T | null;
+  readonly fallo: { readonly error: unknown } | null;
+}
+
+/** Convierte el fallo de una lectura en un dato: la otra sigue, y el fallo se recuerda. */
+function tolerante<T>(): OperatorFunction<T, Lectura<T>> {
+  return (fuente) =>
+    fuente.pipe(
+      map((datos): Lectura<T> => ({ datos, fallo: null })),
+      catchError((error: unknown) => of<Lectura<T>>({ datos: null, fallo: { error } })),
+    );
 }
 
 /**

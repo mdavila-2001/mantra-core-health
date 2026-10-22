@@ -1,0 +1,48 @@
+<div class="location-picker">
+  <!-- En sólo lectura el mapa queda `inert`: se ve el departamento marcado,
+       pero no se puede pulsar ni enfocar. -->
+  <app-department-map
+    [class.location-picker__mapa--fijo]="readonly()"
+    [attr.inert]="readonly() ? '' : null"
+    [departamentos]="departments()"
+    [value]="chosenDepartment()"
+    (valueChange)="chooseDepartment($event)"
+    [municipio]="municipalityInMap()"
+    [punto]="punto()"
+    [etiqueta]="mapLabel()"
+    [testId]="testId() + '-mapa'"
+  />
+
+  <!-- El select de ciudad aparece recién con departamento elegido: sin él la
+       lista serían los ~340 municipios del país de corrido, que es justamente
+       lo que el mapa viene a evitar. Mientras tanto se dice qué falta, en vez
+       de dejar un desplegable vacío que parece roto. -->
+  @if (chosenDepartment() === null) {
+    <p class="location-picker__pendiente" [attr.data-testid]="testId() + '-pendiente'">
+      Elija primero su departamento en el mapa y acá aparecen sus ciudades.
+    </p>
+  } @else {
+    <app-form-field
+      [label]="municipalityLabel()"
+      [hint]="municipalityHint()"
+      [description]="municipalityDescription()"
+      [required]="required()"
+      [errorMessage]="errorMessage()"
+    >
+      <app-select
+        [options]="municipalities()"
+        [value]="value()"
+        [disabled]="readonly()"
+        (valueChange)="chooseMunicipality($event)"
+        placeholder="Elija su ciudad o municipio"
+        [attr.data-testid]="testId() + '-municipio'"
+      >
+        <!-- El glifo del campo, cuando quien monta el control lo proyecta. Se
+             vuelve a proyectar hacia el átomo —`ngProjectAs`— para que caiga
+             dentro del marco del desplegable, que es donde comparte borde, foco
+             y estado de error. Sin nada que proyectar no se dibuja nada. -->
+        <ng-content select="[slot=icon-start]" ngProjectAs="[slot=icon-start]" />
+      </app-select>
+    </app-form-field>
+  }
+</div>

@@ -6,3 +6,9 @@
 :host {
   display: block;
 }
+
+/* Los avisos de lectura incompleta y de vitrina sin actualizar van arriba de
+   la ficha, separados de ella por el mismo paso que usa el resto de la vista. */
+.perfil__aviso {
+  margin-block-end: var(--sp-4);
+}

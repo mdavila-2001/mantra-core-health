@@ -1,0 +1,9 @@
+$ [experimento: los 6 handlers legados restaurados desde HEAD] yarn test --watch=false --include=src/app/core/mock/mock-backend.spec.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/core/mock/mock-backend.spec.ts > backend simulado > registra sólo el verbo que la API publica en las rutas homologadas (Hito 3)
+AssertionError: POST /community/reactions (verbo legado): expected 1 to be +0 // Object.is equality
+ FAIL   mantra-core-health  src/app/core/mock/mock-backend.spec.ts > backend simulado > la reacción responde 200, como la API: es un PUT idempotente y no un alta
+AssertionError: expected 201 to be 200 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 36 passed (38)
+exit=1

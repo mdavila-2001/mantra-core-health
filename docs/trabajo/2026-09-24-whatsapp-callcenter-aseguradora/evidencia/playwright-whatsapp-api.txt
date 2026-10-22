@@ -1,0 +1,38 @@
+
+Running 4 tests using 1 worker
+
+  ok 1 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:267:7 › la configuración y la lectura de canales (API · Neon) › DENIED sin + responde 400 nombrando el campo y E.164 (2.1s)
+  ok 2 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:292:7 › la configuración y la lectura de canales (API · Neon) › valores válidos persisten normalizados y se leen en la ficha y en el listado (4.7s)
+  x  3 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:337:7 › la configuración y la lectura de canales (API · Neon) › rechaza un WhatsApp de menos de 8 dígitos (Tarea 2, CA-2.4) (2.0s)
+  ok 4 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:360:7 › la configuración y la lectura de canales (API · Neon) › :id ajeno al carrier del tenant activo responde 404 (1.7s)
+
+
+  1) [chromium] › playwright\carril-insurance-whatsapp.spec.ts:337:7 › la configuración y la lectura de canales (API · Neon) › rechaza un WhatsApp de menos de 8 dígitos (Tarea 2, CA-2.4) 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 200
+
+      348 |       data: { whatsappNumber: '+5917154', callCenterPhone: null, supportEmail: null },
+      349 |     });
+    > 350 |     expect(rechazado.status()).toBe(400);
+          |                                ^
+      351 |
+      352 |     const aceptado = await admin.api.put(`/insurance-carriers/${carrierId}/contact-channels`, {
+      353 |       data: { whatsappNumber: '+59171548', callCenterPhone: null, supportEmail: null },
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-insurance-whatsapp.spec.ts:350:32
+
+    Error Context: artifacts\playwright\salida\carril-insurance-whatsapp--526e5-e-8-dígitos-Tarea-2-CA-2-4--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-insurance-whatsapp--526e5-e-8-dígitos-Tarea-2-CA-2-4--chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\carril-insurance-whatsapp--526e5-e-8-dígitos-Tarea-2-CA-2-4--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\carril-insurance-whatsapp.spec.ts:337:7 › la configuración y la lectura de canales (API · Neon) › rechaza un WhatsApp de menos de 8 dígitos (Tarea 2, CA-2.4) 
+  3 passed (12.4s)

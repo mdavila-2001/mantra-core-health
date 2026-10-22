@@ -1,3 +1,4 @@
+import type { BloqueoDelMes } from '../calendar-view.types';
 import {
   afterRenderEffect,
   ChangeDetectionStrategy,
@@ -20,31 +21,23 @@ import type {
 } from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { nextControlId } from '@shared/forms/form-control.context';
-import type { EstadoResuelto } from '../day-view/day-view';
+import type { EstadoResuelto } from '../calendar-view.types';
 import {
   toBookingStatusPresentation,
   type BookingStatusPresentation,
 } from '../../booking-status';
-import { pacienteDeLaCita } from '../detalle-de-la-cita';
+import { appointmentPatient } from '../appointment-detail';
 import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import {
-  claveDelDia,
-  DIAS_DE_LA_SEMANA,
-  fechaLarga,
-  fechasDeLaGrilla,
-  medianoche,
-} from '../../../../shared/date/calendario-mes';
+  dayKey,
+  WEEK_DAYS,
+  longDate,
+  gridDates,
+  midnight,
+} from '../../../../shared/date/month-calendar';
 
-/** Un bloqueo declarado por el profesional, ya resuelto para el calendario. */
-export interface BloqueoDelMes {
-  /** El id de la excepción, para poder quitarla desde el día. */
-  readonly id?: string;
-  readonly desde: Date;
-  readonly hasta: Date;
-  /** Por qué, si se declaró. Es lo que distingue «bloqueado» de «sin agenda». */
-  readonly motivo: string | null;
-}
+export type { BloqueoDelMes } from '../calendar-view.types';
 
 /** El estado de un día, decidido una sola vez. */
 export type EstadoDelDia = 'sin-agenda' | 'bloqueado' | 'libre' | 'con-reservas' | 'lleno';
@@ -61,6 +54,11 @@ export interface CeldaDelMes {
   readonly reservados: number;
   /** Turnos publicados ese día. */
   readonly total: number;
+  /**
+   * Lo que la celda muestra: los turnos que quedan por ofrecer. `null` cuando
+   * no hay nada que contar — sin agenda, bloqueado o un día que ya pasó.
+   */
+  readonly disponibles: number | null;
   /** El motivo del bloqueo, cuando lo hay. */
   readonly motivo: string | null;
   /** Cómo se anuncia la celda entera a un lector de pantalla. */
@@ -135,7 +133,7 @@ export interface DayDetailRow {
  * ## El color nunca solo
  *
  * Cada celda lleva su número visible y una etiqueta accesible completa
- * («martes 8: seis de ocho turnos reservados»). Un mes que sólo se entienda por
+ * («martes 8: 2 turnos disponibles»). Un mes que sólo se entienda por
  * el tono no lo entiende nadie con baja visión — ni nadie mirando el teléfono
  * al sol.
  */
@@ -183,7 +181,7 @@ export class MonthView implements OnDestroy {
   /** Si la lectura de las citas falló: el globo no puede decir «sin citas». */
   readonly bookingsFailed = input(false);
 
-  protected readonly encabezados = DIAS_DE_LA_SEMANA;
+  protected readonly encabezados = WEEK_DAYS;
 
   protected readonly titulo = computed(() =>
     this.mes().toLocaleDateString('es-BO', { month: 'long', year: 'numeric' }),
@@ -192,29 +190,32 @@ export class MonthView implements OnDestroy {
   /** Las seis semanas, con el estado de cada día ya resuelto. */
   protected readonly semanas = computed<readonly (readonly CeldaDelMes[])[]>(() => {
     const porDia = this.cuposPorDia();
-    const hoy = claveDelDia(new Date());
-    const desdeHoy = medianoche(new Date()).getTime();
+    const hoy = dayKey(new Date());
+    const desdeHoy = midnight(new Date()).getTime();
     const mesActual = this.mes();
 
-    return fechasDeLaGrilla(mesActual).map((semana) =>
+    return gridDates(mesActual).map((semana) =>
       semana.map((fecha) => {
-        const clave = claveDelDia(fecha);
+        const clave = dayKey(fecha);
         const cuenta = porDia.get(clave) ?? { total: 0, reservados: 0 };
         const bloqueos = this.bloqueosDe(fecha);
         const bloqueo = bloqueos[0] ?? null;
 
         const estado = decidirEstado(cuenta, bloqueo !== null);
+        const pasado = fecha.getTime() < desdeHoy;
+        const disponibles = disponiblesDelDia(estado, cuenta, pasado);
         return {
           fecha,
           numero: fecha.getDate(),
           delMes: fecha.getMonth() === mesActual.getMonth(),
           esHoy: clave === hoy,
-          pasado: fecha.getTime() < desdeHoy,
+          pasado,
           estado,
           reservados: cuenta.reservados,
           total: cuenta.total,
+          disponibles,
           motivo: bloqueo?.motivo ?? null,
-          etiqueta: etiquetaDeLaCelda(fecha, estado, cuenta, bloqueo?.motivo ?? null),
+          etiqueta: etiquetaDeLaCelda(fecha, estado, disponibles, bloqueo?.motivo ?? null),
           resumen: resumenDelDia(fecha, this.franjasPorDia().get(clave) ?? [], bloqueos),
         };
       }),
@@ -231,7 +232,7 @@ export class MonthView implements OnDestroy {
   private readonly cuposPorDia = computed(() => {
     const porDia = new Map<string, { total: number; reservados: number }>();
     for (const cupo of this.cupos()) {
-      const clave = claveDelDia(cupo.startAt);
+      const clave = dayKey(cupo.startAt);
       const actual = porDia.get(clave) ?? { total: 0, reservados: 0 };
       porDia.set(clave, {
         total: actual.total + cupo.capacity,
@@ -253,7 +254,7 @@ export class MonthView implements OnDestroy {
     const porDia = new Map<string, Franja[]>();
     const ordenados = [...this.cupos()].sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
     for (const cupo of ordenados) {
-      const clave = claveDelDia(cupo.startAt);
+      const clave = dayKey(cupo.startAt);
       const franjas = porDia.get(clave) ?? [];
       const ultima = franjas.at(-1);
       if (ultima !== undefined && cupo.startAt.getTime() <= ultima.hasta.getTime()) {
@@ -413,7 +414,7 @@ export class MonthView implements OnDestroy {
    * de la semana, donde no hay lugar; el globo tiene scroll.
    */
   private bookingRowsOf(fecha: Date): readonly DayDetailRow[] {
-    const inicio = medianoche(fecha).getTime();
+    const inicio = midnight(fecha).getTime();
     const fin = inicio + UN_DIA_MS;
     return this.citas()
       .filter((cita) => {
@@ -428,7 +429,7 @@ export class MonthView implements OnDestroy {
             ? hora(cita.startAt as Date)
             : `${hora(cita.startAt as Date)}–${hora(cita.endAt)}`,
         // Mismas palabras que el día y la semana: sin nombre no se inventa uno.
-        primary: pacienteDeLaCita(cita),
+        primary: appointmentPatient(cita),
         secondary: null,
         // C-08 · el chip sale del mapa único de `booking-status.ts`, no de una
         // lista nueva y no del `display` inglés del catálogo.
@@ -445,7 +446,7 @@ export class MonthView implements OnDestroy {
    * pero no se ofrece, y listarlo diría lo contrario.
    */
   private availableRowsOf(fecha: Date): readonly DayDetailRow[] {
-    const inicio = medianoche(fecha).getTime();
+    const inicio = midnight(fecha).getTime();
     const fin = inicio + UN_DIA_MS;
     const ahora = Date.now();
     const bloqueos = this.bloqueosDe(fecha);
@@ -499,7 +500,7 @@ export class MonthView implements OnDestroy {
 
   /** Los bloqueos que tocan esa fecha, en orden. */
   private bloqueosDe(fecha: Date): readonly BloqueoDelMes[] {
-    const inicio = medianoche(fecha).getTime();
+    const inicio = midnight(fecha).getTime();
     const fin = inicio + UN_DIA_MS;
     return this.bloqueos()
       .filter((b) => b.desde.getTime() < fin && b.hasta.getTime() > inicio)
@@ -646,7 +647,7 @@ function resumenDelDia(
   franjas: readonly Franja[],
   bloqueos: readonly BloqueoDelMes[],
 ): DaySummary {
-  const inicio = medianoche(fecha).getTime();
+  const inicio = midnight(fecha).getTime();
   const fin = inicio + UN_DIA_MS;
   const blocks = bloqueos.map((bloqueo) => {
     const desde = Math.max(bloqueo.desde.getTime(), inicio);
@@ -659,8 +660,8 @@ function resumenDelDia(
     return `Bloqueado ${cuando}${motivo}.`;
   });
   return {
-    title: fechaLarga(fecha),
-    hours: franjas.length === 0 ? 'No atendés.' : `Atendés ${listaDeFranjas(franjas)}.`,
+    title: longDate(fecha),
+    hours: franjas.length === 0 ? 'No atiende.' : `Atiende ${listaDeFranjas(franjas)}.`,
     blocks,
   };
 }
@@ -684,6 +685,22 @@ function decidirEstado(
 }
 
 /**
+ * Cuántos turnos quedan por ofrecer ese día.
+ *
+ * La celda dice sólo esto, no lo reservado (pedido del cliente, 24/09): el mes
+ * es para ver dónde queda lugar. Un día que ya pasó no ofrece nada, aunque le
+ * hayan sobrado cupos: contarlos contradiría al globo, que dice que el día ya fue.
+ */
+function disponiblesDelDia(
+  estado: EstadoDelDia,
+  cuenta: { total: number; reservados: number },
+  pasado: boolean,
+): number | null {
+  if (pasado || estado === 'sin-agenda' || estado === 'bloqueado') return null;
+  return Math.max(cuenta.total - cuenta.reservados, 0);
+}
+
+/**
  * Cómo se anuncia una celda.
  *
  * Con el número solo, un lector de pantalla dice «12» y nada más. Acá dice el
@@ -692,20 +709,17 @@ function decidirEstado(
 function etiquetaDeLaCelda(
   fecha: Date,
   estado: EstadoDelDia,
-  cuenta: { total: number; reservados: number },
+  disponibles: number | null,
   motivo: string | null,
 ): string {
-  const cuando = fechaLarga(fecha);
+  const cuando = longDate(fecha);
   switch (estado) {
     case 'sin-agenda':
-      return `${cuando}: no atendés`;
+      return `${cuando}: no atiende`;
     case 'bloqueado':
       return motivo === null ? `${cuando}: bloqueado` : `${cuando}: bloqueado — ${motivo}`;
-    case 'libre':
-      return `${cuando}: ${cuenta.total} turnos publicados, ninguno reservado`;
-    case 'lleno':
-      return `${cuando}: completo, ${cuenta.total} de ${cuenta.total} turnos reservados`;
-    case 'con-reservas':
-      return `${cuando}: ${cuenta.reservados} de ${cuenta.total} turnos reservados`;
   }
+  if (disponibles === null) return `${cuando}: día pasado`;
+  if (disponibles === 0) return `${cuando}: sin horarios disponibles`;
+  return `${cuando}: ${disponibles} ${disponibles === 1 ? 'horario disponible' : 'horarios disponibles'}`;
 }

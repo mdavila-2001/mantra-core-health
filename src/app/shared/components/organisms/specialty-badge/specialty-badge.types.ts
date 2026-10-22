@@ -20,9 +20,6 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
 export interface SpecialtyBadgeItem {
   readonly id: string;
   readonly nombre: string;
-  /** La que el profesional ejerce principalmente: va primera y con tono de marca. */
-  readonly principal: boolean;
-  readonly certificada: boolean;
   /** El estado en palabras. Vacío = la insignia no muestra sello. */
   readonly estado: string;
   readonly sello: StatusSealVariant | null;

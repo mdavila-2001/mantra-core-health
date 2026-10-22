@@ -138,7 +138,7 @@ describe('GroupDetail', () => {
     responderPadron();
 
     expect(texto()).toContain('Salir del grupo');
-    expect(texto()).toContain('No escribas datos personales');
+    expect(texto()).toContain('No escriba datos personales');
   });
 
   it('quien ya pidió entrar ve que su ingreso está en revisión', () => {
@@ -147,7 +147,7 @@ describe('GroupDetail', () => {
     responderMuro();
     responderPadron();
 
-    expect(texto()).toContain('Tu ingreso está en revisión');
+    expect(texto()).toContain('Su ingreso está en revisión');
     expect(texto()).not.toContain('Unirme al grupo');
   });
 
@@ -186,7 +186,7 @@ describe('GroupDetail', () => {
       publicar(t: string): void;
     };
     componente.alternarRespuesta('c-1');
-    componente.publicar('te respondo');
+    componente.publicar('le respondo');
     fixture.detectChanges();
 
     http.expectOne((r) => r.url === '/community/profiles/me').flush(perfilPropio);
@@ -197,14 +197,51 @@ describe('GroupDetail', () => {
     );
     expect(req.request.body).toEqual({
       authorProfileId: 'pp-1',
-      bodyText: 'te respondo',
+      bodyText: 'le respondo',
       parentCommentId: 'c-1',
     });
-    req.flush(publicacion('c-2', 'te respondo'));
+    req.flush(publicacion('c-2', 'le respondo'));
     fixture.detectChanges();
 
     // Publicar recarga el muro en vez de parchear el árbol en memoria.
     responderMuro([publicacion('c-1', 'Hola grupo')]);
+  });
+
+  it('si unirse falla, el aviso es el motivo de la API con su código de soporte', () => {
+    montar();
+    responderFicha({});
+    responderMuro();
+    responderPadron();
+
+    (fixture.componentInstance as unknown as { unirse(): void }).unirse();
+    http.expectOne('/community/profiles/me').flush({ id: 'pp-1', displayName: 'Ana' });
+    http
+      .expectOne((r) => r.url.startsWith('/community/groups/g-1/') && r.method === 'POST')
+      .flush(
+        { code: 'CONFLICT', message: 'Ya pidió entrar a este grupo.', correlationId: 'corr-grp', timestamp: '', path: '' },
+        { status: 409, statusText: 'Conflict' },
+      );
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Ya pidió entrar a este grupo. (Código de soporte: corr-grp)');
+  });
+
+  it('a quien administra, una cola de pendientes caída no se muestra como «nadie esperando»', () => {
+    montar();
+    responderFicha({ isMember: true, canPost: true, canAdminister: true, membershipId: 'm-1' });
+    responderMuro();
+
+    const padron = http.match((r) => r.url === '/community/groups/g-1/members' && r.method === 'GET');
+    padron[0].flush(paginaVacia);
+    padron[1].flush(
+      { code: 'INTERNAL', message: 'x', correlationId: 'corr-pend', timestamp: '', path: '' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    expect(texto()).toContain(
+      'No pudimos leer las solicitudes de ingreso pendientes. (Código de soporte: corr-pend)',
+    );
   });
 
   it('quien administra resuelve las solicitudes pendientes', () => {
