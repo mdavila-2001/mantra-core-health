@@ -1063,6 +1063,13 @@
   pointer-events: none;
 }
 
+/* El selector de tema es chrome sobre la franja: con fondo de superficie la línea
+   pasa por DETRÁS de los botones y no por encima de su ícono. */
+.auth-split--calm.auth-split--full .auth-split__theme {
+  background: var(--bg-surface);
+  border-radius: var(--r-full);
+}
+
 /* El panel de `calm` pinta su propio fondo y taparía la franja que va detrás.
    A ancho completo lo dejamos transparente: el blanco (o la superficie oscura)
    lo sigue poniendo `.auth-split`, así que no cambia nada de lo que se ve. */

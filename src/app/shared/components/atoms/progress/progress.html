@@ -1,6 +1,30 @@
 <!-- El relleno es decoración: lo que se anuncia son los aria-value* del host.
      En indeterminada el ancho no significa nada, lo dice la animación. -->
-<span class="progress__fill" [style.width]="isIndeterminate() ? null : fillWidth()"></span>
+@if (waveVisible()) {
+  <!-- La barra dicha como latido (`wave`): el riel es el trazo entero, tenue, y
+       el avance es el mismo trazo dibujado hasta el punto en que va. Se recorta
+       por ANCHO —`clip-path`— y no por largo de trazo: los latidos hacen que el
+       largo no sea proporcional a la posición, y un 40 por ciento tiene que
+       quedar al 40 por ciento del riel. Es decoración; lo que se anuncia son los
+       `aria-value*`. -->
+  <svg
+    class="progress__wave"
+    viewBox="0 0 1000 40"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path class="progress__wave-track" vector-effect="non-scaling-stroke" d="M0 20 H120 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H320 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H520 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H720 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H870 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H1000" />
+    <path
+      class="progress__wave-fill"
+      vector-effect="non-scaling-stroke"
+      [style.clip-path]="waveClip()"
+      d="M0 20 H120 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H320 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H520 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H720 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H870 l6 -3 l6 6 l8 -17 l9 29 l7 -15 l6 0 H1000"
+    />
+  </svg>
+} @else {
+  <span class="progress__fill" [style.width]="isIndeterminate() ? null : fillWidth()"></span>
+}
 
 <!-- La punta: el mismo dato que el relleno, dicho como posición en vez de como
      largo. `aria-hidden` porque no agrega información: el avance ya viaja en
