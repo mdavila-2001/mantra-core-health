@@ -67,6 +67,28 @@
         </ul>
       }
 
+      <!-- Sin zona elegida, el panel de al lado quedaba en blanco —media tarjeta
+           vacía junto a la figura—. Ahí va ahora el «cómo funciona» en tres
+           pasos con número: no repite la pista de la figura, cuenta lo que pasa
+           después de tocarla, que es lo que quien desconfía quiere saber antes
+           de empezar (rediseño del 22/10/2026). -->
+      @if (!nombreDeLaZonaAbierta()) {
+        <ol class="sintomas__guia" data-testid="sintomas-guia" aria-label="Cómo funciona">
+          <li class="sintomas__guia-paso">
+            <span class="sintomas__guia-numero" aria-hidden="true">1</span>
+            <span class="sintomas__guia-texto">Toque en la figura <strong>dónde le pasa</strong>.</span>
+          </li>
+          <li class="sintomas__guia-paso">
+            <span class="sintomas__guia-numero" aria-hidden="true">2</span>
+            <span class="sintomas__guia-texto">Elija <strong>lo que siente</strong> de la lista que aparece.</span>
+          </li>
+          <li class="sintomas__guia-paso">
+            <span class="sintomas__guia-numero" aria-hidden="true">3</span>
+            <span class="sintomas__guia-texto">Le decimos <strong>a qué especialidad ir</strong> y puede pedir la cita.</span>
+          </li>
+        </ol>
+      }
+
       <p class="sintomas__chips-rotulo sintomas__lado-otros" id="sintomas-otros">
         Lo que no está en un lugar del cuerpo
       </p>
