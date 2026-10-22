@@ -220,6 +220,15 @@ export class ShellLayout {
   private readonly cart = inject(CartStore);
   protected readonly unidadesDelCarrito = this.cart.unitCount;
   protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
+
+  /**
+   * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la
+   * cuarta vuelta, quien atiende. El resto de los roles, la de siempre.
+   */
+  protected readonly esMedico = computed(
+    () => !this.esPacienteDelCarrito() && this.auth.roles().includes('PRACTITIONER'),
+  );
+  protected readonly usaRediseno = computed(() => this.esPacienteDelCarrito() || this.esMedico());
   protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
   protected readonly pharmacyTestids = PHARMACY_TESTIDS;
 
@@ -269,13 +278,13 @@ export class ShellLayout {
       }
     });
 
-    /* La hoja visual del paciente (`styles/paciente.css`) se compila aparte y
-       sin inyectar: sólo la descarga quien la usa. Se pone el `<link>` desde
-       acá —también bajo SSR, así llega en el HTML y no hay parpadeo— y se
-       quita si la sesión deja de ser de un paciente. */
+    /* La hoja visual del rediseño (`styles/paciente.css`) se compila aparte y
+       sin inyectar: sólo la descarga quien la usa —el paciente y el médico—.
+       Se pone el `<link>` desde acá —también bajo SSR, así llega en el HTML y
+       no hay parpadeo— y se quita si la sesión deja de ser de uno de ellos. */
     effect(() => {
-      const paciente = this.esPacienteDelCarrito();
-      untracked(() => this.hojaDelPaciente(paciente));
+      const rediseno = this.usaRediseno();
+      untracked(() => this.hojaDelPaciente(rediseno));
     });
 
     this.urlActual.set(this.rutaLimpia());
