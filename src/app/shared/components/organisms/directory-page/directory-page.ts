@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 
+import { AppButton } from '../../atoms/button/button';
 import { ResultCard } from '../../molecules/result-card/result-card';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { FilterBar, type FilterDef } from '../filter-bar/filter-bar';
@@ -47,6 +48,16 @@ import type { GrupoDeDirectorio, SustantivoDelDirectorio } from './directory-pag
 /** Dónde se recuerda la forma elegida: una sola para los cuatro directorios. */
 const CLAVE_DE_VISTA = 'alovida.directorio.vista';
 
+/**
+ * Cuántas tarjetas se dibujan de entrada y cuántas suma cada «Mostrar más».
+ *
+ * La guía de médicos llegaba con 804 y las dibujaba todas: 190 000 px de
+ * página y varios segundos en blanco antes del primer pintado. 24 llena dos
+ * pantallas de escritorio en grilla (3 o 4 por fila) y es divisible por las
+ * dos.
+ */
+const TANDA_POR_DEFECTO = 24;
+
 type Vista = 'grilla' | 'lista';
 
 function vistaGuardada(clave: string): Vista | null {
@@ -61,7 +72,7 @@ function vistaGuardada(clave: string): Vista | null {
 
 @Component({
   selector: 'app-directory-page',
-  imports: [FilterBar, PageHeader, ResultCard, ViewStateHost],
+  imports: [AppButton, FilterBar, PageHeader, ResultCard, ViewStateHost],
   templateUrl: './directory-page.html',
   styleUrl: './directory-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -91,11 +102,15 @@ export class DirectoryPage {
   readonly filtros = input<readonly FilterDef[]>([]);
   readonly etiquetaBusqueda = input('Buscar en el directorio');
   /**
-   * Lo que se lee dentro del buscador vacío. «Buscar» a secas por defecto,
-   * como la barra; una portada que busca en varios lugares lo usa para decir
-   * en cuáles.
+   * Lo que se lee dentro del buscador vacío. Por defecto, el mismo
+   * `etiquetaBusqueda`: el rótulo del campo no se ve, y un «Buscar» a secas
+   * no decía qué se puede escribir ahí.
    */
-  readonly searchPlaceholder = input('Buscar');
+  readonly searchPlaceholder = input<string | null>(null);
+
+  protected readonly textoDelBuscador = computed(
+    () => this.searchPlaceholder() ?? this.etiquetaBusqueda(),
+  );
 
   readonly estado = input.required<ViewState<unknown>>();
   readonly grupos = input.required<readonly GrupoDeDirectorio[]>();
@@ -169,6 +184,64 @@ export class DirectoryPage {
     const { singular, plural } = this.sustantivo();
     return `${cuantos} ${cuantos === 1 ? singular : plural}`;
   });
+
+  /** Cuántas tarjetas suma cada «Mostrar más». */
+  readonly tamanoDeTanda = input(TANDA_POR_DEFECTO);
+
+  /**
+   * Cuántas tarjetas se dibujan. Vuelve a una tanda cada vez que cambian los
+   * grupos —otro filtro, otra búsqueda—: lo abierto de una búsqueda no tiene
+   * por qué seguir abierto en la siguiente.
+   */
+  protected readonly limite = linkedSignal({
+    source: this.grupos,
+    computation: () => this.tamanoDeTanda(),
+  });
+
+  /**
+   * Los grupos recortados al límite, en orden, con las tarjetas que entran de
+   * cada uno. El grupo viaja entero para que su encabezado siga diciendo
+   * cuántos tiene de verdad y no cuántos se ven. Un grupo que quedó todo fuera
+   * del límite no se dibuja, ni su encabezado: un rótulo sin tarjetas debajo
+   * parece un tramo vacío.
+   */
+  protected readonly gruposVisibles = computed(() => {
+    let quedan = this.limite();
+    const visibles: { grupo: GrupoDeDirectorio; resultados: GrupoDeDirectorio['resultados'] }[] =
+      [];
+    for (const grupo of this.grupos()) {
+      if (quedan <= 0) {
+        break;
+      }
+      const resultados = grupo.resultados.slice(0, quedan);
+      quedan -= resultados.length;
+      visibles.push({ grupo, resultados });
+    }
+    return visibles;
+  });
+
+  protected readonly mostrados = computed(() => Math.min(this.limite(), this.total()));
+
+  protected readonly restantes = computed(() => this.total() - this.mostrados());
+
+  /**
+   * «Mostrar 24 más», o los que queden si son menos. Sin el sustantivo: el de
+   * varios directorios es «clínicas encontradas», y la línea de progreso, justo
+   * encima, ya dice de qué son.
+   */
+  protected readonly textoMostrarMas = computed(
+    () => `Mostrar ${Math.min(this.tamanoDeTanda(), this.restantes())} más`,
+  );
+
+  /** «Se muestran 24 de 804 médicos». */
+  protected readonly textoProgreso = computed(() => {
+    const { plural } = this.sustantivo();
+    return `Se muestran ${this.mostrados()} de ${this.total()} ${plural}.`;
+  });
+
+  protected mostrarMas(): void {
+    this.limite.update((actual) => actual + this.tamanoDeTanda());
+  }
 
   protected readonly sinCoincidencias = computed(
     () => this.total() === 0 && this.textoSinCoincidencias() !== null,
