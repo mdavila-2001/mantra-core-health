@@ -109,15 +109,18 @@ export class ResultCard {
     (this.resultado().meta ?? []).slice(0, this.maximoDeMeta()),
   );
 
-  /** Acción de la tarjeta: si no viene explícita pero hay enlace, habilita «Revisar disponibilidad». */
+  /**
+   * Acción de la tarjeta: la que trae el resultado o, si sólo hay enlace,
+   * «Ver ficha». Antes el respaldo era «Revisar disponibilidad», que sólo
+   * tiene sentido en un médico —el directorio de médicos lo declara explícito
+   * con el ancla a sus horarios— y salía también en clínicas, farmacias y
+   * aseguradoras, que no tienen agenda.
+   */
   protected readonly accion = computed<SearchResultAction | undefined>(() => {
     const r = this.resultado();
     if (r.action) return r.action;
     if (r.link) {
-      return {
-        label: 'Revisar disponibilidad',
-        link: r.link,
-      };
+      return { label: 'Ver ficha', link: r.link };
     }
     return undefined;
   });
