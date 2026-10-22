@@ -60,6 +60,7 @@ import {
   type Coordenadas,
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { RegistrationBadge } from '../registro-compartido/registration-badge';
 
 /* ============================================================================
     Alta de farmacia — Módulo Farmacia §1 del registro de procesos
@@ -250,6 +251,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-pharmacy',
   imports: [
+    RegistrationBadge,
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,

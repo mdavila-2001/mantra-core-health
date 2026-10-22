@@ -143,6 +143,17 @@
 }
 
 .searchable-display {
+  /* Es un `<button>`: sin este reinicio el navegador le pone su caja gris con
+     borde en relieve (`appearance: auto`, `2px outset`), y el campo buscable se
+     veía como un botón de sistema dentro del marco en vez de como un campo. */
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
   flex: 1;
   width: 100%;
   font-family: var(--font-body);

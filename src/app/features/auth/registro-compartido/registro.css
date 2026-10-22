@@ -33,12 +33,12 @@
     entera un tope sólo lograba dos barras de scroll en la misma pantalla. */
 .registro {
   position: relative;
-  /* `backdrop-filter` crea contexto de apilado, así que todo lo que flota
-     dentro de la tarjeta —el desplegable de la lupa de ocupaciones, y
-     cualquier otro panel— queda encerrado acá: su `z-index` es local y no
-     puede ganarle a la columna de ayuda, que es hermana posterior en el DOM y
-     por eso se pinta encima. Con esto la tarjeta entera se eleva por sobre esa
-     columna y el desplegable vuelve a verse completo.
+  /* Una capa propia: todo lo que flota dentro de la tarjeta —el desplegable de
+     la lupa de ocupaciones, y cualquier otro panel— queda encerrado acá, y su
+     `z-index` es local y no puede ganarle a la columna de ayuda, que es hermana
+     posterior en el DOM y por eso se pinta encima. Antes lo daba el
+     `backdrop-filter` de la tarjeta de vidrio; ahora la da esta capa, que es
+     lo único de ese efecto que hacía falta.
 
      No es recorte, es orden de pintado: por eso alcanza una capa y no hace
      falta colgar el panel del `<body>` como hacen el globo de ayuda y el menú,
@@ -46,15 +46,14 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
-  backdrop-filter: blur(22px) saturate(1.35);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
-  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  /* Papel, no vidrio: superficie del tema, filete y una sombra mínima. El
+     cristal con desenfoque, la sombra larga y el canto de luz tenían sentido
+     sobre un fondo vivo; sobre una superficie quieta sólo sumaban peso. */
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2xl);
   padding: var(--sp-6);
-  box-shadow:
-    var(--shadow-lg),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 @media (min-width: 650px) {
@@ -86,9 +85,24 @@
 /* Membrete: título y bajada separados del cuerpo por una regla, como la cabecera
    de un expediente. Se usa en los dos estados (alta y confirmación). */
 .registro__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--sp-4);
   margin-bottom: var(--sp-6);
   padding-bottom: var(--sp-4);
   border-bottom: 1px solid var(--border-default);
+}
+
+/* La insignia del tipo de cuenta ocupa toda la altura de la cabecera, a la
+   izquierda; el título y las bajadas, a su derecha. */
+.registro__header > app-registration-badge {
+  grid-column: 1;
+  grid-row: 1 / span 6;
+}
+
+.registro__header > :not(app-registration-badge) {
+  grid-column: 2;
 }
 
 .registro__title {

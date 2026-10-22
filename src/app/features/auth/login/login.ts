@@ -15,13 +15,13 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { FormTracing } from '../../../core/observability/business/form-tracing';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { AccountIcon } from '../../../shared/components/atoms/account-icon/account-icon';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
@@ -70,11 +70,11 @@ const MY_ORGANIZATIONS_ROUTE = '/administration/medical-organization?tab=members
     Input,
     Link,
     FormField,
+    AccountIcon,
     NavIcon,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
-    PointerScene,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
