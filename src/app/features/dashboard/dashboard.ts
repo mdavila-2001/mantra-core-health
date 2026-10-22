@@ -137,6 +137,17 @@ export class Dashboard {
    */
   protected readonly atiendePacientes = computed(() => this.auth.practitionerProfileId() !== null);
 
+  /**
+   * El título saluda por el nombre, igual que el panel del paciente.
+   *
+   * Si el token no trae nombre vuelve a «Panel»: un «Hola, » colgando se lee
+   * como un error.
+   */
+  protected readonly tituloDelPanel = computed(() => {
+    const nombre = this.auth.displayName() ?? '';
+    return nombre === '' ? 'Panel' : `Hola, ${nombre}`;
+  });
+
   /** El subtítulo dice lo que la pantalla trae, y eso depende de quién entró. */
   protected readonly subtituloDelPanel = computed(() =>
     this.atiendePacientes()

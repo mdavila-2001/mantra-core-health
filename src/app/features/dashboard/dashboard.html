@@ -43,7 +43,7 @@
   <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
      acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
   <app-page-header
-    title="Panel"
+    [title]="tituloDelPanel()"
     [subtitle]="subtituloDelPanel()"
     appTutorialTarget="panel-titulo"
   />
