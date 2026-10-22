@@ -3,6 +3,7 @@ import { Validators, type AbstractControl, type ValidationErrors } from '@angula
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 import { opcionesAutoridadReguladora } from '../../../core/profesion/autoridades-reguladoras';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
+import { MENSAJE_CEDULA_INVALIDA } from './cedula-de-identidad';
 import { MENSAJE_CONTRASENA_CORTA } from './politica-de-contrasena';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
@@ -74,75 +75,73 @@ export function practitionerFields(context: PractitionerFieldsContext): readonly
   // lo que el padrón real trae en esa casilla —y lo que la gente cargaba— es
   // el número del SEDES, que además es una habilitación y no un título.
 
-  return paginarCampos([
-    {
-      titulo: '¿Cómo se llama?',
-      clave: 'name',
-      icon: 'people',
-      hint: 'Como figura en su documento. Si no tiene alguno, déjelo vacío.',
-      // Nombres y apellidos van juntos en una página, como pide el registro
-      // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
-      // `key` de `name`, para que el motor siga validando el obligatorio y
-      // sepa a qué página volver al enviar— porque son cuatro casillas y el
-      // tope del motor es de cuatro campos por página.
-      campos: [
-        {
-          key: 'name',
-          label: '',
-          control: 'custom',
-          required: true,
-          mensajeDeError: 'Ingrese su nombre.',
-        },
-        {
-          key: 'lastName',
-          label: 'Apellido paterno',
-          control: 'text',
-          required: true,
-          autocomplete: 'family-name',
-          placeholder: 'Rojas',
-          testId: 'registro-pro-apellido-paterno',
-          ancho: 'mitad',
-          mensajeDeError: 'Ingrese su apellido paterno.',
-        },
-        {
-          key: 'motherLastName',
-          label: 'Apellido materno',
-          hint: 'Si no lleva, déjelo vacío.',
-          control: 'text',
-          autocomplete: 'family-name',
-          placeholder: 'Paz',
-          testId: 'registro-pro-apellido-materno',
-          ancho: 'mitad',
-        },
-      ],
-    },
-    {
-      titulo: 'Su documento de identidad',
-      clave: 'document',
-      icon: 'patients',
-      hint: 'Los dos hacen falta. Identifican a la persona detrás de la matrícula.',
-      campos: [
-        {
-          key: 'nationalId',
-          label: 'Cédula de identidad',
-          required: true,
-          hint: 'Se guarda como su documento oficial.',
-          description:
-            'No es con lo que inicia sesión —eso es su correo—, pero es lo que ata su matrícula a una persona.',
-          control: 'text',
-          autocomplete: 'off',
-          placeholder: '1234567',
-          testId: 'registro-pro-documento',
-          icono: 'patients',
-          // Media línea, con su departamento de emisión al lado: la misma
-          // pareja que en el alta de paciente, y por lo mismo — el número y
-          // su expedición son un solo documento.
-          ancho: 'mitad',
-          mensajeDeError: 'Ingrese un documento válido: letras, números, punto y guion.',
-        },
-        context.departmentIssuerField('registro-pro-departamento-ci'),
-      ],
-    },
+  // Nombre y cédula van en UNA página, como en el alta de paciente (propietario,
+  // 22/10/2026): son el mismo documento —el nombre se escribe «como figura» en
+  // la cédula— y partirlos obligaba a dos pasos para lo que se contesta con el
+  // carnet en la mano. Son cinco campos, uno más que el tope del motor, así que
+  // esta página **no** pasa por `paginarCampos` (que la partiría otra vez); el
+  // resto sí, y el tope de cuatro sigue valiendo para todas las demás.
+  const paginaDeIdentidad: PaginaDeFormulario = {
+    titulo: 'Su nombre y su cédula',
+    clave: 'name',
+    icon: 'people',
+    hint: 'Como figuran en su documento. Si no tiene algún apellido, déjelo vacío. La cédula se revisa antes de pasar al paso siguiente.',
+    // Los tres nombres entran en UN campo proyectado —bajo la `key` de
+    // `name`, para que el motor siga validando el obligatorio y sepa a qué
+    // página volver al enviar— porque son tres casillas de texto y se leen
+    // como una sola pregunta.
+    campos: [
+      {
+        key: 'name',
+        label: '',
+        control: 'custom',
+        required: true,
+        mensajeDeError: 'Ingrese su nombre.',
+      },
+      {
+        key: 'lastName',
+        label: 'Apellido paterno',
+        control: 'text',
+        required: true,
+        autocomplete: 'family-name',
+        placeholder: 'Rojas',
+        testId: 'registro-pro-apellido-paterno',
+        ancho: 'mitad',
+        mensajeDeError: 'Ingrese su apellido paterno.',
+      },
+      {
+        key: 'motherLastName',
+        label: 'Apellido materno',
+        hint: 'Si no lleva, déjelo vacío.',
+        control: 'text',
+        autocomplete: 'family-name',
+        placeholder: 'Paz',
+        testId: 'registro-pro-apellido-materno',
+        ancho: 'mitad',
+      },
+      {
+        key: 'nationalId',
+        label: 'Cédula de identidad',
+        required: true,
+        hint: 'Se guarda como su documento oficial.',
+        description:
+          'Sólo el número, sin el complemento: el departamento que la emitió va en la casilla de al lado. No es con lo que inicia sesión —eso es su correo—, pero es lo que ata su matrícula a una persona.',
+        control: 'text',
+        autocomplete: 'off',
+        placeholder: '1234567',
+        testId: 'registro-pro-documento',
+        icono: 'patients',
+        // Media línea, con su departamento de emisión al lado: la misma
+        // pareja que en el alta de paciente, y por lo mismo — el número y
+        // su expedición son un solo documento.
+        ancho: 'mitad',
+        mensajeDeError: MENSAJE_CEDULA_INVALIDA,
+      },
+      context.departmentIssuerField('registro-pro-departamento-ci'),
+    ],
+  };
+
+  const paginasRestantes = paginarCampos([
     {
       titulo: 'Cuéntenos un poco sobre usted',
       clave: 'profile',
@@ -584,6 +583,8 @@ export function practitionerFields(context: PractitionerFieldsContext): readonly
       ],
     },
   ]);
+
+  return [paginaDeIdentidad, ...paginasRestantes];
 }
 
 /** Busca la definición de un campo para reutilizar su etiqueta y reglas. */

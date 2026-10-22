@@ -50,6 +50,10 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
+import {
+  MENSAJE_CEDULA_INVALIDA,
+  validarCedulaBoliviana,
+} from '../registro-compartido/cedula-de-identidad';
 import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
@@ -90,12 +94,6 @@ function fechaIso(fecha: Date): string {
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${anio}-${mes}-${dia}`;
 }
-
-/** Mínimos que exigen los DTO del backend. */
-const MIN_DOCUMENTO = 4;
-
-/** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
-const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
 /** El NIT boliviano es sólo dígitos; el backend valida lo mismo. */
 const NIT_VALIDO = /^[0-9]{4,20}$/;
@@ -627,11 +625,7 @@ export class RegisterPatient {
     {
       nationalId: new FormControl('', {
         nonNullable: true,
-        validators: [
-          Validators.required,
-          Validators.minLength(MIN_DOCUMENTO),
-          Validators.pattern(DOCUMENTO_VALIDO),
-        ],
+        validators: [Validators.required, validarCedulaBoliviana],
       }),
       // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite
       // el documento de identidad y como se comparan dos personas al buscar
@@ -1272,7 +1266,7 @@ export class RegisterPatient {
           testId: 'registro-documento',
           icono: 'patients',
           ancho: 'mitad',
-          mensajeDeError: 'Ingrese su documento: letras, números, punto y guion.',
+          mensajeDeError: MENSAJE_CEDULA_INVALIDA,
         },
         this.campoDepartamentoEmisor('registro-departamento-ci'),
         {
