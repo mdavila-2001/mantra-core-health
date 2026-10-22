@@ -104,13 +104,15 @@ describe('faker del backend simulado', () => {
 
   describe('el padrón generado', () => {
     it('tiene volumen suficiente para que haya que paginar', () => {
-      // Los quince escritos a mano, los 763 médicos reales de la red de
-      // Alianza Seguros y Nacional Seguros (`insurer-network.ts`) y los 13 de
+      // Los quince escritos a mano, los 754 médicos reales de la red de
+      // Alianza Seguros y Nacional Seguros (`insurer-network.ts`; eran 763 con
+      // nueve establecimientos —«Fisiocentro», «Slimbody SRL»— que la lista de
+      // prestadores mezcla con los médicos y el extractor ahora separa) y los 13 de
       // USUARIO_MEDICOS; 120 pacientes de la maqueta más los 92 de
       // USUARIO_PACIENTES (`registered-people.ts`). Y, desde D-H3-PROV-01
       // (23/09/2026), los 13 profesionales de demostración con agenda simulada.
       expect(PROFESSIONALS_REGISTERED_DEMO.length).toBe(13);
-      expect(PROFESSIONALS.length).toBe(15 + 763 + 13 + PROFESSIONALS_REGISTERED_DEMO.length);
+      expect(PROFESSIONALS.length).toBe(15 + 754 + 13 + PROFESSIONALS_REGISTERED_DEMO.length);
       expect(PATIENTS.length).toBe(120 + 92);
     });
 
