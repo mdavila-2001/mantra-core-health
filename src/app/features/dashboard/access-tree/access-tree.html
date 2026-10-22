@@ -204,28 +204,47 @@
      modal que llevara a los tres al mismo agrupador sería el mismo rodeo que
      esta corrección vino a sacar. -->
 
+<!-- Cada directorio va en `@defer`: así no viaja en el bundle inicial del
+     panel —eran cuatro pantallas enteras cargadas al entrar, para un modal
+     que casi nadie abre— y se baja recién cuando el modal se abre. -->
 @switch (modalAbierto()) {
   @case ('comunidades') {
     <app-communities-dialog (closed)="cerrarModal()" />
   }
   @case ('directorio-clinicas') {
     <app-content-dialog heading="Directorio de clínicas" size="xl" (closed)="cerrarModal()">
-      <app-clinics-directory [embebido]="true" />
+      @defer (on immediate) {
+        <app-clinics-directory [embebido]="true" />
+      } @placeholder {
+        <p class="arbol__cargando-directorio" role="status">Cargando el directorio…</p>
+      }
     </app-content-dialog>
   }
   @case ('directorio-laboratorios') {
     <app-content-dialog heading="Directorio de laboratorios" size="xl" (closed)="cerrarModal()">
-      <app-laboratory-directory [embebido]="true" />
+      @defer (on immediate) {
+        <app-laboratory-directory [embebido]="true" />
+      } @placeholder {
+        <p class="arbol__cargando-directorio" role="status">Cargando el directorio…</p>
+      }
     </app-content-dialog>
   }
   @case ('directorio-farmacias') {
     <app-content-dialog heading="Directorio de farmacias" size="xl" (closed)="cerrarModal()">
-      <app-pharmacies-directory [embebido]="true" />
+      @defer (on immediate) {
+        <app-pharmacies-directory [embebido]="true" />
+      } @placeholder {
+        <p class="arbol__cargando-directorio" role="status">Cargando el directorio…</p>
+      }
     </app-content-dialog>
   }
   @case ('directorio-aseguradoras') {
     <app-content-dialog heading="Directorio de aseguradoras" size="xl" (closed)="cerrarModal()">
-      <app-insurers-directory [embebido]="true" />
+      @defer (on immediate) {
+        <app-insurers-directory [embebido]="true" />
+      } @placeholder {
+        <p class="arbol__cargando-directorio" role="status">Cargando el directorio…</p>
+      }
     </app-content-dialog>
   }
 }
