@@ -12,7 +12,7 @@
    - los botones toman forma de píldora, que se reconoce como «se puede tocar»;
    - el menú lateral tiene renglones más altos y letra un escalón más grande.
 
-   Todo cuelga de `.app-shell--paciente`, que el armazón pone sólo cuando la
+   Todo cuelga de `.app-shell--redesign`, que el armazón pone sólo cuando la
    sesión es de un paciente: quien atiende o administra ve la aplicación igual
    que antes. El fondo de página sigue blanco (regla del cliente, 10/09/2026):
    el color va en los organismos, no detrás de ellos. La escala tipográfica
@@ -23,7 +23,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Encabezado de pantalla: cinta de color ─────────────────────────────── */
-.app-shell--paciente .app-main app-page-header {
+.app-shell--redesign .app-main app-page-header {
   position: relative;
   overflow: hidden;
   padding: var(--sp-6) var(--sp-6);
@@ -37,7 +37,7 @@
 }
 
 @media (min-width: 780px) {
-  .app-shell--paciente .app-main app-page-header {
+  .app-shell--redesign .app-main app-page-header {
     padding: var(--sp-8) var(--sp-10);
   }
 }
@@ -46,11 +46,11 @@
    círculo blanco a la izquierda del título. Reemplaza al trazo de electro
    dibujado a mano que asomaba detrás del botón de la derecha: a la izquierda
    no hay nada con qué chocar, y el título queda «firmado» en cada pantalla. */
-.app-shell--paciente .app-main app-page-header {
+.app-shell--redesign .app-main app-page-header {
   padding-inline-start: calc(var(--sp-6) + 3.5rem + var(--sp-4));
 }
 
-.app-shell--paciente .app-main app-page-header::after {
+.app-shell--redesign .app-main app-page-header::after {
   content: '';
   position: absolute;
   inset-block-start: var(--sp-6);
@@ -65,11 +65,11 @@
 }
 
 @media (min-width: 780px) {
-  .app-shell--paciente .app-main app-page-header {
+  .app-shell--redesign .app-main app-page-header {
     padding-inline-start: calc(var(--sp-10) + 4rem + var(--sp-5));
   }
 
-  .app-shell--paciente .app-main app-page-header::after {
+  .app-shell--redesign .app-main app-page-header::after {
     inset-block-start: var(--sp-8);
     inset-inline-start: var(--sp-10);
     inline-size: 4rem;
@@ -77,11 +77,11 @@
 }
 
 @media (max-width: 479px) {
-  .app-shell--paciente .app-main app-page-header {
+  .app-shell--redesign .app-main app-page-header {
     padding-inline-start: calc(var(--sp-5) + 2.75rem + var(--sp-3));
   }
 
-  .app-shell--paciente .app-main app-page-header::after {
+  .app-shell--redesign .app-main app-page-header::after {
     inset-block-start: var(--sp-6);
     inset-inline-start: var(--sp-5);
     inline-size: 2.75rem;
@@ -91,11 +91,11 @@
 /* El menú lateral traía dos trazos de electro animados que, cortados por el
    alto de la pantalla, se veían como rayas sueltas al pie. Para el paciente,
    en su lugar, el logo como marca de agua. */
-.app-shell--paciente .app-side-nav__textura path {
+.app-shell--redesign .app-side-nav__textura path {
   display: none;
 }
 
-.app-shell--paciente .app-side-nav__fondo::after {
+.app-shell--redesign .app-side-nav__fondo::after {
   content: '';
   position: absolute;
   inset-block-end: var(--sp-10);
@@ -109,7 +109,7 @@
   mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
 }
 
-.app-shell--paciente .app-main app-page-header .page-header__title {
+.app-shell--redesign .app-main app-page-header .page-header__title {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--fs-h1);
@@ -118,15 +118,15 @@
   color: var(--c-petrol-700, var(--brand-primary));
 }
 
-.app-shell--paciente .app-main app-page-header .page-header__subtitle {
+.app-shell--redesign .app-main app-page-header .page-header__subtitle {
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
   max-inline-size: 60ch;
 }
 
 /* ── Tarjetas: más redondas, con sombra suave y realce al pasar ─────────── */
-.app-shell--paciente .app-main .card.card--outlined,
-.app-shell--paciente .app-main .card.card--elevated {
+.app-shell--redesign .app-main .card.card--outlined,
+.app-shell--redesign .app-main .card.card--elevated {
   border-radius: var(--r-xl);
   border-color: var(--c-aqua-100);
   box-shadow: var(--shadow-sm);
@@ -135,82 +135,82 @@
     transform var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out);
 }
 
-.app-shell--paciente .app-main .card.card--outlined:hover,
-.app-shell--paciente .app-main .card.card--elevated:hover {
+.app-shell--redesign .app-main .card.card--outlined:hover,
+.app-shell--redesign .app-main .card.card--elevated:hover {
   box-shadow: var(--shadow-md);
 }
 
-.app-shell--paciente .app-main .card[role='button']:hover {
+.app-shell--redesign .app-main .card[role='button']:hover {
   transform: translateY(-2px);
 }
 
 /* ── Botones en píldora ─────────────────────────────────────────────────── */
-.app-shell--paciente .app-main [app-button] {
+.app-shell--redesign .app-main [app-button] {
   border-radius: var(--r-full);
 }
 
 /* ── Pestañas: más grandes, la elegida con fondo ────────────────────────── */
-.app-shell--paciente .app-main .tabs__tab {
+.app-shell--redesign .app-main .tabs__tab {
   font-size: var(--fs-body-lg);
   border-radius: var(--r-full) var(--r-full) 0 0;
 }
 
-.app-shell--paciente .app-main .tabs__tab[aria-selected='true'] {
+.app-shell--redesign .app-main .tabs__tab[aria-selected='true'] {
   background: var(--c-aqua-50);
 }
 
 /* ── Menú lateral: renglones más altos y un escalón más de letra ────────── */
-.app-shell--paciente .app-side-nav__item {
+.app-shell--redesign .app-side-nav__item {
   min-height: 2.875rem;
   font-size: var(--fs-body-lg);
   border-radius: var(--r-lg);
 }
 
-.app-shell--paciente .app-side-nav__item app-nav-icon {
+.app-shell--redesign .app-side-nav__item app-nav-icon {
   width: 1.35rem;
   height: 1.35rem;
 }
 
-.app-shell--paciente .app-side-nav__item.is-activo {
+.app-shell--redesign .app-side-nav__item.is-activo {
   font-weight: 600;
   background: rgba(159, 216, 208, 0.26);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-shell--paciente .app-main .card { transition: none; }
-  .app-shell--paciente .app-main .card[role='button']:hover { transform: none; }
+  .app-shell--redesign .app-main .card { transition: none; }
+  .app-shell--redesign .app-main .card[role='button']:hover { transform: none; }
 }
 
 /* ── Tema oscuro ────────────────────────────────────────────────────────── */
-:root[data-theme='dark'] .app-shell--paciente .app-main app-page-header {
+:root[data-theme='dark'] .app-shell--redesign .app-main app-page-header {
   border-color: var(--border-default);
   background:
     radial-gradient(80% 140% at 100% 0%, rgba(79, 179, 169, 0.18) 0%, transparent 60%),
     var(--bg-surface);
 }
 
-:root[data-theme='dark'] .app-shell--paciente .app-main app-page-header .page-header__title {
+:root[data-theme='dark'] .app-shell--redesign .app-main app-page-header .page-header__title {
   color: var(--c-aqua-300);
 }
 
-:root[data-theme='dark'] .app-shell--paciente .app-main .card.card--outlined,
-:root[data-theme='dark'] .app-shell--paciente .app-main .card.card--elevated {
+:root[data-theme='dark'] .app-shell--redesign .app-main .card.card--outlined,
+:root[data-theme='dark'] .app-shell--redesign .app-main .card.card--elevated {
   border-color: var(--border-default);
 }
 
-:root[data-theme='dark'] .app-shell--paciente .app-main .tabs__tab[aria-selected='true'] {
+:root[data-theme='dark'] .app-shell--redesign .app-main .tabs__tab[aria-selected='true'] {
   background: rgba(79, 179, 169, 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .app-shell--paciente .app-main app-page-header {
+  :root:not([data-theme='light']) .app-shell--redesign .app-main app-page-header {
     border-color: var(--border-default);
     background:
       radial-gradient(80% 140% at 100% 0%, rgba(79, 179, 169, 0.18) 0%, transparent 60%),
       var(--bg-surface);
   }
 
-  :root:not([data-theme='light']) .app-shell--paciente .app-main app-page-header .page-header__title {
+  :root:not([data-theme='light']) .app-shell--redesign .app-main app-page-header .page-header__title {
     color: var(--c-aqua-300);
   }
 }
@@ -220,17 +220,18 @@
    la cabecera del paciente tenía nueve. En pantalla ancha cada atajo lleva su
    nombre debajo del ícono; en los anchos intermedios, donde no entran nueve
    rótulos, se agrupan detrás de «Más» —el mismo menú con palabras que ya usa el
-   teléfono—. Quien atiende o administra conserva la cabecera de siempre.
+   teléfono—. Vale también para el médico (cuarta vuelta): sus cinco atajos
+   eran íconos sueltos. Quien administra conserva la cabecera de siempre.
 
    Sin agrandar la escala tipográfica: el propietario la bajó un escalón el
    18/09/2026 porque «se leía como con zoom». Lo que se gana acá es la palabra,
    no el tamaño. */
 @media (min-width: 1280px) {
-  .app-shell--paciente .app-header__rapidos-lista {
+  .app-shell--redesign .app-header__rapidos-lista {
     gap: var(--e1);
   }
 
-  .app-shell--paciente .app-header__rapidos-lista .app-header__ajustes {
+  .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes {
     flex-direction: column;
     gap: 2px;
     inline-size: auto;
@@ -240,7 +241,7 @@
     border-radius: var(--r-ctrl);
   }
 
-  .app-shell--paciente .app-header__rapidos-label {
+  .app-shell--redesign .app-header__rapidos-label {
     display: block;
     font-size: var(--fs-caption);
     line-height: 1.1;
@@ -248,7 +249,7 @@
     white-space: nowrap;
   }
 
-  .app-shell--paciente .app-header__rapidos-lista .app-header__chats-badge {
+  .app-shell--redesign .app-header__rapidos-lista .app-header__chats-badge {
     position: absolute;
     inset-block-start: 0;
     inset-inline-end: var(--e1);
@@ -256,7 +257,7 @@
 }
 
 @media (min-width: 641px) and (max-width: 1279px) {
-  .app-shell--paciente .app-header__rapidos-boton {
+  .app-shell--redesign .app-header__rapidos-boton {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -270,22 +271,22 @@
     cursor: pointer;
   }
 
-  .app-shell--paciente .app-header__rapidos-boton svg {
+  .app-shell--redesign .app-header__rapidos-boton svg {
     inline-size: 1.25rem;
     block-size: 1.25rem;
   }
 
-  .app-shell--paciente .app-header__rapidos-boton::after {
+  .app-shell--redesign .app-header__rapidos-boton::after {
     content: 'Más';
     font-weight: 600;
   }
 
-  .app-shell--paciente .app-header__rapidos-boton:focus-visible {
+  .app-shell--redesign .app-header__rapidos-boton:focus-visible {
     outline: 2px solid var(--aguamarina);
     outline-offset: 2px;
   }
 
-  .app-shell--paciente .app-header__rapidos-lista {
+  .app-shell--redesign .app-header__rapidos-lista {
     position: absolute;
     inset-block-start: calc(100% + var(--e2));
     inset-inline-end: 0;
@@ -304,12 +305,12 @@
     box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
   }
 
-  .app-shell--paciente .app-header__rapidos.is-open .app-header__rapidos-lista {
+  .app-shell--redesign .app-header__rapidos.is-open .app-header__rapidos-lista {
     display: flex;
   }
 
-  .app-shell--paciente .app-header__rapidos-lista .app-header__ajustes,
-  .app-shell--paciente .app-header__rapidos-lista .app-header__red-social {
+  .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes,
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social {
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -323,14 +324,14 @@
     text-decoration: none;
   }
 
-  .app-shell--paciente .app-header__rapidos-label,
-  .app-shell--paciente .app-header__red-social-texto {
+  .app-shell--redesign .app-header__rapidos-label,
+  .app-shell--redesign .app-header__red-social-texto {
     display: inline;
     font-size: var(--fs-body);
     font-weight: 500;
   }
 
-  .app-shell--paciente .app-header__rapidos-lista .app-header__chats-badge {
+  .app-shell--redesign .app-header__rapidos-lista .app-header__chats-badge {
     margin-inline-start: auto;
   }
 }
@@ -652,33 +653,33 @@
    dedo sin apuntar) y el carril de filtros se desvanece en los bordes en vez
    de cortar en seco. El nombre del componente va en el selector para ganarle
    a la hoja encapsulada, igual que en el inicio. */
-.app-shell--paciente app-messaging .mensajeria__cabecera {
+.app-shell--redesign app-messaging .mensajeria__cabecera {
   padding-inline: var(--e5);
   padding-block-start: var(--e2);
 }
 
-.app-shell--paciente app-messaging .mensajeria__buscador {
+.app-shell--redesign app-messaging .mensajeria__buscador {
   padding: 0 var(--e5) var(--e3);
 }
 
-.app-shell--paciente app-messaging .mensajeria__campo input {
+.app-shell--redesign app-messaging .mensajeria__campo input {
   block-size: 44px;
   font-size: var(--fs-body);
   border-color: var(--filete);
 }
 
-.app-shell--paciente app-messaging .mensajeria__filtros {
+.app-shell--redesign app-messaging .mensajeria__filtros {
   grid-template-columns: 32px minmax(0, 1fr) 32px;
   gap: var(--e2);
   padding: 0 var(--e5) var(--e3);
 }
 
-.app-shell--paciente app-messaging .mensajeria__flecha {
+.app-shell--redesign app-messaging .mensajeria__flecha {
   inline-size: 32px;
   block-size: 32px;
 }
 
-.app-shell--paciente app-messaging .mensajeria__chips {
+.app-shell--redesign app-messaging .mensajeria__chips {
   padding-block: 2px;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 20px), transparent);
   mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 20px), transparent);
@@ -686,29 +687,29 @@
   scroll-padding-inline: 6px;
 }
 
-.app-shell--paciente app-messaging .mensajeria__chip {
+.app-shell--redesign app-messaging .mensajeria__chip {
   block-size: 34px;
   padding-inline: var(--e4);
   font-size: var(--fs-body-sm, var(--fs-caption));
 }
 
-.app-shell--paciente app-messaging .mensajeria__chip.is-activo {
+.app-shell--redesign app-messaging .mensajeria__chip.is-activo {
   background: var(--petroleo);
   color: #fff;
 }
 
 /* Las filas: el mismo margen izquierdo que el título, y aire entre filas. */
-.app-shell--paciente app-conversation-list .conversaciones__item {
+.app-shell--redesign app-conversation-list .conversaciones__item {
   padding: var(--e3) var(--e5);
   block-size: 80px;
 }
 
-.app-shell--paciente app-conversation-list .conversaciones__fila + .conversaciones__fila .conversaciones__item {
+.app-shell--redesign app-conversation-list .conversaciones__fila + .conversaciones__fila .conversaciones__item {
   border-block-start: 1px solid var(--filete-2);
 }
 
 /* El panel vacío: el texto un escalón más grande, que se lea sin acercarse. */
-.app-shell--paciente app-messaging .mensajeria__vacio-texto {
+.app-shell--redesign app-messaging .mensajeria__vacio-texto {
   max-inline-size: 38ch;
   font-size: var(--fs-body);
   line-height: 1.5;
