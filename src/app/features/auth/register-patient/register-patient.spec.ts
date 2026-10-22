@@ -443,7 +443,7 @@ describe('RegisterPatient', () => {
      * exactamente lo que este motor vino a deshacer. Los tres nombres siguen
      * yendo en un campo proyectado para que los apellidos entren en la misma.
      */
-    it('ninguna página pide más de cuatro cosas', () => {
+    it('el formulario se organiza exactamente en 5 pasos consolidados', () => {
       const paginas = component.paginasPaciente();
 
       expect(paginas.length).toBe(5);
@@ -529,11 +529,6 @@ describe('RegisterPatient', () => {
      * dónde guardarse: la zona en residencia y en trabajo (AC-03-10). La prueba
      * está para que aparezca **con su columna**, no de contrabando: el día que
      * alguien agregue el campo sin el destino, esto se pone rojo.
-     *
-     * La relación del contacto (AC-03-11) **salió** de esta lista: su columna
-     * `profiles.related_persons.relationship_concept_id` existe, su conjunto de
-     * valores también, y desde esta entrega se pregunta. Su prueba es la de más
-     * abajo.
      */
     it('no pregunta la zona, que no tiene dónde guardarse', () => {
       const claves = component

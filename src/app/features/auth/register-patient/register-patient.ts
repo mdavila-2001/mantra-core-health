@@ -81,6 +81,9 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
 import type { PinMap } from '../../../shared/components/organisms/map/map-pin.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -515,6 +518,7 @@ const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
     FormField,
     Select,
     AppInput,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-patient.html',
   styleUrls: ['../shared-registration/registration.css', './register-patient.css'],
@@ -525,8 +529,10 @@ export class RegisterPatient {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
+  private readonly draftService = inject(OnboardingDraftService);
 
   readonly STORAGE_KEY = 'alovida.registro-paciente.borrador';
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
   readonly pasoGuardado = signal<number>(0);
   readonly ocupacionesPersonalizadas = signal<readonly (SelectOption<string> & { code: string })[]>([]);
 
@@ -2239,22 +2245,20 @@ export class RegisterPatient {
     () => AYUDA_PACIENTE[this.claveVisible()] ?? [],
   );
 
-  /** Guarda el borrador del avance del formulario en caché (localStorage). */
+  /** Guarda el borrador del avance del formulario en caché (localStorage) y backend remoto. */
   guardarBorrador(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
       const paginas = this.paginasPaciente();
       const clave = this.claveVisible();
-      const indice = paginas.findIndex((p) => p.clave === clave);
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
       const raw = this.formPaciente.getRawValue();
-      const borrador = {
-        version: 1,
-        pasoIndice: Math.max(0, indice),
-        pasoClave: clave,
-        formValores: {
-          ...raw,
-          birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
-        },
+      const valores = {
+        ...raw,
+        birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
+      };
+      const extraData = {
         nombresExtra: this.nombresExtra(),
         empresaSeleccionada: this.empresaSeleccionada(),
         ocupacionSeleccionada: this.ocupacionSeleccionada(),
@@ -2263,66 +2267,94 @@ export class RegisterPatient {
         direccionConfirmada: this.direccionConfirmada(),
         gpsTrabajo: this.gpsTrabajo(),
         direccionTrabajoConfirmada: this.direccionTrabajoConfirmada(),
+      };
+      // Compatibilidad con pruebas unitarias legacy
+      const borrador = {
+        version: 1,
+        pasoIndice: indice,
+        pasoClave: clave,
+        formValores: valores,
+        ...extraData,
         fechaModificacion: new Date().toISOString(),
       };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(borrador));
+
+      // Servicio fullstack con debounce hacia la API
+      this.draftService.saveProgress(
+        'patient',
+        indice,
+        clave,
+        titulo,
+        valores,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'patient', indice, {
+        stepKey: clave,
+      });
     } catch {
       // Ignorar restricciones en almacenamiento local
     }
   }
 
   /** Restaura el avance previo del formulario desde caché si existe. */
-  restaurarBorrador(): void {
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
       const serializado = localStorage.getItem(this.STORAGE_KEY);
-      if (!serializado) return;
-      const datos = JSON.parse(serializado);
-      if (!datos || datos.version !== 1) return;
+      const legacy = serializado ? JSON.parse(serializado) : null;
+      const draft = draftParam;
 
-      if (datos.formValores) {
-        const valores = { ...datos.formValores };
-        if (typeof valores.birthDate === 'string' && valores.birthDate) {
-          const d = new Date(valores.birthDate);
-          if (!Number.isNaN(d.getTime())) {
-            valores.birthDate = d;
-          } else {
-            valores.birthDate = null;
-          }
+      const rawValores = draft ? draft.data : (legacy?.formValores ?? this.draftService.detectDraft('patient')?.data);
+      if (rawValores) {
+        const valores = { ...rawValores } as Record<string, unknown>;
+        if (typeof valores['birthDate'] === 'string' && valores['birthDate']) {
+          const d = new Date(valores['birthDate']);
+          valores['birthDate'] = !Number.isNaN(d.getTime()) ? d : null;
         }
         this.formPaciente.patchValue(valores);
       }
 
-      if (Array.isArray(datos.nombresExtra)) {
-        this.nombresExtra.set(datos.nombresExtra);
+      const extra = (draft ? draft.extraData : (legacy ?? this.draftService.detectDraft('patient')?.extraData)) ?? {};
+      if (Array.isArray(extra['nombresExtra'])) {
+        this.nombresExtra.set(extra['nombresExtra'] as readonly string[]);
       }
-      if (datos.empresaSeleccionada !== undefined) {
-        this.empresaSeleccionada.set(datos.empresaSeleccionada);
+      if (extra['empresaSeleccionada'] !== undefined) {
+        this.empresaSeleccionada.set(extra['empresaSeleccionada'] as string | null);
       }
-      if (datos.ocupacionSeleccionada !== undefined) {
-        this.ocupacionSeleccionada.set(datos.ocupacionSeleccionada);
+      if (extra['ocupacionSeleccionada'] !== undefined) {
+        this.ocupacionSeleccionada.set(extra['ocupacionSeleccionada'] as string | null);
       }
-      if (Array.isArray(datos.ocupacionesPersonalizadas)) {
-        this.ocupacionesPersonalizadas.set(datos.ocupacionesPersonalizadas);
+      if (Array.isArray(extra['ocupacionesPersonalizadas'])) {
+        this.ocupacionesPersonalizadas.set(extra['ocupacionesPersonalizadas'] as readonly (SelectOption<string> & { code: string })[]);
       }
-      if (datos.gpsDomicilio !== undefined) {
-        this.gpsDomicilio.set(datos.gpsDomicilio);
+      if (extra['gpsDomicilio'] !== undefined) {
+        this.gpsDomicilio.set(extra['gpsDomicilio'] as Coordenadas | null);
       }
-      if (typeof datos.direccionConfirmada === 'boolean') {
-        this.direccionConfirmada.set(datos.direccionConfirmada);
+      if (typeof extra['direccionConfirmada'] === 'boolean') {
+        this.direccionConfirmada.set(extra['direccionConfirmada']);
       }
-      if (datos.gpsTrabajo !== undefined) {
-        this.gpsTrabajo.set(datos.gpsTrabajo);
+      if (extra['gpsTrabajo'] !== undefined) {
+        this.gpsTrabajo.set(extra['gpsTrabajo'] as Coordenadas | null);
       }
-      if (typeof datos.direccionTrabajoConfirmada === 'boolean') {
-        this.direccionTrabajoConfirmada.set(datos.direccionTrabajoConfirmada);
+      if (typeof extra['direccionTrabajoConfirmada'] === 'boolean') {
+        this.direccionTrabajoConfirmada.set(extra['direccionTrabajoConfirmada']);
       }
-      if (typeof datos.pasoIndice === 'number' && datos.pasoIndice >= 0) {
-        this.pasoGuardado.set(datos.pasoIndice);
+      const pasoIndice = draft?.stepIndex ?? legacy?.pasoIndice;
+      if (typeof pasoIndice === 'number' && pasoIndice >= 0) {
+        this.pasoGuardado.set(pasoIndice);
       }
+
+      this.borradorDetectado.set(null);
     } catch {
       // Ignorar si el borrador estaba corrupto
     }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'patient', 0);
   }
 
   /** Elimina el borrador en caché al completar exitosamente el registro. */
@@ -2330,6 +2362,8 @@ export class RegisterPatient {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
       localStorage.removeItem(this.STORAGE_KEY);
+      this.draftService.clearDraft('patient');
+      this.borradorDetectado.set(null);
     } catch {
       // Ignorar
     }
@@ -2356,7 +2390,14 @@ export class RegisterPatient {
   });
 
   constructor() {
-    this.restaurarBorrador();
+    const detectado = this.draftService.detectDraft('patient');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    } else {
+      // Soporte para pruebas directas que no muestran banner
+      this.restaurarBorrador();
+    }
+    this.draftService.trackEvent('start', 'patient', 0);
 
     this.cargarDepartamentos();
     this.cargarMunicipios();
@@ -2462,6 +2503,12 @@ export class RegisterPatient {
         if (idxOtra > 0) {
           const [otra] = ordenadas.splice(idxOtra, 1);
           ordenadas.unshift(otra);
+        } else if (idxOtra === -1 && ordenadas.length > 0) {
+          ordenadas.unshift({
+            value: 'o-otra',
+            label: 'Otro',
+            code: CODIGO_OCUPACION_OTRA,
+          });
         }
         // Incorporar las ocupaciones personalizadas registradas previamente
         const personalizadas = this.ocupacionesPersonalizadas();
@@ -2715,6 +2762,7 @@ export class RegisterPatient {
         const { trustedAmbulanceName, trustedAmbulancePhone } = this.formPaciente.getRawValue();
         this.ambulanciaDeConfianza.guardar(trustedAmbulanceName, trustedAmbulancePhone);
         this.limpiarBorrador();
+        this.draftService.trackEvent('complete', 'patient', 4);
       },
       error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'patient')),
     });

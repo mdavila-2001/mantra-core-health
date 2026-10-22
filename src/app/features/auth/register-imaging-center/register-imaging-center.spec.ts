@@ -550,4 +550,56 @@ describe('RegisterImagingCenter', () => {
       expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
     });
   });
+
+  describe('persistencia de borrador (onboarding draft)', () => {
+    afterEach(() => {
+      localStorage.removeItem('alovida.onboarding.draft.imaging-center');
+    });
+
+    it('guarda el avance en localStorage al cambiar de paso', () => {
+      component.form.patchValue({
+        legalName: 'Centro Radiológico La Paz',
+        taxId: '1023456789',
+      });
+      component.guardarBorrador();
+      const raw = localStorage.getItem('alovida.onboarding.draft.imaging-center');
+      expect(raw).not.toBeNull();
+      const draft = JSON.parse(raw!);
+      expect(draft.data.legalName).toBe('Centro Radiológico La Paz');
+      expect(draft.data.taxId).toBe('1023456789');
+    });
+
+    it('restaura el borrador guardado', () => {
+      const mockDraft = {
+        id: 'draft-img-1',
+        formType: 'imaging-center',
+        stepIndex: 1,
+        stepKey: 'modalidades',
+        stepTitle: 'Estudios que realiza',
+        totalSteps: 6,
+        data: {
+          legalName: 'Resonancia Magnética Los Andes',
+          taxId: '987654321',
+        },
+        extraData: {
+          gpsCentral: { lat: -16.5, lng: -68.15 },
+        },
+        lastSavedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('alovida.onboarding.draft.imaging-center', JSON.stringify(mockDraft));
+
+      component.restaurarBorrador();
+
+      expect(component.form.controls.legalName.value).toBe('Resonancia Magnética Los Andes');
+      expect(component.form.controls.taxId.value).toBe('987654321');
+      expect(component.gpsCentral()).toEqual({ lat: -16.5, lng: -68.15 });
+      expect(component.pasoGuardado()).toBe(1);
+    });
+
+    it('limpia el borrador al descartarlo', () => {
+      localStorage.setItem('alovida.onboarding.draft.imaging-center', '{"id":"draft-1"}');
+      component.descartarBorrador();
+      expect(localStorage.getItem('alovida.onboarding.draft.imaging-center')).toBeNull();
+    });
+  });
 });

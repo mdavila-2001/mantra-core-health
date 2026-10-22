@@ -720,4 +720,55 @@ describe('RegisterLaboratory', () => {
     });
   });
 
+  describe('persistencia de borrador (onboarding draft)', () => {
+    afterEach(() => {
+      localStorage.removeItem('alovida.onboarding.draft.laboratory');
+    });
+
+    it('guarda el avance en localStorage al cambiar de paso', () => {
+      component.form.patchValue({
+        legalName: 'Laboratorio Santa Cruz SRL',
+        taxId: '1023456789',
+      });
+      component.guardarBorrador();
+      const raw = localStorage.getItem('alovida.onboarding.draft.laboratory');
+      expect(raw).not.toBeNull();
+      const draft = JSON.parse(raw!);
+      expect(draft.data.legalName).toBe('Laboratorio Santa Cruz SRL');
+      expect(draft.data.taxId).toBe('1023456789');
+    });
+
+    it('restaura el borrador guardado', () => {
+      const mockDraft = {
+        id: 'draft-lab-1',
+        formType: 'laboratory',
+        stepIndex: 2,
+        stepKey: 'ubicacion',
+        stepTitle: 'Ubicación de la central',
+        totalSteps: 7,
+        data: {
+          legalName: 'BioLab Central',
+          taxId: '987654321',
+        },
+        extraData: {
+          gpsCentral: { lat: -17.78, lng: -63.18 },
+        },
+        lastSavedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('alovida.onboarding.draft.laboratory', JSON.stringify(mockDraft));
+
+      component.restaurarBorrador();
+
+      expect(component.form.controls.legalName.value).toBe('BioLab Central');
+      expect(component.form.controls.taxId.value).toBe('987654321');
+      expect(component.gpsCentral()).toEqual({ lat: -17.78, lng: -63.18 });
+      expect(component.pasoGuardado()).toBe(2);
+    });
+
+    it('limpia el borrador al descartarlo', () => {
+      localStorage.setItem('alovida.onboarding.draft.laboratory', '{"id":"draft-1"}');
+      component.descartarBorrador();
+      expect(localStorage.getItem('alovida.onboarding.draft.laboratory')).toBeNull();
+    });
+  });
 });
