@@ -1,18 +1,29 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
-import type { SearchResultAction, SearchResultItem, SearchResultRating } from '../search-result/search-result.types';
+import type {
+  SearchResultAction,
+  SearchResultItem,
+  SearchResultRating,
+} from '../search-result/search-result.types';
 import { cleanDisplayName } from '../../../utils/clean-display-name';
-import { ratingFallback } from '../../../utils/rating-fallback';
 
 /**
  * Un resultado de directorio **en tarjeta de grilla o lista**.
  *
  * Muestra el perfil profesional, centro o entidad con fotografía,
- * nombre higienizado, calificación destacada de pacientes, especialidad,
+ * nombre higienizado, calificación de pacientes cuando existe, especialidad,
  * ubicación y acciones directas.
  */
 @Component({
@@ -50,8 +61,16 @@ export class ResultCard {
     return cleanDisplayName(this.resultado().title);
   });
 
-  /** Calificación de pacientes con fallback realista y determinista. */
-  protected readonly calificacion = computed<SearchResultRating>(() => {
+  /**
+   * La calificación de pacientes, **sólo si es real**: la que trae el
+   * resultado o la que viene escrita en su meta. Sin reseñas no se dibuja nada.
+   *
+   * Antes había un respaldo que inventaba una nota de 4,7 a 5,0 y de 24 a 163
+   * opiniones con un hash del nombre, para que ninguna tarjeta quedara «vacía».
+   * Eso le decía al paciente que otros pacientes habían opinado de alguien de
+   * quien nadie opinó: un dato falso en una guía de salud.
+   */
+  protected readonly calificacion = computed<SearchResultRating | null>(() => {
     const r = this.resultado();
     if (r.rating && r.rating.count > 0 && r.rating.average > 0) {
       return r.rating;
@@ -59,19 +78,17 @@ export class ResultCard {
     const metaScore = (r.meta ?? []).find(
       (m) => m.iconKey === 'puntuacion' || /reseña/i.test(m.text),
     );
-    if (metaScore) {
-      const match = metaScore.text.match(/(\d(?:[,.]\d)?)\s*·\s*(\d+)/);
-      if (match) {
-        const average = parseFloat(match[1]!.replace(',', '.'));
-        const count = parseInt(match[2]!, 10);
-        return {
-          average,
-          count,
-          label: average >= 4.8 ? 'Excelente' : 'Muy recomendado',
-        };
-      }
+    const match = metaScore?.text.match(/(\d(?:[,.]\d)?)\s*·\s*(\d+)/);
+    if (!match) {
+      return null;
     }
-    return ratingFallback(r.id || r.title);
+    const average = parseFloat(match[1]!.replace(',', '.'));
+    const count = parseInt(match[2]!, 10);
+    return {
+      average,
+      count,
+      label: average >= 4.8 ? 'Excelente' : 'Muy recomendado',
+    };
   });
 
   /** Si cuenta con sello de verificación activa. */

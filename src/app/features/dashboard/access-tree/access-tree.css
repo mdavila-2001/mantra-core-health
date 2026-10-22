@@ -453,3 +453,11 @@ a.arbol__acceso:active {
     animation: none;
   }
 }
+
+/* Lo que se ve el instante que tarda en bajar un directorio diferido. */
+.arbol__cargando-directorio {
+  margin: 0;
+  padding: var(--sp-6) 0;
+  color: var(--text-secondary);
+  text-align: center;
+}
