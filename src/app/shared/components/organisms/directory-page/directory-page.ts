@@ -90,6 +90,12 @@ export class DirectoryPage {
 
   readonly filtros = input<readonly FilterDef[]>([]);
   readonly etiquetaBusqueda = input('Buscar en el directorio');
+  /**
+   * Lo que se lee dentro del buscador vacío. «Buscar» a secas por defecto,
+   * como la barra; una portada que busca en varios lugares lo usa para decir
+   * en cuáles.
+   */
+  readonly searchPlaceholder = input('Buscar');
 
   readonly estado = input.required<ViewState<unknown>>();
   readonly grupos = input.required<readonly GrupoDeDirectorio[]>();

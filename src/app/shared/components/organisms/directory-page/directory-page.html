@@ -18,6 +18,7 @@
 <app-filter-bar
   [filters]="filtros()"
   [searchLabel]="etiquetaBusqueda()"
+  [searchPlaceholder]="searchPlaceholder()"
   (filtersChanged)="filtrosCambiaron.emit($event)"
 />
 
