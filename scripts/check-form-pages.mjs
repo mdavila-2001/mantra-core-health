@@ -71,6 +71,10 @@ const EXCEPCIONES = new Map([
     'app/features/insurance/insurance-catalog/approval-rules-dialog.html',
     'son tres preguntas, no seis campos: si la cobertura requiere autorización previa, qué documentos hay que adjuntar y la cláusula de exclusión. Los documentos son UNA lista de opciones múltiples, que se dibuja con cuatro casillas porque no existe el átomo de grupo que sí tiene el radio — el verificador cuenta controles y acá cuatro controles son una sola respuesta',
   ],
+  [
+    'app/features/auth/shared-registration/inline-name-fields/inline-name-fields.html',
+    'es un fragmento de campos de nombres proyectado como campo custom dentro de formularios paginados',
+  ],
 ]);
 
 /**

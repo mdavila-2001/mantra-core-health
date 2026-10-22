@@ -1,6 +1,6 @@
-import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, PLATFORM_ID } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -28,6 +28,9 @@ import { Input as AppInput } from '../../../shared/components/atoms/input/input'
 import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
@@ -191,16 +194,22 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
     MapLocationPicker,
     DropzonePdf,
     NameFields,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-pharmacy.html',
   styleUrls: ['../shared-registration/registration.css', './register-pharmacy.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPharmacy {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly draftService = inject(OnboardingDraftService);
   private readonly iam = inject(IamClient);
   /** Resuelve del catálogo los conceptos de país y jurisdicción que la API exige. */
   private readonly alta = inject(DiagnosisCenterEnrollment);
   private readonly router = inject(Router);
+
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
 
   readonly form = new FormGroup({
     // --- 1.1 · la empresa ---------------------------------------------------
@@ -582,8 +591,94 @@ export class RegisterPharmacy {
     return tipo !== null && tipo !== 'UNIPERSONAL';
   }
 
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginas();
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.form.getRawValue();
+      const extraData = {
+        gpsCentral: this.gpsCentral(),
+        sucursales: this.sucursales(),
+        documentosSubidos: this.documentosSubidos(),
+      };
+      this.draftService.saveProgress(
+        'pharmacy',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'pharmacy', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('pharmacy');
+      if (!draft) return;
+      if (draft.data) {
+        this.form.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (extra['gpsCentral'] !== undefined) {
+        this.gpsCentral.set(extra['gpsCentral'] as Coordinates | null);
+      }
+      if (Array.isArray(extra['sucursales'])) {
+        this.sucursales.set(extra['sucursales'] as readonly SucursalDeFarmacia[]);
+      }
+      if (extra['documentosSubidos'] && typeof extra['documentosSubidos'] === 'object') {
+        this.documentosSubidos.set(
+          extra['documentosSubidos'] as Partial<Record<EnrollmentDocumentKey, UploadedDocument>>,
+        );
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'pharmacy', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('pharmacy');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
   constructor() {
-    this.form.controls.companyType.valueChanges.subscribe((tipo) => {
+    if (isPlatformBrowser(this.platformId)) {
+      const detectado = this.draftService.detectDraft('pharmacy');
+      if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+        this.borradorDetectado.set(detectado);
+      }
+      this.draftService.trackEvent('start', 'pharmacy', 0);
+    }
+
+    this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
       const poder = this.form.controls.powerOfAttorneyFileId;
       if (tipo === null || tipo === 'UNIPERSONAL') {
         poder.removeValidators(Validators.required);
@@ -591,6 +686,10 @@ export class RegisterPharmacy {
         poder.addValidators(Validators.required);
       }
       poder.updateValueAndValidity();
+    });
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
     });
   }
 
@@ -779,6 +878,7 @@ export class RegisterPharmacy {
 
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   /* --- envío ---------------------------------------------------------------- */
@@ -809,6 +909,8 @@ export class RegisterPharmacy {
       )
       .subscribe({
         next: (resultado) => {
+          this.limpiarBorrador();
+          this.draftService.trackEvent('complete', 'pharmacy', this.paginas().length);
           this.state.set(ready(null));
           this.verificationSent.set(resultado.emailVerificationSent);
           this.registered.set(true);
