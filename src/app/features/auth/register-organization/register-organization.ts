@@ -68,6 +68,7 @@ import {
   type ValorDeNombre,
 } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
 import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './codigo-desde-sigla';
+import { RegistrationBadge } from '../registro-compartido/registration-badge';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -159,6 +160,7 @@ function grupoDeGerente() {
 @Component({
   selector: 'app-register-organization',
   imports: [
+    RegistrationBadge,
     RouterLink,
     // El botón «Ir a iniciar sesión» de la confirmación es `<button app-button>`:
     // sin esta importación es un `<button>` nativo y su `(clicked)` —un output
@@ -188,7 +190,7 @@ function grupoDeGerente() {
     CamposDeNombre,
   ],
   templateUrl: './register-organization.html',
-  styleUrl: './register-organization.css',
+  styleUrls: ['../registro-compartido/registro.css', './register-organization.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterOrganization {

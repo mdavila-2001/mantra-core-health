@@ -234,6 +234,54 @@ describe('PaginatedForm', () => {
     });
   });
 
+  describe('la entrada de cada página', () => {
+    function seccion(): HTMLElement {
+      return fixture.debugElement.query(By.css('.paginated-form__pagina')).nativeElement as HTMLElement;
+    }
+
+    function avanzar(): void {
+      host.form.controls.documento.setValue('1234567');
+      botonContinuar().click();
+      fixture.detectChanges();
+      fixture.detectChanges();
+    }
+
+    function volver(): void {
+      fixture.debugElement
+        .query(By.css('[data-testid="paginated-form-atras"]'))
+        .nativeElement.click();
+      fixture.detectChanges();
+      fixture.detectChanges();
+    }
+
+    it('al avanzar entra de adelante, y alterna la animación para que se repita', () => {
+      expect(seccion().dataset['direction']).toBe('forward');
+      expect(seccion().classList).not.toContain('paginated-form__pagina--alt');
+
+      avanzar();
+
+      expect(seccion().dataset['direction']).toBe('forward');
+      // Cambiar el nombre de la animación es lo que la reinicia sin recrear los
+      // campos: si el paso 2 llevara el mismo que el 1, no se vería nada.
+      expect(seccion().classList).toContain('paginated-form__pagina--alt');
+    });
+
+    it('al volver entra del otro lado, y la paridad vuelve a la de la primera', () => {
+      avanzar();
+      volver();
+
+      expect(seccion().dataset['direction']).toBe('back');
+      expect(seccion().classList).not.toContain('paginated-form__pagina--alt');
+    });
+
+    it('volver no pierde lo escrito: la animación no recrea el formulario', () => {
+      avanzar();
+      volver();
+
+      expect(host.form.controls.documento.value).toBe('1234567');
+    });
+  });
+
   describe('los campos condicionales («¿cuál?»)', () => {
     /** «Documento» decide si se pregunta el correo, que vive solo en su página. */
     const CONDICIONALES: readonly PaginaDeFormulario[] = [

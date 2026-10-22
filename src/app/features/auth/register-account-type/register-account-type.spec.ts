@@ -121,3 +121,55 @@ describe('RegisterAccountType · organizaciones', () => {
     expect(titulo.textContent).toContain('Registre su organización');
   });
 });
+
+describe('RegisterAccountType · composición de la rejilla', () => {
+  async function render(audience?: 'organizations'): Promise<HTMLElement> {
+    await TestBed.configureTestingModule({
+      imports: [RegisterAccountType],
+      providers: [
+        provideRouter([]),
+        ...(audience
+          ? [{ provide: ActivatedRoute, useValue: { snapshot: { data: { audience } } } }]
+          : []),
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(RegisterAccountType);
+    await fixture.whenStable();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('con dos tipos reparte de a dos: la tercera columna vacía era el hueco a la derecha', async () => {
+    const el = await render();
+
+    expect(el.querySelector('.tipos__grid')?.getAttribute('data-columns')).toBe('2');
+  });
+
+  it('con cuatro tipos los reparte 2×2 y no 3+1', async () => {
+    const el = await render('organizations');
+
+    expect(el.querySelector('.tipos__grid')?.getAttribute('data-columns')).toBe('2');
+  });
+
+  it('cada tarjeta lleva el tono de su tipo, y ninguno es ámbar', async () => {
+    const el = await render('organizations');
+    const tonos = Array.from(el.querySelectorAll('.tipos__card')).map((c) =>
+      c.getAttribute('data-tone'),
+    );
+
+    // Todas traen tono, y salen de los cuatro tríos de estado del sistema: el
+    // ámbar es el punto de acción único del producto y no se reparte.
+    expect(tonos.every((t) => ['primary', 'secondary', 'success', 'info'].includes(t ?? ''))).toBe(
+      true,
+    );
+    // Dos vecinas nunca comparten tono: es lo que las distingue de un vistazo.
+    for (let i = 1; i < tonos.length; i++) expect(tonos[i]).not.toBe(tonos[i - 1]);
+  });
+
+  it('cada tarjeta marca su contenedor para que el ícono juegue al apuntarla', async () => {
+    const el = await render();
+
+    for (const tarjeta of Array.from(el.querySelectorAll('.tipos__card'))) {
+      expect(tarjeta.hasAttribute('data-icon-play')).toBe(true);
+    }
+  });
+});

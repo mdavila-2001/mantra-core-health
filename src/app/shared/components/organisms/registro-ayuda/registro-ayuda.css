@@ -23,9 +23,10 @@
 /* ==========================================================================
     La tarjeta.
 
-    El mismo cristal de `.registro`, con la mitad de la presencia: sin sombra,
-    con el filo apenas marcado y el fondo más transparente. Puestas al lado, se
-    leen como notas al margen del formulario y no como un segundo formulario.
+    La misma superficie de papel de `.registro`, con la mitad de la presencia:
+    sin sombra, con el filo apenas marcado y el fondo un tono más cálido. Puestas
+    debajo, se leen como notas al margen del formulario y no como un segundo
+    formulario.
    ========================================================================== */
 .ayuda__tarjeta {
   display: flex;
@@ -34,9 +35,7 @@
   padding: var(--sp-4);
   border: 1px solid color-mix(in srgb, var(--border-default) 45%, transparent);
   border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--bg-surface) 72%, transparent);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  background: var(--bg-surface-alt);
   /* Entra desde el costado, corto: es la respuesta que aparece al lado de la
      pregunta. Un movimiento largo acá haría esperar para empezar a escribir. */
   animation: ayuda-entra var(--dur-base) var(--ease-out) both;

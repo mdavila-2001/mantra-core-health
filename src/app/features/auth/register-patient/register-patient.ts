@@ -81,6 +81,7 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
 import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { RegistrationBadge } from '../registro-compartido/registration-badge';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -498,6 +499,7 @@ const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
 @Component({
   selector: 'app-register-patient',
   imports: [
+    RegistrationBadge,
     RouterLink,
     AppButton,
     NavIcon,

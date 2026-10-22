@@ -1,8 +1,7 @@
-/* La estructura partida (2 columnas), el fondo vivo y el selector de tema son
-   del organismo `app-auth-split`. Acá va solo la tarjeta del formulario: un
-   cristal que flota sobre esa aurora, con la jerarquía tipo "documento" de la
-   familia expediente (membrete con regla, cuerpo y pie separados por líneas).
-   Solo tokens ALOVIDA. */
+/* La estructura partida (2 columnas) y el selector de tema son del organismo
+   `app-auth-split`. Acá va solo la tarjeta del formulario, con la jerarquía
+   tipo "documento" de la familia expediente (membrete con regla, cuerpo y pie
+   separados por líneas). Solo tokens ALOVIDA. */
 
 /* Pantalla enrutada: el host es un custom element y sin `display` sería EN
    LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
@@ -14,79 +13,22 @@
 /* ==========================================================================
     La tarjeta.
 
-    Cristal, no papel: la superficie deja pasar la aurora que se mueve detrás,
-    y por eso la pantalla se siente viva incluso mirando solo el formulario.
-
-    El 92 % NO es un número al azar. Es el punto en que el fondo se insinúa y
-    el contraste del texto sigue siendo el de los tokens: `--text-primary`
-    sobre `--bg-surface` mide 13,46:1 en el peor caso, y una capa al 8 % de una
-    mancha de marca —que además está desenfocada por el propio degradado— lo
-    deja por encima de 12:1, muy lejos del 7:1 de AAA. Bajarlo a 80 % ya sería
-    apostar el contraste a lo que haya debajo, y debajo hay algo que se mueve.
-
-    Sin `backdrop-filter`: el desenfoque se recalculaba en cada cuadro, porque
-    detrás de la tarjeta pasa el cometa del latido. Al 92 % de opacidad el
-    vidrio apenas se notaba, y su costo sí, en los equipos sin GPU.
+    Papel, no vidrio: una superficie del tema con su filete y una sombra
+    mínima. Antes era un cristal inclinable con reflejo que seguía al puntero,
+    una sombra larga y un canto de luz sobre el escenario oscuro; eso tenía
+    sentido flotando sobre un latido que se movía detrás, y deja de tenerlo en
+    una pantalla quieta donde lo único que se mueve es lo que la persona toca.
+    Una tarjeta que se inclina mientras se escribe en ella era, además, justo el
+    momento en que el efecto pasa de gracioso a molesto.
     ========================================================================== */
 .login {
-  position: relative;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2xl);
   padding: var(--sp-6);
-  /* La sombra del sistema, más un filo de luz interior arriba: es lo que hace
-     leer el borde como canto de vidrio y no como línea dibujada. */
-  /* Sobre el escenario oscuro del latido la sombra del sistema no alcanza a
-     despegar la tarjeta: se suma una caída larga y un canto de luz aqua, el
-     mismo color del trazo que pasa por detrás. */
-  box-shadow:
-    var(--shadow-lg),
-    0 48px 120px -24px rgb(0 0 0 / 0.55),
-    0 0 0 1px color-mix(in srgb, var(--c-aqua-300) 22%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
-  /* Se inclina hacia el puntero. 1,1° es deliberadamente poco: lo suficiente
-     para que la tarjeta responda a la mano, no tanto como para que el texto de
-     un formulario clínico se vea en perspectiva.
-     Las variables vienen heredadas de `app-auth-split`, pero las pisa el
-     `appPointerScene` de esta misma tarjeta, que mide contra SU rectángulo: si
-     se usara el de la escena, el reflejo estaría corrido media pantalla. */
-  transform: perspective(1400px) rotateY(calc(var(--pointer-tilt-x, 0) * 1.1deg))
-    rotateX(calc(var(--pointer-tilt-y, 0) * -1.1deg));
-  transform-style: preserve-3d;
-}
-
-/* Mientras se escribe, la tarjeta se queda quieta. Un campo de texto que se
-   mueve cuando la mano va al teclado es exactamente el momento en que el
-   efecto pasa de gracioso a molesto. */
-.login:focus-within {
-  transform: none;
-  transition: transform var(--dur-base) var(--ease-out);
-}
-
-/* Reflejo: una luz suave que sigue al puntero por encima de la tarjeta y se
-   apaga sola al salir (`--pointer-on` vuelve a 0 con suavizado). Va en un
-   pseudo-elemento y no en el fondo de `.login` para poder mezclarlo sin tocar
-   el color de la superficie. */
-.login::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(
-    22rem 22rem at calc(var(--pointer-x, 0.5) * 100%) calc(var(--pointer-y, 0.5) * 100%),
-    color-mix(in srgb, var(--brand-secondary) 14%, transparent),
-    transparent 68%
-  );
-  opacity: var(--pointer-on, 0);
-}
-
-/* Todo el contenido va por encima del reflejo. */
-.login > * {
-  position: relative;
-  z-index: 1;
+  box-shadow: var(--shadow-sm);
 }
 
 @media (min-width: 650px) {
@@ -256,9 +198,9 @@ form {
   color: var(--brand-primary);
 }
 
-.login__anexo-icono svg {
-  inline-size: 1.25rem;
-  block-size: 1.25rem;
+.login__anexo-icono app-account-icon {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
 }
 
 .login__anexo-texto {
@@ -362,9 +304,5 @@ form > *:nth-child(n + 4) {
   form > *,
   .login__footer {
     animation-delay: 0ms !important;
-  }
-
-  .login {
-    transform: none;
   }
 }

@@ -57,6 +57,7 @@ import {
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
 import { grupoDeNombre, nombreCompleto } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+import { RegistrationBadge } from '../registro-compartido/registration-badge';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -267,6 +268,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-laboratory',
   imports: [
+    RegistrationBadge,
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
