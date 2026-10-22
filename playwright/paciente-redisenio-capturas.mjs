@@ -37,6 +37,7 @@ const PANTALLAS = [
   ['resultados', '/my-account/diagnostic-results'],
   ['tutoriales', '/tutorials'],
   ['chats', '/messaging'],
+  ['dependientes', '/my-account/dependents'],
 ];
 
 const ANCHOS = [
