@@ -35,7 +35,7 @@ const FILAS_CON_HUECO: readonly Paciente[] = [
 ];
 
 // Anfitrión de prueba: lee campos mutables a propósito, no es un componente de producto.
-// eslint-disable-next-line @angular-eslint/prefer-on-push-component-change-detection
+ 
 @Component({
   imports: [DataTable],
   template: `

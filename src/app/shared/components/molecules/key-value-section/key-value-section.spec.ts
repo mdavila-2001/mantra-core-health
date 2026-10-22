@@ -6,7 +6,7 @@ import { KeyValueSection } from './key-value-section';
 import type { KeyValueRow } from './key-value-section.types';
 
 // Anfitrión de prueba: lee campos mutables a propósito, no es un componente de producto.
-// eslint-disable-next-line @angular-eslint/prefer-on-push-component-change-detection
+ 
 @Component({
   imports: [KeyValueSection],
   template: `<app-key-value-section

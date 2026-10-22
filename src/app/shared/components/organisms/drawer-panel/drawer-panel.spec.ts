@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { DrawerPanel } from './drawer-panel';
 
 // Anfitrión de prueba: lee campos mutables a propósito, no es un componente de producto.
-// eslint-disable-next-line @angular-eslint/prefer-on-push-component-change-detection
+ 
 @Component({
   imports: [DrawerPanel],
   template: `
