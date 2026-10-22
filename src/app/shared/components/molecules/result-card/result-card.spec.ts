@@ -67,6 +67,28 @@ describe('ResultCard', () => {
     expect(host!.hasAttribute('app-result-card')).toBe(true);
   });
 
+  /*
+   * Un paciente lee «4,9 · 55 opiniones» como «otros pacientes opinaron». Sin
+   * reseñas reales la tarjeta no puede decirlo: antes un respaldo inventaba
+   * la nota con un hash del nombre.
+   */
+  it('sin reseñas reales no dibuja calificación', () => {
+    expect(elemento('.tarjeta-resultado__calificacion')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toMatch(/opini[oó]n|Excelente|Muy recomendado/u);
+  });
+
+  it('con reseñas reales dibuja la nota y cuántas son', () => {
+    anfitrion.dato.update((d) => ({ ...d, rating: { average: 4.6, count: 12 } }));
+    fixture.detectChanges();
+
+    const nota = elemento('.tarjeta-resultado__calificacion')!;
+    expect(nota.textContent).toContain('4,6');
+    expect(nota.textContent).toContain('12 opiniones');
+    expect(nota.getAttribute('aria-label')).toBe(
+      'Puntuación: 4.6 de 5 estrellas, sobre 12 opiniones',
+    );
+  });
+
   it('sin imagen pinta `figureText`', () => {
     anfitrion.dato.update((d) => ({ ...d, figureText: 'MQ' }));
     fixture.detectChanges();
@@ -155,6 +177,14 @@ describe('ResultCard', () => {
     expect(link.getAttribute('aria-busy')).toBeNull();
   });
 
+  /* Clínicas, farmacias y aseguradoras no tienen agenda: su botón no puede
+     ofrecer «Revisar disponibilidad». */
+  it('sin acción propia, el botón lleva a la ficha', () => {
+    const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
+    expect(accion.textContent?.trim()).toBe('Ver ficha');
+    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle');
+  });
+
   it('muestra la acción distinta y tampoco la navega dos veces', () => {
     anfitrion.dato.update((dato) => ({
       ...dato,
@@ -180,7 +210,11 @@ describe('ResultCard', () => {
   });
 
   it('con `photoUrl` pinta la foto de cabecera en vez de la figura', () => {
-    anfitrion.dato.update((d) => ({ ...d, figureText: 'MQ', photoUrl: '/alovida/directorio/medico-01.jpg' }));
+    anfitrion.dato.update((d) => ({
+      ...d,
+      figureText: 'MQ',
+      photoUrl: '/alovida/directorio/medico-01.jpg',
+    }));
     fixture.detectChanges();
 
     expect(elemento('.tarjeta-resultado__foto img')?.getAttribute('src')).toBe(

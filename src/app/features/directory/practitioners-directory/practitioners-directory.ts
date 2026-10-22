@@ -29,7 +29,6 @@ import {
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { initialsOf } from '../../../shared/text/initials';
-import { directoryPhoto } from '../../../shared/utils/directory-photo';
 import { professionalSubtitle } from '../professional-subtitle';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
@@ -660,8 +659,11 @@ function toResultado(
       link: `/directory/${fila.profileId}`,
       fragment: ANCLA_HORARIOS,
     },
+    // Iniciales y no una foto de banco: en el hueco de la foto de perfil, una
+    // persona ajena se lee como la cara del médico. Un lugar admite una imagen
+    // ilustrativa; una persona, no. Cuando la guía resuelva `photoFileId`, su
+    // foto real va acá.
     figureText: initialsOf(nombre),
-    photoUrl: directoryPhoto('medico', fila.profileId),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
     meta,
     seals: sellos,
