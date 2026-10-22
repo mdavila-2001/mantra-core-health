@@ -272,6 +272,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // —la portada del dominio— va suelta arriba (ver `SUELTAS_A_PROPOSITO`).
     paths: [
       'superadmin/data-catalog',
+      'superadmin/portal',
       'superadmin/flows',
       'superadmin/qa-lab',
       'superadmin/web-analytics',

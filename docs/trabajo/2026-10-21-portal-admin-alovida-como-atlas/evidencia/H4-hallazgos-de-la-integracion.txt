@@ -1,0 +1,25 @@
+# H4 — defectos que sólo apareció al correr contra PostgreSQL real (todos corregidos, con prueba)
+
+1) Claves foráneas no detectadas (0 de ~7 mil).
+   Síntoma: columns[].foreignKey = null y el impacto de iam.users no listaba a ninguno.
+   Causa: array_agg(attname) es name[]; el driver lo entrega como texto crudo "{object_id}", así que la
+   columna de origen era "{" y no coincidía con nada.
+   Corrección: array_agg(a.attname::text ...). Guarda: catalog/scan.queries.spec.ts.
+   Detectado por: test de integración "columnas con tipo, nulabilidad, clave foránea y única".
+
+2) Fechas con formato de Postgres en todas las respuestas ("2026-10-21 15:02:26.892+00", no ISO 8601).
+   Causa: el driver devuelve timestamptz como texto; los presentadores lo pasaban tal cual.
+   Corrección: catalog/timestamps.ts (iso/isoOrNull, falla en voz alta ante un formato desconocido) y
+   las filas del repositorio tipadas como string. Guarda: timestamps.spec.ts y el test
+   "toda fecha sale en ISO 8601 UTC".
+
+3) 500 al listar escaneos o cambios con más de una página (ultimo.requested_at.toISOString is not a function).
+   Misma causa que (2); además el cursor ahora conserva el texto con microsegundos, porque un Date
+   truncado a milisegundos rompe el orden keyset. Guarda: tests de recorrido por cursor de escaneos
+   (limit=3) y de cambios (limit=1).
+   Detectado por: la matriz de autorización, cuando la tabla de escaneos superó 50 filas.
+
+4) Orden no determinista del grafo de impacto (sin ORDER BY): con el tope de 100 nodos, la lista truncada
+   podía cambiar entre llamadas. Corregido con order by; guarda: "iam.users ... el resultado es estable".
+
+Ninguno lo habría detectado una prueba con el ORM o la base mockeados.
