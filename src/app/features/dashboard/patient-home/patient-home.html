@@ -7,7 +7,7 @@
      tecnología, la primera pantalla tiene que sentirse **suya** y decirle qué
      hacer: saludo según la hora con su nombre de pila, la fecha en palabras y
      una sola invitación —conocer la aplicación en un minuto— mientras no la
-     haya aceptado. La ilustración es propia de la portada; el logo no se toca. -->
+     haya aceptado. A la derecha, el logo de AloVida tal cual es. -->
 <section class="portada" data-testid="mi-salud" aria-labelledby="portada-titulo">
   <div class="portada__texto">
     @if (hoy(); as fecha) {
@@ -41,20 +41,16 @@
     }
   </div>
 
-  <!-- Decorativa: un corazón con latido, en los colores de la marca. -->
-  <svg class="portada__ilustracion" viewBox="0 0 240 200" aria-hidden="true" focusable="false">
-    <circle class="portada__burbuja portada__burbuja--a" cx="196" cy="40" r="22" />
-    <circle class="portada__burbuja portada__burbuja--b" cx="34" cy="156" r="14" />
-    <circle class="portada__burbuja portada__burbuja--c" cx="214" cy="160" r="9" />
-    <path
-      class="portada__corazon"
-      d="M120 172c-6-5-62-43-62-88 0-22 17-38 37-38 12 0 21 6 25 14 4-8 13-14 25-14 20 0 37 16 37 38 0 45-56 83-62 88z"
-    />
-    <polyline
-      class="portada__latido"
-      points="70,104 100,104 110,82 124,128 136,94 144,104 172,104"
-    />
-  </svg>
+  <!-- Decorativa: el logo de AloVida —el de verdad, sin redibujar— en un sello
+       blanco con dos anillos que laten despacio. Sin texto alternativo: la
+       marca ya está en el menú y acá no agrega información. -->
+  <div class="portada__marca" aria-hidden="true">
+    <span class="portada__anillo"></span>
+    <span class="portada__anillo portada__anillo--segundo"></span>
+    <span class="portada__sello">
+      <img src="/alovida/imagenes/alovida-logo.svg" alt="" width="104" height="76" />
+    </span>
+  </div>
 </section>
 
 <!-- ─── C5 del plan de UX del 22/08/2026 ────────────────────────────────────
@@ -70,7 +66,7 @@
      buscador clásico deja de ser la puerta y pasa a ser el camino de quien ya
      sabe a quién busca. -->
 <app-card
-  variant="elevated"
+  variant="outlined"
   padding="lg"
   class="mi-salud__sintomas"
   data-testid="mi-salud-sintomas"

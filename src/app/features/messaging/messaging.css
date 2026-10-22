@@ -304,15 +304,59 @@
   color: var(--tinta-2);
 }
 
-.mensajeria__vacio-icono {
-  margin: 0 0 var(--e2);
-  color: var(--aguamarina);
-  opacity: .55;
+/* El sello del panel vacío: el logo de AloVida en un círculo blanco y, en la
+   esquina, el globo de chat como insignia. Entra una vez, con un rebote corto. */
+.mensajeria__vacio-sello {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 7.5rem;
+  aspect-ratio: 1;
+  margin-block-end: var(--e3);
+  border-radius: 50%;
+  background: var(--sup-tarjeta);
+  box-shadow:
+    0 16px 36px -18px rgb(11 85 126 / 45%),
+    0 0 0 8px color-mix(in srgb, var(--sup-tarjeta) 55%, transparent);
+  animation: mensajeria-sello var(--pulse-dur-moment, 420ms) var(--pulse-ease, ease-out) 80ms backwards;
 }
 
-.mensajeria__vacio-icono svg {
-  inline-size: 88px;
-  block-size: 88px;
+.mensajeria__vacio-sello img {
+  inline-size: 4.5rem;
+  block-size: auto;
+  translate: 0 4%;
+}
+
+.mensajeria__vacio-insignia {
+  position: absolute;
+  inset-block-end: 0.25rem;
+  inset-inline-end: 0.25rem;
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--petroleo);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--sup-tarjeta);
+}
+
+.mensajeria__vacio-insignia svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+@keyframes mensajeria-sello {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mensajeria__vacio-sello {
+    animation: none;
+  }
 }
 
 .mensajeria__vacio-titulo {
