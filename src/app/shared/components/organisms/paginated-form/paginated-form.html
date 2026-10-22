@@ -4,9 +4,11 @@
   <header class="paginated-form__avance">
     <!-- `showMarker`: la barra termina en un círculo en la posición del avance.
          Acá el avance es el estado de quien mira —en qué paso va—, que es
-         justamente para lo que la punta sirve. Es decoración: no cambia una
-         palabra de lo que se anuncia. -->
-    <app-progress [value]="avance()" [label]="resumen()" size="sm" showMarker />
+         justamente para lo que la punta sirve. `wave` dibuja la barra como el
+         latido de la marca, que se va trazando a medida que se avanza: cuanto
+         más cerca del final, más trazo y más ganas de terminar. Es decoración:
+         no cambia una palabra de lo que se anuncia. -->
+    <app-progress [value]="avance()" [label]="resumen()" size="sm" showMarker wave />
 
     @if (mostrarPasos()) {
       <app-stepper
