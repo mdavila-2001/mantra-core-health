@@ -50,11 +50,30 @@ export function fotoDeDirectorio(tema: TemaDeFoto, clave: string): string {
 
 /** La foto de la tarjeta de una especialidad de la portada de médicos. */
 export function fotoDeEspecialidad(nombre: string): string {
-  return fotoDeDirectorio(temaDeCentroDiagnostico(nombre) === 'imagen' ? 'imagen' : 'medico', nombre);
+  return fotoDeDirectorio(
+    temaDeCentroDiagnostico(nombre) === 'imagen' ? 'imagen' : 'medico',
+    nombre,
+  );
 }
+
+/**
+ * Las puertas cuya foto se elige a mano y no por hash.
+ *
+ * La de aseguradoras comparte tema con la de médicos y el hash de las dos
+ * rutas caía en la **misma** foto: dos tarjetas vecinas con la misma imagen.
+ * Se le fija una del mismo tema que habla de cuidado familiar, que es lo que
+ * cubre un seguro de salud.
+ */
+const FOTO_FIJA_DE_VERTICAL: Readonly<Record<string, string>> = {
+  'insurers-directory': fotoDeDirectorio('medico', 'insurers'),
+};
 
 /** La foto de cada puerta de la portada «Directorios». */
 export function fotoDeVertical(ruta: string): string {
+  const fija = FOTO_FIJA_DE_VERTICAL[ruta.replace(/^\//u, '')];
+  if (fija !== undefined) {
+    return fija;
+  }
   const tema: TemaDeFoto = ruta.includes('laboratory')
     ? 'laboratorio'
     : ruta.includes('clinic')
