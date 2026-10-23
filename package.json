@@ -7,7 +7,7 @@
   },
   "scripts": {
     "ng": "ng",
-    "prepare": "git config core.hooksPath .githooks || true",
+    "postinstall": "git config core.hooksPath .githooks || true",
     "env:generate": "node scripts/generate-env.mjs",
     "config:env": "node scripts/generate-env.mjs",
     "stock:generate": "node scripts/generate-component-index.mjs",
