@@ -28,7 +28,7 @@
 
 /* ---- columna de facetas + resultados ------------------------------------
    Mobile-first: una sola columna, con la de facetas plegada detrás de un
-   botón. Desde 960 px de contenedor, la columna fija a la izquierda. */
+   botón. Desde 860 px de contenedor, la columna fija a la izquierda. */
 .mercado {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -55,12 +55,6 @@
   cursor: pointer;
 }
 
-.mercado__plegar svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
 
 .mercado__plegar:focus-visible {
   outline: 3px solid var(--focus-ring);
@@ -187,7 +181,7 @@ app-filter-bar + .mercado__faceta {
   min-inline-size: 0;
 }
 
-@container (min-width: 960px) {
+@container (min-width: 860px) {
   .mercado:not(.mercado--sin-columna) {
     grid-template-columns: 17rem minmax(0, 1fr);
     gap: var(--sp-6);
@@ -402,5 +396,95 @@ app-filter-bar + .mercado__faceta {
     block-size: auto;
     overflow: visible;
     clip-path: none;
+  }
+}
+
+/* ---- detalles (propietario, 23/10/2026) ---------------------------------- */
+
+.mercado__faceta-rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mercado__faceta-icono {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--brand-primary) 10%, var(--bg-surface));
+  color: var(--brand-primary);
+  font-size: 1rem;
+}
+
+.mercado__opcion-cuenta {
+  padding: 1px 8px;
+  border-radius: var(--r-full);
+  background: var(--bg-surface-alt);
+  font-weight: 600;
+}
+
+.mercado__opcion[aria-pressed='true'] .mercado__opcion-cuenta {
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--bg-surface));
+  color: var(--brand-primary);
+}
+
+.mercado__ver-mas {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.mercado__ver-mas-icono {
+  transform: rotate(90deg);
+}
+
+.mercado__ver-mas-icono--abierto {
+  transform: rotate(-90deg);
+}
+
+.mercado__plegar app-nav-icon {
+  font-size: 1.15rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Las tarjetas entran escalonadas, de a 30 ms y con techo: la tanda entera
+     llega en menos de medio segundo, nadie espera a la última. */
+  .directorio__grilla > li {
+    animation: tarjeta-entra var(--dur-slow) var(--ease-out) backwards;
+    animation-delay: calc(min(var(--i, 0), 12) * 30ms);
+  }
+
+  /* El panel de filtros del teléfono baja en vez de aparecer de golpe. */
+  .mercado__facetas--abiertas {
+    animation: panel-baja var(--dur-base) var(--ease-out);
+  }
+
+  .mercado__opcion,
+  .mercado__plegar {
+    transition:
+      background var(--dur-fast) var(--ease-standard),
+      color var(--dur-fast) var(--ease-standard),
+      border-color var(--dur-fast) var(--ease-standard);
+  }
+
+  .mercado__ver-mas-icono {
+    transition: transform var(--dur-base) var(--ease-standard);
+  }
+}
+
+@keyframes tarjeta-entra {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes panel-baja {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
   }
 }

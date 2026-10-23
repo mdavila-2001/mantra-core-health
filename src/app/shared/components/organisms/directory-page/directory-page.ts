@@ -12,7 +12,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 
 import { AppButton } from '../../atoms/button/button';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 import { ResultCard } from '../../molecules/result-card/result-card';
+import { ratingOf } from '../../molecules/result-card/rating-of';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { FilterBar, SEARCH_PARAM, type FilterDef } from '../filter-bar/filter-bar';
 import { PageHeader } from '../page-header/page-header';
@@ -73,7 +76,7 @@ type Vista = 'grilla' | 'lista';
  * entrega sus grupos —por ciudad, por especialidad—: no se rotula «relevancia»
  * porque nadie lo calculó como tal.
  */
-type Orden = 'original' | 'nombre-asc' | 'nombre-desc';
+type Orden = 'original' | 'calificacion' | 'nombre-asc' | 'nombre-desc';
 
 /** Cuántas opciones del grupo se ven antes de «Ver todas». */
 const GRUPOS_A_LA_VISTA = 10;
@@ -92,7 +95,7 @@ function vistaGuardada(clave: string): Vista | null {
 
 @Component({
   selector: 'app-directory-page',
-  imports: [AppButton, FilterBar, PageHeader, ResultCard, ViewStateHost],
+  imports: [AppButton, FilterBar, NavIcon, PageHeader, ResultCard, ViewStateHost],
   templateUrl: './directory-page.html',
   styleUrl: './directory-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -203,6 +206,9 @@ export class DirectoryPage {
    */
   readonly rotuloDeGrupos = input('Sección');
 
+  /** El ícono del rótulo de esa faceta. */
+  readonly iconoDeGrupos = input<NavIconName>('labels');
+
   /** Los filtros que van arriba, junto al buscador: los desplegables. */
   protected readonly filtrosDeArriba = computed(() =>
     this.filtros().filter((filtro) => filtro.asChips !== true),
@@ -284,6 +290,14 @@ export class DirectoryPage {
 
   readonly orden = signal<Orden>('original');
 
+  /**
+   * Si algún resultado tiene reseñas. Sin ninguna, «Mejor calificadas» sería
+   * un orden que no ordena nada, y no se ofrece.
+   */
+  private readonly hayCalificaciones = computed(() =>
+    this.grupos().some((grupo) => grupo.resultados.some((r) => ratingOf(r) !== null)),
+  );
+
   protected readonly opcionesDeOrden = computed<readonly { value: Orden; label: string }[]>(() => [
     {
       value: 'original',
@@ -292,12 +306,20 @@ export class DirectoryPage {
           ? `Por ${this.rotuloDeGrupos().toLowerCase()}`
           : 'Predeterminado',
     },
+    ...(this.hayCalificaciones()
+      ? [{ value: 'calificacion' as const, label: 'Mejor calificadas' }]
+      : []),
     { value: 'nombre-asc', label: 'Nombre: de la A a la Z' },
     { value: 'nombre-desc', label: 'Nombre: de la Z a la A' },
   ]);
 
   protected elegirOrden(valor: string): void {
-    if (valor === 'original' || valor === 'nombre-asc' || valor === 'nombre-desc') {
+    if (
+      valor === 'original' ||
+      valor === 'calificacion' ||
+      valor === 'nombre-asc' ||
+      valor === 'nombre-desc'
+    ) {
       this.orden.set(valor);
     }
   }
@@ -347,6 +369,18 @@ export class DirectoryPage {
     const orden = this.orden();
     if (orden === 'original') {
       return deLosGrupos;
+    }
+    if (orden === 'calificacion') {
+      // La nota manda; a igual nota, la que más opiniones tiene. Las que no
+      // tienen reseñas van al final, en el orden en que venían.
+      return [...deLosGrupos].sort((a, b) => {
+        const notaA = ratingOf(a);
+        const notaB = ratingOf(b);
+        if (notaA === null || notaB === null) {
+          return (notaA === null ? 1 : 0) - (notaB === null ? 1 : 0);
+        }
+        return notaB.average - notaA.average || notaB.count - notaA.count;
+      });
     }
     const sentido = orden === 'nombre-asc' ? 1 : -1;
     return [...deLosGrupos].sort((a, b) => sentido * a.title.localeCompare(b.title, 'es'));

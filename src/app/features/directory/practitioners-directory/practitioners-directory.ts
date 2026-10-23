@@ -231,6 +231,7 @@ export class PractitionersDirectory {
     {
       key: PARAM_ESPECIALIDAD,
       label: 'Especialidad',
+      icon: 'stethoscope',
       placeholder: 'Todas las especialidades',
       // En la columna de facetas, como la categoría de una tienda
       // (propietario, 23/10/2026).

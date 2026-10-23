@@ -218,6 +218,9 @@
 }
 
 .tarjeta-resultado__distincion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   align-self: flex-start;
   margin: 0;
   padding: 2px 8px;
@@ -431,7 +434,10 @@
     padding: var(--sp-3);
   }
 
+  /* Arriba y no centrada: centrada en una fila alta dejaba un hueco encima
+     de la foto y la tarjeta se leía corrida hacia un lado. */
   :host(.tarjeta-resultado--lista) > .tarjeta-resultado__foto {
+    align-self: start;
     aspect-ratio: 1;
     inline-size: 6.5rem;
     min-block-size: 5.5rem;
@@ -561,5 +567,49 @@
 
   :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__titulo {
     font-size: var(--fs-body);
+  }
+}
+
+/* ---- detalles (propietario, 23/10/2026) ---------------------------------- */
+
+.tarjeta-resultado__distincion-icono {
+  font-size: 0.85rem;
+  color: var(--c-amber-500);
+}
+
+.tarjeta-resultado__accion-flecha {
+  font-size: 0.95rem;
+}
+
+/* Un velo suave abajo de la foto: el sello de verificación y el borde de la
+   tarjeta se separan de fotos claras sin oscurecer la imagen. */
+.tarjeta-resultado__foto::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  block-size: 40%;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.18));
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Las estrellas se llenan hasta la nota al aparecer la tarjeta. */
+  .tarjeta-resultado__estrellas-relleno {
+    animation: estrellas-llenan 700ms var(--ease-out) 150ms backwards;
+  }
+
+  .tarjeta-resultado__accion-flecha {
+    transition: transform var(--dur-base) var(--ease-standard);
+  }
+
+  :host(:hover) .tarjeta-resultado__accion-flecha,
+  .tarjeta-resultado__accion:focus-visible .tarjeta-resultado__accion-flecha {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes estrellas-llenan {
+  from {
+    inline-size: 0;
   }
 }

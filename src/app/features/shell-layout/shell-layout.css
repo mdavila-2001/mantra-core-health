@@ -47,6 +47,16 @@
     display: none;
   }
 
+  /* Las acciones van a la derecha, como en cualquier barra de app: con la
+     tira alineada al principio, en un teléfono de 400–700 px quedaban todas
+     amontonadas a la izquierda y un hueco a la derecha (propietario,
+     23/10/2026). `margin-inline-start: auto` y no `justify-content: flex-end`:
+     el margen automático se anula cuando la tira desborda, así que su
+     comienzo nunca queda fuera de alcance del desplazamiento. */
+  .app-header__derecha > :first-child {
+    margin-inline-start: auto;
+  }
+
   /* En modo cajón el nombre ya viaja en aria-label y en el globo. El texto
      visible vuelve en escritorio, donde sí hay lugar para leerlo. */
   .app-header__red-social-texto {
