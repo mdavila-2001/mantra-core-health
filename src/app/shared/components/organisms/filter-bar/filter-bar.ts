@@ -22,7 +22,7 @@ import type { SelectOption } from '../../atoms/select/select.types';
 export const SEARCH_PARAM = 'q';
 
 /** Cuántas opciones de una faceta se ven antes de «Ver más». */
-const OPCIONES_DE_FACETA_A_LA_VISTA = 8;
+const OPCIONES_DE_FACETA_A_LA_VISTA = 10;
 
 /**
  * Un filtro de value set. **Siempre selector, nunca texto libre**: todo lo que
