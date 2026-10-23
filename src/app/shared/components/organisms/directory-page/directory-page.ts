@@ -2,15 +2,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
+  signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 
 import { AppButton } from '../../atoms/button/button';
 import { ResultCard } from '../../molecules/result-card/result-card';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { FilterBar, type FilterDef } from '../filter-bar/filter-bar';
+import { FilterBar, SEARCH_PARAM, type FilterDef } from '../filter-bar/filter-bar';
 import { PageHeader } from '../page-header/page-header';
 import { ViewStateHost } from '../view-state-host/view-state-host';
 import type { GrupoDeDirectorio, SustantivoDelDirectorio } from './directory-page.types';
@@ -28,8 +32,12 @@ import type { GrupoDeDirectorio, SustantivoDelDirectorio } from './directory-pag
  * cuatro pantallas escritas a mano, la quinta corrección de diseño se aplica a
  * dos y media.
  *
- * Así que la anatomía se escribe una sola vez: **título, barra de filtros con
- * chips, contador, y una grilla de tarjetas agrupada por secciones**. Los
+ * Así que la anatomía se escribe una sola vez. Desde el 23/10/2026 es la de un
+ * **marketplace** (pedido del propietario: «como Amazon»): buscador ancho
+ * arriba, columna de facetas a la izquierda —los filtros de chips y los
+ * grupos del directorio con su cantidad—, barra de resultados con el rango,
+ * «Ordenar por» y grilla o lista, y una grilla plana de tarjetas. Los grupos
+ * ya no cortan la grilla en bandas: son una faceta más. Los
  * cuatro directorios pasan a ser el mapeo de sus datos a
  * {@link GrupoDeDirectorio} y una lista de {@link FilterDef} — que es lo único
  * en lo que de verdad se diferencian.
@@ -59,6 +67,18 @@ const CLAVE_DE_VISTA = 'alovida.directorio.vista';
 const TANDA_POR_DEFECTO = 24;
 
 type Vista = 'grilla' | 'lista';
+
+/**
+ * Cómo se ordena la grilla. `original` es el orden en que el directorio
+ * entrega sus grupos —por ciudad, por especialidad—: no se rotula «relevancia»
+ * porque nadie lo calculó como tal.
+ */
+type Orden = 'original' | 'nombre-asc' | 'nombre-desc';
+
+/** Cuántas opciones del grupo se ven antes de «Ver todas». */
+const GRUPOS_A_LA_VISTA = 8;
+
+type Resultado = GrupoDeDirectorio['resultados'][number];
 
 function vistaGuardada(clave: string): Vista | null {
   try {
@@ -175,13 +195,160 @@ export class DirectoryPage {
   readonly filtrosCambiaron = output<Readonly<Record<string, string>>>();
   readonly reintentar = output<void>();
 
-  protected readonly total = computed(() =>
-    this.grupos().reduce((suma, grupo) => suma + grupo.resultados.length, 0),
+  private readonly ruta = inject(ActivatedRoute);
+
+  /**
+   * Cómo se llama lo que agrupa al directorio, para el rótulo de su faceta:
+   * «Ciudad», «Especialidad», «Categoría».
+   */
+  readonly rotuloDeGrupos = input('Sección');
+
+  /** Los filtros que van arriba, junto al buscador: los desplegables. */
+  protected readonly filtrosDeArriba = computed(() =>
+    this.filtros().filter((filtro) => filtro.asChips !== true),
   );
 
+  /** Los filtros que van a la columna de facetas: los de chips. */
+  protected readonly filtrosDeLaColumna = computed(() =>
+    this.filtros().filter((filtro) => filtro.asChips === true),
+  );
+
+  /**
+   * La faceta de grupos: sólo si hay más de un grupo con nombre. Un único
+   * grupo —«Todos los médicos»— no acota nada.
+   */
+  protected readonly gruposConNombre = computed(() =>
+    this.grupos().filter((grupo) => grupo.nombre !== '' && grupo.resultados.length > 0),
+  );
+
+  protected readonly hayFacetaDeGrupos = computed(() => this.gruposConNombre().length > 1);
+
+  protected readonly hayColumna = computed(
+    () => this.filtrosDeLaColumna().length > 0 || this.hayFacetaDeGrupos(),
+  );
+
+  /** El grupo elegido en la faceta. Se suelta si el grupo deja de existir. */
+  protected readonly grupoElegido = linkedSignal<readonly GrupoDeDirectorio[], string | null>({
+    source: this.grupos,
+    computation: (grupos, anterior) =>
+      anterior?.value != null && grupos.some((grupo) => grupo.id === anterior.value)
+        ? anterior.value
+        : null,
+  });
+
+  protected elegirGrupo(id: string | null): void {
+    this.grupoElegido.set(this.grupoElegido() === id ? null : id);
+  }
+
+  protected readonly verTodosLosGrupos = signal(false);
+
+  protected readonly gruposALaVista = computed(() => {
+    const grupos = this.gruposConNombre();
+    if (this.verTodosLosGrupos() || grupos.length <= GRUPOS_A_LA_VISTA) {
+      return grupos;
+    }
+    const vista = grupos.slice(0, GRUPOS_A_LA_VISTA);
+    const elegido = grupos.find((grupo) => grupo.id === this.grupoElegido());
+    // El elegido se ve siempre, aunque esté más abajo del corte.
+    return elegido !== undefined && !vista.includes(elegido) ? [...vista, elegido] : vista;
+  });
+
+  protected readonly gruposOcultos = computed(
+    () => this.gruposConNombre().length - this.gruposALaVista().length,
+  );
+
+  /** En teléfono la columna se pliega detrás de un botón «Filtros». */
+  protected readonly columnaAbierta = signal(false);
+
+  /** Cuántos filtros de la columna están puestos, para el botón plegado. */
+  protected readonly filtrosActivosEnLaColumna = computed(() => {
+    const params = this.parametros();
+    const deChips = this.filtrosDeLaColumna().filter((filtro) => params[filtro.key]).length;
+    return deChips + (this.grupoElegido() === null ? 0 : 1);
+  });
+
+  /** La URL, leída como la lee la barra: los filtros viven ahí. */
+  private readonly parametros = toSignal(this.ruta.queryParams, {
+    initialValue: {} as Readonly<Record<string, string>>,
+  });
+
+  readonly orden = signal<Orden>('original');
+
+  protected readonly opcionesDeOrden = computed<readonly { value: Orden; label: string }[]>(() => [
+    {
+      value: 'original',
+      label: this.hayFacetaDeGrupos() ? `Por ${this.rotuloDeGrupos().toLowerCase()}` : 'Predeterminado',
+    },
+    { value: 'nombre-asc', label: 'Nombre: de la A a la Z' },
+    { value: 'nombre-desc', label: 'Nombre: de la Z a la A' },
+  ]);
+
+  protected elegirOrden(valor: string): void {
+    if (valor === 'original' || valor === 'nombre-asc' || valor === 'nombre-desc') {
+      this.orden.set(valor);
+    }
+  }
+
+  /**
+   * Una de las dos barras —la de arriba o la de la columna— cambió la URL.
+   *
+   * Se emite el estado **entero** leído de la URL y no lo que trajo cada
+   * barra: cada una sólo conoce sus filtros, y quien consume espera recibir
+   * el término y todos los códigos juntos, como cuando había una sola barra.
+   */
+  protected alCambiarFiltros(): void {
+    const params = this.parametros() as Readonly<Record<string, string>>;
+    const activos: Record<string, string> = {};
+    if (params[SEARCH_PARAM]) {
+      activos[SEARCH_PARAM] = params[SEARCH_PARAM];
+    }
+    for (const filtro of this.filtros()) {
+      const codigo = params[filtro.key];
+      if (codigo) {
+        activos[filtro.key] = codigo;
+      }
+    }
+    this.filtrosCambiaron.emit(activos);
+  }
+
+  /**
+   * El nombre del tramo que se está mirando, si es uno solo: el elegido en la
+   * faceta, o el único que hay. Va en la barra de resultados porque la grilla
+   * ya no lleva bandas, y «de qué directorio son estas tarjetas» es un dato.
+   */
+  protected readonly ambito = computed(() => {
+    const elegido = this.grupoElegido();
+    const conNombre = this.gruposConNombre();
+    if (elegido !== null) {
+      return conNombre.find((grupo) => grupo.id === elegido)?.nombre ?? null;
+    }
+    return conNombre.length === 1 ? conNombre[0]!.nombre : null;
+  });
+
+  /** Los resultados que pasan la faceta de grupo, ya ordenados. */
+  protected readonly resultados = computed<readonly Resultado[]>(() => {
+    const elegido = this.grupoElegido();
+    const deLosGrupos = this.grupos()
+      .filter((grupo) => elegido === null || grupo.id === elegido)
+      .flatMap((grupo) => grupo.resultados);
+    const orden = this.orden();
+    if (orden === 'original') {
+      return deLosGrupos;
+    }
+    const sentido = orden === 'nombre-asc' ? 1 : -1;
+    return [...deLosGrupos].sort((a, b) => sentido * a.title.localeCompare(b.title, 'es'));
+  });
+
+  protected readonly total = computed(() => this.resultados().length);
+
+  /** «1–24 de 804 médicos», o «5 médicos» cuando entran todos. */
   protected readonly contador = computed(() => {
     const cuantos = this.total();
     const { singular, plural } = this.sustantivo();
+    const mostrados = this.mostrados();
+    if (cuantos > mostrados) {
+      return `1–${mostrados} de ${cuantos} ${plural}`;
+    }
     return `${cuantos} ${cuantos === 1 ? singular : plural}`;
   });
 
@@ -194,31 +361,12 @@ export class DirectoryPage {
    * por qué seguir abierto en la siguiente.
    */
   protected readonly limite = linkedSignal({
-    source: this.grupos,
+    source: this.resultados,
     computation: () => this.tamanoDeTanda(),
   });
 
-  /**
-   * Los grupos recortados al límite, en orden, con las tarjetas que entran de
-   * cada uno. El grupo viaja entero para que su encabezado siga diciendo
-   * cuántos tiene de verdad y no cuántos se ven. Un grupo que quedó todo fuera
-   * del límite no se dibuja, ni su encabezado: un rótulo sin tarjetas debajo
-   * parece un tramo vacío.
-   */
-  protected readonly gruposVisibles = computed(() => {
-    let quedan = this.limite();
-    const visibles: { grupo: GrupoDeDirectorio; resultados: GrupoDeDirectorio['resultados'] }[] =
-      [];
-    for (const grupo of this.grupos()) {
-      if (quedan <= 0) {
-        break;
-      }
-      const resultados = grupo.resultados.slice(0, quedan);
-      quedan -= resultados.length;
-      visibles.push({ grupo, resultados });
-    }
-    return visibles;
-  });
+  /** Las tarjetas que se dibujan: la grilla plana, recortada a la tanda. */
+  protected readonly visibles = computed(() => this.resultados().slice(0, this.limite()));
 
   protected readonly mostrados = computed(() => Math.min(this.limite(), this.total()));
 

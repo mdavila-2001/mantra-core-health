@@ -7,6 +7,7 @@ import {
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,6 +20,9 @@ import type { SelectOption } from '../../atoms/select/select.types';
 
 /** Clave por omisión del término de búsqueda en la URL (ver `FilterBar.searchParam`). */
 export const SEARCH_PARAM = 'q';
+
+/** Cuántas opciones de una faceta se ven antes de «Ver más». */
+const OPCIONES_DE_FACETA_A_LA_VISTA = 8;
 
 /**
  * Un filtro de value set. **Siempre selector, nunca texto libre**: todo lo que
@@ -128,6 +132,7 @@ export interface ActiveFilter {
   host: {
     class: 'filter-bar',
     '[class.filter-bar--wrap]': 'wrap()',
+    '[class.filter-bar--facets]': "layout() === 'facets'",
   },
 })
 export class FilterBar {
@@ -146,6 +151,31 @@ export class FilterBar {
    * necesitan y siguen exactamente igual.
    */
   readonly wrap = input(false, { transform: booleanAttribute });
+
+  /**
+   * `facets` dibuja los filtros de chips como la columna de un catálogo: cada
+   * grupo con su rótulo arriba y sus opciones en lista, una por renglón.
+   *
+   * Es la forma de la columna lateral del directorio (estilo marketplace): ahí
+   * no hay ancho para una fila de chips, y una lista vertical se recorre de
+   * un vistazo. El comportamiento —URL, un valor por filtro, tocar de nuevo
+   * quita— es el mismo que el de los chips.
+   */
+  readonly layout = input<'bar' | 'facets'>('bar');
+
+  /**
+   * `false` no dibuja el buscador. Para la columna de facetas, cuyo buscador
+   * está arriba, en otra barra que comparte la URL con ésta.
+   */
+  readonly showSearch = input(true, { transform: booleanAttribute });
+
+  /**
+   * `false` no dibuja la fila de filtros activos con «Limpiar todo». Para la
+   * barra de arriba cuando los filtros viven en la columna de facetas: la
+   * fila iría repetida en los dos lugares.
+   */
+  readonly showActive = input(true, { transform: booleanAttribute });
+
   readonly searchLabel = input<string>('Buscar en el listado');
 
   /**
@@ -276,6 +306,37 @@ export class FilterBar {
     }
     return grupos;
   });
+
+  /** Los filtros de la columna de facetas que se abrieron con «Ver más». */
+  protected readonly facetasAbiertas = signal<ReadonlySet<string>>(new Set<string>());
+
+  /**
+   * Las opciones de una faceta que se ven: las primeras
+   * {@link OPCIONES_DE_FACETA_A_LA_VISTA}, más la elegida si quedó abajo del
+   * corte. Sesenta especialidades seguidas tapan el resto de la columna.
+   */
+  protected opcionesALaVista(filter: FilterDef): FilterDef['options'] {
+    const opciones = filter.options;
+    if (
+      this.facetasAbiertas().has(filter.key) ||
+      opciones.length <= OPCIONES_DE_FACETA_A_LA_VISTA
+    ) {
+      return opciones;
+    }
+    const vista = opciones.slice(0, OPCIONES_DE_FACETA_A_LA_VISTA);
+    const elegida = opciones.find((opcion) => this.isChipSelected(filter, opcion.value));
+    return elegida !== undefined && !vista.includes(elegida) ? [...vista, elegida] : vista;
+  }
+
+  protected alternarFaceta(filter: FilterDef): void {
+    this.facetasAbiertas.update((abiertas) => {
+      const nuevas = new Set(abiertas);
+      if (!nuevas.delete(filter.key)) {
+        nuevas.add(filter.key);
+      }
+      return nuevas;
+    });
+  }
 
   /** Si esa opción es la que está puesta hoy para ese filtro. */
   protected isChipSelected(filter: FilterDef, code: string): boolean {
