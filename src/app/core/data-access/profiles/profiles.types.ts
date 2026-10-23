@@ -1092,7 +1092,7 @@ export interface PractitionerListItem {
   readonly workplaces: readonly string[];
   /**
    * La media de las reseñas publicadas y cuántas son. **Opcionales: la API
-   * todavía no los manda en el listado** (PENDIENTES-BACKEND, P59) —sólo en
+   * todavía no los manda en el listado** (PENDIENTES-BACKEND, P61) —sólo en
    * la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
    * inventada.
    */

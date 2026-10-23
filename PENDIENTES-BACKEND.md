@@ -2546,7 +2546,7 @@ reintento; visor) y `features/laboratory/summary/`.
 > `imagen@alovida.mock`. Los precios son los de ejemplo del catálogo y son iguales entre centros.
 
 
-## P59 · Las reseñas en el listado de médicos — 23/10/2026
+## P61 · Las reseñas en el listado de médicos — 23/10/2026
 
 > **Qué pide el front.** El propietario quiere las reseñas en **cada** tarjeta del directorio
 > (marketplace, #1159). Farmacias, clínicas, aseguradoras y laboratorios ya las traen
