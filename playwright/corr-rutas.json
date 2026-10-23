@@ -129,6 +129,10 @@
       "nombre": "questionnaires"
     },
     {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
       "ruta": "/administration/accounting",
       "nombre": "administration_accounting"
     },
@@ -271,12 +275,6 @@
       "nombre": "credenciales-con-adjunto"
     }
   ],
-  "41": [
-    {
-      "ruta": "/administration/accounting",
-      "nombre": "contabilidad-pagos-confirmados"
-    }
-  ],
   "40": [
     {
       "ruta": "/my-account",
@@ -294,6 +292,12 @@
     {
       "ruta": "/directory",
       "nombre": "directorio-sigue-vivo"
+    }
+  ],
+  "41": [
+    {
+      "ruta": "/administration/accounting",
+      "nombre": "contabilidad-pagos-confirmados"
     }
   ],
   "42": [
@@ -322,6 +326,10 @@
     {
       "ruta": "/directory",
       "nombre": "directory"
+    },
+    {
+      "ruta": "/psychological-help",
+      "nombre": "psychological-help"
     },
     {
       "ruta": "/groups",
@@ -450,6 +458,30 @@
     {
       "ruta": "/administration/moderation",
       "nombre": "administration_moderation"
+    },
+    {
+      "ruta": "/administration/health-context",
+      "nombre": "administration_health-context"
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
     },
     {
       "ruta": "/billing",
@@ -596,6 +628,10 @@
       "nombre": "administration_laboratory-prices"
     },
     {
+      "ruta": "/administration/center-schedule",
+      "nombre": "administration_center-schedule"
+    },
+    {
       "ruta": "/administration/laboratory-branches",
       "nombre": "administration_laboratory-branches"
     },
@@ -652,6 +688,10 @@
     {
       "ruta": "/directory",
       "nombre": "directory"
+    },
+    {
+      "ruta": "/psychological-help",
+      "nombre": "psychological-help"
     },
     {
       "ruta": "/laboratory-directory",
@@ -866,6 +906,26 @@
     {
       "ruta": "/administration/moderation",
       "nombre": "administration_moderation"
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
     },
     {
       "ruta": "/administration/accounting",
