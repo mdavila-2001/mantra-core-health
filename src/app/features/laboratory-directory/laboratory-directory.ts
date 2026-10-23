@@ -30,12 +30,7 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
-import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
-import {
-  DepartmentMap,
-  type DepartamentoElegible,
-} from '../../shared/components/organisms/department-map/department-map';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -168,7 +163,7 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
  */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [AppButton, AppButtonLink, DepartmentMap, DirectoryPage, NavIcon, RouterLink],
+  imports: [AppButtonLink, DirectoryPage, NavIcon, RouterLink],
   templateUrl: './laboratory-directory.html',
   // El mapa comparte la hoja de clínicas y farmacias: es el mismo filtro.
   styleUrls: [
@@ -195,7 +190,29 @@ export class LaboratoryDirectory {
   private readonly units = inject(DiagnosticUnitsClient);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly filtros = FILTROS;
+  /**
+   * Los filtros de la columna, más el departamento en lugar del mapa
+   * (propietario, 23/10/2026): sólo los departamentos con algún centro, con
+   * cuántos tienen.
+   */
+  protected readonly filtros = computed<readonly FilterDef[]>(() => {
+    const cuenta = new Map<string, number>();
+    for (const unidad of dataOf(this.unidades()) ?? []) {
+      for (const departamento of this.departamentosDe(unidad)) {
+        cuenta.set(departamento, (cuenta.get(departamento) ?? 0) + 1);
+      }
+    }
+    const opciones = this.ramas()
+      .filter((rama) => (cuenta.get(rama.conceptId) ?? 0) > 0)
+      .map((rama) => ({ value: rama.conceptId, label: `${rama.nombre} (${cuenta.get(rama.conceptId)})` }));
+    if (opciones.length < 2 && this.departamentoElegido() === null) {
+      return FILTROS;
+    }
+    return [
+      ...FILTROS,
+      { key: PARAM_DEPARTAMENTO, label: 'Departamento', asChips: true, options: opciones },
+    ];
+  });
   protected readonly sustantivo = SUSTANTIVO;
 
   /** Lo que devolvió el buscador, sin agrupar: el mapa necesita las ciudades. */
@@ -227,25 +244,7 @@ export class LaboratoryDirectory {
   /** El catálogo no llegó: el mapa no se dibuja y se ofrece reintentar. */
   protected readonly catalogoGeoCaido = signal(false);
 
-  /** Los nueve departamentos, todos: ver `departamentos` en `PublicDirectoryListing`. */
-  protected readonly departamentos = computed<readonly DepartamentoElegible[]>(() =>
-    this.ramas().map((rama) => ({
-      conceptId: rama.conceptId,
-      sigla: rama.sigla,
-      nombre: rama.nombre,
-    })),
-  );
-
   private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
-
-  /**
-   * Si los resultados traen ciudades. Hoy sólo la maqueta las sirve (ver
-   * `cities` en el tipo): sin ellas el mapa no acotaría nada, y un filtro que
-   * no filtra no se dibuja.
-   */
-  protected readonly hayCiudades = computed(() =>
-    (dataOf(this.unidades()) ?? []).some((unidad) => (unidad.cities?.length ?? 0) > 0),
-  );
 
   protected readonly departamentoElegido = computed(() => {
     const valor: unknown = this.parametros()[PARAM_DEPARTAMENTO];
@@ -272,24 +271,10 @@ export class LaboratoryDirectory {
       : unidades.filter((unidad) => this.departamentosDe(unidad).has(elegido));
   }
 
-  /** El resumen bajo el mapa: cuántos centros hay en el departamento elegido. */
-  protected readonly resumenDelMapa = computed<string | null>(() => {
-    const elegido = this.departamentoElegido();
-    if (elegido === null) {
-      return null;
-    }
-    const nombre = this.ramas().find((rama) => rama.conceptId === elegido)?.nombre ?? '';
-    const cuantos = this.delDepartamento(dataOf(this.unidades()) ?? []).length;
-    if (cuantos === 0) {
-      return `Todavía no hay nada publicado en ${nombre}.`;
-    }
-    return `${cuantos} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
-  });
-
   /** Sin centros en el departamento elegido: lo dice la lista, no un vacío genérico. */
   protected readonly sinCoincidencias = computed<string | null>(() =>
     this.state().status === 'ready' && this.groups().length === 0
-      ? 'No hay centros publicados en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.'
+      ? 'No hay centros publicados en ese departamento con los filtros que puso. Quite el departamento para ver todo el país.'
       : null,
   );
 
@@ -382,7 +367,7 @@ export class LaboratoryDirectory {
   protected readonly subtitulo = computed(() =>
     this.enPortada()
       ? `Elija qué necesita hacerse o busque el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
-      : 'Centros verificados de toda la red, agrupados por categoría. Toque un chip para acotar.',
+      : 'Centros verificados de toda la red, con filtros a la izquierda para acotar.',
   );
 
   /**
