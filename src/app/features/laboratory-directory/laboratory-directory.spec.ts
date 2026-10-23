@@ -204,9 +204,15 @@ describe('LaboratoryDirectory', () => {
       fixture.detectChanges();
 
       expect((fixture.nativeElement as HTMLElement).querySelector('app-department-map')).toBeNull();
-      expect(opcionesDeDepartamento().map((opcion) => opcion.textContent?.trim())).toEqual(
-        expect.arrayContaining(['La Paz (1)', 'Santa Cruz (1)']),
+      // El nombre y la cantidad van en piezas separadas: la cantidad es una
+      // pastilla a la derecha.
+      const leidas = opcionesDeDepartamento().map(
+        (opcion) =>
+          `${opcion.querySelector('.filter-bar__faceta-texto')?.textContent?.trim()} (${opcion
+            .querySelector('.filter-bar__faceta-cantidad')
+            ?.textContent?.trim()})`,
       );
+      expect(leidas).toEqual(expect.arrayContaining(['La Paz (1)', 'Santa Cruz (1)']));
     });
 
     it('does not offer a department facet that could not filter anything', () => {
