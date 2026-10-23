@@ -440,3 +440,116 @@
     padding-block-start: var(--sp-1);
   }
 }
+
+/* ============================================================================
+    Grilla como vitrina de marketplace (propietario, 23/10/2026: «al estilo de
+    Amazon»).
+
+    Cada tarjeta es un producto: imagen a todo el ancho y a la misma altura en
+    todas —con foto o con las iniciales grandes—, el nombre en dos líneas como
+    mucho, los datos debajo y la acción a lo ancho al pie. Que todas midan lo
+    mismo arriba es lo que deja recorrer la grilla con la vista, fila por fila.
+    ========================================================================== */
+
+:host(:not(.tarjeta-resultado--lista)) {
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__foto,
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: auto;
+  block-size: auto;
+  aspect-ratio: 4 / 3;
+  margin: calc(var(--sp-3) * -1) calc(var(--sp-4) * -1) var(--sp-2);
+  border: 0;
+  border-block-end: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+
+/* Sin foto, las iniciales ocupan la vitrina: grandes, sobre un fondo de
+   marca suave. Mejor eso que una foto de banco que no es la de nadie. */
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+  font-size: 2.75rem;
+  letter-spacing: 0.02em;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__cabecera {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__titulo {
+  font-size: var(--fs-body-lg);
+  line-height: 1.3;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__titulo a {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__pie {
+  justify-content: stretch;
+  padding-block-start: var(--sp-2);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__accion {
+  flex: 1 1 100%;
+  justify-content: center;
+  min-block-size: 40px;
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__accion:hover {
+  background: var(--brand-primary-hover);
+  border-color: var(--brand-primary-hover);
+  color: var(--text-inverse);
+}
+
+/* El tipo se lee entero: en la vitrina es lo que distingue una tarjeta de la
+   de al lado. Hasta dos líneas, sin puntos suspensivos a mitad de palabra. */
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__subtitulo-tag {
+  align-items: flex-start;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__subtitulo-icono {
+  margin-block-start: 1px;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__subtitulo-texto {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+/* Dos por fila en el teléfono: la vitrina se achica sin perder la forma. */
+@media (max-width: 34rem) {
+  :host(:not(.tarjeta-resultado--lista)) {
+    padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  }
+
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__foto,
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+    margin: calc(var(--sp-2) * -1) calc(var(--sp-3) * -1) var(--sp-1);
+  }
+
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+    font-size: 2rem;
+  }
+
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__titulo {
+    font-size: var(--fs-body);
+  }
+}
