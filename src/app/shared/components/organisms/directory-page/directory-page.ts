@@ -76,7 +76,7 @@ type Vista = 'grilla' | 'lista';
 type Orden = 'original' | 'nombre-asc' | 'nombre-desc';
 
 /** Cuántas opciones del grupo se ven antes de «Ver todas». */
-const GRUPOS_A_LA_VISTA = 8;
+const GRUPOS_A_LA_VISTA = 10;
 
 type Resultado = GrupoDeDirectorio['resultados'][number];
 
@@ -221,7 +221,17 @@ export class DirectoryPage {
     this.grupos().filter((grupo) => grupo.nombre !== '' && grupo.resultados.length > 0),
   );
 
-  protected readonly hayFacetaDeGrupos = computed(() => this.gruposConNombre().length > 1);
+  /**
+   * `false` no dibuja la faceta de grupos. Para los directorios cuyos grupos
+   * ya tienen su filtro propio —clínicas, farmacias y aseguradoras agrupan
+   * por ciudad, y la ciudad es un filtro dentro del departamento—: dos
+   * facetas «Ciudad» en la misma columna serían la misma pregunta dos veces.
+   */
+  readonly facetaDeGrupos = input(true);
+
+  protected readonly hayFacetaDeGrupos = computed(
+    () => this.facetaDeGrupos() && this.gruposConNombre().length > 1,
+  );
 
   protected readonly hayColumna = computed(
     () => this.filtrosDeLaColumna().length > 0 || this.hayFacetaDeGrupos(),
@@ -277,7 +287,10 @@ export class DirectoryPage {
   protected readonly opcionesDeOrden = computed<readonly { value: Orden; label: string }[]>(() => [
     {
       value: 'original',
-      label: this.hayFacetaDeGrupos() ? `Por ${this.rotuloDeGrupos().toLowerCase()}` : 'Predeterminado',
+      label:
+        this.gruposConNombre().length > 1
+          ? `Por ${this.rotuloDeGrupos().toLowerCase()}`
+          : 'Predeterminado',
     },
     { value: 'nombre-asc', label: 'Nombre: de la A a la Z' },
     { value: 'nombre-desc', label: 'Nombre: de la Z a la A' },
