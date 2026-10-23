@@ -125,8 +125,16 @@
       "nombre": "my-quotations"
     },
     {
+      "ruta": "/my-medical-groups",
+      "nombre": "my-medical-groups"
+    },
+    {
       "ruta": "/questionnaires",
       "nombre": "questionnaires"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
     },
     {
       "ruta": "/administration/accounting",
@@ -135,6 +143,10 @@
     {
       "ruta": "/my-account",
       "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
     },
     {
       "ruta": "/settings",
@@ -310,6 +322,10 @@
       "nombre": "directory"
     },
     {
+      "ruta": "/psychological-help",
+      "nombre": "psychological-help"
+    },
+    {
       "ruta": "/groups",
       "nombre": "groups"
     },
@@ -368,6 +384,10 @@
     {
       "ruta": "/my-quotations",
       "nombre": "my-quotations"
+    },
+    {
+      "ruta": "/my-medical-groups",
+      "nombre": "my-medical-groups"
     },
     {
       "ruta": "/questionnaires",
@@ -438,6 +458,30 @@
       "nombre": "administration_moderation"
     },
     {
+      "ruta": "/administration/health-context",
+      "nombre": "administration_health-context"
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
+    },
+    {
       "ruta": "/billing",
       "nombre": "billing"
     },
@@ -456,6 +500,18 @@
     {
       "ruta": "/my-account",
       "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/privacy",
+      "nombre": "my-account_privacy"
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "nombre": "my-account_clinical-access"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
     },
     {
       "ruta": "/my-account/appointments",
@@ -640,6 +696,10 @@
       "nombre": "directory"
     },
     {
+      "ruta": "/psychological-help",
+      "nombre": "psychological-help"
+    },
+    {
       "ruta": "/laboratory-directory",
       "nombre": "laboratory-directory"
     },
@@ -662,6 +722,18 @@
     {
       "ruta": "/my-account",
       "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/privacy",
+      "nombre": "my-account_privacy"
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "nombre": "my-account_clinical-access"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
     },
     {
       "ruta": "/my-account/appointments",
@@ -854,6 +926,26 @@
       "nombre": "administration_moderation"
     },
     {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
+    },
+    {
       "ruta": "/administration/accounting",
       "nombre": "administration_accounting"
     },
@@ -864,6 +956,10 @@
     {
       "ruta": "/my-account",
       "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
     },
     {
       "ruta": "/my-account/appointments",
