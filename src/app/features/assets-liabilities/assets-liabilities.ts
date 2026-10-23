@@ -4,6 +4,8 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { catchError, map, of, startWith, switchMap, type Observable } from 'rxjs';
 
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
+import { AccountingPractices, NO_ACTIVE_PRACTICE } from '../../core/data-access/accounting/accounting-practices';
+import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import type { ChartOfAccounts, LedgerAccount, Practice } from '../../core/data-access/accounting/accounting.types';
 import { AssetsLiabilitiesClient } from '../../core/data-access/assets-liabilities/assets-liabilities.client';
 import type {
@@ -54,6 +56,7 @@ import { errorMessageOf } from '../../shared/forms/form-support';
   selector: 'app-assets-liabilities',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ViewStateHost,
     AnnounceOnAppear,
     Alert,
     AppButton,
@@ -72,6 +75,7 @@ import { errorMessageOf } from '../../shared/forms/form-support';
 })
 export class AssetsLiabilities {
   private readonly accounting = inject(AccountingClient);
+  private readonly accountingPractices = inject(AccountingPractices);
   private readonly client = inject(AssetsLiabilitiesClient);
 
   protected readonly pestanaActiva = signal(0);
@@ -80,9 +84,13 @@ export class AssetsLiabilities {
   private readonly intento = signal(0);
 
   private readonly practicas = toSignal(
-    this.accounting.listPractices().pipe(catchError(() => of<readonly Practice[]>([]))),
+    this.accountingPractices.list().pipe(catchError(() => of<readonly Practice[]>([]))),
     { initialValue: undefined },
   );
+
+  /** Ya se sabe que no tiene ninguna práctica activa: S3, no un selector vacío. */
+  protected readonly sinPracticaActiva = computed(() => this.practicas()?.length === 0);
+  protected readonly noActivePractice = NO_ACTIVE_PRACTICE;
 
   protected readonly opcionesDePractica = computed<readonly SelectOption<string>[]>(() =>
     (this.practicas() ?? []).map((p) => ({ value: p.id, label: p.name })),

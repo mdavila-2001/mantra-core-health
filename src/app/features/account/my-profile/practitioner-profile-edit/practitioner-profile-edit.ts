@@ -33,6 +33,7 @@ import {
   SUPPORT_FILE_FORMATS,
 } from '../../../auth/registro-compartido/credenciales-del-medico';
 import { LanguagesCatalog } from '../../../../core/data-access/terminology/languages.service';
+import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
@@ -723,7 +724,13 @@ export class PractitionerProfileEdit {
   protected cargarIdiomas(): void {
     forkJoin({
       idiomas: this.catalogoDeIdiomas.idiomas(),
-      niveles: this.catalogoDeIdiomas.niveles(),
+      // El nivel es opcional: si su catálogo no está, se ofrece sólo «Sin
+      // especificar» y el médico igual puede cargar sus idiomas. Antes la falta
+      // de `VS_LANGUAGE_PROFICIENCY` —que ningún seed declara todavía— tumbaba
+      // el bloque entero (auditoría contra la API real, 2026-10-23).
+      niveles: this.catalogoDeIdiomas
+        .niveles()
+        .pipe(catchError(() => of<readonly ValueSetOption[]>([]))),
     }).subscribe({
       next: ({ idiomas, niveles }) => {
         this.catalogoIdiomasCaido.set(false);
