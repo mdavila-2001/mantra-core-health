@@ -46,42 +46,33 @@
     }
   </div>
 
-  <!-- La calificación sólo existe si hay reseñas reales. -->
-  @if (calificacion(); as nota) {
-    <div
-      class="tarjeta-resultado__calificacion"
-      [attr.aria-label]="
-        'Puntuación: ' +
-        nota.average +
-        ' de 5 estrellas, sobre ' +
-        nota.count +
-        (nota.count === 1 ? ' opinión' : ' opiniones')
-      "
-    >
-      <div class="tarjeta-resultado__estrellas" aria-hidden="true">
-        <svg
-          class="tarjeta-resultado__estrella"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          width="16"
-          height="16"
-          focusable="false"
-        >
-          <path
-            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-          />
-        </svg>
-        <span class="tarjeta-resultado__puntuacion">{{
-          nota.average.toFixed(1).replace('.', ',')
-        }}</span>
-      </div>
-      <span class="tarjeta-resultado__opiniones"
-        >({{ nota.count }} {{ nota.count === 1 ? 'opinión' : 'opiniones' }})</span
+  <!-- Reseñas, en TODAS las tarjetas (propietario, 23/10/2026): cinco
+       estrellas rellenas según la nota real, la nota y cuántas opiniones.
+       Sin reseñas, las estrellas van vacías y lo dice: nunca una nota
+       inventada para que la tarjeta no quede «pobre». -->
+  <div
+    class="tarjeta-resultado__resenas"
+    [class.tarjeta-resultado__resenas--vacias]="calificacion() === null"
+    role="img"
+    [attr.aria-label]="textoDeResenas()"
+  >
+    <span class="tarjeta-resultado__estrellas" aria-hidden="true">
+      <span class="tarjeta-resultado__estrellas-base">★★★★★</span>
+      <span class="tarjeta-resultado__estrellas-relleno" [style.inline-size.%]="rellenoDeEstrellas()"
+        >★★★★★</span
       >
-      @if (nota.label; as rotulo) {
-        <span class="tarjeta-resultado__distincion">{{ rotulo }}</span>
-      }
-    </div>
+    </span>
+    @if (calificacion(); as nota) {
+      <span class="tarjeta-resultado__puntuacion" aria-hidden="true">{{
+        nota.average.toFixed(1).replace('.', ',')
+      }}</span>
+      <span class="tarjeta-resultado__opiniones" aria-hidden="true">({{ nota.count }})</span>
+    } @else {
+      <span class="tarjeta-resultado__opiniones" aria-hidden="true">Sin reseñas todavía</span>
+    }
+  </div>
+  @if (distincion(); as rotulo) {
+    <p class="tarjeta-resultado__distincion">{{ rotulo }}</p>
   }
 
   <!-- Subtítulo / Especialidad -->

@@ -84,11 +84,39 @@ export class ResultCard {
     }
     const average = parseFloat(match[1]!.replace(',', '.'));
     const count = parseInt(match[2]!, 10);
-    return {
-      average,
-      count,
-      label: average >= 4.8 ? 'Excelente' : 'Muy recomendado',
-    };
+    return { average, count };
+  });
+
+  /**
+   * Cuánto de las cinco estrellas se rellena, en porcentaje: 3,7 de 5 es el
+   * 74 %. Las estrellas parciales son las de cualquier tienda: se leen de un
+   * vistazo sin tener que leer el número.
+   */
+  protected readonly rellenoDeEstrellas = computed(() => {
+    const nota = this.calificacion();
+    return nota === null ? 0 : Math.min(100, Math.max(0, (nota.average / 5) * 100));
+  });
+
+  /**
+   * La distinción, **sólo para las notas que la merecen**. Antes toda nota por
+   * debajo de 4,8 salía «Muy recomendado», también un 3,7 o un 2,0: un elogio
+   * que las reseñas no dicen.
+   */
+  protected readonly distincion = computed(() => {
+    const nota = this.calificacion();
+    if (nota === null) return null;
+    if (nota.label) return nota.label;
+    if (nota.average >= 4.8) return 'Excelente';
+    if (nota.average >= 4.5) return 'Muy recomendado';
+    return null;
+  });
+
+  /** «4,5 de 5 estrellas, 60 opiniones» o «Sin reseñas todavía», para el lector. */
+  protected readonly textoDeResenas = computed(() => {
+    const nota = this.calificacion();
+    if (nota === null) return 'Sin reseñas todavía';
+    const media = nota.average.toFixed(1).replace('.', ',');
+    return `${media} de 5 estrellas, ${nota.count} ${nota.count === 1 ? 'opinión' : 'opiniones'}`;
   });
 
   /** Si cuenta con sello de verificación activa. */

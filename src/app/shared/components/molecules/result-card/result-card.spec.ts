@@ -72,21 +72,35 @@ describe('ResultCard', () => {
    * reseñas reales la tarjeta no puede decirlo: antes un respaldo inventaba
    * la nota con un hash del nombre.
    */
-  it('sin reseñas reales no dibuja calificación', () => {
-    expect(elemento('.tarjeta-resultado__calificacion')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toMatch(/opini[oó]n|Excelente|Muy recomendado/u);
+  it('sin reseñas reales lo dice, con las estrellas vacías y sin número', () => {
+    const resenas = elemento('.tarjeta-resultado__resenas')!;
+    expect(resenas.classList).toContain('tarjeta-resultado__resenas--vacias');
+    expect(resenas.getAttribute('aria-label')).toBe('Sin reseñas todavía');
+    expect(resenas.textContent).toContain('Sin reseñas todavía');
+    expect(fixture.nativeElement.textContent).not.toMatch(/\d,\d|Excelente|Muy recomendado/u);
   });
 
-  it('con reseñas reales dibuja la nota y cuántas son', () => {
+  it('con reseñas reales dibuja las estrellas, la nota y cuántas son', () => {
     anfitrion.dato.update((d) => ({ ...d, rating: { average: 4.6, count: 12 } }));
     fixture.detectChanges();
 
-    const nota = elemento('.tarjeta-resultado__calificacion')!;
-    expect(nota.textContent).toContain('4,6');
-    expect(nota.textContent).toContain('12 opiniones');
-    expect(nota.getAttribute('aria-label')).toBe(
-      'Puntuación: 4.6 de 5 estrellas, sobre 12 opiniones',
-    );
+    const resenas = elemento('.tarjeta-resultado__resenas')!;
+    expect(resenas.textContent).toContain('4,6');
+    expect(resenas.textContent).toContain('(12)');
+    expect(resenas.getAttribute('aria-label')).toBe('4,6 de 5 estrellas, 12 opiniones');
+    expect(
+      elemento('.tarjeta-resultado__estrellas-relleno')!.style.inlineSize,
+    ).toBe('92%');
+    expect(elemento('.tarjeta-resultado__distincion')!.textContent).toContain('Muy recomendado');
+  });
+
+  // Antes toda nota menor a 4,8 salía «Muy recomendado»: un 3,7 también.
+  it('una nota mediana no se lleva un elogio que las reseñas no dicen', () => {
+    anfitrion.dato.update((d) => ({ ...d, rating: { average: 3.7, count: 60 } }));
+    fixture.detectChanges();
+
+    expect(elemento('.tarjeta-resultado__resenas')!.textContent).toContain('3,7');
+    expect(elemento('.tarjeta-resultado__distincion')).toBeNull();
   });
 
   it('sin imagen pinta `figureText`', () => {
