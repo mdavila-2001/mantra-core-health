@@ -2563,7 +2563,7 @@ reintento; visor) y `features/laboratory/summary/`.
 > decir dónde se guardan idioma y nivel, y recién después el backend lo acepta y lo devuelve. El
 > supuesto original, con su razonamiento, está en `docs/progress/BLOCKERS.md`.
 
-## P59 · Las reseñas en el listado de médicos — 23/10/2026
+## P61 · Las reseñas en el listado de médicos — 23/10/2026
 
 > **Qué pide el front.** El propietario quiere las reseñas en **cada** tarjeta del directorio
 > (marketplace, #1159). Farmacias, clínicas, aseguradoras y laboratorios ya las traen
