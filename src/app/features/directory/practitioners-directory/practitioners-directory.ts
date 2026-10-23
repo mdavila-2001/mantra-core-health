@@ -668,6 +668,10 @@ function toResultado(
     // foto real va acá.
     figureText: inicialesDe(nombre),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
+    // Las reseñas reales, cuando la API las mande en el listado (P61).
+    ...(fila.ratingAverage != null && (fila.ratingCount ?? 0) > 0
+      ? { rating: { average: fila.ratingAverage, count: fila.ratingCount! } }
+      : {}),
     meta,
     seals: sellos,
   };
