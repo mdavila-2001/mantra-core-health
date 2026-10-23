@@ -8,6 +8,7 @@ import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
+import { AccountingPractices, NO_ACTIVE_PRACTICE } from '../../../core/data-access/accounting/accounting-practices';
 import { SessionStore } from '../../../core/auth/session.store';
 import { readApiError } from '../../../core/http/api-error';
 import { describeApiFailure } from '../../../core/http/api-failure';
@@ -122,6 +123,7 @@ import {
 })
 export class Cockpit {
   private readonly accounting = inject(AccountingClient);
+  private readonly accountingPractices = inject(AccountingPractices);
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
   private readonly destroyRef = inject(DestroyRef);
@@ -349,8 +351,8 @@ export class Cockpit {
   });
 
   constructor() {
-    this.accounting
-      .listPractices()
+    this.accountingPractices
+      .list()
       .pipe(
         map((items) => ready(items)),
         catchError((error: unknown) => of(errorToViewState<readonly Practice[]>(error))),
@@ -360,6 +362,9 @@ export class Cockpit {
         this.practicas.set(estado);
         if (estado.status === 'ready' && estado.data.length > 0 && this.practicaElegida() === null) {
           this.practicaElegida.set(estado.data[0]!.id);
+        }
+        if (estado.status === 'ready' && estado.data.length === 0) {
+          this.tablero.set(NO_ACTIVE_PRACTICE);
         }
       });
 

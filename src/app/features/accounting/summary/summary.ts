@@ -12,7 +12,15 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
+import {
+  AccountingPractices,
+  NO_ACTIVE_PRACTICE,
+} from '../../../core/data-access/accounting/accounting-practices';
 import { SessionStore } from '../../../core/auth/session.store';
+import {
+  simulatorAvailable,
+  unavailableMessage,
+} from '../../../core/data-access/simulator-only';
 import { SimpleAccounting } from '../records/records';
 import type {
   BalanceSheet,
@@ -28,6 +36,7 @@ import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
@@ -211,6 +220,7 @@ interface Dinero {
   selector: 'app-accounting-summary',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    Alert,
     AppButton,
     AppButtonLink,
     Card,
@@ -230,6 +240,7 @@ interface Dinero {
 })
 export class Summary {
   private readonly accounting = inject(AccountingClient);
+  private readonly accountingPractices = inject(AccountingPractices);
   private readonly toasts = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly session = inject(SessionStore);
@@ -249,6 +260,9 @@ export class Summary {
   readonly tab = signal(0);
   /** Subpestañas del Resumen: 0 = Movimientos · 1 = Pendientes · 2 = Patrimonio. */
   readonly subtab = signal(0);
+  /** La contabilidad simple no está en la API real: sólo en la maqueta. */
+  protected readonly simpleAccountingAvailable = simulatorAvailable();
+  protected readonly simpleAccountingUnavailable = unavailableMessage('Los registros de la contabilidad simple');
   readonly chosenPractice = signal<string | null>(null);
   private readonly practices = signal<ViewState<readonly Practice[]>>(loading());
   private readonly dinero = signal<ViewState<Dinero>>(loading());
@@ -454,8 +468,8 @@ export class Summary {
   });
 
   constructor() {
-    this.accounting
-      .listPractices()
+    this.accountingPractices
+      .list()
       .pipe(
         map((items) => ready(items)),
         catchError((error: unknown) => of(errorToViewState<readonly Practice[]>(error))),
@@ -465,6 +479,11 @@ export class Summary {
         this.practices.set(estado);
         if (estado.status === 'ready' && estado.data.length > 0 && this.chosenPractice() === null) {
           this.chosenPractice.set(estado.data[0]!.id);
+        }
+        // Sin una práctica activa no hay qué leer: es S3 con la próxima acción,
+        // no un esqueleto de carga que nunca termina.
+        if (estado.status === 'ready' && estado.data.length === 0) {
+          this.dinero.set(NO_ACTIVE_PRACTICE);
         }
       });
 

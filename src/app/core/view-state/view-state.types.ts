@@ -56,6 +56,8 @@ export interface ViewStateNextAction {
   readonly label: string;
   /** Ruta interna de Angular. Se omite cuando la acción abre un diálogo. */
   readonly route?: string;
+  /** Parámetros de consulta de la ruta (p. ej. qué pestaña abrir). */
+  readonly queryParams?: Readonly<Record<string, string>>;
 }
 
 /** Un problema puntual devuelto por la API, ya traducido a lenguaje de la vista. */

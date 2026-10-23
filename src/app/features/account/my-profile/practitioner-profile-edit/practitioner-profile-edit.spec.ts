@@ -3993,6 +3993,28 @@ describe('PractitionerProfileEdit', () => {
       },
     ];
 
+    /** Responde sólo el catálogo de idiomas (dos opciones); el de niveles queda pendiente. */
+    function responderSoloIdiomas(): void {
+      pedidoDeConjunto('VS_LANGUAGE').flush({
+        items: [{ id: 'vs-lang', internalCode: 'VS_LANGUAGE', name: 'Idiomas', defaultVersionId: 'v1' }],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+      http
+        .expectOne((r) => r.url.includes('/terminology/value-sets/vs-lang/$expand'))
+        .flush({
+          valueSetId: 'vs-lang',
+          items: [
+            { conceptId: 'lang-es', code: 'LANG-ES', display: 'Español', codeSystemVersionId: 'csv-1' },
+            { conceptId: 'lang-en', code: 'LANG-EN', display: 'Inglés', codeSystemVersionId: 'csv-1' },
+          ],
+          count: 2,
+          limit: 200,
+          nextCursor: null,
+        });
+    }
+
     /** Responde los dos catálogos —idiomas y niveles— con una opción cada uno de más. */
     function responderCatalogoDeIdiomas(): void {
       pedidoDeConjunto('VS_LANGUAGE').flush({
@@ -4062,6 +4084,16 @@ describe('PractitionerProfileEdit', () => {
       expect(etiquetas('opcionesDeIdioma')).toEqual(['Español', 'Inglés']);
       expect(etiquetas('opcionesDeNivel')).toEqual(['Sin especificar', 'Avanzado']);
       expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+    });
+
+    it('sin el catálogo de niveles, igual ofrece los idiomas con «Sin especificar»', () => {
+      montarYCargar();
+      responderSoloIdiomas();
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+      expect(interno<() => readonly unknown[]>('opcionesDeIdioma')()).toHaveLength(2);
+      expect(interno<() => readonly { label: string }[]>('opcionesDeNivel')()).toHaveLength(1);
     });
 
     it('si el catálogo no llega, lo dice y no ofrece un desplegable vacío', () => {
