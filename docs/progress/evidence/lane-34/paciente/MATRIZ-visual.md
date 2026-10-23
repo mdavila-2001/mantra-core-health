@@ -1,14 +1,15 @@
-# MATRIZ visual — carril 34 — despues — 2026-10-13T11:43:47.501Z
+# MATRIZ visual — carril 34 — despues — 2026-10-23T23:24:22.211Z
 
-Celdas: 136 · en rojo: 0
+Celdas: 140 · en rojo: 0
 
 | Ruta | Viewport | Tema | Fondo blanco | Centrado (≤2 px) | Ancho (≥85 %) | Sin scroll H | Consola | Foto |
 |---|---|---|---|---|---|---|---|---|
 | `/dashboard` | 375 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-375-claro.png` |
-| `/tutorials` | 375 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/tutorials-375-claro.png` |
+| `/tutorials` | 375 | claro | PASS | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-375-claro.png` |
 | `/messaging` | 375 | claro | PASS | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-375-claro.png` |
 | `/directories` | 375 | claro | PASS | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-375-claro.png` |
 | `/directory` | 375 | claro | PASS | PASS | PASS (<app-practitioners-directory>) | PASS | PASS | `fotos/despues/directory-375-claro.png` |
+| `/psychological-help` | 375 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/psychological-help-375-claro.png` |
 | `/laboratory-directory` | 375 | claro | PASS | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-375-claro.png` |
 | `/clinics-directory` | 375 | claro | PASS | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-375-claro.png` |
 | `/pharmacies-directory` | 375 | claro | PASS | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-375-claro.png` |
@@ -23,7 +24,7 @@ Celdas: 136 · en rojo: 0
 | `/my-account/questionnaires` | 375 | claro | PASS | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-375-claro.png` |
 | `/settings` | 375 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-375-claro.png` |
 | `/notification-center` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-375-claro.png` |
-| `/my-account/identity` | 375 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-375-claro.png` |
+| `/my-account/identity` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-375-claro.png` |
 | `/my-account/pharmacy` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_pharmacy-375-claro.png` |
 | `/my-account/pharmacy-orders` | 375 | claro | PASS | PASS | PASS (<app-pharmacy-orders>) | PASS | PASS | `fotos/despues/my-account_pharmacy-orders-375-claro.png` |
 | `/my-account/promotions` | 375 | claro | PASS | PASS | PASS (<app-promotions>) | PASS | PASS | `fotos/despues/my-account_promotions-375-claro.png` |
@@ -39,10 +40,11 @@ Celdas: 136 · en rojo: 0
 | `/auth/register/imaging-center` | 375 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | PASS | `fotos/despues/register-imaging-center-375-claro.png` |
 | `/auth/register/pharmacy` | 375 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | PASS | `fotos/despues/register-pharmacy-375-claro.png` |
 | `/dashboard` | 768 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-768-claro.png` |
-| `/tutorials` | 768 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/tutorials-768-claro.png` |
+| `/tutorials` | 768 | claro | PASS | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-768-claro.png` |
 | `/messaging` | 768 | claro | PASS | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-768-claro.png` |
 | `/directories` | 768 | claro | PASS | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-768-claro.png` |
 | `/directory` | 768 | claro | PASS | PASS | PASS (<app-practitioners-directory>) | PASS | PASS | `fotos/despues/directory-768-claro.png` |
+| `/psychological-help` | 768 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/psychological-help-768-claro.png` |
 | `/laboratory-directory` | 768 | claro | PASS | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-768-claro.png` |
 | `/clinics-directory` | 768 | claro | PASS | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-768-claro.png` |
 | `/pharmacies-directory` | 768 | claro | PASS | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-768-claro.png` |
@@ -57,7 +59,7 @@ Celdas: 136 · en rojo: 0
 | `/my-account/questionnaires` | 768 | claro | PASS | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-768-claro.png` |
 | `/settings` | 768 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-768-claro.png` |
 | `/notification-center` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-768-claro.png` |
-| `/my-account/identity` | 768 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-768-claro.png` |
+| `/my-account/identity` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-768-claro.png` |
 | `/my-account/pharmacy` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_pharmacy-768-claro.png` |
 | `/my-account/pharmacy-orders` | 768 | claro | PASS | PASS | PASS (<app-pharmacy-orders>) | PASS | PASS | `fotos/despues/my-account_pharmacy-orders-768-claro.png` |
 | `/my-account/promotions` | 768 | claro | PASS | PASS | PASS (<app-promotions>) | PASS | PASS | `fotos/despues/my-account_promotions-768-claro.png` |
@@ -73,10 +75,11 @@ Celdas: 136 · en rojo: 0
 | `/auth/register/imaging-center` | 768 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | PASS | `fotos/despues/register-imaging-center-768-claro.png` |
 | `/auth/register/pharmacy` | 768 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | PASS | `fotos/despues/register-pharmacy-768-claro.png` |
 | `/dashboard` | 1440 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-1440-claro.png` |
-| `/tutorials` | 1440 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/tutorials-1440-claro.png` |
+| `/tutorials` | 1440 | claro | PASS | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-1440-claro.png` |
 | `/messaging` | 1440 | claro | PASS | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-1440-claro.png` |
 | `/directories` | 1440 | claro | PASS | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-1440-claro.png` |
 | `/directory` | 1440 | claro | PASS | PASS | PASS (<app-practitioners-directory>) | PASS | PASS | `fotos/despues/directory-1440-claro.png` |
+| `/psychological-help` | 1440 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/psychological-help-1440-claro.png` |
 | `/laboratory-directory` | 1440 | claro | PASS | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-1440-claro.png` |
 | `/clinics-directory` | 1440 | claro | PASS | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-1440-claro.png` |
 | `/pharmacies-directory` | 1440 | claro | PASS | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-1440-claro.png` |
@@ -91,7 +94,7 @@ Celdas: 136 · en rojo: 0
 | `/my-account/questionnaires` | 1440 | claro | PASS | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-1440-claro.png` |
 | `/settings` | 1440 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-1440-claro.png` |
 | `/notification-center` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-1440-claro.png` |
-| `/my-account/identity` | 1440 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-claro.png` |
+| `/my-account/identity` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-claro.png` |
 | `/my-account/pharmacy` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_pharmacy-1440-claro.png` |
 | `/my-account/pharmacy-orders` | 1440 | claro | PASS | PASS | PASS (<app-pharmacy-orders>) | PASS | PASS | `fotos/despues/my-account_pharmacy-orders-1440-claro.png` |
 | `/my-account/promotions` | 1440 | claro | PASS | PASS | PASS (<app-promotions>) | PASS | PASS | `fotos/despues/my-account_promotions-1440-claro.png` |
@@ -107,10 +110,11 @@ Celdas: 136 · en rojo: 0
 | `/auth/register/imaging-center` | 1440 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | PASS | `fotos/despues/register-imaging-center-1440-claro.png` |
 | `/auth/register/pharmacy` | 1440 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | PASS | `fotos/despues/register-pharmacy-1440-claro.png` |
 | `/dashboard` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-1440-oscuro.png` |
-| `/tutorials` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/tutorials-1440-oscuro.png` |
+| `/tutorials` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-1440-oscuro.png` |
 | `/messaging` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-1440-oscuro.png` |
 | `/directories` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-1440-oscuro.png` |
 | `/directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-practitioners-directory>) | PASS | PASS | `fotos/despues/directory-1440-oscuro.png` |
+| `/psychological-help` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/psychological-help-1440-oscuro.png` |
 | `/laboratory-directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-1440-oscuro.png` |
 | `/clinics-directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-1440-oscuro.png` |
 | `/pharmacies-directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-1440-oscuro.png` |
@@ -125,7 +129,7 @@ Celdas: 136 · en rojo: 0
 | `/my-account/questionnaires` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-1440-oscuro.png` |
 | `/settings` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-1440-oscuro.png` |
 | `/notification-center` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-1440-oscuro.png` |
-| `/my-account/identity` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-oscuro.png` |
+| `/my-account/identity` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-oscuro.png` |
 | `/my-account/pharmacy` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_pharmacy-1440-oscuro.png` |
 | `/my-account/pharmacy-orders` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-pharmacy-orders>) | PASS | PASS | `fotos/despues/my-account_pharmacy-orders-1440-oscuro.png` |
 | `/my-account/promotions` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-promotions>) | PASS | PASS | `fotos/despues/my-account_promotions-1440-oscuro.png` |

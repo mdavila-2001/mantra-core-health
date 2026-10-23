@@ -1,6 +1,6 @@
-# MATRIZ visual — carril 34 — despues — 2026-10-13T11:40:32.079Z
+# MATRIZ visual — carril 34 — despues — 2026-10-23T23:20:35.403Z
 
-Celdas: 140 · en rojo: 0
+Celdas: 144 · en rojo: 0
 
 | Ruta | Viewport | Tema | Fondo blanco | Centrado (≤2 px) | Ancho (≥85 %) | Sin scroll H | Consola | Foto |
 |---|---|---|---|---|---|---|---|---|
@@ -23,11 +23,12 @@ Celdas: 140 · en rojo: 0
 | `/my-services` | 375 | claro | PASS | PASS | PASS (<app-my-services>) | PASS | PASS | `fotos/despues/my-services-375-claro.png` |
 | `/my-quotations` | 375 | claro | PASS | PASS | PASS (<app-quotation-list>) | PASS | PASS | `fotos/despues/my-quotations-375-claro.png` |
 | `/questionnaires` | 375 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/questionnaires-375-claro.png` |
-| `/administration/accounting` | 375 | claro | PASS | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-375-claro.png` |
+| `/administration/medical-organization` | 375 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-375-claro.png` |
+| `/administration/accounting` | 375 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-375-claro.png` |
 | `/my-account` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-375-claro.png` |
 | `/settings` | 375 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-375-claro.png` |
 | `/notification-center` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-375-claro.png` |
-| `/my-account/identity` | 375 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-375-claro.png` |
+| `/my-account/identity` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-375-claro.png` |
 | `/my-account/invoices` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-375-claro.png` |
 | `/my-account/requests` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-375-claro.png` |
 | `/administration/my-practice` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_my-practice-375-claro.png` |
@@ -58,11 +59,12 @@ Celdas: 140 · en rojo: 0
 | `/my-services` | 768 | claro | PASS | PASS | PASS (<app-my-services>) | PASS | PASS | `fotos/despues/my-services-768-claro.png` |
 | `/my-quotations` | 768 | claro | PASS | PASS | PASS (<app-quotation-list>) | PASS | PASS | `fotos/despues/my-quotations-768-claro.png` |
 | `/questionnaires` | 768 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/questionnaires-768-claro.png` |
-| `/administration/accounting` | 768 | claro | PASS | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-768-claro.png` |
+| `/administration/medical-organization` | 768 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-768-claro.png` |
+| `/administration/accounting` | 768 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-768-claro.png` |
 | `/my-account` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-768-claro.png` |
 | `/settings` | 768 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-768-claro.png` |
 | `/notification-center` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-768-claro.png` |
-| `/my-account/identity` | 768 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-768-claro.png` |
+| `/my-account/identity` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-768-claro.png` |
 | `/my-account/invoices` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-768-claro.png` |
 | `/my-account/requests` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-768-claro.png` |
 | `/administration/my-practice` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_my-practice-768-claro.png` |
@@ -93,11 +95,12 @@ Celdas: 140 · en rojo: 0
 | `/my-services` | 1440 | claro | PASS | PASS | PASS (<app-my-services>) | PASS | PASS | `fotos/despues/my-services-1440-claro.png` |
 | `/my-quotations` | 1440 | claro | PASS | PASS | PASS (<app-quotation-list>) | PASS | PASS | `fotos/despues/my-quotations-1440-claro.png` |
 | `/questionnaires` | 1440 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/questionnaires-1440-claro.png` |
-| `/administration/accounting` | 1440 | claro | PASS | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-claro.png` |
+| `/administration/medical-organization` | 1440 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-1440-claro.png` |
+| `/administration/accounting` | 1440 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-claro.png` |
 | `/my-account` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-1440-claro.png` |
 | `/settings` | 1440 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-1440-claro.png` |
 | `/notification-center` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-1440-claro.png` |
-| `/my-account/identity` | 1440 | claro | PASS | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-claro.png` |
+| `/my-account/identity` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-claro.png` |
 | `/my-account/invoices` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-1440-claro.png` |
 | `/my-account/requests` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-1440-claro.png` |
 | `/administration/my-practice` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_my-practice-1440-claro.png` |
@@ -128,11 +131,12 @@ Celdas: 140 · en rojo: 0
 | `/my-services` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-my-services>) | PASS | PASS | `fotos/despues/my-services-1440-oscuro.png` |
 | `/my-quotations` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-quotation-list>) | PASS | PASS | `fotos/despues/my-quotations-1440-oscuro.png` |
 | `/questionnaires` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/questionnaires-1440-oscuro.png` |
-| `/administration/accounting` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-oscuro.png` |
+| `/administration/medical-organization` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-1440-oscuro.png` |
+| `/administration/accounting` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-oscuro.png` |
 | `/my-account` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-1440-oscuro.png` |
 | `/settings` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-1440-oscuro.png` |
 | `/notification-center` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-1440-oscuro.png` |
-| `/my-account/identity` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (4 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-oscuro.png` |
+| `/my-account/identity` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-oscuro.png` |
 | `/my-account/invoices` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-1440-oscuro.png` |
 | `/my-account/requests` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-1440-oscuro.png` |
 | `/administration/my-practice` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_my-practice-1440-oscuro.png` |
