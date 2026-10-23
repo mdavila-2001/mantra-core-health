@@ -531,13 +531,17 @@ describe('Resumen contable', () => {
         (t as HTMLElement).textContent?.trim() ?? '',
       );
 
-    it('son dos pestañas —Resumen y Registros— y abre en Resumen', () => {
+    // MD-06 (2026-10-23) agregó la tercera, «Pagos por sesión»: el menú del
+    // médico es una lista cerrada y la tabla del prestador vive acá.
+    it('son tres pestañas —Resumen, Registros y Pagos por sesión— y abre en Resumen', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
+      expect(rotulos(fixture)).toEqual(['Resumen', 'Registros', 'Pagos por sesión']);
+      // La pestaña cerrada no pide nada: la tabla se monta al abrirla.
+      http.expectNone((r) => r.url.endsWith('/billing/me/provider-payment-table'));
       expect(subrotulos(fixture)).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(texto).toContain('¿Cuánto hizo?');
@@ -546,6 +550,19 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
       const textoPendientes = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(textoPendientes).toContain('Lo que está pendiente');
+    });
+
+    it('«Pagos por sesión» pide la tabla del prestador recién al abrirla (MD-06)', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      fixture.componentInstance.tab.set(2);
+      fixture.detectChanges();
+      const req = http.expectOne((r) => r.url.endsWith('/billing/me/provider-payment-table'));
+      expect(req.request.method).toBe('GET');
+      req.flush({ items: [], nextCursor: null, totals: { sessions: 0, amountMinor: 0, paidMinor: 0, pendingMinor: 0 } });
     });
 
     it('divide el resumen en subpestañas: Movimientos, Pendientes y Patrimonio', () => {

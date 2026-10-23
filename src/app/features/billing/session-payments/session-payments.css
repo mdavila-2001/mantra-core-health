@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+.sesiones__paciente {
+  display: block;
+  font-weight: 600;
+  /* En 390 px el nombre ocupa varios renglones: se reparten parejos en vez de
+     dejar una inicial sola («Beatriz / Sintética / B»). */
+  text-wrap: balance;
+}
+
+.sesiones__monto {
+  font-variant-numeric: tabular-nums;
+  /* «Bs 150,00» es una sola cifra: en 390 px se partía en dos renglones. */
+  white-space: nowrap;
+}
+
+.sesiones__seguro,
+.sesiones__secundario {
+  display: block;
+}
+
+.sesiones__secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

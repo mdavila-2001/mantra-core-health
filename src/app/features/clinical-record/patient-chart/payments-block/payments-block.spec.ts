@@ -71,6 +71,12 @@ describe('PaymentsBlock', () => {
   });
 
   afterEach(() => {
+    // C-01: la caja también monta la revisión de comprobantes, que pide la
+    // tabla del prestador filtrada por la persona. Se cubre en su propio spec
+    // (`payment-proofs-review.spec.ts`); acá sólo se contesta vacía.
+    for (const req of http.match((r) => r.url.endsWith('/billing/me/provider-payment-table'))) {
+      req.flush({ items: [], nextCursor: null, totals: { sessions: 0, amountMinor: 0, paidMinor: 0, pendingMinor: 0 } });
+    }
     http.verify();
   });
 

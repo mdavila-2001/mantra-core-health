@@ -291,11 +291,14 @@ test.describe('@carril-1 @richard', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('@carril-2 @pablo', () => {
-  test('MD-06 la facturación tiene la tabla de pagos por sesión con su estado', async ({ page }) => {
+  // La tabla vive en «Contabilidad» del médico y no en `/billing`: el menú del
+  // médico es una lista cerrada del cliente (navigation.service.spec.ts, §4.H) y
+  // `/billing` es de la caja. `/billing` la ofrece además a los roles de caja.
+  test('MD-06 la contabilidad del médico tiene la tabla de pagos por sesión con su estado', async ({ page }) => {
     await entrarComo(page, 'medica');
-    await abrir(page, '/billing');
+    await abrir(page, '/administration/accounting');
     const pestana = page.getByRole('tab', { name: /pagos por sesión/i });
-    await expect(pestana, 'Falta la pestaña «Pagos por sesión» en /billing (MD-06, P-H2.S3)').toBeVisible();
+    await expect(pestana, 'Falta la pestaña «Pagos por sesión» en Contabilidad (MD-06, P-H2.S3)').toBeVisible();
     await pestana.click();
     const tabla = principal(page).getByRole('table');
     await expect(tabla).toBeVisible();

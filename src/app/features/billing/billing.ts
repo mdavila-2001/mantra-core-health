@@ -57,6 +57,9 @@ import {
 import { SIMULATED_AVAILABLE_INVOICING } from './invoicing-availability';
 import { amountLiteral } from './amount-in-words';
 import { PaymentsPlan } from './payment-plan/payment-plan';
+import { SessionPayments } from './session-payments/session-payments';
+import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { downloadGraphicRepresentation, downloadXml } from './graphic-representation';
 
 type Operacion = 'pago' | 'factura' | 'anulacion' | 'reversion' | 'correo' | 'pdf';
@@ -93,7 +96,7 @@ function centavos(importe: string): number {
  */
 @Component({
   selector: 'app-billing',
-  imports: [PaginatedForm, CustomField, ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PaymentsPlan, Select, ViewStateHost],
+  imports: [PaginatedForm, CustomField, ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PaymentsPlan, Select, SessionPayments, Tab, Tabs, ViewStateHost],
   templateUrl: './billing.html',
   styleUrl: './billing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -114,6 +117,9 @@ export class Billing {
   private abiertoDesde: string | null = null;
 
   readonly disponible = inject(SIMULATED_AVAILABLE_INVOICING)();
+
+  /** Pestaña visible: 0 = cobros y facturas, 1 = pagos por sesión (MD-06). */
+  protected readonly pestana = signal(0);
 
   readonly estado = signal<ViewState<DatosDeFacturacion>>(loading());
   readonly datos = computed(() => {

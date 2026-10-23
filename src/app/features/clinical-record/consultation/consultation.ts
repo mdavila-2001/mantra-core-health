@@ -69,6 +69,9 @@ import {
 import { PaymentsBlock } from '../patient-chart/payments-block/payments-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
 import { InformedConsentBlock } from './informed-consent-block/informed-consent-block';
+import { HttpErrorResponse } from '@angular/common/http';
+import { readApiError } from '../../../core/http/api-error';
+import { formatMinor } from '../../../core/data-access/billing/payment-proofs.types';
 import {
   QUOTATION_NEW_ROUTE,
   QUOTATION_PATIENT_QUERY_PARAM,
@@ -717,21 +720,70 @@ export class Consultation {
       return;
     }
 
+    this.enviarCierre(encuentro);
+  }
+
+  /**
+   * Manda el cierre. C-01 (MD-06): sin pago confirmado la API responde 422
+   * `PAYMENT_REQUIRED`; la pantalla lo explica y ofrece la única salida, la
+   * excepción con motivo que queda auditada. Nunca se cierra en silencio.
+   */
+  private enviarCierre(encuentro: EncuentroEnCurso, sinPago?: { reason: string }): void {
     this.cerrando.set(encuentro.id);
     this.registro.set(loading());
 
-    this.clinical.closeEncounter(encuentro.id).subscribe({
+    this.clinical.closeEncounter(encuentro.id, undefined, sinPago).subscribe({
       next: () => {
         this.cerrando.set(null);
         this.registro.set(ready(null));
-        this.toasts.success('Queda registrado con su hora de fin.', 'Encuentro cerrado');
+        this.toasts.success(
+          sinPago === undefined
+            ? 'Queda registrado con su hora de fin.'
+            : 'Se cerró sin pago confirmado; la excepción quedó registrada con su motivo.',
+          'Encuentro cerrado',
+        );
         this.cargar();
       },
       error: (error: unknown) => {
         this.cerrando.set(null);
+        const cuerpo = error instanceof HttpErrorResponse ? readApiError(error) : null;
+        if (sinPago === undefined && cuerpo?.details?.['reason'] === 'PAYMENT_REQUIRED') {
+          this.registro.set(ready(null));
+          void this.ofrecerCierreSinPago(encuentro, cuerpo.details);
+          return;
+        }
         this.registro.set(errorToViewState<null>(error));
       },
     });
+  }
+
+  private async ofrecerCierreSinPago(
+    encuentro: EncuentroEnCurso,
+    detalles: Record<string, unknown>,
+  ): Promise<void> {
+    const monto =
+      typeof detalles['amountMinor'] === 'number'
+        ? formatMinor(detalles['amountMinor'], String(detalles['currency'] ?? 'BOB'))
+        : 'la consulta';
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'La consulta no tiene el pago confirmado',
+        message: `Falta confirmar el pago de ${monto}. Revise el comprobante del paciente en «Pagos» y acéptelo. Si de todos modos tiene que cerrar, indique el motivo: la excepción queda registrada.`,
+        confirmLabel: 'Cerrar sin pago',
+        destructive: true,
+      },
+      {
+        label: 'Motivo para cerrar sin pago',
+        hint: 'Por ejemplo: «El paciente paga en la próxima sesión».',
+        minLength: 5,
+        maxLength: 500,
+      },
+    );
+    if (motivo === null) {
+      this.toasts.info('El encuentro sigue en curso hasta que se confirme el pago.', 'Pago pendiente');
+      return;
+    }
+    this.enviarCierre(encuentro, { reason: motivo });
   }
 
   /** Descarga la receta en PDF; sin emitir, se declara copia de trabajo. */

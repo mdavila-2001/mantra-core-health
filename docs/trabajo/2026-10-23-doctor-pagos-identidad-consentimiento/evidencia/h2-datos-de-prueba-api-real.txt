@@ -1,0 +1,15 @@
+$ E2E_API_BASE_URL=http://127.0.0.1:3005 node scripts/e2e-sembrar-api-real.mjs --etiqueta carril2 --salida <scratchpad>/e2e-real.env
+Etiqueta: carril2 · práctica 56516c10-2448-44d6-9671-22d20095ac74
+1 · 163acddc-… · QR pendiente
+2 · e818aeed-… · efectivo aceptado y consulta cerrada
+3 · bf6df4c9-… · rechazado con motivo
+4 · b2411050-… · cerrar sin pago → 422 PAYMENT_REQUIRED (esperado)
+Tabla del prestador: 4 sesiones · por estado {"PENDING":3,"PAID":1}
+exit=0
+
+$ (segunda corrida, misma etiqueta)
+Escenario ya sembrado: no se crearon consultas nuevas.
+Tabla del prestador: 4 sesiones · por estado {"PENDING":3,"PAID":1}
+exit=0
+
+Datos: sintéticos y declarados (nombres «Sintética», correos @alovida.test, CI PW-CARRIL2-*). Credenciales sólo en el scratchpad.

@@ -8,6 +8,12 @@
   </span>
 </p>
 
+<!-- Dos lecturas de la misma caja (MD-06): los cobros y sus facturas, y la
+     tabla de pagos por sesión del prestador. La segunda lee la API real
+     (`/billing/me/provider-payment-table`) y no depende de la facturación
+     simulada, por eso las pestañas envuelven también el aviso de «no conectada». -->
+<app-tabs [(selectedIndex)]="pestana" data-testid="facturacion-pestanas">
+<app-tab label="Cobros y facturas">
 @if (!disponible) {
   <app-card>
     <p class="vacio-honesto" data-testid="facturacion-no-conectada">
@@ -338,3 +344,12 @@
     }
   </app-view-state-host>
 }
+</app-tab>
+<app-tab label="Pagos por sesión">
+  <!-- Lo proyectado en una pestaña se instancia aunque esté oculta: sin este
+       @if, la tabla pediría sus datos al abrir «Cobros y facturas». -->
+  @if (pestana() === 1) {
+    <app-session-payments />
+  }
+</app-tab>
+</app-tabs>

@@ -4,6 +4,11 @@
      `app-view-state-host` por lo mismo que los demás bloques de la ficha —el
      anfitrión resuelve los nueve estados de una lectura que ocupa la pantalla
      entera, y esto vive dentro de un modal—, así que cada estado se dice acá. -->
+<!-- C-01: los comprobantes del paciente, para aceptarlos o rechazarlos. Va
+     antes que los cobros y fuera de la rama de la facturación simulada: la
+     revisión es de la API real y decide si la consulta se puede cerrar. -->
+<app-payment-proofs-review [patientProfileId]="patientProfileId()" />
+
 @if (facturacionSimulada) {
   <app-patient-charges [patientProfileId]="patientProfileId()" />
 } @else {

@@ -1,0 +1,5 @@
+$ E2E_MODE=real E2E_BASE_URL=http://127.0.0.1:4201 yarn playwright test playwright/c01-aceptar-comprobante.spec.ts --workers=1   (datos: --etiqueta pablomut5, API real, sin mocks)
+[1/3] [chromium] › playwright/c01-aceptar-comprobante.spec.ts:107:5 › PA-04 · el médico rechaza con motivo y el motivo queda guardado tras recargar
+[2/3] [chromium] › playwright/c01-aceptar-comprobante.spec.ts:145:5 › PA-04 · el médico acepta el comprobante y el cobro queda pagado tras recargar
+[3/3] [chromium] › playwright/c01-aceptar-comprobante.spec.ts:189:5 › MD-06 · cerrar sin pago confirmado avisa y ofrece la excepción con motivo; cancelar deja la consulta en curso
+  3 passed (17.9s)

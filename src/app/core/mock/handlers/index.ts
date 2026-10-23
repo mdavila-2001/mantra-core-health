@@ -14,6 +14,7 @@ import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
+import { registrarComprobantesDePago } from './payment-proofs.handlers';
 import { registrarContabilidadSimple } from './simple-accounting.handlers';
 import { registrarIdentidad } from './identity.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
@@ -73,6 +74,8 @@ export function crearRouterSimulado(): MockRouter {
   // FACT-SIAT-MOCK · `/billing/simulated/*`, sin colisión con
   // `/billing/service-catalog`, que es de `registrarPracticas`.
   registrarFacturacionSimulada(router);
+  // C-01 · comprobantes de pago del paciente (mismas rutas que la API real).
+  registrarComprobantesDePago(router);
   registrarContabilidadSimple(router);
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);

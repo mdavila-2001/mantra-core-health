@@ -439,4 +439,15 @@
       </div>
     }
   </app-tab>
+
+  <!-- MD-06 / Q-P3 (2026-10-23): la tabla de pagos por sesión, acá porque el
+       menú del médico es una lista cerrada del cliente y «Contabilidad» ya está
+       en ella. La API acota a sus consultas. -->
+  <app-tab label="Pagos por sesión">
+    @if (tab() === 2) {
+      <div class="pestana">
+        <app-session-payments />
+      </div>
+    }
+  </app-tab>
 </app-tabs>

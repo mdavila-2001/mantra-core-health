@@ -251,11 +251,20 @@ export class ClinicalClient {
   closeEncounter(
     encounterId: string,
     expectedRowVersion?: number,
+    sinPago?: { readonly reason: string },
   ): Observable<EncounterRegistration> {
+    // C-01: sin pago confirmado la API responde 422 `PAYMENT_REQUIRED`. La
+    // única salida es la excepción explícita, con motivo y auditada.
+    const body = {
+      ...(expectedRowVersion === undefined ? {} : { expectedRowVersion }),
+      ...(sinPago === undefined
+        ? {}
+        : { closeWithoutPayment: true, closeWithoutPaymentReason: sinPago.reason }),
+    };
     return this.http
       .post<WireEncounterRegistration>(
         this.url(`/clinical/encounters/${encodeURIComponent(encounterId)}/close`),
-        expectedRowVersion === undefined ? {} : { expectedRowVersion },
+        body,
       )
       .pipe(map(toEncounterRegistration));
   }

@@ -1,0 +1,140 @@
+<section class="comprobantes" aria-labelledby="comprobantes-titulo" data-testid="comprobantes-de-pago">
+  <h3 id="comprobantes-titulo" class="comprobantes__titulo">Comprobantes del paciente</h3>
+
+  @switch (estado().status) {
+    @case ('loading') {
+      <p class="comprobantes__secundario" data-testid="comprobantes-cargando">Buscando comprobantes…</p>
+    }
+    @case ('forbidden') {
+      <app-alert tone="info" title="No puede revisar comprobantes">
+        Su rol no incluye la revisión de pagos. El resto de la consulta sigue disponible.
+      </app-alert>
+    }
+    @case ('ready') {
+      @if (conComprobante().length === 0) {
+        <p class="comprobantes__vacio" data-testid="comprobantes-vacio">
+          El paciente todavía no subió comprobantes. Cuando pague por QR o declare efectivo, el comprobante
+          aparece acá para aceptarlo o rechazarlo.
+        </p>
+      } @else {
+        <ul class="comprobantes__lista">
+          @for (fila of conComprobante(); track fila.chargeId) {
+            @if (fila.proof; as comprobante) {
+              <li class="comprobante" data-testid="comprobante">
+                @if (miniatura(comprobante); as src) {
+                  <!-- La miniatura abre la captura en grande: hay que poder leer
+                       el monto y la referencia antes de aceptar. -->
+                  <button
+                    type="button"
+                    class="comprobante__ampliar"
+                    data-testid="comprobante-ampliar"
+                    [attr.aria-label]="'Ver en grande el comprobante de ' + monto(comprobante.amountMinor, comprobante.currency)"
+                    (click)="ampliado.set(comprobante)"
+                  >
+                    <img
+                      class="comprobante__miniatura"
+                      [src]="src"
+                      width="96"
+                      height="96"
+                      alt="Captura del comprobante de pago de la consulta del {{ fila.startAt | date: 'd MMM y' }}"
+                    />
+                  </button>
+                } @else {
+                  <span class="comprobante__miniatura comprobante__miniatura--vacia" aria-hidden="true">
+                    {{ comprobante.method === 'CASH' ? 'Efectivo' : 'Sin imagen' }}
+                  </span>
+                }
+                <div class="comprobante__datos">
+                  <p class="comprobante__monto">{{ monto(comprobante.amountMinor, comprobante.currency) }}</p>
+                  <p class="comprobantes__secundario">
+                    {{ etiquetaDeMetodo[comprobante.method] }} · subido el
+                    <span class="comprobantes__fecha">{{ comprobante.createdAt | date: 'd MMM y, HH:mm' }}</span>
+                  </p>
+                  <p class="comprobantes__secundario">
+                    Consulta del {{ fila.startAt | date: 'd MMM y' }} · Cobro: {{ etiquetaDeCobro[fila.status] }}
+                  </p>
+                  @if (comprobante.rejectionReason) {
+                    <p class="comprobantes__secundario">Motivo: {{ comprobante.rejectionReason }}</p>
+                  }
+                </div>
+                <div class="comprobante__estado">
+                  <app-badge
+                    [variant]="
+                      comprobante.status === 'ACCEPTED'
+                        ? 'success'
+                        : comprobante.status === 'REJECTED'
+                          ? 'error'
+                          : 'warning'
+                    "
+                    [value]="etiquetaDeComprobante[comprobante.status]"
+                  />
+                  @if (comprobante.status === 'PENDING_REVIEW') {
+                    <div class="comprobante__acciones">
+                      <button
+                        app-button
+                        variant="primary"
+                        size="sm"
+                        type="button"
+                        data-testid="comprobante-aceptar"
+                        [disabled]="revisando() !== null"
+                        (clicked)="aceptar(comprobante)"
+                      >
+                        Aceptar
+                      </button>
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        data-testid="comprobante-rechazar"
+                        [disabled]="revisando() !== null"
+                        (clicked)="rechazar(comprobante)"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  }
+                </div>
+              </li>
+            }
+          }
+        </ul>
+      }
+    }
+    @case ('offline') {
+      <app-alert tone="warning" title="Sin conexión" data-testid="comprobantes-sin-conexion">
+        <p class="comprobantes__alerta">No pudimos leer los comprobantes de esta persona. Revise la conexión y reintente.</p>
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" (clicked)="recargar()">Reintentar</button>
+        </div>
+      </app-alert>
+    }
+    @default {
+      <!-- S9: el error dice qué pasó y lleva el ID de petición para soporte. -->
+      <app-alert tone="error" title="No pudimos leer los comprobantes" data-testid="comprobantes-error">
+        <p class="comprobantes__alerta">
+          La revisión de pagos no está disponible ahora; el resto de la consulta sigue funcionando.
+        </p>
+        @if (idDePeticion(); as id) {
+          <p class="comprobantes__alerta comprobantes__secundario">ID de petición: <code>{{ id }}</code></p>
+        }
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" type="button" (clicked)="recargar()">Reintentar</button>
+        </div>
+      </app-alert>
+    }
+  }
+</section>
+
+@if (ampliado(); as comprobante) {
+  <app-content-dialog
+    heading="Comprobante de pago"
+    [description]="etiquetaDeMetodo[comprobante.method] + ' · ' + monto(comprobante.amountMinor, comprobante.currency)"
+    size="lg"
+    (closed)="ampliado.set(null)"
+  >
+    @if (miniatura(comprobante); as src) {
+      <img class="comprobante__grande" [src]="src" alt="Captura del comprobante de pago, en grande" />
+    }
+  </app-content-dialog>
+}

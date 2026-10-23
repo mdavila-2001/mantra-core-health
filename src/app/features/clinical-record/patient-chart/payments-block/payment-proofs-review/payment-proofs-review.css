@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.comprobantes {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.comprobantes__titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.comprobantes__secundario,
+.comprobantes__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.comprobantes__lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comprobante {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.comprobante__miniatura {
+  display: grid;
+  place-items: center;
+  inline-size: 96px;
+  block-size: 96px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+
+.comprobante__datos {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.comprobante__monto {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.comprobante__estado {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: end;
+}
+
+.comprobante__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 480px) {
+  .comprobante {
+    grid-template-columns: auto 1fr;
+  }
+
+  .comprobante__estado {
+    grid-column: 1 / -1;
+    justify-items: start;
+  }
+}
+
+.comprobante__ampliar {
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: var(--r-sm);
+  cursor: zoom-in;
+}
+
+.comprobante__ampliar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.comprobante__grande {
+  display: block;
+  /* Ocupa el diálogo: una captura chica se agranda en vez de quedar en un punto. */
+  inline-size: 100%;
+  max-inline-size: 100%;
+  max-block-size: 70vh;
+  margin-inline: auto;
+  object-fit: contain;
+}
+
+.comprobantes__fecha {
+  white-space: nowrap;
+}
+
+.comprobantes__alerta {
+  margin: 0;
+}

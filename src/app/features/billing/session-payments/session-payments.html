@@ -1,0 +1,53 @@
+<section class="sesiones" aria-labelledby="sesiones-titulo" data-testid="pagos-por-sesion">
+  <h2 id="sesiones-titulo" class="sr-only">Pagos por sesión</h2>
+  <app-data-table
+    [state]="estado()"
+    [columns]="columnas()"
+    [trackBy]="porFila"
+    [cursor]="cursor()"
+    [pageSummary]="resumen()"
+    caption="Pagos por sesión: monto, cobertura del seguro, estado del cobro y comprobante de cada consulta"
+    (cursorChanged)="mover($event)"
+    (retry)="cargar()"
+    (refresh)="cargar()"
+  />
+</section>
+
+<ng-template #pacienteCell let-fila>
+  <span class="sesiones__paciente">{{ fila.patientName }}</span>
+</ng-template>
+
+<ng-template #fechaCell let-fila>
+  <time [attr.datetime]="fila.startAt">{{ fila.startAt | date: 'd MMM y, HH:mm' }}</time>
+</ng-template>
+
+<ng-template #montoCell let-fila>
+  <span class="sesiones__monto">{{ monto(fila.amountMinor, fila.currency) }}</span>
+</ng-template>
+
+<ng-template #seguroCell let-fila>
+  <span class="sesiones__seguro">
+    {{ seguro(fila) }}
+    @if (fila.insurerAmountMinor > 0) {
+      <span class="sesiones__secundario">· cubre {{ monto(fila.insurerAmountMinor, fila.currency) }}</span>
+    }
+  </span>
+  <span class="sesiones__secundario">Paciente paga {{ monto(fila.patientAmountMinor, fila.currency) }}</span>
+</ng-template>
+
+<ng-template #estadoCell let-fila>
+  <!-- El estado se dice con texto: el color sólo acompaña. -->
+  <app-badge [variant]="variante(fila)" [value]="estadoDe(fila)" />
+  @if (fila.invoiced) {
+    <span class="sesiones__secundario">Facturado</span>
+  }
+</ng-template>
+
+<ng-template #comprobanteCell let-fila>
+  @if (comprobanteDe(fila); as comprobante) {
+    <span>{{ comprobante.metodo }}</span>
+    <span class="sesiones__secundario">{{ comprobante.estado }}</span>
+  } @else {
+    <span class="sesiones__secundario">Sin comprobante</span>
+  }
+</ng-template>

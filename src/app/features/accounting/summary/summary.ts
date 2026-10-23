@@ -53,6 +53,7 @@ import {
   weekWindows,
   type Comparison,
 } from './windows';
+import { SessionPayments } from '../../billing/session-payments/session-payments';
 
 /* ============================================================================
     Cómo se llama cada cuenta cuando la lee un médico.
@@ -224,6 +225,7 @@ interface Dinero {
     Tab,
     Tabs,
     ViewStateHost,
+    SessionPayments,
   ],
   templateUrl: './summary.html',
   styleUrl: './summary.css',
