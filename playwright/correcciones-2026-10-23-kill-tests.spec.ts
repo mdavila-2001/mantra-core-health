@@ -153,7 +153,9 @@ test.describe('@carril-1 @leo', () => {
     await expect(page.getByTestId('header-promociones')).toHaveCount(0);
     await abrir(page, '/my-account/promotions');
     await expect(page).toHaveURL(/\/my-account\/pharmacy\/cart/);
-    await page.getByRole('tab', { name: /promociones/i }).click();
+    const promociones = page.getByRole('tab', { name: /promociones/i });
+    await expect(promociones, 'El carrito no tiene la pestaña «Promociones» (PA-03.d, L-H3.S4)').toBeVisible();
+    await promociones.click();
     await expect(page.getByRole('tabpanel')).toBeVisible();
     await expect(page.getByTestId('promociones-mapa')).toHaveCount(0);
     await expect(page.locator('app-department-map')).toHaveCount(0);
@@ -183,9 +185,10 @@ test.describe('@carril-1 @leo', () => {
   test('PA-09.a la orientación del triage no ofrece «Recomendar medicamentos»', async ({ page }) => {
     await entrarComo(page, 'paciente');
     await abrir(page, '/dashboard');
-    await page.getByTestId('sintomas-escribir').click();
-    await page.getByTestId('sintomas-observacion').fill('me duele la cabeza desde hace dos días');
-    await page.getByTestId('sintomas-guardar-observacion').click();
+    const texto = page.getByTestId('sintomas-texto').locator('textarea');
+    await expect(texto, 'El inicio del paciente no muestra el triage con su área de texto').toBeVisible();
+    await texto.fill('me duele la cabeza desde hace dos días');
+    await expect(page.getByTestId('sintomas-orientacion-header'), 'El triage no produjo orientación para el texto').toBeVisible();
     await expect(page.getByTestId('sintomas-tab-especialidades')).toBeVisible();
     await expect(page.getByTestId('sintomas-boton-recomendar-medicamentos')).toHaveCount(0);
     await expect(page.getByTestId('sintomas-medicamentos-seccion')).toHaveCount(0);
@@ -291,7 +294,9 @@ test.describe('@carril-2 @pablo', () => {
   test('MD-06 la facturación tiene la tabla de pagos por sesión con su estado', async ({ page }) => {
     await entrarComo(page, 'medica');
     await abrir(page, '/billing');
-    await page.getByRole('tab', { name: /pagos por sesión/i }).click();
+    const pestana = page.getByRole('tab', { name: /pagos por sesión/i });
+    await expect(pestana, 'Falta la pestaña «Pagos por sesión» en /billing (MD-06, P-H2.S3)').toBeVisible();
+    await pestana.click();
     const tabla = principal(page).getByRole('table');
     await expect(tabla).toBeVisible();
     for (const columna of [/paciente/i, /monto/i, /seguro/i, /estado/i, /comprobante/i]) {
@@ -301,8 +306,13 @@ test.describe('@carril-2 @pablo', () => {
 
   test('MD-01 el alta del médico avisa si el documento ya está registrado por otro médico', async ({ page }) => {
     await abrir(page, '/auth/register/practitioner');
-    const documento = page.getByLabel(/número de documento|cédula|carnet/i).first();
-    await expect(documento).toBeVisible();
+    const documento = page.getByLabel(/cédula de identidad|número de documento/i).first();
+    for (let paso = 0; paso < 6 && (await documento.count()) === 0; paso += 1) {
+      const siguiente = page.getByRole('button', { name: /siguiente|continuar/i }).first();
+      if ((await siguiente.count()) === 0) break;
+      await siguiente.click();
+    }
+    await expect(documento, 'No se encontró el campo «Cédula de identidad» en el alta del médico').toBeVisible();
     await documento.fill('1234567');
     await documento.blur();
     await expect(page.getByTestId('documento-disponibilidad'), 'Falta el validador de disponibilidad del documento (MD-01, P-H3)').toBeVisible();
@@ -345,8 +355,12 @@ test.describe('@carril-2 @pablo', () => {
     await expect(primera, 'No hay encuestas: crear una antes de correr esta prueba').toBeVisible();
     await primera.click();
     await esperarAplicacionLista(page);
-    await page.getByTestId('modo-medico-marketing').getByRole('radio', { name: /marketing/i }).check();
-    await page.getByRole('button', { name: /agregar pregunta|nueva pregunta/i }).click();
+    const toggle = page.getByTestId('modo-medico-marketing');
+    await expect(toggle, 'Falta el toggle Médico – Marketing en el editor de encuestas (MD-05.c)').toBeVisible();
+    await toggle.getByRole('radio', { name: /marketing/i }).check();
+    const agregar = page.getByRole('button', { name: /agregar pregunta|nueva pregunta/i });
+    await expect(agregar).toBeVisible();
+    await agregar.click();
     await expect(page.getByTestId('tipo-pregunta-likert')).toBeVisible();
   });
 });
@@ -394,7 +408,9 @@ test.describe('@carril-2 @justin', () => {
     await cupo.click();
     await esperarAplicacionLista(page);
     await expect(page).toHaveURL(/\/schedule\/book\//);
-    await page.getByRole('button', { name: /confirmar/i }).click();
+    const confirmar = page.getByRole('button', { name: /confirmar/i });
+    await expect(confirmar).toBeVisible();
+    await confirmar.click();
     await expect(principal(page).getByText(/se avisó al paciente/i)).toBeVisible();
     expect(rechazos, 'La API rechazó al médico con 403 (AG-03)').toEqual([]);
   });
@@ -412,7 +428,9 @@ test.describe('@carril-2 @justin', () => {
   test('MD-07 un término del atlas muestra artículo con fuente e imagen con licencia', async ({ page }) => {
     await entrarComo(page, 'paciente');
     await abrir(page, '/glossary/hipertension-arterial');
-    await page.getByRole('tab', { name: /artículo/i }).click();
+    const articulo = page.getByRole('tab', { name: /artículo/i });
+    await expect(articulo, 'El término no tiene pestaña «Artículo»: el atlas no llegó a este término (MD-07)').toBeVisible();
+    await articulo.click();
     await expect(principal(page).getByText(/fuente:/i).first()).toBeVisible();
     const imagen = principal(page).getByRole('img').first();
     await expect(imagen).toBeVisible();
