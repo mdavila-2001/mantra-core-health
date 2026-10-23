@@ -177,7 +177,8 @@ describe('DirectoriesOverview', () => {
       fixture.detectChanges();
 
       expect(root().querySelector('.directories__grid')).toBeNull();
-      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      // Sin bandas (marketplace): el directorio se nombra en la barra de resultados.
+      const rotulos = [...root().querySelectorAll('.directorio__ambito')];
       expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
         expect.stringContaining('Directorio de farmacias'),
       ]);
@@ -224,7 +225,8 @@ describe('DirectoriesOverview', () => {
       http.verify();
       fixture.detectChanges();
 
-      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      // Sin bandas (marketplace): el directorio se nombra en la barra de resultados.
+      const rotulos = [...root().querySelectorAll('.directorio__ambito')];
       expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
         expect.stringContaining('Directorio de aseguradoras'),
       ]);

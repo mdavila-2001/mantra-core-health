@@ -162,12 +162,17 @@ describe('ClinicsDirectory · los chips de ciudad cuelgan del departamento', () 
    * dejaría pasar que el organismo los pinte igual.
    */
   function chipsEnPantalla(): readonly string[] {
+    // Desde el 23/10/2026 los filtros son la columna de facetas del
+    // marketplace: cada grupo es un `role="group"` rotulado por su título.
     const pantalla = fixture.nativeElement as HTMLElement;
-    const renglon = pantalla.querySelector<HTMLElement>('[role="group"][aria-label="Ciudad"]');
-    return renglon === null
+    const renglon = [...pantalla.querySelectorAll<HTMLElement>('[role="group"]')].find(
+      (grupo) =>
+        grupo.querySelector('.filter-bar__faceta-rotulo')?.textContent?.trim() === 'Ciudad',
+    );
+    return renglon === undefined
       ? []
-      : [...renglon.querySelectorAll<HTMLElement>('app-chip')].map(
-          (chip) => chip.textContent?.trim() ?? '',
+      : [...renglon.querySelectorAll<HTMLElement>('.filter-bar__faceta-texto')].map(
+          (opcion) => opcion.textContent?.trim() ?? '',
         );
   }
 
@@ -177,7 +182,8 @@ describe('ClinicsDirectory · los chips de ciudad cuelgan del departamento', () 
     // El mapa es el corte de arriba: ofrecer las dos escalas a la vez es
     // ofrecer dos preguntas para una sola decisión.
     expect(chipsDeCiudad()).toEqual([]);
-    expect(filtros().map((filtro) => filtro.key)).toEqual(['verificado']);
+    // El departamento ocupa el lugar del mapa (propietario, 23/10/2026).
+    expect(filtros().map((filtro) => filtro.key)).toEqual(['departamento', 'verificado']);
     expect(chipsEnPantalla()).toEqual([]);
   });
 
@@ -210,7 +216,7 @@ describe('ClinicsDirectory · los chips de ciudad cuelgan del departamento', () 
 
     // Un chip único no acota nada: sería un botón que no hace nada con la
     // misma pinta que los que sí.
-    expect(filtros().map((filtro) => filtro.key)).toEqual(['verificado']);
+    expect(filtros().map((filtro) => filtro.key)).toEqual(['departamento', 'verificado']);
   });
 
   it('cambiar de departamento suelta la ciudad del anterior', () => {
