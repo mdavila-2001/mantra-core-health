@@ -379,13 +379,13 @@ describe('PharmacyDetail', () => {
     ]);
   });
 
-  it('dibuja la farmacia en el mapa, con el nombre de su ficha', () => {
+  // El propietario pidió sacar los mapas de todo el directorio (23/10/2026):
+  // la ficha dice la dirección escrita y nada más.
+  it('no dibuja mapa: la dirección va escrita', () => {
     montar();
     responder();
 
-    const mapa = fixture.nativeElement.querySelector('app-map .mapa') as HTMLElement | null;
-    expect(mapa).not.toBeNull();
-    expect(mapa?.getAttribute('aria-label')).toContain('Farmacia Vida');
+    expect(fixture.nativeElement.querySelector('app-map')).toBeNull();
   });
 
   it('el buscador acota por genérico, marca, presentación y grupo', () => {

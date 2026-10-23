@@ -129,17 +129,54 @@ describe('DirectoryPage · tope progresivo', () => {
     expect(botonMas(f)).toBeNull();
   });
 
-  it('un grupo que quedó entero fuera del tope no dibuja su encabezado', () => {
+  // Marketplace (propietario, 23/10/2026): los grupos ya no cortan la grilla
+  // en bandas; son una faceta de la columna con su cantidad.
+  it('los grupos no cortan la grilla: son una faceta que acota', () => {
     const f = montar(40, 20);
-    const rotulos = Array.from<HTMLElement>(
-      f.nativeElement.querySelectorAll('.directorio__rotulo'),
-    );
+    expect(f.nativeElement.querySelector('.directorio__rotulo')).toBeNull();
+    expect(f.nativeElement.querySelectorAll('ul.directorio__grilla').length).toBe(1);
 
-    expect(rotulos.map((r) => r.textContent!.replace(/\s+/g, ' ').trim())).toEqual([
+    const opciones = Array.from<HTMLButtonElement>(
+      f.nativeElement.querySelectorAll('.mercado__opcion'),
+    );
+    expect(
+      opciones.map((o) =>
+        Array.from(o.querySelectorAll('span'))
+          .map((span) => span.textContent!.trim())
+          .join(' '),
+      ),
+    ).toEqual([
+      'Ver todo',
       'Grupo 0 20',
       'Grupo 20 20',
     ]);
-    expect(tarjetas(f)).toBe(24);
+
+    opciones[2]!.click();
+    f.detectChanges();
+    expect(tarjetas(f)).toBe(20);
+    expect(f.nativeElement.querySelector('.directorio__cuenta').textContent).toContain(
+      '20 médicos',
+    );
+  });
+
+  it('ordena por nombre al elegirlo en «Ordenar por»', () => {
+    const f = montar(3);
+    const select = f.nativeElement.querySelector('.mercado__orden select') as HTMLSelectElement;
+    select.value = 'nombre-desc';
+    select.dispatchEvent(new Event('change'));
+    f.detectChanges();
+
+    const titulos = Array.from<HTMLElement>(
+      f.nativeElement.querySelectorAll('.tarjeta-resultado__titulo a'),
+    ).map((a) => a.textContent!.trim());
+    expect(titulos).toEqual(['Resultado 2', 'Resultado 1', 'Resultado 0']);
+  });
+
+  it('dice el rango cuando no entran todas: «1–24 de 804»', () => {
+    const f = montar(804);
+    expect(f.nativeElement.querySelector('.directorio__cuenta').textContent).toContain(
+      '1–24 de 804 médicos',
+    );
   });
 
   it('un filtro nuevo vuelve a la primera tanda', () => {
