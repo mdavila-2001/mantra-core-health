@@ -30,8 +30,12 @@
   <app-tab label="Resumen">
     @if (tab() === 0) {
       <div class="pestana">
-        @if (chosenPractice(); as practica) {
-          <app-simple-accounting class="contabilidad-simple" parte="numeros" [practiceId]="practica" />
+        <!-- La contabilidad simple sólo existe en la maqueta: contra la API real
+             su lectura da 404 y el recuadro decía «No encontramos lo que busca». -->
+        @if (simpleAccountingAvailable) {
+          @if (chosenPractice(); as practica) {
+            <app-simple-accounting class="contabilidad-simple" parte="numeros" [practiceId]="practica" />
+          }
         }
 
         <app-view-state-host [state]="dineroStatus()" (retry)="recargar()" (refresh)="recargar()">
@@ -433,8 +437,14 @@
   <app-tab label="Registros">
     @if (tab() === 1) {
       <div class="pestana">
-        @if (chosenPractice(); as practica) {
-          <app-simple-accounting class="contabilidad-simple" parte="registros" [practiceId]="practica" />
+        @if (!simpleAccountingAvailable) {
+          <app-alert tone="info" data-testid="simple-accounting-unavailable">
+            <p>{{ simpleAccountingUnavailable }}</p>
+          </app-alert>
+        } @else {
+          @if (chosenPractice(); as practica) {
+            <app-simple-accounting class="contabilidad-simple" parte="registros" [practiceId]="practica" />
+          }
         }
       </div>
     }
