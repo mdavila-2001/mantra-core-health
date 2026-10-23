@@ -189,4 +189,37 @@ describe('DirectoryPage · tope progresivo', () => {
     f.detectChanges();
     expect(tarjetas(f)).toBe(24);
   });
+
+  // Con reseñas en las tarjetas, el directorio ofrece ordenar por ellas.
+  it('«Mejor calificadas» pone primero la nota más alta y al final las sin reseñas', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const f = TestBed.createComponent(DirectoryPage);
+    f.componentRef.setInput('titulo', 'Directorio');
+    f.componentRef.setInput('subtitulo', 'Sub');
+    f.componentRef.setInput('estado', { kind: 'ready', data: null });
+    f.componentRef.setInput('sustantivo', { singular: 'clínica', plural: 'clínicas' });
+    f.componentRef.setInput('grupos', [
+      {
+        id: 'g',
+        nombre: '',
+        resultados: [
+          { id: 'a', title: 'Sin nota', link: '/a' },
+          { id: 'b', title: 'Tres siete', link: '/b', rating: { average: 3.7, count: 60 } },
+          { id: 'c', title: 'Cuatro cinco', link: '/c', rating: { average: 4.5, count: 60 } },
+        ],
+      },
+    ]);
+    f.detectChanges();
+
+    const select = f.nativeElement.querySelector('.mercado__orden select') as HTMLSelectElement;
+    expect([...select.options].map((o) => o.text)).toContain('Mejor calificadas');
+    select.value = 'calificacion';
+    select.dispatchEvent(new Event('change'));
+    f.detectChanges();
+
+    const titulos = Array.from<HTMLElement>(
+      f.nativeElement.querySelectorAll('.tarjeta-resultado__titulo a'),
+    ).map((a) => a.textContent!.trim());
+    expect(titulos).toEqual(['Cuatro cinco', 'Tres siete', 'Sin nota']);
+  });
 });

@@ -14,6 +14,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { AppButton } from '../../atoms/button/button';
 import { Chip } from '../../atoms/chip/chip';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 import { SearchField } from '../../molecules/search-field/search-field';
 import { Select } from '../../atoms/select/select';
 import type { SelectOption } from '../../atoms/select/select.types';
@@ -70,11 +72,19 @@ export interface FilterDef {
    * Sin él, cada filtro es su propio renglón, rotulado con su `label`.
    */
   readonly chipsGroup?: string;
+
+  /**
+   * El ícono del rótulo en la columna de facetas (`layout="facets"`). Opcional:
+   * sin él, el rótulo va solo. En un grupo de chips manda el del primer filtro
+   * que lo declara.
+   */
+  readonly icon?: NavIconName;
 }
 
 /** Un renglón de chips ya resuelto: su rótulo y los filtros que lo componen. */
 export interface ChipGroup {
   readonly label: string;
+  readonly icon?: NavIconName;
   readonly filters: readonly FilterDef[];
 }
 
@@ -125,7 +135,7 @@ export interface ActiveFilter {
  */
 @Component({
   selector: 'app-filter-bar',
-  imports: [AppButton, Chip, SearchField, Select],
+  imports: [AppButton, Chip, NavIcon, SearchField, Select],
   templateUrl: './filter-bar.html',
   styleUrl: './filter-bar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -291,7 +301,7 @@ export class FilterBar {
    * array de filtros y nada más.
    */
   protected readonly chipGroups = computed<readonly ChipGroup[]>(() => {
-    const grupos: { label: string; filters: FilterDef[] }[] = [];
+    const grupos: { label: string; icon?: NavIconName; filters: FilterDef[] }[] = [];
     for (const filtro of this.filters()) {
       if (filtro.asChips !== true) {
         continue;
@@ -299,9 +309,10 @@ export class FilterBar {
       const rotulo = filtro.chipsGroup ?? filtro.label;
       const existente = grupos.find((grupo) => grupo.label === rotulo);
       if (existente === undefined) {
-        grupos.push({ label: rotulo, filters: [filtro] });
+        grupos.push({ label: rotulo, filters: [filtro], ...(filtro.icon ? { icon: filtro.icon } : {}) });
       } else {
         existente.filters.push(filtro);
+        existente.icon ??= filtro.icon;
       }
     }
     return grupos;
@@ -336,6 +347,16 @@ export class FilterBar {
       }
       return nuevas;
     });
+  }
+
+  /**
+   * Separa «Santa Cruz (160)» en el nombre y la cantidad, para dibujar la
+   * cantidad aparte, alineada a la derecha, como en el filtro de una tienda.
+   * Un rótulo sin cantidad al final vuelve entero.
+   */
+  protected partirCantidad(rotulo: string): { readonly texto: string; readonly cantidad: string | null } {
+    const partes = /^(.*\S)\s+\((\d[\d.\s]*)\)$/u.exec(rotulo);
+    return partes ? { texto: partes[1]!, cantidad: partes[2]! } : { texto: rotulo, cantidad: null };
   }
 
   /** Si esa opción es la que está puesta hoy para ese filtro. */
