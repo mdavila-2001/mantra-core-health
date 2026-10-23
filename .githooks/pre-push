@@ -42,8 +42,10 @@
 #
 # ## Instalación
 #
-# No hace falta hacer nada: el script `prepare` de `package.json` apunta
-# `core.hooksPath` a `.githooks/` en cada `yarn install`. Para comprobarlo:
+# No hace falta hacer nada: `core.hooksPath` apunta a `.githooks/` por el
+# script `postinstall` de `package.json` (yarn lo corre cuando cambian las
+# dependencias; `prepare` no lo corre) y por el arranque de sesión de Claude
+# Code (ver `docs/graphify.md`). Para comprobarlo:
 #
 #   git config core.hooksPath      # debe decir .githooks
 
