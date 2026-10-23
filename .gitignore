@@ -183,3 +183,6 @@ src/app/features/component-stock/component-index.generated.ts
 
 # Fuente cruda del padrón de universidades (2,2 MB): la descarga `scripts/gen-universidades-por-pais.mjs`.
 data/universidades/
+
+# graphify: grafo del código, local de cada máquina (docs/graphify.md).
+graphify-out/
