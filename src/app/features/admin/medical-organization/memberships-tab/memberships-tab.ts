@@ -1,41 +1,41 @@
 import {
-  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
-  input,
   signal,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
+import { catchError, of } from 'rxjs';
 
-import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
-import type { Practice } from '../../core/data-access/accounting/accounting.types';
-import { PracticeSitesClient } from '../../core/data-access/practice-sites/practice-sites.client';
+import { AccountingClient } from '../../../../core/data-access/accounting/accounting.client';
+import type { Practice } from '../../../../core/data-access/accounting/accounting.types';
+import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import {
   ROLE_ASSIGNMENT_STATUS,
   roleAssignmentStatusLabel,
-} from '../../core/data-access/practice-sites/role-assignment-concepts';
-import type { MyRoleAssignment } from '../../core/data-access/practice-sites/practice-sites.types';
-import { describeApiFailure } from '../../core/http/api-failure';
-import { errorToViewState } from '../../core/http/error-to-view-state';
-import { loading, ready } from '../../core/view-state/view-state';
-import type { ViewState } from '../../core/view-state/view-state.types';
-import { AnnounceOnAppear } from '../../shared/a11y/announce-on-appear';
-import type { SelectOption } from '../../shared/components/atoms/select/select.types';
-import { AppButton } from '../../shared/components/atoms/button/button';
-import { Avatar } from '../../shared/components/atoms/avatar/avatar';
-import { Select } from '../../shared/components/atoms/select/select';
-import { Alert } from '../../shared/components/molecules/alert/alert';
-import { Card } from '../../shared/components/molecules/card/card';
-import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
-import { Badge } from '../../shared/components/atoms/badge/badge';
-import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
-import { DataTable } from '../../shared/components/organisms/data-table/data-table';
-import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
-import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf } from '../../shared/forms/form-support';
+} from '../../../../core/data-access/practice-sites/role-assignment-concepts';
+import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { describeApiFailure } from '../../../../core/http/api-failure';
+import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { loading, ready } from '../../../../core/view-state/view-state';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../../shared/components/molecules/card/card';
+import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
+import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
 
 /**
  * El tono del sello de cada estado de vinculación.
@@ -55,6 +55,8 @@ function varianteDeEstado(estado: string): BadgeVariant {
 /** Una vinculación tal como la pinta la tabla. */
 interface AssignmentRow extends MyRoleAssignment {
   readonly statusLabel: string;
+  readonly roleLabel: string;
+  readonly sinceLabel: string;
   readonly isFinal: boolean;
   /**
    * El sello de verificado se gana, no se declara: sólo aparece cuando la
@@ -66,9 +68,15 @@ interface AssignmentRow extends MyRoleAssignment {
   readonly statusVariant: BadgeVariant;
 }
 
+const FORMATO_DIA = new Intl.DateTimeFormat('es-BO', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 /**
- * «Mis organizaciones»: en qué organizaciones el profesional tiene una
- * vinculación, y pedir una nueva.
+ * Pestaña «Mis vinculaciones» del panel de organización médica.
  *
  * ## Para qué sirve esta pantalla
  *
@@ -90,7 +98,7 @@ interface AssignmentRow extends MyRoleAssignment {
  * la organización que lo atiende.
  */
 @Component({
-  selector: 'app-my-organizations',
+  selector: 'app-memberships-tab',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AnnounceOnAppear,
@@ -101,28 +109,15 @@ interface AssignmentRow extends MyRoleAssignment {
     Card,
     DataTable,
     EmptyState,
-    PageHeader,
     Select,
   ],
-  templateUrl: './my-organizations.html',
-  styleUrl: './my-organizations.css',
+  templateUrl: './memberships-tab.html',
+  styleUrl: './memberships-tab.css',
 })
-export class MyOrganizations {
-  /**
-   * `true` cuando esta pantalla vive **dentro** del panel «Organización
-   * médica», como su pestaña «Mis vinculaciones».
-   *
-   * Cambia dos cosas: no dibuja su membrete —lo pone el panel— ni el bloque
-   * largo que explica qué es una vinculación, que en una pestaña de un panel de
-   * administración es un párrafo que nadie vuelve a leer. La ruta propia
-   * redirige acá desde el 2026-09-10, así que en la práctica siempre está
-   * embebida; el modo suelto se conserva porque el componente sigue siendo
-   * montable solo y su spec lo ejercita así.
-   */
-  readonly embedded = input(false, { transform: booleanAttribute });
-
+export class MembershipsTab {
   private readonly practiceSites = inject(PracticeSitesClient);
   private readonly accounting = inject(AccountingClient);
+  private readonly terminology = inject(TerminologyClient);
 
   /**
    * Escrito a mano (no `toSignal` puro): tras enviar una solicitud hay que
@@ -130,6 +125,7 @@ export class MyOrganizations {
    * volver a dispararla sin este signal.
    */
   private readonly vinculaciones = signal<readonly MyRoleAssignment[] | undefined>(undefined);
+  private readonly etiquetasDeCargo = signal<ConceptLabels>(new Map());
 
   /**
    * El fallo de la lectura de vinculaciones, o `null`.
@@ -145,6 +141,8 @@ export class MyOrganizations {
     (this.vinculaciones() ?? []).map((v) => ({
       ...v,
       statusLabel: roleAssignmentStatusLabel(v.status),
+      roleLabel: this.etiquetasDeCargo().get(v.roleConceptId)?.display ?? 'Profesional',
+      sinceLabel: v.validFrom === undefined ? '—' : FORMATO_DIA.format(v.validFrom),
       isFinal:
         v.status === ROLE_ASSIGNMENT_STATUS.REJECTED ||
         v.status === ROLE_ASSIGNMENT_STATUS.ENDED,
@@ -163,13 +161,19 @@ export class MyOrganizations {
     viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaOrg');
   private readonly celdaEstado =
     viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaEstado');
-  private readonly celdaPrincipal =
-    viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaPrincipal');
+  private readonly celdaCargo =
+    viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaCargo');
+  private readonly celdaDesde =
+    viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaDesde');
+  private readonly celdaAcciones =
+    viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaAcciones');
 
   protected readonly columnas = computed<readonly ColumnDef<AssignmentRow>[]>(() => [
     { key: 'practiceName', header: 'Organización', priority: 1, cell: this.celdaOrganizacion() },
+    { key: 'roleConceptId', header: 'Rol/cargo', priority: 2, cell: this.celdaCargo() },
+    { key: 'validFrom', header: 'Desde', priority: 3, cell: this.celdaDesde() },
     { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'isPrimary', header: 'Principal', priority: 3, cell: this.celdaPrincipal() },
+    { key: 'actions', header: 'Acciones', priority: 1, cell: this.celdaAcciones() },
   ]);
 
   protected readonly porId = (fila: AssignmentRow): string => fila.id;
@@ -258,10 +262,24 @@ export class MyOrganizations {
     });
   }
 
+  /** Preselecciona una vinculación finalizada para pedirla nuevamente. */
+  protected elegirParaNuevaSolicitud(fila: AssignmentRow): void {
+    if (fila.isFinal) {
+      this.organizacionElegida.set(fila.practiceId);
+    }
+  }
+
   private recargarVinculaciones(): void {
     this.falloDeVinculaciones.set(null);
     this.practiceSites.listMyRoleAssignments().subscribe({
-      next: (items) => this.vinculaciones.set(items),
+      next: (items) => {
+        this.vinculaciones.set(items);
+        this.etiquetasDeCargo.set(new Map());
+        const ids = [...new Set(items.map((item) => item.roleConceptId))];
+        this.terminology.readConceptLabels(ids).pipe(catchError(() => of(new Map()))).subscribe({
+          next: (etiquetas) => this.etiquetasDeCargo.set(etiquetas),
+        });
+      },
       error: (error: unknown) =>
         this.falloDeVinculaciones.set(errorToViewState<readonly AssignmentRow[]>(error)),
     });
