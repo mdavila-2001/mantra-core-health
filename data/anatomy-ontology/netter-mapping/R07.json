@@ -1,0 +1,3910 @@
+[
+ {
+  "netterId": "ENT_039518967ab050",
+  "name": "Arteria(s) — glútea — superior",
+  "queries": [
+   "superior gluteal artery"
+  ],
+  "uberon": "UBERON:0001315",
+  "matchedText": "superior gluteal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_12d1bcab0d7f6f",
+  "name": "Hiato — arteria femoral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_149585b5942bef",
+  "name": "Arteria(s) — maleolar medial posterior",
+  "queries": [
+   "posterior medial malleolar artery",
+   "medial posterior malleolar artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_197d86bab1f4db",
+  "name": "Arteria(s) — fémur",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_20f8df2b26d23f",
+  "name": "Arteria(s) — muslo, visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_231a4fd077af18",
+  "name": "Arteria(s) — tibial — posterior",
+  "queries": [
+   "posterior tibial artery"
+  ],
+  "uberon": "UBERON:0001538",
+  "matchedText": "posterior tibial artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_273ec3401383d9",
+  "name": "Pie — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_277dc0aa3274fd",
+  "name": "Arteria(s) — transversa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2aff0909c0c59e",
+  "name": "Arteria(s) — retinacular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_34a1e106dd8e24",
+  "name": "Arteria(s) — articular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3cba620a114561",
+  "name": "Arteria(s) — plantar — comun",
+  "queries": [
+   "common plantar digital artery",
+   "common plantar digital arteries"
+  ],
+  "uberon": "UBERON:0002455",
+  "matchedText": "common plantar digital arteries",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_42d8cb930f4dad",
+  "name": "Arteria(s) — subsinovial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_483e1f720f6862",
+  "name": "Arteria(s) — muslo, visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_55b8de7911401f",
+  "name": "Rodilla — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_60d94c764da394",
+  "name": "Arteria(s) — safena",
+  "queries": [
+   "saphenous artery"
+  ],
+  "uberon": "UBERON:0015350",
+  "matchedText": "saphenous artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_69ade4b88776e1",
+  "name": "Arteria(s) — circunfleja — medial",
+  "queries": [
+   "medial circumflex femoral artery"
+  ],
+  "uberon": "UBERON:0001356",
+  "matchedText": "medial circumflex femoral artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6d061d884ef359",
+  "name": "Arteria(s) — superior — medial",
+  "queries": [
+   "superior medial genicular artery",
+   "medial superior genicular artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_6e292e7bc094b5",
+  "name": "Arteria(s) — profunda",
+  "queries": [
+   "deep femoral artery",
+   "profunda femoris artery"
+  ],
+  "uberon": "UBERON:0001355",
+  "matchedText": "deep femoral artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_71d28df26b47a8",
+  "name": "Cadera — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7a9d7476c15ea2",
+  "name": "Arteria(s) — posteriores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7abe59e4499a2b",
+  "name": "Arteria(s) — femoral",
+  "queries": [
+   "femoral artery"
+  ],
+  "uberon": "UBERON:0002060",
+  "matchedText": "femoral artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_83625d06b4c8e8",
+  "name": "Arteria(s) — maleolar — lateral anterior",
+  "queries": [
+   "anterior lateral malleolar artery",
+   "lateral anterior malleolar artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_889cc4316d4641",
+  "name": "Arteria(s) — rodilla — descendente",
+  "queries": [
+   "descending genicular artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_88bffc55884918",
+  "name": "Arteria(s) — ramas dorsales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_98db6c7a67ef23",
+  "name": "Arteria(s) — media",
+  "queries": [
+   "middle genicular artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_a28ca6b9e6253f",
+  "name": "Arteria(s) — inferior — lateral",
+  "queries": [
+   "inferior lateral genicular artery",
+   "lateral inferior genicular artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_a2dfa3505a352f",
+  "name": "Fémur — arteria nutricia",
+  "queries": [
+   "nutrient artery of femur",
+   "femoral nutrient artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_babb07234477c1",
+  "name": "Arteria(s) — circunfleja — lateral",
+  "queries": [
+   "lateral circumflex femoral artery",
+   "lateral femoral circumflex artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_bf6190ccfb45e0",
+  "name": "Arteria(s) — calcánea — medial",
+  "queries": [
+   "medial calcaneal artery",
+   "medial calcaneal branch of posterior tibial artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_c16668dd1c6c3b",
+  "name": "Arteria(s) — circunfleja — descendente",
+  "queries": [
+   "descending branch of lateral circumflex femoral artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_c5b3ba06c1b36b",
+  "name": "Arteria(s) — maleolar — medial anterior",
+  "queries": [
+   "anterior medial malleolar artery",
+   "medial anterior malleolar artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_c9d8fcf0fb0a98",
+  "name": "Maléolo — red arterial",
+  "queries": [
+   "malleolar network",
+   "malleolar arterial network"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_cbec43142172cc",
+  "name": "Muslo — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_d3ca80b4e68881",
+  "name": "Cuello — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e09dbc432c0d40",
+  "name": "Arteria(s) — circunfleja — ascendente",
+  "queries": [
+   "ascending branch of lateral circumflex femoral artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_e2de8792e5931a",
+  "name": "Arteria(s) — y cuello fémur",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e8e13575a35a44",
+  "name": "Arteria(s) — propia",
+  "queries": [
+   "proper plantar digital artery",
+   "proper plantar digital arteries"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ambigua: «Arteria propia» sin especificar si es digital plantar o dorsal; no se fuerza la correspondencia."
+ },
+ {
+  "netterId": "ENT_ee488f0551e314",
+  "name": "Fémur — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f089efe5cd9a92",
+  "name": "Arteria(s) — cadera y muslo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f842685ca21e59",
+  "name": "Arteria(s) — mediai",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_fd1afeccc35f7b",
+  "name": "Miembro — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_0a7b7dfa6d0ac0",
+  "name": "Cartítlago — articulación cadera",
+  "queries": [
+   "articular cartilage of hip joint",
+   "hip joint articular cartilage"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_19050f46ff0123",
+  "name": "Articulación(es) — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_1e6673465f0d45",
+  "name": "Articulación(es) — visión — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_20d8d3bf87d47d",
+  "name": "Articulación(es) — capsulas y ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2917ff4f867579",
+  "name": "Membrana — articulación cadera",
+  "queries": [
+   "synovial membrane of hip joint"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_2b53262471d141",
+  "name": "Articulación(es) — transversa tarso",
+  "queries": [
+   "transverse tarsal joint",
+   "midtarsal joint"
+  ],
+  "uberon": "UBERON:0011962",
+  "matchedText": "transverse tarsal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3885912abce990",
+  "name": "Articulación(es) — cápsula",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_5aa0e4e5fdead7",
+  "name": "Articulación(es) — ligamento iliofemoral",
+  "queries": [
+   "iliofemoral ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_d1ac03b5f1b3c1",
+  "name": "Articulación(es) — tarsometatarsiana",
+  "queries": [
+   "tarsometatarsal joint"
+  ],
+  "uberon": "UBERON:0011118",
+  "matchedText": "tarsometatarsal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f7251b312594ba",
+  "name": "Articulación(es) — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_fd03eecf52ed72",
+  "name": "Articulación(es) — visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_57538a41c7efcb",
+  "name": "Coxal — cartílago articular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_590d55cdb3a38c",
+  "name": "Fosa — poplítea",
+  "queries": [
+   "popliteal fossa",
+   "popliteal area"
+  ],
+  "uberon": "UBERON:0013069",
+  "matchedText": "popliteal fossa",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7f329f5635f53a",
+  "name": "Fosa — grasa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_b99c8fa3ca0dd5",
+  "name": "Rodilla — cavidad articular",
+  "queries": [
+   "synovial cavity of knee joint",
+   "knee joint cavity",
+   "knee joint synovial cavity"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_227a484a7f41b7",
+  "name": "Conducto — aductor",
+  "queries": [
+   "adductor canal",
+   "subsartorial canal"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_273ee88b72cf3b",
+  "name": "Rótula",
+  "queries": [
+   "patella"
+  ],
+  "uberon": "UBERON:0002446",
+  "matchedText": "patella",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_37ed34b6c7b2ec",
+  "name": "Pata ganso",
+  "queries": [
+   "pes anserinus",
+   "pes anserinus of tibia"
+  ],
+  "uberon": "UBERON:0008977",
+  "matchedText": "pes anserinus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8bf78f95e097a7",
+  "name": "Falange",
+  "queries": [
+   "phalanx of foot",
+   "phalanx of pes"
+  ],
+  "uberon": "UBERON:0001449",
+  "matchedText": "phalanx of pes",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9256645a72ee23",
+  "name": "Placa epifisaria",
+  "queries": [
+   "epiphyseal plate",
+   "growth plate"
+  ],
+  "uberon": "UBERON:0002516",
+  "matchedText": "epiphyseal plate",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_95a4a1ed022a8e",
+  "name": "Calcáneo",
+  "queries": [
+   "calcaneus"
+  ],
+  "uberon": "UBERON:0001450",
+  "matchedText": "calcaneus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_96d303bb0b9c0b",
+  "name": "Sustentáculo astrágalo",
+  "queries": [
+   "sustentaculum tali"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_d20d288a556a50",
+  "name": "Espolón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3b7cdbbad80128",
+  "name": "Pierna — fascia profunda",
+  "queries": [
+   "deep fascia of leg",
+   "crural fascia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_aa77a2839c02a3",
+  "name": "Masculo(s) — fascia lata",
+  "queries": [
+   "fascia lata"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ambigua: probablemente subentrada del músculo tensor de la fascia lata, no de la fascia lata; no se fuerza."
+ },
+ {
+  "netterId": "ENT_f8ef7cd49bb18d",
+  "name": "Compartimiento(s) — fasciales pierna",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_ba496955e9224e",
+  "name": "Abertura lateral (agujero de Luschka) — anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_bef985cde38fe3",
+  "name": "Abertura lateral (agujero de Luschka) — nutricio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_0a7f01676693c2",
+  "name": "Peroné — cresta medial",
+  "queries": [
+   "medial crest of fibula"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_0bc1c446838447",
+  "name": "Pie — huesos",
+  "queries": [
+   "bones of foot",
+   "skeleton of foot",
+   "skeleton of pes"
+  ],
+  "uberon": "UBERON:0001445",
+  "matchedText": "skeleton of foot",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0c0b828b86996d",
+  "name": "Peroné — cabeza",
+  "queries": [
+   "head of fibula",
+   "fibular head",
+   "proximal epiphysis of fibula"
+  ],
+  "uberon": "UBERON:0008775",
+  "matchedText": "head of fibula",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0cab602ae9a720",
+  "name": "Tibia — borde — anterior",
+  "queries": [
+   "anterior border of tibia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_0f9f68da34ec1c",
+  "name": "Fémur — espolón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_11e4e2e776cc9d",
+  "name": "Hueso. V. también huesos específicos — base",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_1767e024cf17b9",
+  "name": "Tibia — tuberosidad",
+  "queries": [
+   "tibial tuberosity"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_1a46ec9b52f54a",
+  "name": "Hueso. V. también huesos específicos — cara articular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_1a523494b4ecf3",
+  "name": "Peroné — vértice",
+  "queries": [
+   "apex of head of fibula"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_2c5b924d0f1c56",
+  "name": "Fémur — fosita ligamento",
+  "queries": [
+   "fovea of head of femur",
+   "fovea capitis femoris",
+   "fovea capitis of femur"
+  ],
+  "uberon": "UBERON:0012078",
+  "matchedText": "fovea capitis femoris",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2ea1db9ab9a5a9",
+  "name": "Tibia — articular — inferior",
+  "queries": [
+   "inferior articular surface of tibia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_2f06cd48c56f2b",
+  "name": "Fémur — tubérculo aductor",
+  "queries": [
+   "adductor tubercle of femur",
+   "adductor tubercle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_3020e80d5a0e92",
+  "name": "Peroné — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_31463ca46fb47a",
+  "name": "Tibia — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3582a9e3622657",
+  "name": "Fémur — cabeza",
+  "queries": [
+   "head of femur",
+   "femur head",
+   "femoral head"
+  ],
+  "uberon": "UBERON:0006767",
+  "matchedText": "head of femur",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_372ce00c9bb765",
+  "name": "Peroné — tobillo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3a668942336291",
+  "name": "Tibia — articular — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3aff0db0ae4a42",
+  "name": "Fémur — anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3c67cfa354a2c2",
+  "name": "Peroné — cuello",
+  "queries": [
+   "neck of fibula"
+  ],
+  "uberon": "UBERON:0018673",
+  "matchedText": "neck of fibula",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_43a5100319de66",
+  "name": "Fémur — cuerpo",
+  "queries": [
+   "shaft of femur",
+   "femur shaft",
+   "diaphysis of femur"
+  ],
+  "uberon": "UBERON:0006862",
+  "matchedText": "shaft of femur",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4892448d1ca9df",
+  "name": "Hueso. V. también huesos específicos — tuberosidad",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_516eb8ce55809d",
+  "name": "Hueso — visión — dorsal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_53fbdbd0172970",
+  "name": "Hueso — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_56d59dd3e0edf6",
+  "name": "Hueso — visión — plantar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_57856a6ec4deb5",
+  "name": "Peroné — inserciones ligamentosas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_5801809859476e",
+  "name": "Tibia — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_59d36d0a5e4855",
+  "name": "Tibia — inserciones ligamento posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_5d35748152f747",
+  "name": "Tibia — articular — superior",
+  "queries": [
+   "superior articular surface of tibia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_5d499efc5653d6",
+  "name": "Tibia — cóndilo — medial",
+  "queries": [
+   "medial condyle of tibia"
+  ],
+  "uberon": "UBERON:0009990",
+  "matchedText": "medial condyle of tibia",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_61fe6406f08fba",
+  "name": "Fémur",
+  "queries": [
+   "femur"
+  ],
+  "uberon": "UBERON:0000981",
+  "matchedText": "femur",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_62a6ca7a5f1630",
+  "name": "Hueso — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_6411bea58f7f38",
+  "name": "Fémur — niño",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_644af0ee8d3c5a",
+  "name": "Hueso. V. también huesos específicos — cuerpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_6753d0b87c33f5",
+  "name": "Tibia",
+  "queries": [
+   "tibia"
+  ],
+  "uberon": "UBERON:0000979",
+  "matchedText": "tibia",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_777c59adbf766b",
+  "name": "Tibia — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7a175fc645ef35",
+  "name": "Peroné — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7b24141ec9d122",
+  "name": "Peroné — intercondileo anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_85b10fb54c44bc",
+  "name": "Fémur — pectinea",
+  "queries": [
+   "pectineal line of femur"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_862a8f926d55ec",
+  "name": "Fémur — trocánter — mayor",
+  "queries": [
+   "greater trochanter"
+  ],
+  "uberon": "UBERON:0002503",
+  "matchedText": "greater trochanter",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_86e7d9daa140c1",
+  "name": "Fémur — cresta intertrocantérea",
+  "queries": [
+   "intertrochanteric crest"
+  ],
+  "uberon": "UBERON:0013633",
+  "matchedText": "intertrochanteric crest",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_871e945504bf0f",
+  "name": "Pierna — derecha, huesos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_87cdac878e2d49",
+  "name": "Fémur — agujero nutricio",
+  "queries": [
+   "nutrient foramen of femur"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_8aedff58f25a74",
+  "name": "Fémur — cóndilo — lateral",
+  "queries": [
+   "lateral condyle of femur"
+  ],
+  "uberon": "UBERON:0009985",
+  "matchedText": "lateral condyle of femur",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_96965b359bdd34",
+  "name": "Peroné — articular superior",
+  "queries": [
+   "articular surface of head of fibula",
+   "articular facet of head of fibula"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_9759cd1515af0e",
+  "name": "Membrana — inserción fémur",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a220cc366b8d3a",
+  "name": "Peroné",
+  "queries": [
+   "fibula"
+  ],
+  "uberon": "UBERON:0001446",
+  "matchedText": "fibula",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a66798a10def91",
+  "name": "Peroné — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a8bece67d2ba21",
+  "name": "Fémur — poplitea",
+  "queries": [
+   "popliteal surface of femur"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_bbf1288b101f5e",
+  "name": "Fémur — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_bf50c60a64dd73",
+  "name": "Fémur — áspera",
+  "queries": [
+   "linea aspera"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_c22ca519c3fad0",
+  "name": "Fémur — ligamento cabeza",
+  "queries": [
+   "ligament of head of femur",
+   "ligamentum teres femoris"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_c3bfe6678c7105",
+  "name": "Fémur — fosa intercondiiea",
+  "queries": [
+   "intercondylar fossa of femur"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_c418d9f1059ddc",
+  "name": "Fémur — rotuliana",
+  "queries": [
+   "patellar surface of femur"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_c4d04d41a44fc6",
+  "name": "Fémur — visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_c8489d0f3f7b3e",
+  "name": "Peroné — tróclea",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_ceb4f132cef32f",
+  "name": "Hueso — intermedio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_d3a73426c7ef90",
+  "name": "Tibia — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_dc7e30a4e618dd",
+  "name": "Tibia — articular — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_dc7e614d52a342",
+  "name": "Fémur — cápsula fibrosa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_ddce986309f25f",
+  "name": "Tibia — articular — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e55a8f4a9433ee",
+  "name": "Fémur — tubérculo aductor",
+  "queries": [
+   "adductor tubercle of femur",
+   "adductor tubercle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_eb2cccac265f71",
+  "name": "Hueso. V. también huesos específicos — cuboides",
+  "queries": [
+   "cuboid bone",
+   "cuboid"
+  ],
+  "uberon": "UBERON:0001455",
+  "matchedText": "cuboid bone",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f072d6b38220a9",
+  "name": "Fémur — epicóndilo lateral",
+  "queries": [
+   "lateral epicondyle of femur"
+  ],
+  "uberon": "UBERON:0009986",
+  "matchedText": "lateral epicondyle of femur",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f0eda30c764311",
+  "name": "Peroné — anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f3134de387c971",
+  "name": "Fémur — tuberosidad glútea",
+  "queries": [
+   "gluteal tuberosity"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_f62e23f1fdd5eb",
+  "name": "Peroné — cóndilo lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f668b11c17e16d",
+  "name": "Tibia — línea oblicua",
+  "queries": [
+   "soleal line",
+   "oblique line of tibia",
+   "soleal line of tibia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_f8a172d64e485a",
+  "name": "Fémur — cóndilo — medial",
+  "queries": [
+   "medial condyle of femur"
+  ],
+  "uberon": "UBERON:0009984",
+  "matchedText": "medial condyle of femur",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0a4caeb858f5c7",
+  "name": "Ligamento(s) — astragaloperoneo — posterior",
+  "queries": [
+   "posterior talofibular ligament"
+  ],
+  "uberon": "UBERON:0013726",
+  "matchedText": "posterior talofibular ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_18a63768240aba",
+  "name": "Ligamento(s) — calcaneoperoneo",
+  "queries": [
+   "calcaneofibular ligament"
+  ],
+  "uberon": "UBERON:0011971",
+  "matchedText": "calcaneofibular ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_19c8c463836388",
+  "name": "Atla — ligamento rotuliano",
+  "queries": [
+   "patellar ligament"
+  ],
+  "uberon": "UBERON:0003676",
+  "matchedText": "patellar ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_246542cad23fd0",
+  "name": "Ligamento(s) — astragaloperoneo — anterior",
+  "queries": [
+   "anterior talofibular ligament"
+  ],
+  "uberon": "UBERON:0013725",
+  "matchedText": "anterior talofibular ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_28a71396cb8be9",
+  "name": "Ligamento(s) (cont.} — tibioperoneo — posterior",
+  "queries": [
+   "posterior tibiofibular ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_2933a3adc9b59e",
+  "name": "Ligamento(s) — peroneo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2a9b00e81ab2fc",
+  "name": "Rodilla — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3bfdc513ce0084",
+  "name": "Ligamento(s) — plantar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3f517d1947b897",
+  "name": "Ligamento(s) (cont.} — tibioperoneo — anterior",
+  "queries": [
+   "anterior tibiofibular ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_444dcfdf96659f",
+  "name": "Ligamento(s) — calcaneonavicular",
+  "queries": [
+   "calcaneonavicular ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_449e4db5df3271",
+  "name": "Ligamento(s) — calcaneometatarsiano",
+  "queries": [
+   "calcaneometatarsal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_6161d3f0a4930a",
+  "name": "Tobillo — ligamento — lateral",
+  "queries": [
+   "lateral ligament of ankle",
+   "lateral collateral ligament of ankle",
+   "lateral ligament of ankle joint"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_69adf3bf271680",
+  "name": "Tobillo — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7f54f479741fff",
+  "name": "Pie — ligamentos y tendones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_86772a3e37daa8",
+  "name": "Atlas de anatomía hum — de Bigelow, ligamento en Y",
+  "queries": [
+   "iliofemoral ligament",
+   "Y ligament of Bigelow"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_907c572fc2ac9d",
+  "name": "Ligamento(s) — astragalocalcáneo interóseo",
+  "queries": [
+   "interosseous talocalcaneal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_94a312a6c46bd1",
+  "name": "Ligamento(s) — calcaneocuboideo",
+  "queries": [
+   "calcaneocuboid ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_9b9f841d844ef3",
+  "name": "Ligamento(s) (cont.} — tarsometatarsiano, dorsal",
+  "queries": [
+   "dorsal tarsometatarsal ligament",
+   "dorsal tarsometatarsal ligaments"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_b879cbe414d165",
+  "name": "Ligamento(s) — colateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_d017a20aa6fefd",
+  "name": "Ligamento(s) — bolsa subtendinosa inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e61a4ada570d4e",
+  "name": "Tobillo — ligamento — medial",
+  "queries": [
+   "medial ligament of ankle",
+   "deltoid ligament",
+   "medial ligament of ankle joint"
+  ],
+  "uberon": "UBERON:0011972",
+  "matchedText": "medial ligament of ankle joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e8459427c4b60b",
+  "name": "Ligamento(s) (cont.} — rotuliano",
+  "queries": [
+   "patellar ligament"
+  ],
+  "uberon": "UBERON:0003676",
+  "matchedText": "patellar ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e8f27459ce4fb1",
+  "name": "Ligamento(s) — plantar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f90b61877c7c62",
+  "name": "Ligamento(s) (cont.} — tobillo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_08669a9adc61fe",
+  "name": "Nódulo(s) linfático(s) — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_126eb75f5d2f0c",
+  "name": "Wolff) — nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_79f1534846145a",
+  "name": "Nódulo(s) linfático(s) — popliteos",
+  "queries": [
+   "popliteal lymph node",
+   "popliteal lymph nodes"
+  ],
+  "uberon": "UBERON:0001543",
+  "matchedText": "popliteal lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c7a559fc287221",
+  "name": "Miembro — nódulos y vasos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_00c9c2a58df859",
+  "name": "Músculo(s) — inserciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_030c71a595c2ab",
+  "name": "Músculo(s) — inserciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_04f4dbfe82f7d7",
+  "name": "Músculo(s) — interóseo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_04fb24717ebdc3",
+  "name": "Músculo(s) — subtendinosa lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_0837bbcace3b92",
+  "name": "Músculo(s) — dorsal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_0d8598280ea0aa",
+  "name": "Músculo(s) — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_12371759ac3b21",
+  "name": "Músculo(s) — ramo nervio tibial superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_13d88c4f8557b8",
+  "name": "Músculo(s) — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_161d1dc880e835",
+  "name": "Músculo(s) — visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_24ef7367627daa",
+  "name": "Pie — músculos interóseos",
+  "queries": [
+   "interosseous muscle of pes",
+   "interosseous muscle of foot"
+  ],
+  "uberon": "UBERON:0006497",
+  "matchedText": "interosseous muscle of pes",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2ea3ec38ee33b9",
+  "name": "Músculo(s) — oblicua",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_32d6c60c097d76",
+  "name": "Músculo(s) — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_40381beb3e6a2b",
+  "name": "Músculo(s) — mayor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_40cee4abf3b104",
+  "name": "Músculo(s) — obturador",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_466bdcc90258dc",
+  "name": "Músculo(s) — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_49b5d69d850d74",
+  "name": "Músculo(s) — cabeza — larga",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_4f208d90125d0b",
+  "name": "Músculo(s) — grácil",
+  "queries": [
+   "gracilis",
+   "gracilis muscle"
+  ],
+  "uberon": "UBERON:0000950",
+  "matchedText": "gracilis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_52e026d503cbf8",
+  "name": "Músculo(s) — inserciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_549df3c2481222",
+  "name": "Músculo(s) — cabeza — corta",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_559185e07c3b65",
+  "name": "Músculo(s) — cabeza — larga, inserciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_5a0924b8276990",
+  "name": "Músculo(s) — ramo profundo nervio tibial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_5b58259636b43b",
+  "name": "Músculo(s) — superficiales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_5c35528012e8f5",
+  "name": "Músculo(s) — femoral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_68d61e613fe7ec",
+  "name": "Músculo(s) — isquiocondileo",
+  "queries": [
+   "ischiocondylar part of adductor magnus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_6a1c0fb406b62f",
+  "name": "Miembro — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_6c28e91fa60773",
+  "name": "Músculo(s) — cabeza — corta, inserciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_6c9ba785ed8ce1",
+  "name": "Músculo(s) — cabeza — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_705075ad1c5027",
+  "name": "Músculo(s) — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_711e05884f5831",
+  "name": "Músculo(s) — primero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_755ce71ebd263f",
+  "name": "Músculo(s) — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_76ff327070fa18",
+  "name": "Músculo(s) — visión — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7c9e8fc2b4d5c4",
+  "name": "Músculo(s) — pectineo",
+  "queries": [
+   "pectineus",
+   "pectineus muscle"
+  ],
+  "uberon": "UBERON:0001382",
+  "matchedText": "pectineus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7d57486b7420ee",
+  "name": "Musculo(s) — meñique o dedo pequeño",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7dfb438b73613c",
+  "name": "Musculo(s) — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7e42d48fc09eac",
+  "name": "Músculo(s) — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_84331541c064f2",
+  "name": "Pie — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_86447716f3af5f",
+  "name": "Músculo(s) — aductor mínimo",
+  "queries": [
+   "adductor minimus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_9079e161d53897",
+  "name": "Músculo(s) — bolsa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_939b3e849b708d",
+  "name": "Músculo(s) — transversa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a1e137bad45811",
+  "name": "Músculo(s) — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a25f05abc19adc",
+  "name": "Músculo(s) — ilíaco",
+  "queries": [
+   "iliacus",
+   "iliacus muscle"
+  ],
+  "uberon": "UBERON:0001369",
+  "matchedText": "iliacus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a260000ebc63cd",
+  "name": "Músculo(s) — nervio tibial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a28c387d3db7f6",
+  "name": "Músculo(s) — articular rodilla",
+  "queries": [
+   "articularis genus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_a30905e25955a4",
+  "name": "Músculo(s) — aductores muslo",
+  "queries": [
+   "adductor group of thigh",
+   "adductor muscles of thigh"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_a82b0d3ca69e0e",
+  "name": "Músculo(s) — subcutánea",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a9feb62e7ac997",
+  "name": "Músculo(s) — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_ad59ce6f6f3e18",
+  "name": "Músculo(s) — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_b0f4341cd7e998",
+  "name": "Músculo(s) — inserciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_b585788a59f162",
+  "name": "Atlas de anatomía hun — músculos inervados",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_c917be751ad811",
+  "name": "Músculo(s) — menor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_ca2ebfd8bc7058",
+  "name": "Músculo(s) — tendones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_d012d746b854b2",
+  "name": "Músculo(s) — aductor — corto",
+  "queries": [
+   "adductor brevis"
+  ],
+  "uberon": "UBERON:0000368",
+  "matchedText": "adductor brevis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d13a205cc4eec8",
+  "name": "Músculo(s) — inserciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_d47e8fc47c7a23",
+  "name": "Músculo(s) — femoral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_d74dce3ac1ce28",
+  "name": "Músculo(s) — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_de90149b028014",
+  "name": "Músculo(s) — cadera y muslo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e0f5af2a8ced68",
+  "name": "Músculo(s) — femoral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e1c6b44528dd0d",
+  "name": "Músculo(s) — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e25667815f1420",
+  "name": "Músculo(s) — hiato",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f05b3dc8fa2403",
+  "name": "Cadera — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f2fb1e6e6c2a7d",
+  "name": "Músculo(s) — iliopsoas",
+  "queries": [
+   "iliopsoas"
+  ],
+  "uberon": "UBERON:0001999",
+  "matchedText": "iliopsoas",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f496e4bac45d6c",
+  "name": "Músculo(s) — aponeurosis glútea",
+  "queries": [
+   "gluteal aponeurosis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_f4d5701b71428e",
+  "name": "Músculo(s) — del dedo gordo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f70d77ca8173f0",
+  "name": "Atla — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_fa92cb408a0f1c",
+  "name": "Músculo(s) — profundos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_0177606632efbc",
+  "name": "Nervio(s) — clúneo — inferior",
+  "queries": [
+   "inferior cluneal nerve",
+   "inferior clunial nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_054fb7d4b51806",
+  "name": "Nervio(s) — dorsal — lateral",
+  "queries": [
+   "lateral dorsal cutaneous nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_0fea8d036efdc3",
+  "name": "Nervio(s) — plantar — medial",
+  "queries": [
+   "medial plantar nerve"
+  ],
+  "uberon": "UBERON:0035111",
+  "matchedText": "medial plantar nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1c11f16744f4e8",
+  "name": "Nervio(s) — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2a2560c072e050",
+  "name": "Atlas de anatomía hum — ramo superficial nervio tibial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2a396e8cb4947a",
+  "name": "Nervio(s) — femoral",
+  "queries": [
+   "femoral nerve"
+  ],
+  "uberon": "UBERON:0001267",
+  "matchedText": "femoral nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2e525736b71109",
+  "name": "Nervio(s) — ramos calcáneo lateral y cutáneo — dorsal lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_374e61a98a6089",
+  "name": "Atlas de anatomía hun — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3d81ae8c7c496b",
+  "name": "Nervio(s) — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3e3958a06a0336",
+  "name": "Nervio(s) — plantar — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_3eaec6bc2fefdf",
+  "name": "Nervio(s) — genitofemoral",
+  "queries": [
+   "genitofemoral nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_419fd851e5f7cc",
+  "name": "Nervio(s) — esquema",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_4806d737e569d5",
+  "name": "Nervio(s) — glúteo — inferior",
+  "queries": [
+   "inferior gluteal nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_484582561447db",
+  "name": "Nervio(s) — tibial",
+  "queries": [
+   "tibial nerve"
+  ],
+  "uberon": "UBERON:0001323",
+  "matchedText": "tibial nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4ed975317037fd",
+  "name": "Nervio(s) — femoral",
+  "queries": [
+   "femoral nerve"
+  ],
+  "uberon": "UBERON:0001267",
+  "matchedText": "femoral nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5739f1ae8ae3f6",
+  "name": "Nervio(s) — miembro — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_5a9bd260b27218",
+  "name": "Nervio(s) — articular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_601ff0111c3799",
+  "name": "Nervio(s) — muslo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_6e3df33a0e41be",
+  "name": "Nervio(s) — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_6fe4a5db25a3fd",
+  "name": "Muslo — nervio(s)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_75543bbf852cbb",
+  "name": "Nervio(s) — articulación rodilla",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_756b46e91f6b7b",
+  "name": "Nervio(s) — intermedio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_77c7be3a627a34",
+  "name": "Nervio(s) — ramos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7b0c5e5fa0adfd",
+  "name": "Nervio(s) — abductor dedo gordo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7e9ca798da4da5",
+  "name": "Nervio(s) — ramos articulares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7f9629d7ca04c0",
+  "name": "Masculo(s) — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_868ad9a66a4189",
+  "name": "Nervio(s) — iliohipogástrico",
+  "queries": [
+   "iliohypogastric nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_890a31a18cd8a4",
+  "name": "Nervio(s) — cuadrado plantar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_89e25e89573585",
+  "name": "Nervio(s) — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_8a6ad54b6d9a89",
+  "name": "Nervio(s) — ramo calcáneo — lateral",
+  "queries": [
+   "lateral calcaneal nerve",
+   "lateral calcaneal branch of sural nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_8b446818240581",
+  "name": "Nervio(s) — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_916f227bc74446",
+  "name": "Nervio(s) — músculos inervados",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_9602dfa8f4fcf6",
+  "name": "Nervio(s) — flexor corto dedos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_9683f35bac9031",
+  "name": "Atlas de anatomía hun — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_9f4b17bc56bf1f",
+  "name": "Nervio(s) — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a1e1ddea2d9069",
+  "name": "Nervio(s) — clúneo — superior",
+  "queries": [
+   "superior cluneal nerve",
+   "superior clunial nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_ad86652119eeb9",
+  "name": "Nervio(s) — nalga",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_b2712130ef2544",
+  "name": "Nervio(s) — plantar — lateral",
+  "queries": [
+   "lateral plantar nerve"
+  ],
+  "uberon": "UBERON:0035110",
+  "matchedText": "lateral plantar nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b5bbf02c2b46fe",
+  "name": "Nervio(s) — cutáneo — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_b6ecf0e7c82cdd",
+  "name": "Pie — nervio cutáneo dorsal lateral",
+  "queries": [
+   "lateral dorsal cutaneous nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_bb3e2bb508c93b",
+  "name": "Nervio(s) — ramo calcáneo — medial",
+  "queries": [
+   "medial calcaneal nerve",
+   "medial calcaneal branch of tibial nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_becca138d9e75e",
+  "name": "Nervio(s) — sural",
+  "queries": [
+   "sural nerve"
+  ],
+  "uberon": "UBERON:0015488",
+  "matchedText": "sural nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c4e692109e8506",
+  "name": "Nervio(s) — cutáneo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_cd1bfab5e7694c",
+  "name": "Atla — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_db5d5adccad558",
+  "name": "Nervio(s) — femoral — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_dd2bf4eeba2529",
+  "name": "Pierna — nervio interóseo",
+  "queries": [
+   "interosseous nerve of leg",
+   "crural interosseous nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_e02277e948e5c5",
+  "name": "Cadera — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f6947889329e7e",
+  "name": "Nervio(s) — clúneo — medio",
+  "queries": [
+   "middle cluneal nerve",
+   "middle clunial nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_fab136963eadca",
+  "name": "Nervio(s) — ramos cutáneos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2331deb223ec52",
+  "name": "Retináculo — tracto iliotibial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2c3e89ad1bac32",
+  "name": "Retináculo — rotuliano — medial",
+  "queries": [
+   "medial patellar retinaculum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_2fe5e72260d0db",
+  "name": "Retináculo — rotuliano — lateral",
+  "queries": [
+   "lateral patellar retinaculum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_4ec2eebbec888f",
+  "name": "Retináculo — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7928fed9d75e19",
+  "name": "Retináculo — peroneo — inferior",
+  "queries": [
+   "inferior fibular retinaculum",
+   "inferior peroneal retinaculum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_95eaf7bce9b725",
+  "name": "Retináculo — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_98cb16ca62168e",
+  "name": "Retináculo — peroneo — superior",
+  "queries": [
+   "superior fibular retinaculum",
+   "superior peroneal retinaculum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_aff9f28379cec7",
+  "name": "Tracto — retináculo rotuliano lateral y cápsula",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_7f6d5a65ef1283",
+  "name": "Plexo — esquema",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_da97b9347056b5",
+  "name": "Plexo — coccígeo",
+  "queries": [
+   "coccygeal plexus",
+   "coccygeal nerve plexus"
+  ],
+  "uberon": "UBERON:0035768",
+  "matchedText": "coccygeal plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e39a6b91ed8043",
+  "name": "Plexo — lumbar",
+  "queries": [
+   "lumbar plexus",
+   "lumbar nerve plexus"
+  ],
+  "uberon": "UBERON:0034987",
+  "matchedText": "lumbar plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f62b2ba44bd58a",
+  "name": "Plexo — rotuliano",
+  "queries": [
+   "patellar plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_0290376121e011",
+  "name": "Cresta — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_1ca6e033de9409",
+  "name": "Maléolo — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_1d4a08d8d63060",
+  "name": "Tobillo — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_1e8df3f661f366",
+  "name": "Eminencia — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_1f6052bc6f5696",
+  "name": "Epicóndilos — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_4413be13550dee",
+  "name": "Pierna — disección — superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_456bb751708ff5",
+  "name": "Peroné — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_6423c2eda59d99",
+  "name": "Pie — disección profunda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_8abaca96f900f9",
+  "name": "Radiografía — articulación cadera",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_8bd6360df92e24",
+  "name": "Articulación(es) — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_8d2360fd9aead3",
+  "name": "Pierna — disección — profunda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_90049d5228b56a",
+  "name": "Rótula — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_a61b166a2d57b1",
+  "name": "Cadera — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_c9401d9f484249",
+  "name": "Pie — disección superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_d21d7b33b4c03c",
+  "name": "Tibia — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_f5006be29e74a6",
+  "name": "Radiografía — tobillo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_f5259db2f79478",
+  "name": "Radiografía — rodilla",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_f6eb802b8d48ad",
+  "name": "Rodilla — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+ },
+ {
+  "netterId": "ENT_069f66e5a59888",
+  "name": "Tendón — calcáneo",
+  "queries": [
+   "calcaneal tendon",
+   "Achilles tendon"
+  ],
+  "uberon": "UBERON:0003701",
+  "matchedText": "calcaneal tendon",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0dbf95a15bbbce",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_1247681bc62510",
+  "name": "Tendón — grácil",
+  "queries": [
+   "gracilis tendon",
+   "tendon of gracilis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_2478b164bf7645",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_27177f0f34ce4c",
+  "name": "Tendon — origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2ab3afe06586e0",
+  "name": "Tobillo — tendones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_2c9019efaeb682",
+  "name": "Tendon — sartorio",
+  "queries": [
+   "sartorius tendon",
+   "tendon of sartorius"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_3727bcbd7880ef",
+  "name": "Tendón — inserción músculo sóleo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_4242dbc4f12907",
+  "name": "Tendon — corto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_4905f49c26e06b",
+  "name": "Tendon — vaina tendinosa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_6169caad7f4d2e",
+  "name": "Tendon — largo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_61dbdf479cc398",
+  "name": "Tendon — recto femoral",
+  "queries": [
+   "rectus femoris tendon",
+   "tendon of rectus femoris"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_64981e44b8e10a",
+  "name": "Tendon — tibial anterior",
+  "queries": [
+   "tibialis anterior tendon",
+   "tendon of tibialis anterior"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_6804d638214596",
+  "name": "Tendón — cuádriceps",
+  "queries": [
+   "quadriceps tendon",
+   "quadriceps femoris tendon",
+   "tendon of quadriceps femoris"
+  ],
+  "uberon": "UBERON:0014848",
+  "matchedText": "quadriceps tendon",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7c28aefd7642d7",
+  "name": "Tendon — semimembranoso",
+  "queries": [
+   "semimembranosus tendon",
+   "tendon of semimembranosus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_866bb02968fabb",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_8d2c7fda1f8c0a",
+  "name": "Atlas de anatomía hum — tendón, vaina",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_98df6143a54b26",
+  "name": "Tendon — semitendinoso",
+  "queries": [
+   "semitendinosus tendon",
+   "tendon of semitendinosus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_9e5ccc8c9505e3",
+  "name": "Tendon — poplíteo",
+  "queries": [
+   "popliteus tendon",
+   "tendon of popliteus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_a30cec3cbe0761",
+  "name": "Mayor — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_a720c9380b368d",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_b304d2c15bbc2f",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_ba1dd63ce01d5d",
+  "name": "Tendon — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_c59ab5ad242e94",
+  "name": "Mayor — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_c98ea079ee5d32",
+  "name": "Pie — tendón largo fibroso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_ca38d57c6f6a3e",
+  "name": "Pie — tendones, visión plantar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_cb9aea32b39891",
+  "name": "Tendon — peroneo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_cbf82ba070a7f2",
+  "name": "Astrágalo — surco tendón flexor largo dedo gordo",
+  "queries": [
+   "groove for tendon of flexor hallucis longus of talus",
+   "groove for flexor hallucis longus tendon"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_d02f90591ab4cc",
+  "name": "Tendón — iliopsoas",
+  "queries": [
+   "iliopsoas tendon",
+   "tendon of iliopsoas"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_d69f832a7542cf",
+  "name": "Atlas de anatomía hum — tendón, origen lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_d8fa87d63512a2",
+  "name": "Tendon — plantar",
+  "queries": [
+   "plantaris tendon",
+   "tendon of plantaris"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_e13e0f6ad015c5",
+  "name": "Tendón — aductor mayor",
+  "queries": [
+   "adductor magnus tendon",
+   "tendon of adductor magnus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_e34728c0faf8c6",
+  "name": "Tendon — vaina fibrosa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e878e5b19f9507",
+  "name": "Atlas de anatomía hum — tendón, origen medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f274b87f2f3d75",
+  "name": "Tobillo — y tendones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f738fd2dca88e7",
+  "name": "Tendon — surco inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_f967ce641559f7",
+  "name": "Calcáneo — surco tendón flexor largo dedo gordo",
+  "queries": [
+   "groove for tendon of flexor hallucis longus of calcaneus",
+   "groove for flexor hallucis longus tendon"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+ },
+ {
+  "netterId": "ENT_ff66d2cab1d661",
+  "name": "Tendón — femoral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_378caec92dbd32",
+  "name": "Vasos — poplíteos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_c25e9a99483c85",
+  "name": "Vasos — miembro — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_38b014183ca05e",
+  "name": "Ala — vena circunfleja ilíaca superficial",
+  "queries": [
+   "superficial circumflex iliac vein"
+  ],
+  "uberon": "UBERON:8600082",
+  "matchedText": "superficial circumflex iliac vein",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_58c0a7ff65fc87",
+  "name": "Vena(s) — metatarsiana dorsal",
+  "queries": [
+   "dorsal metatarsal vein",
+   "dorsal metatarsal veins"
+  ],
+  "uberon": "UBERON:0001549",
+  "matchedText": "dorsal metatarsal vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7c60b1262ad9c2",
+  "name": "Vena(s) — poplítea",
+  "queries": [
+   "popliteal vein"
+  ],
+  "uberon": "UBERON:0001544",
+  "matchedText": "popliteal vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a3b03191668422",
+  "name": "Vena(s) — peronea",
+  "queries": [
+   "fibular vein",
+   "peroneal vein"
+  ],
+  "uberon": "UBERON:8600083",
+  "matchedText": "fibular vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dcbaa0e8095356",
+  "name": "Dedos — vena",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ },
+ {
+  "netterId": "ENT_e2999ecfd1bae4",
+  "name": "Miembro — nervios y venas superficiales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+ }
+]
