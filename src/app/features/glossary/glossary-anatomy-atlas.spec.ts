@@ -1,0 +1,98 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+
+import { anatomyShardOf } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
+import type { AnatomyPart, AnatomyStructure } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
+import { GlossaryAnatomyAtlas } from './glossary-anatomy-atlas';
+
+const UTERO = 'UBERON:0000995';
+
+const PARTES: readonly AnatomyPart[] = [
+  { meshId: 'FMA24474', layer: 'skeleton', sex: 'shared', structureId: 'UBERON:0000981', shard: 0, side: 'right', labelEn: 'right femur', match: 'fma_parent' },
+];
+
+const FICHA_SIN_DEFINICION: AnatomyStructure = {
+  id: UTERO,
+  labelEn: 'uterus',
+  labelEs: 'útero',
+  synonymsEn: [],
+  fma: ['17558'],
+  regions: ['R05'],
+  definition: null,
+  isA: [],
+  relations: [],
+  incoming: [],
+  netter: [],
+  meshes: [],
+  extendedDescription: null,
+  images: [],
+};
+
+describe('GlossaryAnatomyAtlas', () => {
+  let harness: RouterTestingHarness;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'glossary/anatomy-atlas', component: GlossaryAnatomyAtlas }]),
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    harness = await RouterTestingHarness.create();
+  });
+
+  function html(): HTMLElement {
+    return harness.fixture.nativeElement as HTMLElement;
+  }
+
+  function responderCatalogo(): void {
+    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
+    http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [[UTERO, 'útero', 'uterus', 0]] });
+  }
+
+  it('la vista «Mujer» dice que no hay modelo femenino libre y qué muestra en su lugar', async () => {
+    await harness.navigateByUrl('/glossary/anatomy-atlas?sex=female');
+    responderCatalogo();
+    harness.detectChanges();
+    const aviso = html().querySelector('[data-testid="atlas3d-aviso-mujer"]');
+    expect(aviso?.textContent).toContain('No existe un modelo 3D femenino libre');
+    expect(aviso?.textContent).toContain('la pelvis y las proporciones siguen siendo masculinas');
+    expect(html().textContent).toContain('Estructuras femeninas sin pieza 3D');
+  });
+
+  it('con «Hombre» no muestra el aviso', async () => {
+    await harness.navigateByUrl('/glossary/anatomy-atlas');
+    responderCatalogo();
+    harness.detectChanges();
+    expect(html().querySelector('[data-testid="atlas3d-aviso-mujer"]')).toBeNull();
+  });
+
+  it('una estructura sin definición en la ontología lo dice, y no la completa', async () => {
+    await harness.navigateByUrl(`/glossary/anatomy-atlas?structure=${encodeURIComponent(UTERO)}`);
+    responderCatalogo();
+    const shard = String(anatomyShardOf(UTERO, 32)).padStart(2, '0');
+    http.expectOne(`/anatomy-atlas-3d/catalog/structures-${shard}.json`).flush({ [UTERO]: FICHA_SIN_DEFINICION });
+    harness.detectChanges();
+    expect(html().querySelector('[data-testid="atlas3d-ficha-titulo"]')?.textContent).toContain('útero');
+    expect(html().querySelector('[data-testid="atlas3d-sin-definicion"]')?.textContent).toContain('no se completa a mano');
+    expect(html().textContent).toContain('traducción automática sin revisar');
+    expect(html().textContent).toContain('Descripción extendida');
+  });
+
+  it('muestra los créditos y las licencias de las tres fuentes', async () => {
+    await harness.navigateByUrl('/glossary/anatomy-atlas');
+    responderCatalogo();
+    harness.detectChanges();
+    const creditos = html().querySelector('[data-testid="atlas3d-creditos"]')?.textContent ?? '';
+    expect(creditos).toContain('BodyParts3D');
+    expect(creditos).toContain('CC-BY-SA 2.1 JP');
+    expect(creditos).toContain('UBERON');
+    expect(creditos).toContain('Foundational Model of Anatomy');
+  });
+});
