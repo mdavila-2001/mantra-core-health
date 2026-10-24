@@ -310,8 +310,8 @@ export function registrarAuth(router: MockRouter): void {
         // Bloque del centro de diagnóstico (carril A de la cuenta de
         // laboratorio, 2026-09-30): éste SÍ lo declara el DTO real
         // (`DiagnosticUnitProfileDto`), con la sede primaria y su dirección.
-        // `branches` es lo único que el cliente le suma y el DTO no tiene
-        // (P51).
+        // `branches` ya lo declara el DTO real (`DiagnosticUnitBranchDto`, P51);
+        // `description` y `locationUrl` son extensión del simulador (P54).
         diagnosticUnit?: {
           diagnosticUnitTypeConceptId?: string;
           modalityConceptIds?: readonly string[];
@@ -322,9 +322,9 @@ export function registrarAuth(router: MockRouter): void {
           };
           branches?: readonly {
             name?: string;
-            addressLines?: readonly string[];
-            latitude?: number;
-            longitude?: number;
+            address?: { lines?: readonly string[]; latitude?: number; longitude?: number };
+            description?: string;
+            locationUrl?: string;
           }[];
         };
         // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
@@ -468,7 +468,7 @@ export function registrarAuth(router: MockRouter): void {
       diagnosticUnit.branches?.forEach((sucursal, indice) => {
         const prefijo = `organization.diagnosticUnit.branches.${indice}`;
         if (!sucursal.name) mensajes.push(`${prefijo}.name should not be empty`);
-        mensajes.push(...mensajesDeCoordenadas(prefijo, sucursal));
+        mensajes.push(...mensajesDeCoordenadas(`${prefijo}.address`, sucursal.address ?? {}));
       });
       if (mensajes.length > 0) {
         return reply(400, {
