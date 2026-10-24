@@ -313,10 +313,11 @@ export class PdfComposer {
     this.doc.restoreGraphicsState();
   }
 
-  /** Dibuja recortado a un rectángulo: lo que se sale no se ve. */
-  clipped(x: number, y: number, width: number, height: number, draw: () => void): void {
+  /** Dibuja recortado a un rectángulo, redondeado si se pide: lo que se sale no se ve. */
+  clipped(x: number, y: number, width: number, height: number, draw: () => void, radius = 0): void {
     this.doc.saveGraphicsState();
-    this.doc.rect(x, y, width, height, null);
+    if (radius > 0) this.doc.roundedRect(x, y, width, height, radius, radius, null);
+    else this.doc.rect(x, y, width, height, null);
     this.doc.clip();
     this.doc.discardPath();
     draw();

@@ -38,6 +38,9 @@ export const DEFAULT_FOOTER_NOTE = 'Documento confidencial';
 /** El nombre de la marca junto al isotipo. */
 export const WORDMARK = 'AloVida';
 
+/** Cuánto se nota la marca de agua: lo justo para leerse sin tapar lo de debajo. */
+const WATERMARK_OPACITY = 0.14;
+
 /** Cuánto se nota lo secundario sobre la portada: el blanco de la marca, más tenue. */
 const COVER_SECONDARY_OPACITY = 0.78;
 
@@ -49,13 +52,11 @@ export function formatIssuedAt(date: Date): string {
 
 /** Abre la primera hoja. Devuelve dónde empieza el contenido. */
 export function drawFirstPage(composer: PdfComposer): number {
-  drawWatermark(composer);
   return drawCover(composer);
 }
 
 /** Abre una hoja de continuación. Devuelve dónde empieza el contenido. */
 export function drawContinuationPage(composer: PdfComposer): number {
-  drawWatermark(composer);
   return drawContinuationHeader(composer);
 }
 
@@ -254,8 +255,11 @@ function drawContinuationHeader(composer: PdfComposer): number {
 /* ---- la marca de agua -------------------------------------------------- */
 
 /**
- * Marca de agua en diagonal, centrada en la hoja y **debajo** de todo: en un
- * PDF lo que se dibuja después tapa lo anterior, así que va primero.
+ * Marca de agua en diagonal, centrada en la hoja y **encima** de todo, con poca
+ * opacidad: el texto de debajo se sigue leyendo, y ningún bloque opaco —una
+ * tarjeta, la cabecera de una tabla, la banda del total— la tapa. Debajo del
+ * contenido, «SIN VALIDEZ» salía como «SIN V… DEZ», y una marca que invalida un
+ * papel se tiene que leer entera en cada hoja.
  *
  * `jsPDF` alinea el texto **antes** de rotarlo, así que el punto de partida se
  * calcula a mano para que el centro del texto rotado caiga en el centro de la
@@ -275,13 +279,14 @@ function drawWatermark(composer: PdfComposer): void {
   const length = composer.doc.getTextWidth(shaped);
   const x = composer.pageWidth / 2 - (length / 2) * Math.cos(radians);
   const y = composer.pageHeight / 2 + (length / 2) * Math.sin(radians);
-  composer.withOpacity(0.6, () => composer.doc.text(shaped, x, y, { angle }));
+  composer.withOpacity(WATERMARK_OPACITY, () => composer.doc.text(shaped, x, y, { angle }));
 }
 
 /* ---- el pie ------------------------------------------------------------ */
 
 /**
- * El pie de todas las hojas: emisor, nota legal, fecha de emisión y «Página X
+ * El pie de todas las hojas —y, con él, la marca de agua, que va encima del
+ * contenido—: emisor, nota legal, fecha de emisión y «Página X
  * de Y» en su píldora, sobre una franja fina en degradado al borde.
  *
  * Se estampa **al final**, cuando ya se sabe cuántas hojas hay: un documento
@@ -303,6 +308,7 @@ export function stampFooters(composer: PdfComposer): void {
 
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page);
+    drawWatermark(composer);
     composer.rule(ruleY, PDF_COLORS.rule, 0.6);
     composer.gradient(0, composer.pageHeight - PDF_PAGE.footerBand, composer.pageWidth, PDF_PAGE.footerBand, PDF_GRADIENTS.cover);
 

@@ -12,6 +12,7 @@ import {
   PDF_TONES,
   PDF_TYPE,
   type PdfTextStyle,
+  type PdfTone,
 } from './pdf-theme';
 
 /* ============================================================================
@@ -164,7 +165,9 @@ function drawHeading(composer: PdfComposer, block: PdfBlock): void {
     composer.y += PDF_SPACE.afterSection;
     return;
   }
-  const style = level === 3 ? PDF_TYPE.heading : PDF_TYPE.minorHeading;
+  // Un solo estilo para todos los subtítulos: tres estilos para el mismo rango
+  // se leían como tres jerarquías distintas.
+  const style = PDF_TYPE.heading;
   const lines = composer.wrap(block.text, composer.width, style);
   composer.ensure(PDF_SPACE.md + lines.length * style.leading + PDF_TYPE.body.leading * 2);
   composer.space(PDF_SPACE.md);
@@ -426,20 +429,44 @@ function drawPanels(composer: PdfComposer, block: PdfBlock): void {
 /* ---- avisos, totales y QR --------------------------------------------- */
 
 /**
- * Un aviso: texto sobre una tarjeta del color de su estado, con una barra
- * redondeada de la tinta del estado y un título opcional. Es para lo que hay
- * que leer pero no es el dato —advertencias, alergias, «esto no es una
- * factura»—.
+ * Qué marca lleva cada tono, además de su color: una fotocopia en blanco y
+ * negro deja todos los avisos del mismo gris, y una alergia no puede depender
+ * de que se vea el rojo. `null` = sólo la barra.
+ */
+const TONE_GLYPH: Readonly<Record<PdfTone, '!' | 'i' | 'check' | null>> = {
+  neutral: null,
+  brand: null,
+  info: 'i',
+  success: 'check',
+  warning: '!',
+  alert: '!',
+};
+
+/** El diámetro de la marca de un aviso. */
+const GLYPH_SIZE = 11;
+
+/**
+ * Un aviso: texto sobre una tarjeta del color de su estado, con una barra de
+ * la tinta del estado a ras del borde izquierdo, una marca que se distingue
+ * sin color —«!», «i», ✓— y un título opcional. Es para lo que hay que leer
+ * pero no es el dato —advertencias, alergias, «esto no es una factura»—.
+ *
+ * El texto arranca a 14 pt del borde, como el de las tarjetas y la rejilla: un
+ * aviso debajo de una lista se alinea con ella.
  */
 function drawNote(composer: PdfComposer, block: PdfBlock): void {
-  const tone = PDF_TONES[block.tone ?? 'brand'];
+  const toneName = block.tone ?? 'brand';
+  const tone = PDF_TONES[toneName];
+  const glyph = TONE_GLYPH[toneName];
   const pad = PDF_SPACE.panelPadding;
-  const bar = 3;
-  const textX = composer.left + pad + bar + 10;
+  const inset = 14;
+  const textX = composer.left + inset;
   const textWidth = composer.right - pad - textX;
-  const titleStyle = { ...PDF_TYPE.noteTitle, color: tone.ink };
-  const title = block.title === undefined ? [] : composer.wrap(block.title, textWidth, titleStyle);
-  const lines = composer.wrap(block.text, textWidth, PDF_TYPE.note);
+  const titleStyle = { ...PDF_TYPE.heading, color: tone.ink };
+  const glyphRoom = glyph === null ? 0 : GLYPH_SIZE + 6;
+  const title = block.title === undefined ? [] : composer.wrap(block.title, textWidth - glyphRoom, titleStyle);
+  // Sin título, la marca va en el primer renglón del texto y lo corre a la derecha.
+  const lines = composer.wrap(block.text, textWidth - (title.length === 0 ? glyphRoom : 0), PDF_TYPE.note);
   if (lines.length === 0 && title.length === 0) return;
 
   composer.space(PDF_SPACE.sm);
@@ -455,19 +482,61 @@ function drawNote(composer: PdfComposer, block: PdfBlock): void {
     fit = Math.max(1, fit);
     const chunk = pending.slice(0, fit);
     const height = pad * 2 + titleHeight + chunk.length * PDF_TYPE.note.leading;
-    composer.box(composer.left, composer.y, composer.width, height, PDF_SPACE.radius, { fill: tone.fill });
-    composer.box(composer.left + pad, composer.y + pad, bar, height - pad * 2, bar / 2, { fill: tone.ink });
-    let y = composer.y + pad;
-    if (first && title.length > 0) {
-      y += composer.writeLines(title, textX, y, titleStyle) + 2;
+    const top = composer.y;
+    composer.box(composer.left, top, composer.width, height, PDF_SPACE.radius, { fill: tone.fill });
+    composer.clipped(
+      composer.left,
+      top,
+      composer.width,
+      height,
+      () => composer.fill(composer.left, top, 3.5, height, tone.ink),
+      PDF_SPACE.radius,
+    );
+    let y = top + pad;
+    if (first && glyph !== null) {
+      const lineStyle = title.length > 0 ? titleStyle : PDF_TYPE.note;
+      drawToneGlyph(composer, glyph, textX, y + (lineStyle.leading - GLYPH_SIZE) / 2, tone.ink, tone.fill);
     }
-    composer.writeLines(chunk, textX, y, PDF_TYPE.note);
-    composer.y += height;
+    if (first && title.length > 0) {
+      y += composer.writeLines(title, textX + glyphRoom, y, titleStyle) + 2;
+    }
+    const bodyX = first && title.length === 0 ? textX + glyphRoom : textX;
+    composer.writeLines(chunk.slice(0, 1), bodyX, y, PDF_TYPE.note);
+    composer.writeLines(chunk.slice(1), textX, y + PDF_TYPE.note.leading, PDF_TYPE.note);
+    composer.y = top + height;
     pending = pending.slice(chunk.length);
     first = false;
     if (pending.length > 0) composer.newPage();
   }
   composer.y += PDF_SPACE.sm;
+}
+
+/** La marca de un tono: un disco de su tinta con «!», «i» o ✓ calado en el color del aviso. */
+function drawToneGlyph(
+  composer: PdfComposer,
+  glyph: '!' | 'i' | 'check',
+  x: number,
+  y: number,
+  ink: readonly [number, number, number],
+  paper: readonly [number, number, number],
+): void {
+  const r = GLYPH_SIZE / 2;
+  const cx = x + r;
+  const cy = y + r;
+  composer.doc.setFillColor(ink[0], ink[1], ink[2]);
+  composer.doc.circle(cx, cy, r, 'F');
+  composer.doc.setFillColor(paper[0], paper[1], paper[2]);
+  composer.doc.setDrawColor(paper[0], paper[1], paper[2]);
+  if (glyph === 'check') {
+    composer.doc.setLineWidth(1.3);
+    composer.doc.line(cx - 2.4, cy + 0.1, cx - 0.6, cy + 1.9);
+    composer.doc.line(cx - 0.6, cy + 1.9, cx + 2.6, cy - 1.8);
+    return;
+  }
+  // Trazos en vez de un carácter: no dependen de la fuente ni se cuelan en el texto.
+  const stem = glyph === '!' ? { top: cy - 3, bottom: cy + 1, dot: cy + 2.9 } : { top: cy - 0.8, bottom: cy + 3, dot: cy - 2.7 };
+  composer.doc.rect(cx - 0.75, stem.top, 1.5, stem.bottom - stem.top, 'F');
+  composer.doc.circle(cx, stem.dot, 0.85, 'F');
 }
 
 /** «Total: 120,00 Bs» → la etiqueta y el importe, para la caja de totales. */
@@ -609,15 +678,26 @@ function drawWritingLines(composer: PdfComposer, count = 1): void {
   for (let index = 0; index < lines; index += 1) {
     composer.ensure(PDF_SPACE.writingLine);
     composer.y += PDF_SPACE.writingLine;
-    composer.rule(composer.y - 4, PDF_COLORS.rule, 0.6);
+    // El borde de un campo editable (`--borde-ctrl`): el filete de superficie
+    // se perdía al imprimir y desaparecía en una fotocopia.
+    composer.rule(composer.y - 4, PDF_COLORS.writingLine, 0.5);
   }
   composer.y += PDF_SPACE.sm;
 }
 
+/** La resolución mínima de una ilustración impresa, en píxeles por pulgada. */
+const MIN_IMAGE_PPI = 200;
+
 /** Una ilustración del contenido, centrada, sin separarla de su crédito siguiente. */
 function drawContentImage(composer: PdfComposer, image: PdfLogo | undefined): void {
   if (image === undefined) return;
-  const box = { ancho: composer.width, alto: Math.min(300, composer.usableHeight - 20) };
+  // Nunca por debajo de 200 ppp: una ilustración estirada más allá de sus
+  // píxeles se ve escalonada al imprimir. 1 pt = 1/72", así que el ancho
+  // máximo es `píxeles × 72 / 200`.
+  const box = {
+    ancho: Math.min(composer.width, (image.ancho * 72) / MIN_IMAGE_PPI),
+    alto: Math.min(300, composer.usableHeight - 20, (image.alto * 72) / MIN_IMAGE_PPI),
+  };
   const fit = contenerLogo(image, box);
   if (fit === null) return;
   composer.space(PDF_SPACE.sm);

@@ -40,6 +40,7 @@ export const PDF_TOKENS = {
   'sup-inset': [249, 248, 244],
   filete: [205, 217, 213],
   'filete-2': [227, 234, 231],
+  'borde-ctrl': [125, 135, 134],
   'anillo-foco': [51, 112, 108],
   'ok-bg': [223, 237, 233],
   'ok-tinta': [39, 114, 92],
@@ -93,8 +94,15 @@ export const PDF_COLORS = {
   ruleSoft: token('filete-2'),
   /** Fondo de las filas pares y de las rejillas de datos: el marfil de AloVida. */
   inset: token('sup-inset'),
-  /** La marca de agua. */
-  watermark: token('filete'),
+  /** Los renglones para escribir a mano: el borde de un campo editable (`--borde-ctrl`). */
+  writingLine: token('borde-ctrl'),
+  /**
+   * La marca de agua: la tinta del error, con poca opacidad y **encima** del
+   * contenido. Debajo la tapaba cualquier bloque opaco, y en un gris claro la
+   * fotocopiadora la borraba; una marca que invalida un papel se tiene que leer
+   * entera en cada hoja.
+   */
+  watermark: token('error-tinta'),
 } as const satisfies Record<string, ColorRgb>;
 
 /** Los tonos de un aviso: los pares de estado de AloVida (`--*-bg` / `--*-tinta`). */
@@ -102,7 +110,7 @@ export const PDF_TONES = {
   /** Lo que acompaña al documento sin alarmar. */
   neutral: { fill: token('neutro-bg'), ink: token('neutro-tinta') },
   /** Lo propio de la marca: una indicación, «esto no es una factura». */
-  brand: { fill: token('info-bg'), ink: token('tinta-marca') },
+  brand: { fill: token('sup-inset'), ink: token('tinta-marca') },
   /** Una información útil para el lector. */
   info: { fill: token('info-bg'), ink: token('info-tinta') },
   /** Un resultado favorable, una confirmación. */
@@ -212,109 +220,65 @@ export interface PdfTextStyle {
 }
 
 /**
- * La escala tipográfica: los roles de AloVida llevados al papel, con una razón
- * ≈ 1,2 desde el cuerpo de 9,75 pt.
+ * La escala tipográfica: siete pasos —22, 15, 13, 11, 9,75, 8,5 y 7 pt— y
+ * nada fuera de ellos. Lo que distingue un rol de otro dentro de un paso es la
+ * pieza (Poppins o Nunito Sans), el color y las versalitas, no medio punto de
+ * cuerpo: dos tamaños casi iguales se leen como un descuido.
  */
 export const PDF_TYPE = {
   /** El título del documento, sobre la portada. */
   title: { font: 'display', size: 22, leading: 27, color: PDF_COLORS.onBrand },
-  /** La bajada bajo el título, sobre la portada. */
-  subtitle: { font: 'text', size: 9.75, leading: 14, color: PDF_COLORS.onBrand },
-  /** La clase de documento sobre el título, en versalitas menta. */
-  eyebrow: {
-    font: 'displayMedium',
-    size: 7.5,
-    leading: 11,
-    color: PDF_COLORS.accentSoft,
-    tracking: 1.6,
-    uppercase: true,
-  },
   /** El nombre de la marca, junto al isotipo. */
   wordmark: { font: 'display', size: 15, leading: 18, color: PDF_COLORS.onBrand },
-  /** Rótulo de un dato sobre la portada. */
-  coverLabel: {
-    font: 'displayMedium',
-    size: 6.5,
-    leading: 9,
-    color: PDF_COLORS.accentSoft,
-    tracking: 0.9,
-    uppercase: true,
-  },
-  /** Valor de un dato sobre la portada. */
-  coverValue: { font: 'text', size: 9.5, leading: 13, color: PDF_COLORS.onBrand },
   /** El folio, destacado sobre la portada. */
   coverReference: { font: 'display', size: 13, leading: 17, color: PDF_COLORS.onBrand },
+  /** El total a pagar. */
+  grandTotal: { font: 'display', size: 13, leading: 17, color: PDF_COLORS.onBrand },
   /** Título de sección de primer nivel. */
-  section: { font: 'display', size: 12.5, leading: 16, color: PDF_COLORS.brandDeep },
+  section: { font: 'display', size: 13, leading: 17, color: PDF_COLORS.brandDeep },
   /** Título de sección de segundo nivel: el que usan casi todos los documentos. */
   subsection: { font: 'display', size: 11, leading: 15, color: PDF_COLORS.brandDeep },
-  /** Subtítulo dentro de una sección. */
-  heading: { font: 'display', size: 9.75, leading: 13, color: PDF_COLORS.ink },
-  /** Rótulo menor. */
-  minorHeading: { font: 'displayMedium', size: 8.75, leading: 12, color: PDF_COLORS.inkMuted },
+  /** Subtítulo dentro de una sección, el título de un aviso o de un QR. */
+  heading: { font: 'display', size: 9.75, leading: 13.5, color: PDF_COLORS.brandDeep },
+  /** La bajada bajo el título, sobre la portada. */
+  subtitle: { font: 'text', size: 9.75, leading: 14, color: PDF_COLORS.onBrand },
+  /** Valor de un dato sobre la portada. */
+  coverValue: { font: 'text', size: 9.75, leading: 13.5, color: PDF_COLORS.onBrand },
   /** El cuerpo. */
   body: { font: 'text', size: 9.75, leading: 14.5, color: PDF_COLORS.ink },
   /** El valor de un dato. */
   value: { font: 'text', size: 9.75, leading: 13.5, color: PDF_COLORS.ink },
   /** El valor destacado de un dato o una cifra. */
   valueStrong: { font: 'textBold', size: 9.75, leading: 13.5, color: PDF_COLORS.ink },
-  /** La etiqueta de un dato, en versalitas. */
-  label: {
-    font: 'displayMedium',
-    size: 6.5,
-    leading: 9,
-    color: PDF_COLORS.inkSubtle,
-    tracking: 0.8,
-    uppercase: true,
-  },
-  /** El título de una tarjeta, en versalitas aguamarina. */
-  cardTitle: {
-    font: 'display',
-    size: 7,
-    leading: 10,
-    color: PDF_COLORS.accentInk,
-    tracking: 1.1,
-    uppercase: true,
-  },
+  /** Una fila de totales. */
+  totalRow: { font: 'text', size: 9.75, leading: 13.5, color: PDF_COLORS.inkMuted },
+  /** El importe de una fila de totales. */
+  totalValue: { font: 'textBold', size: 9.75, leading: 13.5, color: PDF_COLORS.ink },
   /** Las filas de una tabla. */
-  cell: { font: 'text', size: 8.75, leading: 12, color: PDF_COLORS.ink },
-  /** La cabecera de una tabla, en blanco sobre petróleo. */
-  cellHead: {
-    font: 'displayMedium',
-    size: 6.75,
-    leading: 9.5,
-    color: PDF_COLORS.onBrand,
-    tracking: 0.7,
-    uppercase: true,
-  },
+  cell: { font: 'text', size: 8.5, leading: 12, color: PDF_COLORS.ink },
   /** Notas y avisos. */
-  note: { font: 'text', size: 8.75, leading: 13, color: PDF_COLORS.ink },
-  /** El título de un aviso. */
-  noteTitle: { font: 'display', size: 8.75, leading: 12.5, color: PDF_COLORS.ink },
+  note: { font: 'text', size: 8.5, leading: 12.5, color: PDF_COLORS.ink },
   /** Letra chica al final de un bloque. */
-  caption: { font: 'text', size: 8, leading: 11.5, color: PDF_COLORS.inkSubtle },
+  caption: { font: 'text', size: 8.5, leading: 12, color: PDF_COLORS.inkSubtle },
+  /** La clase de documento sobre el título, en versalitas menta. */
+  eyebrow: { font: 'displayMedium', size: 7, leading: 10.5, color: PDF_COLORS.accentSoft, tracking: 1.6, uppercase: true },
+  /** Rótulo de un dato sobre la portada. */
+  coverLabel: { font: 'displayMedium', size: 7, leading: 10, color: PDF_COLORS.accentSoft, tracking: 0.9, uppercase: true },
+  /** La etiqueta de un dato, en versalitas. */
+  label: { font: 'displayMedium', size: 7, leading: 10, color: PDF_COLORS.inkSubtle, tracking: 0.8, uppercase: true },
+  /** El título de una tarjeta, en versalitas aguamarina. */
+  cardTitle: { font: 'display', size: 7, leading: 10, color: PDF_COLORS.accentInk, tracking: 1.1, uppercase: true },
+  /** La cabecera de una tabla, en blanco sobre petróleo. */
+  cellHead: { font: 'displayMedium', size: 7, leading: 10, color: PDF_COLORS.onBrand, tracking: 0.7, uppercase: true },
+  /** El rótulo del total a pagar, sobre la banda. */
+  grandTotalLabel: { font: 'displayMedium', size: 7, leading: 10, color: PDF_COLORS.accentSoft, tracking: 1, uppercase: true },
   /** El pie de página. */
-  footer: { font: 'text', size: 7.25, leading: 10.5, color: PDF_COLORS.inkSubtle },
+  footer: { font: 'text', size: 7, leading: 10.5, color: PDF_COLORS.inkSubtle },
   /** El emisor en el pie. */
-  footerStrong: { font: 'display', size: 7.25, leading: 10.5, color: PDF_COLORS.brandDeep },
+  footerStrong: { font: 'display', size: 7, leading: 10.5, color: PDF_COLORS.brandDeep },
   /** La numeración en el pie. */
   pageNumber: { font: 'displayMedium', size: 7, leading: 10, color: PDF_COLORS.brandDeep },
-  /** Una fila de totales. */
-  totalRow: { font: 'text', size: 9.25, leading: 13, color: PDF_COLORS.inkMuted },
-  /** El importe de una fila de totales. */
-  totalValue: { font: 'textBold', size: 9.25, leading: 13, color: PDF_COLORS.ink },
-  /** El rótulo del total a pagar, sobre la banda. */
-  grandTotalLabel: {
-    font: 'displayMedium',
-    size: 7,
-    leading: 10,
-    color: PDF_COLORS.accentSoft,
-    tracking: 1,
-    uppercase: true,
-  },
-  /** El total a pagar. */
-  grandTotal: { font: 'display', size: 14, leading: 18, color: PDF_COLORS.onBrand },
-  /** La marca de agua. */
+  /** La marca de agua: fuera de la escala a propósito, es una estampa y no texto de lectura. */
   watermark: { font: 'display', size: 64, leading: 72, color: PDF_COLORS.watermark },
 } as const satisfies Record<string, PdfTextStyle>;
 

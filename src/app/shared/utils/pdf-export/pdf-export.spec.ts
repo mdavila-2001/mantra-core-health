@@ -40,6 +40,8 @@ const { DocumentoFalso } = vi.hoisted(() => {
       circle: [number, number, number][];
       /** Los textos rotados: la marca de agua. */
       rotated: string[];
+      /** Todo lo escrito, rotado o no, en el orden en que se escribió. */
+      orden: string[];
       line: [number, number, number, number][];
       gState: { opacity?: number }[];
       charSpace: number[];
@@ -60,6 +62,7 @@ const { DocumentoFalso } = vi.hoisted(() => {
       roundedRect: [],
       circle: [],
       rotated: [],
+      orden: [],
       line: [],
       gState: [],
       charSpace: [],
@@ -105,8 +108,10 @@ const { DocumentoFalso } = vi.hoisted(() => {
     text(line: string | string[], x: number, y: number, opciones?: { angle?: number }): this {
       if (opciones?.angle !== undefined) {
         this.llamadas.rotated.push(String(line));
+        this.llamadas.orden.push(`rotado:${String(line)}`);
         return this;
       }
+      this.llamadas.orden.push(...(Array.isArray(line) ? line : [line]));
       for (const [index, value] of (Array.isArray(line) ? line : [line]).entries()) {
         this.llamadas.text.push([value, x, y + index * 14]);
       }
@@ -691,6 +696,19 @@ describe('la portada, el membrete y el pie', () => {
     );
   });
 
+  /**
+   * El defecto que esto cierra: dibujada antes que el contenido, cualquier
+   * bloque opaco —una tarjeta, la cabecera de una tabla— la tapaba, y «SIN
+   * VALIDEZ» se leía «SIN V… DEZ». Va encima de todo, con poca opacidad.
+   */
+  it('la marca de agua va encima del contenido, con poca opacidad', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Contenido de la hoja' }], { watermark: 'Sin validez' });
+
+    const { orden, gState } = ultimoDocumento().llamadas;
+    expect(orden.indexOf('rotado:SIN VALIDEZ')).toBeGreaterThan(orden.indexOf('Contenido de la hoja'));
+    expect(gState.map((estado) => estado.opacity)).toContain(0.14);
+  });
+
   it('sin marca de agua no escribe nada rotado', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }]);
 
@@ -1251,6 +1269,40 @@ describe('los bloques', () => {
 
     const textos = ultimoDocumento().llamadas.text.map(([linea]) => linea);
     expect(textos.indexOf('Alergias')).toBeLessThan(textos.indexOf('Alergia a la penicilina.'));
+  });
+
+  /**
+   * En una fotocopia en blanco y negro todos los avisos salen del mismo gris:
+   * una alergia no puede depender de que se vea el rojo. Los tonos que avisan
+   * algo llevan una marca dibujada; los neutros, sólo la barra.
+   */
+  it.each([
+    ['alert', true],
+    ['warning', true],
+    ['info', true],
+    ['success', true],
+    ['brand', false],
+    ['neutral', false],
+  ] as const)('un aviso %s lleva marca propia: %s', async (tono, conMarca) => {
+    const { noteBlock } = await import('./pdf-export');
+    buildBlocksPdf([]);
+    const base = ultimoDocumento().llamadas.circle.length;
+    buildBlocksPdf([noteBlock('Texto del aviso.', tono, 'Título')]);
+
+    expect(ultimoDocumento().llamadas.circle.length > base).toBe(conMarca);
+  });
+
+  /** Estirada más allá de sus píxeles, una ilustración se ve escalonada al imprimir. */
+  it('una ilustración no se dibuja por debajo de 200 ppp', () => {
+    buildBlocksPdf(
+      [{ kind: 'image', text: 'Esquema', image: { dataUrl: 'data:image/png;base64,AA==', formato: 'PNG', ancho: 400, alto: 200 } }],
+      { logo: null, firma: null },
+    );
+
+    const [imagen] = ultimoDocumento().llamadas.addImage;
+    // 400 px a 200 ppp son 2 pulgadas: 144 pt.
+    expect(imagen!.ancho).toBeCloseTo(144, 5);
+    expect(imagen!.alto).toBeCloseTo(72, 5);
   });
 
   it('una lista pone una viñeta por renglón', async () => {

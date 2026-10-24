@@ -39,7 +39,7 @@ test('muestra del generador genérico', async () => {
     'Aplicación de inyectable intramuscular',
   ];
   const bolivianos = (amount: number): string =>
-    `${amount.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs`;
+    `${amount < 0 ? '−' : ''}${Math.abs(amount).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs`;
   const lines = Array.from({ length: 34 }, (_, i) => ({
     service: services[i % services.length],
     unit: 45 + ((i * 37) % 180),
@@ -100,7 +100,7 @@ test('muestra del generador genérico', async () => {
     },
     { kind: 'heading', level: 3, text: 'Indicaciones' },
     listBlock([
-      'Paracetamol 500 mg, un comprimido cada 8 horas por 5 días, sólo si hay dolor.',
+      'Paracetamol 500 mg, un comprimido cada 8 horas por 5 días, solo si hay dolor.',
       'Pausas activas de 5 minutos cada hora de trabajo frente a pantalla.',
       'Higiene del sueño: horario regular, sin pantallas una hora antes de dormir.',
       'Acudir a urgencias si el dolor es súbito e intenso, o si aparece fiebre, rigidez de nuca o pérdida de fuerza.',
@@ -108,6 +108,8 @@ test('muestra del generador genérico', async () => {
     noteBlock('Alergia declarada a la penicilina y sus derivados. Verifique antes de indicar antibióticos.', 'alert', 'Alergias'),
     noteBlock('Los resultados de laboratorio se entregan en 48 horas hábiles en la misma sede.', 'info', 'Información'),
     noteBlock('Este documento no reemplaza una factura. Consérvelo como constancia de la atención.'),
+    noteBlock('Su solicitud de reembolso fue aprobada el 21/10/2026.', 'success', 'Confirmación'),
+    noteBlock('El estudio requiere ayuno de 8 horas. Si no puede cumplirlo, reprograme la cita.', 'warning', 'Preparación'),
     noteBlock('Aviso neutro para aclaraciones administrativas que no requieren atención especial.', 'neutral'),
     { kind: 'divider', text: '' },
     {
@@ -132,7 +134,7 @@ test('muestra del generador genérico', async () => {
     { kind: 'image', text: 'Logo de muestra', image: fixtureImage('practice-logo.png') },
     { kind: 'caption', text: 'Ilustración de muestra: logotipo ficticio, sin relación con un consultorio real.' },
     ...(qr === null ? [] : [qr]),
-    { kind: 'caption', text: 'Generado por el generador genérico de documentos de AloVida. Todos los datos son ficticios.' },
+    { kind: 'caption', text: 'Muestra del sistema de documentos de AloVida. Todos los datos son ficticios.' },
   ];
 
   const doc = buildBlocksPdf(blocks, {
@@ -152,11 +154,18 @@ test('muestra del generador genérico', async () => {
 });
 
 /**
- * La misma base con marca de agua, sin logo de consultorio y con el emisor por
- * omisión: el papel de un documento sin validez.
+ * La misma base con marca de agua en varias hojas y sobre bloques opacos (una
+ * tabla con cabecera, una rejilla, la banda del total), con logo de consultorio
+ * pero sin bajada, y un emisor con datos largos que llegan a la píldora del pie.
  */
 test('muestra con marca de agua', () => {
   loadBrandFonts();
+  const row = (cells: string[], header = false): PdfBlock => ({
+    kind: 'row',
+    text: cells.join('\t'),
+    cells,
+    ...(header ? { header: true } : {}),
+  });
   const doc = buildBlocksPdf(
     [
       noteBlock(
@@ -176,8 +185,14 @@ test('muestra con marca de agua', () => {
       ),
       {
         kind: 'paragraph',
-        text: 'La marca de agua va debajo del contenido en todas las hojas y no tapa ningún dato: el texto se lee completo encima de ella, en pantalla y en una impresión en blanco y negro.',
+        text: 'La marca de agua va encima del contenido, con poca opacidad, en todas las hojas: ningún bloque la tapa y el texto de debajo se sigue leyendo, en pantalla y en una fotocopia en blanco y negro.',
       },
+      { kind: 'heading', level: 2, text: 'Detalle' },
+      row(['N.º', 'Concepto', 'Importe'], true),
+      ...Array.from({ length: 48 }, (_, i) =>
+        row([String(i + 1), `Cuota ${i + 1} del plan de pagos`, `${(250 + i * 5).toLocaleString('es-BO', { minimumFractionDigits: 2 })} Bs`]),
+      ),
+      totalsBlock([{ label: 'Total', value: '17.640,00 Bs', emphasis: true }]),
     ],
     {
       title: 'Constancia de prueba',
@@ -185,7 +200,16 @@ test('muestra con marca de agua', () => {
       reference: 'N.º 000045',
       watermark: 'Sin validez',
       issuedAt: SAMPLE_DATE,
-      logo: null,
+      logo: fixtureImage('practice-logo.png'),
+      issuer: {
+        name: 'Centro Médico Integral de Especialidades Illimani S.R.L.',
+        details: [
+          'NIT 0000000000',
+          'Calle Ficticia N.º 0000, entre Av. Primera y Av. Segunda, zona Central, Cochabamba',
+          'Tel. 4 000 0000',
+          'contacto@ejemplo.invalid',
+        ],
+      },
       firma: null,
     },
   );
