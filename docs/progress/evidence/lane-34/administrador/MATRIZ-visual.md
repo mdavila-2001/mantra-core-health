@@ -1,6 +1,6 @@
-# MATRIZ visual — carril 34 — despues — 2026-10-13T11:53:15.233Z
+# MATRIZ visual — carril 34 — despues — 2026-10-23T23:29:55.509Z
 
-Celdas: 188 · en rojo: 0
+Celdas: 208 · en rojo: 0
 
 | Ruta | Viewport | Tema | Fondo blanco | Centrado (≤2 px) | Ancho (≥85 %) | Sin scroll H | Consola | Foto |
 |---|---|---|---|---|---|---|---|---|
@@ -28,7 +28,12 @@ Celdas: 188 · en rojo: 0
 | `/administration/identity-assurance` | 375 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-375-claro.png` |
 | `/administration/terminology` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-375-claro.png` |
 | `/administration/moderation` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-375-claro.png` |
-| `/administration/accounting` | 375 | claro | PASS | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-375-claro.png` |
+| `/administration/geolocation` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-375-claro.png` |
+| `/administration/services-catalog` | 375 | claro | PASS | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-375-claro.png` |
+| `/administration/medical-organization` | 375 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-375-claro.png` |
+| `/administration/medical-laboratory` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-375-claro.png` |
+| `/administration/clinical-forms` | 375 | claro | PASS | PASS | PASS (44 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-375-claro.png` |
+| `/administration/accounting` | 375 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-375-claro.png` |
 | `/my-account/dependents` | 375 | claro | PASS | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-375-claro.png` |
 | `/my-account` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-375-claro.png` |
 | `/my-account/appointments` | 375 | claro | PASS | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-375-claro.png` |
@@ -75,7 +80,12 @@ Celdas: 188 · en rojo: 0
 | `/administration/identity-assurance` | 768 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-768-claro.png` |
 | `/administration/terminology` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-768-claro.png` |
 | `/administration/moderation` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-768-claro.png` |
-| `/administration/accounting` | 768 | claro | PASS | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-768-claro.png` |
+| `/administration/geolocation` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-768-claro.png` |
+| `/administration/services-catalog` | 768 | claro | PASS | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-768-claro.png` |
+| `/administration/medical-organization` | 768 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-768-claro.png` |
+| `/administration/medical-laboratory` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-768-claro.png` |
+| `/administration/clinical-forms` | 768 | claro | PASS | PASS | PASS (44 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-768-claro.png` |
+| `/administration/accounting` | 768 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-768-claro.png` |
 | `/my-account/dependents` | 768 | claro | PASS | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-768-claro.png` |
 | `/my-account` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-768-claro.png` |
 | `/my-account/appointments` | 768 | claro | PASS | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-768-claro.png` |
@@ -122,7 +132,12 @@ Celdas: 188 · en rojo: 0
 | `/administration/identity-assurance` | 1440 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-1440-claro.png` |
 | `/administration/terminology` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-1440-claro.png` |
 | `/administration/moderation` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-1440-claro.png` |
-| `/administration/accounting` | 1440 | claro | PASS | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-claro.png` |
+| `/administration/geolocation` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-1440-claro.png` |
+| `/administration/services-catalog` | 1440 | claro | PASS | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-1440-claro.png` |
+| `/administration/medical-organization` | 1440 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-1440-claro.png` |
+| `/administration/medical-laboratory` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-1440-claro.png` |
+| `/administration/clinical-forms` | 1440 | claro | PASS | PASS | PASS (44 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-1440-claro.png` |
+| `/administration/accounting` | 1440 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-claro.png` |
 | `/my-account/dependents` | 1440 | claro | PASS | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-1440-claro.png` |
 | `/my-account` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-1440-claro.png` |
 | `/my-account/appointments` | 1440 | claro | PASS | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-1440-claro.png` |
@@ -169,7 +184,12 @@ Celdas: 188 · en rojo: 0
 | `/administration/identity-assurance` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-1440-oscuro.png` |
 | `/administration/terminology` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-1440-oscuro.png` |
 | `/administration/moderation` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-1440-oscuro.png` |
-| `/administration/accounting` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (14 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-oscuro.png` |
+| `/administration/geolocation` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-1440-oscuro.png` |
+| `/administration/services-catalog` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-1440-oscuro.png` |
+| `/administration/medical-organization` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-1440-oscuro.png` |
+| `/administration/medical-laboratory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-1440-oscuro.png` |
+| `/administration/clinical-forms` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (44 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-1440-oscuro.png` |
+| `/administration/accounting` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-oscuro.png` |
 | `/my-account/dependents` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-1440-oscuro.png` |
 | `/my-account` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account-1440-oscuro.png` |
 | `/my-account/appointments` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-1440-oscuro.png` |
