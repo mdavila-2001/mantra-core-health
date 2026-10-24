@@ -68,7 +68,7 @@ Nota de los comandos: `corepack yarn test --include=…` filtra por archivo. Los
 - Qué no anda: `gh pr checks` no reporta ningún check. El CI del repo está caído (CLAUDE.md), así que el criterio de checks en verde no se puede demostrar.
 - Qué falta exactamente: un CI que corra sobre el PR. Hasta entonces la entrega es A MEDIAS por esa causa, no HECHO.
 
-Salida literal, consultada después del último push (`14495e3a4`):
+Salida literal, consultada después del último push (`11c4060e6`; ver también `evidencia/10-pr-tras-ultimo-push.txt`):
 
 ```text
 $ gh pr view 1227 --json isDraft,mergeable,mergeStateStatus,headRefOid,baseRefName
