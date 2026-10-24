@@ -5,6 +5,8 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly } from '../wire';
 import type {
+  DiagnosticUnitCoveragePage,
+  DiagnosticUnitCoverageQuery,
   DiagnosticUnitDetail,
   DiagnosticUnitDirectory,
   DiagnosticUnitSearchPage,
@@ -62,6 +64,30 @@ export class DiagnosticUnitsClient {
       params = params.set(clave, String(valor));
     }
     return this.http.get<DiagnosticUnitSearchPage>(this.url('/diagnostic-units/search'), {
+      params,
+    });
+  }
+
+  /**
+   * `GET /diagnostic-units/search` con varios estudios — qué centros los
+   * tienen todos y qué les falta a los demás.
+   *
+   * Los conceptos viajan juntos y separados por coma, igual que los productos de
+   * `GET /pharmacy-inventory/availability`: una sola petición, nunca una por
+   * estudio. El origen viaja sólo si la persona lo eligió.
+   */
+  searchCoverage(query: DiagnosticUnitCoverageQuery): Observable<DiagnosticUnitCoveragePage> {
+    let params = new HttpParams().set('studyConceptIds', query.studyConceptIds.join(','));
+    if (query.kind !== undefined) {
+      params = params.set('kind', query.kind);
+    }
+    if (query.origin !== undefined) {
+      params = params.set('lat', String(query.origin.lat)).set('lng', String(query.origin.lng));
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+    return this.http.get<DiagnosticUnitCoveragePage>(this.url('/diagnostic-units/search'), {
       params,
     });
   }

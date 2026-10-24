@@ -7,6 +7,11 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
+import { DiagnosticUnitsClient } from '../../../../core/data-access/diagnostic-units/diagnostic-units.client';
+import type { DiagnosticUnitCoverageItem } from '../../../../core/data-access/diagnostic-units/diagnostic-units.types';
+import { modalidadDeEstudio } from '../../../../core/data-access/diagnostic-units/modalidades';
+import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
+import type { PatientOrder } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type {
   AvailabilityProduct,
@@ -61,19 +66,31 @@ import type {
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { categoriaDeAnalisis } from '../../diagnostic-orders/diagnostic-orders.types';
 import { PHARMACY_CART_ROUTE } from '../../pharmacy/pharmacy.routes';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
 import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
+import { coverageRoute, directionsUrl, type CoverageRoute } from './where-to-buy.route';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
-const MIS_ESTUDIOS_ROUTE = '/my-account/diagnostic-orders';
+const MY_STUDIES_ROUTE = '/my-account/diagnostic-orders';
 
 /** La guía de laboratorios y centros de diagnóstico, sin cercanía. */
-const LABORATORIOS_ROUTE = '/laboratory-directory';
+const LABORATORY_DIRECTORY_ROUTE = '/laboratory-directory';
 
 /** La guía de clínicas y hospitales. */
-const CLINICAS_ROUTE = '/clinics-directory';
+const CLINICS_DIRECTORY_ROUTE = '/clinics-directory';
+
+/**
+ * Las pestañas, en el orden de la plantilla, por su valor en `?tab=`. La
+ * pestaña viaja en la URL para que recargar o compartir el enlace vuelva a la
+ * misma; un valor desconocido abre Farmacias.
+ */
+export const WHERE_TO_BUY_TABS = ['pharmacies', 'imaging', 'medical-centers'] as const;
+
+/** Tope de centros de la búsqueda por cobertura: el mismo que el de sedes. */
+const IMAGING_CENTER_LIMIT = 20;
 
 /** Mismo tope que la historia: es la misma lectura del resumen clínico. */
 const TOPE = 50;
@@ -101,7 +118,7 @@ const CANTIDAD_POR_RENGLON = 1;
  * paciente son otro juego de puntos, `lugaresGuardados` más abajo, que se
  * ofrecen primero porque ya sabemos que le quedan cerca.
  */
-const CIUDADES: readonly PuntoDeReferencia[] = [
+const CITIES: readonly PuntoDeReferencia[] = [
   { etiqueta: 'Santa Cruz de la Sierra', lat: -17.7833, lng: -63.1821 },
   { etiqueta: 'La Paz', lat: -16.4957, lng: -68.1335 },
   { etiqueta: 'Cochabamba', lat: -17.3895, lng: -66.1568 },
@@ -165,6 +182,10 @@ interface SedeVisible {
   readonly completa: boolean;
   /** Los medicamentos de la receta que esta sede NO puede confirmar. */
   readonly faltantes: readonly string[];
+  /** Los medicamentos que sí confirma, por concepto: lo que pesa el recorrido. */
+  readonly covers: ReadonlySet<string>;
+  /** «Cómo llegar»: el punto en el mapa, o `null` sin coordenadas. */
+  readonly directions: string | null;
   /** «96.50 BOB», o `null` si falta un precio o las listas mezclan monedas. */
   readonly total: string | null;
   /** El total en centavos, o `null` si no es un importe: la clave de «Más barato». */
@@ -209,6 +230,35 @@ interface ResultadoDeSedes {
 
 /** Sin sucursales que mostrar: la pantalla no llegó a consultar. */
 const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [], aprobadosIncluidos: 0 };
+
+/** Una sede como parada del recorrido: la misma, con la distancia que pesa el criterio. */
+type RouteStop = SedeVisible & { readonly distanceKm: number | null };
+
+/** Un estudio pedido que todavía no tiene resultado, listo para la búsqueda. */
+interface PendingStudy {
+  /** El concepto del estudio: el `codeConceptId` de la orden, que es el `study_concept_id` de la oferta. */
+  readonly conceptId: string;
+  readonly name: string;
+}
+
+/** Un centro de imagenología, evaluado contra los estudios pendientes. */
+interface ImagingCenter {
+  readonly id: string;
+  readonly name: string;
+  readonly address: string | null;
+  /** «1,2 km», o `null` sin origen o sin coordenadas del centro. */
+  readonly distance: string | null;
+  readonly complete: boolean;
+  /** Los estudios que este centro no ofrece, por su nombre. */
+  readonly missing: readonly string[];
+  readonly directions: string | null;
+}
+
+/** Lo que pinta la pestaña de imagenología. */
+interface ImagingResult {
+  readonly studies: readonly PendingStudy[];
+  readonly centers: readonly ImagingCenter[];
+}
 
 /**
  * **Dónde comprar mi receta** (carril E3, sobre las lecturas E2 del backend).
@@ -291,6 +341,8 @@ export class WhereToBuy {
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly cart = inject(CartStore);
   private readonly dialogs = inject(DialogService);
+  private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly diagnosticUnits = inject(DiagnosticUnitsClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly documento = inject(DOCUMENT);
@@ -302,17 +354,39 @@ export class WhereToBuy {
   protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
 
   /**
-   * Los destinos que ofrecen las dos pestañas que todavía no pueden ordenar por
-   * cercanía. No son un consuelo: son lo que hoy sí resuelve parte de la
-   * pregunta —qué me pidieron, y qué lugares hay— mientras el dato que falta
-   * (la dirección de los centros) no exista.
+   * Las salidas de las otras dos pestañas: qué me pidieron, y qué lugares hay
+   * cuando la búsqueda por cobertura no tiene nada que mostrar.
    */
-  protected readonly rutaDeEstudios = MIS_ESTUDIOS_ROUTE;
-  protected readonly rutaDeLaboratorios = LABORATORIOS_ROUTE;
-  protected readonly rutaDeClinicas = CLINICAS_ROUTE;
-  protected readonly ciudades = CIUDADES;
+  protected readonly myStudiesRoute = MY_STUDIES_ROUTE;
+  protected readonly laboratoryDirectoryRoute = LABORATORY_DIRECTORY_ROUTE;
+  protected readonly clinicsDirectoryRoute = CLINICS_DIRECTORY_ROUTE;
+  protected readonly ciudades = CITIES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
   protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
+
+  /* ---- la pestaña activa, en la URL ---------------------------------------- */
+
+  protected readonly tabIndex = signal(
+    tabIndexOf(this.route.snapshot.queryParamMap.get('tab')),
+  );
+
+  /**
+   * Cambia de pestaña y la deja en la URL (`replaceUrl`: cambiar de pestaña no
+   * apila pasos en el historial). Imagenología se consulta recién la primera
+   * vez que se abre: quien vino por la receta no paga esa lectura.
+   */
+  protected selectTab(index: number): void {
+    this.tabIndex.set(index);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: WHERE_TO_BUY_TABS[index] ?? null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    if (WHERE_TO_BUY_TABS[index] === 'imaging') {
+      this.loadImagingOnce();
+    }
+  }
 
   /**
    * Maqueta (`true`) o API real (`false`). La variante con seguro es una
@@ -426,6 +500,51 @@ export class WhereToBuy {
     })),
   );
 
+  /**
+   * El recorrido que cubre los medicamentos consultables (ver
+   * `where-to-buy.route.ts`). Con la variante con seguro no se ofrece: esa
+   * vista evalúa otra receta, la aprobada, y mezclar los dos criterios en la
+   * misma pantalla confundiría más de lo que ayuda.
+   */
+  protected readonly coverage = computed<CoverageRoute<RouteStop> | null>(() => {
+    const sedes = this.resultado()?.sedes ?? [];
+    if (this.conSeguro() || sedes.length === 0) {
+      return null;
+    }
+    const needed = this.items()
+      .filter((item) => item.productId !== null && this.incluidos().has(item.conceptId))
+      .map((item) => item.conceptId);
+    if (needed.length === 0) {
+      return null;
+    }
+    return coverageRoute(
+      sedes.map((sede) => ({ ...sede, distanceKm: sede.distanciaKm })),
+      needed,
+    );
+  });
+
+  /** Los medicamentos de la receta, por su nombre, a partir de sus conceptos. */
+  protected nombresDe(conceptIds: readonly string[]): string {
+    return this.items()
+      .filter((item) => conceptIds.includes(item.conceptId))
+      .map((item) => item.medicamento)
+      .join(', ');
+  }
+
+  protected readonly imagingData = computed(() => dataOf(this.imaging()));
+
+  protected studyNames(studies: readonly PendingStudy[]): string {
+    return studies.map((study) => study.name).join(', ');
+  }
+
+  /** Los medicamentos que esta parada aporta al recorrido, por su nombre. */
+  protected coveredBy(sede: SedeVisible): string {
+    return this.items()
+      .filter((item) => sede.covers.has(item.conceptId) && this.incluidos().has(item.conceptId))
+      .map((item) => item.medicamento)
+      .join(', ');
+  }
+
   protected readonly etiquetaDelMapa = computed(() => {
     const cantidad = this.sedesEnElMapa().length;
     const marcadas = cantidad === 1 ? '1 sucursal marcada' : `${cantidad} sucursales marcadas`;
@@ -441,6 +560,103 @@ export class WhereToBuy {
       return;
     }
     this.cargar();
+    if (WHERE_TO_BUY_TABS[this.tabIndex()] === 'imaging') {
+      this.loadImagingOnce();
+    }
+  }
+
+  /* ---- imagenología: los centros que tienen mis estudios ------------------ */
+
+  protected readonly imaging = signal<ViewState<ImagingResult>>(loading());
+
+  /** Los estudios pendientes, una vez leídos; `null` mientras no se pidieron. */
+  private imagingStudies: readonly PendingStudy[] | null = null;
+  private imagingRequested = false;
+
+  private loadImagingOnce(): void {
+    if (this.imagingRequested || this.perfil === null) {
+      return;
+    }
+    this.imagingRequested = true;
+    this.loadImaging();
+  }
+
+  /**
+   * Lee las órdenes propias y se queda con las de imagenología sin resultado.
+   * Sin etiquetas no hay código de estudio con qué buscar, así que un fallo
+   * del catálogo es un error con reintento, no un «no tiene estudios».
+   */
+  protected loadImaging(): void {
+    this.imaging.set(loading());
+    this.imagingStudies = null;
+    this.diagnostics
+      .getOwnOrders()
+      .pipe(
+        switchMap((page) => {
+          const pending = page.items.filter((order) => !order.hasReleasedResult);
+          if (pending.length === 0) {
+            return of<readonly PendingStudy[]>([]);
+          }
+          const ids = pending.flatMap((order) =>
+            order.categoryConceptId === undefined
+              ? [order.codeConceptId]
+              : [order.codeConceptId, order.categoryConceptId],
+          );
+          return this.terminology
+            .readConceptLabels([...new Set(ids)])
+            .pipe(map((labels) => pendingImagingStudies(pending, labels)));
+        }),
+      )
+      .subscribe({
+        next: (studies) => {
+          this.imagingStudies = studies;
+          this.searchImaging();
+        },
+        error: (error: unknown) => this.imaging.set(errorToViewState<ImagingResult>(error)),
+      });
+  }
+
+  /** Una sola búsqueda con todos los estudios, desde el mismo origen que farmacias. */
+  protected searchImaging(): void {
+    const studies = this.imagingStudies;
+    if (studies === null) {
+      return;
+    }
+    if (studies.length === 0) {
+      this.imaging.set(
+        empty(
+          { label: 'Ver mis estudios pedidos', route: MY_STUDIES_ROUTE },
+          'No tiene estudios de imagenología pendientes. Cuando su médico le pida uno, acá va a ver dónde hacérselo.',
+        ),
+      );
+      return;
+    }
+    this.imaging.set(loading());
+    const origen = this.origen();
+    this.diagnosticUnits
+      .searchCoverage({
+        studyConceptIds: studies.map((study) => study.conceptId),
+        kind: 'IMAGING',
+        origin: origen === null ? undefined : geoPuntoDe(origen),
+        limit: IMAGING_CENTER_LIMIT,
+      })
+      .subscribe({
+        next: (page) => {
+          if (page.items.length === 0) {
+            this.imaging.set(
+              empty(
+                { label: 'Buscar un laboratorio', route: LABORATORY_DIRECTORY_ROUTE },
+                'Ningún centro publicado ofrece hoy los estudios que le pidieron.',
+              ),
+            );
+            return;
+          }
+          this.imaging.set(
+            ready({ studies, centers: page.items.map((item) => imagingCenterOf(item, studies)) }),
+          );
+        },
+        error: (error: unknown) => this.imaging.set(errorToViewState<ImagingResult>(error)),
+      });
   }
 
   /* ---- la receta ---------------------------------------------------------- */
@@ -809,12 +1025,20 @@ export class WhereToBuy {
 
   protected medirDesde(punto: PuntoDeReferencia): void {
     this.origen.set(punto);
-    this.consultar();
+    this.remeasure();
   }
 
   protected quitarOrigen(): void {
     this.origen.set(null);
+    this.remeasure();
+  }
+
+  /** El origen es uno solo: farmacias e imagenología miden desde el mismo punto. */
+  private remeasure(): void {
     this.consultar();
+    if (this.imagingStudies !== null) {
+      this.searchImaging();
+    }
   }
 
   /* ---- el mapa y las tarjetas hablan de la misma sede ---------------------- */
@@ -861,6 +1085,65 @@ function itemDe(
 
 function geoPuntoDe(punto: PuntoDeReferencia): GeoPoint {
   return { lat: punto.lat, lng: punto.lng };
+}
+
+/** «1,2 km»: un decimal y coma, como el resto de la pantalla. */
+function formatKm(km: number): string {
+  return `${km.toFixed(1).replace('.', ',')} km`;
+}
+
+/** El índice de la pestaña pedida en `?tab=`; desconocida o ausente, Farmacias. */
+export function tabIndexOf(tab: string | null): number {
+  const index = (WHERE_TO_BUY_TABS as readonly string[]).indexOf(tab ?? '');
+  return index < 0 ? 0 : index;
+}
+
+/**
+ * Los estudios de imagenología sin resultado, uno por concepto. Cuenta como
+ * imagenología la orden cuya categoría lo dice, o la que no trae categoría y
+ * cuyo estudio tiene una modalidad de imagen; una orden de laboratorio nunca.
+ *
+ * La búsqueda va por concepto y no por el `studyCode` de la oferta: ese es el
+ * código propio de cada centro; el concepto es lo que la orden y la oferta
+ * comparten. El `code` del concepto sólo sirve para reconocer la modalidad.
+ */
+export function pendingImagingStudies(
+  orders: readonly PatientOrder[],
+  labels: ConceptLabels,
+): readonly PendingStudy[] {
+  const byConcept = new Map<string, PendingStudy>();
+  for (const order of orders) {
+    const study = labels.get(order.codeConceptId);
+    if (study === undefined || order.hasReleasedResult) {
+      continue;
+    }
+    const category = categoriaDeAnalisis(
+      order.categoryConceptId === undefined ? undefined : labels.get(order.categoryConceptId)?.code,
+    );
+    const imaging =
+      category === 'IMAGING' || (category === 'OTHER' && modalidadDeEstudio(study.code) !== null);
+    if (imaging) {
+      byConcept.set(order.codeConceptId, { conceptId: order.codeConceptId, name: study.display });
+    }
+  }
+  return [...byConcept.values()];
+}
+
+/** Un centro de la búsqueda, con sus faltantes dichos por su nombre. */
+function imagingCenterOf(
+  item: DiagnosticUnitCoverageItem,
+  studies: readonly PendingStudy[],
+): ImagingCenter {
+  const nameOf = new Map(studies.map((study) => [study.conceptId, study.name]));
+  return {
+    id: item.id,
+    name: item.name,
+    address: item.addressText,
+    distance: item.distanceKm === null ? null : formatKm(item.distanceKm),
+    complete: item.complete,
+    missing: item.missingStudyConceptIds.map((id) => nameOf.get(id) ?? 'Un estudio pedido'),
+    directions: directionsUrl(item.latitude, item.longitude),
+  };
 }
 
 /**
@@ -1094,11 +1377,16 @@ function evaluar(
       farmacia: sede.pharmacyName,
       sede: sede.siteName,
       direccion: sede.addressText,
-      distancia:
-        sede.distanceKm === null ? null : `${sede.distanceKm.toFixed(1).replace('.', ',')} km`,
+      distancia: sede.distanceKm === null ? null : formatKm(sede.distanceKm),
       distanciaKm: sede.distanceKm,
       completa: faltantes.length === 0,
       faltantes,
+      covers: new Set(
+        consultables
+          .filter((item) => !sede.missingProductIds.includes(item.productId))
+          .map((item) => item.conceptId),
+      ),
+      directions: directionsUrl(sede.latitude, sede.longitude),
       total:
         sede.totalAmount === null
           ? null

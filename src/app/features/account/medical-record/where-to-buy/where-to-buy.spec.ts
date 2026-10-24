@@ -288,13 +288,16 @@ describe('WhereToBuy', () => {
 
   afterEach(() => http.verify());
 
-  async function montar(requestId = 'm-1'): Promise<void> {
+  async function montar(requestId = 'm-1', query = ''): Promise<void> {
     TestBed.inject(SessionStore).start({
       accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], pid: 'pp-1' }),
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl(`/my-account/medical-record/where-to-buy/${requestId}`, WhereToBuy);
+    await harness.navigateByUrl(
+      `/my-account/medical-record/where-to-buy/${requestId}${query}`,
+      WhereToBuy,
+    );
   }
 
   /** Resuelve el recorrido completo hasta la consulta de disponibilidad. */
@@ -354,6 +357,138 @@ describe('WhereToBuy', () => {
     expect(pestanas[0]?.getAttribute('aria-selected')).toBe('true');
     // Y el panel activo es el de farmacias, no una promesa.
     expect(texto()).toContain('Sucursal Centro');
+  });
+
+  /* ---- carril 19: pestaña en la URL, recorrido, «Cómo llegar», imagenología -- */
+
+  /** Dos órdenes de imagen sin resultado y una de laboratorio que no cuenta. */
+  const ORDENES_PROPIAS = {
+    patientProfileId: 'pp-1',
+    limit: 50,
+    truncated: false,
+    items: [
+      { id: 'o-1', codeConceptId: 'c-rx', categoryConceptId: 'cat-img', statusConceptId: 's-1', createdAt: '2026-10-01T10:00:00Z', hasReleasedResult: false },
+      { id: 'o-2', codeConceptId: 'c-eco', statusConceptId: 's-1', createdAt: '2026-10-02T10:00:00Z', hasReleasedResult: false },
+      { id: 'o-3', codeConceptId: 'c-hemo', categoryConceptId: 'cat-lab', statusConceptId: 's-1', createdAt: '2026-10-03T10:00:00Z', hasReleasedResult: false },
+    ],
+  };
+
+  const CONCEPTOS_DE_ORDENES = {
+    items: [
+      { conceptId: 'c-rx', code: 'STUDY-RX-TORAX', display: 'Radiografía de tórax', codeSystemVersionId: 'v1' },
+      { conceptId: 'c-eco', code: 'STUDY-ECO-ABD', display: 'Ecografía abdominal', codeSystemVersionId: 'v1' },
+      { conceptId: 'c-hemo', code: 'STUDY-HEMOGRAMA', display: 'Hemograma', codeSystemVersionId: 'v1' },
+      { conceptId: 'cat-img', code: 'SRQ-IMAGING', display: 'Imagenología', codeSystemVersionId: 'v1' },
+      { conceptId: 'cat-lab', code: 'SRQ-LAB', display: 'Laboratorio', codeSystemVersionId: 'v1' },
+    ],
+  };
+
+  const centro = (id: string, name: string, complete: boolean, missingStudyConceptIds: string[]) => ({
+    id,
+    code: id,
+    name,
+    type: { code: 'DU_TYPE_IMAGING', display: 'Centro de imagenología' },
+    siteCount: 1,
+    equipmentCount: 1,
+    studyCount: 2,
+    acceptsExternalOrders: true,
+    walkInAvailable: null,
+    homeCollectionAvailable: false,
+    tenantId: 't-img',
+    rating: null,
+    ratingCount: 0,
+    minAmount: null,
+    complete,
+    missingStudyConceptIds,
+    distanceKm: null,
+    addressText: 'Av. Busch 120',
+    latitude: -17.77,
+    longitude: -63.19,
+  });
+
+  it('abre la pestaña que pide la URL y busca todos los estudios de imagen en una sola consulta', async () => {
+    await montar('m-1', '?tab=imaging');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES_PROPIAS);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    const busqueda = http.expectOne((r) => r.url === '/diagnostic-units/search');
+    // El laboratorio no entra: la búsqueda es de imagenología.
+    expect(busqueda.request.params.get('studyConceptIds')).toBe('c-rx,c-eco');
+    expect(busqueda.request.params.get('kind')).toBe('IMAGING');
+    busqueda.flush({
+      items: [
+        centro('u-1', 'Centro de Imagen Sur', true, []),
+        centro('u-2', 'Imagen Norte', false, ['c-eco']),
+      ],
+      total: 2,
+      limit: 20,
+      offset: 0,
+    });
+    harness.detectChanges();
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
+    expect(pestanas[1]?.getAttribute('aria-selected')).toBe('true');
+    expect(texto()).toContain('Estudios pendientes: Radiografía de tórax, Ecografía abdominal');
+    expect(texto()).toContain('Centro de Imagen Sur');
+    expect(texto()).toContain('Le falta: Ecografía abdominal');
+    const comoLlegar = harness.routeNativeElement?.querySelector<HTMLAnchorElement>(
+      '[data-testid="imagen-lista"] a[href*="google.com/maps"]',
+    );
+    expect(comoLlegar?.getAttribute('target')).toBe('_blank');
+    expect(comoLlegar?.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('deja la pestaña elegida en la URL', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
+    pestanas[2]?.click();
+    harness.detectChanges();
+
+    expect(navegar).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { tab: 'medical-centers' }, replaceUrl: true }),
+    );
+  });
+
+  it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    expect(
+      harness.routeNativeElement?.querySelector('[data-testid="compra-recorrido-una"]')?.textContent,
+    ).toContain('Farmacia Andina · Sucursal Centro tiene todo lo que eligió');
+  });
+
+  it('sin ninguna sucursal completa, sugiere el recorrido de menos paradas', async () => {
+    await montar();
+    responderHastaProductos();
+    const [primera, segunda] = DISPONIBILIDAD_FIXTURE.items;
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush({
+      ...DISPONIBILIDAD_FIXTURE,
+      items: [
+        { ...primera!, complete: false, missingProductIds: [FIXTURE_IDS.productoIbuprofeno] },
+        segunda!,
+      ],
+    });
+    harness.detectChanges();
+
+    const paradas = Array.from(
+      harness.routeNativeElement?.querySelectorAll('[data-testid="compra-paradas"] > li') ?? [],
+    ).map((li) => li.textContent ?? '');
+    expect(paradas).toHaveLength(2);
+    // La más cercana primero; la que no publica distancia, al final.
+    expect(paradas[0]).toContain('Sucursal Centro');
+    expect(paradas[0]).toContain('Aquí: Amoxicilina');
+    expect(paradas[1]).toContain('Sucursal Plan Tres Mil');
+    expect(paradas[1]).toContain('Aquí: Ibuprofeno');
   });
 
   it('muestra las campañas de la farmacia con su etiqueta y pliega las que sobran', async () => {
