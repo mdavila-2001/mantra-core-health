@@ -146,19 +146,35 @@ describe('LaboratoryDirectory', () => {
       .flush({ items, total, limit: 20, offset: 0 });
   }
 
-  describe('the search bar on every level (19/09/2026)', () => {
-    it('shows the same search bar on the category cover, above the categories', () => {
+  // Sin portada de categorías desde el 24/10/2026 (propietario: «directo al
+  // buscador», menos clics hasta pedir un estudio).
+  describe('straight to the list, no category cover (24/10/2026)', () => {
+    it('opens on the centres with the search bar, without a category cover', () => {
       mount();
       responder([LAB, IMAGING]);
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
       expect(raiz.querySelector('app-filter-bar app-search-field')).not.toBeNull();
-      expect(raiz.querySelector('[data-testid="portada-categorias"]')).not.toBeNull();
-      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(0);
+      expect(raiz.querySelector('[data-testid="portada-categorias"]')).toBeNull();
+      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(2);
     });
 
-    it('a term typed on the cover searches every category and lists the centres grouped', () => {
+    it('offers the kind of centre as a facet, not as a second category facet', () => {
+      mount();
+      responder([LAB, IMAGING]);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const rotulos = [...raiz.querySelectorAll('.filter-bar__faceta-rotulo')].map((r) =>
+        r.textContent?.trim(),
+      );
+      expect(rotulos).toContain('Tipo de centro');
+      // La faceta de grupos repetía la misma pregunta: no se dibuja.
+      expect(raiz.querySelector('.mercado__faceta')).toBeNull();
+    });
+
+    it('a typed term searches every kind of centre at once', () => {
       parametros.next({ q: 'central' });
       mount();
       const pedido = http.expectOne((request) => request.url === BUSQUEDA);
@@ -167,15 +183,23 @@ describe('LaboratoryDirectory', () => {
       pedido.flush({ items: [LAB, IMAGING], total: 2, limit: 20, offset: 0 });
       fixture.detectChanges();
 
-      const raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.querySelector('[data-testid="portada-categorias"]')).toBeNull();
-      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(2);
-      // Los grupos son la faceta «Categoría» de la columna (marketplace).
       expect(
-        [...raiz.querySelectorAll('.mercado__opcion-texto')]
-          .map((rotulo) => rotulo.textContent?.trim())
-          .filter((rotulo) => rotulo !== 'Ver todo'),
-      ).toEqual(['Imagenología diagnóstica', 'Laboratorio clínico']);
+        (fixture.nativeElement as HTMLElement).querySelectorAll('li[app-result-card]').length,
+      ).toBe(2);
+    });
+
+    it('each card jumps straight to the studies and prices of its centre', () => {
+      mount();
+      responder([LAB]);
+      fixture.detectChanges();
+
+      const accion = groups()[0]!.resultados[0]!.action;
+      expect(accion).toEqual({
+        label: 'Ver estudios y precios',
+        link: `/laboratory-directory/${LAB.id}`,
+        fragment: 'estudios',
+        icon: 'flask',
+      });
     });
   });
 
@@ -363,6 +387,13 @@ describe('LaboratoryDirectory', () => {
   });
 
   describe('aConsulta', () => {
+    it('sends the price ceiling and the external-orders filter in the types the contract expects', () => {
+      expect(aConsulta({ maxAmount: '100', acceptsExternalOrders: 'true' })).toEqual({
+        maxAmount: 100,
+        acceptsExternalOrders: true,
+      });
+    });
+
     it('drops keys the contract does not declare instead of sending them', () => {
       // El backend valida con `forbidNonWhitelisted`: una clave de más vuelve
       // 400 y tira abajo la búsqueda entera.

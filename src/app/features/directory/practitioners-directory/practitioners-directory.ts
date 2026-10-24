@@ -28,8 +28,13 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
-import { initialsOf } from '../../../shared/text/initials';
-import { professionalSubtitle } from '../professional-subtitle';
+import {
+  cortesDe,
+  filtrosDeLaGuia,
+  pasaLosCortes,
+  type CortesDeLaGuia,
+} from './practitioner-filters';
+import { porNombre, toResultado } from './practitioner-card';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
 interface TarjetaDeEspecialidad {
@@ -44,14 +49,6 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
   plural: 'médicos',
 };
 
-/**
- * El ancla de los horarios en la ficha del profesional.
- *
- * Vive acá y en `practitioner-detail.html`: es el contrato entre la tarjeta que
- * ofrece «revisar disponibilidad» y la sección que responde esa pregunta.
- */
-const ANCLA_HORARIOS = 'horarios';
-
 /** Clave del chip de especialidad en la URL. */
 const PARAM_ESPECIALIDAD = 'especialidad';
 
@@ -64,16 +61,6 @@ const PARAM_ESPECIALIDAD = 'especialidad';
  * con un uuid.
  */
 const SIN_ESPECIALIDAD_URL = 'sin-especialidad';
-
-/**
- * Cuántas sedes se nombran en la tarjeta antes de resumir.
- *
- * Dos entran en una línea en un teléfono; con más, la tarjeta se convierte en
- * un párrafo y deja de servir para comparar de un vistazo. El resto se cuenta,
- * que es lo que hace falta saber: «y 3 sedes más» dice que hay más sin
- * obligar a leerlas.
- */
-const MAXIMO_DE_SEDES = 2;
 
 /** Tope por página del backend. La guía las junta todas. */
 const POR_PAGINA = 50;
@@ -194,6 +181,12 @@ export class PractitionersDirectory {
     { initialValue: '' },
   );
 
+  /** Los cortes en memoria que trae la URL al abrir: un enlace compartido los reproduce. */
+  private readonly cortesEnUrl = toSignal(
+    this.route.queryParams.pipe(map((params) => cortesDe(params))),
+    { initialValue: {} as CortesDeLaGuia },
+  );
+
   /** El recuento por especialidad: lo que dibuja la portada. */
   protected readonly recuento = signal<ViewState<readonly TarjetaDeEspecialidad[]>>(loading());
 
@@ -214,6 +207,12 @@ export class PractitionersDirectory {
    * sus especialidades reales— pero se sigue pudiendo buscar por él.
    */
   private readonly titulosPorId = signal<ReadonlyMap<string, string>>(new Map());
+
+  /** Las filas de la guía por id: los cortes en memoria leen sus datos. */
+  private readonly filasPorId = signal<ReadonlyMap<string, PractitionerListItem>>(new Map());
+
+  /** Los cortes en memoria que están puestos, leídos de la URL. */
+  protected readonly cortes = signal<CortesDeLaGuia>({});
 
   /** Filtro en memoria: el directorio ya está entero en pantalla. */
   protected readonly filtro = signal('');
@@ -241,7 +240,16 @@ export class PractitionersDirectory {
         label: `${tarjeta.nombre} (${tarjeta.cantidad})`,
       })),
     },
+    ...filtrosDeLaGuia([...this.filasPorId().values()], this.cortes()),
   ]);
+
+  /** Si el médico pasa los cortes en memoria; sin su fila, sólo sin cortes. */
+  private pasaLosCortes(id: string): boolean {
+    const fila = this.filasPorId().get(id);
+    return fila === undefined
+      ? Object.keys(this.cortes()).length === 0
+      : pasaLosCortes(fila, this.cortes());
+  }
 
   /** Si se cortó por el techo de páginas, para poder decirlo. */
   protected readonly recortada = signal(false);
@@ -257,9 +265,15 @@ export class PractitionersDirectory {
     // El chip acota **antes** que el texto: son dos cortes distintos —«sólo
     // cardiología» y «que se llame Quispe»— y aplicarlos en el otro orden daría
     // el mismo resultado con más trabajo.
-    const todos = (dataOf(this.estado()) ?? []).filter(
-      (grupo) => elegida === null || grupo.conceptId === elegida,
-    );
+    const hayCortes = Object.keys(this.cortes()).length > 0;
+    const todos = (dataOf(this.estado()) ?? [])
+      .filter((grupo) => elegida === null || grupo.conceptId === elegida)
+      .map((grupo) =>
+        hayCortes
+          ? { ...grupo, profesionales: grupo.profesionales.filter((p) => this.pasaLosCortes(p.id)) }
+          : grupo,
+      )
+      .filter((grupo) => !hayCortes || grupo.profesionales.length > 0);
     const busqueda = normalizar(this.filtro());
     if (busqueda === '') {
       return todos;
@@ -305,6 +319,9 @@ export class PractitionersDirectory {
     if (texto !== '') {
       return `Ningún médico coincide con «${texto}». Pruebe con otro nombre o con la especialidad.`;
     }
+    if (Object.keys(this.cortes()).length > 0) {
+      return 'Ningún médico cumple todos los filtros que puso. Pruebe quitando alguno.';
+    }
     return this.especialidad() === null
       ? null
       : 'Ningún médico de esa especialidad está publicado todavía. Pruebe quitando el chip.';
@@ -322,6 +339,7 @@ export class PractitionersDirectory {
   protected filtrar(activos: Readonly<Record<string, string>>): void {
     this.filtro.set(activos[SEARCH_PARAM] ?? '');
     this.especialidad.set(activos[PARAM_ESPECIALIDAD] ?? null);
+    this.cortes.set(cortesDe(activos));
   }
 
   constructor() {
@@ -334,6 +352,10 @@ export class PractitionersDirectory {
     effect(() => {
       const busqueda = this.busquedaEnUrl();
       untracked(() => this.filtro.set(busqueda));
+    });
+    effect(() => {
+      const cortes = this.cortesEnUrl();
+      untracked(() => this.cortes.set(cortes));
     });
     effect(() => {
       const elegida = this.especialidadEnUrl();
@@ -424,6 +446,7 @@ export class PractitionersDirectory {
       )
       .subscribe({
         next: ({ filas, etiquetas }) => {
+          this.filasPorId.set(new Map(filas.map((fila) => [fila.profileId, fila] as const)));
           this.titulosPorId.set(
             new Map(
               filas
@@ -562,118 +585,4 @@ function agrupar(
         .sort(porNombre),
     },
   ];
-}
-
-/**
- * Las especialidades reales del médico, en palabras y con la elegida primero:
- * en Cardiología, el cardiólogo dice «Cardiología». `undefined` si no declaró
- * ninguna o el catálogo no las resolvió, y entonces queda el título.
- */
-function especialidadesDe(
-  fila: PractitionerListItem,
-  etiquetas: ConceptLabels,
-  elegida: string | null,
-): string | undefined {
-  const nombres = [...fila.specialties]
-    .sort(
-      (a, b) => Number(b.specialtyConceptId === elegida) - Number(a.specialtyConceptId === elegida),
-    )
-    .map((especialidad) => etiquetas.get(especialidad.specialtyConceptId)?.display)
-    .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
-  return nombres.length === 0 ? undefined : [...new Set(nombres)].join(' · ');
-}
-
-function porNombre(a: SearchResultItem, b: SearchResultItem): number {
-  return a.title.localeCompare(b.title, 'es');
-}
-
-/**
- * Traduce el dominio a lo que la tarjeta de resultado muestra.
- *
- * La tarjeta no conoce al dominio a propósito (ver `search-result.types.ts`):
- * recibe figura, título, líneas de contexto y sellos, y quien la usa traduce.
- *
- * El `practitionerCode` no se muestra: es un identificador de sistema, y la
- * Guía es sólo del paciente (`navigation.map.ts`, `exclusiveRoles`), así que
- * no hay a quién mostrárselo por rol (feedback de la analista F-01, 18/08/2026).
- * Sigue viajando en el DTO por si una consola de administración lo necesita.
- */
-function toResultado(
-  fila: PractitionerListItem,
-  nombresDeOtros: readonly string[] = [],
-  etiquetas: ConceptLabels = new Map(),
-  elegida: string | null = null,
-): SearchResultItem {
-  const nombre = fila.displayName ?? 'Profesional sin nombre registrado';
-  const meta = [];
-  // El subtítulo pasa por el guardia de F-25: una tarjeta sin subtítulo es más
-  // pobre, una con el nombre de otro es una guía que miente.
-  // Primero las especialidades reales (propietario, 04/10/2026); el título
-  // escrito a mano sólo cuando no declaró ninguna.
-  const subtitulo =
-    especialidadesDe(fila, etiquetas, elegida) ??
-    professionalSubtitle(fila.professionalTitle, nombre, nombresDeOtros);
-  // El subtítulo del profesional —«Cardióloga · Clínica Los Olivos»— NO va en
-  // `meta`: es qué es esta persona, no un dato de contexto, y en el gris de
-  // 13 px se leía igual que la lista de sedes de abajo. Va en `subtitle`, que
-  // la tarjeta pinta pegado al nombre. Ver el JSDoc de `SearchResultItem`.
-
-  // Dónde atiende, debajo del título. Es la pregunta que sigue a «quién es»
-  // cuando se elige un médico, y hasta ahora había que abrir la ficha para
-  // responderla. Con techo: alguien del padrón puede tener nueve sedes y la
-  // tarjeta dejaría de ser una tarjeta.
-  const sedes = fila.workplaces ?? [];
-  if (sedes.length > 0) {
-    const visibles = sedes.slice(0, MAXIMO_DE_SEDES);
-    const resto = sedes.length - visibles.length;
-    meta.push({
-      text:
-        visibles.join(' · ') +
-        (resto > 0 ? ` · y ${resto} ${resto === 1 ? 'sede más' : 'sedes más'}` : ''),
-    });
-  }
-
-  const sellos = [];
-  // El sello de matrícula verificada, primero: es lo que distingue a quien
-  // probó lo que declara del resto del padrón, y la guía los lista a todos.
-  // Sólo se marca al verificado: estampar «sin verificar» a quien todavía no
-  // pasó por el trámite dice de él algo que no es suyo.
-  if (fila.verified) {
-    sellos.push({ label: 'Matrícula verificada', tone: 'ok' as const });
-  }
-  // La disponibilidad para pacientes nuevos ya no se estampa: el sello salía en
-  // TODA tarjeta, también en la de quien nunca tocó el ajuste, y el valor por
-  // defecto anunciaba «No toma pacientes nuevos» de profesionales que sí los
-  // toman. Quien busca lo resuelve en la agenda del profesional, que es el dato
-  // real. `acceptsNewPatients` sigue viajando en la fila.
-  if (fila.telehealthAvailable) {
-    sellos.push({ label: 'Telemedicina', tone: 'info' as const });
-  }
-
-  return {
-    id: fila.profileId,
-    title: nombre,
-    link: `/directory/${fila.profileId}`,
-    // «Revisar disponibilidad» (fila 30 de la bitácora): el título lleva a la
-    // ficha entera y esto salta a los horarios, que es la pregunta con la que
-    // se compara a dos profesionales. Mismo destino, distinta altura — por eso
-    // el ancla y no un segundo enlace al mismo lugar.
-    action: {
-      label: 'Revisar disponibilidad',
-      link: `/directory/${fila.profileId}`,
-      fragment: ANCLA_HORARIOS,
-    },
-    // Iniciales y no una foto de banco: en el hueco de la foto de perfil, una
-    // persona ajena se lee como la cara del médico. Un lugar admite una imagen
-    // ilustrativa; una persona, no. Cuando la guía resuelva `photoFileId`, su
-    // foto real va acá.
-    figureText: initialsOf(nombre),
-    ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
-    // Las reseñas reales, cuando la API las mande en el listado (P61).
-    ...(fila.ratingAverage != null && (fila.ratingCount ?? 0) > 0
-      ? { rating: { average: fila.ratingAverage, count: fila.ratingCount! } }
-      : {}),
-    meta,
-    seals: sellos,
-  };
 }
