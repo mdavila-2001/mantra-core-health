@@ -19,6 +19,7 @@ import {
 
 import { AuthService } from '../../core/auth/auth.service';
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
+import { AccountingPractices } from '../../core/data-access/accounting/accounting-practices';
 import type {
   BalanceSheet,
   ChartOfAccounts,
@@ -195,6 +196,7 @@ export interface MesFacturado {
 })
 export class Accounting {
   private readonly libros = inject(AccountingClient);
+  private readonly accountingPractices = inject(AccountingPractices);
   private readonly auth = inject(AuthService);
   private readonly csv = inject(CsvExportService);
 
@@ -229,7 +231,7 @@ export class Accounting {
 
   /** Las prácticas de la organización. Sin esto no hay `practiceId` que pedir. */
   private readonly practicas = toSignal(
-    this.libros.listPractices().pipe(catchError(() => of<readonly Practice[]>([]))),
+    this.accountingPractices.list().pipe(catchError(() => of<readonly Practice[]>([]))),
     { initialValue: undefined },
   );
 
