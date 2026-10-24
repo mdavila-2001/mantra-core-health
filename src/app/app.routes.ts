@@ -688,14 +688,22 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Ficha de un caso de verificación (V27-01): una fila del listado de
-    // `identidad/casos` abierta.
+    // El listado viejo de casos abre la pestaña «Mis trámites» de la identidad
+    // unificada. Función y no texto: un `redirectTo` de texto con `?tab=` no es
+    // una ruta, y además perdería el query que traía el enlace.
+    path: 'my-account/identity/cases',
+    pathMatch: 'full',
+    redirectTo: redireccionConQuery({ ruta: '/my-account/identity', query: { tab: 'cases' } }),
+  },
+  {
+    // Ruta anterior a la unión de identidad. Conserva el enlace profundo y lo
+    // abre como diálogo dentro de la pestaña «Mis trámites».
     path: 'my-account/identity/cases/:caseId',
-    title: `${APP_TITLE} - Caso de verificación`,
-    loadComponent: () =>
-      import('./features/identity-assurance/verification-case-detail/verification-case-detail')
-        .then((m) => m.VerificationCaseDetail)
-        .catch(() => chunkFallido()),
+    pathMatch: 'full',
+    redirectTo: ({ params, queryParams }) =>
+      inject(Router).createUrlTree(['/my-account/identity'], {
+        queryParams: { ...queryParams, tab: 'cases', case: params['caseId'] },
+      }),
   },
   {
     // La ficha de un profesional: el destino del clic en la guía (R2-1). No va
@@ -1288,7 +1296,6 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // Las dos rutas propias de antes de unificar (2026-09-10). Están en
   // historiales, en favoritos y en los correos que la plataforma ya mandó.
   'my-account/identity/verify': '/my-account/identity',
-  'my-account/identity/cases': '/my-account/identity',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',
