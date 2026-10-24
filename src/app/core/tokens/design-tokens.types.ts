@@ -53,6 +53,14 @@ export type RampToken = `--c-${RampFamily}-${RampStep}`;
 /* ---- tokens semánticos por tema ------------------------------------------ */
 
 export const SURFACE = {
+  /**
+   * El blanco puro de las superficies del tema claro: de él cuelgan `--bg-base`
+   * y `--bg-surface`. Es el valor de partida, no un token para pintar con él:
+   * en oscuro no cambia, así que quien lo escriba directo queda blanco sobre
+   * fondo oscuro. Se declara acá porque la prueba de fidelidad exige que todo
+   * lo que `styles.css` declara esté en el catálogo.
+   */
+  white: '--surface-white',
   base: '--bg-base',
   surface: '--bg-surface',
   surfaceAlt: '--bg-surface-alt',

@@ -326,7 +326,7 @@
   block-size: 2rem;
   border-radius: 50%;
   background: var(--petroleo);
-  color: #fff;
+  color: var(--text-inverse);
   font-family: var(--f-titulo);
   font-weight: 700;
 }
