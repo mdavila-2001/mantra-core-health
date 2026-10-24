@@ -3,28 +3,28 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En un cadáver masculino de unos 41 años se describió un lóbulo hepático accesorio adicional ubicado sobre la cara visceral del hígado.",
+        "es": "Al disecar el cadáver de un varón de alrededor de 41 años se encontró un lóbulo hepático supernumerario en la cara visceral del hígado.",
         "cites": [
           "PMID:31806047"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En otro caso, un pequeño lóbulo accesorio se unía al lóbulo cuadrado mediante un pedículo formado por peritoneo y quedaba muy próximo a la vesícula biliar.",
+        "es": "Otro caso combinó una vesícula «en forma de frijol» con un lóbulo accesorio pequeño, pediculado por peritoneo desde el lóbulo cuadrado, cuya cercanía podría comprimir la vesícula.",
         "cites": [
           "PMID:28814698"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha publicado el caso de una mujer de 28 años con tejido hepático heterotópico paraesofágico en el mediastino, unido al hígado ortotópico por un pedículo delgado.",
+        "es": "Un tejido hepático heterotópico paraesofágico, conectado al hígado por un pedículo fino, simuló una masa mediastínica en una mujer de 28 años con disnea y dolor torácico.",
         "cites": [
           "PMID:28166154"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Un lóbulo accesorio provisto de un mesenterio largo puede manifestarse con dolor abdominal recurrente, según un caso publicado en 1976.",
+        "es": "Se ha comunicado un lóbulo accesorio sintomático, con un mesenterio largo, que causaba dolor abdominal recurrente en una mujer; los autores lo presentaron como el séptimo caso de la literatura en inglés.",
         "cites": [
           "PMID:1273019"
         ]
@@ -35,35 +35,35 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Se le reconocen cinco superficies: dorsal, izquierda y libre hiliar, además de los planos limítrofes derecho y ventral.",
+        "es": "Se describe como un lóbulo de cinco caras: tres superficies (dorsal, izquierda y libre del hilio) y dos planos limítrofes (derecho y ventral).",
         "cites": [
           "PMID:12557417"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Desde el punto de vista quirúrgico se divide en tres porciones: el lóbulo de Spiegel, el proceso caudado y la porción paracava, que corresponde al parénquima dorsal situado por delante de la vena cava inferior.",
+        "es": "La porción paracava, parénquima dorsal apoyado por delante de la vena cava inferior, completa junto al lóbulo de Spiegel y al proceso caudado la división quirúrgica del lóbulo en tres partes.",
         "cites": [
           "PMID:12557417"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Las tres porciones reciben ramas primarias de las venas porta derecha e izquierda, incluida la zona de la bifurcación hiliar.",
+        "es": "Las ramas portales primarias que nutren esas tres partes salen tanto de la porta derecha como de la izquierda, también desde la zona de la bifurcación hiliar.",
         "cites": [
           "PMID:12557417"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "La rama de la bifurcación hiliar irriga con frecuencia (50%) la porción paracava y en ocasiones (29%) se extiende también al lóbulo de Spiegel.",
+        "es": "La porción paracava depende a menudo (50 %) de una rama nacida en la bifurcación hiliar, cuyo territorio alcanza a veces (29 %) el lóbulo de Spiegel.",
         "cites": [
           "PMID:12557417"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Este lóbulo se ha convertido en objetivo de la cirugía oncológica hepática más agresiva.",
+        "es": "La cirugía oncológica hepática agresiva parece haber encontrado en este lóbulo su último objetivo.",
         "cites": [
           "PMID:12557417"
         ]
@@ -74,42 +74,42 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "En el injerto de lóbulo derecho del trasplante hepático de donante vivo, el drenaje depende de dos secciones con tres vías venosas hepáticas que requieren reconstrucción.",
+        "es": "El injerto de lóbulo derecho de donante vivo drena por tres vías venosas, repartidas en dos secciones, y todas deben reconstruirse.",
         "cites": [
           "PMID:32709407"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las complicaciones del flujo de salida venoso pueden provocar un fallo agudo del injerto, de diagnóstico no siempre sencillo.",
+        "es": "Un fallo agudo del injerto puede deberse a complicaciones del drenaje venoso, que no siempre se reconocen con facilidad.",
         "cites": [
           "PMID:32709407"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una serie de 72 injertos reducidos izquierdos en niños, la obstrucción de la vena hepática se produjo en 12 pacientes y fue más frecuente con la anastomosis terminoterminal.",
+        "es": "La anastomosis terminoterminal de la vena hepática fue la técnica con más obstrucciones del drenaje en una revisión de 72 injertos izquierdos reducidos pediátricos, que sumaron 12 obstrucciones en total.",
         "cites": [
           "PMID:8427000"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 1310 pacientes con carcinoma hepatocelular, la trombosis tumoral aislada de venas hepáticas se asoció con una supervivencia mediana menor que la ausencia de invasión macrovascular (13.3 frente a 32.5 meses).",
+        "es": "Entre 1310 pacientes con carcinoma hepatocelular, quienes tenían sólo trombosis tumoral de venas hepáticas vivieron menos desde el diagnóstico (mediana 13,3 frente a 32,5 meses) que quienes no tenían invasión macrovascular.",
         "cites": [
           "PMID:34077613"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 71 pacientes con cirrosis compensada, el tiempo de llegada del contraste a la vena hepática medido por ecografía mostró una correlación negativa con el gradiente de presión venosa hepática.",
+        "es": "Cuanto más alto era el gradiente de presión venosa hepática, más corto resultaba el tiempo de llegada del contraste a la vena hepática en la ecografía, según un estudio de 71 cirróticos compensados.",
         "cites": [
           "PMID:22473911"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 256 biopsias y 50 hígados de necropsia con hepatopatía alcohólica, la flebosclerosis de las vénulas hepáticas terminales apareció en todos los casos de hepatitis alcohólica y cirrosis.",
+        "es": "La flebosclerosis de las vénulas hepáticas terminales fue constante en la hepatitis alcohólica y la cirrosis, y se agravaba con el daño, en una revisión de 256 biopsias y 50 hígados de necropsia.",
         "cites": [
           "PMID:3950032"
         ]
@@ -120,21 +120,21 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En cortes de cadáver, el área desnuda se encuentra entre las dos hojas del ligamento coronario y contacta directamente con el diafragma, sin cubierta peritoneal.",
+        "es": "Los cortes de cadáver muestran el área desnuda, sin peritoneo, apoyada directamente en el diafragma y encerrada entre las dos hojas del ligamento coronario.",
         "cites": [
           "PMID:21604479"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En esos mismos cortes, el ligamento coronario continúa al ligamento falciforme y se prolonga lateralmente como ligamento triangular derecho.",
+        "es": "Ese ligamento coronario de dos hojas se continúa con el falciforme y hacia los lados forma el ligamento triangular derecho.",
         "cites": [
           "PMID:21604479"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Una simulación basada en estructuras extraídas de TC indicó que, en la ablación por radiofrecuencia de carcinomas próximos al borde del área desnuda, no modelar la dextrosa al 5% interpuesta puede subestimar el volumen ablacionado en casi un 25%.",
+        "es": "Según una simulación sobre estructuras extraídas de TC, ignorar la dextrosa al 5 % interpuesta entre hígado y diafragma podría subestimar en casi un 25 % el volumen ablacionado al tratar con radiofrecuencia carcinomas cercanos al borde del área desnuda.",
         "cites": [
           "PMID:37029689"
         ]
@@ -145,28 +145,28 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En una serie de 9 fibromatosis de tipo desmoide mesentéricas, 7 asentaban en el mesenterio del intestino delgado.",
+        "es": "El mesenterio del intestino delgado concentró 7 de las 9 fibromatosis de tipo desmoide mesentéricas de una serie.",
         "cites": [
           "PMID:37476949"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En esa serie, los tumores carecían de cápsula, tenían límites imprecisos y un diámetro máximo medio de (10.7±8.5) cm.",
+        "es": "Eran tumores sin cápsula y mal delimitados, de 10,7 ± 8,5 cm de diámetro máximo medio.",
         "cites": [
           "PMID:37476949"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 8 pacientes con cáncer gástrico o de colon y metástasis en el mesenterio del intestino delgado, las lesiones se ordenaban a lo largo de los vasos sanguíneos y había émbolos tumorales intravasculares.",
+        "es": "Las metástasis mesentéricas de 8 cánceres gástricos o de colon seguían ordenadamente el trayecto de los vasos y se acompañaban de émbolos tumorales intravasculares, lo que llevó a sugerir una vía hematógena.",
         "cites": [
           "PMID:28099909"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito un carcinoide del mesenterio del intestino delgado con metástasis hepáticas en una mujer de 49 años con vómitos y diarrea.",
+        "es": "Una mujer de 49 años con vómitos y diarrea tenía un carcinoide en el mesenterio del intestino delgado, con metástasis en el hígado.",
         "cites": [
           "PMID:11447876"
         ]
@@ -177,35 +177,35 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En un estudio en 8 cadáveres, el bloqueo transmuscular se dirigió al plano interfascial comprendido entre el cuadrado lumbar y el psoas mayor.",
+        "es": "En 8 cadáveres, la aguja del bloqueo transmuscular terminaba en el plano interfascial entre el cuadrado lumbar y el psoas mayor.",
         "cites": [
           "PMID:28277325"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Desde ese plano, el colorante ascendió sobre todo por detrás de los ligamentos arqueados medial y lateral hasta el espacio paravertebral torácico.",
+        "es": "La vía principal por la que el colorante ascendió al espacio paravertebral torácico pasaba por detrás de los ligamentos arqueados medial y lateral.",
         "cites": [
           "PMID:28277325"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Por debajo del diafragma, el colorante rodeó en todos los casos a los nervios subcostal, iliohipogástrico e ilioinguinal, sin alcanzar el plexo lumbar.",
+        "es": "Bajo el diafragma, los nervios subcostal, iliohipogástrico e ilioinguinal quedaron teñidos en todos los casos, mientras que no se vio colorante alrededor del plexo lumbar.",
         "cites": [
           "PMID:28277325"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En cinco cadáveres, todos los bloqueos transmusculares se distribuyeron hacia las raíces de L1 a L3 y dentro de los músculos psoas mayor y cuadrado lumbar.",
+        "es": "Los cuatro bloqueos transmusculares realizados en cinco cadáveres tiñeron de forma constante las raíces L1 y L3 y se extendieron dentro del psoas mayor y del cuadrado lumbar.",
         "cites": [
           "PMID:27543534"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Un metaanálisis de seis ensayos con 543 parturientas halló puntuaciones de dolor acumuladas a 24 horas menores con el bloqueo del cuadrado lumbar que con el del plano transverso del abdomen, aunque la evidencia se consideró limitada.",
+        "es": "Con evidencia calificada de limitada, un metaanálisis (6 ensayos, 543 parturientas) encontró menos dolor acumulado a 24 horas tras cesárea programada con el bloqueo del cuadrado lumbar que con el del plano transverso del abdomen.",
         "cites": [
           "PMID:37865903"
         ]
@@ -216,35 +216,35 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En 150 tomografías abdominales, el músculo se halló medial a la línea semilunar a la altura de L1 en todos los casos (150/150), en L3 sólo en 8 (5%) y en L5 en ninguno.",
+        "es": "En 150 TC abdominales, la porción muscular medial a la línea semilunar fue constante a la altura de L1, excepcional en L3 (8 casos, 5 %) e inexistente en L5.",
         "cites": [
           "PMID:37713128"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esa serie, su grosor medio fue de 3.4 mm a la altura de L1 y de 1.6 mm a la de L3, con un músculo más delgado en mujeres multíparas que en nulíparas.",
+        "es": "Su grosor medio bajó de 3,4 mm en L1 a 1,6 mm en L3; no difirió entre sexos, pero fue menor en mujeres multíparas que en nulíparas.",
         "cites": [
           "PMID:37713128"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 60 disecciones, la aponeurosis de Spiegel midió entre 1.5 y 3.5 cm de ancho (media 2.26 cm), y se hallaron defectos en 14 de los 60 músculos y aponeurosis estudiados (23.3%).",
+        "es": "Las disecciones de 60 paredes abdominales hallaron defectos en 14 músculos y aponeurosis (23,3 %) y una aponeurosis de Spiegel de 1,5 a 3,5 cm de ancho (media 2,26 cm).",
         "cites": [
           "PMID:24190375"
         ]
       },
       {
         "aspect": "function",
-        "es": "Tras 60 días de reposo estricto en cama, su grosor ecográfico disminuyó un 18.3% en sujetos sin ejercicio, pérdida que un programa de ejercicio de resistencia atenuó.",
+        "es": "Sesenta días de reposo estricto en cama redujeron un 18,3 % el grosor ecográfico del músculo en el grupo sin ejercicio; un programa de ejercicio de resistencia atenuó esa atrofia.",
         "cites": [
           "PMID:27685010"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 428 liberaciones del transverso del abdomen con malla retromuscular para hernias complejas, hubo 13 recidivas (3.7%) entre los 347 pacientes seguidos al menos un año.",
+        "es": "Con la liberación del transverso del abdomen y malla retromuscular en 428 hernias complejas, la recidiva fue del 3,7 % (13 casos) entre los 347 pacientes con al menos un año de seguimiento.",
         "cites": [
           "PMID:26910200"
         ]
@@ -255,28 +255,28 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "En preparaciones aisladas de músculo del tracto urinario superior humano, el cáliz mayor y la pelvis permanecieron inactivos, mientras que los cálices menores mostraron contracciones rítmicas inmediatas.",
+        "es": "A diferencia de los cálices menores, que en baño de órganos se contraen de inmediato y con ritmo regular, las preparaciones humanas de cáliz mayor y pelvis permanecen quietas, lo que apoya la hipótesis de un marcapasos ureteral en los cálices menores.",
         "cites": [
           "PMID:46391"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En un cadáver masculino de 78 años, un uréter bífido posterior nacía directamente de un cáliz mayor del tercio superior renal sin formar pelvis, y el anterior procedía de una pelvis dividida en dos cálices mayores.",
+        "es": "Una duplicación ureteral incompleta izquierda, hallada en un cadáver de varón de 78 años, tenía un uréter posterior unido directamente a un cáliz mayor del tercio superior, sin pelvis intermedia, y otro anterior salido de una pelvis con dos cálices mayores.",
         "cites": [
           "PMID:38720631"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 8 pacientes con tuberculosis renal, la enfermedad temprana o focal se manifestó en TC por obstrucción de un cáliz mayor o de un grupo de cálices menores en cuatro casos.",
+        "es": "La obstrucción de un solo cáliz mayor o de un grupo de cálices menores fue el signo tomográfico de la tuberculosis renal temprana o focal en 4 de 8 pacientes.",
         "cites": [
           "PMID:4019834"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito una rotura espontánea del sistema colector a la altura del cáliz mayor derecho, con fuga de contraste al espacio perirrenal, causada por un cálculo de 4 mm en la unión vesicoureteral.",
+        "es": "Un cálculo de 4 mm en la unión vesicoureteral derecha bastó para romper espontáneamente el sistema colector, con fuga de contraste al espacio perirrenal a la altura del cáliz mayor derecho.",
         "cites": [
           "PMID:31927172"
         ]
@@ -293,42 +293,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Está formado por dos hojas de peritoneo; en un estudio con 20 laparoscopias y 35 especímenes cadavéricos, su longitud fue de 8.3+/-1.6 cm, con anchuras máxima y mínima de 4.9+/-0.8 cm y 1.1+/-0.3 cm.",
+        "es": "Sus dos hojas peritoneales forman un ligamento que, en 20 laparoscopias y 35 especímenes cadavéricos, midió 8,3 ± 1,6 cm de largo y entre 1,1 ± 0,3 y 4,9 ± 0,8 cm de ancho.",
         "cites": [
           "PMID:14586564"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En esa serie, la arteria frénica inferior izquierda y la arteria del segmento medio del hígado formaban un vaso arqueado que aportaba de 6 a 12 ramas al ligamento.",
+        "es": "Un vaso arqueado formado por la arteria frénica inferior izquierda y la arteria del segmento medio hepático le enviaba entre 6 y 12 ramas.",
         "cites": [
           "PMID:14586564"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Sus venas desembocaban en la vena frénica inferior izquierda y no iban acompañadas por arterias.",
+        "es": "Su drenaje venoso, sin arterias acompañantes, terminaba en la vena frénica inferior izquierda.",
         "cites": [
           "PMID:14586564"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "La arteria del ligamento falciforme se visualizó en la angiografía de 26 de 340 pacientes cirróticos (7.6%) y nacía con mayor frecuencia de la arteria hepática media (A4), en 16 casos.",
+        "es": "La angiografía mostró la arteria del ligamento falciforme en 26 de 340 cirróticos (7,6 %), con origen más frecuente en la arteria hepática media (A4, 16 casos).",
         "cites": [
           "PMID:9894319"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En dos cadáveres, esa arteria se anastomosaba con la circulación subcutánea, de forma directa o mediante la rama xifoidea de la arteria torácica interna.",
+        "es": "Disecando dos cadáveres se encontraron dos anastomosis de esa arteria con la circulación subcutánea, una directa y otra a través de la rama xifoidea de la torácica interna.",
         "cites": [
           "PMID:9894319"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Su torsión es una de las causas más raras de dolor abdominal agudo y suele doler en el epigastrio y el cuadrante superior derecho.",
+        "es": "Entre las causas excepcionales de abdomen agudo figura la torsión del ligamento, cuyo dolor se localiza a menudo en el epigastrio y el cuadrante superior derecho.",
         "cites": [
           "PMID:34503431"
         ]
@@ -339,28 +339,28 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El pinzamiento de la tríada portal es el método de control vascular más usado en las resecciones hepáticas; un metaanálisis de 10 ensayos con 820 pacientes no halló diferencias frente a otros métodos.",
+        "es": "Aunque el pinzamiento de la tríada portal es la forma de control vascular más empleada en la resección hepática, un metaanálisis (10 ensayos, 820 pacientes) no encontró diferencias significativas frente a otros métodos.",
         "cites": [
           "PMID:22568411"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 115 hepatectomías con pinzamiento intermitente y presión venosa central baja, la mortalidad fue de 1.7%, y los autores consideran seguro aplicarlo hasta 60 minutos.",
+        "es": "Una serie retrospectiva de 115 hepatectomías con pinzamiento intermitente bajo presión venosa central baja tuvo un 1,7 % de mortalidad; sus autores lo consideran seguro hasta 60 minutos, con hígado normal o alterado.",
         "cites": [
           "PMID:24392450"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la experiencia de ocho centros de trauma se registraron 118 lesiones de estructuras de la tríada portal: 55 de vena porta extrahepática, 28 arteriales y 35 de la vía biliar extrahepática.",
+        "es": "La experiencia acumulada de ocho centros de trauma reunió 118 lesiones de la tríada portal: 55 portales, 35 biliares y 28 arteriales, todas extrahepáticas.",
         "cites": [
           "PMID:7473903"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La mortalidad global de esas lesiones fue de 51% y la mayor parte de las muertes se produjo en quirófano por desangramiento.",
+        "es": "Murió el 51 % de esos pacientes, en dos tercios de los casos en el quirófano y sobre todo por desangramiento.",
         "cites": [
           "PMID:7473903"
         ]
@@ -371,14 +371,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En un caso de complejo de von Meyenburg en la superficie hepática, la porción quísticamente dilatada del conducto biliar intralobulillar contenía pigmento biliar.",
+        "es": "Un complejo de von Meyenburg visible como nódulos negros en la superficie hepática tenía un conducto biliar intralobulillar con una porción dilatada en forma quística y cargada de pigmento biliar.",
         "cites": [
           "PMID:6232129"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En ese caso, prolongaciones espiculares del conducto dilatado se adherían a los cordones de hepatocitos y un conducto tubular tortuoso comunicaba con un conducto biliar interlobulillar terminal del espacio porta vecino.",
+        "es": "La reconstrucción histológica mostró que el conducto dilatado se unía por prolongaciones espiculares a los cordones de hepatocitos y, mediante un conducto tortuoso, a un conducto interlobulillar terminal del espacio porta vecino, lo que sugiere que seguía funcionando como vía biliar.",
         "cites": [
           "PMID:6232129"
         ]
@@ -389,21 +389,21 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "Una revisión sobre el síndrome de compresión de la arteria celíaca cita al plexo nervioso celíaco, junto con el ligamento arcuato medio y los pilares del diafragma, entre las estructuras capaces de comprimir esa arteria.",
+        "es": "Junto con el ligamento arcuato medio y los pilares diafragmáticos, el plexo celíaco figura entre las estructuras que, según una revisión, pueden comprimir la arteria celíaca.",
         "cites": [
           "PMID:17309066"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Entre las causas posibles de esa compresión figuran ganglios celíacos voluminosos fusionados a ambos lados que oprimen el tronco celíaco.",
+        "es": "La compresión del tronco celíaco puede atribuirse también a ganglios celíacos voluminosos fusionados de ambos lados, con o sin participación de los mesentéricos superiores.",
         "cites": [
           "PMID:17309066"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 6 pacientes con carcinoma de cabeza de páncreas, la invasión neural ascendía por el lado derecho de la arteria mesentérica superior hacia el plexo nervioso celíaco.",
+        "es": "En una serie de 6 resecciones en bloque por carcinoma de cabeza de páncreas, la invasión del plexo que rodea la arteria mesentérica superior se prolongaba hacia arriba, por su lado derecho, en dirección al plexo celíaco.",
         "cites": [
           "PMID:16006800"
         ]
@@ -414,42 +414,42 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es el órgano linfoide secundario de mayor tamaño del cuerpo y, además de su papel inmunitario, participa en la hematopoyesis y en la eliminación de eritrocitos.",
+        "es": "Además de sus numerosas funciones inmunitarias como mayor órgano linfoide secundario del cuerpo, interviene en la hematopoyesis y en la depuración de glóbulos rojos.",
         "cites": [
           "PMID:30824527"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Se organiza en dos compartimentos principales, la pulpa blanca, que incluye la zona marginal, y la pulpa roja, muy distintos en arquitectura, organización vascular y composición celular.",
+        "es": "Pulpa blanca (con la zona marginal) y pulpa roja son sus dos grandes compartimentos, que difieren mucho en arquitectura, vasos y células.",
         "cites": [
           "PMID:17067939"
         ]
       },
       {
         "aspect": "function",
-        "es": "Su estructura le permite retirar de la circulación eritrocitos envejecidos, microorganismos y restos celulares.",
+        "es": "Gracias a su organización, depura la sangre de eritrocitos viejos, microorganismos y detritos celulares.",
         "cites": [
           "PMID:16056254"
         ]
       },
       {
         "aspect": "function",
-        "es": "Se lo considera el órgano más importante para la respuesta inmunitaria frente a bacterias y hongos.",
+        "es": "Esa capacidad de filtrado, unida a un compartimento linfoide muy organizado, lo convierte en el principal órgano de la defensa inmunitaria antibacteriana y antifúngica.",
         "cites": [
           "PMID:16056254"
         ]
       },
       {
         "aspect": "function",
-        "es": "Actúa como filtro principal de patógenos y antígenos transportados por la sangre y es clave en el metabolismo del hierro.",
+        "es": "Además de filtrar patógenos y antígenos de la sangre, ocupa un lugar central en el metabolismo del hierro y en la homeostasis eritrocitaria.",
         "cites": [
           "PMID:24238338"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El angiosarcoma esplénico, tumor maligno raro originado en el endotelio vascular del bazo, cuenta con unos 300 casos publicados.",
+        "es": "Con apenas unos 300 casos comunicados, el angiosarcoma esplénico es un tumor maligno infrecuente que nace del endotelio vascular del órgano.",
         "cites": [
           "PMID:34160346"
         ]
@@ -460,42 +460,42 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "La vena porta transporta directamente al hígado productos procedentes del intestino, y el hígado devuelve bilis y anticuerpos hacia el intestino.",
+        "es": "Por la vena porta llegan al hígado, sin intermediarios, productos de origen intestinal; en sentido inverso, el hígado envía al intestino bilis y anticuerpos.",
         "cites": [
           "PMID:31622696"
         ]
       },
       {
-        "aspect": "parts",
-        "es": "Las células estrelladas hepáticas, ricas en vitamina A en reposo, se activan ante la lesión y se transforman en miofibroblastos fibrogénicos.",
+        "aspect": "function",
+        "es": "Ante una lesión, las células estrelladas, cargadas de vitamina A en reposo, pasan a ser miofibroblastos proliferativos, contráctiles y fibrogénicos.",
         "cites": [
           "PMID:18195085"
         ]
       },
       {
         "aspect": "function",
-        "es": "Esas células también almacenan y movilizan retinoides.",
+        "es": "Entre sus funciones con repercusión sistémica figura el depósito y la movilización de retinoides.",
         "cites": [
           "PMID:18195085"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el trasplante de donante cadavérico se reconstruyen cuatro sistemas: venoso hepático, venoso portal, arterial hepático y ductal biliar.",
+        "es": "Los hallazgos de imagen tras un trasplante de donante fallecido se ordenan según los cuatro sistemas que se reconstruyen: venas hepáticas, vena porta, arteria hepática y vía biliar.",
         "cites": [
           "PMID:37495285"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El primer trasplante hepático en humanos se realizó en 1963.",
+        "es": "Desde el primer trasplante hepático humano, en 1963, la intervención se ha vuelto rutinaria y con buenos resultados de supervivencia.",
         "cites": [
           "PMID:10728805"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el pseudomixoma peritoneal, la mucina gelatinosa puede comprimir la superficie hepática y dejar indentaciones visibles en imagen.",
+        "es": "El «festoneado» hepático, muy sugestivo de pseudomixoma peritoneal, es la indentación que deja en la superficie del hígado la mucina gelatinosa que lo comprime.",
         "cites": [
           "PMID:30522825"
         ]
@@ -506,35 +506,35 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La vesícula carece de capa serosa en la cara adyacente al hígado, lo que facilita la invasión hepática del cáncer vesicular.",
+        "es": "Del lado hepático la vesícula no tiene serosa, rasgo que facilita que su cáncer invada el hígado y que contribuye a su mal pronóstico.",
         "cites": [
           "PMID:24634588"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El cáncer de vesícula es la neoplasia maligna más común de la vía biliar y representa el 80%-95% de esos tumores.",
+        "es": "Pese a considerarse raro, el cáncer vesicular es el tumor maligno más frecuente de la vía biliar (80-95 % de esos cánceres).",
         "cites": [
           "PMID:24634588"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se disemina pronto por vía linfática o hematógena y también por invasión directa del hígado.",
+        "es": "Su diseminación es precoz: invade el hígado por contigüidad y metastatiza por vía linfática o hematógena.",
         "cites": [
           "PMID:39212920"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La mayoría de estos carcinomas se descubre de forma incidental tras una colecistectomía por litiasis sintomática.",
+        "es": "Como rara vez da síntomas, la mayoría de estos carcinomas se descubre de modo incidental después de una colecistectomía por cálculos sintomáticos.",
         "cites": [
           "PMID:36302789"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se calcula que unos 20 millones de estadounidenses tienen cálculos biliares, la indicación más frecuente de colecistectomía laparoscópica.",
+        "es": "Los cálculos biliares, presentes en unos 20 millones de estadounidenses, son la indicación más común de la colecistectomía laparoscópica.",
         "cites": [
           "PMID:34774268"
         ]
@@ -545,35 +545,35 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "La nefrona es un dispositivo de filtración multifuncional, y la gran cantidad de nefronas que define al riñón queda establecida durante el desarrollo fetal.",
+        "es": "Cada nefrona funciona como un filtro multifuncional dotado de sensores, y la dotación numerosa y ordenada de nefronas que caracteriza al riñón se fija durante la vida fetal.",
         "cites": [
           "PMID:30125139"
         ]
       },
       {
         "aspect": "function",
-        "es": "El riñón contribuye a mantener en equilibrio los líquidos corporales.",
+        "es": "Al mantener el equilibrio de los líquidos corporales, el riñón repercute en todo el organismo.",
         "cites": [
           "PMID:9829131"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 2017 se registraron 697.5 millones de casos de enfermedad renal crónica en el mundo, con una prevalencia global de 9.1%.",
+        "es": "El estudio de carga mundial de enfermedad contabilizó en 2017 unos 697,5 millones de casos de enfermedad renal crónica, es decir, una prevalencia global del 9,1 %.",
         "cites": [
           "PMID:32061315"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La enfermedad renal diabética aparece en aproximadamente el 40% de los pacientes diabéticos y es la causa principal de enfermedad renal crónica a escala mundial.",
+        "es": "Cerca del 40 % de las personas con diabetes desarrolla enfermedad renal diabética, primera causa mundial de enfermedad renal crónica.",
         "cites": [
           "PMID:28522654"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La afectación renal podría darse en hasta un tercio de los pacientes con sarcoidosis, y su forma más común es la nefritis intersticial granulomatosa.",
+        "es": "Aunque su incidencia exacta se desconoce, el riñón podría afectarse hasta en un tercio de los pacientes con sarcoidosis; la nefritis intersticial granulomatosa es la forma más común, aunque rara vez deteriora la función renal.",
         "cites": [
           "PMID:38521611"
         ]
@@ -584,42 +584,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Es un órgano seroso extenso que combina rasgos epiteliales y mesenquimales.",
+        "es": "Órgano seroso de gran extensión, el peritoneo reúne características epiteliales y mesenquimales.",
         "cites": [
           "PMID:27890350"
         ]
       },
       {
         "aspect": "function",
-        "es": "Interviene en la regulación de la respuesta inflamatoria, en el intercambio de líquido peritoneal y en la prevención de la fibrosis dentro de la cavidad abdominal.",
+        "es": "Desempeña un papel central en el control de la inflamación, en el intercambio de líquido peritoneal y en evitar la fibrosis abdominal; su alteración puede llevar a ascitis abundante o a adherencias fibrosas.",
         "cites": [
           "PMID:27890350"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la ecografía de pacientes con riesgo de enfermedad peritoneal se examinan con atención el fondo de saco de Douglas, las superficies diafragmáticas, las correderas paracólicas, el mesenterio y el epiplón.",
+        "es": "Ante el riesgo de enfermedad peritoneal, la ecografía debe revisar con cuidado el epiplón, el mesenterio, las correderas paracólicas, las superficies diafragmáticas y el fondo de saco de Douglas.",
         "cites": [
           "PMID:12740467"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La ecografía puede detectar cantidades mínimas de líquido intraperitoneal libre.",
+        "es": "Su sensibilidad para el líquido libre, aun en cantidades mínimas, permite que la ecografía aporte información cuantitativa sobre la ascitis.",
         "cites": [
           "PMID:12740467"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Casi todas las enfermedades mucinosas peritoneales diseminadas que corresponden al pseudomixoma peritoneal proceden de tumores mucinosos del apéndice vermiforme.",
+        "es": "El pseudomixoma peritoneal se origina, en la gran mayoría de los casos, en tumores mucinosos del apéndice vermiforme; otros tumores primarios rara vez lo producen.",
         "cites": [
           "PMID:37418023"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Desde 2014, la FIGO estadifica el cáncer peritoneal en el mismo sistema que el de ovario y trompa uterina.",
+        "es": "La revisión de la FIGO de 2014 integró los cánceres de ovario, trompa y peritoneo en un único sistema de estadificación.",
         "cites": [
           "PMID:34669199"
         ]
@@ -630,42 +630,42 @@
     "sentences": [
       {
         "aspect": "innervation",
-        "es": "En 16 disecciones, entre seis y ocho nervios intercostales descendían en dirección inferomedial entre los músculos oblicuo interno y transverso antes de entrar en la vaina del recto.",
+        "es": "En 16 disecciones, de seis a ocho nervios intercostales llegaban a la vaina del recto tras recorrer en sentido inferomedial el plano entre el oblicuo interno y el transverso.",
         "cites": [
           "PMID:7604088"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En esa serie, la mayoría de los nervios penetraba el músculo en su tercio lateral, junto al pedículo vascular intercostal lateral.",
+        "es": "La mayoría se hacía intramuscular en el tercio lateral del músculo, junto al pedículo vascular intercostal lateral.",
         "cites": [
           "PMID:7604088"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En otro estudio de seis cadáveres, los nervios entraban por la cara profunda del músculo en su porción media.",
+        "es": "Disecando seis cadáveres frescos, otro grupo observó que los nervios abordaban el músculo por su cara profunda, en la porción media.",
         "cites": [
           "PMID:2969596"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Se ha descrito un colgajo de avance craneal del músculo, pediculado en la arteria epigástrica inferior profunda, para cubrir defectos de la pared torácica anterior inferior.",
+        "es": "Como recurso de rescate en la reconstrucción de la pared torácica, se ha propuesto avanzar el recto hacia arriba, sobre la arteria epigástrica inferior profunda, para cubrir defectos torácicos anteriores bajos.",
         "cites": [
           "PMID:28462651"
         ]
       },
       {
         "aspect": "function",
-        "es": "En 8 tenistas profesionales, el volumen del músculo fue un 58% mayor que en controles inactivos y un 35% mayor en el lado no dominante que en el dominante.",
+        "es": "La resonancia de 8 tenistas profesionales mostró un recto un 58 % más voluminoso que el de 6 controles inactivos, con predominio del lado no dominante (35 % más que el dominante).",
         "cites": [
           "PMID:21209832"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 18 pacientes con hernia incisional de línea media, la relación entre fuerza de flexión del tronco y área transversal del músculo fue menor que en controles (41.3 ± 11.5 frente a 51.2 ± 16.3 N/cm²).",
+        "es": "Con una hernia incisional de línea media (18 pacientes), cada centímetro cuadrado de sección del recto generaba menos fuerza de flexión del tronco que en 18 controles (41,3 ± 11,5 frente a 51,2 ± 16,3 N/cm²).",
         "cites": [
           "PMID:32387572"
         ]
@@ -676,28 +676,28 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En pacientes con cáncer de ovario avanzado, la supervivencia global mediana fue de 26.9 meses con ganglios celíacos positivos y de 40.04 meses con ganglios negativos.",
+        "es": "Cuando los ganglios celíacos resecados en la citorreducción de un cáncer de ovario avanzado estaban afectados, la supervivencia global mediana fue de 26,9 meses, frente a 40,04 con ganglios negativos.",
         "cites": [
           "PMID:24356411"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una serie de 28 pacientes sometidas a cirugía citorreductora, 15 tenían ganglios celíacos positivos y su resección resultó factible con morbilidad aceptable.",
+        "es": "De 28 pacientes con cáncer de ovario, trompa o peritoneo a quienes se resecaron ganglios celíacos o enfermedad del hilio hepático durante la citorreducción, 15 tenían ganglios celíacos positivos; los autores consideran esas resecciones factibles con morbilidad aceptable.",
         "cites": [
           "PMID:21295334"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 375 pacientes con carcinoma escamoso de esófago en estadio III tratados con quimiorradioterapia, la metástasis en ganglios celíacos se asoció con peor supervivencia.",
+        "es": "Entre 375 pacientes con carcinoma escamoso de esófago en estadio III tratados con quimiorradioterapia curativa, los 51 con metástasis celíacas tuvieron peor supervivencia libre de progresión y global, salvo en los tumores del tercio inferior.",
         "cites": [
           "PMID:29221198"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito un coristoma epitelial quístico benigno en un ganglio celíaco de una mujer de 50 años, hallado durante una colecistectomía.",
+        "es": "Durante una colecistectomía se encontró por azar, en un ganglio celíaco de una mujer de 50 años, un coristoma epitelial quístico benigno de tipo no mülleriano.",
         "cites": [
           "PMID:3610139"
         ]
@@ -714,14 +714,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Según una revisión, el cotransportador NKCC1 de la arteriola aferente renal media su vasoconstricción y es una de las dianas de los diuréticos de asa.",
+        "es": "Los diuréticos de asa bloquean, entre otros, el cotransportador NKCC1 de la arteriola aferente, que media su vasoconstricción.",
         "cites": [
           "PMID:42670726"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la insuficiencia renal aguda isquémica, la vasoconstricción y la pérdida de autorregulación podrían relacionarse con el aumento del calcio intracelular en la arteriola aferente y en las células mesangiales.",
+        "es": "Un exceso de calcio intracelular en la arteriola aferente y en las células mesangiales podría estar detrás de la vasoconstricción y la pérdida de autorregulación que siguen a la isquemia renal aguda.",
         "cites": [
           "PMID:2846945"
         ]
@@ -732,21 +732,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 33 cadáveres humanos, el contenido de colágeno de la cápsula esplénica osciló entre 1.8-24.4% y su tensión crítica entre 0.022-0.652 MPa.",
+        "es": "Medida en 33 cadáveres frescos, la cápsula del bazo tenía entre 1,8 y 24,4 % de colágeno y soportaba tensiones críticas de 0,022 a 0,652 MPa.",
         "cites": [
           "PMID:12497218"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 444 autopsias consecutivas, la fibrosis de la cápsula y la periesplenitis cartilaginosa se correlacionaron con el cor pulmonale, no con la hipertensión arterial.",
+        "es": "Un análisis de 444 autopsias consecutivas vinculó la fibrosis capsular y la periesplenitis cartilaginosa con el cor pulmonale, pero no con la hipertensión, por lo que se propusieron como criterio diagnóstico post mortem.",
         "cites": [
           "PMID:654616"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 109 pacientes con cáncer epitelial de ovario, la afectación de las cápsulas hepática y esplénica se asoció en el análisis univariado con metástasis en ganglios pélvicos.",
+        "es": "Entre las nueve localizaciones asociadas en el análisis univariado a metástasis ganglionares pélvicas en 109 cánceres epiteliales de ovario figuraba la afectación de las cápsulas hepática y esplénica.",
         "cites": [
           "PMID:9103407"
         ]
@@ -757,14 +757,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Se ha propuesto una hernioplastia para hernias inguinales oblicuas grandes que refuerza la pared anterior del conducto inguinal con un colgajo lateral sobrante de la aponeurosis del oblicuo externo.",
+        "es": "Para hernias inguinales oblicuas grandes o gigantes se ha propuesto reforzar la pared anterior del conducto con el colgajo lateral «sobrante» de la aponeurosis del oblicuo externo.",
         "cites": [
           "PMID:25953934"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Con esa técnica se operaron 80 pacientes en 12 años, con 8 complicaciones (10,0%) y sin recidivas entre los 30 revisados a distancia.",
+        "es": "En 12 años se intervinieron así 80 pacientes; hubo 8 complicaciones (10,0 %), una mortal, y ninguno de los 30 controlados a largo plazo presentaba recidiva.",
         "cites": [
           "PMID:25953934"
         ]
@@ -775,7 +775,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En pacientes varones con EPOC leve o moderada, el estudio de tejido del oblicuo interno como músculo respiratorio accesorio mostró con mayor frecuencia que en controles miólisis, cambios escleróticos y contracturas de miofibrillas.",
+        "es": "El análisis morfológico del oblicuo interno, estudiado como músculo respiratorio accesorio en 25 varones con EPOC leve o moderada, halló miólisis, esclerosis y contracturas de miofibrillas con más frecuencia que en controles.",
         "cites": [
           "PMID:24979509"
         ]
@@ -786,35 +786,35 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En 15 cadáveres, las porciones inguinales de los músculos oblicuo interno y transverso no nacían del ligamento inguinal, sino de una banda engrosada de fascia iliopsoas que forma la parte superolateral del arco iliopectíneo.",
+        "es": "Contra la descripción habitual, una disección de 15 cadáveres confirmó que las porciones inguinales del oblicuo interno y del transverso no se originan en el ligamento inguinal sino en una banda engrosada de la fascia del iliopsoas, parte superolateral del arco iliopectíneo.",
         "cites": [
           "PMID:18092366"
         ]
       },
       {
         "aspect": "relations",
-        "es": "El nervio cutáneo femoral lateral suele salir de la pelvis hacia el muslo por detrás del ligamento inguinal.",
+        "es": "Lo habitual es que el nervio cutáneo femoral lateral pase de la pelvis al muslo por detrás del ligamento inguinal.",
         "cites": [
           "PMID:18942079"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 85 muslos disecados, ese nervio era un tronco único en más del 65% y cruzaba el ligamento habitualmente dentro de los 2 cm mediales a la espina ilíaca anterosuperior, aunque podía hacerlo a más de 6 cm.",
+        "es": "En 85 muslos de 43 cadáveres predominó el nervio de tronco único (más del 65 %), que solía cruzar el ligamento a menos de 2 cm medial de la espina ilíaca anterosuperior, aunque podía hacerlo a más de 6 cm.",
         "cites": [
           "PMID:18942079"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 21 mujeres con prolapso de cúpula vaginal de grado III-IV, la suspensión laparoscópica de la cúpula al ligamento inguinal con malla logró éxito anatómico en el 100% tras un seguimiento mínimo de 12 meses.",
+        "es": "Suspender la cúpula vaginal del ligamento inguinal con una malla bifurcada por laparoscopia dio éxito anatómico en las 21 mujeres tratadas por prolapso de grado III-IV, con al menos 12 meses de seguimiento; los autores la presentan como una opción potencial que requiere más estudios.",
         "cites": [
           "PMID:28583896"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 63 pacientes con obstrucción venosa iliofemoral crónica, la colocación de stents venosos a través del ligamento inguinal alcanzó una permeabilidad primaria de 92.1% a los 2 años.",
+        "es": "Los stents venosos colocados a través del ligamento inguinal en 63 pacientes con obstrucción iliofemoral crónica postrombótica mantuvieron una permeabilidad primaria del 92,1 % a los 2 años.",
         "cites": [
           "PMID:38237677"
         ]
@@ -825,21 +825,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En 17 pacientes con cáncer de ovario, la resección de un implante peritoneal profundo en el ligamento redondo exigió una hemihepatectomía izquierda, y se confirmó invasión del parénquima hepático en 10 (58.8%).",
+        "es": "Resecar un implante peritoneal profundo del ligamento redondo exigió una hemihepatectomía izquierda en 17 pacientes con cáncer de ovario, y en 10 de ellas (58,8 %) el tumor había invadido el parénquima hepático.",
         "cites": [
           "PMID:39272893"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito una metástasis de carcinoma folicular de tiroides localizada en el ligamento redondo del hígado mediante PET/TC con 18F-FDG.",
+        "es": "En una mujer de 69 años con carcinoma folicular de tiroides operado 20 años antes, la PET/TC con 18F-FDG localizó en el ligamento redondo del hígado una metástasis, confirmada por anatomía patológica.",
         "cites": [
           "PMID:33512955"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Un bloqueo con novocaína del ligamento redondo se empleó en el tratamiento combinado de 45 pacientes con pancreatitis aguda.",
+        "es": "Según sus autores, un bloqueo con novocaína del ligamento redondo, de base clinicoanatómica, mejoró los resultados del tratamiento conservador en 45 pacientes con pancreatitis aguda.",
         "cites": [
           "PMID:6845579"
         ]
@@ -850,42 +850,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Corresponde a la arteria umbilical obliterada.",
+        "es": "Es el resto obliterado de la arteria umbilical.",
         "cites": [
           "PMID:19727772"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 126 niños explorados por laparoscopia, 14 no tenían ligamento visible, 63 mostraban un cordón fibroso sin pliegue membranoso y 49 un cordón con pliegue.",
+        "es": "En 126 niños explorados por laparoscopia, el aspecto más común fue un cordón fibroso sin pliegue (63), seguido del cordón con pliegue (49) y de la ausencia de ligamento visible (14).",
         "cites": [
           "PMID:19727772"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esa serie ambos ligamentos fueron simétricos, salvo en un niño con anomalía cloacal que tenía un único ligamento derecho.",
+        "es": "Salvo un niño con anomalía cloacal, que tenía un único ligamento, en el lado derecho, ambos lados fueron simétricos.",
         "cites": [
           "PMID:19727772"
         ]
       },
       {
         "aspect": "relations",
-        "es": "El ligamento recorre el espacio paravesical y sirve de guía para llegar al origen de la arteria uterina en la histerectomía laparoscópica.",
+        "es": "En la histerectomía laparoscópica, seguir el ligamento por el espacio paravesical es una de las vías para alcanzar el origen de la arteria uterina; la otra es abordarlo desde el espacio pararrectal.",
         "cites": [
           "PMID:27287682"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 10 cadáveres, las dos hojas de la fascia urogenital envolvían la vejiga y se prolongaban a lo largo del ligamento umbilical medial hasta el ombligo.",
+        "es": "La disección de 10 cadáveres formolizados mostró que las dos hojas de la fascia urogenital, tras envolver la vejiga, acompañaban al ligamento umbilical medial hasta el ombligo.",
         "cites": [
           "PMID:34140024"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En un varón de 81 años con hernia inguinal recidivada se utilizó el ligamento umbilical medial para crear y cerrar el espacio preperitoneal durante una reparación laparoscópica.",
+        "es": "El ligamento umbilical medial, liberado por completo, permitió crear y cerrar el espacio preperitoneal en la reparación laparoscópica transabdominal de una hernia inguinal recidivada tras técnica de Kugel, en un varón de 81 años.",
         "cites": [
           "PMID:35915518"
         ]
@@ -896,42 +896,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Es la cicatriz del cordón umbilical y contiene restos embrionarios que pueden originar enfermedades después del nacimiento.",
+        "es": "Por ser la cicatriz del cordón umbilical, el ombligo guarda restos embrionarios de los que pueden derivar enfermedades posnatales.",
         "cites": [
           "PMID:40423704"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Entre esos restos se cuentan el uraco, el conducto onfalomesentérico y el ligamento redondo del hígado, y los espacios paravesicales extraperitoneales se extienden desde el ombligo hasta la vejiga.",
+        "es": "Uraco, conducto onfalomesentérico y ligamento redondo hepático son los restos embrionarios que contiene, y de él parten hacia la vejiga los espacios paravesicales extraperitoneales.",
         "cites": [
           "PMID:9536487"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "El ligamento redondo alberga el resto de la vena umbilical, que en la hipertensión portal puede recanalizarse y formar una colateral portosistémica.",
+        "es": "En la hipertensión portal, el resto de vena umbilical que contiene el ligamento redondo puede reabrirse y funcionar como colateral portosistémica.",
         "cites": [
           "PMID:9536487"
         ]
       },
       {
         "aspect": "situation",
-        "es": "En 75 voluntarias de la India en decúbito supino, la distancia xifoides-ombligo y la distancia sínfisis del pubis-ombligo guardaban una proporción de 1.6:1.",
+        "es": "Medido en 75 mujeres voluntarias de la India en decúbito supino, el ombligo quedaba a una distancia del xifoides 1,6 veces mayor que la que lo separaba de la sínfisis del pubis.",
         "cites": [
           "PMID:16582780"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 870 colecistectomías laparoscópicas se hallaron defectos umbilicales o paraumbilicales en el 12% de los pacientes, y sólo el 16.3% de esas hernias daba síntomas.",
+        "es": "En 870 colecistectomías laparoscópicas, el 12 % de los pacientes tenía un defecto umbilical o paraumbilical, por lo general inadvertido: sólo el 16,3 % de esas hernias daba síntomas.",
         "cites": [
           "PMID:9171748"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La mayoría de las neoplasias umbilicales son metastásicas, y la metástasis umbilical recibe el nombre de nódulo de la hermana María José.",
+        "es": "Las neoplasias del ombligo suelen ser metástasis, el llamado nódulo de la hermana María José, mientras que el adenocarcinoma primario es escaso.",
         "cites": [
           "PMID:15258514"
         ]
@@ -942,42 +942,42 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es un músculo par, pequeño y triangular, situado entre la cara anterior del recto del abdomen y la cara posterior de la vaina de este.",
+        "es": "Se trata de dos músculos pequeños de forma triangular, alojados por delante del recto del abdomen, contra la cara posterior de su vaina.",
         "cites": [
           "PMID:19159363"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su base inferior, más ancha, se fija en la sínfisis y las crestas del pubis, y su vértice estrecho se inserta en la línea alba.",
+        "es": "Del pubis (sínfisis y crestas) parte su base ancha, mientras que su vértice estrecho termina en la línea alba.",
         "cites": [
           "PMID:19159363"
         ]
       },
       {
         "aspect": "function",
-        "es": "Su función no está aclarada, aunque se le atribuye tensar la línea alba.",
+        "es": "Se cree que ambos tensan la línea alba, aunque su función exacta sigue sin aclararse.",
         "cites": [
           "PMID:19159363"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En siete cadáveres masculinos fue el único músculo abdominal ubicado por delante del pubis y se conectaba con el tendón del aductor largo a través del ligamento púbico anterior.",
+        "es": "Disecado en siete cadáveres masculinos, apareció siempre bilateral y como único músculo abdominal situado delante del pubis, unido con fuerza al tendón del aductor largo mediante el ligamento púbico anterior.",
         "cites": [
           "PMID:28866812"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Un metaanálisis de 11 estudios (787 pacientes) estimó una presencia bilateral del 82.3%, una ausencia bilateral del 11.3% y una presencia unilateral del 6.3%.",
+        "es": "Según un metaanálisis (11 estudios, 787 pacientes), suele estar en ambos lados (82,3 %), falta en los dos en un 11,3 % y aparece sólo en uno en un 6,3 %.",
         "cites": [
           "PMID:33236206"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 52 cadáveres de Kenia estuvo presente en el 84% y terminaba mayormente en el segundo cuarto (25-50%) de la línea alba infraumbilical medida desde la sínfisis.",
+        "es": "Presente en el 84 % de 52 cadáveres kenianos, solía terminar en el segundo cuarto (25-50 %) de la línea alba infraumbilical contado desde la sínfisis.",
         "cites": [
           "PMID:33743034"
         ]
@@ -987,15 +987,15 @@
   "UBERON:0011049": {
     "sentences": [
       {
-        "aspect": "relations",
-        "es": "Se ha descrito un embarazo ectópico alojado bajo la serosa peritoneal que cubre la cara anterior del útero, a la altura del fondo de saco vesicouterino.",
+        "aspect": "clinical",
+        "es": "Un embarazo ectópico se implantó, de forma excepcional, por debajo de la serosa peritoneal de la cara anterior del útero, a la altura del fondo de saco vesicouterino.",
         "cites": [
           "PMID:9987577"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La clasificación de la adenomiosis que compromete el fondo de saco vesicouterino sigue siendo incierta, al igual que la del fondo de saco de Douglas.",
+        "es": "Cómo clasificar la adenomiosis que alcanza el fondo de saco vesicouterino, igual que la del fondo de saco de Douglas o la del miometrio externo, sigue sin resolverse porque su origen es incierto.",
         "cites": [
           "PMID:32173239"
         ]
@@ -1006,14 +1006,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En 65 pacientes operados por adenocarcinoma duodenal, la estación ganglionar pilórica estuvo afectada en el 37% de los tumores proximales y en ninguno de los distales.",
+        "es": "La estación pilórica sólo se afectó en adenocarcinomas duodenales proximales (37 %, frente a 0 % en los distales) en una serie quirúrgica de 65 pacientes.",
         "cites": [
           "PMID:28799027"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En un lactante de 20 meses con enfermedad granulomatosa crónica se observaron macrófagos cargados de pigmento amarillo en la mucosa gástrica y en un ganglio pilórico.",
+        "es": "En un niño de 20 meses cuya enfermedad granulomatosa crónica debutó con obstrucción de la salida gástrica, la mucosa del estómago y un ganglio pilórico contenían los característicos macrófagos cargados de pigmento amarillo.",
         "cites": [
           "PMID:7180966"
         ]
@@ -1024,28 +1024,28 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "El grupo ganglionar pancreaticoduodenal posterior (n.º 13) constituye el principal sitio de drenaje regional de los tumores de la cabeza del páncreas, y su estado predice el del grupo paraaórtico n.º 16.",
+        "es": "Un estudio previo de los mismos autores identificó el grupo pancreaticoduodenal posterior (n.º 13) como drenaje regional principal de los tumores de cabeza pancreática y su estado como predictor del grupo paraaórtico n.º 16, base de una cirugía guiada por ganglio centinela.",
         "cites": [
           "PMID:12579265"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 44 pacientes con carcinoma de cabeza de páncreas, 28 de los 31 con afectación ganglionar tenían comprometido el ganglio pancreaticoduodenal posterior.",
+        "es": "De los 31 pacientes con metástasis ganglionares entre 44 operados por carcinoma de cabeza de páncreas, 28 tenían afectado el ganglio pancreaticoduodenal posterior.",
         "cites": [
           "PMID:1327485"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 65 pacientes con adenocarcinoma duodenal, la estación pancreaticoduodenal fue la afectada con más frecuencia.",
+        "es": "En una serie quirúrgica de 65 adenocarcinomas duodenales, ninguna estación ganglionar se afectó con más frecuencia que la pancreaticoduodenal, comprometida tanto en tumores proximales como distales.",
         "cites": [
           "PMID:28799027"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Una guía para el cáncer de vesícula incluye el ganglio pancreaticoduodenal posterosuperior en la linfadenectomía de la colecistectomía extendida.",
+        "es": "Para el cáncer de vesícula en estadio T2 o superior, una guía recomienda que la linfadenectomía de la colecistectomía extendida alcance el ganglio pancreaticoduodenal posterosuperior.",
         "cites": [
           "PMID:25368485"
         ]
@@ -1056,42 +1056,42 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Es una colateral venosa frecuente en pacientes con cirrosis e hipertensión portal.",
+        "es": "En la cirrosis con hipertensión portal, esta vena es una de las colaterales venosas más habituales.",
         "cites": [
           "PMID:9663277"
         ]
       },
       {
-        "aspect": "relations",
-        "es": "En la ecografía, el ligamento redondo de 32 de 33 sujetos normales (97%) mostró un canal hipoecoico aparente de 0.6-1.9 mm de diámetro.",
+        "aspect": "parts",
+        "es": "En una serie, 32 de 33 sujetos sanos (97 %) mostraban en la ecografía convencional un aparente vaso en el ligamento redondo: un canal hipoecoico de 0,6 a 1,9 mm.",
         "cites": [
           "PMID:2669464"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 39 pacientes con hipertensión portal, el Doppler demostró una vena paraumbilical permeable con flujo hepatófugo en 32 (82%), un signo considerado específico de esa hipertensión.",
+        "es": "El Doppler distingue ese canal de una vena paraumbilical verdaderamente permeable, con flujo hepatófugo, signo específico de hipertensión portal que se halló en 32 de 39 pacientes (82 %).",
         "cites": [
           "PMID:2669464"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 431 pacientes con carcinoma hepatocelular, 9 (2.1%) presentaron trombosis tumoral de la vena paraumbilical, todos con invasión del lóbulo izquierdo y trombosis de la vena porta izquierda.",
+        "es": "La trombosis tumoral de la vena paraumbilical afectó a 9 de 431 pacientes con carcinoma hepatocelular (2,1 %), todos varones con invasión del lóbulo izquierdo y trombosis portal izquierda.",
         "cites": [
           "PMID:8017372"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En pacientes con sangrado por várices se ha usado la punción ecoguiada de la vena paraumbilical recanalizada como acceso para embolizarlas, y el cateterismo se logró en los siete casos tratados.",
+        "es": "En siete pacientes con hemorragia variceal, la vena paraumbilical recanalizada se puncionó con guía ecográfica y se cateterizó con éxito en todos, lo que permitió embolizar las várices.",
         "cites": [
           "PMID:25246824"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Tras la colocación de un TIPS, los pacientes con una vena paraumbilical grande tuvieron más encefalopatía hepática manifiesta a 2 años que los controles (51.9% frente a 25.9%).",
+        "es": "En cirróticos con hemorragia variceal tratados con TIPS, tener una vena paraumbilical grande se asoció con más encefalopatía hepática manifiesta a 2 años que en controles emparejados sin derivaciones espontáneas (51,9 % frente a 25,9 %).",
         "cites": [
           "PMID:36614959"
         ]
@@ -1102,42 +1102,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En arteriografías de 50 sujetos, la arteria gastroepiploica derecha medía de 1.7 a 2.6 mm de diámetro en su origen y era mucho mayor que la izquierda.",
+        "es": "Las arteriografías de 50 sujetos mostraron una gastroepiploica derecha bastante más gruesa que la izquierda, con 1,7 a 2,6 mm de calibre en su origen.",
         "cites": [
           "PMID:6721940"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En esa serie, la anastomosis terminoterminal directa con la arteria gastroepiploica izquierda se observó sólo en el 23.5% de los casos.",
+        "es": "La anastomosis terminoterminal directa entre ambas gastroepiploicas que describen los textos clásicos apareció sólo en el 23,5 % de esas arteriografías.",
         "cites": [
           "PMID:6721940"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En cambio, en 17 cadáveres disecados hubo anastomosis directa entre ambas arterias en 16 (94.1%) y un arco arterial a lo largo de la curvatura mayor en 12 (70.6%).",
+        "es": "La disección de 17 cadáveres dio otra imagen: unión directa entre ambas arterias en 16 (94,1 %) y arco arterial a lo largo de la curvatura mayor en 12 (70,6 %).",
         "cites": [
           "PMID:27319299"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "La mayoría de las gastroplastias empleadas para sustituir el esófago dependen sólo de esta arteria para su vascularización.",
+        "es": "Esta arteria es, en la mayoría de los casos, el único aporte vascular de las gastroplastias que reemplazan el esófago.",
         "cites": [
           "PMID:6721940"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se usa como injerto en la cirugía de revascularización coronaria; en más de 1500 injertos, la permeabilidad acumulada fue de 93.7% al año y de 86.2% a los 5 años.",
+        "es": "Como conducto para revascularización coronaria, su permeabilidad acumulada en una experiencia de más de 1500 injertos fue del 93,7 % al año y del 86,2 % a los 5 años.",
         "cites": [
           "PMID:23977628"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 228 angiografías abdominales, con un diámetro interno de 1.5 mm o más, la probabilidad de que el injerto in situ alcanzara la arteria coronaria derecha fue del 97%.",
+        "es": "Según 228 angiografías abdominales, cuando su diámetro interno es de al menos 1,5 mm el injerto in situ alcanzaría la coronaria derecha con una probabilidad del 97 %.",
         "cites": [
           "PMID:1731667"
         ]
@@ -1148,21 +1148,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En arteriografías de 50 sujetos, la arteria gastroepiploica izquierda era mucho menor que la derecha y faltaba en 3 casos.",
+        "es": "Comparada con la derecha, la gastroepiploica izquierda resultó mucho más fina en las arteriografías de 50 sujetos, y en 3 de ellos faltaba.",
         "cites": [
           "PMID:6721940"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En esa serie, la anastomosis terminoterminal directa con la arteria gastroepiploica derecha se observó sólo en el 23.5% de los casos.",
+        "es": "Sólo en el 23,5 % de esa serie radiológica se veía la anastomosis directa terminoterminal con la gastroepiploica derecha que describen los textos clásicos.",
         "cites": [
           "PMID:6721940"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 17 cadáveres disecados, las arterias gastroepiploicas derecha e izquierda se anastomosaban directamente en 16 (94.1%) y formaban un arco a lo largo de la curvatura mayor en 12 (70.6%).",
+        "es": "En una disección de 17 cadáveres, ambas gastroepiploicas se unían directamente en 16 (94,1 %), y en 12 (70,6 %) dibujaban un arco a lo largo de la curvatura mayor.",
         "cites": [
           "PMID:27319299"
         ]
@@ -1173,21 +1173,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En el melanoma anorrectal, la resección extensa incluye la extirpación del recto y de los ganglios pararrectales; un metaanálisis de 34 estudios con 1858 pacientes no mostró ventaja de supervivencia frente a la escisión local.",
+        "es": "Un metaanálisis de 34 estudios (1858 pacientes) con melanoma anorrectal no halló diferencias de supervivencia global, en ningún estadio, entre la escisión local y la resección extensa, que extirpa el recto con sus ganglios pararrectales.",
         "cites": [
           "PMID:34958352"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una mujer de 86 años con carcinoma rectal, una metástasis en un ganglio pararrectal adoptó forma quística y simuló un quiste de inclusión seroso.",
+        "es": "Un ganglio pararrectal resecado a una mujer de 86 años con carcinoma rectal contenía una metástasis quística que imitaba un quiste de inclusión seroso.",
         "cites": [
           "PMID:33733896"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una mujer de 59 años con carcinoma de ovario recurrente, la PET/TC con 18F-FDG permitió detectar metástasis en ganglios mesorrectales y pararrectales.",
+        "es": "La PET/TC con 18F-FDG fue la que demostró metástasis en ganglios mesorrectales y pararrectales en una mujer de 59 años con recidiva de carcinoma de ovario, y orientó su resección.",
         "cites": [
           "PMID:23938043"
         ]
@@ -1198,14 +1198,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En pacientes con cáncer gástrico del remanente tras una gastroyeyunostomía, la tasa de metástasis en los ganglios mesoyeyunales disecados fue del 35% (21/60) y su presencia fue un factor pronóstico independiente.",
+        "es": "Entre 60 pacientes con cáncer del remanente gástrico reconstruido con gastroyeyunostomía a quienes se disecaron ganglios mesoyeyunales, 21 (35 %) tenían metástasis en ellos, un factor pronóstico independiente de supervivencia global.",
         "cites": [
           "PMID:37163530"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En otra serie de cáncer gástrico del remanente avanzado, la metástasis en ganglios yeyunales alcanzó el 17.6%.",
+        "es": "Otra serie, de 79 gastrectomías completadas por cáncer del remanente, halló metástasis en ganglios yeyunales en el 17,6 % de los casos avanzados, lo que llevó a aconsejar que se considere su disección.",
         "cites": [
           "PMID:36117449"
         ]
@@ -1216,14 +1216,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En 156 pacientes con cáncer gástrico temprano del tercio medio, el ganglio suprapilórico (n.º 5) resultó ser ganglio centinela en el 6%.",
+        "es": "El ganglio suprapilórico (n.º 5) apareció como centinela en el 6 % de 156 cánceres gástricos tempranos del tercio medio, un riesgo a tener en cuenta si se preserva el píloro.",
         "cites": [
           "PMID:27364500"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 48 gastrectomías con preservación del píloro, la disección de los ganglios suprapilóricos prolongó la cirugía sin empeorar el estado nutricional posoperatorio.",
+        "es": "En un informe preliminar de 48 gastrectomías con preservación del píloro, limpiar los ganglios suprapilóricos alargó la operación, pero entre los 24 pacientes seguidos más de un año no empeoró el peso, la hemoglobina ni las proteínas séricas frente a preservarlos.",
         "cites": [
           "PMID:18265675"
         ]
@@ -1237,7 +1237,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Se ha descrito un ganglio retropilórico con una inclusión de epitelio escamoso, hallazgo invocado para explicar el origen de los quistes linfoepiteliales del páncreas.",
+        "es": "Un ganglio retropilórico con una inclusión de epitelio escamoso podría apoyar la hipótesis de que los quistes linfoepiteliales del páncreas nacen de inclusiones epiteliales benignas de ganglios peripancreáticos que sufren metaplasia escamosa.",
         "cites": [
           "PMID:1717361"
         ]
@@ -1248,14 +1248,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En 12 pacientes con hipertensión portal presinusoidal se midió, mediante punción de la pulpa esplénica, el gradiente de presión entre esta y la vena hepática libre, que bajó de 32 a 26 mm Hg con betabloqueantes.",
+        "es": "Medido por punción de la pulpa esplénica y cateterismo de la vena hepática en 12 pacientes no cirróticos con hipertensión portal presinusoidal, el gradiente entre ambos puntos pasó de una media de 32 a 26 mm Hg con betabloqueantes.",
         "cites": [
           "PMID:30003386"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En un paciente con hemocromatosis se observó en resonancia una sobrecarga de hierro en la pulpa esplénica.",
+        "es": "En uno de tres pacientes con hemocromatosis primaria, la resonancia mostró sobrecarga de hierro en la pulpa esplénica, junto con una hemosiderosis reticuloendotelial hepática.",
         "cites": [
           "PMID:14518196"
         ]
@@ -1266,35 +1266,35 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 35 cadáveres adultos, la arteria marginal resultó incompleta en 2 casos, ambos con un patrón de ramificación de la arteria mesentérica superior de tipo B.",
+        "es": "Entre 35 cadáveres adultos disecados, sólo 2 presentaban una arteria marginal incompleta, ambos con el patrón de ramificación mesentérica superior de tipo B.",
         "cites": [
           "PMID:33778940"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "La ligadura de la arteria mesentérica inferior durante la amputación abdominoperineal puede reducir el flujo por la arteria marginal y volver el colon remanente más vulnerable a la isquemia.",
+        "es": "Al ligar la mesentérica inferior en la amputación abdominoperineal puede disminuir el flujo de la arteria marginal, lo que expondría el colon restante al daño isquémico.",
         "cites": [
           "PMID:4540295"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Una revisión advierte que términos históricos como «arteria marginal de Drummond» y «arco de Riolan» generan confusión en la descripción de la circulación colateral mesentérica.",
+        "es": "Los nombres históricos «arteria marginal de Drummond» y «arco de Riolan» son, según una revisión, fuente de confusión al describir las colaterales mesentéricas.",
         "cites": [
           "PMID:3554567"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito una hemorragia retroperitoneal grave originada en esta arteria durante el tratamiento con heparina, controlada con embolización con microespirales.",
+        "es": "Una hemorragia retroperitoneal potencialmente mortal durante el tratamiento con heparina tuvo su origen en esta arteria y se detuvo embolizándola con microespirales, sin isquemia en los 3 años siguientes.",
         "cites": [
           "PMID:8087834"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Tras una reparación abierta de aneurisma aórtico con ligadura de la mesentérica inferior se describió un seudoaneurisma de esta arteria, tratado con embolización sin isquemia intestinal.",
+        "es": "Un seudoaneurisma de esta arteria, primer caso publicado según sus autores, siguió a la reparación abierta urgente de un aneurisma aórtico inflamatorio con ligadura de la mesentérica inferior y se resolvió con embolización sin isquemia intestinal.",
         "cites": [
           "PMID:39564072"
         ]
@@ -1305,42 +1305,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 30 especímenes, la arteria supraduodenal estuvo presente en 28; cuando faltaba, la reemplazaba la arteria gástrica derecha.",
+        "es": "Faltó en 2 de 30 especímenes, y en esos casos la arteria gástrica derecha ocupaba su lugar.",
         "cites": [
           "PMID:2497532"
         ]
       },
       {
         "aspect": "situation",
-        "es": "En esa serie, su origen más frecuente fue la arteria gastroduodenal.",
+        "es": "La gastroduodenal fue su origen más habitual en esa serie.",
         "cites": [
           "PMID:2497532"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Irrigaba de forma constante los dos tercios distales de la porción superior del duodeno y se extendía a los segmentos supraduodenal y retroduodenal del colédoco.",
+        "es": "Su territorio constante abarcaba los dos tercios distales de la primera porción duodenal y alcanzaba los tramos supraduodenal y retroduodenal del colédoco.",
         "cites": [
           "PMID:2497532"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En la mitad de los casos se anastomosaba con la arteria gástrica derecha y con la pancreaticoduodenal posterosuperior, con más frecuencia con la primera.",
+        "es": "En la mitad de los casos se anastomosaba con la gástrica derecha o con la pancreaticoduodenal posterosuperior, más a menudo con la primera.",
         "cites": [
           "PMID:2497532"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Puede nacer de la arteria hepática, la gastroduodenal o la gástrica derecha; en un caso formaba un tronco común con la arteria caudada que irrigaba un carcinoma hepatocelular del segmento I.",
+        "es": "Su origen varía entre la arteria hepática, la gastroduodenal y la gástrica derecha; en un varón de 80 años compartía tronco con la arteria caudada que nutría un carcinoma hepatocelular del segmento I.",
         "cites": [
           "PMID:32382375"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Una arteria supraduodenal de origen aberrante puede ser la causa de una hemorragia digestiva alta refractaria.",
+        "es": "Una arteria supraduodenal de origen aberrante fue la fuente de una hemorragia digestiva alta recurrente que persistió pese a varias endoscopias y a la embolización de la gastroduodenal.",
         "cites": [
           "PMID:28828118"
         ]

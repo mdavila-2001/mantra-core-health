@@ -3,14 +3,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En un estudio radiográfico de 386 codos de 193 pacientes con artritis reumatoide, la pérdida ósea fue más intensa en la mitad radial de la tróclea humeral.",
+        "es": "En una serie radiográfica de 193 pacientes con artritis reumatoide (386 codos), el lado radial de la tróclea fue el más dañado, y los autores suponen que la destrucción empieza allí y se extiende en sentido mediolateral.",
         "cites": [
           "PMID:16670824"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En esa misma serie, el grado de destrucción de la tróclea se correlacionó estrechamente con el de la escotadura troclear, lo que los autores interpretan como lesiones en espejo.",
+        "es": "Dentro de un mismo codo, la pérdida ósea de la tróclea y la de la escotadura troclear iban especialmente de la mano, un paralelismo que los autores leen como lesiones en espejo.",
         "cites": [
           "PMID:16670824"
         ]
@@ -21,35 +21,35 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En cadáveres humanos, la superficie articular del extremo proximal del húmero corresponde a un segmento de esfera cuya inclinación, retroversión y desplazamientos medial y posterior varían de un individuo a otro.",
+        "es": "Medida en cadáveres, la superficie articular proximal del húmero es un casquete esférico cuya orientación (inclinación, retroversión) y cuyos desplazamientos medial y posterior cambian de una persona a otra.",
         "cites": [
           "PMID:9331050"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 244 húmeros de seis poblaciones, la asimetría bilateral fue máxima en la diáfisis, aumentó a la altura de la tuberosidad deltoidea y disminuyó progresivamente hacia distal.",
+        "es": "Al comparar los dos lados en 244 húmeros de seis poblaciones, la diáfisis resultó la región más asimétrica, con un pico a la altura de la tuberosidad deltoidea y una atenuación gradual en dirección distal.",
         "cites": [
           "PMID:33460465"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las fracturas del extremo proximal del húmero son frecuentes y siguen una distribución bimodal, con predominio en varones jóvenes y en mujeres de edad avanzada.",
+        "es": "Comunes, las fracturas del húmero proximal se concentran en dos grupos: varones jóvenes y mujeres mayores.",
         "cites": [
           "PMID:35938761"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 100 fracturas intracapsulares operadas, la longitud de la extensión metafisaria de la cabeza y la integridad de la bisagra medial fueron buenos predictores de isquemia de la cabeza humeral.",
+        "es": "En una serie prospectiva de 100 fracturas intracapsulares operadas, una extensión metafisaria corta de la cabeza y la rotura de la bisagra medial fueron de los mejores indicadores de isquemia de la cabeza humeral.",
         "cites": [
           "PMID:15220884"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el húmero varo del desarrollo, la región medial de la fisis proximal crece con lentitud o no llega a desarrollarse, mientras la lateral avanza más rápido y desvía la epífisis en varo.",
+        "es": "El húmero varo del desarrollo nace de un crecimiento desigual de la fisis proximal: la porción medial se retrasa o no llega a formarse y la lateral, al crecer más, inclina la epífisis hacia el varo.",
         "cites": [
           "PMID:819197"
         ]
@@ -60,42 +60,42 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En un estudio con iluminación infrarroja de 722 manos de 438 personas, la vena cefálica pasaba por la tabaquera anatómica en el 98 % de los casos, aunque su punto de formación respecto de esa región variaba entre cuatro sitios.",
+        "es": "Explorada con luz infrarroja en 438 personas (722 manos), la vena cefálica mostró cuatro sitios de formación distintos respecto de la tabaquera anatómica, pero en el 98 % de las manos la atravesaba.",
         "cites": [
           "PMID:32394420"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 100 cadáveres, la vena se encontró en el 95 % de los lados y en el 80 % de ellos aparecía superficialmente en la porción lateral del triángulo deltopectoral.",
+        "es": "En 100 cadáveres faltaba en el 5 % de los lados; cuando estaba presente, en cuatro de cada cinco casos emergía superficial en la parte lateral del triángulo deltopectoral.",
         "cites": [
           "PMID:18335417"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En la misma serie, el 65,2 % de las venas cefálicas acompañaba a la rama deltoidea del tronco toracoacromial, y su trayecto dentro del triángulo medía de 3,5 a 8,2 cm (media 4,8 cm).",
+        "es": "En esa serie recorría entre 3,5 y 8,2 cm dentro del triángulo (media 4,8 cm) y en casi dos tercios de los casos (65,2 %) iba junto a la rama deltoidea del tronco toracoacromial.",
         "cites": [
           "PMID:18335417"
         ]
       },
       {
-        "aspect": "irrigation",
-        "es": "En 4 especímenes de esa serie, la vena ascendía por delante y por encima de la clavícula para desembocar en la vena subclavia.",
+        "aspect": "relations",
+        "es": "Excepcionalmente, en 4 especímenes, pasaba por delante y por encima de la clavícula para terminar en la vena subclavia.",
         "cites": [
           "PMID:18335417"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se la considera la vena superficial de gran calibre más versátil del miembro superior para microcirugía, como fuente de flujo en colgajos y reimplantes.",
+        "es": "Como vía de entrada y salida de flujo en colgajos y reimplantes, se la considera la más versátil de las grandes venas superficiales del miembro superior en microcirugía.",
         "cites": [
           "PMID:8271926"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una revisión institucional, las fístulas arteriovenosas con transposición de la vena cefálica en el brazo tuvieron una permeabilidad primaria del 40 % y secundaria del 46 % a los 5 años.",
+        "es": "En una revisión institucional de 71 transposiciones de la vena cefálica en el brazo para fístula arteriovenosa, la permeabilidad a 5 años fue del 40 % primaria y del 46 % secundaria, sin diferencia significativa con la transposición basílica.",
         "cites": [
           "PMID:17543490"
         ]
@@ -106,35 +106,35 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es un nervio mixto, sensitivo y motor, descrito clásicamente como responsable de la pronación, de la flexión de la muñeca y de los tres primeros dedos, de la oposición del pulgar y de la sensibilidad palmar de esos tres dedos.",
+        "es": "Nervio mixto, se le atribuye clásicamente la sensibilidad palmar de los tres primeros dedos y, en lo motor, la pronación, la flexión de la muñeca y de esos dedos y la oposición del pulgar.",
         "cites": [
           "PMID:31816428"
         ]
       },
       {
         "aspect": "situation",
-        "es": "Su nombre alude a la posición central que ocupa al final del plexo braquial y en el antebrazo, y en su recorrido atraviesa pasajes estrechos, como el túnel carpiano o el pronador redondo, donde puede comprimirse.",
+        "es": "Debe su nombre a la posición media que ocupa al final del plexo braquial y en el antebrazo; los pasos estrechos de su recorrido, como el pronador redondo o el túnel carpiano, son posibles sitios de compresión.",
         "cites": [
           "PMID:31816428"
         ]
       },
       {
-        "aspect": "function",
-        "es": "Su parálisis suele abolir la oposición del pulgar, aunque las variantes anatómicas y la doble inervación del flexor corto del pulgar pueden evitar a veces una pérdida completa.",
+        "aspect": "clinical",
+        "es": "Aunque la parálisis del mediano suele costar la oposición del pulgar, a veces se conserva en parte gracias a variantes anatómicas o a la doble inervación del flexor corto del pulgar.",
         "cites": [
           "PMID:27387078"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 246 manos operadas se hallaron 29 variantes en el trayecto del nervio dentro del túnel carpiano, y en 100 manos de cadáver la rama tenar era extraligamentosa en el 46 %, subligamentosa en el 31 % y transligamentosa en el 23 %.",
+        "es": "Entre 246 túneles carpianos explorados en cirugía aparecieron 29 variantes del trayecto del nervio; para la rama tenar, una serie de 100 manos de cadáver citada por los autores la halló extraligamentosa en el 46 %, subligamentosa en el 31 % y transligamentosa en el 23 %.",
         "cites": [
           "PMID:839054"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 117 pacientes con síndrome del túnel carpiano, la conducción se enlentecía sobre todo al cruzar el retináculo flexor, lo que apunta a desmielinización en el sitio de compresión.",
+        "es": "En 117 pacientes con síndrome del túnel carpiano, el enlentecimiento era máximo a través del retináculo flexor y la conducción entre muñeca y codo era normal, un patrón que indica desmielinización focal en el punto de compresión.",
         "cites": [
           "PMID:4829536"
         ]
@@ -145,28 +145,28 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La vena basílica proximal transpuesta y anastomosada con la arteria braquial se usa como acceso autólogo para hemodiálisis; en 65 procedimientos fue técnicamente factible en el 95 % de los casos.",
+        "es": "Transponer la porción proximal de la vena basílica y unirla a la arteria braquial ofrece un acceso autólogo para hemodiálisis que, en una serie de 65 procedimientos, pudo completarse en el 95 % de los casos.",
         "cites": [
           "PMID:8377233"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 67 pacientes con fístula braquiobasílica elevada, la permeabilidad actuarial fue del 84 % al año y del 52 % a los 10 años.",
+        "es": "Entre 67 pacientes con fístula braquiobasílica elevada seguidos durante una década, la permeabilidad actuarial bajó del 84 % al primer año al 52 % a los 10 años.",
         "cites": [
           "PMID:10414700"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 30 pacientes con una fístula radiocefálica fallida, la transposición de la vena basílica del antebrazo alcanzó una permeabilidad acumulada del 93 % al año y del 55 % a los 3 años.",
+        "es": "Cuando fracasaba una fístula radiocefálica, transponer la basílica del antebrazo dio en 30 pacientes una permeabilidad acumulada del 93 % a 1 año, que descendió al 55 % a los 3 años.",
         "cites": [
           "PMID:23599505"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 375 fístulas braquiobasílicas creadas mediante superficialización de la vena, la permeabilidad primaria fue del 92 % al primer año y del 54 % al cuarto.",
+        "es": "Con la técnica de superficialización de la vena, en una serie de 375 fístulas braquiobasílicas la permeabilidad primaria pasó del 92 % el primer año al 54 % el cuarto.",
         "cites": [
           "PMID:20471784"
         ]
@@ -177,21 +177,21 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En una serie de 154 cateterismos para nutrición parenteral, la vena braquial profunda se abordó por una pequeña incisión sobre el borde interno del bíceps braquial y se separó del nervio y de la arteria.",
+        "es": "Para colocar 154 catéteres de nutrición parenteral se llegó a la vena braquial profunda por una incisión corta sobre el borde interno del bíceps, aislándola del nervio y de la arteria vecinos.",
         "cites": [
           "PMID:6422073"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En un paciente se halló durante la cirugía una confluencia baja entre las venas basílica y braquial, y la vena braquial se movilizó y transpuso para construir la fístula.",
+        "es": "En un caso, una confluencia baja entre la basílica y la vena braquial descubierta en la segunda etapa quirúrgica llevó a movilizar y transponer la braquial para obtener la fístula.",
         "cites": [
           "PMID:19426640"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La fístula entre arteria braquial y vena braquial se propone como alternativa autóloga de último recurso cuando no hay venas superficiales adecuadas para hemodiálisis.",
+        "es": "Sin venas superficiales aptas para hemodiálisis, unir la arteria braquial con la vena braquial se plantea como un último recurso autólogo.",
         "cites": [
           "PMID:27986484",
           "PMID:26900307"
@@ -199,14 +199,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "En una revisión de 380 fístulas con transposición de vena braquial, la permeabilidad primaria a los 12 meses osciló entre el 24 y el 77 %.",
+        "es": "Una revisión que reunió 380 fístulas con transposición de vena braquial encontró, a los 12 meses, permeabilidades primarias muy dispares: del 24 al 77 %.",
         "cites": [
           "PMID:26900307"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 45 procedimientos, un diámetro venoso menor de 3 mm se asoció con mayor riesgo de oclusión precoz (riesgo relativo de 8).",
+        "es": "En una serie retrospectiva de 45 accesos autólogos (10 de ellos con transposición de vena braquial), una vena de menos de 3 mm de diámetro multiplicó por 8 el riesgo de oclusión precoz.",
         "cites": [
           "PMID:31807129"
         ]
@@ -217,35 +217,35 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "En 12 cadáveres inyectados, la arteria radial emitía en el antebrazo distal varias ramas periósticas hacia la metáfisis distal del radio, situadas entre la inserción distal del braquiorradial y la cara profunda de la mitad radial del pronador cuadrado.",
+        "es": "Según disecciones de 12 cadáveres inyectados, la metáfisis distal del radio recibe varias ramas periósticas de la arteria radial, que discurren entre la inserción del braquiorradial y la cara profunda de la mitad radial del pronador cuadrado.",
         "cites": [
           "PMID:29650375"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En 8 antebrazos estudiados con nanotomografía, los injertos pediculados del radio distal basados en distintas arterias tuvieron una vascularización media similar, aunque el cortical fue más grueso en el dependiente de la arteria carpiana volar (media 0,79 mm).",
+        "es": "Con nanotomografía en 8 antebrazos, los tres injertos pediculados habituales del radio distal mostraron una vascularización media parecida; el basado en la arteria carpiana volar tenía, eso sí, la cortical más gruesa (0,79 mm de media).",
         "cites": [
           "PMID:36779366"
         ]
       },
       {
         "aspect": "function",
-        "es": "A diferencia de la columna lumbar o del fémur, el radio no soporta una carga de compresión gravitatoria durante las actividades diarias, y su extremo distal es un sitio frecuente de fractura.",
+        "es": "El radio, a diferencia del fémur o de la columna lumbar, no recibe en la vida diaria la compresión de la gravedad, y su extremo distal se fractura con frecuencia.",
         "cites": [
           "PMID:32390716"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 270 participantes de 8 a 16 años, las niñas con fracturas de antebrazo de baja energía presentaban menor resistencia, densidad y microestructura del radio distal.",
+        "es": "En 270 niños y adolescentes de 8 a 16 años, las fracturas de antebrazo de baja energía se asociaron en las niñas con un radio distal menos resistente, menos denso y de peor microestructura.",
         "cites": [
           "PMID:25572041"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El piso del segundo compartimento extensor del radio distal se ha usado como sitio donante de injerto esponjoso en 80 pacientes de cirugía de la mano.",
+        "es": "Como donante de hueso esponjoso, el piso del segundo compartimento extensor del radio distal se ha empleado en 80 pacientes de cirugía de la mano sin problemas de seguridad.",
         "cites": [
           "PMID:27575583"
         ]
@@ -256,35 +256,35 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La cabeza del cúbito se relaciona con el radio y con el carpo, y su estabilidad depende de los ligamentos radiocubitales y cubitocarpianos, del fibrocartílago triangular y de la acción del pronador cuadrado y del extensor cubital del carpo.",
+        "es": "Además de articularse con el radio y el carpo, la cabeza del cúbito queda sujeta por los ligamentos radiocubitales y cubitocarpianos y por la acción del pronador cuadrado y del extensor cubital del carpo, mientras el fibrocartílago triangular amortigua las cargas.",
         "cites": [
           "PMID:9604151"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Un estudio de 41 miembros superiores de cadáver detalló la irrigación extra e intraósea del extremo distal del radio y del cúbito y describió arterias que no figuraban en descripciones previas.",
+        "es": "Con inyecciones y diafanización en 41 miembros superiores de cadáver se precisó la irrigación extra e intraósea del radio y el cúbito distales, y aparecieron arterias no descritas antes.",
         "cites": [
           "PMID:8583061"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 44 cúbitos de cadáver, el punto de entrada ideal para un clavo intramedular quedaba en promedio 7 mm proximal y 3 mm lateral a la zona más prominente del olécranon.",
+        "es": "Medidos 44 cúbitos de cadáver, el mejor punto de entrada para un clavo intramedular quedó, de media, 7 mm por encima y 3 mm por fuera de la parte más saliente del olécranon.",
         "cites": [
           "PMID:14521291"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las fracturas aisladas del cúbito distal son raras y suelen acompañar a fracturas del radio distal.",
+        "es": "Rara vez se fractura sola la porción distal del cúbito; lo habitual es que lo haga junto con el radio distal.",
         "cites": [
           "PMID:24411292"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las fracturas del cúbito proximal van desde lesiones aisladas del olécranon hasta fracturas-luxaciones complejas del codo, e incluyen las de la apófisis coronoides.",
+        "es": "En el cúbito proximal, las fracturas abarcan un espectro que va del olécranon aislado y la apófisis coronoides hasta las fracturas-luxaciones complejas del codo.",
         "cites": [
           "PMID:21713726"
         ]
@@ -301,42 +301,42 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "El pisiforme recibe una vascularización propia de la arteria cubitodorsal, rama de la arteria cubital, lo que permite transferirlo pediculado.",
+        "es": "Una rama de la arteria cubital, la cubitodorsal, le aporta un pedículo vascular propio, lo que hace posible trasladarlo vascularizado.",
         "cites": [
           "PMID:21075664"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 25 muñecas de cadáver, el retináculo extensor tenía una inserción compleja en el pisiforme, el flexor cubital del carpo, el quinto metacarpiano, el ligamento pisometacarpiano y el abductor del meñique.",
+        "es": "Al disecar 25 muñecas de cadáver, el retináculo extensor mostró una inserción compleja repartida entre el pisiforme, el flexor cubital del carpo, el quinto metacarpiano, el ligamento pisometacarpiano y el abductor del meñique.",
         "cites": [
           "PMID:7775774"
         ]
       },
       {
         "aspect": "function",
-        "es": "En ensayos mecánicos sobre 12 muñecas frescas, los tejidos blandos que rodean la articulación pisopiramidal resultaron más resistentes en proximal y distal y más débiles en medial.",
+        "es": "Ensayado en 12 muñecas frescas, el soporte de partes blandas de la articulación pisopiramidal fue más débil en su lado medial que en sus extremos proximal y distal.",
         "cites": [
           "PMID:7775774"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La coalición pisiforme-ganchoso consiste en la unión anómala del pisiforme con el gancho del hueso ganchoso; se identificó en 5 de 527 esqueletos de sudafricanos nativos (0,76 %).",
+        "es": "Se llama coalición pisiforme-ganchoso a la unión anómala del pisiforme con el gancho del ganchoso; en una colección de 527 esqueletos de sudafricanos nativos apareció en 5 (0,76 %).",
         "cites": [
           "PMID:21322040"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 12 pacientes con dolor pisopiramidal, 11 mostraban artrosis radiológica de esa articulación, y la extirpación del pisiforme alivió por completo los síntomas en 7 de los 9 operados.",
+        "es": "De 12 pacientes con dolor en la región pisopiramidal, 11 tenían artrosis radiológica de esa articulación; se extirpó el pisiforme en 9 y 7 de ellos quedaron sin síntomas.",
         "cites": [
           "PMID:1588190"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Sus fracturas pasan inadvertidas a menudo por una evaluación radiográfica inadecuada o porque la atención se centra en otras lesiones más evidentes.",
+        "es": "Una radiografía mal orientada o la atención puesta en lesiones más llamativas explican que sus fracturas se pasen por alto con frecuencia.",
         "cites": [
           "PMID:2057787"
         ]
@@ -347,35 +347,35 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El nervio cubital se extiende desde su origen en el plexo braquial hasta su terminación en la mano y los dedos, y en su recorrido tienen especial importancia el túnel cubital y el canal de Guyon.",
+        "es": "Recorre el miembro desde el plexo braquial hasta la mano y los dedos, y el túnel cubital y el canal de Guyon son los tramos de anatomía más crítica.",
         "cites": [
           "PMID:17765580"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Puede comprimirse en cualquier punto de su trayecto, pero es particularmente vulnerable en el codo y en la muñeca.",
+        "es": "El codo y la muñeca son sus puntos más vulnerables a la compresión, aunque ésta puede darse en cualquier tramo.",
         "cites": [
           "PMID:8614581"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 20 especímenes de cadáver, al pasar el codo de la extensión completa a 135° de flexión, el área transversal del túnel cubital disminuyó entre un 30 y un 41 % y la del nervio entre un 33 y un 50 % según la región.",
+        "es": "En 20 codos de cadáver estudiados con resonancia, flexionar desde la extensión completa hasta 135° redujo el área del túnel cubital entre un 30 y un 41 % y la del nervio entre un 33 y un 50 %, según la región medida.",
         "cites": [
           "PMID:9563378"
         ]
       },
       {
-        "aspect": "function",
-        "es": "Sus lesiones producen déficits sensitivos y motores en la mano, y los resultados de su reparación han sido peores que los de los nervios mediano o radial.",
+        "aspect": "clinical",
+        "es": "Lesionarlo deja déficits motores y sensitivos en la mano, y su reparación ha dado peores resultados funcionales que la del mediano o la del radial.",
         "cites": [
           "PMID:25442770"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En cuatro pacientes con avulsión de C5-C6, se transfirió un 10 % del grosor del nervio cubital al nervio motor del bíceps sin deterioro relevante de la función de la mano.",
+        "es": "En cuatro pacientes con avulsión de las raíces C5-C6, desviar un 10 % del grosor del nervio cubital hacia el nervio motor del bíceps no deterioró de forma relevante la función de la mano.",
         "cites": [
           "PMID:8201186"
         ]
@@ -386,42 +386,42 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El coracobraquial es el músculo más pequeño del compartimento anterior del brazo y participa en la flexión y la abducción de la articulación glenohumeral.",
+        "es": "Es el menor de los músculos del compartimento anterior del brazo e interviene en la flexión y la abducción del hombro.",
         "cites": [
           "PMID:34608984"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 312 miembros superiores de cadáver, se originaba en el vértice de la apófisis coracoides y en las caras lateral, posterior y medial del tendón de la cabeza corta del bíceps braquial.",
+        "es": "Según 312 miembros superiores de cadáver, nace del vértice de la coracoides y del tendón de la cabeza corta del bíceps, al que se adhiere por sus caras lateral, posterior y medial.",
         "cites": [
           "PMID:26464302"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En esa misma serie, el nervio musculocutáneo atravesaba el músculo en el 83,33 % de los casos, a una distancia media de 50,62 mm de la apófisis coracoides.",
+        "es": "En esa serie, el musculocutáneo lo perforaba en el 83,33 % de los miembros, entrando de media a 50,62 mm de la coracoides.",
         "cites": [
           "PMID:26464302"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En 387 bloqueos axilares guiados por ecografía, el nervio musculocutáneo se encontraba fuera del coracobraquial en 83 casos (22 %).",
+        "es": "Durante 387 bloqueos axilares ecoguiados, el nervio musculocutáneo no estaba dentro del coracobraquial en 83 ocasiones, es decir, en uno de cada cinco pacientes (22 %).",
         "cites": [
           "PMID:20435937"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En un cadáver se describió la inervación del coracobraquial por una rama de la raíz lateral del nervio mediano, con un nervio musculocutáneo que no lo perforaba.",
+        "es": "Un hallazgo de disección en un cadáver mostró al coracobraquial inervado por una rama de la raíz lateral del mediano, mientras el musculocutáneo bajaba por su lado medial sin perforarlo.",
         "cites": [
           "PMID:9711033"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Un coracobraquial accesorio se identificó por ecografía en 8 de 664 pacientes estudiados por patología del hombro, y en uno se asoció con pinzamiento subcoracoideo.",
+        "es": "La ecografía de 664 pacientes enviados por patología del hombro reveló un coracobraquial accesorio en 8, uno de los cuales sufría un pinzamiento subcoracoideo atribuido a él.",
         "cites": [
           "PMID:25924580"
         ]
@@ -432,21 +432,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 240 miembros superiores de cadáver, el braquial constaba siempre de una cabeza superficial y otra profunda, originadas en los tercios medio y distal de la diáfisis humeral e insertadas por separado en la apófisis coronoides y la tuberosidad del cúbito.",
+        "es": "En los 240 miembros de cadáver examinados tenía siempre dos cabezas, superficial y profunda, que partían de los tercios medio y distal de la diáfisis humeral y llegaban por separado a la coronoides y a la tuberosidad cubital.",
         "cites": [
           "PMID:30820647"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 11 miembros disecados, la cabeza superficial, mayor, terminaba en la tuberosidad cubital mediante un tendón grueso y redondeado, mientras que la profunda lo hacía en la apófisis coronoides mediante una aponeurosis.",
+        "es": "Disecado en 11 miembros, mostró una cabeza superficial mayor que acababa con un tendón grueso y redondo en la tuberosidad cubital y una profunda que se fijaba a la coronoides por una aponeurosis.",
         "cites": [
           "PMID:17545433"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "El nervio musculocutáneo lo inervó en todos los casos estudiados, y una rama del nervio radial contribuyó en el 83,33 % de 240 miembros y en el 81,6 % de una serie de 76 cadáveres tailandeses.",
+        "es": "El musculocutáneo lo inervó siempre, y a menudo se sumó una rama del radial: en el 83,33 % de 240 miembros y en el 81,6 % de una serie de 76 cadáveres tailandeses.",
         "cites": [
           "PMID:30820647",
           "PMID:11948956"
@@ -454,21 +454,21 @@
       },
       {
         "aspect": "innervation",
-        "es": "En 112 nervios musculocutáneos, el 92 % daba un único ramo al braquial, que salía distal al ramo del bíceps a unos 170 mm del acromion de media.",
+        "es": "De 112 nervios musculocutáneos, el 92 % le enviaba un solo ramo, siempre por debajo del destinado al bíceps y a unos 170 mm del acromion de media.",
         "cites": [
           "PMID:9556264"
         ]
       },
       {
         "aspect": "function",
-        "es": "Según un estudio en cadáveres, la cabeza superficial aportaría la mayor parte de la fuerza de flexión del codo y la profunda facilitaría iniciar la flexión desde la extensión completa.",
+        "es": "Los autores de un estudio en cadáveres proponen que la cabeza superficial aportaría el grueso de la fuerza flexora del codo, y que la profunda ayudaría a arrancar la flexión desde la extensión completa.",
         "cites": [
           "PMID:17545433"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 27 niños con fractura supracondílea posterolateral desplazada y déficit vascular, había signos de que el fragmento proximal había atravesado el músculo braquial.",
+        "es": "En fracturas supracondíleas posterolaterales desplazadas con déficit vascular (27 niños operados), la equimosis o el fruncimiento de la piel antecubital y una espícula medial palpable indicaban que el fragmento proximal había perforado el braquial.",
         "cites": [
           "PMID:10413005"
         ]
@@ -479,21 +479,21 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "Su tendón usa el tubérculo del escafoides como polea para llegar a su inserción distal en el segundo metacarpiano.",
+        "es": "Camino de su inserción en el segundo metacarpiano, el tendón se refleja sobre el tubérculo del escafoides, que le sirve de polea.",
         "cites": [
           "PMID:21093178"
         ]
       },
       {
         "aspect": "function",
-        "es": "En 10 muñecas de cadáver, la carga del músculo hizo rotar el escafoides en flexión y supinación y el piramidal en flexión y pronación.",
+        "es": "Al cargarlo en 10 muñecas de cadáver, el escafoides giró hacia la flexión y la supinación y el piramidal hacia la flexión y la pronación.",
         "cites": [
           "PMID:21093178"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Recibe perforantes de la arteria radial que penetran en su mitad distal, y en seis disecciones de cadáver se confirmó que la irrigación de sus porciones media y distal procede de esa arteria.",
+        "es": "Su irrigación depende de la arteria radial: perforantes de esa arteria entran por su mitad distal, y seis disecciones confirmaron que de ella proceden los vasos de sus porciones media y distal.",
         "cites": [
           "PMID:12439015",
           "PMID:12457361"
@@ -501,14 +501,14 @@
       },
       {
         "aspect": "parts",
-        "es": "En 114 fetos humanos, la inserción distal se localizaba en el segundo metacarpiano en alrededor del 82 % de los casos y en el cuarto en menos del 10 %.",
+        "es": "En 114 fetos humanos predominó la inserción en el segundo metacarpiano (alrededor del 82 %), mientras que la del cuarto no llegó al 10 %.",
         "cites": [
           "PMID:36088589"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En un cadáver se describió un flexor radial del carpo duplicado, cuyo vientre adicional se insertaba en el tercer metacarpiano y compartía nervio y vaina sinovial con el músculo normal.",
+        "es": "Se ha descrito en un cadáver un flexor radial del carpo doble: el vientre extra partía de los tabiques intermusculares, terminaba en el tercer metacarpiano y compartía nervio y vaina sinovial con el músculo habitual.",
         "cites": [
           "PMID:3229618"
         ]
@@ -518,36 +518,36 @@
   "UBERON:0001523": {
     "sentences": [
       {
-        "aspect": "parts",
-        "es": "El flexor profundo de los dedos envía tendones a los cuatro dedos largos, y el registro electromiográfico en sujetos sanos indica una subdivisión funcional incompleta con regiones centrales muy selectivas para cada dedo.",
+        "aspect": "function",
+        "es": "Aunque da tendones a los cuatro dedos largos, el registro electromiográfico en personas sanas muestra que no está dividido del todo en compartimentos independientes, si bien conserva núcleos muy selectivos para cada dedo.",
         "cites": [
           "PMID:12815024"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Los músculos lumbricales se originan en sus tendones.",
+        "es": "Sus tendones sirven de origen a los lumbricales.",
         "cites": [
           "PMID:38924964"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 96 dedos de cadáver, su entesis en la falange distal tenía una forma trapezoidal constante, con una superficie media de 29,29 ± 2,35 mm² y una estructura fibrocartilaginosa.",
+        "es": "Examinados 96 dedos de cadáver, su inserción en la falange distal era siempre trapezoidal, fibrocartilaginosa y de unos 29,29 ± 2,35 mm² de superficie media.",
         "cites": [
           "PMID:34893040"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En especímenes de cadáver, la unión tendón-hueso del dedo anular resultó más débil que la del dedo medio, lo que explicaría en parte la mayor frecuencia de avulsiones en el anular.",
+        "es": "Ensayada en cadáveres, la inserción ósea del tendón resistió menos en el anular que en el medio, lo que explicaría en parte por qué las avulsiones afectan con más frecuencia al anular.",
         "cites": [
           "PMID:710982"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las avulsiones de su tendón pueden acompañarse de retracción hacia la palma y de fracturas de la falange distal.",
+        "es": "Cuando el tendón se arranca, puede retraerse hasta la palma y llevarse consigo fragmentos de la falange distal.",
         "cites": [
           "PMID:21368096"
         ]
@@ -558,21 +558,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 490 miembros superiores de 245 cadáveres japoneses, la porción principal del músculo se insertaba en el segundo metacarpiano; 326 casos presentaban sólo esa porción y 164 tenían además de uno a tres fascículos accesorios.",
+        "es": "Revisados 490 miembros de 245 cadáveres japoneses, el cuerpo principal del músculo terminaba en el segundo metacarpiano; en 326 aparecía solo y en 164 lo acompañaban entre uno y tres fascículos accesorios.",
         "cites": [
           "PMID:7808722"
         ]
       },
       {
-        "aspect": "situation",
-        "es": "En una disección de un cadáver coreano, el músculo nacía en la cresta supracondílea lateral del húmero y se dividía en tres cabezas, una de las cuales se fusionaba con el extensor radial corto del carpo.",
+        "aspect": "parts",
+        "es": "Como variante, en un cadáver coreano el músculo partía de la cresta supracondílea lateral y se abría en tres cabezas, la más medial de las cuales acababa uniéndose al extensor radial corto del carpo.",
         "cites": [
           "PMID:29713736"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Su ramo motor procede del nervio radial y se ha empleado tanto como receptor como donante en transferencias nerviosas.",
+        "es": "Lo inerva un ramo del nervio radial, que la cirugía de transferencias nerviosas ha aprovechado tanto para recibir como para donar axones.",
         "cites": [
           "PMID:22749482",
           "PMID:21371622"
@@ -580,7 +580,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En un paciente con tetraplejía alta, la transferencia del ramo del braquial al ramo del extensor radial largo del carpo restableció la extensión activa de la muñeca sin pérdida de la flexión del codo.",
+        "es": "Un hombre de 36 años con tetraplejía alta recuperó la extensión activa de la muñeca cuando se conectó el ramo del braquial con el de este músculo, y conservó la flexión del codo.",
         "cites": [
           "PMID:22749482"
         ]
@@ -591,14 +591,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "En cinco sujetos operados por epicondilitis lateral, el músculo desarrollaba una fuerza isométrica casi máxima con la muñeca en extensión completa, que caía al 20 % del máximo en flexión completa.",
+        "es": "Medidas intraoperatorias de sarcómeros en cinco pacientes con epicondilitis lateral indicaron que el músculo rinde casi su fuerza isométrica máxima con la muñeca extendida del todo y apenas un 20 % de ella en flexión completa.",
         "cites": [
           "PMID:8201193"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En dos casos de variantes descritas en cadáver, el músculo recibía un ramo de la rama profunda del nervio radial o del nervio interóseo posterior.",
+        "es": "En dos variantes halladas en cadáver, su inervación llegaba por un ramo de la rama profunda del radial o del interóseo posterior.",
         "cites": [
           "PMID:11802514",
           "PMID:14695590"
@@ -606,21 +606,21 @@
       },
       {
         "aspect": "parts",
-        "es": "En un cadáver se describió un origen anómalo en la fascia del extensor común de los dedos, sin la inserción habitual en el epicóndilo lateral, y un tendón que terminaba en la base del tercer metacarpiano.",
+        "es": "Un caso de disección mostró un origen excepcional en la fascia del extensor común de los dedos, sin fijación al epicóndilo lateral, con el tendón terminando en la base del tercer metacarpiano.",
         "cites": [
           "PMID:14695590"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El tendón de este músculo es la estructura más afectada en la epicondilitis lateral.",
+        "es": "Dentro de la epicondilitis lateral, la estructura que más sufre es su tendón.",
         "cites": [
           "PMID:31383324"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el origen del músculo de seis pacientes con codo de tenista no se hallaron infiltrados inflamatorios, pero sí fibras nerviosas con sustancia P y péptido relacionado con el gen de la calcitonina junto a vasos pequeños.",
+        "es": "En el origen del músculo de seis pacientes con codo de tenista no aparecieron células inflamatorias, aunque sí fibras nerviosas con sustancia P y péptido relacionado con el gen de la calcitonina en torno a vasos pequeños.",
         "cites": [
           "PMID:10459762"
         ]
@@ -631,28 +631,28 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El abductor largo del pulgar se origina en la parte lateral de la cara dorsal del cúbito por debajo de la inserción del ancóneo, en la membrana interósea y en el tercio medio de la cara dorsal del radio.",
+        "es": "Nace de tres sitios: la parte lateral de la cara dorsal del cúbito, por debajo del ancóneo; la membrana interósea; y el tercio medio de la cara dorsal del radio.",
         "cites": [
           "PMID:31802470"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 50 miembros de cadáver, su tendón principal terminaba en la base del primer metacarpiano, con bandas accesorias de número y destino muy variables.",
+        "es": "En 50 miembros de cadáver, el tendón principal llegaba siempre a la base del primer metacarpiano, mientras que las bandas accesorias variaban mucho en número y destino.",
         "cites": [
           "PMID:31802470"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Presentaba más de un tendón en el 89 % de 82 muñecas de cadáveres tailandeses y en el 49 % de 66 pacientes con síndrome de De Quervain.",
+        "es": "Tener más de un tendón fue la norma en 82 muñecas de cadáveres tailandeses (89 %), pero sólo ocurrió en el 49 % de 66 pacientes operados por síndrome de De Quervain.",
         "cites": [
           "PMID:17484184"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Su tendón discurre por el primer compartimento dorsal de la muñeca junto al del extensor corto del pulgar.",
+        "es": "Comparte con el extensor corto del pulgar el primer compartimento dorsal de la muñeca.",
         "cites": [
           "PMID:28765477",
           "PMID:15734232"
@@ -660,14 +660,14 @@
       },
       {
         "aspect": "function",
-        "es": "Es uno de los principales desviadores radiales de la muñeca, gracias a su inserción en la base del primer metacarpiano y a su amplio brazo de momento.",
+        "es": "Su inserción en la base del primer metacarpiano y su gran brazo de momento lo convierten en uno de los principales desviadores radiales de la muñeca.",
         "cites": [
           "PMID:30054091"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Uno de sus fascículos tendinosos se ha transferido para reemplazar al primer interóseo dorsal en 18 pacientes, con mejor estabilidad de la pinza.",
+        "es": "Prolongado con un injerto, uno de sus fascículos tendinosos ha servido para sustituir al primer interóseo dorsal en 18 pacientes, que ganaron estabilidad en la pinza.",
         "cites": [
           "PMID:6245125"
         ]
@@ -681,14 +681,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El ancóneo es un músculo triangular pequeño situado en la región del codo, considerado una continuación del tríceps braquial; en 34 miembros de cadáver medía de media 73,11 × 27,39 mm.",
+        "es": "Pequeño y triangular, se aloja en la parte posterior del codo como prolongación del tríceps; en 34 miembros de cadáver promedió 73,11 × 27,39 mm.",
         "cites": [
           "PMID:15630659"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Recibe sangre de tres pedículos: la arteria interósea recurrente posterior, la arteria colateral media y la rama posterior de la arteria colateral radial.",
+        "es": "Tres pedículos lo nutren: la interósea recurrente posterior, la colateral media y la rama posterior de la colateral radial.",
         "cites": [
           "PMID:10194023",
           "PMID:15630659"
@@ -696,28 +696,28 @@
       },
       {
         "aspect": "irrigation",
-        "es": "En 12 disecciones, la interósea recurrente posterior y la colateral media estuvieron siempre presentes y se anastomosaban bajo el músculo.",
+        "es": "En las 12 disecciones arteriales de una serie, la interósea recurrente posterior y la colateral media nunca faltaron y siempre se unían entre sí por debajo del músculo.",
         "cites": [
           "PMID:10194023"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En 54 codos de cadáver, el nervio del tríceps y el ancóneo, dependiente del nervio radial, estuvo siempre presente, y un ramo adicional del nervio interóseo posterior apareció en 38 (70,4 %).",
+        "es": "De 54 codos de cadáver, todos tenían el nervio del tríceps y el ancóneo, rama del radial, y 38 (70,4 %) recibían además un ramo del interóseo posterior.",
         "cites": [
           "PMID:33881559"
         ]
       },
       {
         "aspect": "function",
-        "es": "Un estudio anatómico y electromiográfico lo describió como extensor del codo y pronador del antebrazo, con un papel estabilizador comparable al de un ligamento lateral activo.",
+        "es": "Combinando disección y electromiografía, un estudio lo caracterizó como extensor del codo y pronador del antebrazo que estabiliza la articulación, hasta el punto de considerarlo un ligamento lateral activo.",
         "cites": [
           "PMID:6543674"
         ]
       },
       {
         "aspect": "function",
-        "es": "En un modelo basado en 8 cadáveres, su borde anterior actuaba como flexor del codo por encima de 80° de flexión, mientras que el posterior seguía siendo extensor.",
+        "es": "Según un modelo cinemático construido a partir de 8 cadáveres, más allá de 80° de flexión su borde anterior pasa a flexionar el codo, mientras el posterior sigue extendiéndolo.",
         "cites": [
           "PMID:22874649"
         ]
@@ -728,42 +728,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 31 especímenes, el supinador tenía una sola capa semicircular en el 71 % y dos capas en el 29 %; en este caso la superficial llegaba al epicóndilo lateral y la profunda al cúbito, por debajo de la escotadura radial.",
+        "es": "De 31 especímenes, el 71 % tenía un supinador de una sola capa semicircular; en el 29 % restante había dos, una superficial que alcanzaba el epicóndilo lateral y una profunda que llegaba al cúbito bajo la escotadura radial.",
         "cites": [
           "PMID:11040309"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 28 miembros, sus inserciones en el radio y en el cúbito se situaban al 47,9 % y al 31,5 %, respectivamente, de la distancia entre el epicóndilo lateral y la apófisis estiloides del radio.",
+        "es": "Tomando como 100 % la distancia del epicóndilo lateral a la estiloides radial, en 28 miembros el músculo se fijaba al radio al 47,9 % y al cúbito al 31,5 % de ese recorrido.",
         "cites": [
           "PMID:34692843"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En la misma serie de 31 especímenes, el nervio radial se bifurcaba 3,6 ± 0,7 cm por encima del borde del supinador, y la arcada de Frohse era membranosa en el 68 % y tendinosa en el 32 %.",
+        "es": "En esa serie de 31, el radial se dividía 3,6 ± 0,7 cm antes de llegar al borde del supinador, y la arcada de Frohse era membranosa en dos de cada tres casos (68 %) y tendinosa en el resto.",
         "cites": [
           "PMID:11040309"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 52 miembros de cadáver, el nervio interóseo posterior recorría en promedio 4 cm dentro del supinador.",
+        "es": "Disecados 52 miembros, el tramo del nervio interóseo posterior dentro del supinador midió unos 4 cm de media.",
         "cites": [
           "PMID:23696294"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En 12 miembros disecados, el supinador recibía entre dos y nueve ramos del nervio interóseo posterior, con una disposición muy variable.",
+        "es": "En 12 miembros disecados, el número de ramos que le enviaba el interóseo posterior iba de dos a nueve, con patrones muy diversos.",
         "cites": [
           "PMID:20432378"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 30 miembros, la arcada proximal de la capa superficial era puramente tendinosa en el 66,7 %, y tanto ella como la arcada distal se señalan como zonas capaces de comprimir la rama profunda del nervio radial.",
+        "es": "La arcada proximal de su capa superficial fue puramente tendinosa en 20 de 30 miembros (66,7 %); junto con la arcada distal, es uno de los dos sitios donde puede atraparse la rama profunda del radial.",
         "cites": [
           "PMID:23053118"
         ]
@@ -774,14 +774,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El extensor largo del pulgar es un músculo extrínseco que extiende y aduce las articulaciones metacarpofalángica e interfalángica del pulgar.",
+        "es": "Músculo extrínseco del pulgar, lo extiende y lo aproxima actuando sobre sus articulaciones metacarpofalángica e interfalángica.",
         "cites": [
           "PMID:31335014"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Lo inerva el nervio interóseo posterior.",
+        "es": "Su inervación corre a cargo del interóseo posterior.",
         "cites": [
           "PMID:31335014",
           "PMID:11062588"
@@ -789,28 +789,28 @@
       },
       {
         "aspect": "irrigation",
-        "es": "Su irrigación arterial procede de las arterias interóseas anterior y posterior, de la arteria radial y de la arteria cubital.",
+        "es": "Cuatro arterias contribuyen a nutrirlo: las dos interóseas, anterior y posterior, la radial y la cubital.",
         "cites": [
           "PMID:31335014"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En cuatro cadáveres, su tendón se apoyaba sobre el tubérculo de Lister o a su lado, cruzaba por encima de los tendones extensores radiales del carpo y llegaba a la base del pulgar.",
+        "es": "Según la disección de cuatro cadáveres, el tendón pasa sobre el tubérculo de Lister o junto a él y, ya aplanado, cruza por encima de los extensores radiales del carpo camino de la base del pulgar.",
         "cites": [
           "PMID:15615970"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Tras una fractura no desplazada del radio distal, su tendón puede romperse espontáneamente en hasta un 5 % de los adultos.",
+        "es": "La rotura espontánea del tendón es una complicación conocida de la fractura no desplazada del radio distal, que llega a afectar hasta a un 5 % de los adultos.",
         "cites": [
           "PMID:31335014"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 13 pacientes con rotura tras fractura del radio distal, el músculo mostraba cambios inflamatorios extensos y necrosis de fibras, y el tendón degeneración sobre todo en su parte central.",
+        "es": "En las muestras de 13 pacientes cuyo tendón se rompió tras una fractura del radio distal, el músculo tenía inflamación extensa y necrosis de fibras, y el tendón una degeneración concentrada en su parte central.",
         "cites": [
           "PMID:39754134"
         ]
@@ -821,35 +821,35 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "En 750 pulgares normales, la articulación metacarpofalángica mostró la máxima estabilidad radiocubital en flexión completa.",
+        "es": "Explorando 750 pulgares sanos, la metacarpofalángica resultó más estable en sentido radiocubital cuando estaba completamente flexionada.",
         "cites": [
           "PMID:722028"
         ]
       },
       {
         "aspect": "function",
-        "es": "En 25 pulgares de cadáver, la sección del ligamento colateral cubital produjo una inestabilidad cubital marcada, sobre todo en flexión completa de la articulación.",
+        "es": "En pulgares de cadáver, una vez seccionadas la aponeurosis del aductor y la cápsula, cortar además el ligamento colateral cubital provocaba una inestabilidad cubital marcada, más evidente en flexión completa.",
         "cites": [
           "PMID:722028"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En un estudio de resonancia de 33 pacientes con artritis reumatoide precoz, la sinovitis y las erosiones predominaban en el lado radial de las articulaciones metacarpofalángicas.",
+        "es": "Con resonancia de las metacarpofalángicas de la mano dominante en 33 pacientes con artritis reumatoide precoz, tanto la sinovitis como las erosiones tendían a concentrarse en el lado radial.",
         "cites": [
           "PMID:12746894"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Con una simple tracción la articulación se vuelve amplia y su anatomía intraarticular, sencilla, permite identificar con facilidad las estructuras principales por artroscopia.",
+        "es": "Basta tracción para abrir el espacio articular, y como su anatomía interna es sencilla, la artroscopia permite reconocer sin dificultad las estructuras principales.",
         "cites": [
           "PMID:21871361"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 26 pacientes con inestabilidad crónica del ligamento colateral cubital del pulgar, su sustitución con injerto tendinoso estabilizó la articulación en 24 casos.",
+        "es": "Sustituir con un injerto tendinoso el ligamento colateral cubital crónicamente insuficiente del pulgar estabilizó la articulación en 24 de 26 pacientes.",
         "cites": [
           "PMID:8228072"
         ]
@@ -860,35 +860,35 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La extensión completa del codo es posible porque el olécranon se aloja en una fosa de forma adecuada en el extremo distal del húmero.",
+        "es": "Para que el codo llegue a la extensión completa, el olécranon tiene que encajar en una fosa del húmero distal con la forma apropiada.",
         "cites": [
           "PMID:8436869"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las fracturas del olécranon, apófisis del cúbito, representan alrededor del 10 % de las fracturas del codo en adultos y son siempre intraarticulares.",
+        "es": "Cerca de una de cada diez fracturas del codo del adulto afectan a esta apófisis del cúbito, y todas ellas comprometen la superficie articular.",
         "cites": [
           "PMID:18374813"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Su tratamiento requiere restituir la superficie articular y el contorno de la escotadura troclear, con una fijación que permita la movilización temprana.",
+        "es": "Para un buen resultado hay que reconstruir la superficie articular y la forma de la escotadura troclear, y fijar con la estabilidad suficiente para movilizar pronto el codo.",
         "cites": [
           "PMID:18374813"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 58 pacientes operados, la inestabilidad inicial del codo y la morfología de la fractura fueron factores pronósticos de la función y de la aparición de artrosis.",
+        "es": "Al revisar 58 pacientes operados, la morfología de la fractura y la inestabilidad del codo al ingreso pronosticaron la función final y la aparición de artrosis.",
         "cites": [
           "PMID:15488508"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 8 miembros de cadáver con resecciones seriadas del olécranon de hasta el 88 %, la articulación humerocubital se mantuvo estable frente al estrés en varo y en valgo.",
+        "es": "En 8 miembros de cadáver en los que se fue resecando el olécranon hasta un 88 % y se fijó cada vez con placa puente o con acortamiento, la articulación humerocubital siguió estable ante el estrés en varo y en valgo.",
         "cites": [
           "PMID:29099893"
         ]
@@ -899,42 +899,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En cortes de especímenes, el radio de curvatura de la escotadura sigmoidea del radio superaba en 4 a 7 mm al de la cabeza del cúbito, de modo que la pronosupinación combina rotación y deslizamiento.",
+        "es": "Como la escotadura sigmoidea del radio tiene un radio de curvatura 4 a 7 mm mayor que el de la cabeza cubital, en cortes de especímenes se vio que la pronosupinación combina giro y deslizamiento.",
         "cites": [
           "PMID:4023639"
         ]
       },
       {
         "aspect": "parts",
-        "es": "El ligamento radiocubital consta de una parte dorsal y otra volar, fijadas al borde distal de la escotadura sigmoidea y convergentes hacia la fóvea de la cabeza cubital, con el disco cartilaginoso entre ambas.",
+        "es": "Entre el borde distal de la escotadura sigmoidea y la fóvea cubital se tienden dos haces fibrosos, dorsal y volar, del ligamento radiocubital, con el disco cartilaginoso situado entre ellos.",
         "cites": [
           "PMID:4023639"
         ]
       },
       {
         "aspect": "function",
-        "es": "El contacto articular es máximo en posición neutra y se reduce hasta ser marginal al final de la pronación y de la supinación; la parte volar del ligamento estabiliza en pronación y la dorsal en supinación.",
+        "es": "Las superficies coinciden al máximo en posición neutra y apenas se tocan al final de la pronación o de la supinación; en la primera estabiliza el haz volar del ligamento y en la segunda el dorsal.",
         "cites": [
           "PMID:4023639"
         ]
       },
       {
         "aspect": "function",
-        "es": "El complejo cubitocarpiano, con el disco como pieza central y los ligamentos radiocubitales y cubitocarpianos, guía la pronación y la supinación.",
+        "es": "El disco ocupa el centro del complejo cubitocarpiano, que con los ligamentos radiocubitales y cubitocarpianos, entre otros elementos, conduce la pronación y la supinación.",
         "cites": [
           "PMID:9888004"
         ]
       },
       {
         "aspect": "function",
-        "es": "En 20 voluntarios sanos, la traslación dorsopalmar media de la articulación fue de 5,5 mm.",
+        "es": "Medida con un dispositivo en 20 voluntarios sanos, con el codo a 90° y el antebrazo en posición neutra, la articulación se desplazaba en sentido dorsopalmar 5,5 mm de media.",
         "cites": [
           "PMID:23413844"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Su artrosis se manifiesta con dolor y limitación de la rotación del antebrazo, pérdida de fuerza de prensión e inestabilidad.",
+        "es": "Cuando se artrosa, el paciente consulta por un antebrazo que duele y gira menos, con menos fuerza de prensión y sensación de inestabilidad.",
         "cites": [
           "PMID:9888011"
         ]
@@ -945,35 +945,35 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En la mayoría de los hombros disecados, el tendón se fundía con el rodete glenoideo y sólo una pequeña parte se fijaba al tubérculo supraglenoideo; en el 25 % la mayor parte se insertaba en ese tubérculo.",
+        "es": "Disecados numerosos hombros, lo habitual fue que el tendón se continuara con el rodete glenoideo y se fijara poco al tubérculo supraglenoideo; sólo en una cuarta parte se anclaba mayoritariamente en ese tubérculo.",
         "cites": [
           "PMID:2012315"
         ]
       },
       {
         "aspect": "function",
-        "es": "En 100 hombros de cadáver, la porción larga, nacida del rodete superior, cubría la cabeza humeral por delante y por arriba y la estabilizaba en la cavidad glenoidea.",
+        "es": "Al nacer del rodete superior y pasar por delante y por encima de la cabeza humeral, la porción larga contribuye a mantenerla centrada en la glenoide, según una serie de 100 hombros de cadáver.",
         "cites": [
           "PMID:2723500"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En el surco intertubercular, el tendón se desliza sobre un revestimiento fibrocartilaginoso que protege al hueso y al propio tendón.",
+        "es": "A su paso por el surco intertubercular, el tendón se desliza sobre un fibrocartílago que reviste el hueso y protege a ambos.",
         "cites": [
           "PMID:8376203"
         ]
       },
       {
         "aspect": "relations",
-        "es": "El ligamento humeral transverso contribuye a su estabilización; en 80 miembros de cadáver, el tendón medía de media 81,99 mm en el lado derecho y 79,73 mm en el izquierdo.",
+        "es": "El ligamento humeral transverso ayuda a mantenerlo en su sitio; en 80 miembros de cadáver el tendón midió en promedio 81,99 mm a la derecha y 79,73 mm a la izquierda.",
         "cites": [
           "PMID:31448814"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 170 cadáveres con roturas del manguito rotador, las lesiones pequeñas o moderadas se acompañaban de engrosamiento del tendón y estenosis relativa del surco, y las masivas de desgaste de su pared medial.",
+        "es": "En 170 cadáveres, el patrón dependía del tamaño de la rotura del manguito rotador: con roturas pequeñas o moderadas el tendón engrosado estrechaba el surco, y con roturas masivas la pared medial del surco aparecía desgastada.",
         "cites": [
           "PMID:9683766"
         ]
@@ -984,28 +984,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 40 brazos de cadáver, la cabeza corta del bíceps tenía una longitud media de 35,98 cm y un vientre más voluminoso que la cabeza larga, cuyos tendones eran más largos.",
+        "es": "En 40 brazos de cadáver, la cabeza corta midió 35,98 cm de media y tenía más vientre muscular que la larga, cuyos tendones de origen e inserción eran en cambio más largos.",
         "cites": [
           "PMID:38446211"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 15 de 16 hombros de cadáver, la bolsa coracobraquial se situaba por debajo del tendón conjunto del coracobraquial y de la cabeza corta del bíceps y del vértice de la coracoides.",
+        "es": "La bolsa coracobraquial, presente en 15 de 16 hombros de cadáver, quedaba por debajo de la punta de la coracoides y del tendón conjunto que forma con el coracobraquial.",
         "cites": [
           "PMID:34865216"
         ]
       },
       {
         "aspect": "function",
-        "es": "A diferencia de la porción larga, sometida a tensión y compresión, la cabeza corta trabaja sólo en tensión, y en 13 muestras quirúrgicas no mostró metaplasia cartilaginosa.",
+        "es": "Sometida sólo a tracción, a diferencia de la porción larga, que también soporta compresión, la cabeza corta no mostró metaplasia cartilaginosa en 13 muestras quirúrgicas.",
         "cites": [
           "PMID:29567036"
         ]
       },
       {
-        "aspect": "clinical",
-        "es": "En un cadáver varón se describió un arco axilar muscular que nacía del borde anterior del dorsal ancho y se unía a la cabeza corta del bíceps.",
+        "aspect": "relations",
+        "es": "Como rareza, en un cadáver varón un arco axilar muscular salía del borde anterior del dorsal ancho y terminaba fusionándose con la cabeza corta.",
         "cites": [
           "PMID:20502090"
         ]
@@ -1016,42 +1016,42 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El extensor de los dedos es un grupo muscular delgado del dorso del antebrazo del que salen tendones para los dedos índice, medio, anular y meñique.",
+        "es": "Este grupo muscular delgado del dorso del antebrazo reparte tendones al índice, al medio, al anular y al meñique.",
         "cites": [
           "PMID:18650306"
         ]
       },
       {
-        "aspect": "clinical",
-        "es": "En 8 cadáveres, la resistencia al deslizamiento del tendón destinado al dedo medio (0,09 N) fue menor que la del extensor del meñique (0,13 N) y aumentó con la desviación cubital de la muñeca.",
+        "aspect": "function",
+        "es": "En 8 cadáveres, el tendón para el dedo medio se deslizaba con menos resistencia que el extensor del meñique (0,09 frente a 0,13 N), y la desviación cubital de la muñeca la aumentaba.",
         "cites": [
           "PMID:16514653"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 39 brazos disecados, los fascículos del índice y del medio se originaban en relación con el origen tendinoso del extensor radial corto del carpo en el epicóndilo lateral, mientras los del anular y del meñique nacían del tabique entre el extensor del meñique y el extensor cubital del carpo.",
+        "es": "Según 39 brazos disecados, las porciones del índice y del medio nacen pegadas al origen tendinoso del extensor radial corto del carpo en el epicóndilo lateral, y las del anular y el meñique, sin contacto con él, del tabique que separa el extensor del meñique del extensor cubital del carpo.",
         "cites": [
           "PMID:26260257"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En 10 especímenes, los vientres del dedo medio y del anular recibían sobre todo ramos recurrentes del nervio interóseo posterior, y los del índice y del meñique ramos separados.",
+        "es": "En 10 especímenes, ramos recurrentes del interóseo posterior inervaban sobre todo los vientres del medio y del anular, mientras que el índice y el meñique recibían ramos propios.",
         "cites": [
           "PMID:9523967"
         ]
       },
       {
         "aspect": "function",
-        "es": "La electromiografía de superficie permitió registrar por separado la actividad de las porciones destinadas al índice, al medio y al anular.",
+        "es": "Con electrodos de superficie bien colocados pudo registrarse por separado la actividad de los segmentos del músculo que mueven el índice, el medio y el anular.",
         "cites": [
           "PMID:18650306"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 20 miembros de cadáver, el extremo distal de la incisión que divide el músculo para exponer la coronoides quedaba en promedio a 10,6 mm del cruce del nervio interóseo posterior, y a 1,1 mm como mínimo.",
+        "es": "Al dividir el músculo para llegar a la coronoides en 20 miembros de cadáver, el final de la incisión quedaba de media a 10,6 mm del punto donde cruza el interóseo posterior, y nunca a menos de 1,1 mm.",
         "cites": [
           "PMID:27032618"
         ]
@@ -1062,28 +1062,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 95 miembros de cadáver, el extensor del meñique presentaba a menudo dos o tres tendones distales al retináculo extensor.",
+        "es": "Al disecar 95 miembros de cadáver, más allá del retináculo extensor el músculo solía dividirse en dos o tres tendones.",
         "cites": [
           "PMID:24068687"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 38 manos disecadas, el patrón más frecuente en el cuarto espacio intermetacarpiano fueron dos tendones de este músculo (68,5 %).",
+        "es": "De 38 manos disecadas, en el 68,5 % el cuarto espacio intermetacarpiano alojaba dos tendones de este músculo, la disposición más habitual.",
         "cites": [
           "PMID:22033003"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 70 fetos de 17 a 29 semanas no se observó variabilidad del músculo ni diferencias por sexo o lado en sus medidas.",
+        "es": "Medido en 70 fetos de 17 a 29 semanas, el músculo apenas varió y sus dimensiones no difirieron entre sexos ni entre lados.",
         "cites": [
           "PMID:38512010"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una cirugía de ganglión de muñeca, un vientre accesorio de este músculo simuló una masa de partes blandas.",
+        "es": "Durante la extirpación de un ganglión de muñeca, lo que parecía una masa de partes blandas resultó ser un vientre accesorio de este músculo.",
         "cites": [
           "PMID:21089202"
         ]
@@ -1094,28 +1094,28 @@
     "sentences": [
       {
         "aspect": "innervation",
-        "es": "El nervio interóseo anterior inerva el flexor largo del pulgar; su ramo para este músculo se une al nervio en el tercio proximal del antebrazo y conserva un fascículo propio hasta la parte proximal del codo.",
+        "es": "Depende del interóseo anterior: su ramo se incorpora a ese nervio en el tercio proximal del antebrazo, pero mantiene un fascículo independiente hasta la parte alta del codo.",
         "cites": [
           "PMID:21364424"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En 100 miembros inyectados, el tendón recibía vasos de cuatro fuentes distintas, unidas por anastomosis abundantes.",
+        "es": "Inyectados 100 miembros superiores, el tendón mostró cuatro fuentes vasculares diferentes, ricamente anastomosadas entre sí.",
         "cites": [
           "PMID:7701931"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En la vaina del tendón, las poleas anulares A1 y A2 estaban presentes, pero la disposición clásica con una sola polea oblicua apareció sólo en el 10 % de los casos; en el 90 % había entre ambas un complejo fibroso en forma de Y.",
+        "es": "Su vaina tiene siempre las poleas anulares A1 y A2, pero sólo un 10 % de los casos se ajustaba al esquema clásico de una única polea oblicua intermedia; en el 90 % lo que había entre ambas era un complejo fibroso en Y.",
         "cites": [
           "PMID:10637724"
         ]
       },
       {
         "aspect": "parts",
-        "es": "La cabeza accesoria, o músculo de Gantzer, apareció en el 52 % de 25 miembros, en el 62,1 % de 240 miembros de cadáveres tailandeses y en el 32,1 % de 106 antebrazos de una población sudamericana.",
+        "es": "La frecuencia de su cabeza accesoria, el músculo de Gantzer, varía según la serie: 52 % de 25 miembros, 62,1 % de 240 miembros tailandeses y 32,1 % de 106 antebrazos sudamericanos.",
         "cites": [
           "PMID:8732417",
           "PMID:15495169",
@@ -1124,14 +1124,14 @@
       },
       {
         "aspect": "relations",
-        "es": "En la serie tailandesa, esa cabeza accesoria se insertaba siempre en el borde cubital del tendón, y el nervio interóseo anterior pasaba lateral a ella en el 65,8 % de los casos.",
+        "es": "En los cadáveres tailandeses, esa cabeza accesoria terminaba sin excepción en el borde cubital del tendón, y en dos de cada tres casos (65,8 %) el interóseo anterior pasaba por fuera de ella.",
         "cites": [
           "PMID:15495169"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se describieron seis pacientes con parálisis aislada del músculo tras una venopunción en la fosa del codo o una artroscopia de codo, todos recuperados con tratamiento conservador.",
+        "es": "Seis pacientes quedaron con el músculo paralizado de forma aislada tras una venopunción en la fosa del codo (cuatro) o una artroscopia de codo (dos), y todos se recuperaron sin cirugía.",
         "cites": [
           "PMID:21364424"
         ]
@@ -1142,35 +1142,35 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Actúa junto con el palmar largo y el abductor largo del pulgar para abducir el primer metacarpiano.",
+        "es": "Junto con el palmar largo y el abductor largo del pulgar, separa el primer metacarpiano en el plano sagital.",
         "cites": [
           "PMID:267472"
         ]
       },
       {
         "aspect": "relations",
-        "es": "El fascículo tendinoso que le llega desde el palmar largo presenta un orificio por el que la rama palmar del nervio mediano se hace superficial.",
+        "es": "La rama palmar del mediano se vuelve superficial atravesando un orificio, próximo a su origen, del fascículo tendinoso que el palmar largo envía a este músculo.",
         "cites": [
           "PMID:267472"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 19 manos embalsamadas, el músculo era más grueso de lo descrito clásicamente y estaba formado por tres grupos de divisiones musculares que se unían al tendón común en sitios distintos.",
+        "es": "Estudiado en 19 manos embalsamadas, resultó más grueso de lo que dice la descripción clásica y compuesto por tres grupos de divisiones musculares que llegan al tendón común en puntos diferentes.",
         "cites": [
           "PMID:3228211"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En esa serie, el ramo del nervio mediano destinado al músculo discurría dentro de su espesor y no sobre su cara profunda.",
+        "es": "En esas manos, el ramo que le da el mediano no corría por su cara profunda, como se había descrito, sino dentro del propio músculo.",
         "cites": [
           "PMID:3228211"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito la ausencia congénita bilateral del músculo en un varón joven, detectada por ecografía y resonancia ante un aplanamiento de las eminencias tenares.",
+        "es": "En un hombre de 24 años que consultó por palmas aplanadas y debilidad de ambas manos, la ecografía y la resonancia mostraron que faltaba congénitamente este músculo en los dos lados.",
         "cites": [
           "PMID:23273239"
         ]
@@ -1181,42 +1181,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 18 brazos de cadáver, el tendón se insertaba en la base proximal del primer compartimento dorsal, a unos 17 mm de la punta de la apófisis estiloides radial, con una extensión de 15 mm y una anchura de 11 mm.",
+        "es": "Según 18 brazos de cadáver, el tendón se fija en la base proximal del primer compartimento dorsal, a unos 17 mm de la punta de la estiloides radial, ocupando 15 mm de largo por 11 mm de ancho.",
         "cites": [
           "PMID:16443096"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Esa inserción quedaba limitada por los dos tabiques del primer compartimento dorsal, y todo el tendón estaba firmemente unido a la fascia antebraquial, lo que restringía su excursión.",
+        "es": "Los dos tabiques del primer compartimento dorsal enmarcaban esa inserción, y a lo largo de todo su trayecto el tendón estaba adherido a la fascia antebraquial, lo que limitaba su recorrido.",
         "cites": [
           "PMID:16443096"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Su pedículo vascular dominante procede de la arteria recurrente radial y entra por la porción proximal del músculo.",
+        "es": "La arteria recurrente radial le aporta su pedículo vascular dominante, que penetra por la parte proximal del músculo.",
         "cites": [
           "PMID:31227467"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 10 especímenes, la longitud de sus fibras variaba entre 104,2 y 179,8 mm según la región, y la liberación completa del tendón proporcionó una movilidad de 22,2 mm.",
+        "es": "En 10 especímenes, la longitud de sus fibras iba de 104,2 a 179,8 mm según la región; en otros 8, liberar por completo el tendón le dio 22,2 mm de movilidad pasiva.",
         "cites": [
           "PMID:11210949"
         ]
       },
       {
         "aspect": "function",
-        "es": "La estimulación del ramo radial que inerva el braquiorradial inhibió 11 de 21 unidades motoras del bíceps braquial en sujetos humanos.",
+        "es": "En personas, estimular el ramo del radial que llega al braquiorradial inhibió 11 de las 21 unidades motoras del bíceps registradas.",
         "cites": [
           "PMID:8911944"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 18 de 35 fracturas del radio distal, el trazo formaba un pico radial cuyo extremo coincidía con la posición esperada del final proximal de la inserción del tendón.",
+        "es": "Al revisar 35 fracturas del radio distal, 18 tenían un pico radial cuyo vértice coincidía con el sitio donde debía terminar proximalmente la inserción del tendón.",
         "cites": [
           "PMID:16443096"
         ]
@@ -1227,42 +1227,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 142 muñecas de cadáver, la base del cuarto metacarpiano fue la zona más variable de las articulaciones carpometacarpianas segunda a quinta: plana en el 85,9 % y cónica en el 14,1 %, con articulación con el hueso grande en el 81,7 %.",
+        "es": "De las articulaciones carpometacarpianas segunda a quinta, la base del cuarto metacarpiano fue la más variable en 142 muñecas de cadáver: plana en el 85,9 % y cónica en el resto, y en el 81,7 % contactaba con el hueso grande.",
         "cites": [
           "PMID:1861038"
         ]
       },
       {
         "aspect": "parts",
-        "es": "La articulación carpometacarpiana del pulgar es una articulación en silla de montar.",
+        "es": "Por su forma, la carpometacarpiana del pulgar es una articulación en silla de montar.",
         "cites": [
           "PMID:23395023"
         ]
       },
       {
         "aspect": "function",
-        "es": "En siete pulgares de cadáver, el eje de flexoextensión de la articulación carpometacarpiana se localizó en el trapecio y el de abducción-aducción en el primer metacarpiano, sin ser perpendiculares ni cortarse.",
+        "es": "Localizados en siete pulgares de cadáver, sus dos ejes de giro, el de flexoextensión en el trapecio y el de abducción-aducción en el primer metacarpiano, ni se cruzan ni forman ángulo recto.",
         "cites": [
           "PMID:1569508"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 38 pulgares de cadáver se identificaron siempre los ligamentos dorsorradial, oblicuo posterior, oblicuo anterior e intermetacarpiano.",
+        "es": "Los ligamentos dorsorradial, oblicuo posterior, oblicuo anterior e intermetacarpiano aparecieron en los 38 pulgares de cadáver disecados.",
         "cites": [
           "PMID:8169374"
         ]
       },
       {
         "aspect": "function",
-        "es": "En ese estudio, el ligamento dorsorradial fue la principal restricción frente a la luxación dorsal del pulgar en la articulación carpometacarpiana.",
+        "es": "Al reproducir la luxación dorsal del pulgar en esos especímenes, el ligamento dorsorradial fue el que más se opuso a ella.",
         "cites": [
           "PMID:8169374"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 33 mujeres con antecedente materno de artrosis de la mano, las de mayor hiperlaxitud mostraban con más frecuencia alteraciones del cartílago del trapecio en resonancia (75 % frente a 38 %).",
+        "es": "Entre 33 mujeres cuyas madres tenían artrosis de la mano, la resonancia mostró alteraciones del cartílago del trapecio con más frecuencia en las 20 más hiperlaxas que en las 13 restantes (75 % frente a 38 %).",
         "cites": [
           "PMID:35981296"
         ]
@@ -1273,21 +1273,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Con la progresión de la artritis reumatoide, casi el 75 % de los pacientes desarrolla alteraciones inflamatorias en la articulación radiocarpiana.",
+        "es": "A medida que avanza la artritis reumatoide, cerca de tres de cada cuatro pacientes acaban con inflamación en esta articulación.",
         "cites": [
           "PMID:25417294"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El implante de silicona de Swanson se ha empleado para sustituir la articulación radiocarpiana en la muñeca reumatoide, y sus principales riesgos son la fractura del implante y la sinovitis por silicona.",
+        "es": "Para reemplazarla en la muñeca reumatoide se ha usado el implante de silicona de Swanson, cuyos peligros principales, según un análisis de riesgos, son que se rompa y que provoque sinovitis por silicona.",
         "cites": [
           "PMID:11908482"
         ]
       },
       {
         "aspect": "function",
-        "es": "Un modelo tridimensional de la muñeca analizó cómo distintas artrodesis del carpo modifican la carga transmitida a través de las fosas radioescafoidea y radiosemilunar.",
+        "es": "Con un modelo tridimensional de la muñeca se estudió cuánto cambia, según el tipo de artrodesis del carpo, la carga que pasa por las fosas radioescafoidea y radiosemilunar.",
         "cites": [
           "PMID:26787512"
         ]
@@ -1298,35 +1298,35 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En 30 disecciones, el palmar largo se hallaba en proximal por debajo de la fascia antebraquial y en el tercio inferior del antebrazo su tendón la perforaba, a 4,7 cm de media de la línea biestiloidea, para terminar en la aponeurosis palmar.",
+        "es": "Según 30 disecciones, el músculo queda bajo la fascia antebraquial en su parte alta y, en el tercio inferior del antebrazo, a unos 4,7 cm de la línea biestiloidea, su tendón la perfora para hacerse suprafascial y terminar en la aponeurosis palmar.",
         "cites": [
           "PMID:19208432"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esa serie faltaba en 6 de 30 especímenes (20 %), y en los presentes medía de media 26,9 cm, con un vientre de 13,8 cm y un tendón de 13,1 cm.",
+        "es": "Faltaba en 6 de esos 30 especímenes (20 %); cuando estaba, medía en total 26,9 cm de media, repartidos casi a partes iguales entre vientre (13,8 cm) y tendón (13,1 cm).",
         "cites": [
           "PMID:19208432"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 80 miembros de cadáver, el músculo estaba presente en el 92,5 %; su tendón se fijaba a la aponeurosis palmar en el 78,8 % y cruzaba el nervio mediano a 31,6 mm de media de la línea interestiloidea.",
+        "es": "De 80 miembros de cadáver, el 92,5 % tenía el músculo; en el 78,8 % el tendón acababa en la aponeurosis palmar, y cruzaba al mediano a unos 31,6 mm de la línea interestiloidea.",
         "cites": [
           "PMID:29258498"
         ]
       },
       {
         "aspect": "function",
-        "es": "Como su tendón sólo continúa con las fibras longitudinales superficiales de la aponeurosis palmar, se ha propuesto que actúe como tensor del sistema fascial superficial de la palma.",
+        "es": "Puesto que su tendón sólo se continúa con las fibras longitudinales superficiales de la aponeurosis palmar, los autores sugieren considerarlo un tensor del sistema fascial superficial de la palma.",
         "cites": [
           "PMID:19208432"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Su ausencia clínica fue unilateral en el 16 % y bilateral en el 9 % de 300 adultos caucásicos, mientras que en 890 escolares de Zimbabue el total fue del 1,5 %.",
+        "es": "La exploración clínica no lo detectó en un lado en el 16 % ni en ambos en el 9 % de 300 adultos caucásicos de 18 a 40 años, mientras que entre 890 escolares de Zimbabue faltaba sólo en el 1,5 %.",
         "cites": [
           "PMID:11428320",
           "PMID:19173262"
@@ -1334,7 +1334,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En cuatro pacientes, un palmar largo invertido causaba compresión del nervio mediano relacionada con el esfuerzo, y los síntomas cedieron tras extirparlo.",
+        "es": "Cuatro pacientes con compresión del mediano desencadenada por el esfuerzo tenían un palmar largo invertido, y extirparlo les quitó el dolor.",
         "cites": [
           "PMID:10939482"
         ]
@@ -1345,21 +1345,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "La aponeurosis palmar se considera la parte distal del tendón del palmar largo.",
+        "es": "Se considera que la aponeurosis palmar es la porción distal de este tendón.",
         "cites": [
           "PMID:24795520"
         ]
       },
       {
-        "aspect": "clinical",
-        "es": "En un caso, el tendón se dividía en varias inserciones en la fascia del abductor corto del pulgar, el retináculo flexor y el tendón del flexor cubital del carpo, además de continuarse con la aponeurosis palmar.",
+        "aspect": "parts",
+        "es": "En un caso excepcional, además de continuarse con la aponeurosis palmar, el tendón se abría en varias inserciones: la fascia del abductor corto del pulgar, el retináculo flexor y el tendón del flexor cubital del carpo.",
         "cites": [
           "PMID:24795520"
         ]
       },
       {
-        "aspect": "clinical",
-        "es": "En un cadáver se describió un tendón distal bífido en ambos lados, una variante que ofrecería material adicional para injertos tendinosos.",
+        "aspect": "parts",
+        "es": "Un cadáver presentó en ambos lados un tendón distal bífido, variante que podría aportar material extra para injertos tendinosos.",
         "cites": [
           "PMID:37378498"
         ]
@@ -1370,28 +1370,28 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "La extensión del pulgar depende principalmente del extensor largo y del extensor corto del pulgar.",
+        "es": "La extensión del pulgar corre sobre todo a cargo de este músculo y del extensor largo del pulgar.",
         "cites": [
           "PMID:41945113"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 52 manos disecadas, el músculo faltaba en dos, se insertaba en la falange distal en cuatro y en 36 terminaba en el capuchón extensor sin fijarse a la base de la falange proximal.",
+        "es": "De 52 manos disecadas, en dos faltaba, en cuatro llegaba a la falange distal y en 36 acababa en el capuchón extensor sin anclarse en la base de la falange proximal.",
         "cites": [
           "PMID:1624857"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En una serie de 15 antebrazos se halló un caso en que los tendones del extensor corto y del abductor largo del pulgar se insertaban juntos en la cara inferior de la base del primer metacarpiano.",
+        "es": "Entre 15 antebrazos disecados apareció uno en que su tendón y el del abductor largo del pulgar se fijaban juntos en la cara inferior, y no en la dorsal, de la base del primer metacarpiano.",
         "cites": [
           "PMID:9538618"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se describió la agenesia congénita bilateral del músculo en un pianista, que compensaba con hiperextensión de la articulación interfalángica de ambos pulgares.",
+        "es": "Un estudiante de música de 28 años con agenesia congénita del músculo en ambas manos tocaba instrumentos de teclado a alto nivel compensando con hiperextensión de la interfalángica de los dos pulgares.",
         "cites": [
           "PMID:36573365"
         ]
@@ -1402,36 +1402,36 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El síndrome del túnel carpiano es la neuropatía por atrapamiento periférico más frecuente.",
+        "es": "De todas las neuropatías por atrapamiento periférico, el síndrome del túnel carpiano es la más común.",
         "cites": [
           "PMID:27751557",
           "PMID:21922474"
         ]
       },
       {
-        "aspect": "relations",
-        "es": "El tratamiento quirúrgico secciona el ligamento transverso del carpo para aumentar el volumen del túnel y reducir la presión sobre el nervio mediano.",
+        "aspect": "clinical",
+        "es": "La cirugía libera el nervio mediano cortando el ligamento transverso del carpo, con lo que el túnel gana volumen y baja la presión.",
         "cites": [
           "PMID:18269111"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En ecografía, el área del nervio mediano suele medirse en su punto más grueso, en general a la entrada proximal del túnel; un área menor de 8 mm² orienta a descartar el síndrome y una de 12 mm² o más a confirmarlo.",
+        "es": "Para la ecografía se mide el área del mediano donde es más grueso, casi siempre a la entrada proximal del túnel; por debajo de 8 mm² el síndrome es improbable y a partir de 12 mm² se considera confirmado.",
         "cites": [
           "PMID:23487331"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Afecta sobre todo a mujeres de mediana edad y produce típicamente dolor nocturno con hormigueo y entumecimiento en el territorio del nervio mediano.",
+        "es": "Lo sufren sobre todo mujeres de mediana edad, y el cuadro típico es dolor nocturno con hormigueo y adormecimiento en el territorio del mediano en la mano.",
         "cites": [
           "PMID:18269111"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 246 túneles carpianos explorados quirúrgicamente se encontraron 29 variantes del trayecto del nervio mediano, por lo que se recomienda abordarlo desde el lado cubital.",
+        "es": "Las 29 variantes del mediano halladas al abrir 246 túneles carpianos llevaron a los autores a aconsejar que el nervio se aborde por su lado cubital.",
         "cites": [
           "PMID:839054"
         ]
@@ -1442,42 +1442,42 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El palmar corto es un músculo pequeño y de morfología variable, situado en el lado cubital de la palma, superficial a la eminencia hipotenar.",
+        "es": "Pequeño y de forma cambiante, ocupa el lado cubital de la palma por encima de la eminencia hipotenar.",
         "cites": [
           "PMID:28620932"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Es el único músculo que con frecuencia recibe inervación de la rama superficial del nervio cubital.",
+        "es": "Ningún otro músculo recibe con tanta frecuencia inervación de la rama superficial del nervio cubital.",
         "cites": [
           "PMID:9635559"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 10 cadáveres de edad avanzada, ocupaba un área de 2,1 × 2,1 cm con un espesor de 0,2 cm.",
+        "es": "Medido en 10 cadáveres de personas mayores, cubría unos 2,1 × 2,1 cm y tenía apenas 0,2 cm de grosor.",
         "cites": [
           "PMID:9635559"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Contiene numerosos husos musculares, pero carece de órganos tendinosos de Golgi y de otros receptores asociados a tendones.",
+        "es": "Abundan en él los husos musculares, pero no tiene órganos tendinosos de Golgi ni otros receptores ligados a tendones.",
         "cites": [
           "PMID:31696933"
         ]
       },
       {
         "aspect": "function",
-        "es": "En 12 voluntarios sanos se activaba durante movimientos de prensión y sin prensión, con la mayor actividad en la abducción del quinto dedo en 7 de 11; se le atribuye profundizar el hueco palmar y proteger los elementos neurovasculares del canal cubital.",
+        "es": "Registrado con electromiografía en 12 voluntarios sanos, se activó tanto al prensar como en movimientos sin prensión, y en 7 de 11 su máxima actividad llegó al separar el meñique; se le atribuye ahuecar la palma y proteger los vasos y nervios del canal cubital.",
         "cites": [
           "PMID:28786108"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En tres pacientes con arteria cubital anómala por delante del palmar corto, el nervio cubital se situaba por detrás del músculo en el canal de Guyon; en 43 miembros de cadáver la anomalía arterial apareció en uno.",
+        "es": "Tres pacientes con la arteria cubital anómalamente situada por delante del músculo tenían el nervio cubital por detrás de él en el canal de Guyon; en 43 miembros de cadáver esa anomalía arterial se halló una vez.",
         "cites": [
           "PMID:8228065"
         ]

@@ -3,14 +3,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Un estudio ecográfico y de disección en seis hombros de cadáver y doce voluntarios describe el tendón del infraespinoso como delgado, ancho y con forma de cinta.",
+        "es": "Fino, ancho y con forma de cinta: así aparece el tendón del infraespinoso en un trabajo que combinó la disección de seis hombros de cadáver con la ecografía de doce voluntarios sanos.",
         "cites": [
           "PMID:25680718"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En ese trabajo, su margen anterosuperior pudo diferenciarse del tendón del supraespinoso mediante un abordaje ecográfico anterosuperolateral con el hombro en rotación interna e hiperextensión.",
+        "es": "Colocando el hombro en rotación interna con hiperextensión y explorando por vía anterosuperolateral, ese mismo trabajo consiguió separar ecográficamente el borde anterosuperior del tendón respecto del supraespinoso.",
         "cites": [
           "PMID:25680718"
         ]
@@ -25,7 +25,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito el caso de un varón de 43 años con atrofia e infiltración grasa aislada del músculo infraespinoso tras una rotura completa de su tendón en la inserción humeral.",
+        "es": "Una rotura completa y aislada del tendón en su inserción humeral se acompañó, en un varón de 43 años, de atrofia y degeneración grasa limitadas al músculo infraespinoso.",
         "cites": [
           "PMID:21918868"
         ]
@@ -50,7 +50,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 100 adultos jóvenes sanos, todas las arterias frontales tuvieron flujo de sentido normal y respondieron de forma normal a la compresión de las arterias temporal, facial y carótida común.",
+        "es": "Explorados con Doppler direccional 100 adultos jóvenes sanos, ninguna arteria frontal mostró flujo invertido ni respuesta anómala al comprimir las arterias temporal, facial y carótida común.",
         "cites": [
           "PMID:869298"
         ]
@@ -68,7 +68,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En 300 cadáveres adultos sin patología abdominal, la arteria frénica inferior derecha nació del tronco celíaco en el 40 %, de la aorta en el 38 %, de la arteria renal en el 17 %, de la gástrica izquierda en el 3 % y de la hepática propia en el 2 %.",
+        "es": "El origen de la frénica inferior derecha varió en 300 cadáveres adultos sin patología abdominal: tronco celíaco (40 %), aorta (38 %), arteria renal (17 %), gástrica izquierda (3 %) y hepática propia (2 %).",
         "cites": [
           "PMID:15971218"
         ]
@@ -115,7 +115,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Un estudio cuantitativo en lactantes y niños aporta valores normales de la distancia entre el orificio ureteral y el orificio uretral interno según edad, talla, peso, longitud cráneo-caudal y superficie corporal.",
+        "es": "Para lactantes y niños hay valores de referencia de la separación entre el orificio ureteral y el orificio uretral interno, expresados según edad, talla, peso, longitud cráneo-caudal y superficie corporal.",
         "cites": [
           "PMID:571481"
         ]
@@ -161,21 +161,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Los tumores anexiales femeninos de probable origen wolffiano son raros y asientan sobre todo en el ligamento ancho o en el mesosálpinx.",
+        "es": "El ligamento ancho y el mesosálpinx son el asiento habitual de los tumores anexiales femeninos de probable origen wolffiano, una entidad poco frecuente.",
         "cites": [
           "PMID:26794496"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Estos tumores suelen comportarse de forma benigna, aunque se han descrito casos aislados con transformación maligna.",
+        "es": "Su evolución suele ser benigna, pero la existencia de casos raros con transformación maligna obliga a estudiarlos con cuidado y a vigilarlos.",
         "cites": [
           "PMID:26794496"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito el cistadenoma papilar de células claras del mesosálpinx en mujeres con enfermedad de von Hippel-Lindau, incluso como hallazgo incidental durante una cirugía.",
+        "es": "En mujeres con enfermedad de von Hippel-Lindau se han descrito cistadenomas papilares del mesosálpinx y del ligamento ancho, a veces como hallazgo incidental durante una cirugía.",
         "cites": [
           "PMID:3341511",
           "PMID:22296276"
@@ -201,7 +201,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El lipoleiomioma es un tumor muy poco frecuente, y el ligamento ancho del útero figura entre sus localizaciones raras.",
+        "es": "El ligamento ancho del útero es una de las localizaciones raras del lipoleiomioma, un tumor ya de por sí muy infrecuente.",
         "cites": [
           "PMID:11344612"
         ]
@@ -226,21 +226,21 @@
       },
       {
         "aspect": "innervation",
-        "es": "Sus raíces aportan la inervación sensitiva y motora de la mayor parte de los miembros inferiores, del suelo pélvico y de los esfínteres.",
+        "es": "De estas raíces dependen la sensibilidad y la motricidad del suelo pélvico, de los esfínteres y de la mayor parte de los miembros inferiores.",
         "cites": [
           "PMID:11311464"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Su compresión produce el síndrome de la cola de caballo, que reúne lumbalgia, ciática uni o bilateral, debilidad de los miembros inferiores, alteración sensitiva en silla de montar y pérdida de la función visceral.",
+        "es": "Comprimida, da lugar al síndrome de la cola de caballo: dolor lumbar, ciática en uno o ambos lados, debilidad de las piernas, trastorno sensitivo en silla de montar y pérdida de la función visceral.",
         "cites": [
           "PMID:19104682"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Este síndrome aparece en alrededor del 2 % de las hernias discales lumbares y constituye una de las pocas urgencias quirúrgicas de la columna.",
+        "es": "Considerado una de las escasas urgencias quirúrgicas raquídeas, el síndrome complica en torno al 2 % de las hernias discales lumbares.",
         "cites": [
           "PMID:19104682"
         ]
@@ -254,7 +254,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En resonancia, el engrosamiento de la cola de caballo tiene muchas causas posibles, con hallazgos que se superponen y resultan poco específicos.",
+        "es": "Las causas de engrosamiento de la cola de caballo en resonancia son numerosas y sus imágenes se solapan sin ser específicas, de modo que su lectura debe apoyarse en la clínica, la electrofisiología y el laboratorio.",
         "cites": [
           "PMID:37179144"
         ]
@@ -267,15 +267,15 @@
   "UBERON:0013161": {
     "sentences": [
       {
-        "aspect": "relations",
-        "es": "Según un estudio de secciones seriadas, la capa subependimaria del ventrículo lateral, contigua al núcleo caudado, contiene células progenitoras en el cerebro humano adulto.",
+        "aspect": "parts",
+        "es": "En el cerebro humano adulto, la capa subependimaria del ventrículo lateral que linda con el núcleo caudado alberga células progenitoras, más numerosas en la enfermedad de Huntington, según un estudio en secciones seriadas.",
         "cites": [
           "PMID:15837138"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las neoplasias del ventrículo lateral son raras y representan el 50 % de los tumores intraventriculares en adultos y el 25 % en niños.",
+        "es": "Aunque raros, los tumores del ventrículo lateral suponen la mitad de las neoplasias intraventriculares del adulto y una cuarta parte de las infantiles.",
         "cites": [
           "PMID:22019219"
         ]
@@ -306,15 +306,15 @@
   "UBERON:0013162": {
     "sentences": [
       {
-        "aspect": "relations",
-        "es": "Según un estudio de secciones seriadas, la capa subependimaria del ventrículo lateral, contigua al núcleo caudado, contiene células progenitoras en el cerebro humano adulto.",
+        "aspect": "parts",
+        "es": "En el cerebro humano adulto, la capa subependimaria del ventrículo lateral que linda con el núcleo caudado alberga células progenitoras, más numerosas en la enfermedad de Huntington, según un estudio en secciones seriadas.",
         "cites": [
           "PMID:15837138"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las neoplasias del ventrículo lateral son raras y representan el 50 % de los tumores intraventriculares en adultos y el 25 % en niños.",
+        "es": "Aunque raros, los tumores del ventrículo lateral suponen la mitad de las neoplasias intraventriculares del adulto y una cuarta parte de las infantiles.",
         "cites": [
           "PMID:22019219"
         ]
@@ -353,14 +353,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En cortes seriados plastinados de 19 adultos, el compartimento medial de la parte caudal del espacio periepiglótico quedaba limitado por detrás por la epiglotis y por abajo por el ligamento tiroepiglótico.",
+        "es": "Según cortes plastinados seriados de 19 adultos, el ligamento tiroepiglótico forma el suelo del compartimento medial de la porción caudal del espacio periepiglótico, cuyo límite posterior es la epiglotis.",
         "cites": [
           "PMID:8655405"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 25 laringes adultas normales, la parte anterior del vestíbulo laríngeo estaba limitada medialmente por la epiglotis y el ligamento tiroepiglótico.",
+        "es": "Junto con la epiglotis, el ligamento cierra por dentro la parte anterior del vestíbulo laríngeo, como se vio en cortes plastinados de 25 laringes adultas normales.",
         "cites": [
           "PMID:9438107"
         ]
@@ -406,7 +406,7 @@
       },
       {
         "aspect": "situation",
-        "es": "En un varón infértil de 30 años operado de varicocele se observaron en el cordón espermático dos estructuras tubulares distintas del conducto deferente, con epitelio ciliado seudoestratificado y sin espermatozoides, que se interpretaron como paradídimo.",
+        "es": "Por su ubicación en el cordón espermático y su histología (túbulos contorneados de epitelio ciliado seudoestratificado, sin espermatozoides), dos estructuras halladas junto al conducto deferente durante la varicocelectomía de un varón infértil de 30 años se identificaron como paradídimo.",
         "cites": [
           "PMID:27335784"
         ]
@@ -431,7 +431,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En 60 hemicráneos, la arteria maseterina penetró en el músculo masetero por la escotadura mandibular junto al nervio maseterino, siempre por debajo de este y en el 85 % de los casos también algo por detrás.",
+        "es": "La arteria maseterina llega al masetero con el nervio homónimo a través de la escotadura mandibular; en 60 hemicráneos entró siempre por debajo del nervio y, en el 85 %, además un poco por detrás.",
         "cites": [
           "PMID:41597368"
         ]
@@ -470,21 +470,21 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Las neuronas del núcleo reticular talámico liberan GABA y tienen como dianas principales a las neuronas talamocorticales del tálamo dorsal.",
+        "es": "Las neuronas talamocorticales del tálamo dorsal son la diana principal de la proyección inhibidora, mediada por GABA, del núcleo reticular talámico.",
         "cites": [
           "PMID:15927688"
         ]
       },
       {
         "aspect": "function",
-        "es": "Esta inhibición interviene en la génesis de los husos del sueño y, en las crisis de punta-onda, en la inhibición de las neuronas talamocorticales.",
+        "es": "Esa inhibición reticular participa en el inicio de los husos del sueño y, durante las crisis de punta-onda de origen cortical, genera potenciales inhibitorios prolongados en las neuronas talamocorticales.",
         "cites": [
           "PMID:15927688"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una mujer de 77 años con un infarto previo silente en el núcleo mediodorsal izquierdo, un nuevo infarto en el derecho se acompañó de la aparición aguda de confabulaciones.",
+        "es": "Una mujer de 77 años que ya tenía un infarto silente en el núcleo mediodorsal izquierdo empezó a confabular de forma aguda cuando sufrió un nuevo infarto, aislado, en el derecho.",
         "cites": [
           "PMID:27812504"
         ]
@@ -502,21 +502,21 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Las neuronas del núcleo reticular talámico liberan GABA y tienen como dianas principales a las neuronas talamocorticales del tálamo dorsal.",
+        "es": "Las neuronas talamocorticales del tálamo dorsal son la diana principal de la proyección inhibidora, mediada por GABA, del núcleo reticular talámico.",
         "cites": [
           "PMID:15927688"
         ]
       },
       {
         "aspect": "function",
-        "es": "Esta inhibición interviene en la génesis de los husos del sueño y, en las crisis de punta-onda, en la inhibición de las neuronas talamocorticales.",
+        "es": "Esa inhibición reticular participa en el inicio de los husos del sueño y, durante las crisis de punta-onda de origen cortical, genera potenciales inhibitorios prolongados en las neuronas talamocorticales.",
         "cites": [
           "PMID:15927688"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una mujer de 77 años con un infarto previo silente en el núcleo mediodorsal izquierdo, un nuevo infarto en el derecho se acompañó de la aparición aguda de confabulaciones.",
+        "es": "Una mujer de 77 años que ya tenía un infarto silente en el núcleo mediodorsal izquierdo empezó a confabular de forma aguda cuando sufrió un nuevo infarto, aislado, en el derecho.",
         "cites": [
           "PMID:27812504"
         ]
@@ -534,21 +534,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 154 embarazadas estudiadas con elastografía de onda de corte, la velocidad estimada fue menor en todas las regiones del orificio externo que en las del interno, lo que sugiere un tejido menos denso.",
+        "es": "Con elastografía de onda de corte en 154 embarazadas, el orificio externo mostró en todas sus regiones velocidades menores que el interno, indicio de un tejido menos denso.",
         "cites": [
           "PMID:25029081"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La estenosis del orificio cervical externo es un hallazgo histeroscópico frecuente en mujeres posmenopáusicas, sobre todo tras procedimientos cervicales como la conización.",
+        "es": "La estenosis cervical es un hallazgo histeroscópico frecuente en posmenopáusicas, sobre todo con antecedente de conización u otros procedimientos cervicales, y en los casos graves puede obliterar por completo el orificio externo.",
         "cites": [
           "PMID:32526381"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Según ese trabajo, superar la estenosis del orificio externo resulta técnicamente más exigente que afrontar la obliteración del orificio interno.",
+        "es": "Para el histeroscopista, franquear un orificio externo estenosado resulta técnicamente más difícil que vencer la obliteración del orificio interno, según ese trabajo.",
         "cites": [
           "PMID:32526381"
         ]
@@ -620,7 +620,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los hermanos no afectados de pacientes con trastorno obsesivo-compulsivo presentaron menor anisotropía fraccional en el brazo anterior de la cápsula interna.",
+        "es": "Frente a controles sanos, 19 hermanos no afectados de pacientes con trastorno obsesivo-compulsivo mostraron una anisotropía fraccional reducida en el brazo anterior de la cápsula interna.",
         "cites": [
           "PMID:24489665"
         ]
@@ -638,14 +638,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En ocho cadáveres frescos, la arteria auricular posterior siguió un trayecto predecible por el surco auricular posterior.",
+        "es": "El surco auricular posterior es el camino constante de esta arteria, según las inyecciones y angiografías realizadas en ocho cadáveres frescos.",
         "cites": [
           "PMID:10937086"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Su territorio cutáneo abarcó ambas caras del pabellón auricular y la piel periauricular por encima, por detrás y por debajo.",
+        "es": "Su angiosoma cutáneo cubre las dos caras del pabellón auricular y la piel que lo rodea por arriba, por detrás y por debajo.",
         "cites": [
           "PMID:10937086"
         ]
@@ -714,7 +714,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Las arterias supratroclear y supraorbitaria son ramas de la arteria oftálmica y constituyen los principales aportes sanguíneos de la frente.",
+        "es": "Junto con la supratroclear, esta rama de la arteria oftálmica es una de las dos fuentes principales de sangre de la frente.",
         "cites": [
           "PMID:28234824"
         ]
@@ -734,8 +734,8 @@
         ]
       },
       {
-        "aspect": "relations",
-        "es": "En 20 hemicaras disecadas, la rama superficial de la supraorbitaria irrigaba lateralmente el plano situado por encima del músculo frontal, y su rama profunda se distribuía por debajo de ese músculo.",
+        "aspect": "irrigation",
+        "es": "En 20 hemicaras disecadas, la rama profunda de la supraorbitaria se distribuyó por debajo del músculo frontal, mientras que la superficial nutría la parte lateral del plano situado por encima de él.",
         "cites": [
           "PMID:28234824"
         ]
@@ -762,7 +762,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 200 extremidades de 100 fetos humanos de 18 a 34 semanas se observó una arteria safena entre el 4,5.º y el 7.º mes de vida fetal, con tres variantes, que comenzaba a atrofiarse en el séptimo mes.",
+        "es": "En 200 miembros de 100 fetos de 18 a 34 semanas, la arteria safena se observó entre los cuatro meses y medio y los siete de vida fetal, con tres variantes, y comenzó a atrofiarse en el séptimo mes.",
         "cites": [
           "PMID:3454959"
         ]
@@ -787,35 +787,35 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es la porción más posterior del cuerpo calloso.",
+        "es": "El esplenio ocupa el extremo posterior del cuerpo calloso.",
         "cites": [
           "PMID:32062761"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Limita con la hoz del cerebro y con la tienda del cerebelo.",
+        "es": "Sus vecinos inmediatos son la hoz del cerebro y la tienda del cerebelo.",
         "cites": [
           "PMID:32062761"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Recibe sangre tanto de la circulación anterior como de la posterior.",
+        "es": "Su aporte vascular procede de ambos territorios circulatorios, el anterior y el posterior.",
         "cites": [
           "PMID:32062761"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Contiene axones de distinto calibre y la zona de mayor densidad de células gliales del cuerpo calloso.",
+        "es": "En su composición destacan axones de calibres variados y la mayor concentración de glía de todo el cuerpo calloso.",
         "cites": [
           "PMID:32062761"
         ]
       },
       {
         "aspect": "function",
-        "es": "Sus fibras conectan de forma recíproca las regiones temporales y occipitales de ambos hemisferios y participan en el lenguaje, la transferencia de información visuoespacial y la conducta.",
+        "es": "A través de él se comunican de forma recíproca las regiones temporales y occipitales de un hemisferio y del otro, una conexión importante para el lenguaje, el paso de información visuoespacial y la conducta.",
         "cites": [
           "PMID:32062761"
         ]
@@ -852,7 +852,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Los aneurismas de arteria yeyunal suponen menos del 3 % de los aneurismas de arterias viscerales, con un riesgo de rotura citado del 30 % y una mortalidad del 20 %.",
+        "es": "Aunque representan menos del 3 % de los aneurismas viscerales, los de la arteria yeyunal tienen un riesgo de rotura citado del 30 % y una mortalidad del 20 %.",
         "cites": [
           "PMID:23771962",
           "PMID:36295505"
@@ -893,7 +893,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es la vía principal que conduce la información visual hacia la corteza occipital.",
+        "es": "Constituye la ruta principal por la que la información visual alcanza la corteza occipital.",
         "cites": [
           "PMID:24903826"
         ]
@@ -907,7 +907,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Según la dirección de sus fibras al salir del geniculado lateral se divide en tres haces: el asa de Meyer, el central y el directo.",
+        "es": "Asa de Meyer, haz central y haz directo: son los tres componentes que se distinguen según hacia dónde se orientan las fibras al abandonar el geniculado lateral.",
         "cites": [
           "PMID:19146354"
         ]
@@ -921,14 +921,14 @@
       },
       {
         "aspect": "relations",
-        "es": "El asa de Meyer llega hasta el nivel de la amígdala, junto al fascículo unciforme y la comisura anterior.",
+        "es": "Por delante, el asa de Meyer avanza hasta la altura de la amígdala, vecina del fascículo unciforme y de la comisura anterior.",
         "cites": [
           "PMID:15140705"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Delimitarla con tractografía puede reducir el riesgo de defecto del campo visual tras una resección del lóbulo temporal.",
+        "es": "Trazar con precisión su recorrido mediante tractografía de difusión podría ayudar a evitar los déficits del campo visual que a veces siguen a una resección temporal.",
         "cites": [
           "PMID:28648721"
         ]
@@ -942,7 +942,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Se ha descrito como hallazgo incidental en resonancia la herniación idiopática del uncus y el giro parahipocampal hacia la cisterna ambiens, entidad muy rara que puede confundirse con un tumor.",
+        "es": "Una herniación idiopática del uncus y del giro parahipocampal en la cisterna ambiens apareció como hallazgo casual en una resonancia; es una entidad excepcional que puede tomarse por un tumor.",
         "cites": [
           "PMID:25610616"
         ]
@@ -951,20 +951,6 @@
   },
   "UBERON:0034986": {
     "sentences": [
-      {
-        "aspect": "innervation",
-        "es": "En 22 hemipelvis disecadas, el ligamento sacroilíaco posterior largo estaba atravesado por ramos laterales de los ramos dorsales sacros de S2 en el 96 %, de S3 en el 100 %, de S4 en el 59 % y de S1 en el 4 %.",
-        "cites": [
-          "PMID:16237486"
-        ]
-      },
-      {
-        "aspect": "innervation",
-        "es": "Algunos de esos ramos emiten fibras que terminan dentro del ligamento, lo que apoya su papel como posible generador de dolor.",
-        "cites": [
-          "PMID:16237486"
-        ]
-      },
       {
         "aspect": "relations",
         "es": "En 162 hemipelvis estudiadas con TC con contraste, la arteria glútea superior pasaba entre el quinto nervio lumbar y el primero sacro en el 82 % y por fuera del quinto lumbar en el 17 %.",
@@ -992,14 +978,14 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "En 10 cadáveres humanos no fijados, la arteria rectal superior irrigaba el cuerpo cavernoso del recto mediante un número variable de arterias tortuosas regularmente espaciadas.",
+        "es": "Moldes arteriales en 10 cadáveres no fijados mostraron que el cuerpo cavernoso del recto depende de la rectal superior, a través de arterias tortuosas, equidistantes y en número variable.",
         "cites": [
           "PMID:19175645"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En pelvis adultas y fetales y con Doppler transperineal se observaron ramas adicionales que recorren las capas externas de la pared rectal y la penetran justo por encima del elevador del ano para llegar al plexo hemorroidal interno.",
+        "es": "Disecciones, cortes de pelvis fetales y adultas y Doppler transperineal revelaron además ramas que corren por las capas externas de la pared rectal y la perforan justo por encima del elevador del ano para alcanzar el plexo hemorroidal interno.",
         "cites": [
           "PMID:14706597"
         ]
@@ -1096,13 +1082,13 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "En 180 cerebros, la arteria calcarina fue la rama principal que irrigaba la cara medial del lóbulo occipital.",
+        "es": "La cara medial del lóbulo occipital depende sobre todo de la arteria calcarina, según un estudio de 180 cerebros que también registró el aporte de una calcarina accesoria.",
         "cites": [
           "PMID:10437311"
         ]
       },
       {
-        "aspect": "situation",
+        "aspect": "irrigation",
         "es": "En 100 cerebros disecados, la cara medial de la corteza visual recibió ramas de la arteria cerebral posterior, entre ellas la calcarina en el 100 % de los casos.",
         "cites": [
           "PMID:12723208"
@@ -1135,14 +1121,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En el adulto, la vena cerebral media superficial suele drenar en la fosa craneal media.",
+        "es": "Lo habitual en el adulto es que esta vena desemboque en la fosa craneal media.",
         "cites": [
           "PMID:38399497"
         ]
       },
       {
-        "aspect": "parts",
-        "es": "En 500 venas evaluadas con angio-TC tridimensional, presentes en 456 lados, el 62 % desembocaba en el seno esfenoparietal o en el seno cavernoso y el 12 % en una vena emisaria.",
+        "aspect": "relations",
+        "es": "En 250 pacientes (500 lados) estudiados con angio-TC tridimensional, la vena existía en 456 lados; el 62 % drenaba en el seno esfenoparietal o en el cavernoso y el 12 % en una vena emisaria.",
         "cites": [
           "PMID:10815671"
         ]
@@ -1227,7 +1213,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Los aneurismas de arteria ilíaca tienen una prevalencia inferior al 2 % en la población general y afectan típicamente la arteria ilíaca común, en el 70-90 % de los casos.",
+        "es": "Menos del 2 % de la población general tiene un aneurisma ilíaco, y entre el 70 y el 90 % de ellos asientan en la ilíaca común.",
         "cites": [
           "PMID:35471212",
           "PMID:35780407"
@@ -1235,14 +1221,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Alrededor de la mitad de los pacientes afectados pueden presentar aneurismas ilíacos comunes en ambos lados.",
+        "es": "Según la literatura, cerca de la mitad de quienes los padecen tienen afectadas las dos ilíacas comunes.",
         "cites": [
           "PMID:35471212"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Por su localización profunda en la pelvis, los aneurismas asintomáticos son difíciles de detectar.",
+        "es": "Situados en lo profundo de la pelvis, los que todavía no dan síntomas son difíciles de descubrir.",
         "cites": [
           "PMID:35471212"
         ]
@@ -1274,7 +1260,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es un espacio inmediatamente contiguo a la lámina limitante externa del parénquima hepático.",
+        "es": "Se sitúa justo al lado de la lámina limitante externa del parénquima hepático.",
         "cites": [
           "PMID:7818092"
         ]
@@ -1299,14 +1285,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es un pequeño pliegue semilunar de duramadre situado por debajo de la tienda del cerebelo, que se proyecta hacia delante en la escotadura cerebelosa posterior.",
+        "es": "Este pliegue dural pequeño, en forma de media luna, se dispone bajo la tienda del cerebelo y avanza hacia la escotadura cerebelosa posterior.",
         "cites": [
           "PMID:23315085"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Su base se fija en la línea media a la cara inferior de la tienda del cerebelo, y su borde posterior se inserta en la cresta occipital interna y aloja el seno occipital.",
+        "es": "Por arriba se une, en la línea media, a la parte posterior de la cara inferior de la tienda; por detrás se fija a la cresta occipital interna, y por ese borde discurre el seno occipital.",
         "cites": [
           "PMID:23315085"
         ]
@@ -1357,7 +1343,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Los aneurismas de arteria ilíaca tienen una prevalencia inferior al 2 % en la población general y afectan típicamente la arteria ilíaca común, en el 70-90 % de los casos.",
+        "es": "Menos del 2 % de la población general tiene un aneurisma ilíaco, y entre el 70 y el 90 % de ellos asientan en la ilíaca común.",
         "cites": [
           "PMID:35471212",
           "PMID:35780407"
@@ -1365,14 +1351,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Alrededor de la mitad de los pacientes afectados pueden presentar aneurismas ilíacos comunes en ambos lados.",
+        "es": "Según la literatura, cerca de la mitad de quienes los padecen tienen afectadas las dos ilíacas comunes.",
         "cites": [
           "PMID:35471212"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Por su localización profunda en la pelvis, los aneurismas asintomáticos son difíciles de detectar.",
+        "es": "Situados en lo profundo de la pelvis, los que todavía no dan síntomas son difíciles de descubrir.",
         "cites": [
           "PMID:35471212"
         ]
@@ -1404,7 +1390,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Discurre desde la cisterna premesencefálica, atraviesa la cisterna ambiens y termina en la cisterna cuadrigeminal.",
+        "es": "Su recorrido va de la cisterna premesencefálica a la cuadrigeminal, cruzando por el camino la cisterna ambiens.",
         "cites": [
           "PMID:17542537"
         ]
@@ -1417,7 +1403,7 @@
         ]
       },
       {
-        "aspect": "parts",
+        "aspect": "relations",
         "es": "En 500 lados evaluados con angio-TC tridimensional, la vena desembocaba en la vena magna de Galeno en el 87,8 %.",
         "cites": [
           "PMID:11290476"
@@ -1425,7 +1411,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Sus numerosas variantes se explican por su origen en anastomosis longitudinales secundarias entre venas embrionarias.",
+        "es": "Que presente tantas variantes se atribuye a que se forma a partir de anastomosis longitudinales secundarias entre venas embrionarias.",
         "cites": [
           "PMID:11290476"
         ]
@@ -1514,7 +1500,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es una red de nervios pre y posganglionares dispuesta sobre la aorta abdominal infrarrenal.",
+        "es": "Sobre la aorta abdominal, por debajo de las arterias renales, se extiende esta trama de fibras nerviosas pre y posganglionares.",
         "cites": [
           "PMID:25382240",
           "PMID:26750570"
@@ -1522,7 +1508,7 @@
       },
       {
         "aspect": "function",
-        "es": "Interviene principalmente en la inervación simpática de los órganos mesentéricos, pélvicos y urogenitales.",
+        "es": "Su papel principal es llevar la inervación simpática a las vísceras mesentéricas, pélvicas y urogenitales.",
         "cites": [
           "PMID:25382240"
         ]
@@ -1550,7 +1536,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Su conocimiento es relevante para preservar la fertilidad masculina y la función simpática del intestino posterior y la pelvis durante la cirugía retroperitoneal.",
+        "es": "Según los autores, conocer su anatomía podría ayudar a preservar la fertilidad masculina y la función simpática del intestino posterior y de la pelvis en la cirugía retroperitoneal.",
         "cites": [
           "PMID:25382240"
         ]
@@ -1635,7 +1621,7 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "La arteria pancreática dorsal es la principal arteria del cuerpo y la cola del páncreas.",
+        "es": "Cuerpo y cola del páncreas dependen sobre todo de la arteria pancreática dorsal.",
         "cites": [
           "PMID:35177332"
         ]
@@ -1681,7 +1667,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El conducto pudendo es un túnel musculoosteoaponeurótico formado por el isquion y el músculo obturador interno, en la fosa isquiorrectal, por el que transcurre el nervio pudendo interno.",
+        "es": "Por este túnel de la fosa isquiorrectal, delimitado por el isquion y el músculo obturador interno, discurre el nervio pudendo interno.",
         "cites": [
           "PMID:2619263"
         ]
@@ -1721,7 +1707,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Habitualmente es una rama del tronco tirocervical de la arteria subclavia.",
+        "es": "Lo habitual es que se origine en el tronco tirocervical, rama de la subclavia.",
         "cites": [
           "PMID:29930683"
         ]
@@ -1768,14 +1754,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La trombosis de la vena ovárica afecta con mayor frecuencia a la vena ovárica derecha.",
+        "es": "Es en el lado derecho donde con más frecuencia se produce la trombosis de la vena ovárica.",
         "cites": [
           "PMID:32744103"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Es una entidad rara que suele diagnosticarse en el puerperio y que también se asocia con procesos inflamatorios y malignos de la pelvis.",
+        "es": "Poco frecuente, esta trombosis puede aparecer en el puerperio y se ha relacionado además con procesos pélvicos inflamatorios y tumorales.",
         "cites": [
           "PMID:22464919"
         ]
@@ -1814,7 +1800,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Al microscopio, la capa muscular circular estaba engrosada y la mucosa formaba una roseta, hallazgos que sugieren un posible esfínter anatómico.",
+        "es": "El engrosamiento de la capa muscular circular visto al microscopio, junto con una mucosa agolpada en roseta y el estrechamiento de la unión, apunta a la posible existencia de un esfínter anatómico.",
         "cites": [
           "PMID:17938846"
         ]
