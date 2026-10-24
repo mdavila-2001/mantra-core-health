@@ -72,7 +72,10 @@
     }
   </div>
   @if (distincion(); as rotulo) {
-    <p class="tarjeta-resultado__distincion">{{ rotulo }}</p>
+    <p class="tarjeta-resultado__distincion">
+      <app-nav-icon class="tarjeta-resultado__distincion-icono" name="star" />
+      {{ rotulo }}
+    </p>
   }
 
   <!-- Subtítulo / Especialidad -->
@@ -218,6 +221,12 @@
           </svg>
         }
         <span>{{ navegando() ? 'Abriendo…' : act.label }}</span>
+        <!-- La flecha dice «esto lleva a otra pantalla» y se adelanta un poco
+             al pasar por la tarjeta. Sólo sin ancla: con ancla ya va el
+             calendario, y dos íconos en un botón chico se amontonan. -->
+        @if (!act.fragment) {
+          <app-nav-icon class="tarjeta-resultado__accion-flecha" name="arrow-right" />
+        }
       </a>
     }
     <ng-content />

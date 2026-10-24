@@ -441,6 +441,7 @@ export abstract class PublicDirectoryListing {
       {
         key: PARAM_VERIFICADO,
         label: 'Verificación',
+        icon: 'shield',
         asChips: true,
         options: [{ value: 'true', label: 'Sólo verificadas' }],
       },
@@ -456,6 +457,7 @@ export abstract class PublicDirectoryListing {
       filtros.unshift({
         key: PARAM_CATEGORIA,
         label: 'Categoría',
+        icon: 'tag',
         asChips: true,
         options: categorias.map(({ code, label }) => ({ value: code, label })),
       });
@@ -476,6 +478,7 @@ export abstract class PublicDirectoryListing {
       filtros.unshift({
         key: PARAM_DEPARTAMENTO,
         label: 'Departamento',
+        icon: 'pin',
         asChips: true,
         options: conFichas,
       });
@@ -505,6 +508,7 @@ export abstract class PublicDirectoryListing {
       filtros.splice(despuesDelDepartamento, 0, {
         key: PARAM_CIUDAD,
         label: 'Ciudad',
+        icon: 'building',
         asChips: true,
         options: ciudades,
       });
