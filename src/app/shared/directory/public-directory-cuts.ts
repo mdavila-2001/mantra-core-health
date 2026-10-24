@@ -26,7 +26,7 @@ import { normalizePlace } from '@shared/geo/city-department';
  */
 
 /** Tope por página que acepta el contrato público (`limit` se recorta a 50). */
-export const POR_PETICION_PUBLICA = 50;
+export const PUBLIC_PAGE_LIMIT = 50;
 
 /**
  * Cuántas páginas se recorren como máximo.
@@ -35,12 +35,12 @@ export const POR_PETICION_PUBLICA = 50;
  * crezca sin control no encadene peticiones indefinidamente. Cuando se llega,
  * la pantalla **lo dice** en vez de seguir pidiendo en silencio.
  */
-export const MAX_PAGINAS_PUBLICAS = 10;
+export const PUBLIC_MAX_PAGES = 10;
 
 /** Lo que devuelve el recorrido: las filas y si se cortó por el techo. */
-export interface DirectorioEntero {
-  readonly filas: readonly PublicSearchResult[];
-  readonly recortado: boolean;
+export interface WholeDirectory {
+  readonly rows: readonly PublicSearchResult[];
+  readonly truncated: boolean;
 }
 
 /**
@@ -49,59 +49,59 @@ export interface DirectorioEntero {
  * Recursivo y no un bucle porque cada página depende del cursor de la
  * anterior: no se pueden pedir en paralelo.
  */
-export function leerDirectorioEntero(
-  buscar: (consulta: PublicSearchQuery) => Observable<PublicPage<PublicSearchResult>>,
-  consulta: PublicSearchQuery,
-  acumulado: readonly PublicSearchResult[] = [],
+export function readWholeDirectory(
+  search: (query: PublicSearchQuery) => Observable<PublicPage<PublicSearchResult>>,
+  query: PublicSearchQuery,
+  accumulated: readonly PublicSearchResult[] = [],
   cursor?: string,
-  pagina = 0,
-): Observable<DirectorioEntero> {
-  return buscar({ ...consulta, limit: POR_PETICION_PUBLICA, ...(cursor ? { cursor } : {}) }).pipe(
-    switchMap((respuesta) => {
-      const filas = [...acumulado, ...respuesta.items];
-      if (respuesta.nextCursor === null) {
-        return of({ filas, recortado: false });
+  page = 0,
+): Observable<WholeDirectory> {
+  return search({ ...query, limit: PUBLIC_PAGE_LIMIT, ...(cursor ? { cursor } : {}) }).pipe(
+    switchMap((response) => {
+      const rows = [...accumulated, ...response.items];
+      if (response.nextCursor === null) {
+        return of({ rows, truncated: false });
       }
-      if (pagina + 1 >= MAX_PAGINAS_PUBLICAS) {
-        return of({ filas, recortado: true });
+      if (page + 1 >= PUBLIC_MAX_PAGES) {
+        return of({ rows, truncated: true });
       }
-      return leerDirectorioEntero(buscar, consulta, filas, respuesta.nextCursor, pagina + 1);
+      return readWholeDirectory(search, query, rows, response.nextCursor, page + 1);
     }),
   );
 }
 
 /** Las filas de una categoría; `null` no acota. */
-export function deLaCategoria(
-  filas: readonly PublicSearchResult[],
-  categoria: string | null,
+export function byCategory(
+  rows: readonly PublicSearchResult[],
+  category: string | null,
 ): readonly PublicSearchResult[] {
-  return categoria === null ? filas : filas.filter((fila) => fila.category?.code === categoria);
+  return category === null ? rows : rows.filter((row) => row.category?.code === category);
 }
 
 /** Las filas cuya ciudad cae en el departamento; `null` no acota. */
-export function delDepartamento(
-  filas: readonly PublicSearchResult[],
-  departamento: string | null,
-  porCiudad: ReadonlyMap<string, string>,
+export function byDepartment(
+  rows: readonly PublicSearchResult[],
+  department: string | null,
+  cityToDepartment: ReadonlyMap<string, string>,
 ): readonly PublicSearchResult[] {
-  if (departamento === null) {
-    return filas;
+  if (department === null) {
+    return rows;
   }
-  return filas.filter(
-    (fila) => fila.city !== null && porCiudad.get(normalizePlace(fila.city)) === departamento,
+  return rows.filter(
+    (row) => row.city !== null && cityToDepartment.get(normalizePlace(row.city)) === department,
   );
 }
 
 /** Las filas de una ciudad, sin importar mayúsculas ni tildes; `null` no acota. */
-export function deLaCiudad(
-  filas: readonly PublicSearchResult[],
-  ciudad: string | null,
+export function byCity(
+  rows: readonly PublicSearchResult[],
+  city: string | null,
 ): readonly PublicSearchResult[] {
-  if (ciudad === null) {
-    return filas;
+  if (city === null) {
+    return rows;
   }
-  const buscada = normalizePlace(ciudad);
-  return filas.filter((fila) => fila.city !== null && normalizePlace(fila.city) === buscada);
+  const wanted = normalizePlace(city);
+  return rows.filter((row) => row.city !== null && normalizePlace(row.city) === wanted);
 }
 
 /**
@@ -110,17 +110,17 @@ export function deLaCiudad(
  * Se llama con los **otros** cortes puestos pero no con el del propio mapa:
  * contar con el mapa aplicado dejaría a los departamentos no elegidos en cero.
  */
-export function cuentaPorDepartamento(
-  filas: readonly PublicSearchResult[],
-  porCiudad: ReadonlyMap<string, string>,
+export function countByDepartment(
+  rows: readonly PublicSearchResult[],
+  cityToDepartment: ReadonlyMap<string, string>,
 ): ReadonlyMap<string, number> {
-  const cuenta = new Map<string, number>();
-  for (const fila of filas) {
-    const conceptId = fila.city === null ? undefined : porCiudad.get(normalizePlace(fila.city));
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const conceptId = row.city === null ? undefined : cityToDepartment.get(normalizePlace(row.city));
     if (conceptId === undefined) continue;
-    cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
+    counts.set(conceptId, (counts.get(conceptId) ?? 0) + 1);
   }
-  return cuenta;
+  return counts;
 }
 
 /**
@@ -128,33 +128,33 @@ export function cuentaPorDepartamento(
  * a igualdad por nombre. Salen de los resultados y no del catálogo: un chip que
  * siempre devuelve cero es peor que no tenerlo.
  */
-export function ciudadesPublicadas(filas: readonly PublicSearchResult[]): readonly string[] {
-  const cuenta = new Map<string, number>();
-  for (const fila of filas) {
-    if (fila.city !== null && fila.city !== '') {
-      cuenta.set(fila.city, (cuenta.get(fila.city) ?? 0) + 1);
+export function publishedCities(rows: readonly PublicSearchResult[]): readonly string[] {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (row.city !== null && row.city !== '') {
+      counts.set(row.city, (counts.get(row.city) ?? 0) + 1);
     }
   }
-  return [...cuenta.entries()]
-    .sort(([a, cuentaA], [b, cuentaB]) => cuentaB - cuentaA || a.localeCompare(b, 'es'))
-    .map(([ciudad]) => ciudad);
+  return [...counts.entries()]
+    .sort(([a, countA], [b, countB]) => countB - countA || a.localeCompare(b, 'es'))
+    .map(([city]) => city);
 }
 
 /**
  * Las categorías que de verdad hay, de la que más filas tiene a la que menos y
  * a igualdad por nombre. Una fila sin categoría no inventa una «Otras».
  */
-export function categoriasPublicadas(
-  filas: readonly PublicSearchResult[],
+export function publishedCategories(
+  rows: readonly PublicSearchResult[],
 ): readonly { readonly code: string; readonly label: string }[] {
-  const cuenta = new Map<string, { label: string; total: number }>();
-  for (const fila of filas) {
-    const categoria = fila.category;
-    if (categoria === null) continue;
-    const anterior = cuenta.get(categoria.code);
-    cuenta.set(categoria.code, { label: categoria.label, total: (anterior?.total ?? 0) + 1 });
+  const counts = new Map<string, { label: string; total: number }>();
+  for (const row of rows) {
+    const category = row.category;
+    if (category === null) continue;
+    const previous = counts.get(category.code);
+    counts.set(category.code, { label: category.label, total: (previous?.total ?? 0) + 1 });
   }
-  return [...cuenta.entries()]
+  return [...counts.entries()]
     .sort(([, a], [, b]) => b.total - a.total || a.label.localeCompare(b.label, 'es'))
     .map(([code, { label }]) => ({ code, label }));
 }
