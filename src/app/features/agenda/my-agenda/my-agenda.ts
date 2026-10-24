@@ -2192,16 +2192,22 @@ export class MyAgenda implements OnInit {
     if (!confirmado) return;
 
     this.retirando.set(true);
-    this.scheduling.retireTemplate(actual.data.id).subscribe({
+    // Con citas vivas, `BlockCancellations` muestra a quién alcanzan y deja
+    // elegir: cancelarlas y avisar, o conservarlas (etapa C, 24/10/2026).
+    this.cancellations.retireTemplate(actual.data.id).subscribe({
       next: (retiro) => {
         this.retirando.set(false);
+        if (retiro === null) return;
+        const canceladas = retiro.cancelledBookings ?? 0;
         // Se dice cuántos se conservaron y no sólo cuántos se soltaron: un
         // número distinto de cero significa que hay pacientes citados en un
         // horario que el médico acaba de retirar, y eso tiene que verlo.
         this.toast.success(
-          retiro.keptSlots > 0
-            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
-            : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
+          canceladas > 0
+            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres.${cancelledBookingsText(canceladas)}`
+            : retiro.keptSlots > 0
+              ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
+              : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
           'Horario retirado',
         );
         this.cargar();

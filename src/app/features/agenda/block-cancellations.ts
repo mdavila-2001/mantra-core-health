@@ -5,7 +5,12 @@ import { Observable, from, of, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { readApiError } from '../../core/http/api-error';
-import type { AffectedBooking } from '../../core/data-access/scheduling/scheduling.types';
+import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
+import type {
+  AffectedBooking,
+  RetiredTemplate,
+  TemplateLiveBookings,
+} from '../../core/data-access/scheduling/scheduling.types';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 
 /** El `failureCode` con el que la API dice «hay citas en ese rato: confirme». */
@@ -54,6 +59,7 @@ function isAffectedBooking(value: unknown): value is AffectedBooking {
 @Injectable({ providedIn: 'root' })
 export class BlockCancellations {
   private readonly dialogs = inject(DialogService);
+  private readonly scheduling = inject(SchedulingClient);
   private readonly locale = inject(LOCALE_ID);
 
   /**
@@ -70,6 +76,64 @@ export class BlockCancellations {
         );
       }),
     );
+  }
+
+  /**
+   * Retira un horario preguntando antes qué hacer con sus citas vivas
+   * (etapa C, 24/10/2026: «cambiar el horario avisa al paciente»).
+   *
+   * 1. Pide la vista previa (`live-bookings`).
+   * 2. Sin citas: retira como siempre. Con citas: pregunta —cancelarlas y
+   *    avisar, o conservarlas y seguir atendiéndolas— y retira con esa
+   *    decisión. Con un paciente ya recibido sólo cabe conservar, y se dice.
+   *
+   * `null` cuando la persona vuelve atrás sin retirar.
+   */
+  retireTemplate(templateId: string): Observable<RetiredTemplate | null> {
+    return this.scheduling.listTemplateLiveBookings(templateId).pipe(
+      switchMap((live) => from(this.decideRetire(live))),
+      switchMap((decision) =>
+        decision === 'abort' ? of(null) : this.scheduling.retireTemplate(templateId, decision),
+      ),
+    );
+  }
+
+  /** Qué hacer con las citas vivas de un horario que se va a retirar. */
+  async decideRetire(live: TemplateLiveBookings): Promise<'cancel' | 'keep' | 'abort'> {
+    if (live.total === 0) return 'keep';
+
+    if (live.present.length > 0) {
+      const sigue = await this.dialogs.confirm({
+        title: 'Hay un paciente ya recibido',
+        message:
+          'Mientras haya alguien en el consultorio no se cancelan sus citas desde acá. Puede retirar el horario conservando todas las citas, y seguir atendiéndolas.',
+        details: this.rows([...live.present, ...live.bookings]),
+        confirmLabel: 'Retirar y conservar las citas',
+        cancelLabel: 'Volver',
+      });
+      return sigue ? 'keep' : 'abort';
+    }
+
+    const n = live.bookings.length;
+    const cancelar = await this.dialogs.confirm({
+      title: n === 1 ? 'Este horario tiene una cita' : `Este horario tiene ${n} citas`,
+      message:
+        'Puede cancelarlas ahora y avisar a cada paciente, o conservarlas y seguir atendiéndolas aunque el horario deje de publicarse.',
+      details: this.rows(live.bookings),
+      confirmLabel: n === 1 ? 'Cancelar la cita y avisar' : 'Cancelar las citas y avisar',
+      cancelLabel: 'Conservar las citas',
+      destructive: true,
+    });
+    return cancelar ? 'cancel' : 'keep';
+  }
+
+  private rows(affected: readonly AffectedBooking[]): { label: string; value: string }[] {
+    return affected.map((cita) => ({
+      label: cita.patientName ?? 'Paciente sin nombre registrado',
+      value: `${formatDate(cita.startAt, 'EEEE d/M, HH:mm', this.locale)}${
+        cita.pending ? ' · solicitud sin responder' : ''
+      }`,
+    }));
   }
 
   /** El modal: una fila por cita, con quién y cuándo. */
