@@ -167,6 +167,21 @@ export class NotificationCenter {
    */
   protected abrir(aviso: InAppNotification): void {
     const ruta = this.rutaDe(aviso);
+    this.marcarLeida(aviso);
+    if (ruta) {
+      void this.router.navigateByUrl(ruta);
+    }
+  }
+
+  /**
+   * Marca un aviso como leído sin navegar.
+   *
+   * Es lo único que se puede hacer con un aviso **sin destino**: no es un
+   * control —un enlace que no lleva a ningún lado se lee como producto roto—,
+   * y sin este botón la única salida para sacarlo de «sin leer» era «Marcar
+   * todas», que se lleva puestas las demás.
+   */
+  protected marcarLeida(aviso: InAppNotification): void {
     if (aviso.unread) {
       this.notifications.markRead(aviso.id).subscribe({
         next: () => {
@@ -182,9 +197,6 @@ export class NotificationCenter {
         },
         error: () => this.error.set('No pudimos marcar la notificación.'),
       });
-    }
-    if (ruta) {
-      void this.router.navigateByUrl(ruta);
     }
   }
 
