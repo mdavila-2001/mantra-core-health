@@ -1,73 +1,100 @@
-"""Genera `body-zones.geometry.ts`: la silueta del cuerpo y sus zonas.
+"""Genera `body-zones.geometry.ts` y las imágenes del maniquí a partir del render.
 
-Uso:  python scripts/gen-body-zones.py                     (escribe el .ts)
-      python scripts/gen-body-zones.py --preview salida.html (además, un HTML para mirarla)
+Uso:  python scripts/gen-body-zones.py --render <carpeta del render> [--overlay <carpeta>]
 
-Requiere `shapely` (pip install shapely). No corre en el build: el .ts que
-escribe se versiona, y este script queda para poder rehacerlo.
+`<carpeta del render>` es la salida de `scripts/render-body-map.py` (Blender):
+un PNG RGBA por sexo y vista más `landmarks.json`. Este script escribe:
 
-## Cómo se arma la figura
+- `public/body-map/<sexo>-<vista>.webp`: el maniquí, reducido y comprimido;
+- `src/app/shared/components/organisms/body-map/body-zones.geometry.ts`: la
+  silueta y las zonas pulsables de cada vista, en el mismo `viewBox` que la
+  imagen, para que cada zona calce con el cuerpo que se ve;
+- con `--overlay`, un PNG por vista con las zonas delineadas sobre el render
+  (la prueba de calce).
 
-A mano, con curvas sueltas por zona, cada zona era un pedazo con su propia
-forma y el conjunto nunca terminaba de parecer una persona. Acá es al revés:
+Requiere `pillow`, `shapely` y `scikit-image`. No corre en el build: lo que
+escribe se versiona y este script queda para poder rehacerlo.
 
-1. Se dibuja **un solo contorno** del cuerpo, con proporciones de figura
-   (≈ 7,5 cabezas): media silueta como puntos por los que pasa una curva
-   Catmull-Rom, espejada. Los brazos se arman como trazos de ancho variable
-   (deltoides → bíceps → codo → antebrazo → muñeca → mano, con pulgar) y se
-   unen al tronco; un cierre morfológico redondea axilas y entrepierna.
-2. Las zonas son **celdas** (rectángulos y polígonos simples) que se
-   intersecan con ese contorno. Como las celdas parten el plano sin
-   solaparse, las zonas vecinas comparten exactamente el mismo borde y entre
-   todas cubren la figura entera: no hay partes muertas.
+## Cómo se arma (2026-10-23)
 
-Lo mismo para la espalda (misma figura, otras celdas) y para la cara (un busto
-ampliado, porque ojos, nariz y boca a escala de cuerpo entero no llegan al
-tamaño mínimo de un objetivo táctil).
+Hasta acá la figura era un dibujo vectorial esquemático hecho con curvas en
+este mismo script. Ahora la figura es un **maniquí clínico renderizado** (malla
+de MakeHuman, CC0; ver la cabecera de `render-body-map.py`) y las zonas se
+calzan sobre él:
 
-## Postura (2026-09-24)
+1. **La silueta** sale de la máscara alfa del render: el contorno del cuerpo
+   que se ve es, exactamente, el contorno de la figura pulsable.
+2. **Los brazos** se separan del tronco por la abertura de la axila, que se
+   busca en la máscara; **las manos** se cortan en la muñeca del esqueleto,
+   perpendicular al antebrazo.
+3. **Las costuras del tronco** (pecho, estómago, abdomen, zona íntima,
+   caderas; nuca, espalda, riñones, glúteos; rodillas, pies) son las que ya
+   estaban acordadas, escritas sobre la **lámina de referencia** (la figura
+   anterior: coronilla 8, mentón 65, pezones 120, ombligo 176, entrepierna
+   238, rodilla 322, tobillo 414, planta 434, eje en x = 100). Se trasladan al
+   maniquí con un mapeo por tramos entre esas marcas y las del render, y se
+   ensanchan o angostan según el ancho del tronco a cada altura.
+4. **La cara** escala sus celdas (ojos, nariz, boca, oídos) por la distancia
+   entre los ojos del esqueleto.
 
-Postura en A, la de las láminas clínicas: los brazos separados del tronco
-desde la axila, palmas al frente y pulgares hacia afuera. Con los brazos
-pegados la figura se leía como un maniquí, y el brazo y el costado del pecho
-eran dos objetivos táctiles sin espacio entre ellos.
+Las celdas parten el plano sin solaparse (`repartir`): las zonas vecinas
+comparten el mismo borde y entre todas cubren la figura entera.
 
-## Sexo de la silueta (2026-09-25)
-
-`construir()` devuelve las tres proporciones a la vez: `neutro` (la figura de
-siempre), `masculino` y `femenino`. Las tres comparten cabeza, brazos, piernas
-de la rodilla para abajo y la vista de cara; sólo cambia el ancho relativo de
-hombro, cintura y cadera de `MEDIA_SILUETA`, por una tabla de factores por
-altura (`BANDAS_DE_SEXO`) que `BodyMap` elige según el sexo del paciente.
-
-## Tres capas de dibujo además de las zonas
-
-- `detalles`: líneas finas (clavículas, pectorales, columna, rótulas…). Se
-  dibujan encima de las zonas y no se pulsan.
-- `rellenos`: formas llenas y tenues (el pelo, las cejas, los labios).
-- `acentos`: formas llenas y marcadas (iris, fosas nasales).
-Ninguna de las tres recibe clics: el clic atraviesa hasta la zona.
-
-Cada zona lleva además `centros`: un punto dentro de cada parte (las dos
-manos son dos partes), que es donde la pantalla pone el marcador de la zona
-elegida.
+Cada zona lleva `centros`: un punto dentro de cada parte (las dos manos son
+dos partes), donde la pantalla pone el marcador de la zona elegida.
 """
 
 from __future__ import annotations
 
+import argparse
+import json
 import math
-import sys
 from pathlib import Path
 
+import numpy as np
+from PIL import Image, ImageDraw
 from shapely.geometry import LineString, MultiPolygon, Point, Polygon, box
 from shapely.ops import unary_union
+from skimage import measure
 
 RAIZ = Path(__file__).resolve().parent.parent
 DESTINO = RAIZ / "src/app/shared/components/organisms/body-map/body-zones.geometry.ts"
-CX = 100.0  # eje de simetría
+IMAGENES = RAIZ / "public/body-map"
+URL_IMAGENES = "/body-map"
+
+# Perfil del organismo → nombre del render.
+SEXOS = {"neutro": "neutral", "masculino": "male", "femenino": "female"}
+VISTAS = {"frente": "front", "espalda": "back", "cara": "face"}
+NOMBRE_VISTA = {"frente": "Frente", "espalda": "Espalda", "cara": "Cara"}
+
+# Píxeles por unidad del viewBox en el WebP publicado: a 3× de densidad la
+# figura entera (16rem) y la cara (19rem) siguen nítidas.
+DENSIDAD_WEBP = {"frente": 3.5, "espalda": 3.5, "cara": 4.5}
+CALIDAD_WEBP = 82
+
+INF = 1000.0
+
+# ─── Lámina de referencia ──────────────────────────────────────────────────
+
+REF_CX = 100.0
+REF_MARCAS = {
+    "coronilla": 8.0,
+    "menton": 65.0,
+    "pezon": 120.0,
+    "ombligo": 176.0,
+    "entrepierna": 238.0,
+    "rodilla": 322.0,
+    "tobillo": 414.0,
+    "planta": 434.0,
+}
+# Medio ancho del tronco de la lámina a cada altura (sin brazos).
+REF_MEDIO_ANCHO = [(100, 39.6), (120, 38.8), (150, 33.2), (176, 33.0), (200, 38.6), (214, 40.2), (236, 39.8)]
+# Entre los ojos de la cara de referencia (x = 76 y 124, y = 91).
+REF_OJOS_Y = 91.0
+REF_DISTANCIA_OJOS = 48.0
 
 
-# ─── Curvas ────────────────────────────────────────────────────────────────
+# ─── Utilidades geométricas ────────────────────────────────────────────────
 
 
 def catmull_rom(puntos, pasos=10, cerrada=False):
@@ -110,280 +137,53 @@ def catmull_rom(puntos, pasos=10, cerrada=False):
     return salida
 
 
-def espejo(puntos):
-    return [(2 * CX - x, y) for x, y in puntos]
-
-
-def trazo(nodos):
-    """Trazo de ancho variable: la unión de las envolventes de círculos vecinos."""
-    circulos = [Point(x, y).buffer(r, quad_segs=16) for x, y, r in nodos]
-    partes = [unary_union([a, b]).convex_hull for a, b in zip(circulos, circulos[1:])]
-    return unary_union(partes)
-
-
-def suave(geom, r):
-    """Apertura morfológica: redondea las esquinas salientes de un trazo."""
-    return geom.buffer(-r, quad_segs=16).buffer(r, quad_segs=16)
-
-
-def cerrar(geom, r):
-    """Cierre morfológico: redondea los ángulos entrantes (axilas, entrepierna)."""
-    return geom.buffer(r, quad_segs=16).buffer(-r, quad_segs=16)
-
-
-def con_espejo(geom):
-    """Una forma del lado derecho unida a su reflejo."""
-    reflejo = [Polygon(espejo(list(p.exterior.coords))) for p in poligonos(geom)]
-    return unary_union([geom, *reflejo])
-
-
-# ─── Proporciones por sexo (P-04, 2026-09-25) ───────────────────────────────
-#
-# La figura neutra queda tal cual estaba: `BANDAS_DE_SEXO['neutro']` es `None`,
-# y sin tabla no se toca ni un punto. Masculina y femenina escalan la
-# DISTANCIA AL EJE de cada punto de `MEDIA_SILUETA`, según una tabla de
-# factores por altura (`y`) que se interpola linealmente entre sus puntos y se
-# recorta en los extremos. Sólo se tocan hombro, pecho, cintura y cadera —de
-# `y≈90` a `y≈300`—: la cabeza, los brazos y de la rodilla para abajo quedan
-# iguales en las tres, porque no son lo que distingue una silueta de otra en
-# este dibujo esquemático.
-
-
-def factor_en(y, bandas):
-    """El factor de escala en una altura `y`, interpolado en `bandas`."""
-    if bandas is None:
-        return 1.0
-    if y <= bandas[0][0]:
-        return bandas[0][1]
-    for (y0, f0), (y1, f1) in zip(bandas, bandas[1:]):
-        if y0 <= y <= y1:
-            if y1 == y0:
-                return f1
-            t = (y - y0) / (y1 - y0)
-            return f0 + (f1 - f0) * t
-    return bandas[-1][1]
-
-
-def escalar_silueta(puntos, bandas):
-    """Cada punto se aleja o se acerca del eje según el factor de su altura."""
-    if bandas is None:
-        return puntos
-    return [(CX + (x - CX) * factor_en(y, bandas), y) for x, y in puntos]
-
-
-# Hombro más ancho, cintura apenas afinada, cadera más angosta.
-BANDAS_MASCULINO = [
-    (0, 1.0),
-    (90, 1.0),
-    (100, 1.08),
-    (135, 1.07),
-    (161, 1.03),
-    (186, 0.97),
-    (214, 0.91),
-    (250, 0.9),
-    (292, 0.95),
-    (316, 1.0),
-    (440, 1.0),
-]
-
-# Hombro más angosto, cintura marcada, cadera más ancha.
-BANDAS_FEMENINO = [
-    (0, 1.0),
-    (90, 1.0),
-    (100, 0.93),
-    (135, 0.92),
-    (161, 0.87),
-    (186, 0.93),
-    (214, 1.03),
-    (250, 1.1),
-    (292, 1.04),
-    (316, 1.0),
-    (440, 1.0),
-]
-
-BANDAS_DE_SEXO = {
-    "neutro": None,
-    "masculino": BANDAS_MASCULINO,
-    "femenino": BANDAS_FEMENINO,
-}
-
-
-# ─── La figura de cuerpo entero ────────────────────────────────────────────
-
-# Media silueta derecha (x ≥ 100) de cabeza, cuello, tronco y pierna: de la
-# coronilla bajando por afuera hasta la planta, y subiendo por adentro de la
-# pierna hasta la entrepierna. Alto total: 8 → 434 (≈ 7,5 cabezas de 57).
-# Marcas de altura: mentón 65, pezones 120, ombligo 176, entrepierna 238,
-# rodilla 322, tobillo 414.
-MEDIA_SILUETA = [
-    (100, 8),
-    (109.4, 9.6),
-    (116.8, 14.2),
-    (121, 22.4),
-    (122.2, 32),
-    (121.6, 41),
-    (119.8, 48.6),
-    (116.6, 55.4),
-    (112.4, 60.6),
-    (108.8, 63.8),
-    # cuello
-    (109, 68),
-    (110.2, 73.6),
-    # trapecio hacia el hombro
-    (115.6, 78.2),
-    (123.6, 81),
-    (131.4, 83.4),
-    (137, 86.6),
-    # (el hombro y el brazo son un trazo aparte; el tronco sigue por el costado)
-    (139.6, 96),
-    (140, 108),
-    (138.8, 121),
-    (136.2, 135),
-    (133.4, 149),
-    (132, 161),
-    # cintura → cadera
-    (132.6, 172),
-    (135.4, 186),
-    (138.6, 200),
-    (140.2, 214),
-    # muslo por afuera
-    (139.8, 230),
-    (138, 250),
-    (135, 271),
-    (131.6, 292),
-    (128.8, 306),
-    # rodilla
-    (127.2, 316),
-    (126.6, 326),
-    (127.2, 335),
-    # pantorrilla: el gemelo externo abulta alto
-    (129.2, 347),
-    (129.4, 359),
-    (127.4, 373),
-    (124, 389),
-    (120.8, 403),
-    # tobillo y pie, apenas girado hacia afuera
-    (119.4, 412),
-    (120.6, 419),
-    (124, 425),
-    (127, 429.6),
-    (126, 433.4),
-    (118.6, 434.4),
-    (111.4, 434),
-    (107, 432),
-    (105.8, 426.6),
-    (106.2, 419),
-    # por adentro de la pierna, subiendo: el gemelo interno abulta más abajo
-    (106.8, 410),
-    (107.4, 397),
-    (106.4, 381),
-    (104.8, 364),
-    (104.6, 348),
-    (105.6, 336),
-    (105.8, 325),
-    (104.8, 315),
-    (104.4, 301),
-    (104.2, 287),
-    (103.6, 271),
-    (102.6, 256),
-    (101.2, 244.6),
-    (100, 241),
-]
-
-# El brazo derecho en postura A: deltoides, bíceps, codo a la altura de la
-# cintura, antebrazo que abulta cerca del codo y se afina hacia la muñeca.
-BRAZO = [
-    (135, 91, 10.4),
-    (139.4, 99, 11.2),
-    (143.4, 111, 10),
-    (146.6, 124, 9.2),
-    (149.4, 139, 8.4),
-    (152, 152, 7.6),
-    (153.6, 161, 7.1),
-    (156.4, 174, 7.9),
-    (159.8, 190, 7),
-    (163.4, 205, 5.8),
-    (166.4, 218, 4.7),
-]
-# La mano, palma al frente: palma, dedos juntos y el pulgar hacia afuera.
-PALMA = [(167.2, 222, 5.4), (169.4, 231, 6.8), (171, 241, 6.6), (172, 249, 5.4)]
-DEDOS = [(172, 249, 5.2), (172.6, 257, 4.2), (172.6, 263, 3)]
-PULGAR = [(172, 226, 3.6), (175.6, 234, 3), (177.6, 240.4, 2.4), (177.8, 243.6, 1.9)]
-
-
-def figura_entera(bandas=None):
-    derecha = catmull_rom(escalar_silueta(MEDIA_SILUETA, bandas), pasos=10)
-    izquierda = list(reversed(espejo(derecha)))
-    tronco = Polygon(derecha + izquierda[1:-1]).buffer(0)
-
-    brazo = unary_union(
-        [
-            trazo(BRAZO),
-            suave(unary_union([trazo(PALMA), trazo(DEDOS)]), 1.2),
-            trazo(PULGAR),
-        ]
-    )
-    brazos = con_espejo(cerrar(brazo, 1.4))
-    cuerpo = cerrar(unary_union([tronco, brazos]), 2.8)
-    return cuerpo, brazos
-
-
-# ─── La cara (busto ampliado) ───────────────────────────────────────────────
-
-# Media cara derecha: coronilla, sien, pómulo, ángulo de la mandíbula, mentón.
-MEDIA_CARA = [
-    (100, 12),
-    (116.6, 13.6),
-    (131.4, 20.6),
-    (141.6, 33.4),
-    (146.4, 50),
-    (147.6, 68),
-    (146.6, 86),
-    (145, 102),
-    (141.6, 118),
-    (136.2, 132),
-    (128.4, 145),
-    (119, 155.4),
-    (108.6, 162.4),
-    (100, 164.6),
-]
-
-# La oreja derecha: hélice por afuera, lóbulo abajo, pegada entre ceja y nariz.
-OREJA = [(144, 80), (150.4, 74.4), (157, 76.4), (159.4, 86), (158, 99), (154, 110), (149.6, 118), (145, 118.6), (142.6, 112)]
-
-# El cuello y el arranque de los hombros, con la pendiente del trapecio.
-MEDIO_CUELLO = [
-    (100, 150),
-    (123.6, 146),
-    (125, 162),
-    (127, 178),
-    (132.4, 190),
-    (146, 198),
-    (164, 204.4),
-    (180, 211),
-    (190.4, 221),
-    (195, 238),
-]
-
-
-def figura_cara():
-    derecha = catmull_rom(MEDIA_CARA, pasos=12)
-    cara = Polygon(derecha + list(reversed(espejo(derecha)))[1:-1]).buffer(0)
-    oreja = Polygon(catmull_rom(OREJA, pasos=10, cerrada=True)).buffer(0)
-    orejas = con_espejo(oreja)
-    media = catmull_rom(MEDIO_CUELLO, pasos=10)
-    cuello = Polygon(media + [(195, 240), (5, 240)] + list(reversed(espejo(media)))).buffer(0)
-    cabeza = unary_union([cara, orejas])
-    return cerrar(unary_union([cabeza, cuello]), 2), cara, orejas, cuello
-
-
-# ─── Celdas de cada vista ───────────────────────────────────────────────────
-
-INF = 1000
+def simetrica(media, cx=REF_CX):
+    """Una costura simétrica a partir de su mitad izquierda (x ≤ cx)."""
+    return media + [(2 * cx - x, y) for x, y in reversed(media[:-1])]
 
 
 def banda(y0, y1):
     return box(-INF, y0, INF, y1)
+
+
+def sobre(curva):
+    """Todo lo que queda por ENCIMA de una costura (y crece hacia abajo).
+
+    La costura es una curva de izquierda a derecha; se estira hasta los bordes
+    del plano para que corte la figura de lado a lado.
+    """
+    c = list(curva)
+    return Polygon([(-INF, c[0][1])] + c + [(INF, c[-1][1]), (INF, -INF), (-INF, -INF)]).buffer(0)
+
+
+def elipse(cx, cy, rx, ry):
+    return Polygon([(cx + rx * math.cos(t), cy + ry * math.sin(t)) for t in np.linspace(0, 2 * math.pi, 64)])
+
+
+def poligonos(geom):
+    if geom.is_empty:
+        return []
+    if isinstance(geom, Polygon):
+        return [geom]
+    if isinstance(geom, MultiPolygon):
+        return list(geom.geoms)
+    return [g for g in getattr(geom, "geoms", []) if isinstance(g, Polygon)]
+
+
+def tramos(figura, y, x_min=-INF, x_max=INF):
+    """Los tramos (x0, x1) de la figura cortada por la horizontal `y`."""
+    corte = figura.intersection(LineString([(x_min, y), (x_max, y)]))
+    partes = [corte] if isinstance(corte, LineString) else list(getattr(corte, "geoms", []))
+    return sorted((min(p.xy[0]), max(p.xy[0])) for p in partes if isinstance(p, LineString) and p.length > 0.3)
+
+
+def interpolar(x, tabla):
+    xs, ys = zip(*tabla)
+    if x <= xs[0]:
+        return ys[0] + (x - xs[0]) * (ys[1] - ys[0]) / (xs[1] - xs[0])
+    if x >= xs[-1]:
+        return ys[-1] + (x - xs[-1]) * (ys[-1] - ys[-2]) / (xs[-1] - xs[-2])
+    return float(np.interp(x, xs, ys))
 
 
 def repartir(figura, celdas):
@@ -399,267 +199,280 @@ def repartir(figura, celdas):
     return zonas
 
 
-def sobre(puntos):
-    """Todo lo que queda por ENCIMA de una costura (y crece hacia abajo).
+# ─── Lectura del render ────────────────────────────────────────────────────
 
-    La costura es una curva de izquierda a derecha; se estira hasta los bordes
-    del plano para que corte la figura de lado a lado.
+
+def silueta(alfa: np.ndarray, px_por_unidad: float):
+    """El contorno de la máscara alfa, en unidades del viewBox (par-impar)."""
+    contornos = measure.find_contours(np.pad(alfa, 1), 0.5)
+    figura = Polygon()
+    for c in sorted(contornos, key=len, reverse=True):
+        if len(c) < 12:
+            continue
+        pol = Polygon([((x - 1) / px_por_unidad, (y - 1) / px_por_unidad) for y, x in c]).buffer(0)
+        if pol.area * px_por_unidad**2 < 30:
+            continue
+        figura = figura.symmetric_difference(pol)
+    return figura.simplify(0.15, preserve_topology=True).buffer(0)
+
+
+class Vista:
+    """Una vista del render: su silueta, su encuadre y sus puntos anatómicos."""
+
+    def __init__(self, render: Path, sexo: str, vista: str, datos: dict):
+        self.vista = vista
+        self.png = render / datos["image"]
+        self.ancho, self.alto = datos["viewBox"]
+        self.cx = self.ancho / 2
+        self.marcas = {k: tuple(v) for k, v in datos["landmarks"].items()}
+        imagen = Image.open(self.png)
+        self.px_por_unidad = imagen.width / self.ancho
+        alfa = np.asarray(imagen.getchannel("A"), dtype=np.float32) / 255.0
+        self.figura = silueta(alfa, self.px_por_unidad)
+
+    @property
+    def viewbox(self) -> str:
+        return f"0 0 {num(self.ancho)} {num(self.alto)}"
+
+    def lado(self, nombre: str, signo: float):
+        """El punto `l-`/`r-` que cae del lado `signo` del eje en esta vista."""
+        for prefijo in ("l-", "r-"):
+            p = self.marcas[prefijo + nombre]
+            if (p[0] - self.cx) * signo > 0:
+                return p
+        raise KeyError(nombre)
+
+    def media(self, nombre: str):
+        a, b = self.marcas["l-" + nombre], self.marcas["r-" + nombre]
+        return ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+
+    def medio_ancho_tronco(self, y: float) -> float:
+        for x0, x1 in tramos(self.figura, y):
+            if x0 <= self.cx <= x1:
+                return (x1 - x0) / 2
+        return 0.0
+
+
+# ─── Traslado de la lámina al maniquí ──────────────────────────────────────
+
+
+class Traslado:
+    """Lleva coordenadas de la lámina de referencia al viewBox del render."""
+
+    def __init__(self, v: Vista):
+        minx, miny, maxx, maxy = v.figura.bounds
+        ojos_y = v.media("eye")[1]
+        clavicula_y = v.media("clavicle")[1]
+        # El mentón de la lámina es donde arranca el cuello: el tramo más
+        # angosto entre los ojos y las clavículas.
+        candidatos = np.arange(ojos_y + 4, clavicula_y, 0.25)
+        menton = min(candidatos, key=v.medio_ancho_tronco)
+        pezon = v.media("nipple")[1]
+        entrepierna = self._entrepierna(v)
+        ombligo = pezon + (entrepierna - pezon) * (176 - 120) / (238 - 120)
+        marcas = {
+            "coronilla": miny,
+            "menton": menton,
+            "pezon": pezon,
+            "ombligo": ombligo,
+            "entrepierna": entrepierna,
+            "rodilla": v.media("knee")[1],
+            "tobillo": v.media("ankle")[1],
+            "planta": maxy,
+        }
+        self.tabla_y = sorted((REF_MARCAS[k], marcas[k]) for k in REF_MARCAS)
+        self.cx = v.cx
+        self.escalas = [(yr, v.medio_ancho_tronco(self.y(yr)) / ancho) for yr, ancho in REF_MEDIO_ANCHO]
+        self.marcas = marcas
+
+    @staticmethod
+    def _entrepierna(v: Vista) -> float:
+        y = v.marcas["pelvis"][1]
+        while y < v.marcas["l-knee"][1]:
+            if v.medio_ancho_tronco(y) == 0.0:
+                return y
+            y += 0.25
+        raise SystemExit("no se encontró la entrepierna en la silueta")
+
+    def y(self, y_ref: float) -> float:
+        return interpolar(y_ref, self.tabla_y)
+
+    def escala_x(self, y_ref: float) -> float:
+        return float(np.interp(y_ref, *zip(*self.escalas)))
+
+    def __call__(self, puntos):
+        return [(self.cx + (x - REF_CX) * self.escala_x(y), self.y(y)) for x, y in puntos]
+
+    def costura(self, media):
+        return catmull_rom(self(simetrica(media)), pasos=10)
+
+
+# ─── Brazos ────────────────────────────────────────────────────────────────
+
+
+def brazo(v: Vista, signo: float):
+    """El brazo de un lado, entero, más la altura de su axila.
+
+    La axila es la primera horizontal, bajando desde el hombro, en la que la
+    figura de ese lado se parte en dos tramos (tronco y brazo). Debajo, el
+    brazo es la parte conexa que no llega al eje; arriba, lo que queda por
+    afuera de la recta que sube de la axila hacia la punta del hombro.
     """
-    c = catmull_rom(puntos, pasos=10)
-    return Polygon([(-INF, c[0][1])] + c + [(INF, c[-1][1]), (INF, -INF), (-INF, -INF)]).buffer(0)
+    hombro = v.lado("shoulder", signo)
+    codo = v.lado("elbow", signo)
+    lado = box(v.cx, -INF, INF, INF) if signo > 0 else box(-INF, -INF, v.cx, INF)
+    y = hombro[1]
+    while y < codo[1]:
+        # Del lado elegido: el tronco es el tramo que toca el eje; el hueco de
+        # la axila, el que lo separa del tramo siguiente hacia afuera.
+        de_este_lado = tramos(v.figura.intersection(lado), y)
+        if len(de_este_lado) >= 2:
+            if signo > 0:
+                hueco_x = (de_este_lado[0][1] + de_este_lado[1][0]) / 2
+            else:
+                hueco_x = (de_este_lado[-2][1] + de_este_lado[-1][0]) / 2
+            break
+        y += 0.25
+    else:
+        raise SystemExit(f"no se encontró la axila del lado {signo:+}")
+    axila = (hueco_x, y)
+    debajo = v.figura.intersection(lado).intersection(banda(axila[1], INF))
+    limite = (v.cx + hueco_x) / 2
+    partes_brazo = [p for p in poligonos(debajo) if (p.bounds[0] > limite if signo > 0 else p.bounds[2] < limite)]
+    tope = (hombro[0] - signo * 0.2 * abs(hombro[0] - v.cx), hombro[1] - 30)
+    # La recta axila → tope, prolongada, y el semiplano de afuera.
+    dx, dy = tope[0] - axila[0], tope[1] - axila[1]
+    largo = math.hypot(dx, dy)
+    ux, uy = dx / largo, dy / largo
+    a = (axila[0] - ux * INF, axila[1] - uy * INF)
+    b = (axila[0] + ux * INF, axila[1] + uy * INF)
+    afuera_x = INF * signo
+    semiplano = Polygon([a, b, (afuera_x, b[1]), (afuera_x, a[1])]).buffer(0)
+    arriba = v.figura.intersection(lado).intersection(banda(-INF, axila[1])).intersection(semiplano)
+    return unary_union([*partes_brazo, arriba]).buffer(0.01), axila[1]
 
 
-def simetrica(media):
-    """Una costura simétrica a partir de su mitad izquierda (x ≤ 100)."""
-    return media + [(2 * CX - x, y) for x, y in reversed(media[:-1])]
+def mano(v: Vista, signo: float, brazo_):
+    """La mano: lo que queda más allá de la muñeca, perpendicular al antebrazo."""
+    codo = np.array(v.lado("elbow", signo))
+    muneca = np.array(v.lado("hand", signo))
+    d = (muneca - codo) / np.linalg.norm(muneca - codo)
+    n = np.array([-d[1], d[0]])
+    base = muneca - 2.0 * d
+    semiplano = Polygon([base + n * INF, base - n * INF, base - n * INF + d * INF, base + n * INF + d * INF])
+    return brazo_.intersection(semiplano)
 
 
-def ambos_lados(puntos):
-    """Un polígono del lado derecho y su espejo."""
-    return con_espejo(Polygon(catmull_rom(puntos, pasos=10, cerrada=True)).buffer(0))
+# ─── Celdas de cada vista ──────────────────────────────────────────────────
 
-
-def elipse(cx, cy, rx, ry, giro=0.0):
-    c, s = math.cos(giro), math.sin(giro)
-    puntos = []
-    for i in range(64):
-        t = i * math.pi / 32
-        x, y = rx * math.cos(t), ry * math.sin(t)
-        puntos.append((cx + x * c - y * s, cy + x * s + y * c))
-    return Polygon(puntos)
-
-
-# El hombro: del cuello, por el trapecio, hasta bajo el deltoides. Una curva
-# y no un recuadro, así el corte con el pecho sigue la línea del músculo.
+# El hombro de la lámina: del cuello, por el trapecio, hasta bajo el deltoides.
 HOMBRO = [(113, 70), (190, 70), (190, 116), (148, 117), (141, 114), (134, 104), (126, 93), (116, 85)]
+# Las líneas de la ingle de la lámina: del hueso de la cadera al pubis.
+INGLE = [(74, 201), (84, 220), (94, 238), (100, 247)]
 
 
-def celdas_de_cuerpo(brazos, frente: bool, bandas=None):
-    hombros = unary_union([ambos_lados(HOMBRO), brazos.intersection(banda(-INF, 116))])
+def ambos_lados(t: Traslado, puntos, cx):
+    derecha = Polygon(catmull_rom(t(puntos), pasos=10, cerrada=True)).buffer(0)
+    espejo = Polygon([(2 * cx - x, y) for x, y in derecha.exterior.coords])
+    return unary_union([derecha, espejo])
+
+
+def celdas_de_cuerpo(v: Vista, frente: bool):
+    t = Traslado(v)
+    brazos, axilas, manos = [], [], []
+    for signo in (1.0, -1.0):
+        b, axila_y = brazo(v, signo)
+        brazos.append(b)
+        axilas.append(axila_y)
+        manos.append(mano(v, signo, b))
+    brazos_ = unary_union(brazos)
+    trapecios = ambos_lados(t, HOMBRO, v.cx)
+    hombros = unary_union([trapecios, brazos_.intersection(banda(-INF, max(axilas) + 2))])
     comunes = [
         ("hombros", hombros),
-        ("manos", brazos.intersection(banda(219, INF)).buffer(0.01)),
-        ("brazos", brazos.buffer(0.01)),
+        ("manos", unary_union(manos).buffer(0.01)),
+        ("brazos", brazos_),
     ]
     piernas = [
-        ("pies", banda(405, INF)),
-        ("rodillas", sobre(simetrica([(40, 344), (100, 344)])).difference(banda(-INF, 304))),
+        ("pies", banda(t.y(405), INF)),
+        ("rodillas", sobre(t.costura([(40, 344), (100, 344)])).difference(banda(-INF, t.y(304)))),
         ("piernas", banda(-INF, INF)),
     ]
     if frente:
-        return [
+        ingle = catmull_rom(t(simetrica(INGLE)), pasos=8)
+        return t, [
             # La mandíbula baja hacia el mentón.
-            ("cabeza", sobre(simetrica([(60, 50), (82, 57), (100, 66)]))),
-            ("garganta", sobre(simetrica([(60, 80), (84, 88), (100, 90)]))),
+            ("cabeza", sobre(t.costura([(60, 50), (82, 57), (100, 66)]))),
+            # El cuello, sin la pendiente del trapecio: esa es del hombro.
+            ("garganta", sobre(t.costura([(60, 80), (84, 88), (100, 90)])).difference(trapecios)),
             *comunes,
             # El arco de las costillas: alto en el esternón, bajo a los costados.
-            ("pecho", sobre(simetrica([(50, 150), (70, 146), (88, 134), (100, 129)]))),
-            ("estomago", sobre(simetrica([(50, 172), (76, 177), (100, 179)]))),
-            # Las líneas de la ingle: del hueso de la cadera al pubis.
-            (
-                "intima",
-                Polygon(
-                    catmull_rom(
-                        escalar_silueta(simetrica([(74, 201), (84, 220), (94, 238), (100, 247)]), bandas),
-                        pasos=8,
-                    )
-                    + [(100, 201)]
-                ).buffer(0),
-            ),
-            ("abdomen", sobre(simetrica([(40, 202), (74, 201), (100, 201)]))),
-            ("caderas", banda(-INF, 252)),
+            ("pecho", sobre(t.costura([(50, 150), (70, 146), (88, 134), (100, 129)]))),
+            ("estomago", sobre(t.costura([(50, 172), (76, 177), (100, 179)]))),
+            ("intima", Polygon(ingle + [(v.cx, t.y(201))]).buffer(0)),
+            ("abdomen", sobre(t.costura([(40, 202), (74, 201), (100, 201)]))),
+            ("caderas", banda(-INF, t.y(252))),
             *piernas,
         ]
-    return [
-        # La nuca empieza donde termina el pelo.
-        ("cabeza", sobre(simetrica([(60, 54), (84, 56), (100, 58)]))),
-        ("nuca", sobre(simetrica([(60, 82), (84, 88), (100, 90)]))),
+    return t, [
+        ("cabeza", sobre(t.costura([(60, 54), (84, 56), (100, 58)]))),
+        ("nuca", sobre(t.costura([(60, 82), (84, 88), (100, 90)])).difference(trapecios)),
         *comunes,
-        ("espalda", sobre(simetrica([(40, 166), (100, 170)]))),
+        ("espalda", sobre(t.costura([(40, 166), (100, 170)]))),
         # La cresta de la cadera cierra la cintura.
-        ("rinones", sobre(simetrica([(40, 198), (70, 202), (100, 206)]))),
+        ("rinones", sobre(t.costura([(40, 198), (70, 202), (100, 206)]))),
         # El pliegue del glúteo.
-        ("gluteos", sobre(simetrica([(40, 238), (62, 248), (82, 256), (96, 252), (100, 245)]))),
+        ("gluteos", sobre(t.costura([(40, 238), (62, 248), (82, 256), (96, 252), (100, 245)]))),
         *piernas,
     ]
 
 
-# Los ojos: una almendra generosa alrededor de cada uno (párpados incluidos),
-# que es lo que se señala cuando «me arde el ojo».
-OJO_D = elipse(CX + 24, 91, 17.5, 11.5)
-NARIZ = [(95, 96), (105, 96), (109.4, 112), (114.2, 123), (111, 129.4), (100, 131.6), (89, 129.4), (85.8, 123), (90.6, 112)]
-BOCA = [(100, 136.4), (112, 136.4), (125, 142.6), (117, 151.6), (100, 154.4), (83, 151.6), (75, 142.6), (88, 136.4)]
+# La cara de referencia: ojos en (76, 91) y (124, 91).
+REF_NARIZ = [(95, 96), (105, 96), (109.4, 112), (114.2, 123), (111, 129.4), (100, 131.6), (89, 129.4), (85.8, 123), (90.6, 112)]
+REF_BOCA = [(100, 136.4), (112, 136.4), (125, 142.6), (117, 151.6), (100, 154.4), (83, 151.6), (75, 142.6), (88, 136.4)]
+# La línea de la mandíbula, de oreja a oreja pasando por el mentón.
+REF_MANDIBULA = [(54, 102), (58.4, 118), (63.8, 132), (71.6, 145), (81, 155.4), (91.4, 162.4), (100, 164.6)]
 
 
-def celdas_de_cara(cara, orejas, cuello):
-    ojos = con_espejo(OJO_D)
-    nariz = Polygon(catmull_rom(NARIZ, pasos=8, cerrada=True)).buffer(0)
-    boca = Polygon(catmull_rom(BOCA, pasos=8, cerrada=True)).buffer(0)
+def celdas_de_cara(v: Vista):
+    izq, der = sorted([v.marcas["l-eye"], v.marcas["r-eye"]])
+    k = (der[0] - izq[0]) / REF_DISTANCIA_OJOS
+    ojos_y = (izq[1] + der[1]) / 2
+
+    def t(puntos):
+        return [(v.cx + (x - REF_CX) * k, ojos_y + (y - REF_OJOS_Y) * k) for x, y in puntos]
+
+    ojos = unary_union([elipse(x, y, 0.365 * REF_DISTANCIA_OJOS * k, 0.24 * REF_DISTANCIA_OJOS * k) for x, y in (izq, der)])
+    nariz = Polygon(catmull_rom(t(REF_NARIZ), pasos=8, cerrada=True)).buffer(0)
+    # La boca del maniquí cae un poco más abajo que la de la lámina.
+    boca = Polygon(catmull_rom(t([(x, y + 3) for x, y in REF_BOCA]), pasos=8, cerrada=True)).buffer(0)
+    # Las orejas sobresalen del cráneo: lo que pasa el ancho máximo de la
+    # cabeza por encima de ellas, entre la ceja y el labio superior.
+    oreja_y0, oreja_y1 = t([(0, 74)])[0][1], t([(0, 124)])[0][1]
+    craneo = max(v.medio_ancho_tronco(y) for y in np.arange(t([(0, 30)])[0][1], oreja_y0 - 1, 0.25))
+    orejas = banda(oreja_y0, oreja_y1).difference(box(v.cx - craneo, -INF, v.cx + craneo, INF))
+    # La garganta es la columna del cuello, de la mandíbula a la clavícula; la
+    # pendiente del trapecio, a los costados, ya es hombro.
+    clavicula_y = v.media("clavicle")[1]
+    menton_y = t([(0, 164.6)])[0][1]
+    cuello_medio = min(v.medio_ancho_tronco(y) for y in np.arange(menton_y, clavicula_y, 0.25))
+    costura = catmull_rom(
+        simetrica([(v.cx - 40, clavicula_y + 6), (v.cx - 24, clavicula_y), (v.cx, clavicula_y - 2)], v.cx), pasos=10
+    )
+    # El hombro empieza donde el cuello se abre: más arriba, los costados del
+    # cuello (bajo la oreja) siguen siendo garganta.
+    hombro_y = next(y for y in np.arange(menton_y, clavicula_y, 0.25) if v.medio_ancho_tronco(y) > 1.4 * cuello_medio)
+    columna = box(v.cx - 1.15 * cuello_medio, -INF, v.cx + 1.15 * cuello_medio, INF)
+    cuello = sobre(costura).intersection(unary_union([columna, banda(-INF, hombro_y)]))
     return [
-        ("oidos", orejas.difference(cara)),
+        ("oidos", orejas),
         ("ojos", ojos),
         ("nariz", nariz.difference(ojos)),
         ("boca", boca.difference(nariz)),
-        ("cabeza", cara),
-        ("garganta", sobre(simetrica([(60, 200), (74, 192), (100, 190)]))),
+        ("cabeza", sobre(catmull_rom(t(simetrica(REF_MANDIBULA)), pasos=10))),
+        ("garganta", cuello),
         ("hombros", banda(-INF, INF)),
     ]
-
-
-# ─── Detalles de dibujo (no se pulsan) ──────────────────────────────────────
-
-
-def curva(puntos, pasos=8):
-    return catmull_rom(puntos, pasos=pasos)
-
-
-def por_lado(f):
-    """Aplica `f(s)` a los dos lados (s = 1 derecha, s = -1 izquierda)."""
-    salida = []
-    for s in (1, -1):
-        salida.extend(f(s))
-    return salida
-
-
-def detalles_frente():
-    def lado(s):
-        return [
-            # Esternocleidomastoideo: de detrás de la oreja al esternón.
-            curva([(CX + s * 8.6, 66), (CX + s * 6.4, 76), (CX + s * 3, 88)]),
-            # Clavícula, con su S.
-            curva([(CX + s * 5, 90.6), (CX + s * 13, 89.4), (CX + s * 22, 90.4), (CX + s * 31, 88.4)]),
-            # Borde del deltoides.
-            curva([(CX + s * 29, 92), (CX + s * 34, 102), (CX + s * 39.6, 113)]),
-            # Borde bajo del pectoral.
-            curva([(CX + s * 3, 121), (CX + s * 12, 126.4), (CX + s * 24, 125), (CX + s * 33, 116)]),
-            # Oblicuo, del costado a la cresta de la cadera.
-            curva([(CX + s * 30, 150), (CX + s * 27, 172), (CX + s * 25, 190)]),
-            # Pliegue del codo.
-            curva([(CX + s * 50.4, 160.4), (CX + s * 53.6, 162.4), (CX + s * 56.4, 161.6)], pasos=4),
-            # Dedos: tres rayas cortas en la mano.
-            curva([(CX + s * 70.2, 251), (CX + s * 70.4, 260)], pasos=2),
-            curva([(CX + s * 72.6, 251.4), (CX + s * 72.8, 261.6)], pasos=2),
-            curva([(CX + s * 75, 250.6), (CX + s * 74.8, 259)], pasos=2),
-            # Rótula.
-            curva([(CX + s * 10.6, 326), (CX + s * 11.2, 318), (CX + s * 16, 314.6), (CX + s * 20.8, 318), (CX + s * 21.2, 326)]),
-            # Canto de la tibia.
-            curva([(CX + s * 15.6, 344), (CX + s * 14.8, 372), (CX + s * 14.4, 398)], pasos=4),
-            # Dedos del pie.
-            curva([(CX + s * 13.4, 430.6), (CX + s * 13.6, 434)], pasos=2),
-            curva([(CX + s * 17.8, 430.6), (CX + s * 18.2, 434)], pasos=2),
-        ]
-
-    trazos = por_lado(lado)
-    # Línea alba, del esternón al ombligo, apenas insinuada.
-    trazos.append(curva([(CX, 130), (CX, 152), (CX, 170)], pasos=4))
-    # Ombligo.
-    trazos.append(
-        catmull_rom([(CX, 174.6), (CX + 1.8, 177), (CX, 179.8), (CX - 1.8, 177)], pasos=6, cerrada=True) + [(CX, 174.6)]
-    )
-    return trazos
-
-
-def detalles_espalda():
-    def lado(s):
-        return [
-            # Trapecio: de la nuca al acromion.
-            curva([(CX + s * 9, 72), (CX + s * 20, 82), (CX + s * 32, 88)]),
-            # Omóplato: el borde interno y la punta de abajo.
-            curva([(CX + s * 13, 100), (CX + s * 15.6, 117), (CX + s * 22, 131), (CX + s * 31, 121)]),
-            # Dorsal, del omóplato a la cintura.
-            curva([(CX + s * 34, 124), (CX + s * 30, 146), (CX + s * 22, 168)]),
-            # Hoyuelos lumbares.
-            curva([(CX + s * 6, 214), (CX + s * 8.4, 216.4), (CX + s * 10, 214)], pasos=4),
-            # Codo por detrás.
-            curva([(CX + s * 51, 161.6), (CX + s * 53.6, 164.4), (CX + s * 56.8, 162.6)], pasos=4),
-            # Nudillos: el dorso de la mano.
-            curva([(CX + s * 69, 250.6), (CX + s * 72, 252.4), (CX + s * 75.4, 250)], pasos=4),
-            # Hueco de la rodilla (poplíteo).
-            curva([(CX + s * 9, 322), (CX + s * 16, 325.6), (CX + s * 23.4, 322)]),
-            # Los dos gemelos.
-            curva([(CX + s * 16.4, 334), (CX + s * 16, 352), (CX + s * 15.6, 366)], pasos=4),
-            # Talón.
-            curva([(CX + s * 9.6, 424), (CX + s * 14, 428), (CX + s * 19.4, 424)]),
-        ]
-
-    trazos = por_lado(lado)
-    # Columna, de la nuca al sacro.
-    trazos.append(curva([(CX, 76), (CX, 150), (CX, 212)], pasos=4))
-    # Pliegue interglúteo.
-    trazos.append(curva([(CX, 224), (CX, 247)], pasos=2))
-    return trazos
-
-
-def detalles_cara():
-    def lado(s):
-        return [
-            # Párpado superior y línea del ojo.
-            catmull_rom(
-                [(CX + s * 13, 91), (CX + s * 18.6, 86.2), (CX + s * 26, 85), (CX + s * 33.6, 88.6), (CX + s * 36, 91), (CX + s * 25, 95.4)],
-                pasos=8,
-                cerrada=True,
-            )
-            + [(CX + s * 13, 91)],
-            # Pliegue del párpado.
-            curva([(CX + s * 15, 84.4), (CX + s * 24, 80.6), (CX + s * 34, 84)]),
-            # Hélice interna de la oreja.
-            curva([(CX + s * 49, 84), (CX + s * 53.4, 80.6), (CX + s * 56, 88), (CX + s * 54.4, 100), (CX + s * 50.6, 108)]),
-            # Surco de la nariz a la comisura.
-            curva([(CX + s * 12.6, 123), (CX + s * 16, 129.6), (CX + s * 18.4, 134)]),
-            # Esternocleidomastoideo.
-            curva([(CX + s * 22, 160), (CX + s * 16, 180), (CX + s * 8, 198)]),
-            # Clavícula.
-            curva([(CX + s * 8, 204), (CX + s * 30, 202), (CX + s * 56, 206)]),
-        ]
-
-    trazos = por_lado(lado)
-    # Dorso de la nariz y sus alas.
-    trazos.append(curva([(CX - 3, 98), (CX - 4.6, 112), (CX - 8.6, 121.6), (CX - 5.4, 126.4), (CX, 125.2), (CX + 5.4, 126.4), (CX + 8.6, 121.6)]))
-    # Comisura de los labios.
-    trazos.append(curva([(CX - 17, 143.4), (CX - 7, 142), (CX, 143), (CX + 7, 142), (CX + 17, 143.4)]))
-    # Mentón.
-    trazos.append(curva([(CX - 8, 158.4), (CX, 160), (CX + 8, 158.4)], pasos=4))
-    return trazos
-
-
-def rellenos_cara(cara):
-    """Formas tenues: el pelo, las cejas, los labios."""
-    # El pelo: la cabeza por encima de una línea de nacimiento con entradas.
-    nacimiento = simetrica([(40, 76), (54.4, 62), (60, 44), (72, 38), (86, 36.4), (100, 38.6)])
-    pelo = cara.buffer(1.4).intersection(sobre(nacimiento))
-    cejas = con_espejo(
-        Polygon(
-            catmull_rom(
-                [(CX + 12, 77.6), (CX + 22, 73), (CX + 33, 73.4), (CX + 38.4, 77), (CX + 33, 76.2), (CX + 22, 76.6), (CX + 13, 80.4)],
-                pasos=6,
-                cerrada=True,
-            )
-        ).buffer(0)
-    )
-    labios = Polygon(
-        catmull_rom(
-            [(CX - 17, 143.4), (CX - 9, 138.4), (CX - 3, 139.6), (CX, 138.2), (CX + 3, 139.6), (CX + 9, 138.4), (CX + 17, 143.4), (CX + 8, 150.6), (CX, 151.6), (CX - 8, 150.6)],
-            pasos=6,
-            cerrada=True,
-        )
-    ).buffer(0)
-    return [pelo, cejas, labios]
-
-
-def acentos_cara():
-    """Formas marcadas: iris y fosas nasales."""
-    iris = con_espejo(Point(CX + 24.6, 90.2).buffer(4.8, quad_segs=12))
-    fosas = con_espejo(elipse(CX + 4.6, 125.6, 2.4, 1.2, giro=0.35))
-    return [iris, fosas]
-
-
-def rellenos_cuerpo(cuerpo, frente: bool):
-    """El pelo, también en el cuerpo entero: sin él la cabeza era un huevo."""
-    if frente:
-        linea = simetrica([(70, 30), (80, 22), (90, 19), (100, 20)])
-        return [cuerpo.intersection(sobre(linea)).intersection(banda(-INF, 40))]
-    # De espaldas el pelo cubre la cabeza hasta la nuca.
-    return [cuerpo.intersection(sobre(simetrica([(70, 50), (86, 54), (100, 55)]))).intersection(banda(-INF, 60))]
 
 
 # ─── Salida ────────────────────────────────────────────────────────────────
@@ -668,16 +481,6 @@ def rellenos_cuerpo(cuerpo, frente: bool):
 def num(v):
     s = f"{v:.1f}"
     return s[:-2] if s.endswith(".0") else s
-
-
-def poligonos(geom):
-    if geom.is_empty:
-        return []
-    if isinstance(geom, Polygon):
-        return [geom]
-    if isinstance(geom, MultiPolygon):
-        return list(geom.geoms)
-    return [g for g in getattr(geom, "geoms", []) if isinstance(g, Polygon)]
 
 
 def anillo_a_d(coords):
@@ -701,18 +504,6 @@ def a_d(geom, tolerancia=0.2, minimo=4):
     return "".join(partes)
 
 
-def formas_a_d(formas):
-    return "".join(a_d(f, tolerancia=0.12, minimo=1) for f in formas)
-
-
-def trazos_a_d(trazos):
-    salida = []
-    for t in trazos:
-        pts = LineString(t).simplify(0.12).coords
-        salida.append("M" + " ".join(f"{num(x)} {num(y)}" for x, y in pts))
-    return "".join(salida)
-
-
 def centros(geom):
     """Un punto adentro de cada parte grande: donde va el marcador."""
     salida = []
@@ -730,65 +521,82 @@ def polo_de_inaccesibilidad(pol, paso=0.5):
     minx, miny, maxx, maxy = pol.bounds
     mejor, distancia = pol.representative_point(), -1.0
     borde = pol.boundary
-    y = miny
-    while y <= maxy:
-        x = minx
-        while x <= maxx:
+    for y in np.arange(miny, maxy + paso, paso):
+        for x in np.arange(minx, maxx + paso, paso):
             p = Point(x, y)
             if pol.contains(p):
                 d = borde.distance(p)
                 if d > distancia:
                     mejor, distancia = p, d
-            x += paso
-        y += paso
     return mejor
 
 
-def vistas_de(bandas, cara_vista):
-    """Frente y espalda con la proporción de `bandas` (`None` = neutra), más
-    la cara —que es la misma figura para los tres perfiles: no es lo que
-    distingue una silueta de otra acá (ver `BANDAS_DE_SEXO`)."""
-    cuerpo, brazos = figura_entera(bandas)
-    return [
-        {
-            "id": "frente",
-            "nombre": "Frente",
-            "viewBox": "0 0 200 440",
-            "figura": cuerpo,
-            "zonas": repartir(cuerpo, celdas_de_cuerpo(brazos, True, bandas)),
-            "detalles": detalles_frente(),
-            "rellenos": rellenos_cuerpo(cuerpo, True),
-            "acentos": [],
-        },
-        {
-            "id": "espalda",
-            "nombre": "Espalda",
-            "viewBox": "0 0 200 440",
-            "figura": cuerpo,
-            "zonas": repartir(cuerpo, celdas_de_cuerpo(brazos, False, bandas)),
-            "detalles": detalles_espalda(),
-            "rellenos": rellenos_cuerpo(cuerpo, False),
-            "acentos": [],
-        },
-        cara_vista,
-    ]
+def publicar_imagen(v: Vista, perfil: str, id_vista: str) -> str:
+    nombre = f"{SEXOS[perfil]}-{VISTAS[id_vista]}.webp"
+    densidad = DENSIDAD_WEBP[id_vista]
+    imagen = Image.open(v.png).convert("RGBA")
+    tamano = (round(v.ancho * densidad), round(v.alto * densidad))
+    imagen.resize(tamano, Image.LANCZOS).save(IMAGENES / nombre, "WEBP", quality=CALIDAD_WEBP, method=6)
+    return f"{URL_IMAGENES}/{nombre}"
 
 
-def construir():
-    """Las vistas de los tres perfiles de sexo: `neutro`, `masculino` y
-    `femenino` (ver `BANDAS_DE_SEXO`). La cara se arma una sola vez."""
-    cara_fig, cara, orejas, cuello = figura_cara()
-    cara_vista = {
-        "id": "cara",
-        "nombre": "Cara",
-        "viewBox": "0 0 200 240",
-        "figura": cara_fig,
-        "zonas": repartir(cara_fig, celdas_de_cara(cara, orejas, cuello)),
-        "detalles": detalles_cara(),
-        "rellenos": rellenos_cara(cara),
-        "acentos": acentos_cara(),
-    }
-    return {clave: vistas_de(bandas, cara_vista) for clave, bandas in BANDAS_DE_SEXO.items()}
+COLORES = ["#e4572e", "#29335c", "#f3a712", "#669bbc", "#a8c686", "#8e44ad", "#16a085", "#c0392b"]
+
+
+def superponer(v: Vista, zonas, destino: Path):
+    """La prueba de calce: las zonas delineadas sobre el render."""
+    base = Image.new("RGBA", Image.open(v.png).size, (247, 245, 241, 255))
+    base.alpha_composite(Image.open(v.png).convert("RGBA"))
+    s = v.px_por_unidad
+    # Una capa por zona: dibujar todas en la misma capa RGBA reemplaza los
+    # píxeles en vez de mezclarlos, y la cabeza tapaba ojos, nariz y boca.
+    for i, (zid, geom) in enumerate(zonas):
+        color = COLORES[i % len(COLORES)]
+        rgb = tuple(int(color[j : j + 2], 16) for j in (1, 3, 5))
+        capa = Image.new("RGBA", base.size, (0, 0, 0, 0))
+        dibujo = ImageDraw.Draw(capa)
+        for pol in poligonos(geom):
+            dibujo.polygon([(x * s, y * s) for x, y in pol.exterior.coords], fill=rgb + (46,))
+            for hueco in pol.interiors:
+                dibujo.polygon([(x * s, y * s) for x, y in hueco.coords], fill=(0, 0, 0, 0))
+            for anillo in (pol.exterior, *pol.interiors):
+                dibujo.line([(x * s, y * s) for x, y in anillo.coords], fill=rgb + (255,), width=max(2, round(s * 0.5)))
+        for x, y in centros(geom):
+            dibujo.ellipse((x * s - 6, y * s - 6, x * s + 6, y * s + 6), fill=rgb + (255,))
+            dibujo.text((x * s + 9, y * s - 7), zid, fill=(20, 20, 20, 255))
+        base.alpha_composite(capa)
+    base.convert("RGB").save(destino, quality=88)
+
+
+def construir(render: Path, overlay: Path | None):
+    manifiesto = json.loads((render / "landmarks.json").read_text())
+    IMAGENES.mkdir(parents=True, exist_ok=True)
+    if overlay:
+        overlay.mkdir(parents=True, exist_ok=True)
+    perfiles = {}
+    for perfil, sexo in SEXOS.items():
+        vistas = []
+        for id_vista, nombre in VISTAS.items():
+            v = Vista(render, sexo, id_vista, manifiesto[sexo][nombre])
+            if id_vista == "cara":
+                zonas = repartir(v.figura, celdas_de_cara(v))
+            else:
+                _t, celdas = celdas_de_cuerpo(v, frente=id_vista == "frente")
+                zonas = repartir(v.figura, celdas)
+            if overlay:
+                superponer(v, zonas, overlay / f"{sexo}-{nombre}.png")
+            vistas.append(
+                {
+                    "id": id_vista,
+                    "nombre": NOMBRE_VISTA[id_vista],
+                    "viewBox": v.viewbox,
+                    "image": publicar_imagen(v, perfil, id_vista),
+                    "figura": v.figura,
+                    "zonas": zonas,
+                }
+            )
+        perfiles[perfil] = vistas
+    return perfiles
 
 
 NOMBRE_EXPORT = {
@@ -807,16 +615,11 @@ def ts(perfiles):
             lineas.append(f"    id: '{v['id']}',")
             lineas.append(f"    nombre: '{v['nombre']}',")
             lineas.append(f"    viewBox: '{v['viewBox']}',")
-            lineas.append(f"    contorno: '{a_d(v['figura'])}',")
-            lineas.append(f"    detalles: '{trazos_a_d(v['detalles'])}',")
-            lineas.append(f"    rellenos: '{formas_a_d(v['rellenos'])}',")
-            lineas.append(f"    acentos: '{formas_a_d(v['acentos'])}',")
+            lineas.append(f"    image: '{v['image']}',")
             lineas.append("    zonas: [")
             # El orden del tabulador: de arriba abajo por el centro de cada
             # zona y, a la misma altura, de izquierda a derecha.
-            for zid, geom in sorted(
-                v["zonas"], key=lambda z: (round(z[1].centroid.y / 4), z[1].centroid.x)
-            ):
+            for zid, geom in sorted(v["zonas"], key=lambda z: (round(z[1].centroid.y / 4), z[1].centroid.x)):
                 d = a_d(geom)
                 if not d:
                     continue
@@ -833,30 +636,31 @@ def ts(perfiles):
 
 
 ENCABEZADO = """/* ============================================================================
-    La silueta del cuerpo y sus zonas, para señalar dónde duele con el dedo o
-    con el teclado (P-01, doctor 22/09/2026).
+    El maniquí del cuerpo y sus zonas, para señalar dónde duele con el dedo o
+    con el teclado (P-01, doctor 22/09/2026; maniquí 3D, 2026-10-23).
 
-    **ARCHIVO GENERADO** por `scripts/gen-body-zones.py`. No se edita a mano:
-    se cambia el script y se vuelve a correr (el porqué del método está en su
-    cabecera). A mano, zona por zona, la figura nunca llegó a parecer una
-    persona; generada, es un solo contorno partido en celdas.
+    **ARCHIVO GENERADO** por `scripts/gen-body-zones.py` a partir del render
+    de `scripts/render-body-map.py`. No se edita a mano: se cambia el script y
+    se vuelve a correr (el método está en las cabeceras de los dos).
 
     ## Qué es y qué no es este dato
 
-    Un dibujo esquemático hecho para este control, no una lámina anatómica: es
-    lo que la regla 97 llama dato sintético declarado. No representa ningún
-    dato del mundo y no tiene fuente que citar.
+    Un maniquí clínico renderizado (malla de MakeHuman, CC0) con las zonas
+    calzadas sobre su silueta. No es una lámina anatómica ni representa a
+    ninguna persona: es lo que la regla 97 llama dato sintético declarado.
 
     ## Las tres vistas
 
-    - **Frente** y **espalda**: la figura entera en postura A (≈ 7,5 cabezas,
-      codo a la altura de la cintura, muñeca a la de la cadera, rodilla a
-      media pierna). Cada vista reparte la misma figura en sus propias zonas:
-      al frente el pecho, el estómago y la zona íntima; atrás la nuca, la
-      espalda, los riñones y los glúteos.
+    - **Frente** y **espalda**: la figura entera en postura A. Cada vista
+      reparte la misma figura en sus propias zonas: al frente el pecho, el
+      estómago y la zona íntima; atrás la nuca, la espalda, los riñones y los
+      glúteos.
     - **Cara**: un busto ampliado. Ojos, oídos, nariz y boca a escala de
       cuerpo entero miden menos que un objetivo táctil (WCAG 2.2 · 2.5.8), así
       que tienen su propia vista.
+
+    `image` es el render de la vista, en el mismo `viewBox` que las zonas:
+    la imagen va debajo y las zonas, transparentes, encima.
 
     ## Por qué el `id` es el de la tabla de zonas
 
@@ -871,13 +675,10 @@ ENCABEZADO = """/* =============================================================
 
     ## Tres proporciones de cuerpo (P-04, 2026-09-25)
 
-    `VISTAS_DEL_CUERPO` es la figura neutra de siempre. `_MASCULINA` y
-    `_FEMENINA` son la misma figura con hombro, cintura y cadera escalados
-    (`BANDAS_DE_SEXO` en el script): quien monta el organismo (`BodyMap`)
-    elige una de las tres según el sexo del paciente, o la neutra si no lo
-    sabe. La cabeza, los brazos, las piernas de la rodilla para abajo y la
-    vista de la cara son **la misma figura en las tres**: no es lo que
-    distingue una silueta de otra en este dibujo esquemático.
+    `VISTAS_DEL_CUERPO` es el maniquí neutro (la malla base de MakeHuman, sin
+    targets de género); `_MASCULINA` y `_FEMENINA` son los maniquíes de cada
+    sexo. Quien monta el organismo (`BodyMap`) elige uno según el sexo del
+    paciente, o el neutro si no lo sabe.
     ========================================================================== */
 
 /** Una zona dibujable: su `id` (el de la tabla de zonas) y su contorno. */
@@ -902,47 +703,20 @@ export interface VistaDelCuerpo {
   /** Rótulo del selector de vista. */
   readonly nombre: string;
   readonly viewBox: string;
-  /** El contorno entero, que se pinta debajo de las zonas. */
-  readonly contorno: string;
-  /** Líneas de dibujo (clavículas, columna, rasgos). No se pulsan. */
-  readonly detalles: string;
-  /** Formas llenas y tenues (pelo, cejas, labios). No se pulsan. */
-  readonly rellenos: string;
-  /** Formas llenas y marcadas (iris, fosas nasales). No se pulsan. */
-  readonly acentos: string;
+  /** El render del maniquí en esta vista (WebP con fondo transparente). */
+  readonly image: string;
   readonly zonas: readonly SiluetaDeZona[];
 }
 """
 
 
-def preview(perfiles):
-    colores = ["#f6c6c6", "#f6dcc0", "#f3efb8", "#cdeec2", "#bfe6e6", "#c6d6f6", "#dcc8f4", "#f4c6e4"]
-    partes = []
-    for clave in ("neutro", "masculino", "femenino"):
-        for v in perfiles[clave]:
-            paths = "".join(
-                f'<path d="{a_d(g)}" fill="{colores[i % len(colores)]}" stroke="#fff" stroke-width="1.2"><title>{z}</title></path>'
-                for i, (z, g) in enumerate(v["zonas"])
-            )
-            marcas = "".join(
-                f'<circle cx="{x}" cy="{y}" r="2" fill="#c00"/>' for _z, g in v["zonas"] for x, y in centros(g)
-            )
-            partes.append(
-                f'<figure><svg viewBox="{v["viewBox"]}" width="320"><path d="{a_d(v["figura"])}" fill="#ddd" stroke="#666" stroke-width="2"/>'
-                f'{paths}<path d="{formas_a_d(v["rellenos"])}" fill="#8a8a8a" opacity=".55"/>'
-                f'<path d="{formas_a_d(v["acentos"])}" fill="#444"/>'
-                f'<path d="{trazos_a_d(v["detalles"])}" fill="none" stroke="#777" stroke-width="0.8" stroke-linecap="round"/>{marcas}</svg>'
-                f"<figcaption>{clave} · {v['id']}</figcaption></figure>"
-            )
-    return '<body style="display:flex;flex-wrap:wrap;gap:24px;font:14px sans-serif;background:#fff">' + "".join(partes) + "</body>"
-
-
 if __name__ == "__main__":
-    perfiles = construir()
+    p = argparse.ArgumentParser()
+    p.add_argument("--render", required=True, type=Path)
+    p.add_argument("--overlay", type=Path, default=None)
+    args = p.parse_args()
+    perfiles = construir(args.render, args.overlay)
     DESTINO.write_text(ts(perfiles), encoding="utf-8", newline="\n")
     for clave, vistas in perfiles.items():
         for v in vistas:
             print(clave, v["id"], [(z, round(g.area)) for z, g in v["zonas"]])
-    if "--preview" in sys.argv:
-        salida = Path(sys.argv[sys.argv.index("--preview") + 1])
-        salida.write_text(preview(perfiles), encoding="utf-8")
