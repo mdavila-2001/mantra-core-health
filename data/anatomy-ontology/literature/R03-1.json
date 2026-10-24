@@ -3,21 +3,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En válvulas cardíacas fetales humanas se identificó un subtipo de célula intersticial que produce elastina y se ubica justo por debajo del endotelio valvular.",
+        "es": "Bajo el endotelio de las válvulas fetales humanas reside un subtipo de célula intersticial especializado en sintetizar elastina, identificado mediante secuenciación de ARN unicelular.",
         "cites": [
           "PMID:39196035"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Para sustituir una válvula cardíaca enferma suelen emplearse prótesis mecánicas o biológicas.",
+        "es": "Las prótesis mecánicas y biológicas, opciones habituales para reemplazar una válvula cardíaca, tienen limitaciones que la ingeniería tisular intenta superar.",
         "cites": [
           "PMID:26254880"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La calcificación es la principal causa de fracaso de las prótesis valvulares de origen tisular tratadas previamente con glutaraldehído.",
+        "es": "En las bioprótesis valvulares pretratadas con glutaraldehído, el principal motivo de fracaso es la calcificación.",
         "cites": [
           "PMID:3105321"
         ]
@@ -35,35 +35,35 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En el desarrollo, el corazón pasa de ser un tubo lineal a un órgano de cuatro cavidades mediante un proceso de plegamiento denominado looping.",
+        "es": "El plegamiento conocido como looping es el proceso por el que el tubo cardíaco lineal del embrión se convierte en un órgano de cuatro cavidades.",
         "cites": [
           "PMID:32673587"
         ]
       },
       {
         "aspect": "parts",
-        "es": "La disección muestra que el borde superior del foramen oval es un repliegue de las paredes auriculares, mientras que los tabiques sinusal y auriculoventricular son estructuras septales verdaderas.",
+        "es": "Según la disección, solo los tabiques sinusal y auriculoventricular son tabiques verdaderos; el borde superior del foramen oval, en cambio, es un pliegue de la propia pared auricular.",
         "cites": [
           "PMID:8876818"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En las raíces arteriales, el rasgo principal es la inserción semilunar de las valvas, disposición que la noción de anillo describe de forma imperfecta.",
+        "es": "Más que un anillo, lo que define a las raíces arteriales es la fijación en media luna de sus valvas.",
         "cites": [
           "PMID:8876818"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "El corazón se comunica en ambos sentidos con el encéfalo a través del sistema nervioso autónomo cardíaco, una red compuesta por neuronas y células gliales.",
+        "es": "El sistema nervioso autónomo cardíaco, formado por neuronas y glía, sostiene un diálogo bidireccional entre corazón y encéfalo que le permite adaptarse a las demandas fisiológicas.",
         "cites": [
           "PMID:41107549"
         ]
       },
       {
         "aspect": "function",
-        "es": "En un corazón sano, el intervalo entre latidos sucesivos varía de forma compleja y constante, lo que permite al sistema cardiovascular adaptarse con rapidez a exigencias físicas y psicológicas.",
+        "es": "Un corazón sano no late como un metrónomo: la variabilidad compleja de sus intervalos entre latidos le permite responder con rapidez a desafíos físicos y psicológicos.",
         "cites": [
           "PMID:29034226"
         ]
@@ -81,21 +81,21 @@
       },
       {
         "aspect": "clinical",
-        "es": "El desarrollo embrionario del esternón se ha utilizado para explicar el origen de la hendidura esternal congénita.",
+        "es": "La hendidura esternal congénita se ha intentado explicar a partir de cómo se forma el esternón en el embrión.",
         "cites": [
           "PMID:5485011"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Ante una hendidura esternal completa, un informe recomienda la corrección quirúrgica en el período neonatal, cuando el cierre directo del defecto aún es posible y evita reconstrucciones más complejas.",
+        "es": "Un informe de caso aconseja operar la hendidura esternal completa en el período neonatal, haya o no síntomas, porque durante el primer mes de vida basta un cierre simple y se evitan las reconstrucciones complejas que requieren los niños mayores.",
         "cites": [
           "PMID:7434274"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una serie de 15 pacientes con tuberculosis esternoclavicular confirmada, cinco presentaban afectación aislada del esternón, y la resonancia resultó útil para delimitar la extensión medular y de partes blandas.",
+        "es": "De 15 pacientes con tuberculosis de esternón y clavícula comprobada por anatomía patológica, cinco tenían afectación exclusiva del esternón; la resonancia fue útil para precisar la extensión de la lesión, sobre todo medular y de partes blandas.",
         "cites": [
           "PMID:11026712"
         ]
@@ -113,7 +113,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El pectoral menor suele originarse en las costillas tercera, cuarta y quinta, y se inserta en los bordes medial y superior de la parte anterior de la apófisis coracoides.",
+        "es": "Su inserción habitual es la parte anterior de la apófisis coracoides, en sus bordes medial y superior, y su origen suele estar en las costillas tercera a quinta.",
         "cites": [
           "PMID:30306210"
         ]
@@ -134,7 +134,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Un pectoral menor relativamente corto se acompaña de alteraciones de la cinemática escapular que se han vinculado con el pinzamiento del hombro.",
+        "es": "Se ha descrito que quienes tienen un pectoral menor relativamente corto muestran cambios en el movimiento de la escápula, cambios que se asocian al pinzamiento del hombro.",
         "cites": [
           "PMID:18434665"
         ]
@@ -152,14 +152,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La posición, el movimiento y la morfología del diafragma pueden valorarse mediante radiografía de tórax, fluoroscopia, tomografía computarizada y resonancia magnética.",
+        "es": "Radiografía y fluoroscopia, así como TC y RM, sirven para examinar la posición, la movilidad y la forma, normales o patológicas, del diafragma.",
         "cites": [
           "PMID:20112626"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el paciente crítico, la ecografía permite estimar el grosor del diafragma, su engrosamiento durante la contracción y su desplazamiento caudal.",
+        "es": "En cuidados intensivos, medir por ecografía el grosor del diafragma, su engrosamiento y su desplazamiento caudal parece factible y reproducible, aunque faltan estudios a gran escala en la práctica real.",
         "cites": [
           "PMID:31876624"
         ]
@@ -174,7 +174,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los síndromes de diafragma poroso comparten un defecto diafragmático que suele manifestarse con derrame pleural, neumotórax, hemotórax o empiema.",
+        "es": "Bajo el nombre de síndromes de diafragma poroso se agrupan cuadros dispares unidos por un defecto diafragmático, a través del cual suelen producirse derrame pleural, neumotórax, hemotórax o empiema.",
         "cites": [
           "PMID:9619316"
         ]
@@ -206,7 +206,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Se considera dilatación aneurismática un aumento del 50 % sobre el diámetro normal, y la dilatación de la aorta ascendente suele provocar insuficiencia valvular aórtica relevante aun con una válvula normal.",
+        "es": "Una aorta ascendente dilatada, que se califica de aneurismática cuando supera en un 50 % su diámetro normal, produce con frecuencia una insuficiencia aórtica significativa aunque la válvula sea normal.",
         "cites": [
           "PMID:10391320"
         ]
@@ -231,21 +231,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Del arco aórtico nacen normalmente tres ramas: el tronco braquiocefálico, la arteria carótida común izquierda y la arteria subclavia izquierda.",
+        "es": "El tronco braquiocefálico, la carótida común izquierda y la subclavia izquierda son las tres ramas que el arco aórtico emite de forma habitual.",
         "cites": [
           "PMID:26393115"
         ]
       },
       {
         "aspect": "parts",
-        "es": "El patrón clásico de ramificación se ha descrito en el 63,5 %-89,4 % de los casos; la variante más frecuente es el tronco común braquiocefálico y carotídeo izquierdo, seguida del origen directo de la arteria vertebral izquierda.",
+        "es": "Según la bibliografía, entre el 63,5 % y el 89,4 % de los casos presenta el patrón clásico; entre las variantes predomina el tronco común del braquiocefálico con la carótida común izquierda y, en segundo lugar, el nacimiento de la vertebral izquierda directamente del arco.",
         "cites": [
           "PMID:26393115"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 100 arcos aórticos de cadáveres adultos se hallaron tres ramas en el 77,0 %, dos en el 12,0 % y cuatro en el 11,0 %; el tronco braquiocefálico fue la rama de mayor calibre.",
+        "es": "En 100 arcos aórticos de cadáveres de 40 a 70 años se hallaron tres ramas en el 77,0 %, dos en el 12,0 % y cuatro en el 11,0 %; en la mayoría de los patrones, el tronco braquiocefálico fue la rama de mayor calibre.",
         "cites": [
           "PMID:16295713"
         ]
@@ -284,7 +284,7 @@
       },
       {
         "aspect": "innervation",
-        "es": "En una disección de 15 mamas de cadáver, los nervios del pezón discurrían en la fascia superficial y atravesaban el tejido subdérmico de la areola hasta formar un plexo bajo ella.",
+        "es": "Según la disección de 15 mamas de cadáver, los nervios destinados al pezón forman un plexo subareolar tras recorrer la fascia superficial y el tejido subdérmico de la areola.",
         "cites": [
           "PMID:8785595"
         ]
@@ -298,21 +298,21 @@
       },
       {
         "aspect": "innervation",
-        "es": "Un ramo profundo de la división anterior del cuarto nervio cutáneo lateral alcanzaba el pezón en 11 de 12 mamas femeninas, pero no era el único aporte al plexo subareolar.",
+        "es": "Aunque a veces se lo presenta como el nervio del pezón, el ramo profundo de la división anterior del cuarto nervio cutáneo lateral, hallado en 11 de 12 mamas femeninas, comparte el plexo subareolar con otros aportes.",
         "cites": [
           "PMID:8785595"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La secreción por el pezón es la tercera consulta mamaria más frecuente; aunque suele ser benigna, entre el 5 % y el 12 % de las secreciones patológicas se asocian con un tumor maligno subyacente.",
+        "es": "La mayoría de las secreciones por el pezón, tercer motivo de consulta mamaria, son benignas, pero una secreción patológica puede ocultar un tumor maligno en el 5 %-12 % de los casos.",
         "cites": [
           "PMID:37460358"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La reconstrucción del complejo areola-pezón constituye la etapa final de la reconstrucción mamaria.",
+        "es": "La reconstrucción mamaria culmina con la del complejo areola-pezón.",
         "cites": [
           "PMID:32560062"
         ]
@@ -323,35 +323,35 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El pulmón humano empieza a desarrollarse hacia la cuarta semana de gestación, cuando la yema traqueal brota del intestino anterior, y su maduración prosigue hasta la primera infancia.",
+        "es": "El desarrollo pulmonar arranca hacia la cuarta semana de gestación con la evaginación traqueal del intestino anterior y no concluye hasta la primera infancia.",
         "cites": [
           "PMID:26051046"
         ]
       },
       {
         "aspect": "function",
-        "es": "La compleja arquitectura pulmonar sostiene la captación de oxígeno y la eliminación de dióxido de carbono.",
+        "es": "Del intercambio gaseoso, es decir, la captación de oxígeno y la eliminación de dióxido de carbono, se encarga la compleja arquitectura del pulmón.",
         "cites": [
           "PMID:32356715"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el pulmón no expandible, el órgano no logra extenderse hasta la pared torácica porque una capa fibrosa restringe la pleura visceral e impide el contacto normal entre las hojas pleurales.",
+        "es": "La formación de una capa fibrosa sobre la pleura visceral es el mecanismo principal del pulmón no expandible, que no alcanza la pared torácica y deja sin aposición normal las dos hojas pleurales.",
         "cites": [
           "PMID:22749682"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El adenocarcinoma es el tipo histológico más frecuente de cáncer de pulmón.",
+        "es": "Entre los tipos histológicos de cáncer de pulmón, ninguno es tan común como el adenocarcinoma.",
         "cites": [
           "PMID:21252716"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La PET-TC con FDG es la principal técnica de estadificación en pacientes con cáncer de pulmón candidatos a cirugía o radioterapia con intención curativa.",
+        "es": "Cuando se plantea un tratamiento curativo, quirúrgico o con radioterapia definitiva, la estadificación del cáncer de pulmón se apoya ante todo en la PET-TC con FDG.",
         "cites": [
           "PMID:25829084"
         ]
@@ -442,35 +442,35 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "La válvula tricúspide es un aparato complejo situado entre la aurícula derecha y el ventrículo derecho.",
+        "es": "Entre la aurícula y el ventrículo derechos se interpone el aparato valvular tricuspídeo, una estructura compleja.",
         "cites": [
           "PMID:34838292"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Suele constar de tres valvas, anterior, posterior y septal, fijadas al anillo fibroso tricuspídeo y unidas a los músculos papilares por las cuerdas tendinosas.",
+        "es": "Por lo general lo forman tres valvas, anterior, posterior y septal, que se anclan en el anillo fibroso y se conectan con los músculos papilares mediante cuerdas tendinosas.",
         "cites": [
           "PMID:34838292"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 51 pacientes estudiados con ecocardiografía transesofágica tridimensional, las válvulas con dos valvas posteriores tenían un anillo posterior mayor que las de una sola (42,4 ± 13,5 frente a 30,7 ± 9,1 mm).",
+        "es": "En 51 pacientes operados de reparación tricuspídea y estudiados antes con ecocardiografía transesofágica tridimensional, el segmento anular de la valva posterior era mayor en las válvulas con dos valvas posteriores que en las de una sola (42,4 ± 13,5 frente a 30,7 ± 9,1 mm).",
         "cites": [
           "PMID:35640550"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La insuficiencia tricuspídea se origina sobre todo por dilatación del anillo valvular.",
+        "es": "La dilatación anular es el mecanismo predominante de la insuficiencia tricuspídea.",
         "cites": [
           "PMID:19470900"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Alrededor del 4 % de las personas de 75 años o más tiene una insuficiencia tricuspídea clínicamente relevante, y la forma primaria representa solo el 8-10 % de la enfermedad valvular tricuspídea.",
+        "es": "La insuficiencia tricuspídea clínicamente relevante afecta a cerca del 4 % de quienes tienen 75 años o más; la primaria, por anomalía del propio aparato valvular, solo se observa en el 8 %-10 % de los pacientes con valvulopatía tricuspídea.",
         "cites": [
           "PMID:34796878"
         ]
@@ -488,28 +488,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El llamado aparato mitral comprende la pared auricular, el anillo, las valvas, las cuerdas tendinosas, los músculos papilares y la pared libre del ventrículo izquierdo.",
+        "es": "El concepto de aparato mitral abarca, además de valvas y anillo, las cuerdas tendinosas, los músculos papilares, la pared auricular y la pared libre del ventrículo izquierdo.",
         "cites": [
           "PMID:31123911"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La enfermedad reumática sigue siendo en el mundo la primera causa de estenosis mitral.",
+        "es": "A escala mundial, la estenosis mitral sigue debiéndose ante todo a la enfermedad reumática.",
         "cites": [
           "PMID:28688022"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La insuficiencia mitral se clasifica en primaria, por lesión del propio aparato mitral, y secundaria, por cambios en la geometría del ventrículo izquierdo.",
+        "es": "Se distingue una insuficiencia mitral primaria, debida a lesiones del aparato mitral, de otra secundaria a la alteración geométrica del ventrículo izquierdo.",
         "cites": [
           "PMID:28688022"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En los países desarrollados, la insuficiencia mitral es la valvulopatía más común.",
+        "es": "Ninguna valvulopatía es tan común en los países desarrollados como la insuficiencia mitral.",
         "cites": [
           "PMID:31078185"
         ]
@@ -541,7 +541,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La implantación percutánea de válvula pulmonar se emplea ante insuficiencia pulmonar u obstrucción del tracto de salida del ventrículo derecho en pacientes seleccionados.",
+        "es": "En pacientes seleccionados con insuficiencia pulmonar u obstrucción del tracto de salida del ventrículo derecho, el implante percutáneo de válvula pulmonar es una terapia emergente.",
         "cites": [
           "PMID:20644013"
         ]
@@ -583,7 +583,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 25 fetos humanos de 6 a 9 semanas, el esbozo del manubrio se inició como un mesénquima interclavicular continuo con las clavículas en formación.",
+        "es": "Según el examen de 25 fetos de 6 a 9 semanas, el primer esbozo del manubrio es un mesénquima situado entre las clavículas en formación y continuo con ellas.",
         "cites": [
           "PMID:23165944"
         ]
@@ -604,7 +604,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Según ese estudio, el manubrio se desarrolla en una zona de confluencia de derivados de la cresta neural, la placa lateral y los somitas.",
+        "es": "Los autores proponen que en la formación del manubrio confluyen derivados de tres orígenes: cresta neural, placa lateral y somitas.",
         "cites": [
           "PMID:23165944"
         ]
@@ -615,7 +615,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "La apófisis xifoides es una pequeña prominencia ósea de la pared torácica anterior situada inmediatamente por debajo del cuerpo del esternón.",
+        "es": "Justo debajo del cuerpo esternal, en la pared torácica anterior, se encuentra la apófisis xifoides, un pequeño relieve óseo.",
         "cites": [
           "PMID:29098125"
         ]
@@ -654,28 +654,28 @@
       },
       {
         "aspect": "clinical",
-        "es": "El síndrome de costillas cortas y polidactilia es una displasia esquelética letal de herencia autosómica recesiva con costillas cortas e hipoplasia torácica.",
+        "es": "Costillas cortas con hipoplasia torácica caracterizan al síndrome de costillas cortas y polidactilia, una displasia esquelética letal que se hereda de forma autosómica recesiva.",
         "cites": [
           "PMID:15605271"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Mutaciones de NEK1 se identificaron como causa del tipo Majewski de ese síndrome.",
+        "es": "En dos familias, el mapeo por homocigosidad identificó mutaciones de NEK1 como una causa del tipo Majewski de ese síndrome.",
         "cites": [
           "PMID:21211617"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la reconstrucción autóloga de la microtia con técnica de Nagata, el cartílago costal se obtiene sin pericondrio para no deformar el tórax.",
+        "es": "Para evitar deformidades torácicas, la técnica de Nagata de reconstrucción autóloga de la microtia exige extraer el cartílago costal sin su pericondrio.",
         "cites": [
           "PMID:29153188"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El quiste óseo aneurismático costal es un tumor benigno de la pared torácica de presentación rara.",
+        "es": "Raro en la práctica quirúrgica, el quiste óseo aneurismático de costilla es un tumor benigno originado en la pared torácica.",
         "cites": [
           "PMID:29424198"
         ]
@@ -693,7 +693,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El cartílago costal humano, autólogo o en forma de aloinjerto irradiado, se usa ampliamente en cirugía reconstructiva y en rinoplastia de aumento del dorso.",
+        "es": "El cartílago costal humano se emplea ampliamente en cirugía reconstructiva, cada vez más como aloinjerto irradiado, y tanto la forma autóloga como la homóloga irradiada son opciones aceptadas en la rinoplastia de aumento.",
         "cites": [
           "PMID:36097422",
           "PMID:32077916"
@@ -733,14 +733,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En fibras de Purkinje humanas, la subunidad KChIP2 se expresa débilmente, mientras que DPP6 y la frecuenina (NCS-1) se encuentran enriquecidas.",
+        "es": "A diferencia del músculo ventricular, donde KChIP2 es esencial para la corriente Ito, las fibras de Purkinje humanas expresan poco esta subunidad y son ricas en DPP6 y frecuenina (NCS-1).",
         "cites": [
           "PMID:23532596"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En cinco pacientes con fibrilación ventricular idiopática, los datos clínicos apuntaron a un origen de la arritmia en el sistema de fibras de Purkinje.",
+        "es": "En una serie de cinco casos de fibrilación ventricular idiopática, la clínica orientaba a un origen de la arritmia en la red de Purkinje.",
         "cites": [
           "PMID:23532596"
         ]
@@ -783,7 +783,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El músculo transverso del tórax es una lámina muscular delgada que tapiza la cara interna de la pared torácica anterior.",
+        "es": "Delgado y laminar, el transverso del tórax recubre por dentro la pared torácica anterior.",
         "cites": [
           "PMID:21272314"
         ]
@@ -804,14 +804,14 @@
       },
       {
         "aspect": "relations",
-        "es": "En cadáveres humanos, el plano situado por debajo de los intercostales internos y por encima del transverso del tórax permite que un colorante inyectado alcance varios nervios intercostales.",
+        "es": "En cinco bloqueos ecoguiados realizados en cuatro cadáveres, el colorante inyectado en el plano situado por debajo de los intercostales internos y por encima del transverso del tórax tiñó cuatro niveles de nervios intercostales.",
         "cites": [
           "PMID:37419507"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El bloqueo del plano del transverso del tórax es una técnica de anestesia regional que proporciona analgesia a la pared torácica anterior en cirugía cardíaca y mamaria.",
+        "es": "El bloqueo del plano del transverso del tórax, una técnica regional reciente para la analgesia de la pared torácica anterior, parece eficaz en cirugía mamaria y cardíaca según la evidencia disponible.",
         "cites": [
           "PMID:31360703"
         ]
@@ -822,7 +822,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 107 cadáveres adultos, un pliegue en el techo del seno oblicuo del saco pericárdico contenía una vena esofagoauricular permeable o un cordón fibroso.",
+        "es": "Mediante disecciones de 107 cadáveres adultos frescos se describió una variante en la que un pliegue del techo del seno oblicuo del pericardio parece contener una vena esofagoauricular permeable o un cordón fibroso.",
         "cites": [
           "PMID:15249984"
         ]
@@ -836,14 +836,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 52 pericardiocentesis, el diámetro anteroposterior del saco medido por ecocardiografía se correlacionó con el volumen del derrame, y un valor de 12 cm o más predijo volúmenes iguales o superiores a 650 ml.",
+        "es": "En 52 pericardiocentesis, el diámetro anteroposterior del saco medido por ecocardiografía se correlacionó con el volumen del derrame; un valor de 12 cm o más tuvo un valor predictivo positivo del 88 % para volúmenes de 650 ml o más.",
         "cites": [
           "PMID:16153556"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Los teratomas quísticos mediastínicos de gran tamaño pueden dar síntomas por compresión o por rotura hacia el saco pericárdico.",
+        "es": "Aunque la mayoría se descubre por azar, un teratoma quístico mediastínico grande puede dar síntomas al comprimir estructuras del mediastino o al romperse dentro del saco pericárdico.",
         "cites": [
           "PMID:23087278"
         ]
@@ -854,14 +854,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El pericardio consta de una monocapa mesotelial visceral, el epicardio, que se refleja sobre los grandes vasos y se continúa con una capa parietal fibrosa externa, poco elástica, de fibras de colágeno y elastina.",
+        "es": "Dos capas forman el pericardio: el epicardio, monocapa mesotelial visceral que se refleja sobre los grandes vasos, y una capa parietal fibrosa externa, relativamente inextensible, de colágeno y elastina organizados.",
         "cites": [
           "PMID:29025540"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Entre ambas capas existe un espacio virtual que en condiciones normales alberga hasta 50 mL de filtrado plasmático.",
+        "es": "El espacio virtual que las separa contiene normalmente hasta 50 ml de filtrado de plasma.",
         "cites": [
           "PMID:29025540"
         ]
@@ -875,7 +875,7 @@
       },
       {
         "aspect": "function",
-        "es": "Sin ser imprescindible para la vida, el pericardio cumple funciones mecánicas, reflejas, membranosas, metabólicas y ligamentosas, que cobran importancia en la hipervolemia o en el agrandamiento cardíaco agudo.",
+        "es": "Aunque no es vital, el pericardio desempeña funciones sutiles, mecánicas, reflejas, membranosas, metabólicas y ligamentosas, que ganan peso cuando hay hipervolemia o el corazón se agranda de forma aguda.",
         "cites": [
           "PMID:29025540"
         ]
