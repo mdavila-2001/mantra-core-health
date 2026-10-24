@@ -372,7 +372,7 @@ function businessRule(body: ApiErrorBody, codigo: string): ViewState<null> {
   if (campo === 'issuerAdministrativeAreaConceptId' || /departamento emisor/i.test(texto)) {
     return pide(
       'issuerAdministrativeAreaConceptId',
-      'Elija el departamento donde se emitió su carnet de identidad, en el paso «Su documento de identidad», y vuelva a enviar.',
+      'Elija el departamento donde se emitió su carnet de identidad, en el paso donde pide su cédula, y vuelva a enviar.',
     );
   }
   if (/tipo societario pertenece/i.test(texto)) {

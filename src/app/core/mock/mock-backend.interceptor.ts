@@ -61,7 +61,7 @@ function validadorSimulado(): Promise<Validador> {
 }
 
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
-  // `apiRealForzada` es el interruptor del stock de componentes: deja pasar la
+  // `forcedRealApi` es el interruptor del stock de componentes: deja pasar la
   // petición a la red para poder comparar una pantalla con datos simulados y
   // con datos de verdad. Apagado por omisión y sin persistir. Ver `api-mode.ts`.
   if (!environment.mockBackend || forcedRealApi()) {
