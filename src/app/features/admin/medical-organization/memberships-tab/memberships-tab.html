@@ -1,29 +1,3 @@
-@if (!embedded()) {
-  <app-page-header
-    title="Mis organizaciones"
-    subtitle="Dónde tiene una vinculación, y pedir una nueva"
-  />
-
-  <!-- La explicación larga sólo fuera del panel: adentro es una pestaña de un
-       panel de administración, y un párrafo de ocho renglones arriba de una
-       tabla es un párrafo que nadie vuelve a leer. Lo que no se puede perder
-       —que estar vinculado NO da acceso a los pacientes— se dice igual, corto,
-       al lado del formulario. -->
-  <app-alert tone="info" class="explicacion">
-    <p>
-      Un profesional puede ejercer en más de una organización a la vez. Acá ve todas sus
-      vinculaciones —incluidas las pendientes de aprobación— y pide vincularse a una nueva.
-      <strong>Ejemplo:</strong> elige «Hospital Central», confirma, y la vinculación queda
-      <em>pendiente</em> hasta que esa organización la apruebe.
-    </p>
-    <p>
-      <strong>Importante:</strong> pertenecer a una organización no le da acceso a sus
-      pacientes. El acceso a un paciente concreto depende siempre de una cita, derivación,
-      intervención o autorización con ese paciente.
-    </p>
-  </app-alert>
-}
-
 <h2 class="titulo-de-seccion">Pedir una vinculación</h2>
 <app-card>
   @if (errorDeSolicitud(); as mensaje) {
@@ -62,12 +36,10 @@
       {{ enviando() ? 'Enviando…' : 'Pedir vinculación' }}
     </button>
   </div>
-  @if (embedded()) {
-    <p class="nota-de-acceso">
-      Estar vinculado no da acceso a los pacientes de la organización: eso depende siempre de una
-      cita, derivación, intervención o autorización con esa persona.
-    </p>
-  }
+  <p class="nota-de-acceso">
+    Estar vinculado no da acceso a los pacientes de la organización: eso depende siempre de una
+    cita, derivación, intervención o autorización con esa persona.
+  </p>
 </app-card>
 
 <h2 class="titulo-de-seccion">Mis vinculaciones</h2>
@@ -86,6 +58,8 @@
     [state]="estadoDeLaTabla()"
     [columns]="columnas()"
     [trackBy]="porId"
+    [fitContainer]="true"
+    [wrapHeaders]="true"
     caption="Sus vinculaciones con organizaciones"
     data-testid="mis-vinculaciones"
     (retry)="reintentarVinculaciones()"
@@ -129,13 +103,37 @@
 </ng-template>
 
 <ng-template #celdaEstado let-fila>
-  <app-badge [variant]="fila.statusVariant">{{ fila.statusLabel }}</app-badge>
+  <app-badge class="vinculacion__estado" [variant]="fila.statusVariant">
+    <span class="vinculacion__estado-rotulo">{{ fila.statusLabel }}</span>
+  </app-badge>
 </ng-template>
 
-<ng-template #celdaPrincipal let-fila>
+<ng-template #celdaCargo let-fila>
+  {{ fila.roleLabel }}
+</ng-template>
+
+<ng-template #celdaDesde let-fila>
+  {{ fila.sinceLabel }}
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
   @if (fila.isPrimary) {
     <span class="vinculacion__principal">Principal</span>
+  }
+  @if (fila.isFinal) {
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      [attr.aria-label]="'Solicitar vinculación con ' + fila.practiceName"
+      (clicked)="elegirParaNuevaSolicitud(fila)"
+    >
+      Solicitar
+    </button>
   } @else {
-    <span class="vinculacion__sin-dato" aria-label="No es la organización principal">—</span>
+    @if (!fila.isPrimary) {
+      <span class="vinculacion__sin-dato">—</span>
+    }
   }
 </ng-template>

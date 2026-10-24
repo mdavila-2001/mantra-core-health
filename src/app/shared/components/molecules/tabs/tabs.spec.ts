@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { accessibleName } from '../../../../../testing/a11y';
@@ -7,6 +7,7 @@ import { Tabs } from './tabs';
 
 @Component({
   imports: [Tabs, Tab],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-tabs [(selectedIndex)]="seccion">
       <app-tab label="Evolución">Dolor torácico de 2 horas</app-tab>
@@ -105,6 +106,25 @@ describe('Tabs', () => {
       await fixture.whenStable();
 
       expect(botones().map((boton) => boton.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
+    });
+
+    it('lleva a la vista una pestaña seleccionada por URL fuera de la franja visible', async () => {
+      const tira = root().querySelector('.tabs__list') as HTMLElement;
+      const scrollBy = vi.fn();
+      Object.defineProperty(tira, 'getBoundingClientRect', {
+        configurable: true,
+        value: () => ({ left: 0, right: 100 }),
+      });
+      Object.defineProperty(tira, 'scrollBy', { configurable: true, value: scrollBy });
+      Object.defineProperty(botones()[2], 'getBoundingClientRect', {
+        configurable: true,
+        value: () => ({ left: 60, right: 150 }),
+      });
+
+      host.seccion.set(2);
+      await fixture.whenStable();
+
+      expect(scrollBy).toHaveBeenCalledWith({ left: 50, behavior: 'smooth' });
     });
   });
 

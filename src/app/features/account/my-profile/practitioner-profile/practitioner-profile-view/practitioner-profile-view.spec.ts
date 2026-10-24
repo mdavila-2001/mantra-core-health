@@ -730,10 +730,14 @@ describe('PractitionerProfileView', () => {
   it('la ficha propia NO ofrece «Ver cómo me ven»: el perfil público se sacó', () => {
     const host = montar(PERFIL, true);
 
+    const editar = host.querySelector<HTMLAnchorElement>('[data-testid="mi-perfil-editar"]');
+
     const enlace = Array.from(host.querySelectorAll('a[app-button]')).find((a) =>
       a.textContent?.includes('Ver cómo me ven'),
     );
 
+    expect(editar?.textContent).toContain('Editar perfil');
+    expect(host.textContent).not.toContain('Configurar mi perfil');
     expect(enlace).toBeUndefined();
     expect(host.innerHTML).not.toContain('/my-account/preview');
   });
