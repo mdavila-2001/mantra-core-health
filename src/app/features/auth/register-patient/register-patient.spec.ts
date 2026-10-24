@@ -10,6 +10,7 @@ import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-
 import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
 import { EMPLOYER, OCCUPATION } from '../../../core/mock/fixtures/concepts';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 
 const RESPUESTA = {
   userId: 'u-1',
@@ -1151,15 +1152,81 @@ describe('RegisterPatient', () => {
     });
   });
 
-  it('quitar una casilla agregada saca ese nombre y deja los otros', () => {
+  it('quitar una casilla agregada saca ese nombre y deja los otros', async () => {
+    const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
     component.agregarNombre();
     component.agregarNombre();
     component.escribirNombreExtra(0, 'Fernanda');
     component.escribirNombreExtra(1, 'Belén');
 
-    component.quitarNombre(0);
+    await component.quitarNombre(0);
 
+    expect(confirmar).toHaveBeenCalledTimes(1);
     expect(component.nombresExtra()).toEqual(['Belén']);
+  });
+
+  /**
+   * TAREA 04, AC-04-7: el «Quitar» de ícono borra lo escrito de un toque, así
+   * que con datos pregunta antes. Vacío no hay nada que perder y no pregunta.
+   */
+  describe('confirmar antes de quitar lo escrito', () => {
+    it('una casilla vacía se quita sin preguntar', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm');
+      component.agregarNombre();
+
+      await component.quitarNombre(0);
+
+      expect(confirmar).not.toHaveBeenCalled();
+      expect(component.nombresExtra()).toEqual([]);
+    });
+
+    it('si no confirma, el nombre se queda', async () => {
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+      component.agregarNombre();
+      component.escribirNombreExtra(0, 'Fernanda');
+
+      await component.quitarNombre(0);
+
+      expect(component.nombresExtra()).toEqual(['Fernanda']);
+    });
+
+    it('un celular escrito pregunta, y sin confirmar no se quita', async () => {
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(false);
+      component.agregarTelefono();
+      component.telefonosExtra.at(0).setValue('+591 71111111');
+
+      await component.quitarTelefono(0);
+
+      expect(confirmar).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Quitar el celular 1', destructive: true }),
+      );
+      expect(component.telefonosExtra.length).toBe(1);
+    });
+
+    it('un contacto con datos pregunta, y al confirmar se quita', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      component.agregarContacto();
+      component.contactosExtra.at(0).controls.name.setValue('Luis Paz');
+
+      await component.quitarContacto(0);
+
+      expect(confirmar).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Quitar el contacto de emergencia 1', destructive: true }),
+      );
+      expect(component.contactosExtra.length).toBe(0);
+    });
+
+    it('un contacto vacío se quita sin preguntar', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm');
+      component.agregarContacto();
+
+      await component.quitarContacto(0);
+
+      expect(confirmar).not.toHaveBeenCalled();
+      expect(component.contactosExtra.length).toBe(0);
+    });
   });
 
   /**

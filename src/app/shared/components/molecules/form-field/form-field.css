@@ -124,8 +124,17 @@
   }
 }
 
-.form-field-container:hover > .form-field-control > .form-field-description,
-.form-field-container:focus-within > .form-field-control > .form-field-description {
+/* El camino va completo, hijo por hijo, y no con un descendiente suelto: un
+   campo `custom` del motor envuelve OTROS `app-form-field` (las casillas de
+   nombre, los contactos sumados), y con un descendiente apuntar el de afuera
+   encendería todos los globos de adentro a la vez.
+
+   Antes decía `> .form-field-control >` directo desde el contenedor; al entrar
+   `.form-field-body` (el envoltorio del ícono) el selector dejó de coincidir y
+   la explicación no aparecía nunca, ni al apuntar ni al enfocar (TAREA 04,
+   AC-04-2). Lo encontró `carril-04-visuales-alta-paciente.spec.ts`. */
+.form-field-container:hover > .form-field-body > .form-field-control > .form-field-description,
+.form-field-container:focus-within > .form-field-body > .form-field-control > .form-field-description {
   opacity: 1;
 }
 

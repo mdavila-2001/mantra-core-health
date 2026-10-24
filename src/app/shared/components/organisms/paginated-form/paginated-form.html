@@ -201,6 +201,7 @@
                   <app-date-picker
                     [value]="fechaDe(campo)"
                     (valueChange)="escribirFecha(campo, $event)"
+                    (textProblem)="anotarFechaRechazada(campo, $event)"
                     [placeholder]="campo.placeholder ?? 'DD/MM/AAAA'"
                     [minDate]="campo.minDate ?? null"
                     [maxDate]="campo.maxDate ?? null"
@@ -212,6 +213,7 @@
                     mode="date-time"
                     [value]="fechaDe(campo)"
                     (valueChange)="escribirFecha(campo, $event)"
+                    (textProblem)="anotarFechaRechazada(campo, $event)"
                     [placeholder]="campo.placeholder ?? 'DD/MM/AAAA HH:mm'"
                     [minDate]="campo.minDate ?? null"
                     [maxDate]="campo.maxDate ?? null"

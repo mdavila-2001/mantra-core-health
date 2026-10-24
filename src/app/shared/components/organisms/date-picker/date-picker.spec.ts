@@ -536,15 +536,51 @@ describe('DatePicker', () => {
       expect(flecha('30 años siguientes').getAttribute('aria-disabled')).toBe('true');
     });
 
-    it('la grilla de años apaga los años anteriores a minDate', async () => {
+    it('la grilla de años no empieza antes de minDate', async () => {
       fixture.componentRef.setInput('minDate', new Date(1900, 0, 1));
       fixture.componentRef.setInput('value', new Date(1905, 5, 10));
       await fixture.whenStable();
       await abrirAnios();
 
-      expect(anuncio()).toBe('Años 1880 a 1909');
-      expect(celda('1899').disabled).toBe(true);
+      // La década daría 1880–1909, con veinte años que no se pueden elegir.
+      expect(anuncio()).toBe('Años 1900 a 1929');
+      expect(celda('1899')).toBeUndefined();
       expect(celda('1900').disabled).toBe(false);
+      expect(enfocada()).toBe('1905');
+    });
+
+    it('con minDate en 1910 la primera página es 1910–1939 entera, y avanza de a treinta', async () => {
+      // El alta de paciente arranca en 1910.
+      fixture.componentRef.setInput('minDate', new Date(1910, 0, 1));
+      fixture.componentRef.setInput('maxDate', new Date(2026, 11, 31));
+      fixture.componentRef.setInput('value', new Date(1912, 5, 10));
+      await fixture.whenStable();
+      await abrirAnios();
+
+      expect(anuncio()).toBe('Años 1910 a 1939');
+      expect(celdas().map((cell) => cell.textContent?.trim())).toEqual(
+        Array.from({ length: 30 }, (_, i) => String(1910 + i)),
+      );
+      expect(celdas().some((cell) => cell.disabled)).toBe(false);
+      expect(flecha('30 años anteriores').getAttribute('aria-disabled')).toBe('true');
+
+      flecha('30 años siguientes').click();
+      await fixture.whenStable();
+      expect(anuncio()).toBe('Años 1940 a 1969');
+    });
+
+    it('una fila entera fuera de rango se quita; un año suelto guarda su casilla', async () => {
+      fixture.componentRef.setInput('maxDate', new Date(2026, 11, 31));
+      fixture.componentRef.setInput('value', new Date(2020, 5, 10));
+      await fixture.whenStable();
+      await abrirAnios();
+
+      // 2027–2029 comparten fila con 2025 y 2026: se apagan sin quitarse, para
+      // que 2025 siga en la primera columna. 2030–2039 son filas enteras fuera.
+      expect(anuncio()).toBe('Años 2000 a 2029');
+      expect(celda('2027').disabled).toBe(true);
+      expect(celda('2027').classList.contains('is-row-out-of-range')).toBe(false);
+      expect(celda('2026').classList.contains('is-row-out-of-range')).toBe(false);
     });
 
     it('en el borde de minDate la flecha de 30 años anteriores se apaga', async () => {
@@ -749,6 +785,36 @@ describe('DatePicker', () => {
       await fixture.whenStable();
 
       expect(inputEl.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('avisa por qué rechazó lo escrito: fuera de rango, inexistente, y nada cuando se corrige', async () => {
+      fixture.componentRef.setInput('minDate', new Date(1910, 0, 1));
+      fixture.componentRef.setInput('maxDate', 'today');
+      const avisos: (string | null)[] = [];
+      fixture.componentInstance.textProblem.subscribe((problema) => avisos.push(problema));
+      const valores: (Date | null)[] = [];
+      fixture.componentInstance.value.subscribe((valor) => valores.push(valor));
+      await fixture.whenStable();
+
+      async function escribir(texto: string): Promise<void> {
+        const inputEl = input()!;
+        inputEl.value = texto;
+        inputEl.dispatchEvent(new Event('input'));
+        inputEl.dispatchEvent(new Event('blur'));
+        await fixture.whenStable();
+      }
+
+      // Una fecha real anterior a 1910: el modelo no la recibe, pero se dice por qué.
+      await escribir('20/02/1800');
+      expect(avisos.at(-1)).toBe('out-of-range');
+      expect(valores).toEqual([]);
+
+      await escribir('31/02/2000');
+      expect(avisos.at(-1)).toBe('invalid');
+
+      await escribir('17/05/1990');
+      expect(avisos.at(-1)).toBeNull();
+      expect(valores.at(-1)?.getFullYear()).toBe(1990);
     });
   });
 

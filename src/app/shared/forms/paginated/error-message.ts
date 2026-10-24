@@ -1,5 +1,7 @@
 import type { AbstractControl } from '@angular/forms';
 
+import type { DateTextProblem } from '../../components/organisms/date-picker/date-picker.types';
+
 import type { CampoDeFormulario } from './paginated-form.types';
 
 /**
@@ -92,4 +94,48 @@ export function mensajeDeError(
   // Un validador propio sin mensaje declarado. No se calla: un campo en rojo sin
   // explicación deja a la persona probando a ciegas.
   return `Revise ${campo.label.toLocaleLowerCase('es')}.`;
+}
+
+/**
+ * El error de una fecha escrita a mano que el selector rechazó.
+ *
+ * Va aparte de `mensajeDeError` y le gana al `mensajeDeError` del campo: ese
+ * mensaje habla de un dato que falta («Ingrese su fecha de nacimiento.»), y
+ * acá la persona sí escribió una fecha. Decirle que la ingrese la deja
+ * mirando «20/02/1800» sin saber qué tiene de malo.
+ */
+export function mensajeDeFechaRechazada(
+  problema: DateTextProblem,
+  campo: Pick<CampoDeFormulario, 'minDate' | 'maxDate'>,
+): string {
+  if (problema === 'invalid') {
+    return 'Revise la fecha: día, mes y año, como DD/MM/AAAA.';
+  }
+  const desde = limiteEnPalabras(campo.minDate);
+  const hasta = limiteEnPalabras(campo.maxDate);
+  if (desde !== null && hasta !== null) {
+    return `Ingrese una fecha desde ${desde} hasta ${hasta}.`;
+  }
+  if (desde !== null) {
+    return `Ingrese una fecha desde ${desde} en adelante.`;
+  }
+  if (hasta !== null) {
+    return `Ingrese una fecha hasta ${hasta}.`;
+  }
+  return 'Revise la fecha.';
+}
+
+/**
+ * Un límite como lo diría una persona: «hoy», «1910» cuando es el 1 de enero
+ * —el alta pide «desde 1910», no «desde el 01/01/1910»— o la fecha completa.
+ */
+function limiteEnPalabras(limite: Date | 'today' | string | null | undefined): string | null {
+  if (limite === null || limite === undefined || limite === '') return null;
+  if (limite === 'today') return 'hoy';
+  const fecha = limite instanceof Date ? limite : new Date(limite);
+  if (Number.isNaN(fecha.getTime())) return null;
+  if (fecha.getMonth() === 0 && fecha.getDate() === 1) return String(fecha.getFullYear());
+  const dd = String(fecha.getDate()).padStart(2, '0');
+  const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+  return `el ${dd}/${mm}/${fecha.getFullYear()}`;
 }
