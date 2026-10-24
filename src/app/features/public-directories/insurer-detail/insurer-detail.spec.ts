@@ -382,6 +382,38 @@ describe('InsurerDetail', () => {
     ).not.toContain('Cobertura 12');
   });
 
+  it('un catálogo de ejemplo lo avisa arriba y rotula cada plan «De ejemplo»', () => {
+    const [producto] = CARRIER.products;
+    const [integral] = producto!.plans;
+    responderMercado({
+      carrier: {
+        ...CARRIER,
+        products: [
+          { ...producto!, plans: [integral!, { ...integral!, id: 'plan-2', name: 'Plan B' }] },
+        ],
+      },
+      brokers: BROKERS,
+      exampleCatalog: true,
+    });
+
+    const aviso = root().querySelector('[data-testid="aseguradora-de-ejemplo"]');
+    expect(aviso?.textContent).toContain('Planes de ejemplo');
+    expect(aviso?.textContent).toContain('no son una oferta de la compañía');
+    expect(root().textContent).not.toContain('tal como lo publicó la aseguradora');
+    // Dos tarjetas en «Comparar planes» y la cabecera de la pestaña abierta.
+    const rotulos = root().querySelectorAll('[data-testid="plan-de-ejemplo"]');
+    expect(rotulos.length).toBeGreaterThanOrEqual(2);
+    expect(rotulos[0]!.textContent).toContain('De ejemplo');
+  });
+
+  it('un catálogo publicado —o una respuesta sin el campo— no lleva el rótulo', () => {
+    responderMercado({ carrier: CARRIER, brokers: BROKERS });
+
+    expect(root().querySelector('[data-testid="aseguradora-de-ejemplo"]')).toBeNull();
+    expect(root().querySelector('[data-testid="plan-de-ejemplo"]')).toBeNull();
+    expect(root().textContent).toContain('tal como lo publicó la aseguradora');
+  });
+
   it('sin catálogo publicado lo dice, y no dibuja una tabla vacía', () => {
     responderMercado({ carrier: null, brokers: [] });
 
