@@ -3,7 +3,8 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import type { Actor } from './support/actores';
+import { administrador, contextoDeApi, type Actor } from './support/actores';
+import { crearMedicoSintetico, crearPacienteConToken } from './support/api-real-clinica';
 import { entrar, irA } from './support/sesion';
 
 /**
@@ -212,3 +213,67 @@ test('REQ-18-005 sin sesión la red social, con sesión el panel; cada rol ve su
   await expect(page.locator('li[data-path="directory"]')).toHaveCount(0);
   await page.screenshot({ path: join(OUTPUT_DIR, '1440-7-directorios-del-administrador.png') });
 });
+
+/**
+ * REQ-18-005 · la autorización la decide la **API**, no la pantalla.
+ *
+ * Sólo contra la API real (`E2E_API_REAL=1`, `E2E_API_URL`): en la maqueta las
+ * respuestas las inventa el simulador y no prueban nada del servidor. Sin
+ * sesión, los directorios del panel responden 401 y los de la red social 200;
+ * con sesión de paciente o de médico, el panel responde.
+ */
+test.describe('REQ-18-005 · autorización en el servidor (API real)', () => {
+  test.skip(process.env['E2E_API_REAL'] !== '1', 'Sólo con la API real: E2E_API_REAL=1.');
+
+  const PANEL = [
+    '/profiles/practitioners?limit=1',
+    '/profiles/practitioners/specialty-counts',
+    '/diagnostic-units/search?limit=1',
+  ];
+  const SOCIAL_NETWORK = [
+    '/public/search/practitioners?limit=1',
+    '/public/search/organizations?limit=1',
+    '/public/search/pharmacies?limit=1',
+    '/public/search/insurers?limit=1',
+  ];
+
+  test('sin sesión: el panel responde 401 y la red social 200', async () => {
+    const api = await contextoDeApi();
+    for (const route of PANEL) {
+      expect((await api.get(route)).status(), route).toBe(401);
+    }
+    for (const route of SOCIAL_NETWORK) {
+      expect((await api.get(route)).status(), route).toBe(200);
+    }
+    await api.dispose();
+  });
+
+  test('con sesión de paciente, de médico y de administrador el panel responde', async () => {
+    const api = await contextoDeApi();
+    const patient = await crearPacienteConToken(api);
+    const practitioner = await crearMedicoSintetico(api);
+    const admin = administrador();
+    const adminLogin = await api.post('/iam/auth/login', {
+      data: { email: admin.identificador, password: admin.clave },
+    });
+    expect(adminLogin.status()).toBe(200);
+    const adminToken = ((await adminLogin.json()) as { accessToken: string }).accessToken;
+
+    for (const [who, token] of [
+      ['paciente', patient.token],
+      ['médico', practitioner.token],
+      // La pantalla no le muestra la guía de médicos al administrador (es una
+      // decisión de menú, corrección #2), pero el servidor no se la niega: la
+      // guía es para cualquier sesión, y un administrador no tiene menos
+      // permisos que un paciente.
+      ['administrador', adminToken],
+    ] as const) {
+      for (const route of PANEL) {
+        const response = await api.get(route, { headers: { authorization: `Bearer ${token}` } });
+        expect(response.status(), `${who} ${route}`).toBe(200);
+      }
+    }
+    await api.dispose();
+  });
+});
+
