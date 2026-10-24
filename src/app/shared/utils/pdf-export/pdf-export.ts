@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 
-import { drawContent, drawSignature } from './pdf-blocks';
+import { drawContent, drawSignature, signatureHeight } from './pdf-blocks';
 import { PdfComposer } from './pdf-composer';
 import type {
   PdfBlock,
@@ -101,6 +101,26 @@ function withoutRepeatedTitle(blocks: readonly PdfBlock[], title: string | undef
  * @returns El documento `jsPDF` maquetado, listo para `.save()` o `.output()`.
  */
 export function buildBlocksPdf(blocks: readonly PdfBlock[], options: PdfExportOptions = {}): jsPDF {
+  const first = compose(blocks, options);
+  // La firma sola en la última hoja se lee como un papel al que le falta algo:
+  // si el último bloque del contenido es chico, se arma otra vez el papel con
+  // ese bloque en la hoja nueva, junto a la firma.
+  if (first.signatureAlone && first.end.lastHeight !== null && first.end.lastStart > 0) {
+    const fits = first.end.lastHeight + first.signatureNeeds <= first.usableHeight;
+    if (fits) {
+      const moved = [
+        ...blocks.slice(0, first.end.lastStart),
+        { kind: 'pagebreak' as const, text: '' },
+        ...blocks.slice(first.end.lastStart),
+      ];
+      return compose(moved, options).doc;
+    }
+  }
+  return first.doc;
+}
+
+/** Una pasada del maquetador, con lo que hace falta para decidir si repetirla. */
+function compose(blocks: readonly PdfBlock[], options: PdfExportOptions) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
   // La bajada no va a los metadatos: en los papeles clínicos dice de quién es,
   // y los metadatos viajan con el archivo sin que nadie los mire.
@@ -114,10 +134,16 @@ export function buildBlocksPdf(blocks: readonly PdfBlock[], options: PdfExportOp
   composer.pageTop = drawFirstPage(composer);
   composer.y = composer.pageTop;
 
-  drawContent(composer, blocks);
-  drawSignature(composer);
+  const end = drawContent(composer, blocks);
+  const signatureAlone = drawSignature(composer);
   stampFooters(composer);
-  return doc;
+  return {
+    doc,
+    end,
+    signatureAlone,
+    signatureNeeds: signatureHeight(composer) + 48,
+    usableHeight: composer.usableHeight,
+  };
 }
 
 /**

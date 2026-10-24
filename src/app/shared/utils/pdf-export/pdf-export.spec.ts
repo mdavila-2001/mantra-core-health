@@ -1012,7 +1012,12 @@ describe('el bloque de firma y sello', () => {
     expect(yDe('Dra. Valeria Rojas')).toBeGreaterThan(conPoco);
   });
 
-  it('si no entra entero en la hoja, el bloque pasa a una página nueva sin pisar el contenido', () => {
+  /**
+   * Si la firma no entra, pasa a una hoja nueva; y como sola en la última hoja
+   * se lee como un papel al que le falta algo, se lleva con ella el último
+   * bloque del contenido. Lo anterior no se mueve.
+   */
+  it('si no entra en la hoja, pasa a una nueva con el último bloque, y lo anterior no se mueve', () => {
     const paginas = (n: number, firma: typeof FIRMA_COMPLETA | null): number => {
       buildBlocksPdf(lineas(n), { title: 'Receta', firma });
       return ultimoDocumento().llamadas.addPage;
@@ -1025,17 +1030,45 @@ describe('el bloque de firma y sello', () => {
     expect(limite, 'ningún largo de contenido obligó a abrir una página').toBeDefined();
 
     buildBlocksPdf(lineas(limite!), { title: 'Receta' });
-    const yUltimaSinFirma = yDe(`Línea ${limite! - 1}`);
+    const yPenultimaSinFirma = yDe(`Línea ${limite! - 2}`);
     const paginasSinFirma = paginas(limite!, null);
-    const entraConUnaMenos = paginas(limite! - 1, FIRMA_COMPLETA) === paginas(limite! - 1, null);
 
     buildBlocksPdf(lineas(limite!), { title: 'Receta', firma: FIRMA_COMPLETA });
+    const { orden, addPage } = ultimoDocumento().llamadas;
 
-    // El contenido no se movió, y el bloque entero se dibujó en la página nueva.
-    expect(yDe(`Línea ${limite! - 1}`)).toBe(yUltimaSinFirma);
-    expect(ultimoDocumento().llamadas.addPage).toBe(paginasSinFirma + 1);
-    expect(hay('Matrícula M-1234')).toBe(true);
-    expect(entraConUnaMenos).toBe(true);
+    expect(addPage).toBe(paginasSinFirma + 1);
+    expect(yDe(`Línea ${limite! - 2}`)).toBe(yPenultimaSinFirma);
+    // La última línea y la firma comparten la hoja nueva.
+    const hoja = orden.lastIndexOf('— hoja nueva —');
+    expect(orden.indexOf(`Línea ${limite! - 1}`)).toBeGreaterThan(hoja);
+    expect(orden.indexOf('Dra. Valeria Rojas')).toBeGreaterThan(hoja);
+  });
+
+  it('el título del último bloque viaja con él y con la firma', () => {
+    for (let n = 5; n <= 45; n += 1) {
+      buildBlocksPdf(
+        [...lineas(n), { kind: 'heading', level: 2, text: 'Respuestas' }, campoDeBloque('Tabaquismo', 'No')],
+        { title: 'Receta', firma: FIRMA_COMPLETA },
+      );
+      const { orden } = ultimoDocumento().llamadas;
+      const titulo = orden.indexOf('Respuestas');
+      const dato = orden.indexOf('No');
+      // Nunca un corte de hoja entre el título y su dato.
+      expect(orden.slice(titulo, dato).includes('— hoja nueva —'), `con ${n} líneas`).toBe(false);
+    }
+  });
+
+  it('si el último bloque es más alto que lo que entra con la firma, la firma va sola', () => {
+    DocumentoFalso.lineasForzadas = 46;
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Antes' }, { kind: 'paragraph', text: 'PÁRRAFO_LARGO' }], {
+      title: 'Receta',
+      firma: SIN_IMAGENES,
+    });
+    const { orden } = ultimoDocumento().llamadas;
+    const hoja = orden.lastIndexOf('— hoja nueva —');
+    // El párrafo largo no se arrastra entero: la firma pasa sola.
+    expect(orden.indexOf('Renglón 1')).toBeLessThan(hoja);
+    expect(orden.indexOf('Dra. Valeria Rojas')).toBeGreaterThan(hoja);
   });
 
   it('una imagen que no se puede dibujar deja el hueco y el documento sale igual', () => {
@@ -1142,6 +1175,21 @@ describe('las tablas', () => {
       const hoja = orden.lastIndexOf('— hoja nueva —', total);
       const filasEnLaHoja = orden.slice(hoja + 1, total).filter((linea) => linea.startsWith('Cuota '));
       expect(filasEnLaHoja.length, `con ${n} filas`).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('el aviso que cierra una tabla tampoco queda solo en una hoja', async () => {
+    const { noteBlock } = await import('./pdf-export');
+    for (let n = 20; n <= 60; n += 1) {
+      buildBlocksPdf([
+        { kind: 'row', text: '', cells: ['Concepto', 'Importe'], header: true },
+        ...Array.from({ length: n }, (_, i) => ({ kind: 'row' as const, text: '', cells: [`Cuota ${i + 1}`, '100,00'] })),
+        noteBlock('Falta algún precio publicado.', 'warning', 'Total no disponible'),
+      ]);
+      const { orden } = ultimoDocumento().llamadas;
+      const aviso = orden.indexOf('Total no disponible');
+      const hoja = orden.lastIndexOf('— hoja nueva —', aviso);
+      expect(orden.slice(hoja + 1, aviso).some((linea) => linea.startsWith('Cuota ')), `con ${n} filas`).toBe(true);
     }
   });
 

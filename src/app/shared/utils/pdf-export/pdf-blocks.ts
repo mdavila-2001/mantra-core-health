@@ -66,22 +66,53 @@ export function groupBlocks(blocks: readonly PdfBlock[]): readonly Element[] {
   return elements;
 }
 
+/** Dónde quedó el último elemento del contenido: lo que la firma puede arrastrar. */
+export interface ContentEnd {
+  /** El índice, en la lista de bloques, del primer bloque del último elemento. */
+  readonly lastStart: number;
+  /** Cuánto ocupó el último elemento, si cupo entero en una sola hoja; si no, `null`. */
+  readonly lastHeight: number | null;
+}
+
+/** Cuántos bloques de la lista ocupa un elemento. */
+function blockCount(element: Element): number {
+  if (element.type === 'table') return element.rows.length;
+  if (element.type === 'fieldList') return element.fields.length;
+  return 1;
+}
+
 /** Dibuja el contenido entero, en orden. */
-export function drawContent(composer: PdfComposer, blocks: readonly PdfBlock[]): void {
+export function drawContent(composer: PdfComposer, blocks: readonly PdfBlock[]): ContentEnd {
   const elements = groupBlocks(blocks);
+  let start = 0;
+  let end: ContentEnd = { lastStart: 0, lastHeight: null };
+  // El título que anuncia un elemento viaja con él: si la firma arrastra el
+  // último elemento a otra hoja, su título no puede quedar solo al pie.
+  let headingStart: { readonly start: number; readonly page: number; readonly top: number } | null = null;
   for (const [index, element] of elements.entries()) {
+    const isHeading = element.type === 'block' && element.block.kind === 'heading';
+    const anchor = !isHeading && headingStart !== null ? headingStart : { start, page: composer.page, top: composer.y };
+    const page = anchor.page;
+    const top = anchor.top;
+    end = { lastStart: anchor.start, lastHeight: null };
+    headingStart = isHeading ? (headingStart ?? { start, page: composer.page, top: composer.y }) : null;
+    start += blockCount(element);
     if (element.type === 'table') {
       // Los totales que cierran una tabla no quedan solos en una hoja nueva:
       // la última fila se reserva junto con ellos (y con el aire que los separa:
       // el de fin de tabla más el de antes de la caja).
       const next = elements[index + 1];
-      const trailing =
-        next?.type === 'block' && (next.block.kind === 'totals' || next.block.kind === 'total')
-          ? PDF_SPACE.md + PDF_SPACE.sm + measureTotals(composer, totalsOf(next.block)).total
-          : 0;
+      const trailing = next?.type === 'block' ? PDF_SPACE.md + trailingHeightOf(composer, next.block) : 0;
       drawTable(composer, element.rows, trailing);
     } else if (element.type === 'fieldList') {
-      drawFieldList(composer, element.fields);
+      const last = drawFieldList(composer, element.fields);
+      // En una lista de varios datos, la firma arrastra sólo el último dato, no
+      // la lista entera: si no, la hoja anterior quedaba casi vacía.
+      if (element.fields.length > 1) {
+        headingStart = null;
+        end = { lastStart: start - 1, lastHeight: composer.page === last.page ? composer.y - last.top : null };
+        continue;
+      }
     } else if (element.block.kind === 'heading') {
       // Un título reserva el arranque de lo que lo sigue —la cabecera y una
       // fila de una tabla, el primer dato de una lista, la primera fila de una
@@ -90,7 +121,9 @@ export function drawContent(composer: PdfComposer, blocks: readonly PdfBlock[]):
     } else {
       drawBlock(composer, element.block);
     }
+    if (composer.page === page) end = { lastStart: end.lastStart, lastHeight: composer.y - top };
   }
+  return end;
 }
 
 function drawBlock(composer: PdfComposer, block: PdfBlock): void {
@@ -353,7 +386,8 @@ function labelStyleFor(label: string): PdfTextStyle {
  * derecha, con un filete de superficie entre renglones. La vista baja por los
  * valores sin tropezar con «Paciente:», «Documento:», «Profesional:» repetidos.
  */
-function drawFieldList(composer: PdfComposer, fields: readonly PdfField[]): void {
+function drawFieldList(composer: PdfComposer, fields: readonly PdfField[]): { readonly page: number; readonly top: number } {
+  let last = { page: composer.page, top: composer.y };
   const labelWidth = PDF_SPACE.labelColumn;
   const valueX = composer.left + labelWidth;
   const valueWidth = composer.width - labelWidth;
@@ -362,6 +396,7 @@ function drawFieldList(composer: PdfComposer, fields: readonly PdfField[]): void
   // del valor: así se leen como un solo renglón.
   composer.space(PDF_SPACE.xs);
   for (const field of fields) {
+    last = { page: composer.page, top: composer.y };
     const labelStyle = labelStyleFor(field.label);
     const labelLines = composer.wrap(field.label, labelWidth - PDF_SPACE.md, labelStyle);
     let valueLines = composer.wrap(field.value, valueWidth, PDF_TYPE.value);
@@ -390,6 +425,7 @@ function drawFieldList(composer: PdfComposer, fields: readonly PdfField[]): void
     }
   }
   composer.y += PDF_SPACE.md;
+  return last;
 }
 
 /** Una celda de la rejilla, ya medida. */
@@ -672,6 +708,38 @@ function totalRowOf(text: string): PdfTotalRow {
   return { label: text.slice(0, at).trim(), value: text.slice(at + 1).trim(), emphasis: true };
 }
 
+/**
+ * Lo que tiene que ir pegado a la última fila de la tabla que lo precede: la
+ * caja de totales, o el aviso que la cierra («falta algún precio»). Un aviso
+ * más alto que media hoja no se reserva entero: se parte como siempre.
+ */
+function trailingHeightOf(composer: PdfComposer, block: PdfBlock): number {
+  if (block.kind === 'totals' || block.kind === 'total') {
+    return PDF_SPACE.sm + measureTotals(composer, totalsOf(block)).total;
+  }
+  if (block.kind === 'note') {
+    const height = PDF_SPACE.sm + noteHeight(composer, block);
+    return height <= composer.usableHeight / 2 ? height : 0;
+  }
+  return 0;
+}
+
+/** El alto de un aviso entero, sin partir. */
+function noteHeight(composer: PdfComposer, block: PdfBlock): number {
+  const toneName = block.tone ?? 'brand';
+  const glyphRoom = TONE_GLYPH[toneName] === null ? 0 : GLYPH_SIZE + 6;
+  const textWidth = composer.right - PDF_SPACE.panelPadding - (composer.left + 14);
+  const titleStyle = PDF_TYPE.heading;
+  const title = block.title === undefined ? [] : composer.wrap(block.title, textWidth - glyphRoom, titleStyle);
+  const lines = composer.wrap(block.text, textWidth - (title.length === 0 ? glyphRoom : 0), PDF_TYPE.note);
+  return (
+    PDF_SPACE.panelPadding * 2 +
+    title.length * titleStyle.leading +
+    (title.length > 0 ? 2 : 0) +
+    lines.length * PDF_TYPE.note.leading
+  );
+}
+
 /** Las filas de un bloque `totals`, o la de un `total` suelto. */
 function totalsOf(block: PdfBlock): readonly PdfTotalRow[] {
   return block.kind === 'total' ? [totalRowOf(block.text)] : (block.totals ?? []);
@@ -881,17 +949,20 @@ function signatureImageArea(signature: { readonly firma: unknown; readonly sello
  *
  * Va pegado al contenido y no clavado al pie de la hoja, que dejaba un hueco
  * en medio del papel con poco contenido. Si no entra entero en la hoja en
- * curso, pasa a la siguiente sin dejar nada a medias: puede quedar solo en esa
- * hoja, y es preferible a partir la firma de su nombre.
+ * curso, pasa a la siguiente sin dejar nada a medias; y si así quedaría sola
+ * en esa hoja, el maquetador vuelve a armar el papel llevándose con ella el
+ * último bloque del contenido (ver `buildBlocksPdf`).
+ *
+ * @returns `true` si tuvo que abrir una hoja nueva.
  *
  * Sin imágenes —o con imágenes que `jsPDF` no acepta— el bloque sale igual, con
  * la línea vacía: un documento que se firma a mano después necesita justo eso.
  */
-export function drawSignature(composer: PdfComposer): void {
+export function drawSignature(composer: PdfComposer): boolean {
   const signature = composer.signature;
-  if (signature === null) return;
-  const height = signatureImageArea(signature) + 4 + SIGNATURE_TEXT_HEIGHT;
-  composer.ensure(PDF_SIGNATURE.clearance + height);
+  if (signature === null) return false;
+  const height = signatureHeight(composer);
+  const openedPage = composer.ensure(PDF_SIGNATURE.clearance + height);
   composer.space(PDF_SIGNATURE.clearance);
 
   const width = PDF_SIGNATURE.width;
@@ -916,6 +987,14 @@ export function drawSignature(composer: PdfComposer): void {
   }
   composer.write('Firma y sello', center, y + 2, PDF_TYPE.label, { align: 'center' });
   composer.y = top + height;
+  return openedPage;
+}
+
+/** El alto del bloque de firma con su aire, o 0 si el documento no lleva firma. */
+export function signatureHeight(composer: PdfComposer): number {
+  const signature = composer.signature;
+  if (signature === null) return 0;
+  return signatureImageArea(signature) + 4 + SIGNATURE_TEXT_HEIGHT;
 }
 
 /** Una imagen contenida en su caja y apoyada en su borde inferior. */
