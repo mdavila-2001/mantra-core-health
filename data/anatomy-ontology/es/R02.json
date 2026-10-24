@@ -1,0 +1,774 @@
+{
+ "UBERON:0000951": {
+  "labelEs": "músculos rotadores",
+  "definitionEs": "Cualquiera de varios músculos transversoespinosos cortos, desarrollados principalmente en las regiones cervical, lumbar y torácica, que se originan en la apófisis transversa de una vértebra y se insertan en la raíz de la apófisis espinosa de las dos o tres vértebras inmediatamente superiores, con inervación procedente de los ramos dorsales del nervio espinal, y cuyas acciones rotan la columna vertebral."
+ },
+ "UBERON:0001066": {
+  "labelEs": "disco intervertebral",
+  "definitionEs": "Almohadilla de fibrocartílago situada entre las superficies articulares de dos centros vertebrales sucesivos, que tiene un núcleo pulposo en su centro."
+ },
+ "UBERON:0001067": {
+  "labelEs": "articulación cigapofisaria",
+  "definitionEs": "Articulación sinovial entre la precigapófisis de una vértebra y la postcigapófisis de la vértebra situada inmediatamente por encima. Existen dos articulaciones facetarias en cada segmento de movimiento vertebral[WP]."
+ },
+ "UBERON:0001068": {
+  "labelEs": "piel del dorso",
+  "definitionEs": "Zona de piel que forma parte de un dorso [Definición generada automáticamente]."
+ },
+ "UBERON:0001075": {
+  "labelEs": "centro vertebral óseo",
+  "definitionEs": "Forma osificada de un centro vertebral, elemento esquelético que reemplaza funcionalmente a la notocorda[VSAP,modified]."
+ },
+ "UBERON:0001076": {
+  "labelEs": "espina neural",
+  "definitionEs": "Prolongación de los arcos neurales en posición dorsal respecto al canal neural[TAO,modified]."
+ },
+ "UBERON:0001077": {
+  "labelEs": "apófisis transversa",
+  "definitionEs": "Las apófisis transversas o costales de una vértebra, en número de dos, se proyectan una a cada lado desde el punto en que la lámina se une al pedículo, entre las apófisis articulares superior e inferior. Sirven para la inserción de músculos y ligamentos. [WP,unvetted]."
+ },
+ "UBERON:0001078": {
+  "labelEs": "pedículo del arco vertebral",
+  "definitionEs": "Las dos apófisis cortas y gruesas que se proyectan hacia atrás, una a cada lado, desde la parte superior del cuerpo hasta las láminas."
+ },
+ "UBERON:0001079": {
+  "labelEs": "precigapófisis",
+  "definitionEs": "Apófisis pares situadas en el extremo cefálico del arco neural. Las carillas articulares de las precigapófisis se orientan dorsomedialmente y se articulan con las carillas, orientadas lateroventralmente, de las postcigapófisis de la vértebra precedente."
+ },
+ "UBERON:0001080": {
+  "labelEs": "postcigapófisis",
+  "definitionEs": "Apófisis pares situadas en el extremo caudal del arco neural. Las carillas articulares de las postcigapófisis se orientan lateroventralmente y se articulan con las carillas, orientadas dorsomedialmente, de las precigapófisis de la vértebra siguiente."
+ },
+ "UBERON:0001094": {
+  "labelEs": "vértebra sacra",
+  "definitionEs": "Hueso vertebral que forma parte de la región sacra de la columna vertebral."
+ },
+ "UBERON:0001095": {
+  "labelEs": "vértebra caudal",
+  "definitionEs": "Cualquier hueso vertebral que forma parte de la región caudal de la columna vertebral (cola o cóccix)."
+ },
+ "UBERON:0001130": {
+  "labelEs": "columna vertebral",
+  "definitionEs": "Subdivisión del sistema esquelético que consta de todas las vértebras y de los elementos esqueléticos y articulaciones asociados del cuerpo[modified from VSAO]."
+ },
+ "UBERON:0001131": {
+  "labelEs": "agujero vertebral",
+  "definitionEs": "Agujero situado dentro de un elemento vertebral a través del cual discurre la médula espinal. Está formado por el segmento anterior y por la parte posterior, el arco vertebral."
+ },
+ "UBERON:0001137": {
+  "labelEs": "dorso",
+  "definitionEs": "Subdivisión principal de un organismo que corresponde a toda la parte del organismo dorsal a un plano horizontal y limitada en un lado por el mismo plano transversal. En los vertebrados incluye la columna vertebral."
+ },
+ "UBERON:0001350": {
+  "labelEs": "cóccix",
+  "definitionEs": "Conjunto de vértebras caudales de la región coccígea que están fusionadas y forman parte de la pelvis ósea."
+ },
+ "UBERON:0001468": {
+  "labelEs": "articulación intervertebral",
+  "definitionEs": "Articulación entre cuerpos vertebrales adyacentes. Puede estar compuesta por el núcleo pulposo, el ligamento anular y los ligamentos longitudinales anterior y posterior."
+ },
+ "UBERON:0002093": {
+  "labelEs": "duramadre espinal",
+  "definitionEs": "Duramadre que forma parte de una médula espinal [Definición generada automáticamente]."
+ },
+ "UBERON:0002175": {
+  "labelEs": "núcleo intermediolateral",
+  "definitionEs": "El núcleo intermediolateral es una región de sustancia gris que se encuentra en la lámina VII de Rexed de la columna espinal. La lámina VII de Rexed contiene varios núcleos bien definidos, entre ellos el núcleo dorsal, la columna celular intermediolateral (asta gris lateral) y el núcleo autónomo sacro. Se extiende desde el primer segmento torácico hasta el tercer segmento lumbar y contiene las neuronas motoras autónomas que dan origen a las fibras preganglionares del sistema simpático. [WP,unvetted]."
+ },
+ "UBERON:0002176": {
+  "labelEs": "núcleo cervical lateral",
+  "definitionEs": "Núcleo de disposición difusa situado en las porciones dorsales del funículo lateral, aproximadamente en los niveles cervicales C1-C3; estación sináptica del tracto espinocervicotalámico."
+ },
+ "UBERON:0002179": {
+  "labelEs": "funículo lateral de la médula espinal",
+  "definitionEs": "Masa lateral de fibras a cada lado de la médula espinal, entre los surcos anterolateral y posterolateral."
+ },
+ "UBERON:0002180": {
+  "labelEs": "funículo anterior de la médula espinal",
+  "definitionEs": "Sustancia blanca de la médula espinal situada a cada lado entre la fisura media ventral y las raíces ventrales de los nervios espinales."
+ },
+ "UBERON:0002181": {
+  "labelEs": "sustancia gelatinosa",
+  "definitionEs": "Material de aspecto gelatinoso del asta dorsal de la médula espinal, compuesto principalmente por neuronas de tipo II de Golgi y algunas células nerviosas de mayor tamaño, que corresponde a la lámina II de Rexed."
+ },
+ "UBERON:0002240": {
+  "labelEs": "médula espinal",
+  "definitionEs": "Parte del sistema nervioso central situada en el conducto vertebral, continua con el encéfalo y caudal a este; separada del encéfalo por el plano del agujero magno. Está compuesta por un núcleo interno de sustancia gris en el que predominan las células nerviosas y una capa externa de sustancia blanca en la que predominan las fibras nerviosas mielinizadas, y rodea el conducto central. (CUMBO)."
+ },
+ "UBERON:0002242": {
+  "labelEs": "núcleo pulposo",
+  "definitionEs": "Sustancia de consistencia gelatinosa situada en el centro del disco vertebral, que es un remanente de la notocorda."
+ },
+ "UBERON:0002246": {
+  "labelEs": "núcleo torácico posterior",
+  "definitionEs": "Dos masas nucleares en forma de columna formadas por células grandes. Los núcleos de Clarke se localizan en las regiones dorsolaterales al conducto central en los segmentos torácicos y lumbares superiores."
+ },
+ "UBERON:0002252": {
+  "labelEs": "músculo esplenio",
+  "definitionEs": "Músculo postvertebral superficial inervado por el ramo posterior del nervio espinal cervical, con orígenes en las apófisis espinosas torácicas superiores y cervicales inferiores, cuyas acciones consisten en extender y rotar homolateralmente la cabeza y el cuello. Ejemplos: esplenio de la cabeza, esplenio del cuello."
+ },
+ "UBERON:0002256": {
+  "labelEs": "asta posterior de la médula espinal",
+  "definitionEs": "Cresta pronunciada de sustancia gris, orientada dorsolateralmente, en cada mitad lateral de la médula espinal[MP]. La sustancia gris dorsal (más hacia la espalda) de la médula espinal. Recibe varios tipos de información sensitiva del cuerpo, entre ellos el tacto ligero, la propiocepción y la vibración. Esta información se envía desde receptores de la piel, los huesos y las articulaciones a través de neuronas sensitivas cuyos cuerpos celulares se encuentran en el ganglio de la raíz dorsal[WP]. La región dorsal de la médula espinal madura contiene neuronas que procesan y transmiten la información sensitiva[GO]."
+ },
+ "UBERON:0002257": {
+  "labelEs": "asta anterior de la médula espinal",
+  "definitionEs": "La columna gris ventral de la médula espinal[MP]. Las neuronas de la región ventral de la médula espinal madura participan en la eferencia motora[GO]."
+ },
+ "UBERON:0002258": {
+  "labelEs": "funículo posterior de la médula espinal",
+  "definitionEs": "Sustancia blanca de la médula espinal situada a cada lado entre el surco medio posterior y la raíz dorsal."
+ },
+ "UBERON:0002291": {
+  "labelEs": "conducto central de la médula espinal",
+  "definitionEs": "Estructura de la médula espinal que forma parte del sistema ventricular, está llena de líquido cefalorraquídeo y recorre toda la longitud de la médula espinal."
+ },
+ "UBERON:0002315": {
+  "labelEs": "sustancia gris de la médula espinal",
+  "definitionEs": "Sustancia gris en forma de cresta de la médula espinal que se extiende longitudinalmente por el centro de cada mitad de la médula espinal y que está compuesta en gran parte o en su totalidad por cuerpos de células nerviosas y sus dendritas, y algo de tejido de sostén."
+ },
+ "UBERON:0002318": {
+  "labelEs": "sustancia blanca de la médula espinal",
+  "definitionEs": "Regiones de la médula espinal compuestas en gran parte o en su totalidad por axones mielinizados de células nerviosas y que contienen pocos o ningún cuerpo neuronal o dendrita."
+ },
+ "UBERON:0002324": {
+  "labelEs": "músculo del dorso",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un dorso [Definición generada automáticamente]."
+ },
+ "UBERON:0002347": {
+  "labelEs": "vértebra torácica",
+  "definitionEs": "Elemento endocondral de vértebra torácica compuesto principalmente por tejido óseo."
+ },
+ "UBERON:0002412": {
+  "labelEs": "vértebra",
+  "definitionEs": "Forma osificada de un elemento vertebral, elemento esquelético que se forma alrededor de la notocorda y forma parte de la columna vertebral."
+ },
+ "UBERON:0002414": {
+  "labelEs": "vértebra lumbar",
+  "definitionEs": "Vértebra grande de la parte móvil de la columna vertebral, caracterizada por la ausencia del agujero transverso en la apófisis transversa y por la ausencia de carillas en los lados del cuerpo."
+ },
+ "UBERON:0002726": {
+  "labelEs": "médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal adyacente a una región cervical."
+ },
+ "UBERON:0002792": {
+  "labelEs": "médula espinal lumbar",
+  "definitionEs": null
+ },
+ "UBERON:0003038": {
+  "labelEs": "médula espinal torácica",
+  "definitionEs": "Los nervios torácicos son los nervios espinales que emergen de las vértebras torácicas. [WP,unvetted]."
+ },
+ "UBERON:0003690": {
+  "labelEs": "sacro",
+  "definitionEs": "Conjunto de vértebras sacras de la región sacra que están fusionadas y forman parte de la pelvis ósea."
+ },
+ "UBERON:0003691": {
+  "labelEs": "espacio epidural",
+  "definitionEs": "La parte más externa del conducto vertebral. Es el espacio dentro del conducto (formado por las vértebras circundantes) situado por fuera de la duramadre."
+ },
+ "UBERON:0003861": {
+  "labelEs": "arco vertebral",
+  "definitionEs": "Parte posterior de una vértebra que consta de un par de pedículos y un par de láminas, y que sostiene siete apófisis: cuatro apófisis articulares, dos apófisis transversas y una apófisis espinosa[WP]. ZFA: un arco neural encierra el canal neural y típicamente se une con su homólogo contralateral para formar una espina neural."
+ },
+ "UBERON:0004170": {
+  "labelEs": "comisura blanca anterior de la médula espinal",
+  "definitionEs": "Banda de fibras nerviosas que cruzan la línea media de la médula espinal en posición ventral al conducto central y a la comisura gris posterior[MP]. La comisura blanca anterior (o ventral), también conocida como alba anterior medullae spinalis, es un haz de fibras nerviosas que cruzan la línea media de la médula espinal justo por delante de la comisura gris. Las fibras A N4 y las fibras C que transportan la sensibilidad dolorosa en el tracto espinotalámico contribuyen a esta comisura, al igual que las fibras del tracto corticoespinal anterior, que transportan señales motoras desde la corteza motora primaria[WP]."
+ },
+ "UBERON:0004469": {
+  "labelEs": "musculatura del dorso",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un dorso [Definición generada automáticamente]."
+ },
+ "UBERON:0004617": {
+  "labelEs": "vértebra lumbar 1 (L1)",
+  "definitionEs": "La primera vértebra lumbar contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004618": {
+  "labelEs": "vértebra lumbar 2 (L2)",
+  "definitionEs": "La segunda vértebra lumbar contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004619": {
+  "labelEs": "vértebra lumbar 3 (L3)",
+  "definitionEs": "La tercera vértebra lumbar contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004620": {
+  "labelEs": "vértebra lumbar 4 (L4)",
+  "definitionEs": "La cuarta vértebra lumbar contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004621": {
+  "labelEs": "vértebra lumbar 5 (L5)",
+  "definitionEs": "La quinta vértebra lumbar contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004622": {
+  "labelEs": "vértebra sacra 1 (S1)",
+  "definitionEs": null
+ },
+ "UBERON:0004623": {
+  "labelEs": "vértebra sacra 2 (S2)",
+  "definitionEs": null
+ },
+ "UBERON:0004624": {
+  "labelEs": "vértebra sacra 3 (S3)",
+  "definitionEs": null
+ },
+ "UBERON:0004625": {
+  "labelEs": "vértebra sacra 4 (S4)",
+  "definitionEs": null
+ },
+ "UBERON:0004626": {
+  "labelEs": "vértebra torácica 1 (T1)",
+  "definitionEs": "La primera vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004627": {
+  "labelEs": "vértebra torácica 2 (T2)",
+  "definitionEs": "La segunda vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004628": {
+  "labelEs": "vértebra torácica 3 (T3)",
+  "definitionEs": "La tercera vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004629": {
+  "labelEs": "vértebra torácica 4 (T4)",
+  "definitionEs": "La cuarta vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004630": {
+  "labelEs": "vértebra torácica 5 (T5)",
+  "definitionEs": "La quinta vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004631": {
+  "labelEs": "vértebra torácica 6 (T6)",
+  "definitionEs": "La sexta vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004632": {
+  "labelEs": "vértebra torácica 7 (T7)",
+  "definitionEs": "La séptima vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004633": {
+  "labelEs": "vértebra torácica 9 (T9)",
+  "definitionEs": "La novena vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004634": {
+  "labelEs": "vértebra torácica 10 (T10)",
+  "definitionEs": "La décima vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004635": {
+  "labelEs": "vértebra torácica 11 (T11)",
+  "definitionEs": "La undécima vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004636": {
+  "labelEs": "vértebra torácica 12 (T12)",
+  "definitionEs": "La duodécima vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004662": {
+  "labelEs": "lámina del arco vertebral",
+  "definitionEs": "Dos placas anchas dirigidas dorsomedialmente desde los pedículos; se fusionan en la línea media dorsal y completan la pared dorsal del agujero vertebral."
+ },
+ "UBERON:0004676": {
+  "labelEs": "asta lateral de la médula espinal",
+  "definitionEs": "Campo triangular que es una proyección hacia lateral de la parte posterolateral de la columna anterior[WP, modified by cjm]."
+ },
+ "UBERON:0004677": {
+  "labelEs": "comisura gris de la médula espinal",
+  "definitionEs": "Banda de sustancia gris que atraviesa la línea media de la médula espinal y rodea el conducto central."
+ },
+ "UBERON:0004678": {
+  "labelEs": "vértice del asta posterior de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0004715": {
+  "labelEs": "anillo fibroso del disco intervertebral",
+  "definitionEs": "Anillo de fibrocartílago y tejido fibroso que forma la circunferencia del disco intervertebral; rodea el núcleo pulposo, que es propenso a herniarse cuando el anillo fibroso está comprometido."
+ },
+ "UBERON:0005359": {
+  "labelEs": "epéndimo de la médula espinal",
+  "definitionEs": "Capa de células ependimarias que reviste la médula espinal."
+ },
+ "UBERON:0005437": {
+  "labelEs": "cono medular",
+  "definitionEs": "El cono medular es el extremo terminal de la médula espinal. Se sitúa cerca de los niveles vertebrales lumbares 1 (L1) y 2 (L2). Después de que la médula espinal se adelgaza, los nervios espinales continúan como raíces nerviosas colgantes denominadas cola de caballo. Esta cola terminal de raíces nerviosas se denomina filum terminale. El extremo superior del cono medular no suele estar bien definido."
+ },
+ "UBERON:0005443": {
+  "labelEs": "filum terminale",
+  "definitionEs": "Cordón de tejido fibroso de la médula espinal que consta del filum terminale interno y del filum terminale externo."
+ },
+ "UBERON:0005462": {
+  "labelEs": "región lumbar",
+  "definitionEs": "Subdivisión del segmento abdominal del tronco que en los humanos está separada de la parte anterior del abdomen por la superficie posterior de la capa anterior de la fascia toracolumbar y la superficie anterior de la columna vertebral lumbar; junto con la parte anterior del abdomen, constituye el abdomen[Modified from FMA]."
+ },
+ "UBERON:0005826": {
+  "labelEs": "fascículo grácil de la médula espinal",
+  "definitionEs": "Fascículo grácil que forma parte de una médula espinal."
+ },
+ "UBERON:0005835": {
+  "labelEs": "fascículo cuneiforme de la médula espinal",
+  "definitionEs": "Tracto axónico de la médula espinal que transmite principalmente información procedente del miembro anterior y del tronco. Forma parte de la vía columna posterior-lemnisco medial."
+ },
+ "UBERON:0005837": {
+  "labelEs": "fascículo de la médula espinal",
+  "definitionEs": "Fascículo que forma parte de una médula espinal."
+ },
+ "UBERON:0005839": {
+  "labelEs": "columna posterior de la médula espinal torácica",
+  "definitionEs": "Subdivisión de la columna dorsal de la médula espinal que forma parte de una médula espinal torácica."
+ },
+ "UBERON:0005840": {
+  "labelEs": "columna posterior de la médula espinal sacra",
+  "definitionEs": "Subdivisión de la columna dorsal de la médula espinal que forma parte de una médula espinal sacra."
+ },
+ "UBERON:0005841": {
+  "labelEs": "columna posterior de la médula espinal cervical",
+  "definitionEs": "Subdivisión de la columna dorsal de la médula espinal que forma parte de una médula espinal cervical."
+ },
+ "UBERON:0005842": {
+  "labelEs": "columna posterior de la médula espinal lumbar",
+  "definitionEs": "Subdivisión de la columna dorsal de la médula espinal que forma parte de una médula espinal lumbar."
+ },
+ "UBERON:0005843": {
+  "labelEs": "médula espinal sacra",
+  "definitionEs": "Segmento de la médula espinal adyacente a una región sacra."
+ },
+ "UBERON:0005844": {
+  "labelEs": "segmento de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0005845": {
+  "labelEs": "segmento caudal de la médula espinal",
+  "definitionEs": "Segmento de la médula espinal adyacente a una región caudal."
+ },
+ "UBERON:0006061": {
+  "labelEs": "apófisis vertebral",
+  "definitionEs": "Proyección en forma de apófisis desde una parte de la vértebra, como el centro o los arcos. Ejemplos: apófisis transversa, diapófisis, parapófisis y cigapófisis (tanto las cigapófisis craneales como las cigapófisis caudales)."
+ },
+ "UBERON:0006062": {
+  "labelEs": "apófisis articular",
+  "definitionEs": "Apófisis pares situadas en los extremos cefálico y caudal del arco neural. Funcionan como estructuras de engranaje entre vértebras adyacentes y limitan la flexión dorsoventral y el movimiento lateral de la columna en la región del tronco[AAO]. Las apófisis articulares o cigapófisis de una vértebra, en la anatomía humana dos superiores y dos inferiores, nacen de las uniones de los pedículos y las láminas. Sobresalen de un extremo de una vértebra para encajar con una cigapófisis de la vértebra siguiente, a fin de dar mayor estabilidad a la columna. Las apófisis superiores se proyectan hacia arriba desde una vértebra inferior, y sus superficies articulares se dirigen más o menos hacia atrás. Las apófisis inferiores se proyectan hacia abajo desde una vértebra superior, y sus superficies articulares se dirigen más o menos hacia delante y hacia fuera. Las superficies articulares están recubiertas de cartílago hialino."
+ },
+ "UBERON:0006073": {
+  "labelEs": "columna vertebral torácica",
+  "definitionEs": "La parte de la columna que comprende las vértebras torácicas."
+ },
+ "UBERON:0006074": {
+  "labelEs": "columna vertebral lumbar",
+  "definitionEs": "Subdivisión de la columna vertebral que corresponde a la subdivisión lumbar del cuerpo y contiene las vértebras lumbares."
+ },
+ "UBERON:0006077": {
+  "labelEs": "subdivisión de la columna vertebral",
+  "definitionEs": "Conjunto de todos los elementos esqueléticos de una subdivisión de la columna vertebral."
+ },
+ "UBERON:0006079": {
+  "labelEs": "subdivisión de la columna posterior de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0006118": {
+  "labelEs": "lámina I de la sustancia gris de la médula espinal",
+  "definitionEs": "Parte citoarquitectónica de la sustancia gris de la médula espinal."
+ },
+ "UBERON:0006127": {
+  "labelEs": "funículo de la médula espinal",
+  "definitionEs": "Funículo del neuroeje que forma parte de una médula espinal."
+ },
+ "UBERON:0006319": {
+  "labelEs": "núcleo reticular de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0006447": {
+  "labelEs": "segmento L5 de la médula espinal lumbar",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la quinta vértebra lumbar en la mayoría de los mamíferos."
+ },
+ "UBERON:0006448": {
+  "labelEs": "segmento L1 de la médula espinal lumbar",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la primera vértebra lumbar en la mayoría de los mamíferos."
+ },
+ "UBERON:0006449": {
+  "labelEs": "segmento L3 de la médula espinal lumbar",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la tercera vértebra lumbar en la mayoría de los mamíferos."
+ },
+ "UBERON:0006450": {
+  "labelEs": "segmento L2 de la médula espinal lumbar",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la segunda vértebra lumbar en la mayoría de los mamíferos."
+ },
+ "UBERON:0006451": {
+  "labelEs": "segmento L4 de la médula espinal lumbar",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la cuarta vértebra lumbar en la mayoría de los mamíferos."
+ },
+ "UBERON:0006452": {
+  "labelEs": "segmento T4 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la cuarta vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006453": {
+  "labelEs": "segmento T5 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la quinta vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006454": {
+  "labelEs": "segmento T6 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la sexta vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006455": {
+  "labelEs": "segmento T7 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la séptima vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006456": {
+  "labelEs": "segmento T8 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la octava vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006457": {
+  "labelEs": "segmento T1 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la primera vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006458": {
+  "labelEs": "segmento T2 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la segunda vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006459": {
+  "labelEs": "segmento T3 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la tercera vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006460": {
+  "labelEs": "segmento S1 de la médula espinal sacra",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la primera vértebra sacra en la mayoría de los mamíferos."
+ },
+ "UBERON:0006461": {
+  "labelEs": "segmento S2 de la médula espinal sacra",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la segunda vértebra sacra en la mayoría de los mamíferos."
+ },
+ "UBERON:0006462": {
+  "labelEs": "segmento S3 de la médula espinal sacra",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la tercera vértebra sacra en la mayoría de los mamíferos."
+ },
+ "UBERON:0006463": {
+  "labelEs": "segmento S4 de la médula espinal sacra",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la cuarta vértebra sacra en la mayoría de los mamíferos."
+ },
+ "UBERON:0006464": {
+  "labelEs": "segmento S5 de la médula espinal sacra",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la quinta vértebra sacra en la mayoría de los mamíferos."
+ },
+ "UBERON:0006465": {
+  "labelEs": "segmento T9 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la novena vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006466": {
+  "labelEs": "segmento T10 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la décima vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006467": {
+  "labelEs": "segmento T11 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la undécima vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006468": {
+  "labelEs": "segmento T12 de la médula espinal torácica",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la duodécima vértebra torácica en la mayoría de los mamíferos."
+ },
+ "UBERON:0006469": {
+  "labelEs": "segmento C1 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la primera vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006470": {
+  "labelEs": "segmento C8 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la octava vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006488": {
+  "labelEs": "segmento C3 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la tercera vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006489": {
+  "labelEs": "segmento C2 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la segunda vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006490": {
+  "labelEs": "segmento C4 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la cuarta vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006491": {
+  "labelEs": "segmento C5 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la quinta vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006492": {
+  "labelEs": "segmento C6 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la sexta vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006493": {
+  "labelEs": "segmento C7 de la médula espinal cervical",
+  "definitionEs": "Segmento de la médula espinal que corresponde a la séptima vértebra cervical en la mayoría de los mamíferos."
+ },
+ "UBERON:0006686": {
+  "labelEs": "vena espinal",
+  "definitionEs": "Vena que forma parte de una columna vertebral."
+ },
+ "UBERON:0006692": {
+  "labelEs": "conducto vertebral",
+  "definitionEs": "Conducto encerrado dentro del agujero vertebral de las vértebras a través del cual pasa la médula espinal."
+ },
+ "UBERON:0007254": {
+  "labelEs": "disco intervertebral torácico",
+  "definitionEs": "Disco intervertebral que forma parte de una región torácica de la columna vertebral. Un disco intervertebral torácico une al menos una vértebra torácica, bien con otra vértebra torácica o bien, en un punto de la columna vertebral, con una vértebra lumbar."
+ },
+ "UBERON:0007255": {
+  "labelEs": "disco intervertebral lumbar",
+  "definitionEs": "Disco intervertebral que forma parte de una región lumbar de la columna vertebral. Un disco intervertebral lumbar une al menos una vértebra lumbar, bien con otra vértebra torácica o bien, en un punto de la columna vertebral, con una vértebra sacra."
+ },
+ "UBERON:0007257": {
+  "labelEs": "disco intervertebral sacro",
+  "definitionEs": "Disco intervertebral que forma parte de una región sacra de la columna vertebral. Un disco intervertebral sacro une al menos una vértebra sacra, bien con otra vértebra torácica o bien, en un punto de la columna vertebral, con una vértebra sacra."
+ },
+ "UBERON:0007699": {
+  "labelEs": "tracto de la médula espinal",
+  "definitionEs": "Tracto axónico que forma parte de una médula espinal."
+ },
+ "UBERON:0007714": {
+  "labelEs": "subsegmento cervical de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0007715": {
+  "labelEs": "subsegmento torácico de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0007716": {
+  "labelEs": "subsegmento lumbar de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0007717": {
+  "labelEs": "subsegmento sacro de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0007838": {
+  "labelEs": "comisura blanca de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0007840": {
+  "labelEs": "comisura blanca posterior de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0008231": {
+  "labelEs": "región dorsal del tórax",
+  "definitionEs": "Subdivisión del tórax que en los humanos corresponde a la parte posterior del tórax y está separada del pecho por la superficie externa de la parte posterolateral de la caja torácica y la superficie anterior de la columna vertebral torácica; junto con el pecho, constituye el tórax."
+ },
+ "UBERON:0008430": {
+  "labelEs": "agujero vertebral lumbar",
+  "definitionEs": "Agujero vertebral que forma parte de una vértebra lumbar."
+ },
+ "UBERON:0008431": {
+  "labelEs": "agujero vertebral sacro",
+  "definitionEs": "Agujero vertebral que forma parte de una vértebra sacra."
+ },
+ "UBERON:0008432": {
+  "labelEs": "agujero vertebral torácico",
+  "definitionEs": "Agujero vertebral que forma parte de una vértebra torácica."
+ },
+ "UBERON:0008433": {
+  "labelEs": "arco vertebral lumbar",
+  "definitionEs": "Arco neural que forma parte de una vértebra lumbar."
+ },
+ "UBERON:0008435": {
+  "labelEs": "arco vertebral de segmento sacro",
+  "definitionEs": "Arco neural que forma parte de una vértebra sacra."
+ },
+ "UBERON:0008436": {
+  "labelEs": "arco vertebral torácico",
+  "definitionEs": "Arco neural que forma parte de una vértebra torácica."
+ },
+ "UBERON:0008456": {
+  "labelEs": "precigapófisis de vértebra lumbar",
+  "definitionEs": "Precigapófisis que forma parte de una vértebra lumbar."
+ },
+ "UBERON:0008457": {
+  "labelEs": "precigapófisis de vértebra sacra",
+  "definitionEs": "Precigapófisis que forma parte de una vértebra sacra."
+ },
+ "UBERON:0008460": {
+  "labelEs": "precigapófisis de vértebra torácica",
+  "definitionEs": "Precigapófisis que forma parte de una vértebra torácica."
+ },
+ "UBERON:0008461": {
+  "labelEs": "postcigapófisis de vértebra lumbar",
+  "definitionEs": "Postcigapófisis que forma parte de una vértebra lumbar."
+ },
+ "UBERON:0008463": {
+  "labelEs": "postcigapófisis de vértebra torácica",
+  "definitionEs": "Postcigapófisis que forma parte de una vértebra torácica."
+ },
+ "UBERON:0008544": {
+  "labelEs": "músculo esplenio del cuello",
+  "definitionEs": "Músculo que se origina en las apófisis espinosas de la tercera a la sexta vértebras torácicas y se inserta en los tubérculos posteriores de las apófisis transversas de las dos o tres vértebras cervicales superiores[WP,modified]."
+ },
+ "UBERON:0009568": {
+  "labelEs": "región del tronco de la columna vertebral",
+  "definitionEs": "Subdivisión de la columna vertebral que corresponde al tronco del cuerpo y contiene las vértebras del tronco/presacras. En los organismos que presentan distinción entre región torácica y lumbar, corresponde a la suma de ambas regiones."
+ },
+ "UBERON:0009572": {
+  "labelEs": "luz del conducto central de la médula espinal",
+  "definitionEs": "Espacio lleno de líquido cefalorraquídeo que recorre longitudinalmente toda la longitud de la médula espinal. El conducto central es continuo con el sistema ventricular del encéfalo. El conducto central representa el remanente adulto del tubo neural."
+ },
+ "UBERON:0009646": {
+  "labelEs": "tronco simpático lumbar",
+  "definitionEs": "Tronco nervioso simpático que forma parte de una región lumbar."
+ },
+ "UBERON:0010269": {
+  "labelEs": "filum terminale interno",
+  "definitionEs": null
+ },
+ "UBERON:0010270": {
+  "labelEs": "filum terminale externo",
+  "definitionEs": null
+ },
+ "UBERON:0011050": {
+  "labelEs": "vértebra torácica 8 (T8)",
+  "definitionEs": "La octava vértebra torácica contando de arriba abajo. Nótese que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0011136": {
+  "labelEs": "ligamento de la columna vertebral",
+  "definitionEs": "Ligamento que une centros vertebrales sucesivos. Es importante para controlar la rigidez de la columna vertebral cuando esta se flexiona."
+ },
+ "UBERON:0011200": {
+  "labelEs": "sínfisis sacrococcígea",
+  "definitionEs": "La sínfisis sacrococcígea (articulación sacrococcígea, articulación del sacro y el cóccix) es una articulación anfiartrodial, formada entre la superficie oval del vértice del sacro y la base del cóccix. Es una articulación ligeramente móvil que con frecuencia se oblitera, parcial o completamente, en la vejez, y es homóloga de las articulaciones entre los cuerpos de las vértebras."
+ },
+ "UBERON:0011270": {
+  "labelEs": "tronco dorsal",
+  "definitionEs": "La parte del tronco que se encuentra en el dorso[cjm]."
+ },
+ "UBERON:0011777": {
+  "labelEs": "núcleo de la médula espinal",
+  "definitionEs": "Núcleo neural que forma parte de la médula espinal."
+ },
+ "UBERON:0014386": {
+  "labelEs": "placa terminal vertebral",
+  "definitionEs": "Cualquiera de las porciones superior e inferior de los cuerpos vertebrales que hacen interfaz con los discos vertebrales. Está compuesta por una capa de hueso esponjoso engrosado."
+ },
+ "UBERON:0014541": {
+  "labelEs": "porción torácica del conducto central de la médula espinal",
+  "definitionEs": "Parte del conducto central de la médula espinal contenida en la médula espinal torácica. Es continua rostralmente con el conducto central de la médula espinal cervical y caudalmente con el conducto central de la médula espinal lumbar."
+ },
+ "UBERON:0014542": {
+  "labelEs": "porción cervical del conducto central de la médula espinal",
+  "definitionEs": "Parte del conducto central contenida en la médula espinal cervical. Es continua caudalmente con el conducto central de la médula espinal torácica y rostralmente con el cuarto ventrículo del encéfalo a través del óbex."
+ },
+ "UBERON:0014543": {
+  "labelEs": "porción lumbar del conducto central de la médula espinal",
+  "definitionEs": "Parte del conducto central situada en la médula espinal lumbar. Es continua rostralmente con el conducto central de la médula espinal torácica y caudalmente con el conducto central de la médula espinal sacra."
+ },
+ "UBERON:0014547": {
+  "labelEs": "porción sacra del conducto central de la médula espinal",
+  "definitionEs": "Parte del conducto central de la médula espinal contenida en la médula espinal sacra. Es continua rostralmente con el conducto central de la médula lumbar."
+ },
+ "UBERON:0014630": {
+  "labelEs": "comisura gris anterior de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0014631": {
+  "labelEs": "comisura gris posterior de la médula espinal",
+  "definitionEs": "Parte de la comisura gris de la sustancia gris central espinal situada por detrás del conducto central de la médula espinal."
+ },
+ "UBERON:0015150": {
+  "labelEs": "pelo del dorso",
+  "definitionEs": "Hebra de pelo que forma parte de un dorso."
+ },
+ "UBERON:0016412": {
+  "labelEs": "parte central del cuerpo del centro vertebral óseo",
+  "definitionEs": null
+ },
+ "UBERON:0016419": {
+  "labelEs": "parte ósea del arco vertebral",
+  "definitionEs": null
+ },
+ "UBERON:0016570": {
+  "labelEs": "lámina de la sustancia gris de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0016574": {
+  "labelEs": "lámina III de la sustancia gris de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0016575": {
+  "labelEs": "lámina IV de la sustancia gris de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0016576": {
+  "labelEs": "lámina V de la sustancia gris de la médula espinal",
+  "definitionEs": "La lámina espinal V es una lámina de la médula espinal. También se conoce como cuello del asta posterior."
+ },
+ "UBERON:0016577": {
+  "labelEs": "lámina VI de la sustancia gris de la médula espinal",
+  "definitionEs": "La lámina espinal VI es una lámina de la médula espinal. También se conoce como base del asta posterior."
+ },
+ "UBERON:0016578": {
+  "labelEs": "lámina VII de la sustancia gris de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0016579": {
+  "labelEs": "lámina VIII de la sustancia gris de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0016580": {
+  "labelEs": "lámina IX de la sustancia gris de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0016610": {
+  "labelEs": "núcleo propio de la médula espinal",
+  "definitionEs": "El núcleo propio es una capa de la médula espinal adyacente a la sustancia gelatinosa. El núcleo propio constituye la mayor parte del asta dorsal y recibe aferencias de los ganglios de la raíz dorsal que transportan información sensitiva, como el tacto ligero, así como información de dolor y temperatura. Las células de este núcleo proyectan a láminas más profundas de la médula espinal, a los núcleos de la columna posterior y a otros centros de relevo supraespinales, entre ellos el mesencéfalo, el tálamo y el hipotálamo. Las láminas III, IV y V de Rexed componen el núcleo propio. El núcleo propio (NP), junto con el núcleo dorsal (ND), interviene en la percepción del tacto fino y la propiocepción."
+ },
+ "UBERON:0016850": {
+  "labelEs": "núcleo del nervio frénico",
+  "definitionEs": "Cuerpos de células neuronales situados en las porciones más mediales del asta anterior, en los niveles cervicales C3-C7, que inervan el diafragma a través del nervio frénico."
+ },
+ "UBERON:0017671": {
+  "labelEs": "parte ósea del arco vertebral de la primera vértebra sacra",
+  "definitionEs": "Parte ósea del arco vertebral que forma parte de una vértebra sacra 1."
+ },
+ "UBERON:0018146": {
+  "labelEs": "apófisis transversa de vértebra lumbar",
+  "definitionEs": "Apófisis transversa que forma parte de una vértebra lumbar."
+ },
+ "UBERON:0022278": {
+  "labelEs": "núcleo del nervio pudendo",
+  "definitionEs": "Núcleo de la parte ventral del asta anterior de la región sacra de la médula espinal que es el origen del nervio pudendo."
+ },
+ "UBERON:0034771": {
+  "labelEs": "núcleo comisural anterior de la médula espinal",
+  "definitionEs": "El término núcleo comisural de la médula espinal se refiere a un grupo de células de la porción medial de la columna gris anterior; corresponde aproximadamente a la lámina VIII."
+ },
+ "UBERON:0035246": {
+  "labelEs": "ligamento longitudinal posterior",
+  "definitionEs": null
+ },
+ "UBERON:0035419": {
+  "labelEs": "ligamento longitudinal anterior",
+  "definitionEs": "Ligamento que recorre toda la longitud de la superficie anterior de la columna vertebral y, de este modo, interconecta todos los cuerpos vertebrales."
+ },
+ "UBERON:0036013": {
+  "labelEs": "hendidura interglútea",
+  "definitionEs": "Línea que divide las regiones glúteas del cuerpo."
+ },
+ "UBERON:0036014": {
+  "labelEs": "surco glúteo",
+  "definitionEs": "Pliegue horizontal formado por la cara inferior de las nalgas y la parte superior posterior de la pierna."
+ },
+ "UBERON:0036658": {
+  "labelEs": "pared del conducto central de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:0039176": {
+  "labelEs": "espacio subaracnoideo de la médula espinal",
+  "definitionEs": null
+ },
+ "UBERON:8600066": {
+  "labelEs": "vena basivertebral",
+  "definitionEs": "Vena tributaria del plexo venoso vertebral interno anterior que drena la sangre de los cuerpos vertebrales."
+ },
+ "UBERON:8600076": {
+  "labelEs": "plexo venoso suboccipital",
+  "definitionEs": "Plexo venoso tributario de las venas cervicales profundas que drena la sangre de la región suboccipital."
+ },
+ "UBERON:8600103": {
+  "labelEs": "plexo venoso vertebral interno anterior",
+  "definitionEs": "Plexo venoso tributario de las venas basivertebrales y de las venas vertebrales internas, que drena la sangre de las vértebras y de la médula espinal. El plexo venoso vertebral interno anterior se localiza dentro del conducto vertebral."
+ },
+ "UBERON:8600104": {
+  "labelEs": "vena intervertebral",
+  "definitionEs": "Vena que drena la sangre de la columna vertebral y de los discos intervertebrales. En el cuello, es tributaria de las venas vertebrales. En el tórax, es tributaria de las venas intercostales posteriores. En las regiones lumbar y sacra, es tributaria de las venas lumbares y sacras laterales."
+ },
+ "UBERON:8600121": {
+  "labelEs": "ganglio lumbar",
+  "definitionEs": "Ganglio que forma parte de la porción lumbar del tronco simpático. Las neuronas de un ganglio lumbar son neuronas simpáticas posganglionares que hacen sinapsis con axones de neuronas simpáticas preganglionares."
+ }
+}

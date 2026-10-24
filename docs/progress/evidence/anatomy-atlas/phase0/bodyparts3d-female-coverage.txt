@@ -1,0 +1,19 @@
+# BodyParts3D 3.0 (copia github.com/Kevin-Mattheus-Moerman/BodyParts3D @ f0eeb6e843380cfe6b83797cf8c3e1af74de5e61)
+STL: 934 archivos, 1.3G
+
+# README de la copia (git show HEAD:README.md): 'The data is currently, unfortunately, only for a single male model. More models will be added if these become available.'
+
+# parts_list_e.txt — piezas con malla que nombran órganos genitales o mamarios
+FMA18247	glans penis
+FMA18256	right epididymis
+FMA18257	left epididymis
+FMA19387	right seminal vesicle
+FMA19388	left seminal vesicle
+FMA19617nsn	corpus spongiosum of penis, nsn
+FMA19618	corpus cavernosum of penis
+FMA7211	right testis
+FMA7212	left testis
+FMA9600	prostate
+
+# Búsqueda de órganos femeninos entre los nombres de las 934 mallas (vacío = ninguno)
+(ninguna)

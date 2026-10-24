@@ -78,10 +78,18 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  *
  * ## Sexo de la silueta (P-04, 2026-09-25)
  *
- * Las tres vistas existen además en proporción masculina y femenina —hombro,
- * cintura y cadera, nada más—: quien monta el organismo pasa `sexo` con el
- * del propio perfil, y sin ese dato se ve la neutra de siempre. Ver
- * {@link SexoDeLaSilueta}.
+ * Las tres vistas existen además con maniquí masculino y femenino: quien
+ * monta el organismo pasa `sexo` con el del propio perfil, y sin ese dato se
+ * ve el neutro. Ver {@link SexoDeLaSilueta}.
+ *
+ * ## El maniquí (2026-10-23)
+ *
+ * Cada vista es un render de estudio de un maniquí clínico —malla de
+ * MakeHuman (CC0), sin pezones ni genitales, piel mate neutra— y las zonas se
+ * calzan sobre su silueta (`scripts/render-body-map.py` y
+ * `scripts/gen-body-zones.py`). La imagen va debajo como `<image>` del mismo
+ * SVG; las zonas, transparentes, encima. Sólo se descarga la imagen de la
+ * vista puesta.
  *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
@@ -135,12 +143,9 @@ export class BodyMap {
   /**
    * El sexo con el que se dibuja la figura (P-04, 2026-09-25).
    *
-   * `'MALE'` y `'FEMALE'` cambian la proporción de hombro, cintura y cadera
+   * `'MALE'` y `'FEMALE'` eligen el maniquí de ese sexo
    * (`body-zones.geometry.ts`); sin ese dato —perfil `INTERSEX`/`UNKNOWN`,
-   * sin sesión, o todavía sin resolver— se dibuja la neutra de siempre. La
-   * cabeza, los brazos, las piernas y la cara son la misma figura en las
-   * tres: no es lo que distingue una silueta de otra en este dibujo
-   * esquemático.
+   * sin sesión, o todavía sin resolver— se dibuja el neutro.
    */
   readonly sexo = input<SexoDeLaSilueta | undefined>(undefined);
 
@@ -157,14 +162,10 @@ export class BodyMap {
   });
 
   /**
-   * Los `id` de los degradados de esta instancia: el volumen (costados más
-   * oscuros), la luz (de arriba a la izquierda) y el relleno de la elegida.
-   * Por instancia, para que dos siluetas en la misma página no se los pisen.
+   * El `id` del degradado de la elegida en esta instancia: por instancia,
+   * para que dos siluetas en la misma página no se lo pisen.
    */
-  private readonly numero = siguienteSilueta++;
-  protected readonly idDelVolumen = `body-map-volumen-${this.numero}`;
-  protected readonly idDeLaLuz = `body-map-luz-${this.numero}`;
-  protected readonly idDeLaElegida = `body-map-elegida-${this.numero}`;
+  protected readonly idDeLaElegida = `body-map-elegida-${siguienteSilueta++}`;
 
   /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
   private readonly apuntada = signal<string | null>(null);

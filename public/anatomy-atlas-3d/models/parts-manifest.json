@@ -1,0 +1,5607 @@
+{
+ "license": "BodyParts3D, (c) The Database Center for Life Science, CC-BY-SA 2.1 JP (https://creativecommons.org/licenses/by-sa/2.1/jp/). Mallas reducidas para Mantra Core Health.",
+ "layers": {
+  "muscles": {
+   "file": "muscles.glb",
+   "parts": 437
+  },
+  "nervous": {
+   "file": "nervous.glb",
+   "parts": 99
+  },
+  "organs": {
+   "file": "organs.glb",
+   "parts": 78
+  },
+  "skeleton": {
+   "file": "skeleton.glb",
+   "parts": 251
+  },
+  "vessels": {
+   "file": "vessels.glb",
+   "parts": 65
+  }
+ },
+ "parts": {
+  "BP44": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 486,
+   "sourceTriangles": 31700
+  },
+  "BP45": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 486,
+   "sourceTriangles": 31644
+  },
+  "BP46": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 360,
+   "sourceTriangles": 17424
+  },
+  "BP47": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 358,
+   "sourceTriangles": 17208
+  },
+  "FMA11336": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 266,
+   "sourceTriangles": 9516
+  },
+  "FMA13295": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1254,
+   "sourceTriangles": 210666
+  },
+  "FMA13336": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 2024,
+   "sourceTriangles": 549294
+  },
+  "FMA13337": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 2020,
+   "sourceTriangles": 546370
+  },
+  "FMA13346": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 322,
+   "sourceTriangles": 13946
+  },
+  "FMA13347": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 318,
+   "sourceTriangles": 13764
+  },
+  "FMA13348": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 448,
+   "sourceTriangles": 27096
+  },
+  "FMA13349": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 446,
+   "sourceTriangles": 26960
+  },
+  "FMA13350": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11104
+  },
+  "FMA13351": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 284,
+   "sourceTriangles": 10918
+  },
+  "FMA13352": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7288
+  },
+  "FMA13353": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7244
+  },
+  "FMA13358": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1304,
+   "sourceTriangles": 227978
+  },
+  "FMA13359": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1302,
+   "sourceTriangles": 227390
+  },
+  "FMA13375": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 582,
+   "sourceTriangles": 45360
+  },
+  "FMA13376": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 576,
+   "sourceTriangles": 44798
+  },
+  "FMA13377": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1194,
+   "sourceTriangles": 191206
+  },
+  "FMA13378": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1188,
+   "sourceTriangles": 188862
+  },
+  "FMA13381": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 600,
+   "sourceTriangles": 48254
+  },
+  "FMA13382": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 600,
+   "sourceTriangles": 48398
+  },
+  "FMA13383": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 334,
+   "sourceTriangles": 15092
+  },
+  "FMA13384": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 334,
+   "sourceTriangles": 15062
+  },
+  "FMA13388": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 314,
+   "sourceTriangles": 13348
+  },
+  "FMA13389": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13174
+  },
+  "FMA13390": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 398,
+   "sourceTriangles": 21238
+  },
+  "FMA13391": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 396,
+   "sourceTriangles": 21202
+  },
+  "FMA13392": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 322,
+   "sourceTriangles": 13984
+  },
+  "FMA13393": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 320,
+   "sourceTriangles": 13700
+  },
+  "FMA13398": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1362,
+   "sourceTriangles": 248640
+  },
+  "FMA13399": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1360,
+   "sourceTriangles": 248234
+  },
+  "FMA13403": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 662,
+   "sourceTriangles": 58938
+  },
+  "FMA13404": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 658,
+   "sourceTriangles": 58308
+  },
+  "FMA13405": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 820,
+   "sourceTriangles": 90336
+  },
+  "FMA13406": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 818,
+   "sourceTriangles": 90014
+  },
+  "FMA13408": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 618,
+   "sourceTriangles": 51314
+  },
+  "FMA13409": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 612,
+   "sourceTriangles": 50290
+  },
+  "FMA13411": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 246,
+   "sourceTriangles": 8154
+  },
+  "FMA13412": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 246,
+   "sourceTriangles": 8154
+  },
+  "FMA13414": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 478,
+   "sourceTriangles": 30620
+  },
+  "FMA13415": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 478,
+   "sourceTriangles": 30670
+  },
+  "FMA13892": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1410,
+   "sourceTriangles": 266412
+  },
+  "FMA13893": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1404,
+   "sourceTriangles": 264182
+  },
+  "FMA21930": {
+   "layer": "muscles",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 3668
+  },
+  "FMA21964": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 298,
+   "sourceTriangles": 12068
+  },
+  "FMA21965": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11704
+  },
+  "FMA22322": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 574,
+   "sourceTriangles": 44402
+  },
+  "FMA22323": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 574,
+   "sourceTriangles": 44306
+  },
+  "FMA22324": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 530,
+   "sourceTriangles": 37770
+  },
+  "FMA22325": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 512,
+   "sourceTriangles": 35424
+  },
+  "FMA22326": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 296,
+   "sourceTriangles": 11760
+  },
+  "FMA22327": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11562
+  },
+  "FMA22328": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 504,
+   "sourceTriangles": 34226
+  },
+  "FMA22329": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 494,
+   "sourceTriangles": 33008
+  },
+  "FMA22330": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 620,
+   "sourceTriangles": 51818
+  },
+  "FMA22331": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 614,
+   "sourceTriangles": 50630
+  },
+  "FMA22332": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 684,
+   "sourceTriangles": 63110
+  },
+  "FMA22333": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 682,
+   "sourceTriangles": 62686
+  },
+  "FMA22334": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4512
+  },
+  "FMA22335": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4306
+  },
+  "FMA22336": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 268,
+   "sourceTriangles": 9778
+  },
+  "FMA22337": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 264,
+   "sourceTriangles": 9424
+  },
+  "FMA22338": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 354,
+   "sourceTriangles": 16770
+  },
+  "FMA22339": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 354,
+   "sourceTriangles": 16760
+  },
+  "FMA22340": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 336,
+   "sourceTriangles": 15100
+  },
+  "FMA22341": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 324,
+   "sourceTriangles": 14248
+  },
+  "FMA22342": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 648,
+   "sourceTriangles": 56614
+  },
+  "FMA22343": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 644,
+   "sourceTriangles": 55766
+  },
+  "FMA22344": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1528,
+   "sourceTriangles": 313270
+  },
+  "FMA22345": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1528,
+   "sourceTriangles": 312862
+  },
+  "FMA22346": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11214
+  },
+  "FMA22347": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 286,
+   "sourceTriangles": 11044
+  },
+  "FMA22348": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 440,
+   "sourceTriangles": 25896
+  },
+  "FMA22349": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 436,
+   "sourceTriangles": 25602
+  },
+  "FMA22354": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 624,
+   "sourceTriangles": 52418
+  },
+  "FMA22355": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 618,
+   "sourceTriangles": 51474
+  },
+  "FMA22358": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 568,
+   "sourceTriangles": 43550
+  },
+  "FMA22359": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 562,
+   "sourceTriangles": 42538
+  },
+  "FMA22425": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 372,
+   "sourceTriangles": 18688
+  },
+  "FMA22426": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 370,
+   "sourceTriangles": 18514
+  },
+  "FMA22448": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 744,
+   "sourceTriangles": 74564
+  },
+  "FMA22449": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 732,
+   "sourceTriangles": 72126
+  },
+  "FMA22450": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 386,
+   "sourceTriangles": 20150
+  },
+  "FMA22451": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 390,
+   "sourceTriangles": 20614
+  },
+  "FMA22452": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 400,
+   "sourceTriangles": 21608
+  },
+  "FMA22454": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 402,
+   "sourceTriangles": 21726
+  },
+  "FMA22456": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 526,
+   "sourceTriangles": 37142
+  },
+  "FMA22457": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 532,
+   "sourceTriangles": 37878
+  },
+  "FMA22459": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 780,
+   "sourceTriangles": 81974
+  },
+  "FMA22460": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 784,
+   "sourceTriangles": 82490
+  },
+  "FMA22544": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 516,
+   "sourceTriangles": 35914
+  },
+  "FMA22545": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 508,
+   "sourceTriangles": 34522
+  },
+  "FMA22546": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 420,
+   "sourceTriangles": 23802
+  },
+  "FMA22547": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 416,
+   "sourceTriangles": 23146
+  },
+  "FMA22548": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 682,
+   "sourceTriangles": 62574
+  },
+  "FMA22549": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 678,
+   "sourceTriangles": 62008
+  },
+  "FMA22550": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6324
+  },
+  "FMA22551": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6116
+  },
+  "FMA22552": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 658,
+   "sourceTriangles": 58214
+  },
+  "FMA22553": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 660,
+   "sourceTriangles": 58314
+  },
+  "FMA22554": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 514,
+   "sourceTriangles": 35734
+  },
+  "FMA22555": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 516,
+   "sourceTriangles": 35814
+  },
+  "FMA22558": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 716,
+   "sourceTriangles": 68566
+  },
+  "FMA22559": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 720,
+   "sourceTriangles": 69368
+  },
+  "FMA22560": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 592,
+   "sourceTriangles": 47020
+  },
+  "FMA22561": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 588,
+   "sourceTriangles": 46702
+  },
+  "FMA22591": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 292,
+   "sourceTriangles": 11446
+  },
+  "FMA22592": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11178
+  },
+  "FMA22726": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 576,
+   "sourceTriangles": 44544
+  },
+  "FMA22727": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 576,
+   "sourceTriangles": 44544
+  },
+  "FMA22728": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 630,
+   "sourceTriangles": 53260
+  },
+  "FMA22729": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 630,
+   "sourceTriangles": 53242
+  },
+  "FMA22740": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 896,
+   "sourceTriangles": 107548
+  },
+  "FMA22741": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 904,
+   "sourceTriangles": 109692
+  },
+  "FMA22742": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 656,
+   "sourceTriangles": 57922
+  },
+  "FMA22743": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 648,
+   "sourceTriangles": 56256
+  },
+  "FMA22744": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 392,
+   "sourceTriangles": 20728
+  },
+  "FMA22745": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 384,
+   "sourceTriangles": 19848
+  },
+  "FMA22751": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 894,
+   "sourceTriangles": 107160
+  },
+  "FMA22753": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 884,
+   "sourceTriangles": 105196
+  },
+  "FMA22754": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 344,
+   "sourceTriangles": 15852
+  },
+  "FMA22756": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 338,
+   "sourceTriangles": 15374
+  },
+  "FMA22757": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 374,
+   "sourceTriangles": 18764
+  },
+  "FMA22758": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 366,
+   "sourceTriangles": 18070
+  },
+  "FMA22779": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 644,
+   "sourceTriangles": 55980
+  },
+  "FMA22780": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 634,
+   "sourceTriangles": 54008
+  },
+  "FMA22781": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6016
+  },
+  "FMA22782": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5932
+  },
+  "FMA22872": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 614,
+   "sourceTriangles": 50598
+  },
+  "FMA22873": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 602,
+   "sourceTriangles": 48504
+  },
+  "FMA22874": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 440,
+   "sourceTriangles": 26166
+  },
+  "FMA22875": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 432,
+   "sourceTriangles": 25156
+  },
+  "FMA22876": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 452,
+   "sourceTriangles": 27454
+  },
+  "FMA22877": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 452,
+   "sourceTriangles": 27382
+  },
+  "FMA22878": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 742,
+   "sourceTriangles": 73986
+  },
+  "FMA22879": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 728,
+   "sourceTriangles": 71104
+  },
+  "FMA23083": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 812,
+   "sourceTriangles": 88394
+  },
+  "FMA23089": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 464,
+   "sourceTriangles": 28990
+  },
+  "FMA23090": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 440,
+   "sourceTriangles": 25894
+  },
+  "FMA258847": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 588,
+   "sourceTriangles": 46410
+  },
+  "FMA258850": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2518
+  },
+  "FMA264840": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2310
+  },
+  "FMA264844": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 592,
+   "sourceTriangles": 47238
+  },
+  "FMA32530": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 242,
+   "sourceTriangles": 7892
+  },
+  "FMA32531": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 242,
+   "sourceTriangles": 7838
+  },
+  "FMA32532": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4396
+  },
+  "FMA32533": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4302
+  },
+  "FMA32534": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7184
+  },
+  "FMA32535": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7136
+  },
+  "FMA32536": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5412
+  },
+  "FMA32537": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5228
+  },
+  "FMA32540": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 484,
+   "sourceTriangles": 31336
+  },
+  "FMA32541": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 476,
+   "sourceTriangles": 30384
+  },
+  "FMA32544": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 326,
+   "sourceTriangles": 14318
+  },
+  "FMA32545": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 330,
+   "sourceTriangles": 14820
+  },
+  "FMA32547": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 486,
+   "sourceTriangles": 31680
+  },
+  "FMA32548": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 488,
+   "sourceTriangles": 31898
+  },
+  "FMA32551": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 358,
+   "sourceTriangles": 17148
+  },
+  "FMA32552": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 356,
+   "sourceTriangles": 17112
+  },
+  "FMA32553": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 336,
+   "sourceTriangles": 15224
+  },
+  "FMA32554": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 336,
+   "sourceTriangles": 15150
+  },
+  "FMA33581": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 720,
+   "sourceTriangles": 69632
+  },
+  "FMA33583": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 712,
+   "sourceTriangles": 68048
+  },
+  "FMA33584": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 476,
+   "sourceTriangles": 30584
+  },
+  "FMA33585": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 474,
+   "sourceTriangles": 30294
+  },
+  "FMA33586": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 588,
+   "sourceTriangles": 46450
+  },
+  "FMA33587": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 578,
+   "sourceTriangles": 44902
+  },
+  "FMA34680": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 466,
+   "sourceTriangles": 29082
+  },
+  "FMA34681": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 460,
+   "sourceTriangles": 28486
+  },
+  "FMA34682": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 470,
+   "sourceTriangles": 29682
+  },
+  "FMA34683": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 464,
+   "sourceTriangles": 29076
+  },
+  "FMA34684": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 572,
+   "sourceTriangles": 44010
+  },
+  "FMA34685": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 576,
+   "sourceTriangles": 44628
+  },
+  "FMA34690": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 262,
+   "sourceTriangles": 9330
+  },
+  "FMA34691": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 260,
+   "sourceTriangles": 9212
+  },
+  "FMA37386": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6352
+  },
+  "FMA37387": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6040
+  },
+  "FMA37390": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 242,
+   "sourceTriangles": 7904
+  },
+  "FMA37391": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7582
+  },
+  "FMA37396": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7074
+  },
+  "FMA37397": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6870
+  },
+  "FMA37398": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3144
+  },
+  "FMA37399": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3044
+  },
+  "FMA37400": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4664
+  },
+  "FMA37401": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4570
+  },
+  "FMA37459": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 356,
+   "sourceTriangles": 17158
+  },
+  "FMA37460": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 356,
+   "sourceTriangles": 17098
+  },
+  "FMA37461": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 492,
+   "sourceTriangles": 32548
+  },
+  "FMA37462": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 504,
+   "sourceTriangles": 34126
+  },
+  "FMA37463": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13230
+  },
+  "FMA37464": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 320,
+   "sourceTriangles": 13906
+  },
+  "FMA37465": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 296,
+   "sourceTriangles": 11806
+  },
+  "FMA37466": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 304,
+   "sourceTriangles": 12506
+  },
+  "FMA37471": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5004
+  },
+  "FMA37472": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5124
+  },
+  "FMA37483": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3016
+  },
+  "FMA37484": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3226
+  },
+  "FMA37485": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3446
+  },
+  "FMA37486": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3522
+  },
+  "FMA37665": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11648
+  },
+  "FMA37666": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11112
+  },
+  "FMA37668": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 510,
+   "sourceTriangles": 34988
+  },
+  "FMA37669": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 508,
+   "sourceTriangles": 34686
+  },
+  "FMA37684": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 454,
+   "sourceTriangles": 27840
+  },
+  "FMA37685": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 462,
+   "sourceTriangles": 28708
+  },
+  "FMA37686": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 490,
+   "sourceTriangles": 32266
+  },
+  "FMA37687": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 494,
+   "sourceTriangles": 32906
+  },
+  "FMA37695": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 448,
+   "sourceTriangles": 26880
+  },
+  "FMA37696": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 442,
+   "sourceTriangles": 26226
+  },
+  "FMA37697": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 520,
+   "sourceTriangles": 36312
+  },
+  "FMA37698": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 516,
+   "sourceTriangles": 35974
+  },
+  "FMA37699": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 542,
+   "sourceTriangles": 39514
+  },
+  "FMA37700": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 532,
+   "sourceTriangles": 38128
+  },
+  "FMA37705": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 326,
+   "sourceTriangles": 14436
+  },
+  "FMA37706": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 324,
+   "sourceTriangles": 14182
+  },
+  "FMA37717": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4924
+  },
+  "FMA37718": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4760
+  },
+  "FMA37719": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3332
+  },
+  "FMA37720": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3308
+  },
+  "FMA37741": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3946
+  },
+  "FMA37742": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4066
+  },
+  "FMA37743": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4322
+  },
+  "FMA37744": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4338
+  },
+  "FMA37745": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4442
+  },
+  "FMA37746": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4388
+  },
+  "FMA38454": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 330,
+   "sourceTriangles": 14666
+  },
+  "FMA38455": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 326,
+   "sourceTriangles": 14436
+  },
+  "FMA38460": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 352,
+   "sourceTriangles": 16722
+  },
+  "FMA38461": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 344,
+   "sourceTriangles": 15930
+  },
+  "FMA38463": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 574,
+   "sourceTriangles": 44410
+  },
+  "FMA38464": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 566,
+   "sourceTriangles": 43062
+  },
+  "FMA38479": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 730,
+   "sourceTriangles": 71294
+  },
+  "FMA38480": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 736,
+   "sourceTriangles": 72594
+  },
+  "FMA38482": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 376,
+   "sourceTriangles": 19048
+  },
+  "FMA38484": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 372,
+   "sourceTriangles": 18698
+  },
+  "FMA38486": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 738,
+   "sourceTriangles": 73160
+  },
+  "FMA38487": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 740,
+   "sourceTriangles": 73558
+  },
+  "FMA38495": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 526,
+   "sourceTriangles": 37140
+  },
+  "FMA38496": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 534,
+   "sourceTriangles": 38276
+  },
+  "FMA38498": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 484,
+   "sourceTriangles": 31496
+  },
+  "FMA38499": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 502,
+   "sourceTriangles": 33894
+  },
+  "FMA38501": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 692,
+   "sourceTriangles": 64444
+  },
+  "FMA38502": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 688,
+   "sourceTriangles": 63656
+  },
+  "FMA38504": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 400,
+   "sourceTriangles": 21540
+  },
+  "FMA38505": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 400,
+   "sourceTriangles": 21510
+  },
+  "FMA38513": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 454,
+   "sourceTriangles": 27650
+  },
+  "FMA38514": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 440,
+   "sourceTriangles": 26072
+  },
+  "FMA38516": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 428,
+   "sourceTriangles": 24766
+  },
+  "FMA38517": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 420,
+   "sourceTriangles": 23666
+  },
+  "FMA38519": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11732
+  },
+  "FMA38520": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11624
+  },
+  "FMA38522": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 348,
+   "sourceTriangles": 16234
+  },
+  "FMA38523": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 344,
+   "sourceTriangles": 16072
+  },
+  "FMA38525": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11670
+  },
+  "FMA38526": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 292,
+   "sourceTriangles": 11518
+  },
+  "FMA38560": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 440,
+   "sourceTriangles": 25978
+  },
+  "FMA38561": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 434,
+   "sourceTriangles": 25376
+  },
+  "FMA38562": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 290,
+   "sourceTriangles": 11374
+  },
+  "FMA38563": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 290,
+   "sourceTriangles": 11406
+  },
+  "FMA38617": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 538,
+   "sourceTriangles": 39130
+  },
+  "FMA38618": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 548,
+   "sourceTriangles": 40366
+  },
+  "FMA38619": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 336,
+   "sourceTriangles": 15216
+  },
+  "FMA38620": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 330,
+   "sourceTriangles": 14676
+  },
+  "FMA38638": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 976,
+   "sourceTriangles": 128150
+  },
+  "FMA38639": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 988,
+   "sourceTriangles": 130822
+  },
+  "FMA38640": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 308,
+   "sourceTriangles": 12768
+  },
+  "FMA38641": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 308,
+   "sourceTriangles": 12766
+  },
+  "FMA38928": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 786,
+   "sourceTriangles": 82990
+  },
+  "FMA38929": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 782,
+   "sourceTriangles": 82050
+  },
+  "FMA38930": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 844,
+   "sourceTriangles": 95564
+  },
+  "FMA38931": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 840,
+   "sourceTriangles": 94474
+  },
+  "FMA38932": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 700,
+   "sourceTriangles": 65814
+  },
+  "FMA38933": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 696,
+   "sourceTriangles": 64980
+  },
+  "FMA38934": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 678,
+   "sourceTriangles": 61866
+  },
+  "FMA38935": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 676,
+   "sourceTriangles": 61374
+  },
+  "FMA40120": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 282,
+   "sourceTriangles": 10648
+  },
+  "FMA40121": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 280,
+   "sourceTriangles": 10634
+  },
+  "FMA42398": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 336,
+   "sourceTriangles": 15236
+  },
+  "FMA42399": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 332,
+   "sourceTriangles": 14930
+  },
+  "FMA42402": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5564
+  },
+  "FMA42403": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5364
+  },
+  "FMA42404": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 358,
+   "sourceTriangles": 17328
+  },
+  "FMA42405": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 354,
+   "sourceTriangles": 16992
+  },
+  "FMA43883": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 606,
+   "sourceTriangles": 49262
+  },
+  "FMA43884": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 604,
+   "sourceTriangles": 49194
+  },
+  "FMA43886": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 264,
+   "sourceTriangles": 9486
+  },
+  "FMA43887": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 268,
+   "sourceTriangles": 9702
+  },
+  "FMA45739": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 700,
+   "sourceTriangles": 65580
+  },
+  "FMA45740": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 692,
+   "sourceTriangles": 64516
+  },
+  "FMA45826": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7378
+  },
+  "FMA45827": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7132
+  },
+  "FMA45854": {
+   "layer": "muscles",
+   "sex": "male",
+   "triangles": 414,
+   "sourceTriangles": 23080
+  },
+  "FMA45855": {
+   "layer": "muscles",
+   "sex": "male",
+   "triangles": 416,
+   "sourceTriangles": 23362
+  },
+  "FMA45856": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 364,
+   "sourceTriangles": 17924
+  },
+  "FMA45857": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 364,
+   "sourceTriangles": 17838
+  },
+  "FMA45858": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 370,
+   "sourceTriangles": 18478
+  },
+  "FMA45859": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 370,
+   "sourceTriangles": 18342
+  },
+  "FMA45874": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7546
+  },
+  "FMA45875": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7468
+  },
+  "FMA45888": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 738,
+   "sourceTriangles": 73098
+  },
+  "FMA45889": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 742,
+   "sourceTriangles": 74180
+  },
+  "FMA45891": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 436,
+   "sourceTriangles": 25478
+  },
+  "FMA45892": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 428,
+   "sourceTriangles": 24698
+  },
+  "FMA45957": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 694,
+   "sourceTriangles": 64772
+  },
+  "FMA45958": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 696,
+   "sourceTriangles": 65138
+  },
+  "FMA45960": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 604,
+   "sourceTriangles": 49104
+  },
+  "FMA45961": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 602,
+   "sourceTriangles": 48710
+  },
+  "FMA45971": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7672
+  },
+  "FMA45972": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7438
+  },
+  "FMA45973": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 286,
+   "sourceTriangles": 10992
+  },
+  "FMA45974": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 282,
+   "sourceTriangles": 10772
+  },
+  "FMA46018": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 266,
+   "sourceTriangles": 9480
+  },
+  "FMA46019": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 270,
+   "sourceTriangles": 9792
+  },
+  "FMA46020": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4180
+  },
+  "FMA46021": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3936
+  },
+  "FMA46110": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3952
+  },
+  "FMA46111": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3904
+  },
+  "FMA46121": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4692
+  },
+  "FMA46122": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4322
+  },
+  "FMA46123": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 274,
+   "sourceTriangles": 10192
+  },
+  "FMA46124": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 262,
+   "sourceTriangles": 9282
+  },
+  "FMA46283": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11676
+  },
+  "FMA46284": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 282,
+   "sourceTriangles": 10648
+  },
+  "FMA46285": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 360,
+   "sourceTriangles": 17432
+  },
+  "FMA46286": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 356,
+   "sourceTriangles": 16954
+  },
+  "FMA46287": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11172
+  },
+  "FMA46288": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 280,
+   "sourceTriangles": 10618
+  },
+  "FMA46304": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3928
+  },
+  "FMA46305": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3822
+  },
+  "FMA46306": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13056
+  },
+  "FMA46307": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 310,
+   "sourceTriangles": 12906
+  },
+  "FMA46309": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 384,
+   "sourceTriangles": 19800
+  },
+  "FMA46310": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 378,
+   "sourceTriangles": 19300
+  },
+  "FMA46313": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4034
+  },
+  "FMA46314": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3986
+  },
+  "FMA46317": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3616
+  },
+  "FMA46318": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3596
+  },
+  "FMA46321": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11258
+  },
+  "FMA46322": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 286,
+   "sourceTriangles": 11162
+  },
+  "FMA46326": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5320
+  },
+  "FMA46327": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5190
+  },
+  "FMA46442": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6844
+  },
+  "FMA46443": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 268,
+   "sourceTriangles": 9736
+  },
+  "FMA46444": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 268,
+   "sourceTriangles": 9702
+  },
+  "FMA46759": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 662,
+   "sourceTriangles": 58896
+  },
+  "FMA46760": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 660,
+   "sourceTriangles": 58592
+  },
+  "FMA46761": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 448,
+   "sourceTriangles": 27024
+  },
+  "FMA46762": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 446,
+   "sourceTriangles": 26756
+  },
+  "FMA46763": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 954,
+   "sourceTriangles": 121926
+  },
+  "FMA46764": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 952,
+   "sourceTriangles": 121620
+  },
+  "FMA46768": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1740,
+   "sourceTriangles": 405678
+  },
+  "FMA46782": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 248,
+   "sourceTriangles": 8330
+  },
+  "FMA46783": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 248,
+   "sourceTriangles": 8280
+  },
+  "FMA46785": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 420,
+   "sourceTriangles": 23906
+  },
+  "FMA46786": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 414,
+   "sourceTriangles": 23042
+  },
+  "FMA46796": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2784
+  },
+  "FMA46797": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2768
+  },
+  "FMA46803": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1688
+  },
+  "FMA46804": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1646
+  },
+  "FMA46806": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5438
+  },
+  "FMA46807": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5374
+  },
+  "FMA46812": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 276,
+   "sourceTriangles": 10218
+  },
+  "FMA46813": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 274,
+   "sourceTriangles": 10120
+  },
+  "FMA46814": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4568
+  },
+  "FMA46815": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4550
+  },
+  "FMA46817": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 272,
+   "sourceTriangles": 9960
+  },
+  "FMA46818": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 270,
+   "sourceTriangles": 9832
+  },
+  "FMA46823": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4040
+  },
+  "FMA46824": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3990
+  },
+  "FMA46826": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1892
+  },
+  "FMA46827": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1852
+  },
+  "FMA46829": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5462
+  },
+  "FMA46830": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5372
+  },
+  "FMA46835": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 256,
+   "sourceTriangles": 8858
+  },
+  "FMA46836": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 256,
+   "sourceTriangles": 8836
+  },
+  "FMA46839": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6736
+  },
+  "FMA46840": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6684
+  },
+  "FMA46841": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 528,
+   "sourceTriangles": 37614
+  },
+  "FMA49001": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 274,
+   "sourceTriangles": 10088
+  },
+  "FMA49002": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 272,
+   "sourceTriangles": 10032
+  },
+  "FMA49004": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 324,
+   "sourceTriangles": 14152
+  },
+  "FMA49005": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 322,
+   "sourceTriangles": 14114
+  },
+  "FMA49007": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 890,
+   "sourceTriangles": 106252
+  },
+  "FMA49008": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 890,
+   "sourceTriangles": 106356
+  },
+  "FMA49012": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7444
+  },
+  "FMA49013": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7368
+  },
+  "FMA49022": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2420
+  },
+  "FMA49023": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2390
+  },
+  "FMA49024": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2328
+  },
+  "FMA49025": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2310
+  },
+  "FMA51142": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 488,
+   "sourceTriangles": 32216
+  },
+  "FMA51143": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 488,
+   "sourceTriangles": 32280
+  },
+  "FMA51144": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11234
+  },
+  "FMA51145": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 282,
+   "sourceTriangles": 10778
+  },
+  "FMA55606": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7382
+  },
+  "FMA55607": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7326
+  },
+  "FMA55608": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2580
+  },
+  "FMA55609": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2544
+  },
+  "FMA55610": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5490
+  },
+  "FMA55611": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5482
+  },
+  "FMA58776": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1348,
+   "sourceTriangles": 243308
+  },
+  "FMA58777": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 1352,
+   "sourceTriangles": 244884
+  },
+  "FMA65014": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 662,
+   "sourceTriangles": 58876
+  },
+  "FMA65015": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 668,
+   "sourceTriangles": 59858
+  },
+  "FMA65016": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 722,
+   "sourceTriangles": 69914
+  },
+  "FMA65017": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 730,
+   "sourceTriangles": 71366
+  },
+  "FMA65018": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 672,
+   "sourceTriangles": 60452
+  },
+  "FMA65019": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 656,
+   "sourceTriangles": 58062
+  },
+  "FMA65198": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4262
+  },
+  "FMA65199": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3764
+  },
+  "FMA71307": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 284,
+   "sourceTriangles": 10838
+  },
+  "FMA71308": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3956
+  },
+  "FMA71309": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6850
+  },
+  "FMA71442": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 248,
+   "sourceTriangles": 8322
+  },
+  "FMA71443": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 256,
+   "sourceTriangles": 8782
+  },
+  "FMA71444": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 286,
+   "sourceTriangles": 11090
+  },
+  "FMA74075": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 662,
+   "sourceTriangles": 58924
+  },
+  "FMA74076": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 660,
+   "sourceTriangles": 58254
+  },
+  "FMA74077": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 470,
+   "sourceTriangles": 29694
+  },
+  "FMA74078": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 470,
+   "sourceTriangles": 29740
+  },
+  "FMA74140": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 358,
+   "sourceTriangles": 17198
+  },
+  "FMA74141": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 346,
+   "sourceTriangles": 16230
+  },
+  "FMA76775": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 388,
+   "sourceTriangles": 20166
+  },
+  "FMA79979": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 518,
+   "sourceTriangles": 36014
+  },
+  "FMA79980": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 516,
+   "sourceTriangles": 35798
+  },
+  "FMA81752": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 338,
+   "sourceTriangles": 15462
+  },
+  "FMA81753": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 326,
+   "sourceTriangles": 14314
+  },
+  "FMA86034": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2424
+  },
+  "FMA86035": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2522
+  },
+  "FMA9756": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 2470,
+   "sourceTriangles": 816056
+  },
+  "FMA9757": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 2324,
+   "sourceTriangles": 723154
+  },
+  "FMA9758": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 2250,
+   "sourceTriangles": 678014
+  },
+  "FMA9761": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 362,
+   "sourceTriangles": 17528
+  },
+  "FMA9762": {
+   "layer": "muscles",
+   "sex": "shared",
+   "triangles": 360,
+   "sourceTriangles": 17396
+  },
+  "BP49": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 384,
+   "sourceTriangles": 19906
+  },
+  "BP50": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 384,
+   "sourceTriangles": 19926
+  },
+  "BP51": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 398,
+   "sourceTriangles": 21388
+  },
+  "FMA258714": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3298
+  },
+  "FMA258716": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7396
+  },
+  "FMA274027": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 400,
+   "sourceTriangles": 21558
+  },
+  "FMA274029": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 400,
+   "sourceTriangles": 21508
+  },
+  "FMA50875": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 276,
+   "sourceTriangles": 10310
+  },
+  "FMA50878": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 276,
+   "sourceTriangles": 10302
+  },
+  "FMA61822": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 1148,
+   "sourceTriangles": 176564
+  },
+  "FMA61844": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 432,
+   "sourceTriangles": 25012
+  },
+  "FMA61961": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3690
+  },
+  "FMA61970": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 586,
+   "sourceTriangles": 46164
+  },
+  "FMA61975": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2448
+  },
+  "FMA61993nsn": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 646,
+   "sourceTriangles": 56314
+  },
+  "FMA62004": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 626,
+   "sourceTriangles": 52760
+  },
+  "FMA62008nsn": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 362,
+   "sourceTriangles": 17690
+  },
+  "FMA62032": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 384
+  },
+  "FMA62033": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2536
+  },
+  "FMA62045": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7752
+  },
+  "FMA62072": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3786
+  },
+  "FMA62327": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6974
+  },
+  "FMA62382": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 272,
+   "sourceTriangles": 10110
+  },
+  "FMA62394": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 590,
+   "sourceTriangles": 46834
+  },
+  "FMA67936": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 274,
+   "sourceTriangles": 10122
+  },
+  "FMA67943": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 818,
+   "sourceTriangles": 90072
+  },
+  "FMA67944": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 1334,
+   "sourceTriangles": 238506
+  },
+  "FMA72653": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 476,
+   "sourceTriangles": 30448
+  },
+  "FMA72654": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 476,
+   "sourceTriangles": 30450
+  },
+  "FMA72655": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 340,
+   "sourceTriangles": 15558
+  },
+  "FMA72656": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 340,
+   "sourceTriangles": 15544
+  },
+  "FMA72661": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 374,
+   "sourceTriangles": 18838
+  },
+  "FMA72662": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 374,
+   "sourceTriangles": 18836
+  },
+  "FMA72665": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 354,
+   "sourceTriangles": 16862
+  },
+  "FMA72666": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 354,
+   "sourceTriangles": 16858
+  },
+  "FMA72667": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 268,
+   "sourceTriangles": 9782
+  },
+  "FMA72668": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 268,
+   "sourceTriangles": 9778
+  },
+  "FMA72669": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13172
+  },
+  "FMA72670": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13164
+  },
+  "FMA72685": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 310,
+   "sourceTriangles": 12926
+  },
+  "FMA72686": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 308,
+   "sourceTriangles": 12918
+  },
+  "FMA72687": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13056
+  },
+  "FMA72688": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 310,
+   "sourceTriangles": 13040
+  },
+  "FMA72689": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6150
+  },
+  "FMA72690": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6148
+  },
+  "FMA72701": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 338,
+   "sourceTriangles": 15346
+  },
+  "FMA72702": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 338,
+   "sourceTriangles": 15330
+  },
+  "FMA72705": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3454
+  },
+  "FMA72706": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3452
+  },
+  "FMA72713": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4452
+  },
+  "FMA72714": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4280
+  },
+  "FMA72717": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11716
+  },
+  "FMA72718": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 294,
+   "sourceTriangles": 11724
+  },
+  "FMA72800": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 248,
+   "sourceTriangles": 8348
+  },
+  "FMA72801": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 248,
+   "sourceTriangles": 8338
+  },
+  "FMA72804": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 278,
+   "sourceTriangles": 10472
+  },
+  "FMA72805": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 278,
+   "sourceTriangles": 10472
+  },
+  "FMA72826": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11272
+  },
+  "FMA72827": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 286,
+   "sourceTriangles": 11160
+  },
+  "FMA72828": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 478,
+   "sourceTriangles": 30670
+  },
+  "FMA72829": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 478,
+   "sourceTriangles": 30636
+  },
+  "FMA72830": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 416,
+   "sourceTriangles": 23206
+  },
+  "FMA72831": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 478,
+   "sourceTriangles": 30738
+  },
+  "FMA72832": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1744
+  },
+  "FMA72833": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1736
+  },
+  "FMA72908": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 602,
+   "sourceTriangles": 48722
+  },
+  "FMA72909": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 602,
+   "sourceTriangles": 48712
+  },
+  "FMA72924": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 468,
+   "sourceTriangles": 29300
+  },
+  "FMA72925": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 468,
+   "sourceTriangles": 29372
+  },
+  "FMA72939": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3078
+  },
+  "FMA72940": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3026
+  },
+  "FMA72975": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 372,
+   "sourceTriangles": 18762
+  },
+  "FMA72976": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 374,
+   "sourceTriangles": 18746
+  },
+  "FMA72977": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 302,
+   "sourceTriangles": 12240
+  },
+  "FMA72978": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 302,
+   "sourceTriangles": 12242
+  },
+  "FMA73303": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2620
+  },
+  "FMA73304": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 686
+  },
+  "FMA73309": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 208,
+   "sourceTriangles": 208
+  },
+  "FMA73310": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 200,
+   "sourceTriangles": 200
+  },
+  "FMA73413": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3852
+  },
+  "FMA73414": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3870
+  },
+  "FMA73422": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 204,
+   "sourceTriangles": 204
+  },
+  "FMA73423": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 204,
+   "sourceTriangles": 204
+  },
+  "FMA73434": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 270
+  },
+  "FMA73435": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 270
+  },
+  "FMA73461": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 730
+  },
+  "FMA73462": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 714
+  },
+  "FMA73463": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 686
+  },
+  "FMA73464": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 672
+  },
+  "FMA74877": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1666
+  },
+  "FMA75351": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4642
+  },
+  "FMA78449": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 764,
+   "sourceTriangles": 78218
+  },
+  "FMA78450": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 762,
+   "sourceTriangles": 78010
+  },
+  "FMA78454": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 352,
+   "sourceTriangles": 16808
+  },
+  "FMA78467": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2252
+  },
+  "FMA78469": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 474,
+   "sourceTriangles": 30134
+  },
+  "FMA78497": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3162
+  },
+  "FMA83740": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 426
+  },
+  "FMA86464": {
+   "layer": "nervous",
+   "sex": "shared",
+   "triangles": 994,
+   "sourceTriangles": 132552
+  },
+  "FMA10419": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4128
+  },
+  "FMA13889": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5052
+  },
+  "FMA14542": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 690
+  },
+  "FMA14543nsn": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 720,
+   "sourceTriangles": 69516
+  },
+  "FMA14544": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 256,
+   "sourceTriangles": 8824
+  },
+  "FMA15571": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2210
+  },
+  "FMA15572": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2226
+  },
+  "FMA15629": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 270,
+   "sourceTriangles": 9874
+  },
+  "FMA15630": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 384,
+   "sourceTriangles": 19788
+  },
+  "FMA15900": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4016
+  },
+  "FMA18247": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 238,
+   "sourceTriangles": 5252
+  },
+  "FMA18256": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 120,
+   "sourceTriangles": 120
+  },
+  "FMA18257": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 484
+  },
+  "FMA19235": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 238,
+   "sourceTriangles": 1504
+  },
+  "FMA19236": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 1498
+  },
+  "FMA19387": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 1084
+  },
+  "FMA19388": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 1080
+  },
+  "FMA19617nsn": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 2202
+  },
+  "FMA19618": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 4860
+  },
+  "FMA19667": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1186
+  },
+  "FMA52780": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 420,
+   "sourceTriangles": 23714
+  },
+  "FMA55099": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 416,
+   "sourceTriangles": 23146
+  },
+  "FMA55680": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6842
+  },
+  "FMA55681": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6446
+  },
+  "FMA55682": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6444
+  },
+  "FMA55683": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6896
+  },
+  "FMA55686": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5894
+  },
+  "FMA55687": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5906
+  },
+  "FMA55688": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7330
+  },
+  "FMA55689": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 244,
+   "sourceTriangles": 8054
+  },
+  "FMA55690": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 244,
+   "sourceTriangles": 8058
+  },
+  "FMA55691": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7334
+  },
+  "FMA55692": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5620
+  },
+  "FMA55693": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5886
+  },
+  "FMA55694": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5900
+  },
+  "FMA55695": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5624
+  },
+  "FMA55697": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 262,
+   "sourceTriangles": 9254
+  },
+  "FMA55698": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 282,
+   "sourceTriangles": 10786
+  },
+  "FMA55699": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 284,
+   "sourceTriangles": 10788
+  },
+  "FMA55700": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 262,
+   "sourceTriangles": 9244
+  },
+  "FMA55703": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 244,
+   "sourceTriangles": 8088
+  },
+  "FMA55704": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 256,
+   "sourceTriangles": 8810
+  },
+  "FMA55705": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 256,
+   "sourceTriangles": 8818
+  },
+  "FMA55706": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 244,
+   "sourceTriangles": 8102
+  },
+  "FMA55798": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6966
+  },
+  "FMA55799": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6966
+  },
+  "FMA57140": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4790
+  },
+  "FMA57141": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4804
+  },
+  "FMA57142": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4600
+  },
+  "FMA57143": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4596
+  },
+  "FMA59815nsn": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6440
+  },
+  "FMA71194": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 490,
+   "sourceTriangles": 32268
+  },
+  "FMA71195": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 586,
+   "sourceTriangles": 45944
+  },
+  "FMA7131": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2642
+  },
+  "FMA7148": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 264,
+   "sourceTriangles": 9384
+  },
+  "FMA71704": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6826
+  },
+  "FMA7196": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 258,
+   "sourceTriangles": 9016
+  },
+  "FMA7197": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 380,
+   "sourceTriangles": 19416
+  },
+  "FMA7198nsn": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 290,
+   "sourceTriangles": 11414
+  },
+  "FMA7202": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 320,
+   "sourceTriangles": 13846
+  },
+  "FMA7204": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 302,
+   "sourceTriangles": 12394
+  },
+  "FMA7205": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 336,
+   "sourceTriangles": 15358
+  },
+  "FMA7206": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 298,
+   "sourceTriangles": 11950
+  },
+  "FMA7207": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 484,
+   "sourceTriangles": 31468
+  },
+  "FMA7208": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 482,
+   "sourceTriangles": 31250
+  },
+  "FMA7211": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 278
+  },
+  "FMA7212": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 280
+  },
+  "FMA7333": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 476,
+   "sourceTriangles": 30398
+  },
+  "FMA7337": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 698,
+   "sourceTriangles": 65592
+  },
+  "FMA7370": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 550,
+   "sourceTriangles": 40652
+  },
+  "FMA7371": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 574,
+   "sourceTriangles": 44288
+  },
+  "FMA7383": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 418,
+   "sourceTriangles": 23478
+  },
+  "FMA7394": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 322,
+   "sourceTriangles": 13870
+  },
+  "FMA7409": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 928,
+   "sourceTriangles": 115630
+  },
+  "FMA76891": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 484,
+   "sourceTriangles": 31524
+  },
+  "FMA76892": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 526,
+   "sourceTriangles": 37118
+  },
+  "FMA76893": {
+   "layer": "organs",
+   "sex": "shared",
+   "triangles": 604,
+   "sourceTriangles": 49028
+  },
+  "FMA9600": {
+   "layer": "organs",
+   "sex": "male",
+   "triangles": 240,
+   "sourceTriangles": 1754
+  },
+  "BP24": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 374,
+   "sourceTriangles": 18942
+  },
+  "BP28": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 378,
+   "sourceTriangles": 19156
+  },
+  "FMA10014": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11286
+  },
+  "FMA10037": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 296,
+   "sourceTriangles": 11928
+  },
+  "FMA10059": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5652
+  },
+  "FMA10081": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6038
+  },
+  "FMA10458": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4280
+  },
+  "FMA12513": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 348,
+   "sourceTriangles": 16330
+  },
+  "FMA12519": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6172
+  },
+  "FMA12520": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6870
+  },
+  "FMA12521": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5278
+  },
+  "FMA12522": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4224
+  },
+  "FMA12523": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4754
+  },
+  "FMA12524": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6350
+  },
+  "FMA12525": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5222
+  },
+  "FMA13072": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 310,
+   "sourceTriangles": 12946
+  },
+  "FMA13073": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 6946
+  },
+  "FMA13074": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 330,
+   "sourceTriangles": 14750
+  },
+  "FMA13075": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 338,
+   "sourceTriangles": 15426
+  },
+  "FMA13076": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 358,
+   "sourceTriangles": 17282
+  },
+  "FMA13322": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5112
+  },
+  "FMA13323": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5140
+  },
+  "FMA13395": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 918,
+   "sourceTriangles": 113256
+  },
+  "FMA13396": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 954,
+   "sourceTriangles": 121816
+  },
+  "FMA13495": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4970
+  },
+  "FMA13500": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5174
+  },
+  "FMA13501": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6308
+  },
+  "FMA13502": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7336
+  },
+  "FMA13503": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 258,
+   "sourceTriangles": 9058
+  },
+  "FMA13504": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 276,
+   "sourceTriangles": 10386
+  },
+  "FMA13505": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 274,
+   "sourceTriangles": 10202
+  },
+  "FMA13506": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5040
+  },
+  "FMA13507": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 292,
+   "sourceTriangles": 11534
+  },
+  "FMA13508": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 326,
+   "sourceTriangles": 14280
+  },
+  "FMA13509": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 328,
+   "sourceTriangles": 14538
+  },
+  "FMA13896": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3032
+  },
+  "FMA13897": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3516
+  },
+  "FMA13898": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3444
+  },
+  "FMA13899": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3238
+  },
+  "FMA13900": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3912
+  },
+  "FMA16033": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 324,
+   "sourceTriangles": 14152
+  },
+  "FMA16034": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 316,
+   "sourceTriangles": 13602
+  },
+  "FMA16035": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 326,
+   "sourceTriangles": 14270
+  },
+  "FMA16036": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 328,
+   "sourceTriangles": 14490
+  },
+  "FMA16037": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 346,
+   "sourceTriangles": 16178
+  },
+  "FMA16202": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 576,
+   "sourceTriangles": 44416
+  },
+  "FMA16586": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 268,
+   "sourceTriangles": 9716
+  },
+  "FMA16587": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 264,
+   "sourceTriangles": 9470
+  },
+  "FMA230986": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 294
+  },
+  "FMA230988": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 302
+  },
+  "FMA23130": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 348,
+   "sourceTriangles": 16268
+  },
+  "FMA23131": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 350,
+   "sourceTriangles": 16492
+  },
+  "FMA23464": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2804
+  },
+  "FMA23465": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2714
+  },
+  "FMA23467": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3592
+  },
+  "FMA23468": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3538
+  },
+  "FMA23707": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 328,
+   "sourceTriangles": 14414
+  },
+  "FMA23708": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 320,
+   "sourceTriangles": 13808
+  },
+  "FMA23725": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 616
+  },
+  "FMA23938": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1138
+  },
+  "FMA23940": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1496
+  },
+  "FMA23942": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1344
+  },
+  "FMA23944": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 884
+  },
+  "FMA23951": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 988
+  },
+  "FMA23953": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 650
+  },
+  "FMA23955": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 634
+  },
+  "FMA23957": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 448
+  },
+  "FMA23959": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 454
+  },
+  "FMA24435": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1074
+  },
+  "FMA24436": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1070
+  },
+  "FMA24437": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 864
+  },
+  "FMA24438": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 866
+  },
+  "FMA24439": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 704
+  },
+  "FMA24440": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 698
+  },
+  "FMA24441": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 396
+  },
+  "FMA24442": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 396
+  },
+  "FMA24443": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1026
+  },
+  "FMA24444": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1058
+  },
+  "FMA24445": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 612
+  },
+  "FMA24446": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1284
+  },
+  "FMA24447": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1278
+  },
+  "FMA24448": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1150
+  },
+  "FMA24449": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1130
+  },
+  "FMA24450": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1368
+  },
+  "FMA24451": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1664
+  },
+  "FMA24452": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1968
+  },
+  "FMA24453": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1620
+  },
+  "FMA24454": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1208
+  },
+  "FMA24455": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1140
+  },
+  "FMA24456": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1476
+  },
+  "FMA24457": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1350
+  },
+  "FMA24458": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 900
+  },
+  "FMA24459": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1040
+  },
+  "FMA24460": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 656
+  },
+  "FMA24461": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 640
+  },
+  "FMA24462": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 452
+  },
+  "FMA24463": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 466
+  },
+  "FMA24464": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2434
+  },
+  "FMA24465": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2480
+  },
+  "FMA24466": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3218
+  },
+  "FMA24467": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3264
+  },
+  "FMA24468": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3018
+  },
+  "FMA24469": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3040
+  },
+  "FMA24470": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2306
+  },
+  "FMA24471": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2270
+  },
+  "FMA24472": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2178
+  },
+  "FMA24473": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2146
+  },
+  "FMA24474": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 310,
+   "sourceTriangles": 12990
+  },
+  "FMA24475": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13202
+  },
+  "FMA24477": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6850
+  },
+  "FMA24478": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6822
+  },
+  "FMA24480": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4622
+  },
+  "FMA24481": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4544
+  },
+  "FMA24482": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5962
+  },
+  "FMA24483": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5924
+  },
+  "FMA24486": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1334
+  },
+  "FMA24487": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1338
+  },
+  "FMA24497": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5448
+  },
+  "FMA24498": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5652
+  },
+  "FMA24500": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3022
+  },
+  "FMA24501": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3096
+  },
+  "FMA24507": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4886
+  },
+  "FMA24508": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4860
+  },
+  "FMA24509": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3258
+  },
+  "FMA24510": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3388
+  },
+  "FMA24511": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3030
+  },
+  "FMA24512": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3228
+  },
+  "FMA24513": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2918
+  },
+  "FMA24514": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3118
+  },
+  "FMA24515": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3432
+  },
+  "FMA24516": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3688
+  },
+  "FMA24521": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4114
+  },
+  "FMA24522": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4210
+  },
+  "FMA24523": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1948
+  },
+  "FMA24524": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2106
+  },
+  "FMA24525": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2702
+  },
+  "FMA24526": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2968
+  },
+  "FMA24528": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3634
+  },
+  "FMA24529": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3804
+  },
+  "FMA25058": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3014
+  },
+  "FMA32634": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1362
+  },
+  "FMA32635": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1416
+  },
+  "FMA32636": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1222
+  },
+  "FMA32637": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1258
+  },
+  "FMA32638": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1094
+  },
+  "FMA32639": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1166
+  },
+  "FMA32640": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1148
+  },
+  "FMA32641": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1206
+  },
+  "FMA32642": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 652
+  },
+  "FMA32643": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 686
+  },
+  "FMA32644": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 634
+  },
+  "FMA32645": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 638
+  },
+  "FMA32646": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 520
+  },
+  "FMA32647": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 546
+  },
+  "FMA32650": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1606
+  },
+  "FMA32651": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1594
+  },
+  "FMA32652": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 466
+  },
+  "FMA32653": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 482
+  },
+  "FMA32654": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 334
+  },
+  "FMA32655": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 354
+  },
+  "FMA32656": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 362
+  },
+  "FMA32657": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 364
+  },
+  "FMA32658": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 274
+  },
+  "FMA32659": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 284
+  },
+  "FMA35192": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 692,
+   "sourceTriangles": 64356
+  },
+  "FMA35193": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 688,
+   "sourceTriangles": 63546
+  },
+  "FMA43253": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2106
+  },
+  "FMA43254": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2194
+  },
+  "FMA44249": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 514,
+   "sourceTriangles": 35464
+  },
+  "FMA44250": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 512,
+   "sourceTriangles": 35210
+  },
+  "FMA45097": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 576
+  },
+  "FMA45098": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 556
+  },
+  "FMA52734": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 496,
+   "sourceTriangles": 33062
+  },
+  "FMA52735": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 454,
+   "sourceTriangles": 27812
+  },
+  "FMA52736": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 336,
+   "sourceTriangles": 15322
+  },
+  "FMA52738": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 290,
+   "sourceTriangles": 11274
+  },
+  "FMA52739": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 288,
+   "sourceTriangles": 11208
+  },
+  "FMA52740": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7774
+  },
+  "FMA52748": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 400,
+   "sourceTriangles": 21658
+  },
+  "FMA52749": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5534
+  },
+  "FMA52788": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 470,
+   "sourceTriangles": 29734
+  },
+  "FMA52789": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 474,
+   "sourceTriangles": 30250
+  },
+  "FMA52892": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4612
+  },
+  "FMA52893": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4560
+  },
+  "FMA53645": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1114
+  },
+  "FMA53646": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1152
+  },
+  "FMA53647": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1024
+  },
+  "FMA53648": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1124
+  },
+  "FMA53649": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 324,
+   "sourceTriangles": 14148
+  },
+  "FMA53650": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 328,
+   "sourceTriangles": 14506
+  },
+  "FMA53655": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3592
+  },
+  "FMA53656": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3642
+  },
+  "FMA54737": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1616
+  },
+  "FMA54738": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1484
+  },
+  "FMA59763": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 260,
+   "sourceTriangles": 9192
+  },
+  "FMA59764": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 266,
+   "sourceTriangles": 9596
+  },
+  "FMA65470": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1314
+  },
+  "FMA66791": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1178
+  },
+  "FMA71908": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1974
+  },
+  "FMA71915": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1684
+  },
+  "FMA71916": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1616
+  },
+  "FMA7486": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 296,
+   "sourceTriangles": 11882
+  },
+  "FMA7487": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 384,
+   "sourceTriangles": 19916
+  },
+  "FMA7488": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4086
+  },
+  "FMA7857": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 324,
+   "sourceTriangles": 14194
+  },
+  "FMA7875": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2342
+  },
+  "FMA7882": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 418,
+   "sourceTriangles": 23694
+  },
+  "FMA7886": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2540
+  },
+  "FMA7909": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 478,
+   "sourceTriangles": 30860
+  },
+  "FMA7913": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2694
+  },
+  "FMA7957": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 534,
+   "sourceTriangles": 38488
+  },
+  "FMA7976": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3486
+  },
+  "FMA7987": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 338,
+   "sourceTriangles": 15464
+  },
+  "FMA8005": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2204
+  },
+  "FMA8012": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 432,
+   "sourceTriangles": 25304
+  },
+  "FMA8031": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2350
+  },
+  "FMA8039": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 482,
+   "sourceTriangles": 31212
+  },
+  "FMA8058": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2428
+  },
+  "FMA8066": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 556,
+   "sourceTriangles": 41634
+  },
+  "FMA8070": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4830
+  },
+  "FMA8093": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 556,
+   "sourceTriangles": 41568
+  },
+  "FMA8112": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4536
+  },
+  "FMA8148": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 532,
+   "sourceTriangles": 37922
+  },
+  "FMA8167": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3220
+  },
+  "FMA8175": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 576,
+   "sourceTriangles": 44634
+  },
+  "FMA8194": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 6078
+  },
+  "FMA8202": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 574,
+   "sourceTriangles": 44434
+  },
+  "FMA8221": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5966
+  },
+  "FMA8229": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 568,
+   "sourceTriangles": 43146
+  },
+  "FMA8248": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 280,
+   "sourceTriangles": 10492
+  },
+  "FMA8256": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 572,
+   "sourceTriangles": 44062
+  },
+  "FMA8275": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 270,
+   "sourceTriangles": 9902
+  },
+  "FMA8283": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 522,
+   "sourceTriangles": 36646
+  },
+  "FMA8310": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 524,
+   "sourceTriangles": 37134
+  },
+  "FMA8364": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 504,
+   "sourceTriangles": 34278
+  },
+  "FMA8391": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 518,
+   "sourceTriangles": 36020
+  },
+  "FMA8445": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 480,
+   "sourceTriangles": 31010
+  },
+  "FMA8472": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 486,
+   "sourceTriangles": 31758
+  },
+  "FMA8531": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 408,
+   "sourceTriangles": 22428
+  },
+  "FMA8532": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 412,
+   "sourceTriangles": 22826
+  },
+  "FMA8533": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 312,
+   "sourceTriangles": 13262
+  },
+  "FMA8534": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 320,
+   "sourceTriangles": 13726
+  },
+  "FMA9165": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5614
+  },
+  "FMA9187": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 248,
+   "sourceTriangles": 8360
+  },
+  "FMA9209": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 258,
+   "sourceTriangles": 8910
+  },
+  "FMA9248": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 256,
+   "sourceTriangles": 8930
+  },
+  "FMA9710": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2422
+  },
+  "FMA9922": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 270,
+   "sourceTriangles": 9834
+  },
+  "FMA9945": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4896
+  },
+  "FMA9968": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 282,
+   "sourceTriangles": 10740
+  },
+  "FMA9991": {
+   "layer": "skeleton",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5206
+  },
+  "FMA10951": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 7686
+  },
+  "FMA14331": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1352
+  },
+  "FMA14332": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 202,
+   "sourceTriangles": 202
+  },
+  "FMA14335": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1538
+  },
+  "FMA14336": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 574
+  },
+  "FMA14749": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 350
+  },
+  "FMA14750": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 602
+  },
+  "FMA14752": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1754
+  },
+  "FMA14753": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1308
+  },
+  "FMA14765": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 896
+  },
+  "FMA14766": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 806
+  },
+  "FMA14768": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 232,
+   "sourceTriangles": 232
+  },
+  "FMA14771": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 808
+  },
+  "FMA14773": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3326
+  },
+  "FMA18806": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1344
+  },
+  "FMA18807": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1288
+  },
+  "FMA18809": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 458
+  },
+  "FMA18810": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 500
+  },
+  "FMA18885": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1326
+  },
+  "FMA18886": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1448
+  },
+  "FMA18887": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 530
+  },
+  "FMA18888": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 478
+  },
+  "FMA21387": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 886
+  },
+  "FMA21388": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 992
+  },
+  "FMA3736": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2156
+  },
+  "FMA3768": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3282
+  },
+  "FMA3784": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 420,
+   "sourceTriangles": 23808
+  },
+  "FMA3802": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 5154
+  },
+  "FMA3818": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4908
+  },
+  "FMA3840nsn": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 236,
+   "sourceTriangles": 3086
+  },
+  "FMA3862nsn": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 262,
+   "sourceTriangles": 9220
+  },
+  "FMA3895": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3542
+  },
+  "FMA3932nsn": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1210
+  },
+  "FMA3941": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4424
+  },
+  "FMA3953": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 2260
+  },
+  "FMA4058": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 698
+  },
+  "FMA4685": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 252
+  },
+  "FMA4694": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 3234
+  },
+  "FMA4706": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1922
+  },
+  "FMA4707": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 7476
+  },
+  "FMA4713": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 236,
+   "sourceTriangles": 4326
+  },
+  "FMA4720": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1532
+  },
+  "FMA4751": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1400
+  },
+  "FMA4754": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 580
+  },
+  "FMA4755": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 946
+  },
+  "FMA4761": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1918
+  },
+  "FMA4762": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 720
+  },
+  "FMA4763": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1112
+  },
+  "FMA50737": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 454
+  },
+  "FMA66326": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 934,
+   "sourceTriangles": 116948
+  },
+  "FMA66643": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 736,
+   "sourceTriangles": 72548
+  },
+  "FMA71567": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 5712
+  },
+  "FMA71669": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 754
+  },
+  "FMA71670": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 1214
+  },
+  "FMA7234": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 594,
+   "sourceTriangles": 47268
+  },
+  "FMA7235": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 376,
+   "sourceTriangles": 19102
+  },
+  "FMA7246": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 366,
+   "sourceTriangles": 18202
+  },
+  "FMA7260": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3860
+  },
+  "FMA7261": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2730
+  },
+  "FMA7262": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 1898
+  },
+  "FMA7266": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 3902
+  },
+  "FMA7274": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 3286,
+   "sourceTriangles": 331592
+  },
+  "FMA76751": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 4318
+  },
+  "FMA76994": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 240,
+   "sourceTriangles": 2246
+  },
+  "FMA9352nsn": {
+   "layer": "vessels",
+   "sex": "shared",
+   "triangles": 238,
+   "sourceTriangles": 4084
+  }
+ }
+}

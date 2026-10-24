@@ -1,0 +1,55 @@
+[
+ {
+  "verdict": "PASS — 13/13 OK, no defects found",
+  "findings": [],
+  "summary": "All 13 items in the sample name the same structure as their English labels. I found no defects and did not modify any files. File audited: /tmp/claude-0/-home-user-mantra-core-health/0936bc81-5207-5906-b755-dffb86a17712/scratchpad/audit/fma-only-sample.json\n\nBP3D:BP46: OK — ulnar head = cabeza cubital and extensor carpi ulnaris = extensor cubital del carpo, both standard terms; left side kept. \"izquierdo\" could grammatically attach to either \"extensor\" or \"carpo\", but both are on the left, so the meaning is the same.\nFMA:13495: OK — matches the English wording exactly (second thoracic = segunda torácica), with nothing added.\nFMA:13503: OK — sixth thoracic = sexta torácica, matches the English wording exactly.\nFMA:32537: OK — oblicuo inferior de la cabeza is the standard term; \"izquierdo\" agrees with \"oblicuo\", so it reads correctly as left.\nFMA:33585: OK — Transverse part = porción transversa (pars transversa); left side kept.\nFMA:37699: OK — cabeza larga del tríceps braquial; right side kept.\nFMA:46110: OK — Deep head = cabeza profunda and flexor pollicis brevis = flexor corto del pulgar; right side kept.\nFMA:46783: OK — Orbital part = porción orbitaria and orbicularis oculi = orbicular del ojo; left side kept.\nFMA:55686: OK — canino inferior derecho; dropping \"diente\" is normal dental usage and changes nothing.\nFMA:55799: OK — canino superior izquierdo; upper and left both kept.\nFMA:58776: OK — tracto iliotibial is the Spanish Terminologia Anatomica (TA) term (\"cintilla iliotibial\" is also used); right side kept.\nFMA:71308: OK — \"Set of\" = \"conjunto de\", so it is still a group; interespinosos torácicos is correct, and no side was added.\nFMA:76751: OK — \"Set of\" kept; \"izquierdo\" correctly belongs to \"ventrículo\" and is not read as a side of the body."
+ },
+ {
+  "verdict": "FAIL",
+  "findings": [
+   {
+    "severity": "BLOCKER",
+    "title": "The 3D viewer is an empty canvas in 4 of the 10 captures, including every 1440 light capture",
+    "where": "screenshots/male-1440-claro.png, female-1440-claro.png, teclado-femur-relacionadas.png, female-utero-sin-pieza.png (viewer at roughly x290-940, y420-985)",
+    "evidence": "A crop of male-1440-claro.png (290,420 660x580) is a flat beige rectangle with no body and no pieces. The same is true of female-1440-claro, the femur keyboard capture (1280 wide) and the uterus capture. The model does render in the 375 and 768 light captures and in both 1440 dark captures. So at desktop light, and in both interaction captures, the main content of the page cannot be seen. The spec only waits for data-status=ready plus 500 ms and then takes a fullPage screenshot. Nothing checks that the canvas has pixels, so the green Playwright run does not show that this view works. It may be a WebGL buffer-clear problem caused by the fullPage capture, but it was not shown either way. Under NO_EVIDENCE_NO_DONE the desktop light state is unproven."
+   },
+   {
+    "severity": "BLOCKER",
+    "title": "No capture shows the ochre highlight on related pieces, and the femur capture shows no green piece",
+    "where": "screenshots/teclado-femur-relacionadas.png; every capture where the model renders",
+    "evidence": "The task asks that the selected piece (green) and the related pieces (ochre) be visibly different from the rest. In teclado-femur-relacionadas.png the canvas is empty, yet the list says 'tibia / hueso coxal / rótula — resaltada en el modelo'. No highlighted femur or ochre tibia, hip bone or kneecap is visible. In the captures that do render (male/female 375 and 768 light, 1440 dark) only the green bladder appears. No piece anywhere is in the ochre shown in the legend. The ochre half of the requirement has no visual evidence, and the 'resaltada en el modelo' label makes a claim the screenshot does not back up."
+   },
+   {
+    "severity": "HIGH",
+    "title": "The uterus capture does not show the uterus card",
+    "where": "screenshots/female-utero-sin-pieza.png",
+    "evidence": "The capture shows the right column scrolled through the 'Estructuras femeninas sin pieza 3D' list (trompa uterina … zona pelúcida). It shows no card titled 'útero' and no tabs. The test checks the title by test id, but the image submitted as evidence for 'the uterus card without a 3D piece' does not show that card. Visually that state is unproven."
+   },
+   {
+    "severity": "HIGH",
+    "title": "At 375 px the active tab 'Ficha' is cut off and shows as 'ha'",
+    "where": "screenshots/female-375-claro.png, tab strip at about y=1640 in the original image",
+    "evidence": "A 200% crop shows '‹ ha | Relacionadas | Fuentes ›'. The tab strip is scrolled so that the active tab loses its first characters, and its highlight pill is partly hidden. This breaks the 'no truncation on phone' rule. male-375-claro.png shows the tabs complete, so the behaviour is inconsistent between the two views at the same width (in female the extra 'Estructuras femeninas' tab overflows the strip and the scroll position hides the active tab)."
+   },
+   {
+    "severity": "MEDIUM",
+    "title": "At 1440 the card text is cut off mid-sentence with no visible scroll affordance",
+    "where": "male-1440-claro.png, male-1440-oscuro.png, female-1440-*.png, right column at about y=990-1025",
+    "evidence": "The English definition ends at '…in which urine collects before' and is cut off with no fade, scrollbar or 'see more'. The 'Fuente', 'Descripción extendida' and 'Referencia en el Atlas de Netter' blocks that appear at 375 and 768 are missing at desktop. The panel looks like it scrolls internally to match the canvas height, but nothing tells the user there is more content."
+   },
+   {
+    "severity": "MEDIUM",
+    "title": "Stray grey highlight on one item in the female structures list",
+    "where": "female-utero-sin-pieza.png, 'vena dorsal profunda del clítoris' at about (861-1086, 811-848)",
+    "evidence": "One list item has a light grey background and the others do not. It reads as leftover hover or focus from the pointer. If it is the focus style, it is too faint to work as a keyboard indicator (no outline or ring)."
+   },
+   {
+    "severity": "LOW",
+    "title": "Translation note placed awkwardly next to the 'Quitar selección' button at 375",
+    "where": "male-375-claro.png / female-375-claro.png, header of the card",
+    "evidence": "'nombre traducido automáticamente' drops to its own line beside 'Quitar selección', while at 768 and 1440 it sits next to the title. The secondary metadata ends up competing with the action. Minor hierarchy issue."
+   }
+  ],
+  "summary": "I reviewed all 10 screenshots, the Playwright log (10/10 passing, EXIT=0) and the spec playwright/atlas-anatomico-3d.spec.ts.\n\nWhat is correct:\n- The layout follows composition-rules §5: one centred, full-width card with a viewer and card panel and Ficha/Relacionadas/Fuentes tabs, and no empty side column.\n- Dark mode is legible: the model, links and the female-view notice all have enough contrast.\n- No horizontal overflow at 375.\n- The selected green piece stands out well where the model renders.\n\nThe visual evidence still does not support the requirement:\n1. The 3D canvas is completely empty in male-1440-claro, female-1440-claro, teclado-femur-relacionadas and female-utero-sin-pieza.\n2. No capture shows the ochre highlight on related pieces, and the femur capture shows neither the femur in green nor the tibia, hip bone or kneecap in ochre, even though the UI labels them 'resaltada en el modelo'.\n3. The uterus capture shows a list, not the uterus card.\n4. In female-375 the active tab is cut off to 'ha'.\n5. At 1440 the card text is cut off mid-sentence with no scroll affordance.\n\nThe spec only checks data-status=ready and URL/text, never canvas pixels, so the green run does not prove what is drawn.\n\nScores:\n\n| Area | Score |\n|---|---|\n| Typography | 8 |\n| Spacing | 8 |\n| Hierarchy | 7 |\n| Consistency | 6 |\n| Responsive | 6 |\n| Accessibility | 6 |\n| Interaction | 4 |\n| States | 4 |\n| Density | 7 |\n| Finish | 5 |\n| **Total** | **61/100** |\n\nVerdict: FAIL. The score is below 92 and there are BLOCKER and HIGH findings.\n\nEvidence lives in /home/user/mantra-core-health/docs/progress/evidence/anatomy-atlas/screenshots/ and /home/user/mantra-core-health/docs/progress/evidence/anatomy-atlas/gates/playwright.txt."
+ }
+]

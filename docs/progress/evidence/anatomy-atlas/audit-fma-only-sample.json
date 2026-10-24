@@ -1,0 +1,67 @@
+[
+ {
+  "id": "BP3D:BP46",
+  "labelEn": "ulnar head of left extensor carpi ulnaris",
+  "labelEs": "cabeza cubital del extensor cubital del carpo izquierdo"
+ },
+ {
+  "id": "FMA:13495",
+  "labelEn": "Intervertebral disk of second thoracic vertebra",
+  "labelEs": "disco intervertebral de la segunda vértebra torácica"
+ },
+ {
+  "id": "FMA:13503",
+  "labelEn": "Intervertebral disk of sixth thoracic vertebra",
+  "labelEs": "disco intervertebral de la sexta vértebra torácica"
+ },
+ {
+  "id": "FMA:32537",
+  "labelEn": "Left obliquus capitis inferior",
+  "labelEs": "oblicuo inferior de la cabeza izquierdo"
+ },
+ {
+  "id": "FMA:33585",
+  "labelEn": "Transverse part of left trapezius",
+  "labelEs": "porción transversa del trapecio izquierdo"
+ },
+ {
+  "id": "FMA:37699",
+  "labelEn": "Long head of right triceps brachii",
+  "labelEs": "cabeza larga del tríceps braquial derecho"
+ },
+ {
+  "id": "FMA:46110",
+  "labelEn": "Deep head of right flexor pollicis brevis",
+  "labelEs": "cabeza profunda del flexor corto del pulgar derecho"
+ },
+ {
+  "id": "FMA:46783",
+  "labelEn": "Orbital part of left orbicularis oculi",
+  "labelEs": "porción orbitaria del orbicular del ojo izquierdo"
+ },
+ {
+  "id": "FMA:55686",
+  "labelEn": "Right lower canine tooth",
+  "labelEs": "canino inferior derecho"
+ },
+ {
+  "id": "FMA:55799",
+  "labelEn": "Left upper canine tooth",
+  "labelEs": "canino superior izquierdo"
+ },
+ {
+  "id": "FMA:58776",
+  "labelEn": "Right iliotibial tract",
+  "labelEs": "tracto iliotibial derecho"
+ },
+ {
+  "id": "FMA:71308",
+  "labelEn": "Set of interspinales thoracis",
+  "labelEs": "conjunto de interespinosos torácicos"
+ },
+ {
+  "id": "FMA:76751",
+  "labelEn": "Set of posterior veins of left ventricle",
+  "labelEs": "conjunto de venas posteriores del ventrículo izquierdo"
+ }
+]
