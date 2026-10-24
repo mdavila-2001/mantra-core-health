@@ -4,9 +4,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { NEVER } from 'rxjs';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
+import { environment } from '../../../../environments/environment';
 import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Resumen } from './resumen';
@@ -588,7 +589,14 @@ describe('Resumen contable', () => {
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
     });
 
+    // La contabilidad simple sólo existe en la maqueta (`simulatorAvailable()`).
+    // Cada caso fija el interruptor que necesita en vez de heredar el de la rama.
     it('en Registros no hay tableros ni se pide el dinero del tablero de nuevo', () => {
+      const mockBackendOriginal = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      onTestFinished(() => {
+        Object.assign(environment, { mockBackend: mockBackendOriginal });
+      });
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
@@ -601,6 +609,26 @@ describe('Resumen contable', () => {
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).not.toBeNull();
       expect(raiz.textContent).not.toContain('¿Cuánto ganó?');
       expect(raiz.textContent).not.toContain('Cobros y pagos pendientes');
+      http.verify();
+    });
+
+    it('contra la API real, Registros avisa que la contabilidad simple no está y no la monta', () => {
+      const mockBackendOriginal = environment.mockBackend;
+      Object.assign(environment, { mockBackend: false });
+      onTestFinished(() => {
+        Object.assign(environment, { mockBackend: mockBackendOriginal });
+      });
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      fixture.componentInstance.pestana.set(1);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).not.toBeNull();
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
       http.verify();
     });
   });
