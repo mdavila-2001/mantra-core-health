@@ -35,6 +35,9 @@ const EMPTY_CELL = /^[—–-]?$/;
 /** El aviso al pie de una tabla cortada. */
 export const TABLE_CONTINUES = 'Continúa en la página siguiente';
 
+/** Lo que ocupa ese aviso bajo la última fila de la hoja. */
+const CONTINUES_ROOM = PDF_SPACE.xs + PDF_TYPE.caption.leading;
+
 /** Dibuja las filas seguidas como una tabla. */
 /**
  * @param trailing - El alto de lo que tiene que ir pegado a la última fila
@@ -80,7 +83,11 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[], trai
 
     const needed = neededFrom(index);
     const last = index === rows.length - 1;
-    if (composer.y + needed > composer.bottom && !composer.atPageTop) {
+    // Si lo que queda de la tabla no entra entero, la hoja se va a cortar y
+    // necesita lugar para el aviso de continuación bajo la última fila.
+    const restFits = composer.y + heights.slice(index).reduce((sum, value) => sum + value, 0) + trailing <= composer.bottom;
+    const limit = restFits ? composer.bottom : composer.bottom - CONTINUES_ROOM;
+    if (composer.y + needed > limit && !composer.atPageTop) {
       if (!isHeader && index > 0) {
         composer.write(TABLE_CONTINUES, composer.right, composer.y + PDF_SPACE.xs, PDF_TYPE.caption, {
           align: 'right',

@@ -764,8 +764,19 @@ function drawContentImage(composer: PdfComposer, image: PdfLogo | undefined): vo
 }
 
 /** El alto del bloque de firma. */
-const SIGNATURE_HEIGHT =
-  PDF_SIGNATURE.stampBox.height + 4 + PDF_TYPE.heading.leading + PDF_TYPE.caption.leading + PDF_TYPE.label.leading + 6;
+/** Lo que mide el bloque de firma debajo de la línea: nombre, matrícula y rótulo. */
+const SIGNATURE_TEXT_HEIGHT = 4 + PDF_TYPE.heading.leading + PDF_TYPE.caption.leading + PDF_TYPE.label.leading + 2;
+
+/**
+ * El espacio sobre la línea: el de las imágenes si hay alguna, o el justo para
+ * firmar a mano (≈ 1,1 cm) si no. Sin imágenes, reservar el alto del sello
+ * mandaba el bloque solo a una hoja nueva por un hueco que nadie iba a llenar.
+ */
+function signatureImageArea(signature: { readonly firma: unknown; readonly sello: unknown }): number {
+  return signature.firma === null && signature.sello === null
+    ? PDF_SIGNATURE.handwritingHeight
+    : PDF_SIGNATURE.stampBox.height;
+}
 
 /**
  * El bloque de firma, a la derecha y al final del contenido: la firma y el
@@ -782,7 +793,8 @@ const SIGNATURE_HEIGHT =
 export function drawSignature(composer: PdfComposer): void {
   const signature = composer.signature;
   if (signature === null) return;
-  composer.ensure(PDF_SIGNATURE.clearance + SIGNATURE_HEIGHT);
+  const height = signatureImageArea(signature) + 4 + SIGNATURE_TEXT_HEIGHT;
+  composer.ensure(PDF_SIGNATURE.clearance + height);
   composer.space(PDF_SIGNATURE.clearance);
 
   const width = PDF_SIGNATURE.width;
@@ -792,7 +804,7 @@ export function drawSignature(composer: PdfComposer): void {
   const { signatureBox, stampBox, gap } = PDF_SIGNATURE;
   const imagesWidth = signatureBox.width + gap + stampBox.width;
   const imagesX = center - imagesWidth / 2;
-  const lineY = top + stampBox.height + 4;
+  const lineY = top + signatureImageArea(signature) + 4;
 
   placeInBox(composer, signature.firma, imagesX, lineY - signatureBox.height - 2, signatureBox);
   placeInBox(composer, signature.sello, imagesX + signatureBox.width + gap, top, stampBox);
@@ -806,7 +818,7 @@ export function drawSignature(composer: PdfComposer): void {
     y += composer.write(`Matrícula ${signature.matricula}`, center, y, PDF_TYPE.caption, { align: 'center' });
   }
   composer.write('Firma y sello', center, y + 2, PDF_TYPE.label, { align: 'center' });
-  composer.y = top + SIGNATURE_HEIGHT;
+  composer.y = top + height;
 }
 
 /** Una imagen contenida en su caja y apoyada en su borde inferior. */

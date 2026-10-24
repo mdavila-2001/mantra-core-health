@@ -193,7 +193,7 @@ export const PDF_PAGE = {
   /** Alto de la franja del pie, al borde inferior. */
   footerBand: 3,
   /** Aire mínimo entre el contenido y el filete del pie. */
-  footerClearance: 22,
+  footerClearance: 16,
 } as const;
 
 /** Ancho útil de la hoja. */
@@ -346,9 +346,11 @@ export const PDF_SIGNATURE = {
   width: 220,
   signatureBox: { width: 140, height: 52 },
   stampBox: { width: 60, height: 60 },
+  /** Sin imágenes: el lugar para firmar a mano sobre la línea (≈ 1,1 cm). */
+  handwritingHeight: 30,
   gap: 12,
   /** Aire mínimo entre el contenido y el bloque: lo justo para que se lea aparte. */
-  clearance: 22,
+  clearance: 16,
 } as const;
 
 /**

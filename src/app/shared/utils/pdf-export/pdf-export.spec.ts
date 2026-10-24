@@ -969,6 +969,16 @@ describe('el bloque de firma y sello', () => {
     expect(hay('Matrícula M-1234')).toBe(true);
   });
 
+  /** Sin imágenes, reservar el alto del sello mandaba el bloque solo a una hoja nueva. */
+  it('sin imágenes el bloque es más bajo: deja sólo el lugar para firmar a mano', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: FIRMA_COMPLETA });
+    const conImagenes = yDe('Dra. Valeria Rojas') - yDe('Una línea');
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: SIN_IMAGENES });
+    const sinImagenes = yDe('Dra. Valeria Rojas') - yDe('Una línea');
+
+    expect(conImagenes - sinImagenes).toBeCloseTo(60 - 30, 5);
+  });
+
   it('sin matrícula cargada imprime el nombre y no inventa un número', () => {
     buildBlocksPdf(CUERPO, { title: 'Receta', firma: { ...SIN_IMAGENES, matricula: null } });
 
@@ -996,7 +1006,7 @@ describe('el bloque de firma y sello', () => {
   it('sigue al contenido: va debajo de la última línea, con su aire', () => {
     buildBlocksPdf(lineas(3), { title: 'Receta', firma: SIN_IMAGENES });
     const conPoco = yDe('Dra. Valeria Rojas');
-    expect(conPoco).toBeGreaterThan(yDe('Línea 2') + 22);
+    expect(conPoco).toBeGreaterThan(yDe('Línea 2') + 16);
 
     buildBlocksPdf(lineas(8), { title: 'Receta', firma: SIN_IMAGENES });
     expect(yDe('Dra. Valeria Rojas')).toBeGreaterThan(conPoco);
