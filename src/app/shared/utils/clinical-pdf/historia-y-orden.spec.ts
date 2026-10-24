@@ -98,8 +98,9 @@ describe('bloquesDeOrden', () => {
     expect(textoDe(bloquesDeOrden(ORDEN))).not.toContain(ORDEN.id);
   });
 
-  it('declara cuándo y de dónde salió el papel', () => {
-    expect(textoDe(bloquesDeOrden(ORDEN))).toContain('Documento generado el');
+  it('no repite en el cuerpo la fecha de generación: la dicen la portada y el pie', () => {
+    expect(textoDe(bloquesDeOrden(ORDEN))).not.toContain('generado el');
+    expect(orderPdfOptions(ORDEN)).not.toHaveProperty('subtitle');
   });
 
   it('se emite cuando se pide: la portada lleva esa fecha, el estado y a qué mostrador va', () => {
@@ -239,7 +240,7 @@ describe('bloquesDeHistoria', () => {
     expect(texto).not.toContain(ORDEN.id);
   });
 
-  it('las recetas van en una sola tabla con la fecha delante, y sus indicaciones debajo', () => {
+  it('las recetas van en una sola tabla, de la más reciente a la más vieja, y sus indicaciones en otra', () => {
     const receta = {
       id: 'r-1',
       paciente: HISTORIA_VACIA.paciente,
@@ -249,19 +250,40 @@ describe('bloquesDeHistoria', () => {
       medicamentos: [{ medicamento: 'Amoxicilina', dosis: '500 mg', frecuencia: 'cada 8 horas' }],
       indicaciones: 'Tomar con las comidas.',
     };
-    const { emitidaEl: _emitida, ...borrador } = receta;
+    const { emitidaEl: _emitida, indicaciones: _sin, ...borrador } = receta;
     const bloques = bloquesDeHistoria({
       ...HISTORIA_VACIA,
-      recetas: [receta, { ...borrador, id: 'r-2', medicamentos: [] }],
+      // La vieja primero en los datos: el papel las ordena por fecha.
+      recetas: [receta, { ...borrador, id: 'r-2', creadaEl: new Date(2026, 8, 2, 9, 0), medicamentos: [] }],
     });
     const tabla = bloques.filter((bloque) => bloque.kind === 'row');
 
     expect(tabla.map((fila) => fila.cells)).toEqual([
       ['Fecha', 'Medicamento', 'Dosis y frecuencia', 'Vigencia', 'Estado'],
+      ['02/09/2026', 'Sin medicamentos indicados', '—', '—', 'Sin emitir'],
       ['14/08/2026', 'Amoxicilina', '500 mg · cada 8 horas', '—', 'Emitida'],
-      ['14/08/2026', 'Sin medicamentos indicados.', '—', '—', 'Sin emitir'],
+      ['Fecha', 'Medicamento', 'Indicaciones'],
+      ['14/08/2026', 'Amoxicilina', 'Tomar con las comidas.'],
     ]);
     expect(textoDe(bloques)).toContain('Amoxicilina (14/08/2026): Tomar con las comidas.');
+  });
+
+  it('órdenes y atenciones, de la más reciente a la más vieja', () => {
+    const bloques = bloquesDeHistoria({
+      ...HISTORIA_VACIA,
+      ordenes: [ORDEN, { ...ORDEN, id: 'o-2', estudio: 'Glucosa', pedidaEl: new Date(2026, 9, 1) }],
+      atenciones: [
+        { titulo: 'Sin fecha', bloques: [] },
+        { titulo: 'Vieja', inicio: new Date(2026, 0, 5), motivo: 'Control', bloques: [] },
+        { titulo: 'Nueva', inicio: new Date(2026, 5, 5), motivo: 'Fiebre', bloques: [] },
+      ],
+    });
+    const textos = bloques.map((bloque) => bloque.text);
+
+    expect(textos.indexOf('Nueva')).toBeLessThan(textos.indexOf('Vieja'));
+    expect(textos.indexOf('Vieja')).toBeLessThan(textos.indexOf('Sin fecha'));
+    const ordenes = bloques.filter((bloque) => bloque.kind === 'row' && bloque.cells?.length === 4);
+    expect(ordenes.map((fila) => fila.cells?.[1])).toEqual(['Estudio', 'Glucosa', 'Hemograma completo']);
   });
 
   it('las alergias de la persona van en un aviso de alerta, junto a sus datos', () => {
@@ -272,26 +294,62 @@ describe('bloquesDeHistoria', () => {
     expect(alergia).toBeLessThan(bloques.findIndex((bloque) => bloque.text === 'Atenciones'));
   });
 
-  it('cada atención es una tabla con una banda por bloque, vacíos incluidos', () => {
+  it('las atenciones son una sola tabla con una banda por atención, vacíos incluidos', () => {
     const tabla = bloquesDeHistoria({
       ...HISTORIA_VACIA,
       atenciones: [
         {
           titulo: 'Atención del 14/08/2026',
+          inicio: new Date(2026, 7, 14, 9, 0),
+          motivo: 'Dolor de garganta',
           bloques: [
             { titulo: 'Diagnósticos', datos: [{ etiqueta: 'Faringitis aguda', valor: 'Activa' }] },
             { titulo: 'Observaciones', datos: [] },
           ],
         },
+        { titulo: 'Atención sin fecha registrada', bloques: [] },
       ],
     }).filter((bloque) => bloque.kind === 'row');
 
+    // Una banda de cabecera por atención —el motor la repite si la tabla sigue
+    // en otra hoja— y tres columnas comunes a todas, que así quedan alineadas.
     expect(tabla.map((fila) => [fila.header === true, fila.cells])).toEqual([
-      [true, ['Diagnósticos', 'Estado clínico']],
-      [false, ['Faringitis aguda', 'Activa']],
-      [true, ['Observaciones', 'Resultado']],
-      [false, ['Sin registros.', '—']],
+      [true, ['14/08/2026', 'Dolor de garganta', '']],
+      [false, ['Diagnóstico', 'Faringitis aguda', 'Activa']],
+      [false, ['Observación', 'Sin registros', '—']],
+      [true, ['', 'Atención sin fecha registrada', '']],
     ]);
+    expect(tabla[0]?.text).toBe('Atención del 14/08/2026');
+  });
+
+  it('formularios y resultados son tablas con una banda por formulario o resultado', () => {
+    const bloques = bloquesDeHistoria({
+      ...HISTORIA_VACIA,
+      formularios: [
+        {
+          id: 'f-1',
+          titulo: 'Ficha de ingreso',
+          completadoEl: new Date(2026, 7, 14, 9, 30),
+          respuestas: [{ etiqueta: 'Peso', texto: '68 kg', masked: false }],
+        },
+        { id: 'f-2', titulo: 'Cuestionario', respuestas: [] },
+      ],
+      resultados: [{ titulo: 'Hemograma', datos: [{ etiqueta: 'Liberado', valor: '15/08/2026' }] }],
+    });
+    const tabla = bloques.filter((bloque) => bloque.kind === 'row');
+
+    expect(tabla.map((fila) => [fila.header === true, fila.cells])).toEqual([
+      [true, ['Ficha de ingreso', 'Completado el 14/08/2026, 09:30']],
+      [false, ['Peso', '68 kg']],
+      [true, ['Cuestionario', 'Pendiente de completar']],
+      [false, ['Sin respuestas registradas', '—']],
+      [true, ['Hemograma', '']],
+      [false, ['Liberado', '15/08/2026']],
+    ]);
+  });
+
+  it('el cuerpo no repite la fecha de generación', () => {
+    expect(textoDe(bloquesDeHistoria(HISTORIA_VACIA))).not.toContain('generado el');
   });
 
   it('es una compilación: sin fecha de emisión inventada y sin bloque de firma', () => {
@@ -346,6 +404,34 @@ describe('historiaDesdeFuentes con formularios (cierre del TODO(J3/E1))', () => 
     // La protegida imprime el marcador y jamás el contenido.
     expect(texto).toContain(`Serología: ${VALOR_ENMASCARADO}`);
     expect(texto).not.toContain('SECRETO');
+  });
+
+  it('las atenciones van de la más reciente a la más vieja, con su fecha y su motivo', () => {
+    const historia = historiaDesdeFuentes(
+      {
+        resumen: {
+          ...RESUMEN_VACIO,
+          encounters: [
+            { id: 'e-sin', statusConceptId: 's' },
+            { id: 'e-1', statusConceptId: 's', startAt: new Date(2026, 0, 5, 9, 0), reasonText: 'Control' },
+            { id: 'e-2', statusConceptId: 's', startAt: new Date(2026, 5, 5, 9, 0), reasonText: 'Fiebre' },
+          ],
+        },
+        formularios: [],
+        ordenes: [],
+        resultados: [],
+      },
+      { paciente: 'Ana Quispe', profesional: '' },
+      () => 'No registrado',
+    );
+
+    expect(historia.atenciones.map((atencion) => atencion.titulo)).toEqual([
+      'Atención del 05/06/2026',
+      'Atención del 05/01/2026',
+      'Atención sin fecha registrada',
+    ]);
+    expect(historia.atenciones[0]).toMatchObject({ motivo: 'Fiebre', inicio: new Date(2026, 5, 5, 9, 0) });
+    expect(historia.atenciones[2]).not.toHaveProperty('inicio');
   });
 
   it('sin formularios, la sección sigue diciendo que no hay', () => {

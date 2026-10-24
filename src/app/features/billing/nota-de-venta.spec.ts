@@ -1,5 +1,4 @@
 import { cobrosDePrueba } from './billing.spec-fixtures';
-import { bs } from './cobros-en-pantalla';
 import {
   bloquesDeNotaDeVenta,
   buildSalesNotePdf,
@@ -10,6 +9,7 @@ import {
   SALES_NOTE_WATERMARK,
   salesNotePdfOptions,
 } from './nota-de-venta';
+import { formatMoney } from '../../shared/utils/pdf-export/pdf-export';
 import type { SimulatedIssuer } from '../../core/data-access/billing-simulated/billing-simulated.types';
 
 /**
@@ -43,12 +43,21 @@ describe('nota de venta SIMULADA', () => {
     const [primero] = bloques;
     expect(primero?.kind).toBe('note');
     expect(primero?.tone).toBe('alert');
+    expect(primero?.title).toBe('Comprobante interno');
     expect(primero?.text).toContain(LEYENDA_DE_NOTA_DE_VENTA);
   });
 
+  it('dice «no válida como factura» en el aviso, la marca de agua y el pie, y nada más', () => {
+    const veces = (texto: string | undefined) => (texto ?? '').toLocaleLowerCase('es').split('no válida como factura').length - 1;
+    expect(veces(todo)).toBe(1);
+    expect(veces(opciones.watermark)).toBe(1);
+    expect(veces(opciones.footerNote)).toBe(1);
+    expect(veces(opciones.title) + veces(opciones.subtitle) + veces(opciones.kind)).toBe(0);
+  });
+
   it('dice que no es una factura en la portada, en cada hoja y en el pie', () => {
-    expect(opciones.title).toBe('NOTA DE VENTA (SIMULADA)');
-    expect(opciones.subtitle).toContain('No válida como factura');
+    expect(opciones.title).toBe('Nota de venta (simulada)');
+    expect(opciones.subtitle).toBe('Pago a cuenta del plan');
     expect(opciones.watermark).toBe(SALES_NOTE_WATERMARK);
     expect(SALES_NOTE_WATERMARK.toLocaleUpperCase('es')).toBe('SIMULADA · NO VÁLIDA COMO FACTURA');
     expect(opciones.footerNote).toBe(SALES_NOTE_FOOTER);
@@ -56,7 +65,7 @@ describe('nota de venta SIMULADA', () => {
   });
 
   it('la portada lleva el número, la fecha real del pago y el emisor; sin firma', () => {
-    expect(opciones.reference).toBe(nota.number);
+    expect(opciones.reference).toBe(`N.º ${nota.number}`);
     expect(opciones.issuedAt).toEqual(new Date(nota.issuedAt));
     expect(opciones.issuer?.name).toBe(EMISOR.legalName);
     expect(opciones.issuer?.details?.[0]?.replace(/\u00a0/g, ' ')).toBe('NIT 0000000000 (SIMULADO)');
@@ -86,23 +95,30 @@ describe('nota de venta SIMULADA', () => {
     const filas = bloques.filter((b) => b.kind === 'row');
     expect(filas[0]?.header).toBe(true);
     expect(filas[0]?.cells).toEqual(['Servicio', 'Ítem', 'Medio de pago', 'A cobrar', 'Recibido']);
+    // Celdas sin moneda, con el formato común «1.234,56».
     expect(filas[1]?.cells).toEqual([
       cobro.plan!.serviceName,
       instancia.label,
       nota.methodLabel,
-      bs(instancia.expectedAmount),
-      bs(nota.amount),
+      formatMoney(instancia.expectedAmount, null),
+      formatMoney(nota.amount, null),
     ]);
+    expect(filas[1]?.cells?.[4]).toMatch(/^\d{1,3}(\.\d{3})*,\d{2}$/);
     const totales = bloques.find((b) => b.kind === 'totals')?.totals;
-    expect(totales).toEqual([{ label: 'Monto recibido', value: bs(nota.amount), emphasis: true }]);
+    expect(totales).toEqual([{ label: 'Monto recibido', value: formatMoney(nota.amount), emphasis: true }]);
+    expect(totales?.[0]?.value).toMatch(/^\d{1,3}(\.\d{3})*,\d{2} Bs$/);
+    // El literal, en una rejilla rotulada como en la factura.
+    const son = bloques.flatMap((b) => (b.kind === 'fields' ? (b.fields ?? []) : [])).find((f) => f.label === 'Son');
+    expect(son?.value).toMatch(/Bolivianos$/);
     expect(todo).toContain('Son: ');
+    expect(todo).toContain('Importes en bolivianos (Bs).');
   });
 
   it('el estado del plan suma lo pagado hasta esta nota y no deja un saldo negativo', () => {
-    const estado = bloques.find((b) => b.kind === 'fields');
+    const estado = bloques.find((b) => b.kind === 'fields' && b.fields?.some((f) => f.label === 'Monto del servicio'));
     expect(estado?.fields).toEqual([
-      { label: 'Monto del servicio', value: bs(cobro.plan!.expectedTotal) },
-      { label: 'Pagado a la fecha', value: bs(pagadoHasta(cobro, nota)) },
+      { label: 'Monto del servicio', value: formatMoney(cobro.plan!.expectedTotal) },
+      { label: 'Pagado a la fecha', value: formatMoney(pagadoHasta(cobro, nota)) },
       expect.objectContaining({ label: 'Saldo del plan' }),
     ]);
     expect(estado?.fields?.[2]?.value).not.toMatch(/-/);

@@ -14,7 +14,7 @@ import {
   SIMULATED_INVOICE_FOOTER,
   SIMULATED_INVOICE_WATERMARK,
 } from './representacion-grafica';
-import type { PdfBlock } from '../../shared/utils/pdf-export/pdf-export';
+import { formatMoney, type PdfBlock } from '../../shared/utils/pdf-export/pdf-export';
 
 /** Un QR ya calculado de mentira: basta para comprobar dónde va y que entra al PDF. */
 const QR_DE_PRUEBA: PdfBlock = {
@@ -48,12 +48,11 @@ describe('representación gráfica de la factura SIMULADA', () => {
       '(Con Derecho a Crédito Fiscal)',
       `Razón social: ${String(factura.cabecera['razonSocialEmisor'])}`,
       'Casa matriz / sucursal: N.º 0',
-      'Punto de venta: N.º 0',
+      'Punto de venta N.º 0',
       `NIT (SIMULADO): ${factura.issuer.nit}`,
-      `Factura N.º ${factura.invoiceNumber}`,
+      `N.º ${factura.invoiceNumber}`,
       `Cód. Autorización: ${factura.cuf} (SIMULADO)`,
-      'Dirección:',
-      'Municipio:',
+      `Dirección / Municipio: ${String(factura.cabecera['direccion'])} · ${String(factura.cabecera['municipio'])}`,
       'Nombre / Razón social:',
       'NIT / CI / CEX:',
       'Cód. cliente:',
@@ -102,6 +101,16 @@ describe('representación gráfica de la factura SIMULADA', () => {
     expect(SIMULATED_INVOICE_FOOTER).toMatch(/SIMULADA · Sin validez fiscal/);
   });
 
+  it('el estado del SIAT se lee como palabra, no en mayúsculas', () => {
+    const estado = opciones.meta?.find((m) => m.label === 'Estado SIAT (SIMULADO)')?.value ?? '';
+    expect(estado).not.toBe(estado.toLocaleUpperCase('es'));
+    expect(estado.toLocaleUpperCase('es')).toBe(factura.siatResponse.codigoDescripcion.toLocaleUpperCase('es'));
+    expect(invoicePdfOptions({ ...factura, siatResponse: { ...factura.siatResponse, codigoDescripcion: 'VALIDADA' } }).meta).toContainEqual({
+      label: 'Estado SIAT (SIMULADO)',
+      value: 'Validada',
+    });
+  });
+
   it('abre con un aviso de alerta que dice que es simulada y sin validez fiscal', () => {
     const [primero] = bloques;
     expect(primero?.kind).toBe('note');
@@ -119,10 +128,13 @@ describe('representación gráfica de la factura SIMULADA', () => {
     expect(filas).toHaveLength(factura.detalle.length);
     expect(filas[0]!.cells).toHaveLength(7);
     const cabecera = bloques.find((b) => b.kind === 'row' && b.header === true);
-    expect(cabecera?.cells).toEqual(['Código', 'Descripción', 'Cantidad', 'Unidad', 'P. unitario', 'Descuento', 'Subtotal']);
-    // La moneda la dice una línea bajo la tabla, no cada celda.
-    expect(filas[0]!.cells?.[6]).toBe(Number(factura.detalle[0]!['subTotal']).toFixed(2));
-    expect(todo).toContain('Importes del detalle en bolivianos (Bs).');
+    // Cabeceras de una palabra: «P. unitario» se partía en dos renglones.
+    expect(cabecera?.cells).toEqual(['Código', 'Descripción', 'Cant.', 'Unidad', 'Precio', 'Desc.', 'Subtotal']);
+    expect(cabecera?.cells?.every((celda) => !celda.includes(' '))).toBe(true);
+    // La moneda la dice la letra chica del final, no cada celda; formato común «1.234,56».
+    expect(filas[0]!.cells?.[6]).toBe(formatMoney(String(factura.detalle[0]!['subTotal']), null));
+    expect(filas[0]!.cells?.[6]).toMatch(/^\d{1,3}(\.\d{3})*,\d{2}$/);
+    expect(todo).toContain('Importes en bolivianos (Bs)');
   });
 
   it('los importes van en la caja de totales, con el monto a pagar resaltado al final', () => {
@@ -130,10 +142,13 @@ describe('representación gráfica de la factura SIMULADA', () => {
     expect(totales.map((t) => t.label)).toEqual(['Subtotal', 'Descuento', 'Total', 'Monto gift card', 'Monto a pagar']);
     expect(totales.at(-1)).toEqual({
       label: 'Monto a pagar',
-      value: `${Number(factura.cabecera['montoTotal']).toFixed(2)} Bs`,
+      value: formatMoney(String(factura.cabecera['montoTotal'])),
       emphasis: true,
     });
     expect(totales.slice(0, -1).every((t) => t.emphasis !== true)).toBe(true);
+    // Pegada a la tabla: el motor la reserva con las últimas filas del detalle.
+    const indice = bloques.findIndex((b) => b.kind === 'totals');
+    expect(bloques[indice - 1]?.kind).toBe('row');
   });
 
   it('lo que se resta lleva el signo menos tipográfico, nunca el guion; un cero va sin signo', () => {
@@ -142,15 +157,15 @@ describe('representación gráfica de la factura SIMULADA', () => {
       cabecera: { ...factura.cabecera, descuentoAdicional: '12.5', montoGiftCard: '20' },
     });
     const totales = conDescuento.find((b) => b.kind === 'totals')?.totals ?? [];
-    expect(totales.find((t) => t.label === 'Descuento')?.value).toBe('\u221212.50 Bs');
-    expect(totales.find((t) => t.label === 'Monto gift card')?.value).toBe('\u221220.00 Bs');
+    expect(totales.find((t) => t.label === 'Descuento')?.value).toBe('\u221212,50 Bs');
+    expect(totales.find((t) => t.label === 'Monto gift card')?.value).toBe('\u221220,00 Bs');
     const sinDescuento = bloquesDeRepresentacionGrafica({
       ...factura,
       cabecera: { ...factura.cabecera, descuentoAdicional: '0', montoGiftCard: null },
     });
     const ceros = sinDescuento.find((b) => b.kind === 'totals')?.totals ?? [];
-    expect(ceros.find((t) => t.label === 'Descuento')?.value).toBe('0.00 Bs');
-    expect(ceros.find((t) => t.label === 'Monto gift card')?.value).toBe('0.00 Bs');
+    expect(ceros.find((t) => t.label === 'Descuento')?.value).toBe('0,00 Bs');
+    expect(ceros.find((t) => t.label === 'Monto gift card')?.value).toBe('0,00 Bs');
     expect(totales.every((t) => !t.value.includes('-'))).toBe(true);
   });
 

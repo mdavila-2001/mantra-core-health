@@ -216,10 +216,12 @@ export function bloquesDeRepresentacionGrafica(factura: SimulatedInvoice, qr: Pd
     ]),
     // Sin título de sección: la cabecera de la tabla ya dice qué es, y el título
     // podía quedar solo al pie de una hoja con la tabla en la siguiente.
-    // La moneda va en la cabecera y no en cada celda, como en los ejemplos del
-    // SIN: con «Bs» en siete columnas, los importes se partían en dos renglones.
-    // Cabeceras cortas: «P. unitario» en versalitas se partía en dos.
-    fila(['Código', 'Descripción', 'Cant.', 'Unidad', 'P. unit. Bs', 'Desc. Bs', 'Subtotal Bs'], true),
+    // La moneda no va en cada celda, como en los ejemplos del SIN: con «Bs» en
+    // siete columnas los importes se partían en dos renglones. La dicen la caja
+    // de totales y la línea de letra chica del final (una línea suelta entre
+    // los totales y lo que sigue quedaba sola arriba de la hoja siguiente). Cabeceras cortas: «P. unitario» —y «P. unit. Bs»—
+    // en versalitas se partían en dos; «Precio» es el precio unitario.
+    fila(['Código', 'Descripción', 'Cant.', 'Unidad', 'Precio', 'Desc.', 'Subtotal'], true),
     ...factura.detalle.map((d) =>
       fila([
         texto(d['codigoProducto']),

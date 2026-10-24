@@ -55,7 +55,7 @@ export const SALES_NOTE_WATERMARK = 'Simulada · No válida como factura';
 export const SALES_NOTE_FOOTER = 'Nota de venta SIMULADA · No válida como factura · Sin validez fiscal';
 
 /** La cabecera del detalle del pago. */
-const CABECERA = ['Servicio', 'Ítem', 'Medio de pago', 'A cobrar Bs', 'Recibido Bs'];
+const CABECERA = ['Servicio', 'Ítem', 'Medio de pago', 'A cobrar', 'Recibido'];
 
 /** Cómo se nombra el emisor cuando la nota no lo trae: no se inventa uno. */
 const EMISOR_DESCONOCIDO = 'Consultorio (SIMULADO)';
@@ -84,7 +84,7 @@ export function bloquesDeNotaDeVenta(
   ];
   return [
     noteBlock(
-      `${LEYENDA_DE_NOTA_DE_VENTA}. Comprobante interno SIMULADO: no pasa por el SIN ni sirve para crédito fiscal.`,
+      `${LEYENDA_DE_NOTA_DE_VENTA}. Es SIMULADA: no pasa por el SIN ni sirve para crédito fiscal.`,
       'alert',
       'Comprobante interno',
     ),
@@ -109,8 +109,9 @@ export function bloquesDeNotaDeVenta(
         ],
       },
     ]),
-    // Sin título de sección: la cabecera de la tabla ya dice qué es. La moneda,
-    // en la cabecera y no en cada celda, como en la factura.
+    // Sin título de sección: la cabecera de la tabla ya dice qué es. La moneda
+    // no va en cada celda, como en la factura: la dicen el monto recibido y la
+    // letra chica del final («A cobrar Bs» partía la cabecera y el ítem).
     { kind: 'row', header: true, text: CABECERA.join('\t'), cells: CABECERA },
     {
       kind: 'row',
@@ -133,7 +134,7 @@ export function bloquesDeNotaDeVenta(
     // Una aclaración de cómo funciona el plan, no una advertencia: letra chica.
     {
       kind: 'caption',
-      text: 'Mientras el plan tenga saldo, cada pago lleva nota de venta. La factura se emite por el total del servicio cuando el plan queda saldado.',
+      text: 'Importes en bolivianos (Bs). Mientras el plan tenga saldo, cada pago lleva nota de venta; la factura se emite por el total del servicio cuando el plan queda saldado.',
     },
   ];
 }

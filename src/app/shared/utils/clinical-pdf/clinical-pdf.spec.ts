@@ -263,6 +263,24 @@ describe('Documento de receta', () => {
     expect(textoDe(bloquesDeReceta(RECETA))).not.toContain('Alergias');
   });
 
+  it('una copia de trabajo nunca se presenta como firmada sin aclararlo', () => {
+    const tarjeta = (receta: DocumentoDeReceta) =>
+      bloquesDeReceta(receta)[0]?.panels?.[2]?.fields.slice(2) ?? [];
+    const { emitidaEl: _emitida, ...sinEmitir } = RECETA;
+    const { firmadaEl: _firmada, ...sinFirmar } = sinEmitir;
+    const firmada = new Date(2026, 7, 15, 10, 5);
+
+    expect(tarjeta(sinFirmar)).toEqual([{ label: 'Firma', value: 'Sin firmar' }]);
+    expect(tarjeta({ ...sinEmitir, firmadaEl: firmada })).toEqual([
+      { label: 'Firma', value: 'Firmada el 15/08/2026, 10:05, sin emitir' },
+    ]);
+    expect(tarjeta({ ...RECETA, firmadaEl: firmada })).toEqual([
+      { label: 'Firmada el', value: '15/08/2026, 10:05' },
+    ]);
+    // Emitida y sin fecha de firma: no se inventa una.
+    expect(tarjeta(RECETA)).toEqual([]);
+  });
+
   it('la fecha de emisión va en la portada y no se repite en el cuerpo', () => {
     expect(textoDe(bloquesDeReceta(RECETA))).not.toContain('Emitida el');
     expect(textoDe(bloquesDeReceta(RECETA))).toContain('Indicada el');
@@ -277,7 +295,8 @@ describe('Portada de la receta', () => {
     expect(opciones.watermark).toBeUndefined();
     expect(opciones.meta).toEqual([{ label: 'Estado', value: 'Emitida' }]);
     expect(opciones.title).toBe('Receta médica');
-    expect(opciones.subtitle).toBe('Ana Quispe');
+    // El nombre va en la tarjeta del paciente, no repetido en la bajada.
+    expect(opciones).not.toHaveProperty('subtitle');
   });
 
   it('sin emitir no declara fecha de emisión y sale con la marca de copia de trabajo', () => {
@@ -344,8 +363,40 @@ describe('Documento de la atención', () => {
     expect(texto).toContain('Sin registros');
   });
 
-  it('el documento declara cuándo se generó', () => {
-    expect(textoDe(bloquesDeAtencion(ATENCION))).toContain('generado el');
+  it('la fecha de generación no se repite en el cuerpo: la dicen la portada y el pie', () => {
+    const { cierre: _cierre, ...enCurso } = ATENCION;
+
+    expect(textoDe(bloquesDeAtencion(ATENCION))).not.toContain('generado el');
+    expect(bloquesDeAtencion(ATENCION).some((bloque) => bloque.kind === 'caption')).toBe(false);
+    // Sin fecha de emisión la portada no inventa una: el motor rotula la de generación.
+    expect(visitPdfOptions(enCurso)).not.toHaveProperty('issuedAt');
+  });
+
+  it('las fechas van en un solo formato, con hora de 24 horas', () => {
+    const texto = textoDe(
+      bloquesDeAtencion({
+        ...ATENCION,
+        inicio: new Date(2026, 9, 24, 21, 40),
+        formularios: [
+          { id: 'f', titulo: 'Tamizaje', completadoEl: new Date(2026, 9, 24, 9, 5), respuestas: [] },
+        ],
+      }),
+    );
+
+    expect(texto).toContain('Inicio de la atención: 24/10/2026, 21:40');
+    expect(texto).toContain('Estado: Completado el 24/10/2026, 09:05');
+    expect(texto).not.toMatch(/a\. m\.|p\. m\.|de octubre/);
+  });
+
+  it('un formulario sin fecha de completado se declara pendiente', () => {
+    const texto = textoDe(
+      bloquesDeAtencion({
+        ...ATENCION,
+        formularios: [{ id: 'f', titulo: 'Tamizaje', respuestas: [] }],
+      }),
+    );
+
+    expect(texto).toContain('Estado: Pendiente de completar');
   });
 
   it('sin motivo registrado lo dice, en vez de dejar el renglón colgado', () => {
@@ -468,7 +519,7 @@ describe('Documento del formulario respondido', () => {
     // Sin fecha: la portada no la inventa y el cuerpo lo advierte.
     expect(formResponsePdfOptions(sinFecha)).not.toHaveProperty('issuedAt');
     expect(formResponsePdfOptions(sinFecha).meta).toEqual([
-      { label: 'Estado', value: 'Sin fecha de completado' },
+      { label: 'Estado', value: 'Pendiente de completar' },
     ]);
     expect(textoDe(bloquesDeFormulario(sinFecha))).toContain('sin fecha de completado');
     expect(avisos(bloquesDeFormulario(sinFecha))).toEqual([
@@ -487,6 +538,43 @@ describe('Documento del formulario respondido', () => {
     const texto = textoDe(bloquesDeFormulario({ ...FORMULARIO, respuestas: [] }));
 
     expect(texto).toContain('Sin respuestas registradas');
-    expect(texto).toContain('generado el');
+    expect(texto).not.toContain('generado el');
+  });
+
+  it('identifica al paciente con su tarjeta, si el dato lo trae', () => {
+    const conPaciente = bloquesDeFormulario({
+      ...FORMULARIO,
+      paciente: { nombre: 'Ana Quispe', documento: '1234567 LP' },
+      profesional: { nombre: 'Dra. Salas', matricula: 'MP 4821' },
+      organizacion: 'Consultorio Central',
+    });
+
+    expect(conPaciente[0]).toMatchObject({ kind: 'panels' });
+    expect(conPaciente[0]?.panels).toEqual([
+      {
+        title: 'Paciente',
+        fields: [
+          { label: 'Nombre', value: 'Ana Quispe' },
+          { label: 'Documento', value: '1234567 LP' },
+        ],
+      },
+      {
+        title: 'Profesional',
+        fields: [
+          { label: 'Nombre', value: 'Dra. Salas' },
+          { label: 'Matrícula', value: 'MP 4821' },
+          { label: 'Organización', value: 'Consultorio Central' },
+        ],
+      },
+    ]);
+    // Sin el dato no se inventa una tarjeta vacía.
+    expect(bloquesDeFormulario(FORMULARIO).some((bloque) => bloque.kind === 'panels')).toBe(false);
+  });
+
+  it('el pie lo emite la organización, como en los demás papeles clínicos', () => {
+    expect(formResponsePdfOptions({ ...FORMULARIO, organizacion: 'Consultorio Central' }).issuer).toEqual({
+      name: 'Consultorio Central',
+    });
+    expect(formResponsePdfOptions(FORMULARIO)).not.toHaveProperty('issuer');
   });
 });

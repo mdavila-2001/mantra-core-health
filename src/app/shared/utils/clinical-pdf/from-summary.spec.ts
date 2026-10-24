@@ -90,6 +90,14 @@ describe('recetaDesdeResumen', () => {
       etiqueta,
     );
     expect(conDesde.medicamentos[0].vigencia).toContain('desde');
+    // El mismo formato de fecha que el resto del papel: dd/mm/aaaa.
+    expect(
+      recetaDesdeResumen(
+        { ...INDICACION, validFrom: new Date(2026, 9, 24), validTo: new Date(2026, 9, 26) },
+        CONTEXTO,
+        etiqueta,
+      ).medicamentos[0].vigencia,
+    ).toBe('del 24/10/2026 al 26/10/2026');
 
     // Sin fechas de vigencia no hay línea que imprimir: una vigencia inventada
     // en una receta es una indicación clínica falsa.
