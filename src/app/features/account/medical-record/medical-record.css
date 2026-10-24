@@ -191,3 +191,113 @@
   align-items: center;
   gap: var(--sp-2);
 }
+
+/* ════ Rediseño del paciente, tercera vuelta (22/10/2026) ════
+   Va en la hoja del componente y no en `styles/paciente.css`: esa hoja cuenta
+   en el paquete inicial, que está al ras de su presupuesto, y estas reglas
+   sólo hacen falta al abrir esta pantalla. `:host-context` las sigue atando a
+   la sesión de paciente, igual que la capa global. */
+
+/* Cada atención, una tarjeta que se abre. */
+:host-context(.app-shell--paciente) .historia__atenciones {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel:hover,
+:host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel.is-expanded {
+  border-color: var(--c-aqua-300);
+  box-shadow: var(--shadow-md);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__trigger {
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: 0;
+}
+
+/* A la izquierda, un círculo de color (el `::before` del botón) con una
+   carpeta clínica encima (el del encabezado), como máscara para que tome el
+   color del tema. */
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
+  content: '';
+  flex-shrink: 0;
+  inline-size: 2.75rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--c-aqua-100);
+  box-shadow: inset 0 0 0 1px var(--c-aqua-200);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__heading {
+  position: relative;
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__heading::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(var(--sp-5) + 1.375rem);
+  inline-size: 1.35rem;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: var(--brand-primary);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='4' width='14' height='17' rx='2'/%3E%3Cpath d='M9 4V3h6v1'/%3E%3Cpath d='M12 9v6M9 12h6'/%3E%3C/svg%3E") center / contain no-repeat;
+  pointer-events: none;
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__label {
+  flex: 1;
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__chevron {
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: var(--sp-1);
+  border-radius: 50%;
+  background: var(--bg-inset);
+  color: var(--brand-primary);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__region {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-block-start: 1px solid var(--border-default);
+}
+
+/* Recetas, alergias, resultados y diagnósticos: filas separadas, con el
+   mismo borde redondo que las atenciones. */
+:host-context(.app-shell--paciente) .historia__lista {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+:host-context(.app-shell--paciente) .historia__item {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  background: var(--bg-surface);
+}
+
+/* En oscuro el círculo claro apagaba la carpeta aguamarina. */
+:host-context([data-theme='dark']) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--border-default);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
+    background: var(--bg-inset);
+    box-shadow: inset 0 0 0 1px var(--border-default);
+  }
+}
