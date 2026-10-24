@@ -4,6 +4,7 @@ import type {
   GlossaryArticleSection,
 } from '../../core/data-access/terminology/glossary-article.types';
 import {
+  bloquesDeSeccion,
   bloquesDeTexto,
   enlaceSeguro,
   fechaLegible,
@@ -182,6 +183,32 @@ describe('glossary-article.logic', () => {
         ['Píldora', 'Pastilla'],
       ],
     });
+  });
+
+  it('una sección sin texto (notas de clasificación del CDC) se pinta como la lista de sus items', () => {
+    const notas = seccion({
+      kind: 'classification',
+      text: null,
+      lang: 'en',
+      items: ['Incluye: miscarriage', 'Excluye1: habitual aborter'],
+    });
+    expect(bloquesDeSeccion(notas)).toEqual([
+      { tipo: 'lista', elementos: ['Incluye: miscarriage', 'Excluye1: habitual aborter'] },
+    ]);
+
+    const [pintable] = seccionesPintables({ sections: [notas] } as unknown as GlossaryArticle);
+    expect(pintable?.bloques).toHaveLength(1);
+    expect(pintable?.sinTraduccion).toBe(true);
+  });
+
+  it('una sección sin texto ni items no revienta y queda sin bloques', () => {
+    expect(bloquesDeSeccion(seccion({ text: null }))).toEqual([]);
+    expect(bloquesDeSeccion(seccion({ text: null, items: ['  ', ''] }))).toEqual([]);
+  });
+
+  it('con texto, bloquesDeSeccion no cambia el comportamiento de bloquesDeTexto', () => {
+    const conTexto = seccion({ text: 'Un párrafo.', items: ['ignorado'] });
+    expect(bloquesDeSeccion(conTexto)).toEqual(bloquesDeTexto('Un párrafo.'));
   });
 
   it('seccionesPintables: título por kind, encabezado de la fuente y desambiguación en el índice', () => {

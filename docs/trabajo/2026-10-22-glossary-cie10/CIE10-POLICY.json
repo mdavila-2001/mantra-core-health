@@ -1,0 +1,34 @@
+{
+  "sources": {
+    "icd10cm-tabular": {
+      "license": "NCHS/CDC, ICD-10-CM Tabular List: contenido de CDC de dominio público según su política general (atribución al NCHS; sin alterar el contenido; disponible gratis en cdc.gov)",
+      "hosts": [
+        "www.cdc.gov"
+      ]
+    },
+    "mondo": {
+      "license": "CC BY 4.0 — Monarch Initiative (Mondo)",
+      "hosts": [
+        "purl.obolibrary.org"
+      ]
+    },
+    "nlm-mesh": {
+      "license": "NLM Terms and Conditions — «Courtesy of the U.S. National Library of Medicine»",
+      "hosts": [
+        "meshb.nlm.nih.gov"
+      ]
+    },
+    "orphanet-es": {
+      "license": "CC BY 4.0 — Orphanet, www.orpha.net",
+      "hosts": [
+        "www.orpha.net"
+      ]
+    },
+    "disease-ontology": {
+      "license": "CC0 1.0 — Disease Ontology",
+      "hosts": [
+        "purl.obolibrary.org"
+      ]
+    }
+  }
+}

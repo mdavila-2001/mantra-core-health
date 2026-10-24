@@ -72,7 +72,8 @@ export interface GlossaryOmittedBlock {
 
 export interface GlossaryArticleSection {
   readonly kind: GlossarySectionKind;
-  readonly text: string;
+  /** `null` cuando la fuente sólo aporta una lista (notas de clasificación del CDC): va en `items`. */
+  readonly text: string | null;
   readonly lang: 'es' | 'en';
   /** Elementos de lista de la fuente, uno por línea. */
   readonly items?: readonly string[];
