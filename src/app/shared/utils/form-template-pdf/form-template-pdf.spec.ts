@@ -1,5 +1,6 @@
 import {
   bloquesDeFormulario,
+  CONSTANCIA_DE_LLENADO,
   formTemplatePdfOptions,
   INSTRUCCIONES_DE_LLENADO,
   type FormularioParaPdf,
@@ -48,6 +49,11 @@ const FORMULARIO: FormularioParaPdf = {
   profesional: 'Dra. Daniela Vargas',
 };
 
+/** Los bloques de las preguntas: todo menos la constancia de llenado del final. */
+function preguntas(bloques: readonly PdfBlock[]): readonly PdfBlock[] {
+  return bloques.slice(0, bloques.length - CONSTANCIA_DE_LLENADO.length);
+}
+
 /** Todo el texto del documento, en orden. */
 function texto(bloques: readonly PdfBlock[]): string {
   return bloques.map((bloque) => bloque.text).join('\n');
@@ -56,7 +62,7 @@ function texto(bloques: readonly PdfBlock[]): string {
 describe('bloquesDeFormulario', () => {
   it('numera las preguntas de corrido a lo largo de las páginas', () => {
     const bloques = bloquesDeFormulario(FORMULARIO);
-    const enunciados = bloques
+    const enunciados = preguntas(bloques)
       .filter((bloque) => bloque.kind === 'heading' && bloque.level === 4)
       .map((bloque) => bloque.text);
 
@@ -77,17 +83,33 @@ describe('bloquesDeFormulario', () => {
   });
 
   it('deja renglones para escribir donde la respuesta es libre, y más en un texto largo', () => {
-    const renglones = bloquesDeFormulario(FORMULARIO).filter(
+    const renglones = preguntas(bloquesDeFormulario(FORMULARIO)).filter(
       (bloque) => bloque.kind === 'blank',
     );
 
-    // Cuatro por el texto largo del motivo y uno por la línea de alergias.
-    expect(renglones.map((bloque) => bloque.lines)).toEqual([4, 1]);
+    // Cuatro por el texto largo del motivo y dos por el texto corto de
+    // alergias: a mano se escribe más grande que en el teclado.
+    expect(renglones.map((bloque) => bloque.lines)).toEqual([4, 2]);
   });
 
-  it('imprime las opciones con casillas ASCII, que es lo que la fuente del PDF codifica', () => {
-    const cuerpo = texto(bloquesDeFormulario(FORMULARIO));
+  it('cierra con la constancia de llenado: nombre, firma y fecha, con renglones', () => {
+    const bloques = bloquesDeFormulario(FORMULARIO);
 
+    expect(bloques.slice(-CONSTANCIA_DE_LLENADO.length)).toEqual(CONSTANCIA_DE_LLENADO);
+    expect(CONSTANCIA_DE_LLENADO[0]).toMatchObject({ kind: 'heading', text: 'Nombre y firma de quien completa · Fecha (DD/MM/AAAA)' });
+    expect(CONSTANCIA_DE_LLENADO[1]).toMatchObject({ kind: 'blank', lines: 2 });
+    // Sin preguntas no hay nada que constar.
+    expect(texto(bloquesDeFormulario({ ...FORMULARIO, paginas: [] }))).not.toContain('Nombre y firma');
+  });
+
+  it('las opciones van en un bloque de casillas dibujadas, redondas si se elige una', () => {
+    const bloques = bloquesDeFormulario(FORMULARIO);
+    const opciones = bloques.filter((bloque) => bloque.kind === 'choices');
+    const cuerpo = texto(bloques);
+
+    expect(opciones).toHaveLength(1);
+    expect(opciones[0]).toMatchObject({ items: ['Nunca', 'Ex fumador'], multiple: false });
+    // El texto canónico del bloque sigue diciendo las casillas en ASCII.
     expect(cuerpo).toContain('( ) Nunca');
     expect(cuerpo).toContain('( ) Ex fumador');
     // Un `☐` sale como un garabato en Latin-1: el defecto sólo se ve impreso.
@@ -117,7 +139,10 @@ describe('bloquesDeFormulario', () => {
 
     expect(texto(bloques)).toContain('[ ] Hipertensión');
     expect(texto(bloques)).toContain('[ ] Otro:');
-    expect(bloques.some((bloque) => bloque.kind === 'blank')).toBe(true);
+    // El renglón de «Otro» va justo después de las casillas.
+    const opciones = bloques.findIndex((bloque) => bloque.kind === 'choices');
+    expect(bloques[opciones]).toMatchObject({ multiple: true, items: ['Hipertensión', 'Otro:'] });
+    expect(bloques[opciones + 1]).toMatchObject({ kind: 'blank', lines: 1 });
   });
 
   it('dice en la portada cuántas preguntas son del estándar y cuántas del consultorio', () => {
@@ -211,7 +236,8 @@ describe('bloquesDeFormulario', () => {
 
     expect(bloques.filter((b) => b.kind === 'row')[1]?.cells).toEqual(['Dolor', '[ ]']);
     // La regla se lee **antes** de la tabla, junto con cómo marcar.
-    const regla = bloques.findIndex((b) => b.text.includes('Solo una respuesta por columna.'));
+    // Dicha sin contradecir el «todas las que correspondan» de la fila.
+    const regla = bloques.findIndex((b) => b.text.includes('Cada columna se marca en una sola fila.'));
     const cabecera = bloques.findIndex((b) => b.kind === 'row' && b.header === true);
     expect(regla).toBeGreaterThanOrEqual(0);
     expect(regla).toBeLessThan(cabecera);
@@ -232,7 +258,9 @@ describe('bloquesDeFormulario', () => {
       ],
     });
 
-    expect(texto(bloques)).toContain('( ) Sí    ( ) No');
+    const opciones = bloques.filter((b) => b.kind === 'choices');
+    expect(opciones).toHaveLength(1);
+    expect(opciones[0]).toMatchObject({ items: ['Sí', 'No'], multiple: false });
     expect(texto(bloques)).not.toContain('[ ] Sí');
   });
 
@@ -247,7 +275,7 @@ describe('bloquesDeFormulario', () => {
       ],
     });
 
-    expect(bloques.some((bloque) => bloque.kind === 'blank')).toBe(false);
+    expect(preguntas(bloques).some((bloque) => bloque.kind === 'blank')).toBe(false);
     expect(texto(bloques)).toContain('Este campo se completa en el sistema.');
   });
 
@@ -283,8 +311,8 @@ describe('bloquesDeFormulario', () => {
     expect(primero?.title).toBe('Cómo completar este formulario');
     expect(primero?.text).toBe(INSTRUCCIONES_DE_LLENADO);
     // Las instrucciones explican las dos casillas que el papel usa.
-    expect(INSTRUCCIONES_DE_LLENADO).toContain('( )');
-    expect(INSTRUCCIONES_DE_LLENADO).toContain('[ ]');
+    expect(INSTRUCCIONES_DE_LLENADO).toContain('Casilla redonda: una sola respuesta');
+    expect(INSTRUCCIONES_DE_LLENADO).toContain('casilla cuadrada: varias');
   });
 
   it('no repite en el cuerpo lo que ya dice la portada', () => {
@@ -301,8 +329,9 @@ describe('bloquesDeFormulario', () => {
     expect(opciones.title).toBe('Valoración preanestésica');
     expect(opciones.kind).toBe('Formulario en blanco');
     expect(opciones.reference).toBe('ANEST_VALORACION');
-    expect(opciones.subtitle).toBe('Anestesiología · Para completar a mano');
-    expect(opciones.meta).toContainEqual({ label: 'Versión', value: '1' });
+    // La versión va en la bajada: en los metadatos alargaba la portada.
+    expect(opciones.subtitle).toBe('Anestesiología · Versión 1 · Para completar a mano');
+    expect(opciones.meta?.some((m) => m.label === 'Versión')).toBe(false);
     expect(opciones.meta).toContainEqual({ label: 'Descargado por', value: 'Dra. Daniela Vargas' });
     // Un formulario en blanco no se emite: el motor rotula «Fecha de generación».
     expect(opciones.issuedAt).toBeUndefined();
@@ -310,7 +339,7 @@ describe('bloquesDeFormulario', () => {
     expect(opciones.firma).toBeNull();
     // Se imprime por tandas en blanco y negro: portada clara.
     expect(opciones.plainPaper).toBe(true);
-    expect(formTemplatePdfOptions({ ...FORMULARIO, especialidad: null }).subtitle).toBe('Para completar a mano');
+    expect(formTemplatePdfOptions({ ...FORMULARIO, especialidad: null }).subtitle).toBe('Versión 1 · Para completar a mano');
   });
 
   it('corta la hoja antes de cada página del formulario, de la segunda en adelante', () => {
@@ -327,8 +356,8 @@ describe('bloquesDeFormulario', () => {
     });
   });
 
-  it('pocas opciones cortas van en un renglón; muchas, una por renglón, y se dice cuántas marcar', () => {
-    const conOpciones = (control: 'radio' | 'checkboxes', etiquetas: readonly string[]) =>
+  it('las opciones dicen cuántas marcar y van con casillas redondas o cuadradas según el tipo', () => {
+    const conOpciones = (control: 'radio' | 'select' | 'checkboxes', etiquetas: readonly string[]) =>
       bloquesDeFormulario({
         ...FORMULARIO,
         paginas: [
@@ -346,21 +375,20 @@ describe('bloquesDeFormulario', () => {
         ],
       });
 
-    const cortas = conOpciones('radio', ['Nunca', 'A veces', 'Siempre']);
-    expect(cortas.filter((b) => b.kind === 'paragraph').map((b) => b.text)).toEqual([
-      '( ) Nunca      ( ) A veces      ( ) Siempre',
-    ]);
-    expect(texto(cortas)).toContain('Marque una sola opción.');
+    const una = conOpciones('radio', ['Nunca', 'A veces', 'Siempre']);
+    expect(una.find((b) => b.kind === 'choices')).toMatchObject({ items: ['Nunca', 'A veces', 'Siempre'], multiple: false });
+    expect(texto(una)).toContain('Marque una sola opción.');
+    // Un desplegable en papel no existe: sus opciones salen igual, redondas.
+    expect(conOpciones('select', ['A', 'B']).find((b) => b.kind === 'choices')).toMatchObject({ multiple: false });
 
-    const muchas = conOpciones('checkboxes', ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco']);
-    expect(muchas.filter((b) => b.kind === 'paragraph').map((b) => b.text)).toEqual([
-      '[ ] Uno',
-      '[ ] Dos',
-      '[ ] Tres',
-      '[ ] Cuatro',
-      '[ ] Cinco',
-    ]);
-    expect(texto(muchas)).toContain('Marque todas las que correspondan.');
+    const varias = conOpciones('checkboxes', ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco']);
+    expect(varias.find((b) => b.kind === 'choices')).toMatchObject({
+      items: ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco'],
+      multiple: true,
+    });
+    expect(texto(varias)).toContain('Marque todas las que correspondan.');
+    // Las opciones ya no van como párrafos de texto.
+    expect(preguntas(varias).some((b) => b.kind === 'paragraph')).toBe(false);
   });
 
   it('una fecha dice en papel cómo escribirla', () => {
@@ -378,8 +406,8 @@ describe('bloquesDeFormulario', () => {
     });
 
     expect(texto(bloques)).toContain('Formato: DD/MM/AAAA.');
-    expect(texto(bloques)).toContain('Formato: DD/MM/AAAA, HH:MM.');
-    expect(bloques.filter((b) => b.kind === 'blank').map((b) => b.lines)).toEqual([1, 1]);
+    expect(texto(bloques)).toContain('Formato: DD/MM/AAAA, HH:MM (24 horas).');
+    expect(preguntas(bloques).filter((b) => b.kind === 'blank').map((b) => b.lines)).toEqual([1, 1]);
   });
 
   it('escribe «solo» sin tilde en todo el papel', () => {

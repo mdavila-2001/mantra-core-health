@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { test, vi } from 'vitest';
 
 import {
   buildFormResponsePdf,
@@ -13,6 +13,8 @@ import type {
   DocumentoDeHistoria,
   DocumentoDeOrden,
   DocumentoDeReceta,
+  DocumentoDato,
+  DocumentoMedicamento,
   DocumentoPaciente,
   DocumentoProfesional,
   HistoriaAtencion,
@@ -26,12 +28,16 @@ import { fixtureImage, loadBrandFonts, SAMPLE_DATE, SAMPLE_SIGNATURE, savePdf, u
 
 /**
  * Las muestras de los documentos clínicos: una receta emitida de una hoja, la
- * misma sin emitir (copia de trabajo), la historia de una atención, una orden
- * de laboratorio, un formulario respondido con un valor protegido y la
- * historia clínica completa, de varias hojas. Todos los datos son ficticios.
+ * misma sin emitir ni firmar (copia de trabajo), la historia de una atención,
+ * una orden de laboratorio, un formulario respondido con un valor protegido y
+ * la historia clínica completa, de varias hojas. Todos los datos son ficticios
+ * y coherentes entre sí: la medicación, las órdenes y la cronología de cada
+ * atención cuentan la misma historia.
  *
  * Se cargan la firma y el logo de muestra, como los deja la sesión de un
- * profesional: la historia completa los tiene que rechazar (`firma: null`).
+ * profesional: la historia completa los tiene que rechazar (`firma: null`). El
+ * reloj se fija a las 18:00 del día de la muestra, después de todo lo que
+ * cuentan los datos, para que la fecha de generación no contradiga a ninguna.
  */
 
 const PACIENTE: DocumentoPaciente = { nombre: 'Valeria Andrea Choque Mamani', documento: 'CI 0000000 LP' };
@@ -40,9 +46,12 @@ const PROFESIONAL: DocumentoProfesional = {
   matricula: SAMPLE_SIGNATURE.matricula ?? undefined,
 };
 const ORGANIZACION = 'Consultorio Illimani';
+const NOW = new Date(2026, 9, 24, 18, 0);
 
 const day = (month: number, date: number, hours = 9, minutes = 0): Date =>
   new Date(2026, month - 1, date, hours, minutes);
+
+/* ---- los papeles de un hecho clínico --------------------------------------- */
 
 const RECETA: DocumentoDeReceta = {
   id: '00000000-0000-4000-8000-000000000201',
@@ -55,11 +64,11 @@ const RECETA: DocumentoDeReceta = {
   porQueEs: { tipo: 'diagnostico', texto: 'Faringoamigdalitis aguda' },
   alergias: ['Penicilina (reacción cutánea, 2019)'],
   medicamentos: [
-    { medicamento: 'Azitromicina 500 mg comprimidos', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'por 3 días' },
-    { medicamento: 'Ibuprofeno 400 mg comprimidos', dosis: '1 comprimido', frecuencia: 'cada 8 horas', vigencia: 'por 5 días, solo si hay dolor' },
+    { medicamento: 'Azitromicina 500 mg comprimidos', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'del 24/10/2026 al 26/10/2026' },
+    { medicamento: 'Ibuprofeno 400 mg comprimidos', dosis: '1 comprimido', frecuencia: 'cada 8 horas', vigencia: 'del 24/10/2026 al 28/10/2026' },
   ],
   indicaciones:
-    'Tome la azitromicina a la misma hora cada día, aunque se sienta mejor. Tome el ibuprofeno con alimentos.\nConsulte de inmediato si aparece dificultad para respirar, fiebre de más de 39 °C o erupción en la piel.',
+    'Tome la azitromicina a la misma hora cada día, aunque se sienta mejor. Tome el ibuprofeno con alimentos y solo si hay dolor.\nConsulte de inmediato si aparece dificultad para respirar, fiebre de más de 39 °C o erupción en la piel.',
 };
 
 const ATENCION: DocumentoDeAtencion = {
@@ -75,15 +84,15 @@ const ATENCION: DocumentoDeAtencion = {
     {
       titulo: 'Diagnósticos',
       datos: [
-        { etiqueta: 'Faringoamigdalitis aguda bacteriana', valor: 'Activo' },
+        { etiqueta: 'Faringoamigdalitis aguda', valor: 'Activo' },
         { etiqueta: 'Rinitis alérgica', valor: 'Crónico, en seguimiento' },
       ],
     },
     {
       titulo: 'Medicación indicada',
       datos: [
-        { etiqueta: 'Azitromicina 500 mg', valor: '1 comprimido · cada 24 horas · del 24 oct 2026 al 26 oct 2026' },
-        { etiqueta: 'Ibuprofeno 400 mg', valor: '1 comprimido · cada 8 horas · del 24 oct 2026 al 28 oct 2026' },
+        { etiqueta: 'Azitromicina 500 mg', valor: '1 comprimido · cada 24 horas · del 24/10/2026 al 26/10/2026' },
+        { etiqueta: 'Ibuprofeno 400 mg', valor: '1 comprimido · cada 8 horas · del 24/10/2026 al 28/10/2026' },
       ],
     },
     {
@@ -126,8 +135,11 @@ const ORDEN: DocumentoDeOrden = {
 
 const FORMULARIO: DocumentoDeFormulario = {
   id: '00000000-0000-4000-8000-000000000601',
+  paciente: PACIENTE,
+  profesional: PROFESIONAL,
+  organizacion: ORGANIZACION,
   titulo: 'Valoración de riesgo cardiovascular',
-  completadoEl: day(10, 22, 11, 15),
+  completadoEl: day(10, 21, 11, 15),
   respuestas: [
     { etiqueta: 'Antecedentes familiares de enfermedad coronaria', texto: 'Padre con infarto agudo de miocardio a los 58 años.', masked: false },
     { etiqueta: 'Tabaquismo', texto: 'Exfumadora desde 2021 (10 paquetes-año).', masked: false },
@@ -144,70 +156,97 @@ const FORMULARIO: DocumentoDeFormulario = {
   ],
 };
 
-/* ---- la historia larga ----------------------------------------------------- */
+/* ---- la historia larga: seis atenciones de 2026 ---------------------------- */
 
-const MOTIVOS = [
-  'Control de presión arterial',
-  'Dolor de garganta y fiebre',
-  'Control de laboratorio',
-  'Cefalea tensional',
-  'Dolor lumbar mecánico',
-  'Control anual de salud',
-];
+const LOSARTAN = { etiqueta: 'Losartán 50 mg', valor: '1 comprimido · cada 24 horas · desde el 02/03/2026' };
+const HTA = { etiqueta: 'Hipertensión arterial esencial', valor: 'Activo' };
 
-const atencionDeLaHistoria = (index: number): HistoriaAtencion => {
-  const date = day(10 - index, 6 + index * 3);
-  const label = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/2026`;
+/** Una atención de la historia, con sus tres bloques como los arma `historiaDesdeFuentes`. */
+const atencion = (
+  inicio: Date,
+  motivo: string,
+  diagnosticos: readonly DocumentoDato[],
+  medicacion: readonly DocumentoDato[],
+  observaciones: readonly DocumentoDato[],
+): HistoriaAtencion => {
   const bloques: DocumentoBloque[] = [
-    {
-      titulo: 'Diagnósticos',
-      datos:
-        index % 3 === 2
-          ? []
-          : [
-              { etiqueta: MOTIVOS[index] === 'Dolor de garganta y fiebre' ? 'Faringoamigdalitis aguda' : 'Hipertensión arterial esencial', valor: 'Activo' },
-              ...(index % 2 === 0 ? [{ etiqueta: 'Sobrepeso', valor: 'Crónico, en seguimiento' }] : []),
-            ],
-    },
-    {
-      titulo: 'Medicación indicada',
-      datos: [
-        { etiqueta: 'Losartán 50 mg', valor: '1 comprimido · cada 24 horas · desde el 2 mar 2026' },
-        { etiqueta: 'Paracetamol 500 mg', valor: '1 comprimido · cada 8 horas · solo si hay dolor' },
-      ],
-    },
-    {
-      titulo: 'Observaciones',
-      datos: [
-        { etiqueta: 'Presión arterial', valor: `${128 - index * 2}/${82 - index} mmHg` },
-        { etiqueta: 'Peso corporal', valor: `${71 - index * 0.4} kg`.replace('.', ',') },
-        { etiqueta: 'Frecuencia cardíaca', valor: `${74 + index} lpm` },
-      ],
-    },
+    { titulo: 'Diagnósticos', datos: diagnosticos },
+    { titulo: 'Medicación indicada', datos: medicacion },
+    { titulo: 'Observaciones', datos: observaciones },
   ];
-  return { titulo: `${MOTIVOS[index]} · ${label}`, bloques };
+  const fecha = `${String(inicio.getDate()).padStart(2, '0')}/${String(inicio.getMonth() + 1).padStart(2, '0')}/2026`;
+  return { titulo: `Atención del ${fecha}`, inicio, motivo, bloques };
 };
 
-const recetaDeLaHistoria = (index: number): DocumentoDeReceta => ({
-  id: `00000000-0000-4000-8000-0000000007${String(index).padStart(2, '0')}`,
+const ATENCIONES: readonly HistoriaAtencion[] = [
+  // En el orden en que las devuelve la API: el papel las ordena por fecha.
+  atencion(day(3, 2), 'Cefalea y control de presión', [HTA], [LOSARTAN], [
+    { etiqueta: 'Presión arterial', valor: '148/94 mmHg' },
+    { etiqueta: 'Peso corporal', valor: '71,8 kg' },
+  ]),
+  atencion(day(6, 3), 'Tos y dificultad respiratoria', [{ etiqueta: 'Bronquitis aguda', valor: 'Activo' }], [
+    LOSARTAN,
+    { etiqueta: 'Salbutamol 100 mcg inhalador', valor: '2 inhalaciones · cada 6 horas · del 03/06/2026 al 10/06/2026' },
+  ], [
+    { etiqueta: 'Temperatura axilar', valor: '37,6 °C' },
+    { etiqueta: 'Saturación de oxígeno', valor: '95 %' },
+  ]),
+  atencion(day(8, 12), 'Control de laboratorio', [], [LOSARTAN], [{ etiqueta: 'Presión arterial', valor: '126/81 mmHg' }]),
+  atencion(day(9, 9), 'Dolor de garganta y fiebre', [{ etiqueta: 'Faringoamigdalitis aguda', valor: 'Activo' }], [
+    LOSARTAN,
+    { etiqueta: 'Azitromicina 500 mg', valor: '1 comprimido · cada 24 horas · del 09/09/2026 al 11/09/2026' },
+    { etiqueta: 'Ibuprofeno 400 mg', valor: '1 comprimido · cada 8 horas · del 09/09/2026 al 13/09/2026' },
+  ], [
+    { etiqueta: 'Temperatura axilar', valor: '38,4 °C' },
+    { etiqueta: 'Frecuencia cardíaca', valor: '92 lpm' },
+  ]),
+  atencion(day(10, 6), 'Control de presión arterial', [HTA], [LOSARTAN], [
+    { etiqueta: 'Presión arterial', valor: '128/82 mmHg' },
+    { etiqueta: 'Peso corporal', valor: '70,6 kg' },
+  ]),
+  atencion(day(10, 21), 'Control anual de salud', [HTA, { etiqueta: 'Sobrepeso', valor: 'Crónico, en seguimiento' }], [LOSARTAN], [
+    { etiqueta: 'Presión arterial', valor: '124/80 mmHg' },
+    { etiqueta: 'Peso corporal', valor: '70,2 kg' },
+    { etiqueta: 'Índice de masa corporal', valor: '27,4 kg/m²' },
+  ]),
+];
+
+const receta = (
+  id: number,
+  creadaEl: Date,
+  medicamentos: readonly DocumentoMedicamento[],
+  indicaciones?: string,
+): DocumentoDeReceta => ({
+  id: `00000000-0000-4000-8000-0000000007${String(id).padStart(2, '0')}`,
   paciente: PACIENTE,
   profesional: PROFESIONAL,
-  creadaEl: day(10 - (index % 6), 6 + (index % 6) * 3, 10),
-  ...(index === 7 ? {} : { emitidaEl: day(10 - (index % 6), 6 + (index % 6) * 3, 10, 15) }),
-  medicamentos: [
-    [
-      { medicamento: 'Losartán 50 mg', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'por 90 días', estado: 'Activa' },
-    ],
-    [
-      { medicamento: 'Azitromicina 500 mg', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'por 3 días', estado: 'Completada' },
-      { medicamento: 'Ibuprofeno 400 mg', dosis: '1 comprimido', frecuencia: 'cada 8 horas', estado: 'Completada' },
-    ],
-    [{ medicamento: 'Paracetamol 500 mg', dosis: '1 comprimido', frecuencia: 'cada 8 horas', vigencia: 'por 5 días' }],
-    [{ medicamento: 'Atorvastatina 20 mg', dosis: '1 comprimido', frecuencia: 'por la noche', vigencia: 'por 180 días', estado: 'Suspendida' }],
-  ][index % 4],
-  ...(index % 3 === 0
-    ? { indicaciones: 'Tome el comprimido siempre a la misma hora. Controle su presión dos veces por semana y anote los valores.' }
-    : {}),
+  creadaEl,
+  emitidaEl: new Date(creadaEl.getTime() + 15 * 60_000),
+  medicamentos,
+  ...(indicaciones === undefined ? {} : { indicaciones }),
+});
+
+const RECETAS: readonly DocumentoDeReceta[] = [
+  receta(1, day(3, 2, 10), [{ medicamento: 'Losartán 50 mg', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'por 90 días', estado: 'Completada' }],
+    'Tome el comprimido cada mañana, a la misma hora. Controle su presión dos veces por semana y anote los valores.'),
+  receta(2, day(6, 3, 10), [{ medicamento: 'Salbutamol 100 mcg inhalador', dosis: '2 inhalaciones', frecuencia: 'cada 6 horas', vigencia: 'por 7 días', estado: 'Completada' }],
+    'Agite el inhalador antes de cada uso y enjuáguese la boca después de usarlo.'),
+  receta(3, day(9, 9, 10), [
+    { medicamento: 'Azitromicina 500 mg', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'por 3 días', estado: 'Completada' },
+    { medicamento: 'Ibuprofeno 400 mg', dosis: '1 comprimido', frecuencia: 'cada 8 horas', vigencia: 'por 5 días', estado: 'Completada' },
+  ], 'Tome la azitromicina a la misma hora cada día, aunque se sienta mejor. Tome el ibuprofeno con alimentos.'),
+  receta(4, day(6, 3, 10, 30), [{ medicamento: 'Losartán 50 mg', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'por 90 días', estado: 'Completada' }]),
+  receta(5, day(10, 21, 10), [{ medicamento: 'Losartán 50 mg', dosis: '1 comprimido', frecuencia: 'cada 24 horas', vigencia: 'por 90 días', estado: 'Activa' }],
+    'Continúe con el comprimido cada mañana. Reduzca la sal en las comidas y traiga su registro de presión al próximo control.'),
+];
+
+const orden = (id: number, estudio: string, categoria: string, estado: string, pedidaEl: Date): DocumentoDeOrden => ({
+  ...ORDEN,
+  id: `00000000-0000-4000-8000-0000000005${String(id).padStart(2, '0')}`,
+  estudio,
+  categoria,
+  estado,
+  pedidaEl,
 });
 
 const HISTORIA: DocumentoDeHistoria = {
@@ -215,8 +254,8 @@ const HISTORIA: DocumentoDeHistoria = {
   edad: '41 años',
   organizacion: ORGANIZACION,
   alergias: ['Penicilina (reacción cutánea, 2019)', 'Látex (dermatitis de contacto)'],
-  atenciones: Array.from({ length: 6 }, (_, index) => atencionDeLaHistoria(index)),
-  recetas: Array.from({ length: 8 }, (_, index) => recetaDeLaHistoria(index)),
+  atenciones: ATENCIONES,
+  recetas: RECETAS,
   formularios: [
     FORMULARIO,
     {
@@ -230,11 +269,10 @@ const HISTORIA: DocumentoDeHistoria = {
     },
   ],
   ordenes: [
-    ORDEN,
-    { ...ORDEN, id: '00000000-0000-4000-8000-000000000502', estudio: 'Hemograma completo', estado: 'Completada', pedidaEl: day(8, 12) },
-    { ...ORDEN, id: '00000000-0000-4000-8000-000000000503', estudio: 'Radiografía de tórax, proyección posteroanterior', categoria: 'Imagenología', estado: 'Completada', pedidaEl: day(6, 3) },
-    { ...ORDEN, id: '00000000-0000-4000-8000-000000000504', estudio: 'Examen general de orina', estado: 'Cancelada', pedidaEl: day(5, 20) },
-    { ...ORDEN, id: '00000000-0000-4000-8000-000000000505', estudio: 'Electrocardiograma de reposo de 12 derivaciones', categoria: 'Cardiología', estado: 'Completada', pedidaEl: day(3, 2) },
+    orden(1, 'Electrocardiograma de reposo de 12 derivaciones', 'Cardiología', 'Completada', day(3, 2, 10)),
+    orden(2, 'Radiografía de tórax, proyección posteroanterior', 'Imagenología', 'Completada', day(6, 3, 10)),
+    orden(3, 'Hemograma completo', 'Laboratorio', 'Completada', day(8, 12, 9, 30)),
+    orden(4, 'Perfil lipídico completo y glucosa en ayunas', 'Laboratorio', 'Activa', day(10, 21, 10, 10)),
   ],
   resultados: [
     { titulo: 'Hemograma completo', datos: [{ etiqueta: 'Liberado', valor: '14/08/2026' }, { etiqueta: 'Conclusión', valor: 'Serie roja, blanca y plaquetaria dentro de los rangos de referencia.' }] },
@@ -243,52 +281,88 @@ const HISTORIA: DocumentoDeHistoria = {
   ],
 };
 
+/** Como las arma `seccionesNuevasDeLaHistoria`: de la atención más reciente a la más vieja. */
 const NUEVAS: SeccionesNuevasDeLaHistoria = {
   diagnosticos: {
     enEstudio: [{ nombre: 'Dislipidemia mixta', certeza: 'Provisional', detalle: 'pendiente de perfil lipídico' }],
     activas: [
-      { nombre: 'Hipertensión arterial esencial', certeza: 'Confirmado', detalle: 'crónica, desde marzo de 2026' },
+      { nombre: 'Hipertensión arterial esencial', certeza: 'Confirmado', detalle: 'crónica, desde el 02/03/2026' },
       { nombre: 'Sobrepeso', certeza: 'Confirmado', detalle: null },
     ],
     historicos: [
-      { nombre: 'Faringoamigdalitis aguda', certeza: 'Confirmado', detalle: 'resuelto el 30/09/2026' },
+      { nombre: 'Faringoamigdalitis aguda', certeza: 'Confirmado', detalle: 'resuelto el 16/09/2026' },
+      { nombre: 'Bronquitis aguda', certeza: 'Confirmado', detalle: 'resuelto el 12/06/2026' },
       { nombre: 'Neumonía adquirida en la comunidad', certeza: 'Descartado', detalle: 'descartado el 05/06/2026' },
     ],
   },
   lineas: [
     {
-      titulo: 'Dolor de garganta y fiebre · 9 de septiembre de 2026',
+      titulo: 'Control anual de salud · 21/10/2026',
       sello: 'Cerrada',
       hechos: [
-        { titulo: 'Diagnóstico: Faringoamigdalitis aguda', detalle: 'confirmado', cuando: '9 de septiembre de 2026' },
-        { titulo: 'Receta: Azitromicina 500 mg', detalle: 'por Faringoamigdalitis aguda', cuando: '9 de septiembre de 2026' },
-        { titulo: 'Nota de evolución', detalle: null, cuando: '9 de septiembre de 2026' },
+        { titulo: 'Diagnóstico en estudio: Dislipidemia mixta', detalle: null, cuando: '21/10/2026' },
+        { titulo: 'Análisis de laboratorio: Perfil lipídico completo', detalle: 'pendiente', cuando: '21/10/2026' },
+        { titulo: 'Receta: Losartán 50 mg', detalle: 'por Hipertensión arterial esencial', cuando: '21/10/2026' },
       ],
     },
     {
-      titulo: 'Control de presión arterial · 6 de octubre de 2026',
+      titulo: 'Control de presión arterial · 06/10/2026',
+      sello: 'Cerrada',
+      hechos: [{ titulo: 'Nota de evolución', detalle: null, cuando: '06/10/2026' }],
+    },
+    {
+      titulo: 'Dolor de garganta y fiebre · 09/09/2026',
       sello: 'Cerrada',
       hechos: [
-        { titulo: 'Medición: Presión arterial', detalle: '128/82 mmHg', cuando: '6 de octubre de 2026' },
-        { titulo: 'Orden: Perfil lipídico completo', detalle: 'pendiente', cuando: null },
+        { titulo: 'Diagnóstico confirmado: Faringoamigdalitis aguda', detalle: null, cuando: '09/09/2026' },
+        { titulo: 'Receta: Azitromicina 500 mg', detalle: 'por Faringoamigdalitis aguda', cuando: '09/09/2026' },
+        { titulo: 'Receta: Ibuprofeno 400 mg', detalle: 'por Faringoamigdalitis aguda', cuando: '09/09/2026' },
       ],
     },
-    { titulo: 'Control anual de salud · 21 de octubre de 2026', sello: 'En curso', hechos: [] },
+    {
+      titulo: 'Control de laboratorio · 12/08/2026',
+      sello: 'Cerrada',
+      hechos: [{ titulo: 'Análisis de laboratorio: Hemograma completo', detalle: 'resultado disponible', cuando: '12/08/2026' }],
+    },
+    {
+      titulo: 'Tos y dificultad respiratoria · 03/06/2026',
+      sello: 'Cerrada',
+      hechos: [
+        { titulo: 'Diagnóstico confirmado: Bronquitis aguda', detalle: null, cuando: '03/06/2026' },
+        { titulo: 'Diagnóstico descartado: Neumonía adquirida en la comunidad', detalle: null, cuando: '05/06/2026' },
+        { titulo: 'Imagenología: Radiografía de tórax', detalle: 'resultado disponible', cuando: '03/06/2026' },
+        { titulo: 'Receta: Salbutamol 100 mcg inhalador', detalle: 'por Bronquitis aguda', cuando: '03/06/2026' },
+      ],
+    },
+    {
+      titulo: 'Cefalea y control de presión · 02/03/2026',
+      sello: 'Cerrada',
+      hechos: [
+        { titulo: 'Diagnóstico confirmado: Hipertensión arterial esencial', detalle: null, cuando: '02/03/2026' },
+        { titulo: 'Cardiología: Electrocardiograma de reposo', detalle: 'resultado disponible', cuando: '02/03/2026' },
+        { titulo: 'Receta: Losartán 50 mg', detalle: 'por Hipertensión arterial esencial', cuando: '02/03/2026' },
+      ],
+    },
   ],
 };
 
 test('muestras de los documentos clínicos', () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
   loadBrandFonts();
   useSampleSignature();
   establecerLogoDeDocumentos(fixtureImage('practice-logo.png'));
 
-  const { emitidaEl: _emitida, ...borrador } = RECETA;
-  console.log(savePdf(buildPrescriptionPdf(RECETA), 'clinical-prescription.pdf'));
-  console.log(savePdf(buildPrescriptionPdf(borrador), 'clinical-prescription-draft.pdf'));
-  console.log(savePdf(buildVisitPdf(ATENCION), 'clinical-visit.pdf'));
-  console.log(savePdf(buildOrderPdf(ORDEN), 'clinical-order.pdf'));
-  console.log(savePdf(buildFormResponsePdf(FORMULARIO), 'clinical-form-response.pdf'));
-  console.log(savePdf(buildHistoriaConEncuentrosPdf(HISTORIA, NUEVAS), 'clinical-history.pdf'));
-
-  establecerLogoDeDocumentos(null);
+  try {
+    const { emitidaEl: _emitida, firmadaEl: _firmada, ...borrador } = RECETA;
+    console.log(savePdf(buildPrescriptionPdf(RECETA), 'clinical-prescription.pdf'));
+    console.log(savePdf(buildPrescriptionPdf(borrador), 'clinical-prescription-draft.pdf'));
+    console.log(savePdf(buildVisitPdf(ATENCION), 'clinical-visit.pdf'));
+    console.log(savePdf(buildOrderPdf(ORDEN), 'clinical-order.pdf'));
+    console.log(savePdf(buildFormResponsePdf(FORMULARIO), 'clinical-form-response.pdf'));
+    console.log(savePdf(buildHistoriaConEncuentrosPdf(HISTORIA, NUEVAS), 'clinical-history.pdf'));
+  } finally {
+    establecerLogoDeDocumentos(null);
+    vi.useRealTimers();
+  }
 });
