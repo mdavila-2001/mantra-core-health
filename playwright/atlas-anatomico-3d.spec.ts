@@ -169,6 +169,7 @@ test('la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y
   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeInViewport();
   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeFocused();
+  await expect(page.getByTestId('atlas3d-sin-pieza')).toBeVisible();
   await page.mouse.move(0, 0);
   await page.locator('.atlas3d__trabajo').screenshot({ path: `${CAPTURAS}/female-utero-sin-pieza.png` });
 });
@@ -180,7 +181,13 @@ test('se elige una pieza con el teclado desde la búsqueda y se resaltan sus rel
   const buscador = page.getByTestId('atlas3d-buscar').locator('input');
   await buscador.fill('femur');
   const opcion = page.getByRole('button', { name: /^(fémur|femur)$/i }).first();
-  await opcion.focus();
+  await expect(opcion).toBeVisible();
+  // Desde el buscador sólo con Tab hasta la opción, y Enter: el camino de
+  // quien no usa ratón.
+  for (let i = 0; i < 6 && !(await opcion.evaluate((el) => el === document.activeElement)); i++) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(opcion).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/structure=UBERON(%3A|:)0000981/);
   await comprobarFicha(page);
