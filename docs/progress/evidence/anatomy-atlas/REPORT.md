@@ -114,8 +114,15 @@ esa es la regla, y el informe lo dirá.
 |---|---|---|
 | `corepack yarn typecheck` | **verde** (EXIT=0) | `gates/typecheck.txt` |
 | `corepack yarn build` | **verde** (EXIT=0). Bundle inicial 1,36 MB, igual que la base: el aviso de presupuesto (620 kB) ya existía en `origin/mockup` (740,05 kB por encima); la rama queda 740,23 kB por encima, +0,18 kB por la entrada de ruta. three.js y el atlas van en trozos diferidos. Lejos del techo de error (1,5 MB) | `gates/build.txt`, `build/` |
-| `corepack yarn test --watch=false` | **rojo, y no por este cambio**: 11 038 pruebas, 77 fallan. **74 fallan igual en `origin/mockup`** (mismos archivos, corridos en un worktree de la base: medication-block, faker, fichas estándar, tokens, rutas viejas, etc.). Las 3 restantes (dos PDF con jsPDF y un temporizador de laboratorio) **pasan aisladas** en la rama (33/33): inestables bajo carga, no relacionadas con el atlas. Las 21 pruebas nuevas del atlas pasan | `gates/test.txt`, `gates/test-base-same-failing-files.txt`, `gates/test-branch-3-extra-failures-isolated.txt` |
+| `corepack yarn test --watch=false` | **rojo, y no por este cambio**: 11 038 pruebas, 77 fallan. **74 fallan igual en `origin/mockup`** (mismos archivos, corridos en un worktree de la base: medication-block, faker, fichas estándar, tokens, rutas viejas, etc.). Las 3 restantes (dos PDF con jsPDF y un temporizador de laboratorio) **pasan aisladas** en la rama (33/33): inestables bajo carga, no relacionadas con el atlas. Las pruebas nuevas del atlas pasan (21 en esa corrida; 22 tras la segunda revisión visual) | `gates/test.txt`, `gates/test-base-same-failing-files.txt`, `gates/test-branch-3-extra-failures-isolated.txt` |
 | Playwright `--workers=1` contra `ng serve` | **10/10 verde**: tocar una pieza abre su ficha y sus relaciones en Hombre y Mujer a 375/768/1440 claro y 1440 oscuro; el lienzo tiene dibujo (conteo de píxeles), la pieza elegida se ve en verde y, con el fémur, las relacionadas en ocre; el útero se abre como ficha sin pieza, a la vista y con foco; selección por teclado desde la búsqueda | `gates/playwright.txt`, `screenshots/` |
+
+Commit de cada compuerta (primera línea de cada archivo): typecheck, build y
+Playwright sobre `9b3bc933`, el código final. La suite completa se corrió
+sobre `dc69d624`; los cambios posteriores tocan sólo el atlas (plantilla,
+lógica, CSS y la prueba de Playwright), y sus 22 pruebas unitarias se
+volvieron a correr en verde sobre el código final. La suite completa no se
+repitió.
 
 Una corrida anterior dio verde contra un servidor equivocado (un build de
 producción viejo que un auditor dejó en el puerto 4200); se descartó y se
