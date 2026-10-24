@@ -18,8 +18,8 @@ import type { DocumentoDeHistoria } from './clinical-pdf.types';
  * 2. **Un diagnóstico descartado no se imprime como enfermedad activa.** Es el
  *    kill-test del carril, y en el papel pesa más: el PDF sale del sistema y
  *    circula por su cuenta.
- * 3. **Las secciones nuevas van ANTES del pie.** Algo impreso después de la
- *    línea que fecha el documento se lee como el anexo de otro papel.
+ * 3. **El cuerpo no repite la fecha de generación.** La dicen la portada y el pie;
+ *    una tercera fecha en el cuerpo sólo puede contradecirlas.
  * 4. **Cero identificadores internos.** Quien abre el PDF no tiene catálogo con
  *    que resolver un uuid.
  */
@@ -97,7 +97,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
 
   /**
    * El kill-test, en el papel: el descartado tiene que estar **después** del
-   * encabezado «Históricos» y **antes** del de «Línea de cada atención», nunca
+   * encabezado «Históricos» y **antes** del de «Cronología por atención», nunca
    * dentro del tramo de «Enfermedades activas».
    */
   it('un diagnóstico descartado no cae en el tramo de las enfermedades activas', () => {
@@ -116,7 +116,7 @@ describe('bloquesDeHistoriaConEncuentros', () => {
   it('imprime la línea de cada atención con su estado y sus hechos, en orden', () => {
     const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
 
-    expect(texto).toContain('Línea de cada atención');
+    expect(texto).toContain('Cronología por atención');
     expect(texto).toContain('Dolor de garganta · 1 de marzo de 2026');
     expect(texto).toContain('Estado de la atención: Cerrada');
     expect(texto).toContain('Nota #a1b2 (1 de marzo de 2026)');
@@ -133,15 +133,33 @@ describe('bloquesDeHistoriaConEncuentros', () => {
       }),
     );
 
-    expect(texto).toContain('De esta atención no quedó nada registrado.');
+    expect(texto).toContain('Sin registros clínicos en esta atención.');
   });
 
-  /** El pie fecha el documento: nada se imprime después de esa línea. */
-  it('las secciones nuevas van antes del pie del documento', () => {
+  /** El pie de cada hoja fecha el documento: el cuerpo no lo repite. */
+  it('el cuerpo no repite la fecha de generación', () => {
     const bloques = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS);
 
-    expect(bloques.at(-1)?.kind).toBe('caption');
-    expect(bloques.at(-1)?.text).toContain('Documento generado el');
+    expect(bloques.some((bloque) => bloque.kind === 'caption')).toBe(false);
+    expect(bloques.map((bloque) => bloque.text).join('\n')).not.toContain('generado el');
+  });
+
+  it('los tres bloques son una sola tabla, con una banda por bloque y rayas en los vacíos', () => {
+    const filas = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, {
+      ...TRES_DIAGNOSTICOS,
+      diagnosticos: { ...TRES_DIAGNOSTICOS.diagnosticos, enEstudio: [] },
+    })
+      .filter((bloque) => bloque.kind === 'row')
+      .map((fila) => [fila.header === true, fila.cells]);
+
+    expect(filas).toEqual([
+      [true, ['En estudio', 'Certeza', 'Detalle']],
+      [false, ['Sin diagnósticos en estudio', '—', '—']],
+      [true, ['Enfermedades activas', 'Certeza', 'Detalle']],
+      [false, ['Hipertensión', 'Confirmado', 'activa hasta el 24/11/2026']],
+      [true, ['Históricos', 'Certeza', 'Detalle']],
+      [false, ['Faringitis aguda', 'Descartado', 'Descartado']],
+    ]);
   });
 
   /** Y las cinco secciones de siempre siguen en pie: esto agrega, no reemplaza. */
@@ -153,6 +171,40 @@ describe('bloquesDeHistoriaConEncuentros', () => {
     expect(texto).toContain('Formularios');
     expect(texto).toContain('Órdenes de estudio');
     expect(texto).toContain('Resultados');
+  });
+
+  /**
+   * Cada sección donde se lee: los diagnósticos por estado abren la historia
+   * —antes de las atenciones— y la línea de cada atención sigue a las
+   * atenciones, antes de las recetas.
+   */
+  it('ubica los diagnósticos antes de las atenciones y la línea antes de las recetas', () => {
+    const textos = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS).map(
+      (bloque) => bloque.text,
+    );
+    const paciente = textos.indexOf('Datos del paciente');
+    const diagnosticos = textos.indexOf('Diagnósticos por estado');
+    const atenciones = textos.indexOf('Atenciones');
+    const lineas = textos.indexOf('Cronología por atención');
+    const recetas = textos.indexOf('Recetas');
+
+    expect(paciente).toBeGreaterThan(-1);
+    expect(diagnosticos).toBeGreaterThan(paciente);
+    expect(atenciones).toBeGreaterThan(diagnosticos);
+    expect(lineas).toBeGreaterThan(atenciones);
+    expect(recetas).toBeGreaterThan(lineas);
+  });
+
+  it('los hechos de una atención son una lista, en el orden dado', () => {
+    const lista = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS).find(
+      (bloque) => bloque.kind === 'list',
+    );
+
+    expect(lista?.items).toEqual([
+      'Nota #a1b2 (1 de marzo de 2026)',
+      'Análisis de laboratorio: Hemograma — resultado disponible (1 de marzo de 2026)',
+      'Receta: Losartán — por Hipertensión',
+    ]);
   });
 
   it('ningún identificador interno llega al papel', () => {

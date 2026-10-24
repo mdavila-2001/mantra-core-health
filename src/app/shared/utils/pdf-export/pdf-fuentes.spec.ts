@@ -15,33 +15,42 @@ function bytes(texto: string): ArrayBuffer {
 describe('prepararFuentes', () => {
   beforeEach(() => establecerFuentesDeDocumentos(null));
 
-  it('baja las dos fuentes de la carpeta pública y las deja en base64', async () => {
+  it('baja las cuatro fuentes de AloVida de la carpeta pública y las deja en base64', async () => {
     const pedidas: string[] = [];
     const bajar = vi.fn(async (url: string) => {
       pedidas.push(url);
-      return bytes(url.endsWith(ARCHIVOS_DE_FUENTES.titulos) ? 'poppins' : 'inter');
+      return bytes(url.slice(RUTA_DE_TIPOGRAFIAS.length));
     });
 
     const fuentes = await prepararFuentes(bajar);
 
     expect(pedidas).toEqual([
-      `${RUTA_DE_TIPOGRAFIAS}${ARCHIVOS_DE_FUENTES.titulos}`,
-      `${RUTA_DE_TIPOGRAFIAS}${ARCHIVOS_DE_FUENTES.cuerpo}`,
+      `${RUTA_DE_TIPOGRAFIAS}poppins-600.ttf`,
+      `${RUTA_DE_TIPOGRAFIAS}poppins-500.ttf`,
+      `${RUTA_DE_TIPOGRAFIAS}nunito-sans-400.ttf`,
+      `${RUTA_DE_TIPOGRAFIAS}nunito-sans-700.ttf`,
     ]);
     expect(fuentes).toEqual({
-      titulos: { archivo: ARCHIVOS_DE_FUENTES.titulos, base64: btoa('poppins') },
-      cuerpo: { archivo: ARCHIVOS_DE_FUENTES.cuerpo, base64: btoa('inter') },
+      titulos: { archivo: 'poppins-600.ttf', base64: btoa('poppins-600.ttf') },
+      rotulos: { archivo: 'poppins-500.ttf', base64: btoa('poppins-500.ttf') },
+      cuerpo: { archivo: 'nunito-sans-400.ttf', base64: btoa('nunito-sans-400.ttf') },
+      cuerpoDestacado: { archivo: 'nunito-sans-700.ttf', base64: btoa('nunito-sans-700.ttf') },
     });
+  });
+
+  it('las cuatro existen en la carpeta pública', async () => {
+    const { existsSync } = await import('node:fs');
+    for (const archivo of Object.values(ARCHIVOS_DE_FUENTES)) {
+      expect(existsSync(`public${RUTA_DE_TIPOGRAFIAS}${archivo}`), archivo).toBe(true);
+    }
   });
 
   /**
    * Un papel con los títulos en Poppins y el cuerpo en Helvetica se vería como
-   * un error de maquetado: si falta una, se descartan las dos.
+   * un error de maquetado: si falta una, se descartan todas.
    */
-  it('si una sola falla no devuelve ninguna', async () => {
-    const bajar = vi.fn(async (url: string) =>
-      url.endsWith(ARCHIVOS_DE_FUENTES.cuerpo) ? null : bytes('poppins'),
-    );
+  it.each(Object.values(ARCHIVOS_DE_FUENTES))('si sólo falla %s no devuelve ninguna', async (falla) => {
+    const bajar = vi.fn(async (url: string) => (url.endsWith(falla) ? null : bytes('fuente')));
 
     expect(await prepararFuentes(bajar)).toBeNull();
   });
@@ -68,7 +77,9 @@ describe('el holder de fuentes', () => {
 
     const fuentes = {
       titulos: { archivo: 'poppins-600.ttf', base64: 'AA==' },
-      cuerpo: { archivo: 'inter-400.ttf', base64: 'AA==' },
+      rotulos: { archivo: 'poppins-500.ttf', base64: 'AA==' },
+      cuerpo: { archivo: 'nunito-sans-400.ttf', base64: 'AA==' },
+      cuerpoDestacado: { archivo: 'nunito-sans-700.ttf', base64: 'AA==' },
     };
     establecerFuentesDeDocumentos(fuentes);
     expect(fuentesDeDocumentos()).toBe(fuentes);
