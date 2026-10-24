@@ -181,6 +181,29 @@ export class MockRouter {
     return this.on('DELETE', pattern, handler);
   }
 
+  /**
+   * Envuelve un manejador ya registrado, sin tocar el archivo que lo declara:
+   * una regla transversal (el CI único de C-10 sobre las altas) vive en su
+   * propio archivo y decide antes, o deja pasar al original.
+   *
+   * @throws Error si la ruta no está registrada: envolver nada es un error de
+   *   orden de registro, no algo para tragarse.
+   */
+  envolver(
+    method: MockMethod,
+    pattern: string,
+    decorador: (original: MockHandler) => MockHandler,
+  ): this {
+    const segments = split(pattern).join('/');
+    const indice = this.routes.findIndex(
+      (r) => r.method === method && r.segments.join('/') === segments,
+    );
+    if (indice === -1) throw new Error(`[mock] no hay ${method} ${pattern} que envolver`);
+    const ruta = this.routes[indice]!;
+    this.routes[indice] = { ...ruta, handler: decorador(ruta.handler) };
+    return this;
+  }
+
   /** Todo lo registrado, para los barridos de prueba: método y patrón. */
   rutas(): readonly { method: MockMethod; pattern: string }[] {
     return this.routes.map((r) => ({ method: r.method, pattern: `/${r.segments.join('/')}` }));

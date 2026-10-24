@@ -1,0 +1,4 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/core/mock/faker/faker.spec.ts > faker del backend simulado > los códigos salen del catálogo, nunca inventados > cada ocupación y cada municipio de cada paciente existen
+ Test Files  1 failed | 118 passed (119)
+      Tests  1 failed | 1659 passed (1660)

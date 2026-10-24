@@ -1,0 +1,36 @@
+/* La región `role="status"` existe siempre (vacía si no hay nada que decir):
+   un lector sólo anuncia cambios dentro de una región que ya estaba. */
+:host {
+  display: block;
+}
+
+.disponibilidad {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* El mismo aviso que antes vivía en cada alta (`.registro__catalogo-caido`). */
+.disponibilidad--caido {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.disponibilidad__icono {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin-block-start: 0.125rem;
+}
+
+[data-tono='ok'] {
+  color: var(--st-success-fg);
+}
+
+.disponibilidad:has([data-tono='ok']) .disponibilidad__icono {
+  color: var(--st-success-fg);
+}

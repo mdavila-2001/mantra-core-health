@@ -307,7 +307,12 @@ describe('RegisterPractitioner', () => {
 
     it('cada bloque trae los campos que le tocan, en su orden', () => {
       expect(camposDe('name')).toEqual(['name', 'lastName', 'motherLastName']);
-      expect(camposDe('document')).toEqual(['nationalId', 'issuerAdministrativeAreaConceptId']);
+      // C-10 / MD-01: la línea de estado de la comprobación del CI.
+      expect(camposDe('document')).toEqual([
+        'nationalId',
+        'issuerAdministrativeAreaConceptId',
+        'documentoDisponibilidad',
+      ]);
       // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
       // nacimiento, como pide el orden.
       // La ocupación se quitó del alta de profesional: lo que dice qué clase de

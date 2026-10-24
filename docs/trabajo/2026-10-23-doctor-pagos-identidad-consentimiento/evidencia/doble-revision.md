@@ -104,3 +104,68 @@ componentes compartidos o previos (fuera del alcance de C-01, anotados para su d
 - `view-state-host`: «Copiar código» y «Reintentar» pegados.
 - Diálogo de confirmación con la misma superficie que el de atrás en oscuro.
 - Datos del sembrado: misma hora en todas las filas (el check-in fija la hora).
+
+---
+
+# H3 · C-10 / MD-01 — línea de comprobación del CI (2026-10-24)
+
+Capturas: [`capturas-h3/`](./capturas-h3/) — 36 = 6 estados × 3 anchos (1440 · 768 · 390) × 2 temas.
+Generadas por `playwright/capturas-c10-ci-unico.spec.ts` contra la API real (4201 → 3005).
+`*-interceptado-*` = red interceptada a propósito: evidencia de UI, no de integración.
+
+## Primera pasada (quien implementó)
+
+| Estado | Lo que se ve | Veredicto |
+|---|---|---|
+| falta-departamento | Línea neutra «Elija el departamento de emisión…» bajo el par número/departamento, en los 6 cortes | OK |
+| disponible | «Documento disponible.» con icono de check, tono éxito; claro y oscuro legibles | OK |
+| ya-registrado | Borde rojo del campo + mensaje del campo («Ya hay un médico registrado…») + línea «Este documento ya está registrado…». Primera toma en 390 salía desplazada (el campo fuera de cuadro): se corrigió encuadrando el título y se re-capturó | OK tras re-captura |
+| sin-respuesta (503 interceptado) | Línea neutra con icono de reintento; el campo no se pone en rojo | OK |
+| sin-catálogo (500 interceptado) | El aviso de antes («No pudimos traer el catálogo de departamentos. Reintentar») ahora desde el componente compartido; el departamento ocupa la fila entera, como antes | OK |
+| paciente-disponible | El CI del médico, con La Paz, sale «Documento disponible.» en el alta de paciente | OK |
+
+Dudas que dejo para la segunda pasada: (1) en «ya registrado» hay dos textos rojos que dicen casi lo mismo; (2) la línea de estado usa la tipografía de ayuda (caption): ¿alcanza el contraste del tono éxito en oscuro?
+
+### Segunda pasada — revisor independiente (ronda 1) · FAIL, 65/100
+
+- MAYOR-1 «ya registrado» duplicado (dos rojos, dos iconos, dos redacciones; doble anuncio al lector). → la línea de estado queda vacía en `tomado`; lo dice el campo.
+- MAYOR-2 el mensaje de error del campo daba ~2,9:1 en oscuro (`form-field.css` con `--c-error-500` fijo). → `--text-danger` (con variante de tema) en el mensaje y el asterisco. Microtarea nueva H3.S2.M7. `check-contrast` sigue en 0.
+- MAYOR-3 faltaba evidencia de «comprobando», de paciente «ya registrado» y del foco de teclado en «Reintentar». → agregadas.
+- MENOR atendidos: icono `pin` en «falta departamento», `history` en «sin respuesta» (no promete acción), logo recortado en 768 (encuadre).
+- MENOR que quedan registrados, fuera del alcance: hueco de la región vacía en la grilla del motor; aviso «sin catálogo» gris con «Reintentar» ghost (estilo previo); columna vacía en «sin catálogo» (§6, previo); «ocupaciones caído» con el marcado viejo.
+
+### Primera pasada (ronda 2, re-capturas: 54 = 9 estados × 3 anchos × 2 temas)
+
+| Estado | Lo que se ve | Veredicto |
+|---|---|---|
+| ya-registrado (médico y paciente) | Un solo mensaje, el del campo, con el borde; en oscuro, rojo claro legible | OK |
+| comprobando (interceptado: respuesta real demorada) | «Comprobando el documento…» con reloj, sin rojo | OK |
+| sin-catálogo + foco en «Reintentar» | Anillo de foco visible en 390/768/1440. Nota: al tabular desde la cédula vacía, la cédula queda tocada y muestra su error de obligatorio (comportamiento real del motor) | OK |
+| resto | como en la ronda 1, con los iconos corregidos | OK |
+
+### Segunda pasada — ronda 2 · sin BLOQUEANTE ni MAYOR en C-10 (82/100)
+
+Notas: falta-departamento, comprobando, disponible, paciente-disponible y sin-respuesta APROBADAS; ya-registrado (médico y paciente), sin-catálogo y foco en «Reintentar» ACEPTABLE CON RESERVAS. Ninguna RECHAZADA.
+MAYOR propio de H3.S2.M7 (no de las pantallas): `form-field` es una primitiva compartida y faltaba evidencia de regresión.
+
+### H3.S2.M7 · regresión de `form-field` (antes / después)
+
+[`capturas-h3-form-field/antes`](./capturas-h3-form-field/antes/) y [`despues`](./capturas-h3-form-field/despues/): ingreso, recuperar contraseña y alta de organización, con sus errores a la vista, 1440 y 390, claro y oscuro (`playwright/capturas-h3-form-field-regresion.spec.ts`, simulador).
+Diferencia por píxel: confinada a los mensajes de error y los asteriscos (1 000–2 600 px por captura, ninguna fuera de esas zonas).
+
+Primera pasada (quien implementó): en claro el texto pasa de #B5533C a #6F382C, más oscuro y con más contraste. En oscuro pasa de #B5533C (≈2,9:1, no llega a AA) a #DFB4AA (≈7,7:1). Se lee menos «rojo», pero es `--st-error-fg` del tema oscuro, y el error lo siguen marcando el ícono y el borde. El asterisco cambia igual. Los bordes de error no se tocaron: siguen en `--c-error-500` en todos los controles, con 2,99:1 en oscuro, que ya era así. Queda registrado como deuda para el dueño del sistema de diseño, porque unificarlos toca diez controles compartidos.
+
+### Segunda pasada — ronda 3 (H3.S2.M7) · ACEPTABLE CON RESERVAS
+
+Sin regresión de maquetación en los 12 pares. Mensaje en oscuro de ≈3,0:1 a ≈7,9:1, en claro de 4,9:1 a 9,2:1. El tono oscuro se sigue leyendo como error, con matiz rojizo, ícono y borde.
+Deuda registrada (dueño: sistema de diseño): (1) borde y texto de error en dos tonos; los bordes siguen en `--c-error-500` en ~10 controles (input, select, textarea, checkbox, radio, date-picker, tree-select, grid-group, department-map, progress), con destino `--st-error-bd` o `--text-danger`; (2) en claro el error se ve marrón oscuro; (3) en oscuro el asterisco se ve casi blanco. Higiene: en `antes/alta-organizacion-1440-light.png` el logo no terminó de cargar (182 px de la diferencia).
+
+## Notas finales H3
+
+| Pantalla | Nota |
+|---|---|
+| falta-departamento · comprobando · disponible · paciente-disponible · sin-respuesta | APROBADA |
+| ya-registrado (médico y paciente) · sin-catálogo · foco en «Reintentar» | ACEPTABLE CON RESERVAS |
+| `form-field` en formularios ajenos (H3.S2.M7) | ACEPTABLE CON RESERVAS |
+
+Ninguna RECHAZADA.

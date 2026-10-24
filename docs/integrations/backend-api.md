@@ -80,6 +80,12 @@ v4.0.7), así que no hay estado intermedio que reanudar: o quedó todo, o no que
 nada. Lo que sí se evita acá es el **doble envío**, y de eso se ocupa
 `app-form-actions`.
 
+### `DocumentAvailabilityClient` — 1 operación
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/iam/auth/document-availability` | `RegisterPatient`, `RegisterPractitioner` (C-10 / MD-01: el CI no se repite para el mismo tipo de usuario) | Sí |
+
 ### `PublicClient` — 1 operación
 
 | Método | Ruta | Consumidor |

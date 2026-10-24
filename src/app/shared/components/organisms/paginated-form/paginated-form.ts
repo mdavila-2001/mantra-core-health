@@ -17,7 +17,7 @@ import {
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { mensajeDeError } from '../../../forms/paginated/error-message';
+import { hayAlgoInvalido, mensajeDeError } from '../../../forms/paginated/error-message';
 import { hiddenFields } from '../../../forms/paginated/conditional-visibility';
 import { isMainQuestion } from '../../../forms/paginated/paginate-fields';
 import {
@@ -694,11 +694,11 @@ export class PaginatedForm {
   protected async enviar(): Promise<void> {
     const grupo = this.form();
     grupo.markAllAsTouched();
-    if (grupo.invalid) {
+    if (hayAlgoInvalido(grupo)) {
       // Lleva a la primera página con algo mal: dejar a la persona en la última
       // con un botón que no responde es el peor final posible.
       const fallo = this.paginasActivas().findIndex((pagina) =>
-        pagina.campos.some((campo) => this.form().get(campo.key)?.invalid === true),
+        pagina.campos.some((campo) => hayAlgoInvalido(this.form().get(campo.key))),
       );
       if (fallo !== -1) {
         this.indice.set(fallo);

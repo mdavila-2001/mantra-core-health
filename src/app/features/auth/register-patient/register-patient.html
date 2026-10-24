@@ -200,17 +200,11 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
-              <p class="registro__catalogo-caido">
-                No pudimos traer el catálogo de departamentos.
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  (clicked)="reintentarDepartamentos()"
-                >
-                  Reintentar
-                </button>
-              </p>
+              <app-document-availability-status caido (reintentar)="reintentarDepartamentos()" />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="documentoDisponibilidad">
+              <app-document-availability-status [estado]="ciDisponible.estado()" />
             </ng-template>
 
             <ng-template appCampoPersonalizado="occupationConceptId">

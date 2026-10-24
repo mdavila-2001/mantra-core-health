@@ -1,0 +1,18 @@
+@if (caido()) {
+  <p class="disponibilidad disponibilidad--caido" data-testid="documento-catalogo-caido">
+    No pudimos traer el catálogo de departamentos.
+    <button app-button variant="ghost" size="sm" (clicked)="reintentar.emit()">Reintentar</button>
+  </p>
+} @else {
+  <p
+    class="disponibilidad"
+    role="status"
+    data-testid="documento-disponibilidad"
+    [attr.data-estado]="estado()"
+  >
+    @if (aviso(); as aviso) {
+      <app-nav-icon class="disponibilidad__icono" [name]="aviso.icono" aria-hidden="true" />
+      <span [attr.data-tono]="aviso.tono">{{ aviso.texto }}</span>
+    }
+  </p>
+}

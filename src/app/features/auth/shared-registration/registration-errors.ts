@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { readApiError, type ApiErrorBody } from '../../../core/http/api-error';
 import { offline, unexpectedError, validation } from '../../../core/view-state/view-state';
 import type { ViewState, ViewStateIssue } from '../../../core/view-state/view-state.types';
+import { esDocumentoYaRegistrado, mensajeDocumentoTomado } from './document-availability';
 
 /**
  * Catálogo de errores de las altas públicas (03/10/2026).
@@ -304,6 +305,14 @@ function labelOf(ruta: string): string {
 
 function repeatedData(body: ApiErrorBody, kind: RegistrationKind): ViewStateIssue {
   const texto = body.message;
+  // C-10 / MD-01: el motivo del contrato manda sobre el texto.
+  if (kind !== 'organization' && esDocumentoYaRegistrado(body.details)) {
+    return {
+      field: 'nationalId',
+      code: body.code,
+      message: mensajeDocumentoTomado(kind === 'patient' ? 'PATIENT' : 'PRACTITIONER'),
+    };
+  }
   if (/correo/i.test(texto)) {
     return {
       field: 'email',

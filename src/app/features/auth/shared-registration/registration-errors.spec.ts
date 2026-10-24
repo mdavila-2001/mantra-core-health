@@ -124,6 +124,28 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
       if (estado.status === 'validation') expect(estado.issues[0].field).toBe('nationalId');
     });
 
+    // C-10 / MD-01: el motivo del contrato manda sobre la redacción.
+    it('CI ya registrado para otro médico: ancla al documento, no al correo repetido', () => {
+      const estado = traducir(
+        respuesta(409, 'CONFLICT', 'cualquier redacción', {
+          reason: 'DOCUMENT_ALREADY_REGISTERED',
+          field: 'nationalId',
+        }),
+        'practitioner',
+      );
+      expect(textoDe(estado)).toContain('Ya hay un médico registrado con este documento');
+      expect(textoDe(estado)).not.toContain('registrada con este correo');
+      if (estado.status === 'validation') expect(estado.issues[0].field).toBe('nationalId');
+    });
+
+    it('CI ya registrado para otro paciente: el mensaje es el del paciente', () => {
+      const estado = traducir(
+        respuesta(409, 'CONFLICT', 'x', { reason: 'DOCUMENT_ALREADY_REGISTERED' }),
+        'patient',
+      );
+      expect(textoDe(estado)).toContain('Ya hay un paciente registrado con este documento');
+    });
+
     it('sigla repetida de una organización: ancla al campo `code`', () => {
       const estado = traducir(
         respuesta(409, 'CONFLICT', 'El código de organización ya existe', { code: 'FARM-1' }),

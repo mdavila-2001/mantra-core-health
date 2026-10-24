@@ -30,6 +30,10 @@ import type {
   UploadedRegistrationDocument,
 } from '../../../core/data-access/iam/iam.types';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
+import { vigilarDocumento } from '../shared-registration/document-availability';
+import { campoDepartamentoEmisor } from '../shared-registration/issuer-department-field';
+import { DocumentAvailabilityStatus } from '../shared-registration/document-availability-status/document-availability-status';
+import { hayAlgoInvalido } from '../../../shared/forms/paginated/invalid-anywhere';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -89,10 +93,7 @@ import {
   passwordValidators,
 } from '../shared-registration/password-policy';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
-import type {
-  CampoDeFormulario,
-  PaginaDeFormulario,
-} from '../../../shared/forms/paginated/paginated-form.types';
+import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-professions.service';
 
 /**
@@ -633,6 +634,7 @@ function sinTildes(texto: string): string {
     AppInput,
     Select,
     Avatar,
+    DocumentAvailabilityStatus,
   ],
   templateUrl: './register-practitioner.html',
   styleUrls: ['../shared-registration/registration.css', './register-practitioner.css'],
@@ -1128,6 +1130,8 @@ export class RegisterPractitioner {
     signatureImageBase64: new FormControl<string | null>(null),
     sealImageBase64: new FormControl<string | null>(null),
   });
+  // C-10 / MD-01: el CI no puede ser de otro médico (número + departamento).
+  readonly ciDisponible = vigilarDocumento('PRACTITIONER', this.formProfesional.controls);
 
   /** Los cuatro tipos de título, para que la plantilla los recorra. */
   protected readonly tiposDeTitulo = TIPOS_DE_TITULO;
@@ -2153,7 +2157,12 @@ export class RegisterPractitioner {
             ancho: 'mitad',
             mensajeDeError: 'Ingrese un documento válido: letras, números, punto y guion.',
           },
-          this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
+          campoDepartamentoEmisor({
+            testId: 'registro-pro-departamento-ci',
+            catalogoCaido: this.catalogoDepartamentosCaido(),
+            departamentos: this.opcionesDepartamento(),
+          }),
+          this.ciDisponible.campo,
         ],
       },
       {
@@ -2599,44 +2608,6 @@ export class RegisterPractitioner {
     ]);
   });
 
-  /**
-   * El campo del departamento que emitió el documento.
-   *
-   * Es un `select` del motor mientras su catálogo esté; si la lectura falló,
-   * el mismo campo pasa a `custom` y la pantalla proyecta ahí el aviso con su
-   * «Reintentar». Un `select` vacío no tiene dónde decir que no cargó: se ve
-   * como un desplegable sin opciones, que es indistinguible de un catálogo que
-   * de verdad no tiene ninguna.
-   *
-   * La clave es la misma en los dos casos —la del control—, así que lo que se
-   * haya elegido antes de un fallo no se pierde.
-   */
-  private campoDepartamentoEmisor(testId: string): CampoDeFormulario {
-    const base = {
-      key: 'issuerAdministrativeAreaConceptId',
-      label: 'Departamento de emisión',
-      required: true,
-      hint: 'El «SC», «LP»... de su cédula.',
-      mensajeDeError: 'Elija el departamento que expidió su cédula.',
-    } as const;
-
-    return this.catalogoDepartamentosCaido()
-      ? // Sin catálogo el campo deja de ser un desplegable y pasa a ser un aviso
-        // con su botón de reintento: eso no cabe en medio renglón, así que
-        // recupera la fila entera. La pareja con el número sólo tiene sentido
-        // mientras los dos sean casillas del mismo tamaño.
-        { ...base, control: 'custom', ancho: 'completo' }
-      : {
-          ...base,
-          control: 'select',
-          options: this.opcionesDepartamento(),
-          placeholder: 'Elija el departamento',
-          testId,
-          // La otra mitad del renglón del documento. Ver la página que lo usa.
-          ancho: 'mitad',
-        };
-  }
-
   /* ---- Estado de la pantalla --------------------------------------------- */
 
   readonly state = signal<ViewState<null>>(ready(null));
@@ -2917,7 +2888,7 @@ export class RegisterPractitioner {
     // que «Tus títulos» tiene su control de respaldo, una fila sin número
     // también deja el formulario inválido, y cortar primero escondería el
     // mensaje que dice qué sección corregir.
-    if (this.formProfesional.invalid && !this.hayTitulosSinNumero()) {
+    if (hayAlgoInvalido(this.formProfesional) && !this.hayTitulosSinNumero()) {
       this.formProfesional.markAllAsTouched();
       return;
     }
@@ -2985,8 +2956,10 @@ export class RegisterPractitioner {
               this.state.set(ready(null));
               this.registered.set(true);
             },
-            error: (error: unknown) =>
-              this.state.set(registrationErrorToViewState(error, 'practitioner')),
+            error: (error: unknown) => {
+              this.state.set(registrationErrorToViewState(error, 'practitioner'));
+              this.ciDisponible.trasError(error);
+            },
           });
         },
         error: (error: unknown) =>

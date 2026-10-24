@@ -2,6 +2,10 @@ import type { AbstractControl } from '@angular/forms';
 
 import type { CampoDeFormulario } from './paginated-form.types';
 
+// Va de la mano con el mensaje: si hay algo que decir de un control o de un
+// grupo que todavía espera una consulta (C-10).
+export { hayAlgoInvalido } from './invalid-anywhere';
+
 /**
  * El error de un campo, en castellano y en segunda persona.
  *
@@ -31,11 +35,18 @@ export function mensajeDeError(
     return '';
   }
 
+  const errores = control.errors ?? {};
+
+  // Un validador que sabe más que el campo —una consulta al servidor, como la
+  // disponibilidad del documento (C-10)— trae su propio mensaje y manda sobre
+  // el del campo, que habla del formato.
+  if (typeof errores['mensajePropio'] === 'string') {
+    return errores['mensajePropio'];
+  }
+
   if (campo.mensajeDeError !== undefined) {
     return campo.mensajeDeError;
   }
-
-  const errores = control.errors ?? {};
 
   if ('required' in errores) {
     return 'Este dato es obligatorio.';

@@ -3,6 +3,7 @@ import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
+import { registrarDisponibilidadDeDocumento } from './document-availability.handlers';
 import { registrarClinica } from './clinical.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
@@ -49,6 +50,7 @@ import { registerPatientSpending } from './patient-spending.handlers';
 export function crearRouterSimulado(): MockRouter {
   const router = new MockRouter();
   registrarAuth(router);
+  registrarDisponibilidadDeDocumento(router);
   registrarTerminologia(router);
   registrarPerfiles(router);
   registerSignatureAndSeal(router);

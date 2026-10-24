@@ -28,8 +28,17 @@ registra el estado real de cada microtarea en este repo a medida que se ejecuta,
 | H2.S2.M7 | `issue-from-encounter` real exige PAID | A MEDIAS | la factura simulada exige pago (422 PAYMENT_REQUIRED, int-spec 2b); el camino real no se extendió |
 | H2.S3.M1–M5 | Cliente C-01, caja «Comprobantes del paciente» (miniatura + lightbox, aceptar/rechazar con motivo), cierre con PAYMENT_REQUIRED y excepción, «Pagos por sesión» (Contabilidad del médico y `/billing`), simulador en 3 niveles | HECHO | `evidencia/doble-revision.md`, `h2-e2e-mutacion-api-real.txt`, `h2-regresion-front.md` (repo del front) |
 | H2.S3.M6 | Móvil: `consultation_billing_sheet.dart` | TODO | no empezado |
-| H3.S1.M1–M4 | Modelo y repositorio del documento único | TODO | |
-| H3.S2.M1–M6 | Altas y `document-availability` | TODO | |
+| H3.S1.M1 | `owner_kind_concept_id` en `diagram_02_common.puml` + `gen_ddl.py 02` | HECHO | repo del modelo, `SQL/02_common` regenerado; se reusa `issuer_administrative_area_concept_id` en vez de un `issuer_department` nuevo (desvío registrado) |
+| H3.S1.M2 | Patch v4248: relleno, medición de duplicados, índice único parcial | HECHO | `evidencia/h3-seed-y-patch.txt` (API): 29 médicos · 39 pacientes · 0 duplicados; segunda corrida sin cambios |
+| H3.S1.M3 | Conceptos `common:document-holder-kind` (paciente, médico, representante) | HECHO | 1.ª siembra 3 filas, 2.ª 0 (`h3-seed-y-patch.txt`) |
+| H3.S1.M4 | `findDocumentHolder` por (tipo, número, departamento, tipo de usuario) | HECHO | int-spec C-10 11/11 contra Postgres real; deriva ORM limpia (`h3-orm-audit-resumen.txt`) |
+| H3.S2.M1 | Médico: chequeo + `ownerKind` + carrera → 409 | HECHO | int-spec 2, 3, 7, 8 |
+| H3.S2.M2 | Paciente: mismo código de error; vinculación a la persona del médico | A MEDIAS | anda: 409 `DOCUMENT_ALREADY_REGISTERED`, el médico puede ser paciente (int-spec 5, 6). No anda: no se une la persona del médico con la del paciente (quedan dos personas). Falta: decisión de identidad maestra (Q-13), escalada |
+| H3.S2.M3 | Representante de organización y altas asistidas | A MEDIAS | anda: alta asistida de médico → 409 (int-spec 7b); mostrador y representantes quedan etiquetados. No anda: el representante queda fuera de la unicidad (una persona puede representar a varias empresas: ambigüedad a confirmar) y no hay int-spec del alta de organización |
+| H3.S2.M4 | `GET /iam/auth/document-availability?type&number&issuer&userType` → `{ available }`, 60/min | HECHO | int-spec 1, 9, 10; sin PII en la respuesta |
+| H3.S2.M5 | Front: validador asíncrono + 409 por código | A MEDIAS | anda en médico y paciente: specs, E2E API real 4/4 ×10, kill-test MD-01 verde, doble revisión. Falta el alta de organización, que depende de la misma decisión de H3.S2.M3 |
+| H3.S2.M6 | Móvil: validador en `practitioner_registration` y `register_patient_wizard` | TODO | no empezado |
+| H3.S2.M7 | (nueva) `form-field`: mensaje de error y asterisco con `--text-danger` (AA en oscuro) | HECHO | `capturas-h3-form-field/antes|despues`, ronda 3 ACEPTABLE CON RESERVAS; `check-contrast` 0 |
 | H4.S1.M1–M3 · H4.S2.M1–M5 | Colegio Médico | TODO | |
 | H5.S1.M1–M3 · H5.S2.M1–M5 · H5.S3.M1–M4 | Consentimiento | TODO | |
 | H6.S1.M1–M3 · H6.S2.M1–M6 · H6.S3.M1–M6 | Encuestas y formularios | TODO | |
@@ -44,7 +53,16 @@ registra el estado real de cada microtarea en este repo a medida que se ejecuta,
 - **C-02 contra un doble** (`NoCoveragePatientShare`, siempre `NO_COVERAGE`): falta integrar con el puerto real de Richard.
 - **Patch v4247.** La serie v42xx de la copia de despliegue de la API llega a v4246 con cambios que no volvieron al repo del modelo (deriva previa, anotada).
 
-**Avance: 23 / 79 microtareas HECHO — 29,1 %** (H1 8, H2 15; H3–H8 sin empezar). Detalle en `REPORTE.md`.
+**Avance: 30 / 80 microtareas HECHO — 37,5 %** (H1 8, H2 15, H3 7; H4–H8 sin empezar; H3.S2.M7 agregada en ejecución). Detalle en `REPORTE.md`.
+
+## Desvíos y decisiones registradas (H3)
+- **`issuer_administrative_area_concept_id` en vez de `issuer_department`.** La columna ya existía y es el departamento de emisión (v4.1.4). Crear otra habría duplicado la verdad.
+- **`owner_kind` separado de `owner_type`.** `owner_type` dice qué entidad es dueña de la fila; un médico y un paciente son las dos personas, así que hacía falta otro eje.
+- **Sin unión automática de personas** médico ↔ paciente: unir por CI permite tomar la identidad de otro. Es identidad maestra (`patient_identity_links`), escalado como Q-13.
+- **Representantes fuera del índice único** (supuesto: una persona representa a varias empresas). Confirmar con el dueño del alta de organizaciones.
+- **El alta de mostrador** (`walk-in`) mantiene su chequeo previo, más estricto (cualquier CI activo): no se cambió su semántica. Sólo se etiqueta el tipo.
+- **Contrato C-10**: se respetan los nombres publicados (`type`, `number`, `issuer`, `userType`) y 60/min.
+- **Ratchet de tamaño** (`check-max-lines`): para no hacer crecer las altas, el campo de departamento pasó a `shared-registration/issuer-department-field.ts`, y el aviso «sin catálogo de departamentos» al componente de estado. El simulador envuelve las altas (`MockRouter.envolver`) en vez de crecer `auth.handlers.ts`.
 
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |

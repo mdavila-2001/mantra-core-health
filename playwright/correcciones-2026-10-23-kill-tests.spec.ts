@@ -310,6 +310,10 @@ test.describe('@carril-2 @pablo', () => {
   test('MD-01 el alta del médico avisa si el documento ya está registrado por otro médico', async ({ page }) => {
     await abrir(page, '/auth/register/practitioner');
     const documento = page.getByLabel(/cédula de identidad|número de documento/i).first();
+    // El motor no deja pasar de una página con obligatorios vacíos: se llenan
+    // los del nombre, que es la página anterior al documento.
+    await page.getByLabel(/primer nombre/i).first().fill('Ana');
+    await page.getByLabel(/apellido paterno/i).first().fill('Rojas');
     for (let paso = 0; paso < 6 && (await documento.count()) === 0; paso += 1) {
       const siguiente = page.getByRole('button', { name: /siguiente|continuar/i }).first();
       if ((await siguiente.count()) === 0) break;

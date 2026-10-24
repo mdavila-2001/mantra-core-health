@@ -1,0 +1,10 @@
+
+Running 4 tests using 1 worker
+
+  ✓  1 [chromium] › playwright/c10-ci-unico-api-real.spec.ts:102:5 › 1 · el CI recién inventado está libre para un médico (2.2s)
+  ✓  2 [chromium] › playwright/c10-ci-unico-api-real.spec.ts:112:5 › 2 · otro médico se registra con ese CI (alta real, fuera del navegador) (171ms)
+  ✓  3 [chromium] › playwright/c10-ci-unico-api-real.spec.ts:130:5 › 3 · al recargar, el mismo CI y departamento se marcan como ya registrados; otro departamento sigue libre (3.0s)
+  ✓  4 [chromium] › playwright/c10-ci-unico-api-real.spec.ts:150:5 › 4 · el alta de paciente acepta el CI del médico: son tipos de usuario distintos (2.5s)
+
+  4 passed (8.6s)
+10/10 corridas seguidas en verde tras corregir la carrera de la prueba (TEST_BUG, ver REPORTE)

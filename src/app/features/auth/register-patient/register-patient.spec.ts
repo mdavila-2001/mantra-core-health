@@ -490,6 +490,8 @@ describe('RegisterPatient', () => {
         'motherLastName',
         'nationalId',
         'issuerAdministrativeAreaConceptId',
+        // C-10 / MD-01: la línea de estado de la comprobación del CI.
+        'documentoDisponibilidad',
         'birthDate',
         'sexAtBirth',
         'occupationConceptId',
