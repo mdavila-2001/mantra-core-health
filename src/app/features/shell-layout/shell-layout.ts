@@ -44,9 +44,15 @@ import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-to
 import { ChatStore } from '../../core/messaging/chat.store';
 import { FirstStepsStore } from '../dashboard/patient-home/first-steps/first-steps.store';
 
-/** El `<link>` de la hoja del paciente: `bundleName` de `angular.json`. */
+/**
+ * El `<link>` de la hoja del paciente: `bundleName` de `angular.json`.
+ *
+ * El `?v=2` es para los navegadores que la guardaron por un año antes de que
+ * el servidor la sirviera con `no-cache` (`server/build-assets.ts`): con la
+ * URL de siempre no la vuelven a pedir. No hace falta subirlo en cada cambio.
+ */
 const PATIENT_STYLESHEET_ID = 'alovida-paciente-css';
-const PATIENT_STYLESHEET_HREF = 'paciente.css';
+const PATIENT_STYLESHEET_HREF = 'paciente.css?v=2';
 import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 

@@ -9,7 +9,7 @@ import { join } from 'node:path';
 
 import { environment } from './environments/environment';
 import { allowedHostsFromEnv } from './server/allowed-hosts';
-import { artefactosInexistentesDan404 } from './server/build-assets';
+import { artefactosInexistentesDan404, cachePorHuella } from './server/build-assets';
 import {
   collectInlineScriptHashes,
   securityHeaders,
@@ -170,6 +170,7 @@ app.use(
     maxAge: '1y',
     index: false,
     redirect: false,
+    setHeaders: cachePorHuella,
   }),
 );
 
