@@ -155,3 +155,65 @@
   font-size: var(--fs-caption);
   font-weight: 400;
 }
+
+/* ════ Rediseño del paciente, tercera vuelta (22/10/2026) ════
+   Va en la hoja del componente y no en `styles/paciente.css`: esa hoja cuenta
+   en el paquete inicial, que está al ras de su presupuesto, y estas reglas
+   sólo hacen falta al abrir esta pantalla. `:host-context` las sigue atando a
+   la sesión de paciente, igual que la capa global. */
+
+/* El vacío explica cómo funciona, en tres pasos. */
+:host-context(.app-shell--paciente) .dependents__vacio {
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-8) var(--sp-6);
+  border: 1px solid var(--c-aqua-100);
+  border-radius: var(--r-2xl);
+  background:
+    radial-gradient(70% 120% at 100% 0%, var(--c-aqua-50) 0%, transparent 60%),
+    var(--bg-surface);
+}
+
+.dependents__pasos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-4) auto 0;
+  padding: 0;
+  max-inline-size: 34rem;
+  list-style: none;
+  text-align: start;
+}
+
+.dependents__pasos li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.dependents__paso-numero {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 2rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+:host-context([data-theme='dark']) .dependents__vacio {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .dependents__vacio {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+  }
+}
