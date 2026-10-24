@@ -1,0 +1,239 @@
+.atlas3d {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.atlas3d__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+
+.atlas3d__capas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.atlas3d__capas legend {
+  float: inline-start;
+  margin-inline-end: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__aviso {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--st-warning-bg);
+  color: var(--text-primary);
+}
+
+.atlas3d__trabajo {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: 1fr;
+}
+
+.atlas3d__visor app-anatomy-viewer {
+  block-size: min(70vh, 40rem);
+}
+
+.atlas3d__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__muestra {
+  display: inline-block;
+  inline-size: var(--sp-3);
+  block-size: var(--sp-3);
+  border-radius: var(--r-xs);
+}
+
+.atlas3d__muestra--elegida {
+  background: var(--brand-primary);
+}
+
+.atlas3d__muestra--relacionada {
+  margin-inline-start: var(--sp-3);
+  background: var(--brand-accent);
+}
+
+.atlas3d__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.atlas3d__resultados,
+.atlas3d__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.atlas3d__resultados {
+  max-block-size: 16rem;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.atlas3d__lista li {
+  padding-block: var(--sp-1);
+}
+
+.atlas3d__opcion {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-block-size: 2.75rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.atlas3d__resultados .atlas3d__opcion {
+  inline-size: 100%;
+}
+
+.atlas3d__opcion:hover {
+  background: var(--bg-hover);
+}
+
+.atlas3d__opcion:focus-visible,
+.atlas3d__limpiar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.atlas3d__sin-pieza,
+.atlas3d__con-pieza,
+.atlas3d__marca {
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__con-pieza {
+  color: var(--text-secondary);
+}
+
+.atlas3d__ficha-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.atlas3d__ficha-cabecera h2 {
+  margin: 0;
+  font-size: var(--fs-h2);
+}
+
+.atlas3d__lado {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.atlas3d__limpiar {
+  margin-inline-start: auto;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.atlas3d__datos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+}
+
+.atlas3d__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.atlas3d__subtitulo {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-h3);
+}
+
+.atlas3d__original {
+  margin: var(--sp-2) 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.atlas3d__atribucion,
+.atlas3d__vacio {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__inicio {
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.atlas3d__inicio p {
+  margin: 0 0 var(--sp-2);
+}
+
+.atlas3d__femeninas summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.atlas3d__creditos {
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 1024px) {
+  .atlas3d__trabajo {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .atlas3d__visor {
+    position: sticky;
+    inset-block-start: var(--sp-4);
+  }
+
+  .atlas3d__panel {
+    max-block-size: calc(min(70vh, 40rem) + 3rem);
+    overflow-y: auto;
+  }
+}
