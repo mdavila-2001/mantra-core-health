@@ -432,20 +432,70 @@
     </app-tab>
 
     <!-- ─── Imagenología ────────────────────────────────────────────────────
-         Los estudios ya están (`GET /diagnostic-results/me/orders`, «Mis
-         estudios») y las sedes de los centros ya publican coordenadas. Lo que
-         falta es la búsqueda que diga, en una sola consulta, qué centros tienen
-         TODOS los estudios y qué les falta a los demás: hoy el buscador acepta
-         un solo estudio. Hasta que la API la publique, se dice y se ofrece lo
-         que sí hay. -->
+         Los estudios salen de las órdenes propias sin resultado
+         (`GET /diagnostic-results/me/orders`); los centros, de una sola
+         búsqueda por cobertura con todos los códigos, que devuelve primero los
+         que los tienen todos y, en los demás, qué les falta. Las sedes
+         publican coordenadas, así que la distancia se mide desde el mismo
+         origen que eligió en Farmacias. -->
     <app-tab label="Centros de imagenología">
-      <app-empty-state
-        title="Todavía no podemos decirle qué centro tiene todos sus estudios"
-        description="Los centros de diagnóstico se buscan hoy de a un estudio, así que todavía no podemos decirle cuál los tiene todos juntos ni cuál le queda más cerca. Mientras tanto puede ver qué le pidieron y buscar un laboratorio a mano."
-      >
-        <a app-button variant="secondary" [routerLink]="myStudiesRoute">Ver mis estudios pedidos</a>
-        <a app-button variant="ghost" [routerLink]="laboratoryDirectoryRoute">Buscar un laboratorio</a>
-      </app-empty-state>
+      <div class="compra">
+        <section class="compra__bloque" aria-labelledby="imagen-centros">
+          <h2 id="imagen-centros" class="compra__titulo">Dónde hacerse sus estudios</h2>
+          <p class="compra__nota" data-testid="imagen-origen">
+            @if (origen(); as punto) {
+              Distancias en línea recta, medidas desde {{ punto.etiqueta }}. Puede cambiar el punto
+              en la pestaña Farmacias.
+            } @else {
+              Sin un punto de partida no se calculan distancias. Puede elegirlo en la pestaña
+              Farmacias: su casa, una ciudad o su ubicación actual.
+            }
+          </p>
+          <app-view-state-host [state]="imaging()" (retry)="loadImaging()">
+            @if (imagingData(); as datos) {
+              <p class="compra__secundario" data-testid="imagen-estudios">
+                Estudios pendientes: {{ studyNames(datos.studies) }}
+              </p>
+              <ul class="compra__sedes" data-testid="imagen-lista">
+                @for (centro of datos.centers; track centro.id) {
+                  <li class="compra__sede">
+                    <div class="compra__sede-datos">
+                      <span class="compra__principal">{{ centro.name }}</span>
+                      @if (centro.address !== null) {
+                        <span class="compra__secundario">{{ centro.address }}</span>
+                      }
+                      @if (centro.distance !== null) {
+                        <span class="compra__secundario">{{ centro.distance }} en línea recta</span>
+                      }
+                      @if (!centro.complete) {
+                        <p class="compra__faltantes" data-testid="imagen-faltantes">
+                          Le falta: {{ centro.missing.join(', ') }}
+                        </p>
+                      }
+                    </div>
+                    <div class="compra__acciones">
+                      <app-badge [variant]="centro.complete ? 'success' : 'warning'">
+                        {{ centro.complete ? 'Tiene todos' : 'Le falta algo' }}
+                      </app-badge>
+                      @if (centro.directions; as enlace) {
+                        <a
+                          app-link
+                          [href]="enlace"
+                          [external]="true"
+                          [attr.aria-label]="'Cómo llegar a ' + centro.name + ' (abre en una pestaña nueva)'"
+                        >
+                          Cómo llegar
+                        </a>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </app-view-state-host>
+          <a app-button variant="ghost" [routerLink]="myStudiesRoute">Ver mis estudios pedidos</a>
+        </section>
+      </div>
     </app-tab>
 
     <!-- ─── Centros médicos ─────────────────────────────────────────────────
