@@ -44,7 +44,9 @@ describe('NAV_SUBGROUPS', () => {
    * del producto, «Historia clínica» quedaba envolviendo sólo al archivo
    * clínico, y se disolvió por la misma regla.
    */
-  const SUELTAS_A_PROPOSITO = ['schedule', 'medical-records'];
+  // «Ayuda psicológica» cuelga directo en General: es una puerta independiente
+  // a recursos de salud mental (11/10/2026), como en mockup (#1052).
+  const SUELTAS_A_PROPOSITO = ['schedule', 'medical-records', 'psychological-help'];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {
     const sinBloque = rutasDelRegistro.filter(

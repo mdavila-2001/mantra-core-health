@@ -111,10 +111,41 @@
     @if (loading() && !loaded()) {
       <p class="dependents__estado" role="status">Buscando a quiénes representa…</p>
     } @else if (dependents().length === 0) {
+      <!-- Rediseño del paciente (22/10/2026): lo mismo que decía el párrafo,
+           ahora en tres pasos numerados, que se siguen sin releer. No lleva
+           botón propio: «Registrar dependiente» ya está arriba, y dos puertas
+           para la misma intención confunden (criterio humano, regla 2). -->
       <app-empty-state
+        class="dependents__vacio"
         title="Todavía no registró a nadie"
-        description="Registre a alguien con su CI: le llega una notificación y, cuando la acepta, va a poder pedirle una cita y ver su historia sin cambiar de cuenta."
-      />
+        description="Un hijo, su mamá o su papá: alguien a quien le pide las citas usted."
+      >
+        <svg
+          empty-icon
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="9" cy="7" r="3.5" />
+          <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+          <circle cx="17.5" cy="9" r="2.5" />
+          <path d="M16 14.2a5 5 0 0 1 5.5 4.8" />
+        </svg>
+        <ol empty-actions class="dependents__pasos" aria-label="Cómo funciona">
+          <li><span class="dependents__paso-numero" aria-hidden="true">1</span>Lo registra con su CI.</li>
+          <li>
+            <span class="dependents__paso-numero" aria-hidden="true">2</span>A esa persona le llega
+            una notificación y la acepta.
+          </li>
+          <li>
+            <span class="dependents__paso-numero" aria-hidden="true">3</span>Desde su cuenta le pide
+            citas y ve su historia, sin cambiar de cuenta.
+          </li>
+        </ol>
+      </app-empty-state>
     } @else {
       <ul class="dependents__lista" data-testid="dependents-lista">
         @for (dependiente of dependents(); track dependiente.id) {

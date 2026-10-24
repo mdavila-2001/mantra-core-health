@@ -112,12 +112,10 @@ describe('buildAccessTree', () => {
   });
 
   /**
-   * Pedido del 19/09/2026 · la zona «Administración» del médico. Salen del
-   * árbol, no del registro: la ruta sigue abriendo —«Mis organizaciones» se
-   * llega desde «Mi perfil»—.
+   * Pedido del 19/09/2026 · las herramientas de farmacia siguen fuera del
+   * árbol del médico. CORR-32 reactivó `my-practice` en esta zona el 13/10.
    */
   it.each([
-    ['administration/my-practice', null],
     // Las de farmacia sólo existen en una organización `PHARMACY`
     // (29/09/2026): el médico que además atiende un mostrador las alcanza al
     // activar esa organización, y aun así no ocupan un renglón de su árbol.
@@ -132,6 +130,15 @@ describe('buildAccessTree', () => {
   ])('no ofrece %s en «Sus accesos» aunque la sesión lo alcance', (ruta, tipo) => {
     expect(seccionesDe(['PRACTITIONER'], tipo).map((s) => s.path)).toContain(ruta);
     expect(rutasRepartidas(['PRACTITIONER'], tipo)).not.toContain(ruta);
+  });
+
+  it('ofrece «Mi consultorio propio» en la zona «Administración» de la profesional', () => {
+    const arbol = buildAccessTree(seccionesDe(['PRACTITIONER']));
+    const administracion = arbol.find((zona) => zona.area.id === 'organizacion');
+
+    expect(administracion?.sections.map((seccion) => seccion.path)).toContain(
+      'administration/my-practice',
+    );
   });
 
   /**
