@@ -11,9 +11,17 @@
   margin-block-end: var(--sp-4);
 }
 
-/* El selector no se encoge: en 375 px cortaba «Hombre» en «Hom…». */
+/* El selector no se encoge: en 375 px cortaba «Hombre» en «Hom…». En
+   pantallas angostas ocupa la fila entera, que es como el propio control
+   reparte el ancho por debajo de 30rem. */
 .atlas3d__barra app-segmented-control {
-  flex: none;
+  flex: 1 1 100%;
+}
+
+@media (min-width: 780px) {
+  .atlas3d__barra app-segmented-control {
+    flex: none;
+  }
 }
 
 .atlas3d__capas {
