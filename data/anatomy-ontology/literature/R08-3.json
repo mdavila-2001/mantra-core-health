@@ -3,28 +3,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En imágenes microscópicas de glándulas intestinales humanas, los núcleos de las células caliciformes se disponen uno junto a otro formando una cadena cerrada que rodea una luz casi vacía.",
+        "es": "Un algoritmo de segmentación de imágenes histológicas humanas parte de que la luz de cada glándula intestinal, casi vacía, queda rodeada por una cadena cerrada de núcleos de células caliciformes apenas separados entre sí.",
         "cites": [
           "PMID:16364002"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En el intestino grueso del feto humano se observan fibras nerviosas nitrérgicas en la base de la glándula intestinal a partir del sexto mes de gestación.",
+        "es": "En el sexto mes de gestación, el intestino grueso fetal humano ya muestra fibras nitrérgicas en la capa muscular, la submucosa y la base de la glándula intestinal.",
         "cites": [
           "PMID:12549009"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El adenocarcinoma colorrectal, la forma más común de cáncer de colon, se origina en las estructuras glandulares intestinales.",
+        "es": "De las estructuras glandulares del intestino surge el adenocarcinoma colorrectal, que es el cáncer de colon más habitual.",
         "cites": [
           "PMID:27614792"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Los patólogos emplean la arquitectura y la formación de las glándulas intestinales para orientar el pronóstico y la planificación terapéutica.",
+        "es": "Al estimar el pronóstico y planificar el tratamiento de cada paciente, el patólogo valora la morfología de las glándulas intestinales: su arquitectura y el grado en que llegan a formarse.",
         "cites": [
           "PMID:27614792"
         ]
@@ -49,14 +49,14 @@
       },
       {
         "aspect": "innervation",
-        "es": "En 93 pacientes bajo anestesia general, la estimulación directa del nervio trigémino provocó respuestas de latencia larga en la musculatura lingual exclusivamente del mismo lado, con 20.2 ± 3.3 ms.",
+        "es": "En una serie de 93 pacientes neuroquirúrgicos anestesiados en la que se probaron varios sitios de estímulo, la estimulación directa del trigémino evocó en la lengua respuestas de latencia larga sólo ipsilaterales, a unos 20,2 ± 3,3 ms.",
         "cites": [
           "PMID:35341967"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Según ese estudio, los músculos de la lengua actúan como vía eferente común de circuitos del tronco encefálico que reciben fibras sensitivas trigeminales y cervicales.",
+        "es": "Los autores interpretan que en la musculatura lingual convergen, como efector compartido, circuitos del tronco encefálico alimentados por aferencias sensitivas trigeminales y cervicales.",
         "cites": [
           "PMID:35341967"
         ]
@@ -74,35 +74,35 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Los meniscos son dos medialunas de fibrocartílago fijadas a las estructuras circundantes mediante inserciones óseas y ligamentosas.",
+        "es": "La rodilla tiene dos meniscos fibrocartilaginosos en forma de media luna, sujetos a las estructuras vecinas por inserciones en el hueso y en ligamentos.",
         "cites": [
           "PMID:31767101"
         ]
       },
       {
         "aspect": "function",
-        "es": "Por su composición y estructura en capas, los meniscos transforman fuerzas compresivas en tensiles, mejoran la congruencia articular y amortiguan la carga.",
+        "es": "Gracias a su composición bioquímica y a su organización en varias capas, los meniscos convierten la compresión en tensión, adaptan entre sí las superficies articulares y absorben el impacto de la carga.",
         "cites": [
           "PMID:31767101"
         ]
       },
       {
         "aspect": "relations",
-        "es": "El menisco medial posee más inserciones en sus cuernos y su cuerpo que el lateral, lo que lo hace más vulnerable a las lesiones.",
+        "es": "Su mayor susceptibilidad a la lesión se atribuye a que el menisco medial está más fijado que el lateral, tanto en los cuernos como en el cuerpo.",
         "cites": [
           "PMID:31767101"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En 20 rodillas de cadáver, los meniscos recibían ramas de las arterias geniculares lateral, medial y media.",
+        "es": "Las ramas que irrigan los meniscos proceden de las arterias geniculares medial, lateral y media, según un estudio histológico y de diafanización en 20 rodillas de cadáver.",
         "cites": [
           "PMID:7081532"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En esa serie, un plexo capilar perimeniscal procedente de la cápsula y la sinovial irrigaba entre el 10 y el 25 % periférico de cada menisco.",
+        "es": "En esa serie, los vasos sólo alcanzaban el 10-25 % periférico del menisco, a través de un plexo capilar perimeniscal nacido de los tejidos capsular y sinovial.",
         "cites": [
           "PMID:7081532"
         ]
@@ -121,28 +121,28 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La microdisección laríngea identificó bandas fasciales pares que van desde el borde lateral de la epiglotis hasta el hueso hioides, cerca de los extremos de sus astas mayores.",
+        "es": "Con microdisección se describieron unos ligamentos hioepiglóticos laterales pares: condensaciones fasciales que unen el borde lateral de la epiglotis, algo por encima del ligamento hioepiglótico medio, con el hioides cerca de la punta de sus astas mayores.",
         "cites": [
           "PMID:7649805"
         ]
       },
       {
         "aspect": "function",
-        "es": "En el análisis videofluoroscópico, el plegamiento de la epiglotis durante la deglución coincidió con el inicio del desplazamiento anterior del hioides.",
+        "es": "En la videofluoroscopia, la epiglotis se plegaba en el mismo cuadro en que el hioides empezaba a avanzar y el tiroides se acercaba a él.",
         "cites": [
           "PMID:7649805"
         ]
       },
       {
         "aspect": "function",
-        "es": "El descenso de la epiglotis en la deglución se produce en el momento de máximo alargamiento del ligamento hioepiglótico, según el análisis cuadro a cuadro de cinefluorografías.",
+        "es": "Analizadas cuadro a cuadro, las cinefluorografías mostraron que el abatimiento deglutorio de la epiglotis coincide con el estiramiento máximo del ligamento hioepiglótico.",
         "cites": [
           "PMID:463526"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La epiglotis bífida es una malformación congénita rara que suele detectarse al estudiar un estridor en lactantes.",
+        "es": "Rara y congénita, la epiglotis bífida suele descubrirse cuando se estudia a un recién nacido o lactante con estridor.",
         "cites": [
           "PMID:8659937",
           "PMID:10206398"
@@ -168,7 +168,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En cadáveres de personas con hipertensión arterial inicial, la concentración de fibras adrenérgicas en esas arterias aumentó hasta un 15-20 %, con independencia del calibre.",
+        "es": "Frente a las de personas sanas, las arterias leptomeníngeas de fallecidos con hipertensión arterial en fase inicial mostraban, fuera cual fuese su calibre, una concentración de fibras y varicosidades adrenérgicas significativamente mayor, de hasta un 15-20 %.",
         "cites": [
           "PMID:19860327"
         ]
@@ -186,42 +186,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Dentro de los túbulos seminíferos, las células germinales se dividen y diferencian en estrecho contacto con las células de Sertoli.",
+        "es": "Las células de Sertoli mantienen un contacto íntimo con las células germinales, que proliferan y se diferencian en el interior de los túbulos seminíferos.",
         "cites": [
           "PMID:26656623"
         ]
       },
       {
         "aspect": "function",
-        "es": "En el espacio intersticial, las células de Leydig sintetizan las hormonas esteroideas que requieren la espermatogénesis y los caracteres sexuales masculinos.",
+        "es": "Fuera de los túbulos, en el intersticio, las células de Leydig fabrican los esteroides necesarios tanto para completar la espermatogénesis como para desarrollar y mantener los caracteres sexuales masculinos.",
         "cites": [
           "PMID:26656623"
         ]
       },
       {
         "aspect": "parts",
-        "es": "La barrera hematotesticular separa el epitelio seminífero en un compartimento basal y otro apical o adluminal.",
+        "es": "La barrera hematotesticular deja a un lado el compartimento basal del epitelio seminífero y al otro el apical o adluminal.",
         "cites": [
           "PMID:22039149"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El testículo no descendido afecta al 2-5 % de los varones nacidos a término en los países occidentales y su frecuencia cae al 1-2 % hacia los 3 meses de edad.",
+        "es": "Entre el 2 y el 5 % de los varones a término de los países occidentales nacen con un testículo mal descendido, pero a los 3 meses la cifra baja espontáneamente al 1-2 %.",
         "cites": [
           "PMID:10640886"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Los hombres con antecedente de criptorquidia presentan un riesgo aumentado de cáncer testicular y de fertilidad reducida.",
+        "es": "A largo plazo, haber tenido un testículo no descendido se asocia con más riesgo de cáncer testicular y con menor fertilidad.",
         "cites": [
           "PMID:10640886"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El cáncer de testículo se clasifica en seminoma y no seminoma, y su forma de presentación más habitual es un bulto testicular.",
+        "es": "Lo más habitual es que el cáncer testicular se manifieste como un bulto en el testículo; por su histología se divide en seminomas y no seminomas.",
         "cites": [
           "PMID:17916870"
         ]
@@ -232,28 +232,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En un estudio de tres encéfalos humanos seccionados en serie, la comisura hipocampal dorsal formaba un haz de fibras de tamaño considerable, mientras que la ventral estaba muy reducida o ausente.",
+        "es": "En tres encéfalos humanos normales seccionados en serie, la comisura hipocampal ventral estaba casi o del todo desaparecida, mientras que la dorsal, bien desarrollada, formaba un haz de fibras considerable.",
         "cites": [
           "PMID:8221057"
         ]
       },
       {
         "aspect": "situation",
-        "es": "En esa misma serie, la comisura hipocampal dorsal cruzaba la línea media por debajo de la parte rostral del esplenio y de la porción caudal del cuerpo del cuerpo calloso.",
+        "es": "La comisura dorsal pasa la línea media bajo el extremo rostral del esplenio y la porción caudal del cuerpo del cuerpo calloso.",
         "cites": [
           "PMID:8221057"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En su trayecto entre el esplenio y la formación hipocampal, sus fibras se adosaban al fórnix y a la parte inferior del fórceps mayor del cuerpo calloso.",
+        "es": "Camino de la formación hipocampal desde el esplenio, sus fibras van adheridas al fórnix y a la porción inferior del fórceps mayor.",
         "cites": [
           "PMID:8221057"
         ]
       },
       {
         "aspect": "function",
-        "es": "La comisura hipocampal dorsal es un tracto de sustancia blanca que comunica regiones de ambos lóbulos temporales; en una muestra amplia de adultos, su difusividad media se correlacionó con el rendimiento en una prueba de memoria de reconocimiento.",
+        "es": "Como tracto blanco que enlaza regiones temporales de ambos hemisferios, la comisura hipocampal dorsal podría intervenir en la memoria de reconocimiento: en una muestra amplia de personas, su difusividad media se correlacionó con el rendimiento en una prueba estandarizada de esa memoria.",
         "cites": [
           "PMID:31364703"
         ]
@@ -267,7 +267,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 41 fetos con agenesia completa aislada del cuerpo calloso, la neurosonografía tridimensional mostró la comisura hipocampal en 27 casos (65.8 %).",
+        "es": "En 41 fetos con agenesia completa aislada del cuerpo calloso, la neurosonografía tridimensional mostró la comisura hipocampal en 27 casos (65,8 %).",
         "cites": [
           "PMID:26126648"
         ]
@@ -278,28 +278,28 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "La comisura anterior es una de las principales vías comisurales del encéfalo y comunica en ambos sentidos los lóbulos frontal, temporal, parietal y occipital de los dos hemisferios.",
+        "es": "Entre las grandes vías comisurales del encéfalo, la comisura anterior establece una comunicación bidireccional entre los lóbulos frontales, temporales, parietales y occipitales de uno y otro hemisferio.",
         "cites": [
           "PMID:34952222"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Al comparar tractografía por imagen de espectro de difusión con disección de encéfalos adultos, la comisura anterior reconstruida resultó más extensa que la observada en la disección.",
+        "es": "Cotejada con la disección de encéfalos adultos, la tractografía por espectro de difusión sugiere que la comisura anterior es más extensa de lo que muestra la disección, pues añade prolongaciones a su estructura principal.",
         "cites": [
           "PMID:34952222"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 100 encéfalos post mortem, el área mediosagital de la comisura anterior fue en promedio un 12 % (1.17 mm2) mayor en mujeres que en hombres.",
+        "es": "En tejido post mortem de 100 personas de edades emparejadas, las mujeres tenían de media un área mediosagital de la comisura anterior un 12 % (1,17 mm²) mayor que los hombres.",
         "cites": [
           "PMID:1744245"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En otra serie de 90 encéfalos post mortem, el área mediosagital de la comisura anterior de hombres homosexuales superó en un 18 % a la de mujeres heterosexuales y en un 34 % a la de hombres heterosexuales.",
+        "es": "Otra serie de 90 encéfalos post mortem halló que esa área mediosagital era un 34 % mayor en hombres homosexuales que en heterosexuales y un 18 % mayor que en mujeres heterosexuales.",
         "cites": [
           "PMID:1496013"
         ]
@@ -310,14 +310,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Las fibras de la comisura posterior interconectan los núcleos pretectales y así median el reflejo fotomotor consensual.",
+        "es": "Al enlazar entre sí los núcleos pretectales, las fibras de la comisura posterior sostienen el reflejo fotomotor consensual.",
         "cites": [
           "PMID:26617130"
         ]
       },
       {
         "aspect": "relations",
-        "es": "El órgano subcomisural, un neuroepitelio especializado, ocupa la línea media dorsal justo debajo de la comisura posterior.",
+        "es": "Bajo la comisura posterior, sobre la línea media dorsal, se aloja un neuroepitelio especializado: el órgano subcomisural.",
         "cites": [
           "PMID:22559938"
         ]
@@ -331,14 +331,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Las comisuras anterior y posterior son puntos de referencia esenciales en neurorradiología y neurocirugía funcional, y sobre ellas se construyen los principales atlas estereotácticos del encéfalo.",
+        "es": "Localizar con exactitud las comisuras anterior y posterior es crítico en neurorradiología y neurocirugía funcional, ya que los grandes atlas estereotácticos del encéfalo toman ambas como base.",
         "cites": [
           "PMID:16399031"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 34 voluntarios sanos estudiados con resonancia de 7.0 T, la línea que une los centros de ambas comisuras resultó una referencia reproducible para orientar los cortes axiales del encéfalo.",
+        "es": "En 34 voluntarios sanos estudiados con resonancia de 7,0 T, la línea que une los centros de ambas comisuras resultó una referencia reproducible para orientar los cortes axiales del encéfalo.",
         "cites": [
           "PMID:23901324"
         ]
@@ -349,14 +349,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Todo lo ingerido debe atravesar primero el estómago, que tradicionalmente se describe como un saco muscular hueco donde comienza la segunda fase de la digestión.",
+        "es": "Por el estómago pasa, antes que por ningún otro segmento, todo lo que se ingiere; la visión clásica lo reduce a un saco muscular hueco que inicia la segunda fase de la digestión.",
         "cites": [
           "PMID:26342014"
         ]
       },
       {
         "aspect": "function",
-        "es": "La secreción de ácido gástrico pone en marcha la digestión y actúa además como primera barrera frente a los microbios transmitidos por los alimentos.",
+        "es": "El ácido que segrega el estómago cumple dos papeles: arranca la digestión y es la primera defensa contra los microbios que llegan con los alimentos.",
         "cites": [
           "PMID:26342014"
         ]
@@ -370,21 +370,21 @@
       },
       {
         "aspect": "clinical",
-        "es": "Helicobacter pylori coloniza aproximadamente a la mitad de la población humana, aunque sólo provoca enfermedad gástrica manifiesta en una parte de los infectados.",
+        "es": "Cerca de la mitad de la humanidad lleva Helicobacter pylori en el estómago, pero sólo una parte de esas personas llega a desarrollar enfermedad gástrica manifiesta.",
         "cites": [
           "PMID:23652324"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La infección por Helicobacter pylori, la infección bacteriana crónica más extendida del mundo, causa la mayoría de las úlceras pépticas y de los cánceres gástricos.",
+        "es": "Helicobacter pylori, responsable de la infección bacteriana crónica más común del planeta, está en el origen de la mayor parte de las úlceras pépticas y de los cánceres gástricos.",
         "cites": [
           "PMID:26342014"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Desde el punto de vista histogenético, los carcinomas gástricos se dividen en un tipo difuso y un tipo diferenciado.",
+        "es": "La clasificación histogenética distingue dos grandes tipos de carcinoma gástrico: el difuso y el diferenciado.",
         "cites": [
           "PMID:11321735"
         ]
@@ -416,7 +416,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La aorta circunfleja es una variante en la que el arco pasa por detrás del esófago y la aorta descendente queda en el lado opuesto, formando con el ligamento arterioso un anillo vascular verdadero.",
+        "es": "En la aorta circunfleja, el arco pasa por detrás del esófago y la aorta desciende por el lado contrario, de modo que junto con el ligamento arterioso cierra un anillo vascular verdadero.",
         "cites": [
           "PMID:37769607"
         ]
@@ -434,7 +434,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "La red neuronal por defecto es un sistema cerebral definido anatómicamente que se activa de preferencia cuando la atención no se dirige al entorno externo, por ejemplo al evocar recuerdos autobiográficos o imaginar el futuro.",
+        "es": "Cuando la atención se aparta del entorno —al recordar episodios de la propia vida o imaginar el futuro, por ejemplo— se activa de preferencia la red neuronal por defecto, un sistema cerebral de base anatómica definida.",
         "cites": [
           "PMID:18400922"
         ]
@@ -448,7 +448,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Los estudios de resonancia en la infancia y la adolescencia muestran que el volumen de sustancia blanca aumenta en todo el encéfalo, mientras que la sustancia gris sigue trayectorias en U invertida que varían según la región.",
+        "es": "Según la resonancia anatómica, durante la infancia y la adolescencia la sustancia blanca crece en todo el encéfalo, mientras que la sustancia gris dibuja curvas en U invertida distintas en cada región.",
         "cites": [
           "PMID:16887188"
         ]
@@ -462,7 +462,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La resonancia magnética es la técnica más precisa para valorar el parénquima cerebral fetal y mostrar sus anomalías del desarrollo.",
+        "es": "Para evaluar el parénquima del encéfalo fetal y poner de manifiesto sus anomalías del desarrollo, ninguna técnica de imagen es tan precisa como la resonancia magnética.",
         "cites": [
           "PMID:35843668"
         ]
@@ -480,35 +480,35 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "En un estudio de 85 piezas humanas, la porción medial del quiasma óptico resultó un punto débil de la microcirculación por su escasa densidad capilar, sin una arteria propia que la irrigue.",
+        "es": "Según un estudio en 85 piezas humanas frescas, ninguna arteria específica irriga la parte media del quiasma óptico, cuya escasa densidad capilar la convierte en el punto débil de su microcirculación.",
         "cites": [
           "PMID:8086633"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Según ese trabajo, unas arterias quiasmáticas laterales aportan mejor irrigación a las fibras laterales del quiasma.",
+        "es": "Los mismos autores proponen que unas arterias quiasmáticas laterales podrían irrigar mejor las fibras laterales del quiasma.",
         "cites": [
           "PMID:8086633"
         ]
       },
       {
         "aspect": "relations",
-        "es": "La compresión de las fibras no cruzadas del nervio óptico o del quiasma por las arterias cerebral anterior o carótida interna puede producir una hemianopsia binasal.",
+        "es": "Una hemianopsia binasal puede deberse a que la carótida interna o la cerebral anterior compriman, en el nervio óptico o en el quiasma, las fibras que no se cruzan.",
         "cites": [
           "PMID:4753869"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La hemianopsia bitemporal se atribuye al estiramiento de las fibras que se cruzan en el quiasma óptico.",
+        "es": "Según ese estudio anatómico, lo que produce la hemianopsia bitemporal es la tracción sobre las fibras que se decusan en el quiasma.",
         "cites": [
           "PMID:4753869"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una revisión de 14 casos, las malformaciones cavernosas del quiasma óptico sangraron con más frecuencia que las localizadas en el encéfalo.",
+        "es": "Al revisar 12 casos publicados junto con 2 propios, los autores observaron que las malformaciones cavernosas del quiasma óptico sangran más a menudo que las del encéfalo.",
         "cites": [
           "PMID:8748824"
         ]
@@ -518,15 +518,15 @@
   "UBERON:0000977": {
     "sentences": [
       {
-        "aspect": "parts",
-        "es": "La célula mesotelial pleural es esencial para mantener la homeostasis normal del espacio pleural y participa en sus procesos patológicos.",
+        "aspect": "function",
+        "es": "Tanto la homeostasis normal del espacio pleural como sus procesos patológicos giran en torno a la célula mesotelial.",
         "cites": [
           "PMID:18332619"
         ]
       },
       {
         "aspect": "function",
-        "es": "Se ha descrito que una parte de las partículas depositadas en el pulmón llega a la pleura y se elimina a través de estomas de la pleura parietal.",
+        "es": "Según una revisión, una fracción de las partículas que se depositan en el pulmón alcanza la pleura, de donde se eliminan por estomas de la hoja parietal.",
         "cites": [
           "PMID:20307263"
         ]
@@ -540,7 +540,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La radiografía de tórax, la tomografía computarizada y la toracocentesis guiada por imagen son las técnicas iniciales para estudiar la enfermedad pleural.",
+        "es": "El estudio inicial de la patología pleural se apoya sobre todo en la radiografía y la tomografía de tórax y en la toracocentesis guiada por imagen.",
         "cites": [
           "PMID:35738911"
         ]
@@ -558,21 +558,21 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En una ecografía infraclavicular de 50 sujetos, la profundidad media de la vena axilar respecto de la piel pasó de 1.9 cm en el punto medial a 3.1 cm en el lateral.",
+        "es": "En una ecografía infraclavicular de 50 sujetos, la profundidad media de la vena axilar respecto de la piel pasó de 1,9 cm en el punto medial a 3,1 cm en el lateral.",
         "cites": [
           "PMID:12697585"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esa misma serie, el diámetro venoso disminuyó de 1.2 cm medialmente a 0.9 cm lateralmente, mientras que la separación entre arteria y vena aumentó de 0.3 a 0.8 cm.",
+        "es": "En esa misma serie, el diámetro venoso disminuyó de 1,2 cm medialmente a 0,9 cm lateralmente, mientras que la separación entre arteria y vena aumentó de 0,3 a 0,8 cm.",
         "cites": [
           "PMID:12697585"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 60 axilas de cadáveres adultos se halló una vena axilar accesoria en el 56.7 % de los casos, que solía desembocar (79.4 %) en el tramo suprapectoral de la vena axilar.",
+        "es": "En 60 axilas de cadáveres adultos se halló una vena axilar accesoria en el 56,7 % de los casos, que solía desembocar (79,4 %) en el tramo suprapectoral de la vena axilar.",
         "cites": [
           "PMID:1641737"
         ]
@@ -593,7 +593,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 207 puertos venosos totalmente implantables, la punción infraclavicular de la vena axilar guiada por ecografía evitó el síndrome de pinzamiento, que sí apareció con la técnica por referencias anatómicas.",
+        "es": "En una revisión de 207 puertos venosos implantables, ninguno de los colocados por punción ecoguiada de la vena axilar infraclavicular mostró signos radiológicos de pinzamiento ni progresión en el seguimiento, a diferencia de los controles históricos implantados por referencias anatómicas.",
         "cites": [
           "PMID:22922950"
         ]
@@ -604,7 +604,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El puente forma parte del tronco encefálico, que alberga numerosos núcleos de nervios craneales y es atravesado por múltiples tractos entre el encéfalo y la médula espinal.",
+        "es": "El puente pertenece al tronco encefálico, una región de anatomía compleja que alberga muchos núcleos de nervios craneales y por la que discurren numerosos tractos entre encéfalo y médula espinal.",
         "cites": [
           "PMID:31283463"
         ]
@@ -618,7 +618,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Ese crecimiento posnatal se relaciona con un marcado aumento de la mielinización durante la lactancia, confirmado en piezas post mortem.",
+        "es": "La resonancia en T2 sugiere que ese crecimiento se debe a la mielinización, cuyo marcado aumento durante la lactancia confirmó la histología post mortem.",
         "cites": [
           "PMID:25307966"
         ]
@@ -632,7 +632,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En una cohorte con confirmación autópsica de 6 pacientes con parálisis supranuclear progresiva y 23 sin ella, un cociente mesencéfalo/puente inferior a 0.50 tuvo un valor predictivo positivo del 100 %.",
+        "es": "En una cohorte con confirmación autópsica de 6 pacientes con parálisis supranuclear progresiva y 23 sin ella, un cociente mesencéfalo/puente inferior a 0,50 tuvo un valor predictivo positivo del 100 %.",
         "cites": [
           "PMID:25805708"
         ]
@@ -650,14 +650,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El síndrome de ovario poliquístico afecta a entre el 5 y el 20 % de las mujeres en edad reproductiva y tiene como rasgo clave la producción excesiva de andrógenos por los ovarios.",
+        "es": "Entre un 5 y un 20 % de las mujeres en edad fértil de todo el mundo tienen síndrome de ovario poliquístico, cuyo rasgo central es que los ovarios fabrican andrógenos en exceso.",
         "cites": [
           "PMID:27510637"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Según el consenso de Rotterdam de 2003, se trata de un síndrome de disfunción ovárica cuyos rasgos cardinales son el hiperandrogenismo y la morfología de ovario poliquístico, sin que ninguno baste por sí solo para el diagnóstico.",
+        "es": "El consenso de Rotterdam de 2003 lo definió como una disfunción ovárica con dos rasgos cardinales, el hiperandrogenismo y la morfología poliquística, ninguno de los cuales permite por sí solo establecer el diagnóstico.",
         "cites": [
           "PMID:14711538",
           "PMID:14688154"
@@ -676,21 +676,21 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El útero es el órgano en el que se implanta el embrión y se desarrolla el feto.",
+        "es": "La implantación del embrión y el desarrollo del feto tienen lugar en el útero.",
         "cites": [
           "PMID:34140619"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En el útero humano gestante abundan leucocitos granulares grandes CD56 brillantes, que proliferan sobre todo durante la fase secretora (lútea) del ciclo no gestante.",
+        "es": "Los leucocitos granulares grandes CD56 brillantes presentes en el útero gestante proliferan sobre todo durante la fase secretora (lútea) del ciclo no gestante.",
         "cites": [
           "PMID:1726555"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El útero unicorne verdadero es una anomalía rara que con frecuencia se asocia a malformaciones de las vías urinarias y puede favorecer la infertilidad y las complicaciones del embarazo.",
+        "es": "El útero unicorne verdadero es poco frecuente; suele acompañarse de anomalías de las vías urinarias y puede predisponer a la infertilidad y a complicaciones obstétricas.",
         "cites": [
           "PMID:1673950"
         ]
@@ -721,8 +721,8 @@
         ]
       },
       {
-        "aspect": "parts",
-        "es": "En la mujer en edad reproductiva, la mucosa vaginal alcanza su mayor grosor y su máximo contenido de glucógeno intracelular hacia la mitad del ciclo, y tras la menopausia se atrofia.",
+        "aspect": "function",
+        "es": "Bajo el estímulo cíclico de las hormonas esteroideas, la mucosa vaginal de la mujer fértil llega a su grosor y contenido de glucógeno máximos a mitad del ciclo; con la menopausia, el tejido se atrofia.",
         "cites": [
           "PMID:16208476"
         ]
@@ -744,7 +744,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El melanoma primario de la vagina es un tumor raro y agresivo, con una edad media al diagnóstico de 60 años y una supervivencia a 5 años estimada en no más del 10 %.",
+        "es": "Raro, agresivo y de mal pronóstico, el melanoma vaginal primario se diagnostica de media a los 60 años, y se estima que su supervivencia a 5 años no supera el 10 %.",
         "cites": [
           "PMID:30113785"
         ]
@@ -776,7 +776,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los tumores primarios de las vesículas seminales son raros, con no más de 60 casos publicados, y su diagnóstico es difícil por la pobreza de los síntomas.",
+        "es": "Con no más de 60 casos comunicados, los tumores primarios de vesícula seminal son raros y cuesta diagnosticarlos porque dan síntomas escasos e inespecíficos.",
         "cites": [
           "PMID:22723505"
         ]
@@ -794,7 +794,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La ectopia del conducto deferente es una anomalía congénita rara que se asocia a malformaciones urinarias y anorrectales.",
+        "es": "Rara y de origen congénito, la desembocadura ectópica del conducto deferente se ha asociado con anomalías de las vías urinarias y de la región anorrectal.",
         "cites": [
           "PMID:35385775"
         ]
@@ -808,21 +808,21 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 1978 se contaban 11 casos publicados de conducto deferente ectópico, con 13 inserciones anómalas, dos de ellas bilaterales.",
+        "es": "Al describir dos lactantes con deferente ectópico, los autores reunían 11 casos publicados que sumaban 13 inserciones anómalas del conducto, 2 de ellas bilaterales.",
         "cites": [
           "PMID:712905"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La ausencia congénita del conducto deferente es una enfermedad genética rara ligada a mutaciones del gen regulador de la conductancia transmembrana de la fibrosis quística, que suele descubrirse al estudiar una infertilidad masculina.",
+        "es": "Ligada a mutaciones del gen regulador de la conductancia transmembrana de la fibrosis quística, la ausencia congénita del deferente es una enfermedad genética rara que suele salir a la luz durante el estudio de una infertilidad masculina.",
         "cites": [
           "PMID:33353780"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En varones infértiles estudiados con ecografía escrotal, la ausencia bilateral congénita del deferente se acompañó siempre de alteraciones del epidídimo, con una sensibilidad del 100 %.",
+        "es": "La ecografía escrotal de varones infértiles mostró anomalías del epidídimo en todos los que carecían de forma congénita de ambos deferentes, lo que dio a ese hallazgo una sensibilidad del 100 %.",
         "cites": [
           "PMID:32955739"
         ]
@@ -833,7 +833,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El esófago está revestido normalmente por un epitelio escamoso, que en el esófago de Barrett es sustituido por un epitelio cilíndrico especializado.",
+        "es": "En el esófago de Barrett, el epitelio escamoso que normalmente reviste el órgano cede su lugar, en una extensión variable, a un epitelio cilíndrico especializado.",
         "cites": [
           "PMID:11007123"
         ]
@@ -847,21 +847,21 @@
       },
       {
         "aspect": "clinical",
-        "es": "El esófago de Barrett se debe al reflujo crónico de ácido y bilis y su diagnóstico exige un segmento de mucosa cilíndrica visible de al menos 1 cm con metaplasia intestinal y células caliciformes.",
+        "es": "Consecuencia del reflujo crónico de ácido y bilis, el esófago de Barrett se diagnostica por endoscopia e histología cuando hay al menos 1 cm visible de mucosa cilíndrica con metaplasia intestinal y células caliciformes.",
         "cites": [
           "PMID:42054681"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El esófago de Barrett es el único precursor conocido del adenocarcinoma esofágico, cuya incidencia ha aumentado en las últimas cinco décadas.",
+        "es": "El adenocarcinoma de esófago, cuya incidencia lleva cinco décadas en aumento, no tiene otro precursor conocido que el esófago de Barrett.",
         "cites": [
           "PMID:35354777"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Entre 1975-1979 y 2000-2004, la incidencia de adenocarcinoma de esófago en hombres blancos estadounidenses subió un 463 %, de 1.01 a 5.69 por 100 000 personas-año.",
+        "es": "Entre 1975-1979 y 2000-2004, la incidencia de adenocarcinoma de esófago en hombres blancos estadounidenses subió un 463 %, de 1,01 a 5,69 por 100 000 personas-año.",
         "cites": [
           "PMID:18695138"
         ]
@@ -879,7 +879,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El carcinoma de hipofaringe mantiene un mal pronóstico pese a los avances terapéuticos, y en el mejor de los casos dos tercios de los pacientes reciben tratamiento paliativo y no curativo.",
+        "es": "Pese a los progresos de la cirugía y de los tratamientos no quirúrgicos, la supervivencia del carcinoma de hipofaringe no ha mejorado, y aun con terapia multimodal, en el mejor de los casos, dos tercios de los pacientes obtienen paliación en lugar de curación.",
         "cites": [
           "PMID:15062363"
         ]
@@ -893,7 +893,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Entre 2001 y 2016, la incidencia del carcinoma escamoso basaloide de hipofaringe fue de 0.0161 por 100 000 personas, y la mayoría de los 213 casos registrados se diagnosticó en estadio IV.",
+        "es": "Entre 2001 y 2016, la incidencia del carcinoma escamoso basaloide de hipofaringe fue de 0,0161 por 100 000 personas, y la mayoría de los 213 casos registrados se diagnosticó en estadio IV.",
         "cites": [
           "PMID:34319483"
         ]
@@ -918,14 +918,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La resonancia magnética, sobre todo la potenciada en T2 de alta resolución espacial, es la técnica de referencia para estadificar el cáncer de recto.",
+        "es": "Por la información pronóstica y de estadificación que aporta, la resonancia magnética —en particular la secuencia T2 de alta resolución espacial— se considera el estándar de referencia en el cáncer de recto.",
         "cites": [
           "PMID:39772798"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El tratamiento clásico del cáncer de recto localmente avanzado ha sido la quimiorradioterapia neoadyuvante seguida de escisión total del mesorrecto.",
+        "es": "Durante años, el cáncer de recto localmente avanzado se trató con quimiorradioterapia neoadyuvante de ciclo largo y, después, escisión total del mesorrecto.",
         "cites": [
           "PMID:39772798"
         ]
@@ -939,7 +939,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La microcirugía endoscópica transanal permite operar y suturar dentro de la cavidad rectal; en su primera serie de doce casos no hubo complicaciones posoperatorias.",
+        "es": "Una técnica endoscópica transanal permite hacer microcirugía y colocar suturas dentro de la cavidad rectal; en los doce casos comunicados no hubo complicaciones posoperatorias.",
         "cites": [
           "PMID:3971938"
         ]
@@ -957,7 +957,7 @@
       },
       {
         "aspect": "function",
-        "es": "En la ataxia por mutaciones de CaV2.1, la atrofia selectiva del flóculo se asocia a alteraciones del seguimiento ocular lento y del mantenimiento de la mirada.",
+        "es": "Cuando la ataxia se debe a mutaciones de CaV2.1, la atrofia que afecta de forma selectiva al flóculo va acompañada de un seguimiento ocular lento deficiente y de dificultad para sostener la mirada.",
         "cites": [
           "PMID:15826995"
         ]
@@ -1003,7 +1003,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La resección en bloque modificada extirpa junto con la cabeza del páncreas el tejido retroperitoneal y los ganglios peripancreáticos, para lograr una resección R0 sin la morbilidad de una linfadenectomía ampliada.",
+        "es": "Para conseguir márgenes libres (R0) sin la morbilidad de una linfadenectomía ampliada, la resección en bloque modificada extirpa la cabeza del páncreas en una sola pieza con el tejido retroperitoneal y los ganglios que la rodean.",
         "cites": [
           "PMID:18366391"
         ]
@@ -1028,7 +1028,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "La vena cava inferior es el mayor conducto venoso situado por debajo del diafragma.",
+        "es": "Por debajo del diafragma, ningún conducto venoso supera en calibre a la vena cava inferior.",
         "cites": [
           "PMID:30937506"
         ]
@@ -1049,7 +1049,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El carcinoma de células renales invade la vena cava inferior en alrededor del 5 % de los pacientes.",
+        "es": "Alrededor de uno de cada veinte pacientes con carcinoma de células renales presenta invasión de la vena cava inferior.",
         "cites": [
           "PMID:7354507"
         ]
@@ -1063,7 +1063,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los filtros de vena cava inferior se colocan para prevenir la embolia pulmonar en pacientes con trombosis venosa profunda pélvica o de los miembros inferiores que no pueden recibir anticoagulación.",
+        "es": "Cuando un paciente con trombosis venosa profunda pélvica o de los miembros inferiores no puede anticoagularse, el filtro de vena cava inferior ofrece una alternativa de riesgo relativamente bajo para prevenir la embolia pulmonar.",
         "cites": [
           "PMID:28123983"
         ]
@@ -1074,7 +1074,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La afectación metastásica de los ganglios linfáticos axilares es una de las variables pronósticas más importantes del cáncer de mama.",
+        "es": "Pocas variables pesan tanto en el pronóstico del cáncer de mama como la presencia de metástasis en los ganglios axilares.",
         "cites": [
           "PMID:10997438"
         ]
@@ -1088,7 +1088,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Según una revisión sistemática, la ecografía axilar es moderadamente sensible y bastante específica para detectar metástasis, y un resultado negativo no las descarta.",
+        "es": "Una revisión sistemática concluyó que la ecografía axilar detecta metástasis con sensibilidad moderada y especificidad bastante alta, de modo que un estudio negativo no permite descartarlas.",
         "cites": [
           "PMID:16632729"
         ]
@@ -1102,7 +1102,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En una serie hospitalaria, la metástasis en ganglios axilares contralaterales se observó en 21 pacientes, el 1.9 % de las pacientes con cáncer de mama, en general con tumores localmente avanzados.",
+        "es": "En una serie hospitalaria, la metástasis en ganglios axilares contralaterales se observó en 21 pacientes, el 1,9 % de las pacientes con cáncer de mama, en general con tumores localmente avanzados.",
         "cites": [
           "PMID:21316187"
         ]
@@ -1113,28 +1113,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "La clavícula se origina de un cordón de células mesenquimales condensadas que se extiende desde el acromion hacia el esbozo del esternón.",
+        "es": "La clavícula nace de un cordón de mesénquima condensado que se tiende desde el acromion hacia el primordio del esternón.",
         "cites": [
           "PMID:24444803"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su cuerpo se forma por osificación intramembranosa a partir de dos centros primarios, mientras que en sus extremos se produce además osificación endocondral.",
+        "es": "Dos centros primarios de osificación intramembranosa forman el cuerpo del hueso, pero en los extremos la clavícula también se osifica por vía endocondral.",
         "cites": [
           "PMID:24444803"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 20 clavículas de cadáveres japoneses de 70 a 99 años, la proporción de hueso cortical fue máxima en el segundo quinto contado desde el extremo acromial y disminuyó hacia ambos extremos.",
+        "es": "En 20 clavículas de cadáveres japoneses de 70 a 99 años divididas en cinco segmentos iguales, la proporción de hueso cortical fue máxima en el punto situado a dos quintos de su longitud desde el extremo acromial y descendía hacia ambos extremos.",
         "cites": [
           "PMID:29654552"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Los autores de ese estudio relacionan esa distribución del hueso cortical y esponjoso con la mayor frecuencia de fracturas de la porción lateral de la clavícula en personas mayores.",
+        "es": "Los autores sugieren que esa distribución del hueso cortical y esponjoso podría ayudar a entender las fracturas de la porción lateral de la clavícula, frecuentes en personas mayores.",
         "cites": [
           "PMID:29654552"
         ]
@@ -1174,7 +1174,7 @@
       },
       {
         "aspect": "innervation",
-        "es": "El pedículo neurovascular del dorsal ancho se ramifica de manera constante en su parte proximal, lo que permite dividir el músculo en unidades musculocutáneas independientes.",
+        "es": "Como su pedículo neurovascular se ramifica de forma constante en la parte proximal, el dorsal ancho puede dividirse, junto con la piel que lo cubre, en unidades musculocutáneas independientes.",
         "cites": [
           "PMID:7232585"
         ]
@@ -1223,14 +1223,14 @@
       },
       {
         "aspect": "relations",
-        "es": "En 19 hombros embalsamados, el ligamento coracohumeral nacía de la apófisis coracoides y envolvía la parte craneal del subescapular, cubriendo con su capa superficial una amplia zona de su cara anterior.",
+        "es": "En 19 hombros embalsamados, el ligamento coracohumeral partía de la apófisis coracoides, abrazaba la porción craneal del subescapular y su capa superficial tapizaba buena parte de la cara anterior del músculo.",
         "cites": [
           "PMID:24766789"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "El subescapular recibe habitualmente dos ramos, los nervios subescapulares superior e inferior, que suelen salir del fascículo posterior del plexo braquial; en 31 piezas se hallaron nervios subescapulares superiores accesorios en el 9.7 %.",
+        "es": "Lo habitual es que el subescapular reciba los nervios subescapulares superior e inferior, ramos que por lo general proceden del fascículo posterior del plexo braquial; en 31 piezas disecadas, el 9,7 % tenía además un nervio subescapular superior accesorio.",
         "cites": [
           "PMID:33053880"
         ]
@@ -1244,7 +1244,7 @@
       },
       {
         "aspect": "innervation",
-        "es": "En 20 hombros disecados por vía infraclavicular, el músculo recibía una media de 2.55 ramos motores, que emergían en promedio 36 mm por debajo del borde inferior de la clavícula.",
+        "es": "En 20 hombros disecados por vía infraclavicular, el músculo recibía una media de 2,55 ramos motores, que emergían en promedio 36 mm por debajo del borde inferior de la clavícula.",
         "cites": [
           "PMID:42853415"
         ]
@@ -1255,21 +1255,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En su desarrollo, la glándula paratiroides deriva del endodermo de las bolsas faríngeas.",
+        "es": "Las paratiroides se forman a partir del endodermo que tapiza las bolsas faríngeas.",
         "cites": [
           "PMID:15591343"
         ]
       },
       {
         "aspect": "function",
-        "es": "Las glándulas paratiroides son órganos endocrinos cuya función principal es secretar hormona paratiroidea para regular el equilibrio de calcio y fósforo del organismo.",
+        "es": "Su papel endocrino central es liberar hormona paratiroidea, con la que el organismo mantiene en equilibrio el calcio y el fósforo.",
         "cites": [
           "PMID:32511868"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Su lesión o extirpación altera la calcemia y la fosfatemia y puede dañar otros órganos como el hueso y el riñón.",
+        "es": "Si las glándulas se lesionan o se extirpan, la falta de hormona desajusta el calcio y el fósforo de la sangre, con posible daño de órganos como el hueso y el riñón.",
         "cites": [
           "PMID:32511868"
         ]
@@ -1309,7 +1309,7 @@
       },
       {
         "aspect": "irrigation",
-        "es": "Una de esas dos ramas puede resecarse sin reconstrucción venosa siempre que el flujo mesentérico se mantenga por la rama restante.",
+        "es": "Si el flujo venoso mesentérico queda asegurado por la otra rama de primer orden, es posible resecar un segmento de una de ellas sin reconstruirla.",
         "cites": [
           "PMID:19092356"
         ]
@@ -1323,21 +1323,21 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 454 pacientes con adenocarcinoma ductal de páncreas no metastásico, la invasión radiológica de la vena porta o mesentérica superior se asoció a una supervivencia global menor (14.4 frente a 20.9 meses).",
+        "es": "En 454 pacientes con adenocarcinoma ductal de páncreas no metastásico, la invasión radiológica de la vena porta o mesentérica superior se asoció a una supervivencia global menor (14,4 frente a 20,9 meses).",
         "cites": [
           "PMID:32561070"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Los aneurismas de la vena mesentérica superior son raros: hasta 2011 se habían descrito sólo 17.",
+        "es": "Los aneurismas de la vena mesentérica superior son raros: un caso clínico publicado contabilizaba apenas 17 descripciones previas.",
         "cites": [
           "PMID:21715423"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 304 hemicolectomías derechas por adenocarcinoma se produjo una lesión importante de la vena mesentérica superior o sus afluentes en 5 casos (1.6 %).",
+        "es": "En 304 hemicolectomías derechas por adenocarcinoma se produjo una lesión importante de la vena mesentérica superior o sus afluentes en 5 casos (1,6 %).",
         "cites": [
           "PMID:27392779"
         ]
@@ -1348,7 +1348,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La compresión de la vena ilíaca común izquierda por la arteria ilíaca común derecha es un cuadro bien descrito, conocido como síndrome de Cockett.",
+        "es": "El síndrome de Cockett, bien conocido, consiste en que la arteria ilíaca común derecha comprime la vena ilíaca común izquierda.",
         "cites": [
           "PMID:12044441"
         ]
@@ -1362,7 +1362,7 @@
       },
       {
         "aspect": "parts",
-        "es": "En un estudio de 28 cadáveres se encontró un espolón endoluminal en la vena ilíaca común izquierda en 6 casos (21.4 %), con distinta composición de sus capas.",
+        "es": "En un estudio de 28 cadáveres se encontró un espolón endoluminal en la vena ilíaca común izquierda en 6 casos (21,4 %), con distinta composición de sus capas.",
         "cites": [
           "PMID:25298827"
         ]
@@ -1377,7 +1377,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En la pared de la vena ilíaca común pueden originarse tumores raros, como leiomiomas o angiosarcomas, cuya resección exige extirpar parte de la vena.",
+        "es": "En la pared de la vena ilíaca común pueden originarse tumores raros, como leiomiomas o angiosarcomas; en los casos descritos, la resección incluyó parte de la vena.",
         "cites": [
           "PMID:11078622",
           "PMID:25596292"
@@ -1400,35 +1400,35 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La vena renal izquierda muestra con frecuencia un calibre mayor en su tramo previo a la aorta que en el segmento situado justo delante de ella, visible en tomografía y ecografía.",
+        "es": "En tomografía y ecografía es frecuente ver la vena renal izquierda claramente más ancha en su tramo situado a la izquierda de la aorta que en el que pasa justo por delante de ella.",
         "cites": [
           "PMID:6773339"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Esa diferencia de calibre se atribuye a un efecto de cascanueces entre la aorta, por detrás, y la arteria mesentérica superior, por delante, al que puede sumarse la tercera porción del duodeno.",
+        "es": "Se cree que ese contraste de calibre obedece a una pinza o «cascanueces» formada por la aorta detrás y la mesentérica superior delante, que la tercera porción del duodeno puede reforzar.",
         "cites": [
           "PMID:6773339"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Por su desarrollo embrionario más complejo que el de la derecha, la vena renal izquierda presenta más variaciones; en una muestra total de 1008 casos se halló un collar renal en el 0.3 % y una vena retroaórtica en el 0.5 %.",
+        "es": "Por su desarrollo embrionario más complejo que el de la derecha, la vena renal izquierda presenta más variaciones; en una muestra total de 1008 casos se halló un collar renal en el 0,3 % y una vena retroaórtica en el 0,5 %.",
         "cites": [
           "PMID:10370998"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En la serie cadavérica de ese estudio, la vena renal izquierda recibía una afluente primaria posterior en el 23.2 % de los casos.",
+        "es": "En la serie cadavérica de ese estudio, la vena renal izquierda recibía una afluente primaria posterior en el 23,2 % de los casos.",
         "cites": [
           "PMID:10370998"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 7929 tomografías consecutivas, la vena renal izquierda retroaórtica tuvo una prevalencia del 0.77 % y sólo 4 de los 61 portadores (6.6 %) presentaban síntomas.",
+        "es": "En 7929 tomografías consecutivas, la vena renal izquierda retroaórtica tuvo una prevalencia del 0,77 % y sólo 4 de los 61 portadores (6,6 %) presentaban síntomas.",
         "cites": [
           "PMID:25661199"
         ]
@@ -1446,7 +1446,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El carcinoma del cuerpo del páncreas tiene mal pronóstico y suele presentarse en fase avanzada.",
+        "es": "Cuando se diagnostica, el carcinoma del cuerpo del páncreas suele estar ya avanzado, y su pronóstico es malo.",
         "cites": [
           "PMID:17495360"
         ]
@@ -1471,14 +1471,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Un muñón cístico largo predispone a la formación de cálculos: en una serie, aparecieron en el 4.19 % tras colecistectomía subtotal laparoscópica frente al 0.02 % tras la técnica convencional.",
+        "es": "Un muñón cístico largo predispone a la formación de cálculos: en una serie, aparecieron en el 4,19 % tras colecistectomía subtotal laparoscópica frente al 0,02 % tras la técnica convencional.",
         "cites": [
           "PMID:18990269"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El conducto cístico se visualiza mejor con colangiografía directa o colangiopancreatografía por resonancia, y sus variantes anatómicas no reconocidas pueden confundir la imagen y complicar los procedimientos posteriores.",
+        "es": "La colangiografía directa y la colangiopancreatografía por resonancia son las técnicas que mejor muestran el conducto cístico, cuyas variantes anatómicas, si pasan inadvertidas, pueden confundir la imagen y complicar procedimientos quirúrgicos, endoscópicos o percutáneos posteriores.",
         "cites": [
           "PMID:11158640"
         ]
@@ -1542,21 +1542,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El apéndice vermiforme es un tubo ciego situado cerca de la válvula ileocecal, en la unión entre el intestino delgado y el grueso.",
+        "es": "El apéndice vermiforme, un conducto cerrado por uno de sus extremos, ocupa la vecindad de la válvula ileocecal, punto de encuentro de los intestinos delgado y grueso.",
         "cites": [
           "PMID:30420527"
         ]
       },
       {
         "aspect": "parts",
-        "es": "El apéndice humano es un divertículo de 5 a 10 cm de largo y de 0.5 a 1 cm de ancho que nace del ciego.",
+        "es": "Prolongación en fondo de saco del ciego, el apéndice humano mide entre 5 y 10 cm de longitud y entre 0,5 y 1 cm de anchura.",
         "cites": [
           "PMID:17936308"
         ]
       },
       {
         "aspect": "function",
-        "es": "Por su asociación con abundante tejido linfático se le atribuye una función inmunitaria, y se ha propuesto que sirve de reservorio de bacterias comensales capaz de repoblar el colon.",
+        "es": "Su vinculación con abundante tejido linfoide hace pensar en un papel inmunitario, de naturaleza aún desconocida; también se ha propuesto que da refugio a bacterias comensales que quizá podrían volver a poblar el colon si su contenido se expulsa tras la exposición a un patógeno.",
         "cites": [
           "PMID:17936308"
         ]
@@ -1570,14 +1570,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Rara vez el apéndice es intracecal, intramural, subhepático o se encuentra en el lado izquierdo del abdomen, y su base no siempre coincide con el punto de McBurney.",
+        "es": "Entre las variantes raras figuran el apéndice intracecal, intramural, subhepático o situado en el hemiabdomen izquierdo, y hay casos en que el punto de McBurney no corresponde a la base del órgano.",
         "cites": [
           "PMID:39720866"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La apendicectomía es la intervención quirúrgica de urgencia más frecuente, y la posición tan variable del apéndice puede confundir el diagnóstico.",
+        "es": "Ninguna operación de urgencia se practica tanto como la apendicectomía, y lo cambiante de la posición del apéndice puede desorientar al clínico.",
         "cites": [
           "PMID:23716128"
         ]
@@ -1595,14 +1595,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "La mutación de p53 aparece en alrededor del 60 % de los cánceres colorrectales, en su mayoría como mutaciones de sentido erróneo en puntos calientes.",
+        "es": "Cerca de seis de cada diez cánceres colorrectales llevan mutado p53, en la mayoría de los casos por cambios de sentido erróneo concentrados en puntos calientes.",
         "cites": [
           "PMID:30496442"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Los pólipos del colon aparecen en todos los grupos de edad y su importancia depende del tipo histológico y de los síntomas que producen.",
+        "es": "Se encuentran pólipos de colon a cualquier edad, y su trascendencia varía con el tipo de pólipo y con los síntomas que causen.",
         "cites": [
           "PMID:1645113"
         ]
@@ -1616,7 +1616,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El colon en bolsa congénito es una anomalía poco común que suele asociarse a malformaciones anorrectales y se diagnostica casi siempre en el recién nacido.",
+        "es": "El colon en bolsa congénito es una anomalía poco común, habitualmente asociada a malformaciones anorrectales, que en la mayoría de los casos se diagnostica en el periodo neonatal.",
         "cites": [
           "PMID:34766541"
         ]
@@ -1627,14 +1627,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En 232 pacientes con neoplasias neuroendocrinas gástricas poco diferenciadas, el 53.49 % de los tumores con localización conocida asentaba en el tercio superior del estómago, es decir, en el cardias y el fondo.",
+        "es": "En 232 pacientes con neoplasias neuroendocrinas gástricas poco diferenciadas, el 53,49 % de los tumores con localización conocida asentaba en el tercio superior del estómago, es decir, en el cardias y el fondo.",
         "cites": [
           "PMID:34135560"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 57 pacientes con carcinoma del cardias o del fondo gástrico, la tomografía por emisión de positrones con FDG tuvo escaso valor para el estadio T, pero resultó útil para valorar ganglios y metástasis a distancia.",
+        "es": "En 57 pacientes con carcinoma del cardias o del fondo gástrico, la tomografía por emisión de positrones con FDG aportó poco para establecer el estadio T, aunque se mostró prometedora para la estadificación ganglionar y a distancia.",
         "cites": [
           "PMID:16784672"
         ]
@@ -1652,7 +1652,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En biopsias de 38 niños sanos, el cuerpo del estómago fue la región del tubo digestivo con menos eosinófilos en la mucosa, con una media de 7.6 ± 6.5 por campo de gran aumento.",
+        "es": "En biopsias de 38 niños sanos, el cuerpo del estómago fue la región del tubo digestivo con menos eosinófilos en la mucosa, con una media de 7,6 ± 6,5 por campo de gran aumento.",
         "cites": [
           "PMID:27045513"
         ]
@@ -1666,7 +1666,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 1846 tumores del estroma gastrointestinal gástrico operados en 10 centros, el cuerpo del estómago fue la localización más frecuente (42.3 %), seguido del fondo (39.8 %).",
+        "es": "En 1846 tumores del estroma gastrointestinal gástrico operados en 10 centros, el cuerpo del estómago fue la localización más frecuente (42,3 %), seguido del fondo (39,8 %).",
         "cites": [
           "PMID:27928796"
         ]
@@ -1717,21 +1717,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Los cambios atróficos inducidos por Helicobacter pylori avanzan desde el antro hacia el cuerpo siguiendo la curvatura menor, y por ello el antro y la curvatura menor son las zonas más afectadas por el cáncer gástrico resecado.",
+        "es": "En las series de cánceres gástricos resecados predominan el antro y la curvatura menor, que son también las zonas por donde avanza, del antro hacia el cuerpo, la atrofia inducida por Helicobacter pylori.",
         "cites": [
           "PMID:31496141"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 768 pacientes operados de carcinoma del cardias, la estación ganglionar de la curvatura menor presentó metástasis en el 41.9 % de los casos.",
+        "es": "En 768 pacientes operados de carcinoma del cardias, la estación ganglionar de la curvatura menor presentó metástasis en el 41,9 % de los casos.",
         "cites": [
           "PMID:29178100"
         ]
       },
       {
-        "aspect": "relations",
-        "es": "Los tumores del estroma gastrointestinal situados en la curvatura menor se extirparon con asistencia robótica porque requerían movilizar el órgano o implicaban riesgo de lesionar grandes vasos.",
+        "aspect": "clinical",
+        "es": "En una serie de 24 pacientes, los tumores del estroma gastrointestinal de la curvatura menor se extirparon con asistencia robótica, ya que exigían movilizar el órgano o suponían riesgo de lesionar grandes vasos.",
         "cites": [
           "PMID:26031949"
         ]
@@ -1763,7 +1763,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Entre 1028 cirugías citorreductoras con quimioterapia intraperitoneal, seis pacientes (0.58 %) sufrieron una perforación gástrica precoz, con defectos situados en la curvatura mayor o cerca de ella.",
+        "es": "Entre 1028 cirugías citorreductoras con quimioterapia intraperitoneal, seis pacientes (0,58 %) sufrieron una perforación gástrica precoz, con defectos situados en la curvatura mayor o cerca de ella.",
         "cites": [
           "PMID:28187769"
         ]
@@ -1789,21 +1789,21 @@
       },
       {
         "aspect": "clinical",
-        "es": "En el ensayo KLASS-04, con 256 pacientes, conservar el píloro redujo la formación de cálculos biliares (2.33 % frente a 8.66 %), pero aumentó la esofagitis por reflujo y el vaciamiento gástrico retardado grave.",
+        "es": "En el ensayo KLASS-04, con 256 pacientes, conservar el píloro redujo la formación de cálculos biliares (2,33 % frente a 8,66 %), pero aumentó la esofagitis por reflujo y el vaciamiento gástrico retardado grave.",
         "cites": [
           "PMID:39219553"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 611 gastrectomías con preservación pilórica por cáncer gástrico precoz, la complicación más frecuente fue la estasis gástrica (8.0 %) y la supervivencia a 5 años alcanzó el 96.3 %.",
+        "es": "En 611 gastrectomías con preservación pilórica por cáncer gástrico precoz, la complicación más frecuente fue la estasis gástrica (8,0 %) y la supervivencia a 5 años alcanzó el 96,3 %.",
         "cites": [
           "PMID:18690631"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 260 duodenopancreatectomías con preservación del píloro, se diagnosticó vaciamiento gástrico retardado en el 13.8 % de los pacientes.",
+        "es": "En 260 duodenopancreatectomías con preservación del píloro, se diagnosticó vaciamiento gástrico retardado en el 13,8 % de los pacientes.",
         "cites": [
           "PMID:20961369"
         ]
@@ -1828,35 +1828,35 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 99 adultos asintomáticos estudiados con tomografía, el diámetro medio del colédoco fue de 6.14 ± 1.95 mm, con un rango de 2.4 a 12.7 mm.",
+        "es": "En 99 adultos asintomáticos estudiados con tomografía, el diámetro medio del colédoco fue de 6,14 ± 1,95 mm, con un rango de 2,4 a 12,7 mm.",
         "cites": [
           "PMID:29214447"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En ese mismo grupo, el colédoco era más ancho en quienes tenían calcificación de la aorta abdominal (7.39 frente a 5.29 mm de media).",
+        "es": "En ese mismo grupo, el colédoco era más ancho en quienes tenían calcificación de la aorta abdominal (7,39 frente a 5,29 mm de media).",
         "cites": [
           "PMID:29214447"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 778 ecografías pediátricas sin patología, el diámetro medio del colédoco fue de 1.24 ± 0.54 mm antes del año, 1.97 ± 0.71 mm entre 1 y 10 años y 2.98 ± 1.17 mm después de los 10 años.",
+        "es": "En 778 ecografías pediátricas sin patología, el diámetro medio del colédoco fue de 1,24 ± 0,54 mm antes del año, 1,97 ± 0,71 mm entre 1 y 10 años y 2,98 ± 1,17 mm después de los 10 años.",
         "cites": [
           "PMID:30922684"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 1000 colangiografías operatorias, la papila biliar duodenal ocupaba una posición anómala en al menos el 13 % de los pacientes.",
+        "es": "Un estudio de 1000 colangiografías operatorias concluyó que, con alta probabilidad, la papila biliar duodenal estaba en posición anómala en al menos el 13 % de los pacientes.",
         "cites": [
           "PMID:984933"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Los cálculos del colédoco afectan a alrededor del 10 % de los pacientes con colelitiasis sintomática.",
+        "es": "Alrededor de uno de cada diez pacientes con colelitiasis sintomática tiene también cálculos en el colédoco.",
         "cites": [
           "PMID:31810810",
           "PMID:12958681"
@@ -1875,7 +1875,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La tercera porción del duodeno cruza en el ángulo que forman la aorta y la arteria mesentérica superior, y su compresión en ese punto produce el síndrome de la arteria mesentérica superior.",
+        "es": "El síndrome de la arteria mesentérica superior se debe a que la tercera porción del duodeno queda comprimida en la pinza que forma esa arteria con la aorta.",
         "cites": [
           "PMID:17476104"
         ]
@@ -1921,14 +1921,14 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "La arteria mesentérica inferior irriga la parte distal del colon transverso, el colon descendente, el sigmoide y el recto.",
+        "es": "El territorio de la arteria mesentérica inferior abarca el colon transverso distal, el descendente, el sigmoide y el recto.",
         "cites": [
           "PMID:40501156"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En angiotomografías de 105 cuerpos, la arteria cólica izquierda tenía un tronco corto (media de 2.4 mm) en el 38.1 % de los casos y uno largo (media de 42.6 mm) en el 61.9 %.",
+        "es": "En angiotomografías de 105 cuerpos, la arteria cólica izquierda tenía un tronco corto (media de 2,4 mm) en el 38,1 % de los casos y uno largo (media de 42,6 mm) en el 61,9 %.",
         "cites": [
           "PMID:40501156"
         ]
@@ -1942,21 +1942,21 @@
       },
       {
         "aspect": "irrigation",
-        "es": "En 20 pacientes con la arteria mesentérica inferior ocluida durante la cirugía de un aneurisma aórtico, el área de sección de la arteria cólica izquierda aumentó de 4.34 a 6.34 mm2.",
+        "es": "En 20 pacientes con la arteria mesentérica inferior ocluida durante la cirugía de un aneurisma aórtico, el área de sección de la arteria cólica izquierda aumentó de 4,34 a 6,34 mm².",
         "cites": [
           "PMID:34593471"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En un metaanálisis de 5917 pacientes operados de cáncer de sigmoide o recto, la ligadura alta de la arteria mesentérica inferior se asoció a más dehiscencias anastomóticas que la baja (9.8 % frente a 7.0 %).",
+        "es": "En un metaanálisis de 5917 pacientes operados de cáncer de sigmoide o recto, la ligadura alta de la arteria mesentérica inferior se asoció a más dehiscencias anastomóticas que la baja (9,8 % frente a 7,0 %).",
         "cites": [
           "PMID:30071856"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 30 cadáveres frescos, la ligadura vascular alta proporcionó una ganancia media de longitud del colon de 19.1 cm, frente a 8.8 cm con la ligadura baja.",
+        "es": "En 30 cadáveres frescos, la ligadura vascular alta proporcionó una ganancia media de longitud del colon de 19,1 cm, frente a 8,8 cm con la ligadura baja.",
         "cites": [
           "PMID:22513429"
         ]
@@ -1967,21 +1967,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La estenosis de la arteria renal es la causa principal de hipertensión renovascular y conduce a una nefropatía isquémica.",
+        "es": "La principal causa de hipertensión renovascular es la estenosis de la arteria renal, que acaba produciendo una nefropatía isquémica.",
         "cites": [
           "PMID:26538439"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las arterias renales pueden afectarse por aterosclerosis, displasia fibromuscular, arteritis de Takayasu, aneurismas y disecciones aórticas de tipo B que se extienden a ellas.",
+        "es": "Entre las enfermedades que pueden comprometer las arterias renales figuran la aterosclerosis, la displasia fibromuscular, la arteritis de Takayasu, los aneurismas y las disecciones aórticas de tipo B que se prolongan hacia ellas.",
         "cites": [
           "PMID:34107749"
         ]
       },
       {
         "aspect": "relations",
-        "es": "La posición de las arterias renales respecto de un aneurisma de aorta abdominal determina en gran medida las opciones de tratamiento endovascular y el pronóstico.",
+        "es": "Ante un aneurisma de aorta abdominal, el lugar donde nacen las arterias renales respecto de él pesa de forma decisiva en las opciones de tratamiento endovascular y en el pronóstico a largo plazo.",
         "cites": [
           "PMID:34107749"
         ]
@@ -2019,21 +2019,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En angiotomografías de 400 adultos (819 arterias), el origen más común de la arteria testicular fue la aorta abdominal, por debajo de las arterias renales y a menos de 5 cm de ellas: 70.7 % a la derecha y 75.6 % a la izquierda.",
+        "es": "En angiotomografías de 400 adultos (819 arterias), el origen más común de la arteria testicular fue la aorta abdominal, por debajo de las arterias renales y a menos de 5 cm de ellas: 70,7 % a la derecha y 75,6 % a la izquierda.",
         "cites": [
           "PMID:34364047"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esa serie, el trayecto esperado se observó en el 76.3 % de las arterias testiculares derechas y en el 82.6 % de las izquierdas.",
+        "es": "En esa serie, el trayecto esperado se observó en el 76,3 % de las arterias testiculares derechas y en el 82,6 % de las izquierdas.",
         "cites": [
           "PMID:34364047"
         ]
       },
       {
         "aspect": "relations",
-        "es": "La arteria testicular tiene un origen alto o aberrante en alrededor del 20 % de los casos, y en un 5-6 % nace de una arteria renal principal o supernumeraria.",
+        "es": "Alrededor de un 20 % de las arterias testiculares tienen un origen alto o aberrante, y en un 5-6 % de esos casos nacen de una arteria renal principal o supernumeraria.",
         "cites": [
           "PMID:8128346"
         ]
@@ -2058,14 +2058,14 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "La arteria gástrica izquierda contribuye a irrigar el fondo gástrico, y su embolización reduce ese aporte y disminuye la grelina sérica.",
+        "es": "Embolizar la arteria gástrica izquierda recorta el riego sanguíneo del fondo gástrico y hace bajar la grelina en sangre.",
         "cites": [
           "PMID:26700353"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 120 cadáveres adultos, la arteria gástrica posterior se identificó en el 81.6 % y su origen más frecuente fue la arteria gástrica izquierda (41.8 %).",
+        "es": "En 120 cadáveres adultos, la arteria gástrica posterior se identificó en el 81,6 % y su origen más frecuente fue la arteria gástrica izquierda (41,8 %).",
         "cites": [
           "PMID:17563830"
         ]
