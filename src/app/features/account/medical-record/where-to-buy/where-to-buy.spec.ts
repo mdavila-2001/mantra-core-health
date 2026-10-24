@@ -31,6 +31,7 @@ import {
   cartLinesFromDraft,
   coberturaConSeguro,
   ordenarSedes,
+  pendingImagingStudies,
   WhereToBuy,
   type ItemDeReceta,
 } from './where-to-buy';
@@ -367,19 +368,85 @@ describe('WhereToBuy', () => {
     expect(texto()).toContain('Sucursal Centro');
   });
 
-  /* ---- carril 19: pestaña en la URL, recorrido y «Cómo llegar» ------------ */
+  /* ---- carril 19: pestaña en la URL, recorrido, «Cómo llegar», imagenología -- */
 
-  it('abre la pestaña que pide la URL', async () => {
+  /** Dos órdenes de imagen sin resultado y una de laboratorio que no cuenta. */
+  const ORDENES_PROPIAS = {
+    patientProfileId: 'pp-1',
+    limit: 50,
+    truncated: false,
+    items: [
+      { id: 'o-1', codeConceptId: 'c-rx', categoryConceptId: 'cat-img', statusConceptId: 's-1', createdAt: '2026-10-01T10:00:00Z', hasReleasedResult: false },
+      { id: 'o-2', codeConceptId: 'c-eco', statusConceptId: 's-1', createdAt: '2026-10-02T10:00:00Z', hasReleasedResult: false },
+      { id: 'o-3', codeConceptId: 'c-hemo', categoryConceptId: 'cat-lab', statusConceptId: 's-1', createdAt: '2026-10-03T10:00:00Z', hasReleasedResult: false },
+    ],
+  };
+
+  const CONCEPTOS_DE_ORDENES = {
+    items: [
+      { conceptId: 'c-rx', code: 'STUDY-RX-TORAX', display: 'Radiografía de tórax', codeSystemVersionId: 'v1' },
+      { conceptId: 'c-eco', code: 'STUDY-ECO-ABD', display: 'Ecografía abdominal', codeSystemVersionId: 'v1' },
+      { conceptId: 'c-hemo', code: 'STUDY-HEMOGRAMA', display: 'Hemograma', codeSystemVersionId: 'v1' },
+      { conceptId: 'cat-img', code: 'SRQ-IMAGING', display: 'Imagenología', codeSystemVersionId: 'v1' },
+      { conceptId: 'cat-lab', code: 'SRQ-LAB', display: 'Laboratorio', codeSystemVersionId: 'v1' },
+    ],
+  };
+
+  const centro = (id: string, name: string, complete: boolean, missingStudyConceptIds: string[]) => ({
+    id,
+    code: id,
+    name,
+    type: { code: 'DU_TYPE_IMAGING', display: 'Centro de imagenología' },
+    siteCount: 1,
+    equipmentCount: 1,
+    studyCount: 2,
+    acceptsExternalOrders: true,
+    walkInAvailable: null,
+    homeCollectionAvailable: false,
+    tenantId: 't-img',
+    rating: null,
+    ratingCount: 0,
+    minAmount: null,
+    complete,
+    missingStudyConceptIds,
+    distanceKm: null,
+    addressText: 'Av. Busch 120',
+    latitude: -17.77,
+    longitude: -63.19,
+  });
+
+  it('abre la pestaña que pide la URL y busca todos los estudios de imagen en una sola consulta', async () => {
     await montar('m-1', '?tab=imaging');
     responderHastaProductos();
     http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES_PROPIAS);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    const busqueda = http.expectOne((r) => r.url === '/diagnostic-units/search');
+    // El laboratorio no entra: la búsqueda es de imagenología.
+    expect(busqueda.request.params.get('studyConceptIds')).toBe('c-rx,c-eco');
+    expect(busqueda.request.params.get('kind')).toBe('IMAGING');
+    busqueda.flush({
+      items: [
+        centro('u-1', 'Centro de Imagen Sur', true, []),
+        centro('u-2', 'Imagen Norte', false, ['c-eco']),
+      ],
+      total: 2,
+      limit: 20,
+      offset: 0,
+    });
     harness.detectChanges();
 
     const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
     expect(pestanas[1]?.getAttribute('aria-selected')).toBe('true');
-    expect(texto()).toContain('Todavía no podemos decirle qué centro tiene todos sus estudios');
+    expect(texto()).toContain('Estudios pendientes: Radiografía de tórax, Ecografía abdominal');
+    expect(texto()).toContain('Centro de Imagen Sur');
+    expect(texto()).toContain('Le falta: Ecografía abdominal');
+    const comoLlegar = harness.routeNativeElement?.querySelector<HTMLAnchorElement>(
+      '[data-testid="imagen-lista"] a[href*="google.com/maps"]',
+    );
+    expect(comoLlegar?.getAttribute('target')).toBe('_blank');
+    expect(comoLlegar?.getAttribute('rel')).toBe('noopener noreferrer');
   });
-
 
   it('deja la pestaña elegida en la URL', async () => {
     await montar();
@@ -1539,3 +1606,33 @@ describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
 function byTestId(id: string): string {
   return `[data-testid="${id}"]`;
 }
+
+describe('pendingImagingStudies con los códigos de la API', () => {
+  const concepto = (conceptId: string, code: string, display: string) =>
+    [conceptId, { conceptId, code, display, codeSystemVersionId: 'v1' }] as const;
+  const labels = new Map([
+    concepto('c-eco', 'diagnostic_units:STUDY_ABDOMINAL_ULTRASOUND', 'Abdominal ultrasound'),
+    concepto('c-rx', 'diagnostic_units:STUDY_CHEST_XRAY', 'Chest X-ray'),
+    concepto('c-glu', 'diagnostic_units:STUDY_GLUCOSE', 'Blood glucose test'),
+    concepto('cat-img', 'diagnostics:SERVICE_REQUEST_CATEGORY_IMAGING', 'Imaging'),
+  ]);
+  const orden = (id: string, codeConceptId: string, categoryConceptId?: string) => ({
+    id,
+    codeConceptId,
+    categoryConceptId,
+    statusConceptId: 's-1',
+    createdAt: new Date('2026-10-01T10:00:00Z'),
+    hasReleasedResult: false,
+  });
+
+  it('reconoce la imagen por la categoría real o, sin categoría, por el estudio; el laboratorio no entra', () => {
+    const estudios = pendingImagingStudies(
+      [orden('o-1', 'c-rx', 'cat-img'), orden('o-2', 'c-eco'), orden('o-3', 'c-glu')],
+      labels,
+    );
+    expect(estudios).toEqual([
+      { conceptId: 'c-rx', name: 'Chest X-ray' },
+      { conceptId: 'c-eco', name: 'Abdominal ultrasound' },
+    ]);
+  });
+});
