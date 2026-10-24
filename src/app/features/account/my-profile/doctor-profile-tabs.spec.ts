@@ -93,6 +93,10 @@ describe('las pestañas de la ficha del médico', () => {
     expect(ENROLLMENT_WITHOUT_TAB_FIELDS['gpsTrabajo']).toContain('lugar de trabajo');
   });
 
+  it('muestra el teléfono de contacto del consultorio en Dónde atiendo', () => {
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['officeContactPhone']).toBe(PESTANA_MEDICO.dondeAtiendo);
+  });
+
   /** Un campo no puede estar en los dos mapas: sería mostrarse y no mostrarse. */
   it('ninguna ausencia aparece además con pestaña', () => {
     for (const campo of Object.keys(ENROLLMENT_WITHOUT_TAB_FIELDS)) {
