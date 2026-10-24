@@ -335,3 +335,56 @@
   }
 
 }
+
+.atlas3d__descripcion p {
+  margin: 0 0 var(--sp-2);
+}
+
+.atlas3d__aspecto {
+  margin: var(--sp-3) 0 var(--sp-1);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.atlas3d__cita {
+  margin-inline-start: 0.15em;
+  font-size: var(--fs-caption);
+  vertical-align: super;
+  line-height: 0;
+}
+
+.atlas3d__bibliografia {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.atlas3d__imagenes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: var(--sp-3);
+}
+
+.atlas3d__figura {
+  margin: 0;
+}
+
+.atlas3d__figura img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.atlas3d__figura figcaption {
+  margin-block-start: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}

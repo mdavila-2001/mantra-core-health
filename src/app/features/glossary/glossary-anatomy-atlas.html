@@ -141,6 +141,25 @@
                         }
                       </dd>
                     </div>
+                    <div>
+                      <dt>Terminologia Anatomica 2</dt>
+                      @if (ficha.ta2; as ta2) {
+                        <dd data-testid="atlas3d-ta2">
+                          TA2 {{ ta2.code }}
+                          @if (ta2.la) {
+                            · <span lang="la">{{ ta2.la }}</span>
+                          }
+                          <span class="atlas3d__marca">
+                            Cruce por FMA:{{ ta2.fma }} en
+                            <a [href]="'https://www.wikidata.org/wiki/' + ta2.wikidata" target="_blank" rel="noopener noreferrer">Wikidata {{ ta2.wikidata }}</a>,
+                            comprobado en el vocabulario de la
+                            <a href="https://ta2viewer.openanatomy.org/" target="_blank" rel="noopener noreferrer">FIPAT</a>
+                          </span>
+                        </dd>
+                      } @else {
+                        <dd class="atlas3d__vacio" data-testid="atlas3d-sin-ta2">Sin código: ningún FMA de esta ficha lleva a un único término TA2.</dd>
+                      }
+                    </div>
                     @if (ficha.regions.length > 0) {
                       <div>
                         <dt>Región</dt>
@@ -172,6 +191,88 @@
                   } @else {
                     <p class="atlas3d__vacio" data-testid="atlas3d-sin-definicion">
                       La ontología no publica una definición para esta estructura, y no se completa a mano.
+                    </p>
+                  }
+
+                  <h3 class="atlas3d__subtitulo">Descripción extendida</h3>
+                  @if (ficha.extendedDescription; as ext) {
+                    @if (ext.status === 'described') {
+                      <p class="atlas3d__marca">
+                        Redactada con asistencia de inteligencia artificial y sin revisión humana: cada frase resume, con otras
+                        palabras, lo que dice el resumen del artículo citado entre corchetes. Lo que la literatura revisada no
+                        dice no se completa.
+                      </p>
+                      <div class="atlas3d__descripcion" data-testid="atlas3d-descripcion">
+                        @for (grupo of sentenceGroups(); track grupo.aspect) {
+                          <h4 class="atlas3d__aspecto">{{ grupo.label }}</h4>
+                          <p>
+                            @for (frase of grupo.sentences; track $index) {
+                              {{ frase.es }}
+                              @for (n of frase.refs; track n) {<a class="atlas3d__cita" [href]="'#atlas3d-fuente-' + n" [attr.aria-label]="'Fuente ' + n">[{{ n }}]</a>}
+                            }
+                          </p>
+                        }
+                      </div>
+                      @if (ext.missingAspects.length > 0) {
+                        <p class="atlas3d__vacio" data-testid="atlas3d-aspectos-sin-fuente">
+                          Sin fuente en la literatura revisada, y por eso vacío: {{ missingAspectsLabel(ext.missingAspects) }}.
+                        </p>
+                      }
+                      <h4 class="atlas3d__aspecto">Artículos citados</h4>
+                      <ol class="atlas3d__bibliografia" data-testid="atlas3d-bibliografia">
+                        @for (fuente of ext.sources; track fuente.id; let i = $index) {
+                          <li [id]="'atlas3d-fuente-' + (i + 1)">
+                            <span lang="en">{{ fuente.title }}</span>
+                            {{ fuente.journal }}{{ fuente.year ? '. ' + fuente.year : '' }}.
+                            <a [href]="'https://pubmed.ncbi.nlm.nih.gov/' + fuente.pmid + '/'" target="_blank" rel="noopener noreferrer">PMID {{ fuente.pmid }}</a>
+                            @if (fuente.doi) {
+                              · <a [href]="'https://doi.org/' + fuente.doi" target="_blank" rel="noopener noreferrer">DOI {{ fuente.doi }}</a>
+                            }
+                          </li>
+                        }
+                      </ol>
+                    } @else {
+                      <p class="atlas3d__vacio" data-testid="atlas3d-sin-literatura">
+                        Se buscó «{{ ext.searchedQuery }}» en PubMed y Europe PMC y ningún resumen encontrado sustenta una frase
+                        sobre esta estructura: queda vacía, y no se completa a mano.
+                      </p>
+                    }
+                  } @else {
+                    <p class="atlas3d__vacio" data-testid="atlas3d-no-buscada">
+                      No disponible: la búsqueda de literatura cubrió las estructuras con pieza 3D o con lámina de Netter, y
+                      esta no es una de ellas.
+                    </p>
+                  }
+
+                  <h3 class="atlas3d__subtitulo">Imágenes</h3>
+                  @if (ficha.images.length > 0) {
+                    <div class="atlas3d__imagenes" data-testid="atlas3d-imagenes">
+                      @for (imagen of ficha.images; track imagen.file) {
+                        <figure class="atlas3d__figura">
+                          <img
+                            [src]="imagen.thumbUrl"
+                            [alt]="imagen.altEs"
+                            [width]="imagen.width"
+                            [height]="imagen.height"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          <figcaption>
+                            {{ imagen.altEs }}. {{ imagen.author }} ·
+                            @if (imagen.licenseUrl) {
+                              <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+                            } @else {
+                              {{ imagen.license }}
+                            }
+                            · <a [href]="imagen.pageUrl" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a>
+                          </figcaption>
+                        </figure>
+                      }
+                    </div>
+                  } @else {
+                    <p class="atlas3d__vacio" data-testid="atlas3d-sin-imagen">
+                      Sin imagen: sólo se publica una imagen de Wikimedia Commons cuyo autor y licencia se leyeron de su API, y
+                      para esta estructura no hay ninguna así.
                     </p>
                   }
 
@@ -241,11 +342,6 @@
                       }
                     </ul>
                   }
-                  <h3 class="atlas3d__subtitulo">Imágenes</h3>
-                  <p class="atlas3d__vacio">
-                    Sin imágenes: la licencia y el autor de cada imagen de Wikimedia Commons deben leerse de su API, que
-                    no estuvo accesible. No se publica una imagen sin licencia comprobada.
-                  </p>
                 </app-tab>
               </app-tabs>
             } @else {

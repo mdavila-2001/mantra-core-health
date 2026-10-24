@@ -1,0 +1,13 @@
+{
+ "UBERON:0000359": {"labelEs": "glándula prepucial", "definitionEs": "Glándulas sebáceas modificadas, pares y lobuladas, situadas en la región inguinal junto al pene y la vagina, con funciones feromonales en los roedores machos; en los machos, la glándula prepucial desemboca en la cavidad prepucial y, en las hembras, el conducto de la glándula prepucial (o clitoral) desemboca en la fosa del clítoris."},
+ "UBERON:0001489": {"labelEs": "articulación de la mano", "definitionEs": "Articulación esquelética que forma parte de la mano [definición generada automáticamente]."},
+ "UBERON:0002113": {"labelEs": "riñón", "definitionEs": "Órgano par de las vías urinarias que produce la orina y mantiene la homeostasis de los líquidos corporales, la presión arterial, el pH, la producción de glóbulos rojos y la mineralización del esqueleto."},
+ "UBERON:0002451": {"labelEs": "glándula endometrial", "definitionEs": "Glándula secretora de moco asociada a la mucosa que reviste el útero."},
+ "UBERON:0002460": {"labelEs": "vena vesical", "definitionEs": "Tributaria de la vena ilíaca que drena la vejiga urinaria."},
+ "UBERON:0003839": {"labelEs": "articulación del miembro anterior", "definitionEs": "Articulación de un miembro que forma parte de un miembro anterior [definición generada automáticamente]."},
+ "UBERON:0003840": {"labelEs": "articulación del miembro posterior", "definitionEs": "Articulación de un miembro que forma parte de un miembro posterior [definición generada automáticamente]."},
+ "UBERON:0010425": {"labelEs": "narina interna", "definitionEs": "Narina situada dentro de la cavidad nasal que comunica con la faringe."},
+ "UBERON:0011677": {"labelEs": "vértebra del tronco", "definitionEs": "Vértebra de la región del tronco. En los tetrápodos incluye las vértebras lumbares y torácicas. Excluye las vértebras caudales o coccígeas, situadas posteriormente. En los tetrápodos incluye las vértebras torácicas, lumbares y sacras, y excluye las cervicales, situadas anteriormente."},
+ "UBERON:0012247": {"labelEs": "glándula cervical", "definitionEs": "Glándulas secretoras de moco de la mucosa del cuello uterino."},
+ "UBERON:0014381": {"labelEs": "remolino de pelo", "definitionEs": "Zona de pelo que crece en sentido opuesto al del resto del pelo."}
+}

@@ -52,9 +52,11 @@ import {
   DEFAULT_LAYERS,
   displayName,
   groupRelations,
+  groupSentences,
   LAYER_LABELS,
   LAYER_ORDER,
   meshesOf,
+  missingAspectsLabel,
   normalizeSearch,
   ontologyUrl,
   partVisibleFor,
@@ -123,6 +125,7 @@ export class GlossaryAnatomyAtlas {
   protected readonly layerLabels = LAYER_LABELS;
   protected readonly displayName = displayName;
   protected readonly ontologyUrl = ontologyUrl;
+  protected readonly missingAspectsLabel = missingAspectsLabel;
   protected readonly modelUrls: Readonly<Record<AnatomyLayer, string>> = {
     skeleton: this.atlas.modelUrl('skeleton.glb'),
     muscles: this.atlas.modelUrl('muscles.glb'),
@@ -186,6 +189,12 @@ export class GlossaryAnatomyAtlas {
   protected readonly relationGroups = computed(() => {
     const ficha = this.structure();
     return ficha === null ? [] : groupRelations(ficha, this.withMesh(), this.inCatalog(), this.drawn());
+  });
+
+  /** Las frases de la descripción extendida, por aspecto y con sus citas numeradas. */
+  protected readonly sentenceGroups = computed(() => {
+    const descripcion = this.structure()?.extendedDescription;
+    return descripcion?.status === 'described' ? groupSentences(descripcion) : [];
   });
 
   /** Las láminas de Netter donde aparece la estructura, sin repetir y en orden. */

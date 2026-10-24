@@ -18,14 +18,21 @@
  * - `public/anatomy-atlas-3d/models/parts-manifest.json`: qué malla está en qué
  *   capa y si es exclusiva de un sexo (lo escribe `build_models.py`).
  *
+ * - `data/anatomy-ontology/ta2.json`: el código TA2 (FIPAT) de cada ficha que
+ *   se pudo cruzar por FMA, de `tools/anatomy-atlas-3d/fetch_ta2.py`.
+ * - `data/anatomy-ontology/literature/`: la descripción extendida. `searched.json`
+ *   dice qué fichas se buscaron en PubMed y Europe PMC
+ *   (`tools/anatomy-atlas-3d/fetch_literature.py`); `R0N.json` (o `R0N-k.json`, un archivo por lote de redacción), las frases
+ *   parafraseadas de los resúmenes, cada una con su PMID; `sources.json`, los
+ *   datos bibliográficos de cada PMID citado. Una ficha buscada sin frases queda
+ *   como `no_source`; una no buscada, `null`.
+ * - `data/anatomy-ontology/images/*.json`: imágenes de Wikimedia Commons con
+ *   autor y licencia leídos de su API `extmetadata`.
+ *
  * ## Lo que NO trae, y por qué
  *
- * - **Descripción extendida con literatura.** Exigía PubMed, Europe PMC,
- *   OpenAlex y Crossref para citar y comprobar cada afirmación, y la red de la
- *   sesión que armó esto no los alcanzaba. Queda `null`, con su motivo, y la
- *   ficha lo dice. No se escribe de memoria.
- * - **Imágenes de Wikimedia Commons.** Igual: sin la API `extmetadata` no hay
- *   autor ni licencia comprobables, así que no hay imagen.
+ * - **Afirmaciones sin cita.** Una frase de la descripción extendida sin PMID
+ *   que esté en `sources.json` hace fallar al generador: no se publica.
  * - **Relaciones que UBERON no declara.** Las inversas que se publican
  *   (`incoming`) son la misma afirmación leída desde la otra punta, no una nueva.
  *
@@ -121,6 +128,45 @@ function clasificarReferencia(ref) {
   return { kind: 'xref', value: ref };
 }
 
+/** Los aspectos de la descripción extendida, en el orden en que se muestran. */
+const ASPECTOS = ['situation', 'parts', 'relations', 'irrigation', 'innervation', 'function', 'clinical'];
+
+/** Lo que se buscó, lo que se redactó y la bibliografía citada. */
+function leerLiteratura() {
+  const carpeta = join(DATOS, 'literature');
+  if (!existsSync(join(carpeta, 'searched.json'))) return { buscadas: new Map(), frases: {}, fuentes: {} };
+  const buscadas = new Map(leerJson(join(carpeta, 'searched.json')).structures.map((b) => [b.id, b]));
+  const fuentes = leerJson(join(carpeta, 'sources.json'));
+  const frases = {};
+  for (const a of readdirSync(carpeta).filter((a) => /^R\d\d(-\d+)?\.json$/.test(a)).sort()) Object.assign(frases, leerJson(join(carpeta, a)));
+  for (const [id, d] of Object.entries(frases)) {
+    if (!buscadas.has(id)) throw new Error(`literatura: ${id} tiene frases pero no figura en searched.json`);
+    for (const f of d.sentences) {
+      if (!ASPECTOS.includes(f.aspect)) throw new Error(`literatura: ${id} usa un aspecto desconocido «${f.aspect}»`);
+      if (!f.es?.trim()) throw new Error(`literatura: ${id} tiene una frase vacía`);
+      if (!f.cites?.length) throw new Error(`literatura: ${id} tiene una frase sin cita: «${f.es}»`);
+      for (const c of f.cites) if (!fuentes[c]) throw new Error(`literatura: ${id} cita ${c}, que no está en sources.json`);
+    }
+  }
+  return { buscadas, frases, fuentes };
+}
+
+/** La descripción extendida de una ficha: `null` si no se buscó, `no_source` si la búsqueda no dio con qué. */
+function descripcionExtendida(id, { buscadas, frases, fuentes }) {
+  if (!buscadas.has(id)) return null;
+  const d = frases[id];
+  const oraciones = [...(d?.sentences ?? [])].sort((a, b) => ASPECTOS.indexOf(a.aspect) - ASPECTOS.indexOf(b.aspect));
+  const citadas = [...new Set(oraciones.flatMap((o) => o.cites))];
+  const cubiertos = new Set(oraciones.map((o) => o.aspect));
+  return {
+    status: oraciones.length > 0 ? 'described' : 'no_source',
+    sentences: oraciones.map((o) => ({ aspect: o.aspect, es: o.es, cites: o.cites })),
+    missingAspects: ASPECTOS.filter((a) => !cubiertos.has(a)),
+    sources: citadas.map((c) => ({ id: c, ...fuentes[c] })),
+    searchedQuery: buscadas.get(id).query,
+  };
+}
+
 function main() {
   const uberon = leerJson(join(DATOS, 'uberon-human.json'));
   const piezas = leerJson(join(DATOS, 'bodyparts3d-parts.json'));
@@ -129,6 +175,9 @@ function main() {
   const mapeo = leerCarpeta('netter-mapping', []);
   const castellano = leerCarpeta('es', {});
   const netter = new Map(leerJson(join(RAIZ, 'data', 'netter-anatomia', 'entities.json')).map((e) => [e.id, e]));
+  const ta2 = existsSync(join(DATOS, 'ta2.json')) ? leerJson(join(DATOS, 'ta2.json')) : { mapped: {}, unmapped: [], source: null };
+  const literatura = leerLiteratura();
+  const imagenes = leerCarpeta('images', {});
 
   const porId = new Map(uberon.map((t) => [t.id, t]));
   const nombresExactos = new Map(
@@ -234,8 +283,9 @@ function main() {
       })),
       netter: netterPorEstructura.get(t.id) ?? [],
       meshes: mallasPorEstructura.get(t.id) ?? [],
-      extendedDescription: null,
-      images: [],
+      ta2: ta2.mapped[t.id] ?? null,
+      extendedDescription: descripcionExtendida(t.id, literatura),
+      images: imagenes[t.id] ?? [],
     };
   });
 
@@ -264,8 +314,9 @@ function main() {
       incoming: [],
       netter: [],
       meshes: mallasPorEstructura.get(p.structureId) ?? [],
-      extendedDescription: null,
-      images: [],
+      ta2: ta2.mapped[p.structureId] ?? null,
+      extendedDescription: descripcionExtendida(p.structureId, literatura),
+      images: imagenes[p.structureId] ?? [],
     });
   }
 
@@ -327,6 +378,17 @@ function main() {
     netterUnmapped: cruce.sinCruce.length,
     netterRejected: cruce.rechazadas.length,
     netterNotReviewed: sinRevisar.length,
+    ta2Vocabulary: ta2.source?.vocabulary ?? null,
+    ta2Crosswalk: ta2.source?.crosswalk ?? null,
+    ta2Mapped: fichas.filter((f) => f.ta2).length,
+    ta2Unmapped: fichas.filter((f) => !f.ta2).length,
+    literatureSearched: fichas.filter((f) => f.extendedDescription).length,
+    literatureDescribed: fichas.filter((f) => f.extendedDescription?.status === 'described').length,
+    literatureNoSource: fichas.filter((f) => f.extendedDescription?.status === 'no_source').length,
+    literatureSentences: fichas.reduce((n, f) => n + (f.extendedDescription?.sentences.length ?? 0), 0),
+    literatureSourcesCited: new Set(fichas.flatMap((f) => f.extendedDescription?.sources.map((s) => s.id) ?? [])).size,
+    images: fichas.reduce((n, f) => n + f.images.length, 0),
+    structuresWithImages: fichas.filter((f) => f.images.length > 0).length,
     femaleOnlyStructures: femeninas.length,
     femaleOnlyWithMesh: femeninas.filter((id) => mallasPorEstructura.has(id)).length,
   };
