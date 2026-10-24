@@ -27,7 +27,7 @@ import {
   DepartmentMap,
   type DepartamentoElegible,
 } from '@shared/components/organisms/department-map/department-map';
-import * as cortes from '@shared/directory/public-directory-cuts';
+import * as cuts from '@shared/directory/public-directory-cuts';
 import { departmentByCity } from '@shared/geo/city-department';
 
 import { CentroCard } from '../centro-card/centro-card';
@@ -240,7 +240,7 @@ export class BuscarHospitalesListado {
     // Con la categoría aplicada y sin los cortes de lugar: la cuenta que sirve
     // es «cuántas clínicas privadas hay ahí si voy», no cuántas fichas de
     // cualquier clase.
-    cortes.cuentaPorDepartamento(this.deLaCategoria(), this.porCiudad()),
+    cuts.countByDepartment(this.deLaCategoria(), this.porCiudad()),
   );
 
   /**
@@ -274,7 +274,7 @@ export class BuscarHospitalesListado {
    * de centro— y las otras dos acotan dentro de la respuesta.
    */
   private readonly deLaCategoria = computed<readonly PublicSearchResult[]>(() =>
-    cortes.deLaCategoria(this.todos(), this.categoriaElegida()),
+    cuts.byCategory(this.todos(), this.categoriaElegida()),
   );
 
   /**
@@ -290,9 +290,9 @@ export class BuscarHospitalesListado {
   protected readonly categorias = computed<
     readonly { readonly code: string; readonly label: string }[]
   >(() =>
-    cortes.categoriasPublicadas(
-      cortes.deLaCiudad(
-        cortes.delDepartamento(this.todos(), this.departamentoElegido(), this.porCiudad()),
+    cuts.publishedCategories(
+      cuts.byCity(
+        cuts.byDepartment(this.todos(), this.departamentoElegido(), this.porCiudad()),
         this.ciudad(),
       ),
     ),
@@ -307,7 +307,7 @@ export class BuscarHospitalesListado {
    * quitar el filtro primero.
    */
   private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() =>
-    cortes.delDepartamento(this.deLaCategoria(), this.departamentoElegido(), this.porCiudad()),
+    cuts.byDepartment(this.deLaCategoria(), this.departamentoElegido(), this.porCiudad()),
   );
 
   /**
@@ -317,12 +317,12 @@ export class BuscarHospitalesListado {
    * Vacío sin departamento: el mapa es el corte de arriba.
    */
   protected readonly ciudades = computed<readonly string[]>(() =>
-    this.departamentoElegido() === null ? [] : cortes.ciudadesPublicadas(this.delDepartamento()),
+    this.departamentoElegido() === null ? [] : cuts.publishedCities(this.delDepartamento()),
   );
 
   /** Lo que queda después de los dos cortes de lugar. */
   private readonly filtradas = computed<readonly PublicSearchResult[]>(() =>
-    cortes.deLaCiudad(this.delDepartamento(), this.ciudad()),
+    cuts.byCity(this.delDepartamento(), this.ciudad()),
   );
 
   /** La página que se está viendo, ya en forma de tarjeta. */
@@ -529,14 +529,14 @@ export class BuscarHospitalesListado {
     const termino = this.texto().trim();
     const consulta: PublicSearchQuery = termino === '' ? {} : { q: termino };
 
-    cortes
-      .leerDirectorioEntero((filtros) => this.directorio.searchOrganizations(filtros), consulta)
+    cuts
+      .readWholeDirectory((filtros) => this.directorio.searchOrganizations(filtros), consulta)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ filas, recortado }) => {
-          this.todos.set(filas);
-          this.recortada.set(recortado);
-          this.estado.set(filas.length === 0 ? 'vacio' : 'datos');
+        next: ({ rows, truncated }) => {
+          this.todos.set(rows);
+          this.recortada.set(truncated);
+          this.estado.set(rows.length === 0 ? 'vacio' : 'datos');
         },
         error: () => this.estado.set('error'),
       });

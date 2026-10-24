@@ -22,7 +22,7 @@ import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
-import * as lugares from '@shared/directory/public-directory-cuts';
+import * as placeCuts from '@shared/directory/public-directory-cuts';
 
 import * as cortes from './public-directory-filters';
 
@@ -201,7 +201,7 @@ export abstract class PublicDirectoryListing {
    * pulsar. La cuenta que sirve es la de «cuánto hay ahí si voy».
    */
   protected readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() =>
-    lugares.cuentaPorDepartamento(this.paraElMapa(), this.porCiudad()),
+    placeCuts.countByDepartment(this.paraElMapa(), this.porCiudad()),
   );
 
   /**
@@ -286,12 +286,12 @@ export abstract class PublicDirectoryListing {
    * otra ciudad sin quitar el filtro primero.
    */
   private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() =>
-    lugares.delDepartamento(dataOf(this.estado()) ?? [], this.departamentoElegido(), this.porCiudad()),
+    placeCuts.byDepartment(dataOf(this.estado()) ?? [], this.departamentoElegido(), this.porCiudad()),
   );
 
   /** Las filas que quedan después de los tres cortes en memoria. */
   private readonly filtradas = computed(() =>
-    lugares.deLaCategoria(this.paraLasCategorias(), this.categoria()),
+    placeCuts.byCategory(this.paraLasCategorias(), this.categoria()),
   );
 
   /**
@@ -349,8 +349,8 @@ export abstract class PublicDirectoryListing {
    * por la que `delDepartamento` no lleva el corte de ciudad.
    */
   private readonly paraLasCategorias = computed<readonly PublicSearchResult[]>(() =>
-    lugares
-      .deLaCiudad(this.delDepartamento(), this.ciudad())
+    placeCuts
+      .byCity(this.delDepartamento(), this.ciudad())
       .filter((fila) => cortes.pasaLosCortesComunes(fila, this.cortesComunes())),
   );
 
@@ -367,7 +367,7 @@ export abstract class PublicDirectoryListing {
    */
   protected readonly categoriasDisponibles = computed<
     readonly { readonly code: string; readonly label: string }[]
->(() => lugares.categoriasPublicadas(this.paraLasCategorias()));
+>(() => placeCuts.publishedCategories(this.paraLasCategorias()));
 
   /**
    * Los chips: las ciudades **del departamento elegido**, y la verificación.
@@ -436,8 +436,8 @@ export abstract class PublicDirectoryListing {
       return filtros;
     }
 
-    const ciudades = lugares
-      .ciudadesPublicadas(this.delDepartamento())
+    const ciudades = placeCuts
+      .publishedCities(this.delDepartamento())
       .map((ciudad) => ({ value: ciudad, label: ciudad }));
 
     if (ciudades.length > 1) {
@@ -489,9 +489,9 @@ export abstract class PublicDirectoryListing {
     const termino = this.termino();
     const consulta: PublicSearchQuery = termino === '' ? {} : { q: termino };
 
-    lugares.leerDirectorioEntero((filtros) => this.buscar(filtros), consulta).subscribe({
-      next: ({ filas, recortado }) => {
-        this.recortada.set(recortado);
+    placeCuts.readWholeDirectory((filtros) => this.buscar(filtros), consulta).subscribe({
+      next: ({ rows: filas, truncated }) => {
+        this.recortada.set(truncated);
         this.estado.set(
           filas.length === 0
             ? empty(

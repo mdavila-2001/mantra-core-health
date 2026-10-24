@@ -8,7 +8,7 @@
 <app-directory-page
   titulo="Directorio de médicos"
   [subtitulo]="
-    (enPortada()
+    (showsLanding()
       ? 'Elija una especialidad para ver quién atiende, o busque por nombre. '
       : 'Busque por nombre o elija otra especialidad. ') +
     totalDeProfesionales() +
@@ -16,13 +16,13 @@
   "
   etiquetaBusqueda="Buscar por nombre o especialidad"
   [filtros]="filtros()"
-  [estado]="enPortada() ? recuento() : estado()"
+  [estado]="showsLanding() ? recuento() : estado()"
   [grupos]="tramos()"
   [sustantivo]="sustantivo"
   [aviso]="aviso()"
   [textoSinCoincidencias]="sinCoincidencias()"
   [preventDuplicateNavigation]="true"
-  [portada]="enPortada()"
+  [portada]="showsLanding()"
   vistaPorDefecto="lista"
   claveDeVista="alovida.directorio.vista.medicos"
   (filtrosCambiaron)="filtrar($event)"
@@ -31,7 +31,7 @@
   <!-- La vuelta a la grilla es un enlace y no un botón: limpia la
        especialidad y la búsqueda de la URL, que es exactamente lo que
        significa «ver todas las especialidades». -->
-  @if (!enPortada()) {
+  @if (!showsLanding()) {
     <a
       slot="antes-de-filtros"
       app-button
@@ -65,7 +65,7 @@
             (tarjeta.cantidad === 1 ? ' médico' : ' médicos')
           "
         >
-          <img class="rejilla__foto" [src]="fotoDe(tarjeta.nombre)" alt="" loading="lazy" />
+          <img class="rejilla__foto" [src]="photoOf(tarjeta.nombre)" alt="" loading="lazy" />
           <app-specialty-icon
             class="rejilla__icono"
             aria-hidden="true"

@@ -209,7 +209,7 @@ describe('PractitionersDirectory', () => {
       ]);
       responderConceptos();
 
-      expect(interno<() => boolean>('enPortada')()).toBe(true);
+      expect(interno<() => boolean>('showsLanding')()).toBe(true);
       // `afterEach` verifica que no quedó ninguna lectura de la guía sin pedir:
       // si la grilla trajera la lista, `/profiles/practitioners` quedaría abierta.
       http.expectNone((r) => r.url === '/profiles/practitioners');
@@ -251,7 +251,7 @@ describe('PractitionersDirectory', () => {
       parametros.next({ especialidad: 'esp-cardio' });
       TestBed.tick();
 
-      expect(interno<() => boolean>('enPortada')()).toBe(false);
+      expect(interno<() => boolean>('showsLanding')()).toBe(false);
       const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
       expect(peticion.request.params.get('specialtyConceptId')).toBe('esp-cardio');
       peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
@@ -264,7 +264,7 @@ describe('PractitionersDirectory', () => {
       montar();
       responderRecuento([]);
 
-      expect(interno<() => boolean>('enPortada')()).toBe(false);
+      expect(interno<() => boolean>('showsLanding')()).toBe(false);
       const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
       expect(peticion.request.params.has('specialtyConceptId')).toBe(false);
       peticion.flush({ items: [FILA, OTRA], count: 2, limit: 50, nextCursor: null });
