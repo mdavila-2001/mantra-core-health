@@ -88,9 +88,7 @@ describe('ResultCard', () => {
     expect(resenas.textContent).toContain('4,6');
     expect(resenas.textContent).toContain('(12)');
     expect(resenas.getAttribute('aria-label')).toBe('4,6 de 5 estrellas, 12 opiniones');
-    expect(
-      elemento('.tarjeta-resultado__estrellas-relleno')!.style.inlineSize,
-    ).toBe('92%');
+    expect(elemento('.tarjeta-resultado__estrellas-relleno')!.style.inlineSize).toBe('92%');
     expect(elemento('.tarjeta-resultado__distincion')!.textContent).toContain('Muy recomendado');
   });
 
@@ -245,5 +243,24 @@ describe('ResultCard', () => {
 
     expect(elemento('.tarjeta-resultado__foto')).toBeNull();
     expect(elemento('.tarjeta-resultado__figura')?.textContent?.trim()).toBe('MQ');
+  });
+
+  it('la línea de actividad lleva el pulso; las demás, el pin de ubicación', () => {
+    anfitrion.dato.update((d) => ({
+      ...d,
+      meta: [
+        { text: 'Clínica Los Olivos' },
+        { text: '312 encuentros atendidos', iconKey: 'actividad' },
+      ],
+    }));
+    fixture.detectChanges();
+
+    const iconos = Array.from<SVGElement>(
+      fixture.nativeElement.querySelectorAll('.tarjeta-resultado__meta-icono'),
+    );
+    expect(iconos).toHaveLength(2);
+    expect(iconos[0]!.querySelector('circle')).not.toBeNull();
+    expect(iconos[1]!.querySelector('circle')).toBeNull();
+    expect(iconos[1]!.querySelector('path')?.getAttribute('d')).toBe('M22 12h-4l-3 9L9 3l-3 9H2');
   });
 });

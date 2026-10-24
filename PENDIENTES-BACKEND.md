@@ -2561,3 +2561,10 @@ reintento; visor) y `features/laboratory/summary/`.
 >
 > **Mientras tanto:** la tarjeta del médico dice «Sin reseñas todavía» con las estrellas vacías.
 > No se inventa una nota.
+>
+> **24/10/2026 — implementado en la API (rama de `dev`, PR pendiente de revisión).** El listado
+> manda `ratingAverage`/`ratingCount` y además `activity` (las cuatro cuentas de la ficha:
+> `encounters`, `medicationRequests`, `clinicalNotes`, `documents`), calculados en lote por página.
+> El front ya las usa para el «Ordenar por» de la guía: mejor puntuación, más reseñas, más
+> encuentros atendidos, más recetas, más notas clínicas y más documentos. Hasta que ese PR se
+> despliegue, contra la API real esas opciones dejan el orden como venía.
