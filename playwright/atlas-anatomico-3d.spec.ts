@@ -74,6 +74,40 @@ async function tocarUnaPieza(pagina: Page): Promise<string> {
   throw new Error('Ningún punto del eje del cuerpo abrió una ficha.');
 }
 
+/**
+ * El lienzo tiene dibujo: decodifica en el navegador la captura del propio
+ * lienzo y cuenta los píxeles que se apartan del fondo. Un lienzo vacío pasaba
+ * igual por `data-status="ready"`; esto no.
+ */
+async function lienzoConDibujo(pagina: Page): Promise<{ piezas: number; verdes: number; ocres: number }> {
+  const lienzo = pagina.getByTestId('anatomy-viewer-canvas');
+  await lienzo.scrollIntoViewIfNeeded();
+  await pagina.waitForTimeout(400);
+  const png = (await lienzo.screenshot()).toString('base64');
+  return pagina.evaluate(async (datos) => {
+    // Sin fetch: la CSP de la app (connect-src 'self') no deja pedir un data: URL.
+    const binario = Uint8Array.from(atob(datos), (c) => c.charCodeAt(0));
+    const imagen = await createImageBitmap(new Blob([binario], { type: 'image/png' }));
+    const c = new OffscreenCanvas(imagen.width, imagen.height);
+    const g = c.getContext('2d');
+    if (g === null) throw new Error('sin 2d');
+    g.drawImage(imagen, 0, 0);
+    const px = g.getImageData(0, 0, imagen.width, imagen.height).data;
+    const [r0, g0, b0] = [px[0], px[1], px[2]];
+    let piezas = 0;
+    let verdes = 0;
+    let ocres = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      const [r, gg, b] = [px[i], px[i + 1], px[i + 2]];
+      if (Math.abs(r - r0) + Math.abs(gg - g0) + Math.abs(b - b0) > 30) piezas++;
+      // --c-success-500 (#2E8B6E) y --c-amber-600 (#B78A59), con margen por la luz.
+      if (gg > r + 25 && gg > b + 5) verdes++;
+      if (r > b + 40 && r > gg + 10 && gg > b + 15) ocres++;
+    }
+    return { piezas, verdes, ocres };
+  }, png);
+}
+
 async function comprobarFicha(pagina: Page): Promise<void> {
   await expect(pagina.getByTestId('atlas3d-ficha-titulo')).toBeVisible({ timeout: 30_000 });
   await pagina.getByRole('tab', { name: 'Relacionadas' }).click();

@@ -104,11 +104,24 @@ esa es la regla, y el informe lo dirá.
 | Muestra del 5 % del cruce Netter (41 aceptadas + 118 sin cruce) | **0 falsos positivos de 41**; 2 «omisiones» señaladas (riñón, arterias segmentarias renales) que no lo son: esas clases de UBERON no declaran xref FMA y quedan fuera del criterio (§6) | `audit-a-raw.json` |
 | Revisión de frontend (agente `frontend-reviewer`) | 4 graves + 6 menores: carrera de piezas, liberación de GPU, colores de resaltado que se confundían con capas, falta de evidencia de navegador; todos corregidos | idem |
 | Regresión (agente `regression-auditor`) | sin regresión bloqueante; orden de rutas, guardas, CSP sin tocar, interceptor; 2 menores (cobertura de docs, rutas.json) corregidos | idem |
+| Revisión visual (agente `visual-reviewer`, sobre las capturas) | primera pasada **FAIL 61/100**: lienzo vacío en capturas de página entera, ocre sin evidencia, captura del útero sin la ficha, pestaña cortada a «ha» en 375 px, panel cortado en escritorio; todo corregido y vuelto a capturar con comprobación de píxeles. **No se volvió a pedir una segunda revisión visual**: las capturas finales no tienen veredicto de un revisor | `audit-c-raw.json` |
+| Muestra del 5 % de los nombres de piezas sólo-FMA (13 de 248) | **13/13 OK** | `audit-c-raw.json`, `audit-fma-only-sample.json` |
 | Licencias y procedencia | 3 graves + 3 menores: **texto del índice de Netter (Elsevier) visible** → ahora sólo número de lámina; castellano sin rótulo en varios lugares → aviso de página y marca en el título; lista femenina sin útero → raíces ampliadas; DISCOVERY corregido | idem |
 
 ## 5. Pruebas (salida literal en `gates/`)
 
-PENDIENTE_GATES
+| Compuerta | Resultado | Archivo |
+|---|---|---|
+| `corepack yarn typecheck` | **verde** (EXIT=0) | `gates/typecheck.txt` |
+| `corepack yarn build` | **verde** (EXIT=0). Bundle inicial 1,36 MB, igual que la base: el aviso de presupuesto (620 kB) ya existía en `origin/mockup` (740,05 kB por encima); la rama queda 740,23 kB por encima, +0,18 kB por la entrada de ruta. three.js y el atlas van en trozos diferidos. Lejos del techo de error (1,5 MB) | `gates/build.txt`, `build/` |
+| `corepack yarn test --watch=false` | **rojo, y no por este cambio**: 11 038 pruebas, 77 fallan. **74 fallan igual en `origin/mockup`** (mismos archivos, corridos en un worktree de la base: medication-block, faker, fichas estándar, tokens, rutas viejas, etc.). Las 3 restantes (dos PDF con jsPDF y un temporizador de laboratorio) **pasan aisladas** en la rama (33/33): inestables bajo carga, no relacionadas con el atlas. Las 21 pruebas nuevas del atlas pasan | `gates/test.txt`, `gates/test-base-same-failing-files.txt`, `gates/test-branch-3-extra-failures-isolated.txt` |
+| Playwright `--workers=1` contra `ng serve` | **10/10 verde**: tocar una pieza abre su ficha y sus relaciones en Hombre y Mujer a 375/768/1440 claro y 1440 oscuro; el lienzo tiene dibujo (conteo de píxeles), la pieza elegida se ve en verde y, con el fémur, las relacionadas en ocre; el útero se abre como ficha sin pieza, a la vista y con foco; selección por teclado desde la búsqueda | `gates/playwright.txt`, `screenshots/` |
+
+Una corrida anterior dio verde contra un servidor equivocado (un build de
+producción viejo que un auditor dejó en el puerto 4200); se descartó y se
+volvió a correr contra `ng serve` recién arrancado. Otra corrida mostró que
+las capturas de página entera borraban el lienzo WebGL: las capturas son ahora
+de la zona de trabajo, y la prueba exige píxeles dibujados.
 
 ## 6. Lo que NO se hizo, y por qué
 
@@ -133,7 +146,14 @@ PENDIENTE_GATES
    especies, la segunda sólo sumaba dientes. Pendiente con criterio explícito.
 7. **Revisión humana del castellano.** Todo el castellano es traducción
    automática; la muestra auditada da 97,7 % de frases fieles, no 100 %. Se
-   rotula en pantalla.
+   rotula en pantalla. Los agentes además leyeron como palabras correctas
+   algunos textos de UBERON con caracteres rotos («choanC&» → coanas); el
+   original en inglés se muestra tal cual.
+10. **Suite completa en verde.** No se logró: 74 fallos ya estaban en
+    `origin/mockup`; arreglarlos excede este alcance (§5).
+11. **Segunda revisión visual independiente.** No se pidió tras las
+    correcciones; la evidencia final son las capturas y las aserciones de
+    píxeles de Playwright.
 8. **Integración con el glosario.** Las 6 322 fichas viven en el atlas, no en
    los shards del glosario (`public/glossary-seed/`), que se generan con otra
    tubería; el glosario enlaza al atlas.
