@@ -104,7 +104,7 @@ esa es la regla, y el informe lo dirá.
 | Muestra del 5 % del cruce Netter (41 aceptadas + 118 sin cruce) | **0 falsos positivos de 41**; 2 «omisiones» señaladas (riñón, arterias segmentarias renales) que no lo son: esas clases de UBERON no declaran xref FMA y quedan fuera del criterio (§6) | `audit-a-raw.json` |
 | Revisión de frontend (agente `frontend-reviewer`) | 4 graves + 6 menores: carrera de piezas, liberación de GPU, colores de resaltado que se confundían con capas, falta de evidencia de navegador; todos corregidos | idem |
 | Regresión (agente `regression-auditor`) | sin regresión bloqueante; orden de rutas, guardas, CSP sin tocar, interceptor; 2 menores (cobertura de docs, rutas.json) corregidos | idem |
-| Revisión visual (agente `visual-reviewer`, sobre las capturas) | primera pasada **FAIL 61/100**: lienzo vacío en capturas de página entera, ocre sin evidencia, captura del útero sin la ficha, pestaña cortada a «ha» en 375 px, panel cortado en escritorio; todo corregido y vuelto a capturar con comprobación de píxeles. **No se volvió a pedir una segunda revisión visual**: las capturas finales no tienen veredicto de un revisor | `audit-c-raw.json` |
+| Revisión visual (agente `visual-reviewer`, sobre las capturas) | 1.ª pasada **FAIL 61/100** (lienzo vacío en capturas de página entera, ocre sin evidencia, captura del útero sin ficha, pestaña cortada, panel cortado); corregido. 2.ª pasada (otro agente) **FAIL 79/100**: confirmó las 7 correcciones y halló 1 HIGH («resaltada» de piezas en capa apagada) y 3 MEDIUM; corregidos salvo las insignias de desarrollo. **No hubo tercera pasada**: no hay veredicto de revisor sobre las capturas finales | `audit-c-raw.json`, `audit-visual-2.md` |
 | Muestra del 5 % de los nombres de piezas sólo-FMA (13 de 248) | **13/13 OK** | `audit-c-raw.json`, `audit-fma-only-sample.json` |
 | Licencias y procedencia | 3 graves + 3 menores: **texto del índice de Netter (Elsevier) visible** → ahora sólo número de lámina; castellano sin rótulo en varios lugares → aviso de página y marca en el título; lista femenina sin útero → raíces ampliadas; DISCOVERY corregido | idem |
 
@@ -151,9 +151,11 @@ de la zona de trabajo, y la prueba exige píxeles dibujados.
    original en inglés se muestra tal cual.
 10. **Suite completa en verde.** No se logró: 74 fallos ya estaban en
     `origin/mockup`; arreglarlos excede este alcance (§5).
-11. **Segunda revisión visual independiente.** No se pidió tras las
-    correcciones; la evidencia final son las capturas y las aserciones de
-    píxeles de Playwright.
+11. **Aprobación visual.** Las dos revisiones visuales dieron FAIL (61 y 79
+    sobre 100, con 92 como umbral). Lo hallado se corrigió, pero no se pidió
+    una tercera revisión: las capturas finales no tienen veredicto de un
+    revisor, sólo las aserciones de Playwright (incluido el conteo de píxeles).
+    Por `NO_SELF_APPROVAL`, eso queda para quien revise el PR.
 8. **Integración con el glosario.** Las 6 322 fichas viven en el atlas, no en
    los shards del glosario (`public/glossary-seed/`), que se generan con otra
    tubería; el glosario enlaza al atlas.
