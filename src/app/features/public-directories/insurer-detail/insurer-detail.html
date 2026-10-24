@@ -34,10 +34,26 @@
 
   <section aria-label="Productos y planes">
     <app-section-heading icono="shield" titulo="Productos y planes" [cuantos]="items().length" />
-    <p class="ficha-publica__nota">
-      Lo que cubre cada plan y lo que no, tal como lo publicó la aseguradora. La prima es de lista:
-      el broker le confirma la suya.
-    </p>
+    <!-- Un catálogo de ejemplo no lo publicó la aseguradora: decir «tal como
+         lo publicó» le atribuiría a una compañía real un producto que no
+         vende. Se avisa arriba y se rotula cada plan. -->
+    @if (deEjemplo()) {
+      <app-alert
+        tone="info"
+        title="Planes de ejemplo"
+        class="aseguradora__ejemplo"
+        data-testid="aseguradora-de-ejemplo"
+      >
+        Esta aseguradora todavía no publicó sus planes en AloVida. Los que ve son de ejemplo, para
+        que conozca cómo se comparan: no son una oferta de la compañía. El broker le cuenta qué
+        ofrece de verdad.
+      </app-alert>
+    } @else {
+      <p class="ficha-publica__nota">
+        Lo que cubre cada plan y lo que no, tal como lo publicó la aseguradora. La prima es de
+        lista: el broker le confirma la suya.
+      </p>
+    }
 
     <app-view-state-host [state]="estadoDelCatalogo()" (retry)="recargarCatalogo()">
       <div vsh-skeleton>
@@ -109,6 +125,14 @@
                               @if (plan.mayorCobertura) {
                                 <app-badge variant="primary" size="sm" value="Mayor cobertura" />
                               }
+                              @if (deEjemplo()) {
+                                <app-badge
+                                  variant="secondary"
+                                  size="sm"
+                                  value="De ejemplo"
+                                  data-testid="plan-de-ejemplo"
+                                />
+                              }
                             </div>
                           </div>
 
@@ -175,6 +199,14 @@
                           <h3 class="aseguradora__nombre">{{ plan.nombre }}</h3>
                           @if (plan.mayorCobertura) {
                             <app-badge variant="primary" size="sm" value="Mayor cobertura" />
+                          }
+                          @if (deEjemplo()) {
+                            <app-badge
+                              variant="secondary"
+                              size="sm"
+                              value="De ejemplo"
+                              data-testid="plan-de-ejemplo"
+                            />
                           }
                         </div>
                         <p class="aseguradora__resumen">{{ plan.resumen }}</p>

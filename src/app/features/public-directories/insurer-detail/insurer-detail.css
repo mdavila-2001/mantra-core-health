@@ -190,6 +190,12 @@
   min-inline-size: 0;
 }
 
+/* El aviso de un catálogo de ejemplo ocupa el lugar de la nota de la
+   sección: lleva el mismo aire hasta el buscador. */
+.aseguradora__ejemplo {
+  margin-block-end: var(--sp-4);
+}
+
 /* ---- Buscador, filtros y paginación (ADR-0015, reglas 5 y 7) ----------- */
 
 .aseguradora__filtros {
