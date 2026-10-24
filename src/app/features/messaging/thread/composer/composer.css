@@ -1,18 +1,34 @@
-/* La barra de escribir. Clavada abajo del hilo, con los paneles —emojis,
-   adjuntar, plantillas— abriéndose SOBRE ella: es donde se usan, y arriba del
-   campo se leían como el rótulo del propio campo. */
+/* La barra de escribir. Clavada abajo del hilo, con los paneles —emojis y
+   plantillas— abriéndose SOBRE ella: es donde se usan, y arriba del campo se
+   leían como el rótulo del propio campo. El menú de adjuntar no es un panel:
+   flota sobre el hilo (`app-menu`) y no empuja nada. */
 
+/* Sin `position` propia, a propósito: la vista previa de adjuntos se apoya
+   en el host del hilo para taparlo entero, y un host posicionado acá la
+   encerraría en la barra. */
 :host {
-  position: relative;
   flex: none;
   display: block;
   background: var(--sup-tarjeta);
   border-block-start: 1px solid var(--filete);
 }
 
+/* Los hijos en flujo sí van posicionados (sin `z-index`): así se pintan por
+   encima del papel del hilo (`thread.css`, `:host::before`, que también es
+   posicionado). Sin esto el patrón quedaba encima del campo de escribir. */
+.composer,
+.composer__panel,
+.composer__respuesta,
+.composer__error {
+  position: relative;
+}
+
 .composer {
   display: flex;
   align-items: flex-end;
+  /* El fondo va acá y no sólo en el host: el host no está posicionado y su
+     fondo se pinta debajo del papel del hilo. */
+  background: var(--sup-tarjeta);
   gap: var(--e2);
   padding: var(--e2) var(--e4);
 }
@@ -87,8 +103,7 @@
 
 /* --- La tira de respuesta ------------------------------------------------ */
 
-.composer__respuesta,
-.composer__adjunto {
+.composer__respuesta {
   display: flex;
   align-items: center;
   gap: var(--e3);
@@ -121,8 +136,7 @@
   font-size: var(--fs-caption);
 }
 
-.composer__respuesta button,
-.composer__adjunto button {
+.composer__respuesta button {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -136,38 +150,9 @@
   cursor: pointer;
 }
 
-.composer__respuesta button svg,
-.composer__adjunto button svg {
+.composer__respuesta button svg {
   inline-size: 16px;
   block-size: 16px;
-}
-
-/* --- El archivo elegido -------------------------------------------------- */
-
-.composer__adjunto-imagen {
-  inline-size: 44px;
-  block-size: 44px;
-  border-radius: var(--r-ctrl);
-  object-fit: cover;
-}
-
-.composer__adjunto-icono {
-  display: inline-flex;
-  color: var(--tinta-2);
-}
-
-.composer__adjunto-icono svg {
-  inline-size: 28px;
-  block-size: 28px;
-}
-
-.composer__adjunto-nombre {
-  flex: 1 1 auto;
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-caption);
 }
 
 /* --- Los paneles --------------------------------------------------------- */
@@ -179,31 +164,51 @@
   background: var(--sup-tarjeta);
 }
 
-.composer__adjuntar {
-  margin: 0;
-  padding: var(--e2);
-  list-style: none;
+/* --- El menú de adjuntar ------------------------------------------------- */
+
+/* El «+» gira a ✕ mientras el menú está abierto, como en WhatsApp. */
+.composer__mas svg {
+  transition: transform var(--dur-base) var(--ease-standard);
 }
 
-.composer__adjuntar button {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  inline-size: 100%;
-  padding: var(--e2) var(--e3);
-  border: 0;
-  border-radius: var(--r-ctrl);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: var(--fs-caption);
-  text-align: start;
-  cursor: pointer;
-}
-
-.composer__adjuntar button:hover,
-.composer__adjuntar button:focus-visible {
+.composer__mas.is-abierto {
   background: var(--sup-inset);
+  color: var(--tinta-marca);
+}
+
+.composer__mas.is-abierto svg {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__mas svg {
+    transition: none;
+  }
+}
+
+/* Cada opción con su círculo de color, para reconocerla sin leer. Son
+   rampas del sistema y no tokens de tema: el color identifica la opción y
+   no tiene que cambiar de noche. */
+.composer__menu-icono {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: var(--r-pill);
+  color: var(--surface-white);
+}
+
+.composer__menu-icono svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.composer__menu-icono--documento { background: var(--c-petrol-600); }
+.composer__menu-icono--fotos { background: var(--c-info-600); }
+.composer__menu-icono--plantilla { background: var(--c-amber-600); }
+
+.composer__menu {
+  min-inline-size: 13rem;
 }
 
 /* --- Plantillas (carril P9) ---------------------------------------------- */
@@ -318,8 +323,6 @@
   }
 }
 
-.composer__adjunto { flex-wrap: wrap; }
-.composer__adjunto app-file-preview { flex-basis: 100%; }
 
 /* La tira de edición (F4.5).
 
