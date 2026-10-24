@@ -94,7 +94,7 @@ describe('las pestañas de la ficha del médico', () => {
   });
 
   it('muestra el teléfono de contacto del consultorio en Dónde atiendo', () => {
-    expect(CAMPO_DEL_ALTA_EN_PESTANA['officeContactPhone']).toBe(PESTANA_MEDICO.dondeAtiendo);
+    expect(ENROLLMENT_IN_TAB_FIELD['officeContactPhone']).toBe(DOCTOR_TAB.dondeAtiendo);
   });
 
   /** Un campo no puede estar en los dos mapas: sería mostrarse y no mostrarse. */
