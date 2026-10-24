@@ -85,6 +85,15 @@ describe('MyOrganizations — Carril 18', () => {
     ).toBeNull();
   });
 
+  it('el selector de organización tiene nombre accesible propio', () => {
+    fixture.detectChanges();
+    flushInicial();
+    fixture.detectChanges();
+
+    const combobox = (fixture.nativeElement as HTMLElement).querySelector('[role="combobox"]');
+    expect(combobox?.getAttribute('aria-label')).toBe('Organización a la que pide vincularse');
+  });
+
   it('sin organización elegida, "solicitar" no manda nada', () => {
     fixture.detectChanges();
     flushInicial();
