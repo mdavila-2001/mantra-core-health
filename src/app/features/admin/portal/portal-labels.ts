@@ -1,3 +1,4 @@
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import type { Rotulo } from '../platform/platform-labels';
 
 /* ============================================================================
@@ -11,9 +12,23 @@ import type { Rotulo } from '../platform/platform-labels';
 
 const NEUTRO = (code: string): Rotulo => ({ label: code, tone: 'secondary' });
 
-function tabla(entradas: Readonly<Record<string, Rotulo>>, vacio = 'Sin dato') {
-  return (code: string | null | undefined): Rotulo =>
+/** Un rotulador que además sabe qué códigos conoce (para armar las opciones de un filtro). */
+export type LabelTable = ((code: string | null | undefined) => Rotulo) & {
+  readonly codes: readonly string[];
+};
+
+function tabla(entradas: Readonly<Record<string, Rotulo>>, vacio = 'Sin dato'): LabelTable {
+  const rotular = (code: string | null | undefined): Rotulo =>
     code ? (entradas[code] ?? NEUTRO(code)) : { label: vacio, tone: 'secondary' };
+  return Object.assign(rotular, { codes: Object.keys(entradas) });
+}
+
+/**
+ * Las opciones de un filtro, sacadas de los códigos que la tabla conoce. Son los
+ * mismos códigos que la API acepta como filtro; el texto es sólo presentación.
+ */
+export function optionsOf(table: LabelTable): readonly SelectOption<string>[] {
+  return table.codes.map((code) => ({ value: code, label: table(code).label }));
 }
 
 export const metodoHttp = tabla({
@@ -111,6 +126,64 @@ export const tipoDeNodo = tabla({
   TABLA: { label: 'Tabla', tone: 'warning' },
   DOMINIO: { label: 'Dominio', tone: 'primary' },
 });
+
+/** De dónde sale una operación: del contrato publicado o sólo del código. */
+export const operationOrigin = tabla({
+  CONTRATO: { label: 'En el contrato', tone: 'success' },
+  CONTRATO_AUSENTE: { label: 'Fuera del contrato', tone: 'warning' },
+});
+
+export const processKind = tabla({
+  MODULO: { label: 'Módulo', tone: 'secondary' },
+  CRITICO: { label: 'Flujo crítico', tone: 'warning' },
+});
+
+/** Los pasos de un árbol de decisión, tal como los nombra el generador. */
+export const decisionStep = tabla({
+  ACCESO: { label: 'Acceso', tone: 'info' },
+  SI: { label: 'Condición', tone: 'info' },
+  LLAMADA: { label: 'Llamada', tone: 'secondary' },
+  EFECTO: { label: 'Efecto', tone: 'warning' },
+  TRANSACCION: { label: 'Transacción', tone: 'primary' },
+  BUCLE: { label: 'Repetición', tone: 'secondary' },
+  INTENTAR: { label: 'Intento', tone: 'secondary' },
+  ERROR: { label: 'Error', tone: 'error' },
+  RESPUESTA: { label: 'Respuesta', tone: 'success' },
+});
+
+/** Dónde declara el modelo una tabla que el ORM sí tiene. */
+export const ddlSource = tabla({
+  SIN_DDL: { label: 'En ninguna fuente del modelo', tone: 'error' },
+  PARCHE: { label: 'Sólo en un parche', tone: 'warning' },
+  NOSQL: { label: 'Almacén no relacional', tone: 'info' },
+});
+
+/** Cómo está el propósito de una tabla: quién lo escribió y si alguien lo revisó. */
+export const purposeState = tabla({
+  DOMAIN_CURATED_DRAFT: { label: 'Borrador curado por dominio', tone: 'info' },
+});
+
+/** Una columna frente a su propiedad en la entidad del ORM. */
+export const columnOrmState = tabla({
+  COINCIDE: { label: 'Coincide', tone: 'success' },
+  AUSENTE_EN_ORM: { label: 'Falta en la entidad', tone: 'error' },
+  NULABILIDAD_DIVERGE: { label: 'Nulabilidad distinta', tone: 'warning' },
+});
+
+/** Cómo se resolvió una relación entre tablas. */
+export const relationResolution = tabla({
+  DECLARED_FK: { label: 'Clave foránea declarada', tone: 'success' },
+});
+
+/** Los atributos de gobierno de una tabla, por su clave en la ficha. */
+export const GOVERNANCE_ATTRIBUTES: Readonly<Record<string, string>> = {
+  responsable: 'Responsable',
+  pii: 'Datos personales',
+  financiera: 'Información financiera',
+  criticaParaAuditoria: 'Crítica para auditoría',
+  retencion: 'Retención',
+  appendOnly: 'Sólo admite altas (append-only)',
+};
 
 /** Un identificador de operación (`Clase_método`) legible: el método sin su clase. */
 export function nombreDeOperacion(id: string): string {

@@ -1,0 +1,134 @@
+<app-back-link [fallback]="listUrl" label="Volver a las operaciones" />
+
+<app-page-header
+  [title]="title()"
+  subtitle="Lo que el inventario sabe de esta operación. Lo que no pudo determinar se dice «sin dato»."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="detail()" (retry)="reload()">
+  @if (detail(); as state) {
+    @if (state.status === 'ready') {
+      @let op = state.data;
+      <app-card class="operation" variant="outlined" padding="md" data-testid="portal-operation-detail">
+        <p class="operation__headline">
+          <app-badge [variant]="method(op.metodo).tone">{{ method(op.metodo).label }}</app-badge>
+          <code class="operation__route">{{ op.ruta }}</code>
+          <app-badge [variant]="risk(op.riesgo).tone">{{ risk(op.riesgo).label }}</app-badge>
+        </p>
+
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Resumen">
+            <section class="operation__section" aria-label="Resumen de la operación">
+              <h3 class="operation__subtitle">Qué hace</h3>
+              @if (op.negocio.texto) {
+                <p>{{ op.negocio.texto }}</p>
+              } @else {
+                <p class="operation__muted">Nadie explicó todavía qué hace para el negocio.</p>
+              }
+              @if (op.sistema) {
+                <p class="operation__muted">{{ op.sistema }}</p>
+              }
+
+              <app-fact-list [hechos]="facts()" etiqueta="Datos de la operación" />
+
+              <h3 class="operation__subtitle">Por qué tiene ese riesgo</h3>
+              @if (op.razonesDeRiesgo.length > 0) {
+                <ul class="operation__list">
+                  @for (reason of op.razonesDeRiesgo; track $index) {
+                    <li>{{ reason }}</li>
+                  }
+                </ul>
+              } @else {
+                <p class="operation__muted">El generador no anotó razones.</p>
+              }
+
+              <h3 class="operation__subtitle">Procesos en los que participa</h3>
+              @if (op.flujos.length > 0) {
+                <ul class="operation__list">
+                  @for (flow of op.flujos; track flow.codigo + flow.etapa) {
+                    <li>
+                      <a app-link [routerLink]="processUrl(flow.codigo)">{{ flow.nombre }}</a>
+                      <span class="operation__muted"> · etapa {{ flow.etapa }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="operation__muted">No se asignó a ningún proceso.</p>
+              }
+            </section>
+          </app-tab>
+
+          <app-tab label="Contrato">
+            <app-portal-operation-contract [operation]="op" />
+          </app-tab>
+
+          <app-tab label="Datos">
+            <app-portal-operation-data [operation]="op" [tableUrl]="tableUrl" />
+          </app-tab>
+
+          <app-tab label="Acceso">
+            <section class="operation__section" aria-label="Quién puede llamarla">
+              <h3 class="operation__subtitle">Quién puede llamarla</h3>
+              @if (op.publica) {
+                <p><app-badge variant="warning">Pública</app-badge> No exige sesión.</p>
+              } @else if (op.roles.length === 0) {
+                <p>Cualquier sesión válida: el controlador no declara roles.</p>
+              } @else {
+                <ul class="operation__chips">
+                  @for (role of op.roles; track role) {
+                    <li><app-badge variant="secondary">{{ role }}</app-badge></li>
+                  }
+                </ul>
+              }
+              <h3 class="operation__subtitle">Qué se comprueba antes de atender</h3>
+              @if (op.requerimientos.length > 0) {
+                <ul class="operation__list">
+                  @for (req of op.requerimientos; track $index) {
+                    <li>
+                      <strong>{{ req.tipo }}</strong> · {{ req.detalle }}
+                      <span class="operation__source">{{ req.fuente }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="operation__muted">El inventario no anotó requisitos.</p>
+              }
+            </section>
+          </app-tab>
+
+          <app-tab label="Pruebas">
+            <section class="operation__section" aria-label="Pruebas que la cubren">
+              @if (op.pruebas.length > 0) {
+                <ul class="operation__list" data-testid="portal-operation-tests">
+                  @for (test of op.pruebas; track test.archivo + test.linea) {
+                    <li>
+                      <app-badge size="sm" variant="info">{{ test.tipo }}</app-badge>
+                      <span class="operation__source">{{ test.archivo }}:{{ test.linea }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="operation__muted">Ninguna prueba la menciona.</p>
+              }
+            </section>
+          </app-tab>
+
+          <app-tab label="Árbol de decisión">
+            <app-view-state-host [state]="tree()" (retry)="reload()">
+              @if (tree(); as t) {
+                @if (t.status === 'ready') {
+                  <app-portal-decision-tree
+                    [nodes]="t.data.nodos"
+                    [responses]="t.data.respuestas"
+                    [truncated]="t.data.truncado"
+                  />
+                }
+              }
+            </app-view-state-host>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  }
+</app-view-state-host>

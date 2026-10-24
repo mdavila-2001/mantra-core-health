@@ -1,0 +1,84 @@
+<app-page-header
+  title="Mapa de rutas"
+  subtitle="Qué proceso usa cada ruta, cómo se autoriza, quién la llama desde el frontend y qué señales de atención tiene."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="route-map" data-testid="portal-route-map">
+  <app-filter-bar
+    searchLabel="Buscar rutas"
+    searchPlaceholder="Ruta, módulo o autorización"
+    wrap
+    [filters]="filterDefs()"
+    [searchLoading]="list.state().status === 'loading'"
+  />
+
+  <app-data-table
+    data-testid="portal-route-map-table"
+    caption="Mapa de rutas de la API"
+    heading="Rutas"
+    [totalCount]="list.total()"
+    [state]="list.state()"
+    [columns]="columns()"
+    [trackBy]="byId"
+    [rowLabel]="rowName"
+    [cursor]="list.cursor()"
+    stackedOnMobile
+    fitContainer
+    wrapHeaders
+    (cursorChanged)="list.move($event)"
+    (retry)="list.reload()"
+  />
+</div>
+
+<ng-template #routeCell let-row>
+  <span class="route-map__op">
+    <app-badge size="sm" [variant]="method(row.metodo).tone">{{ method(row.metodo).label }}</app-badge>
+    <a app-link class="route-map__route" [routerLink]="operationUrl(row.id)">
+      @for (segment of segments(row.ruta); track $index) {{{ segment }}<wbr />}
+    </a>
+  </span>
+  <span class="route-map__secondary">{{ row.modulo }}</span>
+</ng-template>
+
+<ng-template #flowsCell let-row>
+  @if (row.flujos.length === 0) {
+    <span class="route-map__secondary">Sin proceso</span>
+  } @else {
+    <ul class="route-map__flows">
+      @for (flow of row.flujos; track flow.codigo + flow.etapa) {
+        <li>
+          <a app-link [routerLink]="diagramUrl" [queryParams]="{ flujo: flow.codigo }">{{ flow.nombre }}</a>
+          <span class="route-map__secondary">{{ flow.etapa }}</span>
+        </li>
+      }
+    </ul>
+  }
+</ng-template>
+
+<ng-template #riskCell let-row>
+  <app-badge size="sm" [variant]="risk(row.riesgo).tone">{{ risk(row.riesgo).label }}</app-badge>
+</ng-template>
+
+<ng-template #signalsCell let-row>
+  @if (row.senales.length === 0) {
+    <span class="route-map__secondary">Sin señales</span>
+  } @else {
+    <span class="route-map__signals">
+      @for (code of row.senales; track code) {
+        <app-badge size="sm" [variant]="signalLabel(code).tone">{{ signalLabel(code).label }}</app-badge>
+      }
+    </span>
+  }
+</ng-template>
+
+<ng-template #authCell let-row>
+  <span class="route-map__auth">{{ row.autorizacion }}</span>
+  @if (row.llamadaPor === null) {
+    <span class="route-map__secondary">Sin dato de quién la llama</span>
+  } @else if (row.llamadaPor.length === 0) {
+    <span class="route-map__secondary">Ningún cliente del frontend la llama</span>
+  } @else {
+    <span class="route-map__secondary">La llama: {{ row.llamadaPor.join(' · ') }}</span>
+  }
+</ng-template>

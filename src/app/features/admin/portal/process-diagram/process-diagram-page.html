@@ -1,0 +1,37 @@
+<app-page-header
+  title="Diagrama"
+  subtitle="Un proceso o módulo como carriles: cada etapa con sus operaciones, quién actúa y qué tablas toca."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="diagram" variant="outlined" padding="md" data-testid="portal-process-diagram">
+  <div class="diagram__picker">
+    <app-form-field label="Proceso" icon="orders" hint="Los procesos de módulo y los flujos críticos del inventario.">
+      <app-select
+        ariaLabel="Proceso"
+        placeholder="Elija un proceso"
+        data-testid="portal-diagram-process"
+        [searchable]="true"
+        [options]="options.flows()"
+        [value]="flow() || null"
+        (valueChange)="choose($event)"
+      />
+    </app-form-field>
+    @if (flow()) {
+      <a app-link [routerLink]="processUrl()">Ver la ficha del proceso</a>
+    }
+  </div>
+
+  <app-view-state-host [state]="graph()" (retry)="reload()">
+    @if (graph(); as state) {
+      @if (state.status === 'ready') {
+        <h2 class="diagram__title">{{ state.data.nombre }}</h2>
+        <app-portal-process-graph
+          [graph]="state.data"
+          [operationUrl]="operationUrl"
+          [tableUrl]="tableUrl"
+        />
+      }
+    }
+  </app-view-state-host>
+</app-card>

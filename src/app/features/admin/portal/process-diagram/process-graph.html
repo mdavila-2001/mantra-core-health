@@ -1,0 +1,62 @@
+<section class="graph" aria-label="Diagrama del proceso" data-testid="portal-process-graph">
+  <p class="graph__summary">{{ summary() }}</p>
+
+  @if (graph().roles.length > 0) {
+    <details class="graph__roles">
+      <summary>Quién actúa en este proceso ({{ graph().roles.length }})</summary>
+      <ul>
+        @for (role of graph().roles; track role) {
+          <li>{{ role }}</li>
+        }
+      </ul>
+    </details>
+  }
+
+  <ol class="graph__lanes">
+    @for (lane of lanes(); track lane.id; let i = $index) {
+      <li class="graph__lane" data-testid="portal-graph-lane">
+        <h3 class="graph__lane-title">
+          <span class="graph__lane-number">{{ i + 1 }}</span>
+          {{ lane.label }}
+        </h3>
+        @if (lane.operations.length === 0) {
+          <p class="graph__muted">Esta etapa no tiene operaciones.</p>
+        } @else {
+          <ul class="graph__operations">
+            @for (op of lane.operations; track op.nodeId) {
+              <li class="graph__operation">
+                <span class="graph__operation-head">
+                  @if (op.operationId) {
+                    <a app-link class="graph__operation-name" [routerLink]="operationUrl()(op.operationId)">{{ op.label }}</a>
+                  } @else {
+                    <span class="graph__operation-name">{{ op.label }}</span>
+                  }
+                  @if (op.risk) {
+                    <app-badge size="sm" [variant]="risk(op.risk).tone">{{ risk(op.risk).label }}</app-badge>
+                  }
+                </span>
+                @if (op.actors.length > 0) {
+                  <span class="graph__muted">Actúa: {{ op.actors.join(' / ') }}</span>
+                }
+                @for (kind of effects; track kind) {
+                  @if (op.tables[kind].length > 0) {
+                    <span class="graph__tables">
+                      <app-badge size="sm" [variant]="effect(kind).tone">{{ effect(kind).label }}</app-badge>
+                      @for (t of op.tables[kind]; track t.qualified) {
+                        @if (t.schema) {
+                          <a app-link class="graph__table" [routerLink]="tableUrl()(t.schema, t.table)">{{ t.qualified }}</a>
+                        } @else {
+                          <span class="graph__table">{{ t.qualified }}</span>
+                        }
+                      }
+                    </span>
+                  }
+                }
+              </li>
+            }
+          </ul>
+        }
+      </li>
+    }
+  </ol>
+</section>

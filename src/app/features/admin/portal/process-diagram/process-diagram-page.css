@@ -1,0 +1,26 @@
+.diagram {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.diagram__picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-5);
+}
+
+@media (min-width: 780px) {
+  .diagram__picker {
+    grid-template-columns: minmax(0, 32rem) auto;
+    justify-content: start;
+  }
+}
+
+.diagram__title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h2);
+  color: var(--text-primary);
+}

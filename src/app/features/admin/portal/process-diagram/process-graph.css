@@ -1,0 +1,100 @@
+.graph {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.graph__summary,
+.graph__muted {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.graph__roles summary {
+  cursor: pointer;
+  color: var(--text-link);
+}
+
+.graph__roles summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.graph__roles ul {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.graph__lanes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.graph__lane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
+  min-inline-size: 0;
+}
+
+.graph__lane-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.graph__lane-number {
+  flex: none;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.graph__operations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.graph__operation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.graph__operation-head,
+.graph__tables {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.graph__operation-name,
+.graph__table {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,66 @@
+@let op = operation();
+
+<section class="data" aria-label="Datos que toca la operación" data-testid="portal-operation-data">
+  <h3 class="data__title">Tablas</h3>
+  @if (op.datos.length > 0) {
+    <ul class="data__tables">
+      @for (row of op.datos; track $index) {
+        <li class="data__table">
+          <span class="data__table-head">
+            <app-badge size="sm" [variant]="effect(row.operacion).tone">{{ effect(row.operacion).label }}</app-badge>
+            <a app-link class="data__name" [routerLink]="tableUrl()(row.schema, row.tabla)">
+              {{ row.schema }}.{{ row.tabla }}
+            </a>
+            <app-badge size="sm" [variant]="confidence(row.confianza).tone">
+              Confianza: {{ confidence(row.confianza).label }}
+            </app-badge>
+            @if (!row.catalogada) {
+              <app-badge size="sm" variant="warning">No está en el catálogo</app-badge>
+            }
+          </span>
+          @if (row.detalle) {
+            <span class="data__muted">{{ row.detalle }}</span>
+          }
+          @if (row.via.length > 0) {
+            <span class="data__source">Vía {{ row.via.join(' → ') }}</span>
+          }
+        </li>
+      }
+    </ul>
+  } @else if (op.sinTablas) {
+    <p class="data__muted">No toca tablas: {{ op.sinTablas }}</p>
+  } @else {
+    <p class="data__muted">El inventario no encontró tablas que toque.</p>
+  }
+
+  <h3 class="data__title">Eventos que emite</h3>
+  @if (op.eventos.length > 0) {
+    <ul class="data__list">
+      @for (event of op.eventos; track $index) {
+        <li><code>{{ event }}</code></li>
+      }
+    </ul>
+  } @else {
+    <p class="data__muted">Ninguno.</p>
+  }
+
+  <h3 class="data__title">Trabajos que encola</h3>
+  @if (op.trabajos.length > 0) {
+    <ul class="data__list">
+      @for (job of op.trabajos; track $index) {
+        <li><code>{{ job }}</code></li>
+      }
+    </ul>
+  } @else {
+    <p class="data__muted">Ninguno.</p>
+  }
+
+  @if (op.noResuelto.length > 0) {
+    <h3 class="data__title">Lo que el generador no pudo seguir</h3>
+    <ul class="data__list">
+      @for (call of op.noResuelto; track $index) {
+        <li class="data__source">{{ call }}</li>
+      }
+    </ul>
+  }
+</section>

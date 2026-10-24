@@ -1,0 +1,18 @@
+.contract {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+
+.contract__title {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.contract__muted {
+  margin: 0;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}

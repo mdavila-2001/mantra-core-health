@@ -1,0 +1,68 @@
+.route-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.route-map__op {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.route-map__route {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  /* `break-word` y no `anywhere`: `anywhere` baja el ancho mínimo de la celda a una
+     letra y la tabla le quita la columna a la ruta. Parte en `/` (con <wbr>). */
+  overflow-wrap: break-word;
+}
+
+.route-map__secondary {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  /* `break-word`: los nombres de controlador y de cliente parten entre palabras, no a media palabra. */
+  overflow-wrap: break-word;
+}
+
+.route-map__flows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-map__signals {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+/* La señal más larga («Ningún cliente del frontend la llama») no cabe en una línea
+   de la celda: el badge es `nowrap`, así que se le permite partir dentro de su caja. */
+.route-map__signals {
+  max-inline-size: 100%;
+}
+
+.route-map__signals app-badge {
+  max-inline-size: 100%;
+  white-space: normal;
+  line-height: var(--lh-caption);
+  text-align: start;
+}
+
+/* La autorización (`SECURITY_ADMIN · PRACTITIONER`) es la columna más ancha del mapa:
+   en el tamaño del texto secundario cabe junto a las demás sin desplazar la tabla. */
+.route-map__auth {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow-wrap: break-word;
+}
