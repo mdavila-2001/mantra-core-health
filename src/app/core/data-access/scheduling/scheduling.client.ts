@@ -57,6 +57,7 @@ import type {
   WaitlistQuery,
   PublishedTemplatePage,
   RetiredTemplate,
+  TemplateLiveBookings,
   AvailabilityExceptionPage,
   NewDirectAppointment,
   DirectAppointmentCreated,
@@ -361,9 +362,32 @@ export class SchedulingClient {
    * Responde **409** cuando el horario tiene citas comprometidas, con la lista
    * de las que hay que resolver primero en `details.bookingIds`.
    */
-  retireTemplate(templateId: string): Observable<RetiredTemplate> {
+  /**
+   * `DELETE /scheduling/templates/:id` — retira el horario.
+   *
+   * Por omisión conserva las citas vivas (contrato de M4). Con
+   * `affectedBookings: 'cancel'` las cancela con el motivo «cambio de
+   * horario» y le avisa a cada paciente (24/10/2026); la pantalla pregunta
+   * antes, con la lista de `listTemplateLiveBookings`.
+   */
+  retireTemplate(
+    templateId: string,
+    affectedBookings?: 'cancel' | 'keep',
+  ): Observable<RetiredTemplate> {
     return this.http.delete<RetiredTemplate>(
       this.url(`/scheduling/templates/${encodeURIComponent(templateId)}`),
+      affectedBookings === 'cancel' ? { params: { affectedBookings } } : {},
+    );
+  }
+
+  /**
+   * `GET /scheduling/templates/:id/live-bookings` — las citas vivas del
+   * horario, con nombre y hora: la vista previa que se muestra antes de
+   * retirarlo. Sólo para quien administra la agenda.
+   */
+  listTemplateLiveBookings(templateId: string): Observable<TemplateLiveBookings> {
+    return this.http.get<TemplateLiveBookings>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/live-bookings`),
     );
   }
 

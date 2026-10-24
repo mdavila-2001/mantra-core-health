@@ -39,6 +39,7 @@ import { Switch } from '../../../shared/components/atoms/switch/switch';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Router } from '@angular/router';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { BlockCancellations } from '../block-cancellations';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -212,6 +213,7 @@ interface DiaVisible {
 export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
   private readonly dialogs = inject(DialogService);
+  private readonly cancellations = inject(BlockCancellations);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
@@ -1147,11 +1149,20 @@ export class AgendaCreate {
       return;
     }
 
-    this.scheduling.retireTemplate(anterior.id).subscribe({
+    // Con citas vivas en el horario que se reemplaza, `BlockCancellations`
+    // pregunta antes qué hacer con ellas: cancelarlas y avisar a cada
+    // paciente, o conservarlas (etapa C, 24/10/2026). Si la persona vuelve
+    // atrás, no se publica nada y el formulario queda como estaba.
+    this.cancellations.retireTemplate(anterior.id).subscribe({
       next: (retiro) => {
+        if (retiro === null) {
+          this.estado.set(ready(null));
+          return;
+        }
         this.yaRetirado.set(true);
         this.cuposSoltados.set(retiro.releasedSlots);
         this.cuposConservados.set(retiro.keptSlots);
+        this.citasCanceladas.set(retiro.cancelledBookings ?? 0);
         this.crearPlantilla(resourceId, policyId);
       },
       error: (error: unknown) => this.fallar(error),
@@ -1164,6 +1175,8 @@ export class AgendaCreate {
   /** Cupos que el retiro del horario anterior soltó y conservó. */
   protected readonly cuposSoltados = signal<number | null>(null);
   protected readonly cuposConservados = signal<number | null>(null);
+  /** Citas del horario anterior canceladas al reemplazarlo, con aviso a cada paciente. */
+  protected readonly citasCanceladas = signal(0);
 
   private crearPlantilla(resourceId: string, policyId: string | null): void {
     const yaEsta = this.templateId();
@@ -1370,7 +1383,8 @@ export class AgendaCreate {
       this.conAlmuerzo() && !this.almuerzoInvalido()
         ? `, almuerzo de ${enHoras(this.almuerzoDesde())} a ${enHoras(this.almuerzoHasta())}`
         : '';
-    if (this.flexible()) return `${dias}${horario}${almuerzo}, horario flexible sin citas de duración fija`;
+    if (this.flexible())
+      return `${dias}${horario}${almuerzo}, horario flexible sin citas de duración fija`;
     // Con franjas de servicios la frase no puede decir «consultas de 30 minutos» de
     // todo el horario: ni todo es consulta, ni los servicios tienen un largo único.
     const hayServicios = activos.some(

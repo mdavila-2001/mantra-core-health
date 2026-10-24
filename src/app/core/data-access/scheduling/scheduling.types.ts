@@ -945,6 +945,24 @@ export interface RetiredTemplate {
    * a propósito, y la pantalla tiene que decirlo en vez de callarlo.
    */
   readonly keptSlots: number;
+  /**
+   * Citas canceladas por el retiro, con aviso a cada paciente. Mayor que 0
+   * sólo cuando se retiró con `affectedBookings: 'cancel'` (24/10/2026).
+   */
+  readonly cancelledBookings?: number;
+}
+
+/**
+ * `GET /scheduling/templates/:id/live-bookings`: las citas vivas de un
+ * horario, la vista previa que se muestra antes de retirarlo.
+ */
+export interface TemplateLiveBookings {
+  readonly templateId: string;
+  readonly total: number;
+  /** Las que un retiro con cancelación cancelaría (o rechazaría, si están pendientes). */
+  readonly bookings: readonly AffectedBooking[];
+  /** Pacientes ya recibidos: el retiro con cancelación no procede mientras estén. */
+  readonly present: readonly AffectedBooking[];
 }
 
 /** Una plantilla publicada, con sus franjas. */
