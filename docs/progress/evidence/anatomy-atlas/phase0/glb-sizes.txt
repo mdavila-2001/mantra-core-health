@@ -1,0 +1,14 @@
+ 
+4096 .
+4096 ..
+2340884 muscles.glb
+416868 nervous.glb
+294924 organs.glb
+105177 parts-manifest.json
+884832 skeleton.glb
+248532 vessels.glb
+muscles.glb gzip -9: 1565493
+nervous.glb gzip -9: 269920
+organs.glb gzip -9: 186367
+skeleton.glb gzip -9: 547924
+vessels.glb gzip -9: 151786
