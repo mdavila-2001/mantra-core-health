@@ -1,12 +1,12 @@
 /**
- * Las fuentes de marca del papel: Poppins para lo que se destaca e Inter para
- * lo que se lee.
+ * Las fuentes de marca del papel, las de AloVida: Poppins para lo que se
+ * destaca y Nunito Sans para lo que se lee.
  *
  * ## Por qué se cargan aparte
  *
- * `jsPDF` sólo embebe **TTF**, y las fuentes de pantalla son WOFF2. Los dos
- * archivos viven en `public/alovida/tipografias/` (licencias en su
- * `LICENCIAS.md`) y pesan ~570 KB entre los dos, así que **no van en el
+ * `jsPDF` sólo embebe **TTF** estáticos, y las fuentes de pantalla son WOFF2
+ * variables. Los cuatro archivos viven en `public/alovida/tipografias/`
+ * (licencias y origen en su `LICENCIAS.md`), así que **no van en el
  * paquete**: se bajan una vez por sesión, en segundo plano, y quedan listos en
  * este módulo con el mismo patrón que el logo (`pdf-logo.ts`): el maquetador es
  * síncrono y lo llaman doce documentos; ninguno puede esperar una descarga.
@@ -16,9 +16,9 @@
  * - **Nunca impide un documento.** Si una fuente no se pudo bajar —sin red,
  *   bajo SSR, en una prueba—, el holder queda en `null` y el papel sale en
  *   Helvetica, que es un resultado válido y no un error.
- * - **Las dos o ninguna.** Un documento con los títulos en Poppins y el cuerpo
+ * - **Todas o ninguna.** Un documento con los títulos en Poppins y el cuerpo
  *   en Helvetica se vería como un error de maquetado; si falta una, se descartan
- *   las dos.
+ *   todas.
  */
 
 /** Dónde se sirven los TTF. La misma carpeta que las fuentes de pantalla. */
@@ -26,11 +26,17 @@ export const RUTA_DE_TIPOGRAFIAS = '/alovida/tipografias/';
 
 /** Qué archivo cubre cada papel tipográfico. */
 export const ARCHIVOS_DE_FUENTES = {
-  /** Títulos, rótulos, cabeceras y versalitas: lo que se destaca. */
+  /** Títulos: Poppins SemiBold. */
   titulos: 'poppins-600.ttf',
-  /** Cuerpo, datos, tablas y pie: lo que se lee. */
-  cuerpo: 'inter-400.ttf',
+  /** Rótulos, versalitas y cabeceras de tabla: Poppins Medium. */
+  rotulos: 'poppins-500.ttf',
+  /** Cuerpo, datos, tablas y pie: Nunito Sans Regular. */
+  cuerpo: 'nunito-sans-400.ttf',
+  /** Datos destacados y cifras: Nunito Sans Bold. */
+  cuerpoDestacado: 'nunito-sans-700.ttf',
 } as const;
+
+export type PapelTipografico = keyof typeof ARCHIVOS_DE_FUENTES;
 
 /** Una fuente lista para `jsPDF`: su archivo y sus bytes en base64. */
 export interface PdfFuente {
@@ -38,11 +44,8 @@ export interface PdfFuente {
   readonly base64: string;
 }
 
-/** Las dos fuentes del papel, siempre juntas. */
-export interface PdfFuentes {
-  readonly titulos: PdfFuente;
-  readonly cuerpo: PdfFuente;
-}
+/** Las cuatro fuentes del papel, siempre juntas. */
+export type PdfFuentes = Readonly<Record<PapelTipografico, PdfFuente>>;
 
 /** Cómo se bajan los bytes de un archivo. Sustituible en pruebas. */
 export type BajarArchivo = (url: string) => Promise<ArrayBuffer | null>;
@@ -60,27 +63,27 @@ export function fuentesDeDocumentos(): PdfFuentes | null {
 }
 
 /**
- * Baja las dos fuentes y las deja en base64, que es como `jsPDF` las recibe.
+ * Baja las cuatro fuentes y las deja en base64, que es como `jsPDF` las recibe.
  *
- * **Nunca rechaza.** Devuelve `null` fuera del navegador o si cualquiera de las
- * dos falla: la tipografía no puede impedir que se emita una receta.
+ * **Nunca rechaza.** Devuelve `null` fuera del navegador o si cualquiera de
+ * ellas falla: la tipografía no puede impedir que se emita una receta.
  *
  * @param bajar - Cómo obtener los bytes de un archivo; por omisión, `fetch`.
- * @returns Las dos fuentes listas, o `null`.
+ * @returns Las cuatro fuentes listas, o `null`.
  */
 export async function prepararFuentes(bajar: BajarArchivo = bajarConFetch): Promise<PdfFuentes | null> {
   if (typeof window === 'undefined') {
     return null;
   }
   try {
-    const [titulos, cuerpo] = await Promise.all([
-      fuenteDesde(ARCHIVOS_DE_FUENTES.titulos, bajar),
-      fuenteDesde(ARCHIVOS_DE_FUENTES.cuerpo, bajar),
-    ]);
-    if (titulos === null || cuerpo === null) {
+    const papeles = Object.keys(ARCHIVOS_DE_FUENTES) as PapelTipografico[];
+    const fuentes = await Promise.all(
+      papeles.map((papel) => fuenteDesde(ARCHIVOS_DE_FUENTES[papel], bajar)),
+    );
+    if (fuentes.some((fuente) => fuente === null)) {
       return null;
     }
-    return { titulos, cuerpo };
+    return Object.fromEntries(papeles.map((papel, i) => [papel, fuentes[i]])) as PdfFuentes;
   } catch {
     return null;
   }

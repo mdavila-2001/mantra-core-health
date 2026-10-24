@@ -35,6 +35,11 @@ const { DocumentoFalso } = vi.hoisted(() => {
       /** Un trazo del isotipo: cuántos segmentos, dónde y con qué escala. */
       lines: { segmentos: number; x: number; y: number; escala: number }[];
       rect: [number, number, number, number, string][];
+      /** Un rectángulo redondeado: panel, aviso, caja de totales o marco del QR. */
+      roundedRect: [number, number, number, number, string][];
+      circle: [number, number, number][];
+      /** Los textos rotados: la marca de agua. */
+      rotated: string[];
       line: [number, number, number, number][];
       gState: { opacity?: number }[];
       charSpace: number[];
@@ -52,6 +57,9 @@ const { DocumentoFalso } = vi.hoisted(() => {
       save: [],
       lines: [],
       rect: [],
+      roundedRect: [],
+      circle: [],
+      rotated: [],
       line: [],
       gState: [],
       charSpace: [],
@@ -94,7 +102,11 @@ const { DocumentoFalso } = vi.hoisted(() => {
       return text.length * 5;
     }
 
-    text(line: string | string[], x: number, y: number): this {
+    text(line: string | string[], x: number, y: number, opciones?: { angle?: number }): this {
+      if (opciones?.angle !== undefined) {
+        this.llamadas.rotated.push(String(line));
+        return this;
+      }
       for (const [index, value] of (Array.isArray(line) ? line : [line]).entries()) {
         this.llamadas.text.push([value, x, y + index * 14]);
       }
@@ -135,6 +147,16 @@ const { DocumentoFalso } = vi.hoisted(() => {
 
     rect(x: number, y: number, ancho: number, alto: number, estilo: string): this {
       this.llamadas.rect.push([x, y, ancho, alto, estilo]);
+      return this;
+    }
+
+    roundedRect(x: number, y: number, ancho: number, alto: number, _rx: number, _ry: number, estilo: string): this {
+      this.llamadas.roundedRect.push([x, y, ancho, alto, estilo]);
+      return this;
+    }
+
+    circle(x: number, y: number, radio: number): this {
+      this.llamadas.circle.push([x, y, radio]);
       return this;
     }
 
@@ -204,6 +226,14 @@ const { DocumentoFalso } = vi.hoisted(() => {
       return this;
     }
 
+    clip(): this {
+      return this;
+    }
+
+    discardPath(): this {
+      return this;
+    }
+
     restoreGraphicsState(): this {
       return this;
     }
@@ -212,7 +242,11 @@ const { DocumentoFalso } = vi.hoisted(() => {
   return { DocumentoFalso };
 });
 
-vi.mock('jspdf', () => ({ jsPDF: DocumentoFalso }));
+/**
+ * Sin `ShadingPattern` ni `advancedAPI`, el maquetador pinta cada degradado con
+ * su color del medio: es el camino de respaldo, y deja contar los rellenos.
+ */
+vi.mock('jspdf', () => ({ jsPDF: DocumentoFalso, ShadingPattern: undefined }));
 
 /**
  * El sujeto se importa **dentro de cada prueba**, no arriba del archivo.
@@ -276,26 +310,31 @@ function ultimoDocumento(): InstanceType<typeof DocumentoFalso> {
   return doc;
 }
 
+/** Lo que es una fecha de emisión tal como la escribe el papel: `24/10/2026, 10:32`. */
+const FECHA_DE_EMISION = /^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}$/;
+
 /**
  * Lo que se escribió en la hoja **sin el membrete ni el pie**.
  *
- * El maquetador estampa la marca, la clase de documento y la numeración de
- * páginas en cada carilla; una prueba de contenido que las mire tendría que
+ * El maquetador estampa la marca, la fecha de emisión, el emisor y la
+ * numeración en cada carilla; una prueba de contenido que las mire tendría que
  * reescribirse cada vez que el membrete cambie de forma. Se descartan por lo
- * que son —chrome de la hoja—, no por su texto.
+ * que son —chrome de la hoja—, no por su posición.
  */
 function textosDelCuerpo(): string[] {
   const doc = ultimoDocumento();
   const titulos = doc.llamadas.setProperties.flatMap(([props]) =>
-    props.title === undefined ? [] : [props.title, props.title.toLocaleUpperCase('es')],
+    props.title === undefined ? [] : [props.title],
   );
   return doc.llamadas.text
     .map(([linea]) => linea)
     .filter(
       (linea) =>
-        linea !== 'ALOVIDA' &&
+        linea !== 'AloVida' &&
+        linea !== 'FECHA DE EMISIÓN' &&
+        !FECHA_DE_EMISION.test(linea) &&
         !linea.startsWith('Página ') &&
-        !linea.includes('Documento confidencial') &&
+        !linea.includes('Emitido el') &&
         !titulos.includes(linea),
     );
 }
@@ -318,17 +357,19 @@ beforeEach(async () => {
   establecerLogoDeDocumentos(null);
 });
 
+
 describe('buildPdfDocument', () => {
   it('extrae encabezado, párrafo y filas de tabla, en orden', () => {
     buildPdfDocument(elementoDeEjemplo());
 
     // La tabla se maqueta por columnas, así que cada celda es una llamada
-    // aparte: lo que se comprueba es que estén todas y en orden de lectura.
+    // aparte: lo que se comprueba es que estén todas y en orden de lectura. La
+    // cabecera va en versalitas.
     expect(textosDelCuerpo()).toEqual([
-      'PRESUPUESTO',
+      'Presupuesto',
       'Paciente: Ana Pérez',
-      'Servicio',
-      'Precio',
+      'SERVICIO',
+      'PRECIO',
       'Consulta general',
       '100.00',
       'Limpieza dental',
@@ -394,9 +435,9 @@ describe('buildPdfDocument', () => {
     buildPdfDocument(el);
 
     expect(textosDelCuerpo()).toEqual([
-      'BALANCE DE SUMAS Y SALDOS',
-      'Cuenta',
-      'Saldo',
+      'Balance de sumas y saldos',
+      'CUENTA',
+      'SALDO',
       'Caja',
       '1.500,00',
     ]);
@@ -405,7 +446,7 @@ describe('buildPdfDocument', () => {
   /**
    * El defecto que esto cierra: el balance contable salía con «Balance de
    * sumas y saldos» como título grande y, dos renglones abajo, la misma frase
-   * en versalitas — el `h2` de la pantalla y el `title` del botón son el mismo
+   * como sección — el `h2` de la pantalla y el `title` del botón son el mismo
    * texto. Sólo se quita el primer encabezado, y sólo si coincide.
    */
   it('no repite como sección el encabezado de la pantalla que ya es el título', () => {
@@ -415,32 +456,42 @@ describe('buildPdfDocument', () => {
 
     buildPdfDocument(el, { title: 'Balance de sumas y saldos' });
 
-    // El primero se va; el segundo es contenido y se queda. Se mira la hoja
-    // cruda: `textosDelCuerpo` descarta justamente las líneas iguales al título.
+    // Una vez en la portada y una vez el segundo `h2`, que es contenido: el
+    // primero se fue. Las hojas de continuación no hay: entra en una.
     const lineas = ultimoDocumento().llamadas.text.map(([linea]) => linea);
-    expect(lineas.filter((linea) => linea === 'BALANCE DE SUMAS Y SALDOS')).toHaveLength(1);
-    expect(lineas.filter((linea) => linea === 'Balance de sumas y saldos')).toHaveLength(1);
+    expect(ultimoDocumento().llamadas.addPage).toBe(0);
+    expect(lineas.filter((linea) => linea === 'Balance de sumas y saldos')).toHaveLength(2);
     expect(textosDelCuerpo()).toEqual(['Saldos']);
   });
 
   it('conserva el primer encabezado cuando no coincide con el título', () => {
     buildPdfDocument(elementoDeEjemplo(), { title: 'Presupuesto de Ana Pérez' });
 
-    expect(textosDelCuerpo()[0]).toBe('PRESUPUESTO');
+    expect(textosDelCuerpo()[0]).toBe('Presupuesto');
   });
 
-  it('imprime el título arriba y lo guarda en las propiedades del documento', () => {
-    buildPdfDocument(elementoDeEjemplo(), { title: 'Presupuesto de Ana Pérez' });
+  it('imprime el título en la portada y lo guarda en las propiedades del documento', () => {
+    buildPdfDocument(elementoDeEjemplo(), {
+      title: 'Presupuesto de Ana Pérez',
+      subtitle: 'Consultorio Illimani',
+    });
 
     const doc = ultimoDocumento();
-    expect(doc.llamadas.setProperties).toEqual([[{ title: 'Presupuesto de Ana Pérez' }]]);
+    expect(doc.llamadas.setProperties).toEqual([
+      [
+        {
+          title: 'Presupuesto de Ana Pérez',
+          subject: 'Consultorio Illimani',
+          author: 'AloVida',
+          creator: 'AloVida',
+        },
+      ],
+    ]);
     expect(doc.llamadas.text.map(([linea]) => linea)).toContain('Presupuesto de Ana Pérez');
   });
 
   it('agrega una página nueva cuando el contenido no entra en la primera', () => {
     const el = document.createElement('div');
-    // Cada párrafo ocupa una línea de 14pt más 9 de aire; en una A4 con el
-    // membrete arriba entran menos de treinta, así que ochenta desbordan.
     el.innerHTML = Array.from({ length: 80 }, (_, i) => `<p>Línea ${i}</p>`).join('');
 
     buildPdfDocument(el);
@@ -458,7 +509,9 @@ describe('buildPdfDocument', () => {
 describe('las fuentes de marca', () => {
   const FUENTES = {
     titulos: { archivo: 'poppins-600.ttf', base64: 'AA==' },
-    cuerpo: { archivo: 'inter-400.ttf', base64: 'AA==' },
+    rotulos: { archivo: 'poppins-500.ttf', base64: 'AA==' },
+    cuerpo: { archivo: 'nunito-sans-400.ttf', base64: 'AA==' },
+    cuerpoDestacado: { archivo: 'nunito-sans-700.ttf', base64: 'AA==' },
   };
 
   it('sin fuentes cargadas todo el papel va en Helvetica', () => {
@@ -472,9 +525,12 @@ describe('las fuentes de marca', () => {
     expect(new Set(doc.llamadas.setFont.map(([familia]) => familia))).toEqual(
       new Set(['helvetica']),
     );
+    // Lo destacado en negrita, la lectura en normal.
+    expect(doc.llamadas.setFont).toContainEqual(['helvetica', 'bold']);
+    expect(doc.llamadas.setFont).toContainEqual(['helvetica', 'normal']);
   });
 
-  it('con fuentes cargadas las registra en el documento y escribe lo destacado en Poppins y la lectura en Inter', () => {
+  it('con fuentes cargadas registra las cuatro de AloVida y escribe títulos en Poppins y lectura en Nunito Sans', () => {
     establecerFuentesDeDocumentos(FUENTES);
     buildBlocksPdf([
       { kind: 'heading', text: 'Sección', level: 2 },
@@ -483,13 +539,18 @@ describe('las fuentes de marca', () => {
 
     const doc = ultimoDocumento();
     expect(doc.llamadas.addFont).toEqual([
-      ['poppins-600.ttf', 'Poppins', 'normal'],
-      ['inter-400.ttf', 'Inter', 'normal'],
+      ['poppins-600.ttf', 'Poppins-SemiBold', 'normal'],
+      ['poppins-500.ttf', 'Poppins-Medium', 'normal'],
+      ['nunito-sans-400.ttf', 'NunitoSans-Regular', 'normal'],
+      ['nunito-sans-700.ttf', 'NunitoSans-Bold', 'normal'],
     ]);
     const familias = doc.llamadas.setFont.map(([familia]) => familia);
-    expect(familias).toContain('Poppins');
-    expect(familias).toContain('Inter');
+    expect(familias).toContain('Poppins-SemiBold');
+    expect(familias).toContain('NunitoSans-Regular');
     expect(familias).not.toContain('helvetica');
+    // El título de sección se escribió justo después de poner Poppins.
+    const indiceDelTitulo = doc.llamadas.text.findIndex(([linea]) => linea === 'Sección');
+    expect(indiceDelTitulo).toBeGreaterThan(-1);
   });
 
   /** Cada `jsPDF` guarda sus fuentes: un segundo documento las registra de nuevo. */
@@ -498,41 +559,42 @@ describe('las fuentes de marca', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Uno' }]);
     buildBlocksPdf([{ kind: 'paragraph', text: 'Dos' }]);
 
-    expect(DocumentoFalso.instancias.map((doc) => doc.llamadas.addFont.length)).toEqual([2, 2]);
+    expect(DocumentoFalso.instancias.map((doc) => doc.llamadas.addFont.length)).toEqual([4, 4]);
   });
 });
 
-describe('el membrete de marca', () => {
-  it('usa papel blanco y omite la filigrana en un artículo extenso', () => {
-    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], {
-      title: 'Artículo médico',
-      plainPaper: true,
-    });
+describe('la portada, el membrete y el pie', () => {
+  const ANCHO = 595;
 
-    const doc = ultimoDocumento();
-    expect(doc.llamadas.rect).toContainEqual([0, 0, 595, 842, 'F']);
-    expect(doc.llamadas.lines).toHaveLength(4);
-  });
-
-  it('estampa el isotipo dos veces por página: el del membrete y la filigrana', () => {
+  it('la primera hoja abre con la portada a sangre y el isotipo en el membrete', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], { title: 'Receta médica' });
 
     const doc = ultimoDocumento();
-    // Cuatro contornos por isotipo; dos isotipos en la única página.
+    // La banda de la portada cruza la hoja de borde a borde desde arriba.
+    expect(doc.llamadas.rect.some(([x, y, ancho]) => x === 0 && y === 0 && ancho === ANCHO)).toBe(true);
+    // Dos isotipos: el de la marca y el grande y tenue que firma la portada.
     expect(doc.llamadas.lines).toHaveLength(8);
-    // La filigrana es la grande, y va con opacidad: es el fondo, no un sello
-    // encima del texto.
-    const anchos = doc.llamadas.lines.map((trazo) => trazo.escala);
-    expect(Math.max(...anchos)).toBeGreaterThan(Math.min(...anchos));
-    expect(doc.llamadas.gState.map((estado) => estado.opacity)).toContain(0.04);
-    // Y va en el rincón inferior derecho, apoyada sobre el pie: nunca detrás
-    // de una tabla, donde se leía como una mancha gris.
-    const filigrana = doc.llamadas.lines.find((trazo) => trazo.escala === Math.max(...anchos));
-    expect(filigrana?.x).toBeGreaterThan(595 / 2);
-    expect(filigrana?.y).toBeGreaterThan(842 / 2);
+    expect(doc.llamadas.gState.map((estado) => estado.opacity)).toContain(0.07);
+    expect(doc.llamadas.text.map(([linea]) => linea)).toContain('AloVida');
   });
 
-  it('la marca y la clase de documento se escriben con las letras separadas', () => {
+  it('las hojas siguientes llevan un membrete corto con la marca, el título y el folio', () => {
+    buildBlocksPdf(
+      Array.from({ length: 80 }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+      { title: 'Historia clínica', reference: 'N.º 0042' },
+    );
+
+    const doc = ultimoDocumento();
+    const paginas = doc.llamadas.addPage + 1;
+    const lineas = doc.llamadas.text.map(([linea]) => linea);
+    // La marca en el membrete de cada hoja, y AloVida como emisor en cada pie.
+    expect(lineas.filter((linea) => linea === 'AloVida')).toHaveLength(paginas * 2);
+    expect(lineas.filter((linea) => linea === 'Historia clínica  ·  N.º 0042')).toHaveLength(paginas - 1);
+    // Un isotipo por hoja de continuación, más los dos de la portada.
+    expect(doc.llamadas.lines).toHaveLength((paginas - 1) * 4 + 8);
+  });
+
+  it('la clase de documento se escribe en versalitas espaciadas y el espaciado vuelve a cero', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], {
       title: 'Receta médica',
       kind: 'Receta médica',
@@ -543,6 +605,35 @@ describe('el membrete de marca', () => {
     // El espaciado vuelve a cero después de cada texto espaciado: en un PDF es
     // un ajuste global y dejarlo puesto abriría las letras del cuerpo.
     expect(doc.llamadas.charSpace.at(-1)).toBe(0);
+  });
+
+  it('la portada dice la fecha de emisión y los metadatos que el documento pida', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], {
+      title: 'Cotización',
+      reference: 'N.º 0042',
+      issuedAt: new Date(2026, 9, 24, 10, 32),
+      meta: [
+        { label: 'Válida hasta', value: '23/11/2026' },
+        { label: 'Sin valor', value: '  ' },
+      ],
+    });
+
+    const lineas = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(lineas).toContain('N.º 0042');
+    expect(lineas).toContain('FECHA DE EMISIÓN');
+    expect(lineas).toContain('24/10/2026, 10:32');
+    expect(lineas).toContain('VÁLIDA HASTA');
+    expect(lineas).toContain('23/11/2026');
+    // Un dato vacío no imprime un rótulo con un hueco debajo.
+    expect(lineas).not.toContain('SIN VALOR');
+  });
+
+  it('el folio y los metadatos van alineados al margen derecho', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], { reference: 'N.º 0042' });
+
+    // El doble mide 5 pt por letra: el folio termina exactamente en el margen.
+    const folio = ultimoDocumento().llamadas.text.find(([linea]) => linea === 'N.º 0042')!;
+    expect(folio[1] + 'N.º 0042'.length * 5).toBeCloseTo(ANCHO - 48, 5);
   });
 
   it('numera todas las páginas sobre el total, al final', () => {
@@ -559,23 +650,56 @@ describe('el membrete de marca', () => {
     // El total es el mismo en todas: se sella cuando ya se sabe cuántas hay.
     expect(paginas[0]).toBe(`Página 1 de ${paginas.length}`);
     expect(paginas.at(-1)).toBe(`Página ${paginas.length} de ${paginas.length}`);
-    expect(doc.llamadas.setPage).toEqual(Array.from({ length: paginas.length }, (_, i) => i + 1));
+    // Se recorren todas las hojas y se vuelve a la última.
+    expect(doc.llamadas.setPage).toEqual([
+      ...Array.from({ length: paginas.length }, (_, i) => i + 1),
+      paginas.length,
+    ]);
   });
 
-  it('el pie dice la línea legal que el documento pida', () => {
+  it('el pie dice el emisor, la línea legal y la fecha de emisión', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], {
       title: 'Comprobante',
       footerNote: 'No válido como factura',
+      issuedAt: new Date(2026, 9, 24, 10, 32),
+      issuer: { name: 'Consultorio Illimani', details: ['NIT 0000000000', 'La Paz'] },
     });
 
-    expect(ultimoDocumento().llamadas.text.map(([linea]) => linea)).toContain(
-      'No válido como factura',
+    const lineas = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(lineas).toContain('Consultorio Illimani');
+    expect(lineas).toContain('  ·  NIT 0000000000  ·  La Paz');
+    expect(lineas).toContain('No válido como factura  ·  Emitido el 24/10/2026, 10:32');
+  });
+
+  it('sin emisor declarado, el papel lo emite AloVida', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }]);
+
+    const lineas = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(lineas.filter((linea) => linea === 'AloVida')).toHaveLength(2);
+    expect(lineas.some((linea) => linea.startsWith('Documento confidencial  ·  Emitido el '))).toBe(true);
+  });
+
+  it('la marca de agua va en diagonal en cada hoja, en mayúsculas', () => {
+    buildBlocksPdf(
+      Array.from({ length: 80 }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+      { watermark: 'Sin validez fiscal' },
     );
+
+    const doc = ultimoDocumento();
+    expect(doc.llamadas.rotated).toEqual(
+      Array.from({ length: doc.llamadas.addPage + 1 }, () => 'SIN VALIDEZ FISCAL'),
+    );
+  });
+
+  it('sin marca de agua no escribe nada rotado', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }]);
+
+    expect(ultimoDocumento().llamadas.rotated).toEqual([]);
   });
 });
 
-describe('el logo del consultorio en el membrete', () => {
-  const DERECHA = 595 - 54;
+describe('el logo del consultorio en la portada', () => {
+  const DERECHA = 595 - 48;
   const PNG = 'data:image/png;base64,AAAA';
   const logo = (ancho: number, alto: number) => ({
     dataUrl: PNG,
@@ -584,7 +708,7 @@ describe('el logo del consultorio en el membrete', () => {
     alto,
   });
 
-  /** Dónde se escribió una línea del cuerpo: es lo que no puede moverse. */
+  /** Dónde se escribió una línea: es lo que no puede moverse. */
   const yDe = (texto: string): number =>
     ultimoDocumento().llamadas.text.find(([linea]) => linea === texto)![2];
   const xDe = (texto: string): number =>
@@ -593,14 +717,15 @@ describe('el logo del consultorio en el membrete', () => {
   const CUERPO = [{ kind: 'paragraph' as const, text: 'Una línea' }];
   const OPCIONES = { title: 'Receta médica', kind: 'Receta médica', reference: 'N.º 0042' };
 
-  it('sin logo no dibuja ninguna imagen y la clase queda pegada al margen derecho', () => {
+  it('sin logo no dibuja ninguna imagen ni ficha', () => {
     buildBlocksPdf(CUERPO, OPCIONES);
 
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
-    expect(xDe('RECETA MÉDICA')).toBe(DERECHA);
+    // Ninguna ficha blanca en el rincón del logo.
+    expect(ultimoDocumento().llamadas.roundedRect.some(([, y]) => y === 24)).toBe(false);
   });
 
-  it('con logo lo dibuja una vez, dentro de su caja y pegado al margen derecho', () => {
+  it('con logo lo dibuja una vez, dentro de su ficha y contra el margen derecho', () => {
     buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(360, 120) });
 
     const [imagen, ...resto] = ultimoDocumento().llamadas.addImage;
@@ -608,19 +733,12 @@ describe('el logo del consultorio en el membrete', () => {
     expect(imagen!.formato).toBe('PNG');
     expect(imagen!.ancho).toBeLessThanOrEqual(120);
     expect(imagen!.alto).toBeLessThanOrEqual(34);
-    expect(imagen!.x + imagen!.ancho).toBeCloseTo(DERECHA, 5);
-    expect(imagen!.y).toBeGreaterThanOrEqual(44);
-    expect(imagen!.y + imagen!.alto).toBeLessThanOrEqual(78);
-  });
-
-  it('con logo, la clase y el folio se corren a la izquierda de la ranura y no la pisan', () => {
-    buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(360, 120) });
-
-    // El borde visual del texto (ancla + lo que suma el espaciado) queda a la
-    // izquierda de la ranura, sin pisarla.
-    const bordeVisual = xDe('RECETA MÉDICA') + 'RECETA MÉDICA'.length * 1.5;
-    expect(bordeVisual).toBeLessThanOrEqual(DERECHA - 120 - 14 + 1e-9);
-    expect(xDe('N.º 0042') + 'N.º 0042'.length * 0.4).toBeCloseTo(bordeVisual, 5);
+    // La ficha tiene 7 pt de aire alrededor del logo y termina en el margen.
+    expect(imagen!.x + imagen!.ancho).toBeCloseTo(DERECHA - 7, 5);
+    const ficha = ultimoDocumento().llamadas.roundedRect.find(([, y]) => y === 24)!;
+    expect(ficha[0] + ficha[2]).toBeCloseTo(DERECHA, 5);
+    expect(imagen!.y).toBeGreaterThanOrEqual(ficha[1]);
+    expect(imagen!.y + imagen!.alto).toBeLessThanOrEqual(ficha[1] + ficha[3]);
   });
 
   it.each([
@@ -630,12 +748,13 @@ describe('el logo del consultorio en el membrete', () => {
     ['muy alto 1:3', logo(100, 300)],
     ['diminuto', logo(4, 4)],
   ])(
-    'un logo %s no mueve el título ni el arranque del contenido, y cabe en la caja',
+    'un logo %s no mueve el título, el folio ni el arranque del contenido, y cabe en la ficha',
     (_nombre, forma) => {
       buildBlocksPdf(CUERPO, { ...OPCIONES, subtitle: 'Bajada' });
       const sinLogo = {
         titulo: yDe('Receta médica'),
         bajada: yDe('Bajada'),
+        folio: [xDe('N.º 0042'), yDe('N.º 0042')],
         cuerpo: yDe('Una línea'),
       };
 
@@ -643,6 +762,7 @@ describe('el logo del consultorio en el membrete', () => {
       const conLogo = {
         titulo: yDe('Receta médica'),
         bajada: yDe('Bajada'),
+        folio: [xDe('N.º 0042'), yDe('N.º 0042')],
         cuerpo: yDe('Una línea'),
       };
       const [imagen] = ultimoDocumento().llamadas.addImage;
@@ -665,12 +785,12 @@ describe('el logo del consultorio en el membrete', () => {
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
   });
 
-  it('si la imagen no se puede dibujar, el documento sale igual y sin correr la clase', () => {
+  it('si la imagen no se puede dibujar, el documento sale igual', () => {
     DocumentoFalso.fallarAlDibujarImagenes = true;
 
     expect(() => buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(360, 120) })).not.toThrow();
 
-    expect(xDe('RECETA MÉDICA')).toBe(DERECHA);
+    expect(xDe('RECETA MÉDICA')).toBe(48);
     expect(yDe('Una línea')).toBeGreaterThan(0);
   });
 
@@ -678,7 +798,6 @@ describe('el logo del consultorio en el membrete', () => {
     expect(() => buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(0, 0) })).not.toThrow();
 
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
-    expect(xDe('RECETA MÉDICA')).toBe(DERECHA);
   });
 
   it('usa el logo de la sesión por omisión, y `null` lo apaga para ese documento', () => {
@@ -690,19 +809,9 @@ describe('el logo del consultorio en el membrete', () => {
     buildBlocksPdf(CUERPO, { ...OPCIONES, logo: null });
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
   });
-
-  it('sin `kind` ni referencia el logo entra igual y el contenido no se mueve', () => {
-    buildBlocksPdf(CUERPO, { title: 'Sin clase' });
-    const sinLogo = yDe('Una línea');
-
-    buildBlocksPdf(CUERPO, { title: 'Sin clase', logo: logo(360, 120) });
-
-    expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
-    expect(yDe('Una línea')).toBe(sinLogo);
-  });
 });
 
-describe('el bloque de firma y sello del pie', () => {
+describe('el bloque de firma y sello', () => {
   const PNG = 'data:image/png;base64,AAAA';
   const imagen = (ancho: number, alto: number) => ({
     dataUrl: PNG,
@@ -724,6 +833,8 @@ describe('el bloque de firma y sello del pie', () => {
   };
 
   const CUERPO = [{ kind: 'paragraph' as const, text: 'Una línea' }];
+  const lineas = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` }));
   const yDe = (texto: string): number =>
     ultimoDocumento().llamadas.text.find(([linea]) => linea === texto)![2];
   const hay = (texto: string): boolean =>
@@ -733,28 +844,39 @@ describe('el bloque de firma y sello del pie', () => {
     buildBlocksPdf(CUERPO, { title: 'Receta' });
 
     expect(hay('Matrícula M-1234')).toBe(false);
+    expect(hay('FIRMA Y SELLO')).toBe(false);
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
   });
 
-  it('con firma e imagen dibuja las dos cajas, la línea, el nombre y la matrícula', () => {
+  it('con firma e imagen dibuja las dos cajas, la línea, el nombre, la matrícula y el rótulo', () => {
     buildBlocksPdf(CUERPO, { title: 'Receta', firma: FIRMA_COMPLETA });
 
     const imagenes = ultimoDocumento().llamadas.addImage;
     expect(imagenes).toHaveLength(2);
     const [firma, sello] = imagenes;
-    // La firma y el sello caben en sus cajas fijas (150×56 y 56×56) sin estirarse.
-    expect(firma!.ancho).toBeLessThanOrEqual(150 + 1e-9);
-    expect(firma!.alto).toBeLessThanOrEqual(56 + 1e-9);
-    expect(sello!.ancho).toBeLessThanOrEqual(56 + 1e-9);
-    expect(sello!.alto).toBeLessThanOrEqual(56 + 1e-9);
+    // La firma y el sello caben en sus cajas fijas (140×52 y 60×60) sin estirarse.
+    expect(firma!.ancho).toBeLessThanOrEqual(140 + 1e-9);
+    expect(firma!.alto).toBeLessThanOrEqual(52 + 1e-9);
+    expect(sello!.ancho).toBeLessThanOrEqual(60 + 1e-9);
+    expect(sello!.alto).toBeLessThanOrEqual(60 + 1e-9);
     expect(firma!.ancho / firma!.alto).toBeCloseTo(3, 5);
     // El sello va al lado de la firma, a la derecha.
-    expect(sello!.x).toBeGreaterThan(firma!.x + 150 - 1e-9);
+    expect(sello!.x).toBeGreaterThanOrEqual(firma!.x + firma!.ancho);
     expect(hay('Dra. Valeria Rojas')).toBe(true);
     expect(hay('Matrícula M-1234')).toBe(true);
-    // Nombre y matrícula van debajo de las imágenes.
+    expect(hay('FIRMA Y SELLO')).toBe(true);
+    // Nombre, matrícula y rótulo van debajo de las imágenes, en ese orden.
     expect(yDe('Dra. Valeria Rojas')).toBeGreaterThan(firma!.y + firma!.alto);
     expect(yDe('Matrícula M-1234')).toBeGreaterThan(yDe('Dra. Valeria Rojas'));
+    expect(yDe('FIRMA Y SELLO')).toBeGreaterThan(yDe('Matrícula M-1234'));
+  });
+
+  it('va a la derecha: su línea termina en el margen', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: SIN_IMAGENES });
+
+    const corta = ultimoDocumento().llamadas.line.filter(([x1, , x2]) => x2 - x1 === 220);
+    expect(corta).toHaveLength(1);
+    expect(corta[0][2]).toBeCloseTo(595 - 48, 5);
   });
 
   it('sin imágenes el bloque sale igual, con la línea de firma y sin ninguna imagen', () => {
@@ -762,9 +884,6 @@ describe('el bloque de firma y sello del pie', () => {
 
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
     expect(hay('Matrícula M-1234')).toBe(true);
-    // Una línea corta (la de la firma), no un filete de lado a lado.
-    const corta = ultimoDocumento().llamadas.line.filter(([x1, , x2]) => x2 - x1 === 150);
-    expect(corta).toHaveLength(1);
   });
 
   it('sin matrícula cargada imprime el nombre y no inventa un número', () => {
@@ -786,42 +905,40 @@ describe('el bloque de firma y sello del pie', () => {
     expect(despues).toEqual(antes);
   });
 
-  it('va al pie de la página: a la misma altura sin importar cuánto contenido haya', () => {
-    buildBlocksPdf(CUERPO, { title: 'Receta', firma: FIRMA_COMPLETA });
-    const conPoco = yDe('Matrícula M-1234');
+  /**
+   * Antes iba clavado al pie de la última hoja: con poco contenido dejaba un
+   * hueco en medio del papel, y con la hoja casi llena mandaba la firma sola a
+   * una hoja nueva. Ahora sigue al contenido, siempre debajo de lo último.
+   */
+  it('sigue al contenido: va debajo de la última línea, con su aire', () => {
+    buildBlocksPdf(lineas(3), { title: 'Receta', firma: SIN_IMAGENES });
+    const conPoco = yDe('Dra. Valeria Rojas');
+    expect(conPoco).toBeGreaterThan(yDe('Línea 2') + 36);
 
-    buildBlocksPdf(
-      Array.from({ length: 30 }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
-      { title: 'Receta', firma: FIRMA_COMPLETA },
-    );
-
-    expect(yDe('Matrícula M-1234')).toBe(conPoco);
+    buildBlocksPdf(lineas(8), { title: 'Receta', firma: SIN_IMAGENES });
+    expect(yDe('Dra. Valeria Rojas')).toBeGreaterThan(conPoco);
   });
 
-  it('si el contenido llega hasta el pie, el bloque pasa a una página nueva sin pisarlo', () => {
-    const lineas = (n: number) =>
-      Array.from({ length: n }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` }));
+  it('si no entra entero en la hoja, el bloque pasa a una página nueva sin pisar el contenido', () => {
     const paginas = (n: number, firma: typeof FIRMA_COMPLETA | null): number => {
       buildBlocksPdf(lineas(n), { title: 'Receta', firma });
       return ultimoDocumento().llamadas.addPage;
     };
 
     // La cantidad de líneas más chica con la que el bloque ya no entra en la hoja.
-    const limite = Array.from({ length: 40 }, (_, i) => i + 10).find(
+    const limite = Array.from({ length: 40 }, (_, i) => i + 5).find(
       (n) => paginas(n, FIRMA_COMPLETA) > paginas(n, null),
     );
     expect(limite, 'ningún largo de contenido obligó a abrir una página').toBeDefined();
 
     buildBlocksPdf(lineas(limite!), { title: 'Receta' });
     const yUltimaSinFirma = yDe(`Línea ${limite! - 1}`);
-
     const paginasSinFirma = paginas(limite!, null);
-    // Con una línea menos, en cambio, entra sin abrir página.
     const entraConUnaMenos = paginas(limite! - 1, FIRMA_COMPLETA) === paginas(limite! - 1, null);
 
     buildBlocksPdf(lineas(limite!), { title: 'Receta', firma: FIRMA_COMPLETA });
 
-    // El contenido no se movió, y el bloque se dibujó en la página nueva.
+    // El contenido no se movió, y el bloque entero se dibujó en la página nueva.
     expect(yDe(`Línea ${limite! - 1}`)).toBe(yUltimaSinFirma);
     expect(ultimoDocumento().llamadas.addPage).toBe(paginasSinFirma + 1);
     expect(hay('Matrícula M-1234')).toBe(true);
@@ -860,21 +977,18 @@ describe('las tablas', () => {
     const x = new Map(doc.llamadas.text.map(([linea, posicion]) => [linea, posicion]));
     // Las dos filas del cuerpo comparten el borde de cada columna.
     expect(x.get('Consulta')).toBe(x.get('Limpieza'));
-    expect(x.get('100.00')).toBe(x.get('80.00'));
-    // Y los importes terminan a la derecha de donde arranca su columna.
+    // Alineados a la derecha: terminan en el mismo borde aunque midan distinto.
+    expect(x.get('100.00')! + '100.00'.length * 5).toBeCloseTo(x.get('80.00')! + '80.00'.length * 5, 5);
     expect(x.get('100.00')).toBeGreaterThan(x.get('Consulta') ?? 0);
-    // La cabecera se dibuja sobre un panel: un relleno más que los filetes.
-    expect(doc.llamadas.rect.length).toBeGreaterThan(0);
   });
 
   /**
    * El defecto que esto cierra: una tabla larga seguía en la carilla siguiente
    * **sin sus nombres de columna**. En un plan de 36 cuotas, la página 2 quedaba
    * con cuatro columnas de números y ninguna forma de saber cuál era el capital
-   * y cuál el interés sin volver a la página 1 — que en un papel impreso a veces
-   * ya no está.
+   * y cuál el interés sin volver a la página 1.
    */
-  it('repite la fila de encabezado cuando la tabla sigue en otra página', () => {
+  it('repite la fila de encabezado y avisa el corte cuando la tabla sigue en otra página', () => {
     const filas = Array.from({ length: 60 }, (_, i) => ({
       kind: 'row' as const,
       text: `Cuota ${i + 1}	100.00`,
@@ -888,17 +1002,40 @@ describe('las tablas', () => {
 
     const doc = ultimoDocumento();
     expect(doc.llamadas.addPage).toBeGreaterThan(0);
-    const vecesQueSeNombraLaColumna = doc.llamadas.text.filter(
-      ([linea]) => linea === 'Importe',
-    ).length;
-    expect(vecesQueSeNombraLaColumna).toBe(doc.llamadas.addPage + 1);
+    const textos = doc.llamadas.text.map(([linea]) => linea);
+    expect(textos.filter((linea) => linea === 'IMPORTE')).toHaveLength(doc.llamadas.addPage + 1);
+    expect(textos.filter((linea) => linea === 'Continúa en la página siguiente')).toHaveLength(
+      doc.llamadas.addPage,
+    );
+    // Ninguna fila se perdió en el corte.
+    for (let i = 1; i <= 60; i += 1) expect(textos).toContain(`Cuota ${i}`);
+  });
+
+  /**
+   * La última fila sola arriba de una hoja, con su cabecera repetida y nada
+   * más, se lee como un error: se lleva la penúltima con ella.
+   */
+  it('no deja la última fila sola en una hoja nueva', () => {
+    const tabla = (n: number) => [
+      { kind: 'row' as const, text: '', cells: ['Concepto', 'Importe'], header: true },
+      ...Array.from({ length: n }, (_, i) => ({ kind: 'row' as const, text: '', cells: [`Cuota ${i + 1}`, '100.00'] })),
+    ];
+    for (let n = 30; n <= 60; n += 1) {
+      buildBlocksPdf(tabla(n));
+      const doc = ultimoDocumento();
+      const enLaUltimaHoja = doc.llamadas.text.filter(
+        ([linea], indice) =>
+          linea.startsWith('Cuota ') &&
+          indice > doc.llamadas.text.map(([texto]) => texto).lastIndexOf('IMPORTE'),
+      );
+      if (doc.llamadas.addPage > 0) expect(enLaUltimaHoja.length, `con ${n} filas`).not.toBe(1);
+    }
   });
 
   /**
    * El defecto que esto cierra: con una tabla que no entra a lo ancho, repartir
    * la falta entre todas las columnas por igual partía en dos renglones un
-   * encabezado de una sola palabra («Atencion / es»), que es lo primero que se
-   * lee como descuido en un documento.
+   * encabezado de una sola palabra, que es lo primero que se lee como descuido.
    */
   it('no achica la columna angosta cuando la tabla no entra a lo ancho', () => {
     const largo = 'Motivo de consulta con una descripción muy larga que no entra de ninguna forma';
@@ -907,17 +1044,29 @@ describe('las tablas', () => {
       { kind: 'row', text: '', cells: [`Paciente ${largo}`, largo, '2'] },
     ]);
 
-    const doc = ultimoDocumento();
-    // El rótulo entra entero: se escribió en una sola llamada y no en dos.
-    const veces = doc.llamadas.text.filter(([linea]) => linea === 'Atenciones').length;
+    const veces = ultimoDocumento().llamadas.text.filter(([linea]) => linea === 'ATENCIONES').length;
     expect(veces).toBe(1);
   });
 
+  it('no manda a la derecha una columna que no es de números', () => {
+    buildBlocksPdf([
+      { kind: 'row', text: 'Estudio\tPreparación', cells: ['Estudio', 'Preparación'], header: true },
+      { kind: 'row', text: 'Hemograma\tAyuno de 8 horas', cells: ['Hemograma', 'Ayuno de 8 horas'] },
+    ]);
+
+    const doc = ultimoDocumento();
+    const encabezado = doc.llamadas.text.find(([linea]) => linea === 'PREPARACIÓN');
+    const celda = doc.llamadas.text.find(([linea]) => linea === 'Ayuno de 8 horas');
+    // Alineadas a la izquierda las dos: comparten el borde de la columna.
+    expect(encabezado?.[1]).toBe(celda?.[1]);
+  });
+});
+
+describe('los bloques', () => {
   /**
-   * Los renglones en blanco son de los documentos que se completan a mano —un
-   * formulario impreso—. Se cuentan contra el mismo documento sin ellos: el
-   * membrete y el pie también dibujan filetes, y un conteo absoluto se
-   * rompería con el próximo retoque del membrete.
+   * Los renglones en blanco son de los documentos que se completan a mano. Se
+   * cuentan contra el mismo documento sin ellos: el membrete y el pie también
+   * dibujan filetes.
    */
   it('dibuja un filete por cada renglón en blanco que se le pida', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Motivo de consulta' }]);
@@ -953,10 +1102,7 @@ describe('las tablas', () => {
     expect(ultimoDocumento().llamadas.addPage).toBe(1);
   });
 
-  /**
-   * Un corte sobre una hoja recién abierta dejaría una carilla en blanco, que
-   * en un documento impreso se lee como una falla de la impresora.
-   */
+  /** Un corte sobre una hoja recién abierta dejaría una carilla en blanco. */
   it('un corte de hoja sobre una hoja vacía no hace nada', () => {
     buildBlocksPdf([
       { kind: 'pagebreak', text: '' },
@@ -969,28 +1115,6 @@ describe('las tablas', () => {
     expect(ultimoDocumento().llamadas.addPage).toBe(1);
   });
 
-  it('no manda a la derecha una columna que no es de números', () => {
-    buildBlocksPdf([
-      {
-        kind: 'row',
-        text: 'Estudio\tPreparación',
-        cells: ['Estudio', 'Preparación'],
-        header: true,
-      },
-      {
-        kind: 'row',
-        text: 'Hemograma\tAyuno de 8 horas',
-        cells: ['Hemograma', 'Ayuno de 8 horas'],
-      },
-    ]);
-
-    const doc = ultimoDocumento();
-    const encabezado = doc.llamadas.text.find(([linea]) => linea === 'Preparación');
-    const celda = doc.llamadas.text.find(([linea]) => linea === 'Ayuno de 8 horas');
-    // Alineadas a la izquierda las dos: comparten el borde de la columna.
-    expect(encabezado?.[1]).toBe(celda?.[1]);
-  });
-
   it('continúa un párrafo largo en páginas nuevas sin perder renglones', () => {
     DocumentoFalso.lineasForzadas = 100;
     buildBlocksPdf([{ kind: 'paragraph', text: 'PÁRRAFO_LARGO' }], { logo: null, firma: null });
@@ -998,9 +1122,9 @@ describe('las tablas', () => {
     const doc = ultimoDocumento();
     expect(doc.llamadas.addPage).toBeGreaterThan(0);
     const written = doc.llamadas.text.map(([line]) => line);
+    expect(written.filter((line) => line.startsWith('Renglón '))).toHaveLength(100);
     expect(written).toContain('Renglón 1');
     expect(written).toContain('Renglón 100');
-    expect(written.filter((line) => line.startsWith('Renglón '))).toHaveLength(100);
   });
 
   it('inserta la ilustración del contenido antes de su atribución', () => {
@@ -1018,6 +1142,139 @@ describe('las tablas', () => {
 
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
     expect(ultimoDocumento().llamadas.text.map(([line]) => line)).toContain('Autor · CC BY 4.0');
+  });
+
+  it('una rejilla de datos reparte los datos en columnas y omite los vacíos', async () => {
+    const { fieldsBlock } = await import('./pdf-export');
+    buildBlocksPdf([
+      fieldsBlock(
+        [
+          { label: 'Fecha', value: '22/10/2026' },
+          { label: 'Modalidad', value: 'Presencial' },
+          { label: 'Sede', value: 'Sopocachi' },
+          { label: 'Cobertura', value: '   ' },
+          { label: 'Estado', value: 'Atendida' },
+        ],
+        3,
+      ),
+    ]);
+
+    const doc = ultimoDocumento();
+    const xDe = (texto: string): number => doc.llamadas.text.find(([linea]) => linea === texto)![1];
+    const yDe = (texto: string): number => doc.llamadas.text.find(([linea]) => linea === texto)![2];
+    // Tres columnas en la primera fila, y la cuarta vuelve a la primera columna.
+    expect(new Set([xDe('22/10/2026'), xDe('Presencial'), xDe('Sopocachi')]).size).toBe(3);
+    expect(yDe('Presencial')).toBe(yDe('22/10/2026'));
+    expect(xDe('Atendida')).toBe(xDe('22/10/2026'));
+    expect(yDe('Atendida')).toBeGreaterThan(yDe('22/10/2026'));
+    // La etiqueta va encima de su valor.
+    expect(yDe('FECHA')).toBeLessThan(yDe('22/10/2026'));
+    expect(doc.llamadas.text.map(([linea]) => linea)).not.toContain('COBERTURA');
+  });
+
+  it('en la rejilla, un valor que no entra en tres renglones toma la fila entera', async () => {
+    const { fieldsBlock } = await import('./pdf-export');
+    DocumentoFalso.lineasForzadas = 5;
+    buildBlocksPdf([
+      fieldsBlock([
+        { label: 'Fecha', value: '22/10/2026' },
+        { label: 'Motivo', value: 'PÁRRAFO_LARGO' },
+        { label: 'Estado', value: 'Atendida' },
+      ]),
+    ]);
+
+    const doc = ultimoDocumento();
+    const xDe = (texto: string): number => doc.llamadas.text.find(([linea]) => linea === texto)![1];
+    const yDe = (texto: string): number => doc.llamadas.text.find(([linea]) => linea === texto)![2];
+    // El motivo arranca en la primera columna, en una fila propia, y lo que
+    // sigue va debajo de sus cinco renglones.
+    expect(xDe('MOTIVO')).toBe(xDe('FECHA'));
+    expect(yDe('MOTIVO')).toBeGreaterThan(yDe('22/10/2026'));
+    expect(yDe('ESTADO')).toBeGreaterThan(yDe('Renglón 5'));
+  });
+
+  it('las tarjetas van lado a lado, con su título en versalitas y sus datos', async () => {
+    const { panelsBlock } = await import('./pdf-export');
+    buildBlocksPdf([
+      panelsBlock([
+        { title: 'Paciente', fields: [{ label: 'Nombre', value: 'Ana Pérez' }] },
+        { title: 'Profesional', fields: [{ label: 'Nombre', value: 'Dra. Rojas' }, { label: 'Sin', value: '' }] },
+      ]),
+    ]);
+
+    const doc = ultimoDocumento();
+    const textos = doc.llamadas.text;
+    const paciente = textos.find(([linea]) => linea === 'PACIENTE')!;
+    const profesional = textos.find(([linea]) => linea === 'PROFESIONAL')!;
+    expect(profesional[1]).toBeGreaterThan(paciente[1]);
+    expect(profesional[2]).toBe(paciente[2]);
+    expect(textos.map(([linea]) => linea)).toContain('Dra. Rojas');
+    expect(textos.map(([linea]) => linea)).not.toContain('SIN');
+    // Las dos tarjetas miden lo mismo.
+    // (La píldora del número de página también tiene relleno y borde: es chica.)
+    const tarjetas = doc.llamadas.roundedRect.filter(([, , ancho, , estilo]) => estilo === 'FD' && ancho > 120);
+    expect(tarjetas).toHaveLength(2);
+    expect(tarjetas[0][3]).toBe(tarjetas[1][3]);
+  });
+
+  it('la caja de totales alinea los importes a la derecha y resalta el total a pagar', async () => {
+    const { totalsBlock } = await import('./pdf-export');
+    buildBlocksPdf([
+      totalsBlock([
+        { label: 'Subtotal', value: '100,00 Bs' },
+        { label: 'Total a pagar', value: '90,00 Bs', emphasis: true },
+      ]),
+    ]);
+
+    const textos = ultimoDocumento().llamadas.text;
+    const fin = (texto: string): number => {
+      const [linea, x] = textos.find(([escrito]) => escrito === texto)!;
+      return x + linea.length * 5;
+    };
+    expect(fin('100,00 Bs')).toBeCloseTo(595 - 48 - 12, 5);
+    expect(fin('90,00 Bs')).toBeCloseTo(595 - 48 - 12, 5);
+    // El rótulo del total va en versalitas sobre su banda.
+    expect(textos.map(([linea]) => linea)).toContain('TOTAL A PAGAR');
+  });
+
+  it('un total suelto se parte en rótulo e importe', () => {
+    buildBlocksPdf([{ kind: 'total', text: 'Total: 120,00 Bs' }]);
+
+    const textos = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(textos).toContain('TOTAL');
+    expect(textos).toContain('120,00 Bs');
+  });
+
+  it('un aviso escribe su título y su texto', async () => {
+    const { noteBlock } = await import('./pdf-export');
+    buildBlocksPdf([noteBlock('Alergia a la penicilina.', 'alert', 'Alergias')]);
+
+    const textos = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(textos.indexOf('Alergias')).toBeLessThan(textos.indexOf('Alergia a la penicilina.'));
+  });
+
+  it('una lista pone una viñeta por renglón', async () => {
+    const { listBlock } = await import('./pdf-export');
+    buildBlocksPdf([]);
+    const sinLista = ultimoDocumento().llamadas.circle.length;
+    buildBlocksPdf([listBlock(['Uno', 'Dos', 'Tres'])]);
+
+    expect(ultimoDocumento().llamadas.circle).toHaveLength(sinLista + 3);
+    expect(textosDelCuerpo()).toEqual(['Uno', 'Dos', 'Tres']);
+  });
+
+  it('un QR dibuja sus módulos en vectores, con su título y su leyenda', () => {
+    // Un tablero de 3 × 3: cinco módulos oscuros, dos corridas en la fila del medio.
+    const modulos = [1, 0, 1, 0, 1, 0, 1, 0, 1];
+    buildBlocksPdf([{ kind: 'qr', text: 'Escanee el código', title: 'Verificación', qr: { size: 3, modules: modulos } }]);
+    const sinModulos = ultimoDocumento().llamadas.rect.length;
+
+    buildBlocksPdf([{ kind: 'qr', text: 'Escanee el código', title: 'Verificación', qr: { size: 3, modules: [0, 0, 0, 0, 0, 0, 0, 0, 0] } }]);
+
+    expect(sinModulos - ultimoDocumento().llamadas.rect.length).toBe(5);
+    const textos = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(textos).toContain('Verificación');
+    expect(textos).toContain('Escanee el código');
   });
 });
 
