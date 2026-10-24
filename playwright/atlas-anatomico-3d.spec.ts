@@ -85,7 +85,9 @@ async function lienzoConDibujo(pagina: Page): Promise<{ piezas: number; verdes: 
   await pagina.waitForTimeout(400);
   const png = (await lienzo.screenshot()).toString('base64');
   return pagina.evaluate(async (datos) => {
-    const imagen = await createImageBitmap(await (await fetch(`data:image/png;base64,${datos}`)).blob());
+    // Sin fetch: la CSP de la app (connect-src 'self') no deja pedir un data: URL.
+    const binario = Uint8Array.from(atob(datos), (c) => c.charCodeAt(0));
+    const imagen = await createImageBitmap(new Blob([binario], { type: 'image/png' }));
     const c = new OffscreenCanvas(imagen.width, imagen.height);
     const g = c.getContext('2d');
     if (g === null) throw new Error('sin 2d');
