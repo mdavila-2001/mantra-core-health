@@ -32,7 +32,7 @@ Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 
 | cualquier sesión | `/pharmacies-directory` | `PharmaciesDirectory` | InsuranceClient, PublicCatalogClient, PublicDirectoryClient | conectada | ninguna |
 | cualquier sesión | `/insurers-directory` | `InsurersDirectory` | InsuranceClient, PublicCatalogClient, PublicDirectoryClient | conectada | ninguna |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule` | `Agenda` | ClinicalClient, PharmaLabClient, ProfilesClient, SchedulingClient, TerminologyClient | conectada | ninguna |
-| CLINICIAN · PRACTITIONER | `/medical-records` | `ClinicalRecord` | AccountingClient, AuthzClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, ConsentClient, DiagnosticsClient, FilesClient, FormsClient, PracticeSitesClient, ProceduresClient, ProfilesClient, QuotationsClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada | ninguna |
+| CLINICIAN · PRACTITIONER | `/medical-records` | `ClinicalRecord` | AccountingClient, AuthzClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, ConsentClient, DiagnosticsClient, FilesClient, FormsClient, PracticeSitesClient, ProceduresClient, ProfilesClient, QuotationsClient, ReferralsClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/diagnostics` | `Diagnostics` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN | `/interventions` | `Interventions` | ProceduresClient, TerminologyClient | conectada | ninguna |
 | PRACTITIONER · CLINICIAN | `/lab-visits` | `DoctorVisits` | PharmaLabClient | conectada | ninguna |
@@ -73,7 +73,7 @@ Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 
 | PATIENT | `/my-account/clinical-access` | `AccountClinicalAccess` | AuthzClient | conectada | ninguna |
 | cualquier sesión | `/my-account/security` | `AccountSecurity` | AccountSecurityClient | conectada | ninguna |
 | cualquier sesión | `/my-account/appointments` | `Appointments` | SchedulingClient, TerminologyClient | conectada con deuda | resolver: promesa sin pantalla |
-| cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, DiagnosticsClient, FormsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, SchedulingClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, DiagnosticUnitsClient, DiagnosticsClient, FormsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, SchedulingClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/diagnostic-results` | `DiagnosticResults` | AuthzClient, DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/diagnostic-orders` | `DiagnosticOrders` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/cotizaciones` | `Quotations` | DiagnosticUnitsClient, PharmacyClient, ProfilesClient, ServicesCatalogClient | conectada | ninguna |
@@ -199,7 +199,7 @@ Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/groups/:groupId` | `GroupDetail` | CommunityClient | conectada |
 | cualquier sesión | `/insurers-directory/:slug` | `InsurerDetail` | InsuranceClient | conectada |
 | cualquier sesión | `/laboratory-directory/:unitId` | `LaboratoryDetail` | DiagnosticUnitsClient | conectada |
-| CLINICIAN · PRACTITIONER | `/medical-records/:profileId` | `PatientChart` | AccountingClient, AuthzClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, PracticeSitesClient, ProceduresClient, ProfilesClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada |
+| CLINICIAN · PRACTITIONER | `/medical-records/:profileId` | `PatientChart` | AccountingClient, AuthzClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, PracticeSitesClient, ProceduresClient, ProfilesClient, ReferralsClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada |
 | CLINICIAN · PRACTITIONER | `/medical-records/:profileId/consultation` | `Consultation` | ClinicalClient, ConsentClient, ProfilesClient, QuotationsClient, TerminologyClient | conectada |
 | CLINICIAN · PRACTITIONER | `/medical-records/:profileId/request-access` | `RequestAccess` | AuthzClient, ProfilesClient | conectada |
 | cualquier sesión | `/my-account/access-requests` | `AccessRequests` | AuthzClient, ProfilesClient | conectada |
@@ -207,7 +207,7 @@ Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 
 | cualquier sesión | `/my-account/articles` | `MedicalArticles` | CommunityClient, FilesClient | conectada |
 | cualquier sesión | `/my-account/edit` | `PractitionerProfileEdit` | FilesClient, PracticeLogoClient, ProfilesClient, SignatureAndSealClient, TerminologyClient | conectada |
 | cualquier sesión | `/my-account/identity/cases/:caseId` | `VerificationCaseDetail` | IdentityClient | conectada |
-| cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, TerminologyClient | conectada |
+| cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, DiagnosticUnitsClient, DiagnosticsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, TerminologyClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId` | `OrderDetail` | NotificationsClient, PharmacyOrdersClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId/invoice` | `OrderInvoice` | PharmacyOrdersClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId/receipt` | `OrderReceipt` | PharmacyOrdersClient | conectada |
