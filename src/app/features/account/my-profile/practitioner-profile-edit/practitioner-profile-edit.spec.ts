@@ -13,6 +13,7 @@ import { WorkHistory } from '../work-history/work-history';
 
 import { EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
+import { accessibleName } from '../../../../../testing/a11y';
 import { selectOptionLabels } from '../../../../../testing/select';
 import { environment } from '../../../../../environments/environment';
 
@@ -3007,6 +3008,32 @@ describe('PractitionerProfileEdit', () => {
     expect(pestanas).toEqual([...EDITOR_DOCTOR_TABS]);
     expect(pestanas).not.toContain('Actividad');
     expect(fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]')).toBeNull();
+  });
+
+  /**
+   * Cada pestaña del editor tiene nombre accesible, y es su rótulo.
+   *
+   * La auditoría del 23/10/2026 las reportó como `tab` sin nombre; no se
+   * reprodujo en el navegador. Esta prueba fija el patrón del molecule `tabs`
+   * tal como lo usa el editor: el nombre y la relación con su panel.
+   */
+  it('cada pestaña se nombra por su rótulo y controla un panel que existe', () => {
+    const fixture = montarConVista();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    const tablist = raiz.querySelector('[data-testid="edicion-pestanas"] [role="tablist"]');
+    expect(tablist).not.toBeNull();
+
+    const pestanas = Array.from(tablist?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+    expect(pestanas.map((pestana) => accessibleName(pestana))).toEqual([...EDITOR_DOCTOR_TABS]);
+
+    const seleccionadas = pestanas.filter((p) => p.getAttribute('aria-selected') === 'true');
+    expect(seleccionadas).toHaveLength(1);
+    for (const pestana of pestanas) {
+      const panel = raiz.querySelector(`#${pestana.getAttribute('aria-controls') ?? ''}`);
+      expect(panel?.getAttribute('role')).toBe('tabpanel');
+      expect(panel?.getAttribute('aria-labelledby')).toBe(pestana.id);
+    }
   });
 
   /**
