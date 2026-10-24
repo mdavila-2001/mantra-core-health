@@ -134,7 +134,7 @@ function sembrarCatalogo(): Objeto[] {
         'Sin una identidad común, el mismo paciente atendido en dos centros serían dos historias clínicas y dos deudas distintas.',
       rowGrain: 'Una fila por persona física, identificada por su id; los roles (paciente, médico) cuelgan de ella.',
       businessOwner: 'Dirección de admisión',
-      sensitivity: 'PII',
+      sensitivity: 'PERSONAL',
     },
     'APPROVED',
     true,
@@ -190,7 +190,8 @@ function sembrarCatalogo(): Objeto[] {
     objeto('billing', 'payments', [...base, { name: 'invoice_id', type: 'uuid', nullable: false, fk: ['billing', 'invoices'] }]),
     objeto('clinical', 'encounters', [...base, { name: 'appointment_id', type: 'uuid', nullable: true, fk: ['scheduling', 'appointments'] }]),
     objeto('clinical', 'conditions', [...base, { name: 'code', type: 'character varying', nullable: false }]),
-    objeto('iam', 'users', [...base, { name: 'email', type: 'character varying', nullable: false }]),
+    // Detectada por la clasificación automática y sin curar: no es un borrador humano (`DRAFT`).
+    { ...objeto('iam', 'users', [...base, { name: 'email', type: 'character varying', nullable: false }]), ficha: { ...ficha({ sensitivity: 'PHI_IDENTIFIER' }, 'AUTO_DETECTED'), origin: 'AUTO_CLASSIFIER' } },
     objeto('terminology', 'catalog_concepts', [...base, { name: 'code', type: 'character varying', nullable: false }]),
     objeto('telemetry', 'user_activity_events', [...base, { name: 'event_name', type: 'character varying', nullable: false }]),
     objeto('reporting', 'v_daily_revenue', [{ name: 'day', type: 'date', nullable: true }], { objectKind: 'VIEW', filas: null }),
@@ -465,6 +466,7 @@ function registrarCatalogo(router: MockRouter): void {
     f.version = actual + 1;
     f.currentRevisionNo += o.ficha ? 1 : 0;
     f.reviewStatus = submit ? 'NEEDS_REVIEW' : 'DRAFT';
+    f.origin = 'MANUAL';
     f.autorRevision = req.user?.id ?? 'anon';
     f.updatedAt = ahora();
     o.ficha = f;
