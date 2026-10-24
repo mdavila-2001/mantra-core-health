@@ -200,8 +200,11 @@
         [style.pointer-events]="navegando() ? 'none' : null"
         (click)="navegar($event, act.link, act.fragment)"
       >
-        <!-- El calendario sólo cuando la acción salta a los horarios. -->
-        @if (act.fragment) {
+        <!-- El ícono que la acción pida; si no, el calendario sólo cuando la
+             acción salta a los horarios. -->
+        @if (act.icon; as icono) {
+          <app-nav-icon class="tarjeta-resultado__accion-icono" [name]="icono" />
+        } @else if (act.fragment) {
           <svg
             class="tarjeta-resultado__accion-icono"
             viewBox="0 0 24 24"
@@ -224,7 +227,7 @@
         <!-- La flecha dice «esto lleva a otra pantalla» y se adelanta un poco
              al pasar por la tarjeta. Sólo sin ancla: con ancla ya va el
              calendario, y dos íconos en un botón chico se amontonan. -->
-        @if (!act.fragment) {
+        @if (!act.fragment && !act.icon) {
           <app-nav-icon class="tarjeta-resultado__accion-flecha" name="arrow-right" />
         }
       </a>

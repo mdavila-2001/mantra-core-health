@@ -498,3 +498,119 @@ describe('FilterBar · columna de facetas', () => {
     expect(opciones[1]!.querySelector('.filter-bar__faceta-cantidad')).toBeNull();
   });
 });
+
+// Propietario, 24/10/2026: «un buscador y un paginador estético para los
+// filtros». La faceta larga ya no se estira con «Ver 38 más».
+describe('FilterBar · faceta larga con buscador y páginas', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  const ESPECIALIDADES = [
+    'Cardiología', 'Dermatología', 'Gastroenterología', 'Neurología', 'Oftalmología',
+    'Pediatría', 'Psiquiatría', 'Traumatología', 'Urología', 'Odontología', 'Nefrología',
+    'Neumología', 'Endocrinología', 'Hematología', 'Reumatología', 'Oncología', 'Geriatría',
+    'Infectología',
+  ];
+
+  function montar(): ComponentFixture<FilterBar> {
+    const fixture = TestBed.createComponent(FilterBar);
+    fixture.componentRef.setInput('layout', 'facets');
+    fixture.componentRef.setInput('showSearch', false);
+    fixture.componentRef.setInput('filters', [
+      {
+        key: 'especialidad',
+        label: 'Especialidad',
+        asChips: true,
+        options: ESPECIALIDADES.map((nombre, i) => ({ value: `e${i}`, label: `${nombre} (${i + 1})` })),
+      },
+    ]);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function textos(raiz: HTMLElement): string[] {
+    return [...raiz.querySelectorAll('.filter-bar__faceta-texto')].map((t) => t.textContent!.trim());
+  }
+
+  it('muestra una página de ocho, con su paginador y sin «Ver más»', () => {
+    const raiz = montar().nativeElement as HTMLElement;
+    expect(textos(raiz)).toEqual(ESPECIALIDADES.slice(0, 8));
+    expect(raiz.querySelector('.filter-bar__faceta-paginas')).not.toBeNull();
+    expect(raiz.querySelectorAll('.filter-bar__faceta-punto').length).toBe(3);
+    expect(raiz.textContent).not.toContain('Ver ');
+  });
+
+  it('las flechas son botones de ícono con nombre, y la primera empieza deshabilitada', () => {
+    const raiz = montar().nativeElement as HTMLElement;
+    const [anterior, siguiente] = [
+      ...raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-flecha'),
+    ];
+    expect(anterior!.classList).toContain('btn--icon-only');
+    expect(anterior!.getAttribute('aria-label')).toBe('Página anterior');
+    expect(anterior!.getAttribute('aria-disabled')).toBe('true');
+    expect(siguiente!.getAttribute('aria-label')).toBe('Página siguiente');
+  });
+
+  it('pasa de página con la flecha y con los puntos', () => {
+    const fixture = montar();
+    const raiz = fixture.nativeElement as HTMLElement;
+    raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-flecha')[1]!.click();
+    fixture.detectChanges();
+    expect(textos(raiz)).toEqual(ESPECIALIDADES.slice(8, 16));
+
+    raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-punto')[2]!.click();
+    fixture.detectChanges();
+    expect(textos(raiz)).toEqual(ESPECIALIDADES.slice(16));
+    expect(
+      raiz.querySelectorAll('.filter-bar__faceta-punto')[2]!.getAttribute('aria-current'),
+    ).toBe('page');
+  });
+
+  it('el buscador de la faceta encuentra sin tildes y vuelve a la primera página', async () => {
+    const fixture = montar();
+    const raiz = fixture.nativeElement as HTMLElement;
+    raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-flecha')[1]!.click();
+    fixture.detectChanges();
+
+    const campo = fixture.debugElement.query(By.directive(SearchField))
+      .componentInstance as SearchField;
+    campo.value.set('logia');
+    fixture.detectChanges();
+    await new Promise((listo) => setTimeout(listo, 0));
+    fixture.detectChanges();
+
+    // «logía» con tilde, buscada sin ella: todas las que terminan así.
+    expect(textos(raiz)).toEqual(
+      ESPECIALIDADES.filter((e) => e.normalize('NFD').replace(/[̀-ͯ]/g, '').includes('logia')).slice(0, 8),
+    );
+    expect(raiz.querySelector('.filter-bar__faceta-punto[aria-current="page"]')).toBe(
+      raiz.querySelector('.filter-bar__faceta-punto'),
+    );
+  });
+
+  it('dice que no hay coincidencias en vez de dejar la lista vacía', async () => {
+    const fixture = montar();
+    const campo = fixture.debugElement.query(By.directive(SearchField))
+      .componentInstance as SearchField;
+    campo.value.set('zzz');
+    fixture.detectChanges();
+    await new Promise((listo) => setTimeout(listo, 0));
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('.filter-bar__faceta-sin-coincidencias')?.textContent).toContain(
+      'Ninguna opción coincide con «zzz»',
+    );
+    expect(raiz.querySelector('.filter-bar__faceta-paginas')).toBeNull();
+  });
+
+  it('la opción elegida en otra página se ve arriba de la lista', async () => {
+    const fixture = montar();
+    const router = TestBed.inject(Router);
+    await router.navigate([], { queryParams: { especialidad: 'e17' } });
+    fixture.detectChanges();
+
+    expect(textos(fixture.nativeElement as HTMLElement)[0]).toBe('Infectología');
+  });
+});

@@ -640,4 +640,93 @@ describe('PractitionersDirectory', () => {
 
     expect(grupos()[0].profesionales[0].link).toBe('/directory/per-1');
   });
+
+  /* -- Filtros granulares (propietario, 24/10/2026) -------------------------- */
+
+  describe('los filtros que salen de la guía cargada', () => {
+    const REMOTA = {
+      ...OTRA,
+      profileId: 'per-3',
+      displayName: 'Dra. Ana Rojas',
+      verified: false,
+      telehealthAvailable: true,
+      // La dirección del consultorio es de una sola persona: no se ofrece.
+      workplaces: ['Clínica Foianini', 'Calle Única 123'],
+      ratingAverage: 4.6,
+      ratingCount: 3,
+    };
+
+    function claves(): string[] {
+      return interno<() => readonly { key: string }[]>('filtros')().map((f) => f.key);
+    }
+
+    function nombres(): string[] {
+      return grupos().flatMap((g) => g.profesionales.map((p) => p.title));
+    }
+
+    it('ofrece verificación, telemedicina, calificación e institución con su cantidad', () => {
+      montarTodos();
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      expect(claves()).toEqual([
+        'especialidad',
+        'verificado',
+        'telemedicina',
+        'calificacion',
+        'sede',
+      ]);
+      const sede = interno<() => readonly { key: string; options: { label: string }[] }[]>(
+        'filtros',
+      )().find((f) => f.key === 'sede')!;
+      expect(sede.options.map((o) => o.label)).toEqual([
+        'Clínica Foianini (3)',
+        'Hospital San Juan de Dios (2)',
+      ]);
+    });
+
+    it('cada corte acota la lista en memoria, sin pedir otra lectura', () => {
+      montarTodos();
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      const filtrar = interno<(a: Record<string, string>) => void>('filtrar');
+      filtrar({ telemedicina: 'true' });
+      expect(nombres()).toEqual(['Dra. Ana Rojas']);
+
+      filtrar({ verificado: 'true' });
+      expect(nombres()).toEqual(['Dr. Andrés Peña', 'Dra. Lucía Salas']);
+
+      filtrar({ sede: 'Hospital San Juan de Dios' });
+      expect(nombres()).toEqual(['Dr. Andrés Peña', 'Dra. Lucía Salas']);
+
+      filtrar({ calificacion: '4.5' });
+      expect(nombres()).toEqual(['Dra. Ana Rojas']);
+    });
+
+    it('sin nadie que cumpla todos los cortes, lo dice', () => {
+      montarTodos();
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      interno<(a: Record<string, string>) => void>('filtrar')({
+        telemedicina: 'true',
+        verificado: 'true',
+      });
+      expect(nombres()).toEqual([]);
+      expect(interno<() => string | null>('sinCoincidencias')()).toContain(
+        'Ningún médico cumple todos los filtros',
+      );
+    });
+
+    it('un enlace con los cortes en la URL abre la guía ya acotada', () => {
+      parametros.next({ telemedicina: 'true' });
+      montar();
+      responderRecuento([]);
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      expect(nombres()).toEqual(['Dra. Ana Rojas']);
+    });
+  });
 });
