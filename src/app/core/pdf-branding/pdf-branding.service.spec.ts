@@ -35,6 +35,15 @@ describe('PdfBrandingService', () => {
     await Promise.resolve();
   };
 
+  // El logo, la firma y las fuentes son estado global del motor de PDF: si esta
+  // prueba los deja puestos, la siguiente que espere «sesión vacía» falla según
+  // el orden de los archivos.
+  afterEach(() => {
+    establecerLogoDeDocumentos(null);
+    establecerFirmaDeDocumentos(null);
+    establecerFuentesDeDocumentos(null);
+  });
+
   beforeEach(() => {
     vi.resetAllMocks();
     perfil.set(null);

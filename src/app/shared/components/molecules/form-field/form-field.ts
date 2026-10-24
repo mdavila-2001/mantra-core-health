@@ -70,7 +70,15 @@ export class FormField implements FormControlContext {
 
   readonly label = input<string>('');
   readonly hint = input<string>('');
-  readonly errorMessage = input<string>('');
+  /**
+   * Sin error es `''`. Acepta `undefined` y `null` porque quien lo enlaza suele
+   * leer un mapa de errores por campo (`errores()['campo']`), que vale
+   * `undefined` justo cuando no hay error: sin esto, `.length` rompía el campo
+   * entero —y con él el bloque de receta— en cuanto se montaba.
+   */
+  readonly errorMessage = input<string, string | null | undefined>('', {
+    transform: (valor) => valor ?? '',
+  });
   readonly required = input<boolean>(false);
 
   /**

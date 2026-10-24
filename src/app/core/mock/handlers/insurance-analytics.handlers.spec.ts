@@ -94,31 +94,42 @@ describe('handlers de analítica de seguros', () => {
       owner,
     );
     const detail = call<{
-      products: readonly { plans: readonly { id: string; planCode: string }[] }[];
+      products: readonly {
+        plans: readonly { id: string; planCode: string; monthlyPremiumAmount: string | null }[];
+      }[];
     }>('GET', `/insurance-carriers/${directory.items[0]!.id}`, {}, owner);
     const plan = detail.products[0]!.plans[0]!;
 
     // `call()` no manda cuerpo (es `GET`-céntrico): el `PUT` de la prima se
     // dispara directo contra el router, como hace el propio helper por dentro.
-    const match = router.match('PUT', `/insurance-plans/${plan.id}/premium`)!;
-    match.handler({
-      method: 'PUT',
-      path: `/insurance-plans/${plan.id}/premium`,
-      params: match.params,
-      query: new URLSearchParams(),
-      body: { monthlyPremiumAmount: null },
-      headers: new HttpHeaders(),
-      user: owner,
-    });
+    const declararPrima = (monthlyPremiumAmount: string | null): void => {
+      const match = router.match('PUT', `/insurance-plans/${plan.id}/premium`)!;
+      match.handler({
+        method: 'PUT',
+        path: `/insurance-plans/${plan.id}/premium`,
+        params: match.params,
+        query: new URLSearchParams(),
+        body: { monthlyPremiumAmount },
+        headers: new HttpHeaders(),
+        user: owner,
+      });
+    };
 
-    const dashboard = call<DashboardWire>(
-      'GET',
-      '/insurance/analytics/loss-ratio',
-      { startDate: '2025-09-14', endDate: '2026-09-14', planId: plan.id },
-      owner,
-    );
-    expect(dashboard.kpis.lossRatioPercent).toBeNull();
-    expect(dashboard.kpis.coveragesWithoutPremiumCount).toBe(1);
+    // El catálogo es del proceso, no del archivo: lo que esta prueba cambia se
+    // devuelve, o la que corra después —en cualquier archivo— lo encuentra sin prima.
+    declararPrima(null);
+    try {
+      const dashboard = call<DashboardWire>(
+        'GET',
+        '/insurance/analytics/loss-ratio',
+        { startDate: '2025-09-14', endDate: '2026-09-14', planId: plan.id },
+        owner,
+      );
+      expect(dashboard.kpis.lossRatioPercent).toBeNull();
+      expect(dashboard.kpis.coveragesWithoutPremiumCount).toBe(1);
+    } finally {
+      declararPrima(plan.monthlyPremiumAmount);
+    }
   });
 
   it('un planId que no es de la aseguradora administrable responde 404', () => {

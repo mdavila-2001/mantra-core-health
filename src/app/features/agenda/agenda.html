@@ -747,3 +747,14 @@
     }
 </ng-template>
 
+<!-- ─── Pagos de una cita ───────────────────────────────────────────────────
+     Dos pestañas: los comprobantes que la persona envió (se confirman acá y la
+     cita pasa a «Pagada») y la factura de la consulta. -->
+@if (pagosDe(); as citaConPagos) {
+  <app-booking-payments
+    [bookingId]="citaConPagos.id"
+    [patientName]="citaConPagos.paciente"
+    (changed)="pagosCambiaron()"
+    (closed)="pagosDe.set(null)"
+  />
+}

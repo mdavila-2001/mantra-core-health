@@ -697,10 +697,12 @@ const pedidos = new Coleccion<PedidoSimulado>(
       // contrato de `pharmacy-orders` no la publica—, así que vive junto a la pantalla y se
       // reconoce por el identificador; acá sólo nace el pedido.
       { id: ID_PEDIDO_CON_SEGURO, estado: 'EN_REVISION' as const, createdAt: iso(0, 10, 15), expiresAt: iso(3, 10), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-quispe'), patientName: 'Rosa Elena Quispe Vargas', pickupCode: 'AV-6003', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-LEVOTIROXINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      // Del día anterior a propósito: un pedido «de hoy a las 11:40» no existe antes de esa hora
+      // (`yaLlego`), y las pruebas de la bandeja fallaban según a qué hora se corrieran.
       // T-I3 · el pedido que sale a domicilio. El medio de entrega y la dirección son parte del
       // contrato (`deliveryMode`, `deliveryAddressText`), así que los declara el backend simulado
       // y la pantalla los lee de la respuesta, igual que con la API real.
-      { id: ID_PEDIDO_CON_DELIVERY, deliveryMode: 'DOMICILIO' as const, deliveryAddressText: DELIVERY_ORDER_ADDRESS, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      { id: ID_PEDIDO_CON_DELIVERY, deliveryMode: 'DOMICILIO' as const, deliveryAddressText: DELIVERY_ORDER_ADDRESS, estado: 'EN_REVISION' as const, createdAt: iso(-1, 11, 40), expiresAt: iso(2, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       ...pedidosDelTablero(),
     ];
   })(),

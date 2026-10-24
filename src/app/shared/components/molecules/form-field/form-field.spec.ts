@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { Input } from '../../atoms/input/input';
 import { FormField } from './form-field';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormField, Input],
   template: `
     <app-form-field
@@ -104,5 +105,12 @@ describe('FormField', () => {
       ).toBe('true');
       expect(label().textContent).toContain('(obligatorio)');
     });
+  });
+  it('un error indefinido o nulo vale «sin error»: no revienta (mapa de errores por campo)', () => {
+    host.errorMessage.set(undefined as unknown as string);
+    expect(() => fixture.detectChanges()).not.toThrow();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    host.errorMessage.set(null as unknown as string);
+    expect(() => fixture.detectChanges()).not.toThrow();
   });
 });

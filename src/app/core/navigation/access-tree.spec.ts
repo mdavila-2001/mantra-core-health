@@ -205,8 +205,10 @@ describe('buildAccessTree', () => {
 
     expect(portada).toBeDefined();
     expect(portada?.label).toBe('Directorios');
-    // Fuera del menú NO está: es la sección que ocupa el renglón desde el 08/09.
-    expect(portada?.fueraDelMenuPara).toBeUndefined();
+    // Fuera del menú NO está —es la sección que ocupa el renglón desde el 08/09—
+    // salvo para el superadministrador, cuyo menú muestra cada directorio suelto
+    // en lugar de la portada (un solo acceso por pantalla, sin rodeos).
+    expect(portada?.fueraDelMenuPara).toEqual(['SUPERADMIN']);
   });
 
   it('lo declarado explícitamente le gana al cajón del grupo', () => {

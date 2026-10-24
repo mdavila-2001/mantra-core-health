@@ -34,6 +34,7 @@ import type {
   SimulatedIssuer,
   SimulatedOutboxEntry,
   PatientPaymentReport,
+  PaymentProof,
   SimulatedPayment,
   SimulatedPaymentPlan,
   SimulatedPlanInstance,
@@ -273,6 +274,20 @@ export class FacturacionSimulada {
       .map((c) => this.aCobro(c));
   }
 
+  /**
+   * Agrega el cobro de una cita si todavía no existe ninguno para ella. Devuelve
+   * `true` si lo creó. Idempotente: se llama en cada lectura de «pagos de la cita».
+   */
+  asegurarCobro(nuevo: CobroInicial | null): boolean {
+    if (nuevo === null || this.cobros.has(nuevo.id)) return false;
+    const yaHay = this.cobros.filtrar(
+      (c) => c.source === nuevo.source && c.sourceRef === nuevo.sourceRef && c.patientProfileId === nuevo.patientProfileId,
+    );
+    if (yaHay.length > 0) return false;
+    this.cobros.agregar(this.normalizar(nuevo));
+    return true;
+  }
+
   cobro(id: string): SimulatedCharge | null {
     const guardado = this.cobros.get(id);
     return guardado === undefined ? null : this.aCobro(guardado);
@@ -353,16 +368,25 @@ export class FacturacionSimulada {
     return { ok: true, value: this.aCobro(this.cobros.actualizar(cobroId, { payment })!) };
   }
 
-  /** Guarda el aviso del paciente sin marcar el cobro como pagado. */
-  informarPagoDelPaciente(cobroId: string): Resultado<SimulatedCharge> {
+  /**
+   * Guarda el aviso del paciente sin marcar el cobro como pagado.
+   *
+   * Con `proof`, el comprobante queda adjunto al aviso. Si ya había un aviso
+   * pendiente y llega un comprobante, lo reemplaza: es el caso de quien se
+   * equivocó de archivo y lo vuelve a subir antes de que lo revisen.
+   */
+  informarPagoDelPaciente(cobroId: string, proof?: PaymentProof): Resultado<SimulatedCharge> {
     const cobro = this.cobros.get(cobroId);
     if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
     if (cobro.payment !== null) return error('ALREADY_PAID', 'El cobro ya está pagado');
     if (cobro.plan !== null && cobro.plan !== undefined) {
       return error('PLAN_REQUIRED', 'El servicio tiene un plan de pagos: informe cada cuota al consultorio');
     }
-    if (cobro.patientPaymentReport?.status === 'PENDING_CONFIRMATION') {
-      return { ok: true, value: this.aCobro(cobro) };
+    const previo = cobro.patientPaymentReport;
+    if (previo?.status === 'PENDING_CONFIRMATION') {
+      if (proof === undefined) return { ok: true, value: this.aCobro(cobro) };
+      const reemplazado = this.cobros.actualizar(cobroId, { patientPaymentReport: { ...previo, proof } });
+      return { ok: true, value: this.aCobro(reemplazado!) };
     }
     const patientPaymentReport: PatientPaymentReport = {
       id: `reporte-${sha256Hex(`${cobroId}|${this.reloj().getTime()}`).slice(0, 16)}`,
@@ -371,6 +395,7 @@ export class FacturacionSimulada {
       amount: cobro.total,
       reportedAt: this.reloj().toISOString(),
       confirmedAt: null,
+      proof: proof ?? null,
     };
     return { ok: true, value: this.aCobro(this.cobros.actualizar(cobroId, { patientPaymentReport })!) };
   }

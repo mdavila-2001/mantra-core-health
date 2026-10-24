@@ -318,6 +318,21 @@ beforeEach(async () => {
   establecerLogoDeDocumentos(null);
 });
 
+/**
+ * Al terminar este archivo, `jspdf` vuelve a ser el de verdad.
+ *
+ * Con el empaquetado del corredor de Angular, el `vi.mock` de arriba no queda
+ * dentro de este archivo: cualquier prueba que importe el motor de PDF después
+ * —la receta del simulador, la factura— recibía `DocumentoFalso` y reventaba con
+ * «output is not a function» o «widths» de `undefined`, según el orden en que el
+ * trabajador recorriera los archivos. `doUnmock` no se eleva como `vi.mock`, así
+ * que corre acá, al final, y `resetModules` descarta lo ya evaluado con el falso.
+ */
+afterAll(() => {
+  vi.doUnmock('jspdf');
+  vi.resetModules();
+});
+
 describe('buildPdfDocument', () => {
   it('extrae encabezado, párrafo y filas de tabla, en orden', () => {
     buildPdfDocument(elementoDeEjemplo());

@@ -50,6 +50,8 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
+import { BookingPayments } from '../billing/booking-payments/booking-payments';
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../billing/facturacion-disponible';
 import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
 import { Menu } from '../../shared/components/molecules/menu/menu';
 import { RowActions } from '../../shared/components/molecules/row-actions/row-actions';
@@ -508,6 +510,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots
     AppButton,
     AppButtonLink,
     Badge,
+    BookingPayments,
     Menu,
     MenuItem,
     MenuTrigger,
@@ -543,6 +546,11 @@ export class Agenda {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  /** Con la facturación simulada encendida, cada cita ofrece «Pagos». */
+  private readonly facturacionSimulada = inject(FACTURACION_SIMULADA_DISPONIBLE)();
+
+  /** La cita cuyos pagos (comprobantes y factura) se están viendo. */
+  protected readonly pagosDe = signal<CitaVisible | null>(null);
   private readonly dialogs = inject(DialogService);
   /** El idioma activo, para formatear las fechas del detalle fuera de la plantilla. */
   private readonly idioma = inject(LOCALE_ID);
@@ -1094,6 +1102,12 @@ export class Agenda {
       },
     ];
 
+    // «Pagos» (comprobantes enviados + factura) va justo después de «Ver
+    // detalle»: es lo que el médico busca al terminar de atender.
+    if (this.facturacionSimulada && this.puedeAtender() && cita.admitePago) {
+      acciones.push({ code: 'agenda-pagos', label: 'Pagos y comprobantes', icon: 'wallet' });
+    }
+
     // Cada acción se ofrece SOLO en el estado en que el backend la acepta: una
     // opción que va a volver con 422 es un error con forma de oferta.
     if (this.porResponder(cita)) {
@@ -1186,6 +1200,9 @@ export class Agenda {
     switch (code) {
       case 'agenda-detalle':
         void this.verDetalle(cita);
+        return;
+      case 'agenda-pagos':
+        this.pagosDe.set(cita);
         return;
       case 'agenda-historial':
         void this.verHistorialDelPaciente(cita);
@@ -1658,6 +1675,11 @@ export class Agenda {
 
   protected recargar(): void {
     this.cargarAgenda();
+  }
+
+  /** Se confirmó un pago o se emitió una factura: la columna «Pago» se relee. */
+  protected pagosCambiaron(): void {
+    this.trasOperar();
   }
 
   /**

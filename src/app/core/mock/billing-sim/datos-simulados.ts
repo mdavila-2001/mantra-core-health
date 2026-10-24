@@ -366,6 +366,43 @@ function cobrosDeFarmacia(): CobroInicial[] {
   ].filter((c): c is CobroInicial => c !== null);
 }
 
+/** Lo que vale una consulta cuando la cita aún no tiene un cobro propio. */
+const MONTO_DE_CONSULTA_POR_OMISION = '250.00';
+
+/** Una cita que ya no se atiende no genera cobro. */
+function estaVigente(r: ReservaSimulada): boolean {
+  return r.statusConceptId !== ESTADO_RESERVA['BK-CANCELLED'] && r.statusConceptId !== ESTADO_RESERVA['BK-REJECTED'];
+}
+
+/**
+ * El cobro pendiente de una cita que todavía no tiene ninguno, o `null` si la
+ * cita no admite uno (sin paciente, cancelada o rechazada).
+ *
+ * Tiene el **mismo id** que le daría la siembra inicial (`cobro-consulta-…`),
+ * así que si la siembra ya lo había creado no se duplica: el motor lo detecta
+ * por id. Existe para que el paciente pueda subir su comprobante y quien
+ * atiende lo vea **desde que la cita existe**, no sólo si la maqueta la
+ * sembró con un cobro.
+ */
+export function cobroPendienteDeReserva(r: ReservaSimulada): CobroInicial | null {
+  if (r.patientProfileId === null || !estaVigente(r)) return null;
+  const fecha = r.startAt.slice(0, 10);
+  return {
+    id: uuid(`cobro-consulta-${r.id}`),
+    source: 'CONSULTATION',
+    sourceRef: r.appointmentId ?? r.id,
+    issuerId: EMISOR_CONSULTORIO.issuer.id,
+    patientProfileId: r.patientProfileId,
+    patientName: r.patientName,
+    practitionerProfileId: profesionalDe(r),
+    description: `Consulta médica · ${fecha}`,
+    lines: [renglonDeConsulta(MONTO_DE_CONSULTA_POR_OMISION, fecha)],
+    createdAt: r.startAt,
+    suggestedBuyer: compradorSugerido(r.patientProfileId, r.patientName),
+    payment: r.paymentState?.state === 'PAID' ? pago(`consulta-${r.id}`, 1, MONTO_DE_CONSULTA_POR_OMISION, r.startAt) : null,
+  };
+}
+
 export function cobrosIniciales(): CobroInicial[] {
   return [...cobrosDeConsultas(), ...cobrosDeFarmacia()];
 }
