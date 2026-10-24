@@ -163,9 +163,21 @@
   gap: var(--sp-2) var(--sp-4);
 }
 
+.atlas3d__ficha-nombre {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
 .atlas3d__ficha-cabecera h2 {
   margin: 0;
   font-size: var(--fs-h2);
+}
+
+.atlas3d__ficha-cabecera h2:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .atlas3d__lado {
@@ -258,8 +270,4 @@
     inset-block-start: var(--sp-4);
   }
 
-  .atlas3d__panel {
-    max-block-size: calc(min(70vh, 40rem) + 3rem);
-    overflow-y: auto;
-  }
 }
