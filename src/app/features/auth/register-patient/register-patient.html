@@ -194,16 +194,147 @@
                   </app-form-field>
                 }
 
-                <button
-                  app-button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  data-testid="registro-agregar-nombre"
-                  (clicked)="agregarNombre()"
-                >
-                  + Agregar otro nombre
-                </button>
+                <div class="registro__agregar">
+                  <button
+                    app-button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    data-testid="registro-agregar-nombre"
+                    (clicked)="agregarNombre()"
+                  >
+                    + Agregar otro nombre
+                  </button>
+                </div>
+              </div>
+            </ng-template>
+
+            <!-- Los teléfonos que se suman con el «+». Son un arreglo de verdad:
+                 viajan como `additionalPhones` y la API guarda cada uno en su
+                 fila, detrás del principal. -->
+            <ng-template appCampoPersonalizado="additionalPhones">
+              <div class="registro__nombres">
+                @for (telefono of telefonosExtra.controls; track telefono) {
+                  <app-form-field
+                    class="registro__nombre"
+                    [label]="'Otro celular ' + ($index + 1)"
+                    description="Otro número donde también podemos ubicarle."
+                    [errorMessage]="enRojo(telefono, telefonosExtra) ? errorTelefonoExtra : ''"
+                  >
+                    <div class="registro__nombre-extra">
+                      <app-phone-input
+                        [formControl]="telefono"
+                        [hasError]="enRojo(telefono, telefonosExtra)"
+                        [testId]="'registro-telefono-extra-' + $index"
+                      />
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar el celular ' + ($index + 1)"
+                        [appTooltip]="'Quitar el celular ' + ($index + 1)"
+                        [attr.data-testid]="'registro-quitar-telefono-' + $index"
+                        (clicked)="quitarTelefono($index)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                  </app-form-field>
+                }
+                @if (telefonosExtra.length < maxTelefonosExtra) {
+                  <div class="registro__agregar">
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      data-testid="registro-agregar-telefono"
+                      (clicked)="agregarTelefono()"
+                    >
+                      + Agregar otro celular
+                    </button>
+                  </div>
+                }
+              </div>
+            </ng-template>
+
+            <!-- Los contactos de emergencia que se suman con el «+»: los mismos
+                 tres datos que el primero, y el nombre como único obligatorio. -->
+            <ng-template appCampoPersonalizado="additionalEmergencyContacts">
+              <div class="registro__nombres">
+                @for (contacto of contactosExtra.controls; track contacto) {
+                  <fieldset
+                    class="registro__contacto-extra"
+                    [attr.data-testid]="'registro-contacto-extra-' + $index"
+                  >
+                    <legend class="registro__contacto-extra-titulo">
+                      Otro contacto de emergencia {{ $index + 1 }}
+                    </legend>
+                    <app-form-field
+                      class="registro__nombre"
+                      label="Nombre"
+                      [required]="true"
+                      [errorMessage]="enRojo(contacto.controls.name, contactosExtra) ? errorNombreContacto : ''"
+                    >
+                      <app-input
+                        [formControl]="contacto.controls.name"
+                        [hasError]="enRojo(contacto.controls.name, contactosExtra)"
+                        [testId]="'registro-contacto-extra-nombre-' + $index"
+                        placeholder="Luis Paz"
+                      >
+                        <app-nav-icon slot="icon-start" name="people" class="registro__campo-icono" />
+                      </app-input>
+                    </app-form-field>
+                    <app-form-field
+                      class="registro__nombre"
+                      label="Su teléfono (opcional)"
+                      [errorMessage]="enRojo(contacto.controls.phone, contactosExtra) ? errorTelefonoContacto : ''"
+                    >
+                      <app-phone-input
+                        [formControl]="contacto.controls.phone"
+                        [hasError]="enRojo(contacto.controls.phone, contactosExtra)"
+                        [testId]="'registro-contacto-extra-telefono-' + $index"
+                      />
+                    </app-form-field>
+                    <app-form-field class="registro__nombre" label="Su relación con usted (opcional)">
+                      <app-select
+                        [formControl]="contacto.controls.relationshipConceptId"
+                        [options]="opcionesParentesco()"
+                        [searchable]="false"
+                        placeholder="Sin especificar"
+                        [attr.data-testid]="'registro-contacto-extra-relacion-' + $index"
+                      />
+                    </app-form-field>
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [attr.aria-label]="'Quitar el contacto de emergencia ' + ($index + 1)"
+                      [attr.data-testid]="'registro-quitar-contacto-' + $index"
+                      (clicked)="quitarContacto($index)"
+                    >
+                      Quitar este contacto
+                    </button>
+                  </fieldset>
+                }
+                @if (contactosExtra.length < maxContactosExtra) {
+                  <div class="registro__agregar">
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      data-testid="registro-agregar-contacto"
+                      (clicked)="agregarContacto()"
+                    >
+                      + Agregar otro contacto de emergencia
+                    </button>
+                  </div>
+                }
               </div>
             </ng-template>
 

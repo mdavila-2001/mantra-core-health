@@ -26,11 +26,11 @@ import type { SelectOption } from './select.types';
 import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 
 /**
- * Desde cuántas opciones aparece el buscador. Con ocho o menos se ven todas de
- * un vistazo y un buscador sólo estorba; es el mismo umbral que el
- * `OptionSelect` de ATLAS, de donde sale esta disciplina.
+ * Desde cuántas opciones aparece el buscador. Con diez o menos se ven todas de
+ * un vistazo y un buscador sólo estorba: los nueve departamentos de Bolivia
+ * entran sin él (carril 03). La disciplina sale del `OptionSelect` de ATLAS.
  */
-export const SEARCH_FROM = 8;
+export const SEARCH_FROM = 10;
 
 /** Una opción a la vista, con su posición en la lista completa. */
 interface Row<T> {
