@@ -129,8 +129,9 @@ export function normalizeSearch(texto: string): string {
  *
  * - 0: el nombre es exactamente lo escrito («húmero»).
  * - 1: el nombre empieza con lo escrito («húmero» → «húmero distal»).
- * - 2: lo escrito abre una palabra del nombre («humero» → «cabeza del húmero»).
- * - 3: lo escrito está dentro de una palabra o sólo en el nombre en inglés.
+ * - 2: lo escrito son palabras completas del nombre («humero» → «cabeza del húmero»).
+ * - 3: lo escrito abre una palabra del nombre («humero» → «humerocubital»).
+ * - 4: lo escrito está dentro de una palabra o sólo en el nombre en inglés.
  */
 function matchRank(entry: AnatomyIndexEntry, palabras: readonly string[], frase: string): number | null {
   const [id, es, en] = entry;
@@ -146,9 +147,10 @@ function matchRank(entry: AnatomyIndexEntry, palabras: readonly string[], frase:
     if (nombreEs === frase) return 0;
     if (nombreEs.startsWith(frase)) return 1;
     const sus = nombreEs.split(/[^\p{L}\p{N}]+/u);
-    if (palabras.every((p) => sus.some((palabra) => palabra.startsWith(p)))) return 2;
+    if (palabras.every((p) => sus.includes(p))) return 2;
+    if (palabras.every((p) => sus.some((palabra) => palabra.startsWith(p)))) return 3;
   }
-  return 3;
+  return 4;
 }
 
 /**

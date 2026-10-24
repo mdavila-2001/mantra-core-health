@@ -63,6 +63,11 @@ export interface ManifiestoDelGlosario {
   readonly translatedTotal?: number;
   /** Las cubetas del índice de búsqueda que existen (dos letras por palabra). */
   readonly searchBuckets?: readonly string[];
+  /**
+   * Resúmenes llanos que se repiten en varios términos: plantillas de su tipo,
+   * no la explicación de ninguno. Las pantallas no los muestran como definición.
+   */
+  readonly genericSummaries?: readonly string[];
   readonly categories: readonly CategoriaDelManifiesto[];
   readonly tags: readonly EtiquetaDelManifiesto[];
 }

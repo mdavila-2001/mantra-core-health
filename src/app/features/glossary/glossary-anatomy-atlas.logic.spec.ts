@@ -100,7 +100,7 @@ describe('glossary-anatomy-atlas.logic', () => {
       ['UBERON:1', 'húmero distal', 'distal humerus', 0],
       ['UBERON:0', 'húmero', 'humerus', 1],
     ];
-    // «humerocubital» sólo lleva «humero» dentro de una palabra: entra, pero al final.
+    // «humerocubital» sólo empieza con «humero»: entra, pero al final.
     const esperado = ['UBERON:0', 'UBERON:1', 'UBERON:2', 'UBERON:3'];
     expect(searchIndex(indice, 'húmero', 10).map((e) => e[0])).toEqual(esperado);
     expect(searchIndex(indice, 'HUMERO', 10).map((e) => e[0])).toEqual(esperado);

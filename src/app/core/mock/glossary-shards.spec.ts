@@ -251,6 +251,25 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     expect(ficha['translated']).toBe(true);
   });
 
+  it('una plantilla repetida en cientos de términos no se presenta como la definición de ninguno', async () => {
+    const { almacen, get } = montar();
+    const manifiesto = await almacen.manifiesto();
+    const genericos = manifiesto.genericSummaries ?? [];
+    expect(genericos).toContain(
+      'Estructura anatómica del organismo que cumple una función específica de soporte, conexión o protección en el cuerpo humano.',
+    );
+
+    const pagina = await get<{ items: readonly { display: string; shortDefinition: string }[] }>(
+      '/terminology/concepts',
+      { includeValueSets: 'true', q: 'humero', limit: '48' },
+    );
+    expect(pagina.items.length).toBeGreaterThan(0);
+    for (const t of pagina.items) expect(genericos).not.toContain(t.shortDefinition);
+    // «Húmero» no tiene resumen propio: cae a la descripción verbatim de la fuente.
+    const humero = pagina.items.find((t) => t.display === 'Húmero');
+    expect(humero?.shortDefinition).toMatch(/hueso/i);
+  });
+
   it('un id que no es de nadie es 404, no una ficha vacía', async () => {
     const { get } = montar();
     const respuesta = await get<{ status: number }>(

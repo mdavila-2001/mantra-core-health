@@ -188,15 +188,15 @@
                         </app-chip>
                       }
                     </th>
-                    <td>{{ termino.category?.name ?? '—' }}</td>
-                    <td class="glosario__tabla-definicion">
+                    <td data-label="Categoría">{{ termino.category?.name ?? '—' }}</td>
+                    <td class="glosario__tabla-definicion" data-label="Definición breve">
                       @if (termino.shortDefinition) {
                         {{ termino.shortDefinition }}
                       } @else {
                         <span class="glosario__sin-datos">Sin definición breve cargada.</span>
                       }
                     </td>
-                    <td class="glosario__tabla-codigo">{{ termino.code }}</td>
+                    <td class="glosario__tabla-codigo" data-label="Fuente / código">{{ termino.code }}</td>
                   </tr>
                 }
               </tbody>

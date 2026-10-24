@@ -554,3 +554,52 @@
 .glosario__tabla tbody tr:hover {
   background: var(--surface-subtle, transparent);
 }
+
+.glosario__barra app-segmented-control {
+  flex: none;
+  /* En el teléfono el selector reparte el ancho en partes iguales y, sin un
+     piso, «Tarjetas» quedaba cortado en «Tarje…». */
+  min-inline-size: 13rem;
+}
+
+/* En el teléfono la tabla no se aprieta ni se corta: cada fila pasa a ser una
+   ficha con sus datos rotulados, así que ninguna columna se pierde (regla 95.4). */
+@media (max-width: 40rem) {
+  .glosario__tabla,
+  .glosario__tabla tbody,
+  .glosario__tabla tr,
+  .glosario__tabla th,
+  .glosario__tabla td {
+    display: block;
+  }
+
+  .glosario__tabla-titulo {
+    display: block;
+    inline-size: 100%;
+  }
+
+  .glosario__tabla thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .glosario__tabla tbody tr {
+    padding-block: var(--sp-3);
+    border-block-end: 1px solid var(--border-default);
+  }
+
+  .glosario__tabla th,
+  .glosario__tabla td {
+    padding: var(--sp-1) 0;
+    border-block-end: 0;
+  }
+
+  .glosario__tabla td[data-label]::before {
+    content: attr(data-label) ': ';
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+}
