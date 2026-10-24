@@ -28,3 +28,18 @@ export interface SustantivoDelDirectorio {
   readonly singular: string;
   readonly plural: string;
 }
+
+/**
+ * Un orden propio del directorio, por una de las cifras de sus resultados
+ * (`SearchResultItem.stats`). De mayor a menor: «Más encuentros atendidos».
+ *
+ * Existe porque cada directorio tiene cifras distintas —la guía de médicos
+ * cuenta consultas y recetas; una farmacia, no— y el «Ordenar por» común sólo
+ * sabe de nombre y de nota.
+ */
+export interface CriterioDeOrden {
+  /** La clave en `stats` por la que se ordena. */
+  readonly clave: string;
+  /** Lo que dice la opción. */
+  readonly etiqueta: string;
+}
