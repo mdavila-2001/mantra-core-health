@@ -27,6 +27,8 @@ import type {
   AnatomySex,
   AnatomyStructure,
 } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
+import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
+import type { GlossaryTerm } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import {
   ATLAS_3D_FEMALE_ONLY_IDS,
@@ -53,6 +55,7 @@ import {
   LAYER_LABELS,
   LAYER_ORDER,
   meshesOf,
+  normalizeSearch,
   ontologyUrl,
   partVisibleFor,
   relatedMeshes,
@@ -107,6 +110,7 @@ const REGION_NAMES: Readonly<Record<string, string>> = {
 })
 export class GlossaryAnatomyAtlas {
   private readonly atlas = inject(AnatomyAtlasClient);
+  private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -140,6 +144,16 @@ export class GlossaryAnatomyAtlas {
   protected readonly partsState = signal<ViewState<readonly AnatomyPart[]>>(loading());
   private readonly indexState = signal<ViewState<AnatomyIndex>>(loading());
   protected readonly structureState = signal<ViewState<AnatomyStructure | null> | null>(null);
+
+  /**
+   * La definición que el glosario ya tiene de la estructura abierta, o `null`.
+   *
+   * Es la misma que se lee en `/glossary`: las definiciones de anatomía del
+   * glosario (Wikidata, TA98) en castellano. Sólo se usa si el nombre coincide
+   * exactamente con el de la estructura —sin tildes ni mayúsculas—; un parecido
+   * no es la misma estructura y no se muestra.
+   */
+  protected readonly glossaryEntry = signal<GlossaryTerm | null>(null);
 
   protected readonly parts = computed(() => dataOf(this.partsState()) ?? []);
   private readonly index = computed(() => dataOf(this.indexState()));
@@ -207,6 +221,7 @@ export class GlossaryAnatomyAtlas {
   });
 
   private structureRequest: Subscription | null = null;
+  private glossaryRequest: Subscription | null = null;
   private readonly injector = inject(Injector);
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
   private readonly fichaTitulo = viewChild<ElementRef<HTMLElement>>('fichaTitulo');
@@ -229,6 +244,12 @@ export class GlossaryAnatomyAtlas {
     effect(() => {
       const id = this.structureId();
       untracked(() => this.loadStructure(id));
+    });
+
+    // La definición del glosario sigue a la ficha abierta.
+    effect(() => {
+      const ficha = this.structure();
+      untracked(() => this.loadGlossaryEntry(ficha));
     });
 
     // Y el modelo también: la estructura de la URL —venga de la búsqueda o de
@@ -262,6 +283,27 @@ export class GlossaryAnatomyAtlas {
         },
         error: (error: unknown) => this.structureState.set(errorToViewState(error)),
       });
+  }
+
+  private loadGlossaryEntry(ficha: AnatomyStructure | null): void {
+    this.glossaryRequest?.unsubscribe();
+    this.glossaryEntry.set(null);
+    const nombres = [ficha?.labelEs, ficha?.labelEn].filter((n): n is string => n !== null && n !== undefined);
+    if (nombres.length === 0) return;
+    const buscado = nombres.map(normalizeSearch);
+    this.glossaryRequest = this.terminology.searchGlossary({ query: nombres[0], limit: 12 }).subscribe({
+      // Un fallo del glosario no rompe la ficha: la ficha sigue con lo de UBERON.
+      error: () => this.glossaryEntry.set(null),
+      next: (pagina) =>
+        this.glossaryEntry.set(
+          pagina.items.find(
+            (t) =>
+              t.category?.internalCode === 'glossary-category-anatomy' &&
+              t.shortDefinition !== '' &&
+              buscado.includes(normalizeSearch(t.display)),
+          ) ?? null,
+        ),
+    });
   }
 
   private revealStructure(): void {
