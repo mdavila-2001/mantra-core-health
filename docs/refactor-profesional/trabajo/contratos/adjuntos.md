@@ -96,10 +96,10 @@ adjuntos indirectamente):
 **Regla 65 (aislar y simular)**: como `component-stock/**` es de Ender, estos dos escenarios se
 declaran acá con su contrato completo pero **no se implementan en este carril**; los tres niveles del
 contrato de cada organismo (correcto, límite, inválido) ya están ejercitados por los specs propios
-citados arriba, así que la verificación del comportamiento **no depende** del escenario del banco —
-sólo la acreditación visual en la Vitrina queda pendiente de que Ender los monte.
+citados arriba, así que la verificación del comportamiento **no depende** del escenario del banco;
+la acreditación visual en la Vitrina no se hizo en este carril.
 
-## Qué falta / no cubierto
+## No cubierto
 
 - Los dos escenarios de banco no se crearon (son de Ender, ver arriba).
 - No se abrieron los 3+3 consumidores en el navegador; la tabla de consumidores es lectura estática.

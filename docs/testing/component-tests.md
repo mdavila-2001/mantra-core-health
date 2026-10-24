@@ -80,7 +80,7 @@ Las seis de `auth/` tienen prueba. Verifican:
 - `revokedSessions` en `ResetPassword`.
 
 **`Dashboard` y `ShellLayout` no la tienen.** Es la brecha `HIGH` de
-[la estrategia](strategy.md#las-dos-últimas-son-la-brecha-high).
+[la estrategia](strategy.md#las-dos-últimas-sin-prueba).
 
 ## Cómo montar un componente
 

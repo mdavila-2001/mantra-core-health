@@ -174,6 +174,3 @@ La que falta es la que decide cuánto valen las otras tres: hoy mejoran lo que l
 persona ve, no lo que el equipo sabe. `ErrorReporter` deja el código de soporte
 listo para enviarse, pero **no hay a dónde enviarlo** — y elegir destino es una
 decisión de operación con implicaciones de privacidad, no un cambio de código.
-
-Ver [reporte de errores](../observability/error-reporting.md) y
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

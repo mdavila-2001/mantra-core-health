@@ -109,5 +109,4 @@ Honestidad sobre el alcance:
 | RN-64, RN-65, RN-66 | Convenciones del sistema de diseño, **sin verificación automática** |
 | Cualquier permiso por rol | **La API.** El frontend no autoriza |
 
-Las cuatro dependen de revisión humana. Registradas en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
+Las cuatro dependen de revisión humana.

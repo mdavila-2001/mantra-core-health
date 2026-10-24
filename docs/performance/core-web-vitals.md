@@ -89,44 +89,4 @@ registrado en ninguna parte**. Las razones habituales son un fallo con
 `@import` de tipografías (que este proyecto usa) o una incompatibilidad con el
 prerenderizado.
 
-Es exactamente el tipo de decisión que un ADR debería conservar. Registrado como
-brecha `MEDIUM` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md); si el motivo
-se recupera, corresponde
-[un ADR](../adr/index.md).
-
-## Qué haría falta para medir
-
-### Medición sintética — la más barata
-
-```bash
-yarn build
-yarn serve:ssr:mantra-core-health
-npx lighthouse http://localhost:4000/auth --view
-```
-
-**No requiere instalar nada permanente** (`npx` lo baja al vuelo) y da LCP, FCP y
-CLS de las cuatro rutas prerenderizadas. Es el primer paso obvio.
-
-Para `/dashboard` haría falta una sesión, así que la medición sintética cubre lo
-público y deja fuera lo autenticado.
-
-### Medición de campo — la única que da INP
-
-INP **solo se mide con usuarios reales**: depende de qué hacen y con qué
-dispositivo. Exige telemetría, que hoy no existe.
-
-Ver [Web Vitals](../observability/web-vitals.md) y
-[analítica](../integrations/analytics.md), donde están las decisiones de
-privacidad que hay que tomar antes.
-
-## Recomendación
-
-1. **Correr Lighthouse sobre las cuatro rutas prerenderizadas.** Sin instalar
-   nada. De ahí sale la primera línea base real.
-2. **Fijar presupuestos con esos números**, no con los de Google.
-3. **Recuperar o volver a decidir `inlineCritical`.**
-4. Evaluar la telemetría de Web Vitals **después** de resolver la discusión de
-   privacidad.
-
-Ninguna se ejecuta acá: las cuatro son cambios de producto o de herramientas.
+Es exactamente el tipo de decisión que un ADR debería conservar.

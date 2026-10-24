@@ -111,9 +111,6 @@ quien use lector de pantalla puede quedarse esperando algo que ya pasó.
 ### Por qué no se corrige acá
 
 Es un cambio de producto: toca seis componentes y su comportamiento observable.
-Registrado como brecha `MEDIUM` (una `HIGH` para el acuse de recuperación) en
-[el informe de auditoría](audit-report.md) y en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
 
 **La propuesta**, para cuando se autorice: un componente pequeño —o una directiva—
 que envuelva el `app-alert` de esas pantallas y replique las dos reglas que

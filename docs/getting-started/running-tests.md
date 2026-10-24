@@ -97,10 +97,6 @@ breakpoints, umbral del cajón de navegación, clave del tema). Ver
 | Contrato contra el OpenAPI del backend | **No existe** — el OpenAPI no es alcanzable |
 | Rendimiento / Lighthouse | **No existe** |
 
-Las dos últimas están analizadas, con su riesgo y su propuesta, en
-[la estrategia de pruebas](../testing/strategy.md) y en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
-
 ## Avisos esperables
 
 ```text

@@ -127,10 +127,3 @@ tema. Ninguna migración de datos que revertir.
 
 Cuando exista caché, habría que vaciarla al revertir: una caché escrita por la
 versión nueva puede tener una forma que la anterior no entiende.
-
-## Estado
-
-Depende del `BLOCKER` de [despliegue](deployment.md).
-
-**Lo que sí se puede hacer hoy** es el versionado del artefacto (`HIGH`), que es
-prerrequisito de cualquier reversión y no depende de que exista el despliegue.

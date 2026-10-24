@@ -1332,9 +1332,6 @@ del backend es que alguien lo note. Los comentarios rastrean el origen
 («verificadas una por una contra `iam-auth.controller.ts`»), pero eso es
 trazabilidad, no verificación.
 
-Las dos están en [el análisis de brechas](../reports/documentation-gap-analysis.md),
-la segunda como `HIGH`.
-
 ---
 
 ## Verificación

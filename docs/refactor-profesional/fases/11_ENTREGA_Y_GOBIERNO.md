@@ -10,46 +10,46 @@ Consumir candidato verificado, QA final y decisiones. Crear `trabajo/ENTREGA.md`
 
 ## F11.1 — resumir el resultado para producto
 
-- [ ] Describir tareas mejoradas y cambios importantes de navegación.
-- [ ] Adjuntar comparación antes/después con mismo contexto.
-- [ ] Informar funciones conservadas, exclusiones y limitaciones conocidas.
-- [ ] Evitar porcentajes de mejora sin método y muestra.
+- Describir tareas mejoradas y cambios importantes de navegación.
+- Adjuntar comparación antes/después con mismo contexto.
+- Informar funciones conservadas, exclusiones y limitaciones conocidas.
+- Evitar porcentajes de mejora sin método y muestra.
 
 **Aceptación:** la explicación permite comprender el beneficio sin leer todos los diffs.
 
 ## F11.2 — documentar mantenimiento
 
-- [ ] Explicar dónde viven tokens, componentes, reglas y adaptadores.
-- [ ] Documentar cómo añadir una variante sin romper contratos.
-- [ ] Registrar cómo ejecutar catálogo y checks reales.
-- [ ] Actualizar skills y referencias que hayan quedado obsoletas.
+- Explicar dónde viven tokens, componentes, reglas y adaptadores.
+- Documentar cómo añadir una variante sin romper contratos.
+- Registrar cómo ejecutar catálogo y checks reales.
+- Actualizar skills y referencias que hayan quedado obsoletas.
 
 **Aceptación:** un nuevo implementador puede realizar un cambio pequeño siguiendo el sistema sin reconstruirlo.
 
 ## F11.3 — gobernar excepciones
 
-- [ ] Nombrar responsables de tokens, componentes y decisiones UX según el equipo real; no inventar personas.
-- [ ] Establecer un proceso breve para proponer un patrón nuevo: necesidad, consumidores, estados, accesibilidad y coste.
-- [ ] Mantener un registro de deprecaciones y condiciones de retirada.
-- [ ] Separar deuda aceptada de defecto que bloquea entrega.
+- Nombrar responsables de tokens, componentes y decisiones UX según el equipo real; no inventar personas.
+- Establecer un proceso breve para proponer un patrón nuevo: necesidad, consumidores, estados, accesibilidad y coste.
+- Mantener un registro de deprecaciones y condiciones de retirada.
+- Separar deuda aceptada de defecto que bloquea entrega.
 
 **Aceptación:** las reglas ayudan a decidir y no obligan a comités para correcciones pequeñas.
 
 ## F11.4 — preparar integración y reversión
 
-- [ ] Presentar diff y descripción del cambio orientada al problema y resultado.
-- [ ] Adjuntar pruebas y riesgos que un revisor necesita evaluar.
-- [ ] Documentar mecanismo de reversión, verificación posterior y compatibilidad de datos.
-- [ ] Si hay despliegue autorizado, preparar candidato y comprobar permisos antes de ejecutarlo; si no lo hay, dejarlo listo para revisión.
+- Presentar diff y descripción del cambio orientada al problema y resultado.
+- Adjuntar pruebas y riesgos que un revisor necesita evaluar.
+- Documentar mecanismo de reversión, verificación posterior y compatibilidad de datos.
+- Si hay despliegue autorizado, preparar candidato y comprobar permisos antes de ejecutarlo; si no lo hay, dejarlo listo para revisión.
 
 **Aceptación:** no se declara publicada una aplicación que solo se ejecutó localmente.
 
 ## F11.5 — cerrar estado y seguimiento
 
-- [ ] Registrar última versión verificada y enlaces a evidencias.
-- [ ] Listar pendientes concretos, responsable si existe y condición de cierre.
-- [ ] Si se dispone de analítica autorizada, definir seguimiento de errores, éxito de tareas y rendimiento sin capturar datos innecesarios.
-- [ ] Dejar prompt de continuación con primera acción exacta cuando quede trabajo.
+- Registrar última versión verificada y enlaces a evidencias.
+- Listar pendientes concretos, responsable si existe y condición de cierre.
+- Si se dispone de analítica autorizada, definir seguimiento de errores, éxito de tareas y rendimiento sin capturar datos innecesarios.
+- Dejar prompt de continuación con primera acción exacta cuando quede trabajo.
 
 **Gate:** R01–R14 trazados y entrega autocontenida. **Recuperación:** si una regresión aparece después, aplicar el plan documentado y conservar evidencia; no improvisar cambios destructivos para sostener la apariencia de éxito.
 

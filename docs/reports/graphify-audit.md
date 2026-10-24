@@ -248,8 +248,7 @@ El plan exige contrastar el grafo con seis fuentes. Resultado:
 ## 5. Derivas encontradas
 
 Se registran; **no se corrigen**. Corregir cualquiera de ellas es un cambio de
-producto. Están priorizadas en
-[el análisis de brechas](documentation-gap-analysis.md).
+producto.
 
 ### D1 · Un comentario de `login.ts` contradice al propio código
 

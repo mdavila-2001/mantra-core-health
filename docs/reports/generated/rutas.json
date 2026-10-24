@@ -73,6 +73,19 @@
       "parametrizada": false
     },
     {
+      "ruta": "/psychological-help",
+      "etiqueta": "Ayuda psicológica",
+      "grupo": "General",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "PsychologicalHelp",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
       "ruta": "/groups",
       "etiqueta": "Grupos y foros",
       "grupo": "General",
@@ -173,7 +186,7 @@
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -195,9 +208,11 @@
         "ChartNotesClient",
         "ChartTemplatesClient",
         "ClinicalClient",
+        "ConsentClient",
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
+        "PracticeSitesClient",
         "ProceduresClient",
         "ProfilesClient",
         "QuotationsClient",
@@ -384,7 +399,7 @@
         "ProfilesClient",
         "SystemContextClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -602,81 +617,6 @@
       "parametrizada": false
     },
     {
-      "ruta": "/administration/data-catalog",
-      "etiqueta": "Catálogo de datos",
-      "grupo": "Administración",
-      "roles": [
-        "SECURITY_ADMIN",
-        "PLATFORM_ADMIN",
-        "GOVERNANCE_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "DPO"
-      ],
-      "rolesExclusivos": false,
-      "componente": "DataCatalog",
-      "apis": [
-        "DataCatalogClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/web-analytics",
-      "etiqueta": "Analítica web",
-      "grupo": "Administración",
-      "roles": [
-        "PLATFORM_ADMIN",
-        "SECURITY_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "MARKETING_MANAGER",
-        "DPO"
-      ],
-      "rolesExclusivos": false,
-      "componente": "WebAnalytics",
-      "apis": [
-        "WebAnalyticsClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/qa-lab",
-      "etiqueta": "QA Lab",
-      "grupo": "Administración",
-      "roles": [
-        "QA_ADMIN",
-        "QA_ENGINEER",
-        "RELEASE_MANAGER",
-        "PLATFORM_ADMIN"
-      ],
-      "rolesExclusivos": false,
-      "componente": "QaLab",
-      "apis": [
-        "QaLabClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/operations",
-      "etiqueta": "Operación",
-      "grupo": "Administración",
-      "roles": [
-        "PLATFORM_ADMIN",
-        "SRE",
-        "SECURITY_ADMIN",
-        "RELEASE_MANAGER",
-        "GOVERNANCE_ADMIN"
-      ],
-      "rolesExclusivos": false,
-      "componente": "Operations",
-      "apis": [
-        "OpsConsoleClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
       "ruta": "/administration/health-context",
       "etiqueta": "Contexto sanitario",
       "grupo": "Administración",
@@ -815,11 +755,11 @@
         "PRACTITIONER"
       ],
       "rolesExclusivos": false,
-      "componente": "Resumen",
+      "componente": "Summary",
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -844,6 +784,49 @@
       "componente": "MyAccount",
       "apis": [],
       "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/privacy",
+      "etiqueta": "Mi privacidad",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "AccountPrivacy",
+      "apis": [
+        "ConsentClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "etiqueta": "Quién ve mi historia",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "AccountClinicalAccess",
+      "apis": [
+        "AuthzClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/security",
+      "etiqueta": "Seguridad",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "AccountSecurity",
+      "apis": [
+        "AccountSecurityClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -878,7 +861,7 @@
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -889,8 +872,8 @@
       "rolesExclusivos": false,
       "componente": "DiagnosticResults",
       "apis": [
+        "AuthzClient",
         "DiagnosticsClient",
-        "FilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -916,7 +899,7 @@
       "grupo": "Mi cuenta",
       "roles": [],
       "rolesExclusivos": false,
-      "componente": "Cotizaciones",
+      "componente": "Quotations",
       "apis": [
         "DiagnosticUnitsClient",
         "PharmacyClient",
@@ -1005,7 +988,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1092,19 +1075,19 @@
     },
     {
       "ruta": "/administration/my-organization",
-      "etiqueta": "Tu organización",
+      "etiqueta": "Mi organización",
       "grupo": "Administración",
       "roles": [],
       "rolesExclusivos": false,
       "componente": "OrganizationPanel",
       "apis": [
         "DirectoryClient",
-        "LogoDeOrganizacionClient",
+        "OrganizationLogoClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1197,7 +1180,7 @@
         "PharmacyOrdersClient",
         "PharmacyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1352,7 +1335,7 @@
         "AccountingClient",
         "SimpleAccountingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1364,23 +1347,6 @@
       "componente": "BrokerDetail",
       "apis": [
         "InsuranceClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
-      "ruta": "/administration/data-catalog/:objectId",
-      "seccion": "Catálogo de datos",
-      "roles": [
-        "SECURITY_ADMIN",
-        "PLATFORM_ADMIN",
-        "GOVERNANCE_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "DPO"
-      ],
-      "componente": "CatalogObjectDetail",
-      "apis": [
-        "DataCatalogClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -1940,6 +1906,20 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/identity-assurance/cases/:caseId",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CaseDetail",
+      "apis": [
+        "FilesClient",
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
       "ruta": "/administration/identity-assurance/cases/checks",
       "seccion": "Verificación de identidad",
       "roles": [
@@ -2404,22 +2384,6 @@
       "parametrizada": true
     },
     {
-      "ruta": "/administration/qa-lab/plans/:planId",
-      "seccion": "QA Lab",
-      "roles": [
-        "QA_ADMIN",
-        "QA_ENGINEER",
-        "RELEASE_MANAGER",
-        "PLATFORM_ADMIN"
-      ],
-      "componente": "QaPlanDetail",
-      "apis": [
-        "QaLabClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
       "ruta": "/administration/services-catalog/import",
       "seccion": "Catálogo de servicios",
       "roles": [
@@ -2573,6 +2537,7 @@
       "componente": "PatientChart",
       "apis": [
         "AccountingClient",
+        "AuthzClient",
         "BillingSimulatedClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
@@ -2582,6 +2547,7 @@
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
+        "PracticeSitesClient",
         "ProceduresClient",
         "ProfilesClient",
         "SchedulingClient",
@@ -2602,6 +2568,7 @@
       "componente": "Consultation",
       "apis": [
         "ClinicalClient",
+        "ConsentClient",
         "ProfilesClient",
         "QuotationsClient",
         "TerminologyClient"
@@ -2667,9 +2634,9 @@
       "componente": "PractitionerProfileEdit",
       "apis": [
         "FilesClient",
-        "LogoDelConsultorioClient",
-        "FirmaYSelloClient",
+        "PracticeLogoClient",
         "ProfilesClient",
+        "SignatureAndSealClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -2699,7 +2666,7 @@
         "ProfilesClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": true
     },
     {
@@ -2726,7 +2693,7 @@
       "apis": [
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": true
     },
     {
@@ -2767,7 +2734,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2806,7 +2773,7 @@
       "apis": [
         "ProfilesClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2901,7 +2868,7 @@
       "apis": [
         "SchedulingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2949,6 +2916,39 @@
       ],
       "estado": "conectada",
       "parametrizada": false
+    },
+    {
+      "ruta": "/superadmin/data-catalog/:objectId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "CatalogObjectDetail",
+      "apis": [
+        "DataCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/flows/:flowId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "FlowDetailPage",
+      "apis": [
+        "FlowsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/qa-lab/plans/:planId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "QaPlanDetail",
+      "apis": [
+        "QaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
     }
   ],
   "portadas": [

@@ -115,9 +115,3 @@ Y hay que verificar dos cosas antes de dar por bueno el CDN:
 curl -I https://…/main-<hash>.js   # → Cache-Control: public, max-age=31536000
 curl -I https://…/auth             # → sin max-age largo
 ```
-
-## Estado
-
-Lo que hay está bien y no requiere cambios. Lo que falta —cabeceras explícitas
-para el HTML, política de CDN— depende del `BLOCKER` de
-[despliegue](deployment.md).

@@ -24,7 +24,7 @@ Los nuevos campos son opcionales. Las rutas de notas se trasladan a `medical-not
 
 La base ya contiene Reconsulta y análisis funcionales. Por decisión del propietario se conservan y conectan; solamente Nota médica es stub «En construcción (C1)». El rename `AnalysisOrderBlock` no cambia contratos HTTP.
 
-No se cambia esquema ni autorización del backend. C1–C4 completan P39–P42 y C8 consolida pendientes. La entrega va por rama y PR a `mockup`; «integrado» solo se declara cuando el merge exista.
+No se cambia esquema ni autorización del backend. C1–C4 completan P39–P42 y C8 consolida. La entrega va por rama y PR a `mockup`; «integrado» solo se declara cuando el merge exista.
 
 ## Consecuencias y riesgos
 

@@ -32,9 +32,9 @@ esperable es el bloque de imports.
 | `DataTable` | ✔ | ✔ 12 variantes | ✔ spec + navegador | ✔ orden, cursor, selección, reintento, actualizar | ✘ no medida contra pantalla real (ver abajo) | — |
 | `ContentDialog` | ✔ | ✔ 4 | ✔ | ✔ abrir, cerrar, Escape con cambios, guardar como intención | ✘ | — |
 | `ViewStateHost` | ✔ | ✔ 10 | ✔ | ✔ reintentar, actualizar | ✘ | — |
-| `FilterBar` | ✔ | ✘ | monta a ciegas (Router del padre) | — | — | pendiente de F-02 |
-| `PageHeader` | ✔ | ✘ | monta a ciegas (`title` generado) | — | — | siguiente oleada |
-| `DirectoryPage` | ✔ | ✘ | **no monta**: `estado`, `grupos`, `sustantivo` obligatorios sin valor válido | — | — | siguiente oleada |
+| `FilterBar` | ✔ | ✘ | monta a ciegas (Router del padre) | — | — | F-02 diferida |
+| `PageHeader` | ✔ | ✘ | monta a ciegas (`title` generado) | — | — | — |
+| `DirectoryPage` | ✔ | ✘ | **no monta**: `estado`, `grupos`, `sustantivo` obligatorios sin valor válido | — | — | — |
 
 «Paridad visual» exige comparar el organismo en el marco contra la misma pieza en una pantalla
 real con datos equivalentes y el mismo viewport; no se hizo en esta oleada y se deja en ✘ en vez

@@ -126,8 +126,3 @@ mejora el LCP.
   # → solo angular.json
   ```
 - Ausencia de medición de rendimiento.
-
-## Estado del hallazgo
-
-Brecha `MEDIUM` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

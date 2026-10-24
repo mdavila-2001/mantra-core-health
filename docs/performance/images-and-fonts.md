@@ -113,15 +113,3 @@ existe.
 
 No está medido, porque no hay medición de CLS. Ver
 [Core Web Vitals](core-web-vitals.md).
-
-## Recomendaciones
-
-| # | Qué | Esfuerzo |
-|---|---|---|
-| 1 | Quitar o usar las tres tipografías de reserva | Bajo |
-| 2 | Evaluar si Poppins necesita los tres pesos | Bajo |
-| 3 | Medir el impacto de `swap` en el CLS cuando haya Lighthouse | Medio |
-| 4 | Fijar las reglas de imágenes **antes** de la primera imagen real | Bajo |
-
-La cuarta es la más barata y la que más ahorra: es mucho más fácil escribir la
-regla ahora que corregir veinte usos después.

@@ -182,30 +182,6 @@ Es la otra cara de
 `AppErrorHandler` genera un identificador de cliente —`E-<commit>-<n>`— justo
 para esos casos.
 
-## Propuesta
-
-### 1 · Identificador de cliente para los fallos sin petición
-
-Un identificador generado en el cliente, mostrado en la pantalla de recuperación,
-y enviado con el error cuando exista telemetría. Cierra el único hueco
-estructural de la correlación actual.
-
-### 2 · Propagar `traceparent`
-
-Si la API adopta W3C Trace Context, el interceptor podría propagar la cabecera y
-la traza cubriría el frontend además del backend.
-
-**Hoy no aplica:** la API no lo pide, y añadir una cabecera que nadie lee no
-aporta nada.
-
-### 3 · Enviar el `sid` como contexto
-
-El token ya trae `sid` (identificador de sesión, *«para poder cerrarla del lado
-del servidor»*). Como contexto de un registro de error sería útil para agrupar
-todo lo que le pasó a una misma sesión.
-
-**No como cabecera de cada petición**: el servidor ya lo tiene en el token.
-
 ## Estado de entonces, y qué pasó con él
 
 Se registró como `MEDIUM`: *«no es una brecha bloqueante»*, porque cerrarla
@@ -218,6 +194,3 @@ cabecera es inocua para quien no la lee, y el día que la API adopte OTel la
 traza se une sola. Solo la tercera —mandar el `sid`— sigue descartada, y por la
 misma razón de siempre: es un identificador de sesión y no tiene por qué estar
 en un panel de observabilidad.
-
-Registrado como `MEDIUM` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

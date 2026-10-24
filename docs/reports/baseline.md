@@ -181,9 +181,6 @@ ausencia es un hecho comprobable, no una omisión:
 | Análisis de bundle | **Parcial** | El build imprime tamaños; no hay visualizador de composición |
 | Cobertura E2E de journeys | **No aplica** | Consecuencia de la primera fila |
 
-Estas seis ausencias son el material de
-[el análisis de brechas](documentation-gap-analysis.md), no de este informe.
-
 ## 6. Flujos que se sabe que funcionan
 
 Verificado por las 804 pruebas unitarias y de componente, y por el registro
