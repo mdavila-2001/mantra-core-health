@@ -465,6 +465,34 @@ describe('GlossaryTerm', () => {
     );
   });
 
+  it('«Cómo citar» arma la cita con la fuente declarada, y sin fuente no hay cita', async () => {
+    peticion().flush({
+      ...FICHA,
+      properties: {
+        source: 'medlineplus-es',
+        source_retrieved_at: '2026-09-29T10:00:00Z',
+        source_license: 'Dominio público',
+      },
+    });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    const cita = html().querySelector('[data-testid="termino-cita"]')?.textContent ?? '';
+    expect(cita).toContain('MedlinePlus en español (NLM).');
+    expect(cita).toContain(`«${FICHA.display}»`);
+    expect(cita).toContain('En: Alovida, Glosario médico.');
+    expect(cita).toContain('29/09/2026');
+    expect(cita).toContain('Condición de uso: Dominio público.');
+  });
+
+  it('sin fuente declarada no hay «Cómo citar»: no se atribuye a la plataforma lo que no escribió', async () => {
+    peticion().flush({ ...FICHA, properties: {} });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    expect(html().querySelector('[data-testid="termino-cita"]')).toBeNull();
+  });
+
   const CIMA = {
     nregistro: '62935',
     name: 'Paracetamol Ejemplo 500 mg comprimidos',

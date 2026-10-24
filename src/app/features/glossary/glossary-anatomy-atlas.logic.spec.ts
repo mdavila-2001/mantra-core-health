@@ -93,6 +93,28 @@ describe('glossary-anatomy-atlas.logic', () => {
     expect(searchIndex(indice, 'f', 10)).toEqual([]);
   });
 
+  it('ordena por acierto en castellano: el nombre exacto, luego el que empieza así, luego el resto', () => {
+    const indice: AnatomyIndexEntry[] = [
+      ['UBERON:3', 'articulación humerocubital', 'humeroulnar joint', 1],
+      ['UBERON:2', 'cabeza del húmero', 'proximal head of humerus', 1],
+      ['UBERON:1', 'húmero distal', 'distal humerus', 0],
+      ['UBERON:0', 'húmero', 'humerus', 1],
+    ];
+    // «humerocubital» sólo empieza con «humero»: entra, pero al final.
+    const esperado = ['UBERON:0', 'UBERON:1', 'UBERON:2', 'UBERON:3'];
+    expect(searchIndex(indice, 'húmero', 10).map((e) => e[0])).toEqual(esperado);
+    expect(searchIndex(indice, 'HUMERO', 10).map((e) => e[0])).toEqual(esperado);
+  });
+
+  it('busca por varias palabras en cualquier orden, sin tildes', () => {
+    const indice: AnatomyIndexEntry[] = [
+      ['UBERON:2', 'cabeza del húmero', 'proximal head of humerus', 1],
+      ['UBERON:1', 'cabeza del fémur', 'head of femur', 1],
+    ];
+    expect(searchIndex(indice, 'humero cabeza', 10).map((e) => e[0])).toEqual(['UBERON:2']);
+    expect(searchIndex(indice, 'inexistente', 10)).toEqual([]);
+  });
+
   it('enlaza UBERON y FMA a sus PURL y nada más', () => {
     expect(ontologyUrl('UBERON:0000981')).toBe('https://purl.obolibrary.org/obo/UBERON_0000981');
     expect(ontologyUrl('FMA:9611')).toBe('https://purl.org/sig/ont/fma/fma9611');

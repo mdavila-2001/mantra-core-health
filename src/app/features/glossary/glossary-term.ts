@@ -405,6 +405,28 @@ export class GlossaryTerm {
   });
 
   /**
+   * La cita bibliográfica del término, al estilo de «Citar» en Google Académico.
+   *
+   * Sólo arma lo que la ficha declara: nombre, fuente, código y fecha de
+   * consulta de la fuente. Sin fuente declarada no hay cita, porque citar
+   * «Alovida» sola atribuiría a la plataforma una definición que no escribió.
+   */
+  protected readonly cita = computed<string | null>(() => {
+    const ficha = this.ficha();
+    const origen = this.fuente();
+    if (ficha === null || origen === null) return null;
+    const codigo = this.codigoPublicable();
+    const partes = [
+      `${origen.nombre}.`,
+      `«${ficha.display}»${codigo === null ? '' : ` (${codigo})`}.`,
+      'En: Alovida, Glosario médico.',
+      origen.consultado === null ? '' : `Fuente consultada el ${this.fechaLegible(origen.consultado)}.`,
+      origen.licencia === null ? '' : `Condición de uso: ${origen.licencia}.`,
+    ];
+    return partes.filter((parte) => parte !== '').join(' ');
+  });
+
+  /**
    * Por qué falta la definición, dicho con honestidad.
    *
    * Vale para **cualquier** término sin definición, no sólo para los que llegan
