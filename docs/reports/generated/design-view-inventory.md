@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 85 secciones del registro, 118 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -37,7 +37,7 @@ Carril 01. 85 secciones del registro, 118 pantallas hijas o de operación y 126 
 | SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN | `/interventions` | `Interventions` | ProceduresClient, TerminologyClient | conectada | ninguna |
 | PRACTITIONER · CLINICIAN | `/lab-visits` | `DoctorVisits` | PharmaLabClient | conectada | ninguna |
 | MEDICAL_VISITOR | `/my-visits` | `VisitorVisits` | PharmaLabClient | conectada | ninguna |
-| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary` | `Glossary` | TerminologyClient | conectada | ninguna |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary` | `Glossary` | AnatomyAtlasClient, TerminologyClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/form-builder` | `FormBuilder` | ChartTemplatesClient, FormsClient, ProfilesClient, TerminologyClient | conectada con deuda | resolver: datos de muestra |
 | CLINICIAN · PRACTITIONER | `/my-services` | `MyServices` | SchedulingClient, ServicesCatalogClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/my-quotations` | `QuotationList` | ProfilesClient, QuotationsClient | conectada | ninguna |
@@ -193,8 +193,9 @@ Carril 01. 85 secciones del registro, 118 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/terminology/import` | `VersionImport` | TerminologyClient | conectada con deuda |
 | cualquier sesión | `/clinics-directory/:slug` | `ClinicDetail` | PublicCatalogClient | conectada |
 | PATIENT · PRACTITIONER | `/directory/:profileId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
-| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/:conceptId` | `GlossaryTerm` | TerminologyClient | conectada |
-| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/network` | `GlossaryNetwork` | TerminologyClient | conectada |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/:conceptId` | `GlossaryTerm` | AnatomyAtlasClient, TerminologyClient | conectada |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/anatomy-atlas` | `GlossaryAnatomyAtlas` | AnatomyAtlasClient, TerminologyClient | conectada |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/network` | `GlossaryNetwork` | AnatomyAtlasClient, TerminologyClient | conectada |
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/groups/:groupId` | `GroupDetail` | CommunityClient | conectada |
 | cualquier sesión | `/insurers-directory/:slug` | `InsurerDetail` | InsuranceClient | conectada |
 | cualquier sesión | `/laboratory-directory/:unitId` | `LaboratoryDetail` | DiagnosticUnitsClient | conectada |
@@ -366,7 +367,7 @@ Las 126 pantallas de `features/alovida/`, generadas por `scripts/port-vistas-alo
 
 | Estado | Pantallas |
 |---|---|
-| conectada | 191 |
+| conectada | 192 |
 | maqueta portada | 119 |
 | presentacional | 11 |
 | conectada con deuda | 6 |
