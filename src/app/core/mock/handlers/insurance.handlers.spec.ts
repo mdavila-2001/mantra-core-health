@@ -426,6 +426,7 @@ describe('handlers de seguros · el mercado de una aseguradora del directorio', 
       }[];
     } | null;
     readonly brokers: readonly { readonly id: string; readonly chatSlug: string | null }[];
+    readonly exampleCatalog: boolean;
   }
 
   function mercado(slug: string): Mercado {
@@ -533,6 +534,24 @@ describe('handlers de seguros · el mercado de una aseguradora del directorio', 
       'Plan Familiar',
     ]);
     expect(mercado('bisa-seguros-y-reaseguros-s-a')).toEqual(bisa);
+  });
+
+  it('sólo el catálogo de ejemplo llega rotulado «de ejemplo»: las 17 sin catálogo sembrado', () => {
+    const sembradas = fichas
+      .filter((ficha) => !mercado(ficha.slug).exampleCatalog)
+      .map((ficha) => ficha.slug)
+      .sort();
+
+    // Las cuatro fichas que leen un catálogo sembrado; las otras 17, de ejemplo.
+    expect(sembradas).toEqual([
+      'alianza-vida-seguros-y-reaseguros-s-a',
+      'la-vitalicia',
+      'la-vitalicia-seguros-y-reaseguros-de-vida-s-a',
+      'seguros-andina',
+    ]);
+    expect(fichas.filter((ficha) => mercado(ficha.slug).exampleCatalog)).toHaveLength(17);
+    expect(mercado('bisa-seguros-y-reaseguros-s-a').exampleCatalog).toBe(true);
+    expect(mercado('seguros-andina').exampleCatalog).toBe(false);
   });
 
   it('una de seguros generales ofrece accidentes personales y no salud', () => {

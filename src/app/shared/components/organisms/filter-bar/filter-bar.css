@@ -197,26 +197,6 @@
     margin-block: 0 var(--sp-4);
 }
 
-.filter-bar__faceta-mas {
-    margin-block-start: var(--sp-2);
-    padding: var(--sp-2);
-    border: 0;
-    background: transparent;
-    color: var(--text-link, var(--brand-primary));
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.filter-bar__faceta-mas:hover {
-    text-decoration: underline;
-}
-
-.filter-bar__faceta-mas:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 1px;
-}
-
 /* ---- detalles de la columna (propietario, 23/10/2026) ------------------- */
 
 .filter-bar__faceta-rotulo {
@@ -258,20 +238,6 @@
     color: var(--brand-primary);
 }
 
-.filter-bar__faceta-mas {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-1);
-}
-
-.filter-bar__faceta-mas-icono {
-    transform: rotate(90deg);
-}
-
-.filter-bar__faceta-mas--abierta .filter-bar__faceta-mas-icono {
-    transform: rotate(-90deg);
-}
-
 @media (prefers-reduced-motion: no-preference) {
     .filter-bar__faceta-opcion {
         transition:
@@ -295,9 +261,106 @@
     .filter-bar__faceta-opcion:active .filter-bar__faceta-marca {
         transform: scale(0.85);
     }
+}
 
-    .filter-bar__faceta-mas-icono {
-        transition: transform var(--dur-base) var(--ease-standard);
+/* ---- buscador y paginador de la faceta (propietario, 24/10/2026) -------- */
+
+.filter-bar__faceta-buscar {
+    display: block;
+    margin-block-end: var(--sp-2);
+}
+
+.filter-bar__faceta-sin-coincidencias {
+    padding: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm, var(--fs-body));
+}
+
+.filter-bar__faceta-paginas {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-1);
+    margin-block-start: var(--sp-3);
+    padding-block-start: var(--sp-3);
+    border-block-start: 1px dashed var(--border-subtle, var(--border-default));
+}
+
+/* Las flechas, en un cuadrado con borde suave: el mismo botón de ícono de
+   todo el sistema, con el contorno que lo hace leer como control. */
+.filter-bar__faceta-flecha {
+    flex: none;
+    border: 1px solid var(--border-default);
+}
+
+.filter-bar__faceta-puntos {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-inline-size: 0;
+}
+
+/* El objetivo táctil es el botón entero (20 × 24 px); el punto, su dibujo. */
+.filter-bar__faceta-punto {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 20px;
+    block-size: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-full);
+    background: transparent;
+    cursor: pointer;
+}
+
+.filter-bar__faceta-punto::before {
+    content: '';
+    inline-size: 8px;
+    block-size: 8px;
+    border-radius: var(--r-full);
+    background: var(--border-strong, var(--border-default));
+}
+
+.filter-bar__faceta-punto:hover::before {
+    background: var(--text-secondary);
+}
+
+.filter-bar__faceta-punto[aria-current='page']::before {
+    inline-size: 16px;
+    background: var(--brand-primary);
+}
+
+.filter-bar__faceta-punto:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+
+.filter-bar__faceta-pagina {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Con puntos, el «2 de 5» sobra a la vista pero sigue anunciándose. */
+.filter-bar__faceta-puntos + .filter-bar__faceta-pagina {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .filter-bar__faceta-punto::before {
+        transition:
+            inline-size var(--dur-base) var(--ease-spring),
+            background var(--dur-fast) var(--ease-standard);
     }
 }
 
