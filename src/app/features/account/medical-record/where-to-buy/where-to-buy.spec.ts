@@ -296,13 +296,16 @@ describe('WhereToBuy', () => {
 
   afterEach(() => http.verify());
 
-  async function montar(requestId = 'm-1'): Promise<void> {
+  async function montar(requestId = 'm-1', query = ''): Promise<void> {
     TestBed.inject(SessionStore).start({
       accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], pid: 'pp-1' }),
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl(`/my-account/medical-record/where-to-buy/${requestId}`, WhereToBuy);
+    await harness.navigateByUrl(
+      `/my-account/medical-record/where-to-buy/${requestId}${query}`,
+      WhereToBuy,
+    );
   }
 
   /** Resuelve el recorrido completo hasta la consulta de disponibilidad. */
@@ -362,6 +365,72 @@ describe('WhereToBuy', () => {
     expect(pestanas[0]?.getAttribute('aria-selected')).toBe('true');
     // Y el panel activo es el de farmacias, no una promesa.
     expect(texto()).toContain('Sucursal Centro');
+  });
+
+  /* ---- carril 19: pestaña en la URL, recorrido y «Cómo llegar» ------------ */
+
+  it('abre la pestaña que pide la URL', async () => {
+    await montar('m-1', '?tab=imaging');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
+    expect(pestanas[1]?.getAttribute('aria-selected')).toBe('true');
+    expect(texto()).toContain('Todavía no podemos decirle qué centro tiene todos sus estudios');
+  });
+
+
+  it('deja la pestaña elegida en la URL', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
+    pestanas[2]?.click();
+    harness.detectChanges();
+
+    expect(navegar).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { tab: 'medical-centers' }, replaceUrl: true }),
+    );
+  });
+
+  it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    expect(
+      harness.routeNativeElement?.querySelector('[data-testid="compra-recorrido-una"]')?.textContent,
+    ).toContain('Farmacia Andina · Sucursal Centro tiene todo lo que eligió');
+  });
+
+  it('sin ninguna sucursal completa, sugiere el recorrido de menos paradas', async () => {
+    await montar();
+    responderHastaProductos();
+    const [primera, segunda] = DISPONIBILIDAD_FIXTURE.items;
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush({
+      ...DISPONIBILIDAD_FIXTURE,
+      items: [
+        { ...primera!, complete: false, missingProductIds: [FIXTURE_IDS.productoIbuprofeno] },
+        segunda!,
+      ],
+    });
+    harness.detectChanges();
+
+    const paradas = Array.from(
+      harness.routeNativeElement?.querySelectorAll('[data-testid="compra-paradas"] > li') ?? [],
+    ).map((li) => li.textContent ?? '');
+    expect(paradas).toHaveLength(2);
+    // La más cercana primero; la que no publica distancia, al final.
+    expect(paradas[0]).toContain('Sucursal Centro');
+    expect(paradas[0]).toContain('Aquí: Amoxicilina');
+    expect(paradas[1]).toContain('Sucursal Plan Tres Mil');
+    expect(paradas[1]).toContain('Aquí: Ibuprofeno');
   });
 
   it('muestra las campañas de la farmacia con su etiqueta y pliega las que sobran', async () => {
