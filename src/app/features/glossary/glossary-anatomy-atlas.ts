@@ -153,6 +153,13 @@ export class GlossaryAnatomyAtlas {
     return ficha === null ? [] : groupRelations(ficha, this.withMesh(), this.inCatalog());
   });
 
+  /** Las láminas de Netter donde aparece la estructura, sin repetir y en orden. */
+  protected readonly netterPlates = computed(() => {
+    const ficha = this.structure();
+    const laminas = [...new Set((ficha?.netter ?? []).flatMap((e) => e.plates))].sort((a, b) => a - b);
+    return laminas.length > 0 ? laminas : null;
+  });
+
   protected readonly pickedSide = computed(() => {
     const malla = this.meshId();
     const parte = malla === null ? undefined : this.parts().find((p) => p.meshId === malla);
@@ -171,7 +178,11 @@ export class GlossaryAnatomyAtlas {
     const visibles = this.layers().map((c) => LAYER_LABELS[c].toLowerCase()).join(', ');
     const ficha = this.structure();
     const foco = ficha === null ? '' : `. Pieza resaltada: ${displayName(ficha.labelEs, ficha.labelEn, ficha.id)}`;
-    return `Modelo anatómico 3D, cuerpo ${this.sex() === 'female' ? 'en vista «Mujer»' : 'masculino de referencia'}; capas: ${visibles}${foco}`;
+    const cuerpo =
+      this.sex() === 'female'
+        ? 'cuerpo masculino de referencia sin sus órganos genitales (vista «Mujer»; no existe un modelo femenino libre)'
+        : 'cuerpo masculino de referencia';
+    return `Modelo anatómico 3D, ${cuerpo}; capas: ${visibles}${foco}`;
   });
 
   private structureRequest: Subscription | null = null;
@@ -194,6 +205,16 @@ export class GlossaryAnatomyAtlas {
     effect(() => {
       const id = this.structureId();
       untracked(() => this.loadStructure(id));
+    });
+
+    // Y el modelo también: la estructura de la URL —venga de la búsqueda o de
+    // un enlace compartido— se ve aunque su capa estuviera apagada.
+    effect(() => {
+      const id = this.structureId();
+      this.parts();
+      untracked(() => {
+        if (id !== null) this.showLayersOf(id);
+      });
     });
   }
 
@@ -239,6 +260,13 @@ export class GlossaryAnatomyAtlas {
   protected openStructure(id: string): void {
     this.tab.set(0);
     this.setQuery({ structure: id, mesh: null });
+  }
+
+  /** Enciende las capas donde está la estructura: abrirla desde la búsqueda tiene que mostrarla. */
+  private showLayersOf(id: string): void {
+    const suyas = new Set(this.parts().filter((p) => p.structureId === id).map((p) => p.layer));
+    if (suyas.size === 0) return;
+    this.layers.update((capas) => LAYER_ORDER.filter((c) => capas.includes(c) || suyas.has(c)));
   }
 
   protected clearSelection(): void {

@@ -4,7 +4,7 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
-<main class="atlas3d">
+<div class="atlas3d">
   <app-card variant="outlined" padding="md">
     <div class="atlas3d__barra">
       <app-segmented-control
@@ -38,9 +38,17 @@
       </p>
     }
 
+    <p class="atlas3d__nota" data-testid="atlas3d-nota-traduccion">
+      Los nombres y las definiciones en castellano son una traducción automática, sin revisión humana, de la ontología
+      UBERON. Cada ficha muestra el texto original en inglés, que es el que manda.
+    </p>
+
     <div class="atlas3d__trabajo">
       <section class="atlas3d__visor" aria-label="Modelo 3D">
         <app-view-state-host [state]="partsState()">
+          <!-- El contenido proyectado se instancia aunque el host esté en
+               S2: el visor se crea recién cuando hay piezas. -->
+          @if (parts().length > 0) {
           <app-anatomy-viewer
             [parts]="parts()"
             [modelUrls]="modelUrls"
@@ -51,6 +59,7 @@
             [label]="viewerLabel()"
             (picked)="onPicked($event)"
           />
+          }
         </app-view-state-host>
         <p class="atlas3d__leyenda">
           <span class="atlas3d__muestra atlas3d__muestra--elegida" aria-hidden="true"></span> Pieza elegida
@@ -88,6 +97,9 @@
             @if (structure(); as ficha) {
               <header class="atlas3d__ficha-cabecera">
                 <h2 data-testid="atlas3d-ficha-titulo">{{ displayName(ficha.labelEs, ficha.labelEn, ficha.id) }}</h2>
+                @if (ficha.labelEs) {
+                  <span class="atlas3d__marca">nombre traducido automáticamente</span>
+                }
                 @if (pickedSide(); as lado) {
                   <p class="atlas3d__lado">Pieza tocada: {{ lado }}</p>
                 }
@@ -160,18 +172,12 @@
                     fuentes no estuvieron accesibles cuando se armó el catálogo.
                   </p>
 
-                  @if (ficha.netter.length > 0) {
-                    <h3 class="atlas3d__subtitulo">En el índice de Netter</h3>
-                    <ul class="atlas3d__lista">
-                      @for (entrada of ficha.netter; track entrada.netterId) {
-                        <li>
-                          {{ entrada.name }} — lámina{{ entrada.plates.length > 1 ? 's' : '' }} {{ entrada.plates.join(', ') }}
-                          @if (entrada.matchKind === 'laterality_dropped') {
-                            <span class="atlas3d__marca">sin lado en la ontología</span>
-                          }
-                        </li>
-                      }
-                    </ul>
+                  @if (netterPlates(); as laminas) {
+                    <h3 class="atlas3d__subtitulo">Referencia en el Atlas de Netter (4.ª ed.)</h3>
+                    <p data-testid="atlas3d-netter">
+                      Lámina{{ laminas.length > 1 ? 's' : '' }} {{ laminas.join(', ') }}.
+                      <span class="atlas3d__marca">Sólo el número de lámina; la obra es de Elsevier y no se reproduce.</span>
+                    </p>
                   }
                 </app-tab>
 
@@ -272,4 +278,4 @@
       </p>
     </footer>
   </app-card>
-</main>
+</div>

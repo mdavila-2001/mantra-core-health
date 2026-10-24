@@ -25,9 +25,14 @@ reemplazó con nada inventado ni escrito de memoria.
 - Versión 3.0 (20110915), tomada de la copia
   `github.com/Kevin-Mattheus-Moerman/BodyParts3D` (el archivo de DBCLS no era
   alcanzable). 934 STL, 1,3 GB, nombradas por ID FMA (`FMA24474.stl`) o `BP*`.
-- Licencia: CC BY-SA 2.1 JP (`bodyparts3d-LICENSE_content.txt`), con la
-  atribución que exige: «BodyParts3D, (c) The Database Center for Life Science
-  licensed under CC Attribution-Share Alike 2.1 Japan».
+- Licencia: CC BY-SA 2.1 JP (`bodyparts3d-LICENSE_content.txt`). Hay dos
+  formas del crédito: la del archivo de licencia («BodyParts3D, Copyright©
+  2008 Life Science Integrated Database Center licensed by CC
+  Display-Inheritance 2.1 Japan», traducción automática del japonés) y la del
+  README de la copia («BodyParts3D, (c) The Database Center for Life Science
+  licensed under CC Attribution-Share Alike 2.1 Japan»,
+  `bodyparts3d-readme-and-fma-counts.txt`). Se usa la segunda porque nombra
+  la licencia por su nombre oficial en inglés y la entidad actual (DBCLS).
 - **Sólo un cuerpo masculino.** El README de la copia lo dice («The data is
   currently, unfortunately, only for a single male model») y la lista de
   piezas lo confirma: hay testículos, epidídimos, vesículas seminales,
@@ -81,7 +86,9 @@ por capa al encenderla: la CSP no se tocó.
   GitHub; SHA-256 `d4751a15d7551a8414caee2628c62bf68301d567caf54ccfa3eef383ae7cbb61`
   (en `data/anatomy-ontology/provenance.json`). 16 141 clases UBERON; **6 074**
   humanas (con xref FMA).
-- **FMA**: la copia que distribuye BodyParts3D (`FMA.csv`, 104 723 clases).
+- **FMA**: la copia que distribuye BodyParts3D (`FMA.csv`: 104 723 filas,
+  104 721 registros según el parser CSV, 104 698 FMAID distintos —
+  `bodyparts3d-readme-and-fma-counts.txt`).
   OLS4 (la vía para resolver IDs FMA en línea) no era alcanzable.
 - **TA2 (FIPAT)**: no alcanzable (ta2viewer.openanatomy.org rechazado), y
   UBERON 2026-10-01 no trae xrefs TA2. **No hay códigos TA2 en el catálogo.**

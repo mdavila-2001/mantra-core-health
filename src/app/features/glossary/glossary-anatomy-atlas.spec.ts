@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { anatomyShardOf } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
+import { ATLAS_3D_FEMALE_ONLY_IDS } from '../../core/mock/fixtures/anatomy-ontology.generated';
 import type { AnatomyPart, AnatomyStructure } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
 import { GlossaryAnatomyAtlas } from './glossary-anatomy-atlas';
 
@@ -94,5 +95,30 @@ describe('GlossaryAnatomyAtlas', () => {
     expect(creditos).toContain('CC-BY-SA 2.1 JP');
     expect(creditos).toContain('UBERON');
     expect(creditos).toContain('Foundational Model of Anatomy');
+  });
+
+  it('la lista femenina incluye útero, cuello uterino y ovario, y no la mama, que existe en los dos sexos', () => {
+    expect(ATLAS_3D_FEMALE_ONLY_IDS).toContain('UBERON:0000995');
+    expect(ATLAS_3D_FEMALE_ONLY_IDS).toContain('UBERON:0000002');
+    expect(ATLAS_3D_FEMALE_ONLY_IDS).toContain('UBERON:0000992');
+    expect(ATLAS_3D_FEMALE_ONLY_IDS).not.toContain('UBERON:0001911');
+  });
+
+  it('avisa una vez, a nivel de página, que el castellano es traducción automática', async () => {
+    await harness.navigateByUrl('/glossary/anatomy-atlas');
+    responderCatalogo();
+    harness.detectChanges();
+    expect(html().querySelector('[data-testid="atlas3d-nota-traduccion"]')?.textContent).toContain('traducción automática, sin revisión humana');
+  });
+
+  it('de Netter muestra sólo el número de lámina, nunca el texto del índice', async () => {
+    await harness.navigateByUrl(`/glossary/anatomy-atlas?structure=${encodeURIComponent(UTERO)}`);
+    responderCatalogo();
+    const shard = String(anatomyShardOf(UTERO, 32)).padStart(2, '0');
+    http.expectOne(`/anatomy-atlas-3d/catalog/structures-${shard}.json`).flush({
+      [UTERO]: { ...FICHA_SIN_DEFINICION, netter: [{ netterId: 'ENT_1', plates: [372, 368, 372], matchKind: 'exact' }] },
+    });
+    harness.detectChanges();
+    expect(html().querySelector('[data-testid="atlas3d-netter"]')?.textContent).toContain('Láminas 368, 372.');
   });
 });
