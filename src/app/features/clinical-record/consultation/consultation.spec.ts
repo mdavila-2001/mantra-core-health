@@ -58,6 +58,9 @@ const CLAVES = [
   'medicacion',
   'planes',
   'reconsulta',
+  // «Derivar» entró el 24/10/2026 por pedido del propietario: recomendar a otro
+  // profesional, con aviso a la persona. Va junto a la reconsulta.
+  'derivacion',
   'pagos',
 ];
 const TITULOS = [
@@ -67,6 +70,7 @@ const TITULOS = [
   'Receta',
   'Plan de cuidados',
   'Reconsulta',
+  'Derivar',
   'Pagos',
 ];
 
@@ -90,9 +94,7 @@ describe('Consultation', () => {
     http
       .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
       .flush({ ...RESUMEN, ...resumen });
-    http
-      .expectOne((r) => r.url === '/charts/patients/p-1/chart')
-      .flush({ ...CHART, ...chart });
+    http.expectOne((r) => r.url === '/charts/patients/p-1/chart').flush({ ...CHART, ...chart });
     // Sin conceptos la etiqueta cae a «Sin registrar»: lo que se prueba acá es
     // la rejilla, no la traducción. Las pruebas de la línea del encuentro sí
     // los mandan, porque ahí el nombre del diagnóstico es lo que se lee.
@@ -118,16 +120,19 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las siete posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las ocho posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
-    const casillas = interno<() => readonly { clave: string; titulo: string; cantidad: number | null }[]>(
-      'casillas',
-    )();
+    const casillas =
+      interno<() => readonly { clave: string; titulo: string; cantidad: number | null }[]>(
+        'casillas',
+      )();
     expect(casillas.map((c) => c.clave)).toEqual(CLAVES);
     expect(casillas.map((c) => c.titulo)).toEqual(TITULOS);
     expect(casillas.find((c) => c.clave === 'ordenes')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'reconsulta')?.cantidad).toBeNull();
+    // Una derivación es un aviso a la persona, no una fila de su historia.
+    expect(casillas.find((c) => c.clave === 'derivacion')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
     expect(casillas.find((c) => c.clave === 'formulario')?.cantidad).toBeNull();
     // Pagos no lleva cifra: son de la caja y no de las dos lecturas del
@@ -138,7 +143,18 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(7);
+    expect(botones).toHaveLength(8);
+  });
+
+  it('«Derivar» abre su bloque en el modal, con el encabezado y la bajada propios', async () => {
+    await responderLectura();
+
+    (componente as unknown as { abrir(clave: string): void }).abrir('derivacion');
+    harness.detectChanges();
+
+    expect(interno<() => string>('tituloDelModal')()).toBe('Derivar a otro profesional');
+    expect(interno<() => string>('descripcionDelModal')()).toContain('Le avisamos en su campana');
+    expect(harness.routeNativeElement!.querySelector('app-referral-block')).not.toBeNull();
   });
 
   /**
@@ -211,7 +227,9 @@ describe('Consultation', () => {
     const previous = harness.routeNativeElement!.querySelector('dialog')!;
     expect(previous.open).toBe(true);
 
-    harness.routeNativeElement!.querySelector<HTMLButtonElement>('[data-testid="content-dialog-close"]')!.click();
+    harness
+      .routeNativeElement!.querySelector<HTMLButtonElement>('[data-testid="content-dialog-close"]')!
+      .click();
     expect(previous.isConnected).toBe(false);
     tile.click();
     await harness.fixture.whenStable();
@@ -223,10 +241,16 @@ describe('Consultation', () => {
 
   it('distingue la reserva de reconsulta de la cita clínica del check-in', async () => {
     await responderLectura();
-    componente = await harness.navigateByUrl('/medical-records/p-1/consultation?cita=ap-1&booking=b-1', Consultation);
+    componente = await harness.navigateByUrl(
+      '/medical-records/p-1/consultation?cita=ap-1&booking=b-1',
+      Consultation,
+    );
     expect(interno<() => string | null>('originBookingId')()).toBe('b-1');
     expect(interno<() => string | null>('citaDeOrigen')()).toBe('ap-1');
-    componente = await harness.navigateByUrl('/medical-records/p-1/consultation?cita=ap-1', Consultation);
+    componente = await harness.navigateByUrl(
+      '/medical-records/p-1/consultation?cita=ap-1',
+      Consultation,
+    );
     expect(interno<() => string | null>('originBookingId')()).toBeNull();
   });
 

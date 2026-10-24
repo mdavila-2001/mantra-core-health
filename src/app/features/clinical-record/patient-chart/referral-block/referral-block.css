@@ -1,0 +1,12 @@
+:host {
+  display: block;
+}
+
+.derivacion {
+  --card-body-gap: var(--sp-4);
+}
+
+.derivacion__formulario {
+  display: grid;
+  gap: var(--sp-4);
+}
