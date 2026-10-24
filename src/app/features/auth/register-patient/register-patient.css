@@ -162,9 +162,11 @@ app-location-picker:focus-within .registro__campo-icono {
   min-width: 0;
 }
 
+/* El quitar es de ícono (TAREA 04, AC-04-6): a la derecha, como el de los
+   nombres y los celulares, que lo llevan al final de su renglón. */
 .registro__contacto-extra > button {
   grid-column: 1 / -1;
-  justify-self: start;
+  justify-self: end;
 }
 
 .registro__contacto-extra-titulo {

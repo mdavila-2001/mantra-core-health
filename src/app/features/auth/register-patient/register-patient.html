@@ -276,6 +276,7 @@
                     <app-form-field
                       class="registro__nombre"
                       label="Nombre"
+                      description="A quién más llamamos si le pasa algo y no puede responder usted."
                       [required]="true"
                       [errorMessage]="enRojo(contacto.controls.name, contactosExtra) ? errorNombreContacto : ''"
                     >
@@ -291,6 +292,7 @@
                     <app-form-field
                       class="registro__nombre"
                       label="Su teléfono (opcional)"
+                      description="El número al que llamamos a esa persona."
                       [errorMessage]="enRojo(contacto.controls.phone, contactosExtra) ? errorTelefonoContacto : ''"
                     >
                       <app-phone-input
@@ -299,25 +301,34 @@
                         [testId]="'registro-contacto-extra-telefono-' + $index"
                       />
                     </app-form-field>
-                    <app-form-field class="registro__nombre" label="Su relación con usted (opcional)">
+                    <app-form-field
+                      class="registro__nombre"
+                      label="Su relación con usted (opcional)"
+                      description="Qué es esa persona para usted: madre, pareja, amigo…"
+                    >
                       <app-select
                         [formControl]="contacto.controls.relationshipConceptId"
                         [options]="opcionesParentesco()"
                         [searchable]="false"
                         placeholder="Sin especificar"
                         [attr.data-testid]="'registro-contacto-extra-relacion-' + $index"
-                      />
+                      >
+                        <app-nav-icon slot="icon-start" name="people" class="registro__campo-icono" />
+                      </app-select>
                     </app-form-field>
+                    <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. Mismo botón que el de los nombres y los celulares (TAREA 04, AC-04-6). -->
                     <button
                       app-button
                       type="button"
                       variant="ghost"
                       size="sm"
+                      [iconOnly]="true"
                       [attr.aria-label]="'Quitar el contacto de emergencia ' + ($index + 1)"
+                      [appTooltip]="'Quitar el contacto de emergencia ' + ($index + 1)"
                       [attr.data-testid]="'registro-quitar-contacto-' + $index"
                       (clicked)="quitarContacto($index)"
                     >
-                      Quitar este contacto
+                      <app-nav-icon name="remove" />
                     </button>
                   </fieldset>
                 }

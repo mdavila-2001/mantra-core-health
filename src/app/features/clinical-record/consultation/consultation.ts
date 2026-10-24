@@ -57,10 +57,17 @@ import {
 } from '../clinical-record.routes';
 import { writeFailureMessage } from '../write-message';
 import { recordedInEncounter, type RecordedItems } from './recorded-items';
-import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
-import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
+import {
+  CarePlanBlock,
+  type DiagnosticoDelPlan,
+} from '../patient-chart/care-plan-block/care-plan-block';
+import {
+  DiagnosisBlock,
+  type CitaDelPaciente,
+} from '../patient-chart/diagnosis-block/diagnosis-block';
 import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
 import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
+import { ReferralBlock } from '../patient-chart/referral-block/referral-block';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
@@ -107,6 +114,7 @@ export type CasillaDeConsulta =
   | 'medicacion'
   | 'ordenes'
   | 'reconsulta'
+  | 'derivacion'
   | 'planes'
   | 'formulario'
   | 'pagos';
@@ -185,6 +193,13 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M4 5h16v16H4V5Zm4-2v4m8-4v4M4 10h16m-8 3v5m-2-2 2 2 2-2',
     testId: 'consulta-casilla-reconsulta',
   },
+  derivacion: {
+    titulo: 'Derivar',
+    descripcion: 'Recomendar a otro profesional, con aviso a la persona.',
+    tituloDelModal: 'Derivar a otro profesional',
+    icono: 'M5 12h11m-4-4 4 4-4 4M19 5v14',
+    testId: 'consulta-casilla-derivacion',
+  },
   planes: {
     titulo: 'Plan de cuidados',
     descripcion: 'Un objetivo y las actividades para alcanzarlo.',
@@ -218,6 +233,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   'medicacion',
   'planes',
   'reconsulta',
+  'derivacion',
   'pagos',
 ];
 
@@ -261,6 +277,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     EncounterTimeline,
     FormField,
     FollowUpBlock,
+    ReferralBlock,
     MedicationBlock,
     PaymentsBlock,
     PageHeader,
@@ -476,6 +493,9 @@ export class Consultation {
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
       ordenes: null,
       reconsulta: null,
+      // Una derivación no deja una fila propia en las dos lecturas del
+      // expediente: es un aviso a la persona, no un dato de su historia.
+      derivacion: null,
       planes: datos?.chart.carePlans.length ?? 0,
       // El formulario no deja una fila propia en la historia: lo que guarda
       // termina en diagnósticos, notas, documentos o laboratorio.
@@ -489,7 +509,9 @@ export class Consultation {
       clave,
       ...CASILLAS[clave],
       // Con la facturación simulada, «Pagos» cobra y factura: la bajada lo dice.
-      ...(clave === 'pagos' && this.facturacionSimulada ? { descripcion: DESCRIPCION_DE_PAGOS_CON_FACTURACION } : {}),
+      ...(clave === 'pagos' && this.facturacionSimulada
+        ? { descripcion: DESCRIPCION_DE_PAGOS_CON_FACTURACION }
+        : {}),
       cantidad: cantidades[clave],
     }));
   });
@@ -510,9 +532,11 @@ export class Consultation {
     const dialog = event.currentTarget.querySelector('dialog');
     if (dialog === null) return;
     if (event.target instanceof Element && event.target.closest('dialog') !== dialog) return;
-    const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    )).filter((control) => control.getClientRects().length > 0 && control.tabIndex >= 0);
+    const controls = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((control) => control.getClientRects().length > 0 && control.tabIndex >= 0);
     const first = controls.at(0);
     const last = controls.at(-1);
     const boundary = event.shiftKey ? first : last;
@@ -547,6 +571,9 @@ export class Consultation {
       return this.facturacionSimulada
         ? `Lo que ${quien} tiene que pagar y lo que ya pagó: nota de venta por cada pago del plan y la factura al saldarlo.`
         : `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
+    }
+    if (this.casillaAbierta() === 'derivacion') {
+      return `Le recomienda a ${quien} que consulte con otro profesional. Le avisamos en su campana, con un enlace a su ficha para reservar.`;
     }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`
@@ -583,8 +610,8 @@ export class Consultation {
     }),
   );
 
-  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(
-    () => this.diagnosticosParaReceta(),
+  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(() =>
+    this.diagnosticosParaReceta(),
   );
 
   protected readonly medicacionActivaConceptIds = computed<readonly string[]>(() =>

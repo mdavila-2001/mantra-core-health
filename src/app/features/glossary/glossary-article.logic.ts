@@ -192,6 +192,16 @@ export function bloquesDeTexto(texto: string): readonly BloqueDeTexto[] {
     });
 }
 
+/**
+ * Los bloques de una sección: su texto, o —si la fuente sólo trae una lista y el
+ * texto es `null`— los `items` tal cual, como una lista.
+ */
+export function bloquesDeSeccion(seccion: GlossaryArticleSection): readonly BloqueDeTexto[] {
+  if (seccion.text !== null) return bloquesDeTexto(seccion.text);
+  const elementos = (seccion.items ?? []).map((item) => item.trim()).filter((item) => item !== '');
+  return elementos.length === 0 ? [] : [{ tipo: 'lista', elementos }];
+}
+
 /** Una sección lista para pintar. */
 export interface SeccionPintable {
   readonly ancla: string;
@@ -241,7 +251,7 @@ export function seccionesPintables(articulo: GlossaryArticle): readonly SeccionP
       titulo,
       encabezadoDeLaFuente: encabezado,
       seccion,
-      bloques: bloquesDeTexto(seccion.text),
+      bloques: bloquesDeSeccion(seccion),
       extracto: motivoDeExtracto(seccion),
       sinTraduccion: seccion.lang === 'en',
       entradaDelIndice: repetido && encabezado !== null ? `${titulo} · ${encabezado}` : titulo,

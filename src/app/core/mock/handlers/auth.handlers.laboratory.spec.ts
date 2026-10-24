@@ -75,7 +75,10 @@ describe('alta pública de laboratorio en el simulador', () => {
         address: { lines: ['Av. Cañoto 234'], latitude: -17.78, longitude: -63.18 },
       },
       branches: [
-        { name: 'Equipetrol', addressLines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+        {
+          name: 'Equipetrol',
+          address: { lines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+        },
       ],
     });
 
@@ -87,7 +90,7 @@ describe('alta pública de laboratorio en el simulador', () => {
   it('límite — una sucursal sin punto en el mapa pasa: las coordenadas son ambas o ninguna', () => {
     const cuerpo = conUnidad({
       ...CUERPO_MINIMO.organization.diagnosticUnit,
-      branches: [{ name: 'Equipetrol', addressLines: [] }],
+      branches: [{ name: 'Equipetrol', address: { lines: [] } }],
     });
 
     const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
@@ -124,21 +127,21 @@ describe('alta pública de laboratorio en el simulador', () => {
   it('inválido — una coordenada fuera de rango en una sucursal es 400', () => {
     const cuerpo = conUnidad({
       ...CUERPO_MINIMO.organization.diagnosticUnit,
-      branches: [{ name: 'Norte', addressLines: [], latitude: 200, longitude: -63.18 }],
+      branches: [{ name: 'Norte', address: { lines: [], latitude: 200, longitude: -63.18 } }],
     });
 
     const { status, body } = call('POST', '/iam/auth/register-organization', cuerpo);
 
     expect(status).toBe(400);
     expect(mensajes(body)).toContain(
-      'organization.diagnosticUnit.branches.0.latitude must not be greater than 90',
+      'organization.diagnosticUnit.branches.0.address.latitude must not be greater than 90',
     );
   });
 
   it('inválido — una sucursal sin nombre es 400', () => {
     const cuerpo = conUnidad({
       ...CUERPO_MINIMO.organization.diagnosticUnit,
-      branches: [{ name: '', addressLines: ['Av. San Martín 456'] }],
+      branches: [{ name: '', address: { lines: ['Av. San Martín 456'] } }],
     });
 
     const { status, body } = call('POST', '/iam/auth/register-organization', cuerpo);

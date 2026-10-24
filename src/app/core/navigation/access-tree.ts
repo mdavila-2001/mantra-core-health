@@ -120,11 +120,12 @@ export interface AccessArea {
  *
  * **Cuatro de «Administración»** (19/09/2026) — `administration/my-practice`,
  * `administration/pharmacy-orders`, `administration/pharmacy-campaigns` y
- * `administration/pharmacy-profile`. Pedido del propietario mirando la zona del
- * médico. «Mis organizaciones» se abre desde «Mi perfil», que es donde
- * alguien va a buscar «¿dónde atiendo?»; las tres de farmacia son del mostrador
- * de una farmacia, no del consultorio, y quien lo atiende las sigue teniendo en
- * su menú lateral. Ninguna ruta se cierra: esto decide sólo dónde no se ofrecen.
+ * `administration/pharmacy-profile`. El propietario volvió a pedir la entrada
+ * de `my-practice` el 13/10/2026: ahora aparece dentro de esta zona como «Mi
+ * consultorio propio». Las tres de farmacia siguen fuera porque son del
+ * mostrador de una farmacia, no del consultorio, y quien lo atiende las sigue
+ * teniendo en su menú lateral. Ninguna ruta se cierra: esto decide sólo dónde
+ * se ofrecen.
  */
 export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'dashboard',
@@ -136,7 +137,6 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'glossary',
   'my-services',
   'my-quotations',
-  'administration/my-practice',
   'administration/pharmacy-orders',
   'administration/pharmacy-campaigns',
   'administration/pharmacy-catalog',

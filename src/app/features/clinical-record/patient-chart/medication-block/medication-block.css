@@ -12,7 +12,9 @@
   --card-body-gap: var(--sp-4);
   /* Cuatro campos cortos: a lo ancho de la tabla, la línea de la dosis quedaría
      del largo de la pantalla y sería ilegible. */
-  max-inline-size: 68ch;
+  /* El tope de lectura vale en la página; dentro del modal el ancho ya lo
+     fija el diálogo y la tarjeta lo llena (ver `consultation.css`). */
+  max-inline-size: var(--expediente-card-max, 68ch);
 }
 
 .receta__titulo {

@@ -9,13 +9,14 @@ import {
   Injector,
   input,
   model,
+  output,
   signal,
   viewChild,
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
 import { Select } from '../../atoms/select/select';
-import { type DatePickerMode, MAX_DEFAULT_YEAR } from './date-picker.types';
+import { type DatePickerMode, type DateTextProblem, MAX_DEFAULT_YEAR } from './date-picker.types';
 import { FORM_CONTROL_CONTEXT, nextControlId } from '../../../forms/form-control.context';
 import { NoFieldContext } from '../../../forms/no-field-context.directive';
 import { abrirModal, cerrarConSalida } from '@shared/motion/panel-motion';
@@ -34,6 +35,12 @@ export interface YearCell {
   readonly year: number;
   readonly isSelected: boolean;
   readonly isDisabled: boolean;
+  /**
+   * Los cinco años de su fila están fuera del rango: la fila no se dibuja.
+   * Siempre es una fila entera, para que las columnas —que el teclado recorre
+   * de a cinco— no se corran.
+   */
+  readonly isRowOutOfRange: boolean;
 }
 
 /** Celda de la grilla de meses del año en vista. */
@@ -276,6 +283,14 @@ export class DatePicker {
   readonly maxDate = input<Date | string | null>(null);
   readonly allowKeyboard = input<boolean>(true);
 
+  /**
+   * Avisa cuando lo escrito a mano se rechaza, y con `null` cuando deja de
+   * estarlo. El modelo no alcanza: una fecha fuera de rango deja `value` en
+   * `null`, igual que un campo vacío, y el formulario terminaba diciendo
+   * «ingrese su fecha» sobre una fecha que la persona sí ingresó.
+   */
+  readonly textProblem = output<DateTextProblem | null>();
+
   private readonly injector = inject(Injector);
 
   private readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('dialog');
@@ -297,6 +312,12 @@ export class DatePicker {
   /** Texto mostrado en el input editable. */
   protected readonly inputText = signal<string>('');
   protected readonly parseError = signal<boolean>(false);
+
+  /** El motivo del rechazo: si el texto es una fecha real, fue por el rango. */
+  private readonly currentTextProblem = computed<DateTextProblem | null>(() => {
+    if (!this.parseError()) return null;
+    return parseDateOnly(this.inputText().trim()) ? 'out-of-range' : 'invalid';
+  });
 
   /** Fecha en edición mientras el modal está abierto; se descarta al cancelar. */
   protected readonly draft = signal<Date | null>(null);
@@ -395,12 +416,16 @@ export class DatePicker {
     const start = this.yearPageStart();
     const viewYear = this.viewMonth().getFullYear();
 
-    return Array.from({ length: YEARS_PER_PAGE }, (_, index) => {
+    const disabled = Array.from({ length: YEARS_PER_PAGE }, (_, index) => this.isYearOutOfRange(start + index));
+
+    return disabled.map((isDisabled, index) => {
       const year = start + index;
+      const rowStart = index - (index % YEAR_GRID_COLUMNS);
       return {
         year,
         isSelected: year === viewYear,
-        isDisabled: this.isYearOutOfRange(year),
+        isDisabled,
+        isRowOutOfRange: disabled.slice(rowStart, rowStart + YEAR_GRID_COLUMNS).every(Boolean),
       };
     });
   });
@@ -492,6 +517,8 @@ export class DatePicker {
   });
 
   constructor() {
+    effect(() => this.textProblem.emit(this.currentTextProblem()));
+
     // Sincronizar el texto del input cuando el valor del modelo cambia
     effect(() => {
       const val = this.value();
@@ -1377,7 +1404,10 @@ export class DatePicker {
 
   /** Ídem con la página vecina de treinta años de la grilla. */
   protected canShiftYearPage(offset: number): boolean {
-    const start = this.yearPageStart() + offset * YEARS_PER_PAGE;
+    const start = this.clampYearPageStart(this.yearPageStart() + offset * YEARS_PER_PAGE);
+    if (start === this.yearPageStart()) {
+      return false;
+    }
     return !this.hasNoDayInRange(
       new Date(start, 0, 1),
       new Date(start + YEARS_PER_PAGE - 1, MONTHS_PER_YEAR, 0),
@@ -1389,8 +1419,18 @@ export class DatePicker {
     if (!this.canShiftYearPage(offset)) {
       return;
     }
-    this.yearPageStart.update((start) => start + offset * YEARS_PER_PAGE);
+    this.yearPageStart.update((start) => this.clampYearPageStart(start + offset * YEARS_PER_PAGE));
     this.activeCell.set(usableCell(this.yearCells(), this.activeCell()));
+  }
+
+  /**
+   * Ninguna página empieza antes del año de `minDate`: con el alta arrancando
+   * en 1910, la primera página es 1910–1939 entera y no 1890–1919 con veinte
+   * años que no se pueden elegir. Las demás siguen alineadas a la década.
+   */
+  private clampYearPageStart(start: number): number {
+    const min = this.normalizedMinDate();
+    return min ? Math.max(start, min.getFullYear()) : start;
   }
 
   /**
@@ -1428,7 +1468,7 @@ export class DatePicker {
 
   private showYears(): void {
     const viewYear = this.viewMonth().getFullYear();
-    const start = startOfYearPage(viewYear);
+    const start = this.clampYearPageStart(startOfYearPage(viewYear));
     this.yearPageStart.set(start);
     this.panel.set('years');
     this.activeCell.set(usableCell(this.yearCells(), viewYear - start));

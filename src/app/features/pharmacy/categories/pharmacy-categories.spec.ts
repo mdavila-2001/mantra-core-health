@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { PharmacyCategory } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PharmacyCategories } from './pharmacy-categories';
+import { afterAll, beforeAll } from 'vitest';
+import { environment } from '../../../../environments/environment';
 
 /**
  * «Categorías» de la farmacia (carril B, 29/09/2026): crear, renombrar y
@@ -28,6 +30,11 @@ interface Internal {
 }
 
 describe('PharmacyCategories', () => {
+  // Las escrituras de farmacia son «sólo simulador»: sin esto la petición no sale.
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
+
   let fixture: ComponentFixture<PharmacyCategories>;
   let http: HttpTestingController;
 
