@@ -12,12 +12,14 @@ import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angul
 import { filter } from 'rxjs';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type {
   SearchResultAction,
   SearchResultItem,
   SearchResultRating,
 } from '../search-result/search-result.types';
 import { cleanDisplayName } from '../../../utils/clean-display-name';
+import { ratingOf } from './rating-of';
 
 /**
  * Un resultado de directorio **en tarjeta de grilla o lista**.
@@ -28,7 +30,7 @@ import { cleanDisplayName } from '../../../utils/clean-display-name';
  */
 @Component({
   selector: 'li[app-result-card]',
-  imports: [AppButtonLink],
+  imports: [AppButtonLink, NavIcon],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
   host: { class: 'tarjeta-resultado', '[class.tarjeta-resultado--lista]': "vista() === 'lista'" },
@@ -61,31 +63,10 @@ export class ResultCard {
     return cleanDisplayName(this.resultado().title);
   });
 
-  /**
-   * La calificación de pacientes, **sólo si es real**: la que trae el
-   * resultado o la que viene escrita en su meta. Sin reseñas no se dibuja nada.
-   *
-   * Antes había un respaldo que inventaba una nota de 4,7 a 5,0 y de 24 a 163
-   * opiniones con un hash del nombre, para que ninguna tarjeta quedara «vacía».
-   * Eso le decía al paciente que otros pacientes habían opinado de alguien de
-   * quien nadie opinó: un dato falso en una guía de salud.
-   */
-  protected readonly calificacion = computed<SearchResultRating | null>(() => {
-    const r = this.resultado();
-    if (r.rating && r.rating.count > 0 && r.rating.average > 0) {
-      return r.rating;
-    }
-    const metaScore = (r.meta ?? []).find(
-      (m) => m.iconKey === 'puntuacion' || /reseña/i.test(m.text),
-    );
-    const match = metaScore?.text.match(/(\d(?:[,.]\d)?)\s*·\s*(\d+)/);
-    if (!match) {
-      return null;
-    }
-    const average = parseFloat(match[1]!.replace(',', '.'));
-    const count = parseInt(match[2]!, 10);
-    return { average, count };
-  });
+  /** La calificación real, o `null`. Ver {@link ratingOf}. */
+  protected readonly calificacion = computed<SearchResultRating | null>(() =>
+    ratingOf(this.resultado()),
+  );
 
   /**
    * Cuánto de las cinco estrellas se rellena, en porcentaje: 3,7 de 5 es el

@@ -72,6 +72,7 @@ const FILTROS: readonly FilterDef[] = [
   {
     key: 'kind',
     label: 'Tipo de centro',
+    icon: 'flask',
     // Chips y no desplegable (A3 del plan de UX): son dos opciones, y
     // esconderlas detrás de un control que hay que abrir era la razón por la
     // que casi nadie acotaba el directorio.
@@ -84,6 +85,7 @@ const FILTROS: readonly FilterDef[] = [
   {
     key: 'homeCollection',
     label: 'Toma a domicilio',
+    icon: 'home',
     // Las dos comodidades comparten renglón: son dos claves de la URL y una
     // sola pregunta de quien busca. Y van en forma **afirmativa** — «no toma a
     // domicilio» es un filtro que nadie pone a propósito, y ocupaba la mitad
@@ -210,7 +212,7 @@ export class LaboratoryDirectory {
     }
     return [
       ...FILTROS,
-      { key: PARAM_DEPARTAMENTO, label: 'Departamento', asChips: true, options: opciones },
+      { key: PARAM_DEPARTAMENTO, label: 'Departamento', icon: 'pin', asChips: true, options: opciones },
     ];
   });
   protected readonly sustantivo = SUSTANTIVO;

@@ -45,9 +45,7 @@
             aria-controls="mercado-facetas"
             (click)="columnaAbierta.set(!columnaAbierta())"
           >
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-              <path d="M4 6h16M7 12h10M10 18h4" />
-            </svg>
+            <app-nav-icon name="sliders" />
             <span>Filtros</span>
             @if (filtrosActivosEnLaColumna() > 0) {
               <span class="mercado__plegar-cuenta">{{ filtrosActivosEnLaColumna() }}</span>
@@ -76,6 +74,7 @@
                 aria-labelledby="mercado-faceta-grupos"
               >
                 <p class="mercado__faceta-rotulo" id="mercado-faceta-grupos">
+                  <app-nav-icon class="mercado__faceta-icono" [name]="iconoDeGrupos()" />
                   {{ rotuloDeGrupos() }}
                 </p>
                 <ul class="mercado__faceta-lista">
@@ -110,6 +109,7 @@
                     (click)="verTodosLosGrupos.set(true)"
                   >
                     Ver {{ gruposOcultos() }} más
+                    <app-nav-icon class="mercado__ver-mas-icono" name="arrow-right" />
                   </button>
                 } @else if (verTodosLosGrupos()) {
                   <button
@@ -118,6 +118,7 @@
                     (click)="verTodosLosGrupos.set(false)"
                   >
                     Ver menos
+                    <app-nav-icon class="mercado__ver-mas-icono mercado__ver-mas-icono--abierto" name="arrow-right" />
                   </button>
                 }
               </div>
@@ -192,7 +193,10 @@
                anuncia cuántos hay antes de leer el primero. -->
           <ul class="directorio__grilla" [class.directorio__grilla--lista]="vista() === 'lista'">
             @for (resultado of visibles(); track resultado.id) {
+              <!-- `--i`: el orden dentro de su tanda, para que las tarjetas
+                   entren escalonadas. Ver `.directorio__grilla > li`. -->
               <li
+                [style.--i]="$index % tamanoDeTanda()"
                 app-result-card
                 [resultado]="resultado"
                 [vista]="vista()"

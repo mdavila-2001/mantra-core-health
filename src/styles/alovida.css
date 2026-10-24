@@ -2170,6 +2170,15 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 :root[data-tema="oscuro"] .app-theme-toggle__luna,
 :root[data-theme="dark"] .app-theme-toggle__luna { color: var(--tinta-nav); }
 
+/* En un teléfono de 400 px o menos la barra de arriba no entraba y el avatar
+   quedaba cortado (propietario, 23/10/2026): el interruptor cede 12 px. La
+   perilla recorre lo que queda de pista: 52 − 2 de borde − 24 − 2 × 3. */
+@media (max-width: 400px) {
+  .app-theme-toggle__pista { width: 52px; padding: 0 5px; }
+  :root[data-tema="oscuro"] .app-theme-toggle__perilla,
+  :root[data-theme="dark"] .app-theme-toggle__perilla { transform: translateX(20px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .app-theme-toggle__pista, .app-theme-toggle .icono, .app-theme-toggle__perilla { transition: none; }
 }

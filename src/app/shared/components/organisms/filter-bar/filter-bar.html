@@ -57,7 +57,12 @@
          Botones con `aria-pressed` y no radios: tocar la opción puesta la
          quita, igual que con los chips. -->
     <div class="filter-bar__faceta" role="group" [attr.aria-labelledby]="'faceta-' + $index">
-      <p class="filter-bar__faceta-rotulo" [id]="'faceta-' + $index">{{ grupo.label }}</p>
+      <p class="filter-bar__faceta-rotulo" [id]="'faceta-' + $index">
+        @if (grupo.icon) {
+          <app-nav-icon class="filter-bar__faceta-icono" [name]="grupo.icon" />
+        }
+        {{ grupo.label }}
+      </p>
       @for (filter of grupo.filters; track filter.key) {
         @if (isAvailable(filter)) {
           <ul class="filter-bar__faceta-lista">
@@ -70,7 +75,11 @@
                   (click)="toggleChip(filter, opcion.value)"
                 >
                   <span class="filter-bar__faceta-marca" aria-hidden="true"></span>
-                  <span class="filter-bar__faceta-texto">{{ opcion.label }}</span>
+                  @let partes = partirCantidad(opcion.label);
+                  <span class="filter-bar__faceta-texto">{{ partes.texto }}</span>
+                  @if (partes.cantidad !== null) {
+                    <span class="filter-bar__faceta-cantidad">{{ partes.cantidad }}</span>
+                  }
                 </button>
               </li>
             }
@@ -78,10 +87,16 @@
           @if (filter.options.length > opcionesALaVista(filter).length) {
             <button type="button" class="filter-bar__faceta-mas" (click)="alternarFaceta(filter)">
               Ver {{ filter.options.length - opcionesALaVista(filter).length }} más
+              <app-nav-icon class="filter-bar__faceta-mas-icono" name="arrow-right" />
             </button>
           } @else if (facetasAbiertas().has(filter.key)) {
-            <button type="button" class="filter-bar__faceta-mas" (click)="alternarFaceta(filter)">
+            <button
+              type="button"
+              class="filter-bar__faceta-mas filter-bar__faceta-mas--abierta"
+              (click)="alternarFaceta(filter)"
+            >
               Ver menos
+              <app-nav-icon class="filter-bar__faceta-mas-icono" name="arrow-right" />
             </button>
           }
         } @else {
