@@ -75,10 +75,7 @@ export function drawContent(composer: PdfComposer, blocks: readonly PdfBlock[]):
       // la última fila se reserva junto con ellos (y con el aire que los separa:
       // el de fin de tabla más el de antes de la caja).
       const next = elements[index + 1];
-      const trailing =
-        next?.type === 'block' && (next.block.kind === 'totals' || next.block.kind === 'total')
-          ? PDF_SPACE.md + PDF_SPACE.sm + measureTotals(composer, totalsOf(next.block)).total
-          : 0;
+      const trailing = next?.type === 'block' ? PDF_SPACE.md + trailingHeightOf(composer, next.block) : 0;
       drawTable(composer, element.rows, trailing);
     } else if (element.type === 'fieldList') {
       drawFieldList(composer, element.fields);
@@ -670,6 +667,38 @@ function totalRowOf(text: string): PdfTotalRow {
   const at = text.lastIndexOf(':');
   if (at <= 0) return { label: '', value: text.trim(), emphasis: true };
   return { label: text.slice(0, at).trim(), value: text.slice(at + 1).trim(), emphasis: true };
+}
+
+/**
+ * Lo que tiene que ir pegado a la última fila de la tabla que lo precede: la
+ * caja de totales, o el aviso que la cierra («falta algún precio»). Un aviso
+ * más alto que media hoja no se reserva entero: se parte como siempre.
+ */
+function trailingHeightOf(composer: PdfComposer, block: PdfBlock): number {
+  if (block.kind === 'totals' || block.kind === 'total') {
+    return PDF_SPACE.sm + measureTotals(composer, totalsOf(block)).total;
+  }
+  if (block.kind === 'note') {
+    const height = PDF_SPACE.sm + noteHeight(composer, block);
+    return height <= composer.usableHeight / 2 ? height : 0;
+  }
+  return 0;
+}
+
+/** El alto de un aviso entero, sin partir. */
+function noteHeight(composer: PdfComposer, block: PdfBlock): number {
+  const toneName = block.tone ?? 'brand';
+  const glyphRoom = TONE_GLYPH[toneName] === null ? 0 : GLYPH_SIZE + 6;
+  const textWidth = composer.right - PDF_SPACE.panelPadding - (composer.left + 14);
+  const titleStyle = PDF_TYPE.heading;
+  const title = block.title === undefined ? [] : composer.wrap(block.title, textWidth - glyphRoom, titleStyle);
+  const lines = composer.wrap(block.text, textWidth - (title.length === 0 ? glyphRoom : 0), PDF_TYPE.note);
+  return (
+    PDF_SPACE.panelPadding * 2 +
+    title.length * titleStyle.leading +
+    (title.length > 0 ? 2 : 0) +
+    lines.length * PDF_TYPE.note.leading
+  );
 }
 
 /** Las filas de un bloque `totals`, o la de un `total` suelto. */

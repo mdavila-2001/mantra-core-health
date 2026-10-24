@@ -1145,6 +1145,21 @@ describe('las tablas', () => {
     }
   });
 
+  it('el aviso que cierra una tabla tampoco queda solo en una hoja', async () => {
+    const { noteBlock } = await import('./pdf-export');
+    for (let n = 20; n <= 60; n += 1) {
+      buildBlocksPdf([
+        { kind: 'row', text: '', cells: ['Concepto', 'Importe'], header: true },
+        ...Array.from({ length: n }, (_, i) => ({ kind: 'row' as const, text: '', cells: [`Cuota ${i + 1}`, '100,00'] })),
+        noteBlock('Falta algún precio publicado.', 'warning', 'Total no disponible'),
+      ]);
+      const { orden } = ultimoDocumento().llamadas;
+      const aviso = orden.indexOf('Total no disponible');
+      const hoja = orden.lastIndexOf('— hoja nueva —', aviso);
+      expect(orden.slice(hoja + 1, aviso).some((linea) => linea.startsWith('Cuota ')), `con ${n} filas`).toBe(true);
+    }
+  });
+
   /**
    * Con una tabla de dos filas la cabecera se reservaba sólo con la primera,
    * que a su vez se reservaba con la última: la cabecera quedaba sola al pie.
