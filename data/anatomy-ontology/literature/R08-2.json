@@ -1130,7 +1130,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Entre el 10 y el 20 % de las lesiones premalignas y malignas cervicales son adenocarcinomas, cuyo crecimiento hacia el endocérvix complica el diagnóstico.",
+        "es": "Los adenocarcinomas representan entre el 10 y el 20 % de las lesiones cervicales premalignas y malignas, y su localización preferentemente endocervical dificulta el diagnóstico.",
         "cites": [
           "PMID:22921356"
         ]
@@ -1158,7 +1158,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El VPH 31, clonado a partir de una mujer con displasia cervical y emparentado con el VPH 16, faltó en los condilomas genitales pero apareció en alrededor de un 20 % de las displasias leves y moderadas y en un 6 % de los cánceres invasores.",
+        "es": "El VPH 31, un papilomavirus clonado de una mujer con displasia cervical y cercano al VPH 16, no apareció en ningún condiloma genital de la serie analizada (121 lesiones del tracto genital femenino de Estados Unidos y Sudamérica), pero sí en cerca de un 20 % de las displasias leves y moderadas y en un 6 % de los cánceres invasores.",
         "cites": [
           "PMID:3005652"
         ]

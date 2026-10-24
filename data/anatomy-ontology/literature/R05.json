@@ -91,7 +91,7 @@
       },
       {
         "aspect": "function",
-        "es": "Con un sistema de rastreo magnético en sujetos sanos, el rango medio de movimiento del hueso coxal en el plano transversal fue de 3 a 4 grados por lado, con gran variabilidad individual.",
+        "es": "Medido con un rastreador magnético en sujetos sanos durante la abducción y la rotación externa pasivas de la cadera, el hueso coxal se movió de media entre 3 y 4 grados por lado en el plano transversal, con amplia variación entre individuos.",
         "cites": [
           "PMID:14659935"
         ]
@@ -410,8 +410,8 @@
   "UBERON:0001371": {
     "sentences": [
       {
-        "aspect": "parts",
-        "es": "Las lesiones de su tendón pueden afectar, aislada o conjuntamente, a cualquiera de sus dos bandas, la anterior y la posterior.",
+        "aspect": "clinical",
+        "es": "La patología de su tendón puede comprometer la banda anterior, la posterior o ambas a la vez.",
         "cites": [
           "PMID:28039889"
         ]

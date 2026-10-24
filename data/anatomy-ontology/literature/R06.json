@@ -1417,7 +1417,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Para la ecografía se mide el área del mediano donde es más grueso, casi siempre a la entrada proximal del túnel; por debajo de 8 mm² el síndrome es improbable y a partir de 12 mm² se considera confirmado.",
+        "es": "La ecografía, que complementa el estudio electrofisiológico, mide la sección del mediano en su punto más grueso, en la mayoría de los casos a la entrada proximal del túnel; un área menor de 8 mm² permite descartar el síndrome y una de 12 mm² o más, apoyarlo.",
         "cites": [
           "PMID:23487331"
         ]
