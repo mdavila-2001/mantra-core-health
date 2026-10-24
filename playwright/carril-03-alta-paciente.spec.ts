@@ -158,6 +158,8 @@ test.describe('carril 03 — alta de paciente', () => {
 
     // Quitar la primera casilla de celular deja la otra.
     await page.getByTestId('registro-quitar-telefono-0').click();
+    // Carril 04: con un número escrito, el «Quitar» de ícono pregunta antes.
+    await page.getByRole('dialog').getByRole('button', { name: 'Quitar', exact: true }).click();
     await expect(page.getByTestId('registro-telefono-extra-0')).toHaveValue(/72222222|7222 2222/);
     await expect(page.getByTestId('registro-telefono-extra-1')).toHaveCount(0);
 
