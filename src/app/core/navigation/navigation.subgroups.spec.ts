@@ -38,6 +38,10 @@ describe('NAV_SUBGROUPS', () => {
    * La lista es corta a propósito: es la excepción, no la regla. Un subgrupo se
    * justifica cuando ordena varias secciones; envolver una sola es ruido.
    *
+   * También cuelga directo «Ayuda psicológica» en General: la sección es una
+   * puerta independiente solicitada para ofrecer recursos de salud mental
+   * (11/10/2026), no parte de otro subgrupo.
+   *
    * Era de dos: `consultation` salió del registro entero el 2026-09-10, cuando
    * el propietario pidió borrar la pantalla vieja que duplicaba a «Consultas
    * médicas». Volvió a ser de dos el 2026-09-25: al retirarse «Notas médicas»
@@ -47,6 +51,7 @@ describe('NAV_SUBGROUPS', () => {
   const SUELTAS_A_PROPOSITO = [
     'schedule',
     'medical-records',
+    'psychological-help',
     // La portada de «Superadministración» (17/10/2026): es el tablero con el que
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
     // bloque la escondería detrás de un desplegable.
