@@ -23,6 +23,8 @@
   app-shell
   [class.is-nav-recogido]="navRecogido()"
   [class.app-shell--paciente]="esPacienteDelCarrito()"
+  [class.app-shell--medico]="esMedico()"
+  [class.app-shell--redesign]="usaRediseno()"
 >
   <!-- El `id` se declara acá y no lo inventa nadie en caliente: es el destino
        del `aria-controls` del botón que la recoge, y también el que busca el
