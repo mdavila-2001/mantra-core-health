@@ -1,0 +1,115 @@
+<app-page-header
+  title="Deriva de permisos"
+  subtitle="Lo que las rutas de la API exigen contra los roles que existen para asignarse. Un rol exigido que nadie siembra sólo lo ejerce el superadministrador."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="drift()" (retry)="load()">
+  @if (report(); as r) {
+    <div class="drift" data-testid="portal-permission-drift">
+      <p class="drift__note">Calculada al arrancar la API: {{ when(r.generatedAt) }}</p>
+
+      <section class="drift__metrics" aria-label="Rutas de la API">
+        <app-metric-card label="Rutas" [value]="r.routes.total" />
+        <app-metric-card label="Públicas" [value]="r.routes.public" />
+        <app-metric-card label="Con roles declarados" [value]="r.routes.withRoles" tone="success" />
+        <app-metric-card
+          label="Autenticadas sin roles"
+          hint="Las pasa cualquier sesión válida"
+          [value]="r.routes.withoutRoles"
+          [tone]="r.routes.withoutRoles > 0 ? 'warning' : 'success'"
+        />
+      </section>
+
+      <app-card variant="outlined" padding="md">
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab [label]="'Sin sembrar (' + r.usedNotSeeded.length + ')'">
+            <div class="drift__section">
+              <p class="drift__note">
+                Una ruta los exige y la API no los siembra. Mientras no existan como rol asignable, nadie más que el
+                superadministrador puede usar esas rutas.
+              </p>
+              <app-data-table
+                data-testid="portal-drift-used-not-seeded"
+                caption="Roles exigidos que la API no siembra"
+                [state]="usedNotSeeded()"
+                [columns]="roleColumns()"
+                [trackBy]="byRole"
+                [rowLabel]="roleName"
+                stackedOnMobile
+                fitContainer
+                (retry)="load()"
+              />
+            </div>
+          </app-tab>
+
+          <app-tab [label]="'Sin uso (' + r.seededNotUsed.length + ')'">
+            <div class="drift__section" data-testid="portal-drift-seeded-not-used">
+              @if (r.seededNotUsed.length === 0) {
+                <p class="drift__note">Ninguno: cada rol sembrado lo exige alguna ruta.</p>
+              } @else {
+                <p class="drift__note">
+                  Se siembran y se pueden asignar, pero ninguna ruta los exige: asignarlos no autoriza nada.
+                </p>
+                <ul class="drift__chips">
+                  @for (code of r.seededNotUsed; track code) {
+                    <li><code>{{ code }}</code></li>
+                  }
+                </ul>
+              }
+            </div>
+          </app-tab>
+
+          <app-tab [label]="'Rutas sin roles (' + r.routes.withoutRoles + ')'">
+            <div class="drift__section">
+              <p class="drift__note">
+                Rutas autenticadas que no declaran roles ni son públicas: las pasa cualquier sesión.
+                @if (r.routesWithoutRolesTruncated) {
+                  Se muestran {{ r.routesWithoutRoles.length }} de {{ r.routes.withoutRoles }}.
+                }
+              </p>
+              <app-data-table
+                data-testid="portal-drift-without-roles"
+                caption="Rutas autenticadas sin roles"
+                [state]="withoutRoles()"
+                [columns]="routeColumns()"
+                [trackBy]="byRoute"
+                [rowLabel]="routeName"
+                stackedOnMobile
+                fitContainer
+                (retry)="load()"
+              />
+            </div>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    </div>
+  }
+</app-view-state-host>
+
+<ng-template #roleCell let-row>
+  <code class="drift__code">{{ row.role }}</code>
+</ng-template>
+
+<ng-template #databaseCell let-row>
+  <app-badge size="sm" [variant]="inDatabase(row.inDatabase).tone">{{ inDatabase(row.inDatabase).label }}</app-badge>
+</ng-template>
+
+<ng-template #sampleCell let-row>
+  <ul class="drift__routes">
+    @for (s of row.sample; track $index) {
+      <li class="drift__route">{{ s.method }} @for (p of segments(s.template); track $index) {{{ p }}<wbr />}</li>
+    }
+  </ul>
+</ng-template>
+
+<ng-template #routeCell let-row>
+  <span class="drift__op">
+    <app-badge size="sm" [variant]="method(row.method).tone">{{ method(row.method).label }}</app-badge>
+    <span class="drift__route">@for (p of segments(row.template); track $index) {{{ p }}<wbr />}</span>
+  </span>
+</ng-template>
+
+<ng-template #handlerCell let-row>
+  <code class="drift__code">{{ row.controller }}.<wbr />{{ row.handler }}</code>
+</ng-template>
