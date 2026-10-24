@@ -42,35 +42,35 @@
       },
       {
         "aspect": "parts",
-        "es": "En cinco piezas humanas, el diámetro de las fibras del geniogloso creció de forma gradual desde las fibras anteriores, dirigidas al dorso lingual, hasta las posteriores, que van a la raíz de la lengua.",
+        "es": "En cinco piezas, las fibras del geniogloso fueron más gruesas cuanto más posterior era su trayecto: las más finas iban al dorso de la lengua y las más gruesas a su raíz.",
         "cites": [
           "PMID:11510738"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esas mismas piezas predominaron las fibras de tipo II en la porción anterior, sin un tipo dominante en la posterior.",
+        "es": "En la histoquímica de esas piezas, la porción anterior resultó rica en fibras de tipo II, mientras que la posterior era mixta, sin predominio de ningún tipo.",
         "cites": [
           "PMID:11510738"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 20 cadáveres se describió un tendón que nace de la parte posterior del geniogloso y se fija en el centro del cartílago epiglótico, denominado tendón glosoepiglótico.",
+        "es": "Al estudiar el espacio preepiglótico de 20 cadáveres se identificó en la línea media un haz tendinoso, llamado tendón glosoepiglótico, que une la parte posterior del geniogloso con el centro del cartílago epiglótico.",
         "cites": [
           "PMID:35678869"
         ]
       },
       {
         "aspect": "function",
-        "es": "El geniogloso se considera el principal músculo dilatador de la vía aérea superior.",
+        "es": "Una revisión sobre la apnea obstructiva del sueño lo señala como el músculo de mayor peso entre los que mantienen abierta la vía aérea superior.",
         "cites": [
           "PMID:31652594"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 17 varones con apnea obstructiva del sueño grave, la lesión neuromuscular crónica fue mayor en la porción posterior del geniogloso que en la anterior.",
+        "es": "Los potenciales de unidad motora de 17 varones con apnea obstructiva grave revelaron un daño neuromuscular crónico más marcado en la porción posterior del geniogloso que en la anterior.",
         "cites": [
           "PMID:25107373"
         ]
@@ -81,42 +81,42 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El hiogloso es un músculo de forma cuadrilátera que parte de toda la longitud del hueso hioides y termina en el borde lateral de la lengua.",
+        "es": "Cuadrilátero, el hiogloso va desde el hioides, en toda su extensión, hasta el costado de la lengua.",
         "cites": [
           "PMID:34662079"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 40 piezas humanas, sobre la cara externa del hiogloso se dispusieron de arriba abajo el nervio lingual, el conducto submandibular, la prolongación anterior de la glándula submandibular y el nervio hipogloso.",
+        "es": "Según 40 disecciones de la región submandibular, el nervio lingual ocupa la parte más alta de la cara lateral del hiogloso, seguido hacia abajo por el conducto submandibular, la prolongación anterior de la glándula y, por último, el nervio hipogloso.",
         "cites": [
           "PMID:2641429"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 20 hemicabezas cadavéricas, el nervio lingual comenzó a anastomosarse con el hipogloso antes de rebasar el borde anterior del hiogloso.",
+        "es": "En 20 lados de 10 cabezas cadavéricas, las comunicaciones entre los nervios lingual e hipogloso aparecieron ya antes del borde anterior del hiogloso.",
         "cites": [
           "PMID:30815909"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Su aporte arterial depende sobre todo de la rama sublingual de la arteria lingual, con un aporte accesorio de la rama submentoniana de la arteria facial.",
+        "es": "La irrigación le llega principalmente por la rama sublingual de la arteria lingual; la rama submentoniana de la facial la complementa.",
         "cites": [
           "PMID:34662079"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Recibe su inervación motora del nervio hipogloso.",
+        "es": "Su inervación motora corresponde al nervio hipogloso.",
         "cites": [
           "PMID:34662079"
         ]
       },
       {
         "aspect": "function",
-        "es": "Su contracción desciende y retrae la lengua.",
+        "es": "Al contraerse, tira de la lengua hacia abajo y hacia atrás.",
         "cites": [
           "PMID:34662079"
         ]
@@ -187,21 +187,21 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El sistema ácigos constituye una vía venosa accesoria que comunica la vena cava superior con la inferior y ofrece circulación colateral entre ambas.",
+        "es": "El sistema ácigos funciona como un puente venoso accesorio entre las dos venas cavas, por el que puede establecerse una circulación colateral importante.",
         "cites": [
           "PMID:25171956"
         ]
       },
       {
         "aspect": "function",
-        "es": "Cuando se obstruyen las vías principales de retorno venoso, la vena ácigos puede convertirse en una derivación vital.",
+        "es": "Esa función colateral cobra importancia vital si se ocluyen las grandes vías de retorno venoso.",
         "cites": [
           "PMID:25171956"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la interrupción de la vena cava inferior con continuación ácigos, la vena ácigos aumenta mucho de calibre.",
+        "es": "Su calibre crece de forma marcada cuando la cava inferior está interrumpida y el retorno sigue por la ácigos, la llamada continuación ácigos.",
         "cites": [
           "PMID:25171956",
           "PMID:9124932"
@@ -209,7 +209,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Las dilataciones aneurismáticas o varicosas del cayado de la ácigos son raras y pueden presentarse como masas del mediastino, a menudo halladas de forma casual.",
+        "es": "Los aneurismas del cayado de la ácigos y las várices de esta vena son raros; pueden simular tumores del mediastino y el aneurisma suele descubrirse por casualidad en una radiografía de tórax.",
         "cites": [
           "PMID:10377213",
           "PMID:9124932"
@@ -228,14 +228,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En 91 disecciones submandibulares de 54 cadáveres, la arteria lingual pasó por debajo del tendón del digástrico en el 67 % de los casos y a una media de 6,3 mm, con desviación estándar de 3,9 mm, por encima del hueso hioides.",
+        "es": "Según 91 disecciones submandibulares en 54 cadáveres, la arteria lingual corría unos 6,3 mm (± 3,9) por encima del hioides y, en dos tercios de los casos (67 %), por debajo del tendón del digástrico.",
         "cites": [
           "PMID:9084192"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En esa misma serie, la arteria lingual quedó por debajo del nervio hipogloso en el 84,6 % de los casos, justo por detrás de él en el 11 % y por encima en el 4,4 %.",
+        "es": "Respecto del hipogloso, la arteria quedó casi siempre por debajo del nervio (84,6 %); sólo en el 11 % se situó directamente en profundidad respecto de él y en el 4,4 % por encima.",
         "cites": [
           "PMID:9084192"
         ]
@@ -282,7 +282,7 @@
       },
       {
         "aspect": "relations",
-        "es": "En 299 mandíbulas secas y 21 cabezas de autopsia, se hallaron agujeros en la cara interna de la porción alveolar en el 32 % de los casos, ocupados por un paquete con ramas del nervio milohioideo, de la arteria sublingual y venas acompañantes.",
+        "es": "Un tercio de 299 mandíbulas secas (32 %) presentaba agujeros accesorios en la cara interna de la porción alveolar; la histología mostró que alojan un paquete formado por ramas del nervio milohioideo y de la arteria sublingual con sus venas.",
         "cites": [
           "PMID:16121325"
         ]
@@ -300,21 +300,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "La arteria maxilar es una rama terminal de la carótida externa cuyo tronco recorre en su mayor parte el espacio extracraneal.",
+        "es": "Rama terminal de la carótida externa, la arteria maxilar recorre fuera del cráneo la mayor parte de su trayecto troncular.",
         "cites": [
           "PMID:24224604"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Sus ramas irrigan músculos y órganos de cabeza y cuello y las cavidades oral y nasosinusal, y algunas llegan a la duramadre y a nervios craneales, con posibles anastomosis con la carótida interna.",
+        "es": "La mayoría de sus ramas nutren músculos y órganos cervicofaciales y las cavidades oral y nasosinusal; otras alcanzan la duramadre y nervios craneales y pueden comunicarse con la carótida interna.",
         "cites": [
           "PMID:24224604"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En disecciones microscópicas de la fosa pterigopalatina, la arteria maxilar dio sucesivamente las arterias alveolar superior posterior, infraorbitaria, del conducto pterigoideo, palatina descendente y esfenopalatina en 18 de los 21 especímenes (85,7 %).",
+        "es": "El orden de salida más común en la fosa pterigopalatina (alveolar superior posterior, infraorbitaria, del conducto pterigoideo, palatina descendente y, al final, esfenopalatina) se repitió en 18 de 21 lados disecados al microscopio (85,7 %).",
         "cites": [
           "PMID:12524612"
         ]
@@ -347,35 +347,35 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "La arteria mentoniana es una rama terminal de la arteria alveolar inferior, que a su vez procede de la arteria maxilar.",
+        "es": "Procede de la arteria alveolar inferior, a su vez rama de la maxilar, como una de sus ramas terminales.",
         "cites": [
           "PMID:31691967"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En diez hemicabezas cadavéricas se halló en todos los lados y presentó 14 anastomosis: ocho con la arteria labial inferior y seis con la submentoniana, ambas ramas de la arteria facial.",
+        "es": "Presente en los diez lados disecados de cinco cabezas, la arteria mentoniana sumó 14 anastomosis con ramas de la facial: ocho con la labial inferior y seis con la submentoniana.",
         "cites": [
           "PMID:31691967"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En esa serie, la anastomosis con la labial inferior tendió a situarse por encima del agujero mentoniano y la anastomosis con la submentoniana por delante de él.",
+        "es": "La comunicación entre la labial inferior y la mentoniana tendió a quedar por encima del agujero mentoniano; por delante de él, la labial inferior solía anastomosarse con la submentoniana.",
         "cites": [
           "PMID:31691967"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En un lado de esa misma serie, la arteria mentoniana irrigó directamente el labio inferior sin anastomosarse.",
+        "es": "Sólo en uno de los diez lados llegó por sí sola al labio inferior, sin comunicarse con otras arterias.",
         "cites": [
           "PMID:31691967"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En un estudio ecográfico de casos y controles con 30 pacientes mayores de 60 años, la señal débil o ausente del flujo de la arteria mentoniana se asoció con el edentulismo.",
+        "es": "En 30 exploraciones ecográficas de mayores de 60 años (12 casos y 18 controles), el flujo débil o ausente de la arteria mentoniana se asoció con la falta de dientes, dentro de las limitaciones del estudio.",
         "cites": [
           "PMID:26205777"
         ]
@@ -385,7 +385,7 @@
   "UBERON:0001618": {
     "sentences": [
       {
-        "aspect": "irrigation",
+        "aspect": "clinical",
         "es": "La arteria bucal sirve de pedículo vascular a un colgajo en isla miomucoso del buccinador, útil para reconstruir defectos orofaríngeos de tamaño moderado, de hasta 8-9 cm.",
         "cites": [
           "PMID:38135564"
@@ -418,7 +418,7 @@
       },
       {
         "aspect": "parts",
-        "es": "En esa serie, su diámetro externo medio fue de 1,02 ± 0,17 mm en el lado derecho y de 1,03 ± 0,16 mm en el izquierdo.",
+        "es": "Su calibre externo rondó 1 mm a ambos lados: 1,02 ± 0,17 mm a la derecha y 1,03 ± 0,16 mm a la izquierda.",
         "cites": [
           "PMID:16327539"
         ]
@@ -445,7 +445,7 @@
         ]
       },
       {
-        "aspect": "clinical",
+        "aspect": "function",
         "es": "En un estudio Doppler de 207 personas sanas, los índices de resistencia y de pulsatilidad de la arteria lagrimal no difirieron entre sexos ni entre etapas de la vida reproductiva.",
         "cites": [
           "PMID:15756661"
@@ -457,7 +457,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En el hiato aórtico, el tronco celíaco y la arteria mesentérica superior guardan relación con estructuras suprayacentes, en particular los pilares del diafragma.",
+        "es": "A la altura del hiato aórtico, el tronco celíaco y la mesentérica superior quedan bajo estructuras como los pilares diafragmáticos; esa vecindad desfavorable es relativamente común y sólo a veces produce un síndrome compresivo.",
         "cites": [
           "PMID:9146722"
         ]
@@ -493,7 +493,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La estenosis del tronco celíaco detectada durante una duodenopancreatectomía suele obligar a revascularizarlo en la misma intervención para mantener la perfusión hepática.",
+        "es": "Aunque lo habitual es revascularizar en la misma operación un tronco celíaco estenótico hallado durante una duodenopancreatectomía, en una serie retrospectiva de 427 pacientes la estenosis no modificó de forma significativa las complicaciones postoperatorias.",
         "cites": [
           "PMID:39099190"
         ]
@@ -504,14 +504,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En la angiografía, el extremo distal de la vena cerebral anterior o la vena comunicante anterior marcan la pared anterior de la porción baja del tercer ventrículo.",
+        "es": "En angiografía, la pared anterior de la parte baja del tercer ventrículo queda señalada por la vena comunicante anterior o por el final de la vena cerebral anterior.",
         "cites": [
           "PMID:597449"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Por esa relación, la vena cerebral anterior resulta útil para delimitar la extensión supraselar de una masa intraselar.",
+        "es": "El mismo trabajo la considera muy útil para precisar cuánto asciende por encima de la silla una masa intraselar.",
         "cites": [
           "PMID:597449"
         ]
@@ -522,21 +522,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El hueso temporal alberga, dentro de un tejido óseo denso, una disposición intrincada de estructuras diminutas, con numerosos agujeros, conductos y hendiduras.",
+        "es": "Su anatomía es de las más complejas: dentro de un hueso muy denso se alojan estructuras minúsculas y una multitud de agujeros, conductos y hendiduras.",
         "cites": [
           "PMID:36244722"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la otosclerosis, el hueso temporal sufre una remodelación anómala con resorción ósea, aposición de hueso nuevo y proliferación vascular.",
+        "es": "Desde el punto de vista histopatológico, la otosclerosis remodela de forma anómala el temporal: coexisten resorción, neoformación ósea y proliferación de vasos.",
         "cites": [
           "PMID:29397947"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La hipoacusia neurosensorial de la otosclerosis se asocia con la extensión del proceso al endostio coclear y con depósito de colágeno en el ligamento espiral.",
+        "es": "La pérdida auditiva neurosensorial de estos pacientes acompaña a la llegada del foco al endostio coclear y al depósito de colágeno a lo largo del ligamento espiral.",
         "cites": [
           "PMID:29397947"
         ]
@@ -561,7 +561,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En radiografías de tórax del primer mes de vida de lactantes con cardiopatía congénita, el centro de osificación del cuerpo del hioides fue visible en el 71 % del grupo control.",
+        "es": "En 63 lactantes autopsiados con cardiopatía congénita, la radiografía de tórax del primer mes mostró el centro de osificación del cuerpo del hioides en el 71 % de los 31 cardiópatas sin trasposición de grandes vasos, asplenia ni síndrome de Down, y en todos los que tenían alguna de esas tres condiciones.",
         "cites": [
           "PMID:2947657"
         ]
@@ -575,7 +575,7 @@
       },
       {
         "aspect": "function",
-        "es": "En un estudio preliminar, la estimulación eléctrica de los puntos motores de los músculos elevadores de la laringe consiguió elevar el hioides junto con la laringe.",
+        "es": "En un trabajo preliminar con dos voluntarios sanos y un paciente con síndrome bulbar lateral, estimular eléctricamente los puntos motores de los músculos elevadores de la laringe hizo ascender el hioides junto con la laringe.",
         "cites": [
           "PMID:21992253"
         ]
@@ -606,7 +606,7 @@
         ]
       },
       {
-        "aspect": "irrigation",
+        "aspect": "clinical",
         "es": "Gracias a su abundante irrigación, la lengua proporciona colgajos fiables para reconstruir defectos orales, faríngeos y peribucales.",
         "cites": [
           "PMID:25086693"
@@ -628,7 +628,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La lengua geográfica, o glositis migratoria benigna, produce un aspecto de mapa por atrofia de las papilas filiformes, con lesiones que cambian de forma con el tiempo.",
+        "es": "En la glositis migratoria benigna o lengua geográfica, zonas con papilas filiformes atróficas dibujan sobre la lengua un patrón de mapa cuyos contornos cambian con el tiempo.",
         "cites": [
           "PMID:37984855"
         ]
@@ -639,13 +639,13 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Al microscopio electrónico, los corpúsculos gustativos de las papilas fungiformes humanas contienen células de tipo I, II y III, además de contactos con terminaciones nerviosas.",
+        "es": "Vistos con microscopía electrónica, los corpúsculos de las papilas fungiformes humanas reúnen los tres tipos celulares clásicos (I, II y III) y puntos de contacto con terminaciones nerviosas.",
         "cites": [
           "PMID:1149133"
         ]
       },
       {
-        "aspect": "innervation",
+        "aspect": "function",
         "es": "Las vesículas y gránulos de las células de tipo III, vecinas a fibras aferentes, apoyan que estas células actúen como receptores sensoriales.",
         "cites": [
           "PMID:1149133"
@@ -660,7 +660,7 @@
       },
       {
         "aspect": "function",
-        "es": "El número de cualidades gustativas que detecta una papila fungiforme se correlacionó con la cantidad de corpúsculos que contiene.",
+        "es": "Cuantos más corpúsculos tenía una papila fungiforme, más cualidades gustativas registraba.",
         "cites": [
           "PMID:7403846"
         ]
@@ -685,21 +685,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El carcinoma nasofaríngeo es el tumor epitelial más frecuente de la nasofaringe y su tratamiento principal es la radioterapia.",
+        "es": "Entre los tumores epiteliales nasofaríngeos predomina el carcinoma, que se trata ante todo con radioterapia; la cirugía o la quimioterapia quedan para pacientes seleccionados.",
         "cites": [
           "PMID:12413677"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Tras la radioterapia puede persistir una masa residual en la nasofaringe que no implica necesariamente tumor viable, y la resonancia distingue mejor que la tomografía la cicatriz madura y la recidiva.",
+        "es": "Una masa que persiste en la nasofaringe tras la irradiación no equivale por fuerza a tumor activo; la resonancia reconoce mejor que la tomografía la cicatriz madura, la recidiva y las complicaciones, aunque no separa con fiabilidad la recidiva de los cambios posradiación.",
         "cites": [
           "PMID:12413677"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El virus de Epstein-Barr se detectó en la mayoría de las células tumorales de los tres tipos histológicos de la OMS del carcinoma nasofaríngeo analizados.",
+        "es": "Los tres tipos histológicos de la OMS (epidermoide, no queratinizante e indiferenciado) mostraron ARN del virus de Epstein-Barr en la mayor parte de sus células tumorales, con menos señal en las zonas de diferenciación escamosa.",
         "cites": [
           "PMID:7778675"
         ]
@@ -717,14 +717,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "El tabaco y el alcohol se reconocen como los principales factores de riesgo del cáncer de orofaringe, que debe sospecharse ante dolor de garganta, odinofagia y otalgia.",
+        "es": "Ante dolor de garganta, odinofagia u otalgia conviene pensar en un carcinoma de orofaringe, tumor poco frecuente cuyos factores de riesgo mayores son el tabaco y el alcohol.",
         "cites": [
           "PMID:11796235"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 2358 pacientes con carcinoma epidermoide de orofaringe asociado al virus del papiloma humano y vaciamiento cervical terapéutico, el nivel ganglionar II fue el más afectado, con ganglios positivos en el 81,0 %.",
+        "es": "De los 2358 pacientes con carcinoma epidermoide de orofaringe ligado al virus del papiloma humano de una base nacional, 1935 tuvieron vaciamiento cervical terapéutico, y en el 81,0 % de ellos el nivel II, el más afectado, tenía ganglios positivos.",
         "cites": [
           "PMID:32894979"
         ]
@@ -749,21 +749,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "La laringe ocupa la transición entre las vías respiratorias superiores y las inferiores.",
+        "es": "La laringe marca el paso entre la vía respiratoria superior y la inferior.",
         "cites": [
           "PMID:36244725"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su anatomía comprende cartílagos, tejidos de sostén, músculos, espacios mucosos, vasos, nervios y una red linfática propia.",
+        "es": "Para describirla se repasan sus cartílagos y tejidos de sostén, la musculatura, los espacios mucosos, el aporte neurovascular y el drenaje linfático.",
         "cites": [
           "PMID:36244725"
         ]
       },
       {
         "aspect": "function",
-        "es": "Participa en la fonación, en la deglución y en la protección de la vía aérea.",
+        "es": "Interviene en tres tareas: hablar, tragar y proteger la vía respiratoria.",
         "cites": [
           "PMID:36244725"
         ]
@@ -777,7 +777,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En los tumores laríngeos iniciales, tanto la cirugía abierta o endoscópica como la irradiación pueden controlar la enfermedad conservando la función del órgano.",
+        "es": "Según una revisión, cuando la enfermedad es inicial la radioterapia o la cirugía, abierta o endoscópica, pueden dominar el tumor sin sacrificar la función laríngea.",
         "cites": [
           "PMID:22450148"
         ]
@@ -835,7 +835,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La detección de la invasión tumoral de los cartílagos laríngeos es importante para estadificar y tratar el carcinoma de laringe.",
+        "es": "Saber si el tumor ha invadido los cartílagos laríngeos pesa en la estadificación del carcinoma de laringe y en la elección de su tratamiento.",
         "cites": [
           "PMID:11526865",
           "PMID:10699738"
@@ -864,7 +864,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los tumores cartilaginosos de la laringe son raros, con unos 250 casos publicados, y pueden confundirse con tumores tiroideos.",
+        "es": "Los tumores cartilaginosos de la laringe son raros (unos 250 casos publicados) y difíciles de reconocer pronto; se ha descrito un condroma que simuló un tumor de tiroides.",
         "cites": [
           "PMID:30921219"
         ]
@@ -881,8 +881,8 @@
         ]
       },
       {
-        "aspect": "relations",
-        "es": "Los odontoblastos tapizan la cámara pulpar en contacto con la dentina, forman tejido mineralizado y actúan además como células de barrera frente a las bacterias.",
+        "aspect": "function",
+        "es": "En el límite con la dentina, una capa de odontoblastos recubre la cámara pulpar; además de producir tejido mineralizado, estas células hacen de barrera defensiva ante las bacterias.",
         "cites": [
           "PMID:33540711"
         ]
@@ -897,7 +897,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Según la teoría hidrodinámica, el dolor breve e intenso de la hipersensibilidad dentinaria se origina en el movimiento del líquido de esos túbulos expuestos.",
+        "es": "El dolor breve e intenso de la hipersensibilidad dentinaria se atribuye, según la teoría hidrodinámica, a lo que ocurre en el líquido de esos túbulos expuestos.",
         "cites": [
           "PMID:24993261",
           "PMID:16687894"
@@ -905,7 +905,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La dentinogénesis imperfecta y la displasia dentinaria son trastornos hereditarios autosómicos dominantes de la estructura de la dentina; la primera tiene una incidencia descrita de 1 por cada 6000 a 8000 nacimientos.",
+        "es": "Dos trastornos hereditarios autosómicos dominantes alteran la estructura de la dentina: la dentinogénesis imperfecta, con una incidencia publicada de 1 cada 6000 a 8000, y la displasia dentinaria.",
         "cites": [
           "PMID:19021896"
         ]
@@ -916,14 +916,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La inflamación de la encía constituye la base fisiopatológica de las enfermedades periodontales, como la gingivitis y la periodontitis, principales causas de pérdida dentaria en adultos.",
+        "es": "Gingivitis y periodontitis, que encabezan las causas de pérdida de dientes en adultos, comparten como sustrato fisiopatológico la inflamación de la encía.",
         "cites": [
           "PMID:29683455"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la periodontitis, el tejido gingival muestra un reclutamiento y una activación exagerados de neutrófilos.",
+        "es": "Uno de los rasgos dominantes de la encía con periodontitis es el exceso de neutrófilos atraídos y activados, cuyas trampas extracelulares se vinculan con las lesiones inflamatorias.",
         "cites": [
           "PMID:39084404"
         ]
@@ -949,20 +949,20 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El núcleo caudado contribuye a la conducta dirigida a metas activando los esquemas de acción adecuados y eligiendo submetas según la evaluación de sus resultados.",
+        "es": "Según una revisión que reúne datos anatómicos, de neuroimagen, de pacientes y de animales, el caudado sostiene la acción orientada a un objetivo: pone en marcha los esquemas de acción correctos y escoge submetas a partir de cómo resultaron las acciones.",
         "cites": [
           "PMID:18824075"
         ]
       },
       {
         "aspect": "function",
-        "es": "Esa función lo distingue del putamen, más ligado al aprendizaje estímulo-respuesta o de hábitos.",
+        "es": "El putamen, en cambio, parecería limitarse más al aprendizaje de hábitos o de tipo estímulo-respuesta.",
         "cites": [
           "PMID:18824075"
         ]
       },
       {
-        "aspect": "relations",
+        "aspect": "function",
         "es": "En voluntarios sanos estudiados con tomografía por emisión de positrones, la estimulación magnética repetitiva de la corteza prefrontal dorsolateral izquierda liberó dopamina en el caudado dorsal del mismo lado.",
         "cites": [
           "PMID:11459878"
@@ -970,7 +970,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 80 pacientes con enfermedad de Huntington, la atrofia de la cabeza del núcleo caudado medida por tomografía se correlacionó de forma inversa con la duración de la enfermedad.",
+        "es": "En 80 pacientes con enfermedad de Huntington, la planimetría por tomografía mostró una cabeza del caudado más pequeña cuanto más larga era la evolución de la enfermedad, es decir, más atrofia con los años.",
         "cites": [
           "PMID:16324236"
         ]
@@ -988,7 +988,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "El putamen, junto con el pulvinar y en menor grado el núcleo caudado, mantiene conexiones anatómicas directas con la circunvolución temporal superior.",
+        "es": "El putamen, el pulvinar y el núcleo caudado tienen conexiones anatómicas directas con la circunvolución temporal superior.",
         "cites": [
           "PMID:11844735"
         ]
@@ -1034,7 +1034,7 @@
       },
       {
         "aspect": "relations",
-        "es": "El segmento interno recibe abundantes aferencias GABAérgicas del estriado y del segmento externo, además de señales del núcleo subtalámico, y envía la información procesada fuera de los ganglios basales.",
+        "es": "Al segmento interno convergen una densa aferencia GABAérgica del estriado y del segmento externo y señales del subtalámico; tras integrarlas, las proyecta fuera de los ganglios basales.",
         "cites": [
           "PMID:17499112"
         ]
@@ -1048,7 +1048,7 @@
       },
       {
         "aspect": "function",
-        "es": "La oscilación autónoma de las neuronas del núcleo subtalámico y del segmento externo del pálido sostiene su actividad tónica, mientras que las descargas rítmicas anómalas de baja frecuencia en esa red caracterizan la enfermedad de Parkinson.",
+        "es": "En la red subtálamo-pálido externo, el disparo oscilatorio espontáneo de las neuronas mantiene la actividad tónica; en la enfermedad de Parkinson, en cambio, predominan ráfagas rítmicas anómalas de baja frecuencia.",
         "cites": [
           "PMID:12220881"
         ]
@@ -1062,7 +1062,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Las lesiones necróticas bilaterales y selectivas del globo pálido se asocian sobre todo con la intoxicación mortal por monóxido de carbono y se han descrito también con cocaína, opiáceos y cianuro.",
+        "es": "La causa más conocida de necrosis bilateral y selectiva del globo pálido es la intoxicación mortal por monóxido de carbono; también se la ha descrito con MDMA, cocaína, opiáceos y cianuro.",
         "cites": [
           "PMID:22866355"
         ]
@@ -1073,14 +1073,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "La amígdala y el complejo hipocampal son dos estructuras del lóbulo temporal medial ligadas a sistemas de memoria independientes que interactúan en situaciones emocionales.",
+        "es": "Ambas en el lóbulo temporal medial, la amígdala y el complejo hipocampal sustentan sistemas de memoria distintos que, ante situaciones con carga emocional, se influyen mutuamente.",
         "cites": [
           "PMID:15082325"
         ]
       },
       {
         "aspect": "function",
-        "es": "La amígdala puede modular tanto la codificación como el almacenamiento de los recuerdos que dependen del hipocampo.",
+        "es": "Por esa vía, la amígdala puede influir en cómo se codifican y se almacenan los recuerdos dependientes del hipocampo.",
         "cites": [
           "PMID:15082325"
         ]
@@ -1094,7 +1094,7 @@
       },
       {
         "aspect": "function",
-        "es": "En diez voluntarios sanos estudiados con resonancia funcional, la señal de la amígdala aumentó ante rostros de miedo presentados de forma enmascarada, aun sin que los sujetos reportaran haberlos visto.",
+        "es": "En diez voluntarios sanos, ocho de los cuales dijeron no haber visto las caras emocionales enmascaradas, la resonancia funcional registró en la amígdala más señal con los rostros de miedo que con los alegres.",
         "cites": [
           "PMID:9412517"
         ]
@@ -1126,7 +1126,7 @@
       },
       {
         "aspect": "relations",
-        "es": "El nervio frénico derecho guarda estrecha relación con la vena cava superior y con la porción anteroinferior de la vena pulmonar superior derecha, y el izquierdo con la orejuela izquierda.",
+        "es": "Por su recorrido, el frénico derecho se acerca a la vena cava superior y a la parte anteroinferior de la vena pulmonar superior derecha; el izquierdo pasa cerca de la orejuela izquierda.",
         "cites": [
           "PMID:17235367"
         ]
@@ -1158,7 +1158,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El plexo coroideo es la fuente principal del líquido cefalorraquídeo y constituye la barrera entre la sangre y ese líquido.",
+        "es": "Además de producir la mayor parte del líquido cefalorraquídeo, el plexo coroideo hace de barrera entre ese líquido y la sangre.",
         "cites": [
           "PMID:36803604",
           "PMID:26174708"
@@ -1166,7 +1166,7 @@
       },
       {
         "aspect": "function",
-        "es": "El líquido que produce sirve de amortiguador mecánico y de vía de eliminación de desechos del sistema nervioso.",
+        "es": "Ese líquido amortigua mecánicamente el sistema nervioso y recoge sus desechos, funciones aceptadas en los vertebrados.",
         "cites": [
           "PMID:26174708"
         ]
@@ -1187,7 +1187,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En organoides cerebrales humanos, el SARS-CoV-2 infectó las células epiteliales del plexo coroideo que expresan ACE2 y dañó la barrera hematoencefálica de ese epitelio.",
+        "es": "En organoides cerebrales derivados de células madre humanas, el SARS-CoV-2 infectó preferentemente las células epiteliales del plexo coroideo que expresan ACE2 y dañó ese epitelio, con fuga a través de la barrera entre la sangre y el líquido cefalorraquídeo.",
         "cites": [
           "PMID:33113348"
         ]
@@ -1198,14 +1198,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El mesencéfalo forma parte del tronco del encéfalo, que contiene numerosos núcleos de nervios craneales y es recorrido por múltiples vías entre el cerebro y la médula espinal.",
+        "es": "Como el resto del tronco del encéfalo, del que forma parte, el mesencéfalo pertenece a una región con numerosos núcleos de nervios craneales, atravesada por las vías que unen el cerebro con la médula.",
         "cites": [
           "PMID:31283463"
         ]
       },
       {
         "aspect": "function",
-        "es": "El área tegmental ventral del mesencéfalo, con sus neuronas dopaminérgicas, ocupa un lugar central en la motivación y el procesamiento de la recompensa.",
+        "es": "La motivación y el procesamiento de la recompensa tienen un eje central en el área tegmental ventral, estructura heterogénea rica en neuronas dopaminérgicas.",
         "cites": [
           "PMID:23578393"
         ]
@@ -1219,14 +1219,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los síndromes mesencefálicos se deben sobre todo a la oclusión de la circulación posterior o al efecto de masa de lesiones intrínsecas, y sus signos en imagen pueden ser sutiles.",
+        "es": "Los síndromes del tronco del encéfalo, mesencéfalo incluido, obedecen sobre todo a oclusiones de la circulación posterior o al efecto de masa de lesiones intrínsecas, y pueden dejar hallazgos de imagen sutiles.",
         "cites": [
           "PMID:31283463"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las alteraciones de las neuronas dopaminérgicas del área tegmental ventral se han implicado en trastornos como la adicción y la depresión.",
+        "es": "Se ha implicado la disfunción de las neuronas dopaminérgicas tegmentales ventrales, y de sus dianas, en la adicción, la depresión y otros trastornos neuropsiquiátricos.",
         "cites": [
           "PMID:23578393"
         ]
@@ -1276,42 +1276,42 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El hipotálamo y la hipófisis se hallan muy próximos en la base del encéfalo, unidos por el tallo hipofisario que se extiende hasta la silla turca.",
+        "es": "Hipotálamo e hipófisis son vecinos en la base del encéfalo; el tallo hipofisario los conecta y llega hasta la silla turca.",
         "cites": [
           "PMID:33549603"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Por el tallo hipofisario pasan hormonas estimuladoras e inhibidoras y otras moléculas de señalización hacia la hipófisis.",
+        "es": "Ese tallo es el paso por el que llegan a la hipófisis hormonas que la estimulan o la inhiben, junto con otras señales moleculares.",
         "cites": [
           "PMID:33549603"
         ]
       },
       {
         "aspect": "function",
-        "es": "El hipotálamo forma parte integral del sistema neuroendocrino.",
+        "es": "Es una pieza esencial del sistema neuroendocrino.",
         "cites": [
           "PMID:11949123"
         ]
       },
       {
         "aspect": "function",
-        "es": "Integra señales de hormonas circulantes, nutrientes y moléculas de señalización para mantener la homeostasis del organismo, incluidos el balance energético, la reproducción y los ritmos circadianos.",
+        "es": "Para sostener la homeostasis del organismo (balance energético, reproducción y ritmos circadianos, entre otras funciones), el hipotálamo combina información de hormonas circulantes, nutrientes y otras señales.",
         "cites": [
           "PMID:34831343"
         ]
       },
       {
         "aspect": "relations",
-        "es": "La eminencia media, que carece de una barrera hematoencefálica típica, es una vía principal por la que el núcleo arcuato detecta moléculas circulantes.",
+        "es": "Al no tener una barrera hematoencefálica típica, la eminencia media es una de las principales puertas por las que el núcleo arcuato capta moléculas de la sangre.",
         "cites": [
           "PMID:31002894"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las alteraciones hipotalámicas pueden contribuir a enfermedades como la diabetes mellitus de tipo 2, la obesidad y la infertilidad.",
+        "es": "Diabetes de tipo 2, obesidad e infertilidad figuran entre los trastornos que pueden derivar de alteraciones del hipotálamo.",
         "cites": [
           "PMID:34831343"
         ]
@@ -1322,28 +1322,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En el ser humano, la habénula es una región encefálica diminuta, del tamaño de un guisante, cuyo nombre alude en latín a una «pequeña rienda» por su forma alargada.",
+        "es": "Del tamaño de un guisante en el ser humano, la habénula debe su nombre al latín habena, «riendita», por su forma alargada.",
         "cites": [
           "PMID:27728786"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Se sitúa cerca de la glándula pineal, y en un principio se le atribuyó la regulación de esa glándula.",
+        "es": "Por su vecindad con la glándula pineal, al principio se pensó que su función era regularla.",
         "cites": [
           "PMID:27728786"
         ]
       },
       {
         "aspect": "relations",
-        "es": "La habénula lateral recibe aferencias de diversas estructuras límbicas del prosencéfalo y de los ganglios basales y proyecta a casi todos los sistemas neuromoduladores del mesencéfalo, noradrenérgicos, serotoninérgicos y dopaminérgicos.",
+        "es": "Desde estructuras límbicas del prosencéfalo y de los ganglios basales llegan aferencias a la habénula lateral, que a su vez alcanza prácticamente todos los sistemas neuromoduladores mesencefálicos: dopaminérgico, serotoninérgico y noradrenérgico.",
         "cites": [
           "PMID:32269316"
         ]
       },
       {
         "aspect": "function",
-        "es": "Actúa como un nodo que conecta y regula regiones cerebrales implicadas en la motivación, la cognición y la toma de decisiones.",
+        "es": "Datos recientes la presentan como un centro de enlace que coordina regiones encargadas de la motivación, la cognición y las decisiones.",
         "cites": [
           "PMID:27728786",
           "PMID:20559337"
@@ -1351,7 +1351,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La actividad anómala de la habénula lateral se ha asociado en estudios humanos y animales con síntomas depresivos como la indefensión y la anhedonia.",
+        "es": "Estudios en roedores, primates no humanos y humanos vinculan la actividad aberrante de la habénula lateral con rasgos depresivos como la indefensión y la anhedonia.",
         "cites": [
           "PMID:29175713"
         ]
@@ -1383,7 +1383,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los tumores de la región pineal, como el germinoma, pueden manifestarse con hidrocefalia aguda y cefalea.",
+        "es": "Se ha descrito un germinoma pineal en un varón de 17 años que debutó con cefalea e hidrocefalia aguda y que retrocedió espontáneamente tras una derivación ventriculoperitoneal.",
         "cites": [
           "PMID:11059673"
         ]
@@ -1415,7 +1415,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En una revisión de 21 pacientes, la lesión de la cintilla óptica se reconoció por una hemianopsia muy incongruente, un defecto pupilar aferente y una atrofia característica de los discos ópticos.",
+        "es": "Según la revisión de 21 casos, tres signos permiten reconocer una lesión de la cintilla: hemianopsia marcadamente incongruente, defecto pupilar aferente y una atrofia papilar típica.",
         "cites": [
           "PMID:646693"
         ]
@@ -1462,7 +1462,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El infarto del cuerpo geniculado lateral produce una hemianopsia homónima contralateral con cambios característicos del campo visual.",
+        "es": "En un varón de 58 años, un infarto del cuerpo geniculado lateral izquierdo causó una hemianopsia homónima derecha que, meses después, mostró en la perimetría alteraciones características de esa lesión.",
         "cites": [
           "PMID:33870940"
         ]
@@ -1487,14 +1487,14 @@
       },
       {
         "aspect": "parts",
-        "es": "En su división ventral, las neuronas grandes formaron grupos que, junto con el neuropilo vecino, constituyeron láminas fibrodendríticas orientadas en sentido mediolateral.",
+        "es": "En la división ventral se distinguieron láminas fibrodendríticas de eje mediolateral, formadas por cúmulos de neuronas grandes y el neuropilo que los rodea.",
         "cites": [
           "PMID:6501112"
         ]
       },
       {
         "aspect": "function",
-        "es": "El cuerpo geniculado medial ocupa un lugar central en el procesamiento auditivo y mantiene vías aferentes y eferentes con la corteza auditiva primaria.",
+        "es": "Conectado en ambos sentidos con la corteza auditiva primaria, el cuerpo geniculado medial es una estación clave del procesamiento auditivo.",
         "cites": [
           "PMID:26594632"
         ]
@@ -1519,7 +1519,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El núcleo supraóptico del hipotálamo humano es un conjunto alargado y compacto de grandes células neurosecretoras.",
+        "es": "Situado en el hipotálamo, el núcleo supraóptico humano agrupa de forma compacta y alargada grandes neuronas neurosecretoras.",
         "cites": [
           "PMID:2272907"
         ]
@@ -1565,7 +1565,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El núcleo paraventricular del hipotálamo interviene en la regulación del balance energético y del crecimiento fetal.",
+        "es": "Se le reconoce un papel importante en el control del balance energético y del crecimiento del feto.",
         "cites": [
           "PMID:28706241"
         ]
@@ -1582,7 +1582,7 @@
   "UBERON:0001932": {
     "sentences": [
       {
-        "aspect": "parts",
+        "aspect": "clinical",
         "es": "En una serie de 35 autopsias se hallaron neuronas gigantes multinucleadas en el núcleo arcuato del hipotálamo en cinco pacientes, tres de ellas mujeres con obesidad marcada.",
         "cites": [
           "PMID:6478679"
@@ -1590,7 +1590,7 @@
       },
       {
         "aspect": "function",
-        "es": "La hipertrofia neuronal de la porción subventricular del núcleo arcuato descrita en la anorexia nerviosa sugiere que este núcleo participa en la regulación de la nutrición y del peso corporal.",
+        "es": "Que en la anorexia nerviosa se haya descrito hipertrofia neuronal en su porción subventricular apunta a que el arcuato podría intervenir en el control de la nutrición y del peso.",
         "cites": [
           "PMID:6478679"
         ]
@@ -1601,7 +1601,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El núcleo ventromedial del hipotálamo se considera un centro clave de la regulación de la ingesta y del metabolismo energético.",
+        "es": "Estudios en roedores lo sitúan como un centro decisivo de la homeostasis energética, que interviene tanto en la ingesta como en el metabolismo.",
         "cites": [
           "PMID:22067315",
           "PMID:17284595"
@@ -1620,21 +1620,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El colículo superior, también llamado techo óptico, se ubica en la parte superior del mesencéfalo.",
+        "es": "En la parte más alta del mesencéfalo se halla el colículo superior, también conocido como techo óptico.",
         "cites": [
           "PMID:40068606"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Es una estructura laminada: sus capas superficiales reciben aferencias directas de la retina y son esencialmente visuales, mientras que las profundas son multimodales y premotoras.",
+        "es": "Su organización en capas separa funciones: las superficiales, con entrada retiniana directa, son ante todo visuales; las profundas combinan varias modalidades y tienen carácter premotor.",
         "cites": [
           "PMID:16221594"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Las capas superficiales proyectan al tálamo visual y al pretecho, y las profundas reciben información somatosensitiva y auditiva, además de aferencias de los ganglios basales y del cerebelo.",
+        "es": "Hacia el tálamo visual y el pretecho se dirigen las proyecciones de las capas superficiales; a las profundas llegan, en cambio, señales somatosensitivas y auditivas y fibras de los ganglios basales y del cerebelo.",
         "cites": [
           "PMID:16221594"
         ]
@@ -1648,7 +1648,7 @@
       },
       {
         "aspect": "function",
-        "es": "Las señales de mando generadas en el colículo superior determinan en gran medida las características métricas de los movimientos sacádicos de los ojos.",
+        "es": "Las propiedades métricas de las sacadas oculares dependen en gran parte de las señales de mando que emite el colículo superior.",
         "cites": [
           "PMID:9000018"
         ]
@@ -1666,7 +1666,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El colículo inferior es un núcleo de relevo principal de la vía auditiva que integra las aferencias del tronco del encéfalo y activa los centros auditivos superiores.",
+        "es": "Estación de relevo central de la vía auditiva, el colículo inferior reúne lo que llega del tronco del encéfalo y pone en marcha los centros auditivos superiores.",
         "cites": [
           "PMID:38797036",
           "PMID:19095058"
@@ -1681,7 +1681,7 @@
       },
       {
         "aspect": "parts",
-        "es": "En esos fetos, la calbindina se concentró en la corteza dorsal y la parvalbúmina sobre todo en el núcleo central del colículo inferior.",
+        "es": "En esos fetos, la distribución de proteínas ligadoras de calcio ya separaba regiones: calbindina en la corteza dorsal y parvalbúmina, principalmente, en el núcleo central.",
         "cites": [
           "PMID:19095058"
         ]
@@ -1695,7 +1695,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En la mayoría de las hipoacusias se reduce la actividad del nervio auditivo, mientras que la del colículo inferior y otros centros auditivos tiende a aumentar de forma compensadora.",
+        "es": "En la mayoría de las hipoacusias cae la actividad del nervio auditivo y, en compensación, sube la de los centros auditivos siguientes, entre ellos el colículo inferior.",
         "cites": [
           "PMID:38797036"
         ]
@@ -1713,14 +1713,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "La esclerosis del asta de Amón es el principal sustrato neuropatológico de la epilepsia del lóbulo temporal, con pérdida segmentaria de neuronas piramidales, dispersión de las células granulares y gliosis reactiva.",
+        "es": "Pérdida segmentaria de neuronas piramidales, dispersión de células granulares y gliosis reactiva definen la esclerosis del asta de Amón, principal sustrato neuropatológico de la epilepsia del lóbulo temporal.",
         "cites": [
           "PMID:11958375"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En la enfermedad de Alzheimer, ciertas células piramidales de CA1 presentan dilataciones fusiformes transitorias, cargadas de proteína tau anómala, en los segmentos distales de su dendrita apical.",
+        "es": "En el curso del Alzheimer, algunas piramidales de CA1 desarrollan de forma pasajera engrosamientos fusiformes llenos de tau anómala en la parte distal de su dendrita apical.",
         "cites": [
           "PMID:9113196"
         ]
@@ -1777,7 +1777,7 @@
       },
       {
         "aspect": "relations",
-        "es": "Según un análisis de la composición de fibras del nervio hipogloso humano, el asa cervical y el ganglio cervical superior aportan fibras no motoras a ese nervio y a sus ramas.",
+        "es": "Un análisis de la composición de fibras del hipogloso humano, puramente motor dentro del cráneo, halló fuera de él fibras sensitivas y simpáticas, y sugiere que entran a través del asa cervical, con aporte del ganglio cervical superior.",
         "cites": [
           "PMID:41565945"
         ]
@@ -1802,7 +1802,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Según un metaanálisis de ocho estudios con 273 ganglios, el ganglio cervical medio suele situarse por detrás de la vaina carotídea y por delante del músculo largo del cuello, entre las vértebras C3 y C7.",
+        "es": "Entre C3 y C7, el ganglio cervical medio suele hallarse delante del largo del cuello y detrás de la vaina carotídea, según un metaanálisis de ocho estudios con 273 ganglios.",
         "cites": [
           "PMID:29357327"
         ]
@@ -1816,7 +1816,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Una variante formada por dos ganglios, el ganglio cervical medio doble, se describió en tres estudios con una frecuencia del 2,9 al 10 %.",
+        "es": "Tres de esos estudios registraron una variante con dos ganglios, el ganglio cervical medio doble, en el 2,9 al 10 % de los casos.",
         "cites": [
           "PMID:29357327"
         ]
@@ -1840,15 +1840,15 @@
   "UBERON:0001998": {
     "sentences": [
       {
-        "aspect": "parts",
-        "es": "En una articulación esternocostal se describió por ecografía el ligamento esternocostal radiado anterior, que puede afectarse por entesitis.",
+        "aspect": "clinical",
+        "es": "En un varón de 42 años con síndrome de Tietze, la ecografía de la tercera articulación esternocostal derecha mostró engrosamiento hipoecoico y señal Doppler en el ligamento esternocostal radiado anterior, signo de entesitis.",
         "cites": [
           "PMID:35284937"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El síndrome de Tietze es un trastorno inflamatorio que cursa con tumefacción dolorosa y no supurativa de la articulación esternocostal o de la esternoclavicular.",
+        "es": "Se llama síndrome de Tietze a la inflamación, de causa desconocida, que hincha y hace doler sin supuración una articulación esternocostal o esternoclavicular.",
         "cites": [
           "PMID:35284937"
         ]
@@ -1873,28 +1873,28 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El iliopsoas es un grupo muscular profundo que une la columna vertebral con el miembro inferior.",
+        "es": "Situado en profundidad, el grupo iliopsoas tiende un puente anatómico entre la columna y el miembro inferior.",
         "cites": [
           "PMID:32516195"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Lo forman los músculos ilíaco, psoas mayor y psoas menor.",
+        "es": "Comprende tres músculos: el ilíaco y los psoas mayor y menor.",
         "cites": [
           "PMID:32516195"
         ]
       },
       {
         "aspect": "function",
-        "es": "Es el principal flexor de la cadera.",
+        "es": "Le corresponde el papel de flexor primario de la cadera.",
         "cites": [
           "PMID:32516195"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Su tendón cruza el reborde acetabular y, en una serie de 25 pacientes, se vinculó con lesiones del labrum en una localización anterior directa.",
+        "es": "Donde su tendón cruza el reborde acetabular, la compresión o tracción sobre el complejo capsulolabral se propuso como causa de lesiones del labrum en posición anterior directa, en una serie de 25 pacientes tratados con tenotomía.",
         "cites": [
           "PMID:22754415"
         ]
@@ -1945,7 +1945,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En un paciente con amiloidosis cardíaca primaria, el depósito de amiloide en el sistema de conducción y en los nervios del plexo cardíaco pareció correlacionarse con las arritmias observadas.",
+        "es": "El estudio histológico de un paciente con amiloidosis cardíaca primaria y trastornos de conducción sugirió que el amiloide acumulado en el sistema de conducción y en los nervios del plexo cardíaco guardaba relación con sus arritmias.",
         "cites": [
           "PMID:3757577"
         ]
@@ -1956,35 +1956,35 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La hipertensión pulmonar se define por una presión arterial pulmonar media en reposo de 25 mmHg o más, medida mediante cateterismo cardíaco derecho, que es el método de referencia.",
+        "es": "El diagnóstico de hipertensión pulmonar exige una presión arterial pulmonar media en reposo igual o superior a 25 mmHg, medida con el método de referencia: el cateterismo cardíaco derecho.",
         "cites": [
           "PMID:28616542"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La ecocardiografía se considera hoy una alternativa segura y accesible al cateterismo para estimar la presión de la arteria pulmonar.",
+        "es": "Tras tres décadas de avances técnicos, la ecocardiografía se acepta como una opción segura y disponible para estimar la presión pulmonar sin los riesgos del cateterismo.",
         "cites": [
           "PMID:28616542"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el cabestrillo de la arteria pulmonar, la arteria pulmonar izquierda nace de la derecha y pasa entre el esófago y la tráquea para llegar al pulmón izquierdo, lo que puede comprimir la tráquea y el bronquio principal derecho.",
+        "es": "Cuando existe un cabestrillo pulmonar, la rama izquierda sale de la arteria pulmonar derecha y alcanza el pulmón izquierdo pasando entre la tráquea y el esófago, de modo que el vaso anómalo puede comprimir la tráquea y el bronquio principal derecho.",
         "cites": [
           "PMID:7355740"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El cabestrillo de la arteria pulmonar es un síndrome infantil raro que se asocia a menudo con estenosis traqueal.",
+        "es": "Esta malformación, rara y propia de la infancia, comprime la vía traqueobronquial y suele acompañarse de estenosis traqueal.",
         "cites": [
           "PMID:36790334"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El origen anómalo de la arteria coronaria izquierda en la arteria pulmonar es una anomalía congénita rara que se manifiesta sobre todo en el primer año de vida.",
+        "es": "Rara y congénita, la salida de la coronaria izquierda desde la arteria pulmonar se manifiesta predominantemente durante el primer año; su diagnóstico en adultos vivos es excepcional.",
         "cites": [
           "PMID:21462214"
         ]
@@ -2002,14 +2002,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "El ligamento lateral del recto, término quirúrgico y no anatómico, es una condensación de tejido conectivo alrededor de la arteria rectal media que queda dividida en dos segmentos por el plexo hipogástrico inferior que la atraviesa.",
+        "es": "El llamado ligamento lateral del recto es un concepto quirúrgico, no anatómico: en la pelvis viva corresponde a tejido conectivo condensado alrededor de la arteria rectal media, que el plexo hipogástrico inferior, en su interior, y la fascia endopélvica visceral separan en dos segmentos.",
         "cites": [
           "PMID:11241921"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 16 cadáveres disecados, los ganglios linfáticos hipogástricos se dispusieron sobre todo por encima del plexo hipogástrico inferior, aunque llegaban hasta las venas pélvicas profundas.",
+        "es": "Al disecar 16 cadáveres, los ganglios del grupo hipogástrico quedaron casi siempre por encima del plexo hipogástrico inferior, aunque se extendían hasta las venas pélvicas profundas.",
         "cites": [
           "PMID:14991491"
         ]
@@ -2023,7 +2023,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Evitar la lesión de los plexos hipogástricos superior e inferior es clave para preservar la función urogenital en la cirugía del cáncer de recto bajo.",
+        "es": "Para no deteriorar la función urinaria y sexual en la amputación abdominoperineal extraelevadora del cáncer de recto bajo, lo esencial es no lesionar los nervios autónomos, entre ellos los plexos hipogástricos superior e inferior.",
         "cites": [
           "PMID:31958939"
         ]
