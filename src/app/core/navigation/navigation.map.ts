@@ -1609,24 +1609,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
-    // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que
+    // **«Mi consultorio propio»** (propietario, 2026-10-13), en el lugar que
     // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
     // activo —la clínica donde el médico está afiliado—, que no es suya: junto
     // a la vieja «Mis organizaciones» y a «Organización médica» eran tres
     // tarjetas parecidas y ninguna contestaba «¿dónde atiendo yo?».
     //
-    // Nació como «Mi consultorio propio» y el propietario la renombró el
-    // 19/09/2026: la pantalla nunca listó sólo el consultorio propio —lista
-    // TODOS los lugares donde atiende, el suyo y las clínicas y hospitales
-    // donde trabaja—, así que el nombre prometía menos de lo que hay. El
-    // nombre queda libre: la vieja pantalla `my-organizations` es desde el
-    // 10/09/2026 la pestaña «Mis vinculaciones» de «Organización médica».
+    // El propietario ratificó «Mi consultorio propio» el 13/10/2026. La lista
+    // compartida conserva los lugares donde atiende, propios y afiliados; el
+    // cambio solicitado acá es el acceso y su nombre visible. `organization-panel`
+    // sigue disponible para quienes administran un tenant.
     //
     // `my-practice` y no `my-office`: es el término del modelo (`M14 practice`)
     // y el que ya usa `NewOwnSite` en el contrato. La ruta no puede empezar por
     // `practices`, que el proxy reserva entero para la API.
     path: 'administration/my-practice',
-    label: 'Mis organizaciones',
+    label: 'Mi consultorio propio',
     group: 'Administración',
     icon: 'hospital',
     // Sólo de quien ejerce: un consultorio propio es de un profesional.
@@ -1640,7 +1638,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // a buscar «¿dónde atiendo?».
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Dónde atiende: su consultorio y las organizaciones donde trabaja.',
+    summary: 'Creá y editá tu consultorio: dirección, mapa, teléfono y horario.',
     module: 'M14 practice',
   },
   {
@@ -1665,7 +1663,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/my-organization',
     // **Invisible para el médico desde el 2026-09-10**, no sólo fuera de su
     // menú. El propietario pidió sacar «Tu organización» «de todos lados» y
-    // poner en su lugar «Mis organizaciones»: con `fueraDelMenuPara` la
+    // poner en su lugar «Mi consultorio propio»: con `fueraDelMenuPara` la
     // tarjeta seguía apareciendo en «Tus accesos», que es justo donde la
     // señaló, al lado de otras dos parecidas.
     //
