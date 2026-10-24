@@ -17,7 +17,7 @@ import {
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { mensajeDeError } from '../../../forms/paginated/error-message';
+import { mensajeDeError, mensajeDeFechaRechazada } from '../../../forms/paginated/error-message';
 import { hiddenFields } from '../../../forms/paginated/conditional-visibility';
 import { isMainQuestion } from '../../../forms/paginated/paginate-fields';
 import {
@@ -48,6 +48,7 @@ import type { SegmentedOption } from '../../molecules/segmented-control/segmente
 import { Stepper } from '../../molecules/stepper/stepper';
 import type { StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
+import type { DateTextProblem } from '../date-picker/date-picker.types';
 import { CustomField } from './custom-field';
 
 /**
@@ -586,7 +587,36 @@ export class PaginatedForm {
   }
 
   protected errorDe(campo: CampoDeFormulario): string {
+    const problema = this.fechasRechazadas().get(campo.key);
+    if (problema !== undefined && this.controlDe(campo)?.touched === true) {
+      return mensajeDeFechaRechazada(problema, campo);
+    }
     return mensajeDeError(this.controlDe(campo), campo);
+  }
+
+  /**
+   * Las fechas escritas a mano que el selector rechazó, por campo. El control
+   * queda en `null` —como vacío—, así que el motivo vive acá: sin esto el
+   * campo decía «ingrese su fecha» y, si no era obligatorio, el paso seguía
+   * de largo tirando lo escrito.
+   */
+  private readonly fechasRechazadas = signal<ReadonlyMap<string, DateTextProblem>>(new Map());
+
+  protected anotarFechaRechazada(campo: CampoDeFormulario, problema: DateTextProblem | null): void {
+    const actual = this.fechasRechazadas();
+    if ((actual.get(campo.key) ?? null) === problema) return;
+    const siguiente = new Map(actual);
+    if (problema === null) {
+      siguiente.delete(campo.key);
+    } else {
+      siguiente.set(campo.key, problema);
+      this.controlDe(campo)?.markAsTouched();
+    }
+    this.fechasRechazadas.set(siguiente);
+  }
+
+  private fechaRechazada(campo: CampoDeFormulario): boolean {
+    return this.fechasRechazadas().has(campo.key);
   }
 
   protected plantillaDe(campo: CampoDeFormulario) {
@@ -694,11 +724,16 @@ export class PaginatedForm {
   protected async enviar(): Promise<void> {
     const grupo = this.form();
     grupo.markAllAsTouched();
-    if (grupo.invalid) {
+    const conFechaRechazada = this.paginasActivas().some((pagina) =>
+      pagina.campos.some((campo) => this.fechaRechazada(campo)),
+    );
+    if (grupo.invalid || conFechaRechazada) {
       // Lleva a la primera página con algo mal: dejar a la persona en la última
       // con un botón que no responde es el peor final posible.
       const fallo = this.paginasActivas().findIndex((pagina) =>
-        pagina.campos.some((campo) => this.form().get(campo.key)?.invalid === true),
+        pagina.campos.some(
+          (campo) => this.form().get(campo.key)?.invalid === true || this.fechaRechazada(campo),
+        ),
       );
       if (fallo !== -1) {
         this.indice.set(fallo);
@@ -753,7 +788,7 @@ export class PaginatedForm {
       const control = this.controlDe(campo);
       if (control === null) continue;
       control.markAsTouched();
-      if (control.invalid) valida = false;
+      if (control.invalid || this.fechaRechazada(campo)) valida = false;
     }
     if (!valida) this.rechazada.emit(pagina);
     return valida;
