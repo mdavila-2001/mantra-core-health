@@ -1,8 +1,9 @@
 /**
  * Reglas que comparten el alta y la edición de credenciales profesionales.
  *
- * El archivo elegido sólo vive en el navegador mientras la pantalla está
- * abierta: la rama `mockup` no publica documentos personales.
+ * El archivo elegido queda en el navegador mientras se completa el formulario.
+ * Al confirmar, el flujo existente lo sube a `common.files` y asocia el `fileId`
+ * a la matrícula o al título; este módulo no realiza llamadas de red.
  */
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
