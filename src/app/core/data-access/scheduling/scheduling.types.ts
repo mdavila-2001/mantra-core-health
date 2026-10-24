@@ -648,7 +648,6 @@ export interface NewScheduleTemplate {
 /** Claves de {@link NewScheduleTemplate} que el DTO real no declara (P36): sólo van a la maqueta. */
 export const SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS: readonly string[] = ['flexibleHours'];
 
-
 export interface ScheduleTemplateCreated {
   readonly id: string;
   readonly name: string;
@@ -689,13 +688,7 @@ export interface SlotsGenerated {
  * no para dibujar la pantalla.
  */
 export type AvailabilityExceptionType =
-  | 'ABSENCE'
-  | 'HOLIDAY'
-  | 'VACATION'
-  | 'CONFERENCE'
-  | 'ERRAND'
-  | 'EXTRA'
-  | 'OTHER';
+  'ABSENCE' | 'HOLIDAY' | 'VACATION' | 'CONFERENCE' | 'ERRAND' | 'EXTRA' | 'OTHER';
 export const AVAILABILITY_EXCEPTION_TYPES: readonly AvailabilityExceptionType[] = [
   'ABSENCE',
   'HOLIDAY',
@@ -776,12 +769,30 @@ export interface AvailabilityExceptionUpdated {
   readonly blockedSlots: number;
 }
 
+/**
+ * Una cita que un bloqueo alcanza, tal como la API la lista en el 422/409 de
+ * «hay citas: confirme» (`failureCode: BOOKINGS_REQUIRE_CONFIRMATION`).
+ */
+export interface AffectedBooking {
+  readonly bookingId: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  readonly patientName: string | null;
+  /** Solicitud sin responder: se rechaza en vez de cancelarse. */
+  readonly pending: boolean;
+}
+
 /** Cuerpo de `POST /scheduling/resources/:id/close-slots`. */
 export interface CloseSlotsRequest {
   readonly exceptionType: AvailabilityExceptionType;
   readonly reason?: string;
   /** Al menos uno: no hay «cerrar todos» a propósito. */
   readonly slotIds: readonly string[];
+  /**
+   * La persona ya vio las citas de esos cupos y confirmó cancelarlas. Sin
+   * esto, un cupo con paciente responde 409 con `affectedBookings`.
+   */
+  readonly cancelAffectedBookings?: boolean;
 }
 
 export interface SlotsClosed {
@@ -790,6 +801,8 @@ export interface SlotsClosed {
   readonly exceptionId: string;
   readonly from: string;
   readonly to: string;
+  /** Citas canceladas al cerrar, con aviso a cada paciente. */
+  readonly cancelledBookings: number;
 }
 
 export interface AvailabilityExceptionTypeList {
@@ -804,12 +817,19 @@ export interface NewAvailabilityException {
   readonly reason?: string;
   /** `true` cuando la excepción **añade** disponibilidad extraordinaria. */
   readonly isAvailable?: boolean;
+  /**
+   * La persona ya vio las citas que el bloqueo alcanza y confirmó. Sin esto,
+   * un rato con citas responde 422 con `affectedBookings` y no bloquea.
+   */
+  readonly cancelAffectedBookings?: boolean;
 }
 
 export interface AvailabilityExceptionCreated {
   readonly id: string;
   /** Slots libres que quedaron bloqueados por la excepción. */
   readonly blockedSlots: number;
+  /** Citas canceladas por el bloqueo, con aviso a cada paciente. */
+  readonly cancelledBookings: number;
 }
 
 /* ==========================================================================
