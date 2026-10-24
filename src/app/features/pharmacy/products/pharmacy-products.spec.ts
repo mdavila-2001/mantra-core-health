@@ -15,6 +15,8 @@ import type {
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PharmacyProducts } from './pharmacy-products';
 import { ProductDialog } from './product-dialog/product-dialog';
+import { afterAll, beforeAll } from 'vitest';
+import { environment } from '../../../../environments/environment';
 
 /**
  * «Productos» de la farmacia (carril B, 29/09/2026).
@@ -66,6 +68,11 @@ interface Internal {
 }
 
 describe('PharmacyProducts', () => {
+  // Las escrituras de farmacia son «sólo simulador»: sin esto la petición no sale.
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
+
   let fixture: ComponentFixture<PharmacyProducts>;
   let http: HttpTestingController;
   let confirmAnswer: boolean;
