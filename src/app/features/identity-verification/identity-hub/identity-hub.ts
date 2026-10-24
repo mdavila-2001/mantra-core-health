@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -63,6 +64,12 @@ export class IdentityHub {
       ? PESTANA.tramites
       : PESTANA.verificar,
   );
+
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.pestana.set(params.get('tab') === 'cases' || params.has('case') ? PESTANA.tramites : PESTANA.verificar);
+    });
+  }
 
   /**
    * Cambia de pestaña y lo deja escrito en la URL.
