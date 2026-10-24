@@ -13,6 +13,7 @@ import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
 import type { ProductFields, LoadMode } from '../catalog-rules/catalog.rules';
 import { chooseSelectOption, selectOptionLabels } from '../../../../testing/select';
 import { PharmacyImport } from './pharmacy-import';
+import { environment } from '../../../../environments/environment';
 
 /**
  * «Importación masiva» del catálogo de la farmacia.
@@ -91,6 +92,15 @@ interface Internal {
   choosePharmacy: (id: string | null) => void;
   downloadTemplate: () => void;
 }
+
+// Estas pruebas ejercitan rutas y claves que hoy sólo existen en la maqueta (P47,
+// informe B de deriva de contratos): contra la API real `simulatorOnly()` y
+// `withSimulatorExtensions()` no dejan salir la petición o quitan las claves, y
+// eso lo cubren simulator-only.spec y contract-drift.spec. En esta rama la
+// maqueta viene apagada: se enciende acá, sólo para este archivo.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('PharmacyImport', () => {
   let fixture: ComponentFixture<PharmacyImport>;

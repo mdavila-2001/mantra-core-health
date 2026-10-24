@@ -2,11 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { PharmacyCategory } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PharmacyCategories } from './pharmacy-categories';
+import { environment } from '../../../../environments/environment';
 
 /**
  * «Categorías» de la farmacia (carril B, 29/09/2026): crear, renombrar y
@@ -26,6 +27,15 @@ interface Internal {
   save: () => void;
   onRowAction: (code: string, category: PharmacyCategory) => Promise<void>;
 }
+
+// Estas pruebas ejercitan rutas y claves que hoy sólo existen en la maqueta (P47,
+// informe B de deriva de contratos): contra la API real `simulatorOnly()` y
+// `withSimulatorExtensions()` no dejan salir la petición o quitan las claves, y
+// eso lo cubren simulator-only.spec y contract-drift.spec. En esta rama la
+// maqueta viene apagada: se enciende acá, sólo para este archivo.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('PharmacyCategories', () => {
   let fixture: ComponentFixture<PharmacyCategories>;
