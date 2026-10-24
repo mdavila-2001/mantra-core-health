@@ -13,7 +13,7 @@
  * | URL | la propia URL: responde con estado < 400 |
  * | ID UBERON | OLS4 de EBI (`/api/ontologies/uberon/terms?obo_id=`) |
  * | ID FMA | OLS4 de EBI (`/api/ontologies/fma/terms?iri=http://purl.org/sig/ont/fma/fmaN`) |
- * | Licencia de cada imagen | API de Wikimedia Commons (`extmetadata`) |
+ * | Licencia de cada imagen | API de Wikimedia Commons (`extmetadata`, de a 50); y que su miniatura responda 200 en upload.wikimedia.org |
  * | PMID y DOI de la descripción extendida | PubMed y Crossref, como los demás; además, que el DOI que dice la ficha sea el que PubMed asocia a ese PMID |
  * | Código TA2 | el vocabulario que publica el visor de FIPAT (ta2viewer.openanatomy.org): el código existe y su término latino es el de la ficha; y Wikidata (SPARQL) declara el par TA2 ↔ FMA por el que se cruzó |
  *
@@ -225,15 +225,54 @@ async function validarTermino(ontologia, id) {
   return { id, ok, via: ok ? 'ols4' : null, detail: ok ? null : r.status === 200 ? 'término inexistente' : motivo(r) };
 }
 
-async function validarImagen(imagen) {
-  const r = await pedir(
-    `https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=extmetadata&titles=${encodeURIComponent(imagen.file)}`,
-  );
-  const pagina = Object.values(r.json?.query?.pages ?? {})[0];
-  const meta = pagina?.imageinfo?.[0]?.extmetadata;
-  const licencia = meta?.LicenseShortName?.value ?? null;
-  const ok = r.status === 200 && licencia !== null && licencia === imagen.license;
-  return { id: imagen.file, ok, via: ok ? 'commons' : null, detail: ok ? null : r.status === 200 ? `licencia en Commons: ${licencia}` : motivo(r) };
+/**
+ * La licencia de cada imagen, contra Commons: de a 50 archivos por pedido y con
+ * espera ante 429 (Commons limita a la IP de salida). Además, que la miniatura
+ * publicada responda desde upload.wikimedia.org.
+ */
+async function validarImagenes(imagenes) {
+  const salida = [];
+  for (const lote of lotes(imagenes, 50)) {
+    const titulos = [...new Set(lote.map((i) => i.file))];
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=extmetadata&titles=${encodeURIComponent(titulos.join('|'))}`;
+    let r;
+    for (let intento = 0; intento < 6; intento++) {
+      r = await pedir(url);
+      if (r.status !== 429) break;
+      await new Promise((listo) => setTimeout(listo, 60_000 * (intento + 1)));
+    }
+    const paginas = new Map(Object.values(r.json?.query?.pages ?? {}).map((p) => [p.title, p]));
+    for (const imagen of lote) {
+      const meta = paginas.get(imagen.file)?.imageinfo?.[0]?.extmetadata;
+      const licencia = meta?.LicenseShortName?.value ?? null;
+      const ok = r.status === 200 && licencia !== null && licencia === imagen.license;
+      salida.push({
+        id: `${imagen.structure} ${imagen.file}`,
+        ok,
+        via: ok ? 'commons' : null,
+        detail: ok ? null : r.status === 200 ? `licencia en Commons: ${licencia}` : motivo(r),
+      });
+    }
+    await new Promise((listo) => setTimeout(listo, 1_000));
+  }
+  return salida;
+}
+
+/** Que cada miniatura publicada responda (GET de la imagen; Commons limita el ritmo). */
+async function validarMiniaturas(imagenes) {
+  const salida = [];
+  for (const imagen of imagenes) {
+    let r;
+    for (let intento = 0; intento < 5; intento++) {
+      r = await pedir(imagen.thumbUrl, { method: 'HEAD' });
+      if (r.status !== 429) break;
+      await new Promise((listo) => setTimeout(listo, 15_000 * (intento + 1)));
+    }
+    const ok = r.status === 200;
+    salida.push({ id: imagen.thumbUrl, ok, via: ok ? 'upload.wikimedia.org' : null, detail: ok ? null : motivo(r) });
+    await new Promise((listo) => setTimeout(listo, 250));
+  }
+  return salida;
 }
 
 /** El vocabulario TA2 del visor de FIPAT: el bundle trae los términos embebidos. */
@@ -327,7 +366,8 @@ async function main() {
   grupos.url = await enParalelo(tope(citas.url), validarUrl);
   grupos.uberon = await enParalelo(tope(uberon), (id) => validarTermino('uberon', id));
   grupos.fma = await enParalelo(tope(fma), (id) => validarTermino('fma', id));
-  grupos.imagenes = await enParalelo(imagenes.slice(0, LIMITE), validarImagen);
+  grupos.imagenes = await validarImagenes(imagenes.slice(0, LIMITE));
+  grupos.miniaturas = await validarMiniaturas(imagenes.slice(0, LIMITE));
   grupos.ta2 = await validarTa2(ta2.slice(0, LIMITE));
   grupos.pmidDoi = validarParesPmidDoi(literatura.pmidDoi, grupos.pmid);
 
