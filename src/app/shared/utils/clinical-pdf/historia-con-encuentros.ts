@@ -70,26 +70,22 @@ export interface SeccionesNuevasDeLaHistoria {
  *
  * Cada sección nueva va donde se lee: los **diagnósticos por estado**, antes de
  * las atenciones —es la lista de problemas con que se abre una historia—, y la
- * **línea de cada atención**, justo después de las atenciones y antes de las
+ * **cronología por atención**, justo después de las atenciones y antes de las
  * recetas. Las dos se ubican por el título de la sección de
  * `bloquesDeHistoria` y no por un índice fijo, que se rompería en cuanto
- * aquélla agregara una sección.
- *
- * Si alguno de esos títulos faltara, la sección cae **antes del pie** y nunca
- * después: el pie dice cuándo y desde dónde salió el papel, y algo impreso
- * después de esa línea se lee como un anexo de otro documento.
+ * aquélla agregara una sección. Si alguno de esos títulos faltara, la sección
+ * va al final.
  */
 export function bloquesDeHistoriaConEncuentros(
   historia: DocumentoDeHistoria,
   nuevas: SeccionesNuevasDeLaHistoria,
 ): readonly PdfBlock[] {
   const base = bloquesDeHistoria(historia);
-  const pie = base.at(-1)?.kind === 'caption' ? base.length - 1 : base.length;
   const antesDe = (titulo: string): number => {
     const indice = base.findIndex(
       (bloque) => bloque.kind === 'heading' && bloque.level === 2 && bloque.text === titulo,
     );
-    return indice === -1 ? pie : indice;
+    return indice === -1 ? base.length : indice;
   };
   const diagnosticos = antesDe('Atenciones');
   const lineas = Math.max(diagnosticos, antesDe('Recetas'));
@@ -131,7 +127,9 @@ export function descargarHistoriaConEncuentros(
 /* ---- las dos secciones, bloque por bloque -------------------------------- */
 
 /**
- * Los tres bloques, **siempre los tres**.
+ * Los tres bloques, **siempre los tres**, en una sola tabla con una banda por
+ * bloque: las columnas se alinean entre los tres y, si la tabla sigue en otra
+ * hoja, la banda del bloque se repite arriba.
  *
  * Un bloque que desaparece cuando está vacío deja a quien lee el papel sin
  * saber si no tiene diagnósticos de ese tipo o si el sistema no los trajo. En
@@ -155,18 +153,16 @@ function grupoDeDiagnosticos(
   filas: readonly DiagnosticoDeLaHistoria[],
   vacio: string,
 ): readonly PdfBlock[] {
-  const bloques: PdfBlock[] = [{ kind: 'heading', text: titulo, level: 3 }];
+  // La banda dice el bloque; `text` es su nombre a secas, que es como se lee.
+  const bloques: PdfBlock[] = [
+    { kind: 'row', text: titulo, cells: [titulo, 'Certeza', 'Detalle'], header: true },
+  ];
   if (filas.length === 0) {
-    bloques.push({ kind: 'paragraph', text: vacio });
+    // Sin punto en la celda: al lado van rayas.
+    bloques.push({ kind: 'row', text: vacio, cells: [vacio.replace(/\.$/, ''), '—', '—'] });
     return bloques;
   }
 
-  bloques.push({
-    kind: 'row',
-    text: ['Diagnóstico', 'Certeza', 'Detalle'].join('\t'),
-    cells: ['Diagnóstico', 'Certeza', 'Detalle'],
-    header: true,
-  });
   for (const fila of filas) {
     const detalle = fila.detalle ?? '—';
     bloques.push({
@@ -179,14 +175,14 @@ function grupoDeDiagnosticos(
 }
 
 /**
- * La línea de cada atención: qué pasó y en qué orden.
+ * La cronología de cada atención: qué pasó y en qué orden.
  *
  * El orden lo trae quien arma el documento —es el mismo que la pantalla
  * dibuja—; el papel no reordena nada, porque dos versiones del mismo hecho
  * clínico en distinto orden es exactamente lo que no puede pasar.
  */
 export function bloquesDeLasLineas(lineas: readonly LineaDeAtencion[]): readonly PdfBlock[] {
-  const bloques: PdfBlock[] = [{ kind: 'heading', text: 'Línea de cada atención', level: 2 }];
+  const bloques: PdfBlock[] = [{ kind: 'heading', text: 'Cronología por atención', level: 2 }];
 
   if (lineas.length === 0) {
     bloques.push({ kind: 'paragraph', text: 'Sin atenciones registradas.' });
@@ -197,7 +193,7 @@ export function bloquesDeLasLineas(lineas: readonly LineaDeAtencion[]): readonly
     bloques.push({ kind: 'heading', text: linea.titulo, level: 3 });
     bloques.push(campoDeBloque('Estado de la atención', linea.sello));
     if (linea.hechos.length === 0) {
-      bloques.push({ kind: 'paragraph', text: 'De esta atención no quedó nada registrado.' });
+      bloques.push({ kind: 'paragraph', text: 'Sin registros clínicos en esta atención.' });
       continue;
     }
     // Los hechos son una enumeración: una viñeta por hecho, en el orden dado.
@@ -206,7 +202,7 @@ export function bloquesDeLasLineas(lineas: readonly LineaDeAtencion[]): readonly
   return bloques;
 }
 
-/** «Receta: Losartán — por Hipertensión (1 de marzo de 2026)». */
+/** «Receta: Losartán — por Hipertensión (01/03/2026)». */
 function frase(hecho: HechoDeLaAtencion): string {
   const conDetalle = hecho.detalle === null ? hecho.titulo : `${hecho.titulo} — ${hecho.detalle}`;
   return hecho.cuando === null ? conDetalle : `${conDetalle} (${hecho.cuando})`;

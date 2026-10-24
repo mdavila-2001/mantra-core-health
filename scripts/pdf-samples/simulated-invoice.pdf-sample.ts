@@ -1,11 +1,13 @@
-import { test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import type {
   SimulatedInvoice,
   SimulatedIssuer,
   SiatRow,
 } from '../../src/app/core/data-access/billing-simulated/billing-simulated.types';
+import { montoLiteral } from '../../src/app/features/billing/monto-literal';
 import {
+  bloquesDeRepresentacionGrafica,
   construirRepresentacionGrafica,
   invoiceQrBlock,
 } from '../../src/app/features/billing/representacion-grafica';
@@ -46,7 +48,15 @@ const SERVICIOS = [
   ['CTRL-PA', 'Control de presión arterial y frecuencia cardíaca', '30.00'],
 ] as const;
 
-function factura(numero: number, renglones: number, descuentoAdicional: number, giftCard: number): SimulatedInvoice {
+/**
+ * Una factura ficticia **coherente**, con las reglas del SIAT simulado
+ * (`siat-simulado.adapter.ts`): subTotal = cantidad × precio − descuento;
+ * montoTotal = Σ subTotal − descuentoAdicional; montoTotalSujetoIva =
+ * montoTotal − montoGiftCard. Sin gift card, como emite el simulador: la
+ * plantilla imprime «Monto a pagar» desde `montoTotal`.
+ */
+function factura(numero: number, renglones: number, descuentoAdicional: number): SimulatedInvoice {
+  const giftCard = 0;
   const detalle: SiatRow[] = Array.from({ length: renglones }, (_, i) => {
     const [codigo, descripcion, precio] = SERVICIOS[i % SERVICIOS.length]!;
     const cantidad = 1 + (i % 3);
@@ -64,7 +74,8 @@ function factura(numero: number, renglones: number, descuentoAdicional: number, 
     };
   });
   const subtotal = detalle.reduce((suma, d) => suma + Number(d['subTotal']), 0);
-  const total = subtotal - descuentoAdicional - giftCard;
+  const total = subtotal - descuentoAdicional;
+  const sujetoIva = total - giftCard;
   const cuf = '0000000000000000000000000000000000000000000000000000MUESTRA';
   return {
     id: `factura-muestra-${numero}`,
@@ -94,7 +105,7 @@ function factura(numero: number, renglones: number, descuentoAdicional: number, 
       codigoCliente: 'PAC-000123',
       codigoMetodoPago: 1,
       montoTotal: total.toFixed(2),
-      montoTotalSujetoIva: total.toFixed(2),
+      montoTotalSujetoIva: sujetoIva.toFixed(2),
       montoGiftCard: giftCard === 0 ? null : giftCard.toFixed(2),
       descuentoAdicional: descuentoAdicional.toFixed(2),
       codigoMoneda: 1,
@@ -123,16 +134,48 @@ function factura(numero: number, renglones: number, descuentoAdicional: number, 
   };
 }
 
+/** Las cuentas de la muestra cierran, en el XML y en lo que imprime el papel. */
+function expectCoherent(f: SimulatedInvoice): void {
+  const c = f.cabecera;
+  const centavos = (valor: unknown) => Math.round(Number(valor ?? 0) * 100);
+  const suma = f.detalle.reduce((total, d) => total + centavos(d['subTotal']), 0);
+  for (const d of f.detalle) {
+    expect(centavos(d['subTotal'])).toBe(centavos(d['precioUnitario']) * Number(d['cantidad']) - centavos(d['montoDescuento']));
+  }
+  expect(suma - centavos(c['descuentoAdicional'])).toBe(centavos(c['montoTotal']));
+  expect(centavos(c['montoTotal']) - centavos(c['montoGiftCard'])).toBe(centavos(c['montoTotalSujetoIva']));
+
+  const bloques = bloquesDeRepresentacionGrafica(f);
+  const totales = new Map((bloques.find((b) => b.kind === 'totals')?.totals ?? []).map((t) => [t.label, t.value]));
+  const base = bloques.flatMap((b) => b.fields ?? []).find((campo) => campo.label === 'Importe base crédito fiscal')?.value;
+  const son = bloques.flatMap((b) => b.fields ?? []).find((campo) => campo.label === 'Son')?.value;
+  const leido = (texto: string | undefined) => Number((texto ?? '').replace(/[^\d,\u2212]/g, '').replace(',', '.').replace('\u2212', '-'));
+  expect(leido(totales.get('Subtotal')) + leido(totales.get('Descuento'))).toBeCloseTo(leido(totales.get('Total')), 2);
+  expect(leido(totales.get('Total')) + leido(totales.get('Monto gift card'))).toBeCloseTo(leido(totales.get('Monto a pagar')), 2);
+  expect(leido(base)).toBeCloseTo(leido(totales.get('Monto a pagar')), 2);
+  expect(`Son: ${son}`).toBe(montoLiteral(String(c['montoTotal'])));
+}
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 24, 18, 0));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 test('factura simulada corta', async () => {
   loadBrandFonts();
   useSampleSignature();
-  const f = factura(12, 2, 0, 0);
+  const f = factura(12, 2, 0);
+  expectCoherent(f);
   console.log(savePdf(construirRepresentacionGrafica(f, await invoiceQrBlock(f)), 'simulated-invoice-short.pdf'));
 });
 
-test('factura simulada larga, con descuento y gift card', async () => {
+test('factura simulada larga, con descuento por renglón y descuento adicional', async () => {
   loadBrandFonts();
   useSampleSignature();
-  const f = factura(1043, 40, 50, 100);
+  const f = factura(1043, 40, 50);
+  expectCoherent(f);
   console.log(savePdf(construirRepresentacionGrafica(f, await invoiceQrBlock(f)), 'simulated-invoice-long.pdf'));
 });

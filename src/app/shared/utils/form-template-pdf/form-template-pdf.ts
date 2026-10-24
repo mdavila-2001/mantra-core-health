@@ -7,6 +7,7 @@ import type {
 } from '../../forms/paginated/paginated-form.types';
 import {
   buildBlocksPdf,
+  choicesBlock,
   noteBlock,
   type PdfBlock,
   type PdfExportOptions,
@@ -43,10 +44,12 @@ import {
 
     ## Nada de casillas Unicode
 
-    Las casillas se dibujan `[ ]` y `( )`, en ASCII. Las fuentes que trae jsPDF
-    codifican en Latin-1: un `☐` sale como un garabato o directamente no sale,
-    y el defecto aparece recién en el papel impreso. Ver también el mismo
-    cuidado en `pdf-theme.ts` sobre lo que sobrevive una fotocopia.
+    Las casillas de las opciones las dibuja el motor en vectores
+    (`choicesBlock`): redondas si se marca una sola, cuadradas si varias. Las
+    fuentes del documento no traen `☐` ni `◯`: un carácter así sale como un
+    garabato o no sale, y el defecto aparece recién en el papel impreso. Dentro
+    de una cuadrícula, donde la celda es texto, siguen siendo `( )` y `[ ]` en
+    ASCII.
     ========================================================================== */
 
 /** De dónde salió el formulario estándar, ya en palabras. */
@@ -93,10 +96,11 @@ export interface FormularioParaPdf {
  * respuesta escrita en el margen.
  */
 const RENGLONES_POR_CONTROL: Readonly<Partial<Record<CampoDeFormulario['control'], number>>> = {
+  text: 2,
   textarea: 4,
 };
 
-/** Los renglones de cualquier campo de escribir que no pida otra cosa. */
+/** Los renglones de un dato corto —fecha, teléfono, correo, número—. */
 const RENGLONES_POR_OMISION = 1;
 
 /**
@@ -105,25 +109,12 @@ const RENGLONES_POR_OMISION = 1;
  */
 const FORMATO_A_MANO: Readonly<Partial<Record<CampoDeFormulario['control'], string>>> = {
   date: 'Formato: DD/MM/AAAA.',
-  datetime: 'Formato: DD/MM/AAAA, HH:MM.',
+  datetime: 'Formato: DD/MM/AAAA, HH:MM (24 horas).',
 };
-
-/**
- * Hasta cuántos caracteres entran las opciones en un solo renglón, casillas y
- * aire incluidos. Más allá, cada opción va en su propio renglón: una casilla
- * que el corte de línea separa de su rótulo se marca en la opción equivocada.
- */
-const OPCIONES_EN_UN_RENGLON = 72;
-
-/** Cuántas opciones, como mucho, van en un solo renglón. */
-const MAX_OPCIONES_EN_UN_RENGLON = 4;
-
-/** El aire entre dos opciones del mismo renglón. */
-const ENTRE_OPCIONES = '      ';
 
 /** Lo que se lee antes de la primera pregunta. */
 export const INSTRUCCIONES_DE_LLENADO =
-  'Escriba en imprenta y marque con una X: las casillas redondas ( ) admiten una sola respuesta y las cuadradas [ ], varias. Las preguntas con asterisco (*) son obligatorias al responder en el sistema.';
+  'Escriba en imprenta y marque con una X. Casilla redonda: una sola respuesta; casilla cuadrada: varias. Las preguntas con asterisco (*) son obligatorias al responder en el sistema.';
 
 /**
  * Las líneas del documento, en orden de lectura.
@@ -181,8 +172,22 @@ export function bloquesDeFormulario(datos: FormularioParaPdf): readonly PdfBlock
     bloques.push(noteBlock('Este formulario todavía no tiene preguntas.', 'neutral'));
   }
 
+  // Al final, quién lo completó y cuándo, a mano: es lo que un formulario en
+  // papel pide para valer como constancia, y reemplaza al bloque de firma del
+  // médico, que en un papel en blanco no corresponde (ver
+  // `formTemplatePdfOptions`). Sin número: no es una pregunta del formulario.
+  if (datos.paginas.length > 0) {
+    bloques.push(...CONSTANCIA_DE_LLENADO);
+  }
+
   return bloques;
 }
+
+/** Los renglones de la constancia de llenado, al final del formulario. */
+export const CONSTANCIA_DE_LLENADO: readonly PdfBlock[] = [
+  { kind: 'heading', level: 4, text: 'Nombre y firma de quien completa · Fecha (DD/MM/AAAA)' },
+  { kind: 'blank', text: '', lines: 2 },
+];
 
 /** Cómo se cita una pregunta en el papel. */
 interface Cita {
@@ -269,15 +274,16 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
 
   if (opciones.length > 0) {
     const varias = campo.control === 'checkboxes';
-    const casilla = varias ? '[ ]' : '( )';
-    const rotulos = opciones.map((opcion) => `${casilla} ${opcion.label}`);
+    const rotulos = opciones.map((opcion) => opcion.label);
     // «Otro» es una opción **y** un renglón: marcarla sin poder escribir al
     // lado la deja sin la respuesta que la lista no previó, que es lo único
     // para lo que existe.
-    if (campo.otro === true) rotulos.push(`${casilla} Otro:`);
+    if (campo.otro === true) rotulos.push('Otro:');
+    // Las casillas las dibuja el motor —redondas si es una sola, cuadradas si
+    // son varias— y pone las opciones cortas en un renglón.
     const bloques: PdfBlock[] = [
       { kind: 'caption', text: varias ? 'Marque todas las que correspondan.' : 'Marque una sola opción.' },
-      ...opcionesEnRenglones(rotulos),
+      choicesBlock(rotulos, varias),
     ];
     if (campo.otro === true) {
       bloques.push({ kind: 'blank', text: '', lines: 1 });
@@ -291,7 +297,7 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
     campo.control === 'yes-no'
   ) {
     // Redondas: se contesta una sola de las dos, como dicen las instrucciones.
-    return [{ kind: 'paragraph', text: '( ) Sí    ( ) No' }];
+    return [choicesBlock(['Sí', 'No'], false)];
   }
 
   // Lo que no se escribe con una lapicera —el odontograma de la ficha
@@ -309,20 +315,6 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
       lines: RENGLONES_POR_CONTROL[campo.control] ?? RENGLONES_POR_OMISION,
     },
   ];
-}
-
-/**
- * Las opciones como párrafos: todas en un renglón si son pocas y cortas, una
- * por renglón si no. Una lista de cuatro respuestas cortas —«Nunca», «A
- * veces»…— en cuatro renglones estira la hoja sin decir más; ocho opciones
- * largas en un renglón partirían una casilla de su rótulo.
- */
-function opcionesEnRenglones(rotulos: readonly string[]): readonly PdfBlock[] {
-  const renglon = rotulos.join(ENTRE_OPCIONES);
-  if (rotulos.length <= MAX_OPCIONES_EN_UN_RENGLON && renglon.length <= OPCIONES_EN_UN_RENGLON) {
-    return [{ kind: 'paragraph', text: renglon }];
-  }
-  return rotulos.map((rotulo) => ({ kind: 'paragraph' as const, text: rotulo }));
 }
 
 /**
@@ -346,7 +338,9 @@ function cuadriculaEnPapel(
       kind: 'caption',
       text: [
         varias ? 'Marque en cada fila todas las columnas que correspondan.' : 'Marque una sola columna en cada fila.',
-        ...(campo.oneResponsePerColumn === true ? ['Solo una respuesta por columna.'] : []),
+        // «Una por columna» dicho sin contradecir el «todas las que correspondan»
+        // de la cuadrícula de casillas: lo que se limita es la columna.
+        ...(campo.oneResponsePerColumn === true ? ['Cada columna se marca en una sola fila.'] : []),
       ].join(' '),
     },
     {
@@ -386,7 +380,8 @@ function enPalabrasLosCamposCorto(datos: FormularioParaPdf): string {
  *   motor rotula entonces «Fecha de generación», que es lo que la fecha es.
  * - **Sin firma** (`firma: null`): el papel sale en blanco, y la firma y el
  *   sello del médico de la sesión estampados sobre un formulario sin llenar
- *   avalarían respuestas que todavía no existen.
+ *   avalarían respuestas que todavía no existen. Quien lo completa firma a mano
+ *   en la constancia del final.
  * - **Papel claro** (`plainPaper`): es un papel que se imprime por tandas, casi
  *   siempre en una impresora de oficina en blanco y negro. La portada oscura
  *   salía como una banda de tóner gris que no dice nada y deja el título en
@@ -399,13 +394,14 @@ export function formTemplatePdfOptions(datos: FormularioParaPdf): PdfExportOptio
   return {
     title: datos.nombre,
     kind: 'Formulario en blanco',
-    subtitle: especialidad === '' ? 'Para completar a mano' : `${especialidad} · Para completar a mano`,
+    // La versión va en la bajada y no en los metadatos: un dato más en esa
+    // columna alargaba la portada y empujaba la constancia a otra hoja.
+    subtitle: [especialidad, `Versión ${datos.version}`, 'Para completar a mano'].filter((parte) => parte !== '').join(' · '),
     reference: datos.codigo,
     // Cuántas preguntas son del estándar y cuántas las agregó el consultorio: es
     // la diferencia entre un formulario comparable entre consultorios y uno
     // propio, y en el papel no se ve de ninguna otra forma.
     meta: [
-      { label: 'Versión', value: String(datos.version) },
       { label: 'Preguntas', value: enPalabrasLosCamposCorto(datos) },
       { label: 'Descargado por', value: datos.profesional },
     ],

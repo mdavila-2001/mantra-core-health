@@ -2,6 +2,7 @@ import type { jsPDF } from 'jspdf';
 
 import {
   buildBlocksPdf,
+  formatMoney,
   noteBlock,
   panelsBlock,
   totalsBlock,
@@ -10,7 +11,7 @@ import {
   type PdfTotalRow,
 } from '../../../../shared/utils/pdf-export/pdf-export';
 import { ROTULOS_DE_FACTURA, type DocumentoDeFactura } from './order-invoice.types';
-import { withDisplayCurrency } from '../../../../core/money/display-currency';
+import { displayCurrency } from '../../../../core/money/display-currency';
 
 /**
  * La factura de ejemplo en PDF (T-E4). Usa el mismo maquetador que el
@@ -30,20 +31,26 @@ import { withDisplayCurrency } from '../../../../core/money/display-currency';
  *   arriba, marca de agua en cada hoja y línea del pie. Una fotocopia de la
  *   segunda hoja tiene que seguir diciéndolo.
  * - **Lo facturado, en tabla**, y subtotal, descuento y total en la caja de
- *   totales. El coaseguro no suma ni resta —es lo que el seguro dejó a cargo
- *   de la persona— y por eso va en su tarjeta, al lado del comprador, y no
- *   dentro de la caja.
+ *   totales, en formato boliviano (`1.234,56 Bs`, descuento con «−»). Sin
+ *   total no hay caja sino un aviso, con el mismo texto que el comprobante.
+ * - **El coaseguro** no suma ni resta —es lo que el seguro dejó a cargo de la
+ *   persona—: va en su tarjeta, al lado del comprador, y una línea bajo los
+ *   totales dice que no se descuenta del total facturado.
+ * - Los textos de la factura dicen «farmacia», como el comprobante del mismo
+ *   pedido.
  * - Sin bloque de firma: una factura no la firma un médico.
  */
-
-/** El signo menos tipográfico (U+2212), no el guion: la fuente de marca lo tiene. */
-const MENOS = '\u2212';
 
 /** La raya que ocupa la columna de importes de un renglón sin precio. */
 const SIN_IMPORTE = '—';
 
-/** Lo que dice un importe que no se puede calcular. Corto: va en la caja de totales. */
-const NO_DISPONIBLE = 'No disponible';
+/**
+ * Lo que dice el papel cuando falta un precio. Son los mismos textos que el
+ * comprobante del pedido (`receipt-pdf.ts`): un mismo vacío se dice igual en
+ * los dos papeles.
+ */
+const MISSING_PRICE_CAPTION = `${SIN_IMPORTE} Precio no publicado por la farmacia: el producto no tiene importe propio en el detalle.`;
+const MISSING_TOTAL_NOTE = 'Total no disponible: falta algún precio publicado.';
 
 /** Arma el PDF. No lo guarda: devuelve el documento. */
 export function buildInvoicePdf(factura: DocumentoDeFactura): jsPDF {
@@ -88,7 +95,7 @@ export function bloquesDeFactura(factura: DocumentoDeFactura): readonly PdfBlock
   const { emisor, comprador, coaseguro, moneda } = factura;
   const bloques: PdfBlock[] = [
     noteBlock(
-      'Factura de ejemplo: el número, los datos fiscales y el descuento no salen de un sistema de facturación. No reemplaza la factura que emite el comercio.',
+      'Factura de ejemplo: el número, los datos fiscales y el descuento no salen de un sistema de facturación. No reemplaza la factura que emite la farmacia.',
       'alert',
       'Sin validez fiscal',
     ),
@@ -98,7 +105,7 @@ export function bloquesDeFactura(factura: DocumentoDeFactura): readonly PdfBlock
         fields: [
           { label: 'Razón social', value: emisor.razonSocial },
           { label: 'NIT', value: emisor.nit },
-          { label: 'Comercio', value: comercioDe(factura) },
+          { label: 'Farmacia', value: comercioDe(factura) },
         ],
       },
       {
@@ -117,10 +124,7 @@ export function bloquesDeFactura(factura: DocumentoDeFactura): readonly PdfBlock
               title: 'Seguro',
               fields: [
                 { label: 'Aseguradora', value: coaseguro.aseguradora },
-                {
-                  label: ROTULOS_DE_FACTURA.coaseguro,
-                  value: withDisplayCurrency(coaseguro.importe, coaseguro.moneda),
-                },
+                { label: ROTULOS_DE_FACTURA.coaseguro, value: dinero(coaseguro.importe, coaseguro.moneda) },
               ],
             },
           ]),
@@ -132,61 +136,55 @@ export function bloquesDeFactura(factura: DocumentoDeFactura): readonly PdfBlock
     const celdas = [
       linea.descripcion,
       String(linea.cantidad),
-      linea.importe === null ? SIN_IMPORTE : withDisplayCurrency(linea.importe, moneda),
+      linea.importe === null ? SIN_IMPORTE : dinero(linea.importe, moneda),
     ];
     bloques.push({ kind: 'row', text: celdas.join('\t'), cells: celdas });
   }
+  // Sin total no hay caja: un «No disponible» resaltado como si fuera un
+  // importe se lee como un total. Va el aviso, igual que en el comprobante.
+  if (factura.total === null) {
+    bloques.push(noteBlock(MISSING_TOTAL_NOTE, 'warning'));
+  } else {
+    const filas: PdfTotalRow[] =
+      factura.subtotal === null
+        ? []
+        : [{ label: ROTULOS_DE_FACTURA.subtotal, value: dinero(factura.subtotal, moneda) }];
+    if (factura.descuentoDeRed !== null) {
+      // `formatMoney` pone el signo menos tipográfico (U+2212), no el guion.
+      filas.push({
+        label: ROTULOS_DE_FACTURA.descuentoDeRed,
+        value: dinero(`-${factura.descuentoDeRed}`, moneda),
+      });
+    }
+    filas.push({ label: ROTULOS_DE_FACTURA.total, value: dinero(factura.total, moneda), emphasis: true });
+    bloques.push(totalsBlock(filas));
+  }
+
   // Un renglón sin precio ocupa su columna con una raya —una palabra en medio
-  // de los importes desalinea la columna entera— y se explica debajo. Si por
-  // eso no hay total, la explicación sube a aviso: es lo que hay que leer.
-  const sinPrecio = factura.lineas.some((linea) => linea.importe === null);
-  const sinTotal = factura.subtotal === null || factura.total === null;
-  if (sinTotal) {
-    bloques.push(
-      noteBlock(
-        sinPrecio
-          ? `${SIN_IMPORTE} Precio no publicado por el comercio. Sin ese precio, el total no se puede calcular.`
-          : 'Falta algún precio publicado: el total no se puede calcular.',
-        'warning',
-      ),
-    );
-  } else if (sinPrecio) {
+  // de los importes desalinea la columna entera— y se explica debajo de la
+  // caja, no entre la tabla y la caja: los totales tienen que seguir pegados a
+  // la última fila para que el motor los pase de hoja juntos.
+  if (factura.lineas.some((linea) => linea.importe === null)) {
+    bloques.push({ kind: 'caption', text: MISSING_PRICE_CAPTION });
+  }
+  if (coaseguro !== null) {
     bloques.push({
       kind: 'caption',
-      text: `${SIN_IMPORTE} Precio no publicado por el comercio: el producto no tiene importe propio en el detalle.`,
+      text: `El coaseguro (${dinero(coaseguro.importe, coaseguro.moneda)}) es lo que queda a su cargo según la liquidación publicada por ${coaseguro.aseguradora}. No se descuenta del total facturado.`,
     });
   }
-
-  // Sin subtotal no se imprime su fila: dos «No disponible» seguidos no dicen
-  // más que uno.
-  const filas: PdfTotalRow[] =
-    factura.subtotal === null
-      ? []
-      : [{ label: ROTULOS_DE_FACTURA.subtotal, value: withDisplayCurrency(factura.subtotal, moneda) }];
-  if (factura.descuentoDeRed !== null) {
-    filas.push({
-      label: ROTULOS_DE_FACTURA.descuentoDeRed,
-      value: `${MENOS}${withDisplayCurrency(factura.descuentoDeRed, moneda)}`,
-    });
-  }
-  filas.push({
-    label: ROTULOS_DE_FACTURA.total,
-    value: importeDicho(factura.total, moneda),
-    emphasis: true,
-  });
-  bloques.push(totalsBlock(filas));
-
   return bloques;
 }
 
-/** El comercio como lo reconoce la persona: «Farmacia Andina — Sucursal Centro». */
+/** La farmacia como la reconoce la persona: «Farmacia Andina — Sucursal Centro». */
 function comercioDe(factura: DocumentoDeFactura): string {
   const { emisor } = factura;
   return emisor.detalle === null ? emisor.nombre : `${emisor.nombre} — ${emisor.detalle}`;
 }
 
-function importeDicho(importe: string | null, moneda: string): string {
-  return importe === null ? NO_DISPONIBLE : withDisplayCurrency(importe, moneda);
+/** Un importe en formato boliviano con su moneda visible: «1.234,56 Bs». */
+function dinero(importe: string, moneda: string): string {
+  return formatMoney(importe, displayCurrency(moneda));
 }
 
 function cabecera(celdas: readonly string[]): PdfBlock {

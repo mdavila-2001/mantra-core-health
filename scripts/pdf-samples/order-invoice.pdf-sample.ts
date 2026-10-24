@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { afterEach, beforeEach, test, vi } from 'vitest';
 
 import { buildInvoicePdf } from '../../src/app/features/account/pharmacy-orders/order-invoice/order-invoice.pdf';
 import type {
@@ -55,7 +55,7 @@ const PRODUCTS = [
   'Insulina glargina · 100 UI/ml · Lapicera prellenada x 3 ml',
 ];
 
-const LONG_CENTS = Array.from({ length: 30 }, (_, i) => (1800 + ((i * 2900) % 14000)) * (1 + (i % 3)));
+const LONG_CENTS = Array.from({ length: 33 }, (_, i) => (1800 + ((i * 2900) % 14000)) * (1 + (i % 3)));
 const LONG_SUBTOTAL = LONG_CENTS.reduce((sum, cents) => sum + cents, 0);
 const LONG_DISCOUNT = Math.round((LONG_SUBTOTAL * 10) / 100);
 
@@ -82,6 +82,16 @@ const LONG: DocumentoDeFactura = {
   total: money(LONG_SUBTOTAL - LONG_DISCOUNT),
   moneda: 'BOB',
 };
+
+/** Un reloj fijo, posterior a todos los eventos de las muestras: la portada y el pie salen iguales en cada corrida. */
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 24, 18, 0));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 test('muestra de la factura corta', () => {
   loadBrandFonts();

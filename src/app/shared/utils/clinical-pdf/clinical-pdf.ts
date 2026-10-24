@@ -6,6 +6,8 @@ import {
   buildBlocksPdf,
   campoDeBloque,
   fieldsBlock,
+  formatDate,
+  formatDateTime,
   listBlock,
   noteBlock,
   panelsBlock,
@@ -24,6 +26,7 @@ import type {
   DocumentoMedicamento,
   DocumentoPaciente,
   DocumentoProfesional,
+  HistoriaAtencion,
   RespuestaDeFormulario,
 } from './clinical-pdf.types';
 
@@ -71,12 +74,6 @@ import type {
     permitirse.
     ========================================================================== */
 
-/** Cómo se imprime una fecha en los documentos. Local, no ISO: lo lee gente. */
-const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
-  dateStyle: 'long',
-  timeStyle: 'short',
-});
-
 /** Lo que se imprime cuando el dato no está. Nunca un hueco en blanco. */
 const SIN_DATO = 'No registrado';
 
@@ -86,17 +83,13 @@ const SIN_DATO = 'No registrado';
  */
 export const COPIA_DE_TRABAJO = 'Copia de trabajo';
 
-/**
- * El pie que declara qué es este papel.
- *
- * Importa que esté: un documento clínico sin fecha de emisión ni origen es un
- * papel que nadie puede fechar después, y el que lo recibe no sabe si mira lo
- * último o algo de hace un año. Cuando la portada trae la fecha de emisión del
- * dato, esta línea es la otra mitad: cuándo se sacó **esta copia**.
- */
-function pieDeDocumento(): string {
-  return `Documento generado el ${FORMATO_FECHA.format(new Date())} desde el sistema.`;
-}
+/*
+   Las fechas van en un solo formato en todos los papeles clínicos —`24/10/2026`
+   y `24/10/2026, 18:30`, en 24 horas— con los formateadores del motor. Y el
+   cuerpo no repite cuándo se generó el papel: lo dicen la portada («Fecha de
+   generación» o «de emisión») y el pie de cada hoja, y una tercera fecha en
+   el cuerpo sólo abre la puerta a que se contradigan.
+*/
 
 /* ---- las opciones de cada documento ---------------------------------------
    Se exportan por lo mismo que los bloques: para probar sin jsPDF de por medio
@@ -117,7 +110,6 @@ export function prescriptionPdfOptions(receta: DocumentoDeReceta): PdfExportOpti
   return {
     title: 'Receta médica',
     kind: 'Prescripción',
-    ...bajadaDe(receta.paciente.nombre),
     meta: [{ label: 'Estado', value: emitida ? 'Emitida' : 'Sin emitir' }],
     ...(emitida
       ? { issuedAt: receta.emitidaEl }
@@ -146,7 +138,6 @@ export function visitPdfOptions(atencion: DocumentoDeAtencion): PdfExportOptions
   return {
     title: 'Historia clínica de la atención',
     kind: 'Registro clínico',
-    ...bajadaDe(atencion.paciente.nombre),
     meta: [{ label: 'Estado', value: cerrada ? 'Cerrada' : 'En curso' }],
     ...(cerrada ? { issuedAt: atencion.cierre } : { watermark: COPIA_DE_TRABAJO }),
     ...emisorDe(atencion.organizacion),
@@ -161,7 +152,6 @@ export function orderPdfOptions(orden: DocumentoDeOrden): PdfExportOptions {
   return {
     title: 'Orden de estudio',
     kind: tiene(orden.categoria) && orden.categoria !== SIN_DATO ? orden.categoria : 'Documento clínico',
-    ...bajadaDe(orden.paciente.nombre),
     meta: [{ label: 'Estado', value: textoDe(orden.estado) }],
     issuedAt: orden.pedidaEl,
     ...emisorDe(orden.organizacion),
@@ -189,16 +179,23 @@ export function historyPdfOptions(historia: DocumentoDeHistoria): PdfExportOptio
   };
 }
 
-/** La portada y el pie de un formulario respondido. Se emite al completarse. */
+/**
+ * La portada y el pie de un formulario respondido. Se emite al completarse, y
+ * el pie lo firma la organización, como el resto de los papeles clínicos.
+ */
 export function formResponsePdfOptions(formulario: DocumentoDeFormulario): PdfExportOptions {
   const completado = formulario.completadoEl !== undefined;
   return {
     title: formulario.titulo,
     kind: 'Formulario clínico',
-    meta: [{ label: 'Estado', value: completado ? 'Completado' : 'Sin fecha de completado' }],
+    meta: [{ label: 'Estado', value: completado ? 'Completado' : PENDIENTE_DE_COMPLETAR }],
     ...(completado ? { issuedAt: formulario.completadoEl } : {}),
+    ...emisorDe(formulario.organizacion),
   };
 }
+
+/** El estado de un formulario sin fecha de completado. */
+const PENDIENTE_DE_COMPLETAR = 'Pendiente de completar';
 
 /* ---- armar y descargar ---------------------------------------------------- */
 
@@ -292,16 +289,15 @@ export function bloquesDeReceta(receta: DocumentoDeReceta): readonly PdfBlock[] 
   // no se repite acá: es la de la portada.
   const prescripcion: PdfField[] = [
     paraQueEs(receta),
-    { label: 'Indicada el', value: fechaYHora(receta.creadaEl) },
+    { label: 'Indicada el', value: formatDateTime(receta.creadaEl) },
+    ...firmaDeLaReceta(receta),
   ];
-  if (receta.firmadaEl !== undefined) {
-    prescripcion.push({ label: 'Firmada el', value: fechaYHora(receta.firmadaEl) });
-  }
   const bloques: PdfBlock[] = [
-    tarjetasDeLasPartes(receta.paciente, receta.profesional, receta.organizacion, {
-      title: 'Prescripción',
-      fields: prescripcion,
-    }),
+    panelsBlock([
+      tarjetaDelPaciente(receta.paciente),
+      tarjetaDelProfesional(receta.profesional, receta.organizacion),
+      { title: 'Prescripción', fields: prescripcion },
+    ]),
   ];
 
   if (receta.emitidaEl === undefined) {
@@ -317,10 +313,8 @@ export function bloquesDeReceta(receta: DocumentoDeReceta): readonly PdfBlock[] 
   }
   bloques.push(...avisoDeAlergias(receta.alergias));
 
-  // Sin títulos de sección —la cabecera de la tabla ya dice qué es— y sin la
-  // línea final de «generado el»: la receta es el papel que tiene que caber en
-  // una hoja con la firma, y la fecha que la identifica —la de emisión— ya está
-  // en la portada y en el pie.
+  // Sin títulos de sección —la cabecera de la tabla ya dice qué es—: la receta
+  // es el papel que tiene que caber en una hoja con la firma.
   if (receta.medicamentos.length === 0) {
     bloques.push(parrafo('Sin medicamentos indicados.'));
   } else {
@@ -336,6 +330,28 @@ export function bloquesDeReceta(receta: DocumentoDeReceta): readonly PdfBlock[] 
     bloques.push(listBlock(indicaciones));
   }
   return bloques;
+}
+
+/**
+ * La firma, tal como es: una receta emitida dice cuándo se firmó; una sin
+ * emitir **nunca** se presenta como firmada sin aclararlo —«Firmada el …, sin
+ * emitir»— y, si no se firmó, lo dice: «Sin firmar».
+ */
+function firmaDeLaReceta(receta: DocumentoDeReceta): readonly PdfField[] {
+  if (receta.emitidaEl !== undefined) {
+    return receta.firmadaEl === undefined
+      ? []
+      : [{ label: 'Firmada el', value: formatDateTime(receta.firmadaEl) }];
+  }
+  return [
+    {
+      label: 'Firma',
+      value:
+        receta.firmadaEl === undefined
+          ? 'Sin firmar'
+          : `Firmada el ${formatDateTime(receta.firmadaEl)}, sin emitir`,
+    },
+  ];
 }
 
 /**
@@ -383,7 +399,10 @@ function lineaDeMedicamento(medicamento: DocumentoMedicamento): string {
 /** Las líneas de la historia de una atención, en orden de lectura. */
 export function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [
-    tarjetasDeLasPartes(atencion.paciente, atencion.profesional, atencion.organizacion),
+    panelsBlock([
+      tarjetaDelPaciente(atencion.paciente),
+      tarjetaDelProfesional(atencion.profesional, atencion.organizacion),
+    ]),
   ];
 
   if (atencion.cierre === undefined) {
@@ -404,7 +423,7 @@ export function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBl
       [
         {
           label: 'Inicio de la atención',
-          value: atencion.inicio === undefined ? SIN_DATO : FORMATO_FECHA.format(atencion.inicio),
+          value: atencion.inicio === undefined ? SIN_DATO : formatDateTime(atencion.inicio),
         },
         { label: 'Motivo de consulta', value: textoDe(atencion.motivo ?? '') },
       ],
@@ -429,19 +448,28 @@ export function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBl
     bloques.push(campoDeBloque('Estado', lineaDeCompletado(formulario)));
     bloques.push(...lineasDeRespuestas(formulario.respuestas));
   }
-
-  bloques.push(pie());
   return bloques;
 }
 
 /**
  * Las líneas de un formulario respondido, en orden de lectura.
  *
- * Cuándo se completó va en la portada —es su fecha de emisión—; sin esa fecha,
- * el papel lo advierte antes de las respuestas.
+ * Abre, como los demás papeles clínicos, con a quién corresponde —y quién lo
+ * registró— si el dato lo trae. Cuándo se completó va en la portada —es su
+ * fecha de emisión—; sin esa fecha, el papel lo advierte antes de las
+ * respuestas.
  */
 export function bloquesDeFormulario(formulario: DocumentoDeFormulario): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [];
+  const tarjetas: PdfPanel[] = [
+    ...(formulario.paciente === undefined ? [] : [tarjetaDelPaciente(formulario.paciente)]),
+    ...(formulario.profesional === undefined
+      ? []
+      : [tarjetaDelProfesional(formulario.profesional, formulario.organizacion)]),
+  ];
+  if (tarjetas.length > 0) {
+    bloques.push(panelsBlock(tarjetas));
+  }
   if (formulario.completadoEl === undefined) {
     // Se dice, no se disimula: sin fecha de cierre es una copia de trabajo.
     bloques.push(
@@ -455,8 +483,6 @@ export function bloquesDeFormulario(formulario: DocumentoDeFormulario): readonly
 
   bloques.push(seccion('Respuestas'));
   bloques.push(...lineasDeRespuestas(formulario.respuestas));
-
-  bloques.push(pie());
   return bloques;
 }
 
@@ -465,7 +491,12 @@ const COMO_PREPARARSE = 'Cómo prepararse';
 
 /** Las líneas de una orden de estudio, en orden de lectura. */
 export function bloquesDeOrden(orden: DocumentoDeOrden): readonly PdfBlock[] {
-  const bloques: PdfBlock[] = [tarjetasDeLasPartes(orden.paciente, orden.profesional, orden.organizacion)];
+  const bloques: PdfBlock[] = [
+    panelsBlock([
+      tarjetaDelPaciente(orden.paciente),
+      tarjetaDelProfesional(orden.profesional, orden.organizacion),
+    ]),
+  ];
 
   // Cuándo se pidió y en qué estado está van en la portada (fecha de emisión y
   // estado): el cuerpo dice qué se pidió.
@@ -497,8 +528,6 @@ export function bloquesDeOrden(orden: DocumentoDeOrden): readonly PdfBlock[] {
   } else {
     bloques.push(noteBlock(orden.preparacion, 'warning', COMO_PREPARARSE));
   }
-
-  bloques.push(pie());
   return bloques;
 }
 
@@ -509,6 +538,12 @@ export function bloquesDeOrden(orden: DocumentoDeOrden): readonly PdfBlock[] {
  * ausente deja a quien lee sin saber si no hubo nada o si el sistema no lo
  * trajo, y en un documento clínico eso no es lo mismo. Cuando está vacía, lo
  * dice con palabras.
+ *
+ * Cada sección es **una** tabla, con una banda por atención, formulario o
+ * resultado: las columnas quedan alineadas en toda la sección, y si la tabla
+ * sigue en otra hoja el motor repite la última banda arriba —la atención o el
+ * formulario al que pertenecen las filas—, así nada queda partido sin contexto.
+ * Lo fechado va de lo más reciente a lo más viejo.
  */
 export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [seccion('Datos del paciente')];
@@ -530,12 +565,10 @@ export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBl
   if (historia.atenciones.length === 0) {
     bloques.push(parrafo('Sin atenciones registradas.'));
   }
-  for (const atencion of historia.atenciones) {
-    bloques.push(rotulo(atencion.titulo));
-    // Una sola tabla por atención, con una banda por bloque: las columnas se
-    // alinean entre diagnósticos, medicación y observaciones.
+  for (const atencion of masRecientePrimero(historia.atenciones, (atencion) => atencion.inicio)) {
+    bloques.push(bandaDeAtencion(atencion));
     for (const bloque of atencion.bloques) {
-      bloques.push(...tablaDeBloque(bloque, [bloque.titulo, columnasDe(bloque.titulo)[1]]));
+      bloques.push(...filasDeBloque(bloque));
     }
   }
 
@@ -543,7 +576,7 @@ export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBl
   if (historia.recetas.length === 0) {
     bloques.push(parrafo('Sin recetas registradas.'));
   } else {
-    bloques.push(...tablaDeRecetas(historia.recetas));
+    bloques.push(...tablaDeRecetas(masRecientePrimero(historia.recetas, (receta) => receta.creadaEl)));
   }
 
   bloques.push(seccion('Formularios'));
@@ -551,26 +584,36 @@ export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBl
     bloques.push(parrafo('Sin formularios respondidos.'));
   }
   for (const formulario of historia.formularios) {
-    bloques.push(rotulo(formulario.titulo));
-    // Las mismas líneas que el formulario suelto y la atención: una sola regla
-    // decide el enmascarado en papel, no una por documento.
-    bloques.push(campoDeBloque('Estado', lineaDeCompletado(formulario)));
-    bloques.push(...lineasDeRespuestas(formulario.respuestas));
+    // Las mismas respuestas que el formulario suelto y la atención: una sola
+    // regla decide el enmascarado en papel, no una por documento.
+    bloques.push({
+      kind: 'row',
+      text: `${formulario.titulo} — ${lineaDeCompletado(formulario)}`,
+      cells: [formulario.titulo, lineaDeCompletado(formulario)],
+      header: true,
+    });
+    if (formulario.respuestas.length === 0) {
+      bloques.push(filaVacia('Sin respuestas registradas', 2));
+    }
+    for (const respuesta of formulario.respuestas) {
+      const valor = respuesta.masked ? VALOR_ENMASCARADO : textoDe(respuesta.texto);
+      bloques.push({ kind: 'row', text: `${respuesta.etiqueta}: ${valor}`, cells: [respuesta.etiqueta, valor] });
+    }
   }
 
   bloques.push(seccion('Órdenes de estudio'));
   if (historia.ordenes.length === 0) {
     bloques.push(parrafo('Sin órdenes registradas.'));
   } else {
-    bloques.push(cabeceraDeTabla(['Estudio', 'Tipo', 'Pedida el', 'Estado']));
-    for (const orden of historia.ordenes) {
+    bloques.push(cabeceraDeTabla(['Pedida el', 'Estudio', 'Tipo', 'Estado']));
+    for (const orden of masRecientePrimero(historia.ordenes, (orden) => orden.pedidaEl)) {
       bloques.push({
         kind: 'row',
-        text: `${textoDe(orden.estudio)} (${textoDe(orden.categoria)}) — pedida el ${FORMATO_FECHA.format(orden.pedidaEl)}. Estado: ${textoDe(orden.estado)}`,
+        text: `${textoDe(orden.estudio)} (${textoDe(orden.categoria)}) — pedida el ${formatDateTime(orden.pedidaEl)}. Estado: ${textoDe(orden.estado)}`,
         cells: [
+          formatDate(orden.pedidaEl),
           textoDe(orden.estudio),
           textoDe(orden.categoria),
-          fechaCorta(orden.pedidaEl),
           textoDe(orden.estado),
         ],
       });
@@ -581,17 +624,74 @@ export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBl
   if (historia.resultados.length === 0) {
     bloques.push(parrafo('Sin resultados liberados.'));
   }
-  bloques.push(...lineasDeBloques(historia.resultados));
-
-  bloques.push(pie());
+  for (const resultado of historia.resultados) {
+    bloques.push(cabeceraDeTabla([resultado.titulo, '']));
+    if (resultado.datos.length === 0) {
+      bloques.push(filaVacia('Sin registros', 2));
+    }
+    for (const dato of resultado.datos) {
+      bloques.push(filaDeDato(dato.etiqueta, dato.valor));
+    }
+  }
   return bloques;
 }
 
 /**
- * Las recetas de la historia en **una** tabla, con la fecha delante: una
- * historia con veinte recetas no puede ser veinte tablas de un renglón. Las
- * indicaciones al paciente, que no caben en una celda, van debajo, cada una
- * con el medicamento y la fecha de su receta.
+ * La banda que encabeza una atención en la tabla de la historia: cuándo, por
+ * qué. Es una fila de cabecera, así que el motor la repite arriba si la
+ * atención sigue en otra hoja.
+ */
+function bandaDeAtencion(atencion: HistoriaAtencion): PdfBlock {
+  const cells =
+    atencion.inicio === undefined && atencion.motivo === undefined
+      ? ['', atencion.titulo, '']
+      : [
+          atencion.inicio === undefined ? 'Sin fecha' : formatDate(atencion.inicio),
+          tiene(atencion.motivo) ? atencion.motivo : 'Consulta',
+          '',
+        ];
+  return { kind: 'row', text: atencion.titulo, cells, header: true };
+}
+
+/**
+ * Las filas de un bloque de una atención en la tabla de la historia: qué es
+ * —diagnóstico, medicación, observación—, el dato y su detalle. Vacío, lo dice
+ * en una fila en vez de desaparecer.
+ */
+function filasDeBloque(bloque: DocumentoBloque): readonly PdfBlock[] {
+  const tipo = tipoDe(bloque.titulo);
+  if (bloque.datos.length === 0) {
+    return [{ kind: 'row', text: `${bloque.titulo}: Sin registros.`, cells: [tipo, 'Sin registros', '—'] }];
+  }
+  return bloque.datos.map((dato) => {
+    const valor = dato.valor.trim();
+    return {
+      kind: 'row',
+      text: valor === '' ? dato.etiqueta : `${dato.etiqueta}: ${valor}`,
+      cells: celdas([tipo, dato.etiqueta, valor]),
+    };
+  });
+}
+
+/** Qué es cada fila de un bloque de la atención, en singular. */
+function tipoDe(titulo: string): string {
+  switch (titulo) {
+    case 'Diagnósticos':
+      return 'Diagnóstico';
+    case 'Medicación indicada':
+      return 'Medicación';
+    case 'Observaciones':
+      return 'Observación';
+    default:
+      return titulo;
+  }
+}
+
+/**
+ * Las recetas de la historia en **una** tabla, de la más reciente a la más
+ * vieja: una historia con veinte recetas no puede ser veinte tablas de un
+ * renglón. Las indicaciones al paciente, que no caben en una celda, van en una
+ * segunda tabla debajo, con el medicamento y la fecha de su receta.
  */
 function tablaDeRecetas(recetas: readonly DocumentoDeReceta[]): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [
@@ -599,19 +699,19 @@ function tablaDeRecetas(recetas: readonly DocumentoDeReceta[]): readonly PdfBloc
   ];
   const indicaciones: PdfBlock[] = [];
   for (const receta of recetas) {
-    const fecha = fechaCorta(receta.creadaEl);
+    const fecha = formatDate(receta.creadaEl);
     const estadoDeLaReceta = receta.emitidaEl === undefined ? 'Sin emitir' : 'Emitida';
     if (receta.medicamentos.length === 0) {
       bloques.push({
         kind: 'row',
-        text: `Receta del ${FORMATO_FECHA.format(receta.creadaEl)}: sin medicamentos indicados.`,
-        cells: [fecha, 'Sin medicamentos indicados.', '—', '—', estadoDeLaReceta],
+        text: `Receta del ${fecha}: sin medicamentos indicados.`,
+        cells: [fecha, 'Sin medicamentos indicados', '—', '—', estadoDeLaReceta],
       });
     }
     for (const medicamento of receta.medicamentos) {
       bloques.push({
         kind: 'row',
-        text: `Receta del ${FORMATO_FECHA.format(receta.creadaEl)}: ${lineaDeMedicamento(medicamento)}`,
+        text: `Receta del ${fecha}: ${lineaDeMedicamento(medicamento)}`,
         cells: celdas([
           fecha,
           medicamento.medicamento,
@@ -623,37 +723,70 @@ function tablaDeRecetas(recetas: readonly DocumentoDeReceta[]): readonly PdfBloc
     }
     if (tiene(receta.indicaciones)) {
       const que = receta.medicamentos.map((medicamento) => medicamento.medicamento).join(', ');
-      indicaciones.push(
-        campoDeBloque(que === '' ? `Receta del ${fecha}` : `${que} (${fecha})`, receta.indicaciones),
-      );
+      indicaciones.push({
+        kind: 'row',
+        text: `${que === '' ? `Receta del ${fecha}` : `${que} (${fecha})`}: ${receta.indicaciones}`,
+        cells: [fecha, que === '' ? '—' : que, receta.indicaciones],
+      });
     }
   }
   if (indicaciones.length > 0) {
-    bloques.push(rotulo('Indicaciones al paciente'), ...indicaciones);
+    bloques.push(rotulo('Indicaciones al paciente'));
+    bloques.push(cabeceraDeTabla(['Fecha', 'Medicamento', 'Indicaciones']), ...indicaciones);
   }
   return bloques;
 }
 
 /**
- * Un bloque de datos como tabla de dos columnas, con su cabecera. Seguidas, las
- * tablas de varios bloques se maquetan como una sola con una banda por bloque.
- * Vacío, lo dice en una fila en vez de desaparecer.
+ * Un bloque de datos como tabla de dos columnas, con su cabecera. Vacío, lo
+ * dice en una fila en vez de desaparecer.
  */
 function tablaDeBloque(bloque: DocumentoBloque, cabecera: readonly [string, string]): readonly PdfBlock[] {
   const filas: PdfBlock[] = [cabeceraDeTabla(cabecera)];
   if (bloque.datos.length === 0) {
-    filas.push({ kind: 'row', text: `${bloque.titulo}: Sin registros.`, cells: ['Sin registros.', '—'] });
+    filas.push({ kind: 'row', text: `${bloque.titulo}: Sin registros.`, cells: ['Sin registros', '—'] });
     return filas;
   }
   for (const dato of bloque.datos) {
-    const valor = dato.valor.trim();
-    filas.push({
-      kind: 'row',
-      text: valor === '' ? dato.etiqueta : `${dato.etiqueta}: ${valor}`,
-      cells: celdas([dato.etiqueta, valor]),
-    });
+    filas.push(filaDeDato(dato.etiqueta, dato.valor));
   }
   return filas;
+}
+
+/** Una fila de dato y valor; el valor ausente ocupa su columna con una raya. */
+function filaDeDato(etiqueta: string, valor: string): PdfBlock {
+  const limpio = valor.trim();
+  return {
+    kind: 'row',
+    text: limpio === '' ? etiqueta : `${etiqueta}: ${limpio}`,
+    cells: celdas([etiqueta, limpio]),
+  };
+}
+
+/** La fila que dice que no hay nada, con rayas en las demás columnas. Sin punto: al lado va «—». */
+function filaVacia(texto: string, columnas: number): PdfBlock {
+  return {
+    kind: 'row',
+    text: `${texto}.`,
+    cells: [texto, ...Array.from({ length: columnas - 1 }, () => '—')],
+  };
+}
+
+/**
+ * De lo más reciente a lo más viejo, con lo que no tiene fecha al final y en
+ * el orden en que vino. Es el orden de la pantalla de la historia: quien abre
+ * su archivo busca la última consulta, no la primera de su vida.
+ */
+function masRecientePrimero<T>(filas: readonly T[], fecha: (fila: T) => Date | undefined): readonly T[] {
+  return filas
+    .map((fila, indice) => ({ fila, indice, instante: fecha(fila)?.getTime() }))
+    .sort((a, b) => {
+      if (a.instante === undefined || b.instante === undefined) {
+        return a.instante === b.instante ? a.indice - b.indice : a.instante === undefined ? 1 : -1;
+      }
+      return b.instante - a.instante || a.indice - b.indice;
+    })
+    .map(({ fila }) => fila);
 }
 
 /**
@@ -674,28 +807,12 @@ function columnasDe(titulo: string): readonly [string, string] {
   }
 }
 
-/** Aplana bloques de datos a líneas, diciendo los vacíos en vez de saltearlos. */
-function lineasDeBloques(bloques: readonly DocumentoBloque[]): readonly PdfBlock[] {
-  const salida: PdfBlock[] = [];
-  for (const bloque of bloques) {
-    salida.push(rotulo(bloque.titulo));
-    if (bloque.datos.length === 0) {
-      salida.push(parrafo('Sin registros.'));
-      continue;
-    }
-    for (const dato of bloque.datos) {
-      salida.push(campoDeBloque(dato.etiqueta, dato.valor));
-    }
-  }
-  return salida;
-}
-
-/** Cuándo se completó el formulario, o su ausencia con todas las letras. */
+/** Cuándo se completó el formulario, o que está pendiente. */
 function lineaDeCompletado(formulario: DocumentoDeFormulario): string {
   return formulario.completadoEl === undefined
     ? // Se dice, no se disimula: sin fecha de cierre es una copia de trabajo.
-      'sin fecha de completado registrada.'
-    : `Completado el ${FORMATO_FECHA.format(formulario.completadoEl)}`;
+      PENDIENTE_DE_COMPLETAR
+    : `Completado el ${formatDateTime(formulario.completadoEl)}`;
 }
 
 /**
@@ -717,34 +834,28 @@ function lineasDeRespuestas(respuestas: readonly RespuestaDeFormulario[]): reado
   );
 }
 
-/**
- * Las dos partes del documento, en tarjetas lado a lado: quién lo recibe y
- * quién responde por él. Los datos opcionales que no se conocen no se
- * imprimen: un renglón «Matrícula» vacío afirma que no la tiene.
- */
-function tarjetasDeLasPartes(
-  paciente: DocumentoPaciente,
-  profesional: DocumentoProfesional,
-  organizacion: string | undefined,
-  tercera?: PdfPanel,
-): PdfBlock {
-  const delPaciente: PdfField[] = [{ label: 'Nombre', value: textoDe(paciente.nombre) }];
+/** La tarjeta de quien recibe el papel. Sin documento, no hay renglón. */
+function tarjetaDelPaciente(paciente: DocumentoPaciente): PdfPanel {
+  const fields: PdfField[] = [{ label: 'Nombre', value: textoDe(paciente.nombre) }];
   if (tiene(paciente.documento)) {
-    delPaciente.push({ label: 'Documento', value: paciente.documento });
+    fields.push({ label: 'Documento', value: paciente.documento });
   }
-  const delProfesional: PdfField[] = [{ label: 'Nombre', value: textoDe(profesional.nombre) }];
+  return { title: 'Paciente', fields };
+}
+
+/**
+ * La tarjeta de quien responde por el papel. Los datos opcionales que no se
+ * conocen no se imprimen: un renglón «Matrícula» vacío afirma que no la tiene.
+ */
+function tarjetaDelProfesional(profesional: DocumentoProfesional, organizacion: string | undefined): PdfPanel {
+  const fields: PdfField[] = [{ label: 'Nombre', value: textoDe(profesional.nombre) }];
   if (tiene(profesional.matricula)) {
-    delProfesional.push({ label: 'Matrícula', value: profesional.matricula });
+    fields.push({ label: 'Matrícula', value: profesional.matricula });
   }
   if (tiene(organizacion)) {
-    delProfesional.push({ label: 'Organización', value: organizacion });
+    fields.push({ label: 'Organización', value: organizacion });
   }
-  const tarjetas: PdfPanel[] = [
-    { title: 'Paciente', fields: delPaciente },
-    { title: 'Profesional', fields: delProfesional },
-    ...(tercera === undefined ? [] : [tercera]),
-  ];
-  return panelsBlock(tarjetas);
+  return { title: 'Profesional', fields };
 }
 
 /**
@@ -788,26 +899,6 @@ function emisorDe(organizacion: string | undefined): Pick<PdfExportOptions, 'iss
   return tiene(organizacion) ? { issuer: { name: organizacion.trim() } } : {};
 }
 
-/** La bajada de la portada: de quién es el papel. */
-function bajadaDe(nombre: string): Pick<PdfExportOptions, 'subtitle'> {
-  return nombre.trim() === '' ? {} : { subtitle: nombre.trim() };
-}
-
-/** `14/08/2026, 10:05`: la fecha corta con la hora, para una tarjeta angosta. */
-function fechaYHora(fecha: Date): string {
-  const hora = [fecha.getHours(), fecha.getMinutes()].map((parte) => String(parte).padStart(2, '0')).join(':');
-  return `${fechaCorta(fecha)}, ${hora}`;
-}
-
-/** `14/08/2026`: la fecha corta de las tablas, sin depender del ICU del entorno. */
-function fechaCorta(fecha: Date): string {
-  return [
-    String(fecha.getDate()).padStart(2, '0'),
-    String(fecha.getMonth() + 1).padStart(2, '0'),
-    fecha.getFullYear(),
-  ].join('/');
-}
-
 /** Las celdas de una fila: un dato ausente ocupa su columna con una raya. */
 function celdas(valores: readonly (string | undefined)[]): readonly string[] {
   return valores.map((valor) => (valor === undefined || valor.trim() === '' ? '—' : valor));
@@ -845,11 +936,6 @@ function rotulo(text: string): PdfBlock {
 /** La fila de encabezado de una tabla. */
 function cabeceraDeTabla(celdasDeCabecera: readonly string[]): PdfBlock {
   return { kind: 'row', text: celdasDeCabecera.join('\t'), cells: celdasDeCabecera, header: true };
-}
-
-/** La letra chica del final: cuándo y desde dónde salió el papel. */
-function pie(): PdfBlock {
-  return { kind: 'caption', text: pieDeDocumento() };
 }
 
 /**

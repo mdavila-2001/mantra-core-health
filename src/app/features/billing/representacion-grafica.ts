@@ -31,6 +31,7 @@ import type {
 import {
   buildBlocksPdf,
   fieldsBlock,
+  formatMoney,
   noteBlock,
   panelsBlock,
   totalsBlock,
@@ -61,9 +62,6 @@ export const SIMULATED_INVOICE_WATERMARK = 'Simulada · Sin validez fiscal';
 /** La línea legal del pie de cada hoja. */
 export const SIMULATED_INVOICE_FOOTER = 'Factura SIMULADA · Sin validez fiscal · No emitida ante el SIN';
 
-/** El signo menos tipográfico (U+2212), escrito por código: se confunde con el guion a la vista. */
-const MENOS = String.fromCharCode(0x2212);
-
 /** Espacio duro (U+00A0), escrito por código: invisible en la fuente es lo que el lint impide. */
 const ESPACIO_DURO = String.fromCharCode(0xa0);
 
@@ -88,19 +86,30 @@ function texto(valor: unknown): string {
   return valor === null || valor === undefined ? '' : String(valor);
 }
 
-/** `12.5` → `12.50`: el importe sin la moneda, para las columnas que la dicen en la cabecera. */
+/** El importe del XML como número; vacío o `xsi:nil` es cero. */
+function monto(valor: unknown): number {
+  return Number(texto(valor) === '' ? '0' : texto(valor));
+}
+
+/** `1234.5` → `1.234,50`: el importe sin la moneda, para las columnas que la dicen en la cabecera. */
 function importe(valor: unknown): string {
-  const n = texto(valor) === '' ? '0' : texto(valor);
-  return Number(n).toFixed(2);
+  return formatMoney(monto(valor), null);
 }
 
+/** `1234.5` → `1.234,50 Bs`, el formato de montos de todos los papeles. */
 function bs(valor: unknown): string {
-  return `${importe(valor)} Bs`;
+  return formatMoney(monto(valor));
 }
 
-/** Lo que se resta del total, con el signo menos; un cero va sin signo. */
+/** Lo que se resta del total, con el signo menos (U+2212); un cero va sin signo. */
 function bsRestado(valor: unknown): string {
-  return Number(texto(valor) || '0') > 0 ? `${MENOS}${bs(valor)}` : bs(valor);
+  return formatMoney(-monto(valor));
+}
+
+/** `VALIDADA` → `Validada`: el estado del SIAT llega en mayúsculas y en el papel se lee como palabra. */
+function estadoLegible(descripcion: string): string {
+  const minusculas = descripcion.toLocaleLowerCase('es');
+  return minusculas.charAt(0).toLocaleUpperCase('es') + minusculas.slice(1);
 }
 
 function fila(celdas: readonly string[], header = false): PdfBlock {
@@ -167,19 +176,18 @@ export function bloquesDeRepresentacionGrafica(factura: SimulatedInvoice, qr: Pd
   const literal = montoLiteral(texto(c['montoTotal']));
   const leyendas = [LEYENDA_DEL_SIN, texto(c['leyenda']), `“${LEYENDA_EN_LINEA}”`].filter((leyenda) => leyenda.trim() !== '');
   const bloques: PdfBlock[] = [
-    noteBlock(
-      `${MARCA_SIMULADO}. Emitida por el simulador de AloVida; no fue enviada al SIN y no sirve para crédito fiscal.`,
-      'alert',
-      'Factura simulada',
-    ),
+    // Un renglón y sin título: la portada ya dice «Factura simulada», y un aviso
+    // de dos renglones con título empujaba el detalle a la segunda hoja.
+    noteBlock(`${MARCA_SIMULADO}: emitida por el simulador de AloVida, no enviada al SIN.`, 'alert'),
     panelsBlock([
       {
         title: 'Emisor',
         fields: [
           { label: 'Razón social', value: texto(c['razonSocialEmisor']) },
           { label: 'NIT (SIMULADO)', value: texto(c['nitEmisor']) },
-          { label: 'Dirección', value: texto(c['direccion']) },
-          { label: 'Municipio', value: texto(c['municipio']) },
+          // Dirección y municipio en un dato, como los imprimen los ejemplos del
+          // SIN: un panel más alto empujaba el detalle a la segunda hoja.
+          { label: 'Dirección / Municipio', value: [texto(c['direccion']), texto(c['municipio'])].filter((parte) => parte !== '').join(' · ') },
           { label: 'Teléfono', value: texto(c['telefono']) },
         ],
       },
@@ -199,17 +207,19 @@ export function bloquesDeRepresentacionGrafica(factura: SimulatedInvoice, qr: Pd
           // El rótulo oficial; la marca va en el valor.
           { label: 'Cód. Autorización', value: `${factura.cuf} (SIMULADO)` },
           { label: 'Actividad', value: `${texto(factura.detalle[0]?.['actividadEconomica'])} (código simulado)` },
-          { label: 'Casa matriz / sucursal', value: `N.º ${texto(c['codigoSucursal'])}` },
-          { label: 'Punto de venta', value: `N.º ${texto(c['codigoPuntoVenta']) || '0'}` },
+          {
+            label: 'Casa matriz / sucursal',
+            value: `N.º ${texto(c['codigoSucursal'])} · Punto de venta N.º ${texto(c['codigoPuntoVenta']) || '0'}`,
+          },
         ],
       },
     ]),
     // Sin título de sección: la cabecera de la tabla ya dice qué es, y el título
     // podía quedar solo al pie de una hoja con la tabla en la siguiente.
-    // La moneda va en una línea bajo la tabla y no en cada celda, como en los
-    // ejemplos del SIN: con «Bs» en siete columnas, los importes se partían en
-    // dos renglones.
-    fila(['Código', 'Descripción', 'Cantidad', 'Unidad', 'P. unitario', 'Descuento', 'Subtotal'], true),
+    // La moneda va en la cabecera y no en cada celda, como en los ejemplos del
+    // SIN: con «Bs» en siete columnas, los importes se partían en dos renglones.
+    // Cabeceras cortas: «P. unitario» en versalitas se partía en dos.
+    fila(['Código', 'Descripción', 'Cant.', 'Unidad', 'P. unit. Bs', 'Desc. Bs', 'Subtotal Bs'], true),
     ...factura.detalle.map((d) =>
       fila([
         texto(d['codigoProducto']),
@@ -221,7 +231,8 @@ export function bloquesDeRepresentacionGrafica(factura: SimulatedInvoice, qr: Pd
         importe(d['subTotal']),
       ]),
     ),
-    { kind: 'caption', text: 'Importes del detalle en bolivianos (Bs).' },
+    // La caja de totales va pegada a la tabla: el motor la reserva con sus
+    // últimas filas, y un texto en medio los separaba de hoja.
     totalsBlock([
       { label: 'Subtotal', value: bs(subtotal) },
       { label: 'Descuento', value: bsRestado(c['descuentoAdicional']) },
@@ -242,7 +253,7 @@ export function bloquesDeRepresentacionGrafica(factura: SimulatedInvoice, qr: Pd
     // Antes del QR y no después: al final quedaba sola en una hoja propia.
     {
       kind: 'caption',
-      text: `Documento sector ${factura.documentSector} · Factura Compra y Venta · Computarizada en Línea · SIAT SIMULADO: ${factura.siatResponse.codigoEstado} ${factura.siatResponse.codigoDescripcion}`,
+      text: `Importes en bolivianos (Bs) · Documento sector ${factura.documentSector} · Factura Compra y Venta · Computarizada en Línea · SIAT SIMULADO: ${factura.siatResponse.codigoEstado} ${estadoLegible(factura.siatResponse.codigoDescripcion)}`,
     },
     ...(qr === null
       ? [{ kind: 'caption' as const, text: `QR de verificación SIMULADO: ${contenidoDelQr(factura)} (no apunta al SIN)` }]
@@ -268,8 +279,8 @@ export function invoicePdfOptions(factura: SimulatedInvoice): PdfExportOptions {
     title: 'FACTURA (SIMULADA)',
     subtitle: '(Con Derecho a Crédito Fiscal)',
     kind: 'Factura simulada · Sin validez fiscal',
-    reference: `Factura N.º ${factura.invoiceNumber}`,
-    meta: [{ label: 'Estado SIAT (SIMULADO)', value: factura.siatResponse.codigoDescripcion }],
+    reference: `N.º ${factura.invoiceNumber}`,
+    meta: [{ label: 'Estado SIAT (SIMULADO)', value: estadoLegible(factura.siatResponse.codigoDescripcion) }],
     ...(issuedAt === undefined ? {} : { issuedAt }),
     issuer: pdfIssuerOf(factura.issuer),
     footerNote: SIMULATED_INVOICE_FOOTER,

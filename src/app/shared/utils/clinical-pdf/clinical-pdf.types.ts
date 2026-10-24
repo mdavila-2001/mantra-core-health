@@ -153,13 +153,19 @@ export interface RespuestaDeFormulario {
  * Un **formulario clínico respondido** dentro de un encuentro (carril de
  * consulta de formularios).
  *
- * Sin paciente ni profesional todavía: el bloque que hoy lo descarga vive
- * dentro del expediente y no conoce esos datos resueltos; cuando el documento
- * se arme desde una pantalla que los tenga, se agregan acá y el armador les da
- * la misma cabecera que a la receta y la atención.
+ * Paciente, profesional y organización son opcionales: el bloque que hoy lo
+ * descarga vive dentro del expediente y no conoce esos datos resueltos (sólo
+ * el identificador del perfil). Cuando llegan, el armador les da la misma
+ * cabecera que a la receta y la atención, y la organización firma el pie.
  */
 export interface DocumentoDeFormulario {
   readonly id: string;
+  /** A quién corresponde, si quien arma el documento lo sabe. */
+  readonly paciente?: DocumentoPaciente;
+  /** Quién lo registró, si se sabe. */
+  readonly profesional?: DocumentoProfesional;
+  /** La organización que emite la copia, si se sabe. */
+  readonly organizacion?: string;
   /** El nombre de la plantilla, o un título genérico si no se pudo resolver. */
   readonly titulo: string;
   /** Cuándo se completó, si la instancia registró el cierre. */
@@ -208,6 +214,13 @@ export interface DocumentoDeOrden {
 /** Una atención dentro de la historia, con lo que se registró en ella. */
 export interface HistoriaAtencion {
   readonly titulo: string;
+  /**
+   * Cuándo empezó y por qué, si se saben: la historia los usa para encabezar
+   * la atención en su tabla y ordenarlas de la más reciente a la más vieja.
+   * Sin ellos, la atención se encabeza con `titulo`.
+   */
+  readonly inicio?: Date;
+  readonly motivo?: string;
   readonly bloques: readonly DocumentoBloque[];
 }
 

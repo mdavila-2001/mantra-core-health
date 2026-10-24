@@ -196,10 +196,17 @@ describe('bloquesDeComprobante', () => {
 
     expect(aviso?.kind).toBe('note');
     expect(aviso?.tone).toBe('brand');
-    expect(aviso?.title).toBe('Este comprobante no es una factura');
+    expect(aviso?.title).toBe('No es una factura');
     expect(aviso?.text).toBe(
-      'Comprobante interno de AloVida que acredita el pago del pedido. No es una factura: la factura la emite la farmacia.',
+      'Comprobante interno de AloVida que acredita el pago del pedido. La factura la emite la farmacia.',
     );
+  });
+
+  it('«no es una factura» se dice una sola vez en el cuerpo: el pie lo repite en cada hoja', () => {
+    const todo = bloquesDeComprobante(papel)
+      .map((bloque) => [bloque.title ?? '', bloque.text].join('\n'))
+      .join('\n');
+    expect(todo.match(/no es una factura/gi)).toHaveLength(1);
   });
 
   it('el papel dice quién, cuándo y con qué medio, en tarjetas lado a lado', () => {
@@ -210,11 +217,9 @@ describe('bloquesDeComprobante', () => {
       'Farmacia › Nombre': 'Farmacia Andina',
       'Farmacia › Sede': 'Sucursal Centro',
       'Paciente › Nombre': 'Ana Pérez',
-      // La fecha del pago, en palabras locales — no la de generación.
-      'Pago › Pagado el': new Intl.DateTimeFormat('es-BO', { dateStyle: 'long', timeStyle: 'short' }).format(
-        PAGADO_EL,
-      ),
-      'Pago › Medio de pago': 'Pagado en mostrador',
+      // La fecha del pago —no la de generación—, en `dd/mm/aaaa, hh:mm` de 24 h.
+      'Pago › Pagado el': '21/08/2026, 18:30',
+      'Pago › Canal de pago': 'Pagado en mostrador',
     });
   });
 
@@ -227,7 +232,7 @@ describe('bloquesDeComprobante', () => {
     expect(partes({ ...papel, paciente: '   ' })['Paciente › Nombre']).toBeUndefined();
   });
 
-  it('cada línea cobrada es una fila con su importe en moneda, y el precio ausente se dice', () => {
+  it('cada línea cobrada es una fila con su importe en formato boliviano, y el precio ausente se dice', () => {
     const bloques = bloquesDeComprobante(papel);
     const cabecera = bloques.find((bloque) => bloque.kind === 'row' && bloque.header === true);
     expect(cabecera?.cells).toEqual(['Producto', 'Cantidad', 'Importe']);
@@ -239,13 +244,15 @@ describe('bloquesDeComprobante', () => {
     expect(filas).toHaveLength(2);
     // La cantidad va sola —es un número y se alinea a la derecha—, y el
     // importe lleva la moneda visible.
-    expect(filas[0]?.cells).toEqual(['Amoxicilina · 500 mg', '1', '60.00 Bs']);
-    expect(filas[0]?.text).toBe('Amoxicilina · 500 mg\t1\t60.00 Bs');
+    expect(filas[0]?.cells).toEqual(['Amoxicilina · 500 mg', '1', '60,00 Bs']);
+    expect(filas[0]?.text).toBe('Amoxicilina · 500 mg\t1\t60,00 Bs');
     // Sin precio, una raya en la columna —para no desalinear los importes—
     // y la explicación en letra chica debajo de la tabla.
     expect(filas[1]?.cells).toEqual(['Ibuprofeno', '2', '—']);
     const nota = bloques.find((bloque) => bloque.kind === 'caption');
-    expect(nota?.text).toContain('Precio no publicado');
+    expect(nota?.text).toBe(
+      '— Precio no publicado por la farmacia: el producto no tiene importe propio en el detalle.',
+    );
     expect(bloques.indexOf(nota!)).toBeGreaterThan(bloques.indexOf(filas[1]!));
   });
 
@@ -257,13 +264,26 @@ describe('bloquesDeComprobante', () => {
     expect(bloquesDeComprobante(completo).some((bloque) => bloque.kind === 'caption')).toBe(false);
   });
 
-  it('el total pagado va en la caja de totales, resaltado y al final', () => {
+  it('el total pagado va en la caja de totales, resaltado y pegado a la última fila', () => {
     const bloques = bloquesDeComprobante(papel);
     const caja = bloques.find((bloque) => bloque.kind === 'totals');
+    // Inmediatamente después de la última fila: así el motor los pasa de hoja juntos.
+    const ultimaFila = bloques.filter((bloque) => bloque.kind === 'row').at(-1);
+    expect(bloques.indexOf(caja!)).toBe(bloques.indexOf(ultimaFila!) + 1);
 
-    expect(caja?.totals).toEqual([{ label: 'Total pagado', value: '111.00 Bs', emphasis: true }]);
-    expect(caja?.text).toBe('Total pagado: 111.00 Bs');
-    expect(bloques.at(-1)).toBe(caja);
+    expect(caja?.totals).toEqual([{ label: 'Total pagado', value: '111,00 Bs', emphasis: true }]);
+    expect(caja?.text).toBe('Total pagado: 111,00 Bs');
+    // Separador de miles con punto y decimales con coma.
+    expect(bloquesDeComprobante({ ...papel, total: '6348.00' }).find((b) => b.kind === 'totals')?.totals?.[0]?.value).toBe(
+      '6.348,00 Bs',
+    );
+    // Una moneda que no es el boliviano se muestra con su código, no como «Bs».
+    expect(bloquesDeComprobante({ ...papel, moneda: 'USD' }).find((b) => b.kind === 'totals')?.totals?.[0]?.value).toBe(
+      '111,00 USD',
+    );
+    // Con todos los precios, la caja cierra el papel.
+    const completo = bloquesDeComprobante({ ...papel, lineas: [papel.lineas[0]!] });
+    expect(completo.at(-1)?.kind).toBe('totals');
   });
 
   it('sin total, el vacío honesto — jamás un número a medias', () => {
@@ -308,6 +328,10 @@ describe('receiptPdfOptions', () => {
     const opciones = receiptPdfOptions(papel);
     expect(opciones.firma).toBeNull();
     expect(opciones.footerNote).toContain('No válido como factura');
+  });
+
+  it('no imprime un folio que el dato no trae: ni el uuid ni el código de retiro', () => {
+    expect(receiptPdfOptions(papel).reference).toBeUndefined();
   });
 
   it('no presenta la fecha del pago como fecha de emisión: la portada rotula la de generación', () => {

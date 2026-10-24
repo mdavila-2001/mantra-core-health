@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { afterEach, beforeEach, test, vi } from 'vitest';
 
 import { buildReceiptPdf } from '../../src/app/shared/utils/receipt-pdf/receipt-pdf';
 import type { DocumentoDeComprobante } from '../../src/app/shared/utils/receipt-pdf/receipt-pdf.types';
@@ -40,7 +40,7 @@ const PRODUCTS = [
   'Clorfenamina · Jarabe 2 mg/5 ml · Frasco x 120 ml',
 ];
 
-const LONG_LINES = Array.from({ length: 34 }, (_, i) => {
+const LONG_LINES = Array.from({ length: 38 }, (_, i) => {
   const unit = 12 + ((i * 29) % 140);
   const qty = 1 + (i % 4);
   return {
@@ -62,6 +62,16 @@ const LONG: DocumentoDeComprobante = {
   total: LONG_LINES.reduce((sum, line) => sum + Number(line.importe ?? 0), 0).toFixed(2),
   moneda: 'BOB',
 };
+
+/** Un reloj fijo, posterior a todos los eventos de las muestras: la portada y el pie salen iguales en cada corrida. */
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 24, 18, 0));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 test('muestra del comprobante corto', () => {
   loadBrandFonts();

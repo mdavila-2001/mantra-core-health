@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { afterEach, beforeEach, test, vi } from 'vitest';
 
 import type { PaginaDeFormulario } from '../../src/app/shared/forms/paginated/paginated-form.types';
 import {
@@ -18,14 +18,20 @@ import { loadBrandFonts, savePdf, useSampleSignature } from './sample-setup';
 
 const si = (value: string, label = value) => ({ value, label });
 
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 24, 18, 0));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 test('formulario en blanco de una hoja', () => {
   loadBrandFonts();
   useSampleSignature();
   const pagina: PaginaDeFormulario = {
     titulo: 'Tamizaje de riesgo cardiovascular',
-    hint: 'Responda pensando en los últimos doce meses.',
     campos: [
-      { key: 'presion', label: 'Presión arterial habitual', control: 'text', hint: 'Por ejemplo, 120/80 mmHg.' },
       { key: 'fuma', label: '¿Fuma actualmente?', control: 'yes-no', required: true },
       {
         key: 'actividad',
@@ -34,7 +40,12 @@ test('formulario en blanco de una hoja', () => {
         required: true,
         options: [si('nada', 'Ninguna'), si('poca', 'Menos de 150 min'), si('ok', '150 min o más')],
       },
-      { key: 'medicacion', label: 'Medicación que toma habitualmente', control: 'text' },
+      { key: 'hta', label: '¿Le diagnosticaron presión alta?', control: 'yes-no' },
+      {
+        key: 'medicacion',
+        label: 'Medicación que toma habitualmente',
+        control: 'textarea',
+      },
     ],
   };
   const datos: FormularioParaPdf = {
@@ -132,7 +143,7 @@ test('formulario en blanco de varias hojas, con todos los tipos de pregunta', ()
         {
           key: 'orden',
           label: 'Ordene sus prioridades para el tratamiento',
-          control: 'grid-checkboxes',
+          control: 'grid-radio',
           oneResponsePerColumn: true,
           rows: [si('dolor', 'Aliviar el dolor'), si('sueno', 'Dormir mejor'), si('energia', 'Recuperar energía')],
           options: [si('1', 'Primera'), si('2', 'Segunda'), si('3', 'Tercera')],

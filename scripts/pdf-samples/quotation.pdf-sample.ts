@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { afterEach, beforeEach, test, vi } from 'vitest';
 
 import { buildQuotationPdf, type QuotationPdfData } from '../../src/app/shared/utils/quotation-pdf/quotation-pdf';
 import { loadBrandFonts, savePdf, useSampleSignature } from './sample-setup';
@@ -48,6 +48,16 @@ const LONG: QuotationPdfData = {
     amount: 312.5,
   })),
 };
+
+/** Un reloj fijo, posterior a todos los eventos de las muestras: la portada y el pie salen iguales en cada corrida. */
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 24, 18, 0));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 test('muestra de la cotización corta', () => {
   loadBrandFonts();

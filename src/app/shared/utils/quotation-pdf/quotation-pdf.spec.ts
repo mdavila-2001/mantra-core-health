@@ -24,8 +24,6 @@ const cotizacion = (extra: Partial<QuotationPdfData> = {}): QuotationPdfData => 
   ...extra,
 });
 
-const FECHA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
-const dia = (iso: string): string => FECHA.format(new Date(`${iso}T00:00:00`));
 
 /** Los datos de todas las rejillas, por etiqueta. */
 const datos = (data: QuotationPdfData): Record<string, string> =>
@@ -45,10 +43,10 @@ describe('quotationPdfOptions', () => {
 
   it('la vigencia va en los metadatos de la portada, en palabras', () => {
     expect(quotationPdfOptions(cotizacion()).meta).toEqual([
-      { label: 'Válida hasta', value: dia('2026-11-30') },
+      { label: 'Válida hasta', value: '30/11/2026' },
     ]);
     expect(quotationPdfOptions(cotizacion({ validUntil: '' })).meta).toEqual([
-      { label: 'Válida hasta', value: 'No definida' },
+      { label: 'Válida hasta', value: 'Sin fecha de vencimiento' },
     ]);
   });
 
@@ -62,9 +60,10 @@ describe('quotationPdfOptions', () => {
 });
 
 describe('quotationBlocks', () => {
-  it('los datos del plan van en una rejilla', () => {
+  it('los datos del plan van en una rejilla, con fechas dd/mm/aaaa y montos en bolivianos', () => {
     expect(datos(cotizacion())).toEqual({
-      'Fecha de atención': dia('2026-11-02'),
+      'Fecha de atención': '02/11/2026',
+      'Precio ofrecido': '3.000,00 Bs',
       Frecuencia: 'Mensual',
       Cuotas: '3',
     });
@@ -81,39 +80,45 @@ describe('quotationBlocks', () => {
     expect(todo).not.toContain('Ana Pérez');
     expect(todo).not.toContain('Tratamiento de ortodoncia');
     expect(todo).not.toContain('Válida hasta');
-    expect(todo).not.toContain(dia('2026-11-30'));
+    expect(todo).not.toContain('30/11/2026');
   });
 
-  it('cada cuota es una fila de la tabla, con su vencimiento en palabras', () => {
+  it('cada cuota es una fila de la tabla, con su vencimiento y su monto con moneda', () => {
     const bloques = quotationBlocks(cotizacion());
     const cabecera = bloques.find((bloque) => bloque.kind === 'row' && bloque.header === true);
     const filas = bloques.filter((bloque) => bloque.kind === 'row' && bloque.header !== true);
 
     expect(cabecera?.cells).toEqual(['Cuota', 'Vencimiento', 'Monto']);
     expect(filas.map((fila) => fila.cells)).toEqual([
-      ['1', dia('2026-12-02'), '800.00'],
-      ['2', dia('2027-01-02'), '800.00'],
-      ['3', dia('2027-02-02'), '800.00'],
+      ['1', '02/12/2026', '800,00 Bs'],
+      ['2', '02/01/2027', '800,00 Bs'],
+      ['3', '02/02/2027', '800,00 Bs'],
     ]);
   });
 
-  it('la caja de totales cierra con el total del plan —anticipo más cuotas— resaltado', () => {
+  it('la caja de totales cierra: anticipo más saldo en cuotas es el total del plan, resaltado', () => {
     const bloques = quotationBlocks(cotizacion());
     const caja = bloques.find((bloque) => bloque.kind === 'totals');
 
     expect(caja?.totals).toEqual([
-      { label: 'Precio ofrecido', value: '3000.00' },
-      { label: 'Anticipo', value: '600.00' },
-      { label: 'Total del plan', value: '3000.00', emphasis: true },
+      { label: 'Anticipo', value: '600,00 Bs' },
+      { label: 'Saldo en cuotas', value: '2.400,00 Bs' },
+      { label: 'Total del plan', value: '3.000,00 Bs', emphasis: true },
     ]);
+    // El precio ofrecido es un dato de la oferta, no un sumando de la caja.
+    expect(caja?.totals?.map((fila) => fila.label)).not.toContain('Precio ofrecido');
     // Va después de la última cuota: el total resume lo que se acaba de leer.
     const ultimaFila = bloques.filter((bloque) => bloque.kind === 'row').at(-1);
     expect(bloques.indexOf(caja!)).toBeGreaterThan(bloques.indexOf(ultimaFila!));
   });
 
-  it('el total sale de las filas impresas, aunque no coincida con el precio ofrecido', () => {
+  it('el saldo y el total salen de las filas impresas, aunque no coincidan con el precio ofrecido', () => {
     const caja = quotationBlocks(cotizacion({ downPaymentAmount: 0 })).find((b) => b.kind === 'totals');
-    expect(caja?.totals?.at(-1)).toEqual({ label: 'Total del plan', value: '2400.00', emphasis: true });
+    expect(caja?.totals).toEqual([
+      { label: 'Anticipo', value: '0,00 Bs' },
+      { label: 'Saldo en cuotas', value: '2.400,00 Bs' },
+      { label: 'Total del plan', value: '2.400,00 Bs', emphasis: true },
+    ]);
   });
 
   it('las condiciones van en un aviso al final: cómo se paga y que no es una factura', () => {
@@ -132,13 +137,22 @@ describe('quotationBlocks', () => {
     ).toContain('El saldo se paga en una cuota, sin interés,');
   });
 
-  it('sin cuotas no hay tabla, y el aviso dice cómo se paga', () => {
-    const contado = quotationBlocks(cotizacion({ installments: [] }));
+  it('con pago único no hay tabla ni «Cuotas: 0»: la rejilla dice la forma de pago', () => {
+    const datosContado = cotizacion({ installments: [] });
+    const contado = quotationBlocks(datosContado);
     expect(contado.some((bloque) => bloque.kind === 'row')).toBe(false);
+    expect(datos(datosContado)).toEqual({
+      'Fecha de atención': '02/11/2026',
+      'Precio ofrecido': '3.000,00 Bs',
+      'Forma de pago': 'Pago único',
+    });
     expect(contado.at(-1)?.text).toContain('Se paga completo el día de la atención.');
-    expect(contado.find((bloque) => bloque.kind === 'totals')?.totals?.at(-1)?.value).toBe('600.00');
+    expect(contado.find((bloque) => bloque.kind === 'totals')?.totals).toEqual([
+      { label: 'Total a pagar', value: '600,00 Bs', emphasis: true },
+    ]);
 
-    const sinPlan = quotationBlocks(cotizacion({ installments: [], downPaymentAmount: 0 }));
-    expect(sinPlan.at(-1)?.text).toContain('Sin plan de pagos armado todavía.');
+    const datosSinPlan = cotizacion({ installments: [], downPaymentAmount: 0 });
+    expect(datos(datosSinPlan)['Forma de pago']).toBe('Sin definir');
+    expect(quotationBlocks(datosSinPlan).at(-1)?.text).toContain('Sin plan de pagos armado todavía.');
   });
 });

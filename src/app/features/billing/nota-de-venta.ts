@@ -23,13 +23,14 @@ import type {
 import {
   buildBlocksPdf,
   fieldsBlock,
+  formatMoney,
   noteBlock,
   panelsBlock,
   totalsBlock,
   type PdfBlock,
   type PdfExportOptions,
 } from '../../shared/utils/pdf-export/pdf-export';
-import { bs, centavos, deCentavos } from './cobros-en-pantalla';
+import { centavos, deCentavos } from './cobros-en-pantalla';
 import { montoLiteral } from './monto-literal';
 import { pdfIssuerOf } from './representacion-grafica';
 
@@ -53,6 +54,9 @@ export const SALES_NOTE_WATERMARK = 'Simulada · No válida como factura';
 /** La línea legal del pie de cada hoja. */
 export const SALES_NOTE_FOOTER = 'Nota de venta SIMULADA · No válida como factura · Sin validez fiscal';
 
+/** La cabecera del detalle del pago. */
+const CABECERA = ['Servicio', 'Ítem', 'Medio de pago', 'A cobrar Bs', 'Recibido Bs'];
+
 /** Cómo se nombra el emisor cuando la nota no lo trae: no se inventa uno. */
 const EMISOR_DESCONOCIDO = 'Consultorio (SIMULADO)';
 
@@ -71,11 +75,18 @@ export function bloquesDeNotaDeVenta(
   const plan = cobro.plan!;
   const pagado = pagadoHasta(cobro, nota);
   const saldo = deCentavos(Math.max(centavos(plan.expectedTotal) - centavos(pagado), 0));
+  const fila = [
+    plan.serviceName,
+    instancia.label,
+    nota.methodLabel,
+    formatMoney(instancia.expectedAmount, null),
+    formatMoney(nota.amount, null),
+  ];
   return [
     noteBlock(
       `${LEYENDA_DE_NOTA_DE_VENTA}. Comprobante interno SIMULADO: no pasa por el SIN ni sirve para crédito fiscal.`,
       'alert',
-      'No válida como factura',
+      'Comprobante interno',
     ),
     panelsBlock([
       {
@@ -98,22 +109,24 @@ export function bloquesDeNotaDeVenta(
         ],
       },
     ]),
-    // Sin título de sección: la cabecera de la tabla ya dice qué es.
-    { kind: 'row', header: true, text: 'Servicio\tÍtem\tMedio de pago\tA cobrar\tRecibido', cells: ['Servicio', 'Ítem', 'Medio de pago', 'A cobrar', 'Recibido'] },
+    // Sin título de sección: la cabecera de la tabla ya dice qué es. La moneda,
+    // en la cabecera y no en cada celda, como en la factura.
+    { kind: 'row', header: true, text: CABECERA.join('\t'), cells: CABECERA },
     {
       kind: 'row',
-      text: [plan.serviceName, instancia.label, nota.methodLabel, bs(instancia.expectedAmount), bs(nota.amount)].join('\t'),
-      cells: [plan.serviceName, instancia.label, nota.methodLabel, bs(instancia.expectedAmount), bs(nota.amount)],
+      text: fila.join('\t'),
+      cells: fila,
     },
-    totalsBlock([{ label: 'Monto recibido', value: bs(nota.amount), emphasis: true }]),
-    { kind: 'paragraph', text: montoLiteral(nota.amount) },
+    totalsBlock([{ label: 'Monto recibido', value: formatMoney(nota.amount), emphasis: true }]),
+    // El literal con su rótulo, como en la factura.
+    fieldsBlock([{ label: 'Son', value: montoLiteral(nota.amount).replace(/^Son:\s*/, '') }], 2),
     // El estado del plan sin título de sección: los rótulos ya lo dicen, y el
     // título solo empujaba la nota a una segunda hoja.
     fieldsBlock(
       [
-        { label: 'Monto del servicio', value: bs(plan.expectedTotal) },
-        { label: 'Pagado a la fecha', value: bs(pagado) },
-        { label: 'Saldo del plan', value: bs(saldo) },
+        { label: 'Monto del servicio', value: formatMoney(plan.expectedTotal) },
+        { label: 'Pagado a la fecha', value: formatMoney(pagado) },
+        { label: 'Saldo del plan', value: formatMoney(saldo) },
       ],
       3,
     ),
@@ -138,10 +151,12 @@ export function bloquesDeNotaDeVenta(
 export function salesNotePdfOptions(nota: SimulatedSalesNote, emisor: SimulatedIssuer | null): PdfExportOptions {
   const issuedAt = new Date(nota.issuedAt);
   return {
-    title: 'NOTA DE VENTA (SIMULADA)',
-    subtitle: 'No válida como factura · Pago a cuenta del plan',
+    title: 'Nota de venta (simulada)',
+    // «No válida como factura» lo dicen el aviso, la marca de agua y el pie:
+    // repetido también acá y en el título del aviso, eran cinco veces.
+    subtitle: 'Pago a cuenta del plan',
     kind: 'Nota de venta simulada',
-    reference: nota.number,
+    reference: `N.º ${nota.number}`,
     ...(Number.isNaN(issuedAt.getTime()) ? {} : { issuedAt }),
     issuer: emisor === null ? { name: EMISOR_DESCONOCIDO } : pdfIssuerOf(emisor),
     footerNote: SALES_NOTE_FOOTER,

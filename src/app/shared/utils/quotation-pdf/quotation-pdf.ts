@@ -2,9 +2,12 @@ import { InjectionToken } from '@angular/core';
 import type { jsPDF } from 'jspdf';
 
 import type { Installment, PaymentFrequency } from '../../../core/data-access/quotations/quotations.types';
+import { displayCurrency } from '../../../core/money/display-currency';
 import {
   buildBlocksPdf,
   fieldsBlock,
+  formatDate,
+  formatMoney,
   noteBlock,
   totalsBlock,
   type PdfBlock,
@@ -47,8 +50,6 @@ export interface QuotationPdfData {
   readonly installments: readonly Installment[];
 }
 
-const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
-
 /** Una sección: versalitas espaciadas sobre un filete, como el resto del repo. */
 function seccion(text: string): PdfBlock {
   return { kind: 'heading', text, level: 2 };
@@ -82,13 +83,24 @@ const FRECUENCIA_EN_FRASE: Readonly<Record<PaymentFrequency, string>> = {
 /** Lo que el papel aclara siempre: qué es y qué no es. */
 const NO_ES_FACTURA = 'Esta cotización es un presupuesto: no es una factura ni un comprobante de pago.';
 
-/** `YYYY-MM-DD` en prosa, o el texto tal cual si no se pudo interpretar. */
-function formatoFecha(iso: string): string {
+/**
+ * La moneda de los importes. El dato no la trae —el formulario tampoco la
+ * muestra—, y la del sistema es el boliviano (`display-currency.ts`).
+ */
+const MONEDA = displayCurrency(null);
+
+/** Un importe en formato boliviano con su moneda: «1.234,56 Bs». */
+function dinero(monto: number): string {
+  return formatMoney(monto, MONEDA);
+}
+
+/** `YYYY-MM-DD` → `dd/mm/aaaa`; `vacio` si no hay fecha, o el texto tal cual si no se pudo interpretar. */
+function formatoFecha(iso: string, vacio = 'No definida'): string {
   if (iso === '') {
-    return 'No definida';
+    return vacio;
   }
   const fecha = new Date(`${iso}T00:00:00`);
-  return Number.isNaN(fecha.getTime()) ? iso : FORMATO_FECHA.format(fecha);
+  return Number.isNaN(fecha.getTime()) ? iso : formatDate(fecha);
 }
 
 /** Arma el PDF de la cotización actual. No lo guarda: devuelve el documento. */
@@ -113,7 +125,7 @@ export function quotationPdfOptions(data: QuotationPdfData): PdfExportOptions {
     title: 'Cotización de servicios',
     kind: 'Cotización',
     subtitle: `${data.patientName} · ${data.serviceName}`,
-    meta: [{ label: 'Válida hasta', value: formatoFecha(data.validUntil) }],
+    meta: [{ label: 'Válida hasta', value: formatoFecha(data.validUntil, 'Sin fecha de vencimiento') }],
     footerNote: 'Cotización · No es una factura ni un comprobante de pago · AloVida',
     firma: null,
   };
@@ -123,10 +135,18 @@ export function quotationPdfOptions(data: QuotationPdfData): PdfExportOptions {
  * Los bloques de la cotización, en orden de lectura. Exportada para que el spec
  * fije QUÉ dice el papel sin pasar por jsPDF.
  *
- * Los importes salen con dos decimales y sin moneda, como en el formulario: el
- * dato no trae la moneda del servicio, y ponerle una sería inventarla.
+ * La caja de totales **cierra**: anticipo más saldo en cuotas es el total del
+ * plan, y el saldo es la suma de las cuotas impresas en la tabla —no el precio
+ * menos el anticipo—, para que la caja no pueda contradecir las filas. El precio
+ * ofrecido va en la rejilla, como dato de la oferta: en la caja se leería como
+ * un sumando más.
  */
 export function quotationBlocks(data: QuotationPdfData): readonly PdfBlock[] {
+  const cuotas = data.installments.length;
+  const saldo = data.installments.reduce((suma, cuota) => suma + cuota.amount, 0);
+  // Anticipo más cuotas: lo que la persona termina pagando.
+  const total = data.downPaymentAmount + saldo;
+
   // Quién y qué se cotiza van en la bajada de la portada; el cuerpo no los
   // repite y arranca por cuándo y cómo se paga.
   const bloques: PdfBlock[] = [
@@ -134,33 +154,35 @@ export function quotationBlocks(data: QuotationPdfData): readonly PdfBlock[] {
     fieldsBlock(
       [
         { label: 'Fecha de atención', value: formatoFecha(data.attentionDate) },
-        { label: 'Frecuencia', value: NOMBRE_DE_FRECUENCIA[data.paymentFrequency] },
-        { label: 'Cuotas', value: `${data.installments.length}` },
+        { label: 'Precio ofrecido', value: dinero(data.offeredPrice) },
+        // Sin cuotas, «Frecuencia: Mensual · Cuotas: 0» describiría un plan que
+        // no existe: se dice la forma de pago.
+        ...(cuotas === 0
+          ? [{ label: 'Forma de pago', value: data.downPaymentAmount > 0 ? 'Pago único' : 'Sin definir' }]
+          : [
+              { label: 'Frecuencia', value: NOMBRE_DE_FRECUENCIA[data.paymentFrequency] },
+              { label: 'Cuotas', value: `${cuotas}` },
+            ]),
       ],
-      3,
+      cuotas === 0 ? 3 : 4,
     ),
   ];
 
-  if (data.installments.length > 0) {
+  if (cuotas > 0) {
     bloques.push(fila(['Cuota', 'Vencimiento', 'Monto'], true));
     for (const cuota of data.installments) {
-      bloques.push(
-        fila([String(cuota.installmentNumber), formatoFecha(cuota.dueDate), cuota.amount.toFixed(2)]),
-      );
+      bloques.push(fila([String(cuota.installmentNumber), formatoFecha(cuota.dueDate), dinero(cuota.amount)]));
     }
+    bloques.push(
+      totalsBlock([
+        { label: 'Anticipo', value: dinero(data.downPaymentAmount) },
+        { label: 'Saldo en cuotas', value: dinero(saldo) },
+        { label: 'Total del plan', value: dinero(total), emphasis: true },
+      ]),
+    );
+  } else {
+    bloques.push(totalsBlock([{ label: 'Total a pagar', value: dinero(total), emphasis: true }]));
   }
-
-  // Anticipo más cuotas: lo que la persona termina pagando. Sale de las mismas
-  // filas impresas arriba, para que el total no pueda contradecirlas.
-  const total =
-    data.downPaymentAmount + data.installments.reduce((suma, cuota) => suma + cuota.amount, 0);
-  bloques.push(
-    totalsBlock([
-      { label: 'Precio ofrecido', value: data.offeredPrice.toFixed(2) },
-      { label: 'Anticipo', value: data.downPaymentAmount.toFixed(2) },
-      { label: 'Total del plan', value: total.toFixed(2), emphasis: true },
-    ]),
-  );
 
   bloques.push(noteBlock(`${formaDePago(data)} ${NO_ES_FACTURA}`, 'brand', 'Condiciones'));
   return bloques;

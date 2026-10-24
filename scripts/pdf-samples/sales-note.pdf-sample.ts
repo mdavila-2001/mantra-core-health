@@ -2,7 +2,7 @@
 // fuera del builder de Angular necesita el compilador JIT para cargarse.
 import '@angular/compiler';
 
-import { test } from 'vitest';
+import { afterEach, beforeEach, test, vi } from 'vitest';
 
 import type {
   SimulatedCharge,
@@ -84,6 +84,14 @@ const COBRO: SimulatedCharge = {
   },
   simulated: true,
 };
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 24, 18, 0));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 test('nota de venta simulada', () => {
   loadBrandFonts();
