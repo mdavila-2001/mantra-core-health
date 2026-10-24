@@ -85,9 +85,9 @@ describe('AuthzAdminClient', () => {
     post.flush({ id: ASSIGNMENT });
 
     client.revoke(USER, ASSIGNMENT).subscribe();
-    const del = http.expectOne(`/authz/users/${USER}/role-assignments/${ASSIGNMENT}`);
-    expect(del.request.method).toBe('DELETE');
-    del.flush({ id: ASSIGNMENT, status: 'REVOKED', note: 'x' });
+    const deletion = http.expectOne(`/authz/users/${USER}/role-assignments/${ASSIGNMENT}`);
+    expect(deletion.request.method).toBe('DELETE');
+    deletion.flush({ id: ASSIGNMENT, status: 'REVOKED', note: 'x' });
   });
 
   it('lee roles asignables, el catálogo de permisos y los permisos de un rol', () => {

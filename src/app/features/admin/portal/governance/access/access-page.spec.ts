@@ -122,9 +122,9 @@ describe('AccessPage', () => {
 
     (drawer()!.querySelector('[data-testid="portal-assignment-revoke"]') as HTMLButtonElement).click();
     await harness.fixture.whenStable();
-    const del = http.expectOne(`/authz/users/${USER}/role-assignments/${ASSIGNMENT}`);
-    expect(del.request.method).toBe('DELETE');
-    del.flush({ id: ASSIGNMENT, status: 'REVOKED', note: 'x' });
+    const deletion = http.expectOne(`/authz/users/${USER}/role-assignments/${ASSIGNMENT}`);
+    expect(deletion.request.method).toBe('DELETE');
+    deletion.flush({ id: ASSIGNMENT, status: 'REVOKED', note: 'x' });
     http
       .expectOne(`/authz/users/${USER}/role-assignments`)
       .flush({ userId: USER, items: [{ ...assignment, status: 'REVOKED', isEffective: false }] });
