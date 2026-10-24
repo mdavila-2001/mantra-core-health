@@ -240,8 +240,9 @@ test('la médica bloquea el rato de una cita: ve a la paciente, confirma, y la c
   await expect(dialogo).toBeVisible();
   await expect(page.getByTestId('dialogo-titulo')).toHaveText('Este bloqueo cancela una cita');
   await expect(page.getByTestId('dialogo-detalles')).toContainText('Rosa Quispe');
+  await page.screenshot({ path: testInfo.outputPath('modal-confirmacion.png'), fullPage: true });
   await testInfo.attach('modal-confirmacion', {
-    body: await page.screenshot({ fullPage: true }),
+    path: testInfo.outputPath('modal-confirmacion.png'),
     contentType: 'image/png',
   });
 
@@ -262,8 +263,9 @@ test('la médica bloquea el rato de una cita: ve a la paciente, confirma, y la c
 
   const toast = page.getByTestId('toast-mensaje');
   await expect(toast).toContainText('Se canceló 1 cita');
+  await page.screenshot({ path: testInfo.outputPath('bloqueo-creado.png'), fullPage: true });
   await testInfo.attach('bloqueo-creado', {
-    body: await page.screenshot({ fullPage: true }),
+    path: testInfo.outputPath('bloqueo-creado.png'),
     contentType: 'image/png',
   });
 
@@ -309,8 +311,9 @@ test('a la paciente le llega «Su cita se canceló» con el motivo del bloqueo',
   await irA(page, '/notification-center');
   await estable(page);
   await expect(page.locator('app-root')).toContainText('Su cita se canceló');
+  await page.screenshot({ path: testInfo.outputPath('bandeja-paciente.png'), fullPage: true });
   await testInfo.attach('bandeja-paciente', {
-    body: await page.screenshot({ fullPage: true }),
+    path: testInfo.outputPath('bandeja-paciente.png'),
     contentType: 'image/png',
   });
 });
