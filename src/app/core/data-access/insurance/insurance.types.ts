@@ -283,6 +283,13 @@ export interface InsurerMarketplace {
    */
   readonly carrier: CarrierDetail | null;
   readonly brokers: readonly MarketplaceBroker[];
+  /**
+   * Si los planes son **de ejemplo**: la aseguradora no publicó su catálogo y
+   * la maqueta muestra uno ilustrativo. La pantalla lo dice en el aviso y en
+   * cada plan, para no atribuirle a una compañía real un producto que no
+   * vende. Sin el campo en la respuesta, `false`.
+   */
+  readonly exampleCatalog: boolean;
 }
 
 /** Un vínculo del broker con una aseguradora. */

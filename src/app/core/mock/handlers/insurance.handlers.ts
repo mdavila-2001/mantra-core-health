@@ -1009,8 +1009,9 @@ function aDecena(monto: number): string {
  * código de la aseguradora sacado del slug y primas que dependen de él. Quien
  * cubre salud ofrece tres planes de salud; una compañía de seguros generales y
  * fianzas —que según la planilla no cubre salud— ofrece accidentes personales,
- * que es lo que esas compañías le venden a una persona. **Son planes de ejemplo**, como el resto de la maqueta:
- * los nombres son genéricos a propósito para no atribuirle a una compañía real
+ * que es lo que esas compañías le venden a una persona. **Son planes de
+ * ejemplo**, como el resto de la maqueta, y la vitrina los rotula así
+ * (`exampleCatalog: true`, 24/10/2026). Los nombres son genéricos a propósito para no atribuirle a una compañía real
  * un producto que no tiene, y no lleva canales de contacto ni matrícula del
  * regulador por lo mismo.
  */
@@ -1131,12 +1132,13 @@ export function registrarSeguros(router: MockRouter): void {
       // sólo mueve la fecha de alta y el tamaño de la red.
       const sintetica = aseguradoraDeLaFicha(ficha);
       const carrier = detalleDeAseguradora(sintetica, semilla(ficha.slug) % 10);
-      return { carrier: { ...carrier, canAdminister: false }, brokers };
+      // `exampleCatalog`: la pantalla rotula estos planes «de ejemplo».
+      return { carrier: { ...carrier, canAdminister: false }, brokers, exampleCatalog: true };
     }
     const aseguradora = ASEGURADORAS[indice]!;
     const carrier =
       catalogoAdministrable.get(aseguradora.id) ?? detalleDeAseguradora(aseguradora, indice);
-    return { carrier: { ...carrier, canAdminister: false }, brokers };
+    return { carrier: { ...carrier, canAdminister: false }, brokers, exampleCatalog: false };
   });
 
   router.post('/insurance-products/:productId/plans', (request) => {
