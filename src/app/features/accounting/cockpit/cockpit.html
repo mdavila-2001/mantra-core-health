@@ -31,6 +31,8 @@
      Práctica, ejercicio y período en una sola fila, con el estado del período
      al final. En una contabilidad el período no es un filtro: decide si un
      asiento se puede postear, así que va siempre a la vista. -->
+<!-- Sin prácticas que elegir, la barra de contexto sobra: el tablero dice qué falta. -->
+@if (opcionesDePractica().length > 0) {
 <app-card variant="outlined" padding="md" class="contexto">
   <div class="contexto__fila">
     <app-form-field label="Práctica" class="contexto__practica">
@@ -110,6 +112,7 @@
     }
   </div>
 </app-card>
+}
 
 <app-view-state-host [state]="estadoDelTablero()" (retry)="recargar()">
   <!-- S4 propio: el 422 de «profesional sin vínculo con la práctica» no es
