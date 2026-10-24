@@ -3,28 +3,28 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 40 disecciones de cadáveres adultos coreanos, el músculo se dividió en una capa superficial y otra profunda respecto del elevador del labio superior.",
+        "es": "Según 40 disecciones en cadáveres adultos coreanos, tiene dos capas: una que desciende por encima del elevador del labio superior y otra que queda por debajo de él.",
         "cites": [
           "PMID:20512646"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esa serie, la capa profunda nacía de la capa superficial y de la apófisis frontal del maxilar, y terminaba entre el elevador del ángulo de la boca y el orbicular de la boca.",
+        "es": "Con origen doble —en la capa superficial y en la apófisis frontal del maxilar—, la capa profunda iba a terminar, en esa serie, entre los músculos orbicular de la boca y elevador del ángulo de la boca.",
         "cites": [
           "PMID:20512646"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 44 especímenes de cadáveres coreanos, el depresor de la ceja se unía a este músculo o a las fibras inferiores del orbicular del ojo en el 75,0 % de los casos.",
+        "es": "Tres de cada cuatro especímenes de un grupo de 44 cadáveres coreanos (33 casos) mostraban fibras musculares o aponeurosis finas que unían el depresor de la ceja con este músculo o con las fibras inferiores del orbicular del ojo.",
         "cites": [
           "PMID:35231048"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 53 caras de cadáveres coreanos, una parte de sus fibras mediales de origen ascendía para mezclarse entre el prócer y el depresor de la ceja en el 13,5 % de los casos.",
+        "es": "La zona comprendida entre la capa superficial del prócer y el depresor de la ceja recibía fibras de origen medial de este músculo en el 13,5 % de 53 caras de cadáveres coreanos.",
         "cites": [
           "PMID:28132092"
         ]
@@ -42,21 +42,21 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es uno de los principales músculos de la expresión facial y se activa al sonreír.",
+        "es": "Interviene en la sonrisa y figura entre los músculos más importantes de la mímica.",
         "cites": [
           "PMID:32807628"
         ]
       },
       {
         "aspect": "situation",
-        "es": "En 52 disecciones de cadáveres conservados con el método de Thiel, su origen se localizó en el margen superior de la apófisis temporal, sobre la cara lateral del hueso cigomático.",
+        "es": "El borde superior de la apófisis temporal, en la cara lateral del cigomático, fue su sitio de origen en 52 hemicaras de cadáveres con embalsamamiento de Thiel.",
         "cites": [
           "PMID:32807628"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En esa misma serie, el músculo se superponía al borde anterosuperior del masetero.",
+        "es": "En su trayecto cubre el borde anterosuperior del masetero, según esa misma serie.",
         "cites": [
           "PMID:32807628"
         ]
@@ -102,7 +102,7 @@
       },
       {
         "aspect": "relations",
-        "es": "Los ligamentos cigomáticos anclan la piel de la mejilla al borde inferior del cigoma, justo por detrás del origen de este músculo.",
+        "es": "Justo detrás de su origen, el borde inferior del cigoma da anclaje a los ligamentos cigomáticos, que fijan allí la piel de la mejilla.",
         "cites": [
           "PMID:2909050"
         ]
@@ -127,14 +127,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es un músculo de la expresión facial que eleva las comisuras de la boca.",
+        "es": "Su acción propia en la mímica es levantar la comisura bucal.",
         "cites": [
           "PMID:31613468"
         ]
       },
       {
         "aspect": "function",
-        "es": "Actúa junto con los cigomáticos mayor y menor y los elevadores del labio superior para exponer los dientes superiores durante la sonrisa.",
+        "es": "En la sonrisa colabora con ambos cigomáticos y con los elevadores del labio superior para que se vea la arcada dental superior.",
         "cites": [
           "PMID:31613468"
         ]
@@ -162,7 +162,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Su parálisis unilateral puede causar una asimetría apreciable de la sonrisa.",
+        "es": "Aunque no es el más decisivo de los músculos de la sonrisa, si se paraliza de un solo lado la sonrisa puede volverse visiblemente asimétrica.",
         "cites": [
           "PMID:31613468"
         ]
@@ -173,14 +173,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es el único elevador del labio inferior y del mentón, y constituye el principal soporte vertical del labio inferior.",
+        "es": "Ningún otro músculo eleva el labio inferior y el mentón; además, es el principal sostén vertical del labio inferior.",
         "cites": [
           "PMID:23524754"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 40 cadáveres coreanos, las fibras mediales de ambos lados descendían y se entrecruzaban, dando forma a la prominencia en cúpula del mentón en todos los especímenes.",
+        "es": "El entrecruzamiento de las fibras mediales derecha e izquierda, que bajan hacia delante y adentro, modelaba la prominencia en cúpula del mentón en los 40 cadáveres coreanos estudiados.",
         "cites": [
           "PMID:23524754"
         ]
@@ -233,7 +233,7 @@
       },
       {
         "aspect": "relations",
-        "es": "Su borde medial se superpone al depresor del labio inferior y el lateral linda con el risorio, el cigomático mayor y el platisma.",
+        "es": "Limita por fuera con el risorio, el cigomático mayor y el platisma, y por dentro su borde se monta sobre el depresor del labio inferior, lo que dificulta inyectarlo con precisión.",
         "cites": [
           "PMID:25347627"
         ]
@@ -265,14 +265,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Llamado a menudo músculo de la sonrisa, es un músculo de la expresión facial que no existe en todas las personas.",
+        "es": "Músculo de la mímica al que se suele llamar «músculo de la sonrisa», no todas las personas lo tienen.",
         "cites": [
           "PMID:31082043"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Es un músculo superficial muy delgado que carece de origen óseo.",
+        "es": "Es una lámina muscular superficial y muy fina que no nace de ningún hueso.",
         "cites": [
           "PMID:35399400"
         ]
@@ -311,7 +311,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En un cadáver con una variante arterial bilateral, el músculo de cada lado nacía de los tubérculos anteriores de las apófisis transversas de la quinta y la sexta vértebras cervicales y terminaba en el tubérculo escaleno de la primera costilla.",
+        "es": "En un cadáver en que ambas arterias subclavias pasaban por delante de él, el músculo se extendía, a cada lado, desde los tubérculos anteriores de las apófisis transversas de C5 y C6 hasta el tubérculo escaleno de la primera costilla.",
         "cites": [
           "PMID:17867345"
         ]
@@ -350,21 +350,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es un músculo suprahioideo, par y estrecho, tendido entre la base del cráneo y el hueso hioides.",
+        "es": "Este suprahioideo estrecho, presente a ambos lados, se extiende desde la base del cráneo hasta el hioides.",
         "cites": [
           "PMID:31613433"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Acompaña al digástrico a lo largo del borde superior de su vientre posterior.",
+        "es": "Su recorrido sigue el borde superior del vientre posterior del digástrico.",
         "cites": [
           "PMID:31613433"
         ]
       },
       {
         "aspect": "function",
-        "es": "Junto con los demás suprahioideos participa en la masticación, la deglución y la fonación.",
+        "es": "Con el resto del grupo suprahioideo contribuye a masticar, tragar y articular la voz.",
         "cites": [
           "PMID:31613433"
         ]
@@ -396,21 +396,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es un ramo del nervio maxilar, división del trigémino, que se desprende en la fosa pterigopalatina.",
+        "es": "Procede del nervio maxilar —la segunda división del trigémino— y se separa de él en la fosa pterigopalatina.",
         "cites": [
           "PMID:30860693"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Pasa por el agujero esfenopalatino hacia la cavidad nasal, baja en dirección oblicua y anterior y emerge en el paladar anterior por el agujero incisivo.",
+        "es": "Su trayecto termina en el agujero incisivo, por donde aparece en el paladar anterior, después de entrar en la nariz por el agujero esfenopalatino y descender en diagonal hacia delante.",
         "cites": [
           "PMID:30860693"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Conduce, en general, la sensibilidad de la mucosa del tabique nasal y del paladar.",
+        "es": "Su territorio sensitivo habitual es la mucosa del tabique nasal y la del paladar.",
         "cites": [
           "PMID:30860693"
         ]
@@ -431,7 +431,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Su bloqueo anestesia la mucosa palatina y la encía que rodean los 6 dientes anteriores del maxilar.",
+        "es": "Bloquearlo deja insensibles la mucosa del paladar y la encía alrededor de los seis dientes anteriores del maxilar.",
         "cites": [
           "PMID:30860693"
         ]
@@ -555,14 +555,14 @@
       },
       {
         "aspect": "innervation",
-        "es": "Recibe inervación del plexo faríngeo, con fibras adicionales de los nervios palatinos menores, que penetran principalmente por su borde lateral.",
+        "es": "Sus nervios proceden del plexo faríngeo, al que se suman fibras de los palatinos menores, y lo abordan sobre todo por el borde lateral.",
         "cites": [
           "PMID:38695947"
         ]
       },
       {
         "aspect": "function",
-        "es": "Interviene de manera esencial en la deglución y el habla, y colabora con otros dilatadores en mantener abierta la vía aérea superior.",
+        "es": "Es clave para tragar y hablar, y contribuye, junto a otros músculos dilatadores, a que la vía aérea superior permanezca permeable.",
         "cites": [
           "PMID:38695947"
         ]
@@ -573,7 +573,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es un músculo de acción esfinteriana con un papel decisivo en el control del segmento proximal del tubo digestivo.",
+        "es": "Actúa como esfínter y resulta clave para gobernar la porción inicial del tubo digestivo.",
         "cites": [
           "PMID:10718449"
         ]
@@ -594,7 +594,7 @@
       },
       {
         "aspect": "parts",
-        "es": "En muestras obtenidas post mortem, contenía más fibras de tipo I oxidativas y menos de tipo II glucolíticas que el vasto lateral.",
+        "es": "Comparado con el vasto lateral de los mismos sujetos, en muestras post mortem tenía significativamente más fibras oxidativas y de tipo I, y menos fibras glucolíticas y de tipo IIB.",
         "cites": [
           "PMID:2621147"
         ]
@@ -626,7 +626,7 @@
       },
       {
         "aspect": "function",
-        "es": "En ese estudio, el fascículo extrínseco se describe como retractor asociado a la expresión facial y el intrínseco como constrictor de la boca.",
+        "es": "Según ese trabajo, cada fascículo tiene su propia función: el intrínseco cierra la boca a modo de constrictor y el extrínseco actúa como retractor ligado a la expresión facial.",
         "cites": [
           "PMID:11318003"
         ]
@@ -640,7 +640,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Una mitad denervada del músculo no recupera inervación espontánea desde el lado opuesto intacto.",
+        "es": "Si una mitad del músculo queda desnervada, los axones del lado sano no brotan hacia ella para reinervarla de forma espontánea.",
         "cites": [
           "PMID:11673926"
         ]
@@ -719,14 +719,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "La descripción clásica le atribuye dos porciones: una transversa y otra alar.",
+        "es": "Clásicamente se lo divide en una parte transversa y otra alar.",
         "cites": [
           "PMID:41530581"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En un estudio histológico de 20 cadáveres de edad avanzada, apareció en todos una tercera porción que nacía junto a la unión mucocutánea del vestíbulo nasal y del cartílago alar mayor y terminaba en el tejido subcutáneo de la piel del ala.",
+        "es": "Una tercera porción, constante en los 20 cadáveres de edad avanzada examinados histológicamente, unía la submucosa de la unión mucocutánea entre el vestíbulo y la cavidad nasal, y el cartílago alar mayor, con el tejido subcutáneo de la piel del ala.",
         "cites": [
           "PMID:41530581"
         ]
@@ -765,7 +765,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Según ese estudio, la porción superficial del masetero comprende el vientre muscular y también ese tendón profundo.",
+        "es": "Esta porción no es sólo vientre muscular: según el mismo estudio, incluye también ese tendón profundo.",
         "cites": [
           "PMID:28042813"
         ]
@@ -802,7 +802,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En ocho arterias de cuatro cabezas de cadáver, el vaso nacía de la arteria oftálmica en la órbita, cruzaba el agujero etmoidal anterior hacia las celdillas etmoidales y alcanzaba la lámina cribosa, donde ascendía para convertirse en la arteria anterior de la hoz.",
+        "es": "Disecando ocho arterias en cuatro cabezas de cadáver se siguió su recorrido: sale de la oftálmica dentro de la órbita, pasa por el agujero etmoidal anterior y las celdillas etmoidales y, al llegar a la lámina cribosa, se dirige hacia arriba como arteria anterior de la hoz.",
         "cites": [
           "PMID:15794837"
         ]
@@ -823,7 +823,7 @@
       },
       {
         "aspect": "irrigation",
-        "es": "Sus ramas septales sirven de vasos nutricios para diversos colgajos nasales pediculados.",
+        "es": "Varios colgajos nasales pediculados se nutren de sus ramas septales, que además sirven de reparo en la cirugía endonasal endoscópica.",
         "cites": [
           "PMID:29600317"
         ]
@@ -887,14 +887,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es una pequeña depresión tapizada por mucosa en la base de la lengua, a cada lado del pliegue glosoepiglótico medio.",
+        "es": "A ambos lados del pliegue glosoepiglótico medio, en la raíz de la lengua, la mucosa forma esta pequeña fosa.",
         "cites": [
           "PMID:30855811"
         ]
       },
       {
         "aspect": "function",
-        "es": "Retiene saliva y, a veces, alimento, con lo que evita que el reflejo deglutorio se active de forma constante, por ejemplo durante el sueño.",
+        "es": "Al acumular saliva —y a veces restos de alimento— impide que el reflejo de deglución se dispare sin cesar, algo que importa durante el sueño.",
         "cites": [
           "PMID:30855811"
         ]
@@ -908,7 +908,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En un estudio de 35 personas con disfagia, un corte ecográfico transversal por encima del hioides permitió visualizarla y detectar residuo faríngeo con una sensibilidad del 86,7 %.",
+        "es": "Con un corte ecográfico transversal por encima del hioides, puesto a punto en 4 voluntarios sanos, se obtuvieron imágenes de la vallécula en 26 de 35 personas con disfagia, y sus zonas hiperecogénicas detectaron residuo faríngeo con una sensibilidad del 86,7 % y una especificidad del 63,6 %.",
         "cites": [
           "PMID:31662446"
         ]
@@ -958,14 +958,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 31 pacientes operados, la vía endoscópica endonasal resultó adecuada para lesiones de su sector medial y la transoral para las de su sector lateral o inferolateral.",
+        "es": "Tomando como referencia la posición del tumor respecto de la lámina pterigoidea lateral, en 31 pacientes operados la vía endoscópica endonasal sirvió para las lesiones mediales de la fosa y la transoral para las laterales o inferolaterales, sin diferencias de morbilidad entre ambas.",
         "cites": [
           "PMID:41439423"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El abordaje orbitocigomático de la fosa infratemporal permite llegar a la vez a esta fosa, a la fosa pterigopalatina y a la órbita.",
+        "es": "Con la vía orbitocigomática de la fosa infratemporal se gana acceso simultáneo a la órbita y a las fosas pterigopalatina e infratemporal.",
         "cites": [
           "PMID:8861693"
         ]
@@ -983,7 +983,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Una revisión propone reconocer en el cuello tres clases de fascias, superficial, profunda y visceral, vinculadas en ese orden a la piel, a los músculos y a las vísceras.",
+        "es": "Una revisión distingue en el cuello fascias superficiales, profundas y viscerales, según se relacionen sobre todo con la piel, con los músculos o con las vísceras.",
         "cites": [
           "PMID:25946970"
         ]
@@ -1044,7 +1044,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Se usa con frecuencia como sustituto dural por ser autólogo y de obtención sencilla, aunque resulta delgado y frágil.",
+        "es": "Al ser tejido propio y fácil de extraer, es un injerto dural frecuente, aunque su delgadez y fragilidad complican suturarlo.",
         "cites": [
           "PMID:21732125"
         ]
@@ -1076,14 +1076,14 @@
       },
       {
         "aspect": "parts",
-        "es": "Delante de la cresta lagrimal anterior presenta de manera constante un surco poco profundo, la sutura notha, perforado por una hilera de orificios descritos por Macalister.",
+        "es": "Por delante de la cresta lagrimal anterior corre siempre la sutura notha, un surco somero en el que se abre una fila de agujeros, los de Macalister.",
         "cites": [
           "PMID:32239084"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En tomografía de haz cónico, los conductos que parten de esos orificios se comunican, en general mediante una delicada red intraósea, con el conducto sinuoso de Wood Jones.",
+        "es": "La tomografía de haz cónico mostró que esos agujeros dan paso a conductos que, por lo general a través de una fina trama dentro del hueso, desembocan en el conducto sinuoso de Wood Jones.",
         "cites": [
           "PMID:32239084"
         ]
@@ -1108,7 +1108,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Según ese estudio, esa señal puede deberse a inversión del flujo y no debe interpretarse como fístula oculta.",
+        "es": "Los autores lo atribuyen posiblemente a un flujo invertido y advierten que ese hallazgo no indica por sí mismo una fístula oculta.",
         "cites": [
           "PMID:23275595"
         ]
@@ -1134,14 +1134,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En 44 cadáveres coreanos, la vena cruzaba el depresor de la ceja y bajaba hasta el ligamento palpebral medial en todos los especímenes.",
+        "es": "En la parte alta de la cara atravesaba el depresor de la ceja antes de descender hasta el ligamento palpebral medial, disposición constante en 44 cadáveres coreanos.",
         "cites": [
           "PMID:36228011"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En esa serie, en el tercio medio facial pasaba entre el origen del elevador del labio superior y del ala de la nariz y las fibras inferiores del orbicular del ojo, por la cara profunda del borde inferior de este.",
+        "es": "Más abajo, en el tercio medio, se deslizaba bajo el borde inferior del orbicular del ojo, entre las fibras inferiores de este y el origen del elevador del labio superior y del ala de la nariz.",
         "cites": [
           "PMID:36228011"
         ]
@@ -1162,7 +1162,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Pueden aparecer várices en cualquier punto de su recorrido, con presentaciones clínicas diversas.",
+        "es": "Sus várices pueden asentar en cualquier tramo de la vena y manifestarse de maneras distintas; en un caso se presentaron como una masa del canto medial.",
         "cites": [
           "PMID:16754226"
         ]
@@ -1208,7 +1208,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 167 pacientes con cáncer de tiroides, sus metástasis bajo vigilancia activa crecieron lentamente, con una mediana del 3 % por año.",
+        "es": "De 167 pacientes con metástasis en estos ganglios por cáncer de tiroides, el 13 % quedó en vigilancia activa, y en ese grupo las metástasis crecieron poco: una mediana del 3 % por año.",
         "cites": [
           "PMID:40891104"
         ]
@@ -1272,14 +1272,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es una articulación situada en el plano mediosagital del techo de la cavidad oral que divide el paladar en dos mitades.",
+        "es": "Separa el paladar en una mitad derecha y otra izquierda: es la articulación que recorre la línea media del techo de la boca.",
         "cites": [
           "PMID:41246625"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su segmento anterior resulta de la fusión de las apófisis palatinas de los maxilares y el posterior, de la unión de las láminas horizontales de los huesos palatinos.",
+        "es": "Por delante la forman, al fusionarse, las apófisis palatinas de ambos maxilares; por detrás, las láminas horizontales de los palatinos.",
         "cites": [
           "PMID:41246625"
         ]
@@ -1300,7 +1300,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El quiste palatino medio es una lesión benigna, poco frecuente y no odontogénica que asienta en esta sutura.",
+        "es": "En ella puede asentar el quiste palatino medio, una lesión rara, benigna y de origen no odontogénico.",
         "cites": [
           "PMID:21415651"
         ]
@@ -1311,7 +1311,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Las orejas prominentes con antihélix hipoplásico suelen presentar una rama inferior poco desarrollada.",
+        "es": "Cuando una oreja prominente tiene el antihélix hipoplásico, es habitual que su rama inferior también esté poco formada.",
         "cites": [
           "PMID:26988067"
         ]
@@ -1357,7 +1357,7 @@
       },
       {
         "aspect": "relations",
-        "es": "La arteria auricular superior, rama de la temporal superficial, queda cubierta por la piel, por este músculo y por la fascia de la glándula parótida.",
+        "es": "Por encima de la arteria auricular superior —rama de la temporal superficial— se disponen la piel, este músculo y la fascia parotídea.",
         "cites": [
           "PMID:8773688"
         ]
@@ -1416,7 +1416,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El nervio alveolar superior posterior es una de las principales ramas sensitivas del nervio maxilar, división del trigémino.",
+        "es": "Del nervio maxilar, la división del trigémino, sale el alveolar superior posterior, uno de sus ramos sensitivos de mayor importancia.",
         "cites": [
           "PMID:18050579"
         ]
@@ -1451,7 +1451,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El bloqueo del ramo posterior se usa para lograr una anestesia profunda de los molares superiores.",
+        "es": "Para anestesiar a fondo los molares superiores se recurre al bloqueo del ramo posterior.",
         "cites": [
           "PMID:18050579"
         ]
@@ -1483,7 +1483,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Su lesión durante la colocación de implantes dentales puede constituir una complicación grave.",
+        "es": "Dañarlo al colocar implantes dentales es una complicación que puede ser seria; una revisión subraya la planificación previa para evitarla.",
         "cites": [
           "PMID:24421983"
         ]
@@ -1575,7 +1575,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Su bloqueo consiste en depositar anestésico local junto al agujero infraorbitario para anestesiar la parte anterior del maxilar.",
+        "es": "Para insensibilizar la parte anterior del maxilar se lo bloquea inyectando anestésico local cerca del agujero infraorbitario.",
         "cites": [
           "PMID:33532198"
         ]
@@ -1632,7 +1632,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Un estudio propone limitar el término a la zona de la base del cráneo donde confluyen la porción petrosa del temporal, el basioccipital y el basiesfenoides, ocupada en vida por fibrocartílago.",
+        "es": "Se ha propuesto reservar el nombre para el área de la base del cráneo, rellena en vida de fibrocartílago, donde se encuentran la porción petrosa del temporal, el basioccipital y el basiesfenoides.",
         "cites": [
           "PMID:9932893"
         ]
@@ -1653,7 +1653,7 @@
       },
       {
         "aspect": "relations",
-        "es": "El tubérculo pterigoideo separa el conducto vidiano de la fisura pterigoesfenoidal y constituye la pared anterior de la parte inferior del agujero.",
+        "es": "La pared anterior de su parte inferior la forma el tubérculo pterigoideo, que a la vez separa el conducto vidiano de la fisura pterigoesfenoidal.",
         "cites": [
           "PMID:30544351"
         ]
@@ -1763,7 +1763,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Según un modelo de la bomba lagrimal basado en observaciones endoscópicas, al abrirse los párpados la presión negativa en los canalículos permite que las lágrimas pasen del lago lagrimal a estos.",
+        "es": "En un modelo de la bomba lagrimal construido a partir de observaciones endoscópicas, la apertura de los párpados crea presión negativa dentro de los canalículos, que así reciben lágrimas del lago lagrimal.",
         "cites": [
           "PMID:1495795"
         ]
@@ -1915,7 +1915,7 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "Es la rama medial proximal de la arteria temporal superficial y, junto con las arterias temporales profundas, irriga el músculo temporal.",
+        "es": "Rama medial proximal de la temporal superficial, comparte con las arterias temporales profundas la irrigación del músculo temporal.",
         "cites": [
           "PMID:29111474"
         ]
@@ -1929,7 +1929,7 @@
       },
       {
         "aspect": "situation",
-        "es": "En 10 cadáveres, la arteria nacía por detrás de la cabeza o del cuello de la mandíbula y por delante del meato acústico externo.",
+        "es": "Su origen, en 10 cadáveres, quedaba entre la cabeza o el cuello de la mandíbula, por delante, y el meato acústico externo, por detrás.",
         "cites": [
           "PMID:34181041"
         ]
@@ -1995,7 +1995,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Su lesión puede acompañarse de un síndrome de desnervación de la glándula parótida.",
+        "es": "Su parálisis bilateral, hallada en 6 de 110 personas con disfunción de este nervio, puede acompañarse de rasgos del síndrome posdesnervación de la parótida, que también se describió en un caso de alteración aislada del nervio tras una fractura del peñasco.",
         "cites": [
           "PMID:3725336",
           "PMID:6824439"
@@ -2014,14 +2014,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En 20 hemicaras de cadáveres coreanos, el nervio recorría la pared lateral de la órbita, cruzaba el agujero cigomaticotemporal y alcanzaba la fosa temporal.",
+        "es": "Tras recorrer la pared lateral de la órbita y atravesar el agujero cigomaticotemporal, llegaba a la fosa temporal en las 20 hemicaras de cadáveres coreanos estudiadas.",
         "cites": [
           "PMID:15167230"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "En esa serie, avanzaba entre las hojas profunda y superficial de la fascia temporal profunda y se distribuía por la piel de la sien.",
+        "es": "Antes de repartirse por la piel de la sien, discurría entre las dos hojas, profunda y superficial, de la fascia temporal profunda, según esa misma serie.",
         "cites": [
           "PMID:15167230"
         ]
@@ -2096,14 +2096,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "La presión venosa epiescleral es un determinante importante de la presión intraocular.",
+        "es": "De la presión en las venas epiesclerales depende en buena medida la presión intraocular.",
         "cites": [
           "PMID:21621536"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Esa presión se ha medido de forma no invasiva calculando la fuerza necesaria para comprimir una vena epiescleral hasta un punto final predeterminado.",
+        "es": "Una forma no invasiva de medirla consiste en estimar cuánta presión hace falta para comprimir una de estas venas hasta un punto final fijado de antemano, aunque la falta de criterios objetivos vuelve incierta la medición.",
         "cites": [
           "PMID:21621536"
         ]
@@ -2117,7 +2117,7 @@
       },
       {
         "aspect": "function",
-        "es": "Según ese estudio, el ascenso postural de la presión intraocular puede atribuirse al aumento de la presión venosa epiescleral.",
+        "es": "Como la presión intraocular subió en la misma medida que la epiescleral, los autores atribuyen a esta última el aumento postural de la primera.",
         "cites": [
           "PMID:28986593"
         ]
@@ -2160,14 +2160,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Recorre el lóbulo temporal desde la cisura de Silvio hacia la tienda del cerebelo y termina en el seno transverso.",
+        "es": "Termina en el seno transverso tras cruzar el lóbulo temporal en dirección a la tienda del cerebelo, partiendo de la cisura de Silvio.",
         "cites": [
           "PMID:36136879"
         ]
       },
       {
         "aspect": "function",
-        "es": "Es la vena de drenaje más importante del lóbulo temporal.",
+        "es": "Entre las venas que drenan el lóbulo temporal, es la de mayor importancia.",
         "cites": [
           "PMID:21279640"
         ]
@@ -2206,21 +2206,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es una rama de la arteria facial que se origina después de que esta sale de la glándula submandibular.",
+        "es": "Se desprende de la arteria facial una vez que esta ha dejado atrás la glándula submandibular.",
         "cites": [
           "PMID:8532806"
         ]
       },
       {
         "aspect": "relations",
-        "es": "En 24 disecciones de cadáveres frescos, corría sobre el milohioideo y por debajo de la mandíbula, y seguía por fuera o por dentro del vientre anterior del digástrico.",
+        "es": "Por debajo de la mandíbula avanza apoyada en el milohioideo y luego pasa, según el caso, por fuera o por dentro del vientre anterior del digástrico, según 24 disecciones en cadáveres frescos.",
         "cites": [
           "PMID:8532806"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En esa serie, irrigaba la piel de casi todo el triángulo del cuello y una zona variable que cruzaba la línea media.",
+        "es": "Su territorio cutáneo abarcaba casi todo el triángulo del cuello y, en extensión variable, llegaba al otro lado de la línea media.",
         "cites": [
           "PMID:8532806"
         ]
