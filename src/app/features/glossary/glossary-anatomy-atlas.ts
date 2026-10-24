@@ -54,6 +54,7 @@ import {
   LAYER_ORDER,
   meshesOf,
   ontologyUrl,
+  partVisibleFor,
   relatedMeshes,
   searchIndex,
   sideLabel,
@@ -161,9 +162,16 @@ export class GlossaryAnatomyAtlas {
     return ficha === null ? [] : relatedMeshes(this.parts(), ficha, this.sex());
   });
 
+  /** Las estructuras que se están dibujando: con pieza en una capa encendida y visibles para el sexo elegido. */
+  private readonly drawn = computed(() => {
+    const capas = new Set(this.layers());
+    const sexo = this.sex();
+    return new Set(this.parts().filter((p) => capas.has(p.layer) && partVisibleFor(p, sexo)).map((p) => p.structureId));
+  });
+
   protected readonly relationGroups = computed(() => {
     const ficha = this.structure();
-    return ficha === null ? [] : groupRelations(ficha, this.withMesh(), this.inCatalog());
+    return ficha === null ? [] : groupRelations(ficha, this.withMesh(), this.inCatalog(), this.drawn());
   });
 
   /** Las láminas de Netter donde aparece la estructura, sin repetir y en orden. */

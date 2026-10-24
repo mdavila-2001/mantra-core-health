@@ -3,6 +3,12 @@
   margin-inline: auto;
 }
 
+/* Los enlaces sueltos (identificadores, DOI, licencias) con el color de
+   enlace del sistema, el mismo que los botones de relación. */
+.atlas3d a {
+  color: var(--text-link);
+}
+
 .atlas3d__barra {
   display: flex;
   flex-wrap: wrap;
@@ -109,6 +115,16 @@
   overflow-y: auto;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
+}
+
+/* La lista femenina tiene más de cien filas: se acota y scrollea sola, como
+   los resultados de búsqueda, en vez de estirar el panel. */
+.atlas3d__lista--larga {
+  max-block-size: 20rem;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding-inline: var(--sp-2);
 }
 
 .atlas3d__lista li {
@@ -265,9 +281,10 @@
     align-items: start;
   }
 
+  /* Debajo de la barra del armazón, que también es sticky. */
   .atlas3d__visor {
     position: sticky;
-    inset-block-start: var(--sp-4);
+    inset-block-start: calc(var(--h-header) + var(--sp-4));
   }
 
 }

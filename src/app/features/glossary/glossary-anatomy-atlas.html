@@ -70,7 +70,7 @@
       <section #panel class="atlas3d__panel" aria-label="Ficha de la estructura">
         <app-search-field
           label="Buscar una estructura"
-          placeholder="Por ejemplo «fémur», «corazón» o «uterus»"
+          placeholder="Por ejemplo «fémur» o «uterus»"
           [debounceMs]="200"
           (searched)="search.set($event)"
           data-testid="atlas3d-buscar"
@@ -102,6 +102,11 @@
                   </h2>
                   @if (ficha.labelEs) {
                     <span class="atlas3d__marca">nombre traducido automáticamente</span>
+                  }
+                  @if (ficha.meshes.length === 0) {
+                    <span class="atlas3d__marca" data-testid="atlas3d-sin-pieza">
+                      Sin pieza 3D en este modelo: por eso no se resalta nada en el cuerpo.
+                    </span>
                   }
                 </div>
                 @if (pickedSide(); as lado) {
@@ -199,8 +204,10 @@
                           } @else {
                             <span>{{ item.label }}</span>
                           }
-                          @if (item.hasMesh) {
+                          @if (item.highlighted) {
                             <span class="atlas3d__con-pieza">resaltada en el modelo</span>
+                          } @else if (item.hasMesh) {
+                            <span class="atlas3d__sin-pieza">tiene pieza en una capa apagada</span>
                           }
                         </li>
                       }
@@ -250,7 +257,7 @@
         @if (sex() === 'female') {
           <details class="atlas3d__femeninas">
             <summary>Estructuras femeninas sin pieza 3D ({{ femaleOnly().length }})</summary>
-            <ul class="atlas3d__lista">
+            <ul class="atlas3d__lista atlas3d__lista--larga">
               @for (entrada of femaleOnly(); track entrada[0]) {
                 <li>
                   <button type="button" class="atlas3d__opcion" (click)="openStructure(entrada[0])">
