@@ -1,6 +1,0 @@
-$ git log --oneline -1 -- docs/trabajo/2026-10-21-portal-admin-alovida-como-atlas
-bc60ea30 docs(trabajo): plan del inventario y portal interno de AloVida con la anatomía de AtlasAdminPortal
-$ git status -sb | head -1
-## claude-marcelo/vigilant-bardeen-gcoocw...origin/claude-marcelo/vigilant-bardeen-gcoocw
-$ git ls-remote --heads origin claude-marcelo/vigilant-bardeen-gcoocw
-bc60ea301d5956dc4895b955af11d3165a7557ce	refs/heads/claude-marcelo/vigilant-bardeen-gcoocw

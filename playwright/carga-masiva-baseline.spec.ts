@@ -72,8 +72,7 @@ test.describe('Carga masiva · baseline (pantalla de hoy, backend simulado)', ()
     const { erroresDeConsola, peticionesFallidas } = vigilante;
     // El dev server inyecta sus propios scripts en línea (recarga en vivo y
     // el anti-parpadeo del tema) y la CSP de la aplicación los bloquea
-    // (`src/server/security-headers.ts:222-223`; ya documentado por Justin en
-    // `docs/trabajo/2026-09-25-justin-pantalla/REPORTE.md:130`). Es del
+    // (`src/server/security-headers.ts:222-223`). Es del
     // servidor de desarrollo, no de esta pantalla — clase ENVIRONMENT.
     const consolaInesperada = erroresDeConsola.filter(
       (e) => !/Content Security Policy/.test(e),

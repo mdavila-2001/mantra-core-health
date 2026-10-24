@@ -1,3 +1,0 @@
-﻿dev ancestor exit=0
-test ancestor exit=0
-02f06858 Merge remote-tracking branch 'origin/dev' into marcelo/insurer-patient-directory-dev

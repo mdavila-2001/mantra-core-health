@@ -15,7 +15,7 @@ import {
 /**
  * Carril 39 · matrículas y adjuntos en «Configurar su perfil», contra la API real.
  *
- * El reporte del carril (`docs/progress/evidence/lane-39/REPORT.md`) dejó dicho
+ * El reporte del carril 39 dejó dicho
  * que el archivo era local a la maqueta y que **no** se declaraba subida ni
  * persistencia. Esta spec mide justamente eso: la matrícula con respaldo sube
  * el archivo (`POST /common/files/upload`), nace con su `fileId`

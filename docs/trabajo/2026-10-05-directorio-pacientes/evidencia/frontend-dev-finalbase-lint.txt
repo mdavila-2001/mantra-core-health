@@ -1,3 +1,0 @@
-COMMAND: yarn lint
-
-EXIT_CODE=0

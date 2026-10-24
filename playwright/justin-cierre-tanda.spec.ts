@@ -48,8 +48,8 @@ const BASE = process.env['PW_BASE_URL'] ?? 'http://localhost:4200';
 const SALIDA = join(
   __dirname,
   '..',
-  'docs',
-  'trabajo',
+  'artifacts',
+  'evidencia',
   '2026-09-25-justin-cierre-tanda',
   'evidencia',
 );

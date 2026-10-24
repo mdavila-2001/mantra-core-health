@@ -29,7 +29,7 @@ const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(AQUI, '..');
 const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:4200';
 const RUTA = '/administration/terminology/import';
-const SALIDA = join(RAIZ, 'docs', 'trabajo', '2026-09-25-marcelo-calidad', 'evidencia', 'h4', 'capturas');
+const SALIDA = join(RAIZ, 'artifacts', 'evidencia', '2026-09-25-marcelo-calidad', 'evidencia', 'h4', 'capturas');
 const FIXTURES = join(RAIZ, 'playwright', 'fixtures', 'carga-masiva');
 const THEME_STORAGE_KEY = 'mantra-core-health.theme';
 

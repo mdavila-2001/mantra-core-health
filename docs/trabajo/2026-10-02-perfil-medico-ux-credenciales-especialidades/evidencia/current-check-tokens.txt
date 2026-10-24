@@ -1,3 +1,0 @@
-✓ check-tokens
-  212 tokens, iguales en styles.css y en el catálogo tipado
-EXIT_CODE=0

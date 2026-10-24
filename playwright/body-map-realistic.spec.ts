@@ -9,13 +9,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
  * Prueba documental del cambio: el render se carga en cada vista y para cada
  * sexo, las zonas siguen siendo un control completo (clic, teclado, estados) y
  * no hay errores de consola. Las fotos quedan en
- * `docs/progress/evidence/body-map-realistic/` y las enlaza su `REPORT.md`.
+ * `artifacts/evidencia/body-map-realistic/`.
  *
  * Corre contra la maqueta (`corepack yarn dev`), sin backend:
  * `E2E_BASE_URL=http://localhost:4291 corepack yarn pw body-map-realistic --workers=1`.
  */
 
-const EVIDENCE = join(process.cwd(), 'docs/progress/evidence/body-map-realistic');
+const EVIDENCE = join(process.cwd(), 'artifacts/evidencia/body-map-realistic');
 mkdirSync(EVIDENCE, { recursive: true });
 
 const RUTA = '/search/symptoms';

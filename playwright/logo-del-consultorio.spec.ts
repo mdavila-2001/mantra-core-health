@@ -8,11 +8,11 @@ import { expect, test, type Page } from '@playwright/test';
  * personales» de la ficha y del editor), «Facturación» lo muestra de lectura, y
  * sale en el membrete del PDF. Contra el simulador de `mockup` (cuenta `medica@alovida.mock`).
  *
- * Deja evidencia en `docs/trabajo/2026-09-30-logo-del-consultorio/`:
+ * Deja evidencia en `artifacts/evidencia/2026-09-30-logo-del-consultorio/`:
  * capturas de la ficha y del editor y los PDF descargados con y sin logo.
  */
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-09-30-logo-del-consultorio');
+const EVIDENCIA = join('artifacts', 'evidencia', '2026-09-30-logo-del-consultorio');
 
 test.beforeAll(() => {
   mkdirSync(EVIDENCIA, { recursive: true });

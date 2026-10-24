@@ -33,8 +33,8 @@ const CONSOLA = '/administration/insurance-campaigns';
 
 const EVIDENCIA = join(
   process.cwd(),
-  'docs',
-  'trabajo',
+  'artifacts',
+  'evidencia',
   '2026-09-25-insurance-preventive-campaigns',
   'evidencia',
 );
