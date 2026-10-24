@@ -1,0 +1,63 @@
+# Z-Anatomy (github.com/LluisV/Z-Anatomy @ 6c7f9016bd5899ac8edafd31b9900c151df42ed6) — mallas FBX del repositorio
+Resources/Models/FBX/CardioVascular41.fbx
+Resources/Models/FBX/Joints100.fbx
+Resources/Models/FBX/LymphoidOrgans100.fbx
+Resources/Models/FBX/MuscularSystem100.fbx
+Resources/Models/FBX/NervousSystem100.fbx
+Resources/Models/FBX/References100.fbx
+Resources/Models/FBX/Regions of human body100.fbx
+Resources/Models/FBX/SkeletalSystem100.fbx
+Resources/Models/FBX/VisceralSystem100.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/CardioVascular41.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/Joints100.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/LymphoidOrgans100.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/MuscularSystem100.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/NervousSystem100.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/Reference lines, planes and movements 1.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/Regions of human body100.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/SkeletalSystem100.fbx
+Z-Anatomy PC/Assets/Models/1.0 Models/VisceralSystem100.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/3DGizmo.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/CrossPlanes.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/Cube-orientation.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/Pin2.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/gizmo.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/rotation_gizmo.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/scale_gizmo.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/translate_gizmo.fbx
+Z-Anatomy PC/Assets/Models/Gizmos/view_gizmo.fbx
+Z-Anatomy PC/Assets/Prefabs/Lights.fbx
+
+# Nombres de nodo en Resources/Models/FBX/VisceralSystem100.fbx que nombran órganos genitales o mamarios (strings -n 5 | grep -iE 'uter|ovar|vagin|vulva|clitor|breast|mammary|prostat|testis|penis|scrot')
+Anterior border of testis.j
+Anterior border of testis.j.001
+Anterior border of testis.t
+Corpus cavernosum of penis
+Corpus spongiosum of penis
+Glans penis
+Inferior pole of testis.j
+Inferior pole of testis.j.001
+Inferior pole of testis.t
+Lateral surface of testis.j
+Lateral surface of testis.j.001
+Lateral surface of testis.t
+Medial surface of testis.j
+Medial surface of testis.j.001
+Medial surface of testis.t
+Penis.g
+Penis.j
+Penis.j.001
+Posterior border of testis.j
+Posterior border of testis.j.001
+Posterior border of testis.t
+Prostate
+Superior pole of testis.j
+Superior pole of testis.j.001
+Superior pole of testis.t
+Testis.001
+Testis.002
+Testis.l
+Testis.r
+
+# sha256
+22b301c93327929c9a14ee582d1848b550a950376e221a6d1078c7256bb83d0e  zanat/Resources/Models/FBX/VisceralSystem100.fbx

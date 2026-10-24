@@ -1,0 +1,22 @@
+# Alcance de red de la sesión (2026-10-24, 00:4x UTC) — curl -s -o /dev/null -w '%{http_code}' --max-time 15
+https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?retmode=json -> 000
+https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=heart&format=json&pageSize=1 -> 000
+https://api.openalex.org/works?per-page=1 -> 000
+https://api.crossref.org/works?rows=1 -> 000
+https://www.ebi.ac.uk/ols4/api/ontologies/uberon -> 000
+https://commons.wikimedia.org/w/api.php?action=query&format=json -> 000
+https://upload.wikimedia.org/ -> 000
+https://en.wikipedia.org/w/api.php -> 000
+https://purl.obolibrary.org/obo/uberon.obo -> 000
+https://dbarchive.biosciencedbc.jp/ -> 000
+https://lifesciencedb.jp/bp3d/ -> 000
+https://ta2viewer.openanatomy.org/ -> 000
+https://www.wikidata.org/w/api.php -> 000
+https://zenodo.org/ -> 000
+https://openlibrary.org/ -> 000
+https://raw.githubusercontent.com/obophenotype/uberon/master/README.md -> 200
+https://github.com/obophenotype/uberon/releases/latest/download/uberon-basic.obo -> 302
+https://registry.npmjs.org/three -> 200
+https://repo.yarnpkg.com/ -> 000
+
+000 = el proxy de salida rechazó la conexión (connect_rejected: host no permitido por la política de red de la sesión).
