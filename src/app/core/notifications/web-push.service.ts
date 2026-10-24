@@ -113,6 +113,26 @@ export class WebPushService {
   }
 
   /**
+   * Da de baja la suscripción **sólo en el navegador**, sin llamar a la API.
+   *
+   * Es lo que corre al cerrar sesión: en ese momento el token ya se descartó y
+   * un `DELETE` respondería 401. No hace falta: con la suscripción dada de baja
+   * el servicio de push contesta 410 al siguiente envío y la API retira la fila
+   * sola. Así, en un dispositivo compartido, la persona siguiente no recibe los
+   * avisos de la anterior.
+   */
+  async forgetBrowser(): Promise<void> {
+    if (!this.supported) return;
+    try {
+      const registration = await navigator.serviceWorker.getRegistration(PUSH_WORKER_URL);
+      await (await registration?.pushManager.getSubscription())?.unsubscribe();
+    } catch {
+      /* cerrar sesión no puede fallar por esto */
+    }
+    this.subscribed.set(false);
+  }
+
+  /**
    * Ofrece el permiso al reservar la primera cita. Sólo si el navegador lo
    * soporta, el servidor lo tiene activo, el permiso sigue sin decidir y no se
    * ofreció antes. Nunca lanza.

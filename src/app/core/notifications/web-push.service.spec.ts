@@ -115,6 +115,21 @@ describe('WebPushService', () => {
     expect(await service.offerAfterFirstBooking()).toBe('skipped');
   });
 
+  it('al cerrar sesión da de baja la suscripción del navegador sin llamar a la API', async () => {
+    instalarNavegador('granted');
+    const registration = await navigator.serviceWorker.getRegistration();
+    const baja = vi.fn().mockResolvedValue(true);
+    vi.mocked(registration!.pushManager.getSubscription).mockResolvedValue({
+      unsubscribe: baja,
+    } as unknown as PushSubscription);
+
+    await service.forgetBrowser();
+
+    expect(baja).toHaveBeenCalledTimes(1);
+    expect(service.subscribed()).toBe(false);
+    http.expectNone(() => true);
+  });
+
   it('no ofrece nada si la persona ya decidió', async () => {
     instalarNavegador('granted');
     expect(await service.offerAfterFirstBooking()).toBe('skipped');
