@@ -54,6 +54,11 @@ function paraPaciente(): NotificacionSimulada[] {
   ];
 }
 
+/**
+ * La bandeja de la médica. `notif-med-6` nace **sin leer y sin destino** a
+ * propósito: es el único caso en el que la fila no se abre y «Marcar como
+ * leída» se ofrece aparte; sin él la maqueta no lo mostraría nunca.
+ */
 function paraMedica(): NotificacionSimulada[] {
   const solicitudes = reservas.filtrar((r) => r.startAt > ahora()).sort((a, b) => a.startAt.localeCompare(b.startAt));
   return [
@@ -62,7 +67,7 @@ function paraMedica(): NotificacionSimulada[] {
     { id: uuid('notif-med-3'), userId: MEDICAL.userId, category: 'SCHEDULING', subject: 'Cita cancelada', bodyText: 'Jorge Luis Mamani Choque canceló su cita de mañana: «El paciente avisó que viajaba».', destination: { type: 'APPOINTMENT', id: '' }, payloadJson: null, unread: true, availableAt: iso(-1, 17), readAt: null },
     { id: uuid('notif-med-4'), userId: MEDICAL.userId, category: 'CLINICAL', subject: 'Resultado crítico', bodyText: 'Laboratorio Central informa potasio 5,9 mmol/L en Ricardo Condori Apaza.', destination: { type: 'DIAGNOSTIC_REPORT', id: uuid('report-critico') }, payloadJson: null, unread: false, availableAt: iso(-2, 13), readAt: iso(-2, 13, 20) },
     { id: uuid('notif-med-5'), userId: MEDICAL.userId, category: 'SOCIAL', subject: 'Su publicación tiene 30 reacciones', bodyText: '«¿Sabía que la hipertensión no suele dar síntomas?…» sigue sumando.', destination: { type: 'POST', id: uuid('post-0') }, payloadJson: null, unread: false, availableAt: iso(-1, 20), readAt: iso(-1, 21) },
-    { id: uuid('notif-med-6'), userId: MEDICAL.userId, category: 'SCHEDULING', subject: 'Solicitud de vinculación aprobada', bodyText: 'Hospital San Lucas aprobó su vinculación como médica de planta.', destination: null, payloadJson: null, unread: false, availableAt: iso(-6, 10), readAt: iso(-6, 11) },
+    { id: uuid('notif-med-6'), userId: MEDICAL.userId, category: 'SCHEDULING', subject: 'Solicitud de vinculación aprobada', bodyText: 'Hospital San Lucas aprobó su vinculación como médica de planta.', destination: null, payloadJson: null, unread: true, availableAt: iso(-6, 10), readAt: null },
     { id: uuid('notif-med-7'), userId: MEDICAL.userId, category: 'MESSAGES', subject: 'Dra. Terrazas le escribió', bodyText: 'Le pedí un Holter, cuando lo tenga lo vemos juntas.', destination: { type: 'CONVERSATION', id: uuid('conv-medica-endocrino') }, payloadJson: null, unread: true, availableAt: iso(-1, 8, 47), readAt: null },
   ];
 }
