@@ -63,6 +63,7 @@ import { LocationPicker } from '../shared-registration/location-picker/location-
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
@@ -589,6 +590,7 @@ export class RegisterPatient {
   private readonly router = inject(Router);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
   private readonly draftService = inject(OnboardingDraftService);
+  private readonly dialogs = inject(DialogService);
 
   readonly STORAGE_KEY = 'alovida.registro-paciente.borrador';
   readonly borradorDetectado = signal<OnboardingDraft | null>(null);
@@ -1942,7 +1944,14 @@ export class RegisterPatient {
    *
    * @param indice - Cuál de los teléfonos extra, empezando por 0.
    */
-  quitarTelefono(indice: number): void {
+  async quitarTelefono(indice: number): Promise<void> {
+    const numero = this.telefonosExtra.at(indice)?.value.trim() ?? '';
+    if (
+      numero !== '' &&
+      !(await this.confirmarQuitar(`Quitar el celular ${indice + 1}`, 'Se borra el número que escribió en esta casilla.'))
+    ) {
+      return;
+    }
     this.telefonosExtra.removeAt(indice);
   }
 
@@ -1957,8 +1966,42 @@ export class RegisterPatient {
    *
    * @param indice - Cuál de los contactos extra, empezando por 0.
    */
-  quitarContacto(indice: number): void {
+  async quitarContacto(indice: number): Promise<void> {
+    const contacto = this.contactosExtra.at(indice)?.getRawValue();
+    const tieneDatos =
+      contacto !== undefined &&
+      (contacto.name.trim() !== '' || contacto.phone.trim() !== '' || contacto.relationshipConceptId !== null);
+    if (
+      tieneDatos &&
+      !(await this.confirmarQuitar(
+        `Quitar el contacto de emergencia ${indice + 1}`,
+        'Se borran el nombre, el teléfono y la relación que escribió para esta persona.',
+      ))
+    ) {
+      return;
+    }
     this.contactosExtra.removeAt(indice);
+  }
+
+  /**
+   * Pregunta antes de borrar algo que la persona ya escribió (TAREA 04, AC-04-7).
+   *
+   * Una casilla vacía se quita sin preguntar: no hay nada que perder, y un
+   * diálogo ahí sólo agrega un clic. Con datos, el botón de ícono queda a un
+   * toque de borrar un contacto entero, y eso sí se confirma.
+   *
+   * @param titulo - Qué se quita, tal como lo dice el `aria-label` del botón.
+   * @param mensaje - Qué se pierde.
+   * @returns `true` si la persona confirmó.
+   */
+  private confirmarQuitar(titulo: string, mensaje: string): Promise<boolean> {
+    return this.dialogs.confirm({
+      title: titulo,
+      message: mensaje,
+      confirmLabel: 'Quitar',
+      cancelLabel: 'Conservar',
+      destructive: true,
+    });
   }
 
   /**
@@ -1996,7 +2039,14 @@ export class RegisterPatient {
    *
    * @param indice - Cuál de las casillas extra, empezando por 0.
    */
-  quitarNombre(indice: number): void {
+  async quitarNombre(indice: number): Promise<void> {
+    const nombre = this.nombresExtra()[indice]?.trim() ?? '';
+    if (
+      nombre !== '' &&
+      !(await this.confirmarQuitar(`Quitar el nombre ${indice + 4}`, `Se borra «${nombre}» de esta casilla.`))
+    ) {
+      return;
+    }
     this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
   }
 
