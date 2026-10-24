@@ -185,7 +185,12 @@
 
   @if (bloques().length === 0) {
     <div class="dia__vacio">
-      <p>No atiende este día.</p>
+      <!-- Con la lectura caída, vacío no quiere decir que no atiende. -->
+      @if (incompleteLoad()) {
+        <p>Este día no se pudo cargar. Vuelva a cargarlo desde el aviso de arriba.</p>
+      } @else {
+        <p>No atiende este día.</p>
+      }
       <button app-button variant="ghost" size="sm" type="button" (clicked)="crear()">
         Agregar una cita o un rato ocupado
       </button>
@@ -453,6 +458,20 @@
                   No disponible<span class="dia__no-disponible-motivo">
                     · {{ bloque.motivo ?? 'sin lugar' }}</span
                   >
+                </p>
+              </div>
+            }
+
+            @case ('sin-cargar') {
+              <!-- El cupo existe pero la lectura del día falló: no se sabe si
+                   está cerrado o tomado, así que no se afirma ninguna de las
+                   dos. El aviso de arriba ofrece volver a cargar. -->
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <div class="dia__cuerpo">
+                <p class="dia__no-disponible" data-testid="dia-sin-cargar">
+                  No se pudo cargar este horario
                 </p>
               </div>
             }
