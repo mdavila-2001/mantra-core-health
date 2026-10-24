@@ -25,6 +25,7 @@ import type {
   CareLinea,
   HistoryNewSections,
 } from '../../../shared/utils/clinical-pdf/history-with-encounters';
+import { formatDate } from '../../../shared/utils/pdf-export/pdf-format';
 import {
   CODIGO_ACTIVA,
   CODIGO_CONFIRMADO,
@@ -625,13 +626,16 @@ function lineaDeAtencion(atencion: EncounterInHistory): CareLinea {
     })),
   ].sort(porInstanteYRelato);
 
+  // El papel escribe las fechas como el resto de los documentos clínicos
+  // (`01/03/2026`), no con la fecha larga del acordeón de la pantalla.
+  const { motivo, cuando } = atencion.encabezado;
   return {
-    titulo: atencion.titulo,
+    titulo: cuando === null ? motivo : `${motivo} · ${formatDate(cuando)}`,
     sello: atencion.sello,
     hechos: hechos.map((hecho) => ({
       titulo: hecho.titulo,
       detalle: hecho.detalle,
-      cuando: hecho.cuando === null ? null : DIA_LARGO.format(hecho.cuando),
+      cuando: hecho.cuando === null ? null : formatDate(hecho.cuando),
     })),
   };
 }

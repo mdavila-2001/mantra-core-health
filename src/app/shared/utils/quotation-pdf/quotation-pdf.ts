@@ -2,7 +2,17 @@ import { InjectionToken } from '@angular/core';
 import type { jsPDF } from 'jspdf';
 
 import type { Installment, PaymentFrequency } from '../../../core/data-access/quotations/quotations.types';
-import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-export';
+import { displayCurrency } from '../../../core/money/display-currency';
+import {
+  buildBlocksPdf,
+  fieldsBlock,
+  formatDate,
+  formatMoney,
+  noteBlock,
+  totalsBlock,
+  type PdfBlock,
+  type PdfExportOptions,
+} from '../pdf-export/pdf-export';
 
 /* ============================================================================
     El PDF de una cotización (FT-24).
@@ -40,18 +50,6 @@ export interface QuotationPdfData {
   readonly installments: readonly Installment[];
 }
 
-const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
-
-/** Cuándo salió el papel. El mismo pie que llevan los documentos clínicos. */
-const FORMATO_EMISION = new Intl.DateTimeFormat('es-BO', {
-  dateStyle: 'long',
-  timeStyle: 'short',
-});
-
-function parrafo(text: string): PdfBlock {
-  return { kind: 'paragraph', text };
-}
-
 /** Una sección: versalitas espaciadas sobre un filete, como el resto del repo. */
 function seccion(text: string): PdfBlock {
   return { kind: 'heading', text, level: 2 };
@@ -75,64 +73,131 @@ const NOMBRE_DE_FRECUENCIA: Readonly<Record<PaymentFrequency, string>> = {
   MONTHLY: 'Mensual',
 };
 
-/** `YYYY-MM-DD` en prosa, o el texto tal cual si no se pudo interpretar. */
-function formatoFecha(iso: string): string {
+/** La frecuencia dentro de una frase: «las cuotas son quincenales». */
+const FRECUENCIA_EN_FRASE: Readonly<Record<PaymentFrequency, string>> = {
+  WEEKLY: 'semanales',
+  BIWEEKLY: 'quincenales',
+  MONTHLY: 'mensuales',
+};
+
+/** Lo que el papel aclara siempre: qué es y qué no es. */
+const NO_ES_FACTURA = 'Esta cotización es un presupuesto: no es una factura ni un comprobante de pago.';
+
+/**
+ * La moneda de los importes. El dato no la trae —el formulario tampoco la
+ * muestra—, y la del sistema es el boliviano (`display-currency.ts`).
+ */
+const MONEDA = displayCurrency(null);
+
+/** Un importe en formato boliviano con su moneda: «1.234,56 Bs». */
+function dinero(monto: number): string {
+  return formatMoney(monto, MONEDA);
+}
+
+/** `YYYY-MM-DD` → `dd/mm/aaaa`; `vacio` si no hay fecha, o el texto tal cual si no se pudo interpretar. */
+function formatoFecha(iso: string, vacio = 'No definida'): string {
   if (iso === '') {
-    return 'No definida';
+    return vacio;
   }
   const fecha = new Date(`${iso}T00:00:00`);
-  return Number.isNaN(fecha.getTime()) ? iso : FORMATO_FECHA.format(fecha);
+  return Number.isNaN(fecha.getTime()) ? iso : formatDate(fecha);
 }
 
 /** Arma el PDF de la cotización actual. No lo guarda: devuelve el documento. */
 export function buildQuotationPdf(data: QuotationPdfData): jsPDF {
-  const bloques: PdfBlock[] = [seccion('Datos de la cotización')];
+  return buildBlocksPdf(quotationBlocks(data), quotationPdfOptions(data));
+}
 
-  bloques.push(campoDeBloque('Paciente', data.patientName));
-  bloques.push(campoDeBloque('Servicio', data.serviceName));
-  bloques.push(campoDeBloque('Precio ofrecido', data.offeredPrice.toFixed(2)));
-  bloques.push(campoDeBloque('Fecha de atención', formatoFecha(data.attentionDate)));
-  bloques.push(campoDeBloque('Válida hasta', formatoFecha(data.validUntil)));
-
-  bloques.push(seccion('Plan de pagos'));
-  bloques.push(campoDeBloque('Interés', 'Sin interés'));
-  bloques.push(campoDeBloque('Anticipo', data.downPaymentAmount.toFixed(2)));
-  bloques.push(campoDeBloque('Cuotas', `${data.installments.length}`));
-  bloques.push(campoDeBloque('Frecuencia', NOMBRE_DE_FRECUENCIA[data.paymentFrequency]));
-
-  bloques.push(seccion('Cuotas'));
-  if (data.installments.length === 0) {
-    bloques.push(
-      parrafo(
-        data.downPaymentAmount > 0
-          ? 'Se paga completo el día de la atención.'
-          : 'Sin plan de pagos armado todavía.',
-      ),
-    );
-  } else {
-    bloques.push(fila(['Cuota', 'Vencimiento', 'Monto'], true));
-    for (const cuota of data.installments) {
-      bloques.push(
-        fila([String(cuota.installmentNumber), formatoFecha(cuota.dueDate), cuota.amount.toFixed(2)]),
-      );
-    }
-  }
-  // Anticipo más cuotas: lo que la persona termina pagando. Sale de las mismas
-  // filas impresas arriba, para que el total no pueda contradecirlas.
-  const total =
-    data.downPaymentAmount + data.installments.reduce((suma, cuota) => suma + cuota.amount, 0);
-  bloques.push({ kind: 'total', text: `Total del plan: ${total.toFixed(2)}` });
-
-  bloques.push({
-    kind: 'caption',
-    text: `Documento generado el ${FORMATO_EMISION.format(new Date())} desde el sistema.`,
-  });
-
-  return buildBlocksPdf(bloques, {
+/**
+ * La portada, el membrete y el pie de la cotización. Exportadas para que el
+ * spec las fije sin pasar por el motor.
+ *
+ * - **Quién y qué** —el paciente y el servicio— van en la bajada, bajo el
+ *   título: identifican el papel de un vistazo y el cuerpo no los repite.
+ * - La **vigencia** va en los metadatos de la portada, al lado del título: es
+ *   lo primero que se mira de una cotización, antes que el detalle.
+ * - Sin `issuedAt`: la cotización sale del formulario **antes de guardarse**,
+ *   y no hay fecha de emisión que decir. El motor rotula la de generación.
+ * - Sin firma: es una cotización, no un papel que firma un médico.
+ */
+export function quotationPdfOptions(data: QuotationPdfData): PdfExportOptions {
+  return {
     title: 'Cotización de servicios',
     kind: 'Cotización',
     subtitle: `${data.patientName} · ${data.serviceName}`,
-  });
+    meta: [{ label: 'Válida hasta', value: formatoFecha(data.validUntil, 'Sin fecha de vencimiento') }],
+    footerNote: 'Cotización · No es una factura ni un comprobante de pago · AloVida',
+    firma: null,
+  };
+}
+
+/**
+ * Los bloques de la cotización, en orden de lectura. Exportada para que el spec
+ * fije QUÉ dice el papel sin pasar por jsPDF.
+ *
+ * La caja de totales **cierra**: anticipo más saldo en cuotas es el total del
+ * plan, y el saldo es la suma de las cuotas impresas en la tabla —no el precio
+ * menos el anticipo—, para que la caja no pueda contradecir las filas. El precio
+ * ofrecido va en la rejilla, como dato de la oferta: en la caja se leería como
+ * un sumando más.
+ */
+export function quotationBlocks(data: QuotationPdfData): readonly PdfBlock[] {
+  const cuotas = data.installments.length;
+  const saldo = data.installments.reduce((suma, cuota) => suma + cuota.amount, 0);
+  // Anticipo más cuotas: lo que la persona termina pagando.
+  const total = data.downPaymentAmount + saldo;
+
+  // Quién y qué se cotiza van en la bajada de la portada; el cuerpo no los
+  // repite y arranca por cuándo y cómo se paga.
+  const bloques: PdfBlock[] = [
+    seccion('Plan de pagos'),
+    fieldsBlock(
+      [
+        { label: 'Fecha de atención', value: formatoFecha(data.attentionDate) },
+        { label: 'Precio ofrecido', value: dinero(data.offeredPrice) },
+        // Sin cuotas, «Frecuencia: Mensual · Cuotas: 0» describiría un plan que
+        // no existe: se dice la forma de pago.
+        ...(cuotas === 0
+          ? [{ label: 'Forma de pago', value: data.downPaymentAmount > 0 ? 'Pago único' : 'Sin definir' }]
+          : [
+              { label: 'Frecuencia', value: NOMBRE_DE_FRECUENCIA[data.paymentFrequency] },
+              { label: 'Cuotas', value: `${cuotas}` },
+            ]),
+      ],
+      cuotas === 0 ? 3 : 4,
+    ),
+  ];
+
+  if (cuotas > 0) {
+    bloques.push(fila(['Cuota', 'Vencimiento', 'Monto'], true));
+    for (const cuota of data.installments) {
+      bloques.push(fila([String(cuota.installmentNumber), formatoFecha(cuota.dueDate), dinero(cuota.amount)]));
+    }
+    bloques.push(
+      totalsBlock([
+        { label: 'Anticipo', value: dinero(data.downPaymentAmount) },
+        { label: 'Saldo en cuotas', value: dinero(saldo) },
+        { label: 'Total del plan', value: dinero(total), emphasis: true },
+      ]),
+    );
+  } else {
+    bloques.push(totalsBlock([{ label: 'Total a pagar', value: dinero(total), emphasis: true }]));
+  }
+
+  bloques.push(noteBlock(`${formaDePago(data)} ${NO_ES_FACTURA}`, 'brand', 'Condiciones'));
+  return bloques;
+}
+
+/** Cómo se paga lo cotizado, dicho en una frase. */
+function formaDePago(data: QuotationPdfData): string {
+  const cuotas = data.installments.length;
+  if (cuotas === 0) {
+    return data.downPaymentAmount > 0
+      ? 'Se paga completo el día de la atención.'
+      : 'Sin plan de pagos armado todavía.';
+  }
+  const enCuotas = cuotas === 1 ? 'una cuota' : `${cuotas} cuotas ${FRECUENCIA_EN_FRASE[data.paymentFrequency]}`;
+  return `El saldo se paga en ${enCuotas}, sin interés, en las fechas de vencimiento indicadas.`;
 }
 
 /**
