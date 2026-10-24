@@ -214,7 +214,7 @@ export class OnboardingDraftService {
   private telemetrySessionId(formType: OnboardingFormType): string {
     let id = this.telemetrySessions.get(formType);
     if (!id) {
-      id = `t-${crypto.randomUUID()}`;
+      id = `t-${generarUuid()}`;
       this.telemetrySessions.set(formType, id);
     }
     return id;

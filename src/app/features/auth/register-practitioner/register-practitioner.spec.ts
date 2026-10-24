@@ -944,20 +944,20 @@ describe('RegisterPractitioner', () => {
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
   });
 
-  it('la cédula se valida de verdad: sólo dígitos, de 5 a 9, y no un relleno', () => {
+  it('el documento admite letras, dígitos, punto y guion, mínimo 4', () => {
     const control = component.formProfesional.controls.nationalId;
-    for (const invalida of ['QA-123', '1234', '1234567890', '1.234.567', '0000000', '9999999']) {
+    for (const invalida of ['123', 'QA 123', 'CI#1234']) {
       control.setValue(invalida);
-      expect(control.invalid, `«${invalida}» no es una cédula`).toBe(true);
+      expect(control.invalid, `«${invalida}» no es un documento`).toBe(true);
     }
-    for (const valida of ['12345', '1234567', '12345678', '123456789']) {
+    for (const valida of ['1234', '1234567', 'CI-E2E-123', 'AB.123']) {
       control.setValue(valida);
       expect(control.valid, `«${valida}» sí lo es`).toBe(true);
     }
   });
 
-  it('con la cédula inválida no se puede enviar el alta', () => {
-    completarProfesional({ nationalId: 'QA-123' });
+  it('con el documento inválido no se puede enviar el alta', () => {
+    completarProfesional({ nationalId: 'QA 123' });
 
     component.submit();
     http.expectNone('/iam/auth/register-practitioner');

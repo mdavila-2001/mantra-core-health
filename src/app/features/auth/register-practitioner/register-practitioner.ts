@@ -94,8 +94,8 @@ import {
   passwordValidators,
 } from '../shared-registration/password-policy';
 import {
-  INVALID_NATIONAL_ID_MESSAGE,
-  validateBolivianNationalId,
+  INVALID_IDENTITY_DOCUMENT_MESSAGE,
+  identityDocumentValidators,
 } from '../shared-registration/national-id';
 import {
   EMPTY_STUDY,
@@ -1082,7 +1082,7 @@ export class RegisterPractitioner {
     // a una persona verificable. Además del formato válido, ahora tiene que estar.
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, validateBolivianNationalId],
+      validators: [...identityDocumentValidators],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     sedesLicenseNumber: new FormControl('', {
@@ -2357,7 +2357,7 @@ export class RegisterPractitioner {
           // pareja que en el alta de paciente, y por lo mismo — el número y
           // su expedición son un solo documento.
           ancho: 'mitad',
-          mensajeDeError: INVALID_NATIONAL_ID_MESSAGE,
+          mensajeDeError: INVALID_IDENTITY_DOCUMENT_MESSAGE,
         },
         this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
       ],
