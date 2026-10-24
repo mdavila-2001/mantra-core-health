@@ -157,7 +157,7 @@ export class AnnotationDialog implements OnInit {
           {
             key: 'sensitivity',
             label: 'Sensibilidad',
-            hint: '«Sin determinar» no es lo mismo que «No sensible».',
+            hint: '«Sin clasificar» no es un nivel: falta decidirlo. «Público» o «Anonimizado» sí lo son.',
             control: 'select' as const,
             options: SENSITIVITY_OPTIONS.map((o) => ({ value: o.value as string, label: o.label })),
           },

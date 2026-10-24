@@ -13,6 +13,7 @@
       "/surveys",
       "/clinical",
       "/authz",
+      "/audit/",
       "/consent",
       "/practitioners",
       "/practitioner-delegates",
