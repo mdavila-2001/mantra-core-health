@@ -37,6 +37,40 @@ function traducir(error: unknown, kind: RegistrationKind = 'organization'): View
 
 describe('registrationErrorToViewState — catálogo de errores del alta', () => {
   describe('400 · datos inválidos', () => {
+    it('un dato que el servidor no reconoce se dice como diferencia de versión, con el código de soporte', () => {
+      // El 400 real de dev: el cliente mandaba ownSite.contactPhone y el DTO desplegado no lo declaraba.
+      const estado = traducir(
+        respuesta(400, 'VALIDATION_FAILED', 'Error de validación', {
+          violations: ['ownSite.property contactPhone should not exist'],
+        }),
+        'practitioner',
+      );
+
+      expect(estado.status).toBe('validation');
+      const texto = textoDe(estado);
+      expect(texto).toContain('«ownSite.contactPhone»');
+      expect(texto).toContain('No es un error suyo');
+      expect(texto).toContain('corr-123');
+      expect(texto).not.toMatch(/should not exist|property /);
+    });
+
+    it('un dato desconocido junto a uno mal escrito: primero la versión, después el dato a corregir', () => {
+      const estado = traducir(
+        respuesta(400, 'VALIDATION_FAILED', 'Error de validación', {
+          violations: [
+            'property tipoRaro should not exist',
+            'email must be an email',
+          ],
+        }),
+        'practitioner',
+      );
+
+      expect(estado.status).toBe('validation');
+      if (estado.status !== 'validation') return;
+      expect(estado.issues[0].message).toContain('«tipoRaro»');
+      expect(estado.issues.map((i) => i.message).join(' ')).toContain('Correo electrónico');
+    });
+
     it('traduce la ruta técnica al nombre del campo y junta las tres reglas de un mismo campo', () => {
       // Respuesta real de la API de test del 03/10/2026, alta de farmacia sin CI.
       const estado = traducir(

@@ -374,11 +374,14 @@ describe('RegisterLaboratory', () => {
     });
     // La fila sin nombre todavía no es una sucursal: no viaja.
     expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
-      { name: 'Equipetrol', addressLines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+      {
+        name: 'Equipetrol',
+        address: { lines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+      },
     ]);
   });
 
-  it('las sucursales subidas en lote viajan con descripción, enlace y el punto que traía el enlace', () => {
+  it('las sucursales subidas en lote viajan con el punto que traía el enlace y sin los campos que la API rechaza', () => {
     completarLoObligatorio();
     component.agregarSucursalesEnLote([
       {
@@ -402,16 +405,14 @@ describe('RegisterLaboratory', () => {
     expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
     const cuerpo = enviarConExito();
 
+    // La API (`DiagnosticUnitBranchDto`) sólo acepta nombre y dirección: la
+    // descripción y el enlace de mapa los rechazaría con 400 (P54).
     expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
       {
         name: 'Norte',
-        addressLines: ['Av. Banzer 100'],
-        latitude: -17.76,
-        longitude: -63.19,
-        description: 'Planta baja',
-        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+        address: { lines: ['Av. Banzer 100'], latitude: -17.76, longitude: -63.19 },
       },
-      { name: 'Sur', addressLines: [], locationUrl: 'https://maps.app.goo.gl/abc' },
+      { name: 'Sur', address: { lines: [] } },
     ]);
   });
 

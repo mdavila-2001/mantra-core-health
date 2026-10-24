@@ -513,14 +513,28 @@ export class IamClient {
           ...(diagnosticUnit.branches === undefined || diagnosticUnit.branches.length === 0
             ? {}
             : {
+                // La forma de `DiagnosticUnitBranchDto` (P51): nombre y una
+                // dirección con `lines` y el par de coordenadas, no las
+                // claves sueltas que el simulador aceptaba. Descripción y
+                // enlace de mapa NO tienen dónde guardarse todavía (P54): la
+                // API los rechaza con 400, así que sólo viajan al simulador.
                 branches: diagnosticUnit.branches.map((branch) => ({
                   name: branch.name,
-                  addressLines: [...branch.addressLines],
-                  ...(branch.location === undefined
+                  address: {
+                    lines: [...branch.addressLines],
+                    ...(branch.location === undefined
+                      ? {}
+                      : {
+                          latitude: branch.location.latitude,
+                          longitude: branch.location.longitude,
+                        }),
+                  },
+                  ...(!environment.mockBackend || branch.description === undefined
                     ? {}
-                    : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
-                  ...(branch.description === undefined ? {} : { description: branch.description }),
-                  ...(branch.locationUrl === undefined ? {} : { locationUrl: branch.locationUrl }),
+                    : { description: branch.description }),
+                  ...(!environment.mockBackend || branch.locationUrl === undefined
+                    ? {}
+                    : { locationUrl: branch.locationUrl }),
                 })),
               }),
         },

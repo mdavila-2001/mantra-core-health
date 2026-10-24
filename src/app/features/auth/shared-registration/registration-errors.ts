@@ -163,7 +163,13 @@ function invalidData(body: ApiErrorBody): readonly ViewStateIssue[] {
 
   const porCampo = new Map<string, { etiqueta: string; reglas: Set<Rule>; libres: string[] }>();
   const sueltas: string[] = [];
+  const desconocidas: string[] = [];
   for (const violacion of violaciones) {
+    const desconocida = readUnknownProperty(violacion);
+    if (desconocida !== null) {
+      desconocidas.push(desconocida);
+      continue;
+    }
     const leida = readViolation(violacion);
     if (leida === null) {
       // Un mensaje propio del DTO, ya escrito en castellano: va tal cual.
@@ -185,6 +191,24 @@ function invalidData(body: ApiErrorBody): readonly ViewStateIssue[] {
     problemas.push({ field: ruta, texto: `${etiqueta}: ${explainRules(reglas, libres)}` });
   }
   for (const suelta of sueltas) problemas.push({ texto: suelta });
+
+  if (desconocidas.length > 0) {
+    // El servidor no conoce un dato que esta pantalla manda: no es algo que la
+    // persona pueda corregir, es una diferencia de versión. Se dice así, con el
+    // código para soporte, en lugar de «ownSite.property contactPhone should
+    // not exist». Si además hay datos mal, se listan después.
+    const nombres = [...new Set(desconocidas)].map((d) => `«${d}»`).join(', ');
+    const codigo = body.correlationId ?? 'sin-id';
+    const versiones = `El servidor todavía no reconoce un dato que esta pantalla envía (${nombres}). No es un error suyo: sus datos siguen cargados. ${SUPPORT} ${codigo}`;
+    return [
+      { code: body.code, message: versiones },
+      ...problemas.map((p) => ({
+        ...(p.field === undefined ? {} : { field: p.field }),
+        code: body.code,
+        message: p.texto,
+      })),
+    ];
+  }
 
   if (problemas.length === 0) {
     return [
@@ -209,6 +233,17 @@ function invalidData(body: ApiErrorBody): readonly ViewStateIssue[] {
       message: p.texto,
     })),
   ];
+}
+
+/**
+ * `forbidNonWhitelisted` de la API dice «ownSite.property contactPhone should
+ * not exist» cuando el cuerpo trae un dato que el DTO no declara. Devuelve la
+ * ruta del dato (`ownSite.contactPhone`) o `null` si la frase es otra.
+ */
+function readUnknownProperty(violacion: string): string | null {
+  const m = /^(?:(.+)\.)?property ([A-Za-z0-9_]+) should not exist$/.exec(violacion);
+  if (m === null) return null;
+  return m[1] === undefined ? m[2] : `${m[1]}.${m[2]}`;
 }
 
 type Rule =
