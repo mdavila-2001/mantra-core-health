@@ -135,6 +135,11 @@ export interface PdfBlock {
     | 'panels'
     /** Una lista con viñetas. */
     | 'list'
+    /**
+     * Opciones para marcar a mano, con casillas dibujadas: redondas para una
+     * sola respuesta, cuadradas para varias. Es del formulario en blanco.
+     */
+    | 'choices'
     /** Un aviso sobre un panel teñido, con un tono. */
     | 'note'
     /** Un total suelto, en una banda a la derecha. */
@@ -178,8 +183,10 @@ export interface PdfBlock {
   readonly columns?: number;
   /** Los paneles; sólo en `panels`. */
   readonly panels?: readonly PdfPanel[];
-  /** Los renglones de una lista; sólo en `list`. */
+  /** Los renglones de una lista o las opciones; sólo en `list` y `choices`. */
   readonly items?: readonly string[];
+  /** Se puede marcar más de una opción (casillas cuadradas); sólo en `choices`. */
+  readonly multiple?: boolean;
   /** Las filas de la caja; sólo en `totals`. */
   readonly totals?: readonly PdfTotalRow[];
   /** El código ya calculado; sólo en `qr`. */

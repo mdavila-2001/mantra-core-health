@@ -1556,6 +1556,87 @@ describe('los bloques', () => {
   });
 });
 
+describe('lo que pidió la revisión visual de la fase 2', () => {
+  it('las opciones se dibujan con casillas: redondas para una, cuadradas para varias', async () => {
+    const { choicesBlock } = await import('./pdf-export');
+    buildBlocksPdf([]);
+    const base = ultimoDocumento().llamadas;
+    const [circulos, redondeados] = [base.circle.length, base.roundedRect.length];
+
+    buildBlocksPdf([choicesBlock(['Sí', 'No'], false)]);
+    expect(ultimoDocumento().llamadas.circle.length - circulos).toBe(2);
+    buildBlocksPdf([choicesBlock(['Fiebre', 'Tos', 'Dolor'], true)]);
+    expect(ultimoDocumento().llamadas.roundedRect.length - redondeados).toBe(3);
+    // El texto de la opción va sin «( )» ni «[ ]» escritos.
+    expect(textosDelCuerpo()).toEqual(['Fiebre', 'Tos', 'Dolor']);
+  });
+
+  it('las opciones cortas van en un mismo renglón', async () => {
+    const { choicesBlock } = await import('./pdf-export');
+    buildBlocksPdf([choicesBlock(['Sí', 'No'], false)]);
+
+    const textos = ultimoDocumento().llamadas.text;
+    const si = textos.find(([linea]) => linea === 'Sí')!;
+    const no = textos.find(([linea]) => linea === 'No')!;
+    expect(no[2]).toBe(si[2]);
+    expect(no[1]).toBeGreaterThan(si[1]);
+  });
+
+  it('una etiqueta que sale de los datos con cifras no se pasa a mayúsculas', () => {
+    buildBlocksPdf([campoDeBloque('Losartán 50 mg', 'Un comprimido por día'), campoDeBloque('Paciente', 'Ana')]);
+
+    expect(textosDelCuerpo()).toContain('Losartán 50 mg');
+    expect(textosDelCuerpo()).toContain('PACIENTE');
+  });
+
+  it('«6:30 p. m.» se escribe con espacios duros, para que no se parta', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Pagado a las 6:30 p. m. en caja' }]);
+
+    expect(textosDelCuerpo()).toContain('Pagado a las 6:30\u00A0p.\u00A0m. en caja');
+  });
+
+  it('el QR se vuelve a dibujar limpio encima de la marca de agua', () => {
+    const qr = { kind: 'qr' as const, text: 'Leyenda', qr: { size: 3, modules: [1, 0, 1, 0, 1, 0, 1, 0, 1] } };
+    buildBlocksPdf([qr]);
+    const sinMarca = ultimoDocumento().llamadas.rect.length;
+    buildBlocksPdf([qr], { watermark: 'Sin validez' });
+    const { rect, orden } = ultimoDocumento().llamadas;
+
+    // Las mismas corridas de módulos, otra vez después de la marca, más su blanco.
+    expect(orden.indexOf('rotado:SIN VALIDEZ')).toBeGreaterThan(-1);
+    expect(rect.length - sinMarca).toBeGreaterThanOrEqual(5 + 1);
+  });
+
+  it('un título seguido de un dato largo no queda solo al pie de la hoja', () => {
+    DocumentoFalso.lineasForzadas = 4;
+    for (let relleno = 30; relleno <= 50; relleno += 1) {
+      buildBlocksPdf([
+        ...Array.from({ length: relleno }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+        { kind: 'heading', level: 3, text: 'Resultados' },
+        campoDeBloque('Hemograma', 'PÁRRAFO_LARGO'),
+      ]);
+      const { orden } = ultimoDocumento().llamadas;
+      const titulo = orden.indexOf('Resultados');
+      const hoja = orden.indexOf('— hoja nueva —', titulo);
+      const despues = orden.slice(titulo, hoja === -1 ? undefined : hoja);
+      expect(despues, `con ${relleno} párrafos antes`).toContain('Renglón 1');
+    }
+  });
+
+  it('el sombreado alterno vuelve a empezar en cada hoja', () => {
+    buildBlocksPdf([
+      { kind: 'row', text: '', cells: ['Concepto', 'Importe'], header: true },
+      ...Array.from({ length: 80 }, (_, i) => ({ kind: 'row' as const, text: '', cells: [`Cuota ${i + 1}`, '1,00'] })),
+    ]);
+    const { orden, addPage } = ultimoDocumento().llamadas;
+    expect(addPage).toBeGreaterThan(0);
+    // Imposible de leer desde el doble sin colores: se comprueba que cada hoja
+    // nueva arranca con la cabecera seguida de una fila.
+    const tras = orden.indexOf('— hoja nueva —');
+    expect(orden.slice(tras).find((linea) => linea.startsWith('Cuota '))).toBeDefined();
+  });
+});
+
 describe('exportElementToPdf', () => {
   it('guarda con el nombre de archivo dado', () => {
     exportElementToPdf(elementoDeEjemplo(), 'presupuesto-ana-perez.pdf');

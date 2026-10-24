@@ -55,6 +55,14 @@ export class PdfComposer {
 
   /** Dónde va el próximo bloque. */
   y = 0;
+  /** La hoja en curso, desde 1. */
+  page = 1;
+  /**
+   * Lo que se vuelve a dibujar **encima de la marca de agua**, por hoja: un QR
+   * con la marca cruzándole los módulos es el que la impresora láser ensucia y
+   * el celular no lee.
+   */
+  readonly overlays = new Map<number, (() => void)[]>();
   /**
    * Dónde empieza el contenido de la hoja **en curso**, bajo su membrete. Es
    * lo que distingue una hoja recién abierta de una a medio escribir.
@@ -104,6 +112,7 @@ export class PdfComposer {
   /** Pasa a una hoja nueva y deja la pluma bajo su membrete. */
   newPage(): void {
     this.doc.addPage();
+    this.page += 1;
     this.pageTop = this.onNewPage(this);
     this.y = this.pageTop;
   }
@@ -162,8 +171,15 @@ export class PdfComposer {
    * una versalita espaciada ese extra es casi un quinto del ancho y el texto se
    * saldría de su columna. Ahí se parte por palabras midiendo con el espaciado.
    */
+  /** Dibuja algo otra vez al final, encima de la marca de agua de esta hoja. */
+  overlay(draw: () => void): void {
+    const list = this.overlays.get(this.page) ?? [];
+    list.push(draw);
+    this.overlays.set(this.page, list);
+  }
+
   wrap(text: string, width: number, style: PdfTextStyle): string[] {
-    const shaped = this.shape(text, style);
+    const shaped = keepTimesTogether(this.shape(text, style));
     // Sólo los blancos comunes cuentan como vacío: un espacio duro (U+00A0) es
     // un renglón deliberado —un hueco pedido a propósito—, y `trim()` lo
     // borraría.
@@ -377,6 +393,15 @@ export class PdfComposer {
       return false;
     }
   }
+}
+
+/**
+ * «6:30 p. m.» no se parte entre renglones: los espacios de la hora y de
+ * «a. m.» / «p. m.» pasan a ser duros. También el espacio fino (U+202F) que usa
+ * `Intl` en algunos entornos, que las fuentes del papel no siempre traen.
+ */
+function keepTimesTogether(text: string): string {
+  return text.replace(/(\d)[ \u00A0\u202F]+([ap])\.[ \u00A0\u202F]*m\./g, '$1\u00A0$2.\u00A0m.');
 }
 
 /** Qué archivo de `PdfFuentes` cubre cada pieza tipográfica del tema. */

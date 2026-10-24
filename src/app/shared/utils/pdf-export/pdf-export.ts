@@ -12,6 +12,7 @@ import type {
 import { drawContinuationPage, drawFirstPage, stampFooters } from './pdf-page';
 import type { PdfTone } from './pdf-theme';
 
+export { formatDate, formatDateTime, formatMoney, formatTime, MINUS } from './pdf-format';
 export type {
   PdfBlock,
   PdfExportOptions,
@@ -175,6 +176,15 @@ export function noteBlock(text: string, tone: PdfTone = 'brand', title?: string)
 /** Una lista con viñetas. */
 export function listBlock(items: readonly string[]): PdfBlock {
   return { kind: 'list', text: items.join('\n'), items };
+}
+
+/**
+ * Opciones para marcar a mano: casillas redondas si se marca una sola,
+ * cuadradas si se marcan varias.
+ */
+export function choicesBlock(items: readonly string[], multiple: boolean): PdfBlock {
+  const marker = multiple ? '[ ]' : '( )';
+  return { kind: 'choices', text: items.map((item) => `${marker} ${item}`).join('   '), items, multiple };
 }
 
 /* ---- la extracción desde el DOM ----------------------------------------- */

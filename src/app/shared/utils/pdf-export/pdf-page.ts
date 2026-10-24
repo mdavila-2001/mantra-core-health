@@ -1,6 +1,7 @@
 import { altoDeMarca, dibujarMarcaAlovida } from './alovida-mark';
 import type { PdfComposer } from './pdf-composer';
 import type { PdfMetaEntry } from './pdf-document.types';
+import { formatDateTime } from './pdf-format';
 import { contenerLogo } from './pdf-logo';
 import {
   PDF_COLORS,
@@ -44,11 +45,11 @@ const WATERMARK_OPACITY = 0.14;
 /** Cuánto se nota lo secundario sobre la portada: el blanco de la marca, más tenue. */
 const COVER_SECONDARY_OPACITY = 0.78;
 
-/** `24/10/2026, 10:32`: día, mes y año a la boliviana, sin depender del ICU del entorno. */
+/** `24/10/2026, 10:32`: el formato común de `pdf-format.ts`. */
 export function formatIssuedAt(date: Date): string {
-  const two = (value: number): string => String(value).padStart(2, '0');
-  return `${two(date.getDate())}/${two(date.getMonth() + 1)}/${date.getFullYear()}, ${two(date.getHours())}:${two(date.getMinutes())}`;
+  return formatDateTime(date);
 }
+
 
 /** Abre la primera hoja. Devuelve dónde empieza el contenido. */
 export function drawFirstPage(composer: PdfComposer): number {
@@ -369,6 +370,7 @@ export function stampFooters(composer: PdfComposer): void {
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page);
     drawWatermark(composer);
+    for (const draw of composer.overlays.get(page) ?? []) draw();
     composer.rule(ruleY, PDF_COLORS.rule, 0.6);
     if (composer.options.plainPaper !== true) {
       composer.gradient(0, composer.pageHeight - PDF_PAGE.footerBand, composer.pageWidth, PDF_PAGE.footerBand, PDF_GRADIENTS.cover);

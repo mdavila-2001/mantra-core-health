@@ -1,7 +1,7 @@
 import type { PdfComposer } from './pdf-composer';
 import type { PdfBlock, PdfField, PdfQrMatrix, PdfTotalRow } from './pdf-document.types';
 import { contenerLogo, type PdfLogo } from './pdf-logo';
-import { drawTable } from './pdf-table';
+import { drawTable, tableStartHeight } from './pdf-table';
 import {
   gridSpan,
   PDF_COLORS,
@@ -82,10 +82,11 @@ export function drawContent(composer: PdfComposer, blocks: readonly PdfBlock[]):
       drawTable(composer, element.rows, trailing);
     } else if (element.type === 'fieldList') {
       drawFieldList(composer, element.fields);
-    } else if (element.block.kind === 'heading' && elements[index + 1]?.type === 'table') {
-      // Un título seguido de una tabla reserva la cabecera y una fila, no dos
-      // renglones de texto: si no, quedaba solo al pie de la hoja.
-      drawHeading(composer, element.block, TABLE_START_HEIGHT);
+    } else if (element.block.kind === 'heading') {
+      // Un título reserva el arranque de lo que lo sigue —la cabecera y una
+      // fila de una tabla, el primer dato de una lista, la primera fila de una
+      // rejilla—: si no, quedaba solo al pie de la hoja.
+      drawHeading(composer, element.block, startHeightOf(composer, elements[index + 1]));
     } else {
       drawBlock(composer, element.block);
     }
@@ -105,6 +106,9 @@ function drawBlock(composer: PdfComposer, block: PdfBlock): void {
       return;
     case 'list':
       drawList(composer, block.items ?? [block.text]);
+      return;
+    case 'choices':
+      drawChoices(composer, block.items ?? [], block.multiple === true);
       return;
     case 'note':
       drawNote(composer, block);
@@ -152,12 +156,32 @@ function drawBlock(composer: PdfComposer, block: PdfBlock): void {
  * de una hoja, con su contenido en la siguiente, se lee como si la sección
  * estuviera vacía.
  */
-/** Lo que mide el arranque de una tabla: el aire, la cabecera y una fila de una línea. */
-const TABLE_START_HEIGHT =
-  PDF_SPACE.sm +
-  PDF_TYPE.cellHead.leading +
-  PDF_TYPE.cell.leading +
-  PDF_SPACE.cellPaddingY * 4;
+/**
+ * Lo que mide el arranque de un elemento: lo mínimo que tiene que entrar en la
+ * hoja junto con el título que lo anuncia.
+ */
+function startHeightOf(composer: PdfComposer, element: Element | undefined): number {
+  const twoLines = PDF_TYPE.body.leading * 2;
+  if (element === undefined) return twoLines;
+  if (element.type === 'table') return tableStartHeight(composer, element.rows);
+  if (element.type === 'fieldList') {
+    const [first] = element.fields;
+    if (first === undefined) return twoLines;
+    const lines = composer.wrap(first.value, composer.width - PDF_SPACE.labelColumn, PDF_TYPE.value).length;
+    return PDF_SPACE.xs + Math.min(3, Math.max(1, lines)) * PDF_TYPE.value.leading + 12;
+  }
+  switch (element.block.kind) {
+    case 'fields':
+      return PDF_SPACE.sm + (PDF_SPACE.panelPadding + 2) * 2 + PDF_TYPE.label.leading + 2 + PDF_TYPE.value.leading * 2;
+    case 'heading':
+      // Un título seguido de otro: el segundo ya reserva lo suyo al dibujarse.
+      return PDF_TYPE.heading.leading + twoLines;
+    case 'choices':
+      return PDF_SPACE.xs + CHOICE_LINE;
+    default:
+      return twoLines;
+  }
+}
 
 /** @param keep - Lo que se reserva de lo que viene después, para no dejar el título solo. */
 function drawHeading(composer: PdfComposer, block: PdfBlock, keep: number = PDF_TYPE.body.leading * 2): void {
@@ -249,6 +273,59 @@ function drawList(composer: PdfComposer, items: readonly string[]): void {
   composer.y += PDF_SPACE.xs;
 }
 
+/** El lado de una casilla de opción: 11,5 pt ≈ 4 mm, lo que se marca cómodo con una lapicera. */
+const CHOICE_BOX = 11.5;
+
+/** El alto de un renglón de opciones. */
+const CHOICE_LINE = 20;
+
+/**
+ * Opciones para marcar a mano, con la casilla **dibujada**: redonda si se marca
+ * una sola, cuadrada si se marcan varias. Las cortas van una al lado de la otra
+ * mientras entren; una opción larga ocupa su renglón y se parte debajo de su
+ * texto, nunca debajo de la casilla.
+ */
+function drawChoices(composer: PdfComposer, items: readonly string[], multiple: boolean): void {
+  const style = PDF_TYPE.body;
+  const gap = 7;
+  const between = 22;
+  const textWidth = composer.width - CHOICE_BOX - gap;
+  composer.space(PDF_SPACE.xs);
+  let x = composer.left;
+  let rowOpen = false;
+  for (const item of items) {
+    const width = CHOICE_BOX + gap + composer.measure(item, style);
+    const fitsInline = x + width <= composer.right;
+    if (rowOpen && !fitsInline) {
+      composer.y += CHOICE_LINE;
+      x = composer.left;
+      rowOpen = false;
+    }
+    const lines = rowOpen || x + width <= composer.right ? [item] : composer.wrap(item, textWidth, style);
+    const height = Math.max(CHOICE_LINE, lines.length * style.leading + (CHOICE_LINE - style.leading));
+    if (!rowOpen) composer.ensure(height);
+    const boxTop = composer.y + (style.leading - CHOICE_BOX) / 2 + 1;
+    composer.doc.setDrawColor(PDF_COLORS.inkMuted[0], PDF_COLORS.inkMuted[1], PDF_COLORS.inkMuted[2]);
+    composer.doc.setLineWidth(0.8);
+    if (multiple) {
+      composer.doc.roundedRect(x, boxTop, CHOICE_BOX, CHOICE_BOX, 1.5, 1.5, 'S');
+    } else {
+      composer.doc.circle(x + CHOICE_BOX / 2, boxTop + CHOICE_BOX / 2, CHOICE_BOX / 2, 'S');
+    }
+    composer.writeLines(lines, x + CHOICE_BOX + gap, composer.y, style);
+    if (lines.length > 1) {
+      composer.y += height;
+      x = composer.left;
+      rowOpen = false;
+      continue;
+    }
+    x += width + between;
+    rowOpen = true;
+  }
+  if (rowOpen) composer.y += CHOICE_LINE;
+  composer.y += PDF_SPACE.xs;
+}
+
 /** La letra chica del final: quién emitió el papel y cuándo, una aclaración. */
 function drawCaption(composer: PdfComposer, text: string): void {
   const style = PDF_TYPE.caption;
@@ -263,6 +340,15 @@ function drawCaption(composer: PdfComposer, text: string): void {
 /* ---- datos ------------------------------------------------------------ */
 
 /**
+ * El estilo de la etiqueta de un dato. Las etiquetas van en versalitas, salvo
+ * las que salen de los datos con cifras —«Losartán 50 mg», «Dosis 2»—: en
+ * mayúsculas, «50 MG» deja de leerse como una unidad.
+ */
+function labelStyleFor(label: string): PdfTextStyle {
+  return /\d/.test(label) ? { ...PDF_TYPE.label, uppercase: false, tracking: 0, size: 7.5 } : PDF_TYPE.label;
+}
+
+/**
  * Datos seguidos: la etiqueta en versalitas a la izquierda y el valor a la
  * derecha, con un filete de superficie entre renglones. La vista baja por los
  * valores sin tropezar con «Paciente:», «Documento:», «Profesional:» repetidos.
@@ -274,12 +360,13 @@ function drawFieldList(composer: PdfComposer, fields: readonly PdfField[]): void
   const padding = 6;
   // La etiqueta, más chica, se baja hasta que su línea base coincide con la
   // del valor: así se leen como un solo renglón.
-  const labelOffset = composer.baseline(PDF_TYPE.value) - composer.baseline(PDF_TYPE.label);
   composer.space(PDF_SPACE.xs);
   for (const field of fields) {
-    const labelLines = composer.wrap(field.label, labelWidth - PDF_SPACE.md, PDF_TYPE.label);
+    const labelStyle = labelStyleFor(field.label);
+    const labelLines = composer.wrap(field.label, labelWidth - PDF_SPACE.md, labelStyle);
     let valueLines = composer.wrap(field.value, valueWidth, PDF_TYPE.value);
-    const labelHeight = labelLines.length * PDF_TYPE.label.leading + 3;
+    const labelHeight = labelLines.length * labelStyle.leading + 3;
+    const labelOffset = composer.baseline(PDF_TYPE.value) - composer.baseline(labelStyle);
     // Un valor más largo que lo que queda de hoja —una evolución, unas
     // indicaciones— sigue en la siguiente, renglón por renglón; nunca se sale
     // de la hoja ni pisa el pie.
@@ -290,7 +377,7 @@ function drawFieldList(composer: PdfComposer, fields: readonly PdfField[]): void
       const chunk = valueLines.slice(0, room);
       const height =
         Math.max(first ? labelHeight : 0, chunk.length * PDF_TYPE.value.leading) + padding * 2;
-      if (first) composer.writeLines(labelLines, composer.left, composer.y + padding + labelOffset, PDF_TYPE.label);
+      if (first) composer.writeLines(labelLines, composer.left, composer.y + padding + labelOffset, labelStyle);
       composer.writeLines(chunk, valueX, composer.y + padding, PDF_TYPE.value);
       composer.y += height;
       valueLines = valueLines.slice(chunk.length);
@@ -678,7 +765,17 @@ function drawQr(composer: PdfComposer, block: PdfBlock): void {
     stroke: PDF_COLORS.ruleSoft,
     weight: 0.7,
   });
-  drawQrModules(composer, qr, composer.left + pad, top + (height - side) / 2, side);
+  const qrX = composer.left + pad;
+  const qrY = top + (height - side) / 2;
+  drawQrModules(composer, qr, qrX, qrY, side);
+  // Encima de la marca de agua, el código vuelve a dibujarse limpio sobre su
+  // blanco: la marca no le cruza los módulos.
+  if ((composer.options.watermark ?? '').trim() !== '') {
+    composer.overlay(() => {
+      composer.fill(qrX, qrY, side, side, PDF_COLORS.onBrand);
+      drawQrModules(composer, qr, qrX, qrY, side);
+    });
+  }
   // Un filete vertical separa el código de su leyenda.
   composer.doc.setDrawColor(PDF_COLORS.ruleSoft[0], PDF_COLORS.ruleSoft[1], PDF_COLORS.ruleSoft[2]);
   composer.doc.setLineWidth(0.7);

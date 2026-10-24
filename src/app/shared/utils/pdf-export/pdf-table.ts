@@ -94,6 +94,9 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[], trai
         });
       }
       composer.newPage();
+      // El sombreado vuelve a empezar en cada hoja: la primera fila bajo la
+      // cabecera repetida va siempre sin teñir.
+      bodyIndex = 0;
       if (!isHeader && header !== null) {
         drawRow(composer, header, widths, numeric, 'header');
       }
@@ -113,6 +116,23 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[], trai
     );
   }
   composer.y += PDF_SPACE.md;
+}
+
+/**
+ * Lo que mide el arranque de una tabla —el aire, la cabecera si la tiene y la
+ * primera fila de datos—: es lo que un título reserva para no quedar solo al
+ * pie de una hoja.
+ */
+export function tableStartHeight(composer: PdfComposer, rows: readonly PdfBlock[]): number {
+  const cells = rows.map(cellsOf);
+  const columns = Math.max(0, ...cells.map((row) => row.length));
+  if (columns === 0) return 0;
+  const widths = columnWidths(composer, rows, cells, columns);
+  const first = rows.findIndex((row) => row.header !== true);
+  let height = PDF_SPACE.sm;
+  if (rows[0]?.header === true) height += layoutRow(composer, cells[0], widths, true).height;
+  if (first !== -1) height += layoutRow(composer, cells[first], widths, false).height;
+  return height;
 }
 
 /** Una fila ya partida en las líneas que entran en su columna. */
