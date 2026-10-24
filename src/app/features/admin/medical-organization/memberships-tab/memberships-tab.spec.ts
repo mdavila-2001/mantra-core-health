@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 
 import { MembershipsTab } from './memberships-tab';
 
@@ -82,6 +84,68 @@ describe('MembershipsTab — Carril 33', () => {
     expect(tabla?.textContent).toContain('Médico/a de planta');
     expect(tabla?.textContent).toContain('10 feb 2026');
     expect(tabla?.textContent).toContain('Solicitar');
+  });
+
+  it('prioriza organización, estado y acciones en móvil y pliega cargo y fecha al detalle', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([
+      {
+        id: 'role-pending',
+        practiceId: 'practice-pending',
+        practiceName: 'Hospital Regional de Rehabilitación y Cuidados Integrales',
+        practiceType: null,
+        practiceSiteId: null,
+        roleConceptId: 'role-attending',
+        specialtyConceptId: null,
+        status: '9705765a-52a0-5c34-b666-a71fda4d9a16', // PENDING
+        isPrimary: false,
+        validFrom: null,
+        validTo: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'role-rejected',
+        practiceId: 'practice-rejected',
+        practiceName: 'Clínica Norte',
+        practiceType: null,
+        practiceSiteId: null,
+        roleConceptId: 'role-attending',
+        specialtyConceptId: null,
+        status: 'a6caee55-265d-54cd-a966-97ac762891d9', // REJECTED
+        isPrimary: false,
+        validFrom: null,
+        validTo: '2026-01-05',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
+    http.expectOne((r) => r.url === '/practices').flush([]);
+    fixture.detectChanges();
+
+    const componente = fixture.componentInstance as unknown as {
+      columnas: () => readonly { key: string; priority: number; sticky?: string }[];
+    };
+    expect(componente.columnas()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'practiceName', priority: 1 }),
+        expect.objectContaining({ key: 'status', priority: 1 }),
+        expect.objectContaining({ key: 'actions', priority: 1, sticky: 'end' }),
+        expect.objectContaining({ key: 'roleConceptId', priority: 2 }),
+        expect.objectContaining({ key: 'validFrom', priority: 3 }),
+      ]),
+    );
+
+    const tabla = fixture.debugElement.query(By.directive(DataTable));
+    expect(tabla.componentInstance.fitContainer()).toBe(true);
+    expect(tabla.componentInstance.wrapHeaders()).toBe(true);
+    expect((tabla.nativeElement as HTMLElement).textContent).toContain(
+      'Hospital Regional de Rehabilitación y Cuidados Integrales',
+    );
+    expect((tabla.nativeElement as HTMLElement).textContent).toContain('Pendiente de aprobación');
+    expect(
+      (tabla.nativeElement as HTMLElement).querySelector(
+        'button[aria-label="Solicitar vinculación con Clínica Norte"]',
+      ),
+    ).not.toBeNull();
   });
 
   /* ---- una caída no es «no tiene organizaciones» (regla 14, 2026-10-08) ---- */
