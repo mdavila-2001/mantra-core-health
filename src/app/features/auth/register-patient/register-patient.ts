@@ -10,8 +10,10 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
+  FormArray,
   FormControl,
   FormGroup,
+  ReactiveFormsModule,
   ValidationErrors,
   Validators,
 } from '@angular/forms';
@@ -34,7 +36,10 @@ import {
   ambulancesForDepartment,
   isSeededAmbulancePhone,
 } from '../../../core/emergency/ambulance-directory.seed';
-import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
+import {
+  PhoneInput,
+  telefonoCompleto,
+} from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -101,6 +106,57 @@ const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
 /** El NIT boliviano es sólo dígitos; el backend valida lo mismo. */
 const NIT_VALIDO = /^[0-9]{4,20}$/;
+
+/**
+ * Cuántos teléfonos y contactos de emergencia más se pueden sumar con el «+».
+ * Los mismos topes que `MAX_ADDITIONAL_PHONES` y
+ * `MAX_ADDITIONAL_EMERGENCY_CONTACTS` del DTO de la API: uno más y la API
+ * contestaría 400.
+ */
+export const MAX_TELEFONOS_EXTRA = 4;
+export const MAX_CONTACTOS_EXTRA = 4;
+
+/** Un contacto de emergencia sumado con el «+»: los mismos tres datos que el primero. */
+type ContactoExtra = FormGroup<{
+  name: FormControl<string>;
+  phone: FormControl<string>;
+  relationshipConceptId: FormControl<string | null>;
+}>;
+
+/**
+ * Un teléfono sumado con el «+». Obligatorio una vez agregado: la casilla vacía
+ * se quita con su botón, no se manda en blanco.
+ */
+function nuevoTelefonoExtra(valor = ''): FormControl<string> {
+  return new FormControl(valor, {
+    nonNullable: true,
+    validators: [Validators.required, telefonoCompleto],
+  });
+}
+
+/** Un contacto de emergencia sumado con el «+». Su nombre es lo único obligatorio. */
+function nuevoContactoExtra(
+  valor: { name?: string; phone?: string; relationshipConceptId?: string | null } = {},
+): ContactoExtra {
+  return new FormGroup({
+    name: new FormControl(valor.name ?? '', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    phone: new FormControl(valor.phone ?? '', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    relationshipConceptId: new FormControl<string | null>(valor.relationshipConceptId ?? null),
+  });
+}
+
+/**
+ * El correo necesita un dominio con su terminación (`.com`, `.bo`…), como lo
+ * exige el `@IsEmail` del backend. `Validators.email` deja pasar `ana@gmail`, que la
+ * API rechaza recién al enviar; este patrón lo frena en el paso.
+ */
+const CORREO_CON_DOMINIO = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[^\s@.]{2,}$/;
 
 /** Un punto en el mapa, tal como lo entrega el navegador. */
 export interface Coordenadas {
@@ -519,6 +575,11 @@ const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
     Select,
     AppInput,
     OnboardingDraftBanner,
+    // Los teléfonos y contactos sumados con el «+» se dibujan fuera del
+    // `[formGroup]` del motor, así que se enchufan con `[formControl]`: igual
+    // que las gerencias del alta de organización.
+    ReactiveFormsModule,
+    PhoneInput,
   ],
   templateUrl: './register-patient.html',
   styleUrls: ['../shared-registration/registration.css', './register-patient.css'],
@@ -680,7 +741,11 @@ export class RegisterPatient {
       // sabiendas si el propietario cambia de idea (P-03-2).
       email: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.email],
+        validators: [
+          Validators.required,
+          Validators.email,
+          Validators.pattern(CORREO_CON_DOMINIO),
+        ],
       }),
       // El control guarda lo que `app-phone-input` compone —el prefijo del país
       // elegido y su número—, así que el validador comprueba justamente eso, y
@@ -751,6 +816,11 @@ export class RegisterPatient {
       // Sin parentesco declarado la API escribe «tutor o representante legal»,
       // que es lo que escribía siempre.
       guardianRelationshipConceptId: new FormControl<string | null>(null),
+      // Los teléfonos y contactos de emergencia que se suman con el «+». Son
+      // arreglos de verdad de punta a punta: viajan como `additionalPhones` y
+      // `additionalEmergencyContacts`, y la API guarda cada uno en su fila.
+      additionalPhones: new FormArray<FormControl<string>>([]),
+      additionalEmergencyContacts: new FormArray<ContactoExtra>([]),
       // La ambulancia de confianza (propietario, 2026-10-08). NO viaja al servidor —el modelo no
       // tiene dónde guardarla—: se guarda en este dispositivo al registrarse (`TrustedAmbulanceStore`).
       trustedAmbulanceName: new FormControl('', { nonNullable: true }),
@@ -1288,7 +1358,7 @@ export class RegisterPatient {
           control: 'date',
           required: true,
           maxDate: 'today',
-          minDate: new Date(1900, 0, 1),
+          minDate: new Date(1910, 0, 1),
           mensajeDeError: 'Ingrese su fecha de nacimiento.',
           ancho: 'mitad',
         },
@@ -1364,6 +1434,11 @@ export class RegisterPatient {
           mensajeDeError: 'Ingrese un número completo para el país elegido.',
         },
         {
+          key: 'additionalPhones',
+          label: '',
+          control: 'custom',
+        },
+        {
           key: 'guardianName',
           label: 'Contacto de emergencia (opcional)',
           hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
@@ -1385,6 +1460,11 @@ export class RegisterPatient {
           mensajeDeError: 'Para guardar el teléfono, cuéntenos también su nombre.',
         },
         this.campoRelacionDelContacto(),
+        {
+          key: 'additionalEmergencyContacts',
+          label: '',
+          control: 'custom',
+        },
         {
           key: 'trustedAmbulanceService',
           label: 'Servicio de ambulancia',
@@ -1837,6 +1917,69 @@ export class RegisterPatient {
     if (id === null) return false;
     return this.opcionesOcupacion().find((o) => o.value === id)?.code === CODIGO_OCUPACION_OTRA;
   });
+
+  /** Los topes del «+», para la plantilla. */
+  readonly maxTelefonosExtra = MAX_TELEFONOS_EXTRA;
+  readonly maxContactosExtra = MAX_CONTACTOS_EXTRA;
+
+  /** Los avisos de los campos sumados con el «+». */
+  readonly errorTelefonoExtra = 'Ingrese un número completo para el país elegido, o quite la casilla.';
+  readonly errorNombreContacto = 'Escriba su nombre, o quite este contacto.';
+  readonly errorTelefonoContacto = 'Ingrese el número completo para el país elegido.';
+
+  /** Los teléfonos sumados con el «+», en el orden en que se agregaron. */
+  get telefonosExtra(): FormArray<FormControl<string>> {
+    return this.formPaciente.controls.additionalPhones;
+  }
+
+  /** Los contactos de emergencia sumados con el «+». */
+  get contactosExtra(): FormArray<ContactoExtra> {
+    return this.formPaciente.controls.additionalEmergencyContacts;
+  }
+
+  /** Suma una casilla de teléfono, hasta el tope que acepta la API. */
+  agregarTelefono(): void {
+    if (this.telefonosExtra.length >= MAX_TELEFONOS_EXTRA) return;
+    this.telefonosExtra.push(nuevoTelefonoExtra());
+  }
+
+  /**
+   * Quita uno de los teléfonos sumados.
+   *
+   * @param indice - Cuál de los teléfonos extra, empezando por 0.
+   */
+  quitarTelefono(indice: number): void {
+    this.telefonosExtra.removeAt(indice);
+  }
+
+  /** Suma un contacto de emergencia, hasta el tope que acepta la API. */
+  agregarContacto(): void {
+    if (this.contactosExtra.length >= MAX_CONTACTOS_EXTRA) return;
+    this.contactosExtra.push(nuevoContactoExtra());
+  }
+
+  /**
+   * Quita uno de los contactos sumados.
+   *
+   * @param indice - Cuál de los contactos extra, empezando por 0.
+   */
+  quitarContacto(indice: number): void {
+    this.contactosExtra.removeAt(indice);
+  }
+
+  /**
+   * Si un control de los sumados con el «+» tiene que mostrarse en rojo.
+   *
+   * El motor marca como tocado el arreglo entero al intentar avanzar, no a sus
+   * hijos: por eso cuenta tanto el control como su arreglo.
+   *
+   * @param control - El teléfono, o el nombre o teléfono de un contacto.
+   * @param arreglo - El arreglo al que pertenece.
+   * @returns `true` si es inválido y ya se intentó avanzar o se lo tocó.
+   */
+  enRojo(control: AbstractControl, arreglo: AbstractControl): boolean {
+    return control.invalid && (control.touched || arreglo.touched);
+  }
 
   /**
    * Los nombres que se agregaron después del tercero.
@@ -2311,6 +2454,25 @@ export class RegisterPatient {
         if (typeof valores['birthDate'] === 'string' && valores['birthDate']) {
           const d = new Date(valores['birthDate']);
           valores['birthDate'] = !Number.isNaN(d.getTime()) ? d : null;
+        }
+        // `patchValue` no crea filas en un `FormArray`: sólo llena las que hay.
+        // Se arman primero, del largo guardado, y después se llenan.
+        if (Array.isArray(valores['additionalPhones'])) {
+          this.telefonosExtra.clear();
+          for (const telefono of valores['additionalPhones'].slice(0, MAX_TELEFONOS_EXTRA)) {
+            this.telefonosExtra.push(nuevoTelefonoExtra(String(telefono ?? '')));
+          }
+          delete valores['additionalPhones'];
+        }
+        if (Array.isArray(valores['additionalEmergencyContacts'])) {
+          this.contactosExtra.clear();
+          const contactos = valores['additionalEmergencyContacts'] as Parameters<
+            typeof nuevoContactoExtra
+          >[0][];
+          for (const contacto of contactos.slice(0, MAX_CONTACTOS_EXTRA)) {
+            this.contactosExtra.push(nuevoContactoExtra(contacto ?? {}));
+          }
+          delete valores['additionalEmergencyContacts'];
         }
         this.formPaciente.patchValue(valores);
       }
@@ -2803,6 +2965,17 @@ export class RegisterPatient {
     const nombreTutor = raw.guardianName.trim();
     const telefonoTutor = raw.guardianPhone.trim();
     const relacionTutor = raw.guardianRelationshipConceptId;
+    const telefonosExtra = raw.additionalPhones.map((t) => t.trim()).filter((t) => t !== '');
+    const contactosExtra = raw.additionalEmergencyContacts
+      .map((c) => ({ ...c, name: c.name.trim(), phone: c.phone.trim() }))
+      .filter((c) => c.name !== '')
+      .map((c) => ({
+        name: c.name,
+        ...(c.phone === '' ? {} : { phone: c.phone }),
+        ...(c.relationshipConceptId === null
+          ? {}
+          : { relationshipConceptId: c.relationshipConceptId }),
+      }));
     const seguroPrivado = raw.privateInsurancePlanId;
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
@@ -2846,6 +3019,7 @@ export class RegisterPatient {
       phone: telefono,
       // `''` no es un código válido: la API responde 400 nombrando el campo.
       sexAtBirth: sexoAlNacer ?? ('' as BirthSexCode),
+      ...(telefonosExtra.length === 0 ? {} : { additionalPhones: telefonosExtra }),
       // Con «Otra ocupación» viaja el oficio escrito y NO el concepto: el
       // backend descarta el texto libre en cuanto recibe un concepto
       // (`occupationFreeText: dto.occupationConceptId ? undefined : …`), y de
@@ -2886,6 +3060,7 @@ export class RegisterPatient {
       ...(nombreTutor === '' || relacionTutor === null
         ? {}
         : { guardianRelationshipConceptId: relacionTutor }),
+      ...(contactosExtra.length === 0 ? {} : { additionalEmergencyContacts: contactosExtra }),
       ...(seguroPrivado === null ? {} : { privateInsurancePlanId: seguroPrivado }),
       ...(seguroPublico === null ? {} : { publicInsurancePlanId: seguroPublico }),
       ...(nit === '' ? {} : { billingTaxId: nit }),
