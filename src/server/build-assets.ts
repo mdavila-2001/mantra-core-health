@@ -14,6 +14,35 @@ export function esArtefactoDeConstruccion(ruta: string): boolean {
 }
 
 /**
+ * El nombre que esbuild le pone a lo que compila: `main-YHR6MAGL.js`,
+ * `chunk-…`, `styles-…`. Ocho mayúsculas o dígitos que cambian con el contenido.
+ */
+const HUELLA_DE_CONTENIDO = /-[A-Z0-9]{8}\.(?:m?js|css)$/;
+
+export function tieneHuellaDeContenido(ruta: string): boolean {
+  return HUELLA_DE_CONTENIDO.test(ruta);
+}
+
+/**
+ * Cuánto puede guardar el navegador cada archivo estático.
+ *
+ * Con huella, un año: si el contenido cambia, cambia el nombre. Sin huella
+ * —`paciente.css`, que se compila aparte y Angular no la firma, y todo lo de
+ * `public/`: el logo, las imágenes, las tipografías—, `no-cache`: el navegador
+ * la guarda pero pregunta antes de usarla, y con el ETag la respuesta es un
+ * 304 sin cuerpo.
+ *
+ * Antes eran un año para todo. Quien abrió la maqueta con la primera versión
+ * de `paciente.css` siguió viendo, después de dos despliegues, el trazo de
+ * electro que la segunda había quitado.
+ */
+export function cachePorHuella(res: express.Response, ruta: string): void {
+  if (!tieneHuellaDeContenido(ruta)) {
+    res.setHeader('Cache-Control', 'no-cache');
+  }
+}
+
+/**
  * Un `.js` que no existe tiene que ser un 404, no la aplicación entera.
  *
  * Va **después** de `express.static`: lo que llega acá es lo que el servidor de
