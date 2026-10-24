@@ -120,15 +120,62 @@ export function normalizeSearch(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase().trim();
 }
 
-/** Las entradas del índice cuyo nombre (castellano o inglés) contiene el texto; primero las que tienen pieza. */
+/**
+ * Qué tan buen acierto es una entrada para lo escrito; menor es mejor, `null` si no acierta.
+ *
+ * Cada palabra escrita tiene que aparecer en el nombre en castellano, en el
+ * inglés o en el identificador. Entre los que aciertan manda el nombre en
+ * castellano, que es el idioma de quien busca:
+ *
+ * - 0: el nombre es exactamente lo escrito («húmero»).
+ * - 1: el nombre empieza con lo escrito («húmero» → «húmero distal»).
+ * - 2: lo escrito son palabras completas del nombre («humero» → «cabeza del húmero»).
+ * - 3: lo escrito abre una palabra del nombre («humero» → «humerocubital»).
+ * - 4: lo escrito está dentro de una palabra o sólo en el nombre en inglés.
+ */
+function matchRank(entry: AnatomyIndexEntry, palabras: readonly string[], frase: string): number | null {
+  const [id, es, en] = entry;
+  const nombreEs = normalizeSearch(es ?? '');
+  const nombreEn = normalizeSearch(en);
+  const idMinuscula = id.toLowerCase();
+  const aciertaEn = (texto: string) => palabras.every((p) => texto.includes(p));
+  const enEs = nombreEs !== '' && aciertaEn(nombreEs);
+  const enIngles = aciertaEn(nombreEn);
+  if (!enEs && !enIngles && idMinuscula !== frase) return null;
+
+  if (enEs) {
+    if (nombreEs === frase) return 0;
+    if (nombreEs.startsWith(frase)) return 1;
+    const sus = nombreEs.split(/[^\p{L}\p{N}]+/u);
+    if (palabras.every((p) => sus.includes(p))) return 2;
+    if (palabras.every((p) => sus.some((palabra) => palabra.startsWith(p)))) return 3;
+  }
+  return 4;
+}
+
+/**
+ * Las entradas del índice que aciertan con lo escrito, de mejor a peor.
+ *
+ * Se busca sin tildes ni mayúsculas y por palabras: «cabeza humero» encuentra
+ * «cabeza del húmero». A igual acierto van primero las que tienen pieza 3D, y
+ * después las de nombre más corto —«fémur» antes que «cabeza del fémur»—.
+ */
 export function searchIndex(entries: readonly AnatomyIndexEntry[], query: string, limit: number): AnatomyIndexEntry[] {
-  const q = normalizeSearch(query);
-  if (q.length < 2) return [];
-  const aciertos = entries.filter(
-    ([id, es, en]) => normalizeSearch(es ?? '').includes(q) || normalizeSearch(en).includes(q) || id.toLowerCase() === q,
+  const frase = normalizeSearch(query).replace(/\s+/g, ' ');
+  if (frase.length < 2) return [];
+  const palabras = frase.split(' ');
+  const aciertos: { entrada: AnatomyIndexEntry; rango: number }[] = [];
+  for (const entrada of entries) {
+    const rango = matchRank(entrada, palabras, frase);
+    if (rango !== null) aciertos.push({ entrada, rango });
+  }
+  aciertos.sort(
+    (a, b) =>
+      a.rango - b.rango ||
+      b.entrada[3] - a.entrada[3] ||
+      (a.entrada[1] ?? a.entrada[2]).length - (b.entrada[1] ?? b.entrada[2]).length,
   );
-  aciertos.sort((a, b) => b[3] - a[3]);
-  return aciertos.slice(0, limit);
+  return aciertos.slice(0, limit).map((a) => a.entrada);
 }
 
 /** El lado de una pieza par, dicho en castellano. */

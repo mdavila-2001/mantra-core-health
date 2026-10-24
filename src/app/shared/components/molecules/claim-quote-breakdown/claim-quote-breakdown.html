@@ -1,0 +1,58 @@
+<section class="cqb" aria-label="Reparto del cobro" data-testid="claim-quote-breakdown">
+  <dl class="cqb__cifras cifras-tabulares">
+    <div>
+      <dt>Cobertura</dt>
+      <dd data-testid="claim-quote-total-coverage">{{ cifras().coverage ?? 'Sin calcular' }}</dd>
+    </div>
+    <div>
+      <dt>Copago</dt>
+      <dd data-testid="claim-quote-total-copay">{{ cifras().copay ?? 'Sin calcular' }}</dd>
+    </div>
+    <div class="cqb__paciente">
+      <dt>A cargo del paciente</dt>
+      <dd data-testid="claim-quote-total-patient">{{ cifras().patient ?? 'Sin calcular' }}</dd>
+    </div>
+    <div>
+      <dt>A cargo de la aseguradora</dt>
+      <dd data-testid="claim-quote-total-insurer">{{ cifras().insurer ?? 'Sin calcular' }}</dd>
+    </div>
+  </dl>
+
+  @if (vm().lines.length > 0) {
+    <ol class="cqb__lineas">
+      @for (linea of vm().lines; track linea.key) {
+        <li class="cqb__linea" [attr.data-testid]="'claim-quote-line-' + linea.key">
+          <div class="cqb__cabecera">
+            <span class="cqb__servicio">{{ linea.serviceLabel }}</span>
+            <app-badge
+              [variant]="linea.authorizationStatus ? tonoDe[linea.authorizationStatus] : 'info'"
+              [attr.data-testid]="'claim-quote-line-auth-' + linea.key"
+            >{{ linea.authorizationLabel }}</app-badge>
+          </div>
+          <dl class="cqb__importes cifras-tabulares">
+            <div>
+              <dt>Monto</dt>
+              <dd>{{ conMoneda(linea.billedAmount, vm().currencyCode) }}</dd>
+            </div>
+            <div>
+              <dt>Cubre el plan</dt>
+              <dd>{{ linea.coveragePercent === null ? 'No cubierto' : linea.coveragePercent + ' %' }}</dd>
+            </div>
+            <div class="cqb__paciente">
+              <dt>A cargo del paciente</dt>
+              <dd data-testid="claim-quote-line-patient">
+                {{ conMoneda(linea.patientAmount, vm().currencyCode) ?? 'Sin calcular' }}
+              </dd>
+            </div>
+            <div>
+              <dt>A cargo de la aseguradora</dt>
+              <dd data-testid="claim-quote-line-insurer">
+                {{ conMoneda(linea.insurerAmount, vm().currencyCode) ?? 'Sin calcular' }}
+              </dd>
+            </div>
+          </dl>
+        </li>
+      }
+    </ol>
+  }
+</section>

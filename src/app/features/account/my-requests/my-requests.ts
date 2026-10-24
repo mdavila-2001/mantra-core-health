@@ -14,15 +14,26 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationService } from '@core/navigation/navigation.service';
 
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
-import type {
-  MyClaim,
-  MyClaimsView,
-  ReceivedClaimOutcome,
+import {
+  ROTULO_DE_AUTORIZACION,
+  type MyClaim,
+  type MyClaimObjection,
+  type MyClaimsView,
+  type PatientObjectionReason,
+  type ReceivedClaimOutcome,
 } from '../../../core/data-access/insurance/insurance.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState, ViewStateNextAction } from '../../../core/view-state/view-state.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { ClaimQuoteBreakdown } from '../../../shared/components/molecules/claim-quote-breakdown/claim-quote-breakdown';
+import type { ClaimQuoteBreakdownVm } from '../../../shared/components/molecules/claim-quote-breakdown/claim-quote-breakdown.types';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Radio } from '../../../shared/components/molecules/radio/radio';
+import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
+import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
@@ -107,8 +118,15 @@ function vacioDe(vista: MyClaimsView, pestana: number): { readonly accion: ViewS
 @Component({
   selector: 'app-my-requests',
   imports: [
+    AppButton,
+    Badge,
     Alert,
     Card,
+    ClaimQuoteBreakdown,
+    FormActions,
+    FormField,
+    Radio,
+    RadioGroup,
     ContentDialog,
     DataTable,
     FilterBar,
@@ -320,6 +338,116 @@ export class MyRequests {
 
   protected cerrar(): void {
     this.abierta.set(null);
+  }
+
+  /* ---- desglose y objeción del paciente (REQ-16-031 y 032) ----------------- */
+
+  /**
+   * El desglose de la solicitud abierta, en la forma de la molécula de reparto.
+   * Solo reordena lo que mandó el servidor: no suma, no resta y no redondea.
+   */
+  protected readonly desgloseVm = computed<ClaimQuoteBreakdownVm | null>(() => {
+    const desglose = this.abierta()?.breakdown ?? null;
+    if (desglose === null) return null;
+    const lineas = desglose.lines;
+    const primera = lineas[0];
+    const coberturasIguales =
+      lineas.length > 0 && lineas.every((linea) => linea.coveragePercent === primera?.coveragePercent);
+    return {
+      currencyCode: desglose.currencyCode,
+      headline: {
+        coverage: coberturasIguales ? (primera?.coveragePercent ?? null) : null,
+        copay: lineas.length === 1 ? (primera?.copayAmount ?? null) : null,
+        patient: desglose.patientTotal,
+        insurer: desglose.insurerTotal,
+      },
+      lines: lineas.map((linea) => ({
+        key: linea.key,
+        serviceLabel: linea.service,
+        billedAmount: linea.billedAmount,
+        coveragePercent: linea.coveragePercent,
+        copayAmount: linea.copayAmount,
+        patientAmount: linea.patientAmount,
+        insurerAmount: linea.insurerAmount,
+        covered: true,
+        authorizationStatus: linea.authorizationStatus,
+        authorizationLabel:
+          linea.authorizationStatus === null
+            ? 'No requiere aprobación previa'
+            : ROTULO_DE_AUTORIZACION[linea.authorizationStatus],
+      })),
+    };
+  });
+
+  /** Los motivos cerrados de la objeción: sin texto libre, porque sería un dato de salud. */
+  protected readonly motivos: readonly { readonly value: PatientObjectionReason; readonly label: string }[] = [
+    { value: 'AMOUNT_DIFFERS', label: 'El importe no coincide con lo que me informaron' },
+    { value: 'SERVICE_NOT_RECEIVED', label: 'El servicio no se realizó' },
+    { value: 'NOT_INFORMED', label: 'No me informaron de este cobro' },
+  ];
+
+  protected readonly objetando = signal<MyClaim | null>(null);
+  protected readonly motivo = signal<PatientObjectionReason | null>(null);
+  protected readonly enviandoObjecion = signal(false);
+  protected readonly errorDeObjecion = signal<string | null>(null);
+  protected readonly puedeObjetar = computed(() => this.motivo() !== null && !this.enviandoObjecion());
+
+  protected abrirObjecion(fila: MyClaim): void {
+    this.motivo.set(null);
+    this.errorDeObjecion.set(null);
+    this.objetando.set(fila);
+  }
+
+  protected cerrarObjecion(): void {
+    if (this.enviandoObjecion()) return;
+    this.objetando.set(null);
+  }
+
+  protected presentarObjecion(): void {
+    const fila = this.objetando();
+    const motivo = this.motivo();
+    if (fila === null || motivo === null || this.enviandoObjecion()) return;
+    this.enviandoObjecion.set(true);
+    this.errorDeObjecion.set(null);
+    this.client
+      .openClaimDispute(fila.id, { initiatedBy: 'PATIENT', objectionReason: motivo })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (respuesta) => {
+          this.marcarObjetada(fila.id, respuesta.id, motivo);
+          this.enviandoObjecion.set(false);
+          this.objetando.set(null);
+          this.motivo.set(null);
+        },
+        error: () => {
+          this.enviandoObjecion.set(false);
+          this.errorDeObjecion.set(
+            'No pudimos presentar la objeción. Intente de nuevo. Si el problema continúa, comuníquese con el consultorio.',
+          );
+        },
+      });
+  }
+
+  /** Refleja la objeción en la lista y en el detalle abierto, sin volver a pedir la lista. */
+  private marcarObjetada(id: string, objecionId: string, motivo: PatientObjectionReason): void {
+    const objecion: MyClaimObjection = {
+      id: objecionId,
+      reason: motivo,
+      submittedAt: new Date(),
+      status: 'OPEN',
+    };
+    this.estado.update((actual) =>
+      actual.status === 'ready'
+        ? ready(actual.data.map((fila) => (fila.id === id ? { ...fila, patientObjection: objecion } : fila)))
+        : actual,
+    );
+    this.abierta.update((fila) => (fila !== null && fila.id === id ? { ...fila, patientObjection: objecion } : fila));
+  }
+
+  /** La etiqueta de la fila: un cobro objetado se ve «en revisión», no como la solicitud. */
+  protected etiquetaDeEstado(fila: MyClaim): string {
+    if (this.vista() === 'PATIENT' && fila.patientObjection?.status === 'OPEN') return 'Cobro en revisión';
+    return fila.status?.display ?? 'Sin estado';
   }
 }
 

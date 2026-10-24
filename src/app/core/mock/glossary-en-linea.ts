@@ -150,6 +150,17 @@ export function facetasEnLinea(manifiesto: ManifiestoDelGlosario) {
   return { categories, tags, total: manifiesto.total };
 }
 
+/**
+ * El resumen llano de la fila, o `''` si es una plantilla repetida en muchos
+ * términos (ver `genericSummaries` en el manifiesto). Una plantilla no explica
+ * el término: mostrarla como si lo hiciera es peor que no mostrar nada.
+ */
+function resumenPropio(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario): string {
+  return manifiesto.genericSummaries?.includes(fila.plainSummaryEs) === true
+    ? ''
+    : fila.plainSummaryEs;
+}
+
 /** Una entrada de la lista, como la devuelve la búsqueda del glosario. */
 export function terminoEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
   const { categoria, etiquetas } = taxonomiaDe(fila, manifiesto);
@@ -165,7 +176,7 @@ export function terminoEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGl
     // (no se redacta nada), así que cae a la frase descriptiva oficial de la
     // fuente y, si tampoco, a la definición verbatim (la tarjeta la corta a
     // cuatro líneas). Todo texto de la fuente, ninguno escrito acá.
-    shortDefinition: fila.plainSummaryEs || fila.metaDescription || fila.definition,
+    shortDefinition: resumenPropio(fila, manifiesto) || fila.metaDescription || fila.definition,
     tags: etiquetas.map((etiqueta) => etiqueta.name),
     relationsCount: fila.relations.length,
     status: 'active' as const,
@@ -253,9 +264,9 @@ export function fichaEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlos
     ...(fila.definition === ''
       ? {}
       : { clinicalDefinition: { text: fila.definition, translated: fila.lang !== 'en' } }),
-    ...(fila.plainSummaryEs === ''
+    ...(resumenPropio(fila, manifiesto) === ''
       ? {}
-      : { plainSummary: { text: fila.plainSummaryEs, translated: true } }),
+      : { plainSummary: { text: resumenPropio(fila, manifiesto), translated: true } }),
     relations: fila.relations.map((relacion) => ({
       type: relacion.type,
       conceptId: relacion.targetId,

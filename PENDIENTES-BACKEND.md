@@ -2561,3 +2561,48 @@ reintento; visor) y `features/laboratory/summary/`.
 >
 > **Mientras tanto:** la tarjeta del médico dice «Sin reseñas todavía» con las estrellas vacías.
 > No se inventa una nota.
+
+## P62 · Quien atiende no puede ver los seguros de la persona — 24/10/2026
+
+> **Qué pide el front.** La cotización del cobro con seguro (REQ-16-026) se hace desde la consulta.
+> Para cotizar, la pantalla necesita la **cobertura vigente** de la persona que atiende: su
+> aseguradora, su plan y su identificador de cobertura. La API sólo la expone al propio paciente
+> (`GET /patient-coverages/me`, rol `PATIENT`).
+>
+> **Qué hace la maqueta.** `GET /patient-coverages/by-patient/:patientProfileId`, sólo en la
+> maqueta, desde el fixture de personas. La pantalla lo lee con `simulatorOnly`: contra la API
+> real responde «todavía no está disponible» y el bloque no falla.
+>
+> **Qué tiene que hacer la API.** Una lectura para el personal con permiso sobre la persona
+> (relación de atención, misma regla que la historia clínica). Devuelve `items` con `id`,
+> `insuranceCarrierId`, `carrierName`, `planName`, `policyIdentifier`, `memberIdentifier`,
+> `validityStatus` y `currencyCode`. Sin datos clínicos.
+>
+> **Abiertos, a confirmar con el propietario del carril.**
+> 1. **Resuelto por el propietario:** cotiza el rol BILLING. Falta en la API: mapear BILLING en
+>    `role-mapping.ts` (hoy `@Roles` declara BILLING y FINANCE, y esos códigos no se mapean).
+> 2. **Resuelto por el propietario:** el `billingProviderEntityId` sale del tenant activo.
+>
+> **Mientras tanto:** el bloque dice «Sin seguro vigente» o «todavía no está disponible». No se
+> inventa una cobertura.
+
+## P63 · El desglose del cobro y la objeción no viajan en «Mis solicitudes» — 24/10/2026
+
+> **Qué pide el front.** El paciente tiene que ver, antes de pagar, qué cubre su plan, cuánto es el
+> copago, qué paga él y qué paga su aseguradora (REQ-16-031), y poder objetar el cobro (REQ-16-032).
+> `GET /insurance/my-claims` (`MyClaimDto`) no trae ninguno de los dos.
+>
+> **Qué hace la maqueta.** Extiende la respuesta sólo para la vista del paciente con `breakdown`
+> (`patientTotal`, `insurerTotal` y, por línea, cobertura, copago, parte del paciente y de la
+> aseguradora, y `authorizationStatus`) y `patientObjection` (`id`, `reason`, `submittedAt`,
+> `status`). El reparto es el mismo de la cotización.
+>
+> **Qué tiene que hacer la API.**
+> - Agregar `breakdown` a `MyClaimDto` para el paciente, calculado en el servidor (nunca en el front).
+> - Agregar `patientObjection`.
+> - `POST /insurance-claims/:id/disputes` acepta a un actor que es sólo paciente con
+>   `objectionReason` (`AMOUNT_DIFFERS`, `SERVICE_NOT_RECEIVED`, `NOT_INFORMED`), sin texto libre.
+>   Hoy el rol del paciente no está en la lista de roles de esa ruta: la maqueta asume que sí.
+>
+> **Mientras tanto:** la pantalla oculta el desglose cuando no llega. El botón de objetar aparece en la
+> vista del paciente, y si la API no lo permite responde 403 y la pantalla lo dice. No se calculan importes en el front.

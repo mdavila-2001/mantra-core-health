@@ -1,4 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+  input,
+  model,
+  signal,
+} from '@angular/core';
 
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
@@ -88,8 +100,15 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  * MakeHuman (CC0), sin pezones ni genitales, piel mate neutra— y las zonas se
  * calzan sobre su silueta (`scripts/render-body-map.py` y
  * `scripts/gen-body-zones.py`). La imagen va debajo como `<image>` del mismo
- * SVG; las zonas, transparentes, encima. Sólo se descarga la imagen de la
- * vista puesta.
+ * SVG; las zonas, transparentes, encima.
+ *
+ * **Las tres vistas se bajan juntas, apenas se monta la figura** (reporte del
+ * propietario, 24/10/2026: «tarda muchísimo en cambiar de frente a espalda y
+ * cara»). Antes sólo se pedía la imagen de la vista puesta, y como el servidor
+ * sirve `public/` con `no-cache` —a propósito, ver `server/build-assets.ts`—
+ * cada cambio de vista era una consulta al servidor: 1,1–1,6 s medidos contra
+ * la demo, con la foto vieja debajo de las zonas nuevas mientras tanto. Ahora
+ * se guardan decodificadas en memoria como `blob:` y el cambio no toca la red.
  *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
@@ -166,6 +185,69 @@ export class BodyMap {
    * para que dos siluetas en la misma página no se lo pisen.
    */
   protected readonly idDeLaElegida = `body-map-elegida-${siguienteSilueta++}`;
+
+  private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /** Las imágenes ya bajadas y decodificadas: ruta pública → URL `blob:`. */
+  private readonly enMemoria = signal<ReadonlyMap<string, string>>(new Map());
+
+  /** Rutas cuya descarga ya arrancó, para no pedir dos veces la misma. */
+  private readonly pedidas = new Set<string>();
+
+  private destruida = false;
+
+  constructor() {
+    // Las tres vistas del sexo puesto; si el sexo llega después (el perfil se
+    // resuelve tarde), se bajan las de ese también.
+    effect(() => {
+      for (const vista of this.vistasDelSexo()) this.precargar(vista.image);
+    });
+    inject(DestroyRef).onDestroy(() => {
+      this.destruida = true;
+      for (const url of this.enMemoria().values()) URL.revokeObjectURL(url);
+    });
+  }
+
+  /** Lo que dibuja el `<image>`: la copia en memoria si ya está, si no la ruta. */
+  protected imagenDe(vista: VistaDelCuerpo): string {
+    return this.enMemoria().get(vista.image) ?? vista.image;
+  }
+
+  /**
+   * Baja una imagen una sola vez y la deja decodificada en memoria.
+   *
+   * Sólo en el navegador: en el servidor no hay a quién mostrársela, y sin
+   * `fetch` o `URL.createObjectURL` (jsdom) la vista sigue con su ruta, que es
+   * exactamente como funcionaba antes.
+   */
+  private precargar(ruta: string): void {
+    if (!this.esNavegador || this.pedidas.has(ruta)) return;
+    if (typeof fetch !== 'function' || typeof URL.createObjectURL !== 'function') return;
+    this.pedidas.add(ruta);
+    void this.bajar(ruta);
+  }
+
+  private async bajar(ruta: string): Promise<void> {
+    try {
+      const respuesta = await fetch(ruta);
+      if (!respuesta.ok) throw new Error(`${ruta}: HTTP ${respuesta.status}`);
+      const url = URL.createObjectURL(await respuesta.blob());
+      // Decodificada antes de usarla: si no, el primer cambio de vista igual
+      // esperaría al decodificador y se vería un cuadro vacío.
+      const imagen = new Image();
+      imagen.src = url;
+      if (typeof imagen.decode === 'function') await imagen.decode();
+      if (this.destruida) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+      this.enMemoria.update((previas) => new Map(previas).set(ruta, url));
+    } catch {
+      // Sin la copia en memoria la vista pide su ruta como antes: más lento,
+      // pero se ve. Se olvida el pedido para reintentarlo si vuelve a hacer falta.
+      this.pedidas.delete(ruta);
+    }
+  }
 
   /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
   private readonly apuntada = signal<string | null>(null);

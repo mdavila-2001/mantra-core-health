@@ -1,3 +1,5 @@
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
+
 /* ============================================================================
     La forma de un resultado del buscador público.
 
@@ -155,4 +157,9 @@ export interface SearchResultAction {
   readonly link: string;
   /** Ancla dentro de esa ruta, para caer en la sección que importa. */
   readonly fragment?: string;
+  /**
+   * El ícono del botón. Sin él, el calendario cuando hay ancla (los horarios)
+   * y la flecha cuando no. Un botón, un ícono: nunca dos.
+   */
+  readonly icon?: NavIconName;
 }

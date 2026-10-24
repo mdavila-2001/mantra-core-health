@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 
@@ -165,10 +172,25 @@ export class LaboratoryDetail {
 
   private unitId: string | null = null;
 
+  /** Si ya se bajó hasta el ancla de la URL: una vez por carga, no a cada pintado. */
+  private anclaAtendida = false;
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.unitId = params.get('unitId');
+      this.anclaAtendida = false;
       this.load();
+    });
+
+    // «Ver estudios y precios» llega con `#estudios`, pero la sección vive
+    // dentro del estado de carga: cuando el router busca el ancla todavía no
+    // existe. Se baja a mano en cuanto la ficha está pintada.
+    afterRenderEffect(() => {
+      if (this.detail() === null || this.anclaAtendida) return;
+      const ancla = this.route.snapshot.fragment;
+      if (ancla === null) return;
+      this.anclaAtendida = true;
+      globalThis.document?.getElementById(ancla)?.scrollIntoView({ block: 'start' });
     });
   }
 
