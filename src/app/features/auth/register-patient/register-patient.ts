@@ -552,6 +552,14 @@ const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
   ['09', 'PA'],
 ]);
 
+/** El borrador antiguo de `localStorage` (formato versión 1). */
+interface BorradorLocal {
+  readonly version: number;
+  readonly pasoIndice?: number;
+  readonly formValores?: Record<string, unknown>;
+  readonly [extra: string]: unknown;
+}
+
 @Component({
   selector: 'app-register-patient',
   imports: [
@@ -2437,17 +2445,47 @@ export class RegisterPatient {
     }
   }
 
+  /**
+   * Lee el borrador antiguo de `localStorage` (sólo la versión 1) y lo deja
+   * limpio: los borradores viejos guardaban la contraseña en claro, así que se
+   * borra y se reescribe la clave sin ella.
+   */
+  private leerBorradorLocal(): BorradorLocal | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    try {
+      const serializado = localStorage.getItem(this.STORAGE_KEY);
+      const parseado = serializado ? JSON.parse(serializado) : null;
+      // Sólo la versión 1 del formato antiguo; otra cosa es basura o futuro.
+      const legacy: BorradorLocal | null =
+        parseado && typeof parseado === 'object' && parseado.version === 1 ? parseado : null;
+      if (legacy?.formValores && typeof legacy.formValores === 'object') {
+        // Borradores viejos guardaban la contraseña en claro: se borra y se
+        // reescribe la clave limpia, para que no se reinyecte ni se quede.
+        const tenia = 'password' in legacy.formValores || 'confirmPassword' in legacy.formValores;
+        delete legacy.formValores['password'];
+        delete legacy.formValores['confirmPassword'];
+        if (tenia) localStorage.setItem(this.STORAGE_KEY, JSON.stringify(legacy));
+      } else if (parseado && !legacy) {
+        localStorage.removeItem(this.STORAGE_KEY);
+      }
+      return legacy;
+    } catch {
+      return null;
+    }
+  }
+
   /** Restaura el avance previo del formulario desde caché si existe. */
   restaurarBorrador(draftParam?: OnboardingDraft): void {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
-      const serializado = localStorage.getItem(this.STORAGE_KEY);
-      const legacy = serializado ? JSON.parse(serializado) : null;
-      const draft = draftParam;
+      const legacy = this.leerBorradorLocal();
+      const draft = draftParam ?? (legacy ? undefined : this.draftService.detectDraft('patient') ?? undefined);
 
-      const rawValores = draft ? draft.data : (legacy?.formValores ?? this.draftService.detectDraft('patient')?.data);
+      const rawValores = draft ? draft.data : legacy?.formValores;
       if (rawValores) {
         const valores = { ...rawValores } as Record<string, unknown>;
+        delete valores['password'];
+        delete valores['confirmPassword'];
         if (typeof valores['birthDate'] === 'string' && valores['birthDate']) {
           const d = new Date(valores['birthDate']);
           valores['birthDate'] = !Number.isNaN(d.getTime()) ? d : null;
@@ -2474,7 +2512,7 @@ export class RegisterPatient {
         this.formPaciente.patchValue(valores);
       }
 
-      const extra = (draft ? draft.extraData : (legacy ?? this.draftService.detectDraft('patient')?.extraData)) ?? {};
+      const extra = (draft ? draft.extraData : legacy) ?? {};
       if (Array.isArray(extra['nombresExtra'])) {
         this.nombresExtra.set(extra['nombresExtra'] as readonly string[]);
       }
@@ -2549,6 +2587,7 @@ export class RegisterPatient {
   });
 
   constructor() {
+    this.leerBorradorLocal();
     const detectado = this.draftService.detectDraft('patient');
     if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
       this.borradorDetectado.set(detectado);

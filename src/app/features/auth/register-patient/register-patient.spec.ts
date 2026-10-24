@@ -438,10 +438,10 @@ describe('RegisterPatient', () => {
    */
   describe('las páginas del alta de paciente', () => {
     /**
-     * AC-03-2, el tope que no se relaja. Diez páginas: el tope es de **campos
-     * por página**, no de páginas, y apretar el orden pedido en menos pasos es
-     * exactamente lo que este motor vino a deshacer. Los tres nombres siguen
-     * yendo en un campo proyectado para que los apellidos entren en la misma.
+     * El alta se recorre en cinco pasos (el propietario consolidó las diez
+     * páginas originales el 21/10/2026). Este número se fija a propósito: sumar
+     * o partir un paso es una decisión de producto. Qué pregunta cada paso lo
+     * fija la prueba de contenido por página, más abajo.
      */
     it('el formulario se organiza exactamente en 5 pasos consolidados', () => {
       const paginas = component.paginasPaciente();
@@ -533,6 +533,11 @@ describe('RegisterPatient', () => {
      * dónde guardarse: la zona en residencia y en trabajo (AC-03-10). La prueba
      * está para que aparezca **con su columna**, no de contrabando: el día que
      * alguien agregue el campo sin el destino, esto se pone rojo.
+     *
+     * La relación del contacto (AC-03-11) **salió** de esta lista: su columna
+     * `profiles.related_persons.relationship_concept_id` existe, su conjunto de
+     * valores también, y desde esta entrega se pregunta. Su prueba es la de más
+     * abajo.
      */
     it('no pregunta la zona, que no tiene dónde guardarse', () => {
       const claves = component
@@ -2622,6 +2627,37 @@ describe('RegisterPatient', () => {
       const guardado = localStorage.getItem(component.STORAGE_KEY)!;
       expect(guardado).not.toContain('secreto12');
       expect(JSON.parse(guardado).formValores.password).toBeUndefined();
+    });
+
+    it('un borrador viejo con contraseña se limpia y no se reinyecta', () => {
+      localStorage.setItem(
+        component.STORAGE_KEY,
+        JSON.stringify({
+          version: 1,
+          pasoIndice: 1,
+          formValores: { name: 'Ana', password: 'viejo-secreto', confirmPassword: 'viejo-secreto' },
+        }),
+      );
+
+      component.restaurarBorrador();
+
+      expect(component.formPaciente.controls.name.value).toBe('Ana');
+      expect(component.formPaciente.controls.password.value).toBe('');
+      const guardado = localStorage.getItem(component.STORAGE_KEY)!;
+      expect(guardado).not.toContain('viejo-secreto');
+      expect(JSON.parse(guardado).formValores.name).toBe('Ana');
+    });
+
+    it('ignora y descarta un borrador local de otra versión', () => {
+      localStorage.setItem(
+        component.STORAGE_KEY,
+        JSON.stringify({ version: 2, formValores: { name: 'Zoe', password: 'x-secreto' } }),
+      );
+
+      component.restaurarBorrador();
+
+      expect(component.formPaciente.controls.name.value).not.toBe('Zoe');
+      expect(localStorage.getItem(component.STORAGE_KEY) ?? '').not.toContain('x-secreto');
     });
 
     it('restaura el avance previo desde localStorage', () => {
