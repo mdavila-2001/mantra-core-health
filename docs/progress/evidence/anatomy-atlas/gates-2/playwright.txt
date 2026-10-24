@@ -1,0 +1,21 @@
+commit fdfe235ec — 2026-10-24T23:50:16Z — contra ng serve recién arrancado (puerto 4200)
+
+Running 14 tests using 1 worker
+
+  ✓   1 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 375-claro (19.6s)
+  ✓   2 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 375-claro (14.5s)
+  ✓   3 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 768-claro (13.7s)
+  ✓   4 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 768-claro (12.2s)
+  ✓   5 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-claro (16.2s)
+  ✓   6 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-claro (17.7s)
+  ✓   7 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-oscuro (24.3s)
+  ✓   8 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-oscuro (25.1s)
+  ✓   9 [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y abre la del útero (13.7s)
+  ✓  10 [chromium] › playwright/atlas-anatomico-3d.spec.ts:177:5 › se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas (15.1s)
+  ✓  11 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 375-claro (11.3s)
+  ✓  12 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 768-claro (10.5s)
+  ✓  13 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 1440-claro (12.1s)
+  ✓  14 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 1440-oscuro (12.4s)
+
+  14 passed (3.7m)
+EXIT=0
