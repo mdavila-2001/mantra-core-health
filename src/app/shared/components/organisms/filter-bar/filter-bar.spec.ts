@@ -451,3 +451,48 @@ describe('FilterBar · wrap (opt-in)', () => {
     expect(barra.classList.contains('filter-bar--wrap')).toBe(true);
   });
 });
+
+describe('FilterBar · columna de facetas', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  function montar(): HTMLElement {
+    const fixture = TestBed.createComponent(FilterBar);
+    fixture.componentRef.setInput('layout', 'facets');
+    fixture.componentRef.setInput('showSearch', false);
+    fixture.componentRef.setInput('filters', [
+      {
+        key: 'departamento',
+        label: 'Departamento',
+        icon: 'pin',
+        asChips: true,
+        options: [
+          { value: 'sc', label: 'Santa Cruz (160)' },
+          { value: 'lp', label: 'La Paz' },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('dibuja el ícono del filtro en el rótulo, sin buscador', () => {
+    const raiz = montar();
+    expect(raiz.querySelector('.filter-bar__faceta-rotulo app-nav-icon')).not.toBeNull();
+    expect(raiz.querySelector('app-search-field')).toBeNull();
+  });
+
+  it('separa la cantidad del nombre para dibujarla aparte', () => {
+    const raiz = montar();
+    const opciones = [...raiz.querySelectorAll('.filter-bar__faceta-opcion')];
+    expect(opciones[0]!.querySelector('.filter-bar__faceta-texto')!.textContent!.trim()).toBe(
+      'Santa Cruz',
+    );
+    expect(opciones[0]!.querySelector('.filter-bar__faceta-cantidad')!.textContent!.trim()).toBe(
+      '160',
+    );
+    // Un rótulo sin cantidad va entero y sin pastilla.
+    expect(opciones[1]!.querySelector('.filter-bar__faceta-cantidad')).toBeNull();
+  });
+});

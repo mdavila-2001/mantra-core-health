@@ -216,3 +216,92 @@
     outline: 3px solid var(--focus-ring);
     outline-offset: 1px;
 }
+
+/* ---- detalles de la columna (propietario, 23/10/2026) ------------------- */
+
+.filter-bar__faceta-rotulo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.filter-bar__faceta-icono {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--brand-primary) 10%, var(--bg-surface));
+    color: var(--brand-primary);
+    font-size: 1rem;
+}
+
+/* La cantidad, aparte y a la derecha: se compara de un vistazo, en columna,
+   como en el filtro de una tienda. */
+.filter-bar__faceta-cantidad {
+    flex: none;
+    margin-inline-start: auto;
+    min-inline-size: 2ch;
+    padding: 1px 8px;
+    border-radius: var(--r-full);
+    background: var(--bg-surface-alt);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: center;
+}
+
+.filter-bar__faceta-opcion[aria-pressed='true'] .filter-bar__faceta-cantidad {
+    background: color-mix(in srgb, var(--brand-primary) 14%, var(--bg-surface));
+    color: var(--brand-primary);
+}
+
+.filter-bar__faceta-mas {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+}
+
+.filter-bar__faceta-mas-icono {
+    transform: rotate(90deg);
+}
+
+.filter-bar__faceta-mas--abierta .filter-bar__faceta-mas-icono {
+    transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .filter-bar__faceta-opcion {
+        transition:
+            background var(--dur-fast) var(--ease-standard),
+            color var(--dur-fast) var(--ease-standard);
+    }
+
+    .filter-bar__faceta-marca {
+        transition:
+            border-color var(--dur-base) var(--ease-standard),
+            background var(--dur-base) var(--ease-standard),
+            box-shadow var(--dur-base) var(--ease-standard),
+            transform var(--dur-base) var(--ease-spring);
+    }
+
+    /* La marca «late» al elegirla: confirma el toque sin un mensaje. */
+    .filter-bar__faceta-opcion[aria-pressed='true'] .filter-bar__faceta-marca {
+        animation: faceta-elegida var(--dur-slow) var(--ease-spring);
+    }
+
+    .filter-bar__faceta-opcion:active .filter-bar__faceta-marca {
+        transform: scale(0.85);
+    }
+
+    .filter-bar__faceta-mas-icono {
+        transition: transform var(--dur-base) var(--ease-standard);
+    }
+}
+
+@keyframes faceta-elegida {
+    0% { transform: scale(0.6); }
+    100% { transform: scale(1); }
+}

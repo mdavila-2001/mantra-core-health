@@ -2,6 +2,15 @@
   display: inline-flex;
 }
 
+/* En un teléfono de 375 px la barra de arriba no entraba por 20 px y el
+   avatar quedaba cortado. El botón conserva su palabra entera —es la acción
+   más importante de la barra— y cede relleno lateral. */
+@media (max-width: 400px) {
+  button[data-testid='boton-emergencia'] {
+    padding-inline: var(--sp-2);
+  }
+}
+
 .panico__dialogo {
   inline-size: min(32rem, calc(100vw - 2 * var(--sp-4)));
   max-block-size: calc(100dvh - 2 * var(--sp-4));
