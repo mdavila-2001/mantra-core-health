@@ -12,6 +12,7 @@ import {
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
@@ -69,6 +70,7 @@ const PIN_DE_LA_CENTRAL = 'central';
     DecimalPipe,
     FormField,
     Input,
+    NavIcon,
     Select,
     Skeleton,
     ViewStateHost,
@@ -81,6 +83,15 @@ export class DatosDeLaEmpresa {
   private readonly toasts = inject(ToastService);
 
   readonly state = input.required<ViewState<DatosLegalesDeLaEmpresa>>();
+
+  /**
+   * `true` sobre la maqueta: la ficha es de ejemplo, se rotula y se puede
+   * editar en pantalla. Con la API real (`false`) la ficha es la que devolvió
+   * el directorio de farmacias: sin rótulo, y sin «Editar», porque no hay
+   * dónde guardar el cambio y un dato real corregido sólo en pantalla engaña
+   * más que uno que no se deja tocar.
+   */
+  readonly sampleData = input(true);
 
   /** La persona pidió reintentar; el dueño de los datos decide qué hacer. */
   readonly retry = output<void>();
@@ -137,7 +148,7 @@ export class DatosDeLaEmpresa {
         lat: punto.lat,
         lng: punto.lng,
         titulo: empresa.razonSocial,
-        subtitulo: empresa.direccionLegal,
+        subtitulo: empresa.direccionLegal ?? undefined,
       },
     ];
   });

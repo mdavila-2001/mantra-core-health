@@ -74,7 +74,7 @@ export class ProvisioningRuleForm {
       hint: 'El proveedor y el alcance de la regla.',
       campos: [
         { key: 'providerId', label: 'Identificador del proveedor', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
-        { key: 'tenantId', label: 'Organización a la que aplica', hint: 'Opcional: vacía, la regla aplica a todas. Pegá el identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'tenantId', label: 'Organización a la que aplica', hint: 'Opcional: vacía, la regla aplica a todas. Pegue el identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
       ],
     },
     {
@@ -132,7 +132,7 @@ export class ProvisioningRuleForm {
   protected readonly created = signal<CreatedProvisioningRule | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para configurar proveedores de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para configurar proveedores de identidad.'),
   );
 
   protected submit(): void {

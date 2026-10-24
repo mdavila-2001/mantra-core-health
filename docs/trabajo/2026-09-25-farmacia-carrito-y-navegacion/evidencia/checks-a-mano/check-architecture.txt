@@ -1,0 +1,17 @@
+
+✗ check-architecture
+
+  3 dependencia(s) circular(es):
+      src/app/core/mock/fixtures/personas.ts
+      → src/app/core/mock/fixtures/insurer-network.ts
+      src/app/core/mock/fixtures/personas.ts
+      → src/app/core/mock/fixtures/registered-people.ts
+      src/app/features/agenda/my-agenda/month-view/month-view.ts
+      → src/app/features/agenda/my-agenda/day-view/day-view.ts
+  1 import(s) contra la dirección de las capas:
+      src/app/core/mock/mock-backend.spec.ts
+      → src/app/shared/components/molecules/phone-input/phone-input.paises.ts
+  2 archivo(s) hacen peticiones fuera de core/data-access/:
+      src/app/core/messaging/adjunto-metadata.ts
+      src/app/shared/components/organisms/map/provincias.ts
+

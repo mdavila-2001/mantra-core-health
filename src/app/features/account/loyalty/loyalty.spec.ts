@@ -135,7 +135,7 @@ describe('Loyalty', () => {
       fixture.detectChanges();
 
       expect(cabecera()).toBeNull();
-      expect(texto()).not.toContain('Lo que sumaste con tus compras');
+      expect(texto()).not.toContain('Lo que sumó con sus compras');
       // El cuerpo sigue entero: lo que se apaga es sólo el título repetido.
       expect(texto()).toContain('Todavía no hay un programa');
     });
@@ -192,7 +192,7 @@ describe('Loyalty', () => {
       const fila = fixture.nativeElement.querySelector('.movimientos__fila');
       expect(fila?.textContent).toContain('Actividad en la app');
       expect(fila?.textContent).toContain('+70');
-      expect(texto()).toContain('Sumaste');
+      expect(texto()).toContain('Sumó');
     });
 
     it('«Ver más» sigue por el cursor que emitió el backend', () => {
@@ -236,7 +236,7 @@ describe('Loyalty', () => {
       expect(porTestId('canje-comprobante')).not.toBeNull();
       expect(porTestId('canje-saldo')?.textContent).toContain('340');
       expect(porTestId('canje-caja')?.textContent).toContain(
-        'Mostrá este código en la caja del supermercado',
+        'Muestre este código en la caja del supermercado',
       );
     });
 
@@ -254,7 +254,7 @@ describe('Loyalty', () => {
       fixture.detectChanges();
 
       expect(texto()).toContain('no alcanza para canjear');
-      expect(texto()).not.toContain('Probá de nuevo en un momento');
+      expect(texto()).not.toContain('Pruebe de nuevo en un momento');
     });
 
     it('cualquier otro fallo del canje no se disfraza de saldo', () => {

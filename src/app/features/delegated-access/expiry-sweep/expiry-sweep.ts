@@ -42,7 +42,7 @@ export class ExpirySweep {
   protected readonly resultado = signal<ExpirySweepResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para ejecutar el barrido de expiración.'),
+    errorMessageOf(this.state(), 'No tiene permiso para ejecutar el barrido de expiración.'),
   );
 
   protected async ejecutar(): Promise<void> {

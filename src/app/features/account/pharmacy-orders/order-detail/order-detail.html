@@ -1,6 +1,6 @@
 <app-page-header
   title="Pedido de farmacia"
-  subtitle="El recorrido completo: del envío al retiro, con cada decisión en tus manos."
+  subtitle="El recorrido completo: del envío al retiro, con cada decisión en sus manos."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -35,7 +35,7 @@
 
       <!-- ─── El envío, cuando salió (FAR-I3) ────────────────────────────── -->
       @if (abierto.envio === 'EN_CAMINO') {
-        <app-alert tone="info" title="Tu pedido está en camino">
+        <app-alert tone="info" title="Su pedido está en camino">
           La farmacia coordina la entrega — todavía sin seguimiento en tiempo
           real.
         </app-alert>
@@ -44,10 +44,10 @@
       <!-- ─── La decisión de sustitución ─────────────────────────────────── -->
       @if (propuestaPendiente(); as propuesta) {
         <section class="pedido__decision" aria-labelledby="pedido-decision" data-testid="pedido-decision">
-          <h3 id="pedido-decision" class="pedido__subtitulo">La farmacia te propone una alternativa</h3>
+          <h3 id="pedido-decision" class="pedido__subtitulo">La farmacia le propone una alternativa</h3>
           <div class="pedido__comparacion">
             <div class="pedido__opcion pedido__opcion--propuesta">
-              <span class="pedido__secundario">Te proponen</span>
+              <span class="pedido__secundario">Le proponen</span>
               <span class="pedido__principal">{{ propuesta.propuesta.nombre }}</span>
               @if (propuesta.propuesta.precio !== null) {
                 <span class="cifras-tabulares">{{ propuesta.propuesta.precio }} {{ moneda(propuesta.moneda) }}</span>
@@ -67,7 +67,7 @@
           </div>
           @if (ahorro(); as diferencia) {
             <p class="pedido__ahorro" data-testid="pedido-ahorro">
-              Te ahorrás <strong class="cifras-tabulares">{{ diferencia }}</strong>
+              Se ahorra <strong class="cifras-tabulares">{{ diferencia }}</strong>
             </p>
           }
           <div class="pedido__acciones">
@@ -89,7 +89,7 @@
       <!-- ─── El código de retiro ────────────────────────────────────────── -->
       @if (abierto.estado === 'LISTO_PARA_RETIRO' && abierto.codigoDeRetiro !== null) {
         <section class="pedido__retiro" aria-labelledby="pedido-retiro" data-testid="pedido-retiro">
-          <h3 id="pedido-retiro" class="pedido__subtitulo">Tu código de retiro</h3>
+          <h3 id="pedido-retiro" class="pedido__subtitulo">Su código de retiro</h3>
           <p class="pedido__codigo cifras-tabulares" data-testid="pedido-codigo">
             {{ abierto.codigoDeRetiro }}
           </p>
@@ -101,7 +101,7 @@
             </div>
           }
           <p>
-            Mostralo en {{ abierto.farmacia }}
+            Muéstrelo en {{ abierto.farmacia }}
             @if (abierto.venceEl !== null) {
               — vence el {{ abierto.venceEl | date: 'dd/MM' }} a las
               {{ abierto.venceEl | date: 'HH:mm' }}
@@ -109,9 +109,9 @@
           </p>
           <p class="pedido__secundario">
             @if (pagado()) {
-              Es un código de identificación: tu pedido ya está pagado.
+              Es un código de identificación: su pedido ya está pagado.
             } @else {
-              Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
+              Es un código de identificación, no un pago: paga al retirar, en la farmacia.
             }
           </p>
         </section>
@@ -119,8 +119,8 @@
 
       <!-- ─── Los finales anticipados y sus salidas ──────────────────────── -->
       @if (abierto.estado === 'VENCIDO') {
-        <app-alert tone="warning" title="Tu reserva venció">
-          Pasaron las 48 horas y el mostrador liberó tu pedido. ¿Lo pedimos de nuevo?
+        <app-alert tone="warning" title="Su reserva venció">
+          Pasaron las 48 horas y el mostrador liberó su pedido. ¿Lo pedimos de nuevo?
         </app-alert>
         <div class="pedido__acciones">
           <button app-button variant="primary" size="sm" type="button" data-testid="pedido-repedir"
@@ -130,7 +130,7 @@
         </div>
       }
       @if (abierto.estado === 'RECHAZADO') {
-        <app-alert tone="error" title="La farmacia no pudo tomar tu pedido">
+        <app-alert tone="error" title="La farmacia no pudo tomar su pedido">
           {{ abierto.motivoDeRechazo ?? 'La farmacia no indicó el motivo.' }}
         </app-alert>
         <div class="pedido__acciones">
@@ -143,7 +143,7 @@
 
       <!-- ─── Los datos del pedido ───────────────────────────────────────── -->
       <section class="pedido__bloque" aria-labelledby="pedido-datos">
-        <h3 id="pedido-datos" class="pedido__subtitulo">Qué pediste</h3>
+        <h3 id="pedido-datos" class="pedido__subtitulo">Qué pidió</h3>
         <dl class="pedido__datos">
           @if (abierto.direccion !== null) {
             <dt>Sucursal</dt>
@@ -197,7 +197,7 @@
         <section class="pedido__bloque" aria-labelledby="pedido-avisos" data-testid="pedido-avisos">
           <h3 id="pedido-avisos" class="pedido__subtitulo">Avisos de este pedido</h3>
           <p class="pedido__secundario">
-            Los avisos que te enviamos sobre este pedido. Pueden no estar todos.
+            Los avisos que le enviamos sobre este pedido. Pueden no estar todos.
           </p>
           <ul class="pedido__avisos">
             @for (aviso of avisos(); track aviso.id) {

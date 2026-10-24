@@ -180,7 +180,7 @@ export class AssetsLiabilities {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeCuenta(),
-            placeholder: 'Elegí una cuenta',
+            placeholder: 'Elija una cuenta',
           },
           {
             key: 'offsetAccountId',
@@ -188,7 +188,7 @@ export class AssetsLiabilities {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeCuenta(),
-            placeholder: 'Elegí una cuenta',
+            placeholder: 'Elija una cuenta',
           },
         ],
       },
@@ -293,7 +293,7 @@ export class AssetsLiabilities {
     const accumulatedDepreciationAccountId = this.cuentaDeDepreciacionAcumulada();
     if (depreciationExpenseAccountId === null || accumulatedDepreciationAccountId === null) {
       this.errorDeAvanceDeActivo.set(
-        'Elegí primero la cuenta de gasto por depreciación y la de depreciación acumulada.',
+        'Elija primero la cuenta de gasto por depreciación y la de depreciación acumulada.',
       );
       return;
     }
@@ -378,7 +378,7 @@ export class AssetsLiabilities {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeCuenta(),
-            placeholder: 'Elegí una cuenta',
+            placeholder: 'Elija una cuenta',
           },
         ],
       },
@@ -482,7 +482,7 @@ export class AssetsLiabilities {
     const bankAccountId = this.cuentaDeBanco();
     const interestExpenseAccountId = this.cuentaDeGastoPorInteres();
     if (bankAccountId === null || interestExpenseAccountId === null) {
-      this.errorDeAvanceDePasivo.set('Elegí primero la cuenta de banco y la de gasto por interés.');
+      this.errorDeAvanceDePasivo.set('Elija primero la cuenta de banco y la de gasto por interés.');
       return;
     }
     this.errorDeAvanceDePasivo.set(null);

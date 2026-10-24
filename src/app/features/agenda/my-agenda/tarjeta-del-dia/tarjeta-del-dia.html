@@ -13,7 +13,7 @@
      el paciente y el motivo ya cargados. -->
 <app-content-dialog
   [heading]="titulo()"
-  description="Agregá una cita o un rato ocupado a este día."
+  description="Agregue una cita o un rato ocupado a este día."
   size="md"
   [dismissible]="!hayAlgoEscrito()"
   (dismissAttempt)="pedirDescarte()"
@@ -42,7 +42,7 @@
 
     <app-form-field
       label="¿Con quién?"
-      hint="Buscá al paciente, o dejalo vacío si es un rato tuyo."
+      hint="Busque al paciente, o déjelo vacío si es un rato suyo."
     >
       <app-reference-combobox
         [selected]="paciente()"
@@ -64,10 +64,10 @@
          tabulador, y anuncia su estado como `radiogroup`. -->
     @if (paciente() !== null) {
       <div class="tarjeta__modalidad">
-        <span class="tarjeta__modalidad-titulo" id="tarjeta-modalidad">¿Cómo lo atendés?</span>
+        <span class="tarjeta__modalidad-titulo" id="tarjeta-modalidad">¿Cómo lo atiende?</span>
         <app-segmented-control
           data-testid="tarjeta-modalidad"
-          ariaLabel="¿Cómo lo atendés?"
+          ariaLabel="¿Cómo lo atiende?"
           size="md"
           [options]="opcionesDeModalidad"
           [value]="modalidad()"

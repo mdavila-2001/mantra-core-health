@@ -88,3 +88,23 @@
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
+
+/* La carga en lote va arriba de la tabla, a la derecha, como acción de la pestaña. */
+.organizacion__acciones-sucursal {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--sp-4);
+}
+
+.organizacion__rechazos {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-left: var(--sp-5);
+}
+
+.organizacion__mapa {
+  display: inline-block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

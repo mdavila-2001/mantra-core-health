@@ -1,0 +1,70 @@
+<div class="emergencia" data-testid="panel-emergencia">
+  @if (ambulancia(); as propia) {
+    <a
+      class="emergencia__llamar emergencia__llamar--propia"
+      data-testid="emergencia-llamar-propia"
+      [href]="enlace(propia.telefono)"
+      (click)="llamando.emit(propia.telefono)"
+    >
+      <span class="emergencia__nombre">Llamar a {{ propia.nombre }}</span>
+      <span class="emergencia__detalle">Su ambulancia de confianza · {{ propia.telefono }}</span>
+    </a>
+  }
+
+  <ul class="emergencia__lista" aria-label="Números oficiales de emergencia">
+    @for (numero of numeros; track numero.id) {
+      <li>
+        <a
+          class="emergencia__llamar"
+          [attr.data-testid]="'emergencia-' + numero.id"
+          [href]="enlace(numero.numero)"
+          (click)="llamando.emit(numero.numero)"
+        >
+          <span class="emergencia__numero">{{ numero.numero }}</span>
+          <span class="emergencia__texto">
+            <span class="emergencia__nombre">{{ numero.nombre }}</span>
+            <span class="emergencia__detalle">{{ numero.alcance }}</span>
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+
+  @if (configurable()) {
+    @if (editando()) {
+      <form class="emergencia__formulario" [formGroup]="formulario" (ngSubmit)="guardar()">
+        <app-form-field label="Nombre de la ambulancia (opcional)" hint="Por ejemplo, la de su seguro o su clínica.">
+          <app-input formControlName="nombre" autocomplete="off" testId="emergencia-confianza-nombre" />
+        </app-form-field>
+        <app-form-field label="Teléfono de la ambulancia" [errorMessage]="errorDelTelefono()" [required]="true">
+          <app-phone-input formControlName="telefono" testId="emergencia-confianza-telefono" />
+        </app-form-field>
+        <div class="emergencia__acciones">
+          <button app-button variant="primary" size="sm" type="submit" data-testid="emergencia-confianza-guardar">
+            Guardar ambulancia de confianza
+          </button>
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="editando.set(false)">Cancelar</button>
+        </div>
+      </form>
+    } @else {
+      <div class="emergencia__acciones">
+        <button app-button variant="secondary" size="sm" type="button" data-testid="emergencia-confianza-editar" (clicked)="editar()">
+          {{ ambulancia() ? 'Cambiar mi ambulancia de confianza' : 'Configurar mi ambulancia de confianza' }}
+        </button>
+        @if (ambulancia()) {
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="quitar()">Quitar ambulancia de confianza</button>
+        }
+      </div>
+    }
+    <p class="emergencia__detalle" role="status">{{ aviso() }}</p>
+  }
+
+  <p class="emergencia__fuente">
+    Números oficiales consultados el {{ consultadoEl }}:
+    @for (numero of numeros; track numero.id; let ultimo = $last) {
+      @if (numero.id === 'emergencias-168' || numero.id === 'sisme-santa-cruz' || numero.id === 'sema-la-paz') {
+        <a [href]="numero.url" target="_blank" rel="noopener noreferrer">{{ numero.fuente }}</a>{{ ultimo || numero.id === 'sema-la-paz' ? '.' : ';' }}
+      }
+    }
+  </p>
+</div>

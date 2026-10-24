@@ -8,17 +8,17 @@
   <div class="vitrina-hero__cuerpo">
     <p class="vitrina-hero__overline">Vitrina de medicamentos</p>
     <h1 id="vitrina-titulo" class="vitrina-hero__titulo">
-      Mirá dónde conseguirlo, antes de salir de tu casa
+      Mire dónde conseguirlo, antes de salir de su casa
     </h1>
     <p class="vitrina-hero__bajada">
-      Precio y disponibilidad de las farmacias de tu zona, uno al lado del otro. Lo consultás acá y
-      lo comprás allá:
+      Precio y disponibilidad de las farmacias de su zona, uno al lado del otro. Lo consulta acá y
+      lo compra allá:
       <strong>AloVida no vende medicamentos ni cobra comisión sobre estos precios.</strong>
     </p>
 
     <div class="vitrina-hero__buscador">
       <app-search-field
-        label="Buscá por principio activo, marca o código ATC"
+        label="Busque por principio activo, marca o código ATC"
         placeholder="Paracetamol, Losartán, C09CA01…"
         [value]="texto()"
         (searched)="buscar($event)"
@@ -42,7 +42,7 @@
 <!-- ─── Las pestañas del buscador ───────────────────────────────────────────── -->
 <!-- ─── Desde dónde medir: se pide, no se toma ──────────────────────────────── -->
 <section class="vitrina-zona" aria-labelledby="vitrina-zona-titulo">
-  <h2 id="vitrina-zona-titulo" class="vitrina-zona__titulo">Farmacias cerca tuyo</h2>
+  <h2 id="vitrina-zona-titulo" class="vitrina-zona__titulo">Farmacias cerca de usted</h2>
 
   @if (origen(); as punto) {
     <p class="vitrina-zona__activa" data-testid="vitrina-origen">
@@ -67,8 +67,8 @@
     </p>
   } @else {
     <p class="vitrina-zona__nota">
-      Compartí tu ubicación para ver primero lo que se consigue cerca — se usa una sola vez para
-      calcular distancias y no se guarda. O medí desde una ciudad, sin dar tu ubicación.
+      Comparta su ubicación para ver primero lo que se consigue cerca — se usa una sola vez para
+      calcular distancias y no se guarda. O mida desde una ciudad, sin dar su ubicación.
     </p>
     <div class="vitrina-zona__acciones">
       <button
@@ -90,7 +90,7 @@
     </div>
     @if (ubicacionDenegada()) {
       <p class="vitrina-zona__nota" role="status">
-        No pudimos leer tu ubicación. Podés medir desde una ciudad, o seguir sin distancias: la
+        No pudimos leer su ubicación. Puede medir desde una ciudad, o seguir sin distancias: la
         vitrina funciona igual.
       </p>
     }
@@ -142,8 +142,8 @@
     <path d="M12 10v4"></path>
     <circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle>
   </svg>
-  Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ves y que llegás. Si el
-  viaje es largo, llamá antes. Los medicamentos con receta se dispensan sólo contra receta médica.
+  Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ve y que llega. Si el
+  viaje es largo, llame antes. Los medicamentos con receta se dispensan sólo contra receta médica.
 </p>
 
 <!-- ─── La vitrina ──────────────────────────────────────────────────────────── -->
@@ -195,7 +195,7 @@
           <h2>Ninguna farmacia publicó algo así</h2>
           <p>
             Puede que ninguna lo tenga hoy, o que las de esta zona no publiquen su inventario. Dos
-            salidas: ampliá la zona, o buscá por principio activo en vez de por marca — una
+            salidas: amplíe la zona, o busque por principio activo en vez de por marca — una
             presentación equivalente suele estar cuando la marca exacta no lo está.
           </p>
           @if (hayFiltros) {
@@ -246,7 +246,7 @@
           </svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar la vitrina.</strong>
-            <p>El catálogo no respondió a tiempo. Tu búsqueda se mantiene escrita.</p>
+            <p>El catálogo no respondió a tiempo. Su búsqueda se mantiene escrita.</p>
           </div>
         </div>
         <div style="margin-top: var(--sp-5)">

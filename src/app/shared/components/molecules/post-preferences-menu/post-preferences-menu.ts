@@ -43,6 +43,7 @@ import { Router } from '@angular/router';
 import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Menu } from '../menu/menu';
 import { MenuItem } from '../menu/menu-item/menu-item';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../menu/menu-trigger/menu-trigger';
 import { ToastService } from '../toast/toast.service';
 
@@ -54,7 +55,7 @@ import {
 
 @Component({
   selector: 'app-post-preferences-menu',
-  imports: [Menu, MenuItem, MenuTrigger, Tooltip],
+  imports: [Menu, MenuItem, MenuTrigger, NavIcon, Tooltip],
   templateUrl: './post-preferences-menu.html',
   styleUrl: './post-preferences-menu.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -177,7 +178,7 @@ export class PostPreferencesMenu {
       await this.document.defaultView?.navigator.clipboard.writeText(url);
       this.toasts.success('Enlace copiado');
     } catch {
-      this.toasts.error('No se pudo copiar el enlace. Copialo de la barra de direcciones.');
+      this.toasts.error('No se pudo copiar el enlace. Cópielo de la barra de direcciones.');
     }
   }
 

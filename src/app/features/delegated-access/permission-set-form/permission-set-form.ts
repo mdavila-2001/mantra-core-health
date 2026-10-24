@@ -116,10 +116,10 @@ export class PermissionSetForm {
             control: 'select' as const,
             required: true,
             options: this.organizaciones(),
-            placeholder: 'Elegí la organización',
+            placeholder: 'Elija la organización',
             mensajeDeError: this.sinOrganizaciones()
-              ? 'Tu sesión no tiene organizaciones a cargo, así que no hay dónde publicar un set.'
-              : 'Elegí la organización propietaria.',
+              ? 'Su sesión no tiene organizaciones a cargo, así que no hay dónde publicar un set.'
+              : 'Elija la organización propietaria.',
           },
           {
             key: 'code',
@@ -127,14 +127,14 @@ export class PermissionSetForm {
             hint: 'Único dentro de la organización; si ya existe, el backend responde 409.',
             control: 'text' as const,
             required: true,
-            mensajeDeError: 'Escribí un código de hasta 100 caracteres.',
+            mensajeDeError: 'Escriba un código de hasta 100 caracteres.',
           },
           {
             key: 'name',
             label: 'Nombre legible',
             control: 'text' as const,
             required: true,
-            mensajeDeError: 'Escribí un nombre de hasta 200 caracteres.',
+            mensajeDeError: 'Escriba un nombre de hasta 200 caracteres.',
           },
           {
             key: 'delegateType',
@@ -188,7 +188,7 @@ export class PermissionSetForm {
   protected readonly published = signal<PermissionSetVersion | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para publicar sets de permisos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para publicar sets de permisos.'),
   );
 
   protected submit(): void {

@@ -1,0 +1,6 @@
+prettier sobre los archivos de H3.S1.M3 (salida de prettier comparada con el archivo, finales de línea normalizados):
+practitioner-profile-edit.logic.ts: sin diferencias
+practitioner-profile-edit.logic.spec.ts: sin diferencias
+practitioner-profile-edit.ts: sin diferencias (se formateó la única línea que este carril había dejado fuera de formato; en HEAD el archivo pasa)
+practitioner-profile-edit.spec.ts: 1 bloque con diferencias, el mismo que ya tiene el archivo en HEAD (el for de edicion-celular-trabajo); los 6 bloques de este carril quedaron formateados
+El CI del repo no corre prettier (.github/workflows/ci.yml).

@@ -102,10 +102,10 @@ export class SearchOriginPicker {
     const places = this.places();
     const opciones: SegmentedOption<SearchOriginSource>[] = [];
     if (places?.home) {
-      opciones.push({ value: 'home', label: 'Tu casa', icon: 'home' });
+      opciones.push({ value: 'home', label: 'Su casa', icon: 'home' });
     }
     if (places?.work) {
-      opciones.push({ value: 'work', label: 'Tu trabajo', icon: 'briefcase' });
+      opciones.push({ value: 'work', label: 'Su trabajo', icon: 'briefcase' });
     }
     opciones.push({ value: 'current', label: 'Ubicación actual', icon: 'pin' });
     return opciones;

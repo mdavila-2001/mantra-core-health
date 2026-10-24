@@ -459,7 +459,7 @@ describe('ChatStore', () => {
         conversationId: 'c-1',
         senderProfileId,
         contentTypeConceptId: 'c-text',
-        bodyText: 'Hola, ¿estás?',
+        bodyText: 'Hola, ¿está?',
         sentAt: new Date(),
       });
     };
@@ -767,7 +767,7 @@ describe('ChatStore', () => {
     });
   });
 
-  it('un tic fallido no vacía la bandeja que estabas mirando', () => {
+  it('un tic fallido no vacía la bandeja que estaba mirando', () => {
     encender();
     expect(store.conversaciones().length).toBe(1);
 
@@ -777,6 +777,6 @@ describe('ChatStore', () => {
       .error(new ProgressEvent('error'));
 
     expect(store.conversaciones().length).toBe(1);
-    expect(store.error()).toBe('No pudimos cargar tus conversaciones.');
+    expect(store.error()).toBe('No pudimos cargar sus conversaciones.');
   });
 });

@@ -59,14 +59,14 @@ export class ContextForm {
       campos: [
         { key: 'countryConceptId', label: 'País', hint: 'Identificador del concepto de país (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
         { key: 'contextDomainConceptId', label: 'Dominio del contexto', hint: 'Identificador del concepto de dominio (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
-        { key: 'contextKey', label: 'Clave del contexto', hint: 'La clave dentro del dominio, como cobertura.publica. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí la clave del contexto (máx. 200 caracteres).' },
+        { key: 'contextKey', label: 'Clave del contexto', hint: 'La clave dentro del dominio, como cobertura.publica. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escriba la clave del contexto (máx. 200 caracteres).' },
       ],
     },
     {
       titulo: 'Cómo se presenta',
       hint: 'El título es el que se lee en los reportes.',
       campos: [
-        { key: 'title', label: 'Título', control: 'text', required: true, mensajeDeError: 'Escribí el título del contexto (máx. 300 caracteres).' },
+        { key: 'title', label: 'Título', control: 'text', required: true, mensajeDeError: 'Escriba el título del contexto (máx. 300 caracteres).' },
         { key: 'description', label: 'Descripción', hint: 'Opcional.', control: 'textarea' },
       ],
     },
@@ -99,7 +99,7 @@ export class ContextForm {
   protected readonly created = signal<ContextCreated | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para crear contextos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para crear contextos.'),
   );
 
   protected submit(): void {

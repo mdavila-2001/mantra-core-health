@@ -105,7 +105,7 @@ export const DEFAULT_CANCEL_LABEL = 'Cancelar';
  * dice para que nadie crea que cancela la edición entera.
  */
 export const CONFIRMAR_CAMBIOS: DialogConfig = {
-  title: '¿Confirmás estos cambios?',
+  title: '¿Confirma estos cambios?',
   message: 'Se guardan y quedan visibles para quien corresponda.',
   confirmLabel: 'Confirmar',
   cancelLabel: 'Seguir editando',
@@ -121,8 +121,8 @@ export const CONFIRMAR_CAMBIOS: DialogConfig = {
  * inercia.
  */
 export const CONFIRMAR_DESCARTE: DialogConfig = {
-  title: '¿Descartás lo que escribiste?',
-  message: 'Lo que cambiaste en este formulario se pierde.',
+  title: '¿Descarta lo que escribió?',
+  message: 'Lo que cambió en este formulario se pierde.',
   confirmLabel: 'Descartar',
   cancelLabel: 'Seguir editando',
   destructive: true,

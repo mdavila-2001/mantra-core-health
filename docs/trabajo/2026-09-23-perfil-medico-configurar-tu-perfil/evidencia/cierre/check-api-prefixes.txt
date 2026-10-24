@@ -1,0 +1,8 @@
+$ node scripts/check-api-prefixes.mjs   # 2026-09-24, rama en bc245a02
+
+✗ check-api-prefixes
+
+  proxy.conf.docker.json no declara «/loyalty» (sí está en proxy.conf.json)
+  deploy/api-locations.conf + nginx.conf no declara «/loyalty» (sí está en proxy.conf.json)
+
+exit=1

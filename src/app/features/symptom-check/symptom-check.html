@@ -1,7 +1,7 @@
 <section class="sintomas" aria-labelledby="sintomas-titulo">
-  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo te sentís?</h2>
+  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo se siente?</h2>
   <p class="sintomas__texto">
-    Tocá en la figura dónde te pasa —de frente, de espaldas o la cara— y te decimos a qué especialidad ir.
+    Toque en la figura dónde le pasa —de frente, de espaldas o la cara— y le decimos a qué especialidad ir.
   </p>
 
   <!-- ─── Elegir sin escribir ───────────────────────────────────────────────
@@ -16,6 +16,8 @@
       class="sintomas__silueta"
       [zonas]="zonasParaLaSilueta()"
       [value]="zonaAbierta()"
+      [marcadas]="zonasMarcadas()"
+      [sexo]="siluetaSexo()"
       (valueChange)="elegirZonaDesdeLaSilueta($event)"
     />
 
@@ -25,7 +27,7 @@
       <!-- Sin zona elegida no hay pista acá: la figura ya dice «Tocá una
            parte del cuerpo», y repetirlo al lado era decirlo dos veces. -->
       @if (nombreDeLaZonaAbierta(); as zona) {
-        <h3 class="sintomas__lado-titulo">{{ zona }}: ¿qué sentís?</h3>
+        <h3 class="sintomas__lado-titulo">{{ zona }}: ¿qué siente?</h3>
       }
       @if (sintomasDeLaZona().length > 0) {
         <ul class="sintomas__opciones" data-testid="zona-abierta">
@@ -55,6 +57,7 @@
               class="sintomas__zona"
               type="button"
               [class.is-abierta]="zonaAbierta() === zona.id"
+              [class.is-marcada]="estaMarcada(zona.id)"
               [attr.aria-expanded]="zonaAbierta() === zona.id"
               [attr.data-testid]="'zona-' + zona.id"
               (click)="alternarZona(zona)"
@@ -219,8 +222,8 @@
   <div class="sintomas__escribir" data-testid="sintomas-escribir">
     <app-form-field
       icon="note"
-      label="Contanos con tus palabras"
-      hint="Podés escribir varios síntomas; no hace falta que sea exacto."
+      label="Cuéntenos con sus palabras"
+      hint="Puede escribir varios síntomas; no hace falta que sea exacto."
     >
       <app-textarea
         data-testid="sintomas-texto"
@@ -237,11 +240,12 @@
          hay botón, porque un botón que al tocarlo dice «acá no se puede» es
          peor que ninguno. El aviso va ANTES del botón y siempre a la vista:
          quien va a hablar de su salud tiene que saber a dónde va lo que dice
-         antes de decirlo (Q-M1). No hay servidor nuestro en el medio. -->
+         antes de decirlo (Q-M1). Lo transcribe el navegador; después el
+         servicio de triage lo analiza sin guardarlo, como a lo tecleado. -->
     @if (dictado.soportado) {
       <div class="sintomas__dictado" data-testid="sintomas-dictado">
         <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
-          Lo que dictás lo transcribe tu navegador; no lo guardamos.
+          Lo que dicta lo transcribe su navegador y lo analizamos para entenderle; no lo guardamos.
         </p>
         <button
           app-button
@@ -279,19 +283,19 @@
           @switch (dictado.estado()) {
             @case ('escuchando') {
               <span class="sintomas__dictado-punto" aria-hidden="true"></span>
-              Escuchando… decí qué te pasa.
+              Escuchando… diga qué le pasa.
               @if (dictado.parcial(); as parcial) {
                 <em>{{ parcial }}</em>
               }
             }
             @case ('sin-permiso') {
-              Activá el micrófono en el navegador o escribí.
+              Active el micrófono en el navegador o escriba.
             }
             @case ('sin-resultado') {
-              No te escuchamos, probá de nuevo.
+              No le escuchamos, pruebe de nuevo.
             }
             @case ('sin-red') {
-              Sin conexión para transcribir; escribí.
+              Sin conexión para transcribir; escriba.
             }
           }
         </p>
@@ -305,17 +309,21 @@
 
   @if (sintomas().length > 0) {
     <div class="sintomas__chips">
-      <span class="sintomas__chips-rotulo">Te entendimos</span>
+      <span class="sintomas__chips-rotulo">Le entendimos</span>
       @for (sintoma of sintomas(); track sintoma.id) {
         <!-- Cada chip se puede quitar: un falso positivo no puede quedar
              atrapado dentro de la recomendación. -->
+        <!-- Con el término del glosario médico oficial; la forma llana, entre paréntesis. -->
         <app-chip
           variant="info"
           [removable]="true"
-          [label]="sintoma.nombre"
+          [label]="nombreParaMostrar(sintoma)"
+          [attr.title]="codigoDelGlosario(sintoma.id)"
+          [attr.data-glossary-code]="codigoDelGlosario(sintoma.id)"
+          data-testid="sintoma-reconocido"
           (removed)="quitar(sintoma)"
         >
-          {{ sintoma.nombre }}
+          {{ nombreParaMostrar(sintoma) }}
         </app-chip>
       }
       <button app-button variant="ghost" size="sm" type="button" (clicked)="empezarDeNuevo()">
@@ -347,18 +355,27 @@
         <p>{{ mensaje }}</p>
       } @else {
         <p>
-          Lo que contás
+          Lo que cuenta
           @if (alarmas().length === 1) {
             —{{ alarmas()[0].nombre }}—
           }
           puede ser una urgencia.
-          <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
+          <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
         </p>
       }
+      <!-- Llamar, a un toque, sin salir de acá (propietario, 2026-10-08). -->
+      <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
     </app-alert>
   } @else if (recomendaciones().length > 0) {
     <div class="sintomas__recomendaciones">
-      <h3 class="sintomas__subtitulo">Conviene que veas a</h3>
+      @if (sintomas().length === 0) {
+        <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
+             y la pista para que pruebe de nuevo si quiere. -->
+        <p class="sintomas__sin-coincidencias" role="status" data-testid="sintomas-sin-certeza">
+          No reconocimos un síntoma concreto. Puede probar con otras palabras o tocar una zona de arriba.
+        </p>
+      }
+      <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
       <ul class="sintomas__lista">
         @for (recomendacion of recomendaciones(); track recomendacion.nombre) {
           <li class="sintomas__opcion">
@@ -382,16 +399,80 @@
         }
       </ul>
     </div>
+  } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
+    <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
+      <app-spinner size="sm" decorative />
+      <span>Estamos leyendo lo que escribió… puede tardar unos segundos.</span>
+    </p>
   } @else if (texto().trim() !== '' && sintomas().length === 0) {
     <p class="sintomas__sin-coincidencias" role="status">
       @if (descartados() !== '') {
         <!-- Leímos el texto y entendimos que lo negaba. Decirlo es lo que evita
              que «no reconocimos nada» se lea como «no te leímos». -->
-        Entendimos que <strong>no</strong> tenés {{ descartados() }}. Contanos qué sí sentís.
+        Entendimos que <strong>no</strong> tiene {{ descartados() }}. Cuéntenos qué sí siente.
       } @else {
-        No reconocimos ningún síntoma. Probá con palabras más simples, o tocá una zona de arriba.
+        No reconocimos ningún síntoma. Pruebe con palabras más simples, o toque una zona de arriba.
       }
     </p>
+  }
+
+  <!-- ─── Guardar la observación (propietario, 2026-10-08) ─────────────────
+       Queda en el dispositivo y viaja como motivo de consulta al pedir turno:
+       el modelo no tiene dónde guarde el paciente una observación libre. -->
+  @if (texto().trim() !== '' || sintomas().length > 0) {
+    <div class="sintomas__observacion">
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        type="button"
+        data-testid="sintomas-guardar-observacion"
+        (clicked)="guardarObservacion()"
+      >
+        Guardar observación
+      </button>
+    </div>
+  }
+  <p class="sintomas__porque" role="status" data-testid="sintomas-observacion-aviso">{{ avisoDeObservacion() }}</p>
+
+  @if (observaciones().length > 0) {
+    <section class="sintomas__guardadas" aria-labelledby="sintomas-guardadas-titulo" data-testid="sintomas-observaciones">
+      <h3 id="sintomas-guardadas-titulo" class="sintomas__subtitulo">Sus observaciones guardadas</h3>
+      <p class="sintomas__porque">
+        Están guardadas en este dispositivo. Cuando solicite una cita, la más reciente se envía al profesional
+        como motivo de consulta; podrá editarla antes de enviarla.
+      </p>
+      <ul class="sintomas__lista">
+        @for (observacion of observaciones().slice(0, 5); track observacion.id) {
+          <li class="sintomas__opcion" data-testid="sintomas-observacion">
+            <div class="sintomas__opcion-texto">
+              <p class="sintomas__especialidad">
+                {{ fechaDe(observacion) }}
+                @if (observacion.usada) {
+                  <span class="sintomas__porque"> · ya enviada con una cita</span>
+                }
+              </p>
+              @if (observacion.sintomas.length > 0) {
+                <p class="sintomas__porque">{{ nombresDe(observacion) }}</p>
+              }
+              @if (observacion.texto !== '') {
+                <p class="sintomas__porque">«{{ observacion.texto }}»</p>
+              }
+            </div>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [attr.aria-label]="'Eliminar la observación del ' + fechaDe(observacion)"
+              (clicked)="borrarObservacion(observacion.id)"
+            >
+              Eliminar observación
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
   }
 
   <!-- El descargo es FIJO y no depende de que nadie se acuerde de ponerlo. -->

@@ -1,0 +1,78 @@
+
+Running 2 tests using 1 worker
+
+corepack.cmd : (node:19700) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 9 Carácter: 1
++ corepack.cmd yarn pw playwright/perfil-medico-ux.spec.ts --project=ch ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:19700) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar (3.3m)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByTestId('login-submit')
+        - locator resolved to <button size="lg" app-button="" type="submit" variant="primary" aria-busy="false" jsaction="click:;" aria-disabled="false" _nghost-ng-c1077680052="" data-testid="login-submit" _ngcontent-ng-c337534498="" class="login__submit btn btn--lg btn--primary">…</button>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is visible, enabled and stable
+          - scrolling into view if needed
+          - done scrolling
+          - <vite-error-overlay></vite-error-overlay> intercepts pointer events
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is visible, enabled and stable
+          - scrolling into view if needed
+          - done scrolling
+          - <vite-error-overlay></vite-error-overlay> intercepts pointer events
+        - retrying click action
+          - waiting 100ms
+        340 × waiting for element to be visible, enabled and stable
+            - element is visible, enabled and stable
+            - scrolling into view if needed
+            - done scrolling
+            - <vite-error-overlay></vite-error-overlay> intercepts pointer events
+          - retrying click action
+            - waiting 500ms
+
+
+       at support\sesion.ts:100
+
+       98 |   await escribir(page, 'login-identifier', actor.identificador);
+       99 |   await escribir(page, 'login-password', actor.clave);
+    > 100 |   await page.getByTestId('login-submit').click();
+          |                                          ^
+      101 |
+      102 |   // Dos destinos legítimos: el panel, o la elección de organización cuando la
+      103 |   // sesión pertenece a más de una. Esperar sólo el panel dejaría la suite roja
+        at intentarIngreso (C:\Alovida\mantra-core-health\playwright\support\sesion.ts:100:42)
+        at entrar (C:\Alovida\mantra-core-health\playwright\support\sesion.ts:80:5)
+        at C:\Alovida\mantra-core-health\playwright\perfil-medico-ux.spec.ts:18:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
+  1 did not run
+  1 error was not a part of any test, see above for details

@@ -1,0 +1,55 @@
+
+Running 1 test using 1 worker
+
+yarn.cmd : (node:4032) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 2 Carácter: 1026
++ ... .0.1:4200'; yarn.cmd pw --config artifacts/playwright.directory.confi ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:4032) War... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › playwright\insurer-patient-directory-real.spec.ts:9:5 › directorio y conversación persistida con API real @real-directory (3.0m)
+
+
+  1) [chromium] › playwright\insurer-patient-directory-real.spec.ts:9:5 › directorio y conversación persistida con API real @real-directory 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.selectOption: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByRole('combobox', { name: 'Filas por página' })
+        - locator resolved to <select id="mch-select-18" aria-invalid="false" class="native-select" _ngcontent-ng-c3823635288="" aria-label="Filas por página">…</select>
+      - attempting select option action
+        2 × waiting for element to be visible and enabled
+          - did not find some options
+        - retrying select option action
+        - waiting 20ms
+        2 × waiting for element to be visible and enabled
+          - did not find some options
+        - retrying select option action
+          - waiting 100ms
+        349 × waiting for element to be visible and enabled
+            - did not find some options
+          - retrying select option action
+            - waiting 500ms
+
+
+       97 |   }
+       98 |   await expect(page.getByTestId('directory-count')).toContainText('12');
+    >  99 |   await page.getByRole('combobox', { name: 'Filas por página' }).selectOption('10');
+          |                                                                  ^
+      100 |   await expect.poll(() => directoryRequests.at(-1)?.body['limit']).toBe(10);
+      101 |   await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
+      102 |   await expect.poll(() => directoryRequests.at(-1)?.body['cursor']).toEqual(expect.any(String));
+        at C:\Alovida\mantra-core-health\playwright\insurer-patient-directory-real.spec.ts:99:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\artifacts\playwright\salida\insurer-patient-directory--5c309-con-API-real-real-directory-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\artifacts\playwright\salida\insurer-patient-directory--5c309-con-API-real-real-directory-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\insurer-patient-directory-real.spec.ts:9:5 › directorio y conversación persistida con API real @real-directory 
+EXIT_CODE=1

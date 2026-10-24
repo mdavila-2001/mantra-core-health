@@ -331,7 +331,7 @@ describe('Recorrido real · el camino del médico', () => {
     // insuficiente», no un error crudo ni una lista vacía mentirosa. Es
     // configuración de la cuenta — las del viernes las prepara J3 — así que se
     // anota y no se pelea.
-    cy.contains(/no ten[ée]s acceso a esta secci[óo]n/i, { timeout: 20_000 }).should('exist');
+    cy.contains(/no tiene acceso a esta secci[óo]n/i, { timeout: 20_000 }).should('exist');
     cy.contains(/rol insuficiente/i).should('exist');
     cy.task(
       'anotarOmision',
@@ -373,7 +373,7 @@ describe('Recorrido real · el camino del médico', () => {
     if (tramoActivo('TRAMO_M1_CLINICA')) {
       throw new Error(
         'TRAMO_M1_CLINICA está activo, pero los formularios clínicos todavía no están en dev: ' +
-          'extendé este bloque cuando entre el merge de M1.',
+          'extienda este bloque cuando entre el merge de M1.',
       );
     }
     anotarTramoApagado(
@@ -386,7 +386,7 @@ describe('Recorrido real · el camino del médico', () => {
     if (tramoActivo('TRAMO_P1_RECETA')) {
       throw new Error(
         'TRAMO_P1_RECETA está activo, pero el flujo de receta todavía no está en dev: ' +
-          'extendé este bloque cuando entre el merge de P1.',
+          'extienda este bloque cuando entre el merge de P1.',
       );
     }
     anotarTramoApagado(

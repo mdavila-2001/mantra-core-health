@@ -3,7 +3,6 @@ import type {
   PedidoFarmacia,
 } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import type { ChipVariant } from '../../../shared/components/atoms/chip/chip.types';
-import { entregaDeEjemplo } from './pharmacy-inbox.fixtures';
 
 /**
  * **Por qué medio se entrega** (carril FAR-I3) — el registro del cliente,
@@ -66,16 +65,17 @@ export interface EntregaEnPantalla {
    */
   readonly modalidad: ModalidadDeEntrega;
   readonly presentacion: EntregaPresentation;
-  /** La dirección, cuando la hay. Hoy sólo la trae el pedido de ejemplo. */
+  /**
+   * La dirección de entrega del contrato (`deliveryAddressText`), cuando la
+   * hay. A un retiro no se le pinta domicilio aunque el pedido traiga uno.
+   */
   readonly direccion: string | null;
-  /** El medio lo puso la maqueta, no el contrato: la pantalla lo rotula. */
-  readonly esEjemplo: boolean;
 }
 
 /**
- * Cómo se entrega un pedido concreto. **La `modalidad` del contrato manda
- * siempre**; sólo el pedido de ejemplo de la maqueta —uno, reconocido por su
- * identificador— aporta el suyo, y entonces sale rotulado.
+ * Cómo se entrega un pedido concreto. **Todo sale del contrato**: la
+ * modalidad (`deliveryMode`) y la dirección (`deliveryAddressText`), también
+ * sobre la maqueta, donde las declara el backend simulado.
  *
  * Vive acá y no en cada pantalla porque la bandeja y el detalle tienen que
  * decir lo mismo del mismo pedido. Y devuelve la modalidad, no sólo cómo
@@ -85,8 +85,7 @@ export interface EntregaEnPantalla {
  * la pantalla muestra y lo que ofrece hacer salen de la misma respuesta.
  */
 export function entregaEnPantalla(pedido: PedidoFarmacia): EntregaEnPantalla | null {
-  const ejemplo = entregaDeEjemplo(pedido);
-  const modalidad = ejemplo?.modalidad ?? pedido.modalidad;
+  const modalidad = pedido.modalidad;
   const presentacion = toEntregaPresentation(modalidad);
   if (modalidad === null || presentacion === null) {
     return null;
@@ -94,7 +93,6 @@ export function entregaEnPantalla(pedido: PedidoFarmacia): EntregaEnPantalla | n
   return {
     modalidad,
     presentacion,
-    direccion: ejemplo?.direccion ?? pedido.direccionDeEntrega,
-    esEjemplo: ejemplo !== null,
+    direccion: modalidad === 'RETIRO' ? null : pedido.direccionDeEntrega,
   };
 }

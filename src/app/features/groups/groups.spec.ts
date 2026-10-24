@@ -116,7 +116,7 @@ describe('Groups', () => {
     responderPerfil();
 
     http.expectNone((r) => r.url === '/community/groups');
-    expect(texto()).toContain('Elegí una organización');
+    expect(texto()).toContain('Elija una organización');
   });
 
   it('pide el directorio de la organización activa y lo pinta', () => {
@@ -256,8 +256,8 @@ describe('Groups', () => {
     // organización», que no tenía dónde hacerlo. La configuración sigue sin
     // volver al perfil, que es de donde el propietario la mandó sacar.
     expect(texto()).toContain('perfil público completo');
-    expect(texto()).not.toContain('Pedíselo a quien administra tu organización');
-    expect(texto()).toContain('Creá tu vitrina pública');
+    expect(texto()).not.toContain('Pídaselo a quien administra su organización');
+    expect(texto()).toContain('Cree su vitrina pública');
     expect(texto()).not.toContain('Configurar mi perfil público');
   });
 
@@ -286,8 +286,8 @@ describe('Groups', () => {
     // organización», que no tenía dónde hacerlo. La configuración sigue sin
     // volver al perfil, que es de donde el propietario la mandó sacar.
     expect(texto()).toContain('perfil público completo');
-    expect(texto()).not.toContain('Pedíselo a quien administra tu organización');
-    expect(texto()).toContain('Creá tu vitrina pública');
+    expect(texto()).not.toContain('Pídaselo a quien administra su organización');
+    expect(texto()).toContain('Cree su vitrina pública');
     expect(texto()).not.toContain('Configurar mi perfil público');
   });
 
@@ -310,8 +310,8 @@ describe('Groups', () => {
     // organización», que no tenía dónde hacerlo. La configuración sigue sin
     // volver al perfil, que es de donde el propietario la mandó sacar.
     expect(texto()).toContain('perfil público completo');
-    expect(texto()).not.toContain('Pedíselo a quien administra tu organización');
-    expect(texto()).toContain('Creá tu vitrina pública');
+    expect(texto()).not.toContain('Pídaselo a quien administra su organización');
+    expect(texto()).toContain('Cree su vitrina pública');
     expect(texto()).not.toContain('Configurar mi perfil público');
   });
 });

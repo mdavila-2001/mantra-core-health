@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { of, type Observable } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
 import { AccountingClient } from '../../../../core/data-access/accounting/accounting.client';
@@ -12,6 +12,8 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/facturacion-disponible';
+import { CobrosDelPaciente } from './cobros-del-paciente/cobros-del-paciente';
 
 /**
  * Cuántos pagos se muestran. Lo que quede afuera se dice, no se calla.
@@ -72,7 +74,15 @@ export interface PagosDelPaciente {
  * `GET /accounting/practitioner/paid-consultations`, que es la lista de
  * comprobantes pagados de la práctica, filtrada por esta persona.
  *
- * ## Es de sólo lectura, y a propósito
+ * ## Con la facturación simulada, cobra y factura
+ *
+ * Si la facturación simulada está disponible (FACT-SIAT-MOCK, ver
+ * {@link FACTURACION_SIMULADA_DISPONIBLE}), el bloque delega en
+ * `app-cobros-del-paciente`: los servicios de la persona con su plan de pagos
+ * —nota de venta por cada pago mientras haya saldo— y el modal de la factura
+ * contra el SIAT simulado. En ese caso **no** se lee Contabilidad.
+ *
+ * ## Sin ella, es de sólo lectura, y a propósito
  *
  * Acá no se cobra ni se anula nada. Cobrar es un asiento contable con su
  * cuenta de debe y de haber —vive en Contabilidad, con su rol— y un botón de
@@ -94,7 +104,7 @@ export interface PagosDelPaciente {
  */
 @Component({
   selector: 'app-payments-block',
-  imports: [Alert, AppButton, Badge, DatePipe],
+  imports: [Alert, AppButton, Badge, CobrosDelPaciente, DatePipe],
   templateUrl: './payments-block.html',
   styleUrl: './payments-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -103,6 +113,9 @@ export class PaymentsBlock {
   private readonly libros = inject(AccountingClient);
 
   readonly patientProfileId = input.required<string>();
+
+  /** Con la facturación simulada, «Pagos» cobra y factura; sin ella, lista lo asentado. */
+  protected readonly facturacionSimulada = inject(FACTURACION_SIMULADA_DISPONIBLE)();
 
   /** Reintento manual: cambiarlo vuelve a disparar la lectura. */
   private readonly intento = signal(0);
@@ -114,6 +127,8 @@ export class PaymentsBlock {
 
   protected readonly estado = toSignal(
     toObservable(this.pedido).pipe(
+      // Con la facturación simulada la lectura es otra: Contabilidad no se pide.
+      filter(() => !this.facturacionSimulada),
       switchMap(({ paciente }): Observable<ViewState<PagosDelPaciente>> =>
         this.libros.listPractices().pipe(
           switchMap((practicas): Observable<ViewState<PagosDelPaciente>> => {

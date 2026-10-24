@@ -128,7 +128,7 @@ describe('Composer', () => {
     escribir('x'.repeat(POST_BODY_MAX + 1));
     publicar();
 
-    expect(texto()).toContain('Te pasaste del largo permitido');
+    expect(texto()).toContain('Se pasó del largo permitido');
     http.expectNone((r) => r.url === '/community/profiles/pp-1/posts');
   });
 
@@ -176,7 +176,7 @@ describe('Composer', () => {
   /** El aviso de P6 no se pinta mientras nadie lo llene. */
   it('no muestra advertencia de PII si nadie la puso', () => {
     montar();
-    expect(texto()).not.toContain('Revisá antes de publicar');
+    expect(texto()).not.toContain('Revise antes de publicar');
   });
 
   it('muestra la advertencia de PII cuando se la pasan', () => {

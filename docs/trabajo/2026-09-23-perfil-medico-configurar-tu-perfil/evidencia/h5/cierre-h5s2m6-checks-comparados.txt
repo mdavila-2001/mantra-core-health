@@ -1,0 +1,64 @@
+# Checks de la rama con H5.S2.M6, bloque por bloque, contra mockup (h6/cierre-checks-en-mockup.txt) y contra el cierre anterior de la rama (h6/cierre-checks.txt).
+# "sin medición en la base": ese check salió en verde en mockup y no se guardó su salida.
+
+== contra mockup
+check-bundle-budget: sin medición en la base
+check-architecture: difiere — 0 líneas sólo en la rama, 1 sólo en la base
+   - ### exit=1
+check-api-prefixes: difiere — 0 líneas sólo en la rama, 1 sólo en la base
+   - ### exit=1
+check-route-prefixes: sin medición en la base
+check-form-pages: difiere — 0 líneas sólo en la rama, 1 sólo en la base
+   - ### exit=1
+check-tokens: sin medición en la base
+check-css-tokens: difiere — 0 líneas sólo en la rama, 1 sólo en la base
+   - ### exit=1
+check-contrast: sin medición en la base
+generate-doc-report: difiere — 19 líneas sólo en la rama, 20 sólo en la base
+   +       inicial: 257.58 kB en 12 archivos
+   +       137.59 kB  styles-PHCVGGOR.css
+   +       77.22 kB  main-I3FB4NST.js
+   +       18.37 kB  chunk-BBB74W7X.js
+   +       5.55 kB  chunk-HOAK6VGV.js
+   +       5.27 kB  chunk-BRVLZO6G.js
+   -       inicial: 424.36 kB en 12 archivos
+   -       166.33 kB  styles.css
+   -       154.11 kB  main.js
+   -       47.10 kB  chunk-BGY6D43H.js
+   -       14.90 kB  chunk-QTMITGJ6.js
+   -       11.05 kB  chunk-UHB2EOI3.js
+
+== contra el cierre anterior de la rama
+check-bundle-budget: difiere — 8 líneas sólo en la rama, 8 sólo en la base
+   +       77.22 kB  main-I3FB4NST.js
+   +       18.37 kB  chunk-BBB74W7X.js
+   +        5.55 kB  chunk-HOAK6VGV.js
+   +        4.54 kB  chunk-IIRGL6TY.js
+   +        3.72 kB  chunk-HPURM3KM.js
+   +     3813.18 kB  chunk-4U3TYKMO.js
+   -       77.22 kB  main-4GFVWSCJ.js
+   -       18.37 kB  chunk-VY2YXDG6.js
+   -        5.55 kB  chunk-P5SBZAH2.js
+   -        4.54 kB  chunk-NANAVFUN.js
+   -        3.72 kB  chunk-KSCR67NP.js
+   -     3813.18 kB  chunk-Y3V4JVBN.js
+check-architecture: idéntico
+check-api-prefixes: idéntico
+check-route-prefixes: idéntico
+check-form-pages: idéntico
+check-tokens: idéntico
+check-css-tokens: idéntico
+check-contrast: idéntico
+generate-doc-report: difiere — 9 líneas sólo en la rama, 9 sólo en la base
+   +       77.22 kB  main-I3FB4NST.js
+   +       18.37 kB  chunk-BBB74W7X.js
+   +       5.55 kB  chunk-HOAK6VGV.js
+   +       4.54 kB  chunk-IIRGL6TY.js
+   +       3.72 kB  chunk-HPURM3KM.js
+   +       3813.18 kB  chunk-4U3TYKMO.js
+   -       77.22 kB  main-4GFVWSCJ.js
+   -       18.37 kB  chunk-VY2YXDG6.js
+   -       5.55 kB  chunk-P5SBZAH2.js
+   -       4.54 kB  chunk-NANAVFUN.js
+   -       3.72 kB  chunk-KSCR67NP.js
+   -       3813.18 kB  chunk-Y3V4JVBN.js

@@ -53,4 +53,19 @@ describe('cotizaciones logic', () => {
       'serv-1',
     ]);
   });
+
+  it('a igual distancia desempata por precio, y el orden no depende de la fuente', () => {
+    const base = { vertical: 'MEDICAMENTOS' as const, donde: 'Sede', distanceKm: 0.4 };
+    const filas: CotizacionResultado[] = [
+      { ...base, id: 'c', que: 'C', price: { amount: 163, currency: 'BOB', source: 'x' } },
+      { ...base, id: 'a', que: 'A', price: { amount: 153, currency: 'BOB', source: 'x' } },
+      { ...base, id: 'b', que: 'B', price: { amount: 157, currency: 'BOB', source: 'x' } },
+    ];
+
+    const orden = ordenarResultados(filas, 'CERCANIA').map((fila) => fila.id);
+    expect(orden).toEqual(['a', 'b', 'c']);
+    expect(ordenarResultados([...filas].reverse(), 'CERCANIA').map((fila) => fila.id)).toEqual(
+      orden,
+    );
+  });
 });

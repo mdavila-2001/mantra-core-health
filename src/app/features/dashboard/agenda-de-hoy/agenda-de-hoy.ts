@@ -24,7 +24,12 @@ import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { StatusSeal } from '@shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
-import { AGENDA_CREATE_ROUTE, AGENDA_ROUTE, APPOINTMENT_NEW_ROUTE } from '../../agenda/agenda.routes';
+import {
+  AGENDA_BOOKING_PARAM,
+  AGENDA_CREATE_ROUTE,
+  AGENDA_ROUTE,
+  APPOINTMENT_NEW_ROUTE,
+} from '../../agenda/agenda.routes';
 import {
   sufijoDeCodigo,
   toBookingStatusPresentation,
@@ -137,8 +142,13 @@ interface JornadaCruda {
  * No opera: no acepta, no cancela, no inicia consultas. Todo eso vive en la
  * agenda y tiene sus confirmaciones, sus choques y sus avisos al paciente. Un
  * resumen que además ejecuta acciones destructivas a un clic de la pantalla de
- * inicio es un accidente esperando. El único camino hacia adelante es «Ver
- * agenda completa».
+ * inicio es un accidente esperando.
+ *
+ * Pero **cada cita lleva a sí misma**: la tarjeta «Ahora» y cada renglón abren
+ * la agenda con `?booking=<id>`, y es la agenda la que ofrece «Iniciar
+ * consulta» sobre esa cita. Antes el único camino era «Ver agenda completa» y
+ * después buscar a la persona en el calendario: justo lo que el médico quería
+ * hacer al tocar la cita que tenía delante.
  */
 @Component({
   selector: 'app-agenda-de-hoy',
@@ -154,6 +164,16 @@ export class AgendaDeHoy {
 
   /** A dónde va «Ver agenda completa». De la tabla de rutas, no escrita a mano. */
   protected readonly rutaDeLaAgenda = AGENDA_ROUTE;
+
+  /** Los parámetros que abren una cita concreta en la agenda. */
+  protected paramsDeLaCita(cita: CitaDeHoy): Record<string, string> {
+    return { [AGENDA_BOOKING_PARAM]: cita.id };
+  }
+
+  /** El nombre del enlace: a quién y a qué hora, para no oír sólo un nombre suelto. */
+  protected nombreDelEnlace(cita: CitaDeHoy): string {
+    return `Abrir la consulta de ${cita.paciente}, a las ${horaCorta(cita.desde)}`;
+  }
 
   protected readonly estado = signal<ViewState<JornadaCruda>>(loading());
 
@@ -338,7 +358,7 @@ export class AgendaDeHoy {
   protected readonly resumenDeLaCinta = computed(() => {
     const total = this.cifras().total;
     const consultas = total === 1 ? '1 consulta' : `${total} consultas`;
-    return `Tu jornada: ${consultas}, entre las ${horaCorta(this.desdeLasHoras())} y las ${horaCorta(this.hastaLasHoras())}.`;
+    return `Su jornada: ${consultas}, entre las ${horaCorta(this.desdeLasHoras())} y las ${horaCorta(this.hastaLasHoras())}.`;
   });
 
   /** Dónde cae el reloj en la cinta, o `null` si el día todavía no empezó o ya terminó. */
@@ -396,7 +416,7 @@ export class AgendaDeHoy {
             this.estado.set(
               empty(
                 { label: 'Publicar mi horario', route: AGENDA_CREATE_ROUTE },
-                'Todavía no tenés una agenda publicada, así que nadie puede reservarte hora.',
+                'Todavía no tiene una agenda publicada, así que nadie puede reservarle hora.',
               ),
             );
             return;
@@ -414,7 +434,7 @@ export class AgendaDeHoy {
                 // No es «Ver la agenda»: ése es el botón del encabezado, que
                 // sigue ahí. Un día vacío tiene otra próxima acción — llenarlo.
                 { label: 'Agendar una consulta', route: APPOINTMENT_NEW_ROUTE },
-                'Hoy no tenés ninguna consulta reservada.',
+                'Hoy no tiene ninguna consulta reservada.',
               ),
             );
             return;

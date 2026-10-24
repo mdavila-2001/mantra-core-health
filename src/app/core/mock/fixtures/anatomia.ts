@@ -1,4 +1,4 @@
-import { uuid } from '../mock-store';
+import { contieneSinTildes, uuid } from '../mock-store';
 import {
   DEFINICIONES_DE_TIPO,
   ENTRADAS_ANATOMICAS,
@@ -222,16 +222,18 @@ export function fichaAnatomicaEnLinea(entrada: ConceptoAnatomico) {
   };
 }
 
-/** Una entrada coincide por nombre, tipo, región o código. */
+/**
+ * Una entrada coincide por nombre, tipo, región o código, sin distinguir
+ * tildes ni la ñ —la misma regla que el resto del glosario—.
+ */
 export function coincideAnatomia(entrada: ConceptoAnatomico, q: string | null): boolean {
   if (q === null || q === '') return true;
-  const aguja = q.toLocaleLowerCase('es');
   return (
-    entrada.name.toLocaleLowerCase('es').includes(aguja) ||
-    tipoLegible(entrada.type).includes(aguja) ||
-    (entrada.region ?? '').toLocaleLowerCase('es').includes(aguja) ||
-    (entrada.subregion ?? '').toLocaleLowerCase('es').includes(aguja) ||
-    entrada.code.toLocaleLowerCase('es').includes(aguja)
+    contieneSinTildes(entrada.name, q) ||
+    contieneSinTildes(tipoLegible(entrada.type), q) ||
+    contieneSinTildes(entrada.region, q) ||
+    contieneSinTildes(entrada.subregion, q) ||
+    contieneSinTildes(entrada.code, q)
   );
 }
 

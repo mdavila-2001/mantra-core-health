@@ -1,0 +1,206 @@
+[
+ {
+  "m": "PUT",
+  "p": "/auth-providers/identity-providers/:id/protocol-configs",
+  "file": "admin-modules.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/clinical/me/medical-aspects",
+  "file": "clinical.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PUT",
+  "p": "/clinical/me/medical-aspects",
+  "file": "clinical.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/medication-requests/:id/attachments",
+  "file": "clinical.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/allergy-intolerances/:id/attachments",
+  "file": "clinical.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/charts/notes/:id/versions",
+  "file": "clinical.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/community/reactions",
+  "file": "community.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/diagnostic-results/me/:id/shares/:shareId",
+  "file": "diagnostics.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/identity/verification-types",
+  "file": "identity.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases/:id/checks:plan",
+  "file": "identity.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/notifications/preferences/me",
+  "file": "notifications.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/pharmacy/orders/:id/mark-ready",
+  "file": "pharmacy.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/pharmacy/orders/:id/keep-original",
+  "file": "pharmacy.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/procedure-cases/:id/team-members/:memberId/decline",
+  "file": "procedures.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/credentials/:id",
+  "file": "profiles.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/specialties/:id",
+  "file": "profiles.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/profiles/practitioners/me/specialties/:id",
+  "file": "profiles.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/jurisdiction-authorizations/:id",
+  "file": "profiles.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/profiles/practitioners/me/jurisdiction-authorizations/:id",
+  "file": "profiles.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/public/profiles/o/:slug/services",
+  "file": "public.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/public/profiles/f/:slug/products",
+  "file": "public.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/public/profiles/f/:slug/branches",
+  "file": "public.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/public/profiles/f/:slug/branch-availability",
+  "file": "public.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/public/posts/:id/comments/:commentId/replies",
+  "file": "public.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/bookings/:id/payment-state",
+  "file": "scheduling.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/surveys/templates/:id",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/surveys/templates/:id/questions/:questionId",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/surveys/templates/:id/questions/:questionId",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PUT",
+  "p": "/surveys/templates/:id/questions/order",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/templates/:id/publish",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/forms/field-definitions/:id",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/forms/assignments/:id",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/forms/assignments/:id",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ },
+ {
+  "m": "PUT",
+  "p": "/forms/assignments/order",
+  "file": "surveys-forms.handlers.ts",
+  "api": null
+ }
+]

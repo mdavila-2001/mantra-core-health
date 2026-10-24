@@ -1,0 +1,4 @@
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36157826490/job/108146640353	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36157826490/job/108146640502	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36157826490/job/108146640641	
+{"baseRefName":"mockup","headRefName":"claude/clinica-c7-nombres","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":682,"reviewDecision":"","url":"https://github.com/mdavila-2001/mantra-core-health/pull/682"}

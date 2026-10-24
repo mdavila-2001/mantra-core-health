@@ -147,7 +147,7 @@ export class ProcedureImport {
         label: `${e.specialty} (${e.count})`,
       })),
       unavailableReason:
-        'No pudimos leer las especialidades del arancel. Podés buscar por nombre igual.',
+        'No pudimos leer las especialidades del arancel. Puede buscar por nombre igual.',
     },
   ]);
 
@@ -301,6 +301,11 @@ export class ProcedureImport {
         // después de dónde salió este servicio y no volver a importarlo.
         code: item.code,
         name: item.display,
+        // El concepto del arancel es el id que el servicio comparte con el
+        // resto del producto: las cláusulas de los seguros y las solicitudes
+        // de reembolso cruzan por él, no por el id del servicio, que es
+        // propio de cada práctica. Sin él, ningún seguro lo reconoce.
+        serviceConceptId: item.conceptId,
         defaultPrice: item.referencePrice ?? '0',
         isActive: true,
       })
@@ -312,7 +317,7 @@ export class ProcedureImport {
           );
           this.toasts.success(
             item.ocrSuspect
-              ? 'Se importó. Revisá el nombre y el precio: el arancel los marcó como dudosos.'
+              ? 'Se importó. Revise el nombre y el precio: el arancel los marcó como dudosos.'
               : 'Se importó al catálogo de la práctica.',
             item.display,
           );
@@ -323,7 +328,7 @@ export class ProcedureImport {
             type: 'error',
             title: 'No pudimos importarlo',
             message:
-              'El alta de servicios exige permiso de administración. Pedilo a quien administre la organización.',
+              'El alta de servicios exige permiso de administración. Pídalo a quien administre la organización.',
           });
         },
       });
@@ -350,7 +355,7 @@ export class ProcedureImport {
             total.length === 0
               ? empty(
                   { label: 'Quitar los filtros' },
-                  'Ningún procedimiento del arancel coincide con lo que buscaste.',
+                  'Ningún procedimiento del arancel coincide con lo que buscó.',
                 )
               : ready(total),
           );

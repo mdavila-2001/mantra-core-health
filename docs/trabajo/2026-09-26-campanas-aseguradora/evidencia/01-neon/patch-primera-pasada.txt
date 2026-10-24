@@ -1,0 +1,35 @@
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:176: NOTICE:  constraint "ck_insurance_campaigns_valid_period" of relation "insurance_campaigns" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:178: NOTICE:  constraint "ck_insurance_campaigns_copay_bonus_range" of relation "insurance_campaigns" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+DO
+COMMIT

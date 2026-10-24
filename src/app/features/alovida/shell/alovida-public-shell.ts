@@ -8,7 +8,9 @@
     repetirlo por pantalla es garantizar que en alguna falte.
     ========================================================================== */
 
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+
+import { PanicButton } from '../../emergency/panic-button/panic-button';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '@core/auth/auth.service';
@@ -27,8 +29,10 @@ import { AlovidaDesignNotice } from './alovida-design-notice';
     RouterLink,
     RouterOutlet,
     AlovidaThemeToggleDirective,
+    PanicButton,
   ],
   templateUrl: './alovida-public-shell.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AlovidaPublicShell {
   private readonly router = inject(Router);

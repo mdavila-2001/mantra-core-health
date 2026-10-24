@@ -1,21 +1,21 @@
 @if (sinPerfilDePaciente) {
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente, así que no hay aspectos médicos propios que declarar.
+    Su cuenta no tiene un perfil de paciente, así que no hay aspectos médicos propios que declarar.
   </app-alert>
 } @else if (cargando()) {
-  <p class="aspectos__estado" role="status">Buscando lo que declaraste…</p>
+  <p class="aspectos__estado" role="status">Buscando lo que declaró…</p>
 } @else if (falloLaLectura()) {
-  <app-alert tone="error" title="No pudimos traer tus aspectos médicos">
-    Reintentá en un momento.
+  <app-alert tone="error" title="No pudimos traer sus aspectos médicos">
+    Reintente en un momento.
   </app-alert>
   <button app-button variant="outline" (clicked)="cargar()">Reintentar</button>
 } @else {
   <form class="aspectos" data-testid="aspectos-form" (submit)="$event.preventDefault(); guardar()">
     <div class="aspectos__intro">
       <p class="aspectos__texto">
-        Esto es lo que <strong>vos</strong> contás de tu salud, no lo que registró un profesional.
-        Tu historia clínica está aparte y no se edita desde acá. Lo que declares lo va a ver quien
-        te atienda.
+        Esto es lo que <strong>usted</strong> cuenta de su salud, no lo que registró un profesional.
+        Su historia clínica está aparte y no se edita desde acá. Lo que declare lo va a ver quien
+        le atienda.
       </p>
       @if (actualizado(); as cuando) {
         <p class="aspectos__actualizado" data-testid="aspectos-actualizado">
@@ -23,7 +23,7 @@
         </p>
       } @else if (vacio()) {
         <p class="aspectos__actualizado" data-testid="aspectos-vacio">
-          Todavía no declaraste nada. Completá lo que sepas: podés dejar en blanco lo que no.
+          Todavía no declaró nada. Complete lo que sepa: puede dejar en blanco lo que no.
         </p>
       }
     </div>

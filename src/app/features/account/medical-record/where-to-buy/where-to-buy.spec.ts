@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { readFileSync } from 'node:fs';
 
 import { provideHttpClient } from '@angular/common/http';
@@ -15,12 +16,19 @@ import type {
   AvailabilityResult,
   AvailabilitySite,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import { CART_STORAGE, type CartStorage } from '../../../../core/data-access/pharmacy-cart/cart.storage';
+import type { CartState } from '../../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
+import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { SessionStore } from '../../../../core/auth/session.store';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map/map';
 import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
+import { createOrderRequest } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.adapter';
 import {
   borradorDePedido,
+  cartLinesFromDraft,
   coberturaConSeguro,
   ordenarSedes,
   WhereToBuy,
@@ -221,12 +229,44 @@ function leafletDoblado(): unknown {
   };
 }
 
+/**
+ * El carrito en memoria, no en `localStorage`.
+ *
+ * `CartStore` persiste por cuenta (H3.S1) y el adaptador de navegador es el
+ * que trae la factory del token. Los `it` de este archivo comparten un mismo
+ * jsdom: con el adaptador real, el carrito que deja una prueba aparece en la
+ * siguiente y dispara el diálogo de «cambiar de farmacia» que esa prueba no
+ * espera. Mismo doble que usa `cart.store.spec.ts`.
+ */
+class MemoriaCartStorage implements CartStorage {
+  private readonly datos = new Map<string, CartState>();
+  read(clave: string): CartState | null {
+    return this.datos.get(clave) ?? null;
+  }
+  write(clave: string, cart: CartState): void {
+    this.datos.set(clave, cart);
+  }
+  clear(clave: string): void {
+    this.datos.delete(clave);
+  }
+}
+
 describe('WhereToBuy', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const campanasDemoOriginal = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: campanasDemoOriginal }));
+
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let getCurrentPosition: ReturnType<typeof vi.fn>;
+  /** Maqueta (`true`) o API real (`false`); se lee al crear la pantalla. */
+  let sampleData: boolean;
 
   beforeEach(() => {
+    sampleData = true;
     // jsdom no trae geolocalización: se cuelga una espía para poder afirmar
     // que NADIE la llama hasta que se aprieta el botón.
     getCurrentPosition = vi.fn();
@@ -243,10 +283,12 @@ describe('WhereToBuy', () => {
         provideRouter([
           { path: 'my-account/medical-record/where-to-buy/:requestId', component: WhereToBuy },
         ]),
+        { provide: CART_STORAGE, useValue: new MemoriaCartStorage() },
         {
           provide: CARGADOR_DE_LEAFLET,
           useValue: (() => Promise.resolve(leafletDoblado())) as CargadorDeLeaflet,
         },
+        { provide: SAMPLE_DATA_ENABLED, useFactory: () => sampleData },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -320,6 +362,26 @@ describe('WhereToBuy', () => {
     expect(pestanas[0]?.getAttribute('aria-selected')).toBe('true');
     // Y el panel activo es el de farmacias, no una promesa.
     expect(texto()).toContain('Sucursal Centro');
+  });
+
+  it('muestra las campañas de la farmacia con su etiqueta y pliega las que sobran', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const sede = harness.routeNativeElement?.querySelector('.compra__sede');
+    const visibles = sede?.querySelectorAll('[data-testid="compra-promos"] > li') ?? [];
+    // Tres a la vista, cada una con su etiqueta de mecánica y un enlace a su ficha.
+    expect(visibles).toHaveLength(3);
+    for (const fila of Array.from(visibles)) {
+      expect(fila.querySelector('app-badge')?.textContent?.trim()).not.toBe('');
+      expect(fila.querySelector('a[href^="/promotions/"]')).not.toBeNull();
+    }
+    // El resto queda a un toque y no se pierde ningún enlace.
+    const mas = sede?.querySelector('[data-testid="compra-mas-promos"]');
+    expect(mas?.querySelector('summary')?.textContent).toMatch(/Ver \d+ promociones? más/);
+    expect(mas?.querySelectorAll('a[href^="/promotions/"]').length).toBeGreaterThan(0);
   });
 
   it('recorre el contrato E2 entero y pinta completas primero, sin coordenadas', async () => {
@@ -412,6 +474,151 @@ describe('WhereToBuy', () => {
     expect(navegar).toHaveBeenCalledWith(['/my-account/pharmacy-orders/new']);
   });
 
+  /* ─── Carril 43 · H5: la salida nueva, al lado de «Enviar pedido» ───────── */
+
+  /** Los botones «Agregar la receta al carrito», en el orden de las tarjetas. */
+  function botonesDeCarrito(): HTMLButtonElement[] {
+    return [
+      ...(harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="where-to-buy-add-to-cart"]',
+      ) ?? []),
+    ];
+  }
+
+  it('«Agregar la receta al carrito» deja el carrito de esa sede, con la receta', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const navegar = vi
+      .spyOn(TestBed.inject(Router), 'navigateByUrl')
+      .mockResolvedValue(true);
+    botonesDeCarrito()[0]?.click();
+    harness.detectChanges();
+
+    const carrito = TestBed.inject(CartStore).cart();
+    expect(carrito?.site.siteName).toBe('Sucursal Centro');
+    expect(carrito?.requestId).toBe('m-1');
+    expect(carrito?.lines.map((linea) => linea.name)).toEqual(['Amoxicilina', 'Ibuprofeno']);
+    expect(navegar).toHaveBeenCalledWith('/my-account/pharmacy/cart');
+  });
+
+  it('avisa por su nombre lo que la sede no pudo agregar', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    // La segunda tarjeta es la sede parcial: le falta la amoxicilina.
+    botonesDeCarrito()[1]?.click();
+    harness.detectChanges();
+
+    const aviso = harness.routeNativeElement?.querySelector(
+      '[data-testid="compra-aviso-carrito"]',
+    );
+    expect(aviso?.textContent).toContain('Amoxicilina');
+    expect(TestBed.inject(CartStore).cart()?.lines).toHaveLength(1);
+  });
+
+  it('con un carrito de otra farmacia pregunta, y cancelar no cambia nada', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const cart = TestBed.inject(CartStore);
+    cart.replaceWith(
+      {
+        pharmacyId: 'otra-farmacia',
+        pharmacyName: 'Otra Farmacia',
+        siteId: 'otra-sede',
+        siteName: 'Otra Sucursal',
+        addressText: null,
+      },
+      [
+        {
+          productId: 'otro-producto',
+          name: 'Otro producto',
+          presentation: null,
+          quantity: 1,
+          unitAmount: '5.00',
+          currency: 'BOB',
+          requiresPrescription: false,
+          medicationConceptId: null,
+        },
+      ],
+      null,
+    );
+    const confirmar = vi
+      .spyOn(TestBed.inject(DialogService), 'confirm')
+      .mockResolvedValue(false);
+    const navegar = vi
+      .spyOn(TestBed.inject(Router), 'navigateByUrl')
+      .mockResolvedValue(true);
+
+    botonesDeCarrito()[0]?.click();
+    await Promise.resolve();
+    harness.detectChanges();
+
+    expect(confirmar).toHaveBeenCalledOnce();
+    expect(cart.cart()?.site.siteId).toBe('otra-sede');
+    expect(cart.cart()?.lines.map((linea) => linea.name)).toEqual(['Otro producto']);
+    expect(navegar).not.toHaveBeenCalled();
+  });
+
+  it('confirmando, el carrito de la otra farmacia se reemplaza por la receta', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const cart = TestBed.inject(CartStore);
+    cart.replaceWith(
+      {
+        pharmacyId: 'otra-farmacia',
+        pharmacyName: 'Otra Farmacia',
+        siteId: 'otra-sede',
+        siteName: 'Otra Sucursal',
+        addressText: null,
+      },
+      [
+        {
+          productId: 'otro-producto',
+          name: 'Otro producto',
+          presentation: null,
+          quantity: 1,
+          unitAmount: '5.00',
+          currency: 'BOB',
+          requiresPrescription: false,
+          medicationConceptId: null,
+        },
+      ],
+      null,
+    );
+    vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+    const navegar = vi
+      .spyOn(TestBed.inject(Router), 'navigateByUrl')
+      .mockResolvedValue(true);
+
+    botonesDeCarrito()[0]?.click();
+    await Promise.resolve();
+    harness.detectChanges();
+
+    expect(cart.cart()?.site.siteId).toBe(FIXTURE_IDS.sedeCentro);
+    expect(cart.cart()?.requestId).toBe('m-1');
+    expect(navegar).toHaveBeenCalledWith('/my-account/pharmacy/cart');
+  });
+
   it('no toca la geolocalización al entrar; el botón la pide y reconsulta con lat/lng', async () => {
     await montar();
     responderHastaProductos();
@@ -439,7 +646,7 @@ describe('WhereToBuy', () => {
     consulta.flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
 
-    expect(texto()).toContain('Distancias medidas desde tu ubicación actual');
+    expect(texto()).toContain('Distancias medidas desde su ubicación actual');
   });
 
   it('destildar un renglón lo saca de la consulta', async () => {
@@ -578,7 +785,7 @@ describe('WhereToBuy', () => {
       consulta.flush(DISPONIBILIDAD_FIXTURE);
       harness.detectChanges();
 
-      expect(texto()).toContain('Distancias medidas desde tu casa');
+      expect(texto()).toContain('Distancias medidas desde su casa');
       // Con un origen ya elegido, la sección muestra el aviso y «Dejar de usar
       // este punto» — no los botones de elección, que viven en la otra rama.
       expect(
@@ -676,6 +883,23 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
   }
 
+  it('contra la API real no ofrece la variante con seguro: la lista es la de la consulta', async () => {
+    sampleData = false;
+    await montarConTresSedes();
+
+    expect(consultar(byTestId('compra-variante-seguro'))).toBeNull();
+    expect(consultar(byTestId('compra-seguro'))).toBeNull();
+    expect(texto()).not.toContain('Demostración');
+    expect(todas(byTestId('compra-item-seguro'))).toHaveLength(0);
+    // Lo que sí es de la API sigue igual: las tres sedes y el orden.
+    expect(sedesEnPantalla()).toEqual([
+      'Farmacia Andina · Sucursal Centro',
+      'Farmacia del Sur · Sucursal Plan Tres Mil',
+      'Farmacia del Sur · Sucursal Norte',
+    ]);
+    expect(consultar('[data-testid="compra-orden"]')).not.toBeNull();
+  });
+
   it('sin seguro: abre con el orden del backend y la tarjeta no habla del seguro', async () => {
     await montarConTresSedes();
 
@@ -727,7 +951,7 @@ describe('WhereToBuy', () => {
     http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
   });
 
-  it('con seguro: cobertura de lo aprobado, desglose «aprobado / a tu cargo» y renglones rotulados', async () => {
+  it('con seguro: cobertura de lo aprobado, desglose «aprobado / a su cargo» y renglones rotulados', async () => {
     await montarConTresSedes();
     conmutarSeguro();
 
@@ -735,7 +959,7 @@ describe('WhereToBuy', () => {
     const renglones = todas('[data-testid="compra-item-seguro"]').map((nodo) =>
       nodo.textContent?.trim(),
     );
-    expect(renglones).toEqual(['Aprobado por el seguro', 'A tu cargo']);
+    expect(renglones).toEqual(['Aprobado por el seguro', 'A su cargo']);
     expect(texto()).toContain('Demostración');
 
     const centro = tarjetaDe('Sucursal Centro');
@@ -745,20 +969,20 @@ describe('WhereToBuy', () => {
       centro
         ?.querySelector('[data-testid="compra-desglose-seguro"]')
         ?.textContent?.replace(/\s+/g, ' '),
-    ).toContain('Aprobado: 68.00 Bs A tu cargo: 28.50 Bs');
+    ).toContain('Aprobado: 68.00 Bs A su cargo: 28.50 Bs');
 
     const planTresMil = tarjetaDe('Plan Tres Mil');
     expect(planTresMil?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
     expect(planTresMil?.textContent).toContain('Le falta de lo aprobado: Amoxicilina');
     expect(planTresMil?.textContent).toContain('Le falta algo aprobado');
     // El ibuprofeno está pero sin precio publicado: se dice, no se estima.
-    expect(planTresMil?.textContent).toContain('A tu cargo: no disponible, falta algún precio');
+    expect(planTresMil?.textContent).toContain('A su cargo: no disponible, falta algún precio');
     // La sede no publica moneda: el importe va sin ella, no con una supuesta.
     expect(planTresMil?.textContent).toContain('Aprobado: 0.00');
 
     const norte = tarjetaDe('Sucursal Norte');
     expect(norte?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
-    expect(norte?.textContent).toContain('A tu cargo: 28.50 Bs');
+    expect(norte?.textContent).toContain('A su cargo: 28.50 Bs');
 
     // El total de la sede no cambia: el desglose se suma, no lo reemplaza.
     expect(centro?.textContent).toContain('Total estimado: 96.50 Bs');
@@ -794,7 +1018,9 @@ describe('WhereToBuy', () => {
       const cobertura =
         tarjeta?.querySelector('[data-testid="compra-cobertura-seguro"]')?.textContent?.trim() ??
         '';
-      expect(tarjeta?.querySelector('app-badge')?.textContent?.trim()).toBe(estado);
+      // El badge de estado vive en las acciones de la tarjeta: las campañas de la
+      // farmacia también llevan su `app-badge` y ya no es el primero del DOM.
+      expect(tarjeta?.querySelector('.compra__acciones app-badge')?.textContent?.trim()).toBe(estado);
       expect(detalle.startsWith(cobertura)).toBe(true);
     }
     expect(pines[0].popup?.querySelector('.mapa__popup-estado')?.textContent).toBe(
@@ -820,7 +1046,7 @@ describe('WhereToBuy', () => {
       .flush(DISPONIBILIDAD_CON_NORTE);
     harness.detectChanges();
 
-    expect(texto()).toContain('ninguno de los medicamentos que elegiste está aprobado');
+    expect(texto()).toContain('ninguno de los medicamentos que eligió está aprobado');
     expect(texto()).toContain('Volver a mi historia');
     expect(todas('.compra__sede')).toHaveLength(0);
     // El conmutador sigue a mano: el vacío no encierra a nadie.
@@ -841,9 +1067,9 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     expect(texto()).toContain(
-      'Ninguna sucursal puede confirmar hoy los medicamentos de tu receta.',
+      'Ninguna sucursal puede confirmar hoy los medicamentos de su receta.',
     );
-    expect(texto()).not.toContain('ninguno de los medicamentos que elegiste está aprobado');
+    expect(texto()).not.toContain('ninguno de los medicamentos que eligió está aprobado');
   });
 
   it('con seguro, un error de disponibilidad queda como error recuperable', async () => {
@@ -983,7 +1209,7 @@ describe('coberturaConSeguro (T-E2)', () => {
   const [SEDE_COMPLETA, SEDE_PARCIAL] = DISPONIBILIDAD_FIXTURE.items;
   const soloAmoxicilina = new Set([FIXTURE_IDS.conceptoAmoxicilina]);
 
-  it('parte el precio de lo disponible en aprobado y a tu cargo', () => {
+  it('parte el precio de lo disponible en aprobado y a su cargo', () => {
     const cobertura = coberturaConSeguro(SEDE_COMPLETA, CONSULTABLES, [], soloAmoxicilina);
     expect(cobertura).toEqual({
       aprobados: 1,
@@ -995,7 +1221,7 @@ describe('coberturaConSeguro (T-E2)', () => {
     });
   });
 
-  it('todo aprobado: nada a tu cargo es 0.00, no una ausencia', () => {
+  it('todo aprobado: nada a su cargo es 0.00, no una ausencia', () => {
     const todo = new Set(CONSULTABLES.map((item) => item.conceptId));
     const cobertura = coberturaConSeguro(SEDE_COMPLETA, CONSULTABLES, [], todo);
     expect(cobertura.aprobado).toBe('96.50 Bs');
@@ -1148,3 +1374,99 @@ describe('where-to-buy.css usa solo tokens declarados', () => {
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 });
+
+/* ─── Carril 43 · H5: la receta entra al carrito ─────────────────────────────
+   Los casos de arriba NO se tocaron: «Enviar pedido» sigue haciendo lo mismo
+   y con el mismo `data-testid`. Lo que sigue prueba la salida nueva. */
+
+describe('cartLinesFromDraft (carril 43 · H5)', () => {
+  it('deja afuera lo que la sede no puede confirmar y lo devuelve por su nombre', () => {
+    // La sede parcial: la amoxicilina está en `missingProductIds`.
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[1], CONSULTABLES, []);
+
+    const { lines, omitted } = cartLinesFromDraft(borrador);
+
+    expect(lines.map((linea) => linea.productId)).toEqual([FIXTURE_IDS.productoIbuprofeno]);
+    expect(omitted).toEqual(['Amoxicilina']);
+  });
+
+  it('deja afuera el medicamento sin producto publicado', () => {
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[0], CONSULTABLES, [
+      'Paracetamol',
+    ]);
+
+    const { lines, omitted } = cartLinesFromDraft(borrador);
+
+    // Una línea sin `productId` haría explotar `createOrderRequest` después.
+    expect(lines.every((linea) => linea.productId !== '')).toBe(true);
+    expect(lines).toHaveLength(2);
+    expect(omitted).toEqual(['Paracetamol']);
+  });
+
+  it('cada línea conserva precio, presentación y cantidad, y declara que exige receta', () => {
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[0], CONSULTABLES, []);
+
+    const { lines } = cartLinesFromDraft(borrador);
+
+    expect(lines[0]).toEqual({
+      productId: FIXTURE_IDS.productoAmoxicilina,
+      name: 'Amoxicilina',
+      presentation: '500 mg · Caja x 21 cápsulas',
+      quantity: 1,
+      unitAmount: '68.00',
+      currency: 'BOB',
+      requiresPrescription: true,
+      medicationConceptId: null,
+    });
+  });
+
+  it('una sede que no puede confirmar nada devuelve cero líneas', () => {
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[0], [], [
+      'Paracetamol',
+      'Amoxicilina',
+    ]);
+
+    const { lines, omitted } = cartLinesFromDraft(borrador);
+
+    expect(lines).toEqual([]);
+    expect(omitted).toEqual(['Paracetamol', 'Amoxicilina']);
+  });
+});
+
+/**
+ * El pedido que nace de un carrito con receta lleva el `medicationRequestId`.
+ *
+ * El caso vive acá y no en `cart.store.spec.ts` (Pablo, Q-J5) porque el
+ * `CartStore` del corte **todavía no tiene `toDraft`**: se aisló su contrato y
+ * se prueba lo que sí existe —`borradorDePedido` → `createOrderRequest`—, que
+ * es exactamente el trecho donde el id de la receta podría perderse. Cuando
+ * `toDraft` llegue, este caso sigue valiendo y el suyo se agrega al lado.
+ */
+describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
+  it('con `requestId`, el cuerpo del POST incluye `medicationRequestId`', () => {
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[0], CONSULTABLES, []);
+
+    const cuerpo = createOrderRequest(
+      { borrador, modalidad: 'RETIRO', direccionDeEntrega: null },
+      'idem-1',
+    );
+
+    expect(cuerpo.medicationRequestId).toBe('m-1');
+  });
+
+  it('sin receta detrás (carrito libre), la clave no viaja', () => {
+    const borrador = borradorDePedido('', DISPONIBILIDAD_FIXTURE.items[0], CONSULTABLES, []);
+
+    const cuerpo = createOrderRequest(
+      { borrador, modalidad: 'RETIRO', direccionDeEntrega: null },
+      'idem-2',
+    );
+
+    expect(cuerpo.medicationRequestId).toBeUndefined();
+  });
+});
+
+/** El selector de un `data-testid` ya existente en la plantilla. */
+function byTestId(id: string): string {
+  return `[data-testid="${id}"]`;
+}

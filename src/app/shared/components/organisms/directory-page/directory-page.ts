@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  linkedSignal,
+  output,
+} from '@angular/core';
 
 import { ResultCard } from '../../molecules/result-card/result-card';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -37,6 +44,21 @@ import type { GrupoDeDirectorio, SustantivoDelDirectorio } from './directory-pag
  * memoria sobre la guía completa (médicos), y eso no se puede unificar sin
  * empeorar a alguno de los dos.
  */
+/** Dónde se recuerda la forma elegida: una sola para los cuatro directorios. */
+const CLAVE_DE_VISTA = 'alovida.directorio.vista';
+
+type Vista = 'grilla' | 'lista';
+
+function vistaGuardada(clave: string): Vista | null {
+  try {
+    const guardada = globalThis.localStorage?.getItem(clave);
+    return guardada === 'lista' || guardada === 'grilla' ? guardada : null;
+  } catch {
+    // Almacenamiento bloqueado (modo privado, SSR): vale la de por defecto.
+    return null;
+  }
+}
+
 @Component({
   selector: 'app-directory-page',
   imports: [FilterBar, PageHeader, ResultCard, ViewStateHost],
@@ -97,6 +119,37 @@ export class DirectoryPage {
 
   /** Activa el bloqueo opt-in de navegaciones repetidas en sus tarjetas. */
   readonly preventDuplicateNavigation = input(false);
+
+  /**
+   * Grilla o lista. Es un gusto de quien mira y no del directorio, así que se
+   * recuerda entre visitas y vale para los cuatro: quien prefiere la lista en
+   * farmacias la quiere también en laboratorios.
+   */
+  /**
+   * La forma con que abre cuando nadie eligió todavía. El directorio de
+   * médicos abre en lista (propietario, 04/10/2026); el resto, en grilla.
+   */
+  readonly vistaPorDefecto = input<Vista>('grilla');
+
+  /**
+   * Dónde se recuerda la elección. Los médicos tienen la suya: si no, una
+   * grilla elegida en farmacias abriría en grilla también la guía de médicos,
+   * que tiene que abrir en filas.
+   */
+  readonly claveDeVista = input(CLAVE_DE_VISTA);
+
+  protected readonly vista = linkedSignal<Vista>(
+    () => vistaGuardada(this.claveDeVista()) ?? this.vistaPorDefecto(),
+  );
+
+  protected elegirVista(vista: Vista): void {
+    this.vista.set(vista);
+    try {
+      globalThis.localStorage?.setItem(this.claveDeVista(), vista);
+    } catch {
+      // Sin almacenamiento la elección vale sólo para esta pantalla.
+    }
+  }
 
   readonly filtrosCambiaron = output<Readonly<Record<string, string>>>();
   readonly reintentar = output<void>();

@@ -173,3 +173,18 @@ button.rejilla__tarjeta:hover .rejilla__icono {
 .rejilla__volver {
   margin-block-end: var(--sp-3);
 }
+
+/* La foto de una tarjeta de portada —directorios, especialidades, categorías—.
+   Sangra hasta los bordes de la tarjeta con márgenes negativos que comen su
+   `padding`, y copia el radio superior para que la esquina no asome cuadrada.
+   Decorativa: ilustra el tipo de lugar, no identifica a nadie. */
+.rejilla__foto {
+  display: block;
+  inline-size: calc(100% + var(--sp-4) * 2);
+  max-inline-size: none;
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-2);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--bg-inset);
+}

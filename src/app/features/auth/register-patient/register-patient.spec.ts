@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { RegisterPatient } from './register-patient';
+import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
 import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
 import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/conceptos';
@@ -251,8 +252,9 @@ describe('RegisterPatient', () => {
         items: [
           { conceptId: 'o-1', code: 'occupation:bo:DOCENTE', display: 'Docente' },
           { conceptId: 'o-2', code: 'occupation:bo:MINERO', display: 'Minero / Minera' },
+          { conceptId: 'o-otra', code: CODIGO_OCUPACION_OTRA, display: 'Otra ocupación' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -263,6 +265,7 @@ describe('RegisterPatient', () => {
       expect(component.opcionesOcupacion()).toEqual([
         { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
         { value: 'o-2', label: 'Minero / Minera', code: 'occupation:bo:MINERO' },
+        { value: 'o-otra', label: 'Otro', code: CODIGO_OCUPACION_OTRA },
       ]);
     });
 
@@ -440,7 +443,8 @@ describe('RegisterPatient', () => {
     it('ninguna página pide más de cuatro cosas', () => {
       const paginas = component.paginasPaciente();
 
-      expect(paginas.length).toBe(10);
+      // Once desde la ambulancia de confianza (propietario, 2026-10-08).
+      expect(paginas.length).toBe(11);
       for (const pagina of paginas) {
         expect(
           pagina.campos.length,
@@ -459,7 +463,7 @@ describe('RegisterPatient', () => {
       const html = fixture.nativeElement as HTMLElement;
 
       expect(html.querySelector('app-stepper .stepper--compact')).not.toBeNull();
-      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(10);
+      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(11);
       expect(html.querySelector('.paginated-form__contador')).toBeNull();
     });
 
@@ -467,6 +471,8 @@ describe('RegisterPatient', () => {
      * AC-03-1, el orden que pidió el propietario: nombres y apellidos → CI +
      * expedición → fecha de nacimiento → sexo → ocupación → celular → contacto
      * de emergencia → residencia → trabajo → correo → seguros → facturación.
+     * La ambulancia de confianza (propietario, 2026-10-08) va pegada al contacto
+     * de emergencia: es la misma pregunta —a quién llamar si pasa algo—.
      *
      * Se comprueba por `clave` y no por título: el título es prosa que se
      * reescribe cuando se lee mal, y `paginarCampos` además le agrega «(1 de
@@ -478,6 +484,7 @@ describe('RegisterPatient', () => {
         'document',
         'profile',
         'contact',
+        'ambulance',
         'residence',
         'work',
         'work-location',
@@ -837,6 +844,24 @@ describe('RegisterPatient', () => {
     req.flush(RESPUESTA);
   });
 
+  it('la ambulancia de confianza se guarda en el dispositivo al registrarse y NO viaja al servidor', () => {
+    completar();
+    component.formPaciente.patchValue({
+      trustedAmbulanceName: 'Ambulancias de mi seguro',
+      trustedAmbulancePhone: '+591 70099887',
+    });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(req.request.body as object).some((clave) => clave.startsWith('trustedAmbulance'))).toBe(false);
+    req.flush(RESPUESTA);
+
+    expect(TestBed.inject(TrustedAmbulanceStore).ambulancia()).toEqual({
+      nombre: 'Ambulancias de mi seguro',
+      telefono: '+591 70099887',
+    });
+  });
+
   /* ---- AC-03-3 / AC-03-4: qué es obligatorio, y qué no ---- */
 
   /**
@@ -1068,7 +1093,7 @@ describe('RegisterPatient', () => {
       const fecha = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
       component.formPaciente.controls.birthDate.setValue(fecha);
 
-      expect(component.edadEnPalabras()).toBe('Tenés 30 años.');
+      expect(component.edadEnPalabras()).toBe('Tiene 30 años.');
     });
 
     it('el día antes del cumpleaños todavía es un año menos', () => {
@@ -1079,7 +1104,7 @@ describe('RegisterPatient', () => {
       component.formPaciente.controls.birthDate.setValue(fecha);
 
       expect(component.edadEnPalabras()).toBe(
-        manana.getFullYear() === hoy.getFullYear() ? 'Tenés 29 años.' : 'Tenés 30 años.',
+        manana.getFullYear() === hoy.getFullYear() ? 'Tiene 29 años.' : 'Tiene 30 años.',
       );
     });
 
@@ -1088,7 +1113,7 @@ describe('RegisterPatient', () => {
       const fecha = new Date(hoy.getFullYear() - 1, hoy.getMonth(), hoy.getDate());
       component.formPaciente.controls.birthDate.setValue(fecha);
 
-      expect(component.edadEnPalabras()).toBe('Tenés 1 año.');
+      expect(component.edadEnPalabras()).toBe('Tiene 1 año.');
     });
   });
 
@@ -1250,72 +1275,16 @@ describe('RegisterPatient', () => {
     req.flush(RESPUESTA);
   });
 
-  /**
-   * El punto sin confirmar se perdía **en silencio**.
-   *
-   * Que no viaje está bien y tiene su prueba arriba. Lo que faltaba es decirlo:
-   * quien capturaba su ubicación y pasaba de página creía que ya estaba
-   * guardada, y nadie le avisaba de lo contrario. El aviso no confirma nada por
-   * su cuenta ni frena el envío — sólo deja de ser silenciosa la consecuencia.
-   */
-  describe('aviso del punto capturado sin confirmar (P5)', () => {
-    /** El aviso de una de las dos ubicaciones, si está en el DOM. */
-    function aviso(cual: 'home' | 'work'): HTMLElement | null {
-      fixture.detectChanges();
-      return (fixture.nativeElement as HTMLElement).querySelector(
-        `[data-testid="registration-${cual}-location-unconfirmed"]`,
-      );
-    }
+  it('el punto capturado y sin confirmar no viaja, y no frena el envío', () => {
+    completar();
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.submit();
 
-    it('no dice nada mientras no haya punto capturado', () => {
-      completar();
-      avanzarHasta('residence');
-
-      expect(aviso('home')).toBeNull();
-    });
-
-    it('avisa en el domicilio cuando el punto está capturado y sin confirmar', () => {
-      completar();
-      avanzarHasta('residence');
-      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
-
-      expect(aviso('home')?.textContent).toContain('no se va a guardar');
-    });
-
-    it('el aviso del domicilio se va al confirmar', () => {
-      completar();
-      avanzarHasta('residence');
-      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
-      component.confirmarDireccionActual();
-
-      expect(aviso('home')).toBeNull();
-    });
-
-    /**
-     * El trabajo tiene el mismo problema y la misma solución: son dos puntos
-     * distintos con su propio estado, y confirmar uno no confirma el otro.
-     */
-    it('avisa igual en el lugar de trabajo, y se va al confirmar', () => {
-      completar();
-      avanzarHasta('work-location');
-      component.gpsTrabajo.set({ lat: -16.5, lng: -68.15 });
-      expect(aviso('work')?.textContent).toContain('no se va a guardar');
-
-      component.confirmarDireccionDeTrabajo();
-      expect(aviso('work')).toBeNull();
-    });
-
-    it('no bloquea el envío: el alta sale con el punto sin confirmar', () => {
-      completar();
-      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
-      component.submit();
-
-      const req = http.expectOne('/iam/auth/register-patient');
-      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
-        'homeLatitude',
-      );
-      req.flush(RESPUESTA);
-    });
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+      'homeLatitude',
+    );
+    req.flush(RESPUESTA);
   });
 
   /**
@@ -1376,7 +1345,7 @@ describe('RegisterPatient', () => {
     expect(component.marcandoDomicilio()).toBe(false);
     expect(component.direccionConfirmada()).toBe(false);
     // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
-    expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcaste');
+    expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcó');
 
     component.submit();
     const sinConfirmar = http.expectOne('/iam/auth/register-patient');
@@ -1458,7 +1427,7 @@ describe('RegisterPatient', () => {
     component.fijarPuntoDeTrabajo({ lat: -17.4, lng: -66.1 });
     expect(component.gpsTrabajo()).toEqual({ lat: -17.4, lng: -66.1 });
     expect(component.direccionTrabajoConfirmada()).toBe(false);
-    expect(component.pinesTrabajo()[0].titulo).toBe('El punto que marcaste');
+    expect(component.pinesTrabajo()[0].titulo).toBe('El punto que marcó');
     expect(component.gpsDomicilio()).toBeNull();
 
     component.quitarUbicacionDeTrabajo();
@@ -1584,7 +1553,7 @@ describe('RegisterPatient', () => {
    * concepto que la representa: con cualquier otra empresa elegida sería un
    * nombre que contradice al catálogo.
    */
-  it('«Otra empresa» habilita el nombre escrito a mano y lo manda', () => {
+  it('«Otra empresa» habilita el nombre escrito a mano y manda el texto SIN el concepto (ID-11)', () => {
     responderEmpresas();
     completar({ workEmployerFreeText: '  Ferretería San Martín  ' });
     component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
@@ -1592,7 +1561,9 @@ describe('RegisterPatient', () => {
 
     component.submit();
     const req = http.expectOne('/iam/auth/register-patient');
-    expect(req.request.body.workEmployerConceptId).toBe(EMPRESA_OTRA);
+    // La API descarta el texto libre en cuanto recibe un concepto: con «Otra»
+    // viaja el texto y NO el concepto, igual que la ocupación (ID-11).
+    expect(req.request.body.workEmployerConceptId).toBeUndefined();
     // Recortado, como la calle y el NIT.
     expect(req.request.body.workEmployerFreeText).toBe('Ferretería San Martín');
 
@@ -1764,7 +1735,7 @@ describe('RegisterPatient', () => {
   });
 
   describe('errores', () => {
-    it('CONFLICT muestra el mensaje que manda la API', () => {
+    it('CONFLICT de documento explica qué hacer, sin repetir el texto de la API', () => {
       completar();
       component.submit();
       http.expectOne('/iam/auth/register-patient').flush(
@@ -1777,27 +1748,30 @@ describe('RegisterPatient', () => {
         { status: 409, statusText: 'Conflict' },
       );
 
-      // El texto sale del catálogo, no de una redacción nuestra: el backend
-      // declara `message` como el mensaje de negocio.
-      expect(component.errorMessage()).toBe('Ya existe una cuenta con ese documento');
+      // El texto sale del catálogo de errores del alta (`registration-errors.ts`):
+      // dice qué dato está repetido y qué hacer.
+      expect(component.errorMessage()).toContain('Ya hay una cuenta registrada con este número de documento');
+      expect(component.errorMessage()).toContain('inicie sesión');
       expect(component.registered()).toBe(false);
     });
 
-    it('VALIDATION_FAILED expone el primer problema de la lista', () => {
+    it('VALIDATION_FAILED nombra el campo en castellano y dice la regla', () => {
       completar();
       component.submit();
       http.expectOne('/iam/auth/register-patient').flush(
         {
           code: 'VALIDATION_FAILED',
           message: 'Validation failed',
-          details: { messages: ['password is too short'] },
+          details: { violations: ['password must be longer than or equal to 8 characters'] },
           timestamp: 't',
           path: '/iam/auth/register-patient',
         },
         { status: 400, statusText: 'Bad Request' },
       );
 
-      expect(component.errorMessage()).toBe('password is too short');
+      expect(component.errorMessage()).toBe(
+        'Revise este dato y vuelva a enviar. Contraseña: tiene que tener al menos 8 caracteres.',
+      );
     });
 
     it('sin conexión lo dice como tal', () => {

@@ -35,37 +35,33 @@
 }
 
 
-/* C-12 (2026-09-20) · el modal que programa el horario de un servicio. */
-.programar-servicio {
+/* v4.2.40 · el diálogo con el que cada profesional declara cómo ofrece un servicio. */
+.oferta-servicio {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
 }
 
-.programar-servicio__campos {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-
-.programar-servicio__dia {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.programar-servicio__rotulo {
-  font-size: var(--fs-caption);
-  font-weight: 600;
-}
-
-.programar-servicio__rango {
+/* Dos campos por renglón en pantallas anchas; uno solo en el teléfono. */
+.oferta-servicio__par {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--sp-3);
 }
 
-.programar-servicio__motivo {
+@media (min-width: 40rem) {
+  .oferta-servicio__par {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.oferta-servicio__interruptores {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.oferta-servicio__nota {
   margin: 0;
   font-size: var(--fs-caption);
   color: var(--text-secondary);

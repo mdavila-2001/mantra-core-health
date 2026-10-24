@@ -1,0 +1,22 @@
+/* Los tres modales de la contabilidad simple: un formulario en una columna,
+   con fecha y monto lado a lado mientras entren. */
+.registros-form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.registros-form__par {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-4);
+}
+
+/* El tipo y su «Nueva cuenta»: el botón al pie del selector, a la derecha. */
+.registros-form__tipo {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.registros-form__nueva-cuenta {
+  justify-self: end;
+}

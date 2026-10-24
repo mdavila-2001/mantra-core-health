@@ -1,0 +1,2 @@
+$ yarn tsc -p cypress/tsconfig.json --noEmit
+exit=0

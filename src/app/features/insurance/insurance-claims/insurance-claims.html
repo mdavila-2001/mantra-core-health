@@ -1,22 +1,22 @@
 <app-page-header
-  title="Solicitudes de seguro"
-  subtitle="Lo que se presentó a cada aseguradora, con lo que aprobó."
+  [title]="isCarrier() ? 'Bandeja de solicitudes recibidas' : 'Solicitudes de seguro'"
+  [subtitle]="isCarrier() ? 'Solicitudes presentadas por prestadores para evaluación y dictamen de cobertura.' : 'Lo que se presentó a cada aseguradora, con lo que aprobó.'"
 />
 
-<!-- El filtro por aseguradora. Es el único que la API aplica de verdad: el
-     rango de fechas y el estado existen en el contrato y todavía no tienen
-     control en pantalla, y un selector que no filtra es peor que ninguno. -->
-<form class="claims__filters" (submit)="$event.preventDefault()">
-  <app-form-field label="Aseguradora" controlId="claims-carrier">
-    <app-select
-      id="claims-carrier"
-      data-testid="claims-carrier-filter"
-      [options]="carrierOptions()"
-      [value]="carrierFilter()"
-      (valueChange)="filterByCarrier($event)"
-    />
-  </app-form-field>
-</form>
+<!-- El filtro por aseguradora sólo se muestra al prestador: la aseguradora ve directamente sus solicitudes recibidas. -->
+@if (!isCarrier()) {
+  <form class="claims__filters" (submit)="$event.preventDefault()">
+    <app-form-field label="Aseguradora" controlId="claims-carrier">
+      <app-select
+        id="claims-carrier"
+        data-testid="claims-carrier-filter"
+        [options]="carrierOptions()"
+        [value]="carrierFilter()"
+        (valueChange)="filterByCarrier($event)"
+      />
+    </app-form-field>
+  </form>
+}
 
 <app-data-table
   [state]="results()"
@@ -25,7 +25,7 @@
   [rowLabel]="claimLabel"
   [cursor]="cursor()"
   rowNavigable
-  caption="Solicitudes de seguro presentadas"
+  [caption]="isCarrier() ? 'Solicitudes de seguro recibidas' : 'Solicitudes de seguro presentadas'"
   (rowActivated)="openClaim($event)"
   (cursorChanged)="move($event)"
   (retry)="retry()"

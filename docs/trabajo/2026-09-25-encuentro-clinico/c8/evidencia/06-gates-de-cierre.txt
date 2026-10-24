@@ -1,0 +1,16 @@
+$ corepack yarn typecheck
+  relaciones: 2214 template-instantiates · 6 imports-available sin instanciar · 70 type-only · 208 dynamic-loads
+  nivel: 0 declarado · 551 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 551/551 · con escenario 3/551 · verificados visualmente 3/551 · bloqueados 71/551 · montó e interactuó: se miden en el banco (runtime)
+
+$ corepack yarn test (los 10 specs de las areas que C8 movio, + el fixture de agenda)
+[2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m361 passed[39m[22m[90m (361)[39m
+
+$ corepack yarn lint
+C:\Users\usuario\Documents\Sistema Salud\wt-clinica-c8\src\app\shared\components\molecules\patient-coverage-card\patient-coverage-card.spec.ts
+  114:71  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+✖ 6 problems (6 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

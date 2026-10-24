@@ -1,0 +1,26 @@
+
+Running 4 tests using 1 worker
+
+corepack.cmd : (node:12912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 2 Carácter: 179
++ ... OLATED='1'; corepack.cmd yarn pw playwright/practitioner-profile-ux.s ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:12912) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
+  ok 1 [chromium] › playwright\practitioner-profile-lists.spec.ts:170:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar (45.0s)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
+  ok 2 [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados (26.6s)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
+  ok 3 [chromium] › playwright\practitioner-profile-ux.spec.ts:9:5 › cancelar protege el borrador y conserva el perfil persistido al recargar (15.1s)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
+  ok 4 [chromium] › playwright\practitioner-profile-ux.spec.ts:81:5 › la ruta directa sin sesión solicita autenticación (1.1s)
+
+  4 passed (1.5m)
+EXIT_CODE=0

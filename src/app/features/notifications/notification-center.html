@@ -1,6 +1,6 @@
 <app-page-header
   title="Notificaciones"
-  subtitle="Lo que pasó con tus recetas, tus consultas, tus turnos y tus mensajes."
+  subtitle="Lo que pasó con sus recetas, sus consultas, sus turnos y sus mensajes."
 >
   <!-- Las acciones de la bandeja entera van en el membrete, no sueltas sobre
        la lista: son de la pantalla, no de una fila. -->
@@ -49,9 +49,9 @@
     <div class="avisos__vacio">
       <app-empty-state
         [title]="
-          soloSinLeer() ? 'No tenés notificaciones sin leer' : 'Todavía no tenés notificaciones'
+          soloSinLeer() ? 'No tiene notificaciones sin leer' : 'Todavía no tiene notificaciones'
         "
-        description="Acá van a aparecer los avisos de tus recetas, tus consultas, tus turnos y tus mensajes."
+        description="Acá van a aparecer los avisos de sus recetas, sus consultas, sus turnos y sus mensajes."
         variant="empty"
       />
     </div>
@@ -86,6 +86,15 @@
                   />
                 </div>
               }
+
+              <!-- Las acciones que la notificación ofrece, sin salir de la
+                   bandeja. Van fuera del botón de la fila para no navegar. -->
+              <app-notification-actions
+                class="avisos__acciones"
+                [actions]="aviso.actions ?? []"
+                [destination]="aviso.destination"
+                (executed)="alEjecutarAccion(aviso)"
+              />
             </li>
           }
         </ul>

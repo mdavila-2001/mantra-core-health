@@ -1,6 +1,6 @@
 <app-page-header
   title="Grupos y foros"
-  subtitle="Comunidades por tema y especialidad dentro de tu organización."
+  subtitle="Comunidades por tema y especialidad dentro de su organización."
 />
 
 @if (error(); as mensaje) {
@@ -27,8 +27,8 @@
   <!-- Una puerta, no un error: el directorio de grupos es por organización y
        elegir por la persona mostraría los de la organización equivocada. -->
   <app-empty-state
-    title="Elegí una organización"
-    description="Los grupos son de cada organización. Elegí una desde el encabezado para ver los suyos."
+    title="Elija una organización"
+    description="Los grupos son de cada organización. Elija una desde el encabezado para ver los suyos."
     variant="empty"
   />
 } @else {
@@ -95,7 +95,7 @@
            resolverlo acá, sin salir del formulario que se estaba llenando. -->
       @if (!perfilListoParaPublico()) {
         <p class="grupos__aviso-perfil">
-          Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
+          Para crear un grupo <strong>público</strong> necesita su perfil público completo: nombre
           visible, foto y el perfil en público.
         </p>
         <app-vitrina-minima
@@ -116,7 +116,7 @@
   @if (vacio()) {
     <app-empty-state
       title="No hay grupos que coincidan"
-      description="Probá con otra búsqueda o sacá el filtro de tema. También podés crear el grupo vos."
+      description="Pruebe con otra búsqueda o saque el filtro de tema. También puede crear el grupo usted."
       variant="empty"
     />
   } @else {

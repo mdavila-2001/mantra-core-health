@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -28,6 +29,7 @@ import { ACCORDION_PARENT } from '../accordion.types';
  */
 @Component({
   selector: 'app-accordion-panel',
+  imports: [NgTemplateOutlet],
   templateUrl: './accordion-panel.html',
   styleUrl: './accordion-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +43,13 @@ export class AccordionPanel {
   private readonly accordion = inject(ACCORDION_PARENT, { optional: true });
 
   readonly heading = input.required<string>();
+
+  /**
+   * Nivel del encabezado. Por omisión `h3`, que es lo que todos los
+   * formularios usaban; un artículo necesita `h2` para sus títulos y `h3` para
+   * los subtítulos, y la jerarquía tiene que llegar al lector de pantalla.
+   */
+  readonly level = input<2 | 3 | 4 | 5 | 6>(3);
   readonly expanded = model<boolean>(false);
   readonly disabled = input(false, { transform: booleanAttribute });
 

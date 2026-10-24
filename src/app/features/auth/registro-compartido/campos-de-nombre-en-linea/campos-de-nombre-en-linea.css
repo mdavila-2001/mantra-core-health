@@ -1,0 +1,44 @@
+/* Seis columnas para repartir tercios (nombres) y mitades (apellidos) sin que
+   ninguna quede más angosta que lo que se escribe adentro; una sola columna
+   en pantalla angosta. */
+.nombres {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+.nombres__campo--tercio {
+  grid-column: span 2;
+}
+
+.nombres__campo--mitad {
+  grid-column: span 3;
+}
+
+.nombres__agregar {
+  grid-column: 1 / -1;
+}
+
+/* La casilla agregada y su botón de quitar, en la misma línea. */
+.nombres__extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.nombres__extra app-input {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 768px) {
+  .nombres {
+    grid-template-columns: 1fr;
+  }
+
+  .nombres__campo--tercio,
+  .nombres__campo--mitad {
+    grid-column: auto;
+  }
+}

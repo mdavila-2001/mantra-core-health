@@ -23,7 +23,7 @@ class ThemeServiceFalso {
   `,
 })
 class Host {
-  readonly claim = signal('Tu salud, conectada');
+  readonly claim = signal('Su salud, conectada');
   readonly tagline = signal('La red más grande');
   readonly scene = signal<AuthSplitScene>('split');
 }
@@ -51,7 +51,7 @@ describe('AuthSplit', () => {
     Array.from(el().querySelectorAll('.auth-split__theme button'));
 
   it('muestra el titular y la bajada de la columna de marca', () => {
-    expect(el().querySelector('.auth-split__claim')?.textContent).toContain('Tu salud, conectada');
+    expect(el().querySelector('.auth-split__claim')?.textContent).toContain('Su salud, conectada');
     expect(el().querySelector('.auth-split__tagline')?.textContent).toContain('La red más grande');
   });
 
@@ -65,11 +65,11 @@ describe('AuthSplit', () => {
       // se reemplazaría de golpe y no habría transición que ver.
       const antes = el().querySelector('.auth-split__claim');
 
-      host.claim.set('Potenciá tu práctica médica');
+      host.claim.set('Potencie su práctica médica');
       await fixture.whenStable();
 
       const despues = el().querySelector('.auth-split__claim');
-      expect(despues?.textContent).toContain('Potenciá tu práctica médica');
+      expect(despues?.textContent).toContain('Potencie su práctica médica');
       expect(despues).not.toBe(antes);
     });
 
@@ -152,7 +152,7 @@ describe('AuthSplit', () => {
       expect(el().querySelectorAll('.auth-split__aurora')).toHaveLength(0);
       // El titular sigue: el escenario cambia el fondo, no el mensaje.
       expect(el().querySelector('.auth-split__claim')?.textContent).toContain(
-        'Tu salud, conectada',
+        'Su salud, conectada',
       );
     });
   });

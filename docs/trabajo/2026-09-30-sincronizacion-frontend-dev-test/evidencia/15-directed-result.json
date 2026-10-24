@@ -1,0 +1,8 @@
+{
+  "command": "corepack yarn test (13 directed suites) --watch=false",
+  "exitCode": 0,
+  "filesPassed": 13,
+  "testsPassed": 178,
+  "evidence": "14-directed-integrated.txt",
+  "snapshot": "uncommitted merge of b0e864f5 into b11d57f7 plus H2 repairs"
+}

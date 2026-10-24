@@ -180,7 +180,7 @@ describe('VitrinaMinima', () => {
     expect(http.match('/community/profiles/me')).toHaveLength(0);
   });
 
-  it('el enlace ya tomado se explica, no se repite «probá de nuevo»', () => {
+  it('el enlace ya tomado se explica, no se repite «pruebe de nuevo»', () => {
     montar();
     interno<() => void>('crear')();
 

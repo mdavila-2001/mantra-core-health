@@ -11,7 +11,7 @@ const CLAVE_ACTIVIDAD = 'alovida.chat-ultima-actividad';
 
 /** El texto por defecto. Se puede cambiar entero; esto es sólo el arranque. */
 export const RESPUESTA_POR_DEFECTO =
-  'Gracias por escribir. En este momento no estoy disponible; te respondo apenas pueda. Si es una urgencia, llamá al servicio de emergencias.';
+  'Gracias por escribir. En este momento no estoy disponible; le respondo apenas pueda. Si es una urgencia, llame al servicio de emergencias.';
 
 /** Entre cuánto y cuánto se puede pedir la espera, en minutos. */
 export const MINUTOS_MINIMO = 1;
@@ -209,6 +209,28 @@ export class ChatAutoReply {
           this.enElServidor.set(false);
         },
       });
+  }
+
+  /**
+   * Olvida la copia local de la configuración y la última actividad (TX-31).
+   *
+   * La fuente de verdad es la API (`GET/PUT /community/profiles/:id/auto-reply`);
+   * lo que queda en el navegador es una copia para abrir la pantalla sin
+   * esperar, y en un dispositivo compartido no debe sobrevivir a la sesión. Lo
+   * corre `AuthService.logout` vía `SESSION_CLEANERS`.
+   */
+  olvidar(): void {
+    this.configuracion.set(CONFIGURACION_POR_DEFECTO);
+    this.enElServidor.set(false);
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      this.document.defaultView?.localStorage.removeItem(CLAVE);
+      this.document.defaultView?.localStorage.removeItem(CLAVE_ACTIVIDAD);
+    } catch {
+      // Bloqueado: no hay nada que borrar ni forma de hacerlo.
+    }
   }
 
   /** Vuelve a lo de fábrica. */

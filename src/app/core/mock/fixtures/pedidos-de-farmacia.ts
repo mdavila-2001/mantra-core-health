@@ -27,3 +27,9 @@ export const ID_PEDIDO_CON_SEGURO = uuid(SEMILLAS_DE_PEDIDO.conSeguro);
 
 /** Un pedido que sale a domicilio en vez de esperar en el mostrador. */
 export const ID_PEDIDO_CON_DELIVERY = uuid(SEMILLAS_DE_PEDIDO.conDelivery);
+
+/**
+ * La dirección guardada del pedido que sale a domicilio. La declara el backend
+ * simulado en `deliveryAddressText`, como el real.
+ */
+export const DELIVERY_ORDER_ADDRESS = 'Av. Cristo Redentor km 4 · Edificio Aurora, dpto. 3B';

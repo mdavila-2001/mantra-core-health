@@ -1,0 +1,13 @@
+$ grep -nE "#[0-9a-fA-F]{3,6}|[0-9]+px" version-import.css
+42:  border-block-start: 1px solid var(--border-subtle);
+62:@media (min-width: 780px) {
+68:@media (min-width: 1120px) {
+97:   `:focus-visible { outline: 4px solid var(--focus-ring) }` para todo, y uno
+
+Cero literales de COLOR. Tres de px, los tres justificados:
+ - L42 '1px solid' — ancho de filete. El sistema NO tiene token de ancho de borde
+   (grep -c -- '--bw-|--border-width' src/styles.css → 0) y es la norma de la casa:
+   el propio baseline de este archivo y content-packs.css usan '1px solid var(--…)'.
+ - L62 y L68 — los cortes 780px y 1120px de composition-rules.md §5. Una media query
+   NO puede leer una custom property: es un límite de CSS, no una elección.
+ - L97 está DENTRO de un comentario.

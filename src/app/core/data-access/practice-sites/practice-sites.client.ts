@@ -155,6 +155,27 @@ export class PracticeSitesClient {
   }
 
   /**
+   * `PUT /practitioners/me/sites/:siteId/logo` — el logo del consultorio.
+   *
+   * Mismo molde que {@link PracticeSitesClient.setSiteBankQr}: el archivo ya
+   * está subido (`FilesClient.upload`) y lo único que viaja es su id.
+   *
+   * **Sólo simulador por ahora.** La API todavía no expone esta ruta; el
+   * contrato esperado está en `docs/pendientes-backend-perfil-profesional.md`.
+   * Ningún componente lo llama: pasan por `LogoDelConsultorioClient`.
+   *
+   * @param siteId - La sede propia cuyo logo se cambia.
+   * @param fileId - El archivo ya subido, o `null` para quitar el logo.
+   * @returns La sede con el logo aplicado.
+   */
+  setSiteLogo(siteId: string, fileId: string | null): Observable<PracticeSite> {
+    return this.http.put<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/logo`),
+      { fileId },
+    );
+  }
+
+  /**
    * `DELETE /practitioners/me/sites/:siteId` — ALV-005: dejo de atender en
    * esa sede. No se borra: se cierra mi vinculación vigente con ella.
    */

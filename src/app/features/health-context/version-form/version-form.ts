@@ -239,7 +239,7 @@ export class VersionForm {
   protected readonly drafted = signal<ContextVersionDrafted | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para redactar versiones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para redactar versiones.'),
   );
 
   protected agregarHecho(): void {

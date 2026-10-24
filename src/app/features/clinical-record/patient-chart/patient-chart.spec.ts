@@ -7,9 +7,12 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
+  VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import {
   atencionDesdeResumen,
@@ -320,7 +323,120 @@ describe('PatientChart', () => {
 
     const diagnostico = interno<() => readonly Record<string, unknown>[]>('diagnosticos')()[0];
     expect(diagnostico['principal']).toBe('Diabetes tipo 2');
-    expect(diagnostico['estado']).toBe('Activa');
+    // C3: el estado ya no es el estado clínico crudo, se deriva con
+    // `diagnosisStateOf` a partir de la verificación — sin ella, presuntivo.
+    expect(diagnostico['estado']).toBe('En estudio');
+  });
+
+  /**
+   * Enfermedades activas (C3): la tarjeta que resume qué diagnósticos
+   * confirmados siguen activos, con días restantes o «crónica», y el sello de
+   * la pestaña Diagnósticos coloreado por estado (no un `info` fijo para los
+   * cuatro). El diálogo de confirmar/rechazar es el `app-diagnosis-verify-dialog`
+   * ya mergeado por otro carril; acá sólo se fija cuándo el menú lo ofrece.
+   */
+  describe('Enfermedades activas (C3)', () => {
+    const CONCEPTOS_C3 = {
+      items: [
+        ...CONCEPTOS.items,
+        { conceptId: 'vs-confirmed', code: 'COND_CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v1' },
+        {
+          conceptId: 'con-hipertension',
+          code: 'I10',
+          display: 'Hipertensión arterial esencial',
+          codeSystemVersionId: 'v1',
+        },
+        // `st-activa` (arriba) tiene código `ACTIVE`, no `COND_ACTIVE`
+        // (`CODIGO_ACTIVA`): sirve para el resto de los tests, que sólo miran
+        // el texto, pero `diagnosisStateOf` compara por código — necesita el
+        // suyo propio para clasificar de verdad como `ACTIVE`.
+        { conceptId: 'st-activa-cond', code: 'COND_ACTIVE', display: 'Activa', codeSystemVersionId: 'v1' },
+      ],
+      count: CONCEPTOS.count + 3,
+      limit: 200,
+    };
+
+    const ACTIVA_CON_FIN = {
+      id: 'c-act',
+      codeConceptId: 'con-hipertension',
+      verificationStatusConceptId: 'vs-confirmed',
+      clinicalStatusConceptId: 'st-activa-cond',
+      onsetAt: '2026-02-01T00:00:00.000Z',
+      expectedResolutionAt: '2099-01-01T00:00:00.000Z',
+      createdAt: '2026-02-01T00:00:00.000Z',
+    };
+
+    const ACTIVA_CRONICA = {
+      id: 'c-cronica',
+      codeConceptId: 'con-hipertension',
+      verificationStatusConceptId: 'vs-confirmed',
+      clinicalStatusConceptId: 'st-activa-cond',
+      onsetAt: '2025-01-01T00:00:00.000Z',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    };
+
+    function enfermedadesActivas(): readonly Record<string, unknown>[] {
+      return interno<() => readonly Record<string, unknown>[]>('enfermedadesActivas')();
+    }
+
+    it('sin diagnósticos confirmados activos, la tarjeta no tiene filas', () => {
+      responderNombre();
+      responderExpediente();
+
+      expect(enfermedadesActivas()).toEqual([]);
+    });
+
+    it('una activa con fin esperado trae días restantes y progreso', () => {
+      responderNombre();
+      responderExpediente({ resumen: { conditions: [ACTIVA_CON_FIN] }, conceptos: CONCEPTOS_C3 });
+
+      const activas = enfermedadesActivas();
+      expect(activas.length).toBe(1);
+      expect(activas[0]['nombre']).toBe('Hipertensión arterial esencial');
+      expect(activas[0]['cronica']).toBe(false);
+      expect(activas[0]['progreso']).not.toBeNull();
+      expect(
+        (activas[0]['hechos'] as readonly { etiqueta: string }[]).some((h) => h.etiqueta === 'Días restantes'),
+      ).toBe(true);
+    });
+
+    it('una crónica no lleva barra de progreso', () => {
+      responderNombre();
+      responderExpediente({ resumen: { conditions: [ACTIVA_CRONICA] }, conceptos: CONCEPTOS_C3 });
+
+      const activas = enfermedadesActivas();
+      expect(activas.length).toBe(1);
+      expect(activas[0]['cronica']).toBe(true);
+      expect(activas[0]['progreso']).toBeNull();
+    });
+
+    it('el sello usa un tono distinto por estado, no un `info` fijo', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: { conditions: [RESUMEN.conditions[0], ACTIVA_CON_FIN] },
+        conceptos: CONCEPTOS_C3,
+      });
+
+      const filas = interno<() => readonly Record<string, unknown>[]>('diagnosticos')();
+      const enEstudio = filas.find((fila) => fila['id'] === 'c-1')!;
+      const activa = filas.find((fila) => fila['id'] === 'c-act')!;
+      expect(enEstudio['estadoTono']).toBe('warning');
+      expect(activa['estadoTono']).toBe('success');
+    });
+
+    it('sólo un presuntivo se ofrece para confirmar o rechazar', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: { conditions: [RESUMEN.conditions[0], ACTIVA_CON_FIN] },
+        conceptos: CONCEPTOS_C3,
+      });
+
+      const filas = interno<() => readonly Record<string, unknown>[]>('diagnosticos')();
+      const enEstudio = filas.find((fila) => fila['id'] === 'c-1')!;
+      const activa = filas.find((fila) => fila['id'] === 'c-act')!;
+      expect(enEstudio['presuntivo']).toBe(true);
+      expect(activa['presuntivo']).toBe(false);
+    });
   });
 
   /**
@@ -423,12 +539,6 @@ describe('PatientChart', () => {
       http
         .expectOne('/clinical/medication-requests/rx-1/attachments')
         .flush({ id: 'link-2', fileId: 'file-2', ownerId: 'rx-1', createdAt: '2026-01-01' });
-
-      abrir('al-1', 'Penicilina', 'alergias');
-      enlazar('file-3', 'al-1').subscribe({ next: () => undefined });
-      http
-        .expectOne('/clinical/allergy-intolerances/al-1/attachments')
-        .flush({ id: 'link-3', fileId: 'file-3', ownerId: 'al-1', createdAt: '2026-01-01' });
     });
 
     /** El tipo de dueño acompaña al bloque; el encuentro cae al genérico. */
@@ -464,16 +574,21 @@ describe('PatientChart', () => {
     expect(observacion['secundario']).toBe('78.5 kg');
   });
 
-  /* ---- la banda de contexto --------------------------------------------- */
+  /* ---- el aviso de apertura ------------------------------------------------
+     Desde el 2026-09-25 se dice por toast y no por modal (ver el constructor
+     de patient-chart.ts): el toast es sólo texto, así que no hay más link
+     clicable para «Volver a la consulta» dentro del aviso — se avisa que hay
+     una consulta en curso y la persona navega por su cuenta. */
 
   /**
-   * Las alergias salen de la segunda pestaña y suben a la banda.
+   * Las alergias salen de la segunda pestaña y se dicen al entrar.
    *
    * Es el único bloque que cambia una conducta **antes** de leerlo: recetar sin
-   * haberlas visto es el error que la banda existe para evitar, y en una pestaña
+   * haberlas visto es el error que el aviso existe para evitar, y en una pestaña
    * había que acordarse de ir a mirarlas.
    */
-  it('destaca las alergias fuera de las pestañas', () => {
+  it('destaca las alergias en el aviso de apertura', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -488,56 +603,154 @@ describe('PatientChart', () => {
         ],
       },
     });
+    harness.fixture.detectChanges();
 
     const destacadas = interno<() => readonly Record<string, unknown>[]>('alergiasDestacadas')();
     expect(destacadas).toHaveLength(1);
     expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
-  });
 
-  it('sin alergias no dibuja la banda de alergias', () => {
-    responderNombre();
-    responderExpediente();
-
-    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
-  });
-
-  /** Cuánto expediente hay, sin abrir pestaña por pestaña. */
-  it('cuenta los bloques en la banda de contexto', () => {
-    responderNombre();
-    responderExpediente();
-
-    const cifras = interno<() => readonly { clave: string; valor: number }[]>('cifras')();
-    expect(cifras.find((c) => c.clave === 'diagnosticos')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'observaciones')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'medicacion')?.valor).toBe(0);
+    expect(avisoDeAlergias).toHaveBeenCalledTimes(1);
+    expect(avisoDeAlergias.mock.calls[0]?.[0]).toContain('Diabetes tipo 2');
+    expect(avisoDeAlergias.mock.calls[0]?.[1]).toBe('Alergias');
   });
 
   /**
-   * Sin encuentros no se afirma «sin atención previa»: el bloque puede venir
-   * recortado, o la atención puede constar en otra organización.
+   * Desde que la alergia se carga como diagnóstico, el aviso tiene que verla:
+   * si sólo leyera `AllergyIntolerance`, la alergia de hoy no aparecería
+   * arriba y se recetaría sin verla. Se decide por el código CIE-10.
    */
-  it('sin encuentros no inventa una última atención', () => {
-    responderNombre();
-    responderExpediente();
-
-    expect(interno<() => Date | null>('ultimaAtencion')()).toBeNull();
-  });
-
-  it('la última atención es la más reciente de los encuentros', () => {
+  it('el aviso incluye los diagnósticos de alergia sin resolver, y sólo esos', () => {
     responderNombre();
     responderExpediente({
       resumen: {
-        encounters: [
-          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-01-10T10:00:00.000Z' },
-          { id: 'e-2', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
-          { id: 'e-3', classConceptId: 'st-activa', startAt: '2026-03-02T10:00:00.000Z' },
+        conditions: [
+          {
+            id: 'c-alergia',
+            codeConceptId: 'dx-z880',
+            clinicalStatusConceptId: 'st-activa',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+          {
+            id: 'c-alergia-resuelta',
+            codeConceptId: 'dx-t784',
+            clinicalStatusConceptId: 'st-activa',
+            resolvedAt: '2026-03-01T00:00:00.000Z',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+          {
+            id: 'c-1',
+            codeConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            createdAt: '2026-01-03T00:00:00.000Z',
+          },
+        ],
+      },
+      conceptos: {
+        ...CONCEPTOS,
+        items: [
+          ...CONCEPTOS.items,
+          {
+            conceptId: 'dx-z880',
+            code: 'Z88.0',
+            display: 'Alergia a la penicilina',
+            codeSystemVersionId: 'v1',
+          },
+          {
+            conceptId: 'dx-t784',
+            code: 'T78.4',
+            display: 'Alergia no especificada',
+            codeSystemVersionId: 'v1',
+          },
         ],
       },
     });
 
-    expect(interno<() => Date | null>('ultimaAtencion')()?.toISOString()).toBe(
-      '2026-05-20T10:00:00.000Z',
-    );
+    const destacadas = interno<() => readonly { id: string; principal: string }[]>(
+      'alergiasDestacadas',
+    )();
+    expect(destacadas.map((fila) => fila.id)).toEqual(['c-alergia']);
+    expect(destacadas[0]?.principal).toBe('Alergia a la penicilina');
+  });
+
+  /**
+   * La alergia se carga como diagnóstico (cliente, 02/10/2026): sin pestaña y
+   * sin alta propias. Las ya registradas siguen en el aviso, de lectura.
+   */
+  it('no dibuja pestaña ni alta de alergias, pero conserva el aviso', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        allergies: [
+          {
+            id: 'a-1',
+            substanceConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const claves = interno<() => readonly { clave: string }[]>('bloques')().map((b) => b.clave);
+    expect(claves).not.toContain('alergias');
+    expect(interno<(clave: string) => unknown>('altaDe')('alergias')).toBeUndefined();
+    harness.fixture.detectChanges();
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="expediente-nueva-alergia"]'),
+    ).toBeNull();
+    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(1);
+  });
+
+  /** Sin alergias y sin consulta abierta no hay nada que avisar. */
+  it('sin nada que avisar no se muestra ningún toast', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
+    responderNombre();
+    responderExpediente();
+    harness.fixture.detectChanges();
+
+    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
+    expect(avisoDeAlergias).not.toHaveBeenCalled();
+    expect(avisoDeConsulta).not.toHaveBeenCalled();
+  });
+
+  /** Dicho una vez, no se repite: releer la pantalla no duplica el toast. */
+  it('el aviso no se repite en la misma visita', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        allergies: [
+          {
+            id: 'a-1',
+            substanceConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            criticalityConceptId: 'st-final',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    harness.fixture.detectChanges();
+    harness.fixture.detectChanges();
+    harness.fixture.detectChanges();
+
+    expect(avisoDeAlergias).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Las cifras de la banda —cuántos diagnósticos, cuánta medicación, la última
+   * atención— se fueron enteras: nadie las pidió y se comían la franja de
+   * arriba de las pestañas. Cada pestaña ya dice cuántos registros trae.
+   */
+  it('no dibuja la banda de cifras', () => {
+    responderNombre();
+    responderExpediente();
+    harness.fixture.detectChanges();
+
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).not.toContain('expediente__cifras');
+    expect(html).not.toContain('Última atención');
   });
 
   /* ---- el expediente dejó de ser un origen de la atención ----------------- */
@@ -557,10 +770,11 @@ describe('PatientChart', () => {
   });
 
   /**
-   * Lo que sí corresponde es la continuación: un encuentro sin `endAt` está
-   * abierto, y quien vino a consultar un antecedente tiene por dónde volver.
+   * Lo que sí corresponde es el aviso: un encuentro sin `endAt` está abierto, y
+   * quien vino a consultar un antecedente se entera por el toast de apertura.
    */
-  it('con un encuentro abierto ofrece volver a la consulta', () => {
+  it('con un encuentro abierto avisa que hay una consulta en curso', () => {
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -572,11 +786,11 @@ describe('PatientChart', () => {
     harness.fixture.detectChanges();
 
     expect(interno<() => boolean>('atencionEnCurso')()).toBe(true);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).toContain('expediente-volver-atencion');
+    expect(avisoDeConsulta).toHaveBeenCalledTimes(1);
   });
 
-  it('con todos los encuentros cerrados no ofrece volver a ninguna consulta', () => {
+  it('con todos los encuentros cerrados no avisa ninguna consulta en curso', () => {
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -593,8 +807,7 @@ describe('PatientChart', () => {
     harness.fixture.detectChanges();
 
     expect(interno<() => boolean>('atencionEnCurso')()).toBe(false);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).not.toContain('expediente-volver-atencion');
+    expect(avisoDeConsulta).not.toHaveBeenCalled();
   });
 
   /** Fase 3.1: era texto de arquitectura interna en la pantalla del médico. */
@@ -731,7 +944,7 @@ describe('PatientChart', () => {
         filas: readonly unknown[],
         titulo: string,
       ) => { status: string; nextAction?: { label: string } }
-    >('estadoDe')([], 'Alergias');
+    >('estadoDe')([], 'Notas');
     expect(vacio.status).toBe('empty');
     expect(vacio.nextAction?.label).toBe('Elegir otra persona');
   });
@@ -792,9 +1005,7 @@ describe('PatientChart', () => {
   /** El texto entero de la receta que esta pantalla genera. */
   function papelDeLaReceta(): string {
     const contexto = interno<() => ContextoDelDocumento>('contextoDelDocumento')();
-    return bloquesDeReceta(
-      recetaDesdeResumen(INDICACION_GUARDADA, contexto, (id) => id ?? ''),
-    )
+    return bloquesDeReceta(recetaDesdeResumen(INDICACION_GUARDADA, contexto, (id) => id ?? ''))
       .map((bloque) => bloque.text)
       .join('\n');
   }
@@ -946,7 +1157,12 @@ describe('PatientChart', () => {
     TestBed.tick();
     responderPerfilPropio(
       perfilConMatriculas([
-        { ...MATRICULA_VIGENTE, id: 'lic-0', licenseNumber: 'MP 1', validTo: '2025-01-01T00:00:00.000Z' },
+        {
+          ...MATRICULA_VIGENTE,
+          id: 'lic-0',
+          licenseNumber: 'MP 1',
+          validTo: '2025-01-01T00:00:00.000Z',
+        },
         { ...MATRICULA_VIGENTE, id: 'lic-1', licenseNumber: 'MP 4821' },
       ]),
     );
@@ -985,9 +1201,10 @@ describe('PatientChart', () => {
       responderNombre();
       responderExpediente();
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'diagnosticos',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+          'diagnosticos',
+        )();
 
       expect(filas[0]?.vinculos).toEqual([
         { rotulo: 'Encuentro', valor: 'Sin encuentro registrado' },
@@ -1018,9 +1235,10 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'diagnosticos',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+          'diagnosticos',
+        )();
 
       expect(filas[0]?.vinculos[0]?.valor).toContain('Activa');
       expect(filas[0]?.vinculos[0]?.valor).toContain('2026');
@@ -1047,9 +1265,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'medicacion',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('medicacion')();
 
       expect(filas[0]?.vinculos[0]).toEqual({
         rotulo: 'Diagnóstico',
@@ -1072,9 +1289,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'medicacion',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('medicacion')();
 
       expect(filas[0]?.vinculos[0]?.valor).toBe('Sin diagnóstico asociado');
     });
@@ -1099,9 +1315,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'alergias',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('alergias')();
 
       expect(filas[0]?.vinculos[0]?.valor).toContain('no guarda encuentro ni diagnóstico');
     });
@@ -1126,14 +1341,410 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'encuentros',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('encuentros')();
 
       expect(filas[0]?.vinculos[0]).toEqual({
         rotulo: 'Diagnósticos del encuentro',
         valor: 'Diabetes tipo 2',
       });
+    });
+
+    /**
+     * Lo cargado en una consulta tiene que poder leerse en la historia,
+     * agrupado por la consulta: recetas, observaciones y notas también
+     * declaran su `encounterId`.
+     */
+    it('el encuentro lista también las recetas, observaciones y notas de esa consulta', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          medicationRequests: [
+            {
+              id: 'm-1',
+              medicationConceptId: 'con-diabetes',
+              statusConceptId: 'st-activa',
+              encounterId: 'e-1',
+              createdAt: '2026-01-03T00:00:00.000Z',
+            },
+          ],
+          observations: [
+            {
+              id: 'o-1',
+              codeConceptId: 'obs-peso',
+              statusConceptId: 'st-final',
+              quantityValue: '78.5',
+              quantityUnitConceptId: 'u-kg',
+              encounterId: 'e-1',
+            },
+          ],
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+            { id: 'e-2', statusConceptId: 'st-final', startAt: '2026-02-03T10:00:00.000Z' },
+          ],
+        },
+        chart: {
+          notes: [
+            {
+              noteId: 'n-1',
+              encounterId: 'e-1',
+              lifecycleStatusConceptId: 'st-final',
+              chiefComplaintText: 'Control de glucemia',
+              createdAt: '2026-01-03T00:00:00.000Z',
+            },
+          ],
+        },
+      });
+
+      const filas = interno<
+        () => readonly { id: string; vinculos: { rotulo: string; valor: string }[] }[]
+      >('encuentros')();
+      const deLaConsulta = (id: string) =>
+        Object.fromEntries(
+          (filas.find((fila) => fila.id === id)?.vinculos ?? []).map((v) => [v.rotulo, v.valor]),
+        );
+
+      expect(deLaConsulta('e-1')).toMatchObject({
+        'Recetas del encuentro': 'Diabetes tipo 2',
+        'Observaciones del encuentro': expect.stringContaining('Peso corporal'),
+        'Notas del encuentro': 'Control de glucemia',
+      });
+      // Lo de otra consulta no se cuela: el vínculo es por `encounterId`.
+      expect(deLaConsulta('e-2')).toMatchObject({
+        'Recetas del encuentro': 'Sin recetas en este encuentro',
+        'Observaciones del encuentro': 'Sin observaciones en este encuentro',
+        'Notas del encuentro': 'Sin notas en este encuentro',
+      });
+    });
+  });
+
+  /**
+   * Las internaciones se abren en la consulta y hasta acá no tenían pestaña:
+   * lo cargado en la consulta no aparecía en la historia.
+   */
+  it('muestra las internaciones en su propia pestaña', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        careEpisodes: [
+          {
+            id: 'ce-1',
+            tenantId: 't-1',
+            statusConceptId: 'st-activa',
+            startAt: '2026-03-01T10:00:00.000Z',
+            createdAt: '2026-03-01T10:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const bloque = interno<
+      () => readonly { clave: string; titulo: string; filas: Record<string, unknown>[] }[]
+    >('bloques')().find((b) => b.clave === 'internaciones');
+
+    expect(bloque?.titulo).toBe('Internaciones');
+    expect(bloque?.filas).toHaveLength(1);
+    expect(bloque?.filas[0]).toMatchObject({
+      id: 'ce-1',
+      principal: 'Internación',
+      estado: 'Activa',
+      detalle: 'En curso',
+    });
+    // Sin alta en el expediente: la internación se abre desde la consulta.
+    expect(interno<(clave: string) => unknown>('altaDe')('internaciones')).toBeUndefined();
+  });
+
+  /**
+   * El formulario clínico de la consulta (ficha, odontograma) vive en `forms`,
+   * atado al encuentro. Se pide al abrir el detalle del encuentro, no al cargar
+   * la pantalla: una petición por encuentro mirado, nunca cincuenta de golpe.
+   */
+  describe('los formularios clínicos de la consulta', () => {
+    function abrirEncuentro(): void {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+          ],
+        },
+      });
+      // Nada de `forms` todavía: la pantalla no los pide al cargar.
+      http.expectNone((r) => r.url === '/forms/instances');
+      const fila = interno<() => readonly { id: string }[]>('encuentros')()[0]!;
+      interno<(f: unknown) => void>('verDetalle')(fila);
+    }
+
+    /** Odontología y laboratorio: se leen por paciente junto con los formularios. */
+    function responderProcedimientos(dentales: object[] = [], ordenes: object[] = []): void {
+      http
+        .expectOne('/dental-procedures/catalog')
+        .flush({ procedureCodes: [], teeth: [], quadrants: [] });
+      http.expectOne((r) => r.url === '/dental-procedures').flush({ items: dentales, total: 0 });
+      http.expectOne((r) => r.url === '/diagnostics/patients/p-1/orders').flush({
+        patientProfileId: 'p-1',
+        orders: ordenes,
+        reports: [],
+        limit: 50,
+        truncated: [],
+      });
+    }
+
+    it('los pide al abrir el encuentro y los muestra con el nombre de cada campo', () => {
+      abrirEncuentro();
+      responderProcedimientos();
+      expect(interno<() => { status: string } | null>('formulariosDelEncuentro')()?.status).toBe(
+        'loading',
+      );
+
+      http.expectOne((r) => r.url === '/charts/templates').flush([
+        {
+          id: 'tpl-1',
+          name: 'Ficha odontológica',
+          fields: [{ fieldId: 'f-1', name: 'Motivo', dataType: 'TEXT' }],
+        },
+      ]);
+      const listado = http.expectOne((r) => r.url === '/forms/instances');
+      expect(listado.request.params.get('encounter')).toBe('e-1');
+      listado.flush({ encounterId: 'e-1', items: [{ id: 'fi-1' }], limit: 50, truncated: false });
+      http.expectOne('/forms/instances/fi-1').flush({
+        id: 'fi-1',
+        createdAt: '2026-01-03T10:30:00.000Z',
+        closedAt: '2026-01-03T10:45:00.000Z',
+        values: [
+          { id: 'v-1', fieldId: 'f-1', ordinal: 1, value: 'Dolor de muela', masked: false },
+        ],
+      });
+
+      const formularios = interno<() => readonly Record<string, unknown>[] | null>(
+        'formulariosLeidos',
+      )();
+      expect(formularios).toHaveLength(1);
+      expect(formularios?.[0]).toMatchObject({
+        id: 'fi-1',
+        titulo: 'Ficha odontológica',
+        respuestas: [{ id: 'v-1', etiqueta: 'Motivo', texto: 'Dolor de muela', masked: false }],
+      });
+    });
+
+    it('sin formularios lo dice, y al cerrar el detalle se olvidan', () => {
+      abrirEncuentro();
+      responderProcedimientos();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
+
+      expect(interno<() => readonly unknown[] | null>('formulariosLeidos')()).toEqual([]);
+
+      interno<() => void>('cerrarDetalle')();
+      expect(interno<() => unknown>('formulariosDelEncuentro')()).toBeNull();
+    });
+
+    it('un fallo de `forms` se dice y se puede reintentar', () => {
+      abrirEncuentro();
+      responderProcedimientos();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush(
+          { message: 'Sin permiso' },
+          { status: 403, statusText: 'Forbidden' },
+        );
+
+      expect(interno<() => string | null>('errorDeFormularios')()).not.toBeNull();
+
+      interno<() => void>('recargarFormularios')();
+      responderProcedimientos();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
+      expect(interno<() => string | null>('errorDeFormularios')()).toBeNull();
+    });
+
+    it('un 403 sin mensaje no deja el aviso vacío', () => {
+      abrirEncuentro();
+      responderProcedimientos();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
+
+      expect(interno<() => string | null>('errorDeFormularios')()).toBe(
+        'Su rol no permite ver formularios clínicos.',
+      );
+    });
+
+    it('un formulario que no se deja leer no esconde a los demás', () => {
+      abrirEncuentro();
+      responderProcedimientos();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http.expectOne((r) => r.url === '/forms/instances').flush({
+        encounterId: 'e-1',
+        items: [{ id: 'fi-1' }, { id: 'fi-2' }],
+        limit: 50,
+        truncated: false,
+      });
+      http
+        .expectOne('/forms/instances/fi-1')
+        .flush({ id: 'fi-1', createdAt: '2026-01-03T10:30:00.000Z', values: [] });
+      http
+        .expectOne('/forms/instances/fi-2')
+        .flush({ message: 'Sin permiso' }, { status: 403, statusText: 'Forbidden' });
+
+      expect(
+        interno<() => readonly { id: string }[] | null>('formulariosLeidos')()?.map((f) => f.id),
+      ).toEqual(['fi-1']);
+      expect(interno<() => number>('formulariosNoLeidos')()).toBe(1);
+      expect(interno<() => string | null>('errorDeFormularios')()).toBeNull();
+    });
+
+    /**
+     * Abrir un encuentro y, antes de que respondan, abrir otro: la respuesta
+     * tardía del primero no puede pintar sus formularios bajo el segundo.
+     */
+    it('la respuesta tardía de otro encuentro no se cuela', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+            { id: 'e-2', statusConceptId: 'st-final', startAt: '2026-02-03T10:00:00.000Z' },
+          ],
+        },
+      });
+      const [primero, segundo] = interno<() => readonly { id: string }[]>('encuentros')();
+      const ver = interno<(f: unknown) => void>('verDetalle');
+
+      ver(primero);
+      const plantillasA = http.expectOne((r) => r.url === '/charts/templates');
+      const listadoA = http.expectOne(
+        (r) => r.url === '/forms/instances' && r.params.get('encounter') === 'e-1',
+      );
+      interno<() => void>('cerrarDetalle')();
+      ver(segundo);
+      // La carga del primero quedó cancelada: su respuesta ya no llega.
+      expect(plantillasA.cancelled).toBe(true);
+      expect(listadoA.cancelled).toBe(true);
+      // Las dos lecturas por paciente: la del primero quedó cancelada, la del
+      // segundo se responde.
+      http
+        .match('/dental-procedures/catalog')
+        .filter((r) => !r.cancelled)
+        .forEach((r) => r.flush({ procedureCodes: [], teeth: [], quadrants: [] }));
+      const dentales = http.match((r) => r.url === '/dental-procedures');
+      const ordenes = http.match((r) => r.url === '/diagnostics/patients/p-1/orders');
+      expect(dentales.filter((r) => !r.cancelled)).toHaveLength(1);
+      dentales.filter((r) => !r.cancelled).forEach((r) => r.flush({ items: [], total: 0 }));
+      ordenes
+        .filter((r) => !r.cancelled)
+        .forEach((r) =>
+          r.flush({ patientProfileId: 'p-1', orders: [], reports: [], limit: 50, truncated: [] }),
+        );
+
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances' && r.params.get('encounter') === 'e-2')
+        .flush({ encounterId: 'e-2', items: [], limit: 50, truncated: false });
+      expect(interno<() => readonly unknown[] | null>('formulariosLeidos')()).toEqual([]);
+    });
+
+    it('dibuja la sección con el formulario y sus respuestas', () => {
+      abrirEncuentro();
+      responderProcedimientos();
+      http.expectOne((r) => r.url === '/charts/templates').flush([
+        { id: 'tpl-1', name: 'Ficha odontológica', fields: [{ fieldId: 'f-1', name: 'Motivo' }] },
+      ]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [{ id: 'fi-1' }], limit: 50, truncated: false });
+      http.expectOne('/forms/instances/fi-1').flush({
+        id: 'fi-1',
+        createdAt: '2026-01-03T10:30:00.000Z',
+        values: [
+          { id: 'v-1', fieldId: 'f-1', ordinal: 1, value: 'Dolor de muela', masked: false },
+          { id: 'v-2', fieldId: 'f-2', ordinal: 2, value: null, masked: true },
+        ],
+      });
+      harness.fixture.detectChanges();
+
+      // El `<dialog>` vive en el top layer: se busca en el documento.
+      const seccion = document.querySelector(
+        '[data-testid="expediente-formularios-del-encuentro"]',
+      );
+      expect(seccion?.textContent).toContain('Ficha odontológica');
+      expect(seccion?.textContent).toContain('Motivo');
+      expect(seccion?.textContent).toContain('Dolor de muela');
+      // Lo enmascarado se dice con el marcador, nunca con un hueco.
+      expect(seccion?.textContent).toContain(VALOR_ENMASCARADO);
+    });
+
+    /**
+     * El «Formulario clínico» de la consulta también guarda odontología y
+     * estudios fuera de `forms`: se leen por paciente y se filtran por el
+     * encuentro. Lo de otro encuentro no se cuela, y si una lectura falla lo
+     * dice sin tumbar la otra.
+     */
+    it('lista la odontología y los estudios de ese encuentro, y sólo esos', () => {
+      abrirEncuentro();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
+      http.expectOne('/dental-procedures/catalog').flush({
+        procedureCodes: [{ conceptId: 'dent-profilaxis', code: 'D1110', display: 'Profilaxis dental' }],
+        teeth: [{ conceptId: 'pieza-16', code: '16', display: 'Pieza 16' }],
+        quadrants: [],
+      });
+      http
+        .expectOne((r) => r.url === '/dental-procedures')
+        .flush({
+          items: [
+            {
+              id: 'dp-1',
+              patientProfileId: 'p-1',
+              procedureCodeConceptId: 'dent-profilaxis',
+              statusConceptId: 'st-final',
+              encounterId: 'e-1',
+              createdAt: '2026-01-03T10:40:00.000Z',
+              sites: [{ id: 's-1', bodySiteConceptId: 'pieza-16' }],
+            },
+            {
+              id: 'dp-2',
+              patientProfileId: 'p-1',
+              procedureCodeConceptId: 'obs-peso',
+              statusConceptId: 'st-final',
+              encounterId: 'otro',
+              createdAt: '2026-01-03T10:40:00.000Z',
+              sites: [],
+            },
+          ],
+          total: 2,
+        });
+      http
+        .expectOne((r) => r.url === '/diagnostics/patients/p-1/orders')
+        .flush({ message: 'Caído' }, { status: 503, statusText: 'Service Unavailable' });
+
+      const procedimientos = Object.fromEntries(
+        interno<() => readonly { rotulo: string; valor: string }[]>(
+          'procedimientosDelEncuentro',
+        )().map((v) => [v.rotulo, v.valor]),
+      );
+      expect(procedimientos).toEqual({
+        'Odontología del encuentro': 'Profilaxis dental (Pieza 16)',
+        'Estudios pedidos en el encuentro': 'No se pudieron leer los estudios',
+      });
+    });
+
+    it('abrir otro bloque no pide formularios', () => {
+      responderNombre();
+      responderExpediente();
+      const diagnostico = interno<() => readonly { id: string }[]>('diagnosticos')()[0]!;
+      interno<(f: unknown) => void>('verDetalle')(diagnostico);
+
+      http.expectNone((r) => r.url === '/forms/instances');
+      expect(interno<() => unknown>('formulariosDelEncuentro')()).toBeNull();
     });
   });
 
@@ -1205,9 +1816,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       expect(bloque).toBeDefined();
 
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
@@ -1223,9 +1833,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
       titulo.set('Laboratorio completo');
       harness.fixture.detectChanges();
@@ -1243,9 +1852,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
       titulo.set('Laboratorio completo');
       harness.fixture.detectChanges();
@@ -1345,6 +1953,87 @@ describe('PatientChart', () => {
       interno<() => void>('cerrarCambioDeEstado')();
 
       expect(interno<(id: string) => string | null>('destinoEstadoDe')(fila.id)).toBeNull();
+    });
+  });
+
+  /**
+   * CL-27: `toDocument` descartaba `files` y el expediente no podía volver a
+   * abrir lo que se subió. Ahora cada archivo es un enlace que baja por
+   * `GET /charts/documents/:id/files/:fileId/content`, con la credencial.
+   */
+  describe('los archivos de un documento del expediente (CL-27)', () => {
+    const DOCUMENTO = {
+      id: 'd-1',
+      title: 'Laboratorio completo',
+      statusConceptId: 'st-final',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      files: [
+        { fileId: 'f-2', contentRole: 'ATTACHMENT', ordinal: 1 },
+        { fileId: 'f-1', contentRole: 'PRIMARY', ordinal: 0 },
+      ],
+    };
+
+    interface FilaConArchivos {
+      id: string;
+      archivos: readonly { fileId: string; rotulo: string }[];
+    }
+
+    it('la fila trae un archivo por cada uno, en orden y con rotulo legible', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0];
+
+      expect(fila?.archivos).toEqual([
+        { fileId: 'f-1', rotulo: 'Archivo 1 · Principal' },
+        { fileId: 'f-2', rotulo: 'Archivo 2' },
+      ]);
+    });
+
+    it('descargar pide los bytes a la ruta del documento y los entrega, sin window.open', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+      const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+
+      const pedido = http.expectOne('/charts/documents/d-1/files/f-1/content');
+      expect(pedido.request.responseType).toBe('blob');
+      pedido.flush(new Blob(['%PDF'], { type: 'application/pdf' }), {
+        headers: { 'Content-Disposition': "attachment; filename*=UTF-8''laboratorio.pdf" },
+      });
+
+      expect(guardar).toHaveBeenCalledWith(expect.any(Blob), 'laboratorio.pdf');
+      expect(abrir).not.toHaveBeenCalled();
+      abrir.mockRestore();
+      guardar.mockRestore();
+    });
+
+    it('un 403 (sin vinculo asistencial con el paciente) no entrega nada', async () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+      http
+        .expectOne('/charts/documents/d-1/files/f-1/content')
+        .flush(new Blob([JSON.stringify({ code: 'FORBIDDEN', message: 'x' })]), {
+          status: 403,
+          statusText: 'Forbidden',
+        });
+
+      // El cuerpo del error llega como Blob y se relee de forma asincronica.
+      await vi.waitFor(() => expect(interno<() => string | null>('bajando')()).toBeNull());
+
+      expect(guardar).not.toHaveBeenCalled();
+      guardar.mockRestore();
     });
   });
 });

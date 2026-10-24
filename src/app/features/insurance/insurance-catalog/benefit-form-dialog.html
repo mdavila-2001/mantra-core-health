@@ -1,6 +1,6 @@
 <app-content-dialog
-  [heading]="mode() === 'create' ? 'Nueva cobertura' : 'Editar cobertura'"
-  [description]="'Plan: ' + planName()"
+  [heading]="mode() === 'create' ? 'Añadir cláusula' : 'Editar cláusula'"
+  [description]="'Producto seguro: ' + planName()"
   [dismissible]="!saving()"
   (closed)="closed.emit()"
 >
@@ -10,16 +10,35 @@
   <form class="insurance-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
     @if (mode() === 'create') {
       <app-form-field
+        label="Servicio cubierto"
+        hint="Del arancel: es el mismo servicio que el médico importa a su catálogo."
+        [required]="true"
+        [errorMessage]="
+          serviceConceptId() === null && form.touched
+            ? 'Elija el servicio que cubre la cláusula.'
+            : ''
+        "
+      >
+        <app-reference-combobox
+          [(value)]="serviceConceptId"
+          [options]="serviceOptions()"
+          [loading]="searchingServices()"
+          placeholder="Busque por nombre o código"
+          emptyMessage="Ningún servicio del arancel coincide"
+          (searched)="searchServices($event)"
+        />
+      </app-form-field>
+      <app-form-field
         label="Categoría"
         [required]="true"
         [errorMessage]="
-          categoryConceptId() === null && form.touched ? 'Seleccioná una categoría.' : ''
+          categoryConceptId() === null && form.touched ? 'Seleccione una categoría.' : ''
         "
       >
         <app-concept-select
           target="insurance.insurance_plan_benefits.benefit_category_concept_id"
           [(value)]="categoryConceptId"
-          placeholder="Seleccioná una categoría"
+          placeholder="Seleccione una categoría"
         />
       </app-form-field>
       <div class="insurance-form__columns">
@@ -38,16 +57,20 @@
         </app-form-field>
       </div>
     } @else if (benefit(); as current) {
-      <p class="insurance-form__context">Categoría: {{ current.category.display }}</p>
+      <p class="insurance-form__context">
+        Servicio: {{ current.service?.display ?? 'Sin servicio declarado' }} · Categoría:
+        {{ current.category.display }}
+      </p>
     }
 
     <div class="insurance-form__columns">
       <app-form-field
-        label="Cobertura (%)"
-        hint="Entre 0 y 100, con hasta dos decimales."
+        label="Porcentaje de pago (%)"
+        hint="Lo que paga el seguro del servicio: entre 0 y 100, con hasta dos decimales."
+        [required]="true"
         [errorMessage]="
           form.controls.coveragePercent.touched && form.controls.coveragePercent.invalid
-            ? 'Ingresá un porcentaje entre 0 y 100.'
+            ? 'Ingrese un porcentaje entre 0 y 100.'
             : ''
         "
       >
@@ -61,7 +84,7 @@
         label="Copago"
         [errorMessage]="
           form.controls.copayAmount.touched && form.controls.copayAmount.invalid
-            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            ? 'Ingrese un importe no negativo con hasta dos decimales.'
             : ''
         "
       >
@@ -71,7 +94,7 @@
         label="Deducible"
         [errorMessage]="
           form.controls.deductibleAmount.touched && form.controls.deductibleAmount.invalid
-            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            ? 'Ingrese un importe no negativo con hasta dos decimales.'
             : ''
         "
       >
@@ -85,7 +108,7 @@
         label="Tope anual"
         [errorMessage]="
           form.controls.annualLimitAmount.touched && form.controls.annualLimitAmount.invalid
-            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            ? 'Ingrese un importe no negativo con hasta dos decimales.'
             : ''
         "
       >
@@ -116,6 +139,6 @@
     [disabled]="saving()"
     (clicked)="submit()"
   >
-    {{ mode() === 'create' ? 'Crear cobertura' : 'Guardar cambios' }}
+    {{ mode() === 'create' ? 'Añadir cláusula' : 'Guardar cambios' }}
   </button>
 </app-content-dialog>

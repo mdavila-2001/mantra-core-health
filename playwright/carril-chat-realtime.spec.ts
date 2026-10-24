@@ -252,7 +252,7 @@ test.describe.serial('Chat en tiempo real (WebSocket)', () => {
       await irA(pagePaciente, `/messaging/${conversationId}`);
       await esperarAplicacionLista(pagePaciente);
 
-      const texto = `Hola, ¿cómo estás? ${Date.now()}`;
+      const texto = `Hola, ¿cómo está? ${Date.now()}`;
       await pageDoctor.getByTestId('hilo-texto').fill(texto);
       await pageDoctor.getByTestId('hilo-enviar').click();
       await capturar(pageDoctor, 'p1-doctor-envio');

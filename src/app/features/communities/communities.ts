@@ -212,7 +212,7 @@ export class Communities {
         this.cargoAlgunaVez.set(true);
         // Distinguir el fallo del vacío: «no tenés comunidades» sobre un error
         // de red es la mentira que hace que nadie reintente.
-        this.error.set('No pudimos cargar las comunidades. Reintentá.');
+        this.error.set('No pudimos cargar las comunidades. Reintente.');
       },
     });
   }

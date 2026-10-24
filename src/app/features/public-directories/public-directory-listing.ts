@@ -240,7 +240,7 @@ export abstract class PublicDirectoryListing {
     if (cuantos === 0) {
       return `Todavía no hay nada publicado en ${nombre}.`;
     }
-    return `${cuantos} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /**
@@ -292,7 +292,7 @@ export abstract class PublicDirectoryListing {
 
   protected readonly aviso = computed(() =>
     this.recortada()
-      ? `Se muestran los primeros resultados. Usá el buscador para encontrar ${this.queSonEnSingular} que no aparezca en la lista.`
+      ? `Se muestran los primeros resultados. Use el buscador para encontrar ${this.queSonEnSingular} que no aparezca en la lista.`
       : null,
   );
 
@@ -516,8 +516,8 @@ export abstract class PublicDirectoryListing {
       return null;
     }
     return this.departamentoElegido() === null
-      ? 'Ninguno de los resultados coincide con los filtros que pusiste. Probá quitando alguno.'
-      : 'No hay nada publicado en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.';
+      ? 'Ninguno de los resultados coincide con los filtros que puso. Pruebe quitando alguno.'
+      : 'No hay nada publicado en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.';
   });
 
   /**

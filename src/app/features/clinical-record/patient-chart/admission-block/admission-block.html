@@ -48,7 +48,7 @@
             }
             @if (internacion.conResponsable) {
               <span class="internacion__dato">
-                {{ internacion.aMiCargo ? 'A tu cargo' : 'A cargo de otro profesional' }}
+                {{ internacion.aMiCargo ? 'A su cargo' : 'A cargo de otro profesional' }}
               </span>
             } @else {
               <span class="internacion__dato internacion__dato--falta">Sin responsable asignado</span>
@@ -78,20 +78,20 @@
       primera sigue abierta no es algo que el expediente admita.
     </p>
   } @else if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      Una internación queda bajo la custodia de una organización. Elegí una en el selector del
+    <app-alert tone="info" title="Elija una organización">
+      Una internación queda bajo la custodia de una organización. Elija una en el selector del
       encabezado para poder darla de alta.
     </app-alert>
   } @else if (!hayEncuentro()) {
-    <app-alert tone="info" title="Abrí el encuentro para internar">
-      La internación se da de alta desde la atención que la motivó. Registrá el encuentro acá
+    <app-alert tone="info" title="Abra el encuentro para internar">
+      La internación se da de alta desde la atención que la motivó. Registre el encuentro acá
       arriba y el formulario aparece.
     </app-alert>
   } @else {
     <form class="internacion__formulario" (submit)="$event.preventDefault()">
       <app-form-field icon="calendar"
         label="Inicio de la internación"
-        hint="Opcional. Si no lo cargás, queda con la hora de este momento. Puede ser pasada: se registra cuándo empezó y cuándo se escribió."
+        hint="Opcional. Si no lo carga, queda con la hora de este momento. Puede ser pasada: se registra cuándo empezó y cuándo se escribió."
         [errorMessage]="
           inicioEnElFuturo()
             ? 'Una internación no puede empezar más adelante. Si todavía no empezó, no hay nada que dar de alta.'

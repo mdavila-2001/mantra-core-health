@@ -1,26 +1,26 @@
 <app-page-header
   title="Solicitudes de vínculo"
-  subtitle="Profesionales que pidieron acceder a tu historia clínica. Vos elegís qué áreas autorizás."
+  subtitle="Profesionales que pidieron acceder a su historia clínica. Usted elige qué áreas autoriza."
   [breadcrumbs]="breadcrumbs()"
 />
 
 <div class="solicitudes">
   @if (!cargando() && solicitudes().length === 0) {
     <app-empty-state
-      title="No tenés solicitudes pendientes"
-      description="Cuando un profesional pida acceder a tu historia, la vas a ver acá."
+      title="No tiene solicitudes pendientes"
+      description="Cuando un profesional pida acceder a su historia, la va a ver acá."
     />
   }
 
   @for (item of solicitudes(); track item.solicitud.id) {
     <app-card class="solicitud">
       <p class="solicitud__quien">
-        <strong>{{ item.profesional }}</strong> pide ver tu historia clínica
+        <strong>{{ item.profesional }}</strong> pide ver su historia clínica
         <span class="solicitud__cuando">(desde el {{ item.solicitud.validFrom | date: 'dd/MM/yyyy' }})</span>
       </p>
 
       <fieldset class="solicitud__especialidades">
-        <legend>Elegí qué especialidades le autorizás</legend>
+        <legend>Elija qué especialidades le autoriza</legend>
         @for (especialidad of especialidades(); track especialidad.id) {
           <app-checkbox
             [label]="especialidad.nombre"

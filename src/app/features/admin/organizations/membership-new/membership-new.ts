@@ -165,10 +165,10 @@ export class MembershipNew {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message || 'Necesitás administrar esta organización para sumar a alguien.';
+      return state.message || 'Necesita administrar esta organización para sumar a alguien.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -288,7 +288,7 @@ export class MembershipNew {
         this.state.set(ready(null));
         this.toast.warning(
           'La persona quedó incorporada, pero no pudimos asignarle la sede. ' +
-            'Completá la asignación desde la ficha de la organización.',
+            'Complete la asignación desde la ficha de la organización.',
           'Falta la sede',
         );
         void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

@@ -6,6 +6,7 @@ import { ClinicalClient } from './clinical.client';
 import type {
   AllergyIntoleranceRegistration,
   ClinicalSummary,
+  Condition,
   ConditionRegistration,
   DiagnosticReportRegistration,
   EncounterRegistration,
@@ -395,6 +396,31 @@ describe('ClinicalClient', () => {
     expect(receta?.createdAt).toBeInstanceOf(Date);
   });
 
+  /**
+   * `Idempotency-Key` por intento de envío: el reintento tras un error lleva
+   * la misma clave (el servidor no deja dos borradores) y, una vez creada, la
+   * receta siguiente lleva otra.
+   */
+  it('createMedicationRequest reutiliza la Idempotency-Key al reintentar y la renueva tras el éxito', () => {
+    const receta = { custodianTenantId: 't-1', patientProfileId: 'p-1', medicationConceptId: 'med-1' };
+
+    client.createMedicationRequest(receta).subscribe({ error: () => undefined });
+    const primera = http.expectOne('/clinical/medication-requests');
+    const clave = primera.request.headers.get('Idempotency-Key');
+    expect(clave).toBeTruthy();
+    primera.flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+    client.createMedicationRequest(receta).subscribe();
+    const reintento = http.expectOne('/clinical/medication-requests');
+    expect(reintento.request.headers.get('Idempotency-Key')).toBe(clave);
+    reintento.flush(RECETA_BORRADOR);
+
+    client.createMedicationRequest(receta).subscribe();
+    const otra = http.expectOne('/clinical/medication-requests');
+    expect(otra.request.headers.get('Idempotency-Key')).not.toBe(clave);
+    otra.flush(RECETA_BORRADOR);
+  });
+
   it('signMedicationRequest va sin cuerpo: quién firma sale del token', () => {
     let receta: MedicationRequestRegistration | undefined;
     client.signMedicationRequest('rx-1').subscribe((r) => (receta = r));
@@ -485,6 +511,65 @@ describe('ClinicalClient', () => {
 
     expect(condicion?.clinicalStatus).toBe('st-activa');
     expect(condicion?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('verifyCondition pega contra el segmento `verification`, omite lo ausente y devuelve la condición con fechas', () => {
+    let condicion: Condition | undefined;
+    client
+      .verifyCondition('c-1', {
+        outcome: 'CONFIRMED',
+        reasonText: 'Cuadro compatible',
+        onsetAt: '2026-09-05T00:00:00.000Z',
+        expectedResolutionAt: '2026-10-05T00:00:00.000Z',
+      })
+      .subscribe((c) => (condicion = c));
+
+    const req = http.expectOne('/clinical/conditions/c-1/verification');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      outcome: 'CONFIRMED',
+      reasonText: 'Cuadro compatible',
+      onsetAt: '2026-09-05T00:00:00.000Z',
+      expectedResolutionAt: '2026-10-05T00:00:00.000Z',
+    });
+
+    req.flush({
+      id: 'c-1',
+      codeConceptId: 'cod-1',
+      clinicalStatusConceptId: 'st-activa',
+      verificationStatusConceptId: 'st-confirmada',
+      onsetAt: '2026-09-05T00:00:00.000Z',
+      expectedResolutionAt: '2026-10-05T00:00:00.000Z',
+      verification: {
+        outcome: 'CONFIRMED',
+        decidedAt: '2026-09-26T10:00:00.000Z',
+        decidedByProfileId: 'pr-1',
+        reasonText: 'Cuadro compatible',
+        basedOn: null,
+      },
+      createdAt: '2026-09-01T10:00:00.000Z',
+    });
+
+    expect(condicion?.verificationStatusConceptId).toBe('st-confirmada');
+    expect(condicion?.expectedResolutionAt).toBeInstanceOf(Date);
+    expect(condicion?.createdAt).toBeInstanceOf(Date);
+    expect(condicion?.verification?.outcome).toBe('CONFIRMED');
+  });
+
+  it('verifyCondition manda la evidencia tal cual y nada más cuando no hay motivo', () => {
+    client
+      .verifyCondition('c-2', {
+        outcome: 'REFUTED',
+        basedOn: { kind: 'NOTE', noteId: 'n-1' },
+      })
+      .subscribe();
+
+    const req = http.expectOne('/clinical/conditions/c-2/verification');
+    expect(req.request.body).toEqual({
+      outcome: 'REFUTED',
+      basedOn: { kind: 'NOTE', noteId: 'n-1' },
+    });
+    req.flush({ id: 'c-2', codeConceptId: 'cod-1', createdAt: '2026-09-01T10:00:00.000Z' });
   });
 
   it('changeConditionStatus pega contra el segmento `change-status` con el motivo', () => {
@@ -591,9 +676,7 @@ describe('ClinicalClient', () => {
     const body = req.request.body as Record<string, unknown>;
     expect(body['effectiveStartAt']).toBe('2026-08-13T09:00:00.000Z');
     expect(body['valueDecimal']).toBe(36.8);
-    expect(body['performers']).toEqual([
-      { performerTypeConceptId: 'tipo-1', performerId: 'hp-1' },
-    ]);
+    expect(body['performers']).toEqual([{ performerTypeConceptId: 'tipo-1', performerId: 'hp-1' }]);
     expect('components' in body).toBe(false);
 
     req.flush(OBSERVACION_REGISTRADA);
@@ -654,19 +737,21 @@ describe('ClinicalClient', () => {
     let resumen: { careEpisodes: readonly { startAt?: Date; endAt?: Date }[] } | undefined;
     client.getSummary('p-1').subscribe((r) => (resumen = r));
 
-    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush({
-      ...RESUMEN_VACIO,
-      careEpisodes: [
-        {
-          id: 'ce-1',
-          tenantId: 't-1',
-          statusConceptId: 'c-activo',
-          startAt: '2026-08-13T10:00:00.000Z',
-          endAt: null,
-          createdAt: '2026-08-13T10:00:00.000Z',
-        },
-      ],
-    });
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush({
+        ...RESUMEN_VACIO,
+        careEpisodes: [
+          {
+            id: 'ce-1',
+            tenantId: 't-1',
+            statusConceptId: 'c-activo',
+            startAt: '2026-08-13T10:00:00.000Z',
+            endAt: null,
+            createdAt: '2026-08-13T10:00:00.000Z',
+          },
+        ],
+      });
 
     expect(resumen?.careEpisodes[0].startAt).toBeInstanceOf(Date);
     // Sin fin, la internación sigue abierta. La clave queda **ausente** y no en
@@ -689,9 +774,7 @@ describe('ClinicalClient', () => {
   });
 
   it('createCareEpisode omite lo opcional y manda el inicio como instante ISO', () => {
-    client
-      .createCareEpisode({ patientProfileId: 'pp-1', tenantId: 't-1' })
-      .subscribe();
+    client.createCareEpisode({ patientProfileId: 'pp-1', tenantId: 't-1' }).subscribe();
 
     const sinOpcionales = http.expectOne('/clinical/care-episodes');
     expect(sinOpcionales.request.method).toBe('POST');

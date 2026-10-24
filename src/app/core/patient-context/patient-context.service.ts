@@ -92,13 +92,24 @@ export class PatientContextService {
     // anterior elegido —y con su nombre en la cabecera—.
     let ultimo: string | null = null;
     effect(() => {
-      const usuario = this.auth.userId();
+      const usuario = this.idDeUsuario();
       if (usuario !== ultimo) {
         ultimo = usuario;
         this.elegido.set(null);
         this.dependientes.set(null);
       }
     });
+  }
+
+  /**
+   * `auth.userId()`, tolerando un doble de prueba incompleto (misma causa
+   * que `CartStore` — carril M6 H2, 2026-09-26): este `effect()` corre en
+   * cualquier tick, y una prueba que reemplaza `AuthService` sin `userId`
+   * lo revienta de forma asíncrona, envenenando al archivo que esté
+   * corriendo en ese momento en el mismo worker.
+   */
+  private idDeUsuario(): string | null {
+    return typeof this.auth.userId === 'function' ? this.auth.userId() : null;
   }
 
   /**

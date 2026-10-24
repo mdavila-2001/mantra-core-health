@@ -65,7 +65,7 @@ export class TrackingSessionClose {
   protected readonly closed = signal<TrackingSession | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para cerrar sesiones de rastreo.'),
+    errorMessageOf(this.state(), 'No tiene permiso para cerrar sesiones de rastreo.'),
   );
 
   protected submit(): void {

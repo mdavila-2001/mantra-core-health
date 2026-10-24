@@ -59,6 +59,21 @@ export interface PracticeSite {
    * nunca esconde el camino para cargarlo.
    */
   readonly bankQrFileId?: string | null;
+
+  /**
+   * El archivo del **logo del consultorio**, o `null` si no cargó ninguno.
+   *
+   * Es lo que sale en la pestaña «Facturación» del perfil y en el membrete de
+   * cada PDF que el profesional emite. Nadie lee este campo directamente: las
+   * pantallas y el PDF hablan con `LogoDelConsultorioClient`, que es el único
+   * que sabe **dónde** vive el logo. Hoy es la sede propia (maqueta); cuando el
+   * backend decida si va en `practice_sites` o en el perfil público de la
+   * organización, cambia ese cliente y nada más.
+   *
+   * Opcional por el mismo motivo que {@link PracticeSite.bankQrFileId}:
+   * ausente se lee como «sin logo», nunca como error.
+   */
+  readonly logoFileId?: string | null;
 }
 
 /**

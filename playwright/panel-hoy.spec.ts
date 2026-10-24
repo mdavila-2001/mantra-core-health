@@ -55,7 +55,7 @@ const ANCHOS: readonly { readonly nombre: string; readonly ancho: number; readon
 
 /** Lo que el propietario mandó sacar, por su texto visible. */
 const RETIRADOS: readonly string[] = [
-  'Tu cuenta',
+  'Su cuenta',
   'Directorio público',
   'Secciones disponibles',
   'Organizaciones',

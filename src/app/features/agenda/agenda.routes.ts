@@ -17,6 +17,16 @@ export const AGENDA_ROUTE = '/schedule';
 export const AGENDA_CREATE_ROUTE = `${AGENDA_ROUTE}/new`;
 
 /**
+ * `?booking=<id>` sobre la agenda: abre esa cita lista para atenderla.
+ *
+ * Es cómo «Lo que toca hoy», la primera pantalla del médico, lleva a la cita
+ * que muestra: la tarjeta «Ahora» y cada renglón del día apuntan acá, y la
+ * agenda —que es la que sabe iniciar, continuar y avisar de otra consulta
+ * abierta— ofrece «Iniciar consulta» sobre esa cita.
+ */
+export const AGENDA_BOOKING_PARAM = 'booking';
+
+/**
  * El alta de cita del profesional (TAREA-14).
  *
  * Dirección propia y no un panel dentro del calendario: el pedido es agendar

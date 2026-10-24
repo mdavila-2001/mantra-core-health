@@ -1,0 +1,347 @@
+Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                                  | Names                                                             |  Raw size
+spec-app-features-insurance-insurance-patients-insurance-patients.js | spec-app-features-insurance-insurance-patients-insurance-patients | 661.18 kB | 
+styles.css                                                           | styles                                                            | 166.42 kB | 
+chunk-EC25APQ2.js                                                    | -                                                                 | 109.05 kB | 
+chunk-YDCEZKLE.js                                                    | -                                                                 |  23.14 kB | 
+spec-app-core-data-access-insurance-insurance.client.js              | spec-app-core-data-access-insurance-insurance.client              |  19.96 kB | 
+spec-app-core-navigation-navigation.map.js                           | spec-app-core-navigation-navigation.map                           |  15.98 kB | 
+chunk-JBWBLPNK.js                                                    | -                                                                 |   5.19 kB | 
+init-testbed.js                                                      | init-testbed                                                      |   1.21 kB | 
+setup-test-setup.js                                                  | setup-test-setup                                                  | 984 bytes | 
+vitest-mock-patch.js                                                 | vitest-mock-patch                                                 | 974 bytes | 
+
+                                                                     | Initial total                                                     |   1.00 MB
+
+Application bundle generation complete. [21.192 seconds] - 2026-10-05T14:03:15.106Z
+
+
+ RUN  v4.1.10 C:/Alovida/mantra-core-health
+
+yarn.cmd : (node:30272) ExperimentalWarning: localStorage is not available because --localstorage-file was not 
+provided.
+En línea: 2 Carácter: 1
++ yarn.cmd ng test --watch=false --ts-config artifacts/tsconfig.directo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:30272) Ex...s not provided.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30272) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30272) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts (20 tests | 20 failed) 130ms
+     × listPractitionerCarriers pega en la ruta del profesional y desenvuelve items 73ms
+     × listCarriers pega en /insurance-carriers y convierte el alta a Date 4ms
+     × listNetworksOfPractitioner pega en /practitioners/:id/insurance-networks y lee la vigencia como fecha local 3ms
+     × getCarrier lee las vigencias como fecha local, no como instante UTC 3ms
+     × getCarrier no convierte los importes del beneficio a número 3ms
+     × getBroker conserva el histórico con la marca de vigencia del servidor 3ms
+     × la cartera es una llamada aparte del perfil 3ms
+     × escapa el identificador en la ruta 2ms
+     × crea un plan conservando fechas, moneda y la ruta escapada 3ms
+     × crea una cobertura sin convertir sus decimales 2ms
+     × reemplaza importes y permite borrar valores con null 2ms
+     × reemplaza las reglas documentales por la ruta específica 4ms
+     × getClaim conserva el desglose de liquidación sin convertir sus importes a número 3ms
+       × listCampaigns pega en /insurance-campaigns, descarta filtros vacíos y convierte fechas 2ms
+       × la vigencia se convierte a día civil local, sin correrse un día 2ms
+       × createCampaign hace POST con el cuerpo tal cual y devuelve la campaña convertida 2ms
+       × updateCampaignStatus hace PATCH a /:id/status y codifica el id 2ms
+       × getActivePatientCampaigns pide con el perfil en la URL y convierte la vigencia 3ms
+       × obtiene las opciones autorizadas y resuelve chat sólo por id y canal 2ms
+       × listInsurerPatients pega en /insurance/patients/search con los filtros presentes y omite los vacíos 1ms
+ ❯ |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts (22 tests | 22 failed) 1028ms
+     × pide la primera página de 25 sin filtros en la URL 980ms
+     × con filas queda en `ready` y pinta nombre, fecha y teléfono sin documento 4ms
+     × AC-3: un paciente sin cobertura vigente dice exactamente «Ninguno» 3ms
+     × dice «Sin correo» y «No especificada» cuando faltan, sin dejar el hueco mudo 2ms
+     × AC-4: «Enviar Mensaje» resuelve la conversación por id y canal interno 2ms
+     × AC-4: sin perfil de comunidad «Escribir» no navega y dice por qué 2ms
+     × copia el teléfono y lo anuncia en la región viva, que siempre está en el DOM 2ms
+     × AC-2: el filtro viaja sólo en el cuerpo y vuelve a la primera página 2ms
+     × el texto buscado va a la petición pero NO a la URL 2ms
+     × el rango de nacimiento viaja como fecha civil, sin correrse de huso 2ms
+     × siguiente página: manda el cursor que entregó la anterior 2ms
+     × vacío con filtros dice que ninguno coincide; vacío sin filtros, que todavía no hay nadie 2ms
+     × «Limpiar filtros» restablece criterios sin alterar la URL 2ms
+     × un error de la API no deja la tabla en blanco: pasa a un estado de error 1ms
+     × cancela la consulta anterior cuando cambia la búsqueda 2ms
+     × espera 300 ms desde la última tecla antes de buscar 2ms
+     × pagina a 10 filas y muestra el total del servidor 2ms
+     × pagina a 25 filas y muestra el total del servidor 2ms
+     × pagina a 50 filas y muestra el total del servidor 1ms
+     × rechaza fechas invertidas y acepta un único día inclusivo 2ms
+     × combina profesión libre y aseguradora y conserva filtros al reintentar 2ms
+     × un rechazo de chat mantiene la búsqueda y no navega 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 42 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > 
+listPractitionerCarriers pega en la ruta del profesional y desenvuelve items
+Error: Expected one matching request for criteria "Match URL: /practitioners/hp%201%2Fx/insurance-carriers", found 
+none. Requests received are: GET http://127.0.0.1:4200/api/practitioners/hp%201%2Fx/insurance-carriers.
+ ❯ HttpClientTestingBackend.expectOne 
+../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/common/http/testing/src/backend.ts:112:12
+ ❯ src/app/core/data-access/insurance/insurance.client.spec.ts:55:26
+     53|     client.listPractitionerCarriers('hp 1/x').subscribe((carriers) => …
+     54|
+     55|     const request = http.expectOne('/practitioners/hp%201%2Fx/insuranc…
+       |                          ^
+     56|     expect(request.request.method).toBe('GET');
+     57|     const items = [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/84]⎯
+
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > 
+listPractitionerCarriers pega en la ruta del profesional y desenvuelve items
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > 
+listCarriers pega en /insurance-carriers y convierte el alta a Date
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > 
+listNetworksOfPractitioner pega en /practitioners/:id/insurance-networks y lee la vigencia como fecha local
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getCarrier 
+lee las vigencias como fecha local, no como instante UTC
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getCarrier 
+no convierte los importes del beneficio a número
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getBroker 
+conserva el histórico con la marca de vigencia del servidor
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > la cartera 
+es una llamada aparte del perfil
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > escapa el 
+identificador en la ruta
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > crea un 
+plan conservando fechas, moneda y la ruta escapada
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > crea una 
+cobertura sin convertir sus decimales
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > reemplaza 
+importes y permite borrar valores con null
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > reemplaza 
+las reglas documentales por la ruta específica
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getClaim 
+conserva el desglose de liquidación sin convertir sus importes a número
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > listCampaigns pega en /insurance-campaigns, descarta filtros vacíos y convierte fechas
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > la vigencia se convierte a día civil local, sin correrse un día
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > createCampaign hace POST con el cuerpo tal cual y devuelve la campaña convertida
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > updateCampaignStatus hace PATCH a /:id/status y codifica el id
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > getActivePatientCampaigns pide con el perfil en la URL y convierte la vigencia
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > directorio 
+de pacientes de la aseguradora > obtiene las opciones autorizadas y resuelve chat sólo por id y canal
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > directorio 
+de pacientes de la aseguradora > listInsurerPatients pega en /insurance/patients/search con los filtros presentes y 
+omite los vacíos
+Error: Expected no open requests, found 1: GET http://127.0.0.1:4200/api/practitioners/hp%201%2Fx/insurance-carriers
+ ❯ HttpClientTestingBackend.verify 
+../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/common/http/testing/src/backend.ts:147:12
+ ❯ src/app/core/data-access/insurance/insurance.client.spec.ts:49:24
+     47|   });
+     48|
+     49|   afterEach(() => http.verify());
+       |                        ^
+     50|
+     51|   it('listPractitionerCarriers pega en la ruta del profesional y desen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/84]⎯
+
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > 
+listCarriers pega en /insurance-carriers y convierte el alta a Date
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > 
+listNetworksOfPractitioner pega en /practitioners/:id/insurance-networks y lee la vigencia como fecha local
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getCarrier 
+lee las vigencias como fecha local, no como instante UTC
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getCarrier 
+no convierte los importes del beneficio a número
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getBroker 
+conserva el histórico con la marca de vigencia del servidor
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > la cartera 
+es una llamada aparte del perfil
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > escapa el 
+identificador en la ruta
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > crea un 
+plan conservando fechas, moneda y la ruta escapada
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > crea una 
+cobertura sin convertir sus decimales
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > reemplaza 
+importes y permite borrar valores con null
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > reemplaza 
+las reglas documentales por la ruta específica
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > getClaim 
+conserva el desglose de liquidación sin convertir sus importes a número
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > listCampaigns pega en /insurance-campaigns, descarta filtros vacíos y convierte fechas
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > la vigencia se convierte a día civil local, sin correrse un día
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > createCampaign hace POST con el cuerpo tal cual y devuelve la campaña convertida
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > updateCampaignStatus hace PATCH a /:id/status y codifica el id
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > campañas 
+preventivas > getActivePatientCampaigns pide con el perfil en la URL y convierte la vigencia
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > directorio 
+de pacientes de la aseguradora > obtiene las opciones autorizadas y resuelve chat sólo por id y canal
+ FAIL  |mantra-core-health| src/app/core/data-access/insurance/insurance.client.spec.ts > InsuranceClient > directorio 
+de pacientes de la aseguradora > listInsurerPatients pega en /insurance/patients/search con los filtros presentes y 
+omite los vacíos
+Error: Cannot configure the test module when the test module has already been instantiated. Make sure you are not 
+using `inject` before `TestBed.configureTestingModule`.
+ ❯ TestBedImpl.assertNotInstantiated 
+../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/testing/src/test_bed.ts:736:12
+ ❯ assertNotInstantiated ../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/testing/src/test_bed.ts:562:9
+ ❯ configureTestingModule ../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/testing/src/test_bed.ts:319:32
+ ❯ src/app/core/data-access/insurance/insurance.client.spec.ts:41:13
+     39|
+     40|   beforeEach(() => {
+     41|     TestBed.configureTestingModule({
+       |             ^
+     42|       providers: [provideHttpClient(), provideHttpClientTesting()],
+     43|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/84]⎯
+
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pide la primera página de 25 sin filtros en la URL
+Error: Expected one matching request for criteria "Match by function: ", found none. Requests received are: GET 
+http://127.0.0.1:4200/api/insurance/patients/options, GET 
+http://127.0.0.1:4200/api/system-context/dynamic-enums?target=profiles.persons.administrative_gender_concept_id.
+ ❯ HttpClientTestingBackend.expectOne 
+../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/common/http/testing/src/backend.ts:112:12
+ ❯ flushGender src/app/features/insurance/insurance-patients/insurance-patients.spec.ts:70:8
+     68|   function flushGender(): void {
+     69|     http
+     70|       .expectOne(
+       |        ^
+     71|         (r) =>
+     72|           r.url === '/system-context/dynamic-enums' &&
+ ❯ src/app/features/insurance/insurance-patients/insurance-patients.spec.ts:60:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/84]⎯
+
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pide la primera página de 25 sin filtros en la URL
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > con filas queda en `ready` y pinta nombre, fecha y teléfono sin documento
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-3: un paciente sin cobertura vigente dice exactamente «Ninguno»
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > dice «Sin correo» y «No especificada» cuando faltan, sin dejar el hueco mudo
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-4: «Enviar Mensaje» resuelve la conversación por id y canal interno
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-4: sin perfil de comunidad «Escribir» no navega y dice por qué
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > copia el teléfono y lo anuncia en la región viva, que siempre está en el DOM
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-2: el filtro viaja sólo en el cuerpo y vuelve a la primera página
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > el texto buscado va a la petición pero NO a la URL
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > el rango de nacimiento viaja como fecha civil, sin correrse de huso
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > siguiente página: manda el cursor que entregó la anterior
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > vacío con filtros dice que ninguno coincide; vacío sin filtros, que todavía no hay nadie
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > «Limpiar filtros» restablece criterios sin alterar la URL
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > un error de la API no deja la tabla en blanco: pasa a un estado de error
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > cancela la consulta anterior cuando cambia la búsqueda
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > espera 300 ms desde la última tecla antes de buscar
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pagina a 10 filas y muestra el total del servidor
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pagina a 25 filas y muestra el total del servidor
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pagina a 50 filas y muestra el total del servidor
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > rechaza fechas invertidas y acepta un único día inclusivo
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > combina profesión libre y aseguradora y conserva filtros al reintentar
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > un rechazo de chat mantiene la búsqueda y no navega
+Error: Expected no open requests, found 2: GET http://127.0.0.1:4200/api/insurance/patients/options, GET 
+http://127.0.0.1:4200/api/system-context/dynamic-enums?target=profiles.persons.administrative_gender_concept_id
+ ❯ HttpClientTestingBackend.verify 
+../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/common/http/testing/src/backend.ts:147:12
+ ❯ src/app/features/insurance/insurance-patients/insurance-patients.spec.ts:65:24
+     63|   });
+     64|
+     65|   afterEach(() => http.verify());
+       |                        ^
+     66|
+     67|   /** El catálogo de sexo se pide una vez, al montar. */
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/84]⎯
+
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > con filas queda en `ready` y pinta nombre, fecha y teléfono sin documento
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-3: un paciente sin cobertura vigente dice exactamente «Ninguno»
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > dice «Sin correo» y «No especificada» cuando faltan, sin dejar el hueco mudo
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-4: «Enviar Mensaje» resuelve la conversación por id y canal interno
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-4: sin perfil de comunidad «Escribir» no navega y dice por qué
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > copia el teléfono y lo anuncia en la región viva, que siempre está en el DOM
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > AC-2: el filtro viaja sólo en el cuerpo y vuelve a la primera página
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > el texto buscado va a la petición pero NO a la URL
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > el rango de nacimiento viaja como fecha civil, sin correrse de huso
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > siguiente página: manda el cursor que entregó la anterior
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > vacío con filtros dice que ninguno coincide; vacío sin filtros, que todavía no hay nadie
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > «Limpiar filtros» restablece criterios sin alterar la URL
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > un error de la API no deja la tabla en blanco: pasa a un estado de error
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > cancela la consulta anterior cuando cambia la búsqueda
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > espera 300 ms desde la última tecla antes de buscar
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pagina a 10 filas y muestra el total del servidor
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pagina a 25 filas y muestra el total del servidor
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > pagina a 50 filas y muestra el total del servidor
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > rechaza fechas invertidas y acepta un único día inclusivo
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > combina profesión libre y aseguradora y conserva filtros al reintentar
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > un rechazo de chat mantiene la búsqueda y no navega
+Error: Cannot configure the test module when the test module has already been instantiated. Make sure you are not 
+using `inject` before `TestBed.configureTestingModule`.
+ ❯ TestBedImpl.assertNotInstantiated 
+../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/testing/src/test_bed.ts:736:12
+ ❯ assertNotInstantiated ../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/testing/src/test_bed.ts:562:9
+ ❯ configureTestingModule ../darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/testing/src/test_bed.ts:319:32
+ ❯ src/app/features/insurance/insurance-patients/insurance-patients.spec.ts:47:13
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  42 failed | 42 passed (84)
+     45|
+     46|   beforeEach(async () => {
+     47|     TestBed.configureTestingModule({
+       |             ^
+   Start at  10:03:24
+   Duration  57.76s (transform 6.48s, setup 5.10s, import 10.19s, tests 1.33s, environment 134.14s)
+
+     48|       providers: [
+     49|         provideHttpClient(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/84]⎯
+

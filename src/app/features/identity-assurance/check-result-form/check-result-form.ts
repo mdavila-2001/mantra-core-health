@@ -82,7 +82,7 @@ export class CheckResultForm {
       campos: [
         { key: 'result', label: 'Veredicto', control: 'radio', options: [{ value: 'MATCH', label: 'Coincide' }, { value: 'NO_MATCH', label: 'No coincide' }], required: true },
         { key: 'matchScore', label: 'Puntaje de coincidencia', hint: 'Opcional: entre 0 y 1, como 0.98. Viaja como texto.', control: 'text', mensajeDeError: NUMBER_STRING_ERROR },
-        { key: 'discrepancyCodes', label: 'Códigos de discrepancia', hint: 'Opcional: separá los códigos con comas, como DOB_MISMATCH, NAME_PARTIAL.', control: 'text' },
+        { key: 'discrepancyCodes', label: 'Códigos de discrepancia', hint: 'Opcional: separe los códigos con comas, como DOB_MISMATCH, NAME_PARTIAL.', control: 'text' },
         { key: 'sourceResponseHash', label: 'Hash de la respuesta fuente', hint: 'Opcional: hash de lo que respondió la autoridad (hasta 200 caracteres).', control: 'text', mensajeDeError: 'Hasta 200 caracteres.' },
       ],
     },
@@ -115,7 +115,7 @@ export class CheckResultForm {
   protected readonly recorded = signal<RecordedCheckResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected submit(): void {

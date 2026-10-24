@@ -43,6 +43,7 @@ import {
 import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/departamento-de-ciudad';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
+import { fotoDeDirectorio, temaDeCentroDiagnostico } from '../../shared/utils/foto-de-directorio';
 
 /**
  * Un tramo del directorio de laboratorios.
@@ -177,6 +178,11 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
+  /** La foto de la tarjeta de una categoría de la portada. */
+  protected fotoDe(codigo: string): string {
+    return fotoDeDirectorio(temaDeCentroDiagnostico(codigo), codigo);
+  }
+
   /**
    * Si va embebido en otro contenedor —el modal de consulta de «Tus accesos»—.
    *
@@ -277,13 +283,13 @@ export class LaboratoryDirectory {
     if (cuantos === 0) {
       return `Todavía no hay nada publicado en ${nombre}.`;
     }
-    return `${cuantos} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /** Sin centros en el departamento elegido: lo dice la lista, no un vacío genérico. */
   protected readonly sinCoincidencias = computed<string | null>(() =>
     this.state().status === 'ready' && this.groups().length === 0
-      ? 'No hay centros publicados en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.'
+      ? 'No hay centros publicados en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.'
       : null,
   );
 
@@ -375,8 +381,8 @@ export class LaboratoryDirectory {
    */
   protected readonly subtitulo = computed(() =>
     this.enPortada()
-      ? `Elegí qué necesitás hacerte o buscá el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
-      : 'Centros verificados de toda la red, agrupados por categoría. Tocá un chip para acotar.',
+      ? `Elija qué necesita hacerse o busque el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
+      : 'Centros verificados de toda la red, agrupados por categoría. Toque un chip para acotar.',
   );
 
   /**
@@ -446,7 +452,7 @@ export class LaboratoryDirectory {
                 ? empty(
                     { label: 'Volver al panel', route: '/dashboard' },
                     hayFiltros(this.activos())
-                      ? 'Ningún centro verificado coincide con esa búsqueda. Probá quitando algún filtro.'
+                      ? 'Ningún centro verificado coincide con esa búsqueda. Pruebe quitando algún filtro.'
                       : 'Todavía no hay centros verificados publicados.',
                   )
                 : ready(pagina.items),
@@ -567,12 +573,13 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
   if (unit.acceptsExternalOrders) {
     seals.push({ label: 'Recibe órdenes externas', tone: 'neutro' as const });
   }
-  const desde = precioDesde(unit.minAmount);
+  const desde = precioDesde(unit.minAmount, unit.minAmountCurrency);
   return {
     id: unit.id,
     title: unit.name,
     link: `/laboratory-directory/${unit.id}`,
     figureText: initials(unit.name),
+    photoUrl: fotoDeDirectorio(temaDeCentroDiagnostico(`${unit.type.code} ${unit.type.display}`), unit.id),
     // La categoría como subtítulo y no como insignia: desde que la portada
     // obliga a elegirla antes de entrar, todas las tarjetas de la lista son de
     // la misma, así que la insignia repetía en cada una la categoría que se
@@ -604,22 +611,24 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
  * publicó tarifa no es un centro gratis, y rellenar el hueco con una frase
  * amable haría que dos situaciones distintas se vean iguales.
  *
- * La moneda va literal porque la búsqueda **no la devuelve** —`minAmount` viaja
- * como número suelto—, y el directorio hoy es de un solo país. El día que la
- * respuesta traiga su concepto de moneda, se lee de ahí.
+ * CL-45/CL-51: la moneda ya no va literal — la búsqueda la devuelve
+ * (`minAmountCurrency`, el código del concepto de `price_schedules`). Un
+ * centro sin tarifa publicada tampoco tiene moneda, así que ambos faltan
+ * juntos; si algún día llegara un importe sin moneda (dato incompleto del
+ * centro), se dice «Bs» como piso conocido antes que inventar un símbolo.
  */
-function precioDesde(minAmount: number | null): string | null {
+function precioDesde(minAmount: number | null, minAmountCurrency: string | null): string | null {
   if (minAmount === null) {
     return null;
   }
-  // Sin decimales cuando no los hay: «Bs 120,00» en una línea de contexto pesa
+  // Sin decimales cuando no los hay: «USD 120,00» en una línea de contexto pesa
   // más de lo que informa.
   const decimales = Number.isInteger(minAmount) ? 0 : 2;
   const cifra = minAmount.toLocaleString('es-BO', {
     minimumFractionDigits: decimales,
     maximumFractionDigits: decimales,
   });
-  return `desde Bs ${cifra}`;
+  return `desde ${minAmountCurrency ?? 'Bs'} ${cifra}`;
 }
 
 /**

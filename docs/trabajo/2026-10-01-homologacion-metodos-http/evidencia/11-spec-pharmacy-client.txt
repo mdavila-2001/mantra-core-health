@@ -1,0 +1,84 @@
+$ yarn test --watch=false --include=src/app/core/data-access/pharmacy/pharmacy.client.spec.ts
+✓ src/app/features/component-stock/component-index.generated.ts
+  596 componentes · 3 otros · 351 pantallas · 138 maquetas · 23 atomos · 46 moleculas · 35 organismos
+  208 con algo que mirar
+  relaciones: 2596 template-instantiates · 5 imports-available sin instanciar · 69 type-only · 229 dynamic-loads
+  nivel: 0 declarado · 596 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 596/596 · con escenario 3/596 · verificados visualmente 3/596 · bloqueados 80/596 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                   | Names                                              |  Raw size
+styles.css                                            | styles                                             | 166.42 kB | 
+spec-app-core-data-access-pharmacy-pharmacy.client.js | spec-app-core-data-access-pharmacy-pharmacy.client |  28.90 kB | 
+chunk-CGZBV6BD.js                                     | -                                                  |   4.07 kB | 
+init-testbed.js                                       | init-testbed                                       |   1.21 kB | 
+vitest-mock-patch.js                                  | vitest-mock-patch                                  | 974 bytes | 
+setup-test-setup.js                                   | setup-test-setup                                   | 911 bytes | 
+
+                                                      | Initial total                                      | 202.49 kB
+
+Application bundle generation complete. [200.460 seconds] - 2026-10-01T14:57:06.926Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 D:/Trabajos Secundarios/Mantra Core Technologies/mantra-core-health
+
+(node:35684) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  10:57:14
+   Duration  81.47s (transform 497ms, setup 22.72s, import 270ms, tests 212ms, environment 56.42s)
+
+exit=0

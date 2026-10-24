@@ -57,7 +57,7 @@
   @case ('validation') {
     @if (validationState(); as invalido) {
       <ng-content select="[vsh-validation]">
-        <app-alert class="view-state-host__validation" tone="error" title="Revisá lo ingresado">
+        <app-alert class="view-state-host__validation" tone="error" title="Revise lo ingresado">
           @if (invalido.issues.length > 0) {
             <ul class="view-state-host__issues">
               @for (issue of invalido.issues; track issue.message) {
@@ -72,7 +72,7 @@
           }
           @if (invalido.retryAfterSeconds !== undefined) {
             <p class="view-state-host__retry-after">
-              Reintentá en {{ invalido.retryAfterSeconds }} segundos.
+              Reintente en {{ invalido.retryAfterSeconds }} segundos.
             </p>
           }
         </app-alert>
@@ -85,8 +85,8 @@
   @case ('forbidden') {
     @if (forbiddenState(); as prohibido) {
       <ng-content select="[vsh-forbidden]">
-        <app-alert tone="error" title="No tenés acceso a esta sección">
-          {{ prohibido.message ?? 'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.' }}
+        <app-alert tone="error" title="No tiene acceso a esta sección">
+          {{ prohibido.message ?? 'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.' }}
           @if (prohibido.nextAction; as accion) {
             <div alert-actions>
               @if (accion.route) {
@@ -109,8 +109,8 @@
       <ng-content select="[vsh-not-found]">
         <app-empty-state
           variant="no-results"
-          title="No encontramos lo que buscás"
-          description="Verificá la dirección o volvé al listado."
+          title="No encontramos lo que busca"
+          description="Verifique la dirección o vuelva al listado."
         >
           <!-- Un solo bloque con el <a> como raíz, igual que S3: un @if
                anidado se proyecta al slot por defecto —que app-empty-state no
@@ -129,7 +129,7 @@
       <app-empty-state
         variant="error"
         title="Sin conexión"
-        description="No pudimos comunicarnos con el servidor. Revisá tu conexión."
+        description="No pudimos comunicarnos con el servidor. Revise su conexión."
       >
         <button app-button empty-actions variant="outline" (clicked)="requestRetry()">
           Reintentar
@@ -144,7 +144,7 @@
     @if (errorState(); as fallo) {
       <ng-content select="[vsh-error]">
         <app-alert tone="error" title="Algo salió mal">
-          {{ fallo.message ?? 'Ocurrió un error inesperado. Si el problema persiste, reportalo con este código.' }}
+          {{ fallo.message ?? 'Ocurrió un error inesperado. Si el problema persiste, repórtelo con este código.' }}
           <p class="view-state-host__request-id">
             Código de soporte:
             <code class="tabular-nums">{{ fallo.requestId }}</code>
@@ -170,7 +170,7 @@
     @if (staleState(); as viejo) {
       <!-- S7: la antigüedad va SIEMPRE visible, nunca solo en un tooltip. -->
       <ng-content select="[vsh-stale]">
-        <app-alert tone="info" title="Estás viendo datos que pueden estar atrasados">
+        <app-alert tone="info" title="Está viendo datos que pueden estar atrasados">
           Información al {{ viejo.asOf | date: 'dd/MM/yyyy HH:mm' }}.
           <div alert-actions>
             <button app-button size="sm" variant="secondary" (clicked)="requestRefresh()">

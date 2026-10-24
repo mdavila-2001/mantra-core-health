@@ -135,8 +135,8 @@
         <section class="bienvenida">
           <h1>Banco de pruebas de componentes</h1>
           <p>
-            Elegí un componente en la lista de la izquierda. Se monta de verdad dentro de un marco
-            del tamaño que elijas —móvil, tableta o escritorio— con datos generados, y podés verlo
+            Elija un componente en la lista de la izquierda. Se monta de verdad dentro de un marco
+            del tamaño que elija —móvil, tableta o escritorio— con datos generados, y puede verlo
             como cualquiera de las cuentas de prueba.
           </p>
           <ul>
@@ -381,7 +381,7 @@
                   <p class="panel__linea">
                     <strong>Contrato</strong> lo fija el anfitrión con
                     <code>variante = {{ e.variante }}</code>: un <code>ViewState</code> válido, funciones
-                    y plantillas de verdad. Para editar entradas sueltas elegí «Valores generados».
+                    y plantillas de verdad. Para editar entradas sueltas elija «Valores generados».
                   </p>
                   <p class="panel__linea">
                     <strong>Entradas</strong>
@@ -515,7 +515,7 @@
               @case ('salidas') {
                 @if (escenario(); as e) {
                   @if (salidas().length === 0) {
-                    <p class="panel__vacio">Todavía no emitió nada. Tocá el componente en el marco.</p>
+                    <p class="panel__vacio">Todavía no emitió nada. Toque el componente en el marco.</p>
                   } @else {
                     <ol class="salidas" data-testid="stock-salidas">
                       @for (s of salidas(); track s.momento) {

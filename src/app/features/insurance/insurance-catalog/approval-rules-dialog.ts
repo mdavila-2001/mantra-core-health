@@ -11,19 +11,31 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
-import type {
-  ApprovalDocumentCode,
-  PlanBenefit,
-  UpdatePlanBenefitRulesInput,
+import {
+  APPROVAL_DOCUMENT_CODES,
+  type ApprovalDocumentCode,
+  type PlanBenefit,
+  type UpdatePlanBenefitRulesInput,
 } from '../../../core/data-access/insurance/insurance.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../shared/components/atoms/checkbox/checkbox';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import {
+  CheckboxGroup,
+  type OpcionDeCasilla,
+} from '../../../shared/components/molecules/checkbox-group/checkbox-group';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { apiErrorMessage } from './insurance-form.helpers';
+
+const DOCUMENT_LABELS: Readonly<Record<ApprovalDocumentCode, string>> = {
+  FIRMA_MEDICO: 'Firma del médico tratante',
+  SELLO_MEDICO: 'Sello profesional y matrícula',
+  ORDEN_MEDICA: 'Orden médica justificativa',
+  INFORME_CLINICO: 'Informe clínico o resumen de historia',
+};
 
 @Component({
   selector: 'app-approval-rules-dialog',
@@ -32,6 +44,7 @@ import { apiErrorMessage } from './insurance-form.helpers';
     AnnounceOnAppear,
     AppButton,
     Checkbox,
+    CheckboxGroup,
     Textarea,
     Alert,
     FormField,
@@ -55,12 +68,13 @@ export class ApprovalRulesDialog {
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
+  protected readonly documentOptions: readonly OpcionDeCasilla[] = APPROVAL_DOCUMENT_CODES.map(
+    (code) => ({ value: code, label: DOCUMENT_LABELS[code] }),
+  );
+
   protected readonly form = this.fb.nonNullable.group({
     requiresPriorAuthorization: [false],
-    firmaMedico: [false],
-    selloMedico: [false],
-    ordenMedica: [false],
-    informeClinico: [false],
+    requiredDocuments: [[] as readonly string[]],
     exclusionNotes: ['', Validators.maxLength(1000)],
   });
 
@@ -69,13 +83,9 @@ export class ApprovalRulesDialog {
       const benefit = this.benefit();
       if (benefit.id === this.initializedBenefitId) return;
       this.initializedBenefitId = benefit.id;
-      const documents = new Set(benefit.approvalRules.requiredDocuments);
       this.form.reset({
         requiresPriorAuthorization: benefit.requiresPriorAuthorization ?? false,
-        firmaMedico: documents.has('FIRMA_MEDICO'),
-        selloMedico: documents.has('SELLO_MEDICO'),
-        ordenMedica: documents.has('ORDEN_MEDICA'),
-        informeClinico: documents.has('INFORME_CLINICO'),
+        requiredDocuments: benefit.approvalRules.requiredDocuments,
         exclusionNotes: benefit.approvalRules.exclusionNotes ?? '',
       });
     });
@@ -88,11 +98,9 @@ export class ApprovalRulesDialog {
       return;
     }
     const value = this.form.getRawValue();
-    const requiredDocuments: ApprovalDocumentCode[] = [];
-    if (value.firmaMedico) requiredDocuments.push('FIRMA_MEDICO');
-    if (value.selloMedico) requiredDocuments.push('SELLO_MEDICO');
-    if (value.ordenMedica) requiredDocuments.push('ORDEN_MEDICA');
-    if (value.informeClinico) requiredDocuments.push('INFORME_CLINICO');
+    const requiredDocuments = APPROVAL_DOCUMENT_CODES.filter((code) =>
+      value.requiredDocuments.includes(code),
+    );
     const input: UpdatePlanBenefitRulesInput = {
       requiresPriorAuthorization: value.requiresPriorAuthorization,
       requiredDocuments,

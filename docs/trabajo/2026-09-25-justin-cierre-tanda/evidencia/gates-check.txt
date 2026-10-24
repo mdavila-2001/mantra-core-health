@@ -1,0 +1,10 @@
+### check-architecture => FALLA (exit 1)
+### check-css-tokens => FALLA (exit 1)
+### check-tokens => OK (exit 0)
+### check-route-prefixes => OK (exit 0)
+### check-client-prefixes => FALLA (exit 1)
+### check-api-prefixes => FALLA (exit 1)
+### check-form-pages => FALLA (exit 1)
+### check-contrast => OK (exit 0)
+### generate-inventory --check => 
+FALLA (exit 1)

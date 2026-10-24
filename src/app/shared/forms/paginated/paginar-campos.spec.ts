@@ -78,14 +78,14 @@ describe('paginarCampos', () => {
 
     it('la ayuda de la sección viaja a todas sus páginas', () => {
       const paginas = paginarCampos([
-        { titulo: 'Habilitación', hint: 'Tal como figura en tu matrícula.', campos: campos(5) },
+        { titulo: 'Habilitación', hint: 'Tal como figura en su matrícula.', campos: campos(5) },
       ]);
 
       // Quien llega a la segunda página no vio la primera hace un rato: una
       // explicación que sólo sale en el primer trozo es una que la mitad no lee.
       expect(paginas.map((pagina) => pagina.hint)).toEqual([
-        'Tal como figura en tu matrícula.',
-        'Tal como figura en tu matrícula.',
+        'Tal como figura en su matrícula.',
+        'Tal como figura en su matrícula.',
       ]);
     });
 
@@ -118,9 +118,30 @@ describe('paginarCampos', () => {
     });
 
     it('una lista suelta de campos toma el título que se le dé', () => {
-      const [pagina] = paginarCampos(campos(2), { tituloPorDefecto: 'Tus datos' });
+      const [pagina] = paginarCampos(campos(2), { tituloPorDefecto: 'Sus datos' });
 
-      expect(pagina.titulo).toBe('Tus datos');
+      expect(pagina.titulo).toBe('Sus datos');
     });
+  });
+
+  it('un «¿cuál?» viaja en la página de su pregunta y no cuenta para el tope', () => {
+    const principal = (n: number) => ({ key: `p${n}`, label: `P${n}`, control: 'yes-no' as const });
+    const cual = (de: number) => ({
+      key: `c${de}`,
+      label: `¿Cuál ${de}?`,
+      control: 'text' as const,
+      showWhen: { key: `p${de}`, equals: true },
+    });
+
+    const paginas = paginarCampos([
+      principal(1), cual(1), cual(1 + 0.5),
+      principal(2), principal(3), principal(4), cual(4),
+      principal(5),
+    ]);
+
+    expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
+      ['p1', 'c1', 'c1.5', 'p2', 'p3', 'p4', 'c4'],
+      ['p5'],
+    ]);
   });
 });

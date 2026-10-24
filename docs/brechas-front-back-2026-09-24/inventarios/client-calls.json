@@ -1,0 +1,3924 @@
+[
+ {
+  "m": "GET",
+  "p": "/practices",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts",
+   "src/app/core/data-access/medical-organization/medical-organization.client.ts",
+   "src/app/core/data-access/services-catalog/services-catalog.client.ts"
+  ],
+  "api": "GET /practices"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/accounts",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/accounts"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/trial-balance",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/trial-balance"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/journal-transactions",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/journal-transactions"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/journal-transactions/${transactionId}",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/journal-transactions/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/practitioner/paid-consultations",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/practitioner/paid-consultations"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/practitioner/consultation-income",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/practitioner/consultation-income"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/practitioner/entries",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/practitioner/entries"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/general-ledger",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/general-ledger"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/income-statement",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/income-statement"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/balance-sheet",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/balance-sheet"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/journal-transactions/drafts",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/journal-transactions/drafts"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/journal-transactions",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/journal-transactions"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/fiscal-years",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/fiscal-years"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/fiscal-periods/${periodId}/lock",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/fiscal-periods/:id/lock"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/open-items",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/open-items"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/clearing-documents",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/clearing-documents"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/dimensions",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/dimensions"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/journal-transactions/${transactionId}/document-flow",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/journal-transactions/:id/document-flow"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/journal-transactions/${transactionId}/${action}",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/journal-transactions/:id/classify"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/assets",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/assets"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/depreciation/run",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/depreciation/run"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/accrual-objects",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "GET /accounting/accrual-objects"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/accruals/run",
+  "files": [
+   "src/app/core/data-access/accounting/accounting.client.ts"
+  ],
+  "api": "POST /accounting/accruals/run"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/schemas",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/schemas"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/objects",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/objects"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/objects/${id}",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/objects/:objectId"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/objects/${objectId}/columns",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/objects/:objectId/columns"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/objects/${objectId}/evidence",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/objects/:objectId/evidence"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/catalog/objects/${objectId}/evidence",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "POST /admin/catalog/objects/:objectId/evidence"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/objects/${objectId}/history",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/objects/:objectId/history"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/objects/${objectId}/changes",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/objects/:objectId/changes"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/objects/${objectId}/impact",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/objects/:objectId/impact"
+ },
+ {
+  "m": "PUT",
+  "p": "/admin/catalog/objects/${objectId}/annotation",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "PUT /admin/catalog/objects/:objectId/annotation"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/catalog/annotations/${annotationId}/review",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "POST /admin/catalog/annotations/:annotationId/review"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/coverage",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/coverage"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/catalog/scans",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "GET /admin/catalog/scans"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/catalog/scans",
+  "files": [
+   "src/app/core/data-access/admin-portal/data-catalog.client.ts"
+  ],
+  "api": "POST /admin/catalog/scans"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/overview",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/overview"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/timeseries",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/timeseries"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/web-vitals",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/web-vitals"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/funnels",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/funnels"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/funnels/${funnelId}/report",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/funnels/:funnelId/report"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/pipeline-health",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/pipeline-health"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/sessions",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/sessions"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/analytics/sessions/${id}",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/analytics/sessions/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/environments",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/environments"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/suites",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/suites"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/suites/${id}",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/suites/:suiteId"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/targets",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/targets"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/runs",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/runs"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/runs/${id}",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/runs/:runId"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/defects",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/defects"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/plans",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/plans"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/qa/plans/${id}",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/qa/plans/:planId"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/qa/plans/preflight",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "POST /admin/qa/plans/preflight"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/qa/plans",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "POST /admin/qa/plans"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/qa/plans/${planId}/approvals",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "POST /admin/qa/plans/:planId/approvals"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/qa/plans/${planId}/cancel",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "POST /admin/qa/plans/:planId/cancel"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/ops/readiness",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/ops/readiness"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/ops/incidents",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/ops/incidents"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/ops/deployments",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/ops/deployments"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/ops/slos",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/ops/slos"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/ops/backups",
+  "files": [
+   "src/app/core/data-access/admin-portal/platform.client.ts"
+  ],
+  "api": "GET /admin/ops/backups"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/practitioner/assets",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "GET /accounting/practitioner/assets"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/practitioner/assets",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "POST /accounting/practitioner/assets"
+ },
+ {
+  "m": "PATCH",
+  "p": "/accounting/practitioner/assets/${assetId}/automation",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "PATCH /accounting/practitioner/assets/:id/automation"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/practitioner/assets/${assetId}/progress",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "POST /accounting/practitioner/assets/:id/progress"
+ },
+ {
+  "m": "GET",
+  "p": "/accounting/practitioner/liabilities",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "GET /accounting/practitioner/liabilities"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/practitioner/liabilities",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "POST /accounting/practitioner/liabilities"
+ },
+ {
+  "m": "PATCH",
+  "p": "/accounting/practitioner/liabilities/${liabilityId}/automation",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "PATCH /accounting/practitioner/liabilities/:id/automation"
+ },
+ {
+  "m": "POST",
+  "p": "/accounting/practitioner/liabilities/${liabilityId}/progress",
+  "files": [
+   "src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts"
+  ],
+  "api": "POST /accounting/practitioner/liabilities/:id/progress"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/identity-providers",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/identity-providers"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/identity-providers/${encodeURIComponent(providerId)}/protocol-configs",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/identity-providers/:id/protocol-configs"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/identity-providers/${encodeURIComponent(providerId)}/signing-keys",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/identity-providers/:id/signing-keys"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/identity-providers/${encodeURIComponent(providerId)}/signing-keys/rotate",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/identity-providers/:id/signing-keys/rotate"
+ },
+ {
+  "m": "PUT",
+  "p": "/auth-providers/identity-providers/${encodeURIComponent(providerId)}/attribute-mappings",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "PUT /auth-providers/identity-providers/:id/attribute-mappings"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/tenant-bindings",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/tenant-bindings"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/identity-providers/${encodeURIComponent(providerId)}/provisioning-rules",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/identity-providers/:id/provisioning-rules"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/identity-providers/by-code/${encodeURIComponent(providerCode)}/authorize",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/identity-providers/by-code/:code/authorize"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/identity-providers/by-code/${encodeURIComponent(providerCode)}/callback",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/identity-providers/by-code/:code/callback"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/account-link-requests",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/account-link-requests"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/account-link-requests/complete",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/account-link-requests/complete"
+ },
+ {
+  "m": "POST",
+  "p": "/auth-providers/federated-identities/${encodeURIComponent(identityId)}/unlink",
+  "files": [
+   "src/app/core/data-access/auth-providers/auth-providers.client.ts"
+  ],
+  "api": "POST /auth-providers/federated-identities/:id/unlink"
+ },
+ {
+  "m": "GET",
+  "p": "/authz/care-relationships",
+  "files": [
+   "src/app/core/data-access/authz/authz.client.ts"
+  ],
+  "api": "GET /authz/care-relationships"
+ },
+ {
+  "m": "GET",
+  "p": "/authz/legal-representations",
+  "files": [
+   "src/app/core/data-access/authz/authz.client.ts"
+  ],
+  "api": "GET /authz/legal-representations"
+ },
+ {
+  "m": "POST",
+  "p": "/authz/care-relationships/request",
+  "files": [
+   "src/app/core/data-access/authz/authz.client.ts"
+  ],
+  "api": "POST /authz/care-relationships/request"
+ },
+ {
+  "m": "GET",
+  "p": "/authz/care-relationships/requests/mine",
+  "files": [
+   "src/app/core/data-access/authz/authz.client.ts"
+  ],
+  "api": "GET /authz/care-relationships/requests/mine"
+ },
+ {
+  "m": "POST",
+  "p": "/authz/care-relationships/${encodeURIComponent(id)}/respond",
+  "files": [
+   "src/app/core/data-access/authz/authz.client.ts"
+  ],
+  "api": "POST /authz/care-relationships/:id/respond"
+ },
+ {
+  "m": "POST",
+  "p": "/charts/care-plans",
+  "files": [
+   "src/app/core/data-access/chart-care-plans/chart-care-plans.client.ts"
+  ],
+  "api": "POST /charts/care-plans"
+ },
+ {
+  "m": "POST",
+  "p": "/charts/documents",
+  "files": [
+   "src/app/core/data-access/chart-documents/chart-documents.client.ts"
+  ],
+  "api": "POST /charts/documents"
+ },
+ {
+  "m": "POST",
+  "p": "/charts/notes",
+  "files": [
+   "src/app/core/data-access/chart-notes/chart-notes.client.ts"
+  ],
+  "api": "POST /charts/notes"
+ },
+ {
+  "m": "PUT",
+  "p": "/charts/notes/${encodeURIComponent(noteId)}/versions",
+  "files": [
+   "src/app/core/data-access/chart-notes/chart-notes.client.ts"
+  ],
+  "api": "PUT /charts/notes/:noteId/versions"
+ },
+ {
+  "m": "GET",
+  "p": "/charts/templates",
+  "files": [
+   "src/app/core/data-access/chart-templates/chart-templates.client.ts"
+  ],
+  "api": "GET /charts/templates"
+ },
+ {
+  "m": "GET",
+  "p": "/charts/templates/${encodeURIComponent(id)}",
+  "files": [
+   "src/app/core/data-access/chart-templates/chart-templates.client.ts"
+  ],
+  "api": "GET /charts/templates/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/charts/templates",
+  "files": [
+   "src/app/core/data-access/chart-templates/chart-templates.client.ts"
+  ],
+  "api": "POST /charts/templates"
+ },
+ {
+  "m": "POST",
+  "p": "/charts/templates/${encodeURIComponent(templateId)}/assignments",
+  "files": [
+   "src/app/core/data-access/chart-templates/chart-templates.client.ts"
+  ],
+  "api": "POST /charts/templates/:templateId/assignments"
+ },
+ {
+  "m": "GET",
+  "p": "/clinical/patients/${encodeURIComponent(patientProfileId)}/summary",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "GET /clinical/patients/:patientProfileId/summary"
+ },
+ {
+  "m": "GET",
+  "p": "/clinical/me/medical-aspects",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "PUT",
+  "p": "/clinical/me/medical-aspects",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/care-episodes",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/care-episodes"
+ },
+ {
+  "m": "GET",
+  "p": "/charts/patients/${encodeURIComponent(patientProfileId)}/chart",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "GET /charts/patients/:patientProfileId/chart"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/encounters/check-in",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/encounters/check-in"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/encounters/${encodeURIComponent(encounterId)}/close",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/encounters/:id/close"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/medication-requests",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/medication-requests"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/sign",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/medication-requests/:id/sign"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/issue",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/medication-requests/:id/issue"
+ },
+ {
+  "m": "GET",
+  "p": "/clinical/prescriptions/${encodeURIComponent(medicationRequestId)}/pdf",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "GET /clinical/prescriptions/:id/pdf"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/conditions",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/conditions"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/conditions/${encodeURIComponent(conditionId)}/change-status",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/conditions/:id/change-status"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/conditions/${encodeURIComponent(conditionId)}/attachments",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/conditions/:id/attachments"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/procedures/${encodeURIComponent(procedureId)}/attachments",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/procedures/:id/attachments"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/medication-requests/${encodeURIComponent(requestId)}/attachments",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/allergy-intolerances/${encodeURIComponent(allergyId)}/attachments",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/allergy-intolerances",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/allergy-intolerances"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/observations",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/observations"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/diagnostic-reports",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/diagnostic-reports"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/diagnostic-reports/${encodeURIComponent(diagnosticReportId)}/release",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /clinical/diagnostic-reports/:id/release"
+ },
+ {
+  "m": "POST",
+  "p": "/cds/check-interactions",
+  "files": [
+   "src/app/core/data-access/clinical/clinical.client.ts"
+  ],
+  "api": "POST /cds/check-interactions"
+ },
+ {
+  "m": "POST",
+  "p": "/common/addresses",
+  "files": [
+   "src/app/core/data-access/common/addresses.client.ts"
+  ],
+  "api": "POST /common/addresses"
+ },
+ {
+  "m": "GET",
+  "p": "/community/profiles/me",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/profiles/me"
+ },
+ {
+  "m": "PUT",
+  "p": "/community/profiles/me",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "PUT /community/profiles/me"
+ },
+ {
+  "m": "GET",
+  "p": "/community/profiles/${encodeURIComponent(profileId)}/auto-reply",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/profiles/by-slug/:slug"
+ },
+ {
+  "m": "PUT",
+  "p": "/community/profiles/${encodeURIComponent(profileId)}/auto-reply",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "PUT /community/profiles/:profileId/auto-reply"
+ },
+ {
+  "m": "GET",
+  "p": "/community/profiles/${encodeURIComponent(profileId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/profiles/me"
+ },
+ {
+  "m": "GET",
+  "p": "/community/profiles/${encodeURIComponent(profileId)}/posts",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/profiles/by-slug/:slug"
+ },
+ {
+  "m": "POST",
+  "p": "/community/profiles/${encodeURIComponent(profileId)}/posts",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/profiles/:profileId/posts"
+ },
+ {
+  "m": "GET",
+  "p": "/community/posts/${encodeURIComponent(postId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/posts/:postId"
+ },
+ {
+  "m": "GET",
+  "p": "/community/posts/${encodeURIComponent(postId)}/comments",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/posts/:postId/comments"
+ },
+ {
+  "m": "PUT",
+  "p": "/community/reactions",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "PUT /community/reactions"
+ },
+ {
+  "m": "POST",
+  "p": "/community/comments",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/comments"
+ },
+ {
+  "m": "GET",
+  "p": "/community/comments/media/${encodeURIComponent(fileId)}/content",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/comments/media/:fileId/content"
+ },
+ {
+  "m": "GET",
+  "p": "/community/conversations/${encodeURIComponent(conversationId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/community/posts/${encodeURIComponent(postId)}/reactions",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/posts/:postId/reactions"
+ },
+ {
+  "m": "POST",
+  "p": "/community/follows",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/follows"
+ },
+ {
+  "m": "DELETE",
+  "p": "/community/follows",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "DELETE /community/follows"
+ },
+ {
+  "m": "POST",
+  "p": "/community/bookmarks",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/bookmarks"
+ },
+ {
+  "m": "DELETE",
+  "p": "/community/bookmarks",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "DELETE /community/bookmarks"
+ },
+ {
+  "m": "POST",
+  "p": "/community/blocks",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/blocks"
+ },
+ {
+  "m": "DELETE",
+  "p": "/community/blocks",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "DELETE /community/blocks"
+ },
+ {
+  "m": "GET",
+  "p": "/community/follows",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/follows"
+ },
+ {
+  "m": "GET",
+  "p": "/community/bookmarks",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/bookmarks"
+ },
+ {
+  "m": "GET",
+  "p": "/community/blocks",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/blocks"
+ },
+ {
+  "m": "GET",
+  "p": "/community/feed",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/feed"
+ },
+ {
+  "m": "GET",
+  "p": "/community/notifications",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/notifications"
+ },
+ {
+  "m": "GET",
+  "p": "/community/profiles/${encodeURIComponent(profileId)}/reviews",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/profiles/:profileId/reviews"
+ },
+ {
+  "m": "GET",
+  "p": "/community/moderation/queue",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/moderation/queue"
+ },
+ {
+  "m": "GET",
+  "p": "/community/moderation/decisions",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/moderation/decisions"
+ },
+ {
+  "m": "GET",
+  "p": "/community/moderation/appeals",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/moderation/appeals"
+ },
+ {
+  "m": "POST",
+  "p": "/community/reports",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/reports"
+ },
+ {
+  "m": "POST",
+  "p": "/community/moderation/queue/${encodeURIComponent(queueId)}/decision",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/moderation/queue/:queueId/decision"
+ },
+ {
+  "m": "POST",
+  "p": "/community/moderation/decisions/${encodeURIComponent(decisionId)}/appeal",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/moderation/decisions/:decisionId/appeal"
+ },
+ {
+  "m": "POST",
+  "p": "/community/moderation/appeals/${encodeURIComponent(appealId)}/resolve",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/moderation/appeals/:appealId/resolve"
+ },
+ {
+  "m": "POST",
+  "p": "/community/profiles/${encodeURIComponent(profileId)}/reviews",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/profiles/:profileId/reviews"
+ },
+ {
+  "m": "POST",
+  "p": "/patients/me/reviews",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /patients/me/reviews"
+ },
+ {
+  "m": "GET",
+  "p": "/community/groups",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/groups"
+ },
+ {
+  "m": "GET",
+  "p": "/community/groups/${encodeURIComponent(groupId)}/members",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/groups/:groupId/members"
+ },
+ {
+  "m": "GET",
+  "p": "/community/groups/${encodeURIComponent(groupId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/groups/:groupId"
+ },
+ {
+  "m": "POST",
+  "p": "/community/groups",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/groups"
+ },
+ {
+  "m": "POST",
+  "p": "/community/groups/${encodeURIComponent(groupId)}/members",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/groups/:groupId/members"
+ },
+ {
+  "m": "DELETE",
+  "p": "/community/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberProfileId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "DELETE /community/groups/:groupId/members/:member"
+ },
+ {
+  "m": "PATCH",
+  "p": "/community/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "PATCH /community/groups/:groupId/members/:member"
+ },
+ {
+  "m": "GET",
+  "p": "/community/groups/${encodeURIComponent(groupId)}/posts",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/groups/:groupId/posts"
+ },
+ {
+  "m": "POST",
+  "p": "/community/groups/${encodeURIComponent(groupId)}/posts",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/groups/:groupId/posts"
+ },
+ {
+  "m": "GET",
+  "p": "/community/topics",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/topics"
+ },
+ {
+  "m": "GET",
+  "p": "/community/conversations",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/conversations"
+ },
+ {
+  "m": "GET",
+  "p": "/community/conversations/${encodeURIComponent(conversationId)}/messages",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/conversations/:conversationId/messages"
+ },
+ {
+  "m": "GET",
+  "p": "/community/profiles/by-slug/${encodeURIComponent(slug)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/profiles/:profileId/reviews"
+ },
+ {
+  "m": "GET",
+  "p": "/public/search/practitioners",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /public/search/practitioners"
+ },
+ {
+  "m": "POST",
+  "p": "/community/conversations",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/conversations"
+ },
+ {
+  "m": "POST",
+  "p": "/community/conversations/${encodeURIComponent(conversationId)}/messages",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/conversations/:conversationId/messages"
+ },
+ {
+  "m": "PATCH",
+  "p": "/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "PATCH /community/conversations/:conversationId/messages/:messageId"
+ },
+ {
+  "m": "POST",
+  "p": "/community/conversations/${encodeURIComponent(conversationId)}/read",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "POST /community/conversations/:conversationId/read"
+ },
+ {
+  "m": "GET",
+  "p": "/community/polls/${encodeURIComponent(pollId)}",
+  "files": [
+   "src/app/core/data-access/community/community.client.ts"
+  ],
+  "api": "GET /community/polls/:pollId"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/content-packs",
+  "files": [
+   "src/app/core/data-access/content-packs/content-packs.client.ts"
+  ],
+  "api": "GET /admin/content-packs"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/content-packs/${encodeURIComponent(code)}/apply",
+  "files": [
+   "src/app/core/data-access/content-packs/content-packs.client.ts"
+  ],
+  "api": "POST /admin/content-packs/:code/apply"
+ },
+ {
+  "m": "POST",
+  "p": "/org/${encodeURIComponent(tenantMembershipId)}/user-assignments",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /org/:tenantMembershipId/user-assignments"
+ },
+ {
+  "m": "PATCH",
+  "p": "/org/user-assignments/${encodeURIComponent(assignmentId)}",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "PATCH /org/user-assignments/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/practitioner-delegates",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /practitioner-delegates"
+ },
+ {
+  "m": "POST",
+  "p": "/practitioner-delegates/${encodeURIComponent(delegationId)}/access-requests",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /practitioner-delegates/:id/access-requests"
+ },
+ {
+  "m": "POST",
+  "p": "/practitioner-delegates/${encodeURIComponent(delegationId)}/grants",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /practitioner-delegates/:id/grants"
+ },
+ {
+  "m": "POST",
+  "p": "/practitioner-delegates/${encodeURIComponent(delegationId)}/revoke",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /practitioner-delegates/:id/revoke"
+ },
+ {
+  "m": "POST",
+  "p": "/access-requests/${encodeURIComponent(requestId)}/decision",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /access-requests/:id/decision"
+ },
+ {
+  "m": "POST",
+  "p": "/authz/effective-actor/evaluate",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /authz/effective-actor/evaluate"
+ },
+ {
+  "m": "POST",
+  "p": "/delegated-access/expiry-sweep",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /delegated-access/expiry-sweep"
+ },
+ {
+  "m": "POST",
+  "p": "/delegated-permission-sets",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /delegated-permission-sets"
+ },
+ {
+  "m": "POST",
+  "p": "/delegated-permission-sets/${encodeURIComponent(setId)}/versions",
+  "files": [
+   "src/app/core/data-access/delegated-access/delegated-access.client.ts"
+  ],
+  "api": "POST /delegated-permission-sets/:id/versions"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-units/administration",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "GET /diagnostic-units/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-units/${encodeURIComponent(id)}/administration",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "GET /diagnostic-units/:id/administration"
+ },
+ {
+  "m": "POST",
+  "p": "/diagnostic-units/${encodeURIComponent(unitId)}/verify-and-publish",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "POST /diagnostic-units/:id/verify-and-publish"
+ },
+ {
+  "m": "POST",
+  "p": "/diagnostic-units/${encodeURIComponent(unitId)}/study-offerings",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "POST /diagnostic-units/:id/study-offerings"
+ },
+ {
+  "m": "POST",
+  "p": "/diagnostic-units/${encodeURIComponent(unitId)}/price-schedules",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "POST /diagnostic-units/:id/price-schedules"
+ },
+ {
+  "m": "POST",
+  "p": "/price-schedules/${encodeURIComponent(scheduleId)}/study-prices",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "POST /price-schedules/:scheduleId/study-prices"
+ },
+ {
+  "m": "POST",
+  "p": "/study-prices/${encodeURIComponent(priceId)}/close",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "POST /study-prices/:priceId/close"
+ },
+ {
+  "m": "DELETE",
+  "p": "/diagnostic-study-offerings/${encodeURIComponent(offeringId)}",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts"
+  ],
+  "api": "DELETE /diagnostic-study-offerings/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-units",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts"
+  ],
+  "api": "GET /diagnostic-units"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-units/search",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts"
+  ],
+  "api": "GET /diagnostic-units/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-units/${encodeURIComponent(id)}",
+  "files": [
+   "src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts"
+  ],
+  "api": "GET /diagnostic-units/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostics/patients/${encodeURIComponent(patientProfileId)}/orders",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "GET /diagnostics/patients/:patientProfileId/orders"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostics/patients/${encodeURIComponent(patientProfileId)}/imaging-studies",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "GET /diagnostics/patients/:patientProfileId/imaging-studies"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostics/work-orders",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "GET /diagnostics/work-orders"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/service-requests",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "POST /clinical/service-requests"
+ },
+ {
+  "m": "POST",
+  "p": "/clinical/service-requests/duplicate-check",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "POST /clinical/service-requests/duplicate-check"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-results/me",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "GET /diagnostic-results/me"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-results/me/orders",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "GET /diagnostic-results/me/orders"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-results/me/${encodeURIComponent(reportId)}",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "GET /diagnostic-results/me/orders"
+ },
+ {
+  "m": "GET",
+  "p": "/diagnostic-results/me/${encodeURIComponent(reportId)}/shares",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "GET /diagnostic-results/me/:reportId/shares"
+ },
+ {
+  "m": "POST",
+  "p": "/diagnostic-results/me/${encodeURIComponent(reportId)}/shares",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "POST /diagnostic-results/me/:reportId/shares"
+ },
+ {
+  "m": "POST",
+  "p": "/diagnostic-results/me/${encodeURIComponent(reportId)}/shares/${encodeURIComponent(shareId)}/revoke",
+  "files": [
+   "src/app/core/data-access/diagnostics/diagnostics.client.ts"
+  ],
+  "api": "POST /diagnostic-results/me/:reportId/shares/:shareId/revoke"
+ },
+ {
+  "m": "GET",
+  "p": "/admin/tenants",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /admin/tenants"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/tenants",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /admin/tenants"
+ },
+ {
+  "m": "POST",
+  "p": "/admin/tenants/${tenantId}/verification",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /admin/tenants/:tenantId/verification"
+ },
+ {
+  "m": "POST",
+  "p": "/tenants/${tenantId}/child-tenants",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /tenants/:tenantId/child-tenants"
+ },
+ {
+  "m": "POST",
+  "p": "/tenants/${tenantId}/branches",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /tenants/:tenantId/branches"
+ },
+ {
+  "m": "POST",
+  "p": "/tenants/${tenantId}/memberships",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /tenants/:tenantId/memberships"
+ },
+ {
+  "m": "POST",
+  "p": "/tenants/${tenantId}/memberships/${membershipId}/branch-assignments",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /tenants/:tenantId/memberships/:membershipId/branch-assignments"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/${tenantId}/branches",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/:tenantId/branches"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/${tenantId}/memberships",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/:tenantId/memberships"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/${tenantId}/memberships/${membershipId}/branch-assignments",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/:tenantId/memberships/:membershipId/branch-assignments"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/${tenantId}/child-tenants",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/:tenantId/child-tenants"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/me",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/me"
+ },
+ {
+  "m": "PATCH",
+  "p": "/tenants/${tenantId}",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "PATCH /tenants/:tenantId"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/${tenantId}/practitioner-requests",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/:tenantId/practitioner-requests"
+ },
+ {
+  "m": "POST",
+  "p": "/tenants/${tenantId}/practitioner-requests/${affiliationId}/approve",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /tenants/:tenantId/practitioner-requests/:affiliationId/approve"
+ },
+ {
+  "m": "POST",
+  "p": "/tenants/${tenantId}/practitioner-requests/${affiliationId}/reject",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "POST /tenants/:tenantId/practitioner-requests/:affiliationId/reject"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/${tenantId}/agenda",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/:tenantId/agenda"
+ },
+ {
+  "m": "GET",
+  "p": "/tenants/${tenantId}",
+  "files": [
+   "src/app/core/data-access/directory/directory.client.ts"
+  ],
+  "api": "GET /tenants/me"
+ },
+ {
+  "m": "POST",
+  "p": "/common/files/upload",
+  "files": [
+   "src/app/core/data-access/files/files.client.ts"
+  ],
+  "api": "POST /common/files/upload"
+ },
+ {
+  "m": "GET",
+  "p": "/common/files/links",
+  "files": [
+   "src/app/core/data-access/files/files.client.ts"
+  ],
+  "api": "GET /common/files/links"
+ },
+ {
+  "m": "POST",
+  "p": "/common/files/${encodeURIComponent(fileId)}/links",
+  "files": [
+   "src/app/core/data-access/files/files.client.ts"
+  ],
+  "api": "POST /common/files/:id/links"
+ },
+ {
+  "m": "POST",
+  "p": "/common/files/${encodeURIComponent(fileId)}/download-url",
+  "files": [
+   "src/app/core/data-access/files/files.client.ts"
+  ],
+  "api": "POST /common/files/:id/download-url"
+ },
+ {
+  "m": "GET",
+  "p": "/common/files/${encodeURIComponent(fileId)}/content",
+  "files": [
+   "src/app/core/data-access/files/files.client.ts"
+  ],
+  "api": "GET /common/files/:id/content"
+ },
+ {
+  "m": "DELETE",
+  "p": "/common/files/${encodeURIComponent(fileId)}",
+  "files": [
+   "src/app/core/data-access/files/files.client.ts"
+  ],
+  "api": "DELETE /common/files/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/forms/instances",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "POST /forms/instances"
+ },
+ {
+  "m": "POST",
+  "p": "/forms/instances/${encodeURIComponent(instanceId)}/values",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "POST /forms/instances/:id/values"
+ },
+ {
+  "m": "POST",
+  "p": "/forms/instances/${encodeURIComponent(instanceId)}/close",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "POST /forms/instances/:id/close"
+ },
+ {
+  "m": "GET",
+  "p": "/forms/instances",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "GET /forms/instances"
+ },
+ {
+  "m": "GET",
+  "p": "/forms/instances/${encodeURIComponent(instanceId)}",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "GET /forms/instances/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/forms/me/instances",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "GET /forms/me/instances"
+ },
+ {
+  "m": "GET",
+  "p": "/forms/me/instances/${encodeURIComponent(instanceId)}",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "GET /forms/me/instances/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/forms/field-definitions",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "POST /forms/field-definitions"
+ },
+ {
+  "m": "POST",
+  "p": "/forms/assignments",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "POST /forms/assignments"
+ },
+ {
+  "m": "PATCH",
+  "p": "/forms/field-definitions/${encodeURIComponent(fieldId)}",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/forms/assignments/${encodeURIComponent(assignmentId)}",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/forms/assignments/${encodeURIComponent(assignmentId)}",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "PUT",
+  "p": "/forms/assignments/order",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/forms/assignments/budget",
+  "files": [
+   "src/app/core/data-access/forms/forms.client.ts"
+  ],
+  "api": "GET /forms/assignments/budget"
+ },
+ {
+  "m": "GET",
+  "p": "/geo/tracked-subjects/${encodeURIComponent(trackedSubjectId)}/last-position",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "GET /geo/tracked-subjects/:id/last-position"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/tracked-subjects",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/tracked-subjects"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/tracked-subjects/${encodeURIComponent(trackedSubjectId)}/pings",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/tracked-subjects/:id/pings"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/tracked-subjects/${encodeURIComponent(trackedSubjectId)}/revoke-consent",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/tracked-subjects/:id/revoke-consent"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/tracking-sessions",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/tracking-sessions"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/tracking-sessions/${encodeURIComponent(sessionId)}/close",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/tracking-sessions/:id/close"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/trips",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/trips"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/trips/${encodeURIComponent(tripId)}/close",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/trips/:id/close"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/geofences",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/geofences"
+ },
+ {
+  "m": "POST",
+  "p": "/geo/geofence-events",
+  "files": [
+   "src/app/core/data-access/geo/geo.client.ts"
+  ],
+  "api": "POST /geo/geofence-events"
+ },
+ {
+  "m": "GET",
+  "p": "/health-context/contexts/resolve",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "GET /health-context/contexts/resolve"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/agents",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/agents"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/sources",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/sources"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/schedules",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/schedules"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/contexts",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/contexts"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/contexts/${encodeURIComponent(contextId)}/versions",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/contexts/:id/versions"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/versions/${encodeURIComponent(versionId)}/quality-reviews",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/versions/:id/quality-reviews"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/versions/${encodeURIComponent(versionId)}/publish",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/versions/:id/publish"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/versions/${encodeURIComponent(versionId)}/supersede",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/versions/:id/supersede"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/collection-runs",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/collection-runs"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/collection-runs/${encodeURIComponent(collectionRunId)}/observations",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/collection-runs/:id/observations"
+ },
+ {
+  "m": "POST",
+  "p": "/health-context/collection-runs/${encodeURIComponent(collectionRunId)}/finish",
+  "files": [
+   "src/app/core/data-access/health-context/health-context.client.ts"
+  ],
+  "api": "POST /health-context/collection-runs/:id/finish"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/login",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/login"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/token/refresh",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/token/refresh"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/register-patient",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/register-patient"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/register-practitioner",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/register-practitioner"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/register-organization",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/register-organization"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/upload-registration-document",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/upload-registration-document"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/verify-email",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/verify-email"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/activate",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/activate"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/logout",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/logout"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/resend-verification",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/resend-verification"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/forgot-password",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/forgot-password"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/auth/reset-password",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/auth/reset-password"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/users",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/users"
+ },
+ {
+  "m": "POST",
+  "p": "/iam/users/assisted-registration",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "POST /iam/users/assisted-registration"
+ },
+ {
+  "m": "GET",
+  "p": "/iam/users",
+  "files": [
+   "src/app/core/data-access/iam/iam.client.ts"
+  ],
+  "api": "GET /iam/users"
+ },
+ {
+  "m": "GET",
+  "p": "/identity/verification-cases",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "GET /identity/verification-cases"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/authorities",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/authorities"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/authorities/${encodeURIComponent(authorityId)}/endpoints",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/authorities/:id/endpoints"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-policies",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/verification-policies"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/verification-cases"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases/${encodeURIComponent(caseId)}/evidence",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/verification-cases/:id/evidence"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases/${encodeURIComponent(caseId)}/checks:plan",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases/${encodeURIComponent(caseId)}/fraud-signals",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/verification-cases/:id/fraud-signals"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases/${encodeURIComponent(caseId)}/manual-review",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/verification-cases/:id/manual-review"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases/${encodeURIComponent(caseId)}/assertions",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/verification-cases/:id/assertions"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/verification-cases/expire-sweep",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/verification-cases/expire-sweep"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/checks/${encodeURIComponent(checkId)}/attempts",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/checks/:id/attempts"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/checks/${encodeURIComponent(checkId)}/results",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/checks/:id/results"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/manual-review/${encodeURIComponent(reviewId)}/decision",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/manual-review/:id/decision"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/assertions/${encodeURIComponent(assertionId)}/revoke",
+  "files": [
+   "src/app/core/data-access/identity/identity-admin.client.ts"
+  ],
+  "api": "POST /identity/assertions/:id/revoke"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/me/identity-verification",
+  "files": [
+   "src/app/core/data-access/identity/identity.client.ts"
+  ],
+  "api": "POST /identity/me/identity-verification"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/me/practitioner/identity-verification",
+  "files": [
+   "src/app/core/data-access/identity/identity.client.ts"
+  ],
+  "api": "POST /identity/me/practitioner/identity-verification"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/me/practitioner/license-verification",
+  "files": [
+   "src/app/core/data-access/identity/identity.client.ts"
+  ],
+  "api": "POST /identity/me/practitioner/license-verification"
+ },
+ {
+  "m": "POST",
+  "p": "/identity/me/tenants/${encodeURIComponent(tenantId)}/verification",
+  "files": [
+   "src/app/core/data-access/identity/identity.client.ts"
+  ],
+  "api": "POST /identity/me/tenants/:tenantId/verification"
+ },
+ {
+  "m": "GET",
+  "p": "/identity/me/verification-cases",
+  "files": [
+   "src/app/core/data-access/identity/identity.client.ts"
+  ],
+  "api": "GET /identity/me/verification-cases"
+ },
+ {
+  "m": "GET",
+  "p": "/identity/me/verification-cases/${encodeURIComponent(caseId)}",
+  "files": [
+   "src/app/core/data-access/identity/identity.client.ts"
+  ],
+  "api": "GET /identity/me/verification-cases/:caseId"
+ },
+ {
+  "m": "GET",
+  "p": "/identity/me/verification-types",
+  "files": [
+   "src/app/core/data-access/identity/identity.client.ts"
+  ],
+  "api": "GET /identity/me/verification-types"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance/analytics/loss-ratio",
+  "files": [
+   "src/app/core/data-access/insurance/insurance-analytics.client.ts"
+  ],
+  "api": "GET /insurance/analytics/loss-ratio"
+ },
+ {
+  "m": "POST",
+  "p": "/insurance/portability/export",
+  "files": [
+   "src/app/core/data-access/insurance/insurance-portability.client.ts"
+  ],
+  "api": "POST /insurance/portability/export"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance/portability/certificates/${encodeURIComponent(certificateId)}/pdf",
+  "files": [
+   "src/app/core/data-access/insurance/insurance-portability.client.ts"
+  ],
+  "api": "GET /insurance/portability/certificates/:certificateId/pdf"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance/portability/certificates/${encodeURIComponent(certificateId)}/json",
+  "files": [
+   "src/app/core/data-access/insurance/insurance-portability.client.ts"
+  ],
+  "api": "GET /insurance/portability/certificates/:certificateId/json"
+ },
+ {
+  "m": "GET",
+  "p": "/public/portability/verify/${encodeURIComponent(manifestHash)}",
+  "files": [
+   "src/app/core/data-access/insurance/insurance-portability.client.ts"
+  ],
+  "api": "GET /public/portability/verify/:manifestHash"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-carrier-catalog",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-carrier-catalog"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-carriers",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-carriers"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-carriers/${encodeURIComponent(id)}",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-carriers/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/insurance-products/${encodeURIComponent(productId)}/plans",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "POST /insurance-products/:productId/plans"
+ },
+ {
+  "m": "POST",
+  "p": "/insurance-plans/${encodeURIComponent(planId)}/benefits",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "POST /insurance-plans/:planId/benefits"
+ },
+ {
+  "m": "PUT",
+  "p": "/insurance-plans/${encodeURIComponent(planId)}/benefits/${encodeURIComponent(benefitId)}",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "PUT /insurance-plans/:planId/benefits/:benefitId"
+ },
+ {
+  "m": "PUT",
+  "p": "/insurance-plans/${encodeURIComponent(planId)}/benefits/${encodeURIComponent(benefitId)}/rules",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "PUT /insurance-plans/:planId/benefits/:benefitId/rules"
+ },
+ {
+  "m": "PUT",
+  "p": "/insurance-plans/${encodeURIComponent(planId)}/premium",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "PUT /insurance-plans/:planId/premium"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-brokers",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-brokers"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-brokers/${encodeURIComponent(id)}",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-brokers/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-brokers/${encodeURIComponent(id)}/clients",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-brokers/:id/clients"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-claims",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-claims"
+ },
+ {
+  "m": "GET",
+  "p": "/insurance-claims/${encodeURIComponent(id)}",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "GET /insurance-claims/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/insurance-claims/${encodeURIComponent(claimId)}/disputes",
+  "files": [
+   "src/app/core/data-access/insurance/insurance.client.ts"
+  ],
+  "api": "POST /insurance-claims/:id/disputes"
+ },
+ {
+  "m": "GET",
+  "p": "/loyalty/me",
+  "files": [
+   "src/app/core/data-access/loyalty/loyalty.client.ts"
+  ],
+  "api": "GET /loyalty/me"
+ },
+ {
+  "m": "GET",
+  "p": "/loyalty/me/points",
+  "files": [
+   "src/app/core/data-access/loyalty/loyalty.client.ts"
+  ],
+  "api": "GET /loyalty/me/points"
+ },
+ {
+  "m": "POST",
+  "p": "/loyalty/me/points/redeem",
+  "files": [
+   "src/app/core/data-access/loyalty/loyalty.client.ts"
+  ],
+  "api": "POST /loyalty/me/points/redeem"
+ },
+ {
+  "m": "GET",
+  "p": "/practices/${encodeURIComponent(practiceId)}/organization",
+  "files": [
+   "src/app/core/data-access/medical-organization/medical-organization.client.ts"
+  ],
+  "api": "GET /practices/:practiceId/organization"
+ },
+ {
+  "m": "GET",
+  "p": "/notifications/me",
+  "files": [
+   "src/app/core/data-access/notifications/notifications.client.ts"
+  ],
+  "api": "GET /notifications/me"
+ },
+ {
+  "m": "POST",
+  "p": "/notifications/in-app/${encodeURIComponent(id)}/read",
+  "files": [
+   "src/app/core/data-access/notifications/notifications.client.ts"
+  ],
+  "api": "POST /notifications/in-app/:id/read"
+ },
+ {
+  "m": "POST",
+  "p": "/notifications/in-app/read-all",
+  "files": [
+   "src/app/core/data-access/notifications/notifications.client.ts"
+  ],
+  "api": "POST /notifications/in-app/read-all"
+ },
+ {
+  "m": "GET",
+  "p": "/notifications/preferences/me",
+  "files": [
+   "src/app/core/data-access/notifications/notifications.client.ts"
+  ],
+  "api": "GET /notifications/preferences/me"
+ },
+ {
+  "m": "PUT",
+  "p": "/notifications/preferences/me",
+  "files": [
+   "src/app/core/data-access/notifications/notifications.client.ts"
+  ],
+  "api": "PUT /notifications/preferences/me"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/reference/concepts",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts"
+  ],
+  "api": "GET /pharma-labs/reference/concepts"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/${enc(pharmaLabId)}",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs/:pharmaLabId"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/${enc(pharmaLabId)}/staff",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs/:pharmaLabId/staff"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/${enc(pharmaLabId)}/medical-visitors",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs/:pharmaLabId/medical-visitors"
+ },
+ {
+  "m": "POST",
+  "p": "/pharma-labs/${enc(pharmaLabId)}/medical-visitors/${enc(medicalVisitorId)}/unlink",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "POST /pharma-labs/:pharmaLabId/medical-visitors/:medicalVisitorId/unlink"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/${enc(pharmaLabId)}/products",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs/:pharmaLabId/products"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/${enc(pharmaLabId)}/materials",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs/:pharmaLabId/materials"
+ },
+ {
+  "m": "GET",
+  "p": "/visit-agenda/me",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /visit-agenda/me"
+ },
+ {
+  "m": "PUT",
+  "p": "/visit-agenda/me",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "PUT /visit-agenda/me"
+ },
+ {
+  "m": "GET",
+  "p": "/visit-agenda/doctors/${enc(doctorUserId)}",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /visit-agenda/doctors/:doctorUserId"
+ },
+ {
+  "m": "POST",
+  "p": "/visit-requests",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "POST /visit-requests"
+ },
+ {
+  "m": "GET",
+  "p": "/visit-requests/mine",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /visit-requests/mine"
+ },
+ {
+  "m": "GET",
+  "p": "/visit-requests/inbox",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /visit-requests/inbox"
+ },
+ {
+  "m": "POST",
+  "p": "/visit-requests/${enc(visitRequestId)}/accept",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "POST /visit-requests/:visitRequestId/accept"
+ },
+ {
+  "m": "POST",
+  "p": "/visit-requests/${enc(visitRequestId)}/reject",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "POST /visit-requests/:visitRequestId/reject"
+ },
+ {
+  "m": "POST",
+  "p": "/visit-requests/${enc(visitRequestId)}/cancel",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "POST /visit-requests/:visitRequestId/cancel"
+ },
+ {
+  "m": "GET",
+  "p": "/visit-records/inbox",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /visit-records/inbox"
+ },
+ {
+  "m": "GET",
+  "p": "/visit-records/labs/${enc(pharmaLabId)}",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /visit-records/labs/:pharmaLabId"
+ },
+ {
+  "m": "GET",
+  "p": "/visit-records/labs/${enc(pharmaLabId)}/rating-summary",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /visit-records/labs/:pharmaLabId/rating-summary"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/${enc(pharmaLabId)}/pharmacovigilance/reports",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs/:pharmaLabId/pharmacovigilance/reports"
+ },
+ {
+  "m": "GET",
+  "p": "/pharma-labs/${enc(pharmaLabId)}/regulatory-documents",
+  "files": [
+   "src/app/core/data-access/pharma-lab/pharma-lab.client.ts"
+  ],
+  "api": "GET /pharma-labs/:pharmaLabId/regulatory-documents"
+ },
+ {
+  "m": "GET",
+  "p": "/pharmacy/pharmacies",
+  "files": [
+   "src/app/core/data-access/pharmacy/pharmacy.client.ts"
+  ],
+  "api": "GET /pharmacy/pharmacies"
+ },
+ {
+  "m": "GET",
+  "p": "/pharmacy/products",
+  "files": [
+   "src/app/core/data-access/pharmacy/pharmacy.client.ts"
+  ],
+  "api": "GET /pharmacy/products"
+ },
+ {
+  "m": "GET",
+  "p": "/pharmacy-inventory/availability",
+  "files": [
+   "src/app/core/data-access/pharmacy/pharmacy.client.ts"
+  ],
+  "api": "GET /pharmacy-inventory/availability"
+ },
+ {
+  "m": "POST",
+  "p": "/pharmacy/orders",
+  "files": [
+   "src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.ts"
+  ],
+  "api": "POST /pharmacy/orders"
+ },
+ {
+  "m": "GET",
+  "p": "/pharmacy/orders/me",
+  "files": [
+   "src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.ts"
+  ],
+  "api": "GET /pharmacy/orders/me"
+ },
+ {
+  "m": "GET",
+  "p": "/pharmacy/orders",
+  "files": [
+   "src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.ts"
+  ],
+  "api": "GET /pharmacy/orders"
+ },
+ {
+  "m": "GET",
+  "p": "/practitioners/${encodeURIComponent(practitionerProfileId)}/sites",
+  "files": [
+   "src/app/core/data-access/practice-sites/practice-sites.client.ts"
+  ],
+  "api": "GET /practitioners/:profileId/sites"
+ },
+ {
+  "m": "GET",
+  "p": "/practitioners/me/role-assignments",
+  "files": [
+   "src/app/core/data-access/practice-sites/practice-sites.client.ts"
+  ],
+  "api": "GET /practitioners/me/role-assignments"
+ },
+ {
+  "m": "POST",
+  "p": "/practices/${encodeURIComponent(practiceId)}/role-assignments/self-request",
+  "files": [
+   "src/app/core/data-access/practice-sites/practice-sites.client.ts"
+  ],
+  "api": "POST /practices/:practiceId/role-assignments/self-request"
+ },
+ {
+  "m": "POST",
+  "p": "/practitioners/me/sites",
+  "files": [
+   "src/app/core/data-access/practice-sites/practice-sites.client.ts"
+  ],
+  "api": "POST /practitioners/me/sites"
+ },
+ {
+  "m": "PATCH",
+  "p": "/practitioners/me/sites/${encodeURIComponent(siteId)}",
+  "files": [
+   "src/app/core/data-access/practice-sites/practice-sites.client.ts"
+  ],
+  "api": "PATCH /practitioners/me/sites/:siteId"
+ },
+ {
+  "m": "PUT",
+  "p": "/practitioners/me/sites/${encodeURIComponent(siteId)}/bank-qr",
+  "files": [
+   "src/app/core/data-access/practice-sites/practice-sites.client.ts"
+  ],
+  "api": "PUT /practitioners/me/sites/:siteId/bank-qr"
+ },
+ {
+  "m": "DELETE",
+  "p": "/practitioners/me/sites/${encodeURIComponent(siteId)}",
+  "files": [
+   "src/app/core/data-access/practice-sites/practice-sites.client.ts"
+  ],
+  "api": "DELETE /practitioners/me/sites/:siteId"
+ },
+ {
+  "m": "GET",
+  "p": "/procedure-cases",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "GET /procedure-cases"
+ },
+ {
+  "m": "GET",
+  "p": "/procedure-cases/${encodeURIComponent(caseId)}/team-members",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "GET /procedure-cases/:id/team-members"
+ },
+ {
+  "m": "POST",
+  "p": "/procedure-cases/${encodeURIComponent(caseId)}/team-members/${encodeURIComponent(memberId)}/accept",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "POST /procedure-cases/:id/team-members/:memberId/accept"
+ },
+ {
+  "m": "POST",
+  "p": "/procedure-cases/${encodeURIComponent(caseId)}/team-members/${encodeURIComponent(memberId)}/respond",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "POST /procedure-cases/:id/team-members/:memberId/respond"
+ },
+ {
+  "m": "GET",
+  "p": "/procedure-cases/${encodeURIComponent(caseId)}",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "GET /procedure-cases/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/dental-procedures",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "GET /dental-procedures"
+ },
+ {
+  "m": "GET",
+  "p": "/dental-procedures/catalog",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "GET /dental-procedures/catalog"
+ },
+ {
+  "m": "POST",
+  "p": "/dental-procedures",
+  "files": [
+   "src/app/core/data-access/procedures/procedures.client.ts"
+  ],
+  "api": "POST /dental-procedures"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/patients",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/patients"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/patients/${encodeURIComponent(profileId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/patients/me"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/patients/me/summary",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/patients/me/summary"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/patients/me",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/patients/me"
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/patients/me",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "PATCH /profiles/patients/me"
+ },
+ {
+  "m": "PUT",
+  "p": "/profiles/patients/me/photo",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "PUT /profiles/patients/me/photo"
+ },
+ {
+  "m": "DELETE",
+  "p": "/profiles/patients/me/photo",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "DELETE /profiles/patients/me/photo"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/patients/me/dependents",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/patients/me/dependents"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/patients/me/dependents",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/patients/me/dependents"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/practitioners/me/summary",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/practitioners/me/summary"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/practitioners/me/onboarding",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/practitioners/me/onboarding"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/practitioners",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/practitioners"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/practitioners/specialty-counts",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/practitioners/specialty-counts"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/practitioners/${encodeURIComponent(profileId)}/summary",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/practitioners/me/summary"
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "PATCH /profiles/practitioners/me"
+ },
+ {
+  "m": "PUT",
+  "p": "/profiles/practitioners/${encodeURIComponent(profileId)}/photo",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "PUT /profiles/practitioners/:profileId/photo"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/patients/merge",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/patients/merge"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/patients/merge-events",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/patients/merge-events"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/patients/merge/${encodeURIComponent(eventId)}/reverse",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/patients/merge/:eventId/reverse"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/patients/${encodeURIComponent(profileId)}/related-persons",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/patients/:profileId/related-persons"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/patients",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/patients"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/practitioners",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/practitioners"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/practitioners/me/affiliations",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/practitioners/me/affiliations"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/practitioners/me/affiliations",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/practitioners/me/affiliations"
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/affiliations/${encodeURIComponent(affiliationId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "PATCH /profiles/practitioners/me/affiliations/:affiliationId"
+ },
+ {
+  "m": "DELETE",
+  "p": "/profiles/practitioners/me/affiliations/${encodeURIComponent(affiliationId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "DELETE /profiles/practitioners/me/affiliations/:affiliationId"
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/specialties/${specialtyId}/primary",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "PATCH /profiles/practitioners/me/specialties/:specialtyId/primary"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/practitioners/${profileId}/specialties",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/practitioners/:profileId/specialties"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/practitioners/${profileId}/jurisdiction-authorizations",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/practitioners/:profileId/jurisdiction-authorizations"
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/practitioners/me/credentials",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/practitioners/me/credentials"
+ },
+ {
+  "m": "DELETE",
+  "p": "/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "DELETE /profiles/practitioners/me/credentials/:credentialId"
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/profiles/persons/${personId}/account-links",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "POST /profiles/persons/:personId/account-links"
+ },
+ {
+  "m": "GET",
+  "p": "/profiles/practitioners/me/linkable-organizations",
+  "files": [
+   "src/app/core/data-access/profiles/profiles.client.ts"
+  ],
+  "api": "GET /profiles/practitioners/me/linkable-organizations"
+ },
+ {
+  "m": "GET",
+  "p": "/public/directory",
+  "files": [
+   "src/app/core/data-access/public/public.client.ts"
+  ],
+  "api": "GET /public/directory"
+ },
+ {
+  "m": "GET",
+  "p": "/public/profiles/f/${encodeURIComponent(slug)}/branch-availability",
+  "files": [
+   "src/app/core/data-access/public-catalog/public-catalog.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "GET",
+  "p": "/public/posts",
+  "files": [
+   "src/app/core/data-access/public-directory/public-directory.client.ts"
+  ],
+  "api": "GET /public/posts"
+ },
+ {
+  "m": "GET",
+  "p": "/public/profiles/${prefijo}/${encodeURIComponent(slug)}",
+  "files": [
+   "src/app/core/data-access/public-directory/public-directory.client.ts"
+  ],
+  "api": "GET /public/profiles/:prefijo/:slug"
+ },
+ {
+  "m": "GET",
+  "p": "/public/profiles/${prefijo}/${encodeURIComponent(slug)}/reviews",
+  "files": [
+   "src/app/core/data-access/public-directory/public-directory.client.ts"
+  ],
+  "api": "GET /public/profiles/:prefijo/:slug/reviews"
+ },
+ {
+  "m": "GET",
+  "p": "/public/medications",
+  "files": [
+   "src/app/core/data-access/public-marketplace/public-marketplace.client.ts"
+  ],
+  "api": "GET /public/medications"
+ },
+ {
+  "m": "GET",
+  "p": "/public/medications/${conceptId}/availability",
+  "files": [
+   "src/app/core/data-access/public-marketplace/public-marketplace.client.ts"
+  ],
+  "api": "GET /public/medications/:conceptId/availability"
+ },
+ {
+  "m": "POST",
+  "p": "/quotations",
+  "files": [
+   "src/app/core/data-access/quotations/quotations.client.ts"
+  ],
+  "api": "POST /quotations"
+ },
+ {
+  "m": "GET",
+  "p": "/quotations/${encodeURIComponent(id)}",
+  "files": [
+   "src/app/core/data-access/quotations/quotations.client.ts"
+  ],
+  "api": "GET /quotations/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/quotations",
+  "files": [
+   "src/app/core/data-access/quotations/quotations.client.ts"
+  ],
+  "api": "GET /quotations"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/resources",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/resources"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/slots",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/slots"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/bookings",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/bookings"
+ },
+ {
+  "m": "PUT",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}/payment-state",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "PUT /scheduling/bookings/:id/payment-state"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/bookings/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/resources",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/resources"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/booking-policies",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/booking-policies"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/resources/${encodeURIComponent(resourceId)}/templates",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/resources/:id/templates"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/resources/${encodeURIComponent(resourceId)}/templates",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/resources/:id/templates"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/templates/${encodeURIComponent(templateId)}/reactivate",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/templates/:id/reactivate"
+ },
+ {
+  "m": "DELETE",
+  "p": "/scheduling/templates/${encodeURIComponent(templateId)}",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "DELETE /scheduling/templates/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/templates/${encodeURIComponent(templateId)}/generate-slots",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/templates/:id/generate-slots"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/resources/${encodeURIComponent(resourceId)}/shift-slots",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/resources/:id/shift-slots"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/resources/${encodeURIComponent(resourceId)}/close-slots",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/resources/:id/close-slots"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/activity-types",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/activity-types"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/exception-types",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/exception-types"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/resources/:id/exceptions"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/resources/:id/exceptions"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/appointments/direct",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/appointments/direct"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/appointments/walk-in",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/appointments/walk-in"
+ },
+ {
+  "m": "PATCH",
+  "p": "/scheduling/exceptions/${encodeURIComponent(exceptionId)}",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "PATCH /scheduling/exceptions/:id"
+ },
+ {
+  "m": "DELETE",
+  "p": "/scheduling/exceptions/${encodeURIComponent(exceptionId)}",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "DELETE /scheduling/exceptions/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/slots/${encodeURIComponent(slotId)}/holds",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/slots/:id/holds"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/holds/${encodeURIComponent(holdToken)}/confirm",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/holds/:holdToken/confirm"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/holds/${encodeURIComponent(holdToken)}/request",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/holds/:holdToken/request"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}/cancel",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/bookings/:id/cancel"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}/reschedule",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/bookings/:id/reschedule"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}/reject",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/bookings/:id/reject"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}/${accion}",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/bookings/:id/accept"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}/check-in",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/bookings/:id/check-in"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/waitlist",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/waitlist"
+ },
+ {
+  "m": "GET",
+  "p": "/scheduling/waitlist",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "GET /scheduling/waitlist"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/bookings/${encodeURIComponent(bookingId)}/delay",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/bookings/:id/delay"
+ },
+ {
+  "m": "POST",
+  "p": "/scheduling/resources/${encodeURIComponent(resourceId)}/delay",
+  "files": [
+   "src/app/core/data-access/scheduling/scheduling.client.ts"
+  ],
+  "api": "POST /scheduling/resources/:id/delay"
+ },
+ {
+  "m": "GET",
+  "p": "/billing/service-catalog",
+  "files": [
+   "src/app/core/data-access/services-catalog/services-catalog.client.ts"
+  ],
+  "api": "GET /billing/service-catalog"
+ },
+ {
+  "m": "POST",
+  "p": "/billing/service-catalog",
+  "files": [
+   "src/app/core/data-access/services-catalog/services-catalog.client.ts"
+  ],
+  "api": "POST /billing/service-catalog"
+ },
+ {
+  "m": "PATCH",
+  "p": "/billing/service-catalog/${encodeURIComponent(id)}",
+  "files": [
+   "src/app/core/data-access/services-catalog/services-catalog.client.ts"
+  ],
+  "api": "PATCH /billing/service-catalog/:id"
+ },
+ {
+  "m": "GET",
+  "p": "/billing/service-catalog/procedure-specialties",
+  "files": [
+   "src/app/core/data-access/services-catalog/services-catalog.client.ts"
+  ],
+  "api": "GET /billing/service-catalog/procedure-specialties"
+ },
+ {
+  "m": "GET",
+  "p": "/billing/service-catalog/procedures",
+  "files": [
+   "src/app/core/data-access/services-catalog/services-catalog.client.ts"
+  ],
+  "api": "GET /billing/service-catalog/procedures"
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/templates",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/templates"
+ },
+ {
+  "m": "GET",
+  "p": "/surveys/templates",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "GET /surveys/templates"
+ },
+ {
+  "m": "GET",
+  "p": "/surveys/templates/${surveyId}",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "GET /surveys/templates/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/templates/${surveyId}/versions",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/templates/:id/versions"
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/templates/${surveyId}/questions",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/templates/:id/questions"
+ },
+ {
+  "m": "PATCH",
+  "p": "/surveys/templates/${surveyId}",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "PATCH",
+  "p": "/surveys/templates/${surveyId}/questions/${questionId}",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "DELETE",
+  "p": "/surveys/templates/${surveyId}/questions/${questionId}",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "PUT",
+  "p": "/surveys/templates/${surveyId}/questions/order",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": null
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/templates/${surveyId}/versions/${versionNumber}/publish",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/templates/:id/versions/:versionNumber/publish"
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/templates/${surveyId}/deactivate",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/templates/:id/deactivate"
+ },
+ {
+  "m": "GET",
+  "p": "/surveys/templates/${surveyId}/responses",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "GET /surveys/templates/:id/responses"
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/assignments",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/assignments"
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/invitations",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/invitations"
+ },
+ {
+  "m": "GET",
+  "p": "/surveys/me/invitations",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "GET /surveys/me/invitations"
+ },
+ {
+  "m": "GET",
+  "p": "/surveys/me/invitations/${invitationId}",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "GET /surveys/me/invitations/:id"
+ },
+ {
+  "m": "POST",
+  "p": "/surveys/me/invitations/${invitationId}/responses",
+  "files": [
+   "src/app/core/data-access/surveys/surveys.client.ts"
+  ],
+  "api": "POST /surveys/me/invitations/:id/responses"
+ },
+ {
+  "m": "GET",
+  "p": "/system-context/dynamic-enums",
+  "files": [
+   "src/app/core/data-access/system-context/system-context.client.ts"
+  ],
+  "api": "GET /system-context/dynamic-enums"
+ },
+ {
+  "m": "GET",
+  "p": "/terminology/concepts",
+  "files": [
+   "src/app/core/data-access/terminology/terminology.client.ts"
+  ],
+  "api": "GET /terminology/concepts"
+ },
+ {
+  "m": "GET",
+  "p": "/terminology/concepts/${encodeURIComponent(conceptId)}",
+  "files": [
+   "src/app/core/data-access/terminology/terminology.client.ts"
+  ],
+  "api": "GET /terminology/concepts/:conceptId"
+ },
+ {
+  "m": "GET",
+  "p": "/terminology/value-sets",
+  "files": [
+   "src/app/core/data-access/terminology/terminology.client.ts"
+  ],
+  "api": "GET /terminology/value-sets"
+ },
+ {
+  "m": "GET",
+  "p": "/terminology/code-systems",
+  "files": [
+   "src/app/core/data-access/terminology/terminology.client.ts"
+  ],
+  "api": "GET /terminology/code-systems"
+ },
+ {
+  "m": "GET",
+  "p": "/terminology/code-systems/${encodeURIComponent(codeSystemId)}/versions",
+  "files": [
+   "src/app/core/data-access/terminology/terminology.client.ts"
+  ],
+  "api": "GET /terminology/code-systems/:id/versions"
+ },
+ {
+  "m": "POST",
+  "p": "/terminology/versions/${encodeURIComponent(versionId)}/import-file",
+  "files": [
+   "src/app/core/data-access/terminology/terminology.client.ts"
+  ],
+  "api": "POST /terminology/versions/:versionId/import-file"
+ },
+ {
+  "m": "POST",
+  "p": "/terminology/versions/${encodeURIComponent(versionId)}/publish",
+  "files": [
+   "src/app/core/data-access/terminology/terminology.client.ts"
+  ],
+  "api": "POST /terminology/versions/:versionId/publish"
+ },
+ {
+  "m": "POST",
+  "p": "/v1/triage/analyze",
+  "files": [
+   "src/app/core/data-access/triage-ia/triage-ia.client.ts"
+  ],
+  "api": null
+ }
+]

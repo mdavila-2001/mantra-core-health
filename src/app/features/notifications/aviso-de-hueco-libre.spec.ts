@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -47,6 +48,9 @@ const OTRA = {
 };
 
 describe('AvisoDeHuecoLibre', () => {
+  const originalMockBackend = environment.mockBackend;
+  beforeEach(() => Object.assign(environment, { mockBackend: true }));
+  afterEach(() => Object.assign(environment, { mockBackend: originalMockBackend }));
   let servicio: AvisoDeHuecoLibre;
   let toasts: ToastService;
   let listMine: ReturnType<typeof vi.fn>;
@@ -134,4 +138,12 @@ describe('AvisoDeHuecoLibre', () => {
     // Una sola vuelta más, no dos.
     expect(listMine.mock.calls.length).toBe(trasArrancar + 1);
   });
+  it('con API real no inicia sondeo ni fabrica avisos', () => {
+    Object.assign(environment, { mockBackend: false });
+    montar(true);
+    servicio.empezar();
+    expect(listMine).not.toHaveBeenCalled();
+    expect(toasts.show).not.toHaveBeenCalled();
+  });
+
 });

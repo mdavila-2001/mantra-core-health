@@ -538,3 +538,29 @@
   gap: var(--sp-3);
   margin: 0;
 }
+
+/* La contabilidad simple va primero y separada de las cuatro preguntas del
+   resumen, que siguen debajo como estaban. */
+.contabilidad-simple {
+  margin-block: var(--sp-5) var(--sp-8);
+}
+
+/* ---- las dos pestañas: Resumen y Registros ---------------------------------
+   Ancho completo del área de contenido; sólo separa la tira de pestañas del
+   primer bloque. */
+
+.pestanas {
+  display: block;
+  inline-size: 100%;
+  margin-block-start: var(--sp-5);
+}
+
+.pestana {
+  display: grid;
+  gap: var(--sp-6);
+  padding-block-start: var(--sp-4);
+}
+
+.pestana > .bloque:first-child {
+  margin-block-start: 0;
+}

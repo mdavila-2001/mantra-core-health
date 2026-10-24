@@ -1,7 +1,8 @@
-import { HttpClient, HttpEvent, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEvent } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
+import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
 import type {
@@ -10,10 +11,12 @@ import type {
   AssistedPatientRegistration,
   AssistedRegistrationResult,
   CreatedUser,
+  LaboratoryOrganizationRegistration,
   LoginCredentials,
   NewUser,
   OrganizationRegistration,
   PasswordReset,
+  PharmacyOrganizationRegistration,
   PasswordResetRequested,
   VerificationResent,
   PasswordResetResult,
@@ -28,6 +31,7 @@ import type {
   UserPage,
   UserSearchQuery,
   VerifiedEmail,
+  DiagnosticCenterRegistration,
 } from './iam.types';
 
 /** Respuestas de la API tal como viajan: las fechas son texto. */
@@ -85,10 +89,19 @@ export class IamClient {
       .pipe(map(toSession));
   }
 
-  /** `POST /iam/auth/token/refresh`. Rota el par completo: el viejo deja de servir. */
-  refresh(refreshToken: string): Observable<Session> {
+  /**
+   * `POST /iam/auth/token/refresh`. Rota el par completo: el viejo deja de servir.
+   *
+   * Con `null` el cuerpo va **vacío**: es el modo cookie (TX-10), donde el
+   * refresh token lo manda el navegador en la cookie `httpOnly` y JavaScript
+   * nunca lo ve.
+   */
+  refresh(refreshToken: string | null): Observable<Session> {
     return this.http
-      .post<TokenResponseBody>(this.url('/iam/auth/token/refresh'), { refreshToken })
+      .post<TokenResponseBody>(
+        this.url('/iam/auth/token/refresh'),
+        refreshToken === null ? {} : { refreshToken },
+      )
       .pipe(map(toSession));
   }
 
@@ -116,16 +129,14 @@ export class IamClient {
       ...(registration.issuerAdministrativeAreaConceptId === undefined
         ? {}
         : {
-            issuerAdministrativeAreaConceptId:
-              registration.issuerAdministrativeAreaConceptId,
+            issuerAdministrativeAreaConceptId: registration.issuerAdministrativeAreaConceptId,
           }),
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, así que el par no puede llegar incoherente.
       ...(registration.residenceMunicipalityConceptId === undefined
         ? {}
         : {
-            residenceMunicipalityConceptId:
-              registration.residenceMunicipalityConceptId,
+            residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
           }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
       ...(registration.gender === undefined ? {} : { gender: registration.gender }),
@@ -172,8 +183,7 @@ export class IamClient {
       ...(registration.guardianRelationshipConceptId === undefined
         ? {}
         : {
-            guardianRelationshipConceptId:
-              registration.guardianRelationshipConceptId,
+            guardianRelationshipConceptId: registration.guardianRelationshipConceptId,
           }),
       ...(registration.privateInsurancePlanId === undefined
         ? {}
@@ -273,6 +283,16 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
+      ...(!environment.mockBackend || registration.signatureImageBase64 === undefined
+        ? {}
+        : { signatureImageBase64: registration.signatureImageBase64 }),
+      ...(!environment.mockBackend || registration.sealImageBase64 === undefined
+        ? {}
+        : { sealImageBase64: registration.sealImageBase64 }),
+      ...(registration.signatureFileId === undefined
+        ? {}
+        : { signatureFileId: registration.signatureFileId }),
+      ...(registration.sealFileId === undefined ? {} : { sealFileId: registration.sealFileId }),
       ...(registration.occupationConceptId === undefined
         ? {}
         : { occupationConceptId: registration.occupationConceptId }),
@@ -317,6 +337,14 @@ export class IamClient {
    * tipos y por eso sí lo pide.
    */
   registerOrganization(registration: OrganizationRegistration): Observable<RegisteredOrganization> {
+    // El laboratorio y el centro de imagenología viajan con su propio cuerpo:
+    // sin `payer` y con la unidad diagnóstica. El de la aseguradora no cambia.
+    if (registration.tenantType === 'DIAGNOSTIC_CENTER') {
+      return this.http.post<RegisteredOrganization>(
+        this.url('/iam/auth/register-organization'),
+        cuerpoDeCentroDiagnostico(registration),
+      );
+    }
     return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
       organization: {
         code: registration.code,
@@ -357,9 +385,7 @@ export class IamClient {
         ...(registration.legalRepresentative === undefined
           ? {}
           : { legalRepresentative: registration.legalRepresentative }),
-        ...(registration.executives === undefined
-          ? {}
-          : { executives: registration.executives }),
+        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
       },
       owner: {
         email: registration.owner.email,
@@ -380,6 +406,138 @@ export class IamClient {
   }
 
   /**
+   * `POST /iam/auth/register-organization` con `tenantType: 'PHARMACY'`.
+   * Auto-registro de una farmacia: crea el tenant y su usuario owner en la
+   * misma operación. Ver el JSDoc de {@link PharmacyOrganizationRegistration}
+   * para por qué es un método aparte de {@link IamClient.registerOrganization}
+   * en vez de generalizarlo: el bloque específico del tipo de tenant no
+   * coincide (`payer` siempre obligatorio para la aseguradora; la farmacia no
+   * tiene bloque propio en el DTO real).
+   */
+  registerPharmacyOrganization(
+    registration: PharmacyOrganizationRegistration,
+  ): Observable<RegisteredOrganization> {
+    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
+      organization: {
+        code: registration.code,
+        legalName: registration.legalName,
+        legalEntityType: registration.legalEntityType,
+        tenantType: 'PHARMACY',
+        countryConceptId: registration.countryConceptId,
+        jurisdictionConceptId: registration.jurisdictionConceptId,
+        legalRepresentative: {
+          fullName: registration.legalRepresentative.fullName,
+          email: registration.legalRepresentative.email,
+          idNumber: registration.legalRepresentative.idNumber,
+          ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
+            ? {}
+            : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
+        },
+        ...(registration.legalDocuments === undefined
+          ? {}
+          : { legalDocuments: registration.legalDocuments }),
+        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+        // `pharmacy.branches`: clave que el backend real todavía no declara
+        // (ver el JSDoc de `PharmacyOrganizationRegistration`, P49). Se manda
+        // igual para que el simulador —que sí la valida— la ejercite.
+        ...(registration.headquarters === undefined && registration.branches === undefined
+          ? {}
+          : {
+              pharmacy: {
+                ...(registration.headquarters === undefined
+                  ? {}
+                  : {
+                      latitude: registration.headquarters.latitude,
+                      longitude: registration.headquarters.longitude,
+                    }),
+                ...(registration.branches === undefined || registration.branches.length === 0
+                  ? {}
+                  : { branches: registration.branches.map((branch) => ({ ...branch })) }),
+              },
+            }),
+      },
+      owner: {
+        email: registration.owner.email,
+        password: registration.owner.password,
+        displayName: registration.owner.displayName,
+      },
+    });
+  }
+
+  /**
+   * `POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`.
+   * Auto-registro de un laboratorio de sangre: crea el tenant, su owner y la
+   * unidad diagnóstica en la misma operación.
+   *
+   * Método aparte, como el de farmacia, porque el bloque del tipo no coincide:
+   * acá viaja `diagnosticUnit` —el bloque que el DTO real ya declara para este
+   * tipo— y no `payer` ni `pharmacy`. Campo por campo y no con un spread del
+   * registro, por lo mismo que el resto del cliente: `forbidNonWhitelisted`
+   * rechaza toda clave que el DTO no declare. La única que el DTO no tiene es
+   * `diagnosticUnit.branches` (ver `PENDIENTES-BACKEND.md`, P51).
+   */
+  registerLaboratoryOrganization(
+    registration: LaboratoryOrganizationRegistration,
+  ): Observable<RegisteredOrganization> {
+    const { diagnosticUnit } = registration;
+    const { address } = diagnosticUnit.primarySite;
+    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
+      organization: {
+        code: registration.code,
+        legalName: registration.legalName,
+        legalEntityType: registration.legalEntityType,
+        tenantType: 'DIAGNOSTIC_CENTER',
+        countryConceptId: registration.countryConceptId,
+        jurisdictionConceptId: registration.jurisdictionConceptId,
+        diagnosticUnit: {
+          name: diagnosticUnit.name,
+          diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
+          modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
+          primarySite: {
+            name: diagnosticUnit.primarySite.name,
+            address: {
+              lines: [...address.lines],
+              ...(address.latitude === undefined || address.longitude === undefined
+                ? {}
+                : { latitude: address.latitude, longitude: address.longitude }),
+            },
+          },
+          ...(diagnosticUnit.branches === undefined || diagnosticUnit.branches.length === 0
+            ? {}
+            : {
+                branches: diagnosticUnit.branches.map((branch) => ({
+                  name: branch.name,
+                  addressLines: [...branch.addressLines],
+                  ...(branch.location === undefined
+                    ? {}
+                    : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
+                  ...(branch.description === undefined ? {} : { description: branch.description }),
+                  ...(branch.locationUrl === undefined ? {} : { locationUrl: branch.locationUrl }),
+                })),
+              }),
+        },
+        legalRepresentative: {
+          fullName: registration.legalRepresentative.fullName,
+          idNumber: registration.legalRepresentative.idNumber,
+          email: registration.legalRepresentative.email,
+          ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
+            ? {}
+            : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
+        },
+        ...(registration.legalDocuments === undefined
+          ? {}
+          : { legalDocuments: registration.legalDocuments }),
+        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+      },
+      owner: {
+        email: registration.owner.email,
+        password: registration.owner.password,
+        displayName: registration.owner.displayName,
+      },
+    });
+  }
+
+  /**
    * `POST /iam/auth/upload-registration-document`. Pre-carga pública de un
    * PDF para un alta que todavía no tiene sesión: el `fileId` devuelto se
    * reenvía en el alta de organización o en su fila de credencial profesional.
@@ -393,6 +551,19 @@ export class IamClient {
     form.append('file', file);
     return this.http.post<UploadedRegistrationDocument>(
       this.url('/iam/auth/upload-registration-document'),
+      form,
+      { reportProgress: true, observe: 'events' },
+    );
+  }
+
+  /** Precarga privada de una imagen de firma/sello antes de crear la cuenta. */
+  uploadRegistrationSignatureImage(
+    file: File,
+  ): Observable<HttpEvent<UploadedRegistrationDocument>> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<UploadedRegistrationDocument>(
+      this.url('/iam/auth/upload-registration-signature-image'),
       form,
       { reportProgress: true, observe: 'events' },
     );
@@ -510,36 +681,29 @@ export class IamClient {
   }
 
   /**
-   * `GET /iam/users` — una página del listado (UC-01-01, cara de lectura).
+   * `POST /iam/users/search` — una página del listado (UC-01-01, cara de lectura).
    *
-   * Busca con `?q=` sobre el nombre visible o el correo de acceso; pagina por
-   * cursor, sin total. Exige `SECURITY_ADMIN`.
+   * Busca por `q` sobre el nombre visible o el correo de acceso; pagina por
+   * cursor, sin total. Exige `SECURITY_ADMIN`. El texto viaja en el cuerpo y
+   * no en la URL: un nombre o un correo en la query string queda en los logs
+   * de acceso de cualquier proxy. El `GET /iam/users?q=` de antes sigue vivo
+   * en la API pero obsoleto.
    */
   searchUsers(query: UserSearchQuery = {}): Observable<UserPage> {
-    // Parámetro a parámetro: el backend valida con `forbidNonWhitelisted` y un
-    // opcional en `undefined` viaja como clave declarada, que vuelve 400.
-    let params = new HttpParams();
-    if (query.query !== undefined && query.query !== '') {
-      params = params.set('q', query.query);
-    }
-    if (query.statusConceptId !== undefined) {
-      params = params.set('status', query.statusConceptId);
-    }
-    if (query.cursor !== undefined) {
-      params = params.set('cursor', query.cursor);
-    }
-    if (query.limit !== undefined) {
-      params = params.set('limit', String(query.limit));
-    }
+    // Clave a clave: el backend valida con `forbidNonWhitelisted` y un
+    // opcional en `undefined` o un texto vacío no deben viajar.
+    const filters: Record<string, string | number> = {};
+    if (query.query !== undefined && query.query !== '') filters['q'] = query.query;
+    if (query.statusConceptId !== undefined) filters['status'] = query.statusConceptId;
+    if (query.cursor !== undefined) filters['cursor'] = query.cursor;
+    if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    return this.http
-      .get<RespuestaPaginaUsuarios>(this.url('/iam/users'), { params })
-      .pipe(
-        map((body) => ({
-          ...body,
-          items: body.items.map(toUserListItem),
-        })),
-      );
+    return this.http.post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters).pipe(
+      map((body) => ({
+        ...body,
+        items: body.items.map(toUserListItem),
+      })),
+    );
   }
 
   private url(path: string): string {
@@ -601,5 +765,54 @@ function toAssistedResult(body: AssistedRegistrationBody): AssistedRegistrationR
     activationToken: body.activationToken,
     activationExpiresAt: new Date(body.activationExpiresAt),
     status: body.status,
+  };
+}
+
+/**
+ * El cuerpo del alta de un laboratorio o centro de imagenología.
+ *
+ * Campo por campo y no con un `...registration`, por lo mismo que el resto del
+ * cliente: `forbidNonWhitelisted` rechaza toda clave que el DTO no declare.
+ */
+function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistration): unknown {
+  const { diagnosticUnit } = registration;
+  const { address } = diagnosticUnit.primarySite;
+  return {
+    organization: {
+      code: registration.code,
+      legalName: registration.legalName,
+      legalEntityType: registration.legalEntityType,
+      ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
+      tenantType: 'DIAGNOSTIC_CENTER',
+      ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+      countryConceptId: registration.countryConceptId,
+      jurisdictionConceptId: registration.jurisdictionConceptId,
+      diagnosticUnit: {
+        diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
+        modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
+        primarySite: {
+          name: diagnosticUnit.primarySite.name,
+          ...(diagnosticUnit.primarySite.timeZone === undefined
+            ? {}
+            : { timeZone: diagnosticUnit.primarySite.timeZone }),
+          address: {
+            lines: [...address.lines],
+            ...(address.latitude === undefined || address.longitude === undefined
+              ? {}
+              : { latitude: address.latitude, longitude: address.longitude }),
+          },
+        },
+      },
+      legalDocuments: registration.legalDocuments,
+      ...(registration.legalRepresentative === undefined
+        ? {}
+        : { legalRepresentative: registration.legalRepresentative }),
+      ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+    },
+    owner: {
+      email: registration.owner.email,
+      password: registration.owner.password,
+      displayName: registration.owner.displayName,
+    },
   };
 }

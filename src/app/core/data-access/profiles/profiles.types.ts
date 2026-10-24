@@ -3,28 +3,19 @@
 import type { BirthSexCode } from '../iam/iam.types';
 
 /**
- * Alta de un perfil de paciente hecha por personal (no auto-registro).
+ * Alta de un perfil de paciente hecha por personal (no auto-registro):
+ * `POST /profiles/patients`.
  *
- * ## El código de paciente es opcional acá, y no en el DTO
- *
- * Porque en el mostrador nadie lo sabe. `patient_code` es único en toda la
- * instalación y el servidor ya lo acuña él mismo en el alta que la persona hace
- * de sí misma (`PAT-<uuid>`); pedirle uno al navegador es pedirle que garantice
- * una unicidad que no puede ver. La pantalla de administración —que lo tiene
- * porque viene de una historia clínica en papel— lo sigue mandando.
- *
- * ## El bloque de filiación
- *
- * Los campos desde `name` para abajo son los que el registro de procesos del
- * cliente exige en la recepción del paciente (módulo Paciente §1.1) y que hoy
- * **sólo acepta el alta que la propia persona hace de sí misma**
- * (`RegisterPatientDto`). Están declarados acá porque son los que la pantalla
- * necesita; contra la API de hoy los rechaza `forbidNonWhitelisted` con un 400.
- * Ver `PENDIENTES-BACKEND.md` (P22): el destino no es este endpoint sino el
- * registro asistido, extendido con este mismo bloque.
+ * Es exactamente `CreatePatientDto`: la API valida con `forbidNonWhitelisted`, así
+ * que un campo que no esté acá y allá es un 400. La filiación completa del
+ * mostrador (nombre, documento, ocupación, tutor…) **no** la acepta este
+ * endpoint —sólo el alta que la persona hace de sí misma— y por eso no está
+ * declarada: el tipo tiene que impedir construir un cuerpo que la API rechaza
+ * (ID-23). Su destino es el registro asistido (`PENDIENTES-BACKEND.md`, P22).
  */
 export interface NewPatientProfile {
-  readonly patientCode?: string;
+  /** Único en toda la instalación; el DTO lo exige. */
+  readonly patientCode: string;
   readonly displayName?: string;
   /** ISO `YYYY-MM-DD`. */
   readonly birthDate?: string;
@@ -36,27 +27,6 @@ export interface NewPatientProfile {
   readonly sexAtBirthConceptId?: string;
   /** Código del índice maestro de pacientes. Único en toda la instalación. */
   readonly masterPatientIndexCode?: string;
-
-  /* -- filiación de mostrador (§1.1) — pendiente en el backend, P22 --------- */
-
-  /** Nombre de pila. */
-  readonly name?: string;
-  /** Los nombres que no son el primero, ya unidos en uno solo. */
-  readonly middleName?: string;
-  readonly lastName?: string;
-  readonly motherLastName?: string;
-  /** Cédula de identidad. Va a `common.identifiers` como identificador oficial. */
-  readonly nationalId?: string;
-  /** Departamento que expidió la cédula (`VS_BO_DEPARTMENT`). */
-  readonly issuerAdministrativeAreaConceptId?: string;
-  readonly phone?: string;
-  /** Ocupación del catálogo `VS_BO_OCCUPATION`. */
-  readonly occupationConceptId?: string;
-  /** El oficio escrito a mano, sólo cuando se eligió «Otra ocupación». */
-  readonly occupationFreeText?: string;
-  /** Tutor o persona autorizada, para quien no puede responder por sí mismo. */
-  readonly guardianName?: string;
-  readonly guardianPhone?: string;
 }
 
 export interface PatientProfile {
@@ -92,6 +62,12 @@ export interface NewPractitionerProfile {
 export interface NewSpecialty {
   readonly specialtyConceptId?: string;
   readonly supportingCredentialId?: string;
+  /**
+   * Desde el 23/09/2026 ninguna pantalla lo muestra ni ordena por él
+   * (D-01: el médico pidió todas las especialidades iguales). Sigue en el
+   * contrato porque la API lo guarda; queda como deuda decidir si se retira
+   * del cable.
+   */
   readonly isPrimary?: boolean;
   readonly boardCertified?: boolean;
 }
@@ -152,7 +128,13 @@ export interface PractitionerProfile {
 export interface PractitionerSpecialty {
   readonly id: string;
   readonly specialtyConceptId: string;
-  /** La especialidad con la que se presenta. Hay una sola vigente. */
+  /**
+   * La especialidad con la que se presenta. Hay una sola vigente.
+   *
+   * Desde el 23/09/2026 ninguna pantalla lo muestra ni ordena por él (D-01).
+   * Sigue en el contrato porque la API lo guarda; queda como deuda decidir si
+   * se retira del cable.
+   */
   readonly isPrimary: boolean;
   /** Certificación del colegio o consejo. */
   readonly boardCertified: boolean;
@@ -179,6 +161,8 @@ export interface PractitionerCredential {
   readonly number: string;
   /** Dónde se cursó. Texto libre: la institución no siempre es una organización. */
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la institución elegida (`issuing_city_text`). */
+  readonly issuingCityText?: string;
   readonly issueDate?: Date;
   readonly expiryDate?: Date;
   readonly stateConceptId: string;
@@ -211,6 +195,8 @@ export interface NewOwnCredential {
   readonly credentialTypeConceptId: string;
   readonly number: string;
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la institución elegida (`issuing_city_text`). */
+  readonly issuingCityText?: string;
   /** ISO `YYYY-MM-DD`, mismo criterio que {@link NewJurisdictionAuthorization.validFrom}. */
   readonly issueDate?: string;
   /** El diploma, ya subido con `FilesClient.upload`. */
@@ -253,6 +239,8 @@ export interface OwnCredentialChanges {
   readonly credentialTypeConceptId?: string;
   readonly number?: string;
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la institución elegida (`issuing_city_text`). */
+  readonly issuingCityText?: string;
   /** ISO `YYYY-MM-DD`, mismo criterio que en el alta. */
   readonly issueDate?: string;
   readonly fileId?: string;
@@ -315,6 +303,15 @@ export interface PractitionerActivity {
 export interface MonthlyCount {
   readonly month: string;
   readonly count: number;
+  /**
+   * De las `count` consultas, cuántas fueron de personas atendidas **con
+   * seguro**. Las demás —`count - insuredCount`— fueron sin seguro.
+   *
+   * Opcional: una instalación que todavía no cruza la consulta con la
+   * cobertura de la persona manda sólo el total, y el gráfico dibuja una serie
+   * en lugar de dos.
+   */
+  readonly insuredCount?: number;
 }
 
 /**
@@ -391,6 +388,8 @@ export interface OwnPractitionerProfile {
   readonly lastName?: string;
   readonly motherLastName?: string;
   readonly birthDate?: Date;
+  /** Sexo asignado al nacer. Sólo en la lectura propia (ID-13). */
+  readonly sexAtBirth?: BirthSexCode;
   /** Su documento. No editable desde el perfil: tiene su circuito propio. */
   readonly nationalId?: string;
   readonly issuerAdministrativeAreaConceptId?: string;
@@ -405,6 +404,13 @@ export interface OwnPractitionerProfile {
   readonly taxId?: string;
   /** A nombre de quién sale el comprobante — la razón social del NIT. */
   readonly taxHolderName?: string;
+  /**
+   * Cada cuánto le factura a las aseguradoras. Ausente si no lo declaró.
+   *
+   * Sólo en la maqueta: el modelo todavía no tiene dónde guardarlo (no hay
+   * columna ni value set), así que no se inventa un concepto.
+   */
+  readonly insuranceBillingFrequency?: InsuranceBillingFrequency;
   /**
    * Su domicilio, si lo declaró (ALV-009). Ausente y no un objeto vacío
    * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
@@ -427,6 +433,9 @@ export interface OwnPractitionerProfile {
   readonly activity: PractitionerActivity;
   readonly createdAt: Date;
 }
+
+/** Cada cuánto el profesional presenta su facturación a las aseguradoras. */
+export type InsuranceBillingFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 
 /** Vínculo entre una persona del directorio y una cuenta de acceso. */
 export interface AccountLink {
@@ -653,6 +662,12 @@ export interface NewPractitionerAffiliation {
   readonly organizationName: string;
   /** Opcional desde ALV-007: un consultorio propio no tiene cargo. */
   readonly roleTitle?: string;
+  /**
+   * Establecimiento del padrón (`VS_BO_HEALTH_FACILITY`), si se eligió de la
+   * lista. Fuera del padrón la API responde 422; el mismo establecimiento con el
+   * mismo cargo e inicio, 409.
+   */
+  readonly healthFacilityConceptId?: string;
   readonly practiceSiteId?: string;
   readonly affiliationTypeConceptId?: string;
   /** ISO `YYYY-MM-DD`. */
@@ -669,8 +684,6 @@ export interface NewPractitionerAffiliation {
 export interface UpdatePractitionerAffiliation {
   readonly organizationName?: string;
   readonly roleTitle?: string;
-  /** `''` lo borra. */
-  readonly departmentText?: string;
   readonly affiliationTypeConceptId?: string;
   /** ISO `YYYY-MM-DD`. */
   readonly startDate?: string;
@@ -852,12 +865,20 @@ export interface OwnCoverage {
   readonly benefits: readonly CoverageBenefitSummary[];
 }
 
-/** Un tutor o persona autorizada, con su teléfono. */
+/** Una persona que puede actuar por el paciente. */
 export interface OwnGuardian {
   readonly displayName?: string;
   readonly relationshipConceptId?: string;
-  readonly isEmergencyContact: boolean;
+  readonly relationshipDisplay: string;
   readonly isLegalGuardian: boolean;
+  readonly phone?: string;
+}
+
+/** Una persona a quien llamar ante una urgencia. */
+export interface OwnEmergencyContact {
+  readonly displayName?: string;
+  readonly relationshipConceptId?: string;
+  readonly relationshipDisplay: string;
   readonly phone?: string;
 }
 
@@ -902,6 +923,13 @@ export interface OwnPatientProfile {
   readonly nationalId?: string;
   /** Departamento que lo emitió (VS_BO_DEPARTMENT). */
   readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * La empresa donde trabaja: del catálogo (`workEmployerConceptId`) o escrita a
+   * mano (`workEmployerFreeText`), nunca las dos. La API ya las devolvía y el
+   * tipo no las declaraba (ID-22).
+   */
+  readonly workEmployerConceptId?: string;
+  readonly workEmployerFreeText?: string;
   /** NIT para facturación. */
   readonly taxId?: string;
   /** A nombre de quién sale el comprobante — la razón social del NIT. */
@@ -919,6 +947,7 @@ export interface OwnPatientProfile {
   readonly workAddress?: OwnAddress;
   /** Siempre presentes, vacías si no declaró nada. */
   readonly coverages: readonly OwnCoverage[];
+  readonly emergencyContacts: readonly OwnEmergencyContact[];
   readonly guardians: readonly OwnGuardian[];
 }
 
@@ -956,6 +985,23 @@ export interface OwnPatientProfileChanges {
   readonly occupationConceptId?: string;
   readonly phone?: string;
   readonly residenceMunicipalityConceptId?: string;
+  /**
+   * Departamento que emitió el documento (`VS_BO_DEPARTMENT`). Se corrige el
+   * departamento, no el número (ID-22).
+   */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * La empresa: un concepto del catálogo **o** un texto, y el catálogo gana
+   * (`''` la vacía). Con la opción «Otra» va el texto y no el concepto.
+   */
+  readonly workEmployerConceptId?: string;
+  readonly workEmployerFreeText?: string;
+  /** Municipio del lugar de trabajo (`VS_BO_MUNICIPALITY`). */
+  readonly workMunicipalityConceptId?: string;
+  /** Tutor o persona autorizada: declara o corrige, nunca quita. */
+  readonly guardianName?: string;
+  readonly guardianPhone?: string;
+  readonly guardianRelationshipConceptId?: string;
   /**
    * NIT de facturación (registro · PACIENTE §1.15.2). `''` lo quita.
    *
@@ -998,6 +1044,7 @@ export interface OwnPatientProfileChanges {
 /** Una especialidad en la fila de la guía: lo justo para agrupar y rotular. */
 export interface PractitionerListSpecialty {
   readonly specialtyConceptId: string;
+  /** Sin uso en pantalla desde el 23/09/2026 (D-01); sigue en el contrato. */
   readonly isPrimary: boolean;
 }
 
@@ -1140,7 +1187,6 @@ export interface LinkableOrganizationPage {
   readonly limit: number;
 }
 
-
 /**
  * Qué es el dependiente para quien lo representa, ya dado vuelta por el
  * servidor.
@@ -1207,4 +1253,48 @@ export interface NewDependent {
   readonly nationalId?: string;
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly relationshipConceptId: string;
+}
+
+/**
+ * Una solicitud para representar a alguien que ya tiene cuenta.
+ *
+ * La respuesta no trae el nombre del dueño del CI a propósito: si lo trajera,
+ * cualquiera podría averiguar quién es quién escribiendo documentos.
+ */
+export interface DependentLinkRequestSent {
+  readonly id: string;
+  readonly status: 'PENDING';
+}
+
+/**
+ * A quién se le pide ser dependiente: por su CI, o por el perfil que devolvió
+ * la búsqueda por nombre.
+ *
+ * Son dos formas de señalar a la misma persona; el servidor resuelve las dos
+ * contra la misma regla (una cuenta registrada que no sea la propia).
+ */
+export type DependentLinkTarget =
+  { readonly nationalId: string } | { readonly patientProfileId: string };
+
+/**
+ * Una cuenta que coincide con el nombre buscado, para elegir a quién enviarle
+ * la solicitud.
+ *
+ * Trae lo mínimo para distinguir homónimos: el nombre y las últimas cifras del
+ * documento, nunca el documento entero. Una búsqueda por nombre no puede
+ * servir para sacar el CI de nadie.
+ */
+export interface DependentCandidate {
+  readonly patientProfileId: string;
+  readonly displayName: string;
+  /** El CI enmascarado, p. ej. `••••4521`. */
+  readonly maskedNationalId?: string;
+}
+
+/** Una solicitud que otra persona le hizo a esta cuenta, pendiente de respuesta. */
+export interface IncomingDependentLinkRequest {
+  readonly id: string;
+  /** Quién pide representarla. */
+  readonly requesterDisplayName: string;
+  readonly createdAt: Date;
 }

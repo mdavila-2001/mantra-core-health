@@ -71,12 +71,12 @@ export class Operations {
     });
     this.ops.slos().subscribe({
       next: (l) =>
-        this.slos.set(l.length ? ready(l) : empty({ label: 'Definí SLO en la operación de plataforma.' }, 'No hay SLO activos: sin ellos la preparación queda sin evidencia.')),
+        this.slos.set(l.length ? ready(l) : empty({ label: 'Defina SLO en la operación de plataforma.' }, 'No hay SLO activos: sin ellos la preparación queda sin evidencia.')),
       error: (e: unknown) => this.slos.set(errorToViewState<readonly SloStatus[]>(e)),
     });
     this.ops.backups().subscribe({
       next: (l) =>
-        this.backups.set(l.length ? ready(l) : empty({ label: 'Definí una política de backup.' }, 'No hay políticas de backup activas.')),
+        this.backups.set(l.length ? ready(l) : empty({ label: 'Defina una política de backup.' }, 'No hay políticas de backup activas.')),
       error: (e: unknown) => this.backups.set(errorToViewState<readonly BackupPolicy[]>(e)),
     });
   }

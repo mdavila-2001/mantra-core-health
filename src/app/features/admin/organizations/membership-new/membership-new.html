@@ -17,9 +17,9 @@
   >
     <app-form-field
       label="Persona"
-      hint="Buscá por nombre o correo y elegí de la lista."
+      hint="Busque por nombre o correo y elija de la lista."
       [required]="true"
-      [errorMessage]="personaFaltante() ? 'Elegí a quién vas a sumar.' : ''"
+      [errorMessage]="personaFaltante() ? 'Elija a quién va a sumar.' : ''"
     >
       <app-reference-combobox
         [selected]="persona()"
@@ -39,7 +39,7 @@
         [value]="rol()"
         (valueChange)="cambiarRol($event)"
         [options]="opcionesDeRol"
-        placeholder="Elegí un rol"
+        placeholder="Elija un rol"
       />
     </app-form-field>
 
@@ -48,28 +48,28 @@
         [value]="alcance()"
         (valueChange)="cambiarAlcance($event)"
         [options]="opcionesDeAlcance"
-        placeholder="Elegí el alcance"
+        placeholder="Elija el alcance"
       />
     </app-form-field>
 
     @if (esPorSede()) {
       @if (sinSedes()) {
         <app-alert tone="warning" data-testid="alta-membresia-sin-sedes">
-          La organización todavía no tiene sedes, así que no hay ninguna a la que acotar. Abrí una
-          primero, o dejá el alcance en toda la organización.
+          La organización todavía no tiene sedes, así que no hay ninguna a la que acotar. Abra una
+          primero, o deje el alcance en toda la organización.
         </app-alert>
       } @else {
         <app-form-field
           label="Sede"
           hint="Dónde trabaja. Se asigna en el mismo acto de sumarla."
           [required]="true"
-          [errorMessage]="sedeFaltante() ? 'Elegí la sede donde trabaja.' : ''"
+          [errorMessage]="sedeFaltante() ? 'Elija la sede donde trabaja.' : ''"
         >
           <app-select
             [value]="sede()"
             (valueChange)="cambiarSede($event)"
             [options]="opcionesDeSede()"
-            placeholder="Elegí una sede"
+            placeholder="Elija una sede"
           />
         </app-form-field>
       }

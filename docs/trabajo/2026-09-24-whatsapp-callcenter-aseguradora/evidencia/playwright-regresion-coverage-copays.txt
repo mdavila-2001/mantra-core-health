@@ -1,0 +1,11 @@
+
+Running 6 tests using 1 worker
+
+  ok 1 [chromium] › playwright\patient-coverage-copays.spec.ts:19:9 › patient coverage mocks 1440 › policy, benefits, independent channels and keyboard access (9.3s)
+  ok 2 [chromium] › playwright\patient-coverage-copays.spec.ts:61:9 › patient coverage mocks 1440 › pharmacy publications, pending and separate logistics rejection (28.1s)
+  ok 3 [chromium] › playwright\patient-coverage-copays.spec.ts:111:9 › patient coverage mocks 1440 › diagnostic order settlement keeps preparation and results (7.8s)
+  ok 4 [chromium] › playwright\patient-coverage-copays.spec.ts:19:9 › patient coverage mocks 390 › policy, benefits, independent channels and keyboard access (7.9s)
+  ok 5 [chromium] › playwright\patient-coverage-copays.spec.ts:61:9 › patient coverage mocks 390 › pharmacy publications, pending and separate logistics rejection (27.0s)
+  ok 6 [chromium] › playwright\patient-coverage-copays.spec.ts:111:9 › patient coverage mocks 390 › diagnostic order settlement keeps preparation and results (7.2s)
+
+  6 passed (1.5m)

@@ -151,7 +151,7 @@ export class FacilityDirectionsDialog {
         codigo: ORIGIN_PIN,
         lat: from.lat,
         lng: from.lng,
-        titulo: 'Tu punto de partida',
+        titulo: 'Su punto de partida',
         subtitulo: from.label,
         estado: { etiqueta: 'Desde acá', tono: 'success' as const },
       });
@@ -193,9 +193,9 @@ export class FacilityDirectionsDialog {
     const from = this.origin();
     const base = `Mapa con la ubicación de ${this.facilityName()}.`;
     if (from === null) {
-      return `${base} Podés marcar desde dónde salís tocando un punto del mapa; la dirección y la distancia también están escritas debajo.`;
+      return `${base} Puede marcar desde dónde sale tocando un punto del mapa; la dirección y la distancia también están escritas debajo.`;
     }
-    return `${base} También está marcado tu punto de partida (${from.label}). La distancia en línea recta está escrita debajo.`;
+    return `${base} También está marcado su punto de partida (${from.label}). La distancia en línea recta está escrita debajo.`;
   });
 
   /** Lo llama `content-dialog` después de `showModal()`. */
@@ -227,7 +227,7 @@ export class FacilityDirectionsDialog {
         this.locationDenied.set(false);
         this.pickingOnMap.set(false);
         this.origin.set({
-          label: 'tu ubicación',
+          label: 'su ubicación',
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
@@ -258,7 +258,7 @@ export class FacilityDirectionsDialog {
     }
     this.pickingOnMap.set(false);
     this.locationDenied.set(false);
-    this.origin.set({ label: 'el punto que marcaste', lat: point.lat, lng: point.lng });
+    this.origin.set({ label: 'el punto que marcó', lat: point.lat, lng: point.lng });
   }
 
   protected clearOrigin(): void {

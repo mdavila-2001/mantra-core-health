@@ -17,11 +17,11 @@ import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
  * en íconos mudos». Abrir acá una segunda puerta para íconos daría dos sets
  * que se desincronizan.
  *
- * Es **opcional** porque el set no cubre todavía las acciones de fila más
- * comunes: tiene `edit` y `remove`, no tiene ver, imprimir, descargar ni
- * duplicar. Una acción sin ícono se dibuja con su texto, que es lo que el
- * pedido exige; agregar nombres al set es una decisión de quien lo lleva y no
- * se toma de paso.
+ * Es **obligatorio** desde el 2026-09-24. Era opcional porque el set no
+ * cubría ver, aceptar ni completar, y el resultado fue un desplegable donde la
+ * mitad de las opciones tenía dibujo y la otra mitad no: se leía como dos
+ * clases de cosa. El propietario pidió que toda opción lleve ícono; el set se
+ * amplió y el tipo lo exige para que no vuelva a pasar.
  */
 export interface RowAction {
   /** Código estable que identifica la acción al emitirse. */
@@ -30,8 +30,8 @@ export interface RowAction {
   /** Lo que se lee en pantalla. Nunca vacío: el texto es el punto. */
   readonly label: string;
 
-  /** Del set cerrado del sistema. Ausente = la acción va sólo con su texto. */
-  readonly icon?: NavIconName;
+  /** Del set cerrado del sistema. Va siempre, junto al texto. */
+  readonly icon: NavIconName;
 
   readonly disabled?: boolean;
 

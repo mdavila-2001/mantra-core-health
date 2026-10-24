@@ -66,7 +66,7 @@ export class CollectionRunForm {
       titulo: 'Identidad de la corrida',
       hint: 'La clave hace la corrida idempotente: reintentar con la misma clave no duplica nada.',
       campos: [
-        { key: 'idempotencyKey', label: 'Clave de idempotencia', hint: 'Única por marca de recolección, como msal-2026-08-11. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí la clave de idempotencia (máx. 200 caracteres).' },
+        { key: 'idempotencyKey', label: 'Clave de idempotencia', hint: 'Única por marca de recolección, como msal-2026-08-11. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escriba la clave de idempotencia (máx. 200 caracteres).' },
         { key: 'trigger', label: 'Qué la dispara', control: 'radio', options: [{ value: 'MANUAL', label: 'Manual: alguien la pide ahora' }, { value: 'SCHEDULED', label: 'Programada: la trae una agenda' }], required: true },
       ],
     },
@@ -110,7 +110,7 @@ export class CollectionRunForm {
   protected readonly started = signal<CollectionRunStarted | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para iniciar corridas.'),
+    errorMessageOf(this.state(), 'No tiene permiso para iniciar corridas.'),
   );
 
   /**

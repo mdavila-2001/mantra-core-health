@@ -1,0 +1,392 @@
+
+Running 17 tests using 1 worker
+
+  ok  1 [chromium] › playwright\carga-masiva.spec.ts:174:7 › Carga masiva · contrato [backend simulado] › test 1 · flujo feliz: 50 leídas, 0 errores, importa 50 [backend simulado] (3.3s)
+  ok  2 [chromium] › playwright\carga-masiva.spec.ts:198:7 › Carga masiva · contrato [backend simulado] › test 2 · idempotencia: segunda vez, 0 insertadas y 50 omitidas [backend simulado] (3.8s)
+  ok  3 [chromium] › playwright\carga-masiva.spec.ts:228:7 › Carga masiva · contrato [backend simulado] › test 3 · con-errores: 5 filas con columna, importar deshabilitado [backend simulado] (3.2s)
+  ok  4 [chromium] › playwright\carga-masiva.spec.ts:250:7 › Carga masiva · contrato [backend simulado] › test 4 · no-es-nada.pdf: rechazo del cliente, sin petición [backend simulado] (3.3s)
+  ok  5 [chromium] › playwright\carga-masiva.spec.ts:273:7 › Carga masiva · contrato [backend simulado] › test 5 · vacio-solo-encabezado: sin filas [backend simulado] (3.4s)
+  ok  6 [chromium] › playwright\carga-masiva.spec.ts:292:7 › Carga masiva · contrato [backend simulado] › test 6 · error-red.csv: 503 conservando archivo y selects [backend simulado] (3.5s)
+  ok  7 [chromium] › playwright\carga-masiva.spec.ts:313:7 › Carga masiva · contrato [backend simulado] › test 7 · plantilla: descarga plantilla-conceptos.csv con el encabezado [backend simulado] (3.5s)
+  ok  8 [chromium] › playwright\carga-masiva.spec.ts:338:7 › Carga masiva · contrato [backend simulado] › test 8 · descargar errores: CSV con encabezado y 5 filas [backend simulado] (3.6s)
+  ok  9 [chromium] › playwright\carga-masiva.spec.ts:363:7 › Carga masiva · contrato [backend simulado] › test 9 · sin doble envío: dos clics rápidos, un solo informe [backend simulado] (3.4s)
+  ok 10 [chromium] › playwright\carga-masiva.spec.ts:396:7 › Carga masiva · contrato [backend simulado] › test 10 · teclado: Tab hasta el archivo, Enter abre el diálogo, Tab hasta Validar [backend simulado] (3.6s)
+  x  11 [chromium] › playwright\carga-masiva.spec.ts:426:7 › Carga masiva · contrato [backend simulado] › test 11 · accesibilidad: axe sin violaciones serious/critical [backend simulado] (11.8s)
+  -  12 [chromium] › playwright\clinica-c6-historia-paciente.spec.ts:66:7 › Carril C6 · mi historia clínica con diagnósticos y encuentros › la pestaña Diagnósticos muestra los tres bloques
+  -  13 [chromium] › playwright\clinica-c6-historia-paciente.spec.ts:85:7 › Carril C6 · mi historia clínica con diagnósticos y encuentros › desplegar una atención muestra su línea del encuentro
+  -  14 [chromium] › playwright\clinica-c6-historia-paciente.spec.ts:113:7 › Carril C6 · mi historia clínica con diagnósticos y encuentros › desplegar una atención no dispara lecturas al abrir la pantalla
+  -  15 [chromium] › playwright\clinica-c6-historia-paciente.spec.ts:148:7 › Carril C6 · mi historia clínica con diagnósticos y encuentros › ningún uuid aparece en la pantalla, en ninguna pestaña
+  -  16 [chromium] › playwright\clinica-c6-historia-paciente.spec.ts:166:7 › Carril C6 · mi historia clínica con diagnósticos y encuentros › «Descargar tu historia» entrega un PDF
+  -  17 [chromium] › playwright\clinica-c6-historia-paciente.spec.ts:176:7 › Carril C6 · mi historia clínica con diagnósticos y encuentros › la pestaña abierta sobrevive a una recarga
+
+
+  1) [chromium] › playwright\carga-masiva.spec.ts:426:7 › Carga masiva · contrato [backend simulado] › test 11 · accesibilidad: axe sin violaciones serious/critical [backend simulado] 
+
+    Error: [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=axeAPI",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#787b7b",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 4.27,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+                    "target": [
+                      "app-card"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p _ngcontent-ng-c2454185353=\"\" class=\"carga__nota\"> ¿No sabés cómo armar el archivo? Bajá la plantilla: trae los nombres de las columnas y una fila de ejemplo. </p>",
+            "target": [
+              "section[aria-labelledby=\"carga-paso-1\"] > .carga__nota"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#787b7b",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 4.27,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+                    "target": [
+                      "app-card"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p _ngcontent-ng-c2454185353=\"\" data-testid=\"importar-tope\" class=\"carga__nota\"> Un archivo por vez, de hasta 10 MB — el mismo tope que aplica el servidor. </p>",
+            "target": [
+              "p[data-testid=\"importar-tope\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#787b7b",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 4.27,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+                    "target": [
+                      "app-card"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p _ngcontent-ng-c2454185353=\"\" class=\"carga__nota\"> «Importar» se habilita recién después de una validación sin errores: nada se guarda hasta entonces. </p>",
+            "target": [
+              ".carga__nota:nth-child(5)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#787b7b",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 4.27,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+                    "target": [
+                      "app-card"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p _ngcontent-ng-c2454185353=\"\" data-testid=\"carga-sin-resultado\" class=\"carga__nota\"> Acá van a aparecer las filas leídas, la vista previa y los problemas en cuanto valides el archivo. </p>",
+            "target": [
+              "p[data-testid=\"carga-sin-resultado\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -   1
+    + Received  + 171
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+    +     "help": "Elements must meet minimum color contrast ratio thresholds",
+    +     "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=axeAPI",
+    +     "id": "color-contrast",
+    +     "impact": "serious",
+    +     "nodes": Array [
+    +       Object {
+    +         "all": Array [],
+    +         "any": Array [
+    +           Object {
+    +             "data": Object {
+    +               "bgColor": "#ffffff",
+    +               "colorParse": undefined,
+    +               "contrastRatio": 4.27,
+    +               "expectedContrastRatio": "4.5:1",
+    +               "fgColor": "#787b7b",
+    +               "fontSize": "9.0pt (12px)",
+    +               "fontWeight": "normal",
+    +               "messageKey": null,
+    +               "shadowColor": undefined,
+    +             },
+    +             "id": "color-contrast",
+    +             "impact": "serious",
+    +             "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +             "relatedNodes": Array [
+    +               Object {
+    +                 "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+    +                 "target": Array [
+    +                   "app-card",
+    +                 ],
+    +               },
+    +             ],
+    +           },
+    +         ],
+    +         "failureSummary": "Fix any of the following:
+    +   Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +         "html": "<p _ngcontent-ng-c2454185353=\"\" class=\"carga__nota\"> ¿No sabés cómo armar el archivo? Bajá la plantilla: trae los nombres de las columnas y una fila de ejemplo. </p>",
+    +         "impact": "serious",
+    +         "none": Array [],
+    +         "target": Array [
+    +           "section[aria-labelledby=\"carga-paso-1\"] > .carga__nota",
+    +         ],
+    +       },
+    +       Object {
+    +         "all": Array [],
+    +         "any": Array [
+    +           Object {
+    +             "data": Object {
+    +               "bgColor": "#ffffff",
+    +               "colorParse": undefined,
+    +               "contrastRatio": 4.27,
+    +               "expectedContrastRatio": "4.5:1",
+    +               "fgColor": "#787b7b",
+    +               "fontSize": "9.0pt (12px)",
+    +               "fontWeight": "normal",
+    +               "messageKey": null,
+    +               "shadowColor": undefined,
+    +             },
+    +             "id": "color-contrast",
+    +             "impact": "serious",
+    +             "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +             "relatedNodes": Array [
+    +               Object {
+    +                 "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+    +                 "target": Array [
+    +                   "app-card",
+    +                 ],
+    +               },
+    +             ],
+    +           },
+    +         ],
+    +         "failureSummary": "Fix any of the following:
+    +   Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +         "html": "<p _ngcontent-ng-c2454185353=\"\" data-testid=\"importar-tope\" class=\"carga__nota\"> Un archivo por vez, de hasta 10 MB — el mismo tope que aplica el servidor. </p>",
+    +         "impact": "serious",
+    +         "none": Array [],
+    +         "target": Array [
+    +           "p[data-testid=\"importar-tope\"]",
+    +         ],
+    +       },
+    +       Object {
+    +         "all": Array [],
+    +         "any": Array [
+    +           Object {
+    +             "data": Object {
+    +               "bgColor": "#ffffff",
+    +               "colorParse": undefined,
+    +               "contrastRatio": 4.27,
+    +               "expectedContrastRatio": "4.5:1",
+    +               "fgColor": "#787b7b",
+    +               "fontSize": "9.0pt (12px)",
+    +               "fontWeight": "normal",
+    +               "messageKey": null,
+    +               "shadowColor": undefined,
+    +             },
+    +             "id": "color-contrast",
+    +             "impact": "serious",
+    +             "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +             "relatedNodes": Array [
+    +               Object {
+    +                 "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+    +                 "target": Array [
+    +                   "app-card",
+    +                 ],
+    +               },
+    +             ],
+    +           },
+    +         ],
+    +         "failureSummary": "Fix any of the following:
+    +   Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +         "html": "<p _ngcontent-ng-c2454185353=\"\" class=\"carga__nota\"> «Importar» se habilita recién después de una validación sin errores: nada se guarda hasta entonces. </p>",
+    +         "impact": "serious",
+    +         "none": Array [],
+    +         "target": Array [
+    +           ".carga__nota:nth-child(5)",
+    +         ],
+    +       },
+    +       Object {
+    +         "all": Array [],
+    +         "any": Array [
+    +           Object {
+    +             "data": Object {
+    +               "bgColor": "#ffffff",
+    +               "colorParse": undefined,
+    +               "contrastRatio": 4.27,
+    +               "expectedContrastRatio": "4.5:1",
+    +               "fgColor": "#787b7b",
+    +               "fontSize": "9.0pt (12px)",
+    +               "fontWeight": "normal",
+    +               "messageKey": null,
+    +               "shadowColor": undefined,
+    +             },
+    +             "id": "color-contrast",
+    +             "impact": "serious",
+    +             "message": "Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +             "relatedNodes": Array [
+    +               Object {
+    +                 "html": "<app-card _ngcontent-ng-c2454185353=\"\" class=\"carga card card--outlined card--padding-md\" _nghost-ng-c1829488791=\"\">",
+    +                 "target": Array [
+    +                   "app-card",
+    +                 ],
+    +               },
+    +             ],
+    +           },
+    +         ],
+    +         "failureSummary": "Fix any of the following:
+    +   Element has insufficient color contrast of 4.27 (foreground color: #787b7b, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+    +         "html": "<p _ngcontent-ng-c2454185353=\"\" data-testid=\"carga-sin-resultado\" class=\"carga__nota\"> Acá van a aparecer las filas leídas, la vista previa y los problemas en cuanto valides el archivo. </p>",
+    +         "impact": "serious",
+    +         "none": Array [],
+    +         "target": Array [
+    +           "p[data-testid=\"carga-sin-resultado\"]",
+    +         ],
+    +       },
+    +     ],
+    +     "tags": Array [
+    +       "cat.color",
+    +       "wcag2aa",
+    +       "wcag143",
+    +       "TTv5",
+    +       "TT13.c",
+    +       "EN-301-549",
+    +       "EN-9.1.4.3",
+    +       "ACT",
+    +       "RGAAv4",
+    +       "RGAA-3.2.1",
+    +     ],
+    +   },
+    + ]
+
+      452 |         JSON.stringify(resultado.violations, null, 2),
+      453 |       );
+    > 454 |       expect(graves, JSON.stringify(graves, null, 2)).toEqual([]);
+          |                                                       ^
+      455 |     } finally {
+      456 |       await paginaAxe.close();
+      457 |       await contexto.close();
+        at C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\carga-masiva.spec.ts:454:55
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carga-masiva-Carga-masiva--7a459--critical-backend-simulado--chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\carga-masiva-Carga-masiva--7a459--critical-backend-simulado--chromium\error-context.md
+
+    Error Context: artifacts\playwright\salida\carga-masiva-Carga-masiva--7a459--critical-backend-simulado--chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carga-masiva-Carga-masiva--7a459--critical-backend-simulado--chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\carga-masiva-Carga-masiva--7a459--critical-backend-simulado--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\carga-masiva.spec.ts:426:7 › Carga masiva · contrato [backend simulado] › test 11 · accesibilidad: axe sin violaciones serious/critical [backend simulado] 
+  6 skipped
+  10 passed (54.7s)
+EXIT=1

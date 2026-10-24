@@ -1,0 +1,3 @@
+$ CHECK_ENGLISH_BASE=origin/dev node scripts/check-english-identifiers.mjs   (base = la del PR; el script compara base...HEAD, o sea lo commiteado)
+check-english-identifiers: OK — sin identificadores nuevos en castellano contra "origin/dev".
+exit=0

@@ -1,0 +1,2 @@
+https://github.com/mdavila-2001/mantra-core-health/pull/868
+EXIT_CODE=0

@@ -86,7 +86,7 @@ describe('QaPlanDetail', () => {
       .flush({ code: 'FORBIDDEN', message: 'x' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Tu rol no permite aprobar planes de ejecución.');
+    expect(texto).toContain('Su rol no permite aprobar planes de ejecución.');
     expect(texto).not.toContain('Quien pidió el plan');
   });
 

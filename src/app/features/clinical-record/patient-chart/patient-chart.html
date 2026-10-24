@@ -15,16 +15,6 @@
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
   <div class="expediente" data-pdf-root #raizPdf>
-    <!-- Continuación, no un origen: atender nace sólo de «Mis citas». Esto
-         aparece únicamente si ya hay un encuentro abierto con esta persona. -->
-    @if (atencionEnCurso()) {
-      <app-alert tone="info" title="Tenés una consulta en curso con esta persona">
-        <a app-link [routerLink]="rutaDeLaAtencion()" data-testid="expediente-volver-atencion">
-          Volver a la consulta
-        </a>
-      </app-alert>
-    }
-
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -33,46 +23,30 @@
       </app-alert>
     }
 
-    <!-- ─── La banda de contexto ──────────────────────────────────────────
-         Las alergias, arriba y fuera de las pestañas: es el único bloque que
-         cambia una conducta antes de leerlo. Debajo, las cifras que dimensionan
-         el expediente sin abrir pestaña por pestaña. -->
-    @if (alergiasDestacadas().length > 0) {
-      <app-alert
-        tone="warning"
-        title="Alergias"
-        class="expediente__alergias"
-        appTutorialTarget="expediente-alergias"
+    <!-- «Enfermedades activas» (C3): lo primero que se ve del historial
+         estructurado. Sólo aparece con al menos una activa; un expediente sin
+         diagnósticos activos no necesita esta tarjeta vacía. -->
+    @if (enfermedadesActivas().length > 0) {
+      <app-card
+        variant="outlined"
+        padding="lg"
+        class="expediente__activas"
+        data-testid="expediente-enfermedades-activas"
       >
-        <ul class="expediente__alergias-lista">
-          @for (alergia of alergiasDestacadas(); track alergia.id) {
-            <li class="expediente__alergias-item">
-              <span>{{ alergia.principal }}</span>
-              @if (alergia.detalle !== '') {
-                <app-badge variant="warning">{{ alergia.detalle }}</app-badge>
+        <h2 class="expediente__activas-titulo">Enfermedades activas</h2>
+        <ul class="expediente__activas-lista">
+          @for (enfermedad of enfermedadesActivas(); track enfermedad.id) {
+            <li class="expediente__activas-item">
+              <p class="expediente__activas-nombre">{{ enfermedad.nombre }}</p>
+              <app-fact-list [hechos]="enfermedad.hechos" />
+              @if (!enfermedad.cronica && enfermedad.progreso !== null) {
+                <app-progress [value]="enfermedad.progreso" label="Tiempo transcurrido" tone="primary" />
               }
             </li>
           }
         </ul>
-      </app-alert>
+      </app-card>
     }
-
-    <div class="expediente__contexto" appTutorialTarget="expediente-contexto">
-      <ul class="expediente__cifras">
-        @for (cifra of cifras(); track cifra.clave) {
-          <li>
-            <p class="expediente__cifra-rotulo">{{ cifra.rotulo }}</p>
-            <p class="expediente__cifra-valor">{{ cifra.valor }}</p>
-          </li>
-        }
-        <li>
-          <p class="expediente__cifra-rotulo">Última atención</p>
-          <p class="expediente__cifra-valor expediente__cifra-valor--fecha">
-            {{ ultimaAtencion() ? (ultimaAtencion() | date: 'd MMM y') : 'Sin atención previa' }}
-          </p>
-        </li>
-      </ul>
-    </div>
 
     <!-- ─── La historia ───────────────────────────────────────────────────
          Se lleva el ancho entero: es lo único que hace esta pantalla. Antes
@@ -145,9 +119,30 @@
         }
       </app-tabs>
     </section>
-
   </div>
 </app-view-state-host>
+
+<!-- 403: sin vínculo ni turno. A quien tiene el rol de emergencia se le ofrece la
+     salida —con justificación obligatoria—; a los demás, sólo el muro de arriba. -->
+@if (expediente().status === 'forbidden' && puedeEmergencia()) {
+  <app-alert tone="warning" title="Acceso de emergencia" data-testid="expediente-emergencia">
+    Si es una urgencia, puede pedir acceso a esta historia sin vínculo ni turno. Queda auditado y
+    la persona lo ve en «Quién ve mi historia».
+    <div alert-actions>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="expediente-acceso-emergencia"
+        [isLoading]="pidiendoEmergencia()"
+        (clicked)="pedirAccesoDeEmergencia()"
+      >
+        Acceso de emergencia
+      </button>
+    </div>
+  </app-alert>
+}
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrincipal let-fila>
@@ -158,8 +153,10 @@
 </ng-template>
 
 <ng-template #celdaEstado let-fila>
-  <!-- El estado nunca viaja sólo en el color: el badge trae su texto. -->
-  <app-badge variant="info" [value]="fila.estado" />
+  <!-- El estado nunca viaja sólo en el color: el badge trae su texto. El tono
+       lo fija cada bloque (C3 distingue En estudio/Activa/Rechazado/
+       Histórico); sin `estadoTono`, el `info` de siempre. -->
+  <app-badge [variant]="fila.estadoTono ?? 'info'" [value]="fila.estado" />
 </ng-template>
 
 <ng-template #celdaCuando let-fila>
@@ -222,12 +219,43 @@
     Acciones
   </button>
   <app-menu #menuDeAcciones>
-    <app-menu-item (selected)="abrirCambioDeEstado(fila)">Cambiar estado clínico…</app-menu-item>
+    <!-- C3: sólo un presuntivo puede confirmarse o rechazarse. Un
+         diagnóstico ya decidido no vuelve a ofrecerlo — el servidor lo
+         rechazaría con 409, y ofrecerlo igual sería mentir en la UI. -->
+    @if (fila.presuntivo) {
+      <app-menu-item data-testid="diagnostico-confirmar" (selected)="abrirVerificacion(fila, 'CONFIRMED')">
+        <app-nav-icon slot="icon" name="check" />
+        Confirmar…
+      </app-menu-item>
+      <app-menu-item data-testid="diagnostico-rechazar" destructive (selected)="abrirVerificacion(fila, 'REFUTED')">
+        <app-nav-icon slot="icon" name="close" />
+        Rechazar…
+      </app-menu-item>
+    }
+    <app-menu-item (selected)="abrirCambioDeEstado(fila)">
+      <app-nav-icon slot="icon" name="refresh" />
+      Cambiar estado clínico…
+    </app-menu-item>
     <app-menu-item (selected)="abrirAdjuntos(fila, 'diagnosticos')">
+      <app-nav-icon slot="icon" name="paperclip" />
       Adjuntar archivos…
     </app-menu-item>
   </app-menu>
 </ng-template>
+
+<!-- C3: confirmar o rechazar un diagnóstico presuntivo. Mismo componente que
+     usa la casilla «Diagnóstico» de la consulta (ya mergeado en `mockup`),
+     reusado acá para que el expediente también pueda decidir. -->
+@if (verificando(); as decision) {
+  <app-diagnosis-verify-dialog
+    [condition]="decision.condicion"
+    [patientProfileId]="pacienteDeLaFicha()"
+    [outcome]="decision.outcome"
+    [nombre]="decision.nombre"
+    (verified)="verificacionCompletada()"
+    (closed)="verificando.set(null)"
+  />
+}
 
 <!-- Cambiar el estado clínico de un diagnóstico ya registrado. El backend
      sigue validando la transición: esto sólo deja de deformar la tabla. -->
@@ -340,7 +368,106 @@
           <dd>{{ vinculo.valor }}</dd>
         </div>
       }
+      <!-- Un enlace por archivo (CL-27). Baja por la ruta del documento, con la
+           credencial: sin pestañas nuevas sobre URLs de `/common/files`. -->
+      @if (abierta.fila.archivos; as archivos) {
+        @if (archivos.length > 0) {
+          <div class="expediente__detalle-fila">
+            <dt>Archivos</dt>
+            <dd>
+              <ul class="expediente__archivos" data-testid="expediente-archivos">
+                @for (archivo of archivos; track archivo.fileId) {
+                  <li>
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [attr.data-testid]="'expediente-archivo-' + archivo.fileId"
+                      [isLoading]="bajando() === archivo.fileId"
+                      (clicked)="descargarArchivo(abierta.fila, archivo)"
+                    >
+                      Ver / descargar {{ archivo.rotulo }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </dd>
+          </div>
+        }
+      }
     </dl>
+
+    <!-- Lo que la consulta guardó como formulario clínico (ficha de la
+         especialidad, odontograma): vive en `forms`, no en el resumen, y se
+         pide al abrir este detalle. -->
+    @if (formulariosDelEncuentro(); as estado) {
+      <section
+        class="expediente__formularios"
+        aria-labelledby="expediente-formularios-titulo"
+        data-testid="expediente-formularios-del-encuentro"
+      >
+        <h3 id="expediente-formularios-titulo" class="expediente__formularios-titulo">
+          Formularios, procedimientos y estudios del encuentro
+        </h3>
+        @if (estado.status === 'loading') {
+          <p class="expediente__secundario" role="status">Buscando los formularios…</p>
+        } @else if (errorDeFormularios(); as mensaje) {
+          <app-alert tone="error" title="No pudimos leer los formularios">
+            {{ mensaje }}
+          </app-alert>
+          <button app-button variant="outline" size="sm" type="button" (clicked)="recargarFormularios()">
+            Reintentar
+          </button>
+        } @else if (formulariosLeidos(); as formularios) {
+          <dl class="expediente__detalle" data-testid="expediente-procedimientos-del-encuentro">
+            @for (vinculo of procedimientosDelEncuentro(); track vinculo.rotulo) {
+              <div class="expediente__detalle-fila">
+                <dt>{{ vinculo.rotulo }}</dt>
+                <dd>{{ vinculo.valor }}</dd>
+              </div>
+            }
+          </dl>
+          @if (formulariosNoLeidos() > 0) {
+            <app-alert tone="warning" data-testid="expediente-formularios-no-leidos">
+              {{ formulariosNoLeidos() === 1
+                ? 'Un formulario de este encuentro no se pudo leer.'
+                : formulariosNoLeidos() + ' formularios de este encuentro no se pudieron leer.' }}
+            </app-alert>
+          }
+          @for (formulario of formularios; track formulario.id) {
+            <div class="expediente__formulario" data-testid="expediente-formulario">
+              <h4 class="expediente__formulario-titulo">
+                {{ formulario.titulo }}
+                @if (formulario.completadoEl) {
+                  <span class="expediente__secundario">
+                    — {{ formulario.completadoEl | date: 'd MMM y, HH:mm' }}
+                  </span>
+                }
+              </h4>
+              <dl class="expediente__detalle">
+                @for (respuesta of formulario.respuestas; track respuesta.id) {
+                  <div class="expediente__detalle-fila">
+                    <dt>{{ respuesta.etiqueta }}</dt>
+                    <dd>
+                      @if (respuesta.masked) {
+                        <em>{{ marcadorEnmascarado }}</em>
+                      } @else {
+                        {{ respuesta.texto }}
+                      }
+                    </dd>
+                  </div>
+                }
+              </dl>
+            </div>
+          } @empty {
+            @if (formulariosNoLeidos() === 0) {
+              <p class="expediente__secundario">Sin formularios clínicos en este encuentro</p>
+            }
+          }
+        }
+      </section>
+    }
   </app-content-dialog>
 }
 
@@ -369,7 +496,9 @@
       aria-hidden="true"
       focusable="false"
     >
-      <path d="M16.5 8.5 9.7 15.3a2.1 2.1 0 0 0 3 3l6.8-6.8a4.2 4.2 0 0 0-5.9-6L6.8 12.3a6.2 6.2 0 0 0 8.8 8.8l5.4-5.4" />
+      <path
+        d="M16.5 8.5 9.7 15.3a2.1 2.1 0 0 0 3 3l6.8-6.8a4.2 4.2 0 0 0-5.9-6L6.8 12.3a6.2 6.2 0 0 0 8.8 8.8l5.4-5.4"
+      />
     </svg>
     Adjuntar
   </button>
@@ -418,14 +547,6 @@
           (cambio)="altaRegistrada()"
         />
       }
-      @case ('alergias') {
-        <app-allergy-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="null"
-          [citas]="citasParaElDiagnostico()"
-          (cambio)="altaRegistrada()"
-        />
-      }
       @case ('medicacion') {
         <!-- La receta trae su lista: firmar y emitir son pasos de la misma
              prescripción y dejarlos fuera obligaría a irse a «Atención» para
@@ -465,7 +586,6 @@
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="null"
-          [citas]="citasParaElDiagnostico()"
           [diagnosticos]="diagnosticosParaElPlan()"
           (cambio)="altaRegistrada()"
         />
@@ -481,3 +601,15 @@
     }
   </app-content-dialog>
 }
+
+<!-- ─── Lo que hay que saber antes de leer ────────────────────────────────
+     Las alergias y la consulta abierta iban en avisos fijos arriba de la
+     página: ocupaban media pantalla en cada visita, empujaban las pestañas
+     abajo del pliegue y, al estar siempre, se dejaban de leer. Un modal
+     tampoco: hay que cerrarlo con un clic para poder seguir, que es la misma
+     interrupción con otra forma. Ahora se dicen una vez, por toast, al abrir
+     el expediente (ver el constructor en patient-chart.ts). Lo mismo que
+     dicen sigue estando en su pestaña —«Diagnósticos», donde se cargan las
+     alergias desde el 02/10/2026, y «Encuentros»—: el toast avisa, no es el
+     único lugar donde consta. -->
+

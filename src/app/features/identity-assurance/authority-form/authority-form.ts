@@ -58,8 +58,8 @@ export class AuthorityForm {
       titulo: 'Qué autoridad',
       hint: 'Cómo se identifica el registro oficial.',
       campos: [
-        { key: 'authorityCode', label: 'Código de la autoridad', hint: 'Único; hasta 100 caracteres. Por ejemplo, RENAPER.', control: 'text', required: true, mensajeDeError: 'Ingresá el código (hasta 100 caracteres).' },
-        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Ingresá el nombre (hasta 200 caracteres).' },
+        { key: 'authorityCode', label: 'Código de la autoridad', hint: 'Único; hasta 100 caracteres. Por ejemplo, RENAPER.', control: 'text', required: true, mensajeDeError: 'Ingrese el código (hasta 100 caracteres).' },
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Ingrese el nombre (hasta 200 caracteres).' },
       ],
     },
     {
@@ -107,7 +107,7 @@ export class AuthorityForm {
   protected readonly registered = signal<RegisteredAuthority | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected submit(): void {

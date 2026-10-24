@@ -103,6 +103,15 @@
   line-height: var(--lh-caption);
 }
 
+.sintomas__leyendo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
+}
+
 .sintomas__sin-coincidencias {
   margin: var(--sp-4) 0 0;
   max-inline-size: 60ch;
@@ -184,11 +193,11 @@
   display: block;
 }
 
-/* 18rem: el ancho de la figura (14rem) más el aire para que el selector
-   «Frente · Espalda · Cara» entre sin cortarse. */
+/* 21rem: el ancho de la figura (16rem) más el acolchado del escenario, y el
+   aire para que el selector «Frente · Espalda · Cara» entre sin cortarse. */
 @media (min-width: 48rem) {
   .sintomas__elegir {
-    grid-template-columns: 18rem minmax(0, 1fr);
+    grid-template-columns: 21rem minmax(0, 1fr);
     gap: var(--e5);
     align-items: start;
   }
@@ -258,6 +267,14 @@
   border-color: var(--aguamarina);
   background: var(--sup-inset);
   transform: translateY(-1px);
+}
+
+/* Lo que se contó nombra esta pastilla: la misma seña que la figura, un borde
+   punteado del color secundario. Si además está abierta, manda `is-abierta`. */
+.sintomas__zona.is-marcada:not(.is-abierta) {
+  border-style: dashed;
+  border-color: var(--brand-secondary);
+  background: color-mix(in srgb, var(--brand-secondary) 10%, var(--bg-surface));
 }
 
 .sintomas__zona.is-abierta {
@@ -408,4 +425,22 @@
   border-radius: var(--r-menu);
   background: var(--sup-tarjeta);
   box-shadow: var(--sombra-1);
+}
+
+/* ---- guardar la observación --------------------------------------------- */
+
+.sintomas__observacion {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+}
+
+.sintomas__guardadas {
+  margin-block-start: var(--sp-4);
+}
+
+.sintomas__emergencia {
+  margin-block-start: var(--sp-3);
 }

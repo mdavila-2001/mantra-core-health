@@ -19,6 +19,15 @@ import { entrar, estable, irA } from './support/sesion';
  * verifica `clinical-prescriptions-pdf.int-spec.ts` contra la API real.
  *
  * `networkidle` no se usa: con HMR el bundler deja conexiones abiertas.
+ *
+ * **C5 (2026-09-25):** el PDF ahora también trae una sección "Diagnóstico"
+ * (o "Motivo") que nunca sale vacía — ver `clinical-pdf.ts:bloquesDeReceta` y
+ * sus specs unitarios. No se agrega una aserción de contenido acá a
+ * propósito: quien arma el `DocumentoDeReceta` de esta pantalla
+ * (`medical-record.ts`, C6, fuera de mi alcance esta noche) todavía no puebla
+ * `porQueEs`, así que el PDF real hoy muestra "Sin indicación registrada." —
+ * comportamiento correcto y ya cubierto por el spec unitario, no un caso
+ * nuevo de este recorrido E2E.
  */
 
 const PACIENTE: Actor = {

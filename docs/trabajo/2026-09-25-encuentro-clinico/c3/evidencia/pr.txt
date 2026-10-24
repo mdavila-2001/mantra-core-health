@@ -1,0 +1,1 @@
+{"baseRefName":"mockup","headRefName":"marcelo/feat-clinica-c3-diagnostico","isDraft":false,"mergeStateStatus":"DIRTY","mergeable":"CONFLICTING","number":709,"reviewDecision":"","reviewRequests":[{"__typename":"User","login":"Jsaldias39"},{"__typename":"User","login":"PabloArauzCaballero"}],"url":"https://github.com/mdavila-2001/mantra-core-health/pull/709"}

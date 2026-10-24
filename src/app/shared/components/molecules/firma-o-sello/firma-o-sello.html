@@ -1,0 +1,26 @@
+@if (src() && !fallo()) {
+  <img class="firma-o-sello__imagen" [src]="src()" [alt]="alt()" (error)="alFallar()" />
+} @else {
+  <!-- El marcador anuncia lo que falta; el dibujo es decoración. -->
+  <span class="firma-o-sello__vacio" [attr.data-testid]="'firma-o-sello-vacio-' + rotulo()">
+    <svg
+      class="firma-o-sello__icono"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      @if (tipo() === 'firma') {
+        <path d="M3 17c2-5 4-8 6-8s0 7 2 7 3-5 5-5 1 4 3 4" />
+        <path d="M3 21h18" />
+      } @else {
+        <circle cx="12" cy="12" r="8" />
+        <circle cx="12" cy="12" r="5" />
+      }
+    </svg>
+    {{ vacio() }}
+  </span>
+}

@@ -218,7 +218,7 @@ export class AllergyBlock implements DraftBlock {
   protected readonly errorDeLaAlergia = computed<string | null>(() =>
     mensajeDeEscritura(this.registro(), {
       accion: 'registrar la alergia',
-      sinPermiso: 'Tu rol no permite registrar alergias.',
+      sinPermiso: 'Su rol no permite registrar alergias.',
     }),
   );
 

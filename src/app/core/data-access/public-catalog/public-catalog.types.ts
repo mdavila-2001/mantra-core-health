@@ -90,6 +90,11 @@ export interface PublicPharmacyProduct {
  * elegir entre ellas sin abrir ninguna.
  */
 export interface PublicPharmacyBranch {
+  /**
+   * La sede (`pharmacy.pharmacy_sites`). Es la clave de la sucursal: dos sedes
+   * del mismo tenant comparten ficha y por eso comparten `slug`.
+   */
+  readonly id: string;
   /** El slug de su propia ficha pública. */
   readonly slug: string;
   /** «Farmacorp · San Miguel»: la cadena y la sucursal, que es como se nombra. */

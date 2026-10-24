@@ -79,7 +79,7 @@ export class TrackingSessionForm {
   protected readonly created = signal<TrackingSession | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para abrir sesiones de rastreo.'),
+    errorMessageOf(this.state(), 'No tiene permiso para abrir sesiones de rastreo.'),
   );
 
   protected submit(): void {

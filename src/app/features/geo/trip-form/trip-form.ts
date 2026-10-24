@@ -70,7 +70,7 @@ export class TripForm {
   protected readonly created = signal<Trip | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para iniciar viajes.'),
+    errorMessageOf(this.state(), 'No tiene permiso para iniciar viajes.'),
   );
 
   protected submit(): void {

@@ -129,3 +129,166 @@ sigue recibiendo lo mismo que recibía. El día que exista el catálogo del lado
 servidor, el frontend pasa a ser un mapeo y no cambia dónde se guarda la
 respuesta. Mismo criterio, y mismo archivo vecino, que
 `titulos-profesionales.ts`.
+
+## El logo del consultorio (2026-09-30)
+
+Justin pidió que el logo del consultorio del doctor se cargue y se edite desde
+su perfil («Datos personales», al mirar y al editar; «Facturación» lo muestra
+de lectura) y salga en el membrete de los PDF. El
+frontend está entregado contra el simulador de `mockup`; **el backend no tiene
+dónde guardarlo**, y esta sección deja escrito qué hace falta y cuál es el
+contrato que el frontend ya usa, para construir la API contra él.
+
+### Lo que hay hoy
+
+- `directory.tenants` **no tiene columna de logo**, y `practice.practices` tampoco.
+  `practice.practice_sites` sólo tiene `bank_qr_file_id` (parche v4215).
+- El logo de una organización que sí existe en el modelo es
+  `community.public_profiles.avatar_file_id` (con `target_type` de organización).
+  Se escribe con `PUT /admin/tenants/:tenantId/public-profile`, que exige
+  `SUPERADMIN` o `SECURITY_ADMIN`: **un doctor no puede cambiar el de su propio
+  consultorio.**
+
+### Decisión pendiente (una de las dos)
+
+1. **Columna `logo_file_id` en `practice.practice_sites`**, con el mismo molde que
+   `bank_qr_file_id`: `SQL/patches/…_practice_sites_logo_file_id.sql` + FK a
+   `common.files` + índice, empezando por el `.puml` del módulo 14 (ADR-0021: el
+   DDL no se escribe a mano).
+2. **Permitir que el dueño de un consultorio propio escriba el
+   `avatar_file_id` de su perfil público de organización**, y leerlo de ahí.
+   Evita un segundo logo que se contradiga con el de la vitrina, pero mezcla dos
+   conceptos: el logo del papel y la foto pública.
+
+### Contrato que el frontend ya espera
+
+Va todo detrás de `LogoDelConsultorioClient`
+(`core/data-access/practice-sites/logo-del-consultorio.client.ts`); el día que
+exista el backend se cambia **ese archivo** y las pantallas y el PDF no se
+tocan.
+
+```http
+PUT /practitioners/me/sites/:siteId/logo
+{ "fileId": "<uuid de un archivo ya subido>" | null }
+→ 200  la sede con el logo aplicado (mismo formato que la lista)
+```
+
+- `null` quita el logo. **Sólo el consultorio propio** (`isOwnSite`): en una
+  clínica ajena responde `404`, indistinguible entre «no existe» y «no es tuyo».
+- La lectura es `GET /practitioners/:profileId/sites`, que ya devuelve las sedes:
+  sólo falta el campo `logoFileId` (opcional; ausente = «sin logo»).
+- El archivo se sube antes con `POST /common/files/upload` como `IMAGE` de
+  sensibilidad `NORMAL` (`upload-policy.ts` ya cita «el logo de una
+  organización»). PNG, JPG o WEBP, hasta 2 MB.
+
+### Pendientes fuera del registro
+
+- **Quién puede verlo.** `GET /common/files/:id/content` sólo entrega a quien
+  subió el archivo, así que hoy el logo lo ve **su dueño**. Para que un paciente
+  lo vea en un documento o en el directorio hace falta servirlo por
+  `/public/media/<fileId>`.
+- **El PDF oficial de la receta** sale de la API (`prescription-pdf.service.ts`,
+  pdfkit) y **no lleva logo**; los otros dos generadores pdfkit
+  (`encounter-pdf.service.ts`, `insurance-portability-pdf.service.ts`) tampoco.
+  Los 12 documentos que arma el frontend (`buildBlocksPdf`) sí. pdfkit necesita un
+  paso previo que baje el archivo y lo dibuje en la misma caja de 120×34 pt que
+  usa el frontend (`LOGO_DEL_CONSULTORIO` en `pdf-theme.ts`).
+- **El selector «Mi consultorio» del encabezado** no muestra logo
+  (`TenantOption` no tiene imagen).
+- **Simulador:** `PUT /practitioners/me/sites/:id/logo` y la semilla
+  `file-logo-consultorio` (`practice.handlers.ts`, `files.handlers.ts`) son sólo
+  maqueta y se borran cuando exista la ruta real. Los bytes de un logo recién
+  subido viven en memoria: un F5 los pierde (limitación conocida del simulador).
+
+## La firma y el sello médicos (2026-09-30)
+
+Justin pidió que el doctor pueda **subir, ver, cambiar y quitar** su **firma** y su
+**sello médico** desde su perfil («Datos personales», al mirar y al editar), que se
+**estampen al pie de los documentos que emite** —los 12 del maquetador del
+frontend— con su nombre y su matrícula debajo, y que el alta permita cargarlos como
+paso **opcional**. El frontend está entregado contra el simulador de `mockup`;
+La API de `dev` ya tiene el contrato autenticado de firma/sello; el flujo de alta descrito abajo incorpora su precarga y persistencia real.
+
+### Qué es y qué NO es
+
+Son **imágenes**: la firma manuscrita escaneada o fotografiada, y el sello. **No es
+una firma electrónica** —no hay certificado, ni criptografía, ni sello de tiempo, ni
+validez legal por sí misma—. Si alguna vez se pide firma electrónica, es otro
+trabajo (ver `clinical.prescription_signatures` y la política de firma de recetas D-05
+en la API, que sí existen y no se tocan acá).
+
+### Contrato real del perfil y del alta (2026-10-03)
+
+El modelo ya declara `signature_file_id` y `seal_file_id` en
+`profiles.health_practitioner_profiles`, con FK a `common.files` e índices.
+Para bases existentes se aplica el patch canónico
+`SQL/patches/2026-10-03_profiles_signature_assets.sql` (también incluido en el
+snapshot `database/SQL/patches/` de la API).
+
+El perfil usa el contrato autenticado que consume `FirmaYSelloClient`:
+
+```http
+GET /profiles/practitioners/me/signature-assets
+→ 200 { "signatureFileId": "<uuid>" | null, "sealFileId": "<uuid>" | null }
+
+PUT /profiles/practitioners/me/signature-assets
+{ "signatureFileId"?: "<uuid>" | null, "sealFileId"?: "<uuid>" | null }
+→ 200 lo mismo que el GET
+```
+
+Una clave ausente conserva el valor anterior; `null` quita esa imagen. La API
+verifica propiedad, formato y tamaño del archivo.
+
+En el registro, todavía sin sesión, cada imagen se precarga mediante
+`POST /iam/auth/upload-registration-signature-image`, multipart con el campo
+`file`: PNG, JPEG o WebP de hasta 2 MB, detectado por firma binaria. Nace sin
+dueño, con categoría `IMAGE` y sensibilidad `PHI`; la ruta pública de medios
+no la sirve. La ruta tiene límite de solicitudes por IP.
+
+Después el formulario envía `signatureFileId` y/o `sealFileId` en
+`POST /iam/auth/register-practitioner`. El alta reclama los archivos para la
+cuenta nueva y los vincula al perfil dentro de la misma transacción. Un
+archivo ajeno, público, de otro formato o demasiado grande rechaza el alta.
+Las cargas confirmadas permanecen en memoria para reintentar sin duplicarlas.
+
+Las claves `signatureImageBase64` y `sealImageBase64` se conservan únicamente
+para el simulador; la API real recibe referencias UUID. No se aumenta el
+límite del cuerpo JSON. Tras iniciar sesión, el titular consulta los
+identificadores y descarga los bytes por `/common/files/:id/content`.
+
+La prueba HTTP de precarga → registro → login → lectura del perfil → descarga
+está en `test/integration/practitioner-signature-registration.int-spec.ts` de
+la API. No equivale a una prueba del formulario desplegado en navegador.
+
+### Pendientes fuera del registro
+
+- **El PDF oficial de la receta** sale de la API (`prescription-pdf.service.ts`,
+  pdfkit) y **no lleva el bloque de firma**; tampoco los otros dos generadores
+  pdfkit. Los 12 documentos del frontend (`buildBlocksPdf`) sí. pdfkit necesita un
+  paso previo que baje las dos imágenes y las dibuje en las mismas cajas fijas del
+  frontend (`FIRMA_Y_SELLO` en `pdf-theme.ts`: firma 150×56 pt, sello 56×56 pt).
+- **Quién puede ver las imágenes.** `GET /common/files/:id/content` sólo entrega a
+  quien subió el archivo: hoy la ve **su dueño**. Para que una receta impresa o
+  descargada por un paciente las lleve, el PDF tiene que generarse del lado del
+  servidor con autorización contextual. Las imágenes privadas del alta no se exponen por `/public/media/<fileId>`.
+- **El nombre y la matrícula** del bloque salen de `getOwnPractitionerProfile`
+  (`displayName` y la primera matrícula cargada). Falta decidir cuál matrícula
+  imprimir cuando hay varias (vigente, de una jurisdicción concreta).
+- **Simulador:** `GET/PUT …/signature-assets`, las semillas `file-firma-medica` y
+  `file-sello-medica` y las claves `…ImageBase64` del alta (`firma-y-sello.handlers.ts`,
+  `files.handlers.ts`, `auth.handlers.ts`) son sólo maqueta y se borran cuando exista
+  la ruta real. Los bytes de una imagen recién subida viven en memoria: un F5 los
+  pierde (limitación conocida).
+
+## País y universidad del alta, en árbol (2026-10-02)
+
+Desde el 02/10/2026 el alta de profesionales (`register-practitioner`) va un paso
+más allá, a pedido del propietario: **país de estudio y universidad son
+desplegables en árbol**, el país acota la universidad. El árbol lo sirve
+`PadronDeUniversidades` (`src/app/core/profesion/padron-de-universidades.ts`):
+Bolivia con la lista curada de arriba, y 199 países más con 10 218
+universidades importadas de `Hipo/university-domains-list` por
+`scripts/gen-universidades-por-pais.mjs`, fijado a un commit y cargado por un
+`import()` diferido. Sigue guardándose el nombre, y sigue habiendo salida a mano
+(«Otro país…», «Otra institución…»). El editor del perfil todavía usa la lista
+plana boliviana; pasarlo al mismo árbol es un cambio de pantalla, no de datos.

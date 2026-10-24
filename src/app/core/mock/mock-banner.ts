@@ -34,7 +34,7 @@ import { MOCK_USERS } from './mock-session';
       </div>
       @if (!plegado()) {
         <p class="mock__texto">
-          <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
+          <strong>Modo demo:</strong> sin backend. Todo lo que ve sale de datos de prueba en memoria y
           los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
         </p>
         <p class="mock__texto">
@@ -108,9 +108,6 @@ import { MOCK_USERS } from './mock-session';
       .mock--plegado {
         inset-block-start: calc(var(--h-header, 56px) + 2px);
       }
-      .mock--plegado {
-        inset-block-start: calc(var(--h-header, 56px) + 2px);
-      }
       .mock__boton {
         padding: 5px 10px;
         font-size: 11px;
@@ -126,6 +123,20 @@ import { MOCK_USERS } from './mock-session';
       /* El stock de componentes es una herramienta de escritorio. */
       .mock--plegado .mock__boton--stock {
         display: none;
+      }
+    }
+    @media (max-width: 640px) {
+      /* Las acciones del header ocupan dos filas; el aviso queda debajo. */
+      .mock,
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 48px);
+      }
+    }
+    @media (max-width: 360px) {
+      /* En el ancho minimo el header puede necesitar una tercera fila. */
+      .mock,
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 88px);
       }
     }
     .mock--plegado {
@@ -167,9 +178,14 @@ import { MOCK_USERS } from './mock-session';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MockBanner {
+  /**
+   * En backend real el banner de datos de prueba / demo se desactiva completamente.
+   */
+  protected readonly activo = false;
   protected readonly plegado = signal(true);
   protected readonly cuentas = MOCK_USERS.map((u) => ({
     email: u.email,
     rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : 'administrador',
   }));
 }
+

@@ -196,7 +196,7 @@ export class ContentPacks {
       return estado.message || 'Sólo una cuenta SUPERADMIN puede aplicar paquetes.';
     }
     if (estado.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (estado.status === 'error') {
       return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;

@@ -1,0 +1,557 @@
+/* ============================================================================
+    «Mis gastos». Mobile-first: una columna; en tableta las cifras van de a
+    dos y en escritorio la rejilla es de doce columnas, a todo el ancho de la
+    página (regla del cliente, 09/09/2026: nada acotado a una columna angosta).
+
+    Los colores de datos salen de dos variables y se rehacen para oscuro al
+    final; la pareja está validada como rampa ordinal (ver
+    `spending-year-chart.css`).
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.spending {
+  --spend-strong: var(--brand-primary);
+  --spend-soft: var(--c-petrol-300);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+.spending p {
+  margin: 0;
+}
+
+/* ---- tipografía común ---------------------------------------------------- */
+
+.spending__overline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Mayúscula sólo en la primera letra: `capitalize` sube cada palabra. */
+.spending__capitalize {
+  display: inline-block;
+}
+
+.spending__capitalize::first-letter {
+  text-transform: uppercase;
+}
+
+.spending__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-h3);
+}
+
+.spending__label {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.spending__value {
+  margin-top: var(--sp-1) !important;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.spending__value--accent {
+  font-size: 2rem;
+}
+
+.spending__sub,
+.spending__hint {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.spending__hint {
+  color: var(--text-muted);
+}
+
+.spending__block {
+  display: block;
+}
+
+.spending__card-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-4);
+}
+
+.spending__card-head--row {
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ---- la cifra del mes ---------------------------------------------------- */
+
+.spending__hero-value {
+  margin-top: var(--sp-3) !important;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.spending__hero .spending__delta {
+  margin-top: var(--sp-3);
+}
+
+.spending__hero .spending__hint {
+  margin-top: var(--sp-2);
+}
+
+/* ---- variación: flecha + palabras + tono de estado (nunca sólo color) ---- */
+
+.spending__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: fit-content;
+  padding: 0.125rem var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.spending__delta--small {
+  margin-top: var(--sp-2);
+}
+
+.spending__delta--inline {
+  padding: 0;
+  background: none;
+  font-weight: 500;
+}
+
+.spending__delta-arrow::before {
+  content: '=';
+}
+
+/* Gastar más no es una buena noticia: sube en tono de advertencia. */
+.spending__delta[data-direction='up'] {
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+}
+
+.spending__delta[data-direction='up'] .spending__delta-arrow::before {
+  content: '↑';
+}
+
+.spending__delta[data-direction='down'] {
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+}
+
+.spending__delta[data-direction='down'] .spending__delta-arrow::before {
+  content: '↓';
+}
+
+.spending__delta[data-direction='new'] .spending__delta-arrow::before {
+  content: '•';
+}
+
+.spending__delta--inline[data-direction] {
+  background: none;
+}
+
+/* ---- tendencia de doce meses --------------------------------------------- */
+
+.spending__spark {
+  position: relative;
+  margin: var(--sp-5) 0 0;
+}
+
+.spending__spark svg {
+  display: block;
+  width: 100%;
+  height: 4rem;
+  overflow: visible;
+}
+
+.spending__spark-area {
+  fill: var(--spend-strong);
+  fill-opacity: 0.1;
+}
+
+.spending__spark-line {
+  fill: none;
+  stroke: var(--spend-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* El punto va en HTML y no en el SVG estirado: ahí sería un óvalo. */
+.spending__spark-dot {
+  position: absolute;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin: -0.3125rem 0 0 -0.3125rem;
+  border: 2px solid var(--bg-surface);
+  border-radius: 50%;
+  background: var(--spend-strong);
+  box-sizing: content-box;
+  transform: translate(-2px, -2px);
+}
+
+.spending__spark figcaption {
+  margin-top: var(--sp-2);
+}
+
+/* ---- las cuatro cifras --------------------------------------------------- */
+
+.spending__kpis {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.spending__kpi {
+  height: 100%;
+}
+
+.spending__kpi .spending__sub {
+  margin-top: var(--sp-2);
+}
+
+/* ---- ahorro -------------------------------------------------------------- */
+
+.spending__split {
+  display: flex;
+  gap: 2px;
+  height: 0.75rem;
+  margin: var(--sp-4) 0;
+  overflow: hidden;
+  border-radius: var(--r-full);
+}
+
+.spending__split-paid {
+  flex-basis: 0;
+  background: var(--spend-strong);
+}
+
+.spending__split-saved {
+  flex-basis: 0;
+  background: var(--spend-soft);
+}
+
+.spending__swatch {
+  display: inline-block;
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: var(--r-xs);
+}
+
+.spending__swatch--paid {
+  background: var(--spend-strong);
+}
+
+.spending__swatch--saved {
+  background: var(--spend-soft);
+}
+
+.spending__facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.spending__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-caption);
+}
+
+.spending__facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.spending__facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
+
+.spending__facts-total {
+  margin-top: var(--sp-1);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ---- categorías y proveedores -------------------------------------------- */
+
+.spending__category-list,
+.spending__provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.spending__category {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.spending__category-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--r-md);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  font-size: 1rem;
+}
+
+.spending__category-main,
+.spending__provider {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.spending__category-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+/* La línea de abajo (parte del total · variación) envuelve de a bloques
+   enteros: en un teléfono no cabe en un renglón y partirla por la mitad
+   dejaba «22 % del» arriba y «total» abajo. */
+.spending__category-line.spending__sub {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+.spending__category-line.spending__sub > span:first-child {
+  white-space: nowrap;
+}
+
+.spending__category-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.spending__category-amount {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.spending__bar-track {
+  display: block;
+  height: 0.5rem;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+.spending__bar {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: var(--r-full);
+  background: var(--spend-strong);
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+.spending__bar--muted {
+  background: var(--spend-soft);
+}
+
+.spending__biggest {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.spending__biggest-line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2) !important;
+  color: var(--text-primary);
+}
+
+.spending__biggest-line app-nav-icon {
+  margin-top: 0.125rem;
+  color: var(--text-secondary);
+}
+
+/* ---- últimos movimientos ------------------------------------------------- */
+
+/* Lo ancho se desplaza en su propia caja, nunca la página. */
+.spending__table-wrap {
+  overflow-x: auto;
+}
+
+.spending__table {
+  width: 100%;
+  min-width: 40rem;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+}
+
+.spending__table th {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+
+.spending__table td {
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+.spending__table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.spending__table .spending__num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.spending__table strong {
+  color: var(--text-primary);
+}
+
+.spending__nowrap {
+  white-space: nowrap;
+}
+
+.spending__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 0.125rem var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  white-space: nowrap;
+}
+
+/* ---- tableta: las cifras de a dos ---------------------------------------- */
+
+@media (min-width: 48rem) {
+  .spending__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spending__card-head--row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .spending__hero-value {
+    font-size: 3.25rem;
+  }
+}
+
+/* ---- escritorio: rejilla de doce ----------------------------------------- */
+
+@media (min-width: 64rem) {
+  .spending {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--sp-5);
+  }
+
+  .spending__hero {
+    grid-column: span 5;
+  }
+
+  .spending__kpis {
+    grid-column: span 7;
+    gap: var(--sp-5);
+  }
+
+  .spending__year {
+    grid-column: span 8;
+  }
+
+  .spending__savings {
+    grid-column: span 4;
+  }
+
+  .spending__categories {
+    grid-column: span 7;
+  }
+
+  .spending__providers {
+    grid-column: span 5;
+  }
+
+  .spending__recent {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spending__bar {
+    transition: none;
+  }
+}
+
+/* ---- oscuro: la serie suave pasa a la rampa aqua (validada) -------------- */
+
+/* `:host-context(html…)` y no `:root …`: el encapsulado de Angular reescribe
+   `:root` como `[_ngcontent-…]:root`, que no coincide nunca — la regla quedaba
+   muerta (medido en el navegador con `getComputedStyle`). */
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .spending {
+    --spend-soft: var(--c-aqua-600);
+  }
+}
+
+:host-context(html[data-theme='dark']) .spending {
+  --spend-soft: var(--c-aqua-600);
+}

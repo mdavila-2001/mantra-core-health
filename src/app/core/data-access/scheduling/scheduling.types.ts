@@ -180,6 +180,58 @@ export interface BookingInsuranceClaim {
   readonly submittedAt: string | null;
 }
 
+/* ============================================================================
+    La reconsulta (C4): «volvé el jueves por esto mismo».
+
+    Una cita nueva y real —con su cupo, su estado y su lugar en las dos
+    agendas— que **recuerda de qué consulta salió**. No es un estado de la cita
+    anterior ni una nota: es una cita.
+   ========================================================================== */
+
+/**
+ * De qué consulta salió una reconsulta.
+ *
+ * `encounterId` es `null` cuando la cita de origen no tiene encuentro clínico
+ * detrás. No es un fallo: la reserva nace en la agenda y el encuentro es un
+ * registro posterior, así que se puede citar de nuevo a alguien desde una cita
+ * que todavía no abrió su consulta.
+ *
+ * Contrato compartido de C0/C4; la persistencia y lectura reales de este
+ * vínculo siguen pendientes de backend P42. El simulador conserva el origen.
+ */
+export interface FollowUpOrigin {
+  /** La reserva de la que nace esta reconsulta. */
+  readonly bookingId: string;
+  /** El encuentro clínico de esa reserva, si lo tenía. */
+  readonly encounterId: string | null;
+  /**
+   * La respuesta del formulario médico de esa consulta de la que sale la
+   * reconsulta. En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
+}
+
+/**
+ * El origen tal como **se lee**: el mismo vínculo, con cuándo fue esa consulta
+ * ya resuelto por el servidor.
+ *
+ * `startAt` no viaja en la escritura —se manda un identificador, no una
+ * fecha—, pero sí en la lectura, y no es un adorno: lo que la fila de la
+ * agenda y la tarjeta del paciente tienen que decir es «de la cita del 12 de
+ * septiembre». Con sólo el identificador, cada pantalla tendría que pedir la
+ * cita de origen de cada reconsulta —una petición por fila— o quedarse sin
+ * poder nombrarla.
+ *
+ * Ausente o `null` es un estado corriente: la cita de origen puede haber
+ * quedado sin cupo. Ahí el sello va solo, sin la frase.
+ *
+ * Pendiente de backend **P42**: la lectura tiene que resolverlo en
+ * `BookingItemDto`. Hoy sólo lo sirve el simulador.
+ */
+export interface FollowUpOriginRef extends FollowUpOrigin {
+  readonly startAt?: Date | null;
+}
+
 export interface Booking {
   readonly id: string;
   readonly patientProfileId?: string;
@@ -270,7 +322,66 @@ export interface Booking {
    * contra, campana sin abrir) y el turno tiene que poder explicarse solo.
    */
   readonly delayNotice?: BookingDelayNotice;
+  /**
+   * De qué cita salió ésta, si es una reconsulta (C4).
+   *
+   * Ausente es una cita corriente. `null` es «se buscó y no deriva de
+   * ninguna», que el simulador distingue de la ausencia.
+   */
+  readonly followUpOf?: FollowUpOriginRef | null;
+  /** La reconsulta que salió de ésta, si ya se agendó una (C4). */
+  readonly followUpBookingId?: string | null;
+  /**
+   * El servicio que se reservó, si la cita no es una consulta (v4.2.40).
+   *
+   * Sale de la copia **congelada al reservar** —lo que el paciente aceptó—, no de
+   * la oferta de hoy. Ausente es «es una consulta» o «no te corresponde verlo»: el
+   * nombre de un servicio puede revelar un dato de salud, así que la API lo
+   * entrega con la misma compuerta que el motivo de consulta.
+   */
+  readonly service?: BookingService;
   readonly createdAt: Date;
+}
+
+/** Lo que el paciente aceptó al reservar un servicio, congelado (`BookingServiceDto`). */
+export interface BookingService {
+  readonly offeringId: string;
+  readonly name: string;
+  readonly price: string;
+  readonly currencyConceptId?: string;
+  /** Lo mínimo que podía tardar. Sólo informa. */
+  readonly minDurationMinutes: number;
+  /** Lo que se reservó en la agenda. */
+  readonly maxDurationMinutes: number;
+  readonly requiresApproval: boolean;
+}
+
+/**
+ * Si una cita es una reconsulta.
+ *
+ * Se pregunta por `followUpOf` y **no** por el `typeConceptId`: el origen es el
+ * dato que el servidor garantiza y el que la pantalla necesita para poder
+ * decir «de la cita del …». El tipo de cita es una clasificación del catálogo
+ * que puede llegar más tarde —o no llegar—, y una cita sin origen no es una
+ * reconsulta por más que la clasifiquen así.
+ */
+export function esReconsulta(cita: Pick<Booking, 'followUpOf'>): boolean {
+  return cita.followUpOf !== undefined && cita.followUpOf !== null;
+}
+
+/**
+ * El motivo que se propone para una reconsulta, a partir del de la cita origen.
+ *
+ * Se antepone «Reconsulta: » una sola vez: quien cita de nuevo a alguien que ya
+ * venía de una reconsulta no debería terminar con «Reconsulta: Reconsulta: …».
+ * Sin motivo de origen queda la palabra sola, que sigue diciendo algo.
+ */
+export function motivoDeReconsulta(motivoDeOrigen: string | null | undefined): string {
+  const origen = (motivoDeOrigen ?? '').trim();
+  if (origen === '') {
+    return 'Reconsulta';
+  }
+  return origen.startsWith('Reconsulta:') ? origen : `Reconsulta: ${origen}`;
 }
 
 /** Una demora informada por el profesional (P8 · registro del cliente 3.5). */
@@ -507,6 +618,13 @@ export interface ScheduleRule {
    * respiro: «no lo dijo» y «dijo que no hay» se guardan distinto.
    */
   readonly gapMinutes?: number;
+  /**
+   * Qué admite la franja: consultas, servicios o ambos (v4.2.40).
+   *
+   * **Ausente ≡ `CONSULTATIONS`**: es lo que toda franja era antes. No se manda
+   * cuando el médico no lo cambió, para no escribir un valor que nadie eligió.
+   */
+  readonly bookingMode?: FranjaModo;
 }
 
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
@@ -788,6 +906,8 @@ export interface PublishedRule {
    * «no declarado» y «cero» sigan siendo distinguibles.
    */
   readonly gapMinutes?: number;
+  /** Qué admite la franja. Ausente ≡ `CONSULTATIONS`. */
+  readonly bookingMode?: FranjaModo;
 }
 
 /** Lo que deja retirar un horario (`DELETE /scheduling/templates/:id`). */
@@ -900,6 +1020,15 @@ export interface NewDirectAppointment {
    * No confundir con el canal de la RESERVA, que dice cómo se pidió el turno.
    */
   readonly channel?: ModalidadDeAtencion;
+  /**
+   * De qué consulta sale esta cita (C4).
+   *
+   * **Ausente es una cita puntual corriente**, que es lo que agendan
+   * `appointment-new` y el mostrador: los rechazos propios de la reconsulta
+   * —403, 404, 422 y 409— sólo corren cuando este campo viaja.
+   * El simulador asigna `APT-RECONSULTA`; la escritura real depende de P42.
+   */
+  readonly followUpOf?: FollowUpOrigin;
 }
 
 /**
@@ -1012,5 +1141,122 @@ export interface WalkInAppointmentCreated {
   readonly encounterId: string;
   readonly statusConceptId: string;
   /** Cupos ofrecidos que este turno retiró. Se informa, no se pregunta. */
+  readonly retractedSlots: number;
+}
+
+/* ---- servicios con duración dinámica (v4.2.40) ---------------------------
+   Las consultas salen de una grilla pre-generada; un servicio no: dura entre un
+   mínimo y un máximo que declara el profesional. Los horarios se CALCULAN en
+   lectura y el turno nace al retener, con el máximo como tiempo reservado. */
+
+/** Qué admite una franja del horario. Del contrato (`RuleBookingMode`). */
+export type FranjaModo = 'CONSULTATIONS' | 'SERVICES' | 'MIXED';
+
+/**
+ * Cómo ofrece un profesional un servicio del catálogo de su práctica.
+ *
+ * El catálogo fija nombre y precio y es **por práctica**; la duración vive acá
+ * porque en una misma organización dos médicos hacen el mismo servicio con
+ * tiempos distintos.
+ */
+export interface ServiceOffering {
+  readonly id: string;
+  readonly practitionerProfileId: string;
+  readonly serviceCatalogId: string;
+  readonly serviceCode: string;
+  readonly serviceName: string;
+  /** Precio de catálogo, con dos decimales. */
+  readonly price: string;
+  readonly currencyConceptId?: string;
+  /** Lo mínimo que puede tardar. Sólo informa: «30–45 min». */
+  readonly minDurationMinutes: number;
+  /** Lo máximo que puede tardar. Es el tiempo que se reserva en la agenda. */
+  readonly maxDurationMinutes: number;
+  /** Aire del profesional antes de atender; el paciente no lo ve ni lo reserva. */
+  readonly prepMinutes: number;
+  /** Aire del profesional después de atender; el paciente no lo ve ni lo reserva. */
+  readonly cleanupMinutes: number;
+  /** Si el paciente puede pedirlo por su cuenta desde el portal. */
+  readonly isPatientBookable: boolean;
+  /** Si cada pedido espera la aceptación del profesional en vez de confirmarse solo. */
+  readonly requiresApproval: boolean;
+  readonly channel?: ModalidadDeAtencion;
+  readonly isActive: boolean;
+}
+
+/** Cuerpo de `POST /scheduling/service-offerings`. */
+export interface NewServiceOffering {
+  readonly serviceCatalogId: string;
+  readonly minDurationMinutes: number;
+  readonly maxDurationMinutes: number;
+  readonly prepMinutes?: number;
+  readonly cleanupMinutes?: number;
+  readonly isPatientBookable?: boolean;
+  readonly requiresApproval?: boolean;
+  readonly channel?: ModalidadDeAtencion;
+}
+
+/** Cuerpo de `PATCH /scheduling/service-offerings/:id`: los ausentes se conservan. */
+export interface ServiceOfferingChanges {
+  readonly minDurationMinutes?: number;
+  readonly maxDurationMinutes?: number;
+  readonly prepMinutes?: number;
+  readonly cleanupMinutes?: number;
+  readonly isPatientBookable?: boolean;
+  readonly requiresApproval?: boolean;
+  readonly channel?: ModalidadDeAtencion;
+  readonly isActive?: boolean;
+}
+
+/** Query de `GET /scheduling/service-availability`. */
+export interface ServiceAvailabilityQuery {
+  readonly offeringId: string;
+  /** Una sede en particular; sin ella se buscan en todas las del profesional. */
+  readonly resourceId?: string;
+  readonly from: Date;
+  readonly to: Date;
+}
+
+/** Un inicio posible para el servicio, en una sede. */
+export interface ServiceStart {
+  readonly resourceId: string;
+  readonly startAt: Date;
+  /** Hasta cuándo se reserva: inicio más la duración máxima. */
+  readonly endAtMax: Date;
+  /** Cuándo podría terminar como pronto: inicio más la duración mínima. */
+  readonly endAtMin: Date;
+}
+
+/** Los horarios donde cabe un servicio. */
+export interface ServiceAvailability {
+  readonly offeringId: string;
+  readonly minDurationMinutes: number;
+  readonly maxDurationMinutes: number;
+  readonly items: readonly ServiceStart[];
+}
+
+/** Lo que pide retener el turno de un servicio. */
+export interface NewServiceHold {
+  readonly resourceId: string;
+  readonly startAt: Date;
+  readonly patientProfileId?: string;
+}
+
+/**
+ * La retención del turno de un servicio.
+ *
+ * Se confirma con las mismas rutas que una consulta (`confirmHold` /
+ * `requestHold`): el cupo que nace al retener es una reserva más.
+ */
+export interface ServiceHold {
+  readonly id: string;
+  /** Token de un solo uso. Se entrega una sola vez. */
+  readonly holdToken: string;
+  readonly expiresAt: Date;
+  /** El cupo que nació para este turno. */
+  readonly bookableSlotId: string;
+  readonly startAt: Date;
+  readonly endAt: Date;
+  /** Cupos de consulta que este turno retiró de la agenda del profesional. */
   readonly retractedSlots: number;
 }

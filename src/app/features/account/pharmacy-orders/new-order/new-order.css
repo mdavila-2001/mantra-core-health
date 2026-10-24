@@ -146,3 +146,21 @@
   gap: var(--sp-2);
   margin: 0 0 var(--sp-3);
 }
+
+/* Las campañas que no son de un solo renglón (2x1, compra mínima, puntos…). */
+.confirmacion__descuento,
+.confirmacion__promo-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.confirmacion__promos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}

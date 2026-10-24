@@ -220,20 +220,34 @@ form {
   align-items: start;
 }
 
-/* La confirmación no explica nada —ya no hay nada que contestar—, así que
-   queda sola y con el ancho de una tarjeta, no con el de la ventana. */
+/* En oscuro, la confirmación no explica nada —ya no hay nada que contestar—,
+   así que queda sola con ancho de tarjeta. En claro la variante CORR-34 ocupa
+   toda la superficie disponible. */
 .registro-conjunto--solo {
   max-width: 44rem;
   margin-inline: auto;
 }
 
-/* En pantalla ancha el alta y su ayuda no se estiran a lo ancho de la ventana:
-   una línea de 1400 px no se lee, y un formulario de cuatro campos centrado es
-   lo que la tarjeta ya hacía de sola cuando era la única columna. */
+/* En oscuro el alta y su ayuda se mantienen acotadas en pantalla ancha. En
+   claro, CORR-34 quita ese tope y aprovecha el área disponible. */
 @media (min-width: 1024px) {
   .registro-conjunto {
     max-width: 52rem;
     margin-inline: auto;
     gap: var(--sp-6);
   }
+}
+
+/* CORR-34: en claro, el área de registro aprovecha la superficie completa.
+   Los campos cortos ya resuelven sus columnas por ancho; el tope de 52 rem
+   dejaba una columna vacía en monitores anchos. En oscuro se conserva el
+   espaciado previo. */
+:host-context(:root[data-tema='claro']) .registro-conjunto {
+  inline-size: 100%;
+  max-width: none;
+  margin-inline: auto;
+}
+
+:host-context(:root[data-tema='claro']) .registro-conjunto--solo {
+  max-width: none;
 }

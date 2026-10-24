@@ -33,7 +33,7 @@
       [value]="practicaElegida()"
       (valueChange)="cambiarPractica($event)"
       [options]="opcionesDePractica()"
-      placeholder="Elegí una práctica"
+      placeholder="Elija una práctica"
     />
   </app-form-field>
 
@@ -59,9 +59,9 @@
           [required]="true"
           [errorMessage]="
             codigoEnConflicto()
-              ? 'Ya existe un servicio con este código en el catálogo. Probá con otro.'
+              ? 'Ya existe un servicio con este código en el catálogo. Pruebe con otro.'
               : formAlta.controls.code.touched && formAlta.controls.code.invalid
-                ? 'Escribí el código del servicio.'
+                ? 'Escriba el código del servicio.'
                 : ''
           "
         >
@@ -73,7 +73,7 @@
           [required]="true"
           [errorMessage]="
             formAlta.controls.name.touched && formAlta.controls.name.invalid
-              ? 'Escribí el nombre del servicio (hasta 200 caracteres).'
+              ? 'Escriba el nombre del servicio (hasta 200 caracteres).'
               : ''
           "
         >
@@ -86,7 +86,7 @@
           [required]="true"
           [errorMessage]="
             formAlta.controls.defaultPrice.touched && formAlta.controls.defaultPrice.invalid
-              ? 'Escribí un precio válido, por ejemplo 100.00.'
+              ? 'Escriba un precio válido, por ejemplo 100.00.'
               : ''
           "
         >

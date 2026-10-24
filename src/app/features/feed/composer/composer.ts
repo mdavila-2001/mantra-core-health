@@ -51,12 +51,12 @@ export const VISIBILIDADES: readonly {
   {
     value: 'FOLLOWERS',
     label: 'Sólo quienes me siguen',
-    hint: 'La leen los perfiles que te siguen en este momento.',
+    hint: 'La leen los perfiles que le siguen en este momento.',
   },
   {
     value: 'PRIVATE',
     label: 'Sólo yo',
-    hint: 'No la ve nadie más que vos.',
+    hint: 'No la ve nadie más que usted.',
   },
 ];
 
@@ -221,7 +221,7 @@ export class Composer {
           // El cuerpo **no** se limpia: si falló, lo que se escribió es lo único
           // que no se puede recuperar.
           this.enviando.set(false);
-          this.error.set('No pudimos publicar. Revisá y reintentá.');
+          this.error.set('No pudimos publicar. Revise y reintente.');
         },
       });
   }

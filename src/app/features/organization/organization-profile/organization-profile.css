@@ -1,0 +1,42 @@
+/* «Mi perfil» de una organización que no es farmacia. Sólo tokens. */
+
+.perfil-organizacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.perfil-organizacion__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.perfil-organizacion__datos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-1) var(--sp-6);
+  margin: 0;
+}
+
+.perfil-organizacion__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.perfil-organizacion__datos dd {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .perfil-organizacion__datos {
+    grid-template-columns: max-content 1fr;
+  }
+
+  .perfil-organizacion__datos dd {
+    margin: 0;
+  }
+}

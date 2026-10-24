@@ -1,0 +1,9 @@
+
+Running 4 tests using 1 worker
+
+  ok 1 [chromium] › playwright\carril-insurance-exclusions-settlement.spec.ts:63:9 › liquidación conciliada · vista del prestador (CLM-2026-0177) › concilia 300 = 150 + 30 + 120 y muestra la cláusula 12.3 en 1440×900 (8.5s)
+  ok 2 [chromium] › playwright\carril-insurance-exclusions-settlement.spec.ts:63:9 › liquidación conciliada · vista del prestador (CLM-2026-0177) › concilia 300 = 150 + 30 + 120 y muestra la cláusula 12.3 en 390×844 (5.9s)
+  ok 3 [chromium] › playwright\carril-insurance-exclusions-settlement.spec.ts:119:9 › liquidación conciliada · vista del paciente (orden parcialmente aprobada) › concilia 100 = 50 + 20 + 30 y muestra la cláusula 14.2 en 1440×900 (5.5s)
+  ok 4 [chromium] › playwright\carril-insurance-exclusions-settlement.spec.ts:119:9 › liquidación conciliada · vista del paciente (orden parcialmente aprobada) › concilia 100 = 50 + 20 + 30 y muestra la cláusula 14.2 en 390×844 (5.4s)
+
+  4 passed (26.4s)

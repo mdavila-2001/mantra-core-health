@@ -32,7 +32,15 @@ export type NotificationDestinationType =
   | 'CONVERSATION'
   | 'APPOINTMENT'
   | 'POST'
-  | 'DIAGNOSTIC_REPORT';
+  | 'DIAGNOSTIC_REPORT'
+  | 'DEPENDENT_LINK_REQUEST'
+  | 'PHARMACY_ORDER'
+  | 'CARE_RELATIONSHIP_REQUEST'
+  /** MCH-027 (AG-06): una orden de estudios que el médico dejó al paciente. */
+  | 'SERVICE_REQUEST'
+  /** AG-06/AG-07: lo que la agenda emite de verdad (ver `notification-routes.ts`). */
+  | 'scheduling.appointment_bookings'
+  | 'scheduling.bookable_slots';
 
 /**
  * A dónde lleva una notificación.
@@ -46,6 +54,25 @@ export interface NotificationDestination {
   readonly id: string;
 }
 
+/** Cómo se pinta el botón de una acción. */
+export type NotificationActionTone = 'primary' | 'neutral' | 'danger';
+
+/**
+ * Un botón que la notificación ofrece: «Aceptar», «Rechazar»…
+ *
+ * Es **datos, no código**: el servidor dice qué acciones ofrece y cuáles siguen
+ * vigentes (una solicitud ya respondida vuelve sin ellas). Qué *hace* cada una
+ * lo decide el cliente, que registra un manejador por `(tipo de destino, key)`
+ * en `notification-actions.ts`. Una acción sin manejador registrado no se
+ * dibuja: un botón que no hace nada es peor que no ofrecerlo.
+ */
+export interface NotificationAction {
+  /** Identificador estable dentro del tipo de destino: `ACCEPT`, `REJECT`. */
+  readonly key: string;
+  readonly label: string;
+  readonly tone?: NotificationActionTone;
+}
+
 /** Una notificación de la bandeja in-app. */
 export interface InAppNotification {
   readonly id: string;
@@ -54,6 +81,8 @@ export interface InAppNotification {
   readonly bodyText?: string;
   readonly destination?: NotificationDestination;
   readonly payloadJson?: unknown;
+  /** Las acciones que ofrece y siguen vigentes; ausente si no ofrece ninguna. */
+  readonly actions?: readonly NotificationAction[];
   readonly unread: boolean;
   readonly availableAt: Date;
   readonly readAt?: Date;

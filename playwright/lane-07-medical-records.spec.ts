@@ -50,8 +50,8 @@ test.describe('Carril 07 · archivo clínico', () => {
     // `/profiles/patients` — la tabla del M34 no se monta con datos, y el
     // vacío inicial invita a escribir en vez de listar el padrón entero.
     await expect(page.getByTestId('tabla')).toHaveCount(0);
-    await expect(page.getByText('Buscá por nombre, código o documento')).toBeVisible();
-    await expect(page.getByText('No tenés acceso a esta sección')).toHaveCount(0);
+    await expect(page.getByText('Busque por nombre, código o documento')).toBeVisible();
+    await expect(page.getByText('No tiene acceso a esta sección')).toHaveCount(0);
 
     // AC-07-5: el camino retirado no deja rastro en la pantalla.
     await expect(page.getByText('Abrir expediente')).toHaveCount(0);
@@ -84,7 +84,7 @@ test.describe('Carril 07 · archivo clínico', () => {
     // comprobar es la AUSENCIA del aviso de acceso y de cualquier error, no
     // la presencia de la tabla.
     await expect(page.getByText('Nadie coincide con')).toBeVisible();
-    await expect(page.getByText('No tenés acceso a esta sección')).toHaveCount(0);
+    await expect(page.getByText('No tiene acceso a esta sección')).toHaveCount(0);
     expect(errores).toEqual([]);
   });
 

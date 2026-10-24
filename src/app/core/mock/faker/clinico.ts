@@ -146,7 +146,7 @@ export function motivoDeConsulta(f: Faker): string {
   return f.helpers.arrayElement(MOTIVOS);
 }
 
-const EVOLUCIONES = [
+const TEXTOS_DE_NOTA = [
   'Paciente refiere mejoría desde la última consulta. Se mantiene el tratamiento.',
   'Persisten los síntomas. Se ajusta la dosis y se solicita control en dos semanas.',
   'Buena adherencia al tratamiento. Signos vitales dentro de parámetros.',
@@ -156,8 +156,8 @@ const EVOLUCIONES = [
   'Cuadro en resolución. Se indica reposo relativo y control si empeora.',
 ] as const;
 
-export function notaDeEvolucion(f: Faker): string {
-  return f.helpers.arrayElement(EVOLUCIONES);
+export function textoDeNotaMedica(f: Faker): string {
+  return f.helpers.arrayElement(TEXTOS_DE_NOTA);
 }
 
 const FORMACION = [

@@ -9,6 +9,7 @@ import type {
   ClaimAdjudication,
   ClaimDetail,
   ClaimDispute,
+  ClaimEob,
   ClaimLine,
   ClaimLineDuplicateStudy,
   ClaimListItem,
@@ -25,13 +26,38 @@ import type {
   CarrierSummary,
   Plan,
   PlanBenefit,
+  PractitionerInsuranceNetwork,
+  PractitionerInsuranceNetworkPage,
   Product,
+  PractitionerInsuranceCarrier,
   ProviderNetwork,
   CreateInsurancePlanInput,
   CreatePlanBenefitInput,
   UpdatePlanBenefitInput,
   UpdatePlanBenefitRulesInput,
   UpdatePlanPremiumInput,
+  UpdateInsurancePlanInput,
+  CampaignCondition,
+  CampaignPage,
+  CampaignQuery,
+  CampaignTargetStatus,
+  CreateCampaignInput,
+  CreateAdjudicationInput,
+  InsuranceCampaign,
+  InsurerMarketplace,
+  MarketplaceBroker,
+  PatientCampaign,
+  MyClaim,
+  MyClaimList,
+  MyClaimsView,
+  ReceivedClaim,
+  ReceivedClaimDecision,
+  ReceivedClaimDecisionInput,
+  ReceivedClaimInvoice,
+  ReceivedClaimList,
+  InsurerPatientPage,
+  InsurerPatientQuery,
+  PatientDirectoryOptions,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -64,6 +90,14 @@ type WireNetwork = Omit<ProviderNetwork, 'effectiveFrom' | 'effectiveTo'> & {
   readonly effectiveTo: string | null;
 };
 
+type WirePractitionerNetwork = Omit<
+  PractitionerInsuranceNetwork,
+  'effectiveFrom' | 'effectiveTo'
+> & {
+  readonly effectiveFrom: string | null;
+  readonly effectiveTo: string | null;
+};
+
 type WireCarrierDetail = WireCarrierSummary & {
   readonly products: readonly WireProduct[];
   readonly networks: readonly WireNetwork[];
@@ -92,6 +126,27 @@ type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
   readonly submittedAt: string | null;
 };
 
+type WireReceivedClaimInvoice = Omit<ReceivedClaimInvoice, 'issuedAt' | 'annulledAt' | 'previous'> & {
+  readonly issuedAt: string;
+  readonly annulledAt: string | null;
+  readonly previous: readonly WireReceivedClaimInvoice[];
+};
+
+type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate' | 'decision' | 'invoice'> & {
+  readonly submittedAt: string | null;
+  /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
+  readonly serviceDate: string | null;
+  readonly decision: (Omit<ReceivedClaimDecision, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  readonly invoice: WireReceivedClaimInvoice | null;
+};
+
+type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision'> & {
+  readonly submittedAt: string | null;
+  /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
+  readonly serviceDate: string | null;
+  readonly decision: (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
+};
+
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
   readonly adjudicatedAt: string;
 };
@@ -112,15 +167,19 @@ type WireClaimLine = Omit<ClaimLine, 'duplicateStudy'> & {
   readonly duplicateStudy: WireClaimLineDuplicateStudy | null;
 };
 
+/** `eob.publishedAt` viaja como ISO-8601; el resto del desglose ya son cadenas. */
+type WireClaimEob = Omit<ClaimEob, 'publishedAt'> & { readonly publishedAt: string };
+
 type WireClaimDetail = Omit<
   ClaimDetail,
-  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes'
+  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes' | 'eob'
 > & {
   readonly header: WireClaimListItem;
   readonly lines: readonly WireClaimLine[];
   readonly adjudication: WireClaimAdjudication | null;
   readonly adjudicationHistory: readonly WireClaimAdjudication[];
   readonly disputes: readonly WireClaimDispute[];
+  readonly eob: WireClaimEob | null;
 };
 
 /**
@@ -174,11 +233,86 @@ export class InsuranceClient {
       );
   }
 
+  /**
+   * `GET /practitioners/:id/insurance-carriers` — las aseguradoras en cuya red
+   * atiende un profesional, con los planes de cada una.
+   *
+   * Es lo que el paciente mira en la ficha para saber si su seguro lo cubre.
+   * Una lista vacía es «no hay convenios informados», no «no trabaja con
+   * seguros»: la pantalla lo dice así.
+   *
+   * @param practitionerProfileId - El perfil profesional de la ficha.
+   * @returns Las aseguradoras, ya ordenadas por nombre.
+   */
+  listPractitionerCarriers(
+    practitionerProfileId: string,
+  ): Observable<readonly PractitionerInsuranceCarrier[]> {
+    return this.http
+      .get<{ readonly items: readonly PractitionerInsuranceCarrier[] }>(
+        this.url(
+          `/practitioners/${encodeURIComponent(practitionerProfileId)}/insurance-carriers`,
+        ),
+      )
+      .pipe(map((body) => body.items));
+  }
+
   /** `GET /insurance-carriers/:id` — catálogo comercial y red. */
   getCarrier(id: string): Observable<CarrierDetail> {
     return this.http
       .get<WireCarrierDetail>(this.url(`/insurance-carriers/${encodeURIComponent(id)}`))
       .pipe(map(toCarrierDetail));
+  }
+
+  /**
+   * `GET /insurance-marketplace/insurers/:slug` — la vitrina de una
+   * aseguradora para el paciente: productos con planes y cláusulas, y los
+   * brokers con los que puede hablar. Se busca por el slug de su ficha
+   * pública, que es lo que trae el directorio.
+   *
+   * **Sólo existe en la maqueta**: la API todavía no lo expone (P48).
+   */
+  getMarketplace(slug: string): Observable<InsurerMarketplace> {
+    return this.http
+      .get<{
+        readonly carrier: WireCarrierDetail | null;
+        readonly brokers: readonly MarketplaceBroker[];
+      }>(this.url(`/insurance-marketplace/insurers/${encodeURIComponent(slug)}`))
+      .pipe(
+        map((body) => ({
+          carrier: body.carrier === null ? null : toCarrierDetail(body.carrier),
+          brokers: body.brokers,
+        })),
+      );
+  }
+
+  /**
+   * `GET /practitioners/:profileId/insurance-networks` — con qué aseguradoras
+   * trabaja el profesional: sus membresías activas en redes de prestadores.
+   *
+   * Una lista vacía es un estado normal —ninguna aseguradora lo sumó a su red—
+   * y quien la reciba tiene que decirlo así, nunca como un fallo.
+   *
+   * @param practitionerProfileId - Profesional consultado.
+   * @returns Una fila por red, con la aseguradora dueña de la red.
+   */
+  listNetworksOfPractitioner(
+    practitionerProfileId: string,
+  ): Observable<PractitionerInsuranceNetworkPage> {
+    return this.http
+      .get<{
+        readonly items: readonly WirePractitionerNetwork[];
+        readonly count: number;
+      }>(this.url(`/practitioners/${encodeURIComponent(practitionerProfileId)}/insurance-networks`))
+      .pipe(
+        map((body) => ({
+          items: body.items.map((item) => ({
+            ...item,
+            effectiveFrom: maybeDateOnly(item.effectiveFrom) ?? null,
+            effectiveTo: maybeDateOnly(item.effectiveTo) ?? null,
+          })),
+          count: body.count,
+        })),
+      );
   }
 
   /** Crea un plan dentro de un producto del carrier del tenant activo. */
@@ -190,6 +324,25 @@ export class InsuranceClient {
       this.url(`/insurance-products/${encodeURIComponent(productId)}/plans`),
       body,
     );
+  }
+
+  /**
+   * `PUT /insurance-plans/:planId` — corrige los datos generales de un
+   * producto seguro. **Sólo existe en la maqueta**: la API todavía no lo expone.
+   */
+  updatePlan(planId: string, body: UpdateInsurancePlanInput): Observable<{ readonly ok: true }> {
+    return this.http.put<{ readonly ok: true }>(
+      this.url(`/insurance-plans/${encodeURIComponent(planId)}`),
+      body,
+    );
+  }
+
+  /**
+   * `DELETE /insurance-plans/:planId` — da de baja un producto seguro con sus
+   * cláusulas. **Sólo existe en la maqueta**: la API todavía no lo expone.
+   */
+  deletePlan(planId: string): Observable<void> {
+    return this.http.delete<void>(this.url(`/insurance-plans/${encodeURIComponent(planId)}`));
   }
 
   /** Crea una cobertura dentro de un plan del carrier del tenant activo. */
@@ -314,6 +467,130 @@ export class InsuranceClient {
   }
 
   /**
+   * `GET /insurance/received-claims` — lo que los prestadores le presentaron a
+   * la aseguradora activa («Solicitudes recibidas»).
+   *
+   * Trae la ventana entera de una vez, con tope y aviso `truncated`: la
+   * pantalla filtra, busca, ordena y pagina en el cliente (ADR-0015, familia
+   * «lista local»). El alcance lo resuelve el servidor por la membresía en la
+   * aseguradora; el cliente no manda ningún id de aseguradora.
+   *
+   * @returns Las solicitudes recibidas, de la más reciente a la más antigua.
+   */
+  listReceivedClaims(): Observable<ReceivedClaimList> {
+    return this.http
+      .get<{
+        readonly items: readonly WireReceivedClaim[];
+        readonly truncated: boolean;
+      }>(this.url('/insurance/received-claims'))
+      .pipe(
+        map((body) => ({
+          items: body.items.map(toReceivedClaim),
+          truncated: body.truncated,
+        })),
+      );
+  }
+
+  /**
+   * `POST /insurance/patients/search` — el directorio autorizado de pacientes
+   * por cursor, con total exacto.
+   *
+   * El servidor restringe a cobertura vigente o padrón administrativo según
+   * el actor. Seleccionar una aseguradora filtra dentro de ese alcance.
+   * Los filtros viajan en el cuerpo y no se conservan en transfer cache.
+   *
+   * @param query - Filtros, orden y cursor de continuación.
+   * @returns La página, con el cursor de la siguiente.
+   */
+  listInsurerPatients(query: InsurerPatientQuery = {}): Observable<InsurerPatientPage> {
+    const body = Object.fromEntries(
+      Object.entries(query).filter(
+        ([, value]) => value !== undefined && value !== null && value !== '',
+      ),
+    );
+    return this.http.post<InsurerPatientPage>(this.url('/insurance/patients/search'), body, {
+      transferCache: false,
+    });
+  }
+
+  patientDirectoryOptions(): Observable<PatientDirectoryOptions> {
+    return this.http.get<PatientDirectoryOptions>(this.url('/insurance/patients/options'), {
+      transferCache: false,
+    });
+  }
+
+  openPatientConversation(
+    patientProfileId: string,
+    channel: 'internal',
+  ): Observable<{ readonly conversationId: string }> {
+    return this.http.post<{ readonly conversationId: string }>(
+      this.url('/insurance/patients/conversation'),
+      { patientProfileId, channel },
+      { transferCache: false },
+    );
+  }
+  /**
+   * `GET /insurance/my-claims` — «Mis solicitudes»: las solicitudes de seguro
+   * de quien mira y lo que decidió la aseguradora. Cualquier sesión puede
+   * pedirla; el lado (paciente, médico, laboratorio, imagenología) lo resuelve
+   * el servidor por la sesión — el cliente no manda ningún id.
+   *
+   * @returns Las solicitudes, de la más reciente a la más antigua.
+   */
+  listMyClaims(): Observable<MyClaimList> {
+    return this.http
+      .get<{
+        readonly view: MyClaimsView;
+        readonly items: readonly WireMyClaim[];
+        readonly truncated: boolean;
+      }>(this.url('/insurance/my-claims'))
+      .pipe(map((body) => ({ view: body.view, items: body.items.map(toMyClaim), truncated: body.truncated })));
+  }
+
+  /**
+   * `POST /insurance/received-claims/:id/decision` — el dictamen de la
+   * aseguradora. **Definitivo**: la API responde `409` si la solicitud ya tiene
+   * uno. Aprobar (total o parcial) emite en el mismo acto la factura del
+   * prestador a la aseguradora por el monto aprobado.
+   *
+   * @returns La solicitud como quedó, con su dictamen y su factura.
+   */
+  decideReceivedClaim(claimId: string, body: ReceivedClaimDecisionInput): Observable<ReceivedClaim> {
+    return this.http
+      .post<WireReceivedClaim>(
+        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/decision`),
+        body,
+      )
+      .pipe(map(toReceivedClaim));
+  }
+
+  /**
+   * `POST /insurance/received-claims/:id/invoice/annulment` — anula la factura
+   * vigente, con motivo. El dictamen no cambia.
+   */
+  annulReceivedClaimInvoice(claimId: string, reason: string): Observable<ReceivedClaim> {
+    return this.http
+      .post<WireReceivedClaim>(
+        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`),
+        { reason },
+      )
+      .pipe(map(toReceivedClaim));
+  }
+
+  /**
+   * `POST /insurance/received-claims/:id/invoice` — emite la factura corregida
+   * de una solicitud aprobada cuya factura se anuló. `409` si ya hay una vigente.
+   */
+  reissueReceivedClaimInvoice(claimId: string): Observable<ReceivedClaim> {
+    return this.http
+      .post<WireReceivedClaim>(
+        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice`),
+        {},
+      )
+      .pipe(map(toReceivedClaim));
+  }
+
+  /**
    * `GET /insurance-claims/:id` — cabecera, ítems, dictámenes y disputas.
    *
    * @param id - Solicitud consultada.
@@ -350,6 +627,126 @@ export class InsuranceClient {
     );
   }
 
+  /**
+   * `POST /insurance-claims/:id/adjudications` — adjudica el reclamo por línea (835).
+   * Dictamina aprobación o rechazo (con cláusula y fundamentación).
+   *
+   * @param claimId - Solicitud adjudicada.
+   * @param body - Dictamen y líneas adjudicadas.
+   * @returns El identificador del recurso creado.
+   */
+  adjudicateClaim(
+    claimId: string,
+    body: CreateAdjudicationInput,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/adjudications`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /insurance-claims/:id/eob` — publica la Explicación de Beneficios.
+   *
+   * @param claimId - Solicitud para la que se emite la EOB.
+   * @param body - Documento asociado opcional.
+   * @returns El identificador de la EOB creada.
+   */
+  publishEob(
+    claimId: string,
+    body: { readonly documentRecordId?: string } = {},
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/eob`),
+      body,
+    );
+  }
+
+  /**
+   * `GET /insurance-campaigns` — las campañas preventivas de la aseguradora
+   * activa, de la más nueva a la más vieja, con cursor opaco.
+   *
+   * Los filtros vacíos se descartan: un `status=''` llegaría al servidor como
+   * cadena vacía y reventaría su `@IsIn()` con un 400 que la pantalla no
+   * provocó a propósito.
+   *
+   * @param query - Filtros por tipo y estado, y cursor de continuación.
+   * @returns La página, con el cursor de la siguiente.
+   */
+  listCampaigns(query: CampaignQuery = {}): Observable<CampaignPage> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value === undefined || value === null || value === '') continue;
+      params = params.set(key, String(value));
+    }
+    return this.http
+      .get<{
+        readonly items: readonly WireCampaign[];
+        readonly nextCursor: string | null;
+      }>(this.url('/insurance-campaigns'), { params })
+      .pipe(
+        map((body) => ({
+          items: body.items.map(toCampaign),
+          nextCursor: body.nextCursor,
+        })),
+      );
+  }
+
+  /**
+   * `POST /insurance-campaigns` — crea una campaña; nace en borrador, o activa
+   * si `activate` es `true`.
+   *
+   * Responde 400 con fechas invertidas o porcentaje fuera de 0..100, 409 con un
+   * código repetido en la aseguradora y 403 a quien no administra una.
+   *
+   * @param input - La campaña, con sus aliados.
+   * @returns La campaña creada.
+   */
+  createCampaign(input: CreateCampaignInput): Observable<InsuranceCampaign> {
+    return this.http
+      .post<WireCampaign>(this.url('/insurance-campaigns'), input)
+      .pipe(map(toCampaign));
+  }
+
+  /**
+   * `PATCH /insurance-campaigns/:id/status` — activa, pausa o finaliza.
+   *
+   * Una transición fuera de la tabla responde 422; repetir el estado actual es
+   * idempotente.
+   *
+   * @param id - Campaña a mover.
+   * @param status - Estado destino.
+   * @returns La campaña ya en su nuevo estado.
+   */
+  updateCampaignStatus(
+    id: string,
+    status: CampaignTargetStatus,
+  ): Observable<InsuranceCampaign> {
+    return this.http
+      .patch<WireCampaign>(this.url(`/insurance-campaigns/${encodeURIComponent(id)}/status`), {
+        status,
+      })
+      .pipe(map(toCampaign));
+  }
+
+  /**
+   * `GET /insurance-campaigns/patient/:patientProfileId` — las campañas
+   * vigentes para el afiliado.
+   *
+   * El id del perfil viaja en la URL a propósito: la API exige que sea el del
+   * titular y un intento sobre el de otro responde 403 y queda auditado.
+   *
+   * @param patientProfileId - Perfil del afiliado (claim `pid`).
+   * @returns Sólo campañas activas, dentro de su vigencia y de su aseguradora.
+   */
+  getActivePatientCampaigns(patientProfileId: string): Observable<readonly PatientCampaign[]> {
+    return this.http
+      .get<readonly WirePatientCampaign[]>(
+        this.url(`/insurance-campaigns/patient/${encodeURIComponent(patientProfileId)}`),
+      )
+      .pipe(map((body) => body.map(toPatientCampaign)));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -357,6 +754,34 @@ export class InsuranceClient {
 
 function toClaimListItem(body: WireClaimListItem): ClaimListItem {
   return { ...body, submittedAt: maybeDate(body.submittedAt) ?? null };
+}
+
+function toReceivedClaim(body: WireReceivedClaim): ReceivedClaim {
+  return {
+    ...body,
+    submittedAt: maybeDate(body.submittedAt) ?? null,
+    serviceDate: maybeDateOnly(body.serviceDate) ?? null,
+    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    invoice: body.invoice === null ? null : toReceivedClaimInvoice(body.invoice),
+  };
+}
+
+function toMyClaim(body: WireMyClaim): MyClaim {
+  return {
+    ...body,
+    submittedAt: maybeDate(body.submittedAt) ?? null,
+    serviceDate: maybeDateOnly(body.serviceDate) ?? null,
+    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+  };
+}
+
+function toReceivedClaimInvoice(body: WireReceivedClaimInvoice): ReceivedClaimInvoice {
+  return {
+    ...body,
+    issuedAt: new Date(body.issuedAt),
+    annulledAt: maybeDate(body.annulledAt) ?? null,
+    previous: body.previous.map(toReceivedClaimInvoice),
+  };
 }
 
 function toClaimAdjudication(body: WireClaimAdjudication): ClaimAdjudication {
@@ -381,6 +806,7 @@ function toClaimDetail(body: WireClaimDetail): ClaimDetail {
     adjudication: body.adjudication ? toClaimAdjudication(body.adjudication) : null,
     adjudicationHistory: body.adjudicationHistory.map(toClaimAdjudication),
     disputes: body.disputes.map(toClaimDispute),
+    eob: body.eob ? { ...body.eob, publishedAt: new Date(body.eob.publishedAt) } : null,
   };
 }
 
@@ -446,5 +872,70 @@ function toBrokerClient(body: WireBrokerClient): BrokerClient {
     ...body,
     effectiveFrom: maybeDateOnly(body.effectiveFrom) ?? null,
     effectiveTo: maybeDateOnly(body.effectiveTo) ?? null,
+  };
+}
+
+/* ---- campañas preventivas (Tarea 4) --------------------------------------- */
+
+interface WireCampaignPartner {
+  readonly id: string;
+  readonly role: InsuranceCampaign['partners'][number]['role'];
+  readonly type: InsuranceCampaign['partners'][number]['type'];
+  readonly name: string;
+  readonly networkProviderMembershipId: string | null;
+}
+
+interface WireCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: InsuranceCampaign['campaignType'];
+  readonly status: InsuranceCampaign['status'];
+  readonly targetCondition: CampaignCondition | null;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: string;
+  readonly validTo: string;
+  readonly activatedAt: string | null;
+  readonly partners: readonly WireCampaignPartner[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+interface WirePatientCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: PatientCampaign['campaignType'];
+  readonly targetCondition: CampaignCondition | null;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: string;
+  readonly validTo: string;
+  readonly carrierName: string;
+  readonly partners: PatientCampaign['partners'];
+}
+
+/** Una fecha `AAAA-MM-DD` a medianoche local: sin correr un día al pintarla. */
+function civilDate(value: string): Date {
+  return maybeDateOnly(value) ?? new Date(value);
+}
+
+function toCampaign(body: WireCampaign): InsuranceCampaign {
+  return {
+    ...body,
+    validFrom: civilDate(body.validFrom),
+    validTo: civilDate(body.validTo),
+    activatedAt: maybeDate(body.activatedAt) ?? null,
+    createdAt: new Date(body.createdAt),
+    updatedAt: new Date(body.updatedAt),
+  };
+}
+
+function toPatientCampaign(body: WirePatientCampaign): PatientCampaign {
+  return {
+    ...body,
+    validFrom: civilDate(body.validFrom),
+    validTo: civilDate(body.validTo),
   };
 }

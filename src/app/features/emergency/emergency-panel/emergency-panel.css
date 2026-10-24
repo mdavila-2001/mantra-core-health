@@ -1,0 +1,83 @@
+:host {
+  display: block;
+}
+
+.emergencia {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.emergencia__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada número es un enlace grande: se toca con el pulgar y en apuro. */
+.emergencia__llamar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.emergencia__llamar:hover {
+  border-color: var(--st-error-bd);
+}
+
+.emergencia__llamar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.emergencia__llamar--propia {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  border-color: var(--st-error-bd);
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+}
+
+.emergencia__numero {
+  min-inline-size: 7ch;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--st-error-fg);
+}
+
+.emergencia__texto {
+  display: grid;
+}
+
+.emergencia__nombre {
+  font-weight: 600;
+}
+
+.emergencia__detalle,
+.emergencia__fuente {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.emergencia__formulario {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.emergencia__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

@@ -1,0 +1,66 @@
+<!-- El riel es una lista ordenada de verdad: los hechos de una consulta tienen
+     orden y un lector de pantalla tiene que poder anunciar «1 de 5». Una pila
+     de `div` con una línea dibujada al costado se ve igual y no dice nada. -->
+@if (vacia()) {
+  <p class="linea-encuentro__vacio">
+    @if (loadingOrders()) {
+      Estamos trayendo los estudios de esta atención.
+    } @else {
+      De esta atención todavía no quedó nada registrado.
+    }
+  </p>
+} @else {
+  <ol class="linea-encuentro__riel" [attr.aria-label]="nombreAccesible()">
+    @for (hecho of linea(); track hecho.id) {
+      <li class="linea-encuentro__hecho" [attr.data-tipo]="hecho.tipo">
+        <!-- El marcador del riel. `aria-hidden` porque el título de al lado ya
+             dice de qué hecho se trata: anunciarlo diría «imagen» cinco veces. -->
+        <span class="linea-encuentro__marca" aria-hidden="true">
+          <app-nav-icon class="linea-encuentro__icono" [name]="iconoDe(hecho.tipo)" />
+        </span>
+
+        <div class="linea-encuentro__cuerpo">
+          <p class="linea-encuentro__titulo">
+            {{ hecho.titulo }}
+            @if (hecho.detalle !== null) {
+              <span class="linea-encuentro__detalle">— {{ hecho.detalle }}</span>
+            }
+          </p>
+
+          @if (hecho.cuando !== null) {
+            <!-- `datetime` en ISO para que la fecha sea legible por máquina sin
+                 que el texto visible tenga que serlo. -->
+            <time class="linea-encuentro__cuando" [attr.datetime]="hecho.cuando.toISOString()">
+              {{ hecho.cuando | date: "d 'de' MMMM y, HH:mm" }}
+            </time>
+          }
+
+          @if (hecho.sello !== null) {
+            <app-badge class="linea-encuentro__sello" [variant]="hecho.tono">
+              {{ hecho.sello }}
+            </app-badge>
+          }
+
+          @if (hecho.hechos.length > 0) {
+            <app-fact-list [hechos]="hecho.hechos" [etiqueta]="hecho.titulo" />
+          }
+        </div>
+      </li>
+    }
+
+    @if (loadingOrders()) {
+      <!-- Se dice que faltan, no se calla: una línea a la que le faltan los
+           estudios y no lo declara se lee como una consulta sin estudios. -->
+      <li class="linea-encuentro__hecho linea-encuentro__hecho--pendiente">
+        <span class="linea-encuentro__marca" aria-hidden="true">
+          <app-nav-icon class="linea-encuentro__icono" name="flask" />
+        </span>
+        <p class="linea-encuentro__cuerpo linea-encuentro__cargando" role="status">
+          Estamos trayendo los estudios de esta atención.
+        </p>
+      </li>
+    }
+  </ol>
+
+  <p class="linea-encuentro__cierre">{{ cierre() }}</p>
+}

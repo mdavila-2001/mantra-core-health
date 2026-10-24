@@ -183,7 +183,7 @@ export class OrgAssignmentForm {
   protected readonly created = signal<CreatedResource | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para asignar usuarios de organización.'),
+    errorMessageOf(this.state(), 'No tiene permiso para asignar usuarios de organización.'),
   );
 
   protected submit(): void {

@@ -174,6 +174,47 @@ describe('ContactPanel', () => {
     expect(cerrado).toBe(1);
   });
 
+  it('Tab no sale de la hoja: del último control vuelve al primero, y al revés', async () => {
+    // WCAG 2.4.3. Antes movía el foco y cerraba con Escape, pero el `Tab`
+    // seguía de largo hacia la bandeja y el hilo de atrás.
+    montar();
+    http.expectOne('/community/profiles/pp-2').flush(ficha());
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const cerrar = consultar('hilo-contacto-cerrar') as HTMLElement;
+    const fichaPublica = consultar('hilo-contacto-ficha') as HTMLElement;
+
+    fichaPublica.focus();
+    fichaPublica.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(cerrar);
+
+    cerrar.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }),
+    );
+    expect(document.activeElement).toBe(fichaPublica);
+  });
+
+  it('lo de atrás queda inerte mientras está abierta, y vuelve al cerrarse', async () => {
+    const behind = document.createElement('button');
+    behind.textContent = 'La bandeja';
+    document.body.prepend(behind);
+    try {
+      montar();
+      http.expectOne('/community/profiles/pp-2').flush(ficha());
+      await fixture.whenStable();
+
+      expect(behind.hasAttribute('inert')).toBe(true);
+      // La hoja misma no: sería cerrar la puerta con la persona adentro.
+      expect(consultar('hilo-contacto')?.closest('[inert]')).toBeNull();
+
+      fixture.destroy();
+      expect(behind.hasAttribute('inert')).toBe(false);
+    } finally {
+      behind.remove();
+    }
+  });
+
   it('avisa que se cerró', () => {
     montar();
     http.expectOne('/community/profiles/pp-2').flush(ficha());

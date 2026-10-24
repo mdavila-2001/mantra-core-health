@@ -64,7 +64,7 @@ export class ScheduleForm {
       campos: [
         { key: 'countryConceptId', label: 'País', hint: 'Identificador del concepto de país (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
         { key: 'agentId', label: 'Agente', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
-        { key: 'scheduleExpression', label: 'Expresión de programación', hint: 'La cadencia, como una expresión cron: 0 3 * * * corre todos los días a las 3.', control: 'text', required: true, mensajeDeError: 'Escribí la expresión de programación (máx. 200 caracteres).' },
+        { key: 'scheduleExpression', label: 'Expresión de programación', hint: 'La cadencia, como una expresión cron: 0 3 * * * corre todos los días a las 3.', control: 'text', required: true, mensajeDeError: 'Escriba la expresión de programación (máx. 200 caracteres).' },
       ],
     },
     {
@@ -72,8 +72,8 @@ export class ScheduleForm {
       hint: 'Opcionales: zona horaria, cuántos días hacia atrás mirar y cuánto vive el dato.',
       campos: [
         { key: 'timezoneConceptId', label: 'Zona horaria', hint: 'Identificador del concepto de zona (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
-        { key: 'lookbackDays', label: 'Ventana hacia atrás (días)', control: 'text', mensajeDeError: 'Ingresá un número entero de días, sin signo.' },
-        { key: 'freshnessTtlSeconds', label: 'Vigencia del dato (segundos)', hint: 'Cuánto se considera fresco lo recolectado. Mínimo 60.', control: 'text', mensajeDeError: 'Ingresá un número entero de segundos, de 60 en adelante.' },
+        { key: 'lookbackDays', label: 'Ventana hacia atrás (días)', control: 'text', mensajeDeError: 'Ingrese un número entero de días, sin signo.' },
+        { key: 'freshnessTtlSeconds', label: 'Vigencia del dato (segundos)', hint: 'Cuánto se considera fresco lo recolectado. Mínimo 60.', control: 'text', mensajeDeError: 'Ingrese un número entero de segundos, de 60 en adelante.' },
         { key: 'nextRunAt', label: 'Primera corrida', hint: 'Sin este dato, la calcula el scheduler a partir de la expresión.', control: 'datetime' },
       ],
     },
@@ -115,7 +115,7 @@ export class ScheduleForm {
   protected readonly created = signal<ScheduleCreated | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para programar recolecciones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para programar recolecciones.'),
   );
 
   protected submit(): void {

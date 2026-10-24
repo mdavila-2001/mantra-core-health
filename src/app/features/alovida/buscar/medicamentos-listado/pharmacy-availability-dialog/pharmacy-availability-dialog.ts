@@ -156,7 +156,7 @@ export class PharmacyAvailabilityDialog {
     const marked = count === 1 ? '1 farmacia marcada' : `${count} farmacias marcadas`;
     const label = this.originLabel();
     const framing =
-      label === null ? '' : ` El mapa abre centrado en ${label}; alejá para ver el resto.`;
+      label === null ? '' : ` El mapa abre centrado en ${label}; aleje para ver el resto.`;
     return `${marked} en el mapa.${framing} La lista completa, con dirección, precio y distancia en línea recta, está debajo.`;
   });
 

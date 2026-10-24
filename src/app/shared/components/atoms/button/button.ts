@@ -115,7 +115,7 @@ export class AppButton {
 
     if (!hasName) {
       console.warn(
-        '[app-button] iconOnly sin nombre accesible: agregá aria-label al <button>.',
+        '[app-button] iconOnly sin nombre accesible: agregue aria-label al <button>.',
         host,
       );
     }

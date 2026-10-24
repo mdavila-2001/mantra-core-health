@@ -87,7 +87,7 @@ describe('AssetsLiabilities — FT-26', () => {
     };
     componente.registrarAvanceDeActivo({ id: 'as1' });
 
-    expect(componente.errorDeAvanceDeActivo()).toContain('Elegí primero');
+    expect(componente.errorDeAvanceDeActivo()).toContain('Elija primero');
     // Sin POST: http.verify() lo confirma.
   });
 

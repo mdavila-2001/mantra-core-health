@@ -48,7 +48,7 @@ export function paginarCampos(
  * algo no cargó.
  */
 function paginarSeccion(seccion: SeccionDeFormulario): readonly PaginaDeFormulario[] {
-  const trozos = partirEnTrozos(seccion.campos, MAX_CAMPOS_POR_PAGINA);
+  const trozos = partirEnTrozos(seccion.campos, MAX_CAMPOS_POR_PAGINA, esPreguntaPrincipal);
   const total = trozos.length;
 
   return trozos.map((campos, indice) => ({
@@ -69,12 +69,39 @@ function paginarSeccion(seccion: SeccionDeFormulario): readonly PaginaDeFormular
   }));
 }
 
-function partirEnTrozos<T>(items: readonly T[], tamano: number): readonly (readonly T[])[] {
+/**
+ * Parte en trozos de `tamano` **preguntas principales**.
+ *
+ * Un campo condicional —el «¿cuál?» de un «sí»— no cuenta para el tope y viaja
+ * en el trozo de la pregunta que lo abre: separarlos dejaba una página con un
+ * «Dolor torácico» suelto y la siguiente, si se contestaba «sí», con el
+ * detalle de un dolor que ya no estaba a la vista. Mientras está cerrado no
+ * ocupa lugar en pantalla, así que la página sigue mostrando cuatro.
+ */
+function partirEnTrozos<T>(
+  items: readonly T[],
+  tamano: number,
+  cuenta: (item: T) => boolean = () => true,
+): readonly (readonly T[])[] {
   const trozos: T[][] = [];
-  for (let desde = 0; desde < items.length; desde += tamano) {
-    trozos.push(items.slice(desde, desde + tamano));
+  let actual: T[] = [];
+  let contados = 0;
+  for (const item of items) {
+    if (cuenta(item) && contados === tamano) {
+      trozos.push(actual);
+      actual = [];
+      contados = 0;
+    }
+    actual.push(item);
+    if (cuenta(item)) contados += 1;
   }
+  if (actual.length > 0) trozos.push(actual);
   return trozos;
+}
+
+/** Si un campo cuenta para el tope de la página: los condicionales no. */
+export function esPreguntaPrincipal(campo: CampoDeFormulario): boolean {
+  return campo.showWhen === undefined;
 }
 
 /**

@@ -1,6 +1,6 @@
 <app-page-header
   title="Muro profesional"
-  subtitle="Lo que publican los perfiles que seguís."
+  subtitle="Lo que publican los perfiles que sigue."
 />
 
 @if (error(); as mensaje) {
@@ -14,13 +14,13 @@
 <div class="muro">
   <main class="muro__centro">
     @if (!perfilResuelto()) {
-      <p class="muro__cargando" role="status">Cargando tu muro…</p>
+      <p class="muro__cargando" role="status">Cargando su muro…</p>
     } @else if (perfil() === null) {
       <!-- Una puerta, no un error: el muro necesita un perfil público, que es una
            entidad aparte del perfil de paciente que trae la sesión. -->
       <app-empty-state
-        title="Todavía no tenés perfil público"
-        description="El muro muestra lo que publican los perfiles que seguís, y para eso hace falta tener el tuyo. Se crea desde «Mi perfil»."
+        title="Todavía no tiene perfil público"
+        description="El muro muestra lo que publican los perfiles que sigue, y para eso hace falta tener el suyo. Se crea desde «Mi perfil»."
         variant="empty"
       />
     } @else {
@@ -35,8 +35,8 @@
 
       @if (vacio()) {
         <app-empty-state
-          title="Tu muro está vacío"
-          description="Cuando sigas a otros profesionales, sus publicaciones van a aparecer acá."
+          title="Su muro está vacío"
+          description="Cuando siga a otros profesionales, sus publicaciones van a aparecer acá."
           variant="empty"
         />
       } @else {

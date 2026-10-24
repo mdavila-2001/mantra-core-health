@@ -38,6 +38,23 @@ export interface Session {
   readonly expiresAt: Date;
 }
 
+/** Una sesión abierta de la propia cuenta (`GET /iam/me/sessions`). */
+export interface MySession {
+  readonly id: string;
+  readonly createdAt: Date;
+  readonly expiresAt: Date;
+  /** Dirección IP con la que se abrió, si la API la trae. */
+  readonly ip?: string;
+  /** Si es la sesión desde la que se mira. */
+  readonly current: boolean;
+}
+
+/** Resultado de `POST /iam/auth/change-password`. */
+export interface PasswordChanged {
+  /** Cuántas de las otras sesiones se cerraron. */
+  readonly revokedSessions: number;
+}
+
 /** Alta de un paciente por sí mismo. El identificador de acceso es el documento. */
 export interface PatientRegistration {
   readonly nationalId: string;
@@ -51,9 +68,9 @@ export interface PatientRegistration {
   /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
   readonly motherLastName?: string;
   /** Opcional y no condiciona el acceso: la cuenta queda usable igual. */
-  readonly email?: string;
+  readonly email: string;
   /** Fecha en formato ISO `YYYY-MM-DD`, tal como la valida el backend. */
-  readonly birthDate?: string;
+  readonly birthDate: string;
   /**
    * Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT).
    *
@@ -61,7 +78,7 @@ export interface PatientRegistration {
    * cédula, lo que distingue dos documentos homónimos de departamentos
    * distintos. Sin `nationalId` no tiene a qué atarse.
    */
-  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly issuerAdministrativeAreaConceptId: string;
   /**
    * Municipio de residencia (catálogo `VS_BO_MUNICIPALITY`).
    *
@@ -78,11 +95,11 @@ export interface PatientRegistration {
    */
   readonly residenceMunicipalityConceptId: string;
   /** Teléfono de contacto, en E.164 o formato nacional. */
-  readonly phone?: string;
+  readonly phone: string;
   /** Género administrativo (HL7 AdministrativeGender). */
   readonly gender?: AdministrativeGenderCode;
   /** Sexo asignado al nacer. Es dato clínico, distinto del género. */
-  readonly sexAtBirth?: BirthSexCode;
+  readonly sexAtBirth: BirthSexCode;
   /**
    * Ocupación, como concepto de `VS_BO_OCCUPATION`.
    *
@@ -353,11 +370,9 @@ export interface PractitionerRegistration {
   /** Fijo del trabajo, la línea del consultorio. */
   readonly workLandline?: string;
   /**
-   * Correo personal, en su rol de dato de contacto suelto.
-   *
-   * Ojo: el alta de profesional **ya no lo usa** — desde el cambio de identidad
-   * de acceso, el correo personal ES el de acceso y por eso viaja en
-   * {@link email}. Queda declarado para los llamadores que separen ambos.
+   * Correo personal. El de acceso ES el personal y viaja en {@link email}; este
+   * campo lo repite para que la API sepa que es personal: sin `workEmail`, un
+   * `personalEmail` igual a `email` evita que se guarde además como institucional.
    */
   readonly personalEmail?: string;
   /**
@@ -382,6 +397,13 @@ export interface PractitionerRegistration {
   readonly sexAtBirth?: BirthSexCode;
   /** Foto de perfil en formato Base64 (Data URI o base64 plano). */
   readonly profilePhotoBase64?: string;
+  /** Imagen de firma para el simulador; la API real usa signatureFileId. No es firma electrónica. */
+  readonly signatureImageBase64?: string;
+  /** Imagen del sello para el simulador; la API real usa sealFileId. */
+  readonly sealImageBase64?: string;
+  /** Firma y sello precargados para el registro contra API real. */
+  readonly signatureFileId?: string;
+  readonly sealFileId?: string;
   /** Ocupación del catálogo (VS_BO_OCCUPATION). */
   readonly occupationConceptId?: string;
   /** Ocupación en texto libre, para cuando no está en el catálogo. */
@@ -410,6 +432,14 @@ export interface NewRegistrationCredential {
   readonly number: string;
   /** Dónde se cursó, como texto libre. */
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la universidad elegida. */
+  readonly issuingCityText?: string;
+  /** País donde se cursó, por nombre. */
+  readonly issuingCountryText?: string;
+  /** Qué profesión acredita, de `VS_BO_PROFESSION` (COB-2023). */
+  readonly professionConceptId?: string;
+  /** Cómo se llama el diplomado, la maestría o el doctorado. */
+  readonly titleText?: string;
   /** PDF ya subido anónimamente y reclamado al crear la cuenta. */
   readonly fileId?: string;
 }
@@ -432,7 +462,13 @@ export interface RegisteredPractitioner {
  * misma regla que el alta administrativa (`NewTenant.payer`)—, y acá no hay
  * otro tipo posible: esta pantalla sólo da de alta aseguradoras.
  */
-export interface OrganizationRegistration {
+export interface PayerOrganizationRegistration {
+  /**
+   * Discriminante de la unión {@link OrganizationRegistration}. Ausente en la
+   * aseguradora, que es lo que el alta pública hace desde siempre: el cliente
+   * manda `'PAYER'` cuando falta.
+   */
+  readonly tenantType?: 'PAYER';
   readonly code: string;
   readonly legalName: string;
   /**
@@ -488,6 +524,82 @@ export interface OrganizationRegistration {
    */
   readonly executives?: OrganizationExecutives;
 }
+
+/**
+ * Alta pública de un laboratorio o un centro de imagenología
+ * (`POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`).
+ *
+ * Es otra rama de la unión y no una aseguradora con campos de más: **no lleva
+ * `payer`** (el cuerpo de una aseguradora no lleva `diagnosticUnit` ni al revés),
+ * y sus documentos legales distinguen lo que una unipersonal no tiene: la
+ * constitución y el poder del representante son opcionales acá y la API decide
+ * por el tipo societario (422 si falta donde se exige).
+ */
+export interface DiagnosticCenterRegistration {
+  readonly tenantType: 'DIAGNOSTIC_CENTER';
+  readonly code: string;
+  readonly legalName: string;
+  readonly legalEntityType: string;
+  readonly tradeName?: string;
+  readonly timeZone?: string;
+  /** Los tipos territoriales exigen país y jurisdicción (422 `missing` si faltan). */
+  readonly countryConceptId: string;
+  readonly jurisdictionConceptId: string;
+  readonly diagnosticUnit: DiagnosticUnitProfile;
+  /**
+   * La cuenta dueña. El formulario pide un solo nombre completo, y la API acepta
+   * `displayName` como la forma sin partes: no se inventa dónde cortarlo.
+   */
+  readonly owner: {
+    readonly email: string;
+    readonly password: string;
+    readonly displayName: string;
+  };
+  readonly legalDocuments: DiagnosticCenterLegalDocuments;
+  /**
+   * Sólo si el formulario recogió todo lo que la API exige del representante
+   * (incluido su número de documento). Ver `powerOfAttorneyFileId`.
+   */
+  readonly legalRepresentative?: Omit<OrganizationLegalRepresentative, 'powerOfAttorneyFileId'> & {
+    readonly powerOfAttorneyFileId?: string;
+  };
+  readonly executives?: OrganizationExecutives;
+}
+
+/** Los cinco documentos, con la constitución opcional (una unipersonal no la tiene). */
+export type DiagnosticCenterLegalDocuments = Omit<
+  OrganizationLegalDocuments,
+  'constitutionFileId'
+> & {
+  readonly constitutionFileId?: string;
+};
+
+/** La unidad diagnóstica que nace con el alta: tipo, modalidades y sede primaria. */
+export interface DiagnosticUnitProfile {
+  /** Concepto de `diagnostic-unit-type`: laboratorio o imágenes. */
+  readonly diagnosticUnitTypeConceptId: string;
+  /** Conceptos de `diagnostic-modality`. Una fuera de la lista responde 422. */
+  readonly modalityConceptIds: readonly string[];
+  readonly primarySite: {
+    readonly name: string;
+    readonly timeZone?: string;
+    readonly address: {
+      readonly lines: readonly string[];
+      /** Sólo si se confirmó sobre el mapa; ambas o ninguna. */
+      readonly latitude?: number;
+      readonly longitude?: number;
+    };
+  };
+}
+
+/**
+ * Lo que `register-organization` acepta, por tipo de organización.
+ *
+ * Se discrimina por `tenantType`: `PAYER` (o ausente) lleva `payer`;
+ * `DIAGNOSTIC_CENTER` lleva `diagnosticUnit` y el territorio. Sin `any`: el
+ * compilador impide mezclar los dos cuerpos.
+ */
+export type OrganizationRegistration = PayerOrganizationRegistration | DiagnosticCenterRegistration;
 
 /** Nombre, celular y correo de una gerencia de contacto (subtarea 1.4). */
 export interface OrganizationContactPerson {
@@ -554,6 +666,169 @@ export interface RegisteredOrganization {
    * declaró ninguno de los dos bloques.
    */
   readonly representativesRegistered?: number;
+  /** Sólo para `DIAGNOSTIC_CENTER` con bloque `diagnosticUnit`: la unidad que nació con el alta. */
+  readonly diagnosticUnitId?: string;
+}
+
+/**
+ * Una sucursal declarada en el alta pública de farmacia (1.18).
+ *
+ * Sólo lo que el mapa confirma: una sucursal sin punto no viaja (la del
+ * enlace de ubicación cuenta como punto cuando lo trae escrito).
+ * `description` y `locationUrl` los suma la carga masiva de sucursales
+ * (2026-09-30); la API todavía no los conoce (P54).
+ */
+export interface PharmacyBranchRegistration {
+  readonly name: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly description?: string;
+  readonly locationUrl?: string;
+}
+
+/**
+ * Alta pública de una farmacia por sí misma (`POST /iam/auth/register-organization`
+ * con `tenantType: 'PHARMACY'`).
+ *
+ * Mismo endpoint que {@link OrganizationRegistration} (la aseguradora): el
+ * registro de procesos repite el mismo onboarding de tenant —empresa,
+ * papeles, representante legal, gerencias, cuenta de acceso— para farmacia,
+ * laboratorio e imagenología (Módulo Farmacia §1). Es una interfaz aparte y
+ * no una unión con `OrganizationRegistration` porque el bloque específico del
+ * tipo de tenant no coincide: la aseguradora exige `payer` siempre; la
+ * farmacia no tiene bloque propio en el DTO real (no hay `PharmacyProfileDto`
+ * — el backend sólo declara `payer`, `broker` y `diagnosticUnit`), así que
+ * `pharmacy.branches` es una clave que **este cliente inventa** para no
+ * perder las sucursales que la persona cargó; el backend real todavía no la
+ * reconoce (ver `PENDIENTES-BACKEND.md`, P49).
+ *
+ * A diferencia de la aseguradora, acá **lo obligatorio es lo más básico**
+ * (decisión D2 del carril de farmacia): razón social, tipo societario, NIT,
+ * dirección legal de la central, nombre y correo del representante, correo de
+ * acceso y contraseña. Los seis papeles en PDF, el GPS de la central, las
+ * sucursales y las tres gerencias se completan después, desde la Ficha.
+ */
+export interface PharmacyOrganizationRegistration {
+  readonly code: string;
+  readonly legalName: string;
+  /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
+  readonly legalEntityType: string;
+  /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
+  readonly countryConceptId: string;
+  readonly jurisdictionConceptId: string;
+  readonly taxIdentifier: string;
+  readonly legalAddress: string;
+  /** Coordenadas de la central, ambas o ninguna. */
+  readonly headquarters?: { readonly latitude: number; readonly longitude: number };
+  readonly branches?: readonly PharmacyBranchRegistration[];
+  /**
+   * El acceso: mismo correo del representante legal, según decide el molde
+   * de esta alta (`RegisterLaboratory`, «Con este correo se entra») — el
+   * registro de procesos no pide un correo de acceso distinto del
+   * representante. `displayName` es la forma que
+   * `RegisterOrganizationOwnerDto` acepta sin partir el nombre en
+   * `name`/`lastName` (deprecada pero vigente): partirlo a mano inventaría
+   * un apellido que el registro de procesos no pregunta.
+   */
+  readonly owner: {
+    readonly email: string;
+    readonly password: string;
+    readonly displayName: string;
+  };
+  /**
+   * Nombre completo y correo del representante legal (1.8, 1.8.2): los dos
+   * únicos datos obligatorios de la persona. `idNumber` y
+   * `powerOfAttorneyFileId` son opcionales acá —a diferencia del alta de
+   * aseguradora— porque el registro de procesos de farmacia no pide la
+   * cédula del representante como dato de alta.
+   */
+  readonly legalRepresentative: {
+    readonly fullName: string;
+    readonly email: string;
+    /** Obligatorio: la API exige el documento del representante (4 a 50 caracteres). */
+    readonly idNumber: string;
+    readonly powerOfAttorneyFileId?: string;
+  };
+  readonly legalDocuments?: OrganizationLegalDocuments;
+  readonly executives?: OrganizationExecutives;
+}
+
+/** Un punto confirmado sobre el mapa: ambas coordenadas o ninguna. */
+export interface RegistrationCoordinates {
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
+/**
+ * Una sucursal declarada en el alta pública de laboratorio (4.1.18): el nombre
+ * y la calle, y el punto sólo si se confirmó sobre el mapa.
+ */
+export interface DiagnosticUnitBranchRegistration {
+  readonly name: string;
+  readonly addressLines: readonly string[];
+  readonly location?: RegistrationCoordinates;
+  /** Suma de la carga masiva de sucursales (2026-09-30); la API todavía no la conoce (P54). */
+  readonly description?: string;
+  /** El enlace de mapa tal como lo pegaron; ídem. */
+  readonly locationUrl?: string;
+}
+
+/**
+ * Alta pública de un laboratorio de sangre por sí mismo
+ * (`POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`),
+ * carril A de la cuenta de laboratorio, 2026-09-30.
+ *
+ * `DIAGNOSTIC_CENTER` es el código que la API emite para un laboratorio
+ * (`TENANT_TYPES` de `mock-session.ts`). A diferencia de la farmacia, el DTO
+ * real **sí** tiene bloque propio para este tipo: `diagnosticUnit`
+ * (`DiagnosticUnitProfileDto`, con `name` y `primarySite.address`). Se usa ése
+ * y no uno inventado; lo único que el cliente le suma es `branches`, que el
+ * DTO no declara (ver `PENDIENTES-BACKEND.md`, P51).
+ *
+ * Mismo criterio de obligatoriedad que la farmacia (D2): sólo lo básico para
+ * nacer. Los seis papeles, el punto de la central, las sucursales y las tres
+ * gerencias son opcionales y viajan sólo cuando están completos.
+ */
+export interface LaboratoryOrganizationRegistration {
+  readonly code: string;
+  readonly legalName: string;
+  /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
+  readonly legalEntityType: string;
+  /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
+  readonly countryConceptId: string;
+  readonly jurisdictionConceptId: string;
+  /** La unidad diagnóstica que nace con el alta: la central y, si hay, sus sucursales. */
+  readonly diagnosticUnit: {
+    readonly name: string;
+    /** `DU_TYPE_LAB` y `DU_MODALITY_LAB`, resueltos del catálogo. */
+    readonly diagnosticUnitTypeConceptId: string;
+    readonly modalityConceptIds: readonly string[];
+    readonly primarySite: {
+      readonly name: string;
+      readonly address: {
+        readonly lines: readonly string[];
+        readonly latitude?: number;
+        readonly longitude?: number;
+      };
+    };
+    readonly branches?: readonly DiagnosticUnitBranchRegistration[];
+  };
+  /** Mismo acceso que la farmacia: el correo del representante legal. */
+  readonly owner: {
+    readonly email: string;
+    readonly password: string;
+    readonly displayName: string;
+  };
+  /** Nombre y correo; el poder sólo si se adjuntó (el proceso 4.1 no pide la cédula). */
+  readonly legalRepresentative: {
+    readonly fullName: string;
+    readonly email: string;
+    /** Obligatorio: la API exige el documento del representante (4 a 50 caracteres). */
+    readonly idNumber: string;
+    readonly powerOfAttorneyFileId?: string;
+  };
+  readonly legalDocuments?: OrganizationLegalDocuments;
+  readonly executives?: OrganizationExecutives;
 }
 
 /**
@@ -662,7 +937,7 @@ export interface AssistedRegistrationResult {
 }
 
 /**
- * Una fila del listado de usuarios (`GET /iam/users`, UC-01-01 cara de
+ * Una fila del listado de usuarios (`POST /iam/users/search`, UC-01-01 cara de
  * lectura). La fila es angosta a propósito; la ficha completa vive en
  * `GET /iam/users/:id`.
  */
@@ -684,7 +959,7 @@ export interface UserPage {
   readonly nextCursor: string | null;
 }
 
-/** Parámetros de `GET /iam/users`. Todos opcionales. */
+/** Filtros de `POST /iam/users/search` (viajan en el cuerpo). Todos opcionales. */
 export interface UserSearchQuery {
   /** Texto sobre el nombre visible o el correo de acceso. */
   readonly query?: string;

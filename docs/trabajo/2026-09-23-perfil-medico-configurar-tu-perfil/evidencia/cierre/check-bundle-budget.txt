@@ -1,0 +1,22 @@
+$ node scripts/check-bundle-budget.mjs   # 2026-09-24, rama en bc245a02
+✓ check-bundle-budget
+  inicial: 258.18 kB en 12 archivos
+     137.59 kB  styles-PHCVGGOR.css
+      77.82 kB  main-RVJG3ZWJ.js
+      18.37 kB  chunk-5OW3MYGT.js
+       5.55 kB  chunk-ASC6KA4O.js
+       5.27 kB  chunk-L2VPNW2P.js
+       4.54 kB  chunk-UMLVS246.js
+       3.72 kB  chunk-5KKQNPHU.js
+       2.04 kB  chunk-BVSFJ4MO.js
+       1.38 kB  chunk-N4EBH2C6.js
+       1.17 kB  chunk-KUB2RXYY.js
+       0.67 kB  chunk-3YP2YVSU.js
+       0.07 kB  chunk-IW46HC6F.js
+  diferidos: 948 fragmentos
+    3813.30 kB  chunk-5NVHQ2ZP.js
+     726.41 kB  chunk-TQOS5TDA.js
+     594.55 kB  chunk-VMQYV22Y.js
+     503.45 kB  chunk-K47TTDII.js
+     432.96 kB  chunk-FWMMDP6O.js
+exit=0

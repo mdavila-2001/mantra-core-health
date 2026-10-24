@@ -13,6 +13,7 @@
 import { analizar, sugerirDe, type Analisis, type Coincidencia } from './motor';
 import { SINTOMAS, SINTOMAS_DE_ALARMA, type Sintoma } from './sintomas.datos';
 import { distancia, normalizar } from './texto';
+import { GLOSARIO_DE_SINTOMAS } from './glosario-de-sintomas.generated';
 
 export type { EspecialidadSugerida, Sintoma } from './sintomas.datos';
 export type { Analisis, Coincidencia } from './motor';
@@ -75,6 +76,8 @@ export interface Recomendacion {
   readonly peso: number;
   /** Los síntomas que la trajeron, en el orden en que se reconocieron. */
   readonly porque: readonly string[];
+  /** Cuando no la trajo un síntoma sino la falta de certeza: qué decirle a la persona. */
+  readonly motivo?: string;
 }
 
 /**
@@ -193,8 +196,39 @@ export function recomendar(
     });
 }
 
+/** La especialidad a la que se manda cuando no hay certeza. */
+export const MEDICINA_GENERAL = 'Medicina general';
+
 /**
- * Si el directorio tiene a alguien de esta especialidad.
+ * Por qué Medicina general va primero aunque el síntoma se haya reconocido con certeza (decisión del
+ * propietario, 2026-10-08: «siempre que ponga de primero al médico de medicina general»).
+ */
+export const GENERAL_PRIMERO = 'Primero lo evalúa un médico general y, si hace falta, lo deriva al especialista.';
+
+/**
+ * Sin certeza, Medicina general **primero** (decisión del propietario, 2026-10-04: «cuando no
+ * sepas a ciencia cierta, mandalo a medicina general»). Un médico general evalúa y deriva; un
+ * especialista elegido a partir de una lectura dudosa puede ser el equivocado.
+ *
+ * Es la excepción a {@link GENERALISTAS}, que la deja última cuando el síntoma SÍ se reconoció. Si
+ * ya venía en la lista, se sube; si no, se agrega con su `motivo`. Si el directorio no la ofrece,
+ * no se inventa: la lista queda como estaba.
+ */
+export function conMedicinaGeneralPrimero(
+  recomendaciones: readonly Recomendacion[],
+  motivo: string,
+  disponibles: ReadonlySet<string> = new Set(),
+): readonly Recomendacion[] {
+  const existente = recomendaciones.find((r) => normalizar(r.nombre) === normalizar(MEDICINA_GENERAL));
+  if (!existente && disponibles.size > 0 && !estaDisponible(MEDICINA_GENERAL, disponibles)) {
+    return recomendaciones;
+  }
+  const general: Recomendacion = { ...(existente ?? { nombre: MEDICINA_GENERAL, peso: 0, porque: [] }), motivo };
+  return [general, ...recomendaciones.filter((r) => r !== existente)];
+}
+
+/**
+ * Busca en `disponibles` la clave que corresponde a `nombre`.
  *
  * No se compara con `=`. Los nombres del directorio son los que cada
  * profesional o cada catálogo escribió —«Otorrinolaringología y Cirugía de
@@ -202,25 +236,58 @@ export function recomendar(
  * coincidía con «Otorrinolaringología» ni con «Cardiología». El filtro que
  * existe para no mandar a un directorio vacío terminaba vaciando la
  * recomendación entera.
+ *
+ * La usan tanto `estaDisponible` (¿se recomienda?) como {@link conceptIdDe}
+ * (¿a qué especialidad del directorio salto al tocarla?): antes cada una
+ * tenía su propio criterio —uno tolerante, el otro exacto— y una especialidad
+ * podía pasar el primero y fallar el segundo. El síntoma era «me recomienda
+ * Traumatología pero al tocarla no me lleva a la lista de traumatólogos, me
+ * deja en el directorio por categoría»: `verProfesionales` no encontraba el
+ * `conceptId`, caía al buscador por texto (`q`), y esa ruta nunca pone el
+ * parámetro `especialidad` que saca de la portada agrupada.
  */
-function estaDisponible(nombre: string, disponibles: ReadonlySet<string>): boolean {
+function buscarClaveDisponible(
+  nombre: string,
+  disponibles: ReadonlySet<string>,
+): string | undefined {
   const buscada = normalizar(nombre);
   if (disponibles.has(buscada)) {
-    return true;
+    return buscada;
   }
   for (const ofrecida of disponibles) {
     if (ofrecida.length < 6) {
       continue;
     }
     if (ofrecida.includes(buscada) || buscada.includes(ofrecida)) {
-      return true;
+      return ofrecida;
     }
     // «Cardióloga» y «Cardiología»: la misma especialidad dicha de dos maneras.
     if (distancia(buscada, ofrecida, 2) <= 2) {
-      return true;
+      return ofrecida;
     }
   }
-  return false;
+  return undefined;
+}
+
+/** Si el directorio tiene a alguien de esta especialidad. Ver {@link buscarClaveDisponible}. */
+function estaDisponible(nombre: string, disponibles: ReadonlySet<string>): boolean {
+  return buscarClaveDisponible(nombre, disponibles) !== undefined;
+}
+
+/**
+ * El `conceptId` de una especialidad recomendada, con la misma tolerancia que
+ * decidió recomendarla (ver {@link buscarClaveDisponible}).
+ *
+ * `undefined` cuando no hay coincidencia: quien llama cae al buscador por
+ * texto, que es el destino que ya existía para una especialidad sin
+ * identificador.
+ */
+export function conceptIdDe(
+  nombre: string,
+  disponibles: ReadonlyMap<string, string>,
+): string | undefined {
+  const clave = buscarClaveDisponible(nombre, new Set(disponibles.keys()));
+  return clave === undefined ? undefined : disponibles.get(clave);
 }
 
 /**
@@ -230,6 +297,9 @@ function estaDisponible(nombre: string, disponibles: ReadonlySet<string>): boole
  * comas hasta el final, porque se lee dentro de un renglón de la pantalla.
  */
 export function explicar(recomendacion: Recomendacion): string {
+  if (recomendacion.motivo) {
+    return recomendacion.motivo;
+  }
   const cuales = enumerar(recomendacion.porque);
   return cuales === '' ? '' : `Por ${cuales}`;
 }
@@ -263,4 +333,25 @@ export function sugerir(
   tope = 6,
 ): readonly Sintoma[] {
   return sugerirDe(parcial, SINTOMAS, new Set(yaPuestos.map((sintoma) => sintoma.id)), tope);
+}
+
+/**
+ * Cómo se muestra un síntoma reconocido: con su término del **glosario médico oficial** (pedido del
+ * propietario, 2026-10-08) y, si se llama distinto, la forma llana entre paréntesis — «Hematospermia
+ * (sangre en el semen)» —, porque quien escribió «eyaculo sangre» tiene que reconocer lo que dijo.
+ * Sin término exacto en el glosario (o en los sensibles, que no lo tienen a propósito) queda el
+ * nombre del catálogo. El mapa sale de `scripts/export-symptom-glossary.mjs` del AI service.
+ */
+export function nombreParaMostrar(sintoma: Pick<Sintoma, 'id' | 'nombre'>): string {
+  const termino = GLOSARIO_DE_SINTOMAS[sintoma.id];
+  if (!termino) {
+    return sintoma.nombre;
+  }
+  return normalizar(termino.name) === normalizar(sintoma.nombre) ? termino.name : `${termino.name} (${sintoma.nombre})`;
+}
+
+/** El código del término del glosario (CIE-10-ES, MedlinePlus…), para el lector y el tooltip. */
+export function codigoDelGlosario(id: string): string | null {
+  const termino = GLOSARIO_DE_SINTOMAS[id];
+  return termino?.code ? `${termino.system === 'cie10es' ? 'CIE-10' : (termino.system ?? '')} ${termino.code}`.trim() : null;
 }

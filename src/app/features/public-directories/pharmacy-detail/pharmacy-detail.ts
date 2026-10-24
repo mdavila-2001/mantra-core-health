@@ -171,13 +171,15 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
       return sucursales
         .filter((sucursal) => sucursal.location !== null)
         .map((sucursal) => ({
-          id: sucursal.slug,
+          // La sede, no el slug: dos sedes del mismo tenant comparten ficha y
+          // por eso slug, y con él como clave el mapa pisaría un pin con otro.
+          id: sucursal.id,
           lat: sucursal.location!.lat,
           lng: sucursal.location!.lng,
           titulo: sucursal.name,
           ...(sucursal.addressText === null ? {} : { subtitulo: sucursal.addressText }),
           estado: sucursal.isCurrent
-            ? { etiqueta: 'Estás viendo ésta', tono: 'info' as const }
+            ? { etiqueta: 'Está viendo ésta', tono: 'info' as const }
             : { etiqueta: 'Otra sucursal', tono: 'neutral' as const },
         }));
     }
@@ -353,15 +355,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
   });
 
   /**
-   * El slug de la más cercana, o `null` si nadie entregó su ubicación.
+   * La sede más cercana, o `null` si nadie entregó su ubicación.
+   *
+   * Por `id` y no por slug: con dos sedes del mismo tenant —mismo slug— el
+   * distintivo caería en las dos.
    *
    * `null` **no es** «ninguna está cerca»: es que no hay con qué medir, y
    * ponerle el distintivo a la primera de la lista sería afirmarlo sin saberlo.
    */
-  protected readonly slugMasCercano = computed<string | null>(() => {
+  protected readonly closestBranchId = computed<string | null>(() => {
     if (this.ubicacion() === null) return null;
     const primera = this.sucursalesOrdenadas().find((sucursal) => sucursal.location !== null);
-    return primera?.slug ?? null;
+    return primera?.id ?? null;
   });
 
   /** Dónde está quien mira, si lo entregó. `null` es lo normal, no un error. */
@@ -434,9 +439,9 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
   protected readonly motivoDeLaRecomendacion = computed(() => {
     const elegida = this.recomendada();
     if (elegida === null) return '';
-    const completa = elegida.complete ? 'tiene todo lo de tu receta' : 'es la que más tiene';
+    const completa = elegida.complete ? 'tiene todo lo de su receta' : 'es la que más tiene';
     if (elegida.distanceKm === null) {
-      return `${completa}. Compartí tu ubicación para saber cuál te queda más cerca.`;
+      return `${completa}. Comparta su ubicación para saber cuál le queda más cerca.`;
     }
     return `${completa} y es la más cercana: ${this.distancia(elegida.distanceKm)} en línea recta.`;
   });

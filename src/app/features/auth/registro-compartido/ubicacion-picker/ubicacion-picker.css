@@ -46,3 +46,29 @@
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
+
+/* «Escribir coordenadas»: el botón y, desplegados, los dos campos. Uno debajo
+   del otro en el teléfono; lado a lado cuando entran. */
+.registro__coordenadas {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+}
+
+.registro__coordenadas-campos {
+  display: grid;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+@media (min-width: 40rem) {
+  .registro__coordenadas-campos {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  .registro__coordenadas-campos > button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

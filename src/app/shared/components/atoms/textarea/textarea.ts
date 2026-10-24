@@ -132,9 +132,9 @@ export class Textarea implements ControlValueAccessor {
     const max = this.maxLength();
     switch (this.limitBand()) {
       case 'reached':
-        return `Alcanzaste el límite de ${max} caracteres.`;
+        return `Alcanzó el límite de ${max} caracteres.`;
       case 'near':
-        return `Te estás acercando al límite de ${max} caracteres.`;
+        return `Se está acercando al límite de ${max} caracteres.`;
       default:
         return '';
     }

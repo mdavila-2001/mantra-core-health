@@ -107,7 +107,7 @@ describe('ViewStateHost', () => {
       await conEstado(
         validation([
           { field: 'documento', message: 'El documento ya está registrado.' },
-          { message: 'Revisá los datos e intentá de nuevo.' },
+          { message: 'Revise los datos e intente de nuevo.' },
         ]),
       );
 
@@ -128,7 +128,7 @@ describe('ViewStateHost', () => {
     it('informa la espera de un 429', async () => {
       await conEstado(validation([{ message: 'Demasiados intentos' }], 30));
 
-      expect(textoVisible()).toContain('Reintentá en 30 segundos');
+      expect(textoVisible()).toContain('Reintente en 30 segundos');
     });
   });
 
@@ -136,7 +136,7 @@ describe('ViewStateHost', () => {
     it('el 403 de identidad es una puerta: muestra la acción', async () => {
       await conEstado(
         forbidden({
-          message: 'Tu identidad todavía no está verificada.',
+          message: 'Su identidad todavía no está verificada.',
           nextAction: { label: 'Verificar mi identidad', route: '/identity/me/verification' },
         }),
       );
@@ -172,7 +172,7 @@ describe('ViewStateHost', () => {
 
       expect(textoVisible()).not.toContain('acceso');
       expect(textoVisible()).not.toContain('permiso');
-      expect(textoVisible()).toContain('No encontramos lo que buscás');
+      expect(textoVisible()).toContain('No encontramos lo que busca');
     });
 
     it('cuando trae próxima acción con ruta, la salida se pinta como enlace', async () => {
@@ -188,7 +188,7 @@ describe('ViewStateHost', () => {
       // roto no tiene ningún identificador que verificar (barrido del 18/08/2026).
       await conEstado(notFound());
 
-      expect(textoVisible()).toContain('Verificá la dirección');
+      expect(textoVisible()).toContain('Verifique la dirección');
       expect(textoVisible()).not.toContain('identificador');
     });
   });

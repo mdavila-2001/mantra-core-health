@@ -14,6 +14,7 @@ import type {
   TenantAgendaQuery,
   BranchAssignmentList,
   BranchAssignmentListItem,
+  BranchChanges,
   BranchList,
   BranchListItem,
   MembershipListItem,
@@ -139,6 +140,27 @@ export class DirectoryClient {
       .post<ConNulos<WireBranchListItem>>(
         this.url(`/tenants/${tenantId}/branches`),
         stripUndefined(branch),
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(map(toBranchListItem));
+  }
+
+  /**
+   * `PATCH /tenants/{id}/branches/{branchId}` — edita el nombre, la
+   * descripción y la ubicación de una sucursal.
+   *
+   * **Sólo existe en el simulador** (P54): la API real no publica edición de
+   * sucursales. `null` borra el dato; una clave ausente lo deja como está.
+   */
+  updateBranch(
+    tenantId: string,
+    branchId: string,
+    changes: BranchChanges,
+  ): Observable<BranchListItem> {
+    return this.http
+      .patch<ConNulos<WireBranchListItem>>(
+        this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`),
+        stripUndefined(changes),
         { headers: deLaOrganizacion(tenantId) },
       )
       .pipe(map(toBranchListItem));
@@ -312,6 +334,45 @@ export class DirectoryClient {
         headers: deLaOrganizacion(tenantId),
       })
       .pipe(map(toTenantListItem));
+  }
+
+  /**
+   * `GET /tenants/{id}/logo` — el archivo que es el logo de la organización.
+   *
+   * El archivo vive en el perfil público. La API comprueba pertenencia a la
+   * organización al leer y membresía owner/admin al escribir.
+   */
+  getOrganizationLogo(tenantId: string): Observable<{ readonly fileId: string | null }> {
+    return this.http.get<{ readonly fileId: string | null }>(
+      this.url(`/tenants/${tenantId}/logo`),
+      {
+        headers: deLaOrganizacion(tenantId),
+      },
+    );
+  }
+
+  /** Bytes autorizados por pertenencia a la organización, aunque otro miembro los haya subido. */
+  getOrganizationLogoContent(tenantId: string): Observable<Blob> {
+    return this.http.get(this.url(`/tenants/${tenantId}/logo/content`), {
+      headers: deLaOrganizacion(tenantId),
+      responseType: 'blob',
+    });
+  }
+
+  /**
+   * `PUT /tenants/{id}/logo` — deja el archivo ya subido como logo, o lo quita con `null`.
+   *
+   * Sólo owner o admin de esa organización. Mismo estado que {@link getOrganizationLogo}.
+   */
+  setOrganizationLogo(
+    tenantId: string,
+    fileId: string | null,
+  ): Observable<{ readonly fileId: string | null }> {
+    return this.http.put<{ readonly fileId: string | null }>(
+      this.url(`/tenants/${tenantId}/logo`),
+      { fileId },
+      { headers: deLaOrganizacion(tenantId) },
+    );
   }
 
   /**

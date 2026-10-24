@@ -127,6 +127,7 @@
 .dia__acciones-barra {
   display: flex;
   gap: var(--sp-2);
+  flex-wrap: wrap;
   align-items: center;
 }
 

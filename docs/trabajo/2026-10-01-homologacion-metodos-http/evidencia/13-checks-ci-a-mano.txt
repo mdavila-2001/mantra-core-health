@@ -1,0 +1,35 @@
+$ node scripts/check-architecture.mjs
+✓ check-architecture
+  1937 archivos · 8970 importaciones internas
+  sin ciclos · capas en una sola dirección · red confinada a core/data-access/ · faker confinado a core/mock/
+  excepción declarada: src/app/core/dev/ (herramienta de desarrollo, diferida)
+exit=0
+
+$ node scripts/check-api-prefixes.mjs
+✓ check-api-prefixes
+  81 prefijos, iguales en las 3 fuentes
+  /access-requests  /accounting  /admin/analytics  /admin/catalog  /admin/content-packs  /admin/ops  /admin/qa  /admin/tenants  /ai  /auth-providers  /authz  /billing/service-catalog  /billing/simulat
+exit=0
+
+$ node scripts/check-route-prefixes.mjs
+✓ check-route-prefixes
+  261 rutas del router, ninguna colisiona con los 80 prefijos de la API
+  excepción declarada: 'practitioners' — cuelga de 'search': la URL real es /search/practitioners
+exit=0
+
+$ node scripts/check-english-identifiers.mjs
+  src/app/features/clinical-record/patient-chart/payments-block/cobros-del-paciente/cobros-del-paciente.ts — "cobros-del-paciente" («del» es una palabra del castellano)
+    (nombre de archivo)
+  src/app/shared/utils/foto-de-directorio.spec.ts — "foto-de-directorio.spec" («de» es una palabra del castellano)
+    (nombre de archivo)
+  src/app/shared/utils/foto-de-directorio.ts — "foto-de-directorio" («de» es una palabra del castellano)
+    (nombre de archivo)
+exit=1
+
+$ node scripts/check-mock-vs-client.mjs
+✓ check-mock-vs-client
+  617 operaciones de core/data-access · 654 manejadores del mock · 1 sin manejador, las 1 ya conocidas y con prompt propio
+exit=0
+
+$ node scripts/check-mock-vs-client.mjs --json  (resumen)
+operaciones 617 manejadores 654 sinManejador 1 nuevasSinManejador 0 yaCubiertas 0

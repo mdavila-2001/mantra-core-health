@@ -25,6 +25,7 @@ import type {
   PedidoFarmacia,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -140,6 +141,13 @@ export class InboxOrder {
   private readonly navigation = inject(NavigationService);
   private readonly toasts = inject(ToastService);
 
+  /**
+   * Si la pantalla puede completar con ejemplos lo que el contrato no trae
+   * (cobertura, factura, dirección). Sólo sobre la maqueta: contra la API
+   * real esas secciones no se dibujan. Ver `core/mock/sample-data.ts`.
+   */
+  private readonly sampleData = inject(SAMPLE_DATA_ENABLED);
+
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly bandejaRoute = BANDEJA_ROUTE;
   protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
@@ -192,11 +200,14 @@ export class InboxOrder {
    * Lo que respondió el seguro, renglón por renglón — o `null` cuando la
    * persona no tiene cobertura, que es lo normal. Sale de los datos de
    * ejemplo de la pantalla y se rotula como tal: el contrato de la API no
-   * publica cobertura todavía.
+   * publica cobertura para el mostrador todavía. Contra la API real es
+   * siempre `null` y la sección no se dibuja.
    */
   protected readonly cobertura = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : coberturaDeEjemplo(abierto, this.renglonesEnPie());
+    return abierto === null || !this.sampleData
+      ? null
+      : coberturaDeEjemplo(abierto, this.renglonesEnPie());
   });
 
   /**
@@ -214,10 +225,14 @@ export class InboxOrder {
     ),
   );
 
-  /** La factura del pedido entregado, con la misma advertencia. */
+  /**
+   * La factura del pedido entregado, con la misma advertencia. Ningún módulo
+   * de la API factura pedidos de farmacia todavía: contra la API real no hay
+   * resumen que mostrar.
+   */
   protected readonly factura = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : facturaDeEjemplo(abierto);
+    return abierto === null || !this.sampleData ? null : facturaDeEjemplo(abierto);
   });
 
   /** La revisión está abierta: los ajustes por renglón se pueden editar. */
@@ -417,7 +432,7 @@ export class InboxOrder {
       {
         title: 'Rechazar el pedido',
         message:
-          'El paciente va a ver el motivo tal como lo escribas: contale por qué y qué puede hacer.',
+          'El paciente va a ver el motivo tal como lo escriba: cuéntele por qué y qué puede hacer.',
         confirmLabel: 'Rechazar el pedido',
         destructive: true,
       },
@@ -488,7 +503,7 @@ export class InboxOrder {
    */
   protected avisarDescargaDeFactura(): void {
     this.toasts.info(
-      'La descarga del comprobante llega con el módulo de facturación. Lo que ves acá es un ejemplo.',
+      'La descarga del comprobante llega con el módulo de facturación. Lo que ve acá es un ejemplo.',
       'Factura de ejemplo',
     );
   }

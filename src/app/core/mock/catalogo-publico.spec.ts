@@ -16,11 +16,12 @@ import { isMockReply, type MockMethod } from './mock-router';
 
 const router = crearRouterSimulado();
 
-function pedir(path: string): unknown {
+/** Los manejadores de ficha son asíncronos: el directorio oficial se lee bajo demanda. */
+async function pedir(path: string): Promise<unknown> {
   const partes = path.split('?');
   const encontrado = router.match('GET' as MockMethod, partes[0]!);
   if (encontrado === null) throw new Error(`sin manejador para ${path}`);
-  return encontrado.handler({
+  return await encontrado.handler({
     method: 'GET',
     path: partes[0]!,
     params: encontrado.params,
@@ -39,8 +40,8 @@ const CLINICA = vitrinas.filtrar((v) => v.kind === 'ORGANIZATION')[0]!.slug;
 const FARMACIA = vitrinas.filtrar((v) => v.kind === 'PHARMACY')[0]!.slug;
 
 describe('el catálogo que publica cada ficha', () => {
-  it('una clínica publica sus servicios con código, nombre y precio', () => {
-    const servicios = items(pedir(`/public/profiles/o/${CLINICA}/services`));
+  it('una clínica publica sus servicios con código, nombre y precio', async () => {
+    const servicios = items(await pedir(`/public/profiles/o/${CLINICA}/services`));
 
     expect(servicios.length).toBeGreaterThan(0);
     for (const servicio of servicios) {
@@ -54,8 +55,8 @@ describe('el catálogo que publica cada ficha', () => {
     }
   });
 
-  it('una farmacia publica sus medicamentos con marca, precio y stock', () => {
-    const productos = items(pedir(`/public/profiles/f/${FARMACIA}/products`));
+  it('una farmacia publica sus medicamentos con marca, precio y stock', async () => {
+    const productos = items(await pedir(`/public/profiles/f/${FARMACIA}/products`));
 
     expect(productos.length).toBeGreaterThan(0);
     for (const producto of productos) {
@@ -66,16 +67,16 @@ describe('el catálogo que publica cada ficha', () => {
     }
   });
 
-  it('el catálogo es el mismo en cada llamada', () => {
+  it('el catálogo es el mismo en cada llamada', async () => {
     // Determinismo: un enlace copiado tiene que abrir lo mismo, y una recarga
     // no puede cambiarle el precio a nadie.
-    expect(items(pedir(`/public/profiles/f/${FARMACIA}/products`))).toEqual(
-      items(pedir(`/public/profiles/f/${FARMACIA}/products`)),
-    );
+    const primera = items(await pedir(`/public/profiles/f/${FARMACIA}/products`));
+    expect(primera.length).toBeGreaterThan(0);
+    expect(primera).toEqual(items(await pedir(`/public/profiles/f/${FARMACIA}/products`)));
   });
 
-  it('un slug del vertical equivocado da 404 y no el catálogo de al lado', () => {
-    const respuesta = pedir(`/public/profiles/o/${FARMACIA}/services`);
+  it('un slug del vertical equivocado da 404 y no el catálogo de al lado', async () => {
+    const respuesta = await pedir(`/public/profiles/o/${FARMACIA}/services`);
 
     expect(isMockReply(respuesta) && respuesta.status).toBe(404);
   });

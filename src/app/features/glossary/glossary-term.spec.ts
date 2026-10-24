@@ -90,6 +90,25 @@ describe('GlossaryTerm', () => {
     return http.expectOne((r) => r.url.includes('/terminology/concepts/'));
   }
 
+  /**
+   * Abre una pestaña de la ficha por su rótulo. La ficha es UNA tarjeta con
+   * pestañas (composition-rules §5) y `app-tab` no dibuja el panel cerrado:
+   * lo que vive en «Medicamento» o «Relacionados» sólo está en el DOM con la
+   * pestaña abierta, como lo ve quien la usa.
+   */
+  async function abrirPestana(rotulo: string): Promise<void> {
+    const boton = [...html().querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (b) => b.textContent?.trim() === rotulo,
+    );
+    if (boton === undefined) throw new Error(`No hay pestaña «${rotulo}»`);
+    boton.click();
+    await harness.fixture.whenStable();
+  }
+
+  function rotulosDePestanas(): string[] {
+    return [...html().querySelectorAll('[role="tab"]')].map((b) => (b.textContent ?? '').trim());
+  }
+
   it('lee el término de la ruta, en castellano y de una sola llamada', () => {
     const req = peticion();
 
@@ -214,6 +233,7 @@ describe('GlossaryTerm', () => {
   it('cada relación enlaza a la ficha del término relacionado por su conceptId', async () => {
     peticion().flush(FICHA);
     await harness.fixture.whenStable();
+    await abrirPestana('Relacionados');
 
     const enlaces = [...html().querySelectorAll('.termino__relaciones a')].map((a) =>
       a.getAttribute('href'),
@@ -228,6 +248,7 @@ describe('GlossaryTerm', () => {
 
     expect(interno<() => readonly unknown[]>('gruposDeRelaciones')().length).toBe(0);
     expect(html().querySelector('.termino__relaciones')).toBeNull();
+    expect(rotulosDePestanas()).not.toContain('Relacionados');
   });
 
   // --- Imagen: hoy siempre ausente, mostrada defensivamente si existiera -----
@@ -314,6 +335,7 @@ describe('GlossaryTerm', () => {
       },
     });
     await harness.fixture.whenStable();
+    await abrirPestana('Medicamento');
 
     const texto = html().textContent ?? '';
     expect(texto).toContain('Medicamento');
@@ -332,6 +354,7 @@ describe('GlossaryTerm', () => {
   it('un campo parcial (sólo fabricante) muestra sólo ese campo, no los otros tres vacíos', async () => {
     peticion().flush({ ...FICHA, properties: { manufacturer: 'Acme Pharmaceuticals' } });
     await harness.fixture.whenStable();
+    await abrirPestana('Medicamento');
 
     const texto = html().textContent ?? '';
     expect(texto).toContain('Fabricante');
@@ -339,5 +362,227 @@ describe('GlossaryTerm', () => {
     expect(texto).not.toContain('Principios activos');
     expect(texto).not.toContain('Forma farmacéutica');
     expect(texto).not.toContain('Vía:');
+  });
+
+  // --- Glosario en castellano (2026-09-30): imagen, fuente y ficha de CIMA ----
+
+  const IMAGEN = {
+    source: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Heart.jpg',
+    thumbnailSource: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Heart.jpg/320px-Heart.jpg',
+    license: 'CC BY-SA 4.0',
+    attribution: 'Autor de Wikimedia',
+    sourcePage: 'https://commons.wikimedia.org/wiki/File:Heart.jpg',
+    alt: 'Ilustración del corazón',
+    status: 'approved',
+  };
+
+  it('con imagen, muestra la miniatura con atribución, licencia y enlace a la fuente, siempre visibles', async () => {
+    peticion().flush({ ...FICHA, image: IMAGEN });
+    await harness.fixture.whenStable();
+
+    const img = html().querySelector<HTMLImageElement>('.termino__imagen img');
+    expect(img?.getAttribute('src')).toBe(IMAGEN.thumbnailSource);
+    const credito = html().querySelector('.termino__imagen-atribucion');
+    expect(credito?.textContent).toContain('Autor de Wikimedia');
+    expect(credito?.textContent).toContain('CC BY-SA 4.0');
+    expect(credito?.querySelector('a')?.getAttribute('href')).toBe(IMAGEN.sourcePage);
+    expect(credito?.querySelector('a')?.getAttribute('rel')).toContain('noopener');
+  });
+
+  it('«Ampliar» abre la imagen entera en un modal, también con su crédito', async () => {
+    peticion().flush({ ...FICHA, image: IMAGEN });
+    await harness.fixture.whenStable();
+    expect(html().querySelector('app-content-dialog')).toBeNull();
+
+    html().querySelector<HTMLButtonElement>('.termino__imagen-boton')?.click();
+    await harness.fixture.whenStable();
+
+    const modal = html().querySelector('app-content-dialog');
+    expect(modal).not.toBeNull();
+    expect(modal?.querySelector('img')?.getAttribute('src')).toBe(IMAGEN.source);
+    expect(modal?.textContent).toContain('CC BY-SA 4.0');
+  });
+
+  it('un término sin definición lo dice con honestidad, nombrando la fuente, sin inventar un párrafo', async () => {
+    const { clinicalDefinition: _d, plainSummary: _p, ...sinTextos } = FICHA;
+    peticion().flush({
+      ...sinTextos,
+      properties: { source: 'cie10es-2026', external_code: 'A00', code_system: 'cie10es' },
+    });
+    await harness.fixture.whenStable();
+
+    const aviso = html().querySelector('[data-testid="termino-sin-definicion"]');
+    expect(aviso?.textContent).toContain('todavía no tiene una definición cargada');
+    expect(aviso?.textContent).toContain('CIE-10-ES');
+    expect(aviso?.textContent).toContain('«A00»');
+    expect(html().textContent).toContain('Todavía no hay una explicación en palabras simples');
+  });
+
+  it('también sin fuente declarada lo dice, sin suponer una', async () => {
+    const { clinicalDefinition: _d, ...sinDefinicion } = FICHA;
+    peticion().flush({ ...sinDefinicion, clinicalDefinition: { text: '  ', translated: true } });
+    await harness.fixture.whenStable();
+
+    expect(html().querySelector('[data-testid="termino-sin-definicion"]')?.textContent).toContain(
+      'No se escribe una definición sin fuente.',
+    );
+  });
+
+  it('la pestaña «Fuente y código» enlaza a la fuente con su fecha de consulta', async () => {
+    peticion().flush({
+      ...FICHA,
+      properties: {
+        source: 'medlineplus-es',
+        source_url: 'https://medlineplus.gov/spanish/highbloodpressure.html',
+        source_retrieved_at: '2026-09-29T10:00:00Z',
+      },
+    });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    const fuente = html().querySelector('[data-testid="termino-fuente"]');
+    expect(fuente?.textContent).toContain('MedlinePlus en español (NLM)');
+    expect(fuente?.textContent).toContain('29/09/2026');
+    expect(fuente?.querySelector('a')?.getAttribute('href')).toBe(
+      'https://medlineplus.gov/spanish/highbloodpressure.html',
+    );
+  });
+
+  const CIMA = {
+    nregistro: '62935',
+    name: 'Paracetamol Ejemplo 500 mg comprimidos',
+    labHolder: 'Laboratorio Titular S.A.',
+    activeIngredients: [{ name: 'PARACETAMOL', amount: '500 mg' }],
+    pharmaceuticalForms: ['COMPRIMIDO'],
+    routes: ['VÍA ORAL'],
+    atc: [{ code: 'N02BE01', name: 'Paracetamol' }],
+    presentations: [{ cn: '712345', name: 'Paracetamol Ejemplo 500 mg 20 comprimidos' }],
+    photos: [{ type: 'materialas', url: 'https://cima.aemps.es/cima/fotos/thumbnails/materialas/62935/x.jpg' }],
+    sections: [
+      { number: '4.1', text: 'Texto verbatim de indicaciones.' },
+      { number: '4.2', text: 'Texto verbatim de posología.' },
+      { number: '4.3', text: 'Texto verbatim de contraindicaciones.' },
+      { number: '4.4', text: 'Texto verbatim de advertencias.' },
+      { number: '4.8', text: 'Texto verbatim de reacciones adversas.' },
+    ],
+    retrievedAt: '2026-09-30',
+    fichaTecnicaUrl: 'https://cima.aemps.es/cima/dochtml/ft/62935/FT_62935.html',
+  };
+
+  it('con ficha de CIMA muestra fotos, presentaciones, vía, forma, ATC y las secciones verbatim, con la cita', async () => {
+    peticion().flush({ ...FICHA, properties: { drug_facts: CIMA } });
+    await harness.fixture.whenStable();
+    await abrirPestana('Medicamento');
+
+    const texto = html().textContent ?? '';
+    expect(texto).toContain('PARACETAMOL');
+    expect(texto).toContain('COMPRIMIDO');
+    expect(texto).toContain('VÍA ORAL');
+    expect(texto).toContain('N02BE01');
+    expect(texto).toContain('CN 712345');
+    for (const titulo of [
+      '4.1. Indicaciones terapéuticas',
+      '4.2. Posología y forma de administración',
+      '4.3. Contraindicaciones',
+      '4.4. Advertencias y precauciones especiales de empleo',
+      '4.8. Reacciones adversas',
+    ]) {
+      expect(texto).toContain(titulo);
+    }
+    expect(texto).toContain('Texto verbatim de posología.');
+    expect(html().querySelector('[data-testid="termino-cita-cima"]')?.textContent).toContain(
+      'Fuente: CIMA (AEMPS), ficha técnica nº 62935, consultado el 30/09/2026.',
+    );
+    const foto = html().querySelector<HTMLImageElement>('.termino__foto img');
+    expect(foto?.getAttribute('src')).toBe(CIMA.photos[0].url);
+    expect(foto?.getAttribute('alt')).toContain('Envase');
+    // CIMA reemplaza al NDC: no se muestran dos bloques de medicamento.
+    expect(texto).not.toContain('openFDA');
+  });
+
+  it('una ficha de CIMA sin número de registro no se muestra: sin cita no hay sección clínica', async () => {
+    const { nregistro: _n, ...sinRegistro } = CIMA;
+    peticion().flush({ ...FICHA, properties: { drug_facts: sinRegistro } });
+    await harness.fixture.whenStable();
+
+    expect(rotulosDePestanas()).not.toContain('Medicamento');
+    expect(html().textContent).not.toContain('Texto verbatim de posología.');
+  });
+
+  it('lee la ficha de CIMA del esquema 2: un principio activo, sus medicamentos y la ficha técnica de referencia', async () => {
+    // Forma de `glossary-data-build/SCHEMA.md` (versión 2), recortada.
+    const vtm = {
+      vtmId: 302007,
+      vtmName: 'espiramicina',
+      atc: [{ code: 'J01FA02', name: 'Espiramicina', level: 5 }],
+      routes: ['VÍA ORAL'],
+      dosageForms: ['COMPRIMIDO'],
+      productCount: 1,
+      referenceProduct: { nregistro: '49735', name: 'ROVAMYCINE 1,5 millones de UI COMPRIMIDOS' },
+      products: [
+        {
+          nregistro: '49735',
+          name: 'ROVAMYCINE 1,5 millones de UI COMPRIMIDOS',
+          holder: 'The Simple Pharma Company Limited',
+          activeIngredients: [{ name: 'ESPIRAMICINA', amount: '1,5', unit: 'MILLONES UI' }],
+          fichaTecnicaUrl: 'https://cima.aemps.es/cima/dochtml/ft/49735/FT_49735.html',
+          cimaUrl: 'https://cima.aemps.es/cima/publico/detalle.html?nregistro=49735',
+          presentations: [{ cn: '819722', name: 'ROVAMYCINE …, 24 comprimidos', commercialized: true }],
+          photos: [
+            {
+              kind: 'formafarmac',
+              url: 'https://cima.aemps.es/cima/fotos/full/formafarmac/49735/x.jpg',
+              thumbUrl: 'https://cima.aemps.es/cima/fotos/thumbnails/formafarmac/49735/x.jpg',
+            },
+          ],
+        },
+      ],
+      sections: [
+        {
+          section: '4.2',
+          title: 'Posología y forma de administración',
+          text: 'Adultos\n\nLa dosis diaria es, generalmente, de 4 comprimidos.',
+          nregistro: '49735',
+          documentUrl: 'https://cima.aemps.es/cima/dochtml/ft/49735/FT_49735.html',
+          documentDate: '2025-05-05T22:12:50.000Z',
+          retrievedAt: '2026-09-30T14:31:23.800Z',
+        },
+      ],
+    };
+    peticion().flush({ ...FICHA, properties: { drug_facts: vtm } });
+    await harness.fixture.whenStable();
+    await abrirPestana('Medicamento');
+
+    const texto = html().textContent ?? '';
+    expect(texto).toContain('ESPIRAMICINA');
+    expect(texto).toContain('The Simple Pharma Company Limited');
+    expect(texto).toContain('CN 819722');
+    expect(texto).toContain('4.2. Posología y forma de administración');
+    expect(texto).toContain('versión del 05/05/2025');
+    expect(html().querySelector('[data-testid="termino-cita-cima"]')?.textContent).toContain(
+      'Fuente: CIMA (AEMPS), ficha técnica nº 49735, consultado el 30/09/2026.',
+    );
+    // La galería baja la miniatura oficial y enlaza la foto entera.
+    const foto = html().querySelector<HTMLImageElement>('.termino__foto img');
+    expect(foto?.getAttribute('src')).toContain('/thumbnails/');
+    expect(foto?.closest('a')?.getAttribute('href')).toContain('/full/');
+  });
+
+  it('dice de dónde sale la definición cuando la fila lo declara', async () => {
+    peticion().flush({
+      ...FICHA,
+      properties: {
+        definition_source: {
+          name: 'MedlinePlus en español — «Aborto»',
+          url: 'https://medlineplus.gov/spanish/abortion.html',
+          retrievedAt: '2026-09-30T14:42:47.144Z',
+        },
+      },
+    });
+    await harness.fixture.whenStable();
+
+    const fuente = html().querySelector('[data-testid="termino-fuente-definicion"]');
+    expect(fuente?.textContent).toContain('MedlinePlus en español');
+    expect(fuente?.textContent).toContain('30/09/2026');
   });
 });

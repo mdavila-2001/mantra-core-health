@@ -130,7 +130,7 @@ describe('CatalogObjectDetail', () => {
       { status: 403, statusText: 'Forbidden' },
     );
     fixture.detectChanges();
-    expect(texto()).toContain('No podés revisar una revisión que escribiste vos');
+    expect(texto()).toContain('No puede revisar una revisión que escribió usted');
   });
 
   it('un 403 sin violación de segregación es un problema de rol, no de autoría', async () => {
@@ -141,8 +141,8 @@ describe('CatalogObjectDetail', () => {
       .expectOne('/admin/catalog/annotations/a1/review')
       .flush({ code: 'FORBIDDEN', message: 'x' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
-    expect(texto()).toContain('Tu rol no permite revisar fichas.');
-    expect(texto()).not.toContain('escribiste vos');
+    expect(texto()).toContain('Su rol no permite revisar fichas.');
+    expect(texto()).not.toContain('escribió usted');
   });
 
   it('rechazar exige motivo y lo envía', async () => {

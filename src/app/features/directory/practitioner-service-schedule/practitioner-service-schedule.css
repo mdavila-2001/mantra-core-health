@@ -1,0 +1,74 @@
+/* «Otros servicios» en la ficha del profesional. Mismo dibujo que la pestaña
+   «Consultas» (practitioner-availability), para que las dos se lean igual.
+   Sólo tokens del sistema; mobile-first. */
+
+:host {
+  display: block;
+}
+
+.otros-servicios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.otros-servicios__nota,
+.otros-servicios__detalle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+.otros-servicios__detalle strong {
+  color: var(--text-primary);
+}
+
+.otros-servicios__servicio {
+  max-width: 32rem;
+}
+
+.otros-servicios__semana {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+}
+
+.otros-servicios__rango {
+  margin: 0;
+  text-align: center;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+@media (min-width: 30rem) {
+  .otros-servicios__semana {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.otros-servicios__sede {
+  display: block;
+}
+
+.otros-servicios__sede + .otros-servicios__sede {
+  margin-top: var(--sp-3);
+}
+
+.otros-servicios__sede-nombre {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.otros-servicios__inicios {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

@@ -1,5 +1,8 @@
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 
+/** Clasificación de C2; el simulador la resuelve al concepto. Pendiente de backend P40. */
+export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
+
 /* ============================================================================
     Tipos de la vista para el circuito diagnóstico: `diagnostics` (M20) y la
     orden de servicio de `clinical` (M08).
@@ -36,6 +39,10 @@ export interface DiagnosticOrder {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
+  /** Categoría de análisis de C2; pendiente de backend P40. */
+  readonly category?: AnalysisCategory;
+  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  readonly basedOnNoteIds?: readonly string[];
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
@@ -101,6 +108,15 @@ export interface NewDiagnosticOrder {
   readonly codeConceptId: string;
   readonly encounterId?: string;
   readonly categoryConceptId?: string;
+  /** Categoría de análisis de C2; pendiente de backend P40. */
+  readonly category?: AnalysisCategory;
+  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  readonly basedOnNoteIds?: readonly string[];
+  /**
+   * La respuesta del formulario médico de la que sale (instancia de `forms`).
+   * En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;
@@ -285,6 +301,8 @@ export interface PatientOrder extends PatientSettlementFields {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
+  /** Categoría de análisis de C2; pendiente de backend P40. */
+  readonly category?: AnalysisCategory;
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
   readonly createdAt: Date;
@@ -313,15 +331,30 @@ export interface DiagnosticResultShare {
   readonly id: string;
   readonly reportId: string;
   readonly practitionerUserId: string;
+  /**
+   * El nombre del profesional, para que «Compartido con» no muestre un uuid.
+   * Ausente si la cuenta perdió su vínculo con la persona (caso raro).
+   */
+  readonly practitionerName?: string;
   readonly validFrom: Date;
   readonly validTo?: Date;
   readonly active: boolean;
 }
 
-/** Compartir un resultado: con quién y hasta cuándo. */
+/**
+ * Compartir un resultado: con quién y hasta cuándo.
+ *
+ * `practitionerProfileId` (CL-48), no una cuenta: es el mismo id que ya trae
+ * `MyCareRelationship.practitionerProfileId` (`GET /authz/me/access`, BR-20).
+ * El paciente elige de esa lista —sus relaciones asistenciales reales—, nunca
+ * tipea un identificador. El servidor exige que la relación esté vigente antes
+ * de resolver la cuenta y crear el acceso.
+ *
+ * `reason` se retiró (CL-50): `authz.resource_scope_grants` no tiene columna
+ * para guardarlo y el backend ya lo ignoraba en silencio.
+ */
 export interface NewDiagnosticResultShare {
-  readonly practitionerUserId: string;
+  readonly practitionerProfileId: string;
   /** Obligatorio: no existe compartir sin plazo. */
   readonly validUntil: Date;
-  readonly reason?: string;
 }

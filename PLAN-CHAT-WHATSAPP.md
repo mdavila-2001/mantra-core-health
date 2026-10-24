@@ -47,6 +47,37 @@
   para que la maqueta muestre todo lo que el chat sabe hacer.
 - El cartel «Datos de prueba» de la maqueta ya no tapa el campo de escribir en móvil.
 
+### Retoques del 30/09 sobre `mockup` · reacciones, recibos, stickers propios y bloqueo
+
+Pedido: «falta editar, reaccionar, más emojis, subir sticker/GIF desde local, la info de
+entregado/visto con hora, y los archivados y bloqueados».
+
+| Pedido | Qué hay ahora |
+|---|---|
+| Editar | «Editar» se ofrece siempre en un texto propio; pasados los 5 min queda **apagado y dice por qué** (antes desaparecía y parecía que no existía). La ventana de 5 min es la del servidor (F4.5). |
+| Reaccionar | Barra de 6 reacciones + «+» (catálogo entero) al tope del menú del mensaje; las reacciones cuelgan de la burbuja, una por persona, tocar la propia la quita. Optimista con reversión. |
+| Entregado / visto | Tres estados en los tildes (✓ enviado · ✓✓ gris entregado · ✓✓ azul leído) y **«Info. del mensaje»** con enviado / entregado / leído y su hora (una fila por persona en grupos). Sin recibos que lo digan no se pinta «entregado». |
+| Sticker / GIF propio | «Subir sticker o GIF» en el panel de stickers (PNG, WEBP, GIF, JPG ≤ 1 MB). Se manda al instante, sin burbuja, y queda en «Míos» (navegador, hasta 30). Viaja por la subida de archivos de siempre, marcado `STICKER`. |
+| Emojis | Ya eran 1 946 con búsqueda en castellano (Unicode 16 + CLDR). **No hay tonos de piel** (decisión del generador, sigue abierta). |
+| Archivados / Bloqueados | Las dos entradas se ven **siempre** (antes «Archivados» se escondía si estaba vacío). «Bloqueados» lista a quién bloqueaste, con nombre y «Desbloquear». Bloquear: menú del hilo (con confirmación) y menú de la fila. Bloqueada la persona, el campo de escribir se cambia por un aviso. |
+| Miniatura de adjunto en vuelo | Era un `blob:` que la CSP (`img-src 'self' data:`) bloquea: la imagen salía rota hasta terminar la subida. Ahora es `data:`. La CSP no se tocó. |
+
+**Pendiente de backend** (la maqueta lo simula con este mismo contrato; la API real todavía no lo tiene):
+
+1. **Reacciones a mensajes** — `PUT /community/conversations/:id/messages/:messageId/reaction`
+   con `{ profileId, emoji | null }` → devuelve el mensaje con `reactions: [{ emoji, profileIds[] }]`.
+   `community.reactions` sólo admite `POST`/`COMMENT`/`REVIEW`: agregar `MESSAGE` es cambio de
+   modelo (`.puml` → `SQL/`), no de API.
+2. **Recibos con hora** — `DirectMessage.receipts: [{ profileId, deliveredAt, readAt }]` en los
+   mensajes propios. `message_receipts` ya guarda las horas; falta exponerlas. Hoy la API sólo
+   publica `peerReadUpTo`, y por eso «Leído» sin recibos no puede decir cuándo.
+3. **Sticker propio** — `contentType: 'STICKER'` en `POST …/messages` y en la lectura. Sin él
+   el otro lado lo ve como una imagen con burbuja (degradación honesta).
+4. **Bloqueo efectivo** — el backend debe **rechazar** el envío de quien bloqueó y decidir qué
+   ve quien fue bloqueado; hoy `POST /community/blocks` sólo guarda el vínculo.
+5. **Nombre en `GET /community/blocks`** — hoy devuelve sólo `blockedProfileId`; el front pide
+   la ficha de cada uno para mostrar el nombre.
+
 ### Diferencias con el plan original
 
 - **El envío optimista, los adjuntos y los emojis entraron con F0–F2**, no en un PR

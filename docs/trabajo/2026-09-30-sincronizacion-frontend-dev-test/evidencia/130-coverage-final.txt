@@ -1,0 +1,90 @@
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\.worktrees\frontend-hito-2\vitest.config.ts
+> Building...
+√ Building...
+Application bundle generation failed. [156.405 seconds] - 2026-10-01T18:44:18.043Z
+
+node.exe : ▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+En C:\Users\Usuario\AppData\Roaming\npm\corepack.ps1: 24 Carácter: 5
++     & "node$exe"  "$basedir/node_modules/corepack/dist/corepack.js" $ ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+X [ERROR] TS2339: Property 'toHaveLength' does not exist on type 'unknown[]'. [plugin angular-compiler]
+
+    src/app/core/mock/handlers/finance.handlers.coverage.spec.ts:233:7:
+      233 │       .toHaveLength(0);
+          ╵        ~~~~~~~~~~~~
+
+
+X [ERROR] TS1005: ')' expected. [plugin angular-compiler]
+
+    src/app/core/mock/handlers/finance.handlers.coverage.spec.ts:233:22:
+      233 │       .toHaveLength(0);
+          ╵                       ^
+
+
+X [ERROR] TS2339: Property 'toHaveLength' does not exist on type 'unknown[]'. [plugin angular-compiler]
+
+    src/app/core/mock/handlers/finance.handlers.coverage.spec.ts:235:7:
+      235 │       .toHaveLength(0);
+          ╵        ~~~~~~~~~~~~
+
+
+X [ERROR] TS1005: ')' expected. [plugin angular-compiler]
+
+    src/app/core/mock/handlers/finance.handlers.coverage.spec.ts:235:22:
+      235 │       .toHaveLength(0);
+          ╵                       ^
+
+
+EXIT_CODE=1

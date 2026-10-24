@@ -1,0 +1,81 @@
+Using Vitest configuration file: /Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-marcelo-farmacia-front/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                   | Names                                              |  Raw size
+styles.css                                            | styles                                             | 166.29 kB | 
+spec-app-core-data-access-pharmacy-pharmacy.client.js | spec-app-core-data-access-pharmacy-pharmacy.client |  15.15 kB | 
+chunk-CGZBV6BD.js                                     | -                                                  |   4.07 kB | 
+init-testbed.js                                       | init-testbed                                       |   1.21 kB | 
+vitest-mock-patch.js                                  | vitest-mock-patch                                  | 974 bytes | 
+setup-test-setup.js                                   | setup-test-setup                                   | 911 bytes | 
+
+                                                      | Initial total                                      | 188.60 kB
+
+Application bundle generation complete. [15.523 seconds] - 2026-09-25T06:52:24.117Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:118:39:
+[37m      118 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:118:62:
+[37m      118 │ ...AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+          ╵                                               [32m~~~~~~~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-marcelo-farmacia-front[39m
+
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 02:52:25
+[2m   Duration [22m 335ms[2m (transform 19ms, setup 83ms, import 11ms, tests 10ms, environment 169ms)[22m
+
+EXIT:0

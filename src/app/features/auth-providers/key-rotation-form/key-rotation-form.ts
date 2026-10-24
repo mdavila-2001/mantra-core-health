@@ -101,7 +101,7 @@ export class KeyRotationForm {
           label: 'Horas de gracia',
           hint: 'Entre 0 y 720. Vacío: el backend aplica 24.',
           control: 'number' as const,
-          mensajeDeError: 'Ingresá un valor entre 0 y 720.',
+          mensajeDeError: 'Ingrese un valor entre 0 y 720.',
         },
       ],
     },
@@ -113,7 +113,7 @@ export class KeyRotationForm {
   protected readonly rotated = signal<KeyRotationResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para rotar claves de firma.'),
+    errorMessageOf(this.state(), 'No tiene permiso para rotar claves de firma.'),
   );
 
   protected submit(): void {

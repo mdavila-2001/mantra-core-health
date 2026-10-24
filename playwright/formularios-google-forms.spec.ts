@@ -94,7 +94,7 @@ test.describe('Formularios · edición como Google Forms', () => {
     await ultimaPropia(page)
       .getByTestId('editor-campo-descripcion')
       .locator('textarea')
-      .fill('Contá desde el último cigarrillo.');
+      .fill('Cuente desde el último cigarrillo.');
 
     // Nada de lo tecleado se perdió mientras se guardaba.
     await expect(nombre).toHaveValue('¿Fuma?');
@@ -143,7 +143,7 @@ test.describe('Formularios · edición como Google Forms', () => {
     await expect(releida.getByTestId('editor-campo-opcion-2').locator('input')).toHaveValue('Ex fumador');
     await expect(releida.getByTestId('editor-campo-otro')).toBeVisible();
     await expect(releida.getByTestId('editor-campo-descripcion').locator('textarea')).toHaveValue(
-      'Contá desde el último cigarrillo.',
+      'Cuente desde el último cigarrillo.',
     );
     await expect(releida.getByText('Hay que marcar exactamente 2 opciones.')).toBeVisible();
     await capturar(page, '04-releido-desde-el-store');
@@ -164,7 +164,7 @@ test.describe('Formularios · edición como Google Forms', () => {
       await previa.getByTestId('paginated-form-continuar').click();
     }
     await expect(previa.getByTestId('checkbox-group-otro')).toBeVisible();
-    await expect(previa.getByText('Contá desde el último cigarrillo.')).toBeVisible();
+    await expect(previa.getByText('Cuente desde el último cigarrillo.')).toBeVisible();
 
     // Marcar tres donde se pedían dos lo dice acá, no cuando el paciente lo vea.
     // El grupo de la pregunta nueva, no el de «Factores de riesgo» del
@@ -176,15 +176,15 @@ test.describe('Formularios · edición como Google Forms', () => {
     await casillas.nth(0).click();
     await casillas.nth(1).click();
     await casillas.nth(2).click();
-    await expect(previa.getByText('Marcá exactamente 2 opciones.')).toBeVisible();
+    await expect(previa.getByText('Marque exactamente 2 opciones.')).toBeVisible();
 
     // «Otro» con texto libre cuenta como una respuesta más: con «Nunca» sola
     // falta una; con «Nunca» y «Pipa» son las dos que se pedían.
     await casillas.nth(2).click();
     await casillas.nth(1).click();
-    await expect(previa.getByText('Marcá exactamente 2 opciones.')).toBeVisible();
+    await expect(previa.getByText('Marque exactamente 2 opciones.')).toBeVisible();
     await previa.getByTestId('checkbox-group-otro-texto').fill('Pipa');
-    await expect(previa.getByText('Marcá exactamente 2 opciones.')).toHaveCount(0);
+    await expect(previa.getByText('Marque exactamente 2 opciones.')).toHaveCount(0);
     await capturar(page, '05-vista-previa-con-otro-y-tope');
 
     // ── Limpiar: quitar la pregunta que se creó ────────────────────────────

@@ -189,6 +189,6 @@ describe('MedicalAspects', () => {
       .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('No pudimos traer tus aspectos médicos');
+    expect(fixture.nativeElement.textContent).toContain('No pudimos traer sus aspectos médicos');
   });
 });

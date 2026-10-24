@@ -1,7 +1,7 @@
 @if (!embebido()) {
   <app-page-header
     title="Mis puntos"
-    subtitle="Lo que sumaste con tus compras, y cómo canjearlo."
+    subtitle="Lo que sumó con sus compras, y cómo canjearlo."
     [breadcrumbs]="breadcrumbs()"
   />
 }
@@ -10,7 +10,7 @@
   <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le
        corresponde, y no es un error. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente, así que no hay puntos propios que mirar.
+    Su cuenta no tiene un perfil de paciente, así que no hay puntos propios que mirar.
   </app-alert>
 } @else {
   <app-view-state-host [state]="membresia()" (retry)="cargar()">
@@ -24,16 +24,16 @@
 
         @case ('canjear') {
           <section class="canjear" aria-labelledby="canjear-titulo" data-testid="canjear-form">
-            <h2 id="canjear-titulo" class="canjear__titulo">¿Cuántos puntos querés canjear?</h2>
+            <h2 id="canjear-titulo" class="canjear__titulo">¿Cuántos puntos quiere canjear?</h2>
             <p class="canjear__disponible">
-              Tenés
+              Tiene
               <strong class="cifras-tabulares">{{ cuenta.saldo }}</strong>
               {{ unidadDe(cuenta.saldo) }} disponibles.
             </p>
 
             <app-form-field
               label="Puntos a canjear"
-              hint="Después te mostramos el código para presentar en la caja del supermercado."
+              hint="Después le mostramos el código para presentar en la caja del supermercado."
               [errorMessage]="errorDeCanje() ?? ''"
             >
               <app-input
@@ -92,7 +92,7 @@
             <dl class="saldo__datos">
               @if (cuenta.nivel; as nivel) {
                 <div class="saldo__dato">
-                  <dt>Tu nivel</dt>
+                  <dt>Su nivel</dt>
                   <dd data-testid="puntos-nivel">{{ nivel.nombre }}</dd>
                 </div>
               }
@@ -118,7 +118,7 @@
           </section>
 
           <section class="movimientos" aria-labelledby="movimientos-titulo">
-            <h2 id="movimientos-titulo" class="movimientos__titulo">Tus movimientos</h2>
+            <h2 id="movimientos-titulo" class="movimientos__titulo">Sus movimientos</h2>
 
             @if (movimientos().length === 0) {
               <p class="movimientos__vacio" data-testid="movimientos-vacio">

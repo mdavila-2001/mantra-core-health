@@ -280,7 +280,7 @@ export class BuscarHospitalesListado {
     if (cuantos === 0) {
       return `Todavía no hay centros publicados en ${nombre}.`;
     }
-    return `${cuantos} ${cuantos === 1 ? 'centro' : 'centros'} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} ${cuantos === 1 ? 'centro' : 'centros'} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /* ---- los cortes en memoria --------------------------------------------- */
@@ -426,7 +426,7 @@ export class BuscarHospitalesListado {
 
   protected readonly aviso = computed(() =>
     this.recortada()
-      ? 'Se muestran los primeros resultados. Usá el buscador para encontrar un centro que no aparezca en la lista.'
+      ? 'Se muestran los primeros resultados. Use el buscador para encontrar un centro que no aparezca en la lista.'
       : null,
   );
 

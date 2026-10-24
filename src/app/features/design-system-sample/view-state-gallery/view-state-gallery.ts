@@ -90,7 +90,7 @@ export class ViewStateGallery {
       titulo: 'Validación o conflicto',
       state: validation(
         [
-          { field: 'sector', message: 'Elegí un sector para ver la ocupación.' },
+          { field: 'sector', message: 'Elija un sector para ver la ocupación.' },
           { message: 'Otra persona actualizó este parte hace instantes.', code: 'CONFLICT' },
         ],
         30,
@@ -101,7 +101,7 @@ export class ViewStateGallery {
       titulo: 'Prohibido / propósito denegado',
       regla: 'S5 ≠ S6 — acá sí se admite que el recurso existe.',
       state: forbidden({
-        message: 'Necesitás verificar tu identidad para ver datos clínicos.',
+        message: 'Necesita verificar su identidad para ver datos clínicos.',
         nextAction: { label: 'Verificar identidad', route: '/identity/me' },
       }),
     },

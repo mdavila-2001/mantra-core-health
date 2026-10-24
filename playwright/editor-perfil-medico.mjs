@@ -114,6 +114,16 @@ async function main() {
     '«Acepto pacientes nuevos» no aparece',
     (await pagina.getByText('Acepto pacientes nuevos').count()) === 0,
   );
+  // Mudadas desde «Credenciales» el 24/09/2026: contestan «¿de qué es
+  // médico?», la misma pregunta que el título profesional de esta pestaña.
+  const filasEspecialidades = await pagina
+    .locator('[data-testid="tabla-especialidades"] tbody tr:not(.data-table__detail-row)')
+    .count();
+  ok(
+    'Datos personales muestra la tabla de especialidades',
+    filasEspecialidades > 0,
+    `${filasEspecialidades} filas`,
+  );
   await capturar('01-datos-personales', { fullPage: true });
 
   /* ── 2 · Contacto: el mapa entero ───────────────────────────────────── */
@@ -173,12 +183,10 @@ async function main() {
   ok('Trayectoria muestra la tabla de títulos cargados', filasAntes > 0, `${filasAntes} filas`);
   await capturar('04-trayectoria', { fullPage: true });
 
-  /* ── 5 · Credenciales: tablas y tres autoridades ───────────────────── */
+  /* ── 5 · Credenciales: tabla de matrículas y tres autoridades ──────── */
   await pestanas.nth(3).click();
   await pagina.waitForTimeout(600);
-  const filasEspecialidades = await pagina.locator('[data-testid="tabla-especialidades"] tbody tr:not(.data-table__detail-row)').count();
   const filasMatriculas = await pagina.locator('[data-testid="tabla-matriculas"] tbody tr:not(.data-table__detail-row)').count();
-  ok('Credenciales muestra la tabla de especialidades', filasEspecialidades > 0, `${filasEspecialidades} filas`);
   ok('Credenciales muestra la tabla de matrículas', filasMatriculas > 0, `${filasMatriculas} filas`);
 
   // `app-select` dibuja un <select> nativo: se leen sus <option> sin el marcador.

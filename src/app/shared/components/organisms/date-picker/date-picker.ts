@@ -562,12 +562,26 @@ export class DatePicker {
     input.setSelectionRange(seg.start, seg.end);
   }
 
+  /**
+   * El segmento donde tiene que quedar el cursor.
+   *
+   * Con el campo vacío la plantilla ocupa sólo la izquierda del input, así que
+   * un clic en cualquier otro punto deja el cursor al final: en el año. Lo que
+   * la persona teclea después —«01011990»— caía entero ahí y el campo quedaba
+   * en `DD/MM/1011`, inválido. Vacío, se empieza siempre por el día; con algo
+   * escrito se respeta dónde hizo clic, que es cómo se corrige un solo segmento.
+   */
+  private segmentForCaret(input: HTMLInputElement): SegmentDef {
+    if (input.value === MASK_TEMPLATE) {
+      return SEGMENT_DAY;
+    }
+    return getSegmentAt(input.selectionStart ?? 0);
+  }
+
   private snapToSegment(input: HTMLInputElement): void {
     this.applyNormalization(input);
     this.ensureMask(input);
-    const pos = input.selectionStart ?? 0;
-    const seg = getSegmentAt(pos);
-    this.selectSegment(input, seg);
+    this.selectSegment(input, this.segmentForCaret(input));
   }
 
   protected handleFocus(): void {
@@ -576,11 +590,10 @@ export class DatePicker {
       return;
     }
     this.ensureMask(input);
+    const valueAtFocus = input.value;
     setTimeout(() => {
-      if (document.activeElement === input) {
-        const pos = input.selectionStart ?? 0;
-        const seg = getSegmentAt(pos);
-        this.selectSegment(input, seg);
+      if (document.activeElement === input && input.value === valueAtFocus) {
+        this.selectSegment(input, this.segmentForCaret(input));
       }
     }, 0);
   }
@@ -593,8 +606,12 @@ export class DatePicker {
   protected handleInputMouseUp(event: MouseEvent): void {
     const input = event.target as HTMLInputElement;
     this.snapToSegment(input);
+    // El reajuste diferido no pisa lo que ya se tecleó: si el primer dígito
+    // entra antes de que corra este temporizador, normalizaba «0D» a «00» y
+    // mandaba el cursor al año.
+    const valueAtMouseUp = input.value;
     setTimeout(() => {
-      if (document.activeElement === input) {
+      if (document.activeElement === input && input.value === valueAtMouseUp) {
         this.snapToSegment(input);
       }
     }, 0);

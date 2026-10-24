@@ -48,12 +48,14 @@ const MAX_BYTES = MAX_MIB * 1024 * 1024;
 const PALABRA_DE_VERIFICACION: Readonly<Record<EstadoDeVerificacion, string>> = {
   PENDIENTE: 'Pendiente de verificación',
   VERIFICADO: 'Verificado',
+  RECHAZADO: 'Rechazado',
 };
 
 /** Con qué severidad se pinta. Lo pendiente informa; no es un problema todavía. */
 const TONO_DE_VERIFICACION: Readonly<Record<EstadoDeVerificacion, BadgeVariant>> = {
   PENDIENTE: 'info',
   VERIFICADO: 'success',
+  RECHAZADO: 'error',
 };
 
 /** Una fila de la carpeta, con todo lo que se dibuja ya resuelto. */
@@ -119,6 +121,13 @@ export class DocumentosLegales {
 
   /** La persona pidió reintentar; el dueño de los datos decide qué hacer. */
   readonly retry = output<void>();
+
+  /**
+   * De lectura (contra la API real): sin rótulo de ejemplo, sin cargar ni
+   * reemplazar papeles y sin la nota de estados provisionales. La carpeta son
+   * las licencias que el contrato publica, y todavía no hay dónde subir una.
+   */
+  readonly readOnly = input(false);
 
   protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
   protected readonly aceptaPdf = ACEPTA_PDF;
@@ -270,7 +279,7 @@ export class DocumentosLegales {
   /** El PDF definitivo lo guarda el módulo de documentos legales, que todavía no existe. */
   protected avisarDescarga(fila: FilaDeDocumento): void {
     this.toasts.info(
-      `«${fila.archivo}» no se puede abrir desde acá todavía: los archivos llegan con el módulo de documentos legales. Lo que ves es un ejemplo.`,
+      `«${fila.archivo}» no se puede abrir desde acá todavía: los archivos llegan con el módulo de documentos legales. Lo que ve es un ejemplo.`,
       'Documento de ejemplo',
     );
   }

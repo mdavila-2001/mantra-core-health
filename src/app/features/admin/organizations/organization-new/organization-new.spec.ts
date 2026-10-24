@@ -213,7 +213,7 @@ describe('OrganizationNew', () => {
   it('la búsqueda de owner traduce usuarios a opciones con su aviso', () => {
     interno<(t: string) => void>('buscarOwner')('maria');
 
-    http.expectOne((r) => r.url === '/iam/users').flush({
+    http.expectOne((r) => r.url === '/iam/users/search').flush({
       items: [
         {
           id: 'u-1',

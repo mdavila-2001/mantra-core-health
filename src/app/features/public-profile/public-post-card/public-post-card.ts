@@ -6,6 +6,8 @@ import { SessionStore } from '@core/auth/session.store';
 import { CommunityClient } from '@core/data-access/community/community.client';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 import { PostPreferencesMenu } from '@shared/components/molecules/post-preferences-menu/post-preferences-menu';
+import { ArticleBody } from '@shared/components/organisms/article-body/article-body';
+import { hasArticleStructure } from '@shared/text/article-markup';
 import { PublicPostComments } from '../public-post-comments/public-post-comments';
 import { PublicPostReactions } from '../public-post-reactions/public-post-reactions';
 
@@ -22,6 +24,7 @@ import { PublicPostReactions } from '../public-post-reactions/public-post-reacti
 @Component({
   selector: 'app-public-post-card',
   imports: [
+    ArticleBody,
     DatePipe,
     PostPreferencesMenu,
     PublicPostComments,
@@ -227,6 +230,16 @@ export class PublicPostCard {
    * `computed` derivado, no un estado que haya que recordar sincronizar.
    */
   private readonly indiceElegido = signal(0);
+
+  /**
+   * Si el cuerpo es un artículo (títulos, listas o imágenes intercaladas).
+   *
+   * Se decide por el contenido y no por la etiqueta porque el resumen público
+   * no trae etiquetas. Un artículo se pinta con sus secciones desplegables y
+   * sus imágenes en el lugar del texto donde van, así que ni el «Ver más» ni
+   * la galería aplican.
+   */
+  protected readonly esArticulo = computed(() => hasArticleStructure(this.post().bodyText));
 
   protected readonly tieneVariasImagenes = computed(() => this.post().mediaUrls.length > 1);
 

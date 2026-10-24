@@ -66,8 +66,8 @@ export class QuotationList {
   protected readonly busquedaDePaciente = signal('');
   protected readonly resultadosDePacientes = signal<ViewState<readonly PatientListItem[]>>(
     empty(
-      { label: 'Escribí para buscar' },
-      'Buscá un paciente por nombre o código para ver sus cotizaciones.',
+      { label: 'Escriba para buscar' },
+      'Busque un paciente por nombre o código para ver sus cotizaciones.',
     ),
   );
   protected readonly pacienteElegido = signal<PatientListItem | null>(null);
@@ -81,8 +81,8 @@ export class QuotationList {
     if (texto.trim() === '') {
       this.resultadosDePacientes.set(
         empty(
-          { label: 'Escribí para buscar' },
-          'Buscá un paciente por nombre o código para ver sus cotizaciones.',
+          { label: 'Escriba para buscar' },
+          'Busque un paciente por nombre o código para ver sus cotizaciones.',
         ),
       );
       return;

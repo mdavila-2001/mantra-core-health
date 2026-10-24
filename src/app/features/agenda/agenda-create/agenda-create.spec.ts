@@ -33,7 +33,10 @@ interface Testable {
   elegirDuracion(indice: number, minutos: number): void;
   elegirRespiro(indice: number, minutos: number): void;
   turnosDelDia(indice: number): number;
-  repetirElPrimero(): void;
+  abrirRepetir(): void;
+  repetirFila(): void;
+  readonly filaARepetir: WritableSignal<number | null>;
+  readonly repetirAbierto: WritableSignal<boolean>;
   publicar(): void;
   /** Publicar en una agenda nueva en vez de en la que ya existe. */
   readonly agendaNueva: WritableSignal<boolean>;
@@ -161,13 +164,13 @@ describe('AgendaCreate', () => {
     http = TestBed.inject(HttpTestingController);
     acc = fixture.componentInstance as unknown as Testable;
     fixture.detectChanges();
-    http.expectOne((r) => r.url === '/scheduling/resources').flush({
-      items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
-      count: 1,
-    });
     http
-      .expectOne('/scheduling/resources/res-1/templates')
-      .flush({ items: [plantilla], count: 1 });
+      .expectOne((r) => r.url === '/scheduling/resources')
+      .flush({
+        items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
+        count: 1,
+      });
+    http.expectOne('/scheduling/resources/res-1/templates').flush({ items: [plantilla], count: 1 });
     fixture.detectChanges();
   }
 
@@ -279,7 +282,7 @@ describe('AgendaCreate', () => {
       http.expectOne('/scheduling/templates/tpl-1').flush(
         {
           code: 'CONFLICT',
-          message: 'El horario tiene 3 citas comprometidas: resolvelas antes de cambiarlo.',
+          message: 'El horario tiene 3 citas comprometidas: resuélvalas antes de cambiarlo.',
           details: { bookingIds: ['b-1', 'b-2', 'b-3'] },
         },
         { status: 409, statusText: 'Conflict' },
@@ -294,8 +297,8 @@ describe('AgendaCreate', () => {
       crearConHorarioVigente(VIGENTE);
 
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).toContain('Cambiá tu horario');
-      expect(texto).not.toContain('Publicá tu agenda');
+      expect(texto).toContain('Cambie su horario');
+      expect(texto).not.toContain('Publique su agenda');
     });
 
     it('carga la semanita con el horario vigente, para poder editarlo', () => {
@@ -446,7 +449,7 @@ describe('AgendaCreate', () => {
 
       // La columna «Turnos» de la fila: el costo en el mismo renglón donde se
       // elige, que es donde se lo mira.
-      expect(fixture.nativeElement.textContent).toContain('Turnos');
+      expect(fixture.nativeElement.textContent).toContain('Horarios');
       expect(acc.turnosDelDia(0)).toBe(8);
 
       // Elegir respiro sobre una franja corta quita turnos, y ese número no se
@@ -470,13 +473,19 @@ describe('AgendaCreate', () => {
       const texto: string = fixture.nativeElement.textContent;
       // El número de la fila y el de la vista previa son el MISMO cálculo. Lo
       // que esta prueba impide es que vuelvan a separarse.
-      expect(acc.turnosDelDia(0)).toBe(5);
+      // Con el redondeo hacia adelante (04/10/2026) el sexto turno empieza a
+      // las 12:45 —dentro de la franja— y se completa hasta las 13:15.
+      expect(acc.turnosDelDia(0)).toBe(6);
       const previa: HTMLElement = fixture.nativeElement.querySelector('.agenda-create__previa-dia');
       expect(previa.textContent).toContain('Lunes');
-      // Y el paso completo —30 + 15— se ve en el cierre: sin contar el
-      // respiro, cinco turnos de 30 cerrarían a las 11:30, no a las 12:30.
-      expect(texto).toContain('09:00 – 12:30');
-      expect(texto).toContain('5 turnos de 30 min');
+      // Y el paso completo —30 + 15— se ve en el cierre.
+      expect(texto).toContain('09:00 – 13:15');
+      expect(texto).toContain('6 citas de 30 min');
+      // Y se dice que el último pasa la hora de fin.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-previa-extiende"]')
+          ?.textContent,
+      ).toContain('13:15');
     });
 
     it('el resumen nombra el respiro sólo cuando lo hay', () => {
@@ -496,6 +505,31 @@ describe('AgendaCreate', () => {
 
       expect(acc.grupoDe(1).getRawValue().respiro).toBe(10);
     });
+
+    it('un horario vigente con franjas de servicios carga qué atiende cada día (v4.2.40)', () => {
+      crearConHorarioVigente({
+        id: 'tpl-m',
+        name: 'Mixto',
+        slotMinutes: 30,
+        statusConceptId: 'c',
+        rules: [
+          { dayOfWeek: 2, startTime: '14:00:00', endTime: '18:00:00', bookingMode: 'SERVICES' },
+          {
+            dayOfWeek: 3,
+            startTime: '08:00:00',
+            endTime: '12:00:00',
+            slotMinutes: 30,
+            bookingMode: 'MIXED',
+          },
+          { dayOfWeek: 4, startTime: '08:00:00', endTime: '12:00:00', slotMinutes: 30 },
+        ],
+      });
+
+      expect(acc.grupoDe(1).getRawValue().modo).toBe('SERVICES');
+      expect(acc.grupoDe(2).getRawValue().modo).toBe('MIXED');
+      // Sin modo declarado ≡ sólo consultas: lo que toda franja era antes.
+      expect(acc.grupoDe(3).getRawValue().modo).toBe('CONSULTATIONS');
+    });
   });
 
   /* -- Quién puede entrar --------------------------------------------------- */
@@ -509,7 +543,7 @@ describe('AgendaCreate', () => {
 
   it('sin organización activa bloquea y explica, en vez de dejar avanzar hasta un 400', () => {
     crear(['PRACTITIONER'], null);
-    expect(fixture.nativeElement.textContent).toContain('Elegí una organización primero');
+    expect(fixture.nativeElement.textContent).toContain('Elija una organización primero');
   });
 
   it('un profesional sin perfil en la sesión ve el aviso y no el formulario', () => {
@@ -530,7 +564,7 @@ describe('AgendaCreate', () => {
 
   it('le dice de quién es la agenda, con su nombre', () => {
     crear();
-    expect(fixture.nativeElement.textContent).toContain('Vas a publicar tu propia agenda');
+    expect(fixture.nativeElement.textContent).toContain('Va a publicar su propia agenda');
     expect(fixture.nativeElement.textContent).toContain('Dra. Elena Salas');
   });
 
@@ -568,20 +602,74 @@ describe('AgendaCreate', () => {
     expect(acc.semana.at(0).getRawValue().duracion).toBe(45);
   });
 
-  it('repetir el primero copia su horario a los demás días encendidos', () => {
+  /*
+   * Propietario, 04/10/2026: el botón va arriba, primero pregunta con un modal
+   * y deja elegir qué fila repetir. Y copia el descanso, que antes quedaba atrás.
+   */
+  it('repetir pregunta primero: abrir el modal no cambia nada', () => {
     crear();
     acc.alternarDia(0);
     acc.alternarDia(3);
     acc.semana.at(0).patchValue({ desde: '08:00', hasta: '11:00', duracion: 20 });
     fixture.detectChanges();
 
-    acc.repetirElPrimero();
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="agenda-create-masivo"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
 
-    expect(acc.semana.at(3).getRawValue()).toMatchObject({
-      desde: '08:00',
-      hasta: '11:00',
-      duracion: 20,
-    });
+    expect(acc.repetirAbierto()).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="agenda-create-masivo-fila"]'),
+    ).not.toBeNull();
+    expect(acc.semana.at(3).getRawValue().desde).not.toBe('08:00');
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="agenda-create-masivo-cancelar"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+    expect(acc.repetirAbierto()).toBe(false);
+    expect(acc.semana.at(3).getRawValue().desde).not.toBe('08:00');
+  });
+
+  it('el botón de repetir está arriba de la tabla, no al pie', () => {
+    crear();
+    acc.alternarDia(0);
+    acc.alternarDia(3);
+    fixture.detectChanges();
+
+    const boton: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="agenda-create-masivo"]',
+    );
+    const tabla: HTMLElement = fixture.nativeElement.querySelector('.agenda-create__tabla');
+    expect(boton.compareDocumentPosition(tabla) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('repetir copia la fila ELEGIDA —con su descanso— a los demás días encendidos', () => {
+    crear();
+    acc.alternarDia(0);
+    acc.alternarDia(3);
+    acc.alternarDia(4);
+    acc.semana.at(3).patchValue({ desde: '08:00', hasta: '11:00', duracion: 20, respiro: 10 });
+    fixture.detectChanges();
+
+    acc.abrirRepetir();
+    expect(acc.filaARepetir()).toBe(0);
+    acc.filaARepetir.set(3);
+    acc.repetirFila();
+
+    for (const dia of [0, 4]) {
+      expect(acc.semana.at(dia).getRawValue()).toMatchObject({
+        desde: '08:00',
+        hasta: '11:00',
+        duracion: 20,
+        respiro: 10,
+      });
+    }
   });
 
   /* -- El contrato: los mismos POST que antes ------------------------------- */
@@ -789,14 +877,14 @@ describe('AgendaCreate', () => {
     http.expectOne('/scheduling/resources/res-1/templates').flush(
       {
         code: 'PRECONDITION_FAILED',
-        message: 'Ya tenés un horario los martes de 10:00 a 12:00 que se cruza con éste',
+        message: 'Ya tiene un horario los martes de 10:00 a 12:00 que se cruza con éste',
       },
       { status: 422, statusText: 'Unprocessable' },
     );
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Ya tenés un horario los martes');
+    expect(texto).toContain('Ya tiene un horario los martes');
     expect(texto).not.toContain('{');
   });
 
@@ -832,7 +920,7 @@ describe('AgendaCreate', () => {
     publicarCompleto();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('tu agenda ya está publicada');
+    expect(texto).toContain('su agenda ya está publicada');
     expect(texto).toContain('lunes de 9 a 13, consultas de 30 minutos');
     expect(texto).toContain('40');
   });
@@ -1024,11 +1112,19 @@ describe('AgendaCreate', () => {
       crear();
       const texto: string = fixture.nativeElement.textContent;
 
-      for (const dia of ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']) {
+      for (const dia of [
+        'Lunes',
+        'Martes',
+        'Miércoles',
+        'Jueves',
+        'Viernes',
+        'Sábado',
+        'Domingo',
+      ]) {
         expect(texto).toContain(dia);
       }
       // Y los apagados lo dicen, en vez de desaparecer.
-      expect(texto).toContain('No atendés');
+      expect(texto).toContain('No atiende');
     });
 
     it('las columnas son las que pidió el original', () => {
@@ -1056,9 +1152,10 @@ describe('AgendaCreate', () => {
       acc.fijarDeLaFila(0, 'hasta', '12:40');
       fixture.detectChanges();
 
-      // 08:15 → 12:40 son 265 minutos: 8 turnos de 30 y sobran 25.
+      // 08:15 → 12:40 son 265 minutos: 8 turnos de 30 y el noveno, que
+      // empieza 12:15, se completa hasta 12:45 (redondeo hacia adelante).
       expect(acc.grupoDe(0).valid).toBe(true);
-      expect(acc.turnosDelDia(0)).toBe(8);
+      expect(acc.turnosDelDia(0)).toBe(9);
     });
 
     it('ya no pregunta la sede ni los pacientes por turno', () => {
@@ -1066,7 +1163,7 @@ describe('AgendaCreate', () => {
       acc.avanzadasAbiertas.set(true);
       fixture.detectChanges();
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).not.toContain('¿En qué sede atendés?');
+      expect(texto).not.toContain('¿En qué sede atiende?');
       expect(texto).not.toContain('¿Cuántos pacientes por turno?');
     });
 
@@ -1106,7 +1203,9 @@ describe('AgendaCreate', () => {
     /** Publica hasta la plantilla y devuelve su cuerpo; cierra el ciclo. */
     function cuerpoDeLaPlantilla(): Record<string, unknown> {
       acc.publicar();
-      http.expectOne('/scheduling/resources').flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+      http
+        .expectOne('/scheduling/resources')
+        .flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
       const plantilla = http.expectOne('/scheduling/resources/res-1/templates');
       const cuerpo = plantilla.request.body as Record<string, unknown>;
       plantilla.flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
@@ -1127,8 +1226,18 @@ describe('AgendaCreate', () => {
 
       expect(acc.turnosDelDia(0)).toBe(9 + 8);
       expect(cuerpoDeLaPlantilla()['rules']).toEqual([
-        expect.objectContaining({ dayOfWeek: 1, startTime: '08:00', endTime: '12:30', slotMinutes: 30 }),
-        expect.objectContaining({ dayOfWeek: 1, startTime: '14:00', endTime: '18:00', slotMinutes: 30 }),
+        expect.objectContaining({
+          dayOfWeek: 1,
+          startTime: '08:00',
+          endTime: '12:30',
+          slotMinutes: 30,
+        }),
+        expect.objectContaining({
+          dayOfWeek: 1,
+          startTime: '14:00',
+          endTime: '18:00',
+          slotMinutes: 30,
+        }),
       ]);
     });
 
@@ -1181,8 +1290,109 @@ describe('AgendaCreate', () => {
       const encabezados = [...fixture.nativeElement.querySelectorAll('thead th')].map(
         (th: Element) => th.textContent?.trim(),
       );
-      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta']);
-      expect(acc.resumen()).toContain('horario flexible sin turnos fijos');
+      // «Atiendo» sí está: qué admite la franja (consultas, servicios o ambos) no
+      // depende de si los turnos son fijos. Lo que NO aparece es duración ni descanso.
+      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta', 'Atiendo']);
+      expect(acc.resumen()).toContain('horario flexible sin citas de duración fija');
+    });
+
+    describe('qué se atiende en cada franja (v4.2.40)', () => {
+      it('por omisión es sólo consultas y NO se manda: ausente ≡ lo de siempre', () => {
+        crear();
+        encenderLunes();
+
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(acc.semana.at(0).getRawValue().modo).toBe('CONSULTATIONS');
+        expect(reglas[0]).not.toHaveProperty('bookingMode');
+      });
+
+      it('una franja de servicios viaja como SERVICES', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'SERVICES' });
+
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas[0]['bookingMode']).toBe('SERVICES');
+      });
+
+      it('una franja mixta viaja como MIXED, con su duración de consulta', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'MIXED', duracion: 20 });
+
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas[0]).toMatchObject({ bookingMode: 'MIXED', slotMinutes: 20 });
+      });
+
+      it('la columna «Atiendo» ofrece consultas, otros servicios y ambos', () => {
+        crear();
+        encenderLunes();
+        expect(
+          (acc as unknown as { opcionesDeModo: { value: string; label: string }[] }).opcionesDeModo,
+        ).toEqual([
+          { value: 'CONSULTATIONS', label: 'Consultas' },
+          { value: 'SERVICES', label: 'Otros servicios' },
+          { value: 'MIXED', label: 'Ambos' },
+        ]);
+        expect(
+          fixture.nativeElement.querySelector('[data-testid="agenda-create-modo-0"]'),
+        ).not.toBeNull();
+      });
+
+      it('un día sólo de servicios no tiene turnos fijos que contar', () => {
+        crear();
+        encenderLunes();
+        acc.semana
+          .at(0)
+          .patchValue({ desde: '14:00', hasta: '18:00', duracion: 30, modo: 'SERVICES' });
+        fixture.detectChanges();
+
+        expect(acc.turnosDelDia(0)).toBe(0);
+        const celda = fixture.nativeElement.querySelector('.agenda-create__fila-turnos');
+        expect(celda.textContent.trim()).toBe('—');
+      });
+
+      it('un día mixto SÍ cuenta sus consultas', () => {
+        crear();
+        encenderLunes();
+        acc.semana
+          .at(0)
+          .patchValue({ desde: '08:00', hasta: '10:00', duracion: 30, modo: 'MIXED' });
+
+        expect(acc.turnosDelDia(0)).toBe(4);
+      });
+
+      it('el resumen no dice «consultas de 30 minutos» cuando hay franjas de servicios', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'SERVICES' });
+
+        expect(acc.resumen()).toContain('franjas de servicios');
+        expect(acc.resumen()).not.toContain('consultas de');
+      });
+
+      it('repetir el primer día copia también qué atiende', () => {
+        crear();
+        acc.alternarDia(0);
+        acc.alternarDia(1);
+        acc.semana.at(0).patchValue({ modo: 'MIXED' });
+
+        acc.abrirRepetir();
+        acc.repetirFila();
+
+        expect(acc.semana.at(1).getRawValue().modo).toBe('MIXED');
+      });
+
+      it('las reglas de la vista previa llevan el modo, igual que las que se publican', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'SERVICES' });
+
+        const previa = (
+          acc as unknown as { reglasDeLaPrevia(): { bookingMode?: string }[] }
+        ).reglasDeLaPrevia();
+        expect(previa[0].bookingMode).toBe('SERVICES');
+      });
     });
 
     it('con turnos fijos no se manda flexibleHours', () => {
@@ -1195,7 +1405,7 @@ describe('AgendaCreate', () => {
       crear();
       const fila = fixture.nativeElement.querySelector('[data-testid="agenda-create-dia-0"]');
       expect(fila.querySelector('[role="radiogroup"]').getAttribute('aria-label')).toBe(
-        '¿Atendés el lunes?',
+        '¿Atiende el lunes?',
       );
       fila.querySelector('[data-value="si"]').click();
       fixture.detectChanges();
@@ -1204,7 +1414,10 @@ describe('AgendaCreate', () => {
       fila.querySelector('[data-value="no"]').click();
       fixture.detectChanges();
       expect(acc.semana.at(0).getRawValue().activo).toBe(false);
-      expect(fixture.nativeElement.querySelectorAll('input[type="checkbox"]:not([role="switch"])').length).toBe(0);
+      expect(
+        fixture.nativeElement.querySelectorAll('input[type="checkbox"]:not([role="switch"])')
+          .length,
+      ).toBe(0);
     });
 
     it('las opciones avanzadas ya no tienen casillas: son «Sí / No»', () => {

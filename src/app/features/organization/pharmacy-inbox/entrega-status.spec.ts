@@ -38,29 +38,38 @@ describe('entrega-status', () => {
 });
 
 /**
- * La resolución de un pedido concreto: manda la `modalidad` del contrato, y
- * sólo el pedido de ejemplo de la maqueta trae el suyo — rotulado.
+ * La resolución de un pedido concreto: la modalidad y la dirección salen del
+ * contrato, también sobre la maqueta (las declara el backend simulado).
  */
 describe('entregaEnPantalla', () => {
-  it('un pedido común usa la modalidad que devolvió la API y no se rotula', () => {
+  it('un pedido común usa la modalidad que devolvió la API, sin dirección', () => {
     const entrega = entregaEnPantalla(PEDIDO_NUEVO);
 
     expect(entrega?.modalidad).toBe('RETIRO');
     expect(entrega?.presentacion.label).toBe('Recojo en mostrador');
-    expect(entrega?.esEjemplo).toBe(false);
     expect(entrega?.direccion).toBeNull();
   });
 
-  it('el pedido de ejemplo sale a domicilio, con dirección y declarado como maqueta', () => {
+  it('el pedido a domicilio trae su dirección del contrato', () => {
     const entrega = entregaEnPantalla(PEDIDO_CON_DELIVERY);
 
-    // Lo que devuelve la API para ese pedido sigue siendo retiro …
-    expect(PEDIDO_CON_DELIVERY.modalidad).toBe('RETIRO');
-    // … y la pantalla dice que el medio lo puso ella.
+    expect(PEDIDO_CON_DELIVERY.modalidad).toBe('DOMICILIO');
     expect(entrega?.modalidad).toBe('DOMICILIO');
     expect(entrega?.presentacion.label).toBe('Delivery');
-    expect(entrega?.esEjemplo).toBe(true);
     expect(entrega?.direccion).toContain('Cristo Redentor');
+  });
+
+  it('un envío sin dirección guardada lo dice con null: no se inventa una', () => {
+    const entrega = entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, direccionDeEntrega: null });
+
+    expect(entrega?.modalidad).toBe('DOMICILIO');
+    expect(entrega?.direccion).toBeNull();
+  });
+
+  it('a un retiro no se le pinta un domicilio, aunque el pedido traiga uno', () => {
+    const entrega = entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, modalidad: 'RETIRO' });
+
+    expect(entrega?.direccion).toBeNull();
   });
 
   it('la modalidad efectiva y la etiqueta salen de la misma respuesta', () => {
@@ -74,7 +83,8 @@ describe('entregaEnPantalla', () => {
     }
   });
 
-  it('sin modalidad ni ejemplo no hay nada que mostrar', () => {
+  it('sin modalidad no hay nada que mostrar', () => {
     expect(entregaEnPantalla({ ...PEDIDO_NUEVO, modalidad: null })).toBeNull();
+    expect(entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, modalidad: null })).toBeNull();
   });
 });

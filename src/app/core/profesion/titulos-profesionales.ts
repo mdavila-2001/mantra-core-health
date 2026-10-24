@@ -1,3 +1,6 @@
+import type { AreaDeSalud } from './instituciones-educativas';
+import type { FiltroDeSalud } from './padron-de-universidades';
+
 /**
  * La forma de una opción, declarada **acá** y no importada de
  * `shared/components/atoms/select`: `core` es una capa por debajo de los
@@ -82,4 +85,36 @@ export const OPCIONES_TITULO_PROFESIONAL: readonly OpcionDeTitulo[] = [
  */
 export function esTituloDeLaLista(titulo: string): boolean {
   return OPCIONES_TITULO_PROFESIONAL.some((opcion) => opcion.value === titulo);
+}
+
+/**
+ * Qué carrera de salud corresponde a cada título de la lista, para acotar las
+ * universidades donde pudo cursarse: un odontólogo no estudió en una casa que
+ * no dicta Odontología (propietario, 04/10/2026).
+ *
+ * El técnico en radiología cae en «Tecnología Médica», que es como lo dictan
+ * las universidades bolivianas relevadas.
+ */
+const AREA_POR_TITULO: Readonly<Record<string, AreaDeSalud>> = {
+  'Médico / Médica': 'Medicina',
+  'Médico especialista / Médica especialista': 'Medicina',
+  'Odontólogo / Odontóloga': 'Odontología',
+  'Licenciado / Licenciada en Enfermería': 'Enfermería',
+  'Licenciado / Licenciada en Bioquímica y Farmacia': 'Bioquímica y Farmacia',
+  'Licenciado / Licenciada en Nutrición': 'Nutrición',
+  'Licenciado / Licenciada en Psicología': 'Psicología',
+  'Licenciado / Licenciada en Fisioterapia y Kinesiología': 'Fisioterapia y Kinesiología',
+  'Licenciado / Licenciada en Fonoaudiología': 'Fonoaudiología',
+  'Licenciado / Licenciada en Trabajo Social': 'Trabajo Social',
+  'Técnico / Técnica en Radiología': 'Tecnología Médica',
+  'Auxiliar de Enfermería': 'Enfermería',
+};
+
+/**
+ * El filtro de universidades para el título con el que ejerce: su carrera si
+ * la lista la conoce, o «alguna de salud» si es un título escrito antes de la
+ * lista cerrada.
+ */
+export function filtroDeSaludDelTitulo(titulo: string): FiltroDeSalud {
+  return AREA_POR_TITULO[titulo.trim()] ?? 'salud';
 }

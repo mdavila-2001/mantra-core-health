@@ -7,13 +7,14 @@ import {
   input,
   LOCALE_ID,
   output,
+  PLATFORM_ID,
   signal,
   type OnInit,
   type TemplateRef,
   untracked,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { formatDate } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calcularTurnos } from '../agenda-create/agenda-turnos';
 import { forkJoin } from 'rxjs';
 
@@ -49,6 +50,10 @@ import type { DialogDetail } from '../../../shared/components/molecules/dialog/d
 import { patientChartRoute } from '../../clinical-record/clinical-record.routes';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
+import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
+import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
+import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -64,6 +69,15 @@ import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
 import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
+import { statusLabelOf } from '../booking-status';
+import {
+  CALENDAR_DAY_PARAM,
+  CALENDAR_VIEW_PARAM,
+  formatCalendarDay,
+  parseCalendarDay,
+  parseCalendarView,
+  type CalendarView,
+} from './calendar-position';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
 const NOMBRE_DEL_DIA = [
@@ -113,7 +127,7 @@ const VENTANA_MAXIMA_DIAS = 92;
  */
 const SIN_AGENDA = empty(
   { label: 'Publicar mi agenda', route: AGENDA_CREATE_ROUTE },
-  'Todavía no publicaste tu horario. Cuando lo hagas, vas a verlo acá y los pacientes van a poder pedirte turno.',
+  'Todavía no publicó su horario. Cuando lo haga, va a verlo acá y los pacientes van a poder pedirle una cita.',
 );
 
 /** Un día de la semanita, ya resuelto para pintar. */
@@ -204,7 +218,10 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
     WeekView,
     ScheduleGrid,
     ContentDialog,
+    FactList,
+    NgTemplateOutlet,
     RouterLink,
+    RowActions,
     ViewStateHost,
   ],
   templateUrl: './my-agenda.html',
@@ -234,8 +251,14 @@ export class MyAgenda implements OnInit {
    * agenda. `/schedule` le pasa la MISMA celda de su tabla de Consultas
    * (propietario, 18/09): las dos vistas ofrecen los mismos botones y no hay
    * una segunda copia que se desfase. Sin ella, el día ofrece las suyas.
+   *
+   * `inline` llega en `true` desde el detalle de la semana: dentro de un modal
+   * las acciones van todas a la vista, sin desplegable.
    */
-  readonly appointmentActions = input<TemplateRef<{ $implicit: Booking }> | null>(null);
+  readonly appointmentActions = input<TemplateRef<{
+    $implicit: Booking;
+    inline?: boolean;
+  }> | null>(null);
 
   /**
    * Cambia cuando quien contiene la agenda operó una cita: las acciones son
@@ -285,6 +308,7 @@ export class MyAgenda implements OnInit {
     untracked(() => {
       const dia = this.diaAbierto();
       if (dia !== null) this.cargarDia(dia);
+      if (this.calendarView() === 'week') this.cargarSemana(this.semanaVisible());
       this.cargarMes();
     });
   });
@@ -293,6 +317,8 @@ export class MyAgenda implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly enElNavegador = isPlatformBrowser(inject(PLATFORM_ID));
   /** El idioma activo, para formatear fechas fuera de la plantilla. */
   /**
    * El idioma activo, para formatear fechas fuera de la plantilla.
@@ -310,6 +336,13 @@ export class MyAgenda implements OnInit {
 
   /** El recurso del profesional; sin él no hay agenda que mostrar. */
   protected readonly recurso = signal<AgendaResource | null>(null);
+
+  /**
+   * Dónde se atiende, para las etiquetas que lee el lector de pantalla en la
+   * grilla, la semana y el día. `null` si el recurso no tiene sede: las
+   * etiquetas la omiten en vez de inventarla.
+   */
+  protected readonly sede = computed(() => this.recurso()?.site?.name ?? null);
 
   protected readonly estado = signal<ViewState<PublishedTemplate>>(loading());
 
@@ -329,6 +362,53 @@ export class MyAgenda implements OnInit {
    * releerla: la lista de históricos ya la trae completa, reglas incluidas.
    */
   protected readonly historicoAVer = signal<PublishedTemplate | null>(null);
+
+  /**
+   * La cita de la semana cuyo detalle está abierto, con sus acciones. `null`
+   * es «cerrado».
+   */
+  protected readonly detalleDeLaSemana = signal<{
+    readonly cita: Booking;
+    readonly fecha: string;
+    readonly hechos: readonly Hecho[];
+  } | null>(null);
+
+  /**
+   * La cita que se eligió mover desde el detalle de la semana. Los destinos
+   * libres se marcan en el día, así que al empezar a moverla se abre su día.
+   */
+  private citaAMoverDesdeLaSemana: Booking | null = null;
+
+  /**
+   * El día y la vista del calendario, escritos en la URL a medida que cambian.
+   *
+   * Con `replaceUrl`: moverse de día no apila una entrada por día —el atrás
+   * tiene que sacar de la agenda, no deshacer cada flecha—, pero la entrada que
+   * queda sí recuerda dónde se estaba. Es la que encuentra «Volver» al regresar
+   * de una cita abierta. Ver `calendar-position.ts`.
+   */
+  private readonly escribirPosicionEnLaUrl = effect(() => {
+    if (this.mode() !== 'calendar' || this.estado().status !== 'ready') return;
+    const vista = this.calendarView();
+    const fecha =
+      vista === 'day'
+        ? this.diaAbierto()
+        : vista === 'week'
+          ? this.semanaVisible()
+          : this.mesVisible();
+    if (fecha === null) return;
+    untracked(() => this.publicarPosicion(vista, fecha));
+  });
+
+  private readonly abrirDiaAlMover = effect(() => {
+    if (!this.moviendoCita()) return;
+    untracked(() => {
+      const cita = this.citaAMoverDesdeLaSemana;
+      this.citaAMoverDesdeLaSemana = null;
+      if (cita === null || this.calendarView() !== 'week' || cita.startAt === undefined) return;
+      this.openDay(aMedianoche(cita.startAt));
+    });
+  });
 
   /** El horario que se está retirando, para el `[isLoading]` del botón. */
   protected readonly retirando = signal(false);
@@ -745,8 +825,7 @@ export class MyAgenda implements OnInit {
         }
         this.estado.set(ready(vigente));
         if (this.mode() === 'calendar') {
-          this.cargarMes();
-          this.openDay(this.diaDeReferencia());
+          this.abrirPosicionInicial();
           // C-13 · las visitas de laboratorio del doctor, para que el día las
           // muestre. Se leen una vez: son de la persona, no del día.
           this.leerVisitasDeLaboratorio();
@@ -881,9 +960,9 @@ export class MyAgenda implements OnInit {
         const cerrados = resultados.reduce((suma, r) => suma + r.blockedSlots, 0);
         this.toast.success(
           cerrados === 0
-            ? 'No había turnos libres que cerrar en ese período.'
-            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'turno libre' : 'turnos libres'}.`,
-          `Bloqueaste ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
+            ? 'No había horarios libres que cerrar en ese período.'
+            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'horario libre' : 'horarios libres'}.`,
+          `Bloqueó ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
         );
         this.cargarMes();
       },
@@ -924,14 +1003,14 @@ export class MyAgenda implements OnInit {
       {
         title: `Bloquear el ${cuando}`,
         message:
-          'Los turnos libres de ese día dejan de ofrecerse. Las citas ya reservadas no se tocan: ' +
-          'si querés cancelarlas, hacelo una por una.',
+          'Los horarios libres de ese día dejan de ofrecerse. Las citas ya reservadas no se tocan: ' +
+          'si quiere cancelarlas, hágalo una por una.',
         confirmLabel: 'Bloquear el día',
       },
       {
         label: '¿Por qué?',
         placeholder: 'Congreso, vacaciones, trámite…',
-        hint: 'Lo ves sólo vos, para acordarte cuando mires el mes.',
+        hint: 'Lo ve sólo usted, para acordarse cuando mire el mes.',
         minLength: 3,
         maxLength: 200,
       },
@@ -1038,14 +1117,14 @@ export class MyAgenda implements OnInit {
     const hora = (f: Date): string => formatDate(f, 'HH:mm', this.idioma);
 
     const confirmado = await this.dialogs.confirm({
-      title: 'Agregar un horario fuera de tu horario de atención',
+      title: 'Agregar un horario fuera de su horario de atención',
       message:
         finPublicado === null
-          ? `Este día no está en tu horario publicado: no atendés. Si seguís, queda abierto de ` +
+          ? `Este día no está en su horario publicado: no atiende. Si sigue, queda abierto de ` +
             `${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se puede reservar.`
-          : `Tu horario de atención de este día termina a las ${hora(finPublicado)}. Si seguís, ` +
+          : `Su horario de atención de este día termina a las ${hora(finPublicado)}. Si sigue, ` +
             `queda abierto de ${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se ` +
-            `puede reservar. No cambia tu horario publicado: vale sólo para este día.`,
+            `puede reservar. No cambia su horario publicado: vale sólo para este día.`,
       confirmLabel: 'Agregar el horario extra',
       cancelLabel: 'No agregar nada',
     });
@@ -1062,7 +1141,7 @@ export class MyAgenda implements OnInit {
       .subscribe({
         next: () => {
           this.toast.success(
-            `Queda abierto de ${hora(desde)} a ${hora(hasta)}, fuera de tu horario de atención.`,
+            `Queda abierto de ${hora(desde)} a ${hora(hasta)}, fuera de su horario de atención.`,
             'Horario extra agregado',
           );
           this.cargarDia(dia);
@@ -1158,7 +1237,12 @@ export class MyAgenda implements OnInit {
     // Una llamada para todo el mes, igual que la semana. Si falla, el globo
     // del día dice que no pudo traer las citas; la ocupación sigue en pie.
     this.scheduling
-      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: MONTH_BOOKINGS_LIMIT })
+      .searchBookings({
+        resourceId: recurso.id,
+        from: desde,
+        to: hasta,
+        limit: MONTH_BOOKINGS_LIMIT,
+      })
       .subscribe({
         next: (pagina: { items: readonly Booking[] }) => {
           this.citasDelMes.set(pagina.items);
@@ -1240,7 +1324,7 @@ export class MyAgenda implements OnInit {
     this.scheduling.deleteException(exceptionId).subscribe({
       next: () => {
         this.toast.success(
-          'Los horarios que retiró no vuelven solos: se regeneran con tu plantilla.',
+          'Los horarios que retiró no vuelven solos: se regeneran con su plantilla.',
           'Rato ocupado quitado',
         );
         if (dia !== null) this.cargarDia(dia);
@@ -1335,9 +1419,7 @@ export class MyAgenda implements OnInit {
     const ir = await this.dialogs.confirm({
       title: 'Detalle de la cita',
       message:
-        cuando === undefined
-          ? SIN_DATO
-          : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
+        cuando === undefined ? SIN_DATO : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
       details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
@@ -1348,10 +1430,57 @@ export class MyAgenda implements OnInit {
     }
   }
 
-  /** Activaron una cita desde la semana: el mismo detalle que desde el día. */
+  /**
+   * Activaron una cita desde la semana: el mismo detalle que desde el día.
+   *
+   * Si quien contiene la agenda aporta acciones (`/schedule`), el detalle las
+   * lleva todas —las mismas que la tarjeta del día—; si no, queda el diálogo
+   * de sólo lectura con «Abrir expediente».
+   */
   protected verDetalleDeLaSemana(cita: Booking): void {
-    const estado = this.estadosResueltos().get(cita.statusConceptId)?.display ?? 'Reservado';
-    void this.verDetalleDeLaCita(cita, estado);
+    const estado = statusLabelOf(
+      this.estadosResueltos().get(cita.statusConceptId)?.code ?? '',
+      'Reservado',
+    );
+    if (this.appointmentActions() === null) {
+      void this.verDetalleDeLaCita(cita, estado);
+      return;
+    }
+    this.detalleDeLaSemana.set({
+      cita,
+      fecha:
+        cita.startAt === undefined
+          ? SIN_DATO
+          : formatDate(cita.startAt, "EEEE d 'de' MMMM", this.idioma),
+      hechos: detalleDeLaCita(cita, estado, this.idioma).map((par) => ({
+        etiqueta: par.label,
+        valor: par.value,
+      })),
+    });
+  }
+
+  protected cerrarDetalleDeLaSemana(): void {
+    this.detalleDeLaSemana.set(null);
+  }
+
+  /**
+   * Una acción elegida dentro del detalle: la ejecuta quien la dibujó y el
+   * detalle se cierra, porque lo que sigue —confirmar, escribir un motivo,
+   * elegir destino— pasa en otro modal o en el día.
+   */
+  protected accionDelDetalleDeLaSemana(evento: Event, cita: Booking): void {
+    const boton = (evento.target as Element | null)?.closest?.('button');
+    if (boton === null || boton === undefined || boton.disabled) return;
+    if (boton.getAttribute('data-action') === 'agenda-reprogramar') {
+      this.citaAMoverDesdeLaSemana = cita;
+    }
+    this.cerrarDetalleDeLaSemana();
+  }
+
+  protected abrirExpedienteDelDetalle(cita: Booking): void {
+    if (cita.patientProfileId === undefined) return;
+    this.cerrarDetalleDeLaSemana();
+    void this.router.navigate([patientChartRoute(cita.patientProfileId)]);
   }
 
   /**
@@ -1423,7 +1552,7 @@ export class MyAgenda implements OnInit {
         this.operandoHorario.set(null);
         this.toast.success(
           res.slotsPendientes
-            ? 'Volvé a publicarlo para abrir los turnos: reactivar no los repone.'
+            ? 'Vuelva a publicarlo para abrir los horarios: reactivar no los repone.'
             : 'Ya estaba vigente.',
           `«${plantilla.name}» volvió a estar vigente`,
         );
@@ -1446,6 +1575,10 @@ export class MyAgenda implements OnInit {
    */
   protected readonly reglasVigentes = computed(() => {
     const e = this.estado();
+    // Todas las franjas, también las SÓLO de otros servicios (propietario,
+    // 04/10/2026): el médico ve su semana completa en un lugar, y la grilla
+    // pinta los otros servicios con otro tono y su leyenda. Antes se filtraban
+    // y sólo aparecían en «Horarios de otros servicios».
     return e.status === 'ready' || e.status === 'stale' ? (e.data?.rules ?? []) : [];
   });
 
@@ -1474,6 +1607,45 @@ export class MyAgenda implements OnInit {
    * era encontrar el día, tocar el rato y abrir la tarjeta.
    */
   protected readonly rutaAgendarCita = APPOINTMENT_NEW_ROUTE;
+
+  /**
+   * Las acciones del horario, en un desplegable (ADR-0012: con tres o más la
+   * barra no las aguanta). Eran cuatro recuadros de color de 44 px con su
+   * texto, que en un escritorio se comían el renglón y en un teléfono lo
+   * partían en tres. Cada una sigue llevando ícono y texto, ahora dentro del
+   * menú; el disparador también.
+   */
+  protected readonly accionesDelHorario = computed<readonly RowAction[]>(() => [
+    { code: 'editar', label: 'Cambiar mi horario', icon: 'edit' },
+    { code: 'bloqueos', label: 'Mis bloqueos', icon: 'lock' },
+    { code: 'agendar', label: 'Agendar una cita', icon: 'calendar' },
+    // Retirar y no borrar: la plantilla no se borra nunca (ver `retirarHorario`).
+    // Va última, lejos del dedo que busca «Cambiar».
+    {
+      code: 'retirar',
+      label: 'Retirar horario',
+      icon: 'remove',
+      destructive: true,
+      disabled: this.retirando(),
+    },
+  ]);
+
+  protected ejecutarAccionDelHorario(code: string): void {
+    switch (code) {
+      case 'editar':
+        void this.router.navigateByUrl(this.rutaEditarHorario);
+        return;
+      case 'bloqueos':
+        void this.router.navigateByUrl(this.rutaBloqueos);
+        return;
+      case 'agendar':
+        void this.router.navigateByUrl(this.rutaAgendarCita);
+        return;
+      case 'retirar':
+        void this.retirarHorario();
+        return;
+    }
+  }
 
   /** El horario sobre el que hay una operación en vuelo. */
   protected readonly operandoHorario = signal<string | null>(null);
@@ -1510,7 +1682,7 @@ export class MyAgenda implements OnInit {
             res.notified === 0
               ? 'No había pacientes a quienes avisar.'
               : `Se le avisó a ${res.notified} ${res.notified === 1 ? 'persona' : 'personas'}.`,
-            `${res.movedSlots} ${res.movedSlots === 1 ? 'turno movido' : 'turnos movidos'}`,
+            `${res.movedSlots} ${res.movedSlots === 1 ? 'cita movida' : 'citas movidas'}`,
           );
           this.cargarMes();
           this.cargarDia(dia);
@@ -1541,7 +1713,7 @@ export class MyAgenda implements OnInit {
       title: 'Cerrar este rato',
       message:
         'Deja de ofrecerse, y no vuelve aunque republiques el horario. ' +
-        'Podés reabrirlo quitando el bloqueo desde «Ver mis bloqueos».',
+        'Puede reabrirlo quitando el bloqueo desde «Ver mis bloqueos».',
       details: [
         {
           label: 'Cuándo',
@@ -1572,6 +1744,56 @@ export class MyAgenda implements OnInit {
           this.avisarFallo(error, 'cerrar ese rato');
         },
       });
+  }
+
+  /**
+   * Abre el calendario donde corresponde: donde ya estaba si se está
+   * recargando, donde dice la URL si se llega volviendo de otra pantalla, y
+   * hoy en la vista del día si no hay nada de eso.
+   */
+  private abrirPosicionInicial(): void {
+    const yaAbierto = this.diaAbierto();
+    const params = this.route.snapshot.queryParamMap;
+    const dia =
+      yaAbierto ?? parseCalendarDay(params.get(CALENDAR_DAY_PARAM)) ?? aMedianoche(new Date());
+    const vista: CalendarView =
+      yaAbierto !== null
+        ? this.calendarView()
+        : (parseCalendarView(params.get(CALENDAR_VIEW_PARAM)) ?? 'day');
+
+    // El mes se fija antes de leerlo: si no, se pediría el mes de hoy y en
+    // seguida el del día pedido, y la primera respuesta no serviría de nada.
+    if (yaAbierto === null) this.mesVisible.set(primerDiaDelMes(dia));
+    this.cargarMes();
+    this.openDay(dia);
+    if (vista === 'week') this.showWeek();
+    if (vista === 'month') this.showMonth();
+  }
+
+  /** Escribe la posición en la URL, salvo que sea la de siempre (hoy, día). */
+  private publicarPosicion(vista: CalendarView, fecha: Date): void {
+    if (!this.enElNavegador) return;
+
+    const dia = formatCalendarDay(fecha);
+    const esHoyEnElDia = vista === 'day' && dia === formatCalendarDay(new Date());
+    const cambios = {
+      [CALENDAR_DAY_PARAM]: esHoyEnElDia ? null : dia,
+      [CALENDAR_VIEW_PARAM]: vista === 'day' ? null : vista,
+    };
+
+    const actuales = this.route.snapshot.queryParamMap;
+    if (
+      actuales.get(CALENDAR_DAY_PARAM) === cambios[CALENDAR_DAY_PARAM] &&
+      actuales.get(CALENDAR_VIEW_PARAM) === cambios[CALENDAR_VIEW_PARAM]
+    ) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: cambios,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   protected volverAlMes(): void {
@@ -1701,7 +1923,7 @@ export class MyAgenda implements OnInit {
         {
           label: '¿Qué le decimos?',
           placeholder: 'Voy con unos minutos de retraso…',
-          hint: 'Lo lee el paciente, así que escribilo como se lo dirías.',
+          hint: 'Lo lee el paciente, así que escríbalo como se lo diría.',
           minLength: 3,
           maxLength: 200,
         },
@@ -1722,15 +1944,15 @@ export class MyAgenda implements OnInit {
 
     const motivo = await this.dialogs.confirmWithReason(
       {
-        title: 'Cancelar este turno',
-        message: 'El paciente recibe el aviso con el motivo que escribas.',
-        confirmLabel: 'Cancelar el turno',
+        title: 'Cancelar esta cita',
+        message: 'El paciente recibe el aviso con el motivo que escriba.',
+        confirmLabel: 'Cancelar la cita',
         cancelLabel: 'No, volver',
       },
       {
         label: '¿Por qué?',
         placeholder: 'Una urgencia, un imprevisto…',
-        hint: 'Lo lee el paciente. Un turno cancelado sin explicación se siente como un plantón.',
+        hint: 'Lo lee el paciente. Una cita cancelada sin explicación se siente como un plantón.',
         minLength: 3,
         maxLength: 200,
       },
@@ -1741,10 +1963,10 @@ export class MyAgenda implements OnInit {
       .cancelBooking(pedido.bookingId, { cancelledBy: 'PROVIDER', reasonText: motivo })
       .subscribe({
         next: () => {
-          this.toast.success('El paciente recibe el aviso.', 'Turno cancelado');
+          this.toast.success('El paciente recibe el aviso.', 'Cita cancelada');
           this.cargarDia(dia);
         },
-        error: (error: unknown) => this.avisarFallo(error, 'cancelar el turno'),
+        error: (error: unknown) => this.avisarFallo(error, 'cancelar la cita'),
       });
   }
 
@@ -1761,7 +1983,7 @@ export class MyAgenda implements OnInit {
       estado.status === 'validation'
         ? estado.issues.map((i) => i.message).join(' ')
         : estado.status === 'forbidden'
-          ? 'No tenés permiso para esta operación.'
+          ? 'No tiene permiso para esta operación.'
           : '';
     this.toast.error(mensaje === '' ? `No pudimos ${queSeIntentaba}.` : mensaje, 'No se pudo');
   }
@@ -1790,7 +2012,7 @@ export class MyAgenda implements OnInit {
     const confirmado = await this.dialogs.confirm({
       title: 'Retirar este horario',
       message:
-        'Deja de publicarse y los turnos que nadie reservó se dan de baja. Los que ya tienen paciente se conservan. Para volver atrás hay que publicarlo de nuevo.',
+        'Deja de publicarse y los horarios que nadie reservó se dan de baja. Los que ya tienen paciente se conservan. Para volver atrás hay que publicarlo de nuevo.',
       confirmLabel: 'Retirar horario',
       destructive: true,
     });
@@ -1805,8 +2027,8 @@ export class MyAgenda implements OnInit {
         // horario que el médico acaba de retirar, y eso tiene que verlo.
         this.toast.success(
           retiro.keptSlots > 0
-            ? `Se dieron de baja ${retiro.releasedSlots} turnos libres. Quedan ${retiro.keptSlots} con paciente: seguí atendiéndolos.`
-            : `Se dieron de baja ${retiro.releasedSlots} turnos libres.`,
+            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
+            : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
           'Horario retirado',
         );
         this.cargar();

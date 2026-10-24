@@ -247,19 +247,28 @@ Cómo quedó:
   profesión»**: es el lugar de la segunda carrera. La profesión con la que ejerce ya se
   eligió, obligatoria, en el paso 7 — rotularlo por el tipo de diploma escondía para qué está.
 
-**Los tres campos son de texto libre, y es una decisión, no una omisión:**
+**País y universidad son desplegables en árbol desde el 02/10/2026; la ciudad sigue siendo
+texto.** El propietario pidió «Universidad y País de estudio deben ser select, poblados con
+datos, como árbol para filtrar por país». Cómo quedó, y de dónde sale cada lista:
 
-| Campo | Por qué texto |
-|---|---|
-| Universidad | El modelo ya la guarda así a propósito (`issuingInstitutionText`: «las universidades del exterior no están en ningún catálogo nuestro»). **No hay padrón de universidades en ninguna de las cuatro capas** y la regla de datos del proyecto pide no hardcodear uno sin dataset ni estrategia de importación. |
-| País | La columna sí es un concepto (`issuing_country_concept_id`), pero hoy existen **dos** en toda la aplicación —`COUNTRY_BO` y `COUNTRY_PE` (`src/common/constants/concepts.ts`)— y **`VS_COUNTRY` no tiene miembros sembrados**. Un desplegable cerrado ofrecería dos opciones y dejaría afuera a quien estudió en Cuba, Argentina o España. |
-| Ciudad | **`profiles.professional_credentials` no tiene columna de ciudad.** Ver abajo. |
+| Campo | Cómo se contesta | De dónde sale |
+|---|---|---|
+| País de estudio | Desplegable: Bolivia primero y 199 países más, con «Otro país…» que destapa una casilla escrita. Elegirlo acota la universidad. | `PadronDeUniversidades` (`src/app/core/profesion/padron-de-universidades.ts`). Los países los genera `scripts/gen-universidades-por-pais.mjs` desde `Hipo/university-domains-list`, fijado a un commit. |
+| Universidad | Desplegable **acotado al país elegido**, deshabilitado hasta que hay país, con «Otra institución…» para la que falte (casilla a mano, tope 200). | Bolivia: la lista curada de `instituciones-educativas.ts` (Sistema de la Universidad Boliviana + privadas autorizadas, regla del 13/09). Resto: el padrón importado, 10 218 universidades, que llega por un `import()` diferido para no encarecer el paso. |
+| Ciudad | Texto libre. | **`profiles.professional_credentials` no tiene columna de ciudad.** Ver abajo. |
+
+Lo que se guarda es **el nombre**, en los dos casos: la universidad viaja tal cual en
+`issuingInstitutionText`, así que al backend le llega lo mismo que cuando era texto; el país
+todavía no viaja (abajo). Las filas de «Tus títulos» (paso 10) usan el mismo árbol, con la
+misma salida a mano. Está fijado por prueba unitaria (`país y universidad en árbol`) y por
+Playwright (`registro-doctor-universidad-y-profesiones.spec.ts`).
 
 #### Lo que falta del lado del modelo, y es lo único de esto que NO es sólo front
 
 - **País:** la columna existe; lo que falta es **sembrar `VS_COUNTRY`** y **exponer
-  `issuingCountryConceptId` en `AddOwnCredentialDto`**, que hoy no lo declara. Con eso el
-  campo pasa de texto a combobox sin tocar la pantalla más que en el origen de las opciones.
+  `issuingCountryConceptId` en `AddOwnCredentialDto`**, que hoy no lo declara. La pantalla ya
+  elige el país de una lista con ISO alpha-2; con eso el envío pasa a ser un mapeo
+  nombre/ISO → concepto, sin tocar la pantalla.
 - **Ciudad:** **no hay dónde guardarla.** Es cambio de modelo, por el camino obligatorio
   (`.puml` → `gen_ddl.py` → `SQL/` → base → ORM; ADR-0021). Dos salidas posibles, y hay que
   elegir a propósito: una columna `issuing_city_text` al lado de `issuing_institution_text`,

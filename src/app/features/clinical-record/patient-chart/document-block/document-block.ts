@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { forkJoin, of, type Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartDocumentsClient } from '../../../../core/data-access/chart-documents/chart-documents.client';
@@ -45,6 +45,17 @@ import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** Qué clase de papel es: informe, laboratorio, consentimiento, certificado. */
 export const TARGET_CATEGORIA_DOCUMENTAL = 'chart.document_records.category_concept_id';
+
+/**
+ * Si el titular puede ver este documento en su propia historia (BR-16/CL-36).
+ *
+ * La API ya aceptaba y persistía `patientVisibilityConceptId` desde antes de
+ * este cambio (default «sólo para el profesional»); lo que faltaba era un
+ * catálogo publicado del que este selector pudiera sacar sus dos opciones sin
+ * adivinar el uuid.
+ */
+export const TARGET_VISIBILIDAD_DOCUMENTAL =
+  'chart.document_records.patient_visibility_concept_id';
 
 /**
  * **Registrar un documento** en el expediente — UC-15-09.
@@ -121,6 +132,7 @@ export class DocumentBlock implements DraftBlock {
   readonly cambio = output<void>();
 
   protected readonly targetCategoria = TARGET_CATEGORIA_DOCUMENTAL;
+  protected readonly targetVisibilidad = TARGET_VISIBILIDAD_DOCUMENTAL;
 
   /** Lo que el almacenamiento acepta de verdad, no lo que suena razonable. */
   protected readonly formatosAceptados = UPLOAD_ACCEPT;
@@ -134,6 +146,8 @@ export class DocumentBlock implements DraftBlock {
 
   protected readonly titulo = signal<string | number | null>('');
   protected readonly categoria = signal<string | null>(null);
+  /** Sin elegir = el default de la API («sólo para el profesional»). BR-16/CL-36. */
+  protected readonly visibilidad = signal<string | null>(null);
   protected readonly autor = signal<string | number | null>('');
   protected readonly esExterno = signal(false);
   protected readonly citaElegida = signal<string | null>(null);
@@ -147,6 +161,7 @@ export class DocumentBlock implements DraftBlock {
     () =>
       String(this.titulo() ?? '').trim() !== '' ||
       this.categoria() !== null ||
+      this.visibilidad() !== null ||
       String(this.autor() ?? '').trim() !== '' ||
       this.esExterno() ||
       this.citaElegida() !== null ||
@@ -175,8 +190,23 @@ export class DocumentBlock implements DraftBlock {
   /** Cuántos archivos van con el documento, para decirlo en el botón. */
   protected readonly cuantosArchivos = computed(() => this.archivos().length);
 
+  /**
+   * Los archivos que **ya se subieron** en esta pasada, por identidad de `File`
+   * (CL-28). La subida y el vínculo son dos casos de uso por diseño de
+   * `common/files`: si `POST /charts/documents` falla después de subir, el
+   * reintento no vuelve a subir lo que ya está —quedaba huérfano y duplicado— y
+   * reenvía los mismos `fileId`. Se vacía cuando el alta sale bien.
+   */
+  private readonly subidos = new Map<File, string>();
+
+  /** Si el próximo envío es un reintento con archivos ya subidos. */
+  protected readonly esReintento = signal(false);
+
   protected readonly rotuloDeEnvio = computed(() => {
     const cuantos = this.cuantosArchivos();
+    if (this.esReintento()) {
+      return 'Reintentar (los archivos ya están subidos)';
+    }
     if (cuantos === 0) {
       return 'Registrar documento';
     }
@@ -208,6 +238,7 @@ export class DocumentBlock implements DraftBlock {
     }
 
     const categoria = this.categoria();
+    const visibilidad = this.visibilidad();
     const autor = String(this.autor() ?? '').trim();
     const encuentro = this.citaElegida() ?? this.encounterId();
     const externo = this.esExterno();
@@ -226,6 +257,9 @@ export class DocumentBlock implements DraftBlock {
             // Los opcionales sin elegir se **omiten**: el backend valida con
             // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
             ...(categoria === null ? {} : { categoryConceptId: categoria }),
+            // BR-16 (CL-36): sin elegir, la API ya default a «sólo para el
+            // profesional» — no se manda un valor que sea el mismo default.
+            ...(visibilidad === null ? {} : { patientVisibilityConceptId: visibilidad }),
             ...(autor === '' ? {} : { authorText: autor }),
             ...(encuentro === null ? {} : { encounterId: encuentro }),
             ...(externo ? { isExternal: true } : {}),
@@ -237,6 +271,8 @@ export class DocumentBlock implements DraftBlock {
         next: (registrado) => {
           this.registrando.set(false);
           this.registro.set(ready(null));
+          this.subidos.clear();
+          this.esReintento.set(false);
           this.limpiar();
           this.toasts.success(
             registrado.fileCount === 0
@@ -249,6 +285,9 @@ export class DocumentBlock implements DraftBlock {
         error: (error: unknown) => {
           this.registrando.set(false);
           this.registro.set(errorToViewState<null>(error));
+          // Lo que ya se subió queda anotado: «Reintentar» reenvía los mismos
+          // `fileId` y no vuelve a subirlo.
+          this.esReintento.set(this.subidos.size > 0);
         },
       });
   }
@@ -271,11 +310,17 @@ export class DocumentBlock implements DraftBlock {
       return of([]);
     }
     return forkJoin(
-      elegidos.map((file) =>
-        this.files
-          .upload(file, categoryForFile(file), CLINICAL_UPLOAD_SENSITIVITY)
-          .pipe(map(({ id }) => id)),
-      ),
+      elegidos.map((file) => {
+        const yaSubido = this.subidos.get(file);
+        if (yaSubido !== undefined) {
+          return of(yaSubido);
+        }
+        return this.files.upload(file, categoryForFile(file), CLINICAL_UPLOAD_SENSITIVITY).pipe(
+          map(({ id }) => id),
+          // Se anota apenas sube, antes de que otro archivo del lote falle.
+          tap((id) => this.subidos.set(file, id)),
+        );
+      }),
     ).pipe(
       map((ids) =>
         ids.map((fileId, indice) => ({
@@ -290,6 +335,7 @@ export class DocumentBlock implements DraftBlock {
   private limpiar(): void {
     this.titulo.set('');
     this.categoria.set(null);
+    this.visibilidad.set(null);
     this.autor.set('');
     this.esExterno.set(false);
     this.citaElegida.set(null);

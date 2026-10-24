@@ -1,0 +1,2 @@
+corepack yarn typecheck → exit=0
+corepack yarn lint → exit=1 (6 errores, los MISMOS 6 del baseline; 0 en archivos de este carril)

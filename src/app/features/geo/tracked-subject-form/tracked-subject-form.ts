@@ -84,7 +84,7 @@ export class TrackedSubjectForm {
   protected readonly created = signal<TrackedSubject | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para dar de alta sujetos rastreados.'),
+    errorMessageOf(this.state(), 'No tiene permiso para dar de alta sujetos rastreados.'),
   );
 
   protected elegirTipo(valor: unknown): void {

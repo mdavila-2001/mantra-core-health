@@ -88,7 +88,7 @@ export class SigningKeyForm {
   protected readonly published = signal<PublishedSigningKey | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para publicar claves de firma.'),
+    errorMessageOf(this.state(), 'No tiene permiso para publicar claves de firma.'),
   );
 
   protected submit(): void {

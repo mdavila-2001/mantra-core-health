@@ -1,4 +1,5 @@
-<form [formGroup]="form()" (ngSubmit)="continuar()" novalidate>
+<ng-template #pageContent>
+<div [formGroup]="form()">
   <!-- El avance va arriba y siempre visible: es la respuesta a «¿cuánto me
        falta?», que es lo que decide si alguien sigue o abandona. -->
   <header class="paginated-form__avance">
@@ -40,9 +41,13 @@
         [class.paginated-form__campos--dos-columnas]="actual.disposicion === 'dos-columnas'"
       >
         @for (campo of actual.campos; track campo.key) {
-          @if (campo.control === 'custom') {
+          <!-- Un campo condicional («¿cuál?») sólo existe en pantalla cuando su
+               padre tiene la respuesta que lo abre. -->
+          @if (ocultos().has(campo.key)) {
+          } @else if (campo.control === 'custom') {
             <app-form-field
               class="paginated-form__campo"
+              [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
@@ -61,6 +66,7 @@
                  siendo el `aria-describedby` del control (ADR-0008). -->
             <app-form-field
               class="paginated-form__campo"
+              [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
@@ -257,6 +263,7 @@
            leen como dos cosas de distinta jerarquía cuando son la ida y la
            vuelta del mismo paso. Con texto se mantiene la diferencia: ahí
            «Siguiente» sí es la acción primaria y «Atrás» la de escape. -->
+      <!-- Excepción ADR-0012 §3 (D-05, 23/09): pasar de página, con aria-label y globo; sólo si la pantalla la enciende. -->
       <button
         app-button
         type="button"
@@ -279,16 +286,19 @@
          que viene es enviar, y eso se descubre cuando ya se envió. Por lo mismo,
          el modo ícono no llega a la última página: una flecha que en realidad
          crea la cuenta esconde aún más. -->
+    <!-- Excepción ADR-0012 §3 (D-05, 23/09): pasar de página, con aria-label y globo; nunca en la última, que dice qué envía. -->
+    @if (!embedded() || !esUltima()) {
     <button
       app-button
-      type="submit"
+      [type]="embedded() ? 'button' : 'submit'"
+      (clicked)="embedded() && continuar()"
       [variant]="esUltima() && destructive() ? 'danger' : 'primary'"
       [isLoading]="pending()"
       [disabled]="pending()"
       [iconOnly]="nextAsIcon()"
       [attr.aria-label]="nextAsIcon() ? 'Siguiente' : null"
       [appTooltip]="nextAsIcon() ? 'Siguiente' : ''"
-      data-testid="paginated-form-continuar"
+      [attr.data-testid]="esUltima() ? submitTestId() : 'paginated-form-continuar'"
     >
       @if (nextAsIcon()) {
         <app-nav-icon name="arrow-right" />
@@ -296,5 +306,17 @@
         {{ esUltima() ? submitLabel() : 'Siguiente' }}
       }
     </button>
+    }
   </nav>
-</form>
+</div>
+</ng-template>
+
+@if (embedded()) {
+  <div tabindex="-1" (keydown.enter)="onEmbeddedEnter($event)">
+    <ng-container [ngTemplateOutlet]="pageContent" />
+  </div>
+} @else {
+  <form (submit)="$event.preventDefault(); continuar()" novalidate>
+    <ng-container [ngTemplateOutlet]="pageContent" />
+  </form>
+}

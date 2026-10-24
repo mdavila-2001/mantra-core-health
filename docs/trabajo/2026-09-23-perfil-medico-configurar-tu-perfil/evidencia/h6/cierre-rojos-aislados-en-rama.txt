@@ -1,0 +1,107 @@
+Using Vitest configuration file: <repo>\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                        [2m | [22m[1mNames[22m                                   [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m                                 [2m | [22m[2mstyles[22m                                  [2m | [22m[36m166.29 kB[39m[2m | [22m
+[32mchunk-TPY3BRT3.js[39m                          [2m | [22m[2m-[22m                                       [2m | [22m [36m24.77 kB[39m[2m | [22m
+[32mspec-app-core-mock-mock-backend-latencia.js[39m[2m | [22m[2mspec-app-core-mock-mock-backend-latencia[22m[2m | [22m  [36m9.07 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                          [2m | [22m[2m-[22m                                       [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mspec-app-core-mock-fallos-simulados.js[39m     [2m | [22m[2mspec-app-core-mock-fallos-simulados[22m     [2m | [22m  [36m2.70 kB[39m[2m | [22m
+[32mchunk-E4SBGQCK.js[39m                          [2m | [22m[2m-[22m                                       [2m | [22m  [36m2.04 kB[39m[2m | [22m
+[32minit-testbed.js[39m                            [2m | [22m[2minit-testbed[22m                            [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                       [2m | [22m[2mvitest-mock-patch[22m                       [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                        [2m | [22m[2msetup-test-setup[22m                        [2m | [22m[36m911 bytes[39m[2m | [22m
+
+[1m [22m                                          [2m | [22m[1mInitial total[22m                           [2m | [22m[1m213.24 kB[22m
+
+[1mLazy chunk files[22m                           [2m | [22m[1mNames[22m                                   [2m | [22m [1mRaw size[22m
+[32mchunk-L7V74THW.js[39m                          [2m | [22m[2mindex[22m                                   [2m | [22m  [36m5.07 MB[39m[2m | [22m
+
+Application bundle generation complete. [80.926 seconds] - 2026-09-24T08:18:37.662Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:103:39:
+[37m      103 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:103:62:
+[37m      103 │ ...AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+          ╵                                               [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m<repo>[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[90mstderr[2m | src/app/core/mock/mock-backend-latencia.spec.ts[2m > [22m[2mlatencia del interceptor — tabla por prefijo, sin azar
+[22m[39m[mock] sin manejador para GET /terminology/calentar — respuesta genérica
+
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend-latencia.spec.ts [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 7492[2mms[22m[39m
+[31m     [31m×[31m no queda ningún Math.random en el archivo (H2.S1.M1)[39m[32m 6[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/core/mock/mock-backend-latencia.spec.ts[2m > [22mlatencia del interceptor — tabla por prefijo, sin azar[2m > [22mno queda ningún Math.random en el archivo (H2.S1.M1)
+[31m[1mError[22m: ENOENT: no such file or directory, open '<repo>\mock-backend.interceptor.ts'[39m
+[36m [2m❯[22m src/app/core/mock/mock-backend-latencia.spec.ts:[2m82:20[22m[39m
+    [90m 80|[39m     // Duplica el comando del DoD (`git grep -c Math.random`) como ase…
+    [90m 81|[39m     // para que un regreso al azar rompa la suite y no sólo el grep ma…
+    [90m 82|[39m     const fuente = readFileSync(join(__dirname, 'mock-backend.intercep…
+    [90m   |[39m                    [31m^[39m
+    [90m 83|[39m     [34mexpect[39m(fuente)[33m.[39mnot[33m.[39m[34mtoContain[39m([32m'Math.random'[39m)[33m;[39m
+    [90m 84|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m10 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 04:18:38
+[2m   Duration [22m 12.10s[2m (transform 2.97s, setup 1.07s, import 209ms, tests 7.50s, environment 3.71s)[22m
+

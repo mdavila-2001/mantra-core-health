@@ -261,8 +261,8 @@ export class Groups {
 
           this.error.set(
             fallo.status === 409
-              ? 'Ya hay un grupo con esa dirección. Cambiá el nombre.'
-              : 'No pudimos crear el grupo. Reintentá.',
+              ? 'Ya hay un grupo con esa dirección. Cambie el nombre.'
+              : 'No pudimos crear el grupo. Reintente.',
           );
         },
       });
@@ -299,7 +299,7 @@ export class Groups {
         error: () => {
           this.cargando.set(false);
           this.cargoAlgunaVez.set(true);
-          this.error.set('No pudimos cargar los grupos. Reintentá.');
+          this.error.set('No pudimos cargar los grupos. Reintente.');
         },
       });
   }

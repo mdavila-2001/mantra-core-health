@@ -83,7 +83,7 @@ export class SpecialtyBrowser<T> {
    * otra palabra—, así que se dicen distinto.
    */
   readonly noMatchesText = input(
-    'Nada coincide con lo que buscaste. Probá con otra palabra o quitá los filtros.',
+    'Nada coincide con lo que buscó. Pruebe con otra palabra o quite los filtros.',
   );
 
   /** Si el consumidor sabe que hay más para traer: al pie, «Cargar más». */

@@ -65,12 +65,27 @@ describe('LocationPicker', () => {
   function opcionesDeCiudad(): readonly string[] {
     return [...html.querySelectorAll('option')]
       .map((opcion) => opcion.textContent?.trim() ?? '')
-      .filter((texto) => texto !== '' && texto !== 'Elegí tu ciudad o municipio');
+      .filter((texto) => texto !== '' && texto !== 'Elija su ciudad o municipio');
   }
+
+  it('en sólo lectura muestra lo guardado y no deja cambiarlo', () => {
+    fixture.componentRef.setInput('readonly', true);
+    component.value.set('mun-scz');
+    fixture.detectChanges();
+
+    const select = html.querySelector<HTMLSelectElement>('select');
+    expect(select?.disabled).toBe(true);
+    expect(select?.value).not.toBe('');
+    expect(html.querySelector('app-department-map')?.hasAttribute('inert')).toBe(true);
+
+    pulsarDepartamento('CB');
+    expect(component.value()).toBe('mun-scz');
+    expect(opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
+  });
 
   it('mientras no hay departamento no ofrece ciudades: dice qué falta', () => {
     expect(html.querySelector('[data-testid="location-pendiente"]')?.textContent).toContain(
-      'Elegí primero tu departamento',
+      'Elija primero su departamento',
     );
     expect(html.querySelector('app-select')).toBeNull();
   });
@@ -130,10 +145,10 @@ describe('LocationPicker', () => {
 
   it('marca el municipio como obligatorio cuando quien lo monta lo pide', () => {
     fixture.componentRef.setInput('required', true);
-    fixture.componentRef.setInput('errorMessage', 'Elegí tu ciudad o municipio.');
+    fixture.componentRef.setInput('errorMessage', 'Elija su ciudad o municipio.');
     pulsarDepartamento('CB');
 
-    expect(html.textContent).toContain('Elegí tu ciudad o municipio.');
+    expect(html.textContent).toContain('Elija su ciudad o municipio.');
   });
 
   /** Sin catálogo no hay mapa ni select: quien lo monta muestra su «Reintentar». */
@@ -156,12 +171,12 @@ describe('LocationPicker', () => {
     it('la explicación llega al campo, que es quien la muestra al apuntarlo', () => {
       fixture.componentRef.setInput(
         'municipalityDescription',
-        'La ciudad donde vivís, para asignarte los centros que te quedan cerca.',
+        'La ciudad donde vive, para asignarle los centros que le quedan cerca.',
       );
       pulsarDepartamento('CB');
 
       expect(html.querySelector('.form-field-description')?.textContent?.trim()).toBe(
-        'La ciudad donde vivís, para asignarte los centros que te quedan cerca.',
+        'La ciudad donde vive, para asignarle los centros que le quedan cerca.',
       );
     });
 

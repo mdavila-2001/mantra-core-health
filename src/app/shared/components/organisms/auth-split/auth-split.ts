@@ -82,6 +82,9 @@ export class AuthSplit {
    */
   readonly contentWidth = input<AuthSplitWidth>('form');
 
+  /** Use the white light-mode surface on public registration routes. */
+  readonly plainSurface = input(false);
+
   /**
    * Cómo se pone en escena la pantalla.
    *

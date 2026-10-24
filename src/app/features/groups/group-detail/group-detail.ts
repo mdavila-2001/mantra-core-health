@@ -175,19 +175,19 @@ export class GroupDetail {
       next: (propio) => {
         if (propio === null) {
           this.error.set(
-            'Para unirte a un grupo necesitás perfil público. Se crea desde «Mi perfil».',
+            'Para unirse a un grupo necesita perfil público. Se crea desde «Mi perfil».',
           );
           return;
         }
         this.community.joinGroup(this.groupIdActual(), propio.id).subscribe({
           next: () => {
-            this.aviso.set('Listo. Si el grupo es privado, tu ingreso queda en revisión.');
+            this.aviso.set('Listo. Si el grupo es privado, su ingreso queda en revisión.');
             this.cargarFicha();
           },
-          error: () => this.error.set('No pudimos unirte al grupo. Reintentá.'),
+          error: () => this.error.set('No pudimos unirse al grupo. Reintente.'),
         });
       },
-      error: () => this.error.set('No pudimos saber si tenés perfil público.'),
+      error: () => this.error.set('No pudimos saber si tiene perfil público.'),
     });
   }
 
@@ -200,10 +200,10 @@ export class GroupDetail {
 
     this.community.leaveGroup(this.groupIdActual(), perfilPropio).subscribe({
       next: () => {
-        this.aviso.set('Saliste del grupo.');
+        this.aviso.set('Salió del grupo.');
         this.cargarFicha();
       },
-      error: () => this.error.set('No pudimos darte de baja. Reintentá.'),
+      error: () => this.error.set('No pudimos darle de baja. Reintente.'),
     });
   }
 
@@ -217,7 +217,7 @@ export class GroupDetail {
     this.community.getOwnProfile().subscribe({
       next: (propio) => {
         if (propio === null) {
-          this.error.set('Necesitás perfil público para publicar.');
+          this.error.set('Necesita perfil público para publicar.');
           return;
         }
 
@@ -237,11 +237,11 @@ export class GroupDetail {
             },
             error: () => {
               this.enviando.set(false);
-              this.error.set('No pudimos publicar. Reintentá.');
+              this.error.set('No pudimos publicar. Reintente.');
             },
           });
       },
-      error: () => this.error.set('No pudimos saber si tenés perfil público.'),
+      error: () => this.error.set('No pudimos saber si tiene perfil público.'),
     });
   }
 
@@ -311,7 +311,7 @@ export class GroupDetail {
         // 404 en un grupo secreto no significa «se rompió»: significa que para
         // quien mira ese grupo no existe, y decir otra cosa lo delataría.
         this.noExiste.set(fallo.status === 404);
-        this.error.set(fallo.status === 404 ? '' : 'No pudimos cargar el grupo. Reintentá.');
+        this.error.set(fallo.status === 404 ? '' : 'No pudimos cargar el grupo. Reintente.');
       },
     });
   }
@@ -346,7 +346,7 @@ export class GroupDetail {
           // 403 es la respuesta correcta de un grupo privado a quien no entró.
           this.muroCerrado.set(fallo.status === 403);
           if (fallo.status !== 403) {
-            this.error.set('No pudimos cargar el muro. Reintentá.');
+            this.error.set('No pudimos cargar el muro. Reintente.');
           }
         },
       });

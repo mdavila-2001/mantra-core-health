@@ -85,7 +85,7 @@ describe('Select', () => {
   describe('placeholder', () => {
     it('queda oculto de la lista pero seleccionable por el propio control', async () => {
       const fixture = crear<string>([{ value: 'a', label: 'A' }]);
-      fixture.componentRef.setInput('placeholder', 'Elegí un servicio');
+      fixture.componentRef.setInput('placeholder', 'Elija un servicio');
       await fixture.whenStable();
 
       const placeholder: HTMLOptionElement = fixture.nativeElement.querySelector('option');
@@ -93,7 +93,7 @@ describe('Select', () => {
       // NO va `disabled`: el navegador se niega a seleccionar una opción
       // deshabilitada y el placeholder nunca llegaría a mostrarse.
       expect(placeholder.disabled).toBe(false);
-      expect(placeholder.textContent?.trim()).toBe('Elegí un servicio');
+      expect(placeholder.textContent?.trim()).toBe('Elija un servicio');
     });
 
     it('sin selección el select queda en el placeholder', async () => {

@@ -1,0 +1,15 @@
+$ python compare_mock_api.py   (front y API en las ramas del hito, con los cambios en disco)
+Total mock routes extracted: 643
+Total API routes extracted from controllers: 1438
+Matched: 572
+Method Mismatch: 0
+Missing in Backend: 71
+Saved results to D:\Trabajos Secundarios\Mantra Core Technologies\mock_vs_test_api_comparison.json
+exit=0
+
+$ python summarize_missing.py (sección de mismatches)
+--- METHOD MISMATCHES (7) ---
+
+--- MISSING IN BACKEND BY DOMAIN / FILE (72) ---
+
+ramas: front=marcelo/fix-homologacion-metodos-http · api=marcelo/fix-homologacion-metodos-http

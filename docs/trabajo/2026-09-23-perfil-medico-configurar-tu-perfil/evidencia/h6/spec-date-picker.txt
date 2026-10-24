@@ -1,0 +1,80 @@
+Using Vitest configuration file: <repo>\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                             | Names                                                        |  Raw size
+spec-app-shared-components-organisms-date-picker-date-picker.js | spec-app-shared-components-organisms-date-picker-date-picker | 219.30 kB | 
+styles.css                                                      | styles                                                       | 166.29 kB | 
+chunk-RSTWSNOR.js                                               | -                                                            |   4.75 kB | 
+init-testbed.js                                                 | init-testbed                                                 |   1.21 kB | 
+vitest-mock-patch.js                                            | vitest-mock-patch                                            | 974 bytes | 
+setup-test-setup.js                                             | setup-test-setup                                             | 911 bytes | 
+
+                                                                | Initial total                                                | 393.44 kB
+
+Application bundle generation complete. [75.422 seconds] - 2026-09-24T02:36:33.500Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButton is not used within the template of NearbyPlaces [plugin angular-compiler]
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+      103 │     AppButton,
+          ╵     ~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:99:39:
+      99 │ ...: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+         ╵                                  ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:99:62:
+      99 │ ... AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+         ╵                                                ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 <repo>
+
+
+ Test Files  1 passed (1)
+      Tests  49 passed (49)
+   Start at  22:36:34
+   Duration  4.34s (transform 218ms, setup 537ms, import 271ms, tests 2.24s, environment 1.05s)
+

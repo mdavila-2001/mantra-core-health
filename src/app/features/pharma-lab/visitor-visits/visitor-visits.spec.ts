@@ -84,7 +84,7 @@ describe('VisitorVisits', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="visit-notice"]')
         ?.textContent,
-    ).toContain('Escribí el motivo');
+    ).toContain('Escriba el motivo');
   });
 
   it('cancela con motivo y refleja el estado resultante', () => {

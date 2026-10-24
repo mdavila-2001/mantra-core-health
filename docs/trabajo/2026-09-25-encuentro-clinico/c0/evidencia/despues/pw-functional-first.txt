@@ -1,0 +1,79 @@
+COMMAND: node scripts/pw-guard.mjs --port 4210 --spec playwright/consulta-rejilla.spec.ts:113
+[pw-guard] Intento 1; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-190258-intento-1.log
+[pw-guard] CHILD_READY
+
+Running 1 test using 1 worker
+
+(node:2036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[pw-guard] taskkill PID 31356: spawnSync taskkill.exe ETIMEDOUT
+[pw-guard] taskkill PID 31356: spawnSync taskkill.exe ETIMEDOUT
+[pw-guard] STALL: sin líneas de salida; relanzando.
+[pw-guard] Intento 2; D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\artifacts\pw-guard\20260925-190258-intento-2.log
+[pw-guard] CHILD_READY
+
+Running 1 test using 1 worker
+
+(node:21844) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › playwright\consulta-rejilla.spec.ts:113:7 › C0 · contrato de la consulta › doce acciones, modales y encuentro persistente al recargar (41.0s)
+
+
+  1) [chromium] › playwright\consulta-rejilla.spec.ts:113:7 › C0 · contrato de la consulta › doce acciones, modales y encuentro persistente al recargar 
+
+    TimeoutError: page.waitForURL: Timeout 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      63 |   await attend.focus();
+      64 |   await page.keyboard.press('Enter');
+    > 65 |   await page.waitForURL(/\/medical-records\/[^/]+\/consultation\?/, { timeout: 30_000 });
+         |              ^
+      66 |   await expect(page.getByTestId('consulta-rejilla')).toBeVisible();
+      67 |   const open = page.getByTestId('consulta-abrir-encuentro');
+      68 |   if (await open.isVisible()) await open.click();
+        at openConsultation (D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\playwright\consulta-rejilla.spec.ts:65:14)
+        at D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\playwright\consulta-rejilla.spec.ts:114:5
+
+    Error: Consola y red del simulador
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 4
+
+    - Array []
+    + Array [
+    +   "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-Ohy6Wz7NFFGmQaVW/a8g5BXylUJrN/hbRM2QuMglZ6Q=' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    +   "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-Ohy6Wz7NFFGmQaVW/a8g5BXylUJrN/hbRM2QuMglZ6Q=' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    + ]
+
+      49 | test.afterEach(async ({ page }) => {
+      50 |   const errors = await page.evaluate(() => (window as unknown as { c0RuntimeErrors: () => Promise<string[]> }).c0RuntimeErrors());
+    > 51 |   expect(errors, 'Consola y red del simulador').toEqual([]);
+         |                                                 ^
+      52 | });
+      53 |
+      54 | async function openConsultation(page: Page): Promise<void> {
+        at D:\Trabajos Secundarios\Mantra Core Technologies\wt-clinica-c0\playwright\consulta-rejilla.spec.ts:51:49
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\consulta-rejilla-C0-·-cont-2dd18-tro-persistente-al-recargar-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\consulta-rejilla-C0-·-cont-2dd18-tro-persistente-al-recargar-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\consulta-rejilla-C0-·-cont-2dd18-tro-persistente-al-recargar-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\consulta-rejilla-C0-·-cont-2dd18-tro-persistente-al-recargar-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\consulta-rejilla.spec.ts:113:7 › C0 · contrato de la consulta › doce acciones, modales y encuentro persistente al recargar 
+RESUMEN: outcome=FAILED intentos=2 duracion=1288.14s
+
+EXIT_CODE: 1

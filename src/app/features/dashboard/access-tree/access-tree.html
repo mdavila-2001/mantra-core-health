@@ -189,8 +189,7 @@
   </ul>
 
   <p class="arbol__pie">
-    {{ totalDisponibles() }} secciones habilitadas en {{ zonas().length }} zonas. Abrí una para ver
-    qué hay adentro.
+    {{ totalDisponibles() }} secciones disponibles, ordenadas en {{ zonas().length }} grupos.
   </p>
 }
 
@@ -222,6 +221,11 @@
   @case ('directorio-farmacias') {
     <app-content-dialog heading="Directorio de farmacias" size="xl" (closed)="cerrarModal()">
       <app-pharmacies-directory [embebido]="true" />
+    </app-content-dialog>
+  }
+  @case ('directorio-aseguradoras') {
+    <app-content-dialog heading="Directorio de aseguradoras" size="xl" (closed)="cerrarModal()">
+      <app-insurers-directory [embebido]="true" />
     </app-content-dialog>
   }
 }

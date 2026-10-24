@@ -9,8 +9,61 @@
   display: block;
 }
 
-.directorio__cuenta {
+.directorio__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
   margin: 0 0 var(--sp-4);
+}
+
+.directorio__vistas {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.directorio__vista {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  /* 44 px de alto: es un control táctil, y en el teléfono es lo primero que se
+     toca al abrir el directorio. */
+  min-block-size: 40px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: calc(var(--r-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.directorio__vista svg {
+  fill: currentColor;
+}
+
+.directorio__vista:hover {
+  color: var(--text-primary);
+}
+
+.directorio__vista[aria-pressed='true'] {
+  background: var(--brand-primary);
+  color: var(--text-on-brand, #fff);
+}
+
+.directorio__vista:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.directorio__cuenta {
+  margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -93,6 +146,13 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* La lista es la misma `ul` con una sola columna: la tarjeta sabe dibujarse
+   horizontal (`vista`), acá sólo se le da el ancho entero. */
+.directorio__grilla--lista {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
 }
 
 /* La bajada cuando el directorio va embebido en un modal: el título ya lo puso

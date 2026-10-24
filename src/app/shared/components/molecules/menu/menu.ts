@@ -224,7 +224,23 @@ export class Menu implements MenuHost, OnDestroy {
     const panel = this.hostElement.nativeElement;
     this.homeParent = panel.parentNode;
     this.homeNextSibling = panel.nextSibling;
-    this.document.body.appendChild(panel);
+    this.destinoDeMudanza(panel).appendChild(panel);
+  }
+
+  /**
+   * A dónde mudar el panel mientras está abierto.
+   *
+   * Un `<dialog>` abierto con `showModal()` vive en la «capa superior» del
+   * navegador: se pinta por encima de cualquier elemento normal sin importar
+   * `z-index`. Mudar el panel siempre a `document.body` lo deja, si el
+   * disparador está DENTRO de un diálogo así, detrás de ese diálogo —presente
+   * en el DOM y «visible» para el layout, pero con los clics interceptados por
+   * el contenido del propio diálogo—. La solución es mudarlo al `<dialog>`
+   * abierto más cercano cuando existe: como ya forma parte de la capa
+   * superior, su subárbol también se pinta ahí.
+   */
+  private destinoDeMudanza(panel: HTMLElement): HTMLElement {
+    return panel.parentElement?.closest<HTMLDialogElement>('dialog[open]') ?? this.document.body;
   }
 
   /** Lo devuelve exactamente a su lugar: el consumidor sigue siendo su dueño. */

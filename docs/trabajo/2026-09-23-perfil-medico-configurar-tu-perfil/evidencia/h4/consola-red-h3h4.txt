@@ -1,0 +1,7 @@
+# Consola y red de H3/H4 — 2026-09-25T03:27:46.137Z
+
+## Consola (error/warning)
+ninguno
+
+## Red (>= 400 o fallida)
+ninguna

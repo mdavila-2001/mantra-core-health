@@ -186,7 +186,7 @@ export class MyOrganizations {
   protected readonly estadoDeSolicitud = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.estadoDeSolicitud().status === 'loading');
   protected readonly errorDeSolicitud = computed(() =>
-    errorMessageOf(this.estadoDeSolicitud(), 'No tenés permiso para solicitar esta vinculación.'),
+    errorMessageOf(this.estadoDeSolicitud(), 'No tiene permiso para solicitar esta vinculación.'),
   );
   protected readonly solicitudEnviada = signal(false);
 

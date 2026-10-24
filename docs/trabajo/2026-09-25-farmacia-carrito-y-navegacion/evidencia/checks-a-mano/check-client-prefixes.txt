@@ -1,0 +1,11 @@
+
+✗ check-client-prefixes — 1 operación(es) sin rutear
+
+  CommunityClient (1)
+      POST /patients/me/reviews
+
+  El servidor de desarrollo responde estas rutas con el index.html de
+  Angular y un 200: el cliente recibe HTML donde espera JSON. Agregá el
+  prefijo a las TRES declaraciones (proxy.conf.json, proxy.conf.docker.json
+  y deploy/nginx.conf) y comprobá que no se coma una ruta del router.
+

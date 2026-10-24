@@ -262,7 +262,7 @@ export class SurveysHome {
           this.estado.set(
             empty(
               { label: 'Crear una encuesta' },
-              'Todavía no creaste ninguna encuesta. Una encuesta se le ofrece al paciente cuando cerrás una consulta que la tenga asociada.',
+              'Todavía no creó ninguna encuesta. Una encuesta se le ofrece al paciente cuando cierra una consulta que la tenga asociada.',
             ),
           );
           return;
@@ -315,7 +315,7 @@ export class SurveysHome {
           // borrador— podría no entrar en el grupo visible y el alta parecería
           // no haber hecho nada.
           this.limpiarFiltros();
-          this.toast.success('Encuesta creada. Agregale preguntas y publicala.');
+          this.toast.success('Encuesta creada. Agréguele preguntas y publíquela.');
           this.cargar();
         },
         error: (error: unknown) => {

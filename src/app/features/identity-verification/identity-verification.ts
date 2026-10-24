@@ -57,7 +57,7 @@ interface TextosDelTramite {
 }
 
 const DOCUMENTO_DE_IDENTIDAD: TextosDelTramite = {
-  titulo: 'Tu documento de identidad',
+  titulo: 'Su documento de identidad',
   texto:
     'Una foto o un PDF del documento, de hasta 10 MB. Se guarda como información ' +
     'de salud protegida: solo lo ve quien tiene que revisarlo.',
@@ -68,9 +68,9 @@ const TEXTOS_POR_TRAMITE: Record<Tramite, TextosDelTramite> = {
   patient: DOCUMENTO_DE_IDENTIDAD,
   practitioner: DOCUMENTO_DE_IDENTIDAD,
   license: {
-    titulo: 'Tu constancia de matrícula',
+    titulo: 'Su constancia de matrícula',
     texto:
-      'La constancia o el título que acredita tu matrícula, en foto o PDF de ' +
+      'La constancia o el título que acredita su matrícula, en foto o PDF de ' +
       'hasta 10 MB. Se guarda como información protegida.',
     label: 'Constancia',
   },
@@ -247,10 +247,10 @@ export class IdentityVerification {
       return state.issues[0]?.message ?? null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'No podés iniciar esta verificación.';
+      return state.message ?? 'No puede iniciar esta verificación.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -297,7 +297,7 @@ export class IdentityVerification {
 
     this.rechazo.set(
       primero.reason === 'tamaño'
-        ? `«${primero.file.name}» pesa más de 10 MB. Probá con una foto más liviana.`
+        ? `«${primero.file.name}» pesa más de 10 MB. Pruebe con una foto más liviana.`
         : primero.reason === 'tipo'
           ? `«${primero.file.name}» no es una imagen ni un PDF.`
           : `No pudimos usar «${primero.file.name}».`,

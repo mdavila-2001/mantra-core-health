@@ -1,0 +1,16 @@
+warning: in the working copy of 'docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/16-stage-test.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/23-source-diff.patch', LF will be replaced by CRLF the next time Git touches it
+[marcelo/feat-sincronizacion-mockup-dev-test da161f8b] fix(hito2): conservar contratos demo y aislar evidencia de regresion
+ 24 files changed, 403 insertions(+), 18 deletions(-)
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/17-commit-test.txt
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/18-lint.txt
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/19-ancestry.json
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/20-sync-dev.txt
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/21-lint.txt
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/22-install-integrated.txt
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/23-build-production.txt
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/23-source-diff.patch
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/23-source-snapshot.json
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/24-bundle-budget.txt
+ create mode 100644 docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/25-commit-repairs.txt
+ rename src/app/{shared/components/organisms/notification-bell/notification-bell.acciones.spec.ts => features/account/dependents/notification-bell-actions.spec.ts} (93%)

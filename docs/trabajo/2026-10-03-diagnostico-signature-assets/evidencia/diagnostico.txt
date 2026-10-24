@@ -1,0 +1,38 @@
+2026-10-03 — Solicitudes de sólo lectura, sin credenciales ni datos de personas.
+Comando: Invoke-WebRequest <URL> -UseBasicParsing -TimeoutSec 10
+Se registran HTTP y Content-Type; excepciones HTTP se inspeccionan mediante Exception.Response.
+
+http://localhost:3000/health HTTP=200 ContentType=application/json; charset=utf-8
+https://test.173.249.39.237.sslip.io/profiles/practitioners/me/signature-assets HTTP=404 ContentType=application/json; charset=utf-8
+https://test.173.249.39.237.sslip.io/iam/me HTTP=404 ContentType=application/json; charset=utf-8
+
+Comando adicional: comprobar Content.TrimStart().StartsWith('<') y extraer únicamente <title>.
+https://test.173.249.39.237.sslip.io/health HTTP=200 ContentType=text/html;charset=UTF-8 HTML=True
+<title>AloVida</title>
+https://test.173.249.39.237.sslip.io/insurance/my-claims HTTP=200 ContentType=text/html;charset=UTF-8 HTML=True
+<title>AloVida</title>
+https://test.173.249.39.237.sslip.io/api/health HTTP=200 ContentType=text/html;charset=UTF-8 HTML=True
+<title>AloVida</title>
+https://test.173.249.39.237.sslip.io/api/insurance/my-claims HTTP=200 ContentType=text/html;charset=UTF-8 HTML=True
+<title>AloVida</title>
+
+git rev-parse --short HEAD (frontend):
+79a098d2
+git rev-parse --short HEAD (API):
+dff74722
+
+rg -n 'signature-assets|signatureFileId|sealFileId' mantra-core-health-api/src mantra-core-health-model -g '*.ts' -g '*.puml' -g '*.sql'
+Sólo coincidencias signatureFileId en tracking/delivery_proofs: firma de entrega, dominio distinto.
+Sin coincidencias signature-assets ni sealFileId.
+
+rg -n 'my-claims' mantra-core-health-api/src/modules/insurance
+Sin coincidencias (exit 1).
+
+rg -n 'insurance|/health|/profiles' mantra-core-health/deploy/api-locations.conf
+25:location ^~ /profiles/     { proxy_pass http://api; include /etc/nginx/api-proxy.conf; }
+169:location ^~ /insurance/analytics     { proxy_pass http://api; include /etc/nginx/api-proxy.conf; }
+170:location ^~ /insurance/portability   { proxy_pass http://api; include /etc/nginx/api-proxy.conf; }
+237:location ^~ /insurance/received-claims { proxy_pass http://api; include /etc/nginx/api-proxy.conf; }
+Sin location para /insurance/my-claims; /health tampoco declara ruta API en ese archivo.
+
+Límite: no se inspeccionó configuración interna del despliegue ni se usó la sesión del usuario.

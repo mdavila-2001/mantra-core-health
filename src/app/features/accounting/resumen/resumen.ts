@@ -12,6 +12,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
+import { ContabilidadSimple } from '../registros/registros';
 import type {
   BalanceSheet,
   FinancialStatementLine,
@@ -31,6 +32,8 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -78,7 +81,7 @@ const NOMBRE_LLANO: Readonly<Record<string, string>> = {
  */
 const ACLARACION: Readonly<Record<string, string>> = {
   '5.5':
-    'No sale plata de tu cuenta: es lo que tus equipos perdieron de valor este mes por usarlos.',
+    'No sale plata de su cuenta: es lo que sus equipos perdieron de valor este mes por usarlos.',
   '5.6': 'Es sólo el interés del préstamo. La cuota que devuelve el capital no es un gasto.',
 };
 
@@ -206,12 +209,15 @@ interface Dinero {
     AppButton,
     AppButtonLink,
     Card,
+    ContabilidadSimple,
     Chip,
     FormField,
     PageHeader,
     RouterLink,
     SectionHeading,
     Select,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './resumen.html',
@@ -233,6 +239,8 @@ export class Resumen {
   private readonly hoy = new Date();
 
   private readonly recarga = signal(0);
+  /** 0 = Resumen (tableros) · 1 = Registros (tablas con su alta). */
+  readonly pestana = signal(0);
   readonly practicaElegida = signal<string | null>(null);
   private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
   private readonly dinero = signal<ViewState<Dinero>>(loading());
@@ -499,7 +507,7 @@ export class Resumen {
           this.saldando.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se pudo registrar. Probá de nuevo en un momento.',
+            message: 'No se pudo registrar. Pruebe de nuevo en un momento.',
           });
         },
       });

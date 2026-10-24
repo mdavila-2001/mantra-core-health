@@ -8,10 +8,8 @@ import {
 import {
   PEDIDO_CON_DELIVERY,
   PEDIDO_CON_SEGURO,
-  PEDIDO_ENTREGADO_CON_FACTURA,
   PEDIDO_NUEVO,
   coberturaDeEjemplo,
-  entregaDeEjemplo,
   facturaDeEjemplo,
 } from './pharmacy-inbox.fixtures';
 
@@ -109,19 +107,11 @@ describe('pharmacy-inbox.fixtures · la respuesta del seguro', () => {
   });
 });
 
-describe('pharmacy-inbox.fixtures · el medio de entrega de la maqueta', () => {
-  it('sólo alcanza al pedido de ejemplo: el resto usa lo que devuelve la API', () => {
-    expect(entregaDeEjemplo(PEDIDO_NUEVO)).toBeNull();
-    expect(entregaDeEjemplo(PEDIDO_CON_SEGURO)).toBeNull();
-    expect(entregaDeEjemplo(PEDIDO_ENTREGADO_CON_FACTURA)).toBeNull();
-  });
-
-  it('el pedido de ejemplo sale a domicilio, con su dirección', () => {
-    const entrega = entregaDeEjemplo(PEDIDO_CON_DELIVERY);
-
+describe('pharmacy-inbox.fixtures · el pedido a domicilio de la maqueta', () => {
+  it('se declara como lo devuelve el backend simulado: modalidad y dirección del contrato', () => {
     expect(PEDIDO_CON_DELIVERY.id).toBe(ID_PEDIDO_CON_DELIVERY);
-    expect(entrega?.modalidad).toBe('DOMICILIO');
-    expect((entrega?.direccion ?? '').length).toBeGreaterThan(10);
+    expect(PEDIDO_CON_DELIVERY.modalidad).toBe('DOMICILIO');
+    expect((PEDIDO_CON_DELIVERY.direccionDeEntrega ?? '').length).toBeGreaterThan(10);
   });
 });
 

@@ -1,0 +1,7 @@
+# CI de los 6 PR de front: `gh run list` (2026-10-03). `queued` = nunca arrancó (runners del equipo).
+2026-10-03T05:40:33Z CI rama=justin/sin-delivery estado=queued conclusion= run=37100580639
+2026-10-03T05:35:20Z CI rama=justin/alta-organizacion-boton-y-e2e estado=queued conclusion= run=37100306028
+2026-10-03T05:33:52Z CI rama=justin/sin-delivery-dev estado=queued conclusion= run=37100224458
+2026-10-03T05:32:25Z CI rama=justin/alta-organizacion-boton-y-e2e-dev estado=queued conclusion= run=37100146202
+2026-10-03T05:27:58Z CI rama=justin/sin-delivery-test estado=queued conclusion= run=37099899903
+2026-10-03T05:27:54Z CI rama=justin/alta-organizacion-boton-y-e2e-test estado=queued conclusion= run=37099896125

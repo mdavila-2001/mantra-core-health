@@ -138,7 +138,7 @@ describe('GroupDetail', () => {
     responderPadron();
 
     expect(texto()).toContain('Salir del grupo');
-    expect(texto()).toContain('No escribas datos personales');
+    expect(texto()).toContain('No escriba datos personales');
   });
 
   it('quien ya pidió entrar ve que su ingreso está en revisión', () => {
@@ -147,7 +147,7 @@ describe('GroupDetail', () => {
     responderMuro();
     responderPadron();
 
-    expect(texto()).toContain('Tu ingreso está en revisión');
+    expect(texto()).toContain('Su ingreso está en revisión');
     expect(texto()).not.toContain('Unirme al grupo');
   });
 
@@ -186,7 +186,7 @@ describe('GroupDetail', () => {
       publicar(t: string): void;
     };
     componente.alternarRespuesta('c-1');
-    componente.publicar('te respondo');
+    componente.publicar('le respondo');
     fixture.detectChanges();
 
     http.expectOne((r) => r.url === '/community/profiles/me').flush(perfilPropio);
@@ -197,10 +197,10 @@ describe('GroupDetail', () => {
     );
     expect(req.request.body).toEqual({
       authorProfileId: 'pp-1',
-      bodyText: 'te respondo',
+      bodyText: 'le respondo',
       parentCommentId: 'c-1',
     });
-    req.flush(publicacion('c-2', 'te respondo'));
+    req.flush(publicacion('c-2', 'le respondo'));
     fixture.detectChanges();
 
     // Publicar recarga el muro en vez de parchear el árbol en memoria.

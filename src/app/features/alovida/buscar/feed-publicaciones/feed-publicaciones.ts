@@ -151,7 +151,7 @@ export class FeedPublicaciones {
    * las siete entradas.
    */
   protected pedirOcultar(): void {
-    this.avisos.info('Todavía no podés ajustar qué tipo de publicaciones ves. Está en camino.');
+    this.avisos.info('Todavía no puede ajustar qué tipo de publicaciones ve. Está en camino.');
   }
 
   /**

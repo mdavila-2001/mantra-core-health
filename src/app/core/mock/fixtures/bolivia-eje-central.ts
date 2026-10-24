@@ -253,7 +253,7 @@ function ofertaDe(establecimiento: EstablecimientoDelCorpus): {
         throw new Error(
           `El corpus declara el servicio «${servicio}» en ${establecimiento.id} y ` +
             'CATEGORIAS_POR_SERVICIO no sabe a qué categoría del catálogo corresponde. ' +
-            'Agregalo en bolivia-eje-central.ts.',
+            'Agréguelo en bolivia-eje-central.ts.',
         );
       }
       return traduccion;

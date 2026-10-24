@@ -47,7 +47,7 @@ export const EVIDENCE_KINDS: readonly { readonly value: EvidenceKind; readonly l
           label="Referencia"
           hint="Ruta del archivo, URL o identificador."
           [required]="true"
-          [errorMessage]="form.controls.reference.touched && form.controls.reference.invalid ? 'Escribí una referencia verificable.' : ''"
+          [errorMessage]="form.controls.reference.touched && form.controls.reference.invalid ? 'Escriba una referencia verificable.' : ''"
         >
           <app-input formControlName="reference" testId="evidence-reference" />
         </app-form-field>

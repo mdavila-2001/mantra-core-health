@@ -1,0 +1,5 @@
+# insurance-analytics.spec.ts aislado, alternando la rama (9f04dd26) y mockup (b07429a0) — 2026-09-24
+vuelta 1 · rama: Tests 10 passed (10) 
+vuelta 1 · mockup: Tests 10 passed (10) 
+vuelta 2 · rama: Tests 10 passed (10) 
+vuelta 2 · mockup: Tests 10 passed (10) 

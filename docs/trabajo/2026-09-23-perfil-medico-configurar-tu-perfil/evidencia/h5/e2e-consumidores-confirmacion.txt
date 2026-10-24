@@ -1,0 +1,78 @@
+
+Running 13 tests using 1 worker
+
+[1/13] [chromium] › playwright\carril-registro-aseguradora-gps.spec.ts:69:7 › alta pública de aseguradora — casa matriz georreferenciada (subtarea 1.3) › la sección trae las dos puertas del selector, sin mapa todavía
+[2/13] [chromium] › playwright\carril-registro-aseguradora-gps.spec.ts:84:7 › alta pública de aseguradora — casa matriz georreferenciada (subtarea 1.3) › con el GPS concedido, el pin aparece y se puede confirmar
+[3/13] [chromium] › playwright\carril-registro-aseguradora-gps.spec.ts:112:7 › alta pública de aseguradora — casa matriz georreferenciada (subtarea 1.3) › marcado manual: tocar el mapa pone el pin, y un segundo toque lo corre sin duplicarlo
+[4/13] [chromium] › playwright\carril-registro-aseguradora-gps.spec.ts:152:7 › alta pública de aseguradora — casa matriz georreferenciada (subtarea 1.3) › quitar la ubicación vuelve al estado inicial
+[5/13] [chromium] › playwright\carril-registro-aseguradora-gps.spec.ts:176:7 › alta pública de aseguradora — casa matriz georreferenciada (subtarea 1.3) › la casa matriz es opcional: el alta se completa igual sin confirmarla
+[6/13] [chromium] › playwright\carril-registro-aseguradora-gps.spec.ts:205:7 › alta pública de aseguradora — casa matriz georreferenciada (subtarea 1.3) › con la casa matriz confirmada, el alta llega igual a la confirmación
+[7/13] [chromium] › playwright\carril-registro-aseguradora-gps.spec.ts:247:7 › alta pública de aseguradora — casa matriz georreferenciada (subtarea 1.3) › el mapa confirmado no se desborda en teléfono ni en tablet
+[8/13] [chromium] › playwright\registro-empresa-y-mapa.spec.ts:34:7 › alta pública — la empresa y el mapa › el domicilio se confirma sobre un mapa, sin números de latitud ni longitud
+[9/13] [chromium] › playwright\registro-empresa-y-mapa.spec.ts:77:7 › alta pública — la empresa y el mapa › la página del trabajo pregunta la empresa, no dónde queda
+[10/13] [chromium] › playwright\registro-empresa-y-mapa.spec.ts:103:7 › alta pública — la empresa y el mapa › «Otra empresa» abre el campo para escribirla
+[11/13] [chromium] › playwright\registro-empresa-y-mapa.spec.ts:132:7 › alta pública — la empresa y el mapa › el lugar de trabajo se elige con el mismo mapa que la residencia
+[12/13] [chromium] › playwright\registro-persistencia.spec.ts:39:5 › el alta persiste contra la API: un login nuevo devuelve la misma localidad de residencia elegida en el mapa
+  1) [chromium] › playwright\registro-persistencia.spec.ts:39:5 › el alta persiste contra la API: un login nuevo devuelve la misma localidad de residencia elegida en el mapa 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED ::1:3005
+    Call log:
+      - → POST <url de la API>/iam/auth/login
+        - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Safari/537.36
+        - accept: */*
+        - accept-encoding: gzip,deflate,br
+        - content-type: application/json
+        - content-length: 69
+
+        at apiRequestContext.post: connect ECONNREFUSED ::1:3005
+        at <repo>\playwright\registro-persistencia.spec.ts:86:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\registro-persistencia-el-a-61cfe-sidencia-elegida-en-el-mapa-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\registro-persistencia-el-a-61cfe-sidencia-elegida-en-el-mapa-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\registro-persistencia-el-a-61cfe-sidencia-elegida-en-el-mapa-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\registro-persistencia-el-a-61cfe-sidencia-elegida-en-el-mapa-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[13/13] [chromium] › playwright\registro-persistencia.spec.ts:124:5 › el GPS del domicilio, confirmado sobre el mapa, persiste contra la API
+  2) [chromium] › playwright\registro-persistencia.spec.ts:124:5 › el GPS del domicilio, confirmado sobre el mapa, persiste contra la API 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED ::1:3005
+    Call log:
+      - → POST <url de la API>/iam/auth/login
+        - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Safari/537.36
+        - accept: */*
+        - accept-encoding: gzip,deflate,br
+        - content-type: application/json
+        - content-length: 65
+
+        at apiRequestContext.post: connect ECONNREFUSED ::1:3005
+        at <repo>\playwright\registro-persistencia.spec.ts:166:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\registro-persistencia-el-G-97757-mapa-persiste-contra-la-API-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\registro-persistencia-el-G-97757-mapa-persiste-contra-la-API-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\registro-persistencia-el-G-97757-mapa-persiste-contra-la-API-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\registro-persistencia-el-G-97757-mapa-persiste-contra-la-API-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+  2 failed
+    [chromium] › playwright\registro-persistencia.spec.ts:39:5 › el alta persiste contra la API: un login nuevo devuelve la misma localidad de residencia elegida en el mapa 
+    [chromium] › playwright\registro-persistencia.spec.ts:124:5 › el GPS del domicilio, confirmado sobre el mapa, persiste contra la API 
+  11 passed (1.9m)

@@ -74,7 +74,7 @@ export class SetVersionForm {
   protected readonly published = signal<PermissionSetVersion | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para versionar sets de permisos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para versionar sets de permisos.'),
   );
 
   protected submit(): void {

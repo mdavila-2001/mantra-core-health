@@ -243,7 +243,7 @@ export class PharmaLabHome {
     const dashboard = this.data();
     const motivo = this.motivo().trim();
     if (!dashboard || motivo === '') {
-      this.ultimaRevocacion.set('Escribí el motivo antes de desvincular.');
+      this.ultimaRevocacion.set('Escriba el motivo antes de desvincular.');
       return;
     }
     this.api.unlinkVisitor(dashboard.lab.id, visitor.id, motivo).subscribe({

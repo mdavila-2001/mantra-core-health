@@ -1,4 +1,7 @@
 import {
+  conceptIdDe,
+  conMedicinaGeneralPrimero,
+  MEDICINA_GENERAL,
   explicar,
   normalizar,
   reconocer,
@@ -88,6 +91,29 @@ describe('reconocerAlarmas', () => {
   });
 });
 
+describe('conMedicinaGeneralPrimero (sin certeza, Medicina general)', () => {
+  const MOTIVO = 'No pudimos identificar con certeza qué le pasa.';
+
+  it('sin ninguna recomendación agrega Medicina general con su motivo', () => {
+    const lista = conMedicinaGeneralPrimero([], MOTIVO);
+    expect(lista.map((r) => r.nombre)).toEqual([MEDICINA_GENERAL]);
+    expect(explicar(lista[0])).toBe(MOTIVO);
+  });
+
+  it('si ya estaba última, la sube primera y deja al resto en su orden', () => {
+    const base = [
+      { nombre: 'Cardiología', peso: 3, porque: ['palpitaciones'] },
+      { nombre: 'Medicina general', peso: 1, porque: ['palpitaciones'] },
+    ];
+    expect(conMedicinaGeneralPrimero(base, MOTIVO).map((r) => r.nombre)).toEqual(['Medicina general', 'Cardiología']);
+  });
+
+  it('si el directorio no la ofrece, no la inventa', () => {
+    const base = [{ nombre: 'Cardiología', peso: 3, porque: ['palpitaciones'] }];
+    expect(conMedicinaGeneralPrimero(base, MOTIVO, new Set(['Cardiología']))).toEqual(base);
+  });
+});
+
 describe('recomendar', () => {
   it('el caso del criterio de aceptación trae Neurología y Oftalmología', () => {
     const recomendaciones = recomendar(
@@ -163,6 +189,28 @@ describe('recomendar', () => {
 
     expect(conFemenino.map((r) => r.nombre)).toContain('Oftalmología');
     expect(conNombreLargo.map((r) => r.nombre)).toContain('Otorrinolaringología');
+  });
+});
+
+describe('conceptIdDe', () => {
+  it('resuelve el mismo par que hizo que la especialidad se recomendara', () => {
+    // Este es el bug reportado: «me duele la pantorrilla» recomienda
+    // Traumatología, pero el directorio la tiene escrita distinto
+    // («Traumatología y Ortopedia»). `recomendar` la ofrece igual porque
+    // `estaDisponible` es tolerante; antes, `verProfesionales` buscaba el
+    // `conceptId` con igualdad exacta, no lo encontraba, y la navegación caía
+    // al buscador por texto — que nunca pone `especialidad` en la URL y deja
+    // a la persona en el directorio agrupado por categoría en vez de en la
+    // lista de traumatólogos.
+    const disponibles = new Map([['traumatologia y ortopedia', 'con-trauma']]);
+
+    expect(conceptIdDe('Traumatología', disponibles)).toBe('con-trauma');
+  });
+
+  it('sin coincidencia ni siquiera difusa, no resuelve nada', () => {
+    const disponibles = new Map([['cardiologia', 'con-cardio']]);
+
+    expect(conceptIdDe('Reumatología', disponibles)).toBeUndefined();
   });
 });
 
@@ -282,5 +330,34 @@ describe('la tabla', () => {
     }
     const sinForma = ZONAS_DEL_CUERPO.filter((zona) => !ZONAS_CON_SILUETA.has(zona.id));
     expect(sinForma.map((zona) => zona.id)).toEqual(['piel', 'animo', 'general']);
+  });
+
+  /**
+   * Los síntomas de «Salud íntima» que sólo corresponden a un sexo (P-04,
+   * 2026-09-25): `symptom-check` los filtra por el sexo del propio perfil.
+   * Este test fija la lista, para que agregar una fila nueva a la zona no la
+   * deje sin marcar por descuido.
+   */
+  it('«soloParaSexo» marca sólo lo que es exclusivo de un sexo', () => {
+    const porSexo = (sexo: 'MALE' | 'FEMALE') =>
+      SINTOMAS.filter((s) => s.soloParaSexo === sexo)
+        .map((s) => s.id)
+        .sort();
+
+    expect(porSexo('MALE')).toEqual(
+      ['dolor-de-testiculos', 'fimosis', 'problemas-de-ereccion', 'prostata', 'sangre-en-el-semen'].sort(),
+    );
+    expect(porSexo('FEMALE')).toEqual(
+      [
+        'atraso-menstrual',
+        'control-embarazo',
+        'dolor-menstrual',
+        'flujo-vaginal',
+        'lactancia-posparto',
+        'menopausia',
+        'miomas-quistes',
+        'sangrado-menstrual-abundante',
+      ].sort(),
+    );
   });
 });

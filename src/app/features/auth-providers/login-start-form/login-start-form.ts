@@ -66,8 +66,8 @@ export class LoginStartForm {
       titulo: 'Contra qué proveedor',
       hint: 'El proveedor se busca por su código, no por su identificador.',
       campos: [
-        { key: 'providerCode', label: 'Código del proveedor', hint: 'El código con el que se registró el proveedor, no su UUID.', control: 'text', required: true, mensajeDeError: 'Ingresá el código del proveedor.' },
-        { key: 'tenantId', label: 'Organización a la que se quiere entrar', hint: 'Opcional: vacía, decide el vínculo del proveedor. Pegá el identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'providerCode', label: 'Código del proveedor', hint: 'El código con el que se registró el proveedor, no su UUID.', control: 'text', required: true, mensajeDeError: 'Ingrese el código del proveedor.' },
+        { key: 'tenantId', label: 'Organización a la que se quiere entrar', hint: 'Opcional: vacía, decide el vínculo del proveedor. Pegue el identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
         { key: 'environment', label: 'Entorno', hint: 'Por defecto, Producción.', control: 'radio', options: [{ value: 'DEVELOPMENT', label: 'Desarrollo' }, { value: 'STAGING', label: 'Staging' }, { value: 'PRODUCTION', label: 'Producción' }] },
       ],
     },
@@ -108,7 +108,7 @@ export class LoginStartForm {
   protected readonly started = signal<FederatedLoginStartResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para operar el login federado.'),
+    errorMessageOf(this.state(), 'No tiene permiso para operar el login federado.'),
   );
 
   protected submit(): void {

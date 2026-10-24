@@ -23,6 +23,8 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { FormActions } from '../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { InsurerProfileCard } from '../insurance/insurer-profile-card/insurer-profile-card';
+import { OrganizationLogo } from './organization-logo/organization-logo';
 
 /**
  * El panel de la organización (TP-1).
@@ -72,6 +74,8 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
     FormActions,
     FormField,
     Input,
+    InsurerProfileCard,
+    OrganizationLogo,
     PageHeader,
     ViewStateHost,
   ],
@@ -193,14 +197,14 @@ export class OrganizationPanel {
       .subscribe({
         next: () => {
           this.guardando.set(false);
-          this.toasts.success('Los datos de tu organización quedaron guardados.');
+          this.toasts.success('Los datos de su organización quedaron guardados.');
           // Se recarga la lista y no sólo la ficha: el nombre que se acaba de
           // cambiar es el que rotula el selector de arriba.
           this.cargar();
         },
         error: () => {
           this.guardando.set(false);
-          this.toasts.error('No se pudieron guardar los datos. Probá de nuevo.');
+          this.toasts.error('No se pudieron guardar los datos. Pruebe de nuevo.');
         },
       });
   }
@@ -272,7 +276,7 @@ export class OrganizationPanel {
         this.decidiendo.set(null);
         this.toasts.success(
           acepta
-            ? 'El profesional ya forma parte de tu organización.'
+            ? 'El profesional ya forma parte de su organización.'
             : 'La solicitud quedó rechazada.',
         );
         // Se recarga la bandeja en vez de sacar la fila a mano: si alguien más
@@ -282,7 +286,7 @@ export class OrganizationPanel {
       },
       error: () => {
         this.decidiendo.set(null);
-        this.toasts.error('No se pudo registrar la decisión. Probá de nuevo.');
+        this.toasts.error('No se pudo registrar la decisión. Pruebe de nuevo.');
       },
     });
   }

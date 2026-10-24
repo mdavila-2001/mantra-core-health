@@ -334,7 +334,7 @@ export class OrderDetail {
   protected async cancelar(): Promise<void> {
     const confirmado = await this.dialogs.confirm({
       title: 'Cancelar el pedido',
-      message: 'La farmacia deja de prepararlo y tu receta sigue disponible en tu historia.',
+      message: 'La farmacia deja de prepararlo y su receta sigue disponible en su historia.',
       confirmLabel: 'Cancelar el pedido',
       destructive: true,
     });

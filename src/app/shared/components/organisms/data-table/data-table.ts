@@ -63,6 +63,8 @@ import {
   host: {
     class: 'data-table',
     '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
+    '[class.data-table--wrap-headers]': 'wrapHeaders()',
+    '[class.data-table--fit-container]': 'fitContainer()',
   },
 })
 export class DataTable<Row> {
@@ -118,6 +120,32 @@ export class DataTable<Row> {
    * omisión, apagado), no como una caja de alto cero.
    */
   readonly maxHeight = input<string | null>(null);
+
+  /**
+   * Deja que los encabezados partan en dos renglones también en escritorio.
+   *
+   * Opt-in, apagado por omisión. Existe porque en escritorio el encabezado es
+   * `nowrap` y, con varias columnas de rótulo largo («Fecha de prestación»,
+   * «Monto solicitado»), es él —no el dato— el que fija el ancho: medido en
+   * «Solicitudes recibidas», 1297 px de tabla en una caja de 1040. Partido,
+   * cada columna mide lo que su palabra más larga y la tabla entra sin scroll
+   * lateral y sin esconder columnas.
+   */
+  readonly wrapHeaders = input(false, { transform: booleanAttribute });
+
+  /**
+   * Pliega las columnas secundarias según el ancho **de la caja** y no el del
+   * viewport.
+   *
+   * Opt-in, apagado por omisión. Existe por los modales: el `@media` de 780 px
+   * despliega las columnas en cuanto la pantalla es de tablet, pero dentro de
+   * un modal la tabla puede medir 600 px con el viewport en 1024 —medido en
+   * «Pagos» de la consulta: 704 px de tabla en 596 de caja, con la columna de
+   * acciones fija tapando importes—. Con esto, la tabla es un *container* y
+   * por debajo de 52rem de caja (≈ 728 px) se comporta como en el teléfono: las
+   * secundarias viven en la fila de detalle.
+   */
+  readonly fitContainer = input(false, { transform: booleanAttribute });
 
   /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
   protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);

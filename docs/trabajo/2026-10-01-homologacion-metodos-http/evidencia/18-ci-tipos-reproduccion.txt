@@ -1,0 +1,8 @@
+$ yarn tsc -p tsconfig.app.json --noEmit   (como el paso «Tipos» del CI: sin generar antes component-index.generated.ts)
+src/app/features/component-stock/component-stock.ts(29,29): error TS2307: Cannot find module './component-index.generated' or its corresponding type declarations.
+src/app/features/component-stock/component-stock.ts(154,29): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/app/features/component-stock/component-stock.ts(167,31): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/app/features/component-stock/component-stock.ts(184,45): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/app/features/component-stock/component-stock.ts(191,38): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/app/features/component-stock/component-stock.ts(198,37): error TS7006: Parameter 'c' implicitly has an 'any' type.
+exit=2

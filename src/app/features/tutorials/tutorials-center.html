@@ -1,6 +1,6 @@
 <app-page-header
   title="Centro de tutoriales"
-  subtitle="Recorridos guiados sobre la aplicación real. Podés dejarlos y retomarlos cuando quieras."
+  subtitle="Recorridos guiados sobre la aplicación real. Puede dejarlos y retomarlos cuando quiera."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -32,9 +32,9 @@
   <app-card variant="outlined" padding="lg" appTutorialTarget="tutoriales-avance">
     <div class="tutoriales__avance">
       <div class="tutoriales__avance-texto">
-        <h2 class="tutoriales__titulo">Tu avance</h2>
+        <h2 class="tutoriales__titulo">Su avance</h2>
         <p class="tutoriales__nota">
-          Completaste {{ completados() }} de {{ total() }} tutoriales disponibles para tu rol.
+          Completó {{ completados() }} de {{ total() }} tutoriales disponibles para su rol.
         </p>
       </div>
 
@@ -100,7 +100,7 @@
     <div class="tutoriales__filtro" appTutorialTarget="tutoriales-busqueda">
       <app-search-field
         label="Buscar un tutorial"
-        placeholder="Qué querés aprender"
+        placeholder="Qué quiere aprender"
         (searched)="buscar($event)"
       />
     </div>
@@ -185,7 +185,7 @@
       <!-- Un vacío que no ofrece salida deja a la persona sin qué hacer: el
            vacío de un listado filtrado casi siempre es culpa del filtro. -->
       <div class="tutoriales__vacio">
-        <p class="tutoriales__nota">Ningún tutorial coincide con lo que buscaste.</p>
+        <p class="tutoriales__nota">Ningún tutorial coincide con lo que buscó.</p>
         <button app-button variant="outline" type="button" (clicked)="limpiarFiltros()">
           Limpiar los filtros
         </button>

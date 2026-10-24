@@ -189,7 +189,7 @@ describe('DoctorVisits', () => {
     const vacio = (fixture.nativeElement as HTMLElement).querySelector(
       '[data-testid="agenda-empty"]',
     );
-    expect(vacio?.textContent).toContain('no recibís visitas de laboratorio');
+    expect(vacio?.textContent).toContain('no recibe visitas de laboratorio');
   });
 
   it('muestra las franjas configuradas de la agenda de visitas', () => {

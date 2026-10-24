@@ -34,31 +34,31 @@ const CAMPOS: readonly CampoDeAspectos[] = [
   {
     clave: 'bloodType',
     rotulo: 'Grupo y factor sanguíneo',
-    ayuda: 'Por ejemplo, O+. Si no lo sabés, dejalo vacío.',
+    ayuda: 'Por ejemplo, O+. Si no lo sabe, déjelo vacío.',
     largo: false,
   },
   {
     clave: 'allergiesText',
     rotulo: 'Alergias',
-    ayuda: 'A medicamentos, alimentos o cualquier otra cosa. Contá qué te pasó.',
+    ayuda: 'A medicamentos, alimentos o cualquier otra cosa. Cuente qué le pasó.',
     largo: true,
   },
   {
     clave: 'currentMedicationsText',
-    rotulo: 'Qué estás tomando',
-    ayuda: 'Incluí lo de venta libre, vitaminas y anticonceptivos.',
+    rotulo: 'Qué está tomando',
+    ayuda: 'Incluya lo de venta libre, vitaminas y anticonceptivos.',
     largo: true,
   },
   {
     clave: 'chronicConditionsText',
     rotulo: 'Enfermedades crónicas',
-    ayuda: 'Lo que llevás hace tiempo: presión, diabetes, tiroides, asma.',
+    ayuda: 'Lo que lleva hace tiempo: presión, diabetes, tiroides, asma.',
     largo: true,
   },
   {
     clave: 'surgeriesText',
     rotulo: 'Cirugías e internaciones',
-    ayuda: 'Qué te operaron y aproximadamente cuándo.',
+    ayuda: 'Qué le operaron y aproximadamente cuándo.',
     largo: true,
   },
   {
@@ -70,7 +70,7 @@ const CAMPOS: readonly CampoDeAspectos[] = [
   {
     clave: 'habitsText',
     rotulo: 'Hábitos',
-    ayuda: 'Tabaco, alcohol, actividad física, cómo comés y cómo dormís.',
+    ayuda: 'Tabaco, alcohol, actividad física, cómo come y cómo duerme.',
     largo: true,
   },
 ];
@@ -203,13 +203,13 @@ export class MedicalAspects {
         // Se pinta lo que el servidor devolvió, no lo que se tipeó: si recortó o
         // normalizó algo, la pantalla tiene que mostrar lo que quedó guardado.
         this.aplicar(aspectos);
-        this.toast.success('Guardamos tus aspectos médicos.');
+        this.toast.success('Guardamos sus aspectos médicos.');
       },
       error: () => {
         this.guardando.set(false);
         // El borrador NO se pierde: si falla la red, lo escrito sigue en pantalla
         // para poder reintentar sin volver a tipearlo.
-        this.toast.error('No pudimos guardar. Lo que escribiste sigue acá: probá de nuevo.');
+        this.toast.error('No pudimos guardar. Lo que escribió sigue acá: pruebe de nuevo.');
       },
     });
   }

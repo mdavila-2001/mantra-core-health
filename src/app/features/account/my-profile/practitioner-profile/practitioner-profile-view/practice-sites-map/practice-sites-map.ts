@@ -134,7 +134,7 @@ export class PracticeSitesMap implements OnDestroy {
   );
 
   protected readonly etiquetaDelMapa = computed(
-    () => `Tus consultorios y sedes en el mapa: ${this.pines().length} ubicados.`,
+    () => `Sus consultorios y sedes en el mapa: ${this.pines().length} ubicados.`,
   );
 
   /** Alternar: volver a tocar el renglón resaltado lo suelta. */

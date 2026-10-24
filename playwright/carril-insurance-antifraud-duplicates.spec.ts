@@ -69,7 +69,7 @@ async function abrirEncuentroDelPaciente(page: Page): Promise<void> {
 
 /** Elige «Laboratorio e imagenología» en el selector de plantilla del formulario clínico. */
 async function abrirLaboratorio(page: Page): Promise<void> {
-  await page.getByLabel('Qué vas a completar').selectOption({ label: 'Laboratorio e imagenología' });
+  await page.getByLabel('Qué va a completar').selectOption({ label: 'Laboratorio e imagenología' });
   await expect(page.getByRole('heading', { name: 'Laboratorio e imagenología' })).toBeVisible();
 }
 
@@ -360,7 +360,7 @@ test.describe('auditoría del reclamo: globo, cláusula y canales (maqueta)', ()
 
     // El call center marca por `tel:` con el número ya limpio: los guiones de
     // «800-10-0101» dejan muerto el enlace en un navegador que respeta el RFC.
-    const callCenter = page.getByTestId('btn-callcenter-claim');
+    const callCenter = page.getByTestId('btn-call-center-phone');
     await expect(callCenter).toBeVisible();
     expect(await callCenter.getAttribute('href')).toBe('tel:800100101');
     await expect(callCenter).toContainText('800-10-0101');

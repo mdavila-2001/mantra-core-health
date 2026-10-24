@@ -39,6 +39,15 @@ class AlmacenFalso {
   clear(): void {
     this.value = null;
   }
+
+  /** La organización recordada por persona (TX-11): el login la consulta al abrir. */
+  readSelectedTenant(): string | null {
+    return null;
+  }
+
+  writeSelectedTenant(): void {
+    /* no-op */
+  }
 }
 
 describe('Login', () => {

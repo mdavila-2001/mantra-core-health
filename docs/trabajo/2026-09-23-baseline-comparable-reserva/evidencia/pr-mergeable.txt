@@ -1,0 +1,70 @@
+Estado de los dos PRs de esta entrega (regla 35.2). Salida literal de `gh`.
+Capturado el 2026-09-24 06:05 UTC.
+
+================================================================
+mantra-core-health #610 -> mockup   (spec, mediciones y capturas)
+================================================================
+
+$ gh pr view 610 --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName
+{"baseRefName":"mockup","headRefName":"justin/baseline-historico-reserva-2026-09-23","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":610,"reviewDecision":"","url":"https://github.com/mdavila-2001/mantra-core-health/pull/610"}
+
+$ gh pr checks 610
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35962183691/job/107512931073	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35962183691/job/107512931313	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35962183691/job/107512931340	
+
+$ gh run view 35962183691 --json status,jobs
+{"jobs":[{"conclusion":"","name":"dependencias","status":"queued"},{"conclusion":"","name":"e2e","status":"queued"},{"conclusion":"","name":"verificar","status":"queued"}],"status":"queued"}
+
+----------------------------------------------------------------
+Los tres checks estan ENCOLADOS, no fallando, y no es este PR:
+todos los PR abiertos del repositorio estan igual, el mas viejo
+desde hace mas de una hora. Clasificado como causa externa
+(regla 80.4); coincide con lo que dice el CLAUDE.md del repo:
+"El CI propio esta caido; los check-*.mjs se corren a mano".
+----------------------------------------------------------------
+
+$ gh pr checks 607
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35953507854/job/107486843091	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35953507854/job/107486843303	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35953507854/job/107486843241	
+
+$ gh pr checks 606
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35940449863/job/107446961423	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35940449863/job/107446961434	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35940449863/job/107446961169	
+
+$ gh pr checks 605
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35937186707/job/107436734803	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35937186707/job/107436735028	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35937186707/job/107436735066	
+
+$ gh pr checks 604
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35936432808/job/107434397991	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35936432808/job/107434398216	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35936432808/job/107434398221	
+
+================================================================
+AlovidaPromptManager #38 -> main   (dailies y reporte de cierre)
+================================================================
+
+$ gh pr view 38 --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName
+{"baseRefName":"main","headRefName":"justin/cerrar-baseline-comparable-reserva-2026-09-24","isDraft":false,"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE","number":38,"reviewDecision":"","url":"https://github.com/PabloArauzCaballero/AlovidaPromptManager/pull/38"}
+
+$ gh pr checks 38
+Espejo sin deriva y candados en verde	pass	8s	https://github.com/PabloArauzCaballero/AlovidaPromptManager/actions/runs/35962400775/job/107513599032	
+
+================================================================
+Guardrails corridos a mano, porque el CI del front no arranca
+================================================================
+
+$ node scripts/check-tokens.mjs          exit 0
+$ node scripts/check-architecture.mjs    exit 1  -- 3 dependencias circulares, todas en src/app/core/mock/fixtures/
+$ node scripts/check-css-tokens.mjs      exit 1  -- 4 tokens sin declarar en src/app/features/ y src/app/shared/
+$ node scripts/check-doc-coverage.mjs    exit 1  -- 13 hallazgos, ninguno de esta carpeta
+$ node scripts/check-doc-links.mjs       exit 1  -- 10 enlaces rotos en docs/tareas/subtarea-2.4-transparencia-copagos/
+
+Los cuatro rojos caen enteros fuera del diff de este PR, que son
+dos cosas: playwright/baseline-comparable-reserva.spec.ts y
+docs/trabajo/2026-09-23-baseline-comparable-reserva/. Ninguno
+nombra un archivo de los que este PR agrega o modifica.

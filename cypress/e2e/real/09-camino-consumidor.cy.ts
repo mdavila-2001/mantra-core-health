@@ -144,7 +144,7 @@ describe('Recorrido real · el camino del consumidor', () => {
    * vaya.
    */
   function portalQuieto(): void {
-    cy.contains(/buscando tus turnos|buscando horarios libres/i, { timeout: 20_000 }).should(
+    cy.contains(/buscando sus citas|buscando horarios libres/i, { timeout: 20_000 }).should(
       'not.exist',
     );
   }
@@ -169,7 +169,7 @@ describe('Recorrido real · el camino del consumidor', () => {
     // también es un `app-alert`: esperar a que se vaya es lo que separa
     // «todavía no preguntó» de «preguntó y no hay». Recién después, a que la
     // búsqueda termine.
-    cy.contains(/eleg[íi] con qui[ée]n te quer[ée]s atender/i, { timeout: 20_000 }).should(
+    cy.contains(/elija con qui[ée]n se quiere atender/i, { timeout: 20_000 }).should(
       'not.exist',
     );
     portalQuieto();
@@ -195,7 +195,7 @@ describe('Recorrido real · el camino del consumidor', () => {
           },
           { log: false },
         );
-        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir un turno' }, 'sin-horarios');
+        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir una cita' }, 'sin-horarios');
         return;
       }
 
@@ -218,12 +218,12 @@ describe('Recorrido real · el camino del consumidor', () => {
       // «Elegí primero un horario» con el cupo ya retenido a nombre de la
       // persona, invisible. Cuando lo arreglen, el camino feliz corre solo.
       cy.get(
-        'app-alert:contains("Cupo retenido"), app-alert:contains("Elegí primero un horario")',
+        'app-alert:contains("Cupo retenido"), app-alert:contains("Elija primero un horario")',
         { timeout: 20_000 },
       ).should('exist');
 
       cy.get('body').then(($tras) => {
-        if ($tras.find('app-alert:contains("Elegí primero un horario")').length > 0) {
+        if ($tras.find('app-alert:contains("Elija primero un horario")').length > 0) {
           cy.task(
             'anotarOmision',
             {
@@ -231,7 +231,7 @@ describe('Recorrido real · el camino del consumidor', () => {
               motivo:
                 'DEFECTO (no falta de datos): «Retener el cupo» dispara el submit nativo — el ' +
                 'hold se crea (201) pero la recarga pierde los query params y la pantalla ' +
-                'vuelve a «Elegí primero un horario». El form de booking-new.html:90 no tiene ' +
+                'vuelve a «Elija primero un horario». El form de booking-new.html:90 no tiene ' +
                 'directiva de formulario que intercepte el submit. El ciclo retener → ' +
                 'confirmar queda bloqueado por pantalla.',
             },
@@ -254,7 +254,7 @@ describe('Recorrido real · el camino del consumidor', () => {
           'have.length.at.least',
           1,
         );
-        cy.contains(/todav[íi]a no ten[ée]s turnos/i).should('not.exist');
+        cy.contains(/todav[íi]a no tiene citas/i).should('not.exist');
         capturar({ carpeta: 'consumidor-03-turno', titulo: 'Mis turnos' }, 'turno-confirmado');
       });
     });
@@ -297,15 +297,13 @@ describe('Recorrido real · el camino del consumidor', () => {
     estable();
     portalQuieto();
     // El portal abre en «Mis citas» y pedir un turno es la otra sección: antes
-    // estaban apiladas y había que bajar hasta el fondo para pedir hora.
-    cy.get('[data-testid="turnos-secciones"] [data-value="citas"]').should(
-      'have.attr',
-      'aria-checked',
-      'true',
-    );
+    // estaban apiladas y había que bajar hasta el fondo para pedir hora. El
+    // mismo botón del encabezado cambia de una a la otra, sin scrollear.
+    cy.get('section[aria-labelledby="turnos-propios"]').should('exist');
+    cy.get('[data-testid="turnos-pedir"]').should('have.text', 'Pedir una cita');
     capturar({ carpeta: 'consumidor-02-portal', titulo: 'Mis turnos' }, 'al-entrar');
 
-    cy.get('[data-testid="turnos-secciones"] [data-value="pedir"]').click();
+    cy.get('[data-testid="turnos-pedir"]').click();
     portalQuieto();
 
     // ¿La sección ofrece agendas? El selector aparece cuando los recursos
@@ -324,7 +322,7 @@ describe('Recorrido real · el camino del consumidor', () => {
           },
           { log: false },
         );
-        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir un turno' }, 'sin-agendas');
+        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir una cita' }, 'sin-agendas');
         return;
       }
       pedirYConfirmarUnTurno();
@@ -335,13 +333,13 @@ describe('Recorrido real · el camino del consumidor', () => {
     if (tramoActivo('TRAMO_E1_CANCELAR')) {
       throw new Error(
         'TRAMO_E1_CANCELAR está activo, pero la pantalla de cancelar del portal todavía no ' +
-          'está en dev: extendé este bloque cuando entre el merge de E1.',
+          'está en dev: extienda este bloque cuando entre el merge de E1.',
       );
     }
     anotarTramoApagado(
       'TRAMO_E1_CANCELAR',
       'Mis turnos',
-      'cancelar el turno recién confirmado y ver el cupo volver a la grilla',
+      'cancelar la cita recién confirmado y ver el cupo volver a la grilla',
     );
 
     // ── 5. Subir la evidencia de identidad ─────────────────────────────────

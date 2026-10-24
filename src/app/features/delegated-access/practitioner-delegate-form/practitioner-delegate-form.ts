@@ -76,7 +76,7 @@ export class PractitionerDelegateForm {
     },
     {
       titulo: 'Alcance',
-      hint: 'Qué rol cumple el delegado y hasta dónde llega. Lo que no elijas lo completa el backend.',
+      hint: 'Qué rol cumple el delegado y hasta dónde llega. Lo que no elija lo completa el backend.',
       campos: [
         { key: 'delegateRole', label: 'Rol del delegado', control: 'radio', options: [{ value: 'ASSISTANT', label: 'Asistente' }, { value: 'SECRETARY', label: 'Secretaría' }, { value: 'NURSE', label: 'Enfermería' }] },
         { key: 'patientScope', label: 'Alcance de pacientes', control: 'radio', options: [{ value: 'ASSIGNED', label: 'Solo los asignados' }, { value: 'ALL', label: 'Todos' }] },
@@ -125,7 +125,7 @@ export class PractitionerDelegateForm {
   protected readonly created = signal<CreatedResource | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para crear delegaciones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para crear delegaciones.'),
   );
 
   protected submit(): void {

@@ -1,0 +1,9 @@
+CONSULTED_UTC=2026-10-05T17:51:58Z
+COMMAND: gh pr view 960 --json number,url,state,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName,headRefOid
+{"baseRefName":"dev","headRefName":"marcelo/insurer-patient-directory-dev","headRefOid":"0037e10a8a604b1190134537a0075704eac2140c","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":960,"reviewDecision":"","state":"OPEN","url":"https://github.com/mdavila-2001/mantra-core-health/pull/960"}
+VIEW_EXIT_CODE=0
+COMMAND: gh pr checks 960
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/37351363240/job/111902740783	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/37351363240/job/111902740707	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/37351363240/job/111902741177	
+CHECKS_EXIT_CODE=8

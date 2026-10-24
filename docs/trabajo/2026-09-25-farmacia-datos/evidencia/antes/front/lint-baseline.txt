@@ -1,0 +1,42 @@
+  14:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  27:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\components\organisms\side-nav\side-nav.spec.ts
+  28:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  31:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\components\organisms\specialty-browser\specialty-browser.spec.ts
+  43:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  46:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\components\organisms\status-seal\status-seal.spec.ts
+  16:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\components\organisms\tenant-switcher\tenant-switcher.spec.ts
+  12:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\components\organisms\view-state-host\view-state-host.spec.ts
+  20:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\forms\file-drop-target.spec.ts
+  5:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\forms\value-accessor-groups.spec.ts
+  14:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\forms\value-accessor.spec.ts
+  15:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  42:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\motion\motion.spec.ts
+  52:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\src\app\shared\motion\pointer-scene.spec.ts
+  42:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+✖ 252 problems (252 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+
+EXIT:1
+
+[exited with code 0]

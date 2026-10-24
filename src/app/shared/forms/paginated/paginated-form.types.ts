@@ -98,6 +98,8 @@ export type TipoDeControl =
   | 'textarea'
   | 'custom';
 
+import type { CondicionVisible } from './visibilidad-condicional';
+
 /** Un campo del formulario, tal como el motor necesita conocerlo para pintarlo. */
 export interface CampoDeFormulario {
   /**
@@ -173,6 +175,16 @@ export interface CampoDeFormulario {
    * guardado—.
    */
   readonly otro?: boolean;
+
+  /**
+   * Cuándo se muestra el campo: si el control `key` vale `equals` (ver
+   * `visibilidad-condicional.ts`). Es lo que pone «¿cuál?» debajo de un «sí».
+   *
+   * Oculto, el motor **deshabilita** su control: no se dibuja, su `required` no
+   * frena «Siguiente» y su valor no sale en `form.value`. Una página que se
+   * queda sin campos visibles se salta.
+   */
+  readonly showWhen?: CondicionVisible;
 
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;

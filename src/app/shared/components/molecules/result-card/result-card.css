@@ -167,3 +167,79 @@
 .tarjeta-resultado__pie:empty {
     display: none;
 }
+
+/* ---- foto --------------------------------------------------------------- */
+
+/* En grilla la foto sangra hasta los bordes de la tarjeta: los márgenes
+   negativos comen el padding del host, y el radio superior copia el de la
+   tarjeta para que la esquina no asome cuadrada. 16:9 porque es como se
+   recortan los archivos de `public/alovida/directorio/`. */
+.tarjeta-resultado__foto {
+    position: relative;
+    display: block;
+    margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-1);
+    aspect-ratio: 16 / 9;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    background: var(--bg-inset);
+    overflow: hidden;
+}
+
+.tarjeta-resultado__foto img {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform var(--dur-slow, 300ms) var(--ease-standard);
+}
+
+:host(:hover) .tarjeta-resultado__foto img {
+    transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host(:hover) .tarjeta-resultado__foto img {
+        transform: none;
+    }
+}
+
+/* ---- vista de lista ------------------------------------------------------ */
+
+/* Dos columnas: la imagen a la izquierda, ocupando todas las filas, y todo lo
+   demás apilado a la derecha. La foto no aporta alto propio (su `img` es
+   absoluto): la fila la manda el texto, y la foto se estira hasta cubrirla. */
+:host(.tarjeta-resultado--lista) {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    align-content: center;
+    column-gap: var(--sp-4);
+    row-gap: var(--sp-1);
+}
+
+:host(.tarjeta-resultado--lista) > * {
+    grid-column: 2;
+}
+
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__foto {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    align-self: stretch;
+    aspect-ratio: auto;
+    min-block-size: 6.5rem;
+    margin: calc(var(--sp-4) * -1) 0 calc(var(--sp-4) * -1) calc(var(--sp-4) * -1);
+    border-radius: var(--r-lg) 0 0 var(--r-lg);
+}
+
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__figura {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    align-self: start;
+}
+
+@media (max-width: 30rem) {
+    :host(.tarjeta-resultado--lista) {
+        grid-template-columns: 6rem minmax(0, 1fr);
+        column-gap: var(--sp-3);
+    }
+}

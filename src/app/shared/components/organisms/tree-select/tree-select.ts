@@ -122,7 +122,7 @@ export class TreeSelect<T> {
   /** Lo que dice el disparador cuando no hay nada elegido. */
   readonly placeholder = input<string>('Sin especificar');
   /** Titular del diálogo. Describe la tarea, no el campo. */
-  readonly dialogTitle = input<string>('Elegí una opción');
+  readonly dialogTitle = input<string>('Elija una opción');
   /** Pista dentro del cuadro de búsqueda. */
   readonly searchPlaceholder = input<string>('Buscar…');
   /** Qué decir cuando la búsqueda no encuentra nada. */

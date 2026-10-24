@@ -1,0 +1,5 @@
+$ yarn test --watch=false (18 specs dirigidos del hito, serial)
+ Test Files  18 passed (18)
+      Tests  417 passed (417)
+   Duration  40.79s (transform 13.72s, setup 6.89s, import 29.87s, tests 27.87s, environment 406.81s)
+exit=0

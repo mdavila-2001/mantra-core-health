@@ -7,6 +7,11 @@ import type {
 /**
  * La presentación de los estados DEL LADO DEL MOSTRADOR (FAR-I3).
  *
+ * Los rótulos de seis de ellos siguen el vocabulario del mockup del cliente
+ * (29/09/2026): Pendiente · Revisión de receta · En preparación · Listo para
+ * retiro · Finalizada · Cancelada. Sólo cambia la palabra: los códigos de
+ * `EstadoDePedido` son el contrato y no se tocan.
+ *
  * `pedido-status.ts` (FAR-I2) le habla al paciente («La farmacia todavía no
  * abrió tu pedido»); esta tabla le habla a quien atiende («Nadie lo abrió
  * todavía»). Mismo criterio: el código del contrato es la identidad y jamás
@@ -23,43 +28,43 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, BandejaStatusPres
   Object.freeze({
     ENVIADO: {
       tone: 'info',
-      label: 'Nuevo',
-      descripcion: 'Nadie lo abrió todavía. Abrilo para empezar a revisarlo.',
+      label: 'Pendiente',
+      descripcion: 'Nadie lo abrió todavía. Ábralo para empezar a revisarlo.',
     },
     EN_REVISION: {
       tone: 'info',
-      label: 'En revisión',
-      descripcion: 'Lo estás revisando: confirmá, proponé una alternativa o rechazalo.',
+      label: 'Revisión de receta',
+      descripcion: 'Lo está revisando: confirme, proponga una alternativa o recháselo.',
     },
     CONFIRMADO: {
       tone: 'success',
       label: 'En preparación',
-      descripcion: 'Confirmado. Cuando esté armado, marcalo como listo.',
+      descripcion: 'Confirmado. Cuando esté armado, márquelo como listo.',
     },
     ACEPTACION_PENDIENTE: {
       tone: 'warning',
       label: 'Esperando al paciente',
-      descripcion: 'Le propusiste una alternativa. La decisión es suya.',
+      descripcion: 'Le propuso una alternativa. La decisión es suya.',
     },
     ACEPTADO: {
       tone: 'success',
       label: 'Propuesta aceptada',
-      descripcion: 'Aceptó la alternativa. Seguí preparando el pedido.',
+      descripcion: 'Aceptó la alternativa. Siga preparando el pedido.',
     },
     LISTO_PARA_RETIRO: {
       tone: 'success',
-      label: 'Esperando el retiro',
+      label: 'Listo para retiro',
       descripcion: 'El pedido espera en el mostrador con su código de retiro.',
     },
     RETIRADO: {
       tone: 'secondary',
-      label: 'Entregado',
+      label: 'Finalizada',
       descripcion: 'El pedido salió completo.',
     },
     RECHAZADO: {
       tone: 'error',
       label: 'Rechazado',
-      descripcion: 'Lo rechazaste; el paciente ve el motivo en palabras.',
+      descripcion: 'Lo rechazó; el paciente ve el motivo en palabras.',
     },
     VENCIDO: {
       tone: 'warning',
@@ -68,7 +73,7 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, BandejaStatusPres
     },
     CANCELADO: {
       tone: 'error',
-      label: 'Cancelado',
+      label: 'Cancelada',
       descripcion: 'El paciente canceló el pedido.',
     },
   });
@@ -91,7 +96,7 @@ const DESCRIPCION_SI_SALE_POR_REPARTO: Readonly<Partial<Record<EstadoDePedido, s
     // ofrece «Marcar listo para retirar» sólo si el pedido se retira.
     CONFIRMADO: 'Confirmado. Este pedido sale por reparto, no se retira en el mostrador.',
     ACEPTADO:
-      'Aceptó la alternativa. Seguí preparándolo: sale por reparto, no se retira en el mostrador.',
+      'Aceptó la alternativa. Siga preparándolo: sale por reparto, no se retira en el mostrador.',
     // Y el estado en el que el detalle pide el código de retiro, que un
     // pedido de reparto no tiene a quién pedírselo.
     LISTO_PARA_RETIRO: 'El pedido está armado y sale por reparto; nadie lo retira del mostrador.',
@@ -118,10 +123,9 @@ export function toBandejaStatusPresentation(
 }
 
 /**
- * Los grupos de la bandeja, en el orden de la tarjeta: los cuatro primeros
- * a la vista —los nuevos arriba y destacados— y el resto plegado. «En
- * preparación» va al pliegue porque su siguiente paso no corre contra el
- * reloj de nadie; las cuatro colas visibles sí.
+ * Los grupos de la bandeja, en el orden de la tarjeta: una columna del tablero
+ * cada uno, de lo que corre contra el reloj (los nuevos arriba y destacados) a
+ * lo que ya terminó.
  */
 export const GRUPOS_DE_BANDEJA = [
   'NUEVOS',
@@ -133,9 +137,6 @@ export const GRUPOS_DE_BANDEJA = [
 ] as const;
 
 export type GrupoDeBandeja = (typeof GRUPOS_DE_BANDEJA)[number];
-
-/** Cuántos grupos del orden anterior se muestran desplegados. */
-export const GRUPOS_A_LA_VISTA = 4;
 
 const ETIQUETA_DE_GRUPO: Readonly<Record<GrupoDeBandeja, string>> = Object.freeze({
   NUEVOS: 'Nuevos',

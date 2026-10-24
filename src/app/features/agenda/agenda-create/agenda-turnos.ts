@@ -25,6 +25,12 @@ export interface Franja {
    * ninguna pantalla que no lo pida nota nada.
    */
   readonly receso?: number;
+  /**
+   * Hasta dónde puede estirarse el último turno, `HH:MM`: el inicio de la
+   * franja siguiente del mismo día (la tarde, después del almuerzo). Sin tope,
+   * el último turno se completa aunque pase la hora de fin.
+   */
+  readonly tope?: string;
 }
 
 /** Un turno concreto, en hora de pared. */
@@ -107,9 +113,14 @@ function calcularDia(franja: Franja): DiaCalculado {
   const paso = franja.duracion + receso;
 
   const turnos: Turno[] = [];
-  // El último turno no necesita respiro después: entra si su CONSULTA entra.
-  // Por eso el corte es sobre `desde + duración`, no sobre el paso completo.
-  for (let desde = inicio; desde + franja.duracion <= fin; desde += paso) {
+  // Redondeo hacia adelante (propietario, 04/10/2026): todo turno que EMPIEZA
+  // dentro de la franja se completa, aunque termine después de la hora de fin
+  // —cada hora le cuesta dinero al médico—. El único tope es la franja
+  // siguiente del día: el turno estirado no la pisa. Es la misma regla que
+  // `generate-slots` en la API.
+  const tope = franja.tope === undefined ? null : enMinutos(franja.tope);
+  for (let desde = inicio; desde < fin; desde += paso) {
+    if (tope !== null && desde + franja.duracion > tope) break;
     turnos.push({
       desde: enTexto(desde),
       hasta: enTexto(desde + franja.duracion),
@@ -123,9 +134,10 @@ function calcularDia(franja: Franja): DiaCalculado {
 
   // El resto se mide desde el FIN del último turno: el aire de los recesos ya
   // está contado adentro del paso, y lo que sobra al final es lo único que el
-  // médico podría querer reacomodar.
+  // médico podría querer reacomodar. Con el redondeo hacia adelante el último
+  // turno puede pasar la hora de fin: ahí no sobra nada.
   const finUltimo = enMinutos(turnos[turnos.length - 1].hasta) ?? fin;
-  const resto = fin - finUltimo;
+  const resto = Math.max(0, fin - finUltimo);
   return {
     dia: franja.dia,
     turnos,

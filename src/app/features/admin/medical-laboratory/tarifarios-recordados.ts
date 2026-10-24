@@ -49,6 +49,23 @@ export class TarifariosRecordados {
     this.espejar();
   }
 
+  /**
+   * Olvida todo lo recordado, en memoria y en la pestaña (TX-31). Lo corre
+   * `AuthService.logout` vía `SESSION_CLEANERS`.
+   */
+  olvidar(): void {
+    this.porUnidad.clear();
+    this.hidratado = false;
+    if (!this.esNavegador) {
+      return;
+    }
+    try {
+      sessionStorage.removeItem(CLAVE);
+    } catch {
+      // Bloqueado: no hay nada que borrar ni forma de hacerlo.
+    }
+  }
+
   /** Lo recordado para esa unidad, en el orden en que se fue creando. */
   deLaUnidad(unitId: string): readonly TarifarioDeLaUnidad[] {
     this.hidratar();

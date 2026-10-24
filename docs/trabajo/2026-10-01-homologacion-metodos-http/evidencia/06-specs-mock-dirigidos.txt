@@ -1,0 +1,107 @@
+$ yarn test --watch=false --include=mock-backend.spec.ts --include=clinical.handlers.spec.ts --include=scheduling.handlers.spec.ts --include=practice.handlers.spec.ts --include=pharmacy.handlers.spec.ts --include=community-gaps.handlers.spec.ts
+✓ src/app/features/component-stock/component-index.generated.ts
+  596 componentes · 3 otros · 351 pantallas · 138 maquetas · 23 atomos · 46 moleculas · 35 organismos
+  208 con algo que mirar
+  relaciones: 2596 template-instantiates · 5 imports-available sin instanciar · 69 type-only · 229 dynamic-loads
+  nivel: 0 declarado · 596 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 596/596 · con escenario 3/596 · verificados visualmente 3/596 · bloqueados 80/596 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                    | Names                                               |  Raw size
+chunk-K2FTQVSX.js                                      | -                                                   |   1.01 MB | 
+chunk-XVOBKNUH.js                                      | -                                                   | 796.50 kB | 
+chunk-2R7AIVEF.js                                      | -                                                   | 748.29 kB | 
+chunk-LXGAJRBG.js                                      | -                                                   | 509.87 kB | 
+chunk-C4QTIC3F.js                                      | -                                                   | 271.32 kB | 
+chunk-P5T52PAM.js                                      | -                                                   | 209.07 kB | 
+styles.css                                             | styles                                              | 166.42 kB | 
+chunk-LOAQU2SW.js                                      | -                                                   | 103.08 kB | 
+chunk-IHWA6B5Q.js                                      | -                                                   |  40.23 kB | 
+spec-app-core-mock-handlers-pharmacy.handlers.js       | spec-app-core-mock-handlers-pharmacy.handlers       |  22.48 kB | 
+spec-app-core-mock-handlers-clinical.handlers.js       | spec-app-core-mock-handlers-clinical.handlers       |  17.10 kB | 
+spec-app-core-mock-handlers-scheduling.handlers.js     | spec-app-core-mock-handlers-scheduling.handlers     |  15.20 kB | 
+spec-app-core-mock-mock-backend.js                     | spec-app-core-mock-mock-backend                     |  14.68 kB | 
+chunk-AGYSZTRA.js                                      | -                                                   |  11.61 kB | 
+spec-app-core-mock-handlers-community-gaps.handlers.js | spec-app-core-mock-handlers-community-gaps.handlers |   5.70 kB | 
+chunk-HZXEPMDQ.js                                      | -                                                   |   5.27 kB | 
+spec-app-core-mock-handlers-practice.handlers.js       | spec-app-core-mock-handlers-practice.handlers       |   1.28 kB | 
+init-testbed.js                                        | init-testbed                                        |   1.21 kB | 
+vitest-mock-patch.js                                   | vitest-mock-patch                                   | 974 bytes | 
+setup-test-setup.js                                    | setup-test-setup                                    | 911 bytes | 
+
+                                                       | Initial total                                       |   3.95 MB
+
+Lazy chunk files                                       | Names                                               |  Raw size
+chunk-JUJGJ5GX.js                                      | agenda                                              |   1.04 kB | 
+
+Application bundle generation complete. [111.318 seconds] - 2026-10-01T14:44:23.627Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 D:/Trabajos Secundarios/Mantra Core Technologies/mantra-core-health
+
+(node:29416) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29416) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29416) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29416) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  6 passed (6)
+      Tests  133 passed (133)
+   Start at  10:44:29
+   Duration  42.81s (transform 16.03s, setup 7.39s, import 37.94s, tests 5.25s, environment 150.62s)
+
+exit=0

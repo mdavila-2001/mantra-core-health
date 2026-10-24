@@ -1,6 +1,6 @@
 <app-page-header
   title="Intervenciones"
-  subtitle="Lo que hay programado y lo que te toca confirmar."
+  subtitle="Lo que hay programado y lo que le toca confirmar."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -48,7 +48,7 @@
                     {{ etiquetaDe(integrante.statusConceptId) }}
                   </span>
                   @if (esMio(integrante)) {
-                    <span class="intervenciones__marca">Sos vos</span>
+                    <span class="intervenciones__marca">Es usted</span>
                   }
                 </div>
 
@@ -91,7 +91,7 @@
         }
         @default {
           <app-alert tone="error" title="No pudimos leer el equipo">
-            Volvé a abrir la intervención para reintentar.
+            Vuelva a abrir la intervención para reintentar.
           </app-alert>
         }
       }
@@ -103,13 +103,13 @@
       @if (respondiendo(); as integrante) {
         <div class="intervenciones__respuesta">
           <h3 class="intervenciones__respuesta-titulo">
-            Tu respuesta como {{ etiquetaDe(integrante.teamRoleConceptId) }}
+            Su respuesta como {{ etiquetaDe(integrante.teamRoleConceptId) }}
           </h3>
 
           <app-select
             [options]="respuestas"
             [value]="respuestaElegida()"
-            ariaLabel="Qué respondés"
+            ariaLabel="Qué responde"
             (valueChange)="elegirRespuesta($event)"
           />
 

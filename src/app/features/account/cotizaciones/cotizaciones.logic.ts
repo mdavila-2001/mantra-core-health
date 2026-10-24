@@ -1,19 +1,51 @@
+import type {
+  CartLine,
+  CartSite,
+} from '../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
+
 /** Las cuatro verticales explícitas de Cotizaciones del paciente. */
 export type VerticalCotizacion =
-  | 'TODAS'
-  | 'MEDICAMENTOS'
-  | 'ANALISIS'
-  | 'IMAGENOLOGIA'
-  | 'SERVICIOS_MEDICOS';
+  'TODAS' | 'MEDICAMENTOS' | 'ANALISIS' | 'IMAGENOLOGIA' | 'SERVICIOS_MEDICOS';
 
 /** La orden que puede elegir la persona. */
 export type OrdenCotizacion = 'PRECIO' | 'CERCANIA';
 
-/** Un precio publicado con su unidad y procedencia; `null` significa no publicado. */
+/**
+ * Un precio publicado con su unidad y procedencia; `null` significa no publicado.
+ *
+ * `currency` es el código que trae la fuente (`BOB`, `USD`, `UMA`…) y se
+ * muestra tal cual: UMA no es una moneda y nada acá la convierte.
+ */
 export interface PrecioPublicado {
   readonly amount: number;
-  readonly currency: 'BOB' | 'UMA';
+  readonly currency: string;
   readonly source: string;
+}
+
+/** A dónde lleva la fila: una pantalla existente, con ícono + texto. */
+export interface AccionDeCotizacion {
+  readonly etiqueta: string;
+  readonly ruta: string;
+}
+
+/**
+ * Lo que hace falta para poner un medicamento en el carrito desde la fila: la
+ * sede a la que queda atado y la línea sin cantidad, con la misma forma que
+ * arma «Agregar» en la búsqueda de Farmacia (`product-results.ts`).
+ */
+export interface CarritoDeCotizacion {
+  readonly sede: CartSite;
+  readonly linea: Omit<CartLine, 'quantity'>;
+}
+
+/**
+ * Lo que hace falta para pedir un horario para un estudio: el centro (cuya
+ * agenda se abre) y el estudio, que viaja como motivo de la reserva.
+ */
+export interface ReservaDeCotizacion {
+  readonly centroId: string;
+  readonly centro: string;
+  readonly estudio: string;
 }
 
 /** La fila normalizada que una fuente existente entrega a la pantalla. */
@@ -24,11 +56,26 @@ export interface CotizacionResultado {
   readonly donde: string;
   readonly price: PrecioPublicado | null;
   readonly distanceKm: number | null;
+  /** Quién no publicó el precio, dicho para la persona, cuando `price` es `null`. */
+  readonly sinPrecio?: string;
+  /** Por qué no hay distancia, dicho para la persona («no aplica», «no publicó su ubicación»). */
+  readonly sinDistancia?: string;
+  /** Aviso sobre la fila misma (p. ej. texto de un escaneo por revisar). */
+  readonly advertencia?: string;
+  readonly accion?: AccionDeCotizacion;
+  /** Medicamento de venta libre con precio: se agrega al carrito ahí mismo. */
+  readonly carrito?: CarritoDeCotizacion;
+  /** Análisis o imagen: se reserva un horario en la agenda del centro. */
+  readonly reserva?: ReservaDeCotizacion;
 }
 
 /** Quita tildes, espacios laterales y diferencias de mayúscula antes de comparar. */
 export function normalizarCotizacion(texto: string): string {
-  return texto.normalize('NFD').replace(/[\u0300-\u036f]/gu, '').toLocaleLowerCase('es').trim();
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLocaleLowerCase('es')
+    .trim();
 }
 
 /** Aplica la búsqueda y vertical sin mutar la fuente. */
@@ -64,10 +111,16 @@ export function ordenarResultados(
   if (orden === 'CERCANIA' && !hasOrigin) {
     return [...resultados];
   }
-  return [...resultados].sort((izquierda, derecha) =>
-    orden === 'PRECIO'
-      ? compararPrecio(izquierda, derecha)
-      : compararDistancia(izquierda, derecha),
+  // Desempate estable: a igual distancia manda el precio, a igual precio la
+  // distancia, y al final el nombre y el id. Sin esto, cinco sedes a 0,4 km
+  // salían en el orden en que las devolvió la fuente (regla 96.6.2).
+  return [...resultados].sort(
+    (izquierda, derecha) =>
+      (orden === 'PRECIO'
+        ? compararPrecio(izquierda, derecha) || compararDistancia(izquierda, derecha)
+        : compararDistancia(izquierda, derecha) || compararPrecio(izquierda, derecha)) ||
+      izquierda.que.localeCompare(derecha.que, 'es') ||
+      izquierda.id.localeCompare(derecha.id),
   );
 }
 

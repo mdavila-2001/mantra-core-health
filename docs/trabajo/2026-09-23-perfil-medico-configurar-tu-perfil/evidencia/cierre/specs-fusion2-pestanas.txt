@@ -1,0 +1,85 @@
+$ yarn ng test --watch=false --include=src/app/features/account/my-profile/pestanas-del-perfil-medico.spec.ts   # 2026-09-24, tras integrar mockup @ d6becdd0
+Using Vitest configuration file: <repo>\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                               [2m | [22m[1mNames[22m                                                          [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m                                                        [2m | [22m[2mstyles[22m                                                         [2m | [22m[36m166.29 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-pestanas-del-perfil-medico.js[39m[2m | [22m[2mspec-app-features-account-my-profile-pestanas-del-perfil-medico[22m[2m | [22m [36m10.95 kB[39m[2m | [22m
+[32mchunk-CGZBV6BD.js[39m                                                 [2m | [22m[2m-[22m                                                              [2m | [22m  [36m4.07 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                   [2m | [22m[2minit-testbed[22m                                                   [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                              [2m | [22m[2mvitest-mock-patch[22m                                              [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                               [2m | [22m[2msetup-test-setup[22m                                               [2m | [22m[36m911 bytes[39m[2m | [22m
+
+[1m [22m                                                                 [2m | [22m[1mInitial total[22m                                                  [2m | [22m[1m184.40 kB[22m
+
+[1mLazy chunk files[22m                                                  [2m | [22m[1mNames[22m                                                          [2m | [22m [1mRaw size[22m
+[32mchunk-XOPJXVIQ.js[39m                                                 [2m | [22m[2mpestanas-del-perfil[22m                                            [2m | [22m[36m565 bytes[39m[2m | [22m
+
+Application bundle generation complete. [77.735 seconds] - 2026-09-25T02:44:06.576Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:118:39:
+[37m      118 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:118:62:
+[37m      118 │ ...AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+          ╵                                               [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m<repo>[39m
+
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m12 passed[39m[22m[90m (12)[39m
+[2m   Start at [22m 22:44:07
+[2m   Duration [22m 1.68s[2m (transform 72ms, setup 459ms, import 53ms, tests 19ms, environment 926ms)[22m
+
+exit=0

@@ -1,17 +1,21 @@
 # Estado del frontend
 
-Foto de la rama al **2026-08-01**. Sirve para orientarse antes de revisar el código y para saber
-qué falta. Se actualiza cuando cambia el estado, no en cada commit.
+Foto de la rama al **2026-08-01**, con una corrección puntual del 2026-09-26 (CV-21: la superficie
+de `mockBackend` no era la que este documento describía). Sirve para orientarse antes de revisar el
+código y para saber qué falta. Se actualiza cuando cambia el estado, no en cada commit.
 
 ---
 
 ## En una línea
 
 **La aplicación se usa de punta a punta.** Se entra con una cuenta real, la sesión sobrevive a
-recargar, se sale —y el cierre revoca de verdad del lado del servidor—, y todo lo que se ve viene de
-la API: nada está simulado. **772 pruebas en verde sobre 65 archivos**, `yarn build` con SSR y
-prerender en verde, y **21 pasos verificados en un navegador real** contra la API viva (el recorrido
-está al final).
+recargar, se sale —y el cierre revoca de verdad del lado del servidor—, y el recorrido descrito acá
+se verificó contra la API real, bajo las configuraciones `production-api`/`real-api`
+(`mockBackend: false`). **La configuración por defecto de `ng serve`
+(`environment.development.ts`) sigue con `mockBackend: true`**: quien abra la app con `yarn start`
+sin más ve datos simulados, no la API. **772 pruebas en verde sobre 65 archivos**, `yarn build` con
+SSR y prerender en verde, y **21 pasos verificados en un navegador real** contra la API viva (el
+recorrido está al final, corrido con `real-api`/`production-api`).
 
 ---
 

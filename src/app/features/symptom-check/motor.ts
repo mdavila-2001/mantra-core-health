@@ -141,6 +141,14 @@ const NO_CONFUNDIR: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['sano', new Set(['mano'])],
   ['casa', new Set(['caida', 'cara'])],
   ['modelo', new Set(['mareo'])],
+  // «Huevos» y «huesos» están a una letra: «me duelen los huevos» no es dolor de huesos.
+  ['huevo', new Set(['hueso'])],
+  ['roncha', new Set(['concha'])],
+  ['concha', new Set(['roncha'])],
+  // «Grados» (de fiebre) y «graso» (hígado graso) están a una letra de «granos».
+  ['grado', new Set(['grano'])],
+  ['graso', new Set(['grano'])],
+  ['corro', new Set(['chorro'])],
 ]);
 
 /* --- El índice ------------------------------------------------------------ */
@@ -453,9 +461,12 @@ function buscarCandidatas(
     }
   }
 
+  // Los patrones comparten lemas: cada uno se compara con el texto una vez.
+  // La memoria vive sólo en este análisis; posiciones y negaciones cambian al escribir.
+  const matchesByLemma = new Map<string, ReturnType<typeof matchingTokens>>();
   const candidatas: Candidata[] = [];
   for (const cual of aMirar) {
-    const candidata = evaluar(indice.patrones[cual], tokens, contenido, negados);
+    const candidata = evaluar(indice.patrones[cual], tokens, contenido, negados, matchesByLemma);
     if (candidata !== null) {
       candidatas.push(candidata);
     }
@@ -472,6 +483,13 @@ function sumar(destino: Set<number>, cuales: readonly number[] | undefined): voi
   }
 }
 
+/** Coincidencias de un lema, independientes del patrón que lo contiene. */
+function matchingTokens(word: string, phoneticKey: string, tokens: readonly Token[]) {
+  return tokens
+    .map((token, position) => ({ donde: position, puntaje: parecido(word, phoneticKey, token) }))
+    .filter((match) => match.puntaje > 0);
+}
+
 /**
  * Si un patrón entra en el texto, y con cuánta confianza.
  *
@@ -484,12 +502,17 @@ function evaluar(
   tokens: readonly Token[],
   contenido: readonly Token[],
   negados: readonly (readonly [number, number])[],
+  matchesByLemma: Map<string, ReturnType<typeof matchingTokens>>,
 ): Candidata | null {
-  const apariciones = patron.lemas.map((palabra, cual) =>
-    contenido
-      .map((token, donde) => ({ donde, puntaje: parecido(palabra, patron.claves[cual], token) }))
-      .filter((intento) => intento.puntaje > 0),
-  );
+  const apariciones = patron.lemas.map((palabra, cual) => {
+    const cached = matchesByLemma.get(palabra);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const matches = matchingTokens(palabra, patron.claves[cual], contenido);
+    matchesByLemma.set(palabra, matches);
+    return matches;
+  });
   if (apariciones.some((lista) => lista.length === 0)) {
     return null;
   }
@@ -525,6 +548,9 @@ function evaluar(
     if (contenido[primera].frase !== contenido[ultima].frase) {
       continue;
     }
+    if (!negacionPegada(patron, elegidas)) {
+      continue;
+    }
 
     const suma = elegidas.reduce((total, elegida) => total + elegida.puntaje, 0);
     const hueco = ultima - primera - (patron.lemas.length - 1);
@@ -558,6 +584,29 @@ function evaluar(
   }
 
   return mejor;
+}
+
+/**
+ * Un patrón que se apoya en «no» exige que la palabra que le sigue en el patrón venga **pegada**
+ * después del «no» en el texto.
+ *
+ * Sin esto, el motor emparejaba sin orden y con hueco: «no tengo hambre» (`no` + `hambre`) cazaba
+ * «tengo hambre y no engordo», y «no para de sangrar» mandaba a urgencias a quien escribía «no hay
+ * nadie, y kgo sangre». Por eso la tabla no podía tener «no tengo hambre», «no tengo fuerzas» ni
+ * «no escucho bien», que es como lo dice la gente. «Pegada» cuenta palabras con contenido: «no me
+ * baja la regla» sigue siendo `no` + `bajar`.
+ */
+function negacionPegada(
+  patron: Patron,
+  elegidas: readonly { readonly donde: number; readonly lema: string }[],
+): boolean {
+  const cual = patron.lemas.indexOf('no');
+  if (cual === -1 || cual === patron.lemas.length - 1) {
+    return true;
+  }
+  const no = elegidas.find((elegida) => elegida.lema === 'no');
+  const siguiente = elegidas.find((elegida) => elegida.lema === patron.lemas[cual + 1]);
+  return no !== undefined && siguiente !== undefined && siguiente.donde === no.donde + 1;
 }
 
 /**

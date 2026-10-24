@@ -1,0 +1,51 @@
+/* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
+   `../registro-compartido/registro.css`, que esta pantalla declara junto a esta
+   hoja en sus `styleUrls`, igual que el resto de las altas. */
+
+/* ---------------------------------------------------------------- sucursales
+   Una tarjeta por local, con su nombre, su calle y su mapa. */
+
+.farmacia-sucursales {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  width: 100%;
+}
+
+/* «Agregar» y «Subir en lote» juntos; en pantalla chica bajan uno bajo otro. */
+.farmacia-sucursales__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.farmacia-sucursal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.farmacia-sucursal__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.farmacia-sucursal__titulo {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  margin: 0;
+}
+
+.farmacia-sucursales__vacio {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}

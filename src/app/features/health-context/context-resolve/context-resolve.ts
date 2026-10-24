@@ -266,7 +266,7 @@ function aFila(fact: ResolvedFact): FilaHecho {
  */
 const ESTADO_INICIAL: ViewState<ResolvedContext> = empty(
   { label: 'Crear un contexto', route: RUTA_ALTA },
-  'Elegí país y dominio, y escribí la clave del contexto para resolver su versión vigente.',
+  'Elija país y dominio, y escriba la clave del contexto para resolver su versión vigente.',
 );
 
 /** Vacío es válido: el control solo se exige con la escotilla abierta. */

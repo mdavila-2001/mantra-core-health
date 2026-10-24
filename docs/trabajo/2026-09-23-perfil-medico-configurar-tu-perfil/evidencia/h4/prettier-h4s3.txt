@@ -1,0 +1,8 @@
+prettier sobre los archivos de H4.S3 (salida de prettier comparada con el archivo, finales de línea normalizados):
+practitioner-profile-edit.ts: 0 bloque(s) con diferencias
+practitioner-profile-edit.html: 0 bloque(s) con diferencias
+practitioner-profile-edit.css: 0 bloque(s) con diferencias
+practitioner-profile-edit.logic.ts: 0 bloque(s) con diferencias
+practitioner-profile-edit.logic.spec.ts: 0 bloque(s) con diferencias
+practitioner-profile-edit.spec.ts: 1 bloque(s) con diferencias
+El único bloque de practitioner-profile-edit.spec.ts es el que ya tiene el archivo en HEAD (el for de edicion-celular-trabajo). El CI del repo no corre prettier.

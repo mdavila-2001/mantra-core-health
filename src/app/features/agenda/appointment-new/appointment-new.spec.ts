@@ -263,7 +263,7 @@ describe('AppointmentNew', () => {
       http.expectOne('/scheduling/appointments/direct').flush(
         {
           code: 'CONFLICT',
-          message: 'Tenés una cita confirmada en ese rato en «Consultorio Norte».',
+          message: 'Tiene una cita confirmada en ese rato en «Consultorio Norte».',
         },
         { status: 409, statusText: 'Conflict' },
       );
@@ -304,6 +304,7 @@ describe('AppointmentNew', () => {
       nuevoNombre: { set(v: string): void };
       nuevoApellidoPaterno: { set(v: string): void };
       nuevoSegundoNombre: { (): string; set(v: string): void };
+      nuevosNombresExtra: { (): readonly string[]; set(v: readonly string[]): void };
       nuevoDocumento: { set(v: string): void };
       nuevoCelular: { set(v: string): void };
       nuevoNacimiento: { set(v: Date | null): void };
@@ -373,7 +374,7 @@ describe('AppointmentNew', () => {
      * escondido igual se tabula y el buscador dejaría de ser la única respuesta
      * a «¿con quién?».
      */
-    it('al elegirlo, el buscador deja lugar al alta y vuelve si te arrepentís', () => {
+    it('al elegirlo, el buscador deja lugar al alta y vuelve si se arrepiente', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
@@ -408,7 +409,7 @@ describe('AppointmentNew', () => {
       };
       c.buscarPaciente('8123456');
       http
-        .expectOne((r) => r.url === '/profiles/patients')
+        .expectOne((r) => r.url === '/profiles/patients/search')
         .flush({ items: [], count: 0, limit: 10, nextCursor: null });
       c.registrarPacienteNuevo();
       conCatalogos();
@@ -502,6 +503,34 @@ describe('AppointmentNew', () => {
      * real. La prueba fija ahora el endpoint atómico, con la filiación entera
      * adentro de `patient`, y **que ya no se llame al alta suelta**.
      */
+    it('los nombres agregados con «+ Agregar otro nombre» viajan junto al segundo en middleName', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+
+      const c = instancia();
+      c.registrarPacienteNuevo();
+      conCatalogos();
+      c.nuevoSegundoNombre.set('Elena');
+      c.nuevosNombresExtra.set(['Beatriz', '']);
+      completarAlta();
+      c.guardar();
+
+      const turno = http.expectOne('/scheduling/appointments/walk-in');
+      expect(turno.request.body.patient.middleName).toBe('Elena Beatriz');
+
+      turno.flush({
+        patientProfileId: 'pac-nuevo',
+        personId: 'per-nuevo',
+        patientCode: 'PAC-99',
+        bookingId: 'book-1',
+        bookableSlotId: 'slot-1',
+        appointmentId: 'appt-1',
+        encounterId: 'enc-1',
+        statusConceptId: 'st-1',
+        retractedSlots: 0,
+      });
+    });
+
     it('registra y atiende en una sola petición al walk-in', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
@@ -612,9 +641,9 @@ describe('AppointmentNew', () => {
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
       buscar('8123456');
-      const peticion = http.expectOne((r) => r.url === '/profiles/patients');
-      expect(peticion.request.params.get('nationalId')).toBe('8123456');
-      expect(peticion.request.params.get('q')).toBeNull();
+      const peticion = http.expectOne((r) => r.url === '/profiles/patients/search');
+      expect(peticion.request.body.nationalId).toBe('8123456');
+      expect(peticion.request.body).not.toHaveProperty('q');
       peticion.flush({ items: [], count: 0, limit: 10, nextCursor: null });
     });
 
@@ -623,10 +652,10 @@ describe('AppointmentNew', () => {
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
       buscar('Ana');
-      const peticion = http.expectOne((r) => r.url === '/profiles/patients');
-      // El parámetro del cable se llama `q`, no `query`.
-      expect(peticion.request.params.get('q')).toBe('Ana');
-      expect(peticion.request.params.get('nationalId')).toBeNull();
+      const peticion = http.expectOne((r) => r.url === '/profiles/patients/search');
+      // La clave del cuerpo se llama `q`, no `query`.
+      expect(peticion.request.body.q).toBe('Ana');
+      expect(peticion.request.body).not.toHaveProperty('nationalId');
       peticion.flush({ items: [], count: 0, limit: 10, nextCursor: null });
     });
   });

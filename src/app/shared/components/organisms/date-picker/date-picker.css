@@ -219,9 +219,13 @@
   margin: 0;
 }
 
-/* Navegación del Calendario: Controles y Encabezado de Mes / Año */
+/* Navegación del Calendario: Controles y Encabezado de Mes / Año.
+   Las flechas llevan nombre (D-05) y no entran en un renglón junto al mes:
+   el mes ocupa el primero y las flechas se reparten en el segundo, las de
+   antes a la izquierda y las de después a la derecha. */
 .calendar-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-1);
@@ -231,14 +235,28 @@
 .nav-controls {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--sp-1);
+}
+
+/* Con el relleno lateral de un botón `sm` cada flecha con nombre pide unos
+   70 px, y los dos grupos dejaban de entrar juntos por debajo de ~390 px: el
+   panel crecía en escalera. Con este relleno entran en un renglón a 360. */
+.nav-controls > [app-button] {
+  padding-inline: var(--sp-2);
+}
+
+/* Si aun así los dos grupos no entran juntos, el de después baja a su propio
+   renglón: sin esto quedaría a la izquierda, debajo del de antes. Con él se
+   queda a la derecha. */
+.nav-controls + .nav-controls {
+  margin-inline-start: auto;
 }
 
 .nav-selectors {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-  flex: 1;
+  flex: 1 1 100%;
   justify-content: center;
 }
 

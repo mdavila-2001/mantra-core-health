@@ -73,7 +73,7 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
     case 'CONCURRENCY_CONFLICT':
       return validation([
         {
-          message: body.message || 'Otra persona modificó este dato mientras lo editabas.',
+          message: body.message || 'Otra persona modificó este dato mientras lo editaba.',
           code: body.code,
         },
       ]);
@@ -104,7 +104,7 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
      */
     case 'IDENTITY_VERIFICATION_REQUIRED':
       return forbidden({
-        message: body.message || 'Necesitás verificar tu identidad para continuar.',
+        message: body.message || 'Necesita verificar su identidad para continuar.',
         nextAction: { label: 'Verificar identidad', route: IDENTITY_VERIFICATION_ROUTE },
       });
 
@@ -122,7 +122,7 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
     case 'DEPENDENCY_UNAVAILABLE':
       return unexpectedError(
         correlationOf(error, body),
-        'Un servicio no está disponible en este momento. Reintentá en unos minutos.',
+        'Un servicio no está disponible en este momento. Reintente en unos minutos.',
       );
 
     /**

@@ -275,7 +275,7 @@ export class VerificationCases {
   private fallaDeDescarga(): void {
     this.descargando.set(null);
     this.errorDeDescarga.set(
-      'No pudimos traer la evidencia de ese caso. Probá de nuevo en un momento.',
+      'No pudimos traer la evidencia de ese caso. Pruebe de nuevo en un momento.',
     );
   }
 
@@ -307,7 +307,7 @@ export class VerificationCases {
     if (casos.length === 0) {
       return empty(
         { label: 'Verificar mi identidad', route: IDENTITY_VERIFICATION_ROUTE },
-        'Cuando inicies una verificación de identidad, tus trámites van a aparecer acá.',
+        'Cuando inicie una verificación de identidad, sus trámites van a aparecer acá.',
       );
     }
     return ready(casos);

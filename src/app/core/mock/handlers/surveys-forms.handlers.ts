@@ -45,7 +45,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
   {
     id: uuid('survey-satisfaccion'),
     title: 'Satisfacción con la consulta',
-    description: 'Tres minutos para contarnos cómo fue tu atención.',
+    description: 'Tres minutos para contarnos cómo fue su atención.',
     status: 'ACTIVE',
     latestVersionNumber: 2,
     latestVersionId: uuid('survey-satisfaccion-v2'),
@@ -54,10 +54,10 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     effectiveFrom: isoDia(-60),
     effectiveTo: null,
     questions: [
-      pregunta('sat', 1, '¿Cómo calificarías la atención recibida?', 'SCALE', { scaleMin: 1, scaleMax: 5 }),
-      pregunta('sat', 2, '¿Te atendieron a la hora acordada?', 'BOOLEAN'),
+      pregunta('sat', 1, '¿Cómo calificaría la atención recibida?', 'SCALE', { scaleMin: 1, scaleMax: 5 }),
+      pregunta('sat', 2, '¿Le atendieron a la hora acordada?', 'BOOLEAN'),
       pregunta('sat', 3, '¿Qué fue lo mejor de la consulta?', 'SINGLE_CHOICE', { options: ['La explicación', 'El trato', 'La puntualidad', 'Las instalaciones'] }),
-      pregunta('sat', 4, '¿Qué mejorarías?', 'MULTIPLE_CHOICE', { options: ['Tiempo de espera', 'Claridad de las indicaciones', 'Comodidad del consultorio', 'Nada'] }),
+      pregunta('sat', 4, '¿Qué mejoraría?', 'MULTIPLE_CHOICE', { options: ['Tiempo de espera', 'Claridad de las indicaciones', 'Comodidad del consultorio', 'Nada'] }),
       pregunta('sat', 5, 'Comentarios', 'TEXT'),
     ],
   },
@@ -75,7 +75,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     questions: [
       pregunta('tele', 1, '¿La conexión fue estable?', 'BOOLEAN'),
       pregunta('tele', 2, 'Calidad del audio y video', 'SCALE', { scaleMin: 1, scaleMax: 5 }),
-      pregunta('tele', 3, '¿Preferís teleconsulta o presencial para el próximo control?', 'SINGLE_CHOICE', { options: ['Teleconsulta', 'Presencial', 'Indistinto'] }),
+      pregunta('tele', 3, '¿Prefiere teleconsulta o presencial para el próximo control?', 'SINGLE_CHOICE', { options: ['Teleconsulta', 'Presencial', 'Indistinto'] }),
     ],
   },
   {
@@ -89,7 +89,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     responseWindowDays: 14,
     effectiveFrom: null,
     effectiveTo: null,
-    questions: [pregunta('post', 1, '¿Tuviste dolor en la primera semana?', 'SCALE', { scaleMin: 0, scaleMax: 10 })],
+    questions: [pregunta('post', 1, '¿Tuvo dolor en la primera semana?', 'SCALE', { scaleMin: 0, scaleMax: 10 })],
   },
   {
     id: uuid('survey-inactiva'),
@@ -102,7 +102,7 @@ const encuestas = new Coleccion<EncuestaSimulada>([
     responseWindowDays: 7,
     effectiveFrom: isoDia(-400),
     effectiveTo: isoDia(-100),
-    questions: [pregunta('vac', 1, '¿Recibiste la vacuna antigripal?', 'BOOLEAN')],
+    questions: [pregunta('vac', 1, '¿Recibió la vacuna antigripal?', 'BOOLEAN')],
   },
 ]);
 
@@ -214,7 +214,7 @@ export function registrarEncuestas(router: MockRouter): void {
   /** Rechaza tocar una versión publicada, con el mismo código que el backend. */
   const soloBorrador = (e: EncuestaSimulada) =>
     e.published
-      ? { status: 422, body: { message: 'La versión ya está publicada: creá una versión nueva para corregir el cuestionario.' } }
+      ? { status: 422, body: { message: 'La versión ya está publicada: cree una versión nueva para corregir el cuestionario.' } }
       : null;
 
   router.patch('/surveys/templates/:id', (request) => {
@@ -377,6 +377,9 @@ export function registrarEncuestas(router: MockRouter): void {
       values: [{ id: uuid('fv-5'), fieldId: uuid('field-pa-sis'), dataType: 'integer', fieldName: 'Presión sistólica', value: 130, ordinal: 1, masked: false, valueStatusConceptId: ESTADO['ST-DRAFT']!, valueVersion: 1, effectiveFrom: iso(-47, 9) }],
     },
   ]);
+  // Sobrevive a F5 como los encuentros que la cuelgan: si no, el formulario
+  // completado en la consulta desaparecía de la historia al recargar.
+  instancias.persistirEn('mock.surveys-forms.instancias');
 
   const item = (i: (typeof instancias extends Coleccion<infer T> ? T : never)) => ({ id: i.id, resourceId: i.resourceId, resourceTypeConceptId: i.resourceTypeConceptId, schemaVersion: i.schemaVersion, stateConceptId: i.stateConceptId, ...(i.closedAt === undefined ? {} : { closedAt: i.closedAt }), createdAt: i.createdAt });
 
@@ -402,7 +405,10 @@ export function registrarEncuestas(router: MockRouter): void {
   });
 
   router.get('/forms/instances', ({ query }) => {
-    const encounterId = query.get('encounterId') ?? '';
+    // El cliente manda `encounter`; `encounterId` queda por compatibilidad.
+    // Sólo con el segundo, la consulta nunca encontraba el formulario ya
+    // respondido y ofrecía llenarlo de nuevo.
+    const encounterId = query.get('encounter') ?? query.get('encounterId') ?? '';
     const items = instancias.filtrar((i) => i.resourceId === encounterId).map(item);
     return { encounterId, items, limit: 50, truncated: false };
   });

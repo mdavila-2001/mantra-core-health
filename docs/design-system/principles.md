@@ -109,7 +109,7 @@ Es la forma que da identidad. Repetida, deja de identificar.
 
 | Excepción | Dónde | Regla de uso |
 |---|---|---|
-| **E1** · `--text-muted` en claro (3,86–4,27:1) | `--c-neutral-300` | Solo texto terciario. **Jamás información clínica** |
+| ~~E1~~ · `--text-muted` en claro — cerrada el 2026-09-26 (ahora 5,13:1) | `--c-ivory-800` | Sigue siendo terciario: **jamás información clínica** |
 | **E2** · `--text-muted` en oscuro (4,45:1 en la superficie más alta) | `--c-sage-600` | Ídem |
 | **E3** · `--border-strong` en oscuro (<3:1) | `rgba(255,255,255,0.24)` | Sin foco. Con foco manda el anillo |
 

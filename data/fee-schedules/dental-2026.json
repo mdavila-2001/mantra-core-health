@@ -793,21 +793,23 @@
   },
   {
     "code": "ODO26-PRO-0020",
-    "display": "Puente fijo métalo cerámico (por elemento)",
+    "display": "Puente fijo metalo cerámico (por elemento)",
     "specialty": "Odontología · Prótesis y rehabilitación oral",
     "group": null,
     "referencePrice": "180.00",
     "priceUnit": "USD",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Puente fijo métalo cerámico (por elemento)"
   },
   {
     "code": "ODO26-PRO-0021",
-    "display": "Puente fijo métalo plástico (por elemento)",
+    "display": "Puente fijo metalo plástico (por elemento)",
     "specialty": "Odontología · Prótesis y rehabilitación oral",
     "group": null,
     "referencePrice": "120.00",
     "priceUnit": "USD",
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Puente fijo métalo plástico (por elemento)"
   },
   {
     "code": "ODO26-PRO-0022",
@@ -1072,12 +1074,13 @@
   },
   {
     "code": "ODO26-AO-0002",
-    "display": "Aplicación de Acido Hialuronico",
+    "display": "Aplicación de Acido Hialurónico",
     "specialty": "Odontología · Armonización orofacial",
     "group": null,
     "referencePrice": null,
     "priceUnit": null,
-    "ocrSuspect": false
+    "ocrSuspect": false,
+    "originalDisplay": "Aplicación de Acido Hialuronico"
   },
   {
     "code": "ODO26-AO-0003",

@@ -260,8 +260,8 @@ export class OrganizationNew {
             required: true,
             testId: 'alta-organizacion-codigo',
             mensajeDeError: this.codigoEnConflicto()
-              ? 'Ya existe una organización con este código. Probá con otro.'
-              : 'Escribí el código de la organización.',
+              ? 'Ya existe una organización con este código. Pruebe con otro.'
+              : 'Escriba el código de la organización.',
           },
           {
             key: 'legalName',
@@ -269,7 +269,7 @@ export class OrganizationNew {
             control: 'text' as const,
             required: true,
             testId: 'alta-organizacion-razon',
-            mensajeDeError: 'Escribí la razón social (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba la razón social (hasta 300 caracteres).',
           },
           {
             key: 'tradeName',
@@ -291,8 +291,8 @@ export class OrganizationNew {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeTipo,
-            placeholder: 'Elegí un tipo',
-            mensajeDeError: 'Elegí el tipo de organización.',
+            placeholder: 'Elija un tipo',
+            mensajeDeError: 'Elija el tipo de organización.',
           },
         ],
       },
@@ -305,7 +305,7 @@ export class OrganizationNew {
                 {
                   key: 'pais',
                   label: 'País',
-                  hint: 'Buscá por nombre; el código acompaña para distinguir homónimos.',
+                  hint: 'Busque por nombre; el código acompaña para distinguir homónimos.',
                   control: 'custom' as const,
                   required: true,
                 },
@@ -331,28 +331,28 @@ export class OrganizationNew {
                   label: 'Código de aseguradora',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el código de aseguradora.',
+                  mensajeDeError: 'Escriba el código de aseguradora.',
                 },
                 {
                   key: 'regulatorIdentifier',
                   label: 'NIT',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el NIT ante el regulador.',
+                  mensajeDeError: 'Escriba el NIT ante el regulador.',
                 },
                 {
                   key: 'sigla',
                   label: 'Sigla',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí la sigla (hasta 20 caracteres).',
+                  mensajeDeError: 'Escriba la sigla (hasta 20 caracteres).',
                 },
                 {
                   key: 'address',
                   label: 'Dirección',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+                  mensajeDeError: 'Escriba la dirección (hasta 300 caracteres).',
                 },
               ],
             },
@@ -369,14 +369,14 @@ export class OrganizationNew {
                   label: 'Código de corredor',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el código de corredor.',
+                  mensajeDeError: 'Escriba el código de corredor.',
                 },
                 {
                   key: 'licenseNumber',
                   label: 'Número de licencia',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el número de licencia.',
+                  mensajeDeError: 'Escriba el número de licencia.',
                 },
               ],
             },
@@ -389,7 +389,7 @@ export class OrganizationNew {
           {
             key: 'owner',
             label: 'Usuario owner',
-            hint: 'Buscá por nombre o correo. Debe existir antes del alta.',
+            hint: 'Busque por nombre o correo. Debe existir antes del alta.',
             control: 'custom' as const,
             required: true,
           },
@@ -510,7 +510,7 @@ export class OrganizationNew {
       return state.message ?? 'Sólo una cuenta SUPERADMIN puede dar de alta organizaciones.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

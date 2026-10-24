@@ -1,0 +1,34 @@
+{
+  "provenance": "Salida literal de c0-focus-probe.mjs antes de keepModalFocus, preservada desde la respuesta de la herramienta.",
+  "samples": [
+    {
+      "step": "open",
+      "modal": true,
+      "activeTag": "BUTTON",
+      "activeId": "content-dialog-close",
+      "inside": true,
+      "documentFocused": true
+    },
+    {
+      "step": "tab",
+      "modal": true,
+      "activeTag": "BODY",
+      "activeId": null,
+      "inside": false,
+      "documentFocused": false
+    },
+    {
+      "step": "shift-tab",
+      "modal": true,
+      "activeTag": "BUTTON",
+      "activeId": "content-dialog-close",
+      "inside": true,
+      "documentFocused": true
+    },
+    {
+      "step": "escape",
+      "closed": true,
+      "triggerFocused": true
+    }
+  ]
+}

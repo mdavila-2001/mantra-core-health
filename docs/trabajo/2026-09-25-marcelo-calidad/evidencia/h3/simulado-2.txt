@@ -1,0 +1,17 @@
+
+Running 11 tests using 1 worker
+
+  ✓   1 [chromium] › playwright/carga-masiva.spec.ts:35:7 › carga masiva — contrato §3/§7 [backend simulado] › 1 · flujo feliz: valida e importa ok-50.csv (2.4s)
+  ✓   2 [chromium] › playwright/carga-masiva.spec.ts:63:7 › carga masiva — contrato §3/§7 [backend simulado] › 2 · idempotencia: reimportar el mismo archivo omite todo (2.7s)
+  ✓   3 [chromium] › playwright/carga-masiva.spec.ts:84:7 › carga masiva — contrato §3/§7 [backend simulado] › 3 · con errores: aborta entero y deshabilita Importar (2.4s)
+  ✓   4 [chromium] › playwright/carga-masiva.spec.ts:106:7 › carga masiva — contrato §3/§7 [backend simulado] › 4 · inválido: un PDF se rechaza en el cliente con un mensaje legible (2.2s)
+  ✓   5 [chromium] › playwright/carga-masiva.spec.ts:122:7 › carga masiva — contrato §3/§7 [backend simulado] › 5 · vacío: archivo sólo con encabezado dice que no tiene filas (2.4s)
+  ✓   6 [chromium] › playwright/carga-masiva.spec.ts:133:7 › carga masiva — contrato §3/§7 [backend simulado] › 6 · fallo de red preserva el archivo elegido y los selects (2.3s)
+  ✓   7 [chromium] › playwright/carga-masiva.spec.ts:147:7 › carga masiva — contrato §3/§7 [backend simulado] › 7 · plantilla CSV: descarga con el encabezado canónico (2.0s)
+  ✓   8 [chromium] › playwright/carga-masiva.spec.ts:157:7 › carga masiva — contrato §3/§7 [backend simulado] › 8 · descarga de errores: CSV con las filas con problema (2.3s)
+  ✓   9 [chromium] › playwright/carga-masiva.spec.ts:182:7 › carga masiva — contrato §3/§7 [backend simulado] › 9 · sin doble envío: el guard deshabilita Validar mientras está en curso (2.6s)
+  ✓  10 [chromium] › playwright/carga-masiva.spec.ts:206:7 › carga masiva — contrato §3/§7 [backend simulado] › 10 · teclado: Tab hasta el archivo, Enter abre el diálogo (2.3s)
+  -  11 [chromium] › playwright/carga-masiva.spec.ts:226:7 › carga masiva — contrato §3/§7 [backend simulado] › 11 · accesibilidad: axe sin violaciones serias, si la dependencia está
+
+  1 skipped
+  10 passed (26.0s)

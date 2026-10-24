@@ -1,41 +1,29 @@
-import { environment as produccion } from './environment';
-import { environment as desarrollo } from './environment.development';
-import { environment as apiReal } from './environment.real-api';
+import { environment as production } from './environment';
+import { environment as development } from './environment.development';
+import { environment as realApi } from './environment.real-api';
+import { environment as productionApi } from './environment.production-api';
+import { environment as e2eReal } from './environment.e2e-real';
+import { environment as demo } from './environment.demo';
 
-/**
- * El modo `real-api` (B-24): apaga el backend simulado y las demos que fabrican
- * datos (campañas y pago), y no toca nada más.
- *
- * El cableado en `angular.json` y `package.json` lo verifica
- * `scripts/check-real-api-config.mjs`; acá se fija el valor de cada entorno.
- */
-describe('environment.real-api', () => {
-  it('apaga el backend simulado', () => {
-    expect(apiReal.mockBackend).toBe(false);
+const simulatedFlags = [
+  'mockBackend', 'demoPresets', 'paymentDemo', 'loyaltyDemo',
+  'campaignsDemo', 'billingSiatDemo', 'designMockups',
+] as const;
+
+describe('execution environments', () => {
+  for (const [name, environment] of Object.entries({ production, development, realApi, productionApi, e2eReal })) {
+    it(`${name} does not fabricate data`, () => {
+      for (const flag of simulatedFlags) expect(environment[flag], flag).toBe(false);
+    });
+  }
+
+  it('demo explicitly enables every simulated capability', () => {
+    for (const flag of simulatedFlags) expect(demo[flag], flag).toBe(true);
+    expect(demo.refreshCookie).toBe(false);
   });
 
-  it('apaga las campañas de demostración', () => {
-    expect(apiReal.campaignsDemo).toBe(false);
-  });
-
-  it('apaga el pago de demostración', () => {
-    expect(apiReal.paymentDemo).toBe(false);
-  });
-
-  it('desarrollo sigue con la maqueta encendida', () => {
-    expect(desarrollo.mockBackend).toBe(true);
-  });
-
-  it('producción sigue con la maqueta encendida', () => {
-    expect(produccion.mockBackend).toBe(true);
-  });
-
-  it('fuera de mockBackend y de las dos demos es idéntico a desarrollo', () => {
-    expect({
-      ...apiReal,
-      mockBackend: desarrollo.mockBackend,
-      campaignsDemo: desarrollo.campaignsDemo,
-      paymentDemo: desarrollo.paymentDemo,
-    }).toEqual(desarrollo);
+  it('real development aliases preserve connection and telemetry configuration', () => {
+    expect(realApi).toEqual(development);
+    expect(e2eReal).toEqual(development);
   });
 });

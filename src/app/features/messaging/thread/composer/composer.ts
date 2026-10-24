@@ -230,6 +230,16 @@ export class Composer {
     this.enviado.emit();
   }
 
+  /**
+   * Un sticker o GIF de la persona: sube y se manda en el acto, marcado como
+   * sticker para que el otro lado lo vea sin burbuja.
+   */
+  protected mandarStickerPropio(archivo: File): void {
+    this.store.enviarAdjunto(archivo, '', true);
+    this.panel.set('ninguno');
+    this.enviado.emit();
+  }
+
   /* --- Emojis -------------------------------------------------------------- */
 
   /**
@@ -277,7 +287,7 @@ export class Composer {
       return;
     }
     if (!TIPOS_ACEPTADOS.some((tipo) => archivo.type.startsWith(tipo))) {
-      this.error.set('Podés mandar imágenes, videos, audios y PDF.');
+      this.error.set('Puede mandar imágenes, videos, audios y PDF.');
       return;
     }
     this.error.set('');

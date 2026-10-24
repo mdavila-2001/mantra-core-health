@@ -1,0 +1,2 @@
+playwright/insurer-patient-directory-real.spec.ts(7,66): error TS2353: Object literal may only specify known properties, and 'reducedMotion' does not exist in type 'Fixtures<{}, {}, PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>'.
+EXIT_CODE=2

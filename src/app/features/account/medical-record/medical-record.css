@@ -6,14 +6,15 @@
     aplica acá: quien lee su propia historia lee poco y de a una cosa.
     ========================================================================== */
 
-/* FT-20 · el cuerpo y la barra lateral.
-   En teléfono la descarga va PRIMERO —es la acción por la que mucha gente entra
-   y no puede quedar al final de una lista larga—; en escritorio pasa al costado
-   y queda pegada, visible desde cualquier pestaña. */
+/* FT-20 · la descarga arriba y el cuerpo a todo el ancho.
+   Una sola columna en cualquier ancho: la descarga va PRIMERO —es la acción por
+   la que mucha gente entra— y la tarjeta con pestañas ocupa el área entera.
+   Antes, en escritorio, la descarga iba en una columna lateral de 18rem que le
+   quitaba ese ancho a la tabla (pedido del cliente, 25/09/2026). */
 .historia {
   display: flex;
-  flex-direction: column-reverse;
-  gap: var(--sp-6);
+  flex-direction: column;
+  gap: var(--sp-4);
 }
 
 .historia__cuerpo {
@@ -28,26 +29,8 @@
   min-inline-size: 0;
 }
 
-.historia__lateral {
+.historia__barra {
   min-inline-size: 0;
-}
-
-/* FT-20-R07 · desde 64rem la descarga vive al costado y acompaña el scroll:
-   «Descargar todo» tiene que poder alcanzarse desde cualquier pestaña sin
-   volver arriba. */
-@media (min-width: 64rem) {
-  .historia {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 18rem;
-    align-items: start;
-    gap: var(--sp-6);
-  }
-
-  .historia__lateral {
-    position: sticky;
-    /* Bajo el encabezado de la página, no pegado al borde de la ventana. */
-    inset-block-start: var(--sp-6);
-  }
 }
 
 .historia__bloque {
@@ -134,15 +117,77 @@
 
 /* La descarga completa encabeza la pantalla: es lo que el registro del cliente
    pide poder hacer, y quien viene a eso no debería recorrer todo primero. */
+/* El botón y su nota en una fila; en teléfono la nota baja sola. */
 .historia__descarga-total {
-  display: grid;
-  gap: var(--sp-2);
-  justify-items: start;
-  margin-block-end: var(--sp-5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
 }
 
 .historia__descarga-nota {
   color: var(--text-muted);
   font-size: var(--fs-caption);
   margin: 0;
+}
+
+/* ---- C6 · la tarjeta única, las atenciones y los diagnósticos ------------- */
+
+/* Regla 8: una sola tarjeta con las pestañas dentro, a lo ancho del área de
+   contenido. Sin `max-inline-size` propio — el tope lo pone `.app-main__inner`
+   y nadie más. */
+.historia__tarjeta {
+  display: block;
+  inline-size: 100%;
+}
+
+.historia__atenciones {
+  display: block;
+}
+
+/* El cuerpo de una atención desplegada: primero sus acciones, después la línea.
+   Las acciones arriba porque «Descargar PDF» es sobre la atención entera, y
+   debajo de la línea se leería como si fuera del último hecho. */
+.historia__atencion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Cada bloque de diagnósticos con su propio aire: en móvil son tres listas
+   seguidas y sin separación se leen como una sola. */
+.historia__dx-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-6);
+}
+
+.historia__dx-bloque:last-child {
+  margin-block-end: 0;
+}
+
+.historia__dx-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* El diagnóstico apila su cabecera y su tabla de datos: el badge tiene que
+   quedar al lado del nombre, no al final de la ficha. */
+.historia__dx {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+
+.historia__dx-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
 }

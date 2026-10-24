@@ -41,7 +41,7 @@ const BROWSER_PERMISSIONS: readonly {
   {
     key: 'ubicacion',
     label: 'Ubicación',
-    purpose: 'Para buscar farmacias y consultorios cerca tuyo.',
+    purpose: 'Para buscar farmacias y consultorios cerca de usted.',
     icon: 'pin',
   },
   {

@@ -1,0 +1,19 @@
+node scripts/check-form-pages.mjs
+
+✗ check-form-pages — 6 formulario(s) sin paginar
+
+  'app/features/accounting/registros/transaccion-dialog.html' pide 5 campos de una vez en su formulario y no usa <app-paginated-form>
+  'app/features/auth/registro-compartido/campos-de-nombre/campos-de-nombre.html' pide 6 campos de una vez en una sola pantalla y no usa <app-paginated-form>
+  'app/features/billing/billing.html' pide 7 campos de una vez en su formulario 2 de 4 y no usa <app-paginated-form>
+  'app/features/billing/factura-simulada-dialog/factura-simulada-dialog.html' pide 6 campos de una vez en su formulario y no usa <app-paginated-form>
+  'app/features/insurance/insurance-campaigns/insurance-campaigns.html' pide 12 campos de una vez en su formulario y no usa <app-paginated-form>
+  'app/features/insurance/insurance-catalog/plan-form-dialog.html' pide 5 campos de una vez en su formulario y no usa <app-paginated-form>
+
+  Un formulario de este sistema se sirve de a una página, con un tope de
+  cuatro campos y una barra de avance. Eso lo da <app-paginated-form>:
+  se le pasan las páginas (paginarCampos() las arma) y el FormGroup de la
+  pantalla. Si de verdad no es un formulario, agregalo a EXCEPCIONES con
+  su motivo escrito.
+
+
+EXIT_CODE=1

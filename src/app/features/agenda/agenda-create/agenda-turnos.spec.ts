@@ -24,15 +24,30 @@ describe('calcularTurnos', () => {
     expect(r.porDia[0].turnos[7]).toEqual({ desde: '12:30', hasta: '13:00', minutos: 30 });
   });
 
-  it('trunca cuando el último turno no entra, igual que el backend', () => {
-    // 420 minutos / 90 = 4,67. El backend emite CUATRO, no cinco: verificado
-    // contra la API viva, el último va de 13:30 a 15:00.
+  /*
+   * Redondeo hacia adelante (propietario, 04/10/2026): «los slots tienen que
+   * permitir completar el slot por más que se pase de la hora máxima, para no
+   * perjudicar al doctor porque cada hora cuesta dinero». Misma regla que
+   * `generate-slots` en la API.
+   */
+  it('completa el último turno aunque pase la hora de fin, igual que el backend', () => {
+    // 420 minutos / 90 = 4,67: antes salían 4 y se perdía la última hora.
+    // Ahora el quinto empieza 15:00 —dentro de la franja— y se completa.
     const r = calcularTurnos([franja('09:00', '16:00', 90)]);
 
-    expect(r.total).toBe(4);
-    expect(r.porDia[0].turnos[3]).toEqual({ desde: '13:30', hasta: '15:00', minutos: 90 });
-    expect(r.porDia[0].resto).toBe(60);
-    expect(r.porDia[0].restoDesde).toBe('15:00');
+    expect(r.total).toBe(5);
+    expect(r.porDia[0].turnos[4]).toEqual({ desde: '15:00', hasta: '16:30', minutos: 90 });
+    expect(r.porDia[0].resto).toBe(0);
+    expect(r.porDia[0].restoDesde).toBeNull();
+  });
+
+  it('el turno completado no pisa la franja siguiente del día (el tope)', () => {
+    // Mañana 08:00–10:00 de 45' con la tarde desde las 10:00: el tercero
+    // (09:30–10:15) pisaría la tarde, así que no sale.
+    const r = calcularTurnos([{ ...franja('08:00', '10:00', 45), tope: '10:00' }]);
+
+    expect(r.total).toBe(2);
+    expect(r.porDia[0].turnos.map((t) => t.hasta)).toEqual(['08:45', '09:30']);
   });
 
   it('suma los días y los conserva por separado', () => {
@@ -67,12 +82,12 @@ describe('calcularTurnos', () => {
     expect(calcularTurnos([franja('09:00', '13:00', -30)]).total).toBe(0);
   });
 
-  it('una franja más corta que la duración da cero turnos y el resto entero', () => {
+  it('una franja más corta que la duración da un turno, completo', () => {
     const r = calcularTurnos([franja('09:00', '09:20', 30)]);
 
-    expect(r.total).toBe(0);
-    expect(r.porDia[0].resto).toBe(20);
-    expect(r.porDia[0].restoDesde).toBe('09:00');
+    expect(r.total).toBe(1);
+    expect(r.porDia[0].turnos[0]).toEqual({ desde: '09:00', hasta: '09:30', minutos: 30 });
+    expect(r.porDia[0].resto).toBe(0);
   });
 
   it('sin franjas el total es cero', () => {
@@ -114,20 +129,18 @@ describe('calcularTurnos', () => {
       expect(r.porDia[0].turnos[5]).toEqual({ desde: '11:30', hasta: '11:50', minutos: 20 });
     });
 
-    it('el último turno entra si su CONSULTA entra: no exige respiro después', () => {
-      // 9:00–10:00, consulta 30, respiro 15: el segundo empieza 9:45 y termina
-      // 10:15… no entra. Pero 9:00–10:15 sí lo emite, aunque su respiro
-      // terminaría 10:30: el aire después de la última consulta es irrelevante.
-      expect(calcularTurnos([conReceso('09:00', '10:00', 30, 15)]).total).toBe(1);
+    it('todo turno que empieza dentro de la franja se completa, con respiro o sin él', () => {
+      // 9:00–10:00, consulta 30, respiro 15: el segundo empieza 9:45 —dentro—
+      // y se completa hasta 10:15. El tercero empezaría 10:30: ya fuera.
+      expect(calcularTurnos([conReceso('09:00', '10:00', 30, 15)]).total).toBe(2);
       expect(calcularTurnos([conReceso('09:00', '10:15', 30, 15)]).total).toBe(2);
     });
 
-    it('un receso que no deja entrar ninguno da cero turnos y el resto entero', () => {
+    it('con receso, una franja corta igual da su turno completo', () => {
       const r = calcularTurnos([conReceso('09:00', '09:20', 30, 10)]);
 
-      expect(r.total).toBe(0);
-      expect(r.porDia[0].resto).toBe(20);
-      expect(r.porDia[0].restoDesde).toBe('09:00');
+      expect(r.total).toBe(1);
+      expect(r.porDia[0].resto).toBe(0);
     });
 
     it('el resto se mide desde el fin del último turno, no desde su respiro', () => {

@@ -48,8 +48,22 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   // lista todo lo pendiente, así que no hace falta el id para llegar a la
   // decisión — y la solicitud puede haber sido respondida ya desde otro aviso.
   CARE_RELATIONSHIP_REQUEST: () => '/my-account/access-requests',
+  // «Alguien pide registrarte como su dependiente»: se acepta o rechaza en la
+  // bandeja de la pantalla de Dependientes.
+  DEPENDENT_LINK_REQUEST: () => '/my-account/dependents',
   // El muro no tiene todavía pantalla de publicación suelta.
   POST: null,
+  // AG-06/AG-07 (BR-22): lo que en verdad emite la agenda
+  // (`scheduling/notices/agenda-notices.ts`, `RECURSO_CITA`/`RECURSO_CUPO`),
+  // no el `APPOINTMENT` aspiracional de arriba. Confirmación, recordatorio,
+  // cancelación y cupo liberado abren todos la misma bandeja: es donde vive
+  // la única decisión que cualquiera de esos avisos puede estar pidiendo.
+  'scheduling.appointment_bookings': () => '/my-account/appointments',
+  'scheduling.bookable_slots': () => '/my-account/appointments',
+  // MCH-027: una orden de estudios que el médico dejó al paciente. No lleva al
+  // id concreto por el mismo motivo que PRESCRIPTION/ENCOUNTER: la lista de
+  // órdenes no acepta ancla todavía.
+  SERVICE_REQUEST: () => '/my-account/diagnostic-orders',
 };
 
 /**

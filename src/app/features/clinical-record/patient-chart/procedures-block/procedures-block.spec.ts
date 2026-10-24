@@ -264,7 +264,7 @@ describe('ProceduresBlock', () => {
       });
 
       expect(texto()).toContain('CQ-000001');
-      expect(texto()).toContain('No podés ver el histórico odontológico');
+      expect(texto()).toContain('No puede ver el histórico odontológico');
     });
 
     it('sin registros, cada mitad dice lo suyo', () => {
@@ -304,7 +304,7 @@ describe('ProceduresBlock', () => {
 
       http.expectNone((r) => r.url === '/procedure-cases');
       expect(texto()).not.toContain('Cirugías');
-      expect(texto()).not.toContain('No podés ver el histórico quirúrgico');
+      expect(texto()).not.toContain('No puede ver el histórico quirúrgico');
 
       http.expectOne((r) => r.url === '/dental-procedures').flush({ items: [], total: 0 });
       http.expectOne((r) => r.url === '/dental-procedures/catalog').flush(CATALOGO);

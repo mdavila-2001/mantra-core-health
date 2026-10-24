@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import {
   ESTABLECIMIENTO,
   ESTADO,
@@ -6,6 +7,7 @@ import {
   TIPO_VINCULO,
   displayDe,
 } from '../fixtures/conceptos';
+import { contactChannelsOfCarrier } from './insurance.handlers';
 import {
   afiliaciones,
   CATEGORIA_MEDICO,
@@ -25,8 +27,31 @@ import {
   type PacienteSimulado,
   type ProfesionalSimulado,
 } from '../fixtures/personas';
-import { conflict, forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
+import {
+  conflict,
+  forbidden,
+  noContent,
+  notFound,
+  preconditionFailed,
+  reply,
+  validation,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
+import { cerrarAcciones, emitirNotificacion } from './notifications.handlers';
+import {
+  ahora,
+  bodyAsQuery,
+  Coleccion,
+  contiene,
+  cuerpo,
+  iso,
+  isoDia,
+  nuevoId,
+  paginar,
+  texto,
+  uuid,
+} from '../mock-store';
 
 /* ============================================================================
     Perfiles: pacientes, profesionales, guía y afiliaciones.
@@ -96,8 +121,14 @@ interface PrincipalElegida {
 
 const principalElegida = new Coleccion<PrincipalElegida>([], 'mock.perfil-medico.principal');
 
-const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>([], 'mock.perfil-medico.especialidades');
-const credencialesAgregadas = new Coleccion<CredencialAgregada>([], 'mock.perfil-medico.credenciales');
+const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>(
+  [],
+  'mock.perfil-medico.especialidades',
+);
+const credencialesAgregadas = new Coleccion<CredencialAgregada>(
+  [],
+  'mock.perfil-medico.credenciales',
+);
 const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-medico.matriculas');
 
 /* ---- corregir y retirar lo ya cargado -------------------------------------
@@ -112,7 +143,10 @@ const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-me
    así que una sola tabla de cada cosa alcanza para las tres. */
 
 /** Los ids que dejaron de verse. */
-const retiradasDelPerfil = new Coleccion<{ readonly id: string }>([], 'mock.perfil-medico.retiradas');
+const retiradasDelPerfil = new Coleccion<{ readonly id: string }>(
+  [],
+  'mock.perfil-medico.retiradas',
+);
 
 /** Un parche sobre una fila: lo que la persona corrigió, encima de lo que había. */
 interface CorreccionDePerfil {
@@ -120,7 +154,10 @@ interface CorreccionDePerfil {
   readonly cambios: Record<string, unknown>;
 }
 
-const correccionesDelPerfil = new Coleccion<CorreccionDePerfil>([], 'mock.perfil-medico.correcciones');
+const correccionesDelPerfil = new Coleccion<CorreccionDePerfil>(
+  [],
+  'mock.perfil-medico.correcciones',
+);
 
 /**
  * Lo que se ve de una colección del perfil: sin lo retirado y con lo corregido
@@ -148,6 +185,24 @@ function corregirDelPerfil(id: string, cambios: Record<string, unknown>): void {
  */
 function existeEnElPerfil(filas: readonly { readonly id: string }[], id: string): boolean {
   return !retiradasDelPerfil.has(id) && filas.some((fila) => fila.id === id);
+}
+
+/** Las claves del cuerpo que el DTO de la API no declara: con la lista blanca estricta, un 400. */
+function clavesFueraDeLaLista(
+  cambios: Record<string, unknown>,
+  permitidas: readonly string[],
+): string[] {
+  return Object.keys(cambios).filter((clave) => !permitidas.includes(clave));
+}
+
+/** La violación con la forma que `class-validator` da a una clave que sobra. */
+function propiedadSobrante(clave: string): { readonly field: string; readonly message: string } {
+  return { field: clave, message: 'should not exist' };
+}
+
+/** Si el estado de verificación de una fila del perfil es «pendiente»: lo único corregible o retirable. */
+function estaPendiente(estadoConceptId: string | undefined): boolean {
+  return estadoConceptId === ESTADO['ST-PENDING'];
 }
 
 /** La fila tal como la devuelve el perfil: sin el dueño, que es de la maqueta. */
@@ -178,15 +233,24 @@ function conElegidaAlFrente<T extends { readonly id: string; readonly isPrimary?
    escriben, y separarse sería servir una lista y escribir sobre otra. */
 
 function especialidadesPropiasDe(p: ProfesionalSimulado) {
-  return [...especialidadesDe(p), ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno)];
+  return [
+    ...especialidadesDe(p),
+    ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno),
+  ];
 }
 
 function credencialesPropiasDe(p: ProfesionalSimulado) {
-  return [...credencialesDe(p), ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno)];
+  return [
+    ...credencialesDe(p),
+    ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno),
+  ];
 }
 
 function matriculasPropiasDe(p: ProfesionalSimulado) {
-  return [...licenciasDe(p), ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno)];
+  return [
+    ...licenciasDe(p),
+    ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno),
+  ];
 }
 
 function profesionalDeSesion(request: MockRequest): ProfesionalSimulado | undefined {
@@ -245,6 +309,14 @@ function fichaDe(p: PacienteSimulado) {
  * segundo juego de coberturas de maqueta que se desalinee del primero.
  */
 export function perfilPropioDe(p: PacienteSimulado) {
+  // Canales reales de la aseguradora ficticia de `p` (Tarea 2), no
+  // literales fijos: antes esta tarjeta usaba el mismo WhatsApp y call
+  // center para cualquier aseguradora, y ese call center era, sin
+  // marcarlo, el real de BISA.
+  const canales =
+    p.aseguradora === undefined
+      ? { whatsapp: null, callCenter: null }
+      : contactChannelsOfCarrier(p.aseguradora);
   return {
     personId: p.personId,
     patientProfileId: p.id,
@@ -291,50 +363,108 @@ export function perfilPropioDe(p: PacienteSimulado) {
       lines: p.direccionTrabajo ?? 'Av. Cañoto esq. Landívar, piso 3',
       city: displayDe(p.municipioId),
       municipalityConceptId: p.municipioId,
-      ...(p.workLat === null || p.workLat === undefined || p.workLng === null || p.workLng === undefined
+      ...(p.workLat === null ||
+      p.workLat === undefined ||
+      p.workLng === null ||
+      p.workLng === undefined
         ? {}
         : { latitude: p.workLat, longitude: p.workLng }),
     },
     coverages:
       p.aseguradora === undefined
         ? []
-        : [{ id: `coverage-${p.id}`,
-            carrierName: p.aseguradora,
-            planName: p.plan,
-            isPublic: false,
-            policyIdentifier: `POL-${p.patientCode.slice(4)}`,
-            memberIdentifier: `AF-${p.patientCode.slice(4)}`,
-            verified: true,
-            status: 'Cobertura activa',
-            statusCode: 'COVERAGE_ACTIVE',
-            validityStatus: 'CURRENT',
-            referenceDate: isoDia(0),
-            effectiveFrom: '2026-01-01',
-            effectiveTo: '2026-12-31',
-            currencyCode: 'BOB',
-            carrierWhatsappNumber: '+59170011223',
-            carrierCallCenterPhone: '800-10-6060',
-            benefits: [
-              { id: `benefit-general-${p.id}`, categoryName: 'Atención ambulatoria', coveragePercent: '80.50', copayAmount: '20.00', deductibleAmount: null, effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
-              { id: `benefit-service-${p.id}`, categoryName: 'Atención ambulatoria', serviceConceptId: uuid('benefit-consultation'), serviceName: 'Consulta de seguimiento', coveragePercent: '100', copayAmount: '0.00', deductibleAmount: '150.00', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
-            ] },
-            { id: `coverage-expired-${p.id}`, carrierName: p.aseguradora, planName: 'Plan anterior', isPublic: false,
-              policyIdentifier: `POL-ANT-${p.patientCode.slice(4)}`, verified: true, status: 'Cobertura activa',
-              statusCode: 'COVERAGE_ACTIVE', validityStatus: 'EXPIRED', effectiveFrom: '2025-01-01', effectiveTo: '2025-12-31',
-              carrierWhatsappNumber: '+59170011223', benefits: [],
+        : [
+            {
+              id: `coverage-${p.id}`,
+              carrierName: p.aseguradora,
+              planName: p.plan,
+              isPublic: false,
+              policyIdentifier: `POL-${p.patientCode.slice(4)}`,
+              memberIdentifier: `AF-${p.patientCode.slice(4)}`,
+              verified: true,
+              status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE',
+              validityStatus: 'CURRENT',
+              referenceDate: isoDia(0),
+              effectiveFrom: '2026-01-01',
+              effectiveTo: '2026-12-31',
+              currencyCode: 'BOB',
+              carrierWhatsappNumber: canales.whatsapp,
+              carrierCallCenterPhone: canales.callCenter,
+              benefits: [
+                {
+                  id: `benefit-general-${p.id}`,
+                  categoryName: 'Atención ambulatoria',
+                  coveragePercent: '80.50',
+                  copayAmount: '20.00',
+                  deductibleAmount: null,
+                  effectiveFrom: '2026-01-01',
+                  effectiveTo: '2026-12-31',
+                  validityStatus: 'CURRENT',
+                },
+                {
+                  id: `benefit-service-${p.id}`,
+                  categoryName: 'Atención ambulatoria',
+                  serviceConceptId: uuid('benefit-consultation'),
+                  serviceName: 'Consulta de seguimiento',
+                  coveragePercent: '100',
+                  copayAmount: '0.00',
+                  deductibleAmount: '150.00',
+                  effectiveFrom: '2026-01-01',
+                  effectiveTo: '2026-12-31',
+                  validityStatus: 'CURRENT',
+                },
+              ],
             },
-            { id: `coverage-future-${p.id}`, carrierName: p.aseguradora, planName: 'Plan próxima renovación', isPublic: false,
-              memberIdentifier: `DECL-${p.patientCode.slice(4)}`, verified: false, status: 'Cobertura activa',
-              statusCode: 'COVERAGE_ACTIVE', validityStatus: 'UPCOMING', effectiveFrom: '2027-01-01', effectiveTo: '2027-12-31',
-              currencyCode: 'USD', carrierCallCenterPhone: '800-10-6060', benefits: [],
-            }],
-    guardians: personasRelacionadasDe(p).map((r) => ({
-      displayName: r.displayName,
-      relationshipConceptId: r.relationshipConceptId,
-      isEmergencyContact: r.isEmergencyContact,
-      isLegalGuardian: r.isLegalGuardian,
-      phone: '+591 70011223',
-    })),
+            {
+              id: `coverage-expired-${p.id}`,
+              carrierName: p.aseguradora,
+              planName: 'Plan anterior',
+              isPublic: false,
+              policyIdentifier: `POL-ANT-${p.patientCode.slice(4)}`,
+              verified: true,
+              status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE',
+              validityStatus: 'EXPIRED',
+              effectiveFrom: '2025-01-01',
+              effectiveTo: '2025-12-31',
+              carrierWhatsappNumber: canales.whatsapp,
+              benefits: [],
+            },
+            {
+              id: `coverage-future-${p.id}`,
+              carrierName: p.aseguradora,
+              planName: 'Plan próxima renovación',
+              isPublic: false,
+              memberIdentifier: `DECL-${p.patientCode.slice(4)}`,
+              verified: false,
+              status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE',
+              validityStatus: 'UPCOMING',
+              effectiveFrom: '2027-01-01',
+              effectiveTo: '2027-12-31',
+              currencyCode: 'USD',
+              carrierCallCenterPhone: canales.callCenter,
+              benefits: [],
+            },
+          ],
+    emergencyContacts: personasRelacionadasDe(p)
+      .filter((r) => r.isEmergencyContact)
+      .map((r) => ({
+        displayName: r.displayName,
+        relationshipConceptId: r.relationshipConceptId,
+        relationshipDisplay: displayDe(r.relationshipConceptId),
+        phone: '+591 70011223',
+      })),
+    guardians: apoderamientos
+      .filtrar((a) => a.dependienteId === p.id)
+      .map((a) => ({
+        displayName: pacientePorId(a.titularId)?.displayName ?? '',
+        relationshipConceptId: a.relationshipConceptId,
+        relationshipDisplay: displayDe(a.relationshipConceptId),
+        isLegalGuardian: a.relationshipConceptId === PARENTESCO['RELATIONSHIP_GUARDIAN'],
+        phone: pacientePorId(a.titularId)?.phone,
+      })),
   };
 }
 
@@ -345,12 +475,27 @@ export function perfilPropioDe(p: PacienteSimulado) {
  */
 const ENCUENTROS_POR_MES = [18, 21, 24, 19, 26, 28, 23, 27, 31, 29, 30, 36] as const;
 
+/**
+ * De esas consultas, las de personas con seguro (194 de 312: cerca del 62 %).
+ * Cada valor queda por debajo de su mes en `ENCUENTROS_POR_MES`; el resto son
+ * consultas sin seguro.
+ */
+const ENCUENTROS_CON_SEGURO_POR_MES = [11, 13, 15, 12, 16, 18, 14, 17, 19, 18, 19, 22] as const;
+
 /** La serie, anclada al mes en curso: el último punto es siempre «hoy». */
-function serieMensualDemo(): readonly { month: string; count: number }[] {
+function serieMensualDemo(): readonly { month: string; count: number; insuredCount: number }[] {
   const hoy = new Date();
   return ENCUENTROS_POR_MES.map((count, indice) => {
-    const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
-    return { month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`, count };
+    const mes = new Date(
+      hoy.getFullYear(),
+      hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice),
+      1,
+    );
+    return {
+      month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`,
+      count,
+      insuredCount: ENCUENTROS_CON_SEGURO_POR_MES[indice] ?? 0,
+    };
   });
 }
 
@@ -441,7 +586,14 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     // porque `011` solo no es un NIT.
     taxId: p.nationalId === '' ? '' : `${p.nationalId}011`,
     taxHolderName: p.displayName,
-    homeAddress: { lines: p.direccion, city: p.ciudad, municipalityConceptId: p.municipioId, latitude: p.lat, longitude: p.lng },
+    insuranceBillingFrequency: 'MONTHLY',
+    homeAddress: {
+      lines: p.direccion,
+      city: p.ciudad,
+      municipalityConceptId: p.municipioId,
+      latitude: p.lat,
+      longitude: p.lng,
+    },
     practitionerCategoryConceptId: CATEGORIA_MEDICO,
     verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,
     practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
@@ -464,8 +616,11 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
             medicationRequests: 208,
             clinicalNotes: 275,
             documents: 41,
-            monthlyEncounters: serieMensualDemo(),
-            quality: CALIDAD_DEMO,
+            // Datos sinteticos solo en demo explicita. ID-14 conserva el
+            // estado vacio cuando se inspecciona el contrato de API real.
+            ...(environment.mockBackend
+              ? { monthlyEncounters: serieMensualDemo(), quality: CALIDAD_DEMO }
+              : {}),
           },
     createdAt: iso(-500),
   };
@@ -482,13 +637,18 @@ function itemDeGuia(p: ProfesionalSimulado) {
     verified: p.verified,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
-    specialties: p.especialidades.map((specialtyConceptId, i) => ({ specialtyConceptId, isPrimary: i === 0 })),
+    specialties: p.especialidades.map((specialtyConceptId, i) => ({
+      specialtyConceptId,
+      isPrimary: i === 0,
+    })),
     // Para los de la red, el consultorio es la dirección que publica la
     // aseguradora: «Consultorio Al» (de «Al Hamss») no existe en ningún lado.
-    workplaces: p.origen !== undefined ? [p.organizacion, p.direccion].filter((x) => x !== '') : [p.organizacion, `Consultorio ${p.lastName}`],
+    workplaces:
+      p.origen !== undefined
+        ? [p.organizacion, p.direccion].filter((x) => x !== '')
+        : [p.organizacion, `Consultorio ${p.lastName}`],
   };
 }
-
 
 /* ---- dependientes (B.1) ---------------------------------------------------
    El apoderamiento vive acá y no en los fixtures porque nace en la sesión: no
@@ -502,11 +662,64 @@ interface ApoderamientoSimulado {
   readonly relationshipConceptId: string;
 }
 
-const apoderamientos: ApoderamientoSimulado[] = [];
+/*
+ * Persistido para que aceptar una solicitud sobreviva al cambio de cuenta, que
+ * recarga la aplicación. Un apoderamiento cuyo dependiente ya no existe —el
+ * alta sin cuenta crea pacientes que no se persisten— se ignora al leer.
+ */
+const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn(
+  'mock.profiles.apoderamientos',
+);
+
+/**
+ * Un pedido de representar a alguien que ya tiene cuenta.
+ *
+ * Se persiste como las notificaciones: el aviso sobrevive a F5 y, si la
+ * solicitud no, tocarlo llevaría a una bandeja vacía.
+ */
+interface SolicitudDeVinculo {
+  readonly id: string;
+  readonly titularId: string;
+  readonly dependienteId: string;
+  readonly estado: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  readonly createdAt: string;
+}
+
+const solicitudes = new Coleccion<SolicitudDeVinculo>([]);
+solicitudes.persistirEn('mock.profiles.solicitudes-de-dependiente');
+
+/** Una cuenta registrada: el alta de un dependiente sin cuenta deja el correo vacío. */
+function cuentaConDocumento(documento: string): PacienteSimulado | undefined {
+  return pacientes.todos().find((p) => p.nationalId === documento && p.email !== '');
+}
+
+/** Minúsculas y sin tildes, para que «maria» encuentre a «María». */
+function sinTildes(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('es');
+}
+
+/** Cuántas letras hacen falta para buscar personas por nombre. */
+const MINIMO_BUSQUEDA_POR_NOMBRE = 3;
+const TOPE_CANDIDATOS = 8;
+
+/**
+ * El CI con sólo las últimas cifras a la vista.
+ *
+ * Alcanza para distinguir a dos homónimos y no sirve para averiguar el
+ * documento de nadie.
+ */
+function documentoEnmascarado(documento: string): string {
+  return documento.length <= 3 ? '•••' : `••••${documento.slice(-3)}`;
+}
 
 /** Los apoderamientos de un titular. */
 function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
-  return apoderamientos.filter((a) => a.titularId === titularId);
+  return apoderamientos.filtrar(
+    (a) => a.titularId === titularId && pacientePorId(a.dependienteId) !== undefined,
+  );
 }
 
 /**
@@ -518,9 +731,9 @@ function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
  */
 export function representaA(titularId: string | undefined, pacienteId: string): boolean {
   if (titularId === undefined) return false;
-  return apoderamientos.some(
-    (a) => a.titularId === titularId && a.dependienteId === pacienteId,
-  );
+  return apoderamientos
+    .todos()
+    .some((a) => a.titularId === titularId && a.dependienteId === pacienteId);
 }
 
 /**
@@ -555,9 +768,7 @@ function resumenDeDependiente(apoderamiento: ApoderamientoSimulado) {
     ...(p?.birthDate === undefined || p.birthDate === ''
       ? {}
       : { birthDate: p.birthDate, ageYears: edadEnAnios(p.birthDate) }),
-    ...(p?.nationalId === undefined || p.nationalId === ''
-      ? {}
-      : { nationalId: p.nationalId }),
+    ...(p?.nationalId === undefined || p.nationalId === '' ? {} : { nationalId: p.nationalId }),
     relationshipCode: relacion.code,
     relationshipDisplay: relacion.display,
     isLegalGuardian: true,
@@ -577,7 +788,12 @@ function edadEnAnios(fecha: string): number {
 export function registrarPerfiles(router: MockRouter): void {
   /* ---- pacientes ---------------------------------------------------------- */
 
-  router.get('/profiles/patients', ({ query }) => {
+  /**
+   * La búsqueda de pacientes, común al `GET` obsoleto (filtros en la query) y
+   * al `POST …/search` que usa `ProfilesClient.searchPatients` (filtros en el
+   * cuerpo, para que el nombre y el documento no queden en la URL).
+   */
+  function searchPatients(query: URLSearchParams) {
     // `q`, no `query`: es como lo manda `ProfilesClient.searchPatients`. Leyendo
     // la clave equivocada el filtro nunca se aplicaba —`contiene(x, null)` es
     // `true`— y el buscador de pacientes devolvía la lista entera escribiera lo
@@ -589,18 +805,24 @@ export function registrarPerfiles(router: MockRouter): void {
     const idiomaClinico = texto(query, 'clinicalLanguageConceptId');
     const todos = pacientes
       .todos()
-      .filter((p) => contiene(p.displayName, q) || contiene(p.patientCode, q) || contiene(p.nationalId, q))
+      .filter(
+        (p) =>
+          contiene(p.displayName, q) || contiene(p.patientCode, q) || contiene(p.nationalId, q),
+      )
       .filter((p) => nationalId === null || p.nationalId === nationalId)
       .filter((p) => aboGroup === null || p.aboGroupId === aboGroup)
       .filter((p) => rhFactor === null || p.rhFactorId === rhFactor)
       .filter((p) => idiomaClinico === null || p.idiomaClinicoId === idiomaClinico)
       .map(itemDeLista);
     return paginar(todos, query, 25);
-  });
+  }
+
+  router.get('/profiles/patients', ({ query }) => searchPatients(query));
+  router.post('/profiles/patients/search', (request) => searchPatients(bodyAsQuery(request)));
 
   router.get('/profiles/patients/me/summary', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil de paciente');
+    if (p === undefined) return notFound('No tiene perfil de paciente');
     return {
       personId: p.personId,
       patientProfileId: p.id,
@@ -614,7 +836,7 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/patients/me', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil de paciente');
+    if (p === undefined) return notFound('No tiene perfil de paciente');
     return perfilPropioDe(p);
   });
 
@@ -650,7 +872,7 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.patch('/profiles/patients/me', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil de paciente');
+    if (p === undefined) return notFound('No tiene perfil de paciente');
     const cambios = cuerpo<Record<string, unknown>>(request);
     const actualizado = pacientes.actualizar(p.id, {
       ...(typeof cambios['name'] === 'string' ? { name: cambios['name'] } : {}),
@@ -660,12 +882,22 @@ export function registrarPerfiles(router: MockRouter): void {
         ? { middleName: cambios['middleName'] === '' ? undefined : cambios['middleName'] }
         : {}),
       ...(typeof cambios['lastName'] === 'string' ? { lastName: cambios['lastName'] } : {}),
-      ...(typeof cambios['motherLastName'] === 'string' ? { motherLastName: cambios['motherLastName'] } : {}),
+      ...(typeof cambios['motherLastName'] === 'string'
+        ? { motherLastName: cambios['motherLastName'] }
+        : {}),
       ...(typeof cambios['phone'] === 'string' ? { phone: cambios['phone'] } : {}),
-      ...(typeof cambios['birthDate'] === 'string' ? { birthDate: cambios['birthDate'].slice(0, 10) } : {}),
-      ...(typeof cambios['residenceMunicipalityConceptId'] === 'string' ? { municipioId: cambios['residenceMunicipalityConceptId'] } : {}),
-      ...(typeof cambios['occupationConceptId'] === 'string' ? { ocupacionId: cambios['occupationConceptId'] } : {}),
-      ...(typeof cambios['homeAddressLines'] === 'string' ? { direccion: cambios['homeAddressLines'] } : {}),
+      ...(typeof cambios['birthDate'] === 'string'
+        ? { birthDate: cambios['birthDate'].slice(0, 10) }
+        : {}),
+      ...(typeof cambios['residenceMunicipalityConceptId'] === 'string'
+        ? { municipioId: cambios['residenceMunicipalityConceptId'] }
+        : {}),
+      ...(typeof cambios['occupationConceptId'] === 'string'
+        ? { ocupacionId: cambios['occupationConceptId'] }
+        : {}),
+      ...(typeof cambios['homeAddressLines'] === 'string'
+        ? { direccion: cambios['homeAddressLines'] }
+        : {}),
       // La dirección de trabajo no se guardaba: el contrato la declaraba, la
       // pantalla la mandaba y la maqueta la tiraba, así que editarla parecía
       // funcionar hasta recargar.
@@ -676,7 +908,9 @@ export function registrarPerfiles(router: MockRouter): void {
       ...coordenadasDelCuerpo(cambios, 'work'),
     });
     const conNombre = actualizado!;
-    pacientes.actualizar(p.id, { displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}` });
+    pacientes.actualizar(p.id, {
+      displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}`,
+    });
     return perfilPropioDe(pacientes.get(p.id)!);
   });
 
@@ -721,7 +955,9 @@ export function registrarPerfiles(router: MockRouter): void {
   );
 
   router.post('/profiles/patients/merge', (request) => {
-    const datos = cuerpo<{ survivingPatientProfileId: string; mergedPatientProfileId: string }>(request);
+    const datos = cuerpo<{ survivingPatientProfileId: string; mergedPatientProfileId: string }>(
+      request,
+    );
     return {
       status: 201,
       body: {
@@ -823,19 +1059,197 @@ export function registrarPerfiles(router: MockRouter): void {
       identityVerified: false,
     };
     pacientes.agregar(nuevo);
-    apoderamientos.push({
+    const apoderamiento = apoderamientos.agregar({
       id: nuevoId('proxy'),
       titularId: titular.id,
       dependienteId: id,
       relationshipConceptId: datos.relationshipConceptId ?? '',
     });
 
-    return { status: 201, body: resumenDeDependiente(apoderamientos.at(-1)!) };
+    return { status: 201, body: resumenDeDependiente(apoderamiento) };
   });
+
+  /* ---- dependientes que ya tienen cuenta: solicitud y aceptación ---------- */
+
+  /**
+   * Pide representar a quien ya tiene cuenta con ese CI.
+   *
+   * No crea el vínculo: le avisa a esa cuenta, que decide. La respuesta no dice
+   * de quién es el CI para no servir de buscador de personas por documento.
+   */
+  router.post('/profiles/patients/me/dependent-requests', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) {
+      return forbidden('Esta cuenta no tiene perfil de paciente');
+    }
+    const datos = cuerpo<{ nationalId?: string; patientProfileId?: string }>(request);
+    const documento = (datos.nationalId ?? '').trim();
+    const perfilElegido = (datos.patientProfileId ?? '').trim();
+    if (documento === '' && perfilElegido === '') {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Escriba el CI de la persona o elíjala de la búsqueda.',
+        error: 'Bad Request',
+      });
+    }
+    // Se señala a la persona por su CI o por el perfil que devolvió la búsqueda
+    // por nombre; las dos formas caen en la misma regla de abajo.
+    const destinatario =
+      perfilElegido === ''
+        ? cuentaConDocumento(documento)
+        : pacientes.todos().find((p) => p.id === perfilElegido && p.email !== '');
+    const esElPropio =
+      (documento !== '' && documento === request.user?.nationalId) ||
+      destinatario?.id === titular.id;
+    if (esElPropio) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'VALIDATION_FAILED',
+        message: 'Ese CI es el suyo: no puede registrarse como su propio dependiente.',
+        error: 'Unprocessable Entity',
+      });
+    }
+    if (destinatario === undefined) {
+      return notFound(
+        perfilElegido === ''
+          ? 'No hay ninguna cuenta registrada con ese CI.'
+          : 'Esa persona ya no tiene una cuenta registrada.',
+      );
+    }
+    if (representaA(titular.id, destinatario.id)) {
+      return conflict('Esa persona ya es su dependiente.');
+    }
+    const pendiente = solicitudes.filtrar(
+      (s) =>
+        s.titularId === titular.id && s.dependienteId === destinatario.id && s.estado === 'PENDING',
+    )[0];
+    if (pendiente !== undefined) {
+      return conflict('Ya le envió una solicitud a esa persona. Falta que la acepte.');
+    }
+
+    const solicitud = solicitudes.agregar({
+      id: nuevoId('solicitud-dependiente'),
+      titularId: titular.id,
+      dependienteId: destinatario.id,
+      estado: 'PENDING',
+      createdAt: ahora(),
+    });
+    emitirNotificacion({
+      userId: destinatario.userId,
+      category: 'CLINICAL',
+      subject: 'Le quieren registrar como dependiente',
+      bodyText: `${titular.displayName} pide registrarse como su dependiente. Si acepta, va a poder pedirle citas y ver su historia clínica.`,
+      destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+      // Decidir desde la campana, sin abrir la pantalla de Dependientes.
+      actions: [
+        { key: 'ACCEPT', label: 'Aceptar', tone: 'primary' },
+        { key: 'REJECT', label: 'Rechazar', tone: 'neutral' },
+      ],
+    });
+    return { status: 201, body: { id: solicitud.id, status: 'PENDING' } };
+  });
+
+  /**
+   * Cuentas cuyo nombre coincide con lo escrito, para elegir a quién pedirle
+   * que sea dependiente.
+   *
+   * Poco expuesta a propósito: nada por debajo de tres letras, pocas filas, el
+   * CI enmascarado, y sin la propia cuenta ni las personas que ya son
+   * dependientes. Todas las palabras escritas deben aparecer (en cualquier
+   * orden) al comienzo de alguna palabra del nombre.
+   */
+  router.get('/profiles/patients/me/dependent-candidates', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) return forbidden('Esta cuenta no tiene perfil de paciente');
+    const palabras = sinTildes(request.query.get('q') ?? '')
+      .split(/\s+/)
+      .filter((p) => p !== '');
+    if (palabras.join('').length < MINIMO_BUSQUEDA_POR_NOMBRE) return [];
+    return pacientes
+      .todos()
+      .filter((p) => p.email !== '' && p.id !== titular.id && !representaA(titular.id, p.id))
+      .filter((p) => {
+        const nombre = sinTildes(p.displayName).split(/\s+/);
+        return palabras.every((palabra) => nombre.some((n) => n.startsWith(palabra)));
+      })
+      .slice(0, TOPE_CANDIDATOS)
+      .map((p) => ({
+        patientProfileId: p.id,
+        displayName: p.displayName,
+        ...(p.nationalId === '' ? {} : { maskedNationalId: documentoEnmascarado(p.nationalId) }),
+      }));
+  });
+
+  router.get('/profiles/patients/me/dependent-requests/incoming', (request) => {
+    const yo = pacienteDeSesion(request);
+    if (yo === undefined) return [];
+    return solicitudes
+      .filtrar((s) => s.dependienteId === yo.id && s.estado === 'PENDING')
+      .map((s) => ({
+        id: s.id,
+        requesterDisplayName: pacientePorId(s.titularId)?.displayName ?? '',
+        createdAt: s.createdAt,
+      }));
+  });
+
+  /** Sólo la persona a la que se le pidió puede responder, y una sola vez. */
+  function responderSolicitud(request: MockRequest, estado: 'ACCEPTED' | 'REJECTED') {
+    const yo = pacienteDeSesion(request);
+    const solicitud = solicitudes.get(request.params['id']!);
+    if (yo === undefined || solicitud === undefined || solicitud.dependienteId !== yo.id) {
+      return notFound('Solicitud no encontrada');
+    }
+    if (solicitud.estado !== 'PENDING') {
+      return conflict('Esa solicitud ya fue respondida.');
+    }
+    solicitudes.actualizar(solicitud.id, { estado });
+    // La decisión ya está tomada: el aviso que la pedía deja de ofrecerla.
+    cerrarAcciones({ type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id });
+    const titular = pacientePorId(solicitud.titularId);
+    if (estado === 'ACCEPTED') {
+      const datos = cuerpo<{ relationshipConceptId?: string }>(request);
+      apoderamientos.agregar({
+        id: nuevoId('proxy'),
+        titularId: solicitud.titularId,
+        dependienteId: yo.id,
+        relationshipConceptId: datos.relationshipConceptId ?? PARENTESCO['RELATIONSHIP_OTHER']!,
+      });
+    }
+    if (titular !== undefined) {
+      emitirNotificacion({
+        userId: titular.userId,
+        category: 'CLINICAL',
+        subject:
+          estado === 'ACCEPTED'
+            ? `${yo.displayName} aceptó ser su dependiente`
+            : `${yo.displayName} rechazó ser su dependiente`,
+        bodyText:
+          estado === 'ACCEPTED'
+            ? 'Ya aparece en su lista de dependientes.'
+            : 'No se creó ningún vínculo.',
+        destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+      });
+    }
+    return { id: solicitud.id, status: estado };
+  }
+
+  router.post('/profiles/patients/me/dependent-requests/:id/accept', (request) =>
+    responderSolicitud(request, 'ACCEPTED'),
+  );
+  router.post('/profiles/patients/me/dependent-requests/:id/reject', (request) =>
+    responderSolicitud(request, 'REJECTED'),
+  );
 
   router.post('/profiles/patients/:id/related-persons', ({ params }) => ({
     status: 201,
-    body: { id: nuevoId('related'), patientProfileId: params['id'], personId: nuevoId('person'), status: 'ACTIVE', createdAt: ahora() },
+    body: {
+      id: nuevoId('related'),
+      patientProfileId: params['id'],
+      personId: nuevoId('person'),
+      status: 'ACTIVE',
+      createdAt: ahora(),
+    },
   }));
 
   /**
@@ -873,7 +1287,8 @@ export function registrarPerfiles(router: MockRouter): void {
       personId: uuid(`person-${id}`),
       userId: uuid(`user-${id}`),
       patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`,
-      displayName: datos.displayName ?? [nombre, apellido, materno].filter((p) => p !== '').join(' '),
+      displayName:
+        datos.displayName ?? [nombre, apellido, materno].filter((p) => p !== '').join(' '),
       name: nombre,
       ...(datos.middleName === undefined ? {} : { middleName: datos.middleName }),
       lastName: apellido,
@@ -893,7 +1308,13 @@ export function registrarPerfiles(router: MockRouter): void {
     pacientes.agregar(nuevo);
     return {
       status: 201,
-      body: { profileId: nuevo.id, personId: nuevo.personId, patientCode: nuevo.patientCode, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
+      body: {
+        profileId: nuevo.id,
+        personId: nuevo.personId,
+        patientCode: nuevo.patientCode,
+        recordLinkageStatus: 'UNLINKED',
+        createdAt: ahora(),
+      },
     };
   });
 
@@ -901,20 +1322,28 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/practitioners/me/summary', (request) => {
     const p = profesionalDeSesion(request);
-    return p === undefined ? notFound('No tenés perfil profesional') : perfilProfesionalDe(p);
+    return p === undefined ? notFound('No tiene perfil profesional') : perfilProfesionalDe(p);
   });
 
   router.get('/profiles/practitioners/me/onboarding', (request) => {
     const p = profesionalDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil profesional');
+    if (p === undefined) return notFound('No tiene perfil profesional');
     const completo = p.id === MEDICA.id;
     return {
       practitionerProfileId: p.id,
       steps: [
         { key: 'professional-data', complete: true, missing: [] },
         { key: 'photo', complete: true, missing: [] },
-        { key: 'organizations', complete: completo, missing: completo ? [] : ['Vinculá al menos una organización'] },
-        { key: 'schedule', complete: completo, missing: completo ? [] : ['Publicá un horario de atención'] },
+        {
+          key: 'organizations',
+          complete: completo,
+          missing: completo ? [] : ['Vincule al menos una organización'],
+        },
+        {
+          key: 'schedule',
+          complete: completo,
+          missing: completo ? [] : ['Publique un horario de atención'],
+        },
         { key: 'review', complete: completo, missing: completo ? [] : ['Revisión pendiente'] },
       ],
       firstIncomplete: completo ? 'done' : 'organizations',
@@ -940,7 +1369,10 @@ export function registrarPerfiles(router: MockRouter): void {
       for (const e of p.especialidades) conteo.set(e, (conteo.get(e) ?? 0) + 1);
     }
     return {
-      items: [...conteo.entries()].map(([specialtyConceptId, practitionerCount]) => ({ specialtyConceptId, practitionerCount })),
+      items: [...conteo.entries()].map(([specialtyConceptId, practitionerCount]) => ({
+        specialtyConceptId,
+        practitionerCount,
+      })),
       practitionerTotal: PROFESIONALES.length,
       withoutSpecialtyCount: PROFESIONALES.filter((p) => p.especialidades.length === 0).length,
     };
@@ -951,7 +1383,9 @@ export function registrarPerfiles(router: MockRouter): void {
     const especialidad = texto(query, 'specialtyConceptId');
     const sinEspecialidad = query.get('withoutSpecialty') === 'true';
     const soloVerificados = query.get('verified') === 'true';
-    const todos = PROFESIONALES.filter((p) => contiene(p.displayName, q) || contiene(p.professionalTitle, q))
+    const todos = PROFESIONALES.filter(
+      (p) => contiene(p.displayName, q) || contiene(p.professionalTitle, q),
+    )
       .filter((p) => especialidad === null || p.especialidades.includes(especialidad))
       .filter((p) => !sinEspecialidad || p.especialidades.length === 0)
       .filter((p) => !soloVerificados || p.verified)
@@ -961,15 +1395,30 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/practitioners/me/affiliations', (request) => {
     const p = profesionalDeSesion(request);
-    const items = p === undefined ? [] : afiliaciones.filtrar((a) => a.practitionerProfileId === p.id);
+    const items =
+      p === undefined ? [] : afiliaciones.filtrar((a) => a.practitionerProfileId === p.id);
     return { items, count: items.length };
   });
 
   router.post('/profiles/practitioners/me/affiliations', (request) => {
     const p = profesionalDeSesion(request);
     if (p === undefined) return forbidden();
-    const datos = cuerpo<{ organizationName: string; roleTitle?: string; startDate: string; endDate?: string; practiceSiteId?: string; affiliationTypeConceptId?: string }>(request);
-    if (afiliaciones.filtrar((a) => a.practitionerProfileId === p.id && a.organizationName === datos.organizationName && a.startDate === datos.startDate).length > 0) {
+    const datos = cuerpo<{
+      organizationName: string;
+      roleTitle?: string;
+      startDate: string;
+      endDate?: string;
+      practiceSiteId?: string;
+      affiliationTypeConceptId?: string;
+    }>(request);
+    if (
+      afiliaciones.filtrar(
+        (a) =>
+          a.practitionerProfileId === p.id &&
+          a.organizationName === datos.organizationName &&
+          a.startDate === datos.startDate,
+      ).length > 0
+    ) {
       return conflict('Ese vínculo ya está en el historial laboral');
     }
     const nueva: AfiliacionSimulada = {
@@ -995,7 +1444,10 @@ export function registrarPerfiles(router: MockRouter): void {
     const actual = afiliaciones.get(request.params['id']!);
     if (actual === undefined) return notFound();
     const datos = cuerpo<Partial<AfiliacionSimulada>>(request);
-    return afiliaciones.actualizar(actual.id, { ...datos, current: (datos.endDate ?? actual.endDate) === null });
+    return afiliaciones.actualizar(actual.id, {
+      ...datos,
+      current: (datos.endDate ?? actual.endDate) === null,
+    });
   });
 
   router.delete('/profiles/practitioners/me/affiliations/:id', ({ params }) => {
@@ -1006,13 +1458,21 @@ export function registrarPerfiles(router: MockRouter): void {
   router.post('/profiles/practitioners/me/credentials', (request) => {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound();
-    const datos = cuerpo<{ credentialTypeConceptId: string; number: string; issuingInstitutionText?: string; issueDate?: string; fileId?: string }>(request);
+    const datos = cuerpo<{
+      credentialTypeConceptId: string;
+      number: string;
+      issuingInstitutionText?: string;
+      issueDate?: string;
+      fileId?: string;
+    }>(request);
     const nueva = credencialesAgregadas.agregar({
       id: nuevoId('cred'),
       profileId: p.id,
       credentialTypeConceptId: datos.credentialTypeConceptId ?? '',
       number: datos.number ?? '',
-      ...(datos.issuingInstitutionText === undefined ? {} : { issuingInstitutionText: datos.issuingInstitutionText }),
+      ...(datos.issuingInstitutionText === undefined
+        ? {}
+        : { issuingInstitutionText: datos.issuingInstitutionText }),
       ...(datos.issueDate === undefined ? {} : { issueDate: datos.issueDate }),
       // El diploma se devuelve en la lectura: sin esto, el título recién
       // cargado se quedaba sin nada que descargar aunque se hubiera adjuntado.
@@ -1022,14 +1482,12 @@ export function registrarPerfiles(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id } };
   });
   /* ---- corregir y retirar lo cargado (propietario, 13/09/2026) ------------
-     De las seis rutas de acá abajo, **sólo el `DELETE` del título existe en la
-     API**. Las otras las sirve este simulador con la forma REST que le toca a
-     cada recurso, para que publicarlas del lado del servidor no obligue a tocar
-     la pantalla. El detalle de lo que falta está en
-     `docs/pendientes-backend-perfil-profesional.md`.
-
-     Todas responden `404` a la fila que no existe o no es propia —el mismo par
-     indistinguible que usa el resto del módulo— y `204` cuando aplicaron. */
+     Las seis rutas existen en la API (título, especialidad y matrícula propias)
+     y el simulador las sirve **con las mismas reglas**: `404` a la fila que no
+     existe o no es propia —el mismo par indistinguible del resto del módulo—,
+     `400` ante una clave que el DTO no declara (con la lista blanca estricta,
+     `isPrimary` incluido), `422` si la fila ya no está pendiente y `204` cuando
+     aplicó. Un recorrido en el simulador tiene que fallar donde falla la API. */
 
   router.patch('/profiles/practitioners/me/credentials/:id', (request) => {
     const p = profesionalDeSesion(request);
@@ -1057,7 +1515,20 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
-    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    const cambios = cuerpo<Record<string, unknown>>(request);
+    const sobrantes = clavesFueraDeLaLista(cambios, ['specialtyConceptId', 'boardCertified']);
+    if (sobrantes.length > 0)
+      return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    if (
+      !estaPendiente(
+        especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId,
+      )
+    ) {
+      return preconditionFailed(
+        'Esa especialidad ya no está pendiente de verificación; no se puede corregir',
+      );
+    }
+    corregirDelPerfil(id, cambios);
     return noContent();
   });
 
@@ -1066,6 +1537,15 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
+    if (
+      !estaPendiente(
+        especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId,
+      )
+    ) {
+      return preconditionFailed(
+        'Esa especialidad ya no está pendiente de verificación; no se puede retirar',
+      );
+    }
     especialidadesAgregadas.borrar(id);
     retiradasDelPerfil.agregar({ id });
     // Si la que se va era la principal, la elección deja de tener sujeto: se
@@ -1081,7 +1561,19 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
-    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    const cambios = cuerpo<Record<string, unknown>>(request);
+    const sobrantes = clavesFueraDeLaLista(cambios, [
+      'licenseNumber',
+      'regulatoryAuthority',
+      'validFrom',
+      'fileId',
+    ]);
+    if (sobrantes.length > 0)
+      return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    if (!estaPendiente(matriculasPropiasDe(p).find((m) => m.id === id)?.stateConceptId)) {
+      return preconditionFailed('Esa matrícula ya no está pendiente; no se puede corregir');
+    }
+    corregirDelPerfil(id, cambios);
     return noContent();
   });
 
@@ -1090,6 +1582,9 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
+    if (!estaPendiente(matriculasPropiasDe(p).find((m) => m.id === id)?.stateConceptId)) {
+      return preconditionFailed('Esa matrícula ya no está pendiente; no se puede retirar');
+    }
     matriculasAgregadas.borrar(id);
     retiradasDelPerfil.agregar({ id });
     return noContent();
@@ -1121,7 +1616,11 @@ export function registrarPerfiles(router: MockRouter): void {
   });
 
   router.post('/profiles/practitioners/:id/specialties', (request) => {
-    const datos = cuerpo<{ specialtyConceptId: string; isPrimary?: boolean; boardCertified?: boolean }>(request);
+    const datos = cuerpo<{
+      specialtyConceptId: string;
+      isPrimary?: boolean;
+      boardCertified?: boolean;
+    }>(request);
     const nueva = especialidadesAgregadas.agregar({
       id: nuevoId('spec'),
       profileId: request.params['id']!,
@@ -1147,13 +1646,21 @@ export function registrarPerfiles(router: MockRouter): void {
   });
 
   router.post('/profiles/practitioners/:id/jurisdiction-authorizations', (request) => {
-    const datos = cuerpo<{ licenseNumber: string; jurisdictionConceptId?: string; regulatoryAuthority?: string; validFrom?: string; fileId?: string }>(request);
+    const datos = cuerpo<{
+      licenseNumber: string;
+      jurisdictionConceptId?: string;
+      regulatoryAuthority?: string;
+      validFrom?: string;
+      fileId?: string;
+    }>(request);
     const nueva = matriculasAgregadas.agregar({
       id: nuevoId('jur'),
       profileId: request.params['id']!,
       jurisdictionConceptId: datos.jurisdictionConceptId ?? JURISDICCION['JUR-BO']!,
       licenseNumber: datos.licenseNumber ?? '',
-      ...(datos.regulatoryAuthority === undefined ? {} : { regulatoryAuthority: datos.regulatoryAuthority }),
+      ...(datos.regulatoryAuthority === undefined
+        ? {}
+        : { regulatoryAuthority: datos.regulatoryAuthority }),
       stateConceptId: ESTADO['ST-PENDING']!,
       ...(datos.validFrom === undefined ? {} : { validFrom: datos.validFrom }),
       ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
@@ -1181,7 +1688,13 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.post('/profiles/persons/:personId/account-links', ({ params }) => ({
     status: 201,
-    body: { id: nuevoId('link'), personId: params['personId'], userId: nuevoId('user'), status: 'ACTIVE', validFrom: ahora() },
+    body: {
+      id: nuevoId('link'),
+      personId: params['personId'],
+      userId: nuevoId('user'),
+      status: 'ACTIVE',
+      validFrom: ahora(),
+    },
   }));
 }
 

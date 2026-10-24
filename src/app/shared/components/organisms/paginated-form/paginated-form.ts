@@ -18,6 +18,8 @@ import {
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { mensajeDeError } from '../../../forms/paginated/mensaje-de-error';
+import { camposOcultos } from '../../../forms/paginated/visibilidad-condicional';
+import { esPreguntaPrincipal } from '../../../forms/paginated/paginar-campos';
 import {
   MAX_CAMPOS_POR_PAGINA,
   type CampoDeFormulario,
@@ -205,6 +207,12 @@ export class PaginatedForm {
 
   readonly submitLabel = input<string>('Enviar');
 
+  /** Un grupo paginado dentro de otro formulario: el padre conserva el envio. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
+  /** Conserva el selector del envio al migrar un formulario existente. */
+  readonly submitTestId = input('paginated-form-continuar');
+
   readonly pending = input(false, { transform: booleanAttribute });
 
   /**
@@ -217,7 +225,7 @@ export class PaginatedForm {
    */
   readonly destructive = input(false, { transform: booleanAttribute });
 
-  readonly confirmTitle = input<string>('¿Confirmás la acción?');
+  readonly confirmTitle = input<string>('¿Confirma la acción?');
   readonly confirmMessage = input<string>('Esta acción no se puede deshacer.');
 
   /**
@@ -326,13 +334,42 @@ export class PaginatedForm {
    */
   private readonly visitedIndex = signal(0);
 
-  readonly total = computed(() => this.paginas().length);
+  /**
+   * Los valores del formulario, como señal. Se lee `getRawValue()` y no
+   * `value` porque un campo oculto está deshabilitado y `value` lo omite: la
+   * condición de su hijo tiene que poder seguir leyéndolo igual.
+   */
+  private readonly valores = signal<Record<string, unknown>>({});
+
+  /** Las claves de los campos que su condición deja fuera de la vista. */
+  protected readonly ocultos = computed(() => {
+    const valores = this.valores();
+    return camposOcultos(
+      this.paginas().flatMap((pagina) => pagina.campos),
+      (key) => valores[key],
+    );
+  });
+
+  /**
+   * Las páginas que tienen algo para contestar. Una página cuyos campos son
+   * todos «¿cuál?» de preguntas respondidas con «no» no es un paso: se salta, y
+   * no cuenta en el avance.
+   */
+  private readonly paginasActivas = computed(() => {
+    const ocultos = this.ocultos();
+    if (ocultos.size === 0) return this.paginas();
+    return this.paginas().filter((pagina) =>
+      pagina.campos.some((campo) => !ocultos.has(campo.key)),
+    );
+  });
+
+  readonly total = computed(() => this.paginasActivas().length);
 
   /** Base 1, que es como se cuenta de cara a la persona. */
   readonly posicion = computed(() => Math.min(this.indice() + 1, this.total()));
 
   readonly pagina = computed<PaginaDeFormulario | null>(
-    () => this.paginas()[this.indice()] ?? null,
+    () => this.paginasActivas()[this.indice()] ?? null,
   );
 
   readonly esUltima = computed(() => this.posicion() >= this.total());
@@ -377,7 +414,7 @@ export class PaginatedForm {
   readonly pasosCompactos = computed(() => this.total() > MAX_PASOS_EN_EL_INDICADOR);
 
   readonly pasos = computed<readonly StepperStep[]>(() =>
-    this.paginas().map((pagina, posicion) => ({
+    this.paginasActivas().map((pagina, posicion) => ({
       label: pagina.titulo,
       status:
         posicion < this.indice() ? 'complete' : posicion === this.indice() ? 'current' : 'upcoming',
@@ -389,7 +426,7 @@ export class PaginatedForm {
       ...(posicion > this.visitedIndex()
         ? {
             disabled: true,
-            disabledReason: 'Todavía no llegaste acá: completá los pasos anteriores.',
+            disabledReason: 'Todavía no llegó acá: complete los pasos anteriores.',
           }
         : {}),
     })),
@@ -402,7 +439,7 @@ export class PaginatedForm {
     // Si el formulario encoge, el índice puede quedar apuntando a una página que
     // ya no existe: se ve como una pantalla en blanco con «paso 4 de 3».
     effect(() => {
-      const ultima = Math.max(0, this.paginas().length - 1);
+      const ultima = Math.max(0, this.paginasActivas().length - 1);
       if (this.indice() > ultima) {
         this.indice.set(ultima);
       }
@@ -414,9 +451,11 @@ export class PaginatedForm {
     effect(() => {
       if (!isDevMode()) return;
       for (const pagina of this.paginas()) {
-        if (pagina.campos.length > MAX_CAMPOS_POR_PAGINA) {
+        // Los «¿cuál?» condicionales no cuentan: viajan con su pregunta.
+        const principales = pagina.campos.filter(esPreguntaPrincipal).length;
+        if (principales > MAX_CAMPOS_POR_PAGINA) {
           console.error(
-            `[app-paginated-form] La página «${pagina.titulo}» trae ${pagina.campos.length} campos y el tope es ${MAX_CAMPOS_POR_PAGINA}. Pasalos por paginarCampos().`,
+            `[app-paginated-form] La página «${pagina.titulo}» trae ${principales} campos y el tope es ${MAX_CAMPOS_POR_PAGINA}. Páselos por paginarCampos().`,
           );
         }
       }
@@ -427,6 +466,36 @@ export class PaginatedForm {
             console.error(
               `[app-paginated-form] El campo «${campo.key}» no existe en el formulario: lo que se escriba ahí no se guarda en ningún lado.`,
             );
+          }
+        }
+      }
+    });
+
+    // Los valores, como señal: de ellos depende qué campo condicional se ve.
+    effect((onCleanup) => {
+      const grupo = this.form();
+      this.valores.set(grupo.getRawValue() as Record<string, unknown>);
+      const suscripcion = grupo.valueChanges.subscribe(() =>
+        this.valores.set(grupo.getRawValue() as Record<string, unknown>),
+      );
+      onCleanup(() => suscripcion.unsubscribe());
+    });
+
+    // Oculto = deshabilitado: así su `required` no frena el avance y su valor
+    // no sale en `form.value`. Sin emitir, para no volver a disparar el efecto
+    // de arriba por un cambio que no es de valor.
+    effect(() => {
+      const ocultos = this.ocultos();
+      const grupo = this.form();
+      for (const pagina of this.paginas()) {
+        for (const campo of pagina.campos) {
+          if (campo.showWhen === undefined) continue;
+          const control = grupo.get(campo.key);
+          if (control === null) continue;
+          if (ocultos.has(campo.key)) {
+            if (control.enabled) control.disable({ emitEvent: false });
+          } else if (control.disabled) {
+            control.enable({ emitEvent: false });
           }
         }
       }
@@ -453,6 +522,14 @@ export class PaginatedForm {
     // El foco sigue a la página. No en el primer render: robarle el foco a quien
     // acaba de entrar es exactamente lo que la directiva `appAnuncio` evita
     // cuando el elemento ya estaba en pantalla.
+    //
+    // `preventScroll: true` (2026-09-26): este formulario suele vivir dentro de
+    // un modal con su propio scroll interno. Con `preventScroll: false` el
+    // navegador reencuadra el `<body>` scrolleable para que el título quede
+    // visible, y eso tira a la persona de vuelta arriba del todo aunque ya
+    // estuviera viendo el título de esa misma página — el efecto es un salto de
+    // scroll cada vez que cambia la página. El foco se sigue moviendo (un lector
+    // de pantalla lo sigue anunciando); lo único que se saca es el salto visual.
     let primera = true;
     effect(() => {
       this.indice();
@@ -461,7 +538,7 @@ export class PaginatedForm {
         return;
       }
       if (isPlatformBrowser(this.platformId)) {
-        this.titulo()?.nativeElement.focus({ preventScroll: false });
+        this.titulo()?.nativeElement.focus({ preventScroll: true });
       }
     });
   }
@@ -602,12 +679,12 @@ export class PaginatedForm {
     if (grupo.invalid) {
       // Lleva a la primera página con algo mal: dejar a la persona en la última
       // con un botón que no responde es el peor final posible.
-      const fallo = this.paginas().findIndex((pagina) =>
+      const fallo = this.paginasActivas().findIndex((pagina) =>
         pagina.campos.some((campo) => this.form().get(campo.key)?.invalid === true),
       );
       if (fallo !== -1) {
         this.indice.set(fallo);
-        this.rechazada.emit(this.paginas()[fallo]);
+        this.rechazada.emit(this.paginasActivas()[fallo]);
       }
       return;
     }
@@ -627,8 +704,20 @@ export class PaginatedForm {
     this.enviado.emit();
   }
 
+  protected onEmbeddedEnter(event: Event): void {
+    if (!(event instanceof KeyboardEvent)) return;
+    if ((event.target as HTMLElement | null)?.tagName !== 'INPUT') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.pending()) this.avanzar();
+  }
+
   /** El submit del `<form>`: en la última página envía, en el resto avanza. */
   protected continuar(): void {
+    if (this.embedded()) {
+      if (!this.pending()) this.avanzar();
+      return;
+    }
     if (this.esUltima()) {
       void this.enviar();
       return;
@@ -638,7 +727,7 @@ export class PaginatedForm {
 
   /** Marca lo de una página y responde si se puede pasar de ella. */
   private paginaEsValida(posicion: number): boolean {
-    const pagina = this.paginas()[posicion] ?? null;
+    const pagina = this.paginasActivas()[posicion] ?? null;
     if (pagina === null) return true;
 
     let valida = true;

@@ -65,7 +65,7 @@ export class TuFactura {
   protected readonly motivoSinFactura = computed(() =>
     this.estado() === 'RETIRADO'
       ? 'La factura de este pedido todavía no está disponible en la app.'
-      : 'La farmacia emite tu factura cuando te entrega el pedido.',
+      : 'La farmacia emite su factura cuando le entrega el pedido.',
   );
 
   protected readonly descargaFallida = signal(false);

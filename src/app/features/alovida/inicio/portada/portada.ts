@@ -2,7 +2,7 @@
    Portada de landing/index.html en la bóveda. El marcado lo
    genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { AlovidaThemeToggleDirective } from '@core/alovida/alovida-theme-toggle.directive';
@@ -11,5 +11,6 @@ import { AlovidaThemeToggleDirective } from '@core/alovida/alovida-theme-toggle.
   selector: 'app-alovida-inicio-portada',
   imports: [RouterLink, AlovidaThemeToggleDirective],
   templateUrl: './portada.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InicioPortada {}

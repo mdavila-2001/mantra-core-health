@@ -156,6 +156,22 @@ jobs:
       - name: Contraste del sistema de diseño
         run: node scripts/check-contrast.mjs
 
+      # Regla 29 (transversal a los 36 carriles): toda ruta, identificador,
+      # variable, clase y archivo NUEVO o TOCADO va en inglés. El checkout de
+      # arriba es superficial (`fetch-depth: 1`): sólo trae el commit de la
+      # punta, así que hace falta un fetch acotado del commit base antes de
+      # poder diffear contra él.
+      - name: Fetch de la base para el diff de identificadores
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --no-tags --depth=50 origin "$BASE_SHA" || true
+            echo "CHECK_ENGLISH_BASE=$BASE_SHA" >> "$GITHUB_ENV"
+          fi
+
+      - name: Identificadores nuevos en inglés
+        run: node scripts/check-english-identifiers.mjs
+
       # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
       - name: Documentación
         run: node scripts/generate-doc-report.mjs
@@ -245,6 +261,18 @@ jobs:
       # comprueba que ese `dist/` sea suyo antes de reutilizarlo.
       - name: Suite crítica
         run: yarn test:e2e:critical
+        env:
+          E2E_SKIP_BUILD: 'true'
+
+      # Accesibilidad en cada pull request hacia `test` o `mockup`: los
+      # problemas `serious`/`critical` de axe sobre el login, el panel y el
+      # registro bloquean el merge. Es una sola spec de la regresión, con la
+      # misma API simulada del arnés y el artefacto que ya construyó el humo:
+      # no levanta nada nuevo. En `master` y a mano no se repite: ahí ya la
+      # corre la regresión completa de abajo.
+      - name: Accesibilidad
+        if: github.event_name == 'pull_request' && contains(fromJSON('["test", "mockup"]'), github.base_ref)
+        run: yarn test:e2e:a11y
         env:
           E2E_SKIP_BUILD: 'true'
 

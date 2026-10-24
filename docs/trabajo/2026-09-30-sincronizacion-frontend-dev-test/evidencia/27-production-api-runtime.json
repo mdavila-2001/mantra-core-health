@@ -1,0 +1,27 @@
+{
+  "commit": "da161f8b1ee03cc97c2646d6db581e7559522b98",
+  "command": "node dist/mantra-core-health/server/server.mjs (PORT=4102)",
+  "checks": [
+    {
+      "path": "/auth",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "cacheControl": "no-cache",
+      "nosniff": "nosniff",
+      "ssr": true,
+      "loginRendered": true,
+      "demoBanner": false
+    },
+    {
+      "path": "/chunk-hito2-missing.js",
+      "status": 404,
+      "contentType": null,
+      "cacheControl": null,
+      "nosniff": "nosniff",
+      "ssr": false,
+      "loginRendered": false,
+      "demoBanner": false
+    }
+  ],
+  "result": "PASS"
+}

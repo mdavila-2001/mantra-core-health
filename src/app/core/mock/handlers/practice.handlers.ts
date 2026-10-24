@@ -79,6 +79,17 @@ const NOMENCLADOR = [...MEDICAL_FEE_SCHEDULE, ...DENTAL_FEE_SCHEDULE].map((item)
   ocrSuspect: item.ocrSuspect,
 }));
 
+/**
+ * La entrada del arancel que corresponde a un concepto.
+ *
+ * La usa la maqueta de seguros para resolver el nombre del servicio de una
+ * cláusula: la cláusula guarda el mismo `conceptId` que el servicio del médico
+ * importado del arancel, y ese es el único id que los dos comparten.
+ */
+export function procedimientoPorConceptId(conceptId: string) {
+  return NOMENCLADOR.find((item) => item.conceptId === conceptId);
+}
+
 /* ---- el catálogo que una organización publica en su ficha ---------------- */
 
 /**
@@ -208,16 +219,16 @@ const vinculaciones = new Coleccion<VinculacionSimulada>([
   { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICA.id },
 ]);
 
-const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; bankQrFileId: string | null }>([
+const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; bankQrFileId: string | null; logoFileId: string | null }>([
   // Sólo el consultorio propio arranca con QR bancario cargado: las otras tres
   // sedes quedan sin él para que el aviso en ámbar —«todavía no configuraste
   // ninguno»— se vea en la misma lista que el estado ya resuelto.
-  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: uuid('file-qr-consultorio') },
-  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
+  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: uuid('file-qr-consultorio'), logoFileId: uuid('file-logo-consultorio') },
+  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null, logoFileId: null },
   // Dos sedes más para la médica: con cuatro, «Dónde atiende» de su ficha
   // pública pasa de una página y se puede ver el paginado funcionando.
-  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
-  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
+  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null, logoFileId: null },
+  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null, logoFileId: null },
 ]);
 
 /**
@@ -259,6 +270,7 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
       // Una sede deducida de la organización no es una fila de nadie, así que
       // no hay dónde guardarle un QR: se responde «sin configurar».
       bankQrFileId: null,
+      logoFileId: null,
     },
   ];
 }
@@ -278,6 +290,8 @@ export interface SedeDeProfesional {
   readonly isOwnSite: boolean;
   /** El QR bancario con el que el profesional cobra acá, o `null`. */
   readonly bankQrFileId: string | null;
+  /** El logo del consultorio, o `null`. Sólo simulador: ver `LogoDelConsultorioClient`. */
+  readonly logoFileId: string | null;
 }
 
 function concepto(code: string, display: string) {
@@ -376,11 +390,6 @@ export function registrarPracticas(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id, practiceId: nueva.practiceId, practitionerProfileId: nueva.practitionerProfileId, status: nueva.status, createdAt: nueva.createdAt } };
   });
 
-  router.get('/practitioners/me/sites', (request) => {
-    const items = sedesDe(request.user?.practitionerProfileId ?? MEDICA.id);
-    return { items, count: items.length };
-  });
-
   /* `isOwnSite` viaja: es lo que separa «mi consultorio» de «un hospital donde
      me aceptaron», y sin él las dos cosas se dibujaban idénticas, con el mismo
      botón «Retirar» al lado — cuando retirar lo propio y desvincularse de un
@@ -408,6 +417,7 @@ export function registrarPracticas(router: MockRouter): void {
       // Un consultorio recién creado no tiene con qué cobrar todavía: el QR se
       // carga después, desde su propia fila.
       bankQrFileId: null,
+      logoFileId: null,
     });
     const { practitionerProfileId: _p, ...resto } = nuevo;
     return { status: 201, body: { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO } };
@@ -452,6 +462,23 @@ export function registrarPracticas(router: MockRouter): void {
     if (actualizado === undefined) return notFound('Consultorio no encontrado');
     const { practitionerProfileId: _p, ...resto } = actualizado;
     return { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO };
+  });
+
+  /* SIMULADOR: el logo del consultorio. La API real no tiene esta ruta ni este
+     campo (ver `docs/pendientes-backend-perfil-profesional.md`); las pantallas
+     no la llaman directo sino por `LogoDelConsultorioClient`, así que el día
+     que exista el backend se borra este bloque y se retoca esa fachada. Sólo el
+     consultorio **propio** lleva logo: en una clínica ajena no es mío. */
+  router.put('/practitioners/me/sites/:id/logo', (request) => {
+    const sitio = sitiosPropios.get(request.params['id']!);
+    if (sitio === undefined || sitio.practiceId !== PRACTICE_CONSULTORIO) {
+      return notFound('Consultorio no encontrado');
+    }
+    const { fileId } = cuerpo<{ fileId: string | null }>(request);
+    const actualizado = sitiosPropios.actualizar(sitio.id, { logoFileId: fileId ?? null });
+    if (actualizado === undefined) return notFound('Consultorio no encontrado');
+    const { practitionerProfileId: _p, ...resto } = actualizado;
+    return { ...resto, isOwnSite: true };
   });
 
   router.delete('/practitioners/me/sites/:id', ({ params }) => {

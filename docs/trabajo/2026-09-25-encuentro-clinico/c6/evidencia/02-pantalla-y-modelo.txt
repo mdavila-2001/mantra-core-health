@@ -1,0 +1,30 @@
+$ corepack yarn test --watch=false --include='src/app/shared/components/organisms/encounter-timeline/encounter-timeline.spec.ts'
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+
+$ corepack yarn test --watch=false --include='src/app/features/account/medical-record/medical-record.spec.ts'
+ Test Files  1 passed (1)
+      Tests  33 passed (33)          # baseline antes de C6: 21 passed
+
+$ corepack yarn test --watch=false --include='src/app/features/account/medical-record/history-view-model.spec.ts'
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+
+$ corepack yarn test --watch=false --include='src/app/shared/utils/clinical-pdf/historia-con-encuentros.spec.ts'
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+
+--- regresión de los vecinos (sin tocarlos) ---
+$ corepack yarn test --watch=false --include='src/app/shared/utils/clinical-pdf/historia-y-orden.spec.ts'
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+
+$ corepack yarn test --watch=false --include='src/app/features/account/medical-record/where-to-buy/where-to-buy.spec.ts'
+ Test Files  1 passed (1)
+      Tests  36 passed (36)
+
+$ corepack yarn test --watch=false --include='src/app/shared/components/molecules/accordion/accordion.spec.ts'
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+
+TOTAL dirigido: 73 pruebas nuevas/actualizadas en verde · 61 de regresión en verde.

@@ -1,0 +1,114 @@
+Using Vitest configuration file: <repo>\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                           | Names                                                      |  Raw size
+spec-app-features-agenda-my-agenda-my-agenda.js               | spec-app-features-agenda-my-agenda-my-agenda               |   1.14 MB | 
+chunk-FKQNCTWW.js                                             | -                                                          | 853.92 kB | 
+chunk-JM5IIUZQ.js                                             | -                                                          | 709.99 kB | 
+styles.css                                                    | styles                                                     | 166.29 kB | 
+chunk-LTXGIAOE.js                                             | -                                                          |  21.96 kB | 
+chunk-H24R4C6H.js                                             | -                                                          |  21.59 kB | 
+spec-app-core-mock-mock-backend-latencia.js                   | spec-app-core-mock-mock-backend-latencia                   |  10.95 kB | 
+chunk-WQSHE37S.js                                             | -                                                          |   9.20 kB | 
+chunk-HZXEPMDQ.js                                             | -                                                          |   5.27 kB | 
+spec-app-core-mock-handlers-insurance-portability.handlers.js | spec-app-core-mock-handlers-insurance-portability.handlers |   4.64 kB | 
+spec-app-core-mock-handlers-insurance-analytics.handlers.js   | spec-app-core-mock-handlers-insurance-analytics.handlers   |   3.33 kB | 
+chunk-WN3LWCZX.js                                             | -                                                          |   2.80 kB | 
+init-testbed.js                                               | init-testbed                                               |   1.21 kB | 
+vitest-mock-patch.js                                          | vitest-mock-patch                                          | 974 bytes | 
+setup-test-setup.js                                           | setup-test-setup                                           | 911 bytes | 
+chunk-AQOFSZLR.js                                             | -                                                          | 249 bytes | 
+
+                                                              | Initial total                                              |   2.95 MB
+
+Lazy chunk files                                              | Names                                                      |  Raw size
+chunk-LHTHPV7O.js                                             | index                                                      |   3.48 MB | 
+
+Application bundle generation complete. [77.622 seconds] - 2026-09-24T00:45:53.126Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButton is not used within the template of NearbyPlaces [plugin angular-compiler]
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+      103 │     AppButton,
+          ╵     ~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:99:39:
+      99 │ ...: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+         ╵                                  ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:99:62:
+      99 │ ... AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+         ╵                                                ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 <repo>
+      Coverage enabled with v8
+
+stderr | src/app/core/mock/mock-backend-latencia.spec.ts > latencia del interceptor — tabla por prefijo, sin azar
+[mock] sin manejador para GET /terminology/calentar — respuesta genérica
+
+ ❯ |mantra-core-health| src/app/core/mock/mock-backend-latencia.spec.ts (5 tests | 1 failed) 6074ms
+     × no queda ningún Math.random en el archivo (H2.S1.M1) 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |mantra-core-health| src/app/core/mock/mock-backend-latencia.spec.ts > latencia del interceptor — tabla por prefijo, sin azar > no queda ningún Math.random en el archivo (H2.S1.M1)
+Error: ENOENT: no such file or directory, open '<repo>\mock-backend.interceptor.ts'
+ ❯ src/app/core/mock/mock-backend-latencia.spec.ts:82:20
+     80|     // Duplica el comando del DoD (`git grep -c Math.random`) como ase…
+     81|     // para que un regreso al azar rompa la suite y no sólo el grep ma…
+     82|     const fuente = readFileSync(join(__dirname, 'mock-backend.intercep…
+       |                    ^
+     83|     expect(fuente).not.toContain('Math.random');
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 61 passed (62)
+   Start at  20:45:54
+   Duration  15.06s (transform 6.56s, setup 6.40s, import 6.96s, tests 8.95s, environment 10.94s)
+

@@ -1,6 +1,6 @@
 <app-page-header
   title="Ajustes"
-  subtitle="Lo que configurás sobre tu cuenta: avisos, apariencia y permisos."
+  subtitle="Lo que configura sobre su cuenta: avisos, apariencia y permisos."
 />
 
 <!-- Vertical: la lista de secciones de unos ajustes se lee como índice, no como
@@ -22,7 +22,7 @@
     <section class="ajustes__bloque">
       <h2 class="ajustes__titulo">Tema</h2>
       <p class="ajustes__detalle">
-        Se guarda en este dispositivo, no en tu cuenta: cada navegador que uses puede tener el suyo.
+        Se guarda en este dispositivo, no en su cuenta: cada navegador que use puede tener el suyo.
       </p>
 
       <!-- El mismo interruptor sol/luna del encabezado: un solo control para
@@ -32,10 +32,10 @@
           <span class="ajustes__nombre">Modo oscuro</span>
           <span class="ajustes__detalle">
             @if (followsSystem()) {
-              Sigue a tu dispositivo, que ahora pide el modo
+              Sigue a su dispositivo, que ahora pide el modo
               {{ resolvedTheme() === 'dark' ? 'oscuro' : 'claro' }}.
             } @else {
-              Elegido por vos: {{ resolvedTheme() === 'dark' ? 'activado' : 'desactivado' }}.
+              Elegido por usted: {{ resolvedTheme() === 'dark' ? 'activado' : 'desactivado' }}.
             }
           </span>
         </span>
@@ -69,8 +69,8 @@
     <section class="ajustes__bloque">
       <h2 class="ajustes__titulo">Permisos del navegador</h2>
       <p class="ajustes__detalle">
-        Los concede tu navegador, no AloVida: para quitarlos, cambialos en la configuración de este
-        sitio en tu navegador.
+        Los concede su navegador, no AloVida: para quitarlos, cámbielos en la configuración de este
+        sitio en su navegador.
       </p>
 
       <ul class="ajustes__lista">
@@ -103,9 +103,9 @@
     </section>
 
     <section class="ajustes__bloque">
-      <h2 class="ajustes__titulo">Tu sesión</h2>
+      <h2 class="ajustes__titulo">Su sesión</h2>
       <p class="ajustes__detalle">
-        Los roles con los que entrás. Los concede y los hace cumplir el servidor.
+        Los roles con los que entra. Los concede y los hace cumplir el servidor.
       </p>
 
       @if (roles().length > 0) {
@@ -115,23 +115,23 @@
           }
         </ul>
       } @else {
-        <p class="ajustes__nota">Tu sesión no declara ningún rol.</p>
+        <p class="ajustes__nota">Su sesión no declara ningún rol.</p>
       }
     </section>
 
     <section class="ajustes__bloque">
-      <h2 class="ajustes__titulo">Quién puede ver tus datos</h2>
+      <h2 class="ajustes__titulo">Quién puede ver sus datos</h2>
       <!-- Se dice lo que hay, no lo que quedaría lindo: la lista no existe
            porque la API no se la responde a la propia persona. Ver la nota del
            componente. Una lista vacía acá se leería como «nadie tiene acceso». -->
       <p class="ajustes__detalle" data-testid="settings-access-note">
-        Todavía no podemos mostrarte quién tiene acceso a tu historia clínica: el servidor sólo le
+        Todavía no podemos mostrarle quién tiene acceso a su historia clínica: el servidor sólo le
         responde esa consulta a quien atiende y a quien administra la seguridad.
       </p>
 
       @if (managesPermissions()) {
         <p class="ajustes__nota">
-          Como administrás la seguridad, sí podés hacerlo desde
+          Como administra la seguridad, sí puede hacerlo desde
           <a routerLink="/administration/delegated-access">Acceso delegado</a>: ahí se otorgan,
           se acotan y se revocan los permisos delegados, y se administran sus conjuntos.
         </p>
@@ -144,7 +144,7 @@
       <section class="ajustes__bloque">
         <h2 class="ajustes__titulo">Verificación de identidad</h2>
         <p class="ajustes__detalle">
-          Validá tu identidad, tu matrícula o una organización a tu cargo, y seguí el trámite.
+          Valide su identidad, su matrícula o una organización a su cargo, y siga el trámite.
         </p>
         <p class="ajustes__nota">
           <a routerLink="/my-account/identity/verify">Verificar identidad</a> ·

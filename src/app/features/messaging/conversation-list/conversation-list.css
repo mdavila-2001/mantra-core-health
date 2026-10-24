@@ -248,3 +248,14 @@
     block-size: 32px;
   }
 }
+
+/* El ícono de «bloqueado», al lado de la hora y las marcas de la fila. */
+.conversaciones__bloqueada {
+  display: inline-flex;
+  color: var(--tinta-3);
+}
+
+.conversaciones__bloqueada svg {
+  inline-size: 15px;
+  block-size: 15px;
+}

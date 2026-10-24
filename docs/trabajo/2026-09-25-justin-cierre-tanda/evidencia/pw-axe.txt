@@ -1,0 +1,7 @@
+
+Running 1 test using 1 worker
+
+  ok 1 [chromium] › playwright\carga-masiva.spec.ts:426:7 › Carga masiva · contrato [backend simulado] › test 11 · accesibilidad: axe sin violaciones serious/critical [backend simulado] (7.2s)
+
+  1 passed (12.3s)
+EXIT=0

@@ -154,7 +154,7 @@ export class CollectionRunFinish {
   protected readonly finished = signal<RunFinished | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para cerrar corridas.'),
+    errorMessageOf(this.state(), 'No tiene permiso para cerrar corridas.'),
   );
 
   /** El resultado, como señal, para que las preguntas reaccionen a él. */

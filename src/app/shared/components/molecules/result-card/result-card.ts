@@ -41,7 +41,7 @@ import type { SearchResultItem } from '../search-result/search-result.types';
   imports: [AppButtonLink],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
-  host: { class: 'tarjeta-resultado' },
+  host: { class: 'tarjeta-resultado', '[class.tarjeta-resultado--lista]': "vista() === 'lista'" },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResultCard {
@@ -58,6 +58,13 @@ export class ResultCard {
    * consumidores conservan exactamente su interacción anterior.
    */
   readonly preventDuplicateNavigation = input(false);
+
+  /**
+   * Cómo se dibuja: `grilla` (foto arriba, tarjeta vertical) o `lista` (foto a
+   * la izquierda, una fila por resultado). Lo decide la página del directorio,
+   * que es quien tiene el selector; la tarjeta sólo obedece.
+   */
+  readonly vista = input<'grilla' | 'lista'>('grilla');
 
   /** El enlace de esta tarjeta ya inició una navegación. */
   protected readonly navegando = signal(false);
@@ -94,6 +101,20 @@ export class ResultCard {
   protected readonly mostrarImagen = computed(
     () => Boolean(this.resultado().figureImageUrl) && !this.imagenFallo(),
   );
+
+  /** Igual que `imagenFallo`, para la foto: una foto rota vuelve a la figura. */
+  protected readonly fotoFallo = linkedSignal({
+    source: this.resultado,
+    computation: () => false,
+  });
+
+  protected readonly mostrarFoto = computed(
+    () => Boolean(this.resultado().photoUrl) && !this.fotoFallo(),
+  );
+
+  protected manejarErrorDeFoto(): void {
+    this.fotoFallo.set(true);
+  }
 
   protected manejarErrorDeImagen(): void {
     this.imagenFallo.set(true);

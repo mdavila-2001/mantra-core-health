@@ -123,3 +123,16 @@
    el próximo que lea este archivo. */
 
 .mi-perfil__coverages { gap: var(--sp-4); }
+
+/* Beneficios preventivos del seguro: separados de las coberturas de arriba. */
+.mi-perfil__campaigns:not(:empty) {
+  display: block;
+  margin-block: var(--sp-6);
+}
+
+/* El mapa de residencia, debajo de los datos de contacto y separado de ellos. */
+.mi-perfil__residencia {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-default);
+}

@@ -30,7 +30,7 @@ describe('mensajeDeFalloDeEscritura', () => {
    */
   it('la petición que no llega se cuenta', () => {
     expect(mensajeDeFalloDeEscritura(offline(), textos)).toBe(
-      'No pudimos conectarnos. Revisá tu conexión y reintentá.',
+      'No pudimos conectarnos. Revise su conexión y reintente.',
     );
   });
 
@@ -47,20 +47,20 @@ describe('mensajeDeFalloDeEscritura', () => {
    */
   it('el 403 sin detalle cae al texto del bloque, no a un aviso vacío', () => {
     expect(mensajeDeFalloDeEscritura(forbidden({ message: '' }), textos)).toBe(
-      'Tu rol no permite registrar la alergia.',
+      'Su rol no permite registrar la alergia.',
     );
     expect(
       mensajeDeFalloDeEscritura(forbidden({ message: '' }), {
         ...textos,
-        sinPermiso: 'Tu rol no permite registrar alergias.',
+        sinPermiso: 'Su rol no permite registrar alergias.',
       }),
-    ).toBe('Tu rol no permite registrar alergias.');
+    ).toBe('Su rol no permite registrar alergias.');
   });
 
   /** S6 no confirma que el recurso exista: ni su nombre ni su dueño. */
   it('el 404 no filtra nada del recurso', () => {
     expect(mensajeDeFalloDeEscritura(notFound(), textos)).toBe(
-      'El expediente ya no existe. Recargá la pantalla.',
+      'El expediente ya no existe. Recargue la pantalla.',
     );
     expect(mensajeDeFalloDeEscritura(notFound(), { ...textos, yaNoExiste: 'La receta ya no existe.' })).toBe(
       'La receta ya no existe.',
@@ -124,7 +124,7 @@ describe('mensajeDeEscritura', () => {
 
   it('el resto de los fallos los resuelve la cola compartida', () => {
     expect(mensajeDeEscritura(offline(), textos)).toBe(
-      'No pudimos conectarnos. Revisá tu conexión y reintentá.',
+      'No pudimos conectarnos. Revise su conexión y reintente.',
     );
     expect(mensajeDeEscritura(ready(null), textos)).toBeNull();
   });

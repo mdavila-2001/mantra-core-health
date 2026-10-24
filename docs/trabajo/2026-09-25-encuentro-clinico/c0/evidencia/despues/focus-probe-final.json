@@ -1,0 +1,31 @@
+[
+  {
+    "step": "open",
+    "modal": true,
+    "activeTag": "BUTTON",
+    "activeId": "content-dialog-close",
+    "inside": true,
+    "documentFocused": true
+  },
+  {
+    "step": "tab",
+    "modal": true,
+    "activeTag": "BUTTON",
+    "activeId": "content-dialog-close",
+    "inside": true,
+    "documentFocused": true
+  },
+  {
+    "step": "shift-tab",
+    "modal": true,
+    "activeTag": "BUTTON",
+    "activeId": "content-dialog-close",
+    "inside": true,
+    "documentFocused": true
+  },
+  {
+    "step": "escape",
+    "closed": true,
+    "triggerFocused": true
+  }
+]

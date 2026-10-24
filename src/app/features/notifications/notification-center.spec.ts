@@ -167,6 +167,6 @@ describe('NotificationCenter', () => {
       .error(new ProgressEvent('error'));
     fixture.detectChanges();
 
-    expect(texto()).toContain('No pudimos cargar tus notificaciones.');
+    expect(texto()).toContain('No pudimos cargar sus notificaciones.');
   });
 });

@@ -28,6 +28,7 @@ las lista y permite copiarlas.
 | Administradora | `admin@alovida.mock` | Todos los roles administrativos: organizaciones, personas, identidad, terminología, moderación, geolocalización, contabilidad, activos, cotizaciones, laboratorio farmacéutico. |
 | Superadmin | `superadmin@alovida.mock` | Comodín: entra a todo. Tres organizaciones. |
 | Visitador | `visitador@alovida.mock` | Carla Fernández Ríos, visitadora médica de Laboratorios Inti. Solicitudes de visita, agenda de visitas, registros. |
+| Farmacia | `farmacia@alovida.mock` | Mariela Céspedes, encargada de Farmacia Vida. Catálogo de productos (alta, carga masiva por CSV, «sin stock», edición y retiro), pedidos del mostrador y promociones. |
 
 También entran por número de documento (`4567890`, `7654321`, `1112223`,
 `9998887`, `5556667`).
@@ -59,6 +60,12 @@ También entran por número de documento (`4567890`, `7654321`, `1112223`,
   en cada recarga y en cada máquina, así que un enlace copiado sigue abriendo
   lo mismo. Añadir volumen no es cosmético: con quince profesionales no había
   segunda página que probar.
+
+  La médica atiende **los siete días**: mañanas en la clínica de lunes a
+  sábado y guardia corta los domingos. No es un capricho de horario — el panel
+  abre con la jornada del día, y con la semana de lunes a viernes la maqueta
+  amanecía vacía dos días de cada siete. Una maqueta que no se puede mostrar el
+  fin de semana no sirve para mostrar nada.
 - `handlers/`: un archivo por dominio de la API; `handlers/index.ts` los
   registra todos.
 
@@ -104,8 +111,9 @@ solicitud.
 (`mock.agenda.reservas`), que es de la pestaña. Para que la médica vea lo que
 reservó la paciente hay que cerrar sesión y entrar en **la misma pestaña**. Una
 pestaña o un navegador nuevos empiezan con la maqueta limpia. Los cupos no se
-guardan: después de F5, el cupo reservado vuelve a ofrecerse aunque la reserva
-siga ahí.
+guardan: se regeneran en cada carga con un id por **fecha** (no por distancia a
+hoy, que al día siguiente los desenganchaba de sus reservas) y su capacidad
+libre se recalcula desde las reservas guardadas.
 
 ### Escenario A — la paciente pide turno con la médica, y la médica lo ve
 

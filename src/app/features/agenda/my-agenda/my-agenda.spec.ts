@@ -2,11 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import type { DialogConfig } from '../../../shared/components/molecules/dialog/dialog.types';
+import { APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 import { MyAgenda } from './my-agenda';
 
 const TENANT = '11111111-1111-1111-1111-111111111111';
@@ -34,6 +35,29 @@ describe('MyAgenda', () => {
   let http: HttpTestingController;
 
   const RECURSOS = `/scheduling/resources?tenantId=${TENANT}`;
+
+  /**
+   * Abre el desplegable de acciones del horario y devuelve sus ítems. `app-menu`
+   * muda el panel al `<body>` mientras está abierto: por eso se buscan en el
+   * documento y no en el fixture.
+   */
+  function accionesDelHorario(): HTMLElement[] {
+    cerrarAcciones();
+    const disparador = document.querySelector<HTMLElement>(
+      '[data-testid="horario-acciones"] [data-testid="row-actions-trigger"]',
+    );
+    disparador?.click();
+    fixture.detectChanges();
+    return [...document.querySelectorAll<HTMLElement>('app-menu [role="menuitem"]')];
+  }
+
+  function cerrarAcciones(): void {
+    if (document.querySelector('app-menu [role="menuitem"]') === null) {
+      return;
+    }
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+  }
 
   function crear(perfil: string | null = PERFIL, tenant: string | null = TENANT): void {
     // Cada caso monta su propia sesión (con perfil, sin perfil, sin tenant), y
@@ -187,7 +211,18 @@ describe('MyAgenda', () => {
   /* -- La agenda del día: lo que `/schedule` abre por defecto (18/09) -------- */
 
   describe('modo calendario', () => {
+    async function crearCalendarioEn(url: string): Promise<void> {
+      configurarCalendario();
+      await TestBed.inject(Router).navigateByUrl(url);
+      montarCalendario();
+    }
+
     function crearCalendario(): void {
+      configurarCalendario();
+      montarCalendario();
+    }
+
+    function configurarCalendario(): void {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [
@@ -204,6 +239,9 @@ describe('MyAgenda', () => {
           },
         ],
       });
+    }
+
+    function montarCalendario(): void {
       fixture = TestBed.createComponent(MyAgenda);
       fixture.componentRef.setInput('mode', 'calendar');
       http = TestBed.inject(HttpTestingController);
@@ -251,6 +289,60 @@ describe('MyAgenda', () => {
       // No es la solapa del horario: ni sus pestañas ni su grilla.
       expect($('.mi-agenda__solapas')).toBeNull();
       expect($('app-schedule-grid')).toBeNull();
+    });
+
+    /**
+     * «Cuando se da volver siempre vuelve al inicio» (propietario, 2026-10-03).
+     * El día abierto queda en la URL, y volver a esa entrada lo reabre.
+     */
+    describe('el día mirado vive en la URL', () => {
+      const pasadoManiana = (): Date => {
+        const dia = new Date();
+        dia.setHours(0, 0, 0, 0);
+        dia.setDate(dia.getDate() + 2);
+        return dia;
+      };
+      const comoEnLaUrl = (dia: Date): string =>
+        `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
+
+      it('al volver con ?day= abre ese día y no hoy', async () => {
+        const dia = pasadoManiana();
+        await crearCalendarioEn(`/?day=${comoEnLaUrl(dia)}`);
+        conRecurso();
+        conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+        sinOcupacion();
+
+        const nombre = dia.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric' });
+        expect($('.dia__titulo')?.textContent?.toLowerCase()).toContain(nombre.split(' ')[0]);
+        expect($('.dia__titulo')?.textContent).toContain(String(dia.getDate()));
+      });
+
+      it('con ?calendar=week vuelve a la semana', async () => {
+        await crearCalendarioEn(`/?day=${comoEnLaUrl(pasadoManiana())}&calendar=week`);
+        conRecurso();
+        conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+        sinOcupacion();
+        sinOcupacion();
+
+        expect($('app-week-view')).not.toBeNull();
+        expect($('[data-testid="ver-semana"]')?.getAttribute('aria-pressed')).toBe('true');
+      });
+
+      it('moverse de día lo escribe en la URL; hoy en el día no deja rastro', async () => {
+        abrir();
+        const router = TestBed.inject(Router);
+        await fixture.whenStable();
+        expect(router.url).not.toContain('day=');
+
+        ($('[aria-label="Ver el día siguiente"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        sinOcupacion();
+        await fixture.whenStable();
+
+        const maniana = new Date();
+        maniana.setDate(maniana.getDate() + 1);
+        expect(router.url).toContain(`day=${comoEnLaUrl(maniana)}`);
+      });
     });
 
     it('ya no ofrece «Ver como tabla»: Consultas es una solapa al lado', () => {
@@ -487,7 +579,14 @@ describe('MyAgenda', () => {
    */
   describe('agregar un horario al final del día (C-10)', () => {
     function calendarioConHorario(
-      rules: unknown[] = [{ dayOfWeek: new Date().getDay(), startTime: '09:00:00', endTime: '13:00:00', slotMinutes: 30 }],
+      rules: unknown[] = [
+        {
+          dayOfWeek: new Date().getDay(),
+          startTime: '09:00:00',
+          endTime: '13:00:00',
+          slotMinutes: 30,
+        },
+      ],
     ): void {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
@@ -541,9 +640,7 @@ describe('MyAgenda', () => {
      * fijan.
      */
     function conDialogo(acepta: boolean): { config(): DialogConfig | undefined } {
-      const espia = vi
-        .spyOn(TestBed.inject(DialogService), 'confirm')
-        .mockResolvedValue(acepta);
+      const espia = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(acepta);
       return { config: () => espia.mock.calls[0]?.[0] };
     }
 
@@ -574,12 +671,14 @@ describe('MyAgenda', () => {
       // El borde del contrato: no hay `endTime` del que partir. La franja no se
       // inventa a las 00:00 ni se cae: se propone el final de la tarde y el
       // diálogo dice que ese día no se atiende.
-      calendarioConHorario([{ dayOfWeek: (new Date().getDay() + 3) % 7, startTime: '09:00:00', endTime: '13:00:00' }]);
+      calendarioConHorario([
+        { dayOfWeek: (new Date().getDay() + 3) % 7, startTime: '09:00:00', endTime: '13:00:00' },
+      ]);
       const dialogo = conDialogo(true);
       await extra().agregarHorarioExtra(new Date());
       fixture.detectChanges();
 
-      expect(dialogo.config()?.message).toContain('no atendés');
+      expect(dialogo.config()?.message).toContain('no atiende');
 
       const req = http.expectOne(
         (r) => r.url === '/scheduling/resources/res-1/exceptions' && r.method === 'POST',
@@ -605,7 +704,7 @@ describe('MyAgenda', () => {
       const dialogo = conDialogo(false);
       await extra().agregarHorarioExtra(new Date());
 
-      expect(dialogo.config()?.title).toContain('fuera de tu horario de atención');
+      expect(dialogo.config()?.title).toContain('fuera de su horario de atención');
       expect(dialogo.config()?.message).toContain('termina a las 13:00');
       expect(dialogo.config()?.message).toContain('se puede reservar');
       // Y el botón dice qué hace, no «Aceptar».
@@ -651,7 +750,47 @@ describe('MyAgenda', () => {
           '.mi-agenda__tarjeta [data-testid="horario-bloque"]',
         ) as NodeListOf<HTMLElement>,
       ).map((b) => b.getAttribute('aria-label') ?? '');
-      expect(franjas).toEqual(['lunes de 09:00 a 13:00: atendés']);
+      expect(franjas).toEqual(['lunes de 09:00 a 13:00: atiende']);
+    });
+
+    it('las franjas de otros servicios aparecen en «Mis horarios», con su tono', () => {
+      // Propietario, 04/10/2026: «dentro del mismo Mis horarios debería
+      // aparecer también los horarios de otros servicios, pero con otro color».
+      // Antes `reglasVigentes` las filtraba y sólo vivían en otra pestaña.
+      crear();
+      conRecurso();
+      http.expectOne('/scheduling/resources/res-1/templates').flush({
+        items: [
+          {
+            id: 'tpl-viva',
+            name: 'La vigente',
+            statusConceptId: 'c',
+            retired: false,
+            rules: [
+              { dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' },
+              {
+                dayOfWeek: 3,
+                startTime: '15:00:00',
+                endTime: '19:00:00',
+                bookingMode: 'SERVICES',
+              },
+            ],
+          },
+        ],
+        count: 1,
+      });
+      fixture.detectChanges();
+      conCuposHasta(new Date('2030-01-01'));
+
+      const modos = Array.from(
+        fixture.nativeElement.querySelectorAll(
+          '.mi-agenda__tarjeta [data-testid="horario-bloque"]',
+        ) as NodeListOf<HTMLElement>,
+      ).map((b) => b.getAttribute('data-mode'));
+      expect(modos).toEqual(['CONSULTATIONS', 'SERVICES']);
+      expect(
+        fixture.nativeElement.querySelector('.mi-agenda__tarjeta [data-testid="horario-leyenda"]'),
+      ).not.toBeNull();
     });
 
     it('los horarios retirados se listan aparte, como historia', () => {
@@ -711,7 +850,7 @@ describe('MyAgenda', () => {
       expect(texto).not.toContain('quirúrgicas');
     });
 
-    it('ofrece retirar el horario, y dice retirar y no borrar (punto 6/7: ícono sobre la fila)', () => {
+    it('ofrece retirar el horario, y dice retirar y no borrar', () => {
       crear();
       conRecurso();
       conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
@@ -719,16 +858,14 @@ describe('MyAgenda', () => {
       });
       conCuposHasta(new Date('2030-01-01'));
 
-      // Ícono, no botón de texto (punto 7): el nombre accesible va en el
-      // `aria-label`, no en el `textContent`.
-      const boton: HTMLElement | null = fixture.nativeElement.querySelector(
-        '[data-testid="horario-retirar"]',
-      );
-      expect(boton).not.toBeNull();
+      const retirar = accionesDelHorario().find((el) => el.dataset['action'] === 'retirar');
+      expect(retirar).toBeDefined();
       // «Borrar» prometería algo que el sistema no hace: la plantilla no se
       // puede borrar nunca, la referencia la auditoría.
-      expect(boton?.getAttribute('aria-label')).toBe('Retirar horario');
-      expect(boton?.getAttribute('aria-label')).not.toContain('Borrar');
+      expect(retirar?.textContent?.trim()).toBe('Retirar horario');
+      expect(retirar?.textContent).not.toContain('Borrar');
+      expect(retirar?.classList.contains('menu-item--destructive')).toBe(true);
+      cerrarAcciones();
     });
   });
 
@@ -780,7 +917,7 @@ describe('MyAgenda', () => {
     expect(fixture.nativeElement.textContent).toContain('consultas de 20 min');
   });
 
-  it('los estados y todas las acciones van juntos, arriba de la tarjeta, como íconos', () => {
+  it('las acciones del horario van en un desplegable: botón con ícono y texto, cada acción con ícono y texto', () => {
     crear();
     conRecurso();
     conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
@@ -790,47 +927,64 @@ describe('MyAgenda', () => {
     const barra = tarjeta.querySelector('[data-testid="horario-barra"]');
     expect(tarjeta.firstElementChild).toBe(barra);
     expect(barra?.textContent).toContain('Vigente');
-    for (const [testId, nombre] of [
-      ['horario-editar', 'Cambiar mi horario'],
-      ['horario-retirar', 'Retirar horario'],
-      ['ver-bloqueos', 'Ver mis bloqueos'],
-      ['agendar-cita', 'Agendar una cita'],
-    ]) {
-      const icono = barra?.querySelector(`[data-testid="${testId}"]`);
-      expect(icono, testId).not.toBeNull();
-      expect(icono?.getAttribute('aria-label')).toBe(nombre);
-      expect(icono?.hasAttribute('appTooltip'), `${testId} sin tooltip`).toBe(true);
-      expect(icono?.querySelector('svg'), `${testId} no es ícono`).not.toBeNull();
+
+    const disparador = barra?.querySelector<HTMLElement>('[data-testid="row-actions-trigger"]');
+    expect(disparador, 'sin disparador del desplegable').not.toBeNull();
+    expect(disparador?.textContent?.trim()).toBe('Acciones');
+    expect(disparador?.getAttribute('aria-label')).toBe('Acciones de su horario');
+    expect(disparador?.querySelector('svg'), 'el disparador lleva ícono').not.toBeNull();
+
+    const acciones = accionesDelHorario();
+    expect(acciones.map((el) => el.textContent?.trim())).toEqual([
+      'Cambiar mi horario',
+      'Mis bloqueos',
+      'Agendar una cita',
+      'Retirar horario',
+    ]);
+    for (const accion of acciones) {
+      expect(accion.querySelector('svg'), `${accion.dataset['action']} sin ícono`).not.toBeNull();
     }
+    cerrarAcciones();
   });
 
-  it('cada acción del horario lleva su propio recuadro de color', () => {
+  it('cada acción del desplegable lleva a su pantalla o pide confirmar el retiro', () => {
     crear();
     conRecurso();
     conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
-    // Con cupos por agotarse aparece también el aviso, que es la quinta acción.
+    conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
+
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+
+    for (const [code, destino] of [
+      ['editar', '/schedule/edit'],
+      ['bloqueos', '/schedule/blocks'],
+      ['agendar', APPOINTMENT_NEW_ROUTE],
+    ]) {
+      accionesDelHorario()
+        .find((el) => el.dataset['action'] === code)!
+        .click();
+      fixture.detectChanges();
+      expect(navegar).toHaveBeenLastCalledWith(destino);
+    }
+
+    accionesDelHorario()
+      .find((el) => el.dataset['action'] === 'retirar')!
+      .click();
+    fixture.detectChanges();
+    expect(confirmar).toHaveBeenCalledTimes(1);
+  });
+
+  it('el aviso de agotamiento lleva ícono, texto y su tinta de advertencia', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
     conCuposHasta(new Date(Date.now() + 10 * 24 * 60 * 60 * 1000));
 
-    const acciones: HTMLElement = fixture.nativeElement.querySelector(
-      '[data-testid="horario-acciones"]',
-    );
-    // El tono es sólo el refuerzo visual —el nombre accesible ya lo verifica la
-    // prueba de arriba—, pero volver a los cinco íconos grises de antes era
-    // justo lo que el propietario pidió corregir: cada uno distinto del resto.
-    const tonos = [
-      ['aviso-agotan', 'mi-agenda__accion--aviso'],
-      ['horario-editar', 'mi-agenda__accion--editar'],
-      ['horario-retirar', 'mi-agenda__accion--retirar'],
-      ['ver-bloqueos', 'mi-agenda__accion--bloqueos'],
-      ['agendar-cita', 'mi-agenda__accion--agendar'],
-    ];
-    for (const [testId, tono] of tonos) {
-      const boton: HTMLElement | null = acciones.querySelector(`[data-testid="${testId}"]`);
-      expect(boton, testId).not.toBeNull();
-      expect(boton?.classList.contains('mi-agenda__accion'), `${testId} sin recuadro`).toBe(true);
-      expect(boton?.classList.contains(tono), `${testId} sin su tono`).toBe(true);
-    }
-    expect(new Set(tonos.map(([, tono]) => tono)).size).toBe(tonos.length);
+    const aviso: HTMLElement = fixture.nativeElement.querySelector('[data-testid="aviso-agotan"]');
+    expect(aviso.textContent?.trim()).toBe('Horarios por agotarse');
+    expect(aviso.querySelector('svg')).not.toBeNull();
+    expect(aviso.classList.contains('mi-agenda__accion--aviso')).toBe(true);
   });
 
   it('pide los bloqueos de esta semana y los pinta en rojo en la grilla', () => {
@@ -910,7 +1064,7 @@ describe('MyAgenda', () => {
     conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
 
     expect(fixture.nativeElement.querySelector('.mi-agenda__semana')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('rige hasta que lo cambies');
+    expect(fixture.nativeElement.textContent).not.toContain('rige hasta que lo cambie');
   });
 
   it('la barra lleva los estados a la izquierda y las acciones a la derecha, separados', () => {
@@ -924,7 +1078,7 @@ describe('MyAgenda', () => {
     expect(chips.dataset['testid']).toBe('horario-chips');
     expect(chips.querySelector('[app-button]')).toBeNull();
     expect(acciones.dataset['testid']).toBe('horario-acciones');
-    expect(acciones.querySelector('[data-testid="horario-editar"]')).not.toBeNull();
+    expect(acciones.querySelector('app-row-actions')).not.toBeNull();
     expect(acciones.querySelector('app-badge')).toBeNull();
   });
 
@@ -990,7 +1144,7 @@ describe('MyAgenda', () => {
 
     const texto: string = fixture.nativeElement.textContent;
     expect(texto).not.toContain('se están por agotar');
-    expect(texto).toContain('Tenés turnos abiertos hasta el');
+    expect(texto).toContain('Tiene horarios abiertos hasta el');
   });
 
   it('si la lectura de cupos falla, la tarjeta sigue sirviendo', () => {
