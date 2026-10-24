@@ -19,9 +19,28 @@
 # asistente que el grafo existe y cómo consultarlo: lo que imprime un
 # `SessionStart` entra al contexto de la sesión.
 #
+# En las sesiones de Claude Code en la nube (`CLAUDE_CODE_REMOTE=true`) cada
+# sesión arranca en una máquina nueva, sin graphify: la sesión lo instala con
+# `uv`, en la versión fijada abajo, y le deja el `PATH` al asistente.
+#
 # `GRAPHIFY_SKIP_HOOK=1` lo apaga. Guía de instalación y uso: `docs/graphify.md`.
 
+version=0.9.95
+
 [ "${GRAPHIFY_SKIP_HOOK:-0}" = "1" ] && exit 0
+
+if [ "$1" = "--session" ] && [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] \
+  && ! command -v graphify >/dev/null 2>&1; then
+  bin=$(uv tool dir --bin 2>/dev/null) || exit 0
+  PATH="$bin:$PATH"
+  export PATH
+  command -v graphify >/dev/null 2>&1 \
+    || uv tool install --quiet "graphifyy==$version" >/dev/null 2>&1 \
+    || exit 0
+  [ -n "${CLAUDE_ENV_FILE:-}" ] \
+    && echo "export PATH=\"$bin:\$PATH\"" >> "$CLAUDE_ENV_FILE"
+fi
+
 command -v graphify >/dev/null 2>&1 || exit 0
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 out="$root/graphify-out"
@@ -35,7 +54,7 @@ if [ "$1" = "--session" ] && [ -d "$root/.githooks" ]; then
     || git -C "$root" config core.hooksPath .githooks
 fi
 
-if [ "$1" = "--session" ] && [ -f "$out/graph.json" ]; then
+if [ "$1" = "--session" ]; then
   cat <<'AVISO'
 graphify: este repositorio tiene un grafo del código en graphify-out/, que se actualiza solo. Para
 preguntas de estructura o de impacto, consultalo antes de recorrer archivos:
@@ -43,6 +62,10 @@ preguntas de estructura o de impacto, consultalo antes de recorrer archivos:
 Responde mejor con nombres de símbolos que con frases. No corras `graphify update` ni
 `graphify install`. Guía: docs/graphify.md.
 AVISO
+  [ -f "$out/graph.json" ] || cat <<'ARMANDO'
+Todavía no existe: se está armando en segundo plano y tarda unos minutos. Hasta que aparezca
+graphify-out/graph.json, buscá con las herramientas de siempre.
+ARMANDO
 fi
 
 # Un candado de más de 30 minutos es de una corrida que murió a mitad.
