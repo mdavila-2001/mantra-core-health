@@ -209,7 +209,7 @@ def main() -> None:
                     "licenseUrl": texto(ext.get("LicenseUrl", {}).get("value")) or None,
                     "width": ancho,
                     "height": alto,
-                    "altEs": f"{nombre}: {TIPO[tipo]} que Wikidata asocia a esta estructura",
+                    "altEs": f"{nombre[:1].upper()}{nombre[1:]}: {TIPO[tipo]} que Wikidata asocia a esta estructura",
                     "kind": tipo,
                     "metadataUrl": m["metadataUrl"],
                 }

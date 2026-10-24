@@ -7,27 +7,27 @@
   "UBERON:0004603": {
     "sentences": [
       { "aspect": "function", "es": "Un estudio de TC volumétrica en dos varones en decúbito supino midió, para la tercera costilla, una rotación respiratoria de 11 grados en el componente de «brazo de bomba» y de 13 grados en el de «asa de cubo» entre la capacidad residual funcional y la capacidad pulmonar total.", "cites": ["PMID:3597261"] },
-      { "aspect": "function", "es": "En ese mismo estudio, el eje de rotación de las costillas tercera a séptima formaba con el plano medio un ángulo aproximado de 35 grados.", "cites": ["PMID:3597261"] },
-      { "aspect": "relations", "es": "En la disección de ocho músculos serratos anteriores, el fascículo originado en la tercera costilla se unía, junto con el fascículo inferior de la segunda, a lo largo del borde medial de la escápula, formando la división media del músculo.", "cites": ["PMID:27757809"] }
+      { "aspect": "function", "es": "Ese trabajo halló un ángulo de alrededor de 35 grados entre el plano medio y el eje de rotación, similar en las cinco costillas estudiadas, de la tercera a la séptima.", "cites": ["PMID:3597261"] },
+      { "aspect": "relations", "es": "Según la disección de ocho serratos anteriores, la división media del músculo, que se fija en el borde medial de la escápula, reúne el fascículo de la tercera costilla y el fascículo inferior de la segunda.", "cites": ["PMID:27757809"] }
     ]
   },
   "UBERON:0004604": {
     "sentences": [
       { "aspect": "relations", "es": "En 44 pacientes operados por videotoracoscopia, el tronco simpático pasaba por el lado medial de la cabeza de la cuarta costilla en el 18,0 % de los casos, en lugar de apoyarse sobre ella.", "cites": ["PMID:18375139"] },
-      { "aspect": "relations", "es": "En esa serie, el tercer ganglio simpático torácico se encontraba a la altura del borde superior de la cuarta costilla en el 36,4 % de los pacientes y sobre la propia costilla en el 4,5 %.", "cites": ["PMID:18375139"] },
-      { "aspect": "clinical", "es": "En un cadáver de un varón de 73 años se describió un fascículo profundo accesorio del pectoral mayor que se fijaba en los cartílagos costales de las costillas cuarta y quinta.", "cites": ["PMID:35344059"] }
+      { "aspect": "relations", "es": "En esa serie, el tercer ganglio torácico quedaba casi siempre en el espacio intercostal; sólo alcanzaba el borde superior de la cuarta costilla en el 36,4 % de los pacientes y se apoyaba sobre ella en el 4,5 %.", "cites": ["PMID:18375139"] },
+      { "aspect": "relations", "es": "En un cadáver de un varón de 73 años se describió un fascículo profundo accesorio del pectoral mayor que se fijaba en los cartílagos costales de las costillas cuarta y quinta.", "cites": ["PMID:35344059"] }
     ]
   },
   "UBERON:0004605": {
     "sentences": [
       { "aspect": "relations", "es": "En 40 lados de 20 cadáveres, la porción costal del pectoral mayor nacía de la quinta costilla en el 25 % de los especímenes, y la distancia entre la línea medioclavicular y el borde lateral de ese músculo a ese nivel fue de 30,5 mm.", "cites": ["PMID:29411424"] },
       { "aspect": "relations", "es": "La inserción del serrato anterior en la quinta costilla se empleó como referencia en un estudio de TC 3D de 50 pacientes para separar las partes superior e inferior de la superficie de deslizamiento escapulotorácica.", "cites": ["PMID:31616984"] },
-      { "aspect": "clinical", "es": "En ensayos de impacto lateral con cuatro cadáveres masculinos, las lesiones AIS 1 aparecieron con deflexiones escaladas de la quinta costilla de 4,2 a 8,6 mm, equivalentes a una compresión del 2 % al 3 %.", "cites": ["PMID:19085171"] }
+      { "aspect": "clinical", "es": "Tomando como medida la deflexión escalada de la quinta costilla, un estudio de impacto lateral en cuatro cadáveres de varón situó las lesiones AIS 1 entre 4,2 y 8,6 mm, es decir, una compresión del 2 % al 3 %.", "cites": ["PMID:19085171"] }
     ]
   },
   "UBERON:0004606": {
     "sentences": [
-      { "aspect": "function", "es": "En tres cajas torácicas de cadáver, la rigidez normalizada de los anillos costales aislados de los seis primeros niveles osciló entre 0,78 ± 0,24 en el primero y 0,19 ± 0,01 en el sexto.", "cites": ["PMID:21512914"] }
+      { "aspect": "function", "es": "Separados del resto de la caja torácica y cargados a la altura del esternón, los anillos costales de los niveles 1 a 6 de tres cadáveres dieron valores normalizados que bajaban de 0,78 ± 0,24 en el primero a 0,19 ± 0,01 en el sexto.", "cites": ["PMID:21512914"] }
     ]
   },
   "UBERON:0004607": {
@@ -37,7 +37,7 @@
   },
   "UBERON:0004608": {
     "sentences": [
-      { "aspect": "function", "es": "En tres cajas torácicas de cadáver sometidas a carga local, la fuerza unilateral normalizada en la unión costocondral varió entre 0,76 ± 0,29 en la primera costilla y 0,15 ± 0,02 en la novena.", "cites": ["PMID:21512914"] }
+      { "aspect": "function", "es": "Bajo carga localizada en tres cajas torácicas de cadáver, la fuerza unilateral normalizada en la unión costocondral fue de 0,15 ± 0,02 en la novena costilla, frente a 0,76 ± 0,29 en la primera, extremos del intervalo observado.", "cites": ["PMID:21512914"] }
     ]
   },
   "UBERON:0004609": {
@@ -45,29 +45,29 @@
   },
   "UBERON:0005438": {
     "sentences": [
-      { "aspect": "situation", "es": "El seno coronario pertenece al sistema venoso cardíaco y comunica la aurícula izquierda con la derecha.", "cites": ["PMID:32815147"] },
-      { "aspect": "parts", "es": "En diez corazones de necropsia, la pared venosa del seno estaba envuelta por un manguito de músculo estriado que alcanzaba 40 ± 8 mm a partir del orificio.", "cites": ["PMID:10673257"] },
+      { "aspect": "situation", "es": "Integrado en el drenaje venoso del corazón, el seno coronario pone en comunicación la aurícula izquierda con la derecha.", "cites": ["PMID:32815147"] },
+      { "aspect": "parts", "es": "Un estudio histológico de diez corazones de necropsia halló en todos un manguito de músculo estriado alrededor de la pared venosa del seno, de 40 ± 8 mm de longitud desde el orificio.", "cites": ["PMID:10673257"] },
       { "aspect": "relations", "es": "En esos corazones, conexiones miocárdicas de número y forma variables unían el manguito con la aurícula izquierda, y la válvula de Vieussens se identificó en 6 de los 10 especímenes.", "cites": ["PMID:10673257"] },
-      { "aspect": "relations", "es": "La cresta de Eustaquio y la válvula de Tebesio pueden dificultar el acceso a su orificio, mientras que la válvula de Vieussens y la vena de Marshall son obstáculos dentro de su luz durante el implante de electrodos.", "cites": ["PMID:35648250"] },
-      { "aspect": "clinical", "es": "Se utiliza como vía en la terapia de resincronización cardíaca, en la ablación con catéter de arritmias izquierdas y para la cardioplejía retrógrada.", "cites": ["PMID:32815147"] },
+      { "aspect": "relations", "es": "Al implantar electrodos de resincronización, la entrada al seno puede verse estorbada por la cresta de Eustaquio o la válvula de Tebesio, y su recorrido por la válvula de Vieussens o la vena de Marshall.", "cites": ["PMID:35648250"] },
+      { "aspect": "clinical", "es": "Su posición lo convierte en acceso para la cardioplejía retrógrada, para la estimulación biventricular de la terapia de resincronización y para la ablación de arritmias del lado izquierdo.", "cites": ["PMID:32815147"] },
       { "aspect": "clinical", "es": "Una revisión de TC cardíaca en 6936 adultos encontró anomalías del seno coronario en el 0,33 %, la mayoría por persistencia de la vena cava superior izquierda (19 de 23 casos).", "cites": ["PMID:27516063"] }
     ]
   },
   "UBERON:0005441": {
     "sentences": [
-      { "aspect": "function", "es": "Su aporte al trabajo ventilatorio cobra relevancia cuando la respiración está sobrecargada.", "cites": ["PMID:11333535"] },
+      { "aspect": "function", "es": "En situaciones de sobrecarga ventilatoria, el intercostal externo participa de manera apreciable en el trabajo respiratorio.", "cites": ["PMID:11333535"] },
       { "aspect": "parts", "es": "En biopsias del quinto espacio intercostal de 42 adultos predominaban las fibras de tipo I (56 ± 11 %) y había 2,8 ± 0,6 capilares por fibra.", "cites": ["PMID:10618746"] },
       { "aspect": "parts", "es": "En ocho pacientes con EPOC grave, las biopsias bilaterales del quinto músculo intercostal externo no mostraron diferencias de tamaño ni de tipo de fibra entre el lado dominante y el no dominante.", "cites": ["PMID:9611653"] },
-      { "aspect": "parts", "es": "Las células satélite resultaron más abundantes junto a las placas motoras que lejos de ellas, con una media de 0,016 frente a 0,00003 núcleos por sarcómero.", "cites": ["PMID:2712344"] },
+      { "aspect": "parts", "es": "En este músculo, los núcleos de células satélite por sarcómero fueron mucho más frecuentes en la región perisináptica que en la extrasináptica (0,016 frente a 0,00003).", "cites": ["PMID:2712344"] },
       { "aspect": "clinical", "es": "En la EPOC, el número de capilares por fibra fue mayor en la obstrucción grave que en los controles (3,0 ± 0,6 frente a 2,3 ± 0,5) y aumentó la actividad de las enzimas glucolíticas, con la oxidativa conservada.", "cites": ["PMID:10618746", "PMID:11333535"] }
     ]
   },
   "UBERON:0005980": {
     "sentences": [
-      { "aspect": "relations", "es": "En el examen macroscópico de 620 corazones, el músculo pectíneo de la aurícula derecha se prolongaba dentro del seno coronario en el 7 % de los casos.", "cites": ["PMID:22830489"] },
-      { "aspect": "clinical", "es": "En 46 corazones de necropsia, la superficie de corte de los músculos pectíneos de la orejuela izquierda fue menor en los pacientes con fibrilación auricular crónica, tanto en valor absoluto como relativo (38 % frente a 21 %).", "cites": ["PMID:10867359"] },
-      { "aspect": "clinical", "es": "En esa misma serie, la fibroelastosis endocárdica de la orejuela izquierda, presente en el 73 % de los casos con fibrilación crónica, alisaba la superficie luminal y recubría los músculos pectíneos.", "cites": ["PMID:10867359"] },
-      { "aspect": "clinical", "es": "En un paciente tratado con fulguración por aleteo auricular, la histología mostró una fibrosis intensa que separaba las fibras de los músculos pectíneos en la pared libre de la aurícula derecha, por delante de la vena cava inferior.", "cites": ["PMID:1929722"] }
+      { "aspect": "relations", "es": "Entre las extensiones miocárdicas venosas registradas en 620 corazones, un 7 % mostraba músculo pectíneo de la aurícula derecha penetrando en el seno coronario.", "cites": ["PMID:22830489"] },
+      { "aspect": "clinical", "es": "En 46 corazones de necropsia, los pacientes con fibrilación auricular crónica tenían en la orejuela izquierda una superficie de corte de músculos pectíneos menor, en valor absoluto y relativo (21 % frente a 38 % sin fibrilación).", "cites": ["PMID:10867359"] },
+      { "aspect": "clinical", "es": "En la mayoría de esos pacientes con fibrilación crónica (73 %, frente al 13 % sin ella), un engrosamiento endocárdico fibroelástico de la orejuela izquierda envolvía los músculos pectíneos y dejaba lisa la luz.", "cites": ["PMID:10867359"] },
+      { "aspect": "clinical", "es": "En la autopsia de un varón de 63 años sometido a ablación con catéter por aleteo auricular, la pared libre de la aurícula derecha, justo por delante de la vena cava inferior, mostraba una fibrosis intensa que disociaba las fibras de los músculos pectíneos.", "cites": ["PMID:1929722"] }
     ]
   },
   "UBERON:0006820": {
@@ -79,10 +79,10 @@
   },
   "UBERON:0007161": {
     "sentences": [
-      { "aspect": "situation", "es": "Es un arco tendinoso de la fascia situada bajo el diafragma que cruza por encima del músculo psoas mayor y se fija medialmente en el costado de la primera o la segunda vértebra lumbar.", "cites": ["PMID:22849755"] },
+      { "aspect": "situation", "es": "Este arco tendinoso, formado en la fascia infradiafragmática, pasa sobre el psoas mayor y se ancla por dentro en el costado de la vértebra L1 o L2.", "cites": ["PMID:22849755"] },
       { "aspect": "relations", "es": "En 210 cirugías renales laparoscópicas retroperitoneales mostró una relación constante con la arteria renal, y se distinguieron dos tipos principales: en «arco estrecho» y en «banda fascial».", "cites": ["PMID:22849755"] },
       { "aspect": "clinical", "es": "En 44 nefrectomías radicales laparoscópicas retroperitoneales, seguir este ligamento por la pared abdominal posterior permitió ubicar la arteria renal y, desde ella, la vena renal.", "cites": ["PMID:30040793"] },
-      { "aspect": "irrigation", "es": "En cadáveres con derrame pleural, un vaso linfático colector grande procedente de la superficie torácica del diafragma atravesaba el pilar muscular cerca de este ligamento y descendía hasta el comienzo del conducto torácico.", "cites": ["PMID:7785406"] },
+      { "aspect": "irrigation", "es": "En los cadáveres con derrame pleural, las redes linfáticas de la cara torácica del diafragma drenaban por un gran colector que cruzaba el pilar cerca de este ligamento y bajaba hasta el origen del conducto torácico, a la altura de los vasos renales.", "cites": ["PMID:7785406"] },
       { "aspect": "clinical", "es": "En un ensayo aleatorizado con 102 pacientes de nefrectomía laparoscópica, el bloqueo paravertebral torácico bajo por la vía posterior a este ligamento redujo el consumo de morfina equivalente en las primeras 24 h frente al bloqueo transmuscular del cuadrado lumbar (media de 23,5 frente a 33,6 mg).", "cites": ["PMID:41162850"] }
     ]
   },
@@ -90,22 +90,22 @@
     "sentences": [
       { "aspect": "relations", "es": "En un estudio con colorante inyectado en la fascia endotorácica, el tinte alcanzó la fascia transversal del abdomen pasando por los ligamentos arqueados medial y lateral, en el trayecto de los nervios subcostal, iliohipogástrico, ilioinguinal, genitofemoral y cutáneo femoral lateral.", "cites": ["PMID:7815695"] },
       { "aspect": "clinical", "es": "En 24 pacientes de cirugía renal laparoscópica, un bloqueo subcostal del cuadrado lumbar dirigido al compartimento justo por debajo de este ligamento tuvo éxito en el 95,8 % y el anestésico se extendió en forma de media luna hasta el espacio paravertebral de T12 en todos los casos.", "cites": ["PMID:33880061"] },
-      { "aspect": "clinical", "es": "Un timoma invasivo en el receso costofrénico puede manifestarse, de forma excepcional, como un engrosamiento focal de este ligamento en la TC y la RM.", "cites": ["PMID:24629791"] }
+      { "aspect": "clinical", "es": "Las neoplasias tímicas se presentan rara vez como un engrosamiento focal de este ligamento, hallazgo descrito en la TC y la RM de un paciente con timoma invasivo del receso costofrénico.", "cites": ["PMID:24629791"] }
     ]
   },
   "UBERON:0008617": {
     "sentences": [
-      { "aspect": "relations", "es": "Carece de fascia de revestimiento propia, y sólo la fascia endotorácica, adosada a su cara interna, lo separa de la pleura.", "cites": ["PMID:16494175"] },
+      { "aspect": "relations", "es": "Como en la pared torácica no hay fascias de revestimiento, entre este músculo y la pleura sólo se interpone la fascia endotorácica, que tapiza su cara interna.", "cites": ["PMID:16494175"] },
       { "aspect": "situation", "es": "En la TC de alta resolución de 25 sujetos sanos, este músculo forma parte de la línea de 1 a 2 mm visible en el contacto entre pulmón y pared torácica, y falta en la región paravertebral.", "cites": ["PMID:2928515"] },
-      { "aspect": "situation", "es": "En la disección de un cadáver adulto, la musculatura de la línea axilar anterior y de la pared torácica anterior no presentaba este grupo muscular, que sí aparecía más lateralmente.", "cites": ["PMID:32521300"] },
+      { "aspect": "situation", "es": "Al disecar un cadáver adulto, este grupo muscular faltaba a lo largo de la línea axilar anterior y en la pared torácica anterior, y sólo se encontraba en posición más lateral.", "cites": ["PMID:32521300"] },
       { "aspect": "relations", "es": "En un cadáver, los electrodos de estimulación implantados con guía ecográfica quedaron en el plano entre los músculos intercostal interno e íntimo, a 0,5–3 mm del nervio intercostal.", "cites": ["PMID:32804225"] }
     ]
   },
   "UBERON:0008779": {
     "sentences": [
-      { "aspect": "situation", "es": "El músculo subclavio se dispone por debajo de la clavícula.", "cites": ["PMID:36690046"] },
-      { "aspect": "function", "es": "Se le atribuye estabilizar la articulación esternoclavicular y oponerse a la elevación del extremo lateral de la clavícula.", "cites": ["PMID:34697796"] },
-      { "aspect": "parts", "es": "En 49 de 52 miembros superiores disecados, del músculo partían estructuras fibrosas adicionales hacia la apófisis coracoides, en forma de cordón grueso, de cordones finos o de lámina plana retorcida.", "cites": ["PMID:34697796"] },
+      { "aspect": "situation", "es": "Su trayecto discurre bajo la clavícula.", "cites": ["PMID:36690046"] },
+      { "aspect": "function", "es": "Clásicamente se le asignan dos funciones: dar estabilidad a la articulación esternoclavicular y frenar el ascenso del extremo lateral de la clavícula.", "cites": ["PMID:34697796"] },
+      { "aspect": "parts", "es": "Casi todos los 52 miembros superiores disecados (49) presentaban prolongaciones fibrosas del músculo hasta la apófisis coracoides, clasificadas en tres tipos: cordón grueso, uno o varios cordones finos o lámina plana retorcida.", "cites": ["PMID:34697796"] },
       { "aspect": "function", "es": "Los autores de ese estudio proponen que el músculo y su prolongación coracoidea integran, con los demás músculos envueltos por la fascia clavipectoral, un sistema funcional de suspensión de la escápula.", "cites": ["PMID:34697796"] },
       { "aspect": "clinical", "es": "Un metaanálisis de 47 artículos estimó en un 4,9 % la prevalencia del músculo subclavio posterior, una variante supernumeraria que puede comprimir el plexo braquial en la abertura torácica superior.", "cites": ["PMID:36690046"] },
       { "aspect": "clinical", "es": "En la RM de 350 pacientes, el subclavio posterior se detectó en 29 (8,3 %), con un grosor medio de 6,10 ± 1,60 mm, y contactaba con el plexo braquial en el 60 % de los lados afectados.", "cites": ["PMID:29974181"] }
@@ -113,18 +113,18 @@
   },
   "UBERON:0008874": {
     "sentences": [
-      { "aspect": "situation", "es": "Se define como el conjunto de vías aéreas alveoladas que siguen al bronquiolo terminal, a partir del primer bronquiolo respiratorio o de transición.", "cites": ["PMID:3382030"] },
-      { "aspect": "parts", "es": "En moldes de silicona de dos pulmones adultos, el volumen acinar medio fue de 187 mm3 (DE ± 79 mm3) y las vías intraacinares se dividían de forma dicotómica a lo largo de unas 9 generaciones (rango 6–12).", "cites": ["PMID:3382030"] },
-      { "aspect": "parts", "es": "En esos moldes, el diámetro interno de las vías se reducía de 500 a 270 µm entre las generaciones 0 y 10, mientras el diámetro externo, que incluye los alvéolos, se mantenía en 700 µm.", "cites": ["PMID:3382030"] },
+      { "aspect": "situation", "es": "Por definición comprende las vías aéreas con alvéolos situadas más allá del bronquiolo terminal, empezando por el bronquiolo respiratorio de primer orden o bronquiolo de transición.", "cites": ["PMID:3382030"] },
+      { "aspect": "parts", "es": "Los moldes de silicona de dos pulmones adultos dieron ácinos de 187 ± 79 mm3 de media, con vías intraacinares de ramificación dicotómica a lo largo de unas 9 generaciones (entre 6 y 12).", "cites": ["PMID:3382030"] },
+      { "aspect": "parts", "es": "De la generación 0 a la 10, la luz de las vías acinares se estrechaba de 500 a 270 µm, pero el calibre externo, con su manguito alveolar, seguía en 700 µm.", "cites": ["PMID:3382030"] },
       { "aspect": "relations", "es": "Un ácino periférico del lóbulo inferior derecho de un joven de 18 años limitaba con la pleura por dos caras y con tabiques de tejido conectivo por las restantes; su bronquiolo terminal daba dos bronquiolos respiratorios, cada uno con cuatro sistemas de conductos alveolares.", "cites": ["PMID:2014492"] },
-      { "aspect": "function", "es": "En el ácino tienen lugar la difusión del oxígeno hasta la superficie alveolar y su paso a través del tejido hacia la sangre capilar.", "cites": ["PMID:12136124"] },
+      { "aspect": "function", "es": "De los pasos que llevan el oxígeno del aire a la sangre, dos ocurren en el ácino: su difusión en fase gaseosa hasta la superficie alveolar y su paso por el tejido hasta el capilar.", "cites": ["PMID:12136124"] },
       { "aspect": "function", "es": "En cinco adultos sanos estudiados con RM de helio-3, un aumento del volumen de gas pulmonar del 143 ± 18 % se acompañó de un incremento del 96 ± 9 % en el número de alvéolos, lo que indica que el pulmón se insufla sobre todo por reclutamiento alveolar.", "cites": ["PMID:22096115"] }
     ]
   },
   "UBERON:0008952": {
     "sentences": [
-      { "aspect": "parts", "es": "En 100 pulmones de niños y adultos, el bronquio del lóbulo superior izquierdo se dividía en dos ramas en el 74 % y en tres en el 26 %.", "cites": ["PMID:15666602"] },
-      { "aspect": "parts", "es": "En esa misma serie, 21 pulmones presentaban variaciones en la ventilación de los segmentos broncopulmonares del lóbulo.", "cites": ["PMID:15666602"] },
+      { "aspect": "parts", "es": "La bifurcación fue el patrón dominante del bronquio lobular superior izquierdo en una serie de 100 pulmones de niños y adultos (74 %), frente a la trifurcación (26 %).", "cites": ["PMID:15666602"] },
+      { "aspect": "parts", "es": "En 21 de esos 100 pulmones, la ventilación de los segmentos broncopulmonares del lóbulo era variante; los autores ordenaron esas variantes en 5 categorías y 8 subcategorías.", "cites": ["PMID:15666602"] },
       { "aspect": "irrigation", "es": "En imágenes tridimensionales de 103 pacientes candidatos a segmentectomía, los patrones de ramificación de bronquios, arterias y venas pulmonares del lóbulo no eran independientes entre sí, y las venas intersegmentarias mostraban trayectos muy variados.", "cites": ["PMID:32993708"] }
     ]
   },
@@ -137,7 +137,7 @@
   },
   "UBERON:0009687": {
     "sentences": [
-      { "aspect": "situation", "es": "En 98 corazones de autopsia, la vena solía originarse en la región posteroseptal izquierda y dirigirse hacia la parte izquierda de la pared posterior.", "cites": ["PMID:11770339"] },
+      { "aspect": "situation", "es": "Según la disección de 98 corazones de autopsia, el origen habitual de la vena está en la región posteroseptal izquierda, desde donde se orienta hacia el lado izquierdo de la pared posterior.", "cites": ["PMID:11770339"] },
       { "aspect": "relations", "es": "En esa serie, el ángulo entre el seno coronario y la vena medía entre 75 y 90 grados en el 62 % de los corazones, y su orificio tenía una válvula en el 58 %, que no impidió introducir un catéter 6F.", "cites": ["PMID:11770339"] },
       { "aspect": "irrigation", "es": "Es una de las tributarias del seno coronario, aunque en una mujer de 79 años se encontró desembocando en la aurícula izquierda por un orificio provisto de una válvula semilunar.", "cites": ["PMID:2268063"] },
       { "aspect": "clinical", "es": "Su cateterismo permite la ablación de vías accesorias epicárdicas posteroinferiores, y las vías paraseptales se clasifican, según el lugar de ablación, en derechas, izquierdas, dentro del seno coronario o dentro de esta vena.", "cites": ["PMID:11770339", "PMID:15717152"] }
@@ -152,10 +152,10 @@
   "UBERON:0015215": {
     "sentences": [
       { "aspect": "relations", "es": "Cuando el ligamento arcuato mediano del diafragma ocupa una posición baja, puede comprimir el tronco celíaco subyacente.", "cites": ["PMID:28050657", "PMID:34815969"] },
-      { "aspect": "parts", "es": "Durante la descompresión quirúrgica, el ligamento y el tejido ganglionar forman sobre la arteria celíaca una banda ancha de varias capas que se secciona por partes.", "cites": ["PMID:33987763"] },
-      { "aspect": "clinical", "es": "El síndrome del ligamento arcuato mediano es un diagnóstico de exclusión, con dolor epigástrico posprandial, náuseas, vómitos y pérdida de peso inexplicada.", "cites": ["PMID:34815969"] },
+      { "aspect": "parts", "es": "En la descompresión de la arteria celíaca, el tejido que la comprime, una banda ancha y estratificada de ligamento y tejido ganglionar, se rodea y se secciona capa a capa hasta liberar la estenosis.", "cites": ["PMID:33987763"] },
+      { "aspect": "clinical", "es": "Su síndrome se diagnostica por exclusión ante síntomas vagos como dolor epigástrico tras las comidas, náuseas, vómitos y adelgazamiento sin causa aparente.", "cites": ["PMID:34815969"] },
       { "aspect": "clinical", "es": "En la angio-TC de donantes renales vivos asintomáticos, la compresión del eje celíaco por este ligamento apareció en el 3,42 %, y la forma de gancho del tronco celíaco se consideró parte de la anatomía normal.", "cites": ["PMID:29914831"] },
-      { "aspect": "clinical", "es": "En una serie de 23 pacientes con el síndrome, el 69,6 % tenía circulación colateral arterial significativa y el 47,8 % aneurismas de arterias viscerales.", "cites": ["PMID:28050657"] }
+      { "aspect": "clinical", "es": "Entre 23 pacientes con el síndrome atendidos en un mismo centro, 16 (69,6 %) desarrollaron circulación colateral arterial significativa y 11 (47,8 %) aneurismas de arterias viscerales.", "cites": ["PMID:28050657"] }
     ]
   },
   "UBERON:0015472": {
@@ -163,21 +163,21 @@
       { "aspect": "relations", "es": "En seis cadáveres embalsamados con el método de Thiel, los ganglios traqueobronquiales izquierdos se disecaron en el espacio entre el cayado aórtico y el bronquio principal izquierdo.", "cites": ["PMID:25875536"] },
       { "aspect": "clinical", "es": "Los ganglios traqueobronquiales izquierdos se consideran regionales en el carcinoma epidermoide de esófago; entre 608 pacientes en los que se extirparon, el 7,4 % tenía metástasis en ellos.", "cites": ["PMID:35400494"] },
       { "aspect": "clinical", "es": "En esa cohorte, la supervivencia global a 5 años fue del 40,5 % con metástasis en estos ganglios y del 62,2 % sin ellas.", "cites": ["PMID:35400494"] },
-      { "aspect": "clinical", "es": "En 265 esofagectomías toracolaparoscópicas, la linfadenectomía sistemática de estos ganglios del lado izquierdo resultó técnicamente factible y segura.", "cites": ["PMID:27042222"] }
+      { "aspect": "clinical", "es": "En una revisión de 265 esofagectomías toracolaparoscópicas, 185 de ellas con disección sistemática de estos ganglios del lado izquierdo, los autores consideraron esa linfadenectomía técnicamente factible y segura.", "cites": ["PMID:27042222"] }
     ]
   },
   "UBERON:0035219": {
     "sentences": [
-      { "aspect": "clinical", "es": "En 141 mastectomías radicales ampliadas, la afectación de la cadena paraesternal se volvía más frecuente a medida que avanzaba el estadio del cáncer, con independencia de su localización en la mama.", "cites": ["PMID:1228259"] },
-      { "aspect": "clinical", "es": "En esa serie, la cadena paraesternal rara vez se afectaba de forma aislada, solía hacerlo junto con los ganglios axilares, y su invasión se asociaba a una supervivencia a 5 años muy baja.", "cites": ["PMID:1228259"] },
+      { "aspect": "clinical", "es": "La frecuencia de invasión de la cadena paraesternal crecía con el estadio del cáncer de mama, fuera cual fuera la localización del tumor, en una serie de 141 mastectomías radicales ampliadas.", "cites": ["PMID:1228259"] },
+      { "aspect": "clinical", "es": "En esa serie, la afectación paraesternal casi nunca era aislada sino que acompañaba a la axilar, y cuando existía la supervivencia a 5 años era extremadamente baja aun tras extirpar los ganglios.", "cites": ["PMID:1228259"] },
       { "aspect": "irrigation", "es": "En un caso de metástasis diafragmática de cáncer de cuerpo uterino, la recidiva en un ganglio paraesternal se interpretó como situada en la vía eferente del drenaje linfático del diafragma.", "cites": ["PMID:21842675"] },
-      { "aspect": "clinical", "es": "Los ganglios paraesternales pequeños y no palpables pueden marcarse con verde de indocianina inyectado bajo guía ecográfica para localizarlos durante la toracoscopia.", "cites": ["PMID:35471984"] }
+      { "aspect": "clinical", "es": "Para localizar en toracoscopia ganglios paraesternales pequeños que no se palpan, se ha propuesto marcarlos mediante inyección ecoguiada de verde de indocianina.", "cites": ["PMID:35471984"] }
     ]
   },
   "UBERON:0035374": {
     "sentences": [
-      { "aspect": "situation", "es": "La vena cardíaca menor recorre la cara posterior del surco coronario.", "cites": ["PMID:15232770"] },
-      { "aspect": "irrigation", "es": "En un estudio de 50 corazones por disección y corrosión, desembocaba en el lado derecho del seno coronario en el 86 % de los casos, en la vena cardíaca media en el 12 % y directamente en la aurícula derecha en el 1 %.", "cites": ["PMID:15232770"] },
+      { "aspect": "situation", "es": "Su trayecto sigue el surco coronario por la cara posterior del corazón.", "cites": ["PMID:15232770"] },
+      { "aspect": "irrigation", "es": "Su desembocadura más habitual era el lado derecho del seno coronario (86 %); con menor frecuencia drenaba en la vena cardíaca media (12 %) o directamente en la aurícula derecha (1 %), según una serie de 50 corazones disecados y otros estudiados por corrosión.", "cites": ["PMID:15232770"] },
       { "aspect": "parts", "es": "En esa serie, la ausencia de la vena fue seis veces más frecuente en los varones que en las mujeres.", "cites": ["PMID:15232770"] },
       { "aspect": "clinical", "es": "Se han comunicado casos aislados de drenaje anómalo de esta vena en la vena cava superior y, en un niño de 14 años operado de comunicación interauricular, en la vena cava inferior.", "cites": ["PMID:25828265", "PMID:39325873"] },
       { "aspect": "clinical", "es": "En un varón de 80 años con atresia del orificio del seno coronario, una vena cardíaca menor dilatada drenaba el seno hacia la aurícula derecha.", "cites": ["PMID:40265645"] }
@@ -186,22 +186,22 @@
   "UBERON:0035468": {
     "sentences": [
       { "aspect": "relations", "es": "En 13 lados de nueve cadáveres se identificó un espacio entre la fascia endotorácica, el diafragma y el receso costodiafragmático, separado del plano del bloqueo M-TAPA por cartílago costal o estructuras tendinosas.", "cites": ["PMID:38940927"] },
-      { "aspect": "clinical", "es": "En diez voluntarios, la inyección de anestésico local en ese espacio bloqueó las ramas cutáneas laterales de T8 a T12, además de las ramas anteriores.", "cites": ["PMID:38940927"] },
-      { "aspect": "relations", "es": "En un espécimen sin embalsamar, los líquidos inyectados en la parte caudal del espacio paravertebral torácico se extendieron hacia atrás hasta el receso costodiafragmático.", "cites": ["PMID:28444433"] },
+      { "aspect": "clinical", "es": "En diez voluntarios, el anestésico depositado en ese espacio alcanzó, además de las ramas anteriores, las ramas cutáneas laterales de T8 a T12.", "cites": ["PMID:38940927"] },
+      { "aspect": "relations", "es": "En un espécimen sin embalsamar, el líquido inyectado en niveles caudales del espacio paravertebral torácico difundió en dirección posterior hasta el receso costodiafragmático.", "cites": ["PMID:28444433"] },
       { "aspect": "clinical", "es": "En una mujer de 48 años, un tumor miofibroblástico inflamatorio originado en el duodécimo nervio intercostal se presentó como masa en el receso costodiafragmático derecho en la TC y la RM.", "cites": ["PMID:17728520"] }
     ]
   },
   "UBERON:0037144": {
     "sentences": [
-      { "aspect": "irrigation", "es": "A partir de angiografías y moldes vasculares de 70 corazones, la pared ventricular se dividió en cuatro zonas según su arteria de origen: anteroseptal, posteroseptal, lateral izquierda y lateral derecha.", "cites": ["PMID:7725189"] },
-      { "aspect": "irrigation", "es": "Esas zonas corresponden a los territorios de la rama interventricular anterior de la coronaria izquierda, la interventricular posterior de la coronaria derecha, la circunfleja y la coronaria derecha, y cada una ocupa cerca de un cuarto del volumen ventricular.", "cites": ["PMID:7725189"] }
+      { "aspect": "irrigation", "es": "Tras opacificar o moldear con resina las coronarias de 70 corazones, los autores propusieron dividir el miocardio ventricular en cuatro zonas de origen arterial distinto: anteroseptal, posteroseptal, lateral izquierda y lateral derecha.", "cites": ["PMID:7725189"] },
+      { "aspect": "irrigation", "es": "Cada zona, de alrededor de un cuarto del volumen ventricular, depende respectivamente de la interventricular anterior, la interventricular posterior, la circunfleja y la coronaria derecha hasta el nacimiento de la interventricular posterior.", "cites": ["PMID:7725189"] }
     ]
   },
   "UBERON:8600102": {
     "sentences": [
-      { "aspect": "irrigation", "es": "Según su longitud, la arteria descendente anterior puede no llegar al vértice del ventrículo izquierdo, compartirlo con la coronaria derecha, irrigarlo por completo o rodearlo e irrigar además más del 25 % de la pared inferior.", "cites": ["PMID:19573940"] },
+      { "aspect": "irrigation", "es": "Un estudio angiográfico clasificó la descendente anterior por su longitud en cuatro tipos: sin llegar al vértice del ventrículo izquierdo, compartiéndolo con la coronaria derecha, irrigándolo entero o rodeándolo hasta abarcar más del 25 % de la pared inferior.", "cites": ["PMID:19573940"] },
       { "aspect": "irrigation", "es": "En los controles con infarto anterior con elevación del ST de ese estudio, esos cuatro tipos se observaron en el 3 %, 13 %, 51 % y 33 %, respectivamente.", "cites": ["PMID:19573940"] },
-      { "aspect": "clinical", "es": "Un puente miocárdico puede cubrir un segmento de esta arteria, disposición capaz de provocar angina, arritmias e incluso la muerte.", "cites": ["PMID:16891236"] },
+      { "aspect": "clinical", "es": "Los puentes miocárdicos sobre un tramo de esta arteria se han relacionado con angina, arritmias e incluso con la muerte.", "cites": ["PMID:16891236"] },
       { "aspect": "clinical", "es": "Cuando la arteria transcurre profundamente dentro del miocardio, su localización durante la cirugía de revascularización puede requerir Doppler, cineangiografía o disección retrógrada de los tejidos que la cubren.", "cites": ["PMID:24172140"] },
       { "aspect": "clinical", "es": "Su origen anómalo en la arteria pulmonar es una anomalía congénita rara: una revisión sistemática reunió 51 casos, con presentaciones que iban desde un soplo asintomático hasta la parada cardíaca súbita.", "cites": ["PMID:33164690"] },
       { "aspect": "clinical", "es": "En 18 receptores de trasplante cardíaco, el grosor íntimo máximo medido con ecografía intravascular fue mayor en esta arteria (0,84 ± 0,48 mm) que en la circunfleja o la coronaria derecha.", "cites": ["PMID:29194769"] }
@@ -215,7 +215,7 @@
   },
   "UBERON:8920015": {
     "sentences": [
-      { "aspect": "irrigation", "es": "En un cadáver de un varón de 87 años, la vena ácigos recibía venas bronquiales de la porción inferior de la tráquea y de los bronquios de los lóbulos medio e inferior derechos.", "cites": ["PMID:18956790"] },
+      { "aspect": "irrigation", "es": "Las venas bronquiales de la tráquea inferior y de los bronquios lobulares medio e inferior derechos drenaban en la ácigos en la disección de un varón de 87 años.", "cites": ["PMID:18956790"] },
       { "aspect": "clinical", "es": "En ese mismo caso de retorno venoso pulmonar anómalo parcial, la vena bronquial del bronquio lobular superior derecho desembocaba en la vena anómala que drenaba a la vena cava superior.", "cites": ["PMID:18956790"] }
     ]
   }

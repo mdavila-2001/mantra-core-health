@@ -46,8 +46,8 @@ export const ATLAS_3D_META = {
   "literatureNoSource": 428,
   "literatureSentences": 4228,
   "literatureSourcesCited": 3028,
-  "images": 0,
-  "structuresWithImages": 0,
+  "images": 1066,
+  "structuresWithImages": 1027,
   "femaleOnlyStructures": 123,
   "femaleOnlyWithMesh": 0
 } as const;
