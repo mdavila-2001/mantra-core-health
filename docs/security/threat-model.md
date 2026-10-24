@@ -169,8 +169,6 @@ anotada en `identity.client.ts`:
 prueba de que no rompen el prerenderizado ni la carga de tipografías.
 
 Ninguno se corrige en este trabajo documental: los ocho son cambios de producto.
-Están en [el análisis de brechas](../reports/documentation-gap-analysis.md) y en
-[el informe de preparación productiva](../reports/production-readiness.md).
 
 ## Revisión
 

@@ -2,8 +2,8 @@
 
 Fecha: 28/09/2026 · Rol: médica (`medica@alovida.mock`) · Ruta: `/my-account`,
 pestaña «Datos personales» · Backend: simulador (`mockBackend: true`, cambiado
-sólo en la copia local para la corrida y revertido; la API real todavía no sirve
-el dato, ver `docs/pendientes-backend-seguros-del-medico.md`).
+sólo en la copia local para la corrida y revertido; ese día la API real todavía
+no servía el dato).
 
 Navegador: Chromium (Playwright), `ng serve`, espera por selector
 (`[data-testid="perfil-seguros"]`), nunca `networkidle`.

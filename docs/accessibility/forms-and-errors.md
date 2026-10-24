@@ -112,15 +112,6 @@ Lo mismo con las confirmaciones que reemplazan el formulario:
 `HIGH` para `/auth/forgot-password` (el acuse es toda la respuesta) y `MEDIUM` para las
 demás. Ver [el informe de auditoría](audit-report.md).
 
-### La propuesta
-
-No hay que reescribir nada: `ViewStateHost` ya sabe hacerlo. Extraer sus dos
-reglas —región viva y foco en S4— a una directiva reutilizable y aplicarla al
-`app-alert` de esas pantallas.
-
-Es un cambio de producto (toca comportamiento observable en seis componentes) y
-por eso no se ejecuta acá.
-
 ## Los errores del servidor no se anclan al campo
 
 `ViewStateIssue` admite un `field`, y `ViewStateHost` lo pinta:

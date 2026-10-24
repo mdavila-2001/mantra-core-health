@@ -9,9 +9,9 @@ import { entrar, irA, estable } from './support/sesion';
  *
  * ## Dónde vive la pantalla
  *
- * No hay ruta propia `/schedule/requests`: la ficha la deja «pendiente de
- * P-13-1» y lo que se mergeó (TAREA-13 S1/S2/§5, PRs #277-#281) resolvió esa
- * pregunta abierta con una **solapa** dentro de `/schedule`
+ * No hay ruta propia `/schedule/requests`: la pregunta P-13-1 de la ficha la
+ * resolvió lo que se mergeó (TAREA-13 S1/S2/§5, PRs #277-#281) con una
+ * **solapa** dentro de `/schedule`
  * (`src/app/features/agenda/agenda.ts` + `agenda.html`), no con una pantalla
  * separada. La solapa «Solicitudes» es la primera y la que arranca
  * seleccionada (`pestana()` por defecto en 0), lista sólo

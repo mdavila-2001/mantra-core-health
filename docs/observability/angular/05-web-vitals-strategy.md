@@ -15,8 +15,8 @@ de rendimiento en spans mezcla las dos cosas y hace las dos peor: el volumen se
 dispara y las preguntas agregadas —el percentil 75 del LCP de la semana— siguen
 sin poder responderse, porque el muestreo ya descartó la mayoría de los datos.
 
-Por eso aquí se hace lo poco que **sí** encaja en una traza, y el resto se
-declara pendiente de una herramienta de métricas.
+Por eso aquí se hace lo poco que **sí** encaja en una traza; el resto es
+trabajo de una herramienta de métricas, no de las trazas.
 
 ---
 

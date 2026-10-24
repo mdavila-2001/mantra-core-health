@@ -89,9 +89,8 @@ const PESTANAS = ['Médico', 'Documento y matrícula', 'Habilitación y motivo']
  * escrito al cambiar de pestaña; al enviar con errores, salta a la primera
  * pestaña que tiene alguno.
  *
- * > **Decisión pendiente de negocio:** si el médico creado por el admin nace
- * > con `CLINICIAN`. Hoy la casilla viene marcada —sin el rol no puede operar—
- * > y es visible y desmarcable; el default no se esconde.
+ * El rol `CLINICIAN` viene marcado —sin el rol el médico no puede operar— y
+ * la casilla es visible y desmarcable: el default no se esconde.
  */
 @Component({
   selector: 'app-practitioner-assisted-registration',

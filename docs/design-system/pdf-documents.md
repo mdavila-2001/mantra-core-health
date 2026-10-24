@@ -62,21 +62,9 @@ con ella.
 un PDF de muestra por plantilla con datos ficticios
 (`scripts/pdf-samples/*.pdf-sample.ts`).
 
-## Pendiente en el backend
+## Los PDF del backend
 
-Los PDF del backend (`mantra-core-health-api`, pdfkit:
-`encounter-pdf.service.ts`, `prescription-pdf.service.ts`,
-`insurance-portability-pdf.service.ts`) no se tocaron: es otro repositorio.
-Para que salgan con la misma identidad habría que portar:
-
-1. **Tokens** de `pdf-theme.ts` (`PDF_TOKENS`, `PDF_COLORS`, `PDF_TONES`,
-   `PDF_GRADIENTS`, `PDF_TYPE`, `PDF_SPACE`) a un módulo compartido del backend;
-   pdfkit acepta los mismos RGB y tiene `linearGradient` para la portada.
-2. **Fuentes:** los cuatro TTF de `public/alovida/tipografias/` registrados con
-   `doc.registerFont` (pdfkit sí subsetea y aplica el interletrado).
-3. **Marco de hoja:** portada, membrete de continuación y pie con
-   «Página X de Y» (en pdfkit, con `bufferPages: true` y un recorrido final).
-4. **Bloques** equivalentes: tarjetas, rejilla, tabla con cabecera repetida,
-   caja de totales, avisos por tono, firma y QR (con `qrcode`, ≥ 3 × 3 cm).
-5. **Formatos** de `pdf-format.ts` (monto, fecha, hora de 24 h).
-6. **Fecha de emisión** del dato, nunca la de generación rotulada como emisión.
+Los PDF que genera `mantra-core-health-api` con pdfkit (`encounter-pdf.service.ts`,
+`prescription-pdf.service.ts`, `insurance-portability-pdf.service.ts`) son de otro
+repositorio y no usan esta identidad: ni los tokens de `pdf-theme.ts`, ni las
+tipografías, ni el marco de hoja, el logo o el bloque de firma.

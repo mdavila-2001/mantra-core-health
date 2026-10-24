@@ -119,11 +119,10 @@ interface FilaConProblema {
  * alta, fila por fila y **en serie** —una farmacia con 300 productos no debe
  * abrir 300 conexiones a la vez— con el resultado de cada una a la vista.
  *
- * ## Lo que el mockup pedía y el backend todavía no tiene
+ * ## Lo que el mockup pedía y el DTO no declara
  *
- * Precio, stock, categoría, descripción, imágenes, borradores y edición. No se
- * dibujan campos que no se guardan: están pedidos en `PENDIENTES-BACKEND.md`
- * (P44).
+ * Precio, stock, categoría, descripción, imágenes y borradores (P47). No se
+ * dibujan campos que no se guardan.
  *
  * ## De qué farmacia es el catálogo
  *

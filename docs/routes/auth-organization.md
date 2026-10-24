@@ -28,7 +28,6 @@ alto.
 > directamente a esta URL sin sesión muestra la pantalla con **cero
 > organizaciones**: `auth.tenants()` devuelve `[]`. No es una filtración (no hay
 > nada que mostrar) pero tampoco es un estado útil: no hay mensaje ni salida.
-> Brecha `MEDIUM` en [el análisis de brechas](../reports/documentation-gap-analysis.md).
 
 ## 3 · Flujo
 

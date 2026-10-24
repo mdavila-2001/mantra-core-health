@@ -2,8 +2,8 @@
     Contrato de `GET /patient-spending/me`: lo que el paciente autenticado gastó
     en su salud, movimiento por movimiento, dentro de un rango de fechas.
 
-    **Todavía no existe en la API** (PENDIENTES-BACKEND.md, P43): hoy lo sirve
-    sólo el backend simulado de `mockup`. El titular sale del token, así que la
+    **No existe en la API** (P44): lo sirve sólo el backend simulado de
+    `mockup`. El titular sale del token, así que la
     ruta no lleva datos de la persona; el rango viaja como `from`/`to`
     (`YYYY-MM-DD`, ambos inclusive).
 

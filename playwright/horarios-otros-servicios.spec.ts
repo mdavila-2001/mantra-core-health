@@ -21,7 +21,7 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 /** `uuid('hpid-medica')` de `mock-session.ts`: el perfil fijo de la médica. */
 const MEDICA_PROFILE_ID = 'be0f3a66-c03e-4eac-a416-c1068238d3d2';
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-10-02-horarios-otros-servicios', 'evidencia');
+const EVIDENCIA = join('artifacts', 'evidencia', '2026-10-02-horarios-otros-servicios', 'evidencia');
 
 const VIEWPORTS = [
   { nombre: '375', width: 375, height: 812 },

@@ -95,9 +95,6 @@ con el propietario, no acá.
 cuenta: leer la URL sigue siendo del contenedor; lo que `FilterBar` centraliza es escribirla desde
 sus controles.
 
-**Pendiente:** decisión de producto sobre «Limpiar todo» y el ancho; después, migrar los cuatro
-con sus specs (`buscar publica el texto en la URL…` ya existe en cada uno).
-
 ## F-03 · Modal con contenido proyectado — **verificada (ya adoptada)**
 
 Se buscó `<dialog` fuera de `molecules/dialog`, `date-picker` y `tree-select`: los cuatro
@@ -139,6 +136,5 @@ haya un tercer consumidor con la misma regla de accesibilidad.
 
 70 de las 81 `<table>` a mano están en `features/alovida/**`, que el propio producto declara
 «referencia de diseño, no la aplicación» y que el generador de portadas borra y regenera.
-La decisión y su mecanismo de graduación están en `docs/adr/ADR-0014` (rama
-`pablo/refactor-tabla-canonica`, pendiente de integrar). El denominador de adopción son las
+La decisión y su mecanismo de graduación están en `docs/adr/ADR-0014`. El denominador de adopción son las
 pantallas conectadas, no la maqueta.

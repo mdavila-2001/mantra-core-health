@@ -772,7 +772,7 @@ export function registrarComunidad(router: MockRouter): void {
     const otros = (c?.participantes ?? []).filter((p) => p !== yo);
     // Los recibos de lo propio. La maqueta los **simula** con reglas fijas —
     // llega al segundo y lo leen a los dos minutos si está dentro de lo leído—
-    // porque la API real todavía no publica las horas (PLAN-CHAT-WHATSAPP.md).
+    // porque la API real no publica las horas de los recibos.
     const conRecibos = (pagina.items as readonly SimulatedMessage[]).map((m) =>
       m.senderProfileId !== yo
         ? m

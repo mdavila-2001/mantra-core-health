@@ -63,33 +63,6 @@ Es el caso en el que el optimismo es la respuesta correcta: la acción es
 **idempotente y no destructiva**, y el peor escenario —que el servidor no se
 entere— se resuelve solo cuando el refresh token expire.
 
-## Qué haría falta para que valiera la pena
-
-Una actualización optimista paga cuando se cumplen las cuatro:
-
-1. **La operación es frecuente.** Marcar leído, favoritear, cambiar un
-   interruptor.
-2. **El resultado es predecible.** El cliente sabe exactamente cómo va a quedar.
-3. **El fallo es raro.** Si falla el 10 % de las veces, la reversión se convierte
-   en el caso habitual.
-4. **La reversión es entendible.** La persona puede comprender que algo volvió
-   atrás, y por qué.
-
-**Ninguna operación de este frontend cumple las cuatro hoy.**
-
-## Lo que haría falta construir
-
-Además de la lógica de cada caso, tres piezas que no existen:
-
-| Pieza | Estado |
-|---|---|
-| Caché donde escribir el valor optimista | **No existe** — ver [caché](caching.md) |
-| Mecanismo de reversión | No existe |
-| Forma de avisar que algo se revirtió | Existe `ToastService`, pero sin acción de deshacer |
-
-**Sin caché no hay actualización optimista posible**, porque no hay dónde
-escribir el valor provisional que no sea la señal local de una pantalla.
-
 ## Riesgo específico de un sistema de salud
 
 Un valor clínico que aparece en pantalla **antes** de que el servidor lo acepte
@@ -106,10 +79,3 @@ Cualquier propuesta futura debería separar explícitamente:
 | Preferencias de interfaz (tema, orden, filtros) | Razonable |
 | Acciones reversibles sin consecuencia clínica | Evaluable caso por caso |
 | **Cualquier dato clínico** | **No** |
-
-## Estado
-
-**No es una brecha.** Es una ausencia coherente con lo que la aplicación hace
-hoy, y la propuesta correcta es no implementarla hasta que exista un caso que la
-justifique. Registrado así en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

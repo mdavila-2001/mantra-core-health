@@ -15,7 +15,8 @@ import { informes } from './diagnostics.handlers';
 /* ============================================================================
     La verificación del diagnóstico (C3): un presuntivo se confirma o se
     rechaza, con motivo y/o evidencia. Contrato §3.4 del plan maestro del
-    encuentro clínico; pendiente de backend P41.
+    encuentro clínico; la API lo publica en
+    `POST /clinical/conditions/:id/verification` (P41).
 
     Sólo `PROVISIONAL → CONFIRMED | REFUTED`, y las dos son terminales: un
     diagnóstico decidido no se vuelve a decidir (409). La evidencia tiene que

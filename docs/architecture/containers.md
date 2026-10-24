@@ -127,8 +127,7 @@ Monta **solo** `src/`, `public/` y los `tsconfig`. Montar la raíz taparía el
 
 **La ausencia de una imagen de producción es la brecha operativa más grande del
 proyecto.** Hay `yarn build` y hay `yarn serve:ssr:…`, pero no hay artefacto,
-ni destino, ni pipeline. Está clasificada como `BLOCKER` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
+ni destino, ni pipeline.
 
 ## Comunicación entre contenedores
 

@@ -107,8 +107,6 @@ del mensaje:
 concretos, así que los errores del servidor se muestran como una lista sin
 anclar. El soporte existe en el tipo y en la plantilla; falta el mapeo.
 
-Brecha `MEDIUM` en [el análisis de brechas](../reports/documentation-gap-analysis.md).
-
 ## Cuatro estados de S4 que no son de campo
 
 `errorToViewState` manda a S4 códigos que no tienen nada que ver con un campo

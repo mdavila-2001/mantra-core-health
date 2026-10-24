@@ -155,10 +155,8 @@ export interface Canje {
  * front: el lado comercio —quien escanea y descuenta— no existe todavía y está
  * declarado fuera de alcance (README de la tanda, tarjeta FAR-I6). Por eso la
  * pantalla lo muestra con el chip DEMO, y por eso este tipo vive separado de
- * `Canje`, que sí espeja el contrato real.
- *
- * TODO(lado comercio): cuando exista, el código lo emite el backend junto con
- * el canje y este tipo se funde con `Canje`.
+ * `Canje`, que sí espeja el contrato real: el backend no emite el código del
+ * comprobante.
  */
 export interface ComprobanteDeCanje {
   readonly canje: Canje;

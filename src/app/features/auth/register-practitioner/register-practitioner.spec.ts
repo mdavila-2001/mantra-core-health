@@ -380,8 +380,7 @@ describe('RegisterPractitioner', () => {
         // GPS. No porque la columna haya aparecido: `common.addresses` ya la
         // tenía, y el alta de paciente escribe ahí desde siempre. Lo que
         // faltaba era que el DTO del profesional la recibiera, y eso es una
-        // línea de `RegisterPractitionerDto` copiada del de paciente —anotada
-        // en `PENDIENTES-BACKEND.md` como condición para el pase a `dev`—.
+        // línea de `RegisterPractitionerDto` copiada del de paciente.
         //
         // La zona sigue acá porque de ella sí no hay columna para nadie.
         'organizationName',

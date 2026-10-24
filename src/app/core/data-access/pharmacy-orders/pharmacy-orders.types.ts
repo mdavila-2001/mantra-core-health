@@ -110,7 +110,6 @@ export interface EntregaRegistrada {
  * Estados del pago, value set provisorio del front (como `ESTADOS_DE_PEDIDO`).
  * La pasarela real no existe: `PAGADO` llega hoy por dos caminos — el
  * mostrador al cerrar la dispensación, o el simulador del QR detrás del gate.
- * TODO(FAR-E4): el puerto real define el catálogo y este set se ajusta acá.
  */
 export const ESTADOS_DE_PAGO = ['PENDIENTE', 'PAGADO'] as const;
 

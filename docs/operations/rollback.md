@@ -14,7 +14,7 @@ Todo lo que este trabajo añadió vive en cinco lugares, y **ninguno entra al
 bundle**:
 
 ```text
-docs/          (excepto docs/auditoria/, preexistente)
+docs/
 scripts/       (excepto generate-env.mjs, que es de otro trabajo)
 structurizr/
 mkdocs.yml
@@ -127,10 +127,3 @@ tema. Ninguna migración de datos que revertir.
 
 Cuando exista caché, habría que vaciarla al revertir: una caché escrita por la
 versión nueva puede tener una forma que la anterior no entiende.
-
-## Estado
-
-Depende del `BLOCKER` de [despliegue](deployment.md).
-
-**Lo que sí se puede hacer hoy** es el versionado del artefacto (`HIGH`), que es
-prerrequisito de cualquier reversión y no depende de que exista el despliegue.

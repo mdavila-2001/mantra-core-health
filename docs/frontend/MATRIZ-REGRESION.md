@@ -48,12 +48,11 @@ carga inicial de cada ruta con una cuenta. No mide:
 | `conectada con deuda` | 3 |
 | `placeholder` | 1 |
 
-## Observación abierta
+## `/directory` con el superadmin
 
-`/directory` redirige a `/dashboard` con `superadmin@` en los cinco viewports.
-Capturas en `evidence/matriz/directory/`. Falta reproducirlo con la cuenta a la
-que la pantalla está dirigida para saber si es un guardia de rol correcto o una
-ruta rota. **Hasta entonces es una observación, no un defecto.**
+`/directory` redirige a `/dashboard` con `superadmin@` en los cinco viewports
+(capturas en `evidence/matriz/directory/`). Es el guardia de rol: la sección es
+exclusiva de `PATIENT` y `PRACTITIONER` (`exclusiveRoles`), no una ruta rota.
 
 ## Sobre la intermitencia
 

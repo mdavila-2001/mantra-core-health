@@ -1,8 +1,0 @@
-{
-    "authStatus":  200,
-    "ssr":  true,
-    "loginRendered":  true,
-    "demoBanner":  false,
-    "missingAssetStatus":  404,
-    "result":  "PASS"
-}

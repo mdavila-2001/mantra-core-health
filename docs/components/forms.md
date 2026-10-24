@@ -248,4 +248,3 @@ Los cuatro están bien puestos. Es de las cosas que más se olvidan y acá no.
 | Envío con Enter en un formulario de un solo campo | Funciona: es el `<form>` nativo |
 
 La primera es la más costosa a medida que aparezcan formularios largos.
-Registrada en [el análisis de brechas](../reports/documentation-gap-analysis.md).

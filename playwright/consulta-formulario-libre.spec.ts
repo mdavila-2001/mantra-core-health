@@ -21,7 +21,7 @@ import { entrar, irA } from './support/sesion';
  *    la segunda suma, no reemplaza—. Guardar registra la nota y el documento.
  * 4. Tras recargar la página, el formulario libre relee lo registrado.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-28-formulario-libre-y-deslizable', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-28-formulario-libre-y-deslizable', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',

@@ -17,7 +17,7 @@ import { entrar, irA } from './support/sesion';
  *    coberturas, y los brokers.
  * 4. «Hablar con el broker» abre el chat con él.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-28-mercado-de-seguros', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-28-mercado-de-seguros', 'evidencia');
 const PACIENTE: Actor = {
   rol: 'paciente',
   identificador: 'paciente@alovida.mock',

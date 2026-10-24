@@ -24,7 +24,7 @@ import { chromium } from 'playwright';
 import { conceptIdOf } from '../scripts/lib/glossary-shards.mjs';
 
 const BASE = process.argv[2] ?? 'http://localhost:4231';
-const SALIDA = process.argv[3] ?? 'docs/trabajo/2026-09-30-glosario-es/evidencia';
+const SALIDA = process.argv[3] ?? 'artifacts/evidencia/2026-09-30-glosario-es/evidencia';
 const MEDICAMENTO = process.argv[4] ?? 'cima-vtm-1039008';
 
 const veredictos = [];

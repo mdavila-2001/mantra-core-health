@@ -14,7 +14,7 @@ import { entrar, irA } from './support/sesion';
  * - regla 6: la tabla de cláusulas no abre scroll lateral;
  * - el filtro vive en la URL: recargar reproduce la búsqueda.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-30-aseguradora-buscador-productos', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-30-aseguradora-buscador-productos', 'evidencia');
 const PACIENTE: Actor = {
   rol: 'paciente',
   identificador: 'paciente@alovida.mock',

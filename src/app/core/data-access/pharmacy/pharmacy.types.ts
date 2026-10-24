@@ -76,7 +76,7 @@ export interface PharmacyProduct {
   readonly requiresPrescription: boolean | null;
   /*
    * Los cuatro de abajo son del catálogo que administra la farmacia y **sólo
-   * los sirve el simulador** (P47 de PENDIENTES-BACKEND): la API real no los
+   * los sirve el simulador** (P47): la API real no los
    * manda, por eso son opcionales y cada pantalla tiene que tolerar que
    * falten.
    */
@@ -545,10 +545,9 @@ export interface PharmacySiteRead {
   readonly latitude: number | null;
   readonly longitude: number | null;
   /**
-   * Si es la casa matriz de su farmacia. Opcional: el backend real todavía no
-   * lo publica (TODO(model): concepto `PHARM_SITE_TYPE_HEAD_OFFICE` en el tipo
-   * de sede + el campo en `PharmacySiteReadDto`). Ausente se lee como «no
-   * marcada», nunca como «no es la matriz».
+   * Si es la casa matriz de su farmacia. Opcional: `PharmacySiteReadDto` no
+   * lo declara (el tipo de sede no tiene un concepto de casa matriz). Ausente
+   * se lee como «no marcada», nunca como «no es la matriz».
    */
   readonly isHeadOffice?: boolean;
 }

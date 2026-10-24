@@ -1,2 +1,0 @@
-$ yarn tsc -p tsconfig.app.json --noEmit
-exit=0

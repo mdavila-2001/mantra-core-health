@@ -1362,11 +1362,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
     // Pedido del propietario (2026-09-25): sacar el renglón de la vista del
-    // paciente mientras se decide qué hacer con la sección — todavía no está
-    // definido. `fueraDelMenuPara` es lo que "apaga una sección de momento
-    // sin perder el código" (mismo mecanismo que «Ajustes»/«Chats» más abajo):
-    // la ruta, el guard y la pantalla siguen enteros, sólo deja de ocupar
-    // renglón. Ver docs/pendiente-decision-cuestionarios.md.
+    // paciente. `fueraDelMenuPara` es lo que "apaga una sección sin perder el
+    // código" (mismo mecanismo que «Ajustes»/«Chats» más abajo): la ruta, el
+    // guard y la pantalla siguen enteros, sólo deja de ocupar renglón.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
@@ -1560,8 +1558,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // del menú lateral, se llega por la billetera de la barra superior.
     //
     // Módulo 17 porque lo que suma son cobros al paciente; el contrato
-    // (`GET /patient-spending/me`) todavía no existe en la API — P43 en
-    // `PENDIENTES-BACKEND.md`.
+    // (`GET /patient-spending/me`, P44) sólo lo sirve el simulador.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/spending',
     label: 'Mis gastos',
@@ -1579,8 +1576,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // médico, la farmacia y facturación, las que emitieron. El lado lo decide
     // el backend por la sesión.
     //
-    // Hoy la lee del SIAT **simulado** (FACT-SIAT-MOCK): la API todavía no
-    // publica facturas — P53 en `PENDIENTES-BACKEND.md`.
+    // La lee del SIAT **simulado** (FACT-SIAT-MOCK,
+    // `GET /billing/simulated/my-invoices`, P53).
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/invoices',
     label: 'Mis facturas',
@@ -1599,8 +1596,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú, que tiene listas cerradas fijadas por specs. Qué solicitudes ve
     // cada cuenta lo decide el backend por la sesión.
     //
-    // Hoy la sirve el simulador sobre la misma tabla que dictamina la
-    // aseguradora en «Solicitudes recibidas» — P56 en `PENDIENTES-BACKEND.md`.
+    // La sirve `GET /insurance/my-claims`, sobre la misma tabla que dictamina
+    // la aseguradora en «Solicitudes recibidas» (P56).
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/requests',
     label: 'Mis solicitudes',

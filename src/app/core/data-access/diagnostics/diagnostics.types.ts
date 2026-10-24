@@ -1,6 +1,6 @@
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 
-/** Clasificación de C2; el simulador la resuelve al concepto. Pendiente de backend P40. */
+/** Clasificación de C2; sólo la resuelve el simulador: la API no la declara (P40). */
 export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
 
 /* ============================================================================
@@ -39,9 +39,9 @@ export interface DiagnosticOrder {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; pendiente de backend P40. */
+  /** Categoría de análisis de C2; sólo la sirve el simulador (P40). */
   readonly category?: AnalysisCategory;
-  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  /** Notas médicas que motivan la orden de C2; sólo las sirve el simulador (P40). */
   readonly basedOnNoteIds?: readonly string[];
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
@@ -113,13 +113,13 @@ export interface NewDiagnosticOrder {
   readonly codeConceptId: string;
   readonly encounterId?: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; pendiente de backend P40. */
+  /** Categoría de análisis de C2; sólo la sirve el simulador (P40). */
   readonly category?: AnalysisCategory;
-  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  /** Notas médicas que motivan la orden de C2; sólo las sirve el simulador (P40). */
   readonly basedOnNoteIds?: readonly string[];
   /**
    * La respuesta del formulario médico de la que sale (instancia de `forms`).
-   * En la cita es obligatoria; pendiente de backend (P43).
+   * En la cita es obligatoria (P43).
    */
   readonly formInstanceId?: string;
   readonly priorityConceptId?: string;
@@ -307,7 +307,7 @@ export interface PatientOrder extends PatientSettlementFields {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; pendiente de backend P40. */
+  /** Categoría de análisis de C2; sólo la sirve el simulador (P40). */
   readonly category?: AnalysisCategory;
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;

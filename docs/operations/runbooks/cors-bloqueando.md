@@ -132,7 +132,7 @@ hacer nada.
 
 ## Prevención
 
-1. **Decidir el dominio de la API** — la decisión pendiente número uno.
+1. **La API detrás del mismo dominio** ([ADR-0011](../../adr/ADR-0011-api-mismo-dominio.md)): con eso no hay CORS que configurar.
 2. Si va en otro dominio, **probar el preflight en staging** — que tampoco
    existe.
 3. Que la lista de cabeceras permitidas incluya `X-Tenant-Id` **desde el

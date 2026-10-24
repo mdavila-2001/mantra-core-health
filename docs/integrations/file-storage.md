@@ -113,8 +113,6 @@ Se puede subir evidencia y no se puede recuperarla. Para el flujo de verificaci�
 alcanza —la revisa alguien del otro lado— pero cualquier funcionalidad de
 historia clínica con adjuntos la necesita.
 
-Registrada en [el análisis de brechas](../reports/documentation-gap-analysis.md).
-
 ## Reglas al implementar la primera pantalla de subida
 
 1. **`sensitivity: 'PHI'` para cualquier cosa clínica.** Ante la duda, `PHI`.

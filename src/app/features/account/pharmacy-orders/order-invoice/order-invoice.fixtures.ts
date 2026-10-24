@@ -31,9 +31,7 @@ import type { CoaseguroDeFactura, DocumentoDeFactura, LineaDeFactura } from './o
  *   llega `null`. La modalidad, el hito del envío y la dirección de entrega no
  *   se tocan: la rama de envío se pinta sólo cuando el contrato la trae.
  * - **Nada se persiste**: cada render deriva lo mismo del pedido recibido.
- *
- * TODO(FAR-E4): cuando el backend publique pago y facturación, esto se queda
- * sólo con los casos de las pruebas.
+ * - **Es de ejemplo porque el pedido no publica pago ni facturación.**
  */
 
 /** El cartel único: el mismo que usa la bandeja del mostrador. */

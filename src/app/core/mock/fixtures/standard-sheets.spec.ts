@@ -65,7 +65,7 @@ describe('las fichas clínicas estándar del simulador', () => {
    * La causa raíz **está sin localizar**. El único sitio que muta el array es
    * `PLANTILLAS_DE_EXPEDIENTE.push(nueva)` en `POST /charts/templates`
    * (`clinical.handlers.ts`), pero no se encontró un solo spec que ejercite ese
-   * camino. Ver `docs/progress/BUGS.md`.
+   * camino.
    *
    * Por eso la comprobación no pregunta por longitudes: un `49 ≠ 43` no dice
    * **quién** sobra, y cada corrida completa cuesta demasiado como para gastar

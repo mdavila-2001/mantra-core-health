@@ -29,39 +29,6 @@ Las nueve etapas, en orden de coste creciente para que falle pronto lo barato:
 9 · Auditoría de dependencias     yarn npm audit --recursive --severity high
 ```
 
-### Propuesta, con lo que existe hoy
-
-```yaml
-# PROPUESTA — .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
-
-jobs:
-  verificar:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - run: corepack enable
-      - run: yarn install --immutable
-      - run: yarn lint
-      - run: yarn tsc -p tsconfig.app.json --noEmit
-      - run: yarn test:coverage
-      - run: yarn build
-      - run: node scripts/check-bundle-budget.mjs
-      - run: node scripts/check-architecture.mjs
-      - run: node scripts/generate-doc-report.mjs
-      # No bloqueante: la única vulnerabilidad conocida es moderada,
-      # de desarrollo, y no llega al navegador.
-      - run: yarn npm audit --recursive --severity high
-        continue-on-error: true
-```
-
-**No se crea el archivo**: añadir un workflow es un cambio de producto —cambia lo
-que pasa en cada `push`— y necesita autorización.
-
 ### Lo que hay que tener en cuenta al montarlo
 
 | Detalle | Por qué |
@@ -138,7 +105,6 @@ Lo que obliga a actualizar documentación:
 | Token del sistema de diseño | `design-system/` |
 | Decisión de arquitectura | **ADR** |
 | Variable de entorno | `environment-variables.md` y `configuration.md` |
-| Cierre de una brecha | `documentation-gap-analysis.md` |
 
 Las que dicen «lo verifica el pipeline» **fallan automáticamente**; el resto
 depende de la revisión.
@@ -153,12 +119,3 @@ depende de la revisión.
 | **Cambiar un valor por defecto** | **No** | **Declararlo en el PR** |
 | Cambiar comportamiento de teclado | **No** | Prueba de accesibilidad |
 | Cambiar estilos | **No** | Revisión visual |
-
-## Estado
-
-**`HIGH`.** Sin CI, las nueve etapas dependen de la disciplina, y la disciplina
-no escala.
-
-Es de las brechas más baratas de cerrar: **las seis verificaciones documentales
-ya existen y no añaden dependencias**. Registrada en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

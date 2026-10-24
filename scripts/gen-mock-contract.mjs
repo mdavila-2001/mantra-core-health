@@ -9,8 +9,7 @@
  * true })`: una clave que el DTO no declara es un **400** que tira abajo el
  * guardado entero. La maqueta no lo emulaba, así que toda deriva de contrato
  * pasaba verde en `mockup` y aparecía recién contra la API real. El informe B
- * (`docs/progress/evidence/flujo-errores/B-deriva-contratos.md`, 2026-10-08)
- * contó 15 roturas así, 6 de ellas «siempre 400».
+ * de deriva de contratos (2026-10-08) contó 15 roturas así, 6 de ellas «siempre 400».
  *
  * ## Fuente
  *

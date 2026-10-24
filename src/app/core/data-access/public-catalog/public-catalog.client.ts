@@ -28,8 +28,9 @@ interface WirePage<T> {
  *
  * Por lo mismo que aquél está separado de `CommunityClient`: no es otra ruta
  * de la misma superficie, es otra superficie. `PublicDirectoryClient` es la
- * transcripción de un contrato que la API ya publica; esto son las dos
- * lecturas que **todavía no publica** (P30 y P31 de `PENDIENTES-BACKEND.md`).
+ * transcripción de `CONTRATO-PUBLICO.md`; esto son lecturas que no están en
+ * ese contrato: la oferta de cada ficha (P30 y P31, que la API publica) y las
+ * sucursales de una cadena (P37, sólo del simulador).
  * Tenerlas juntas haría que un archivo que se compara línea a línea contra el
  * contrato dejara de poder compararse.
  *

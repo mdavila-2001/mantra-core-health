@@ -1,8 +1,8 @@
 # Contrato — «Mis solicitudes»: las decisiones de la aseguradora vistas por cada cuenta
 
 - Fecha: 2026-10-01 · Módulo: M26 `insurance` · Pantalla: `/my-account/requests`
-- Estado: **servido por el simulador** (`src/app/core/mock/handlers/insurer-received-claims.handlers.ts`).
-  La API todavía **no** lo expone (P56 en `PENDIENTES-BACKEND.md`).
+- Estado: **publicado por la API** (`GET /insurance/my-claims`, P56) y servido igual por el
+  simulador (`src/app/core/mock/handlers/insurer-received-claims.handlers.ts`).
 
 ## Qué es
 

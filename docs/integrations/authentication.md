@@ -190,5 +190,3 @@ Está escrita, probada y **nadie la llama**. El refresco es reactivo: se espera 
 
 Funciona, pero significa que **cada expiración cuesta una petición fallida**.
 Usarla para refrescar antes de mandar una petición condenada es una mejora clara.
-Registrada como brecha `MEDIUM` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

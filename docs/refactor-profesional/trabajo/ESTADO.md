@@ -40,11 +40,3 @@ superadmin 10/10; lo que queda marcado está justificado en `HALLAZGOS.md` § «
 ## Bloqueos
 
 Ninguno. D-05 aprobada y ejecutada.
-
-## Para continuar
-
-1. `git -C mantra-core-health worktree add ../wt-<tuyo> -b justin/<tuyo> origin/mockup`
-   (o partir de esta rama si el PR sigue abierto).
-2. `corepack yarn install --immutable && corepack yarn start --port <libre>`.
-3. Leer `PLAN_SITUADO.md` § «Siguiente»; empezar por **N-07** (lector de pantalla y otros navegadores).
-4. Registrar cada incremento aquí, en `EVIDENCIAS.md` y, si decide algo, en `DECISIONES.md`.

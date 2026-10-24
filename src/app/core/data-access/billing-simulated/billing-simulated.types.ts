@@ -1,11 +1,11 @@
 /* ============================================================================
     Contrato de la facturación SIMULADA (FACT-SIAT-MOCK) — rutas
-    `/billing/simulated/*`, que sólo responde el backend simulado del front.
+    `/billing/simulated/*`, que responden la API (`billing-simulated.controller.ts`)
+    y el backend simulado del front.
 
-    TODO(FACT-SIAT-MOCK): **no hay contrato de API real**. Cuando la API publique
-    facturación, este cliente se reemplaza por el real; no se «conecta». Las
-    rutas llevan `simulated` en el nombre y cada objeto declara
-    `simulated: true` para que nadie las confunda con el producto.
+    **No es el SIAT real**: no hay conexión con Impuestos Nacionales. Las rutas
+    llevan `simulated` en el nombre y cada objeto declara `simulated: true`
+    para que nadie las confunda con facturación fiscal.
 
     Dos vocabularios a propósito:
     - lo de MANTRA (cobros, pagos, emisores) va en inglés, como el resto de los

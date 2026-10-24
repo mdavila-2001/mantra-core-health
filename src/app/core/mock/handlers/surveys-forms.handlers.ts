@@ -199,12 +199,11 @@ export function registrarEncuestas(router: MockRouter): void {
     return { status: 201, body: nueva };
   });
 
-  /* -- Edición del borrador (4 rutas que el backend todavía no tiene) -------
+  /* -- Edición del borrador (las 4 rutas de `SurveysTemplatesController`) ----
 
-     Ver `docs/pendientes-backend-surveys.md`. Son las que hacen falta para que
-     componer un cuestionario se parezca a un editor y no a un formulario de
-     una sola dirección: hoy una pregunta mal escrita sólo se puede arreglar
-     tirando la encuesta.
+     Son las que hacen que componer un cuestionario se parezca a un editor y
+     no a un formulario de una sola dirección: sin ellas una pregunta mal
+     escrita sólo se arreglaría tirando la encuesta.
 
      Las cuatro **sólo tocan el borrador**: sobre una versión publicada
      devuelven 422, igual que `POST /questions`. Eso no es una limitación del

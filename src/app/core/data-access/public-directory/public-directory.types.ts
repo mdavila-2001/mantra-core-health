@@ -283,7 +283,7 @@ export interface PublicProfileDetail {
   /**
    * Los lugares donde atiende, con el propio primero.
    *
-   * Es lo que pedía P16 de `PENDIENTES-BACKEND.md`, con las palabras del
+   * Es lo que pedía P16, con las palabras del
    * cliente: «en el perfil público del profesional falta los lugares donde
    * atiende». `city` y `address` son **una** dirección y siguen sirviendo de
    * respaldo; esto son las sedes, que es lo que hay que poder mirar antes de

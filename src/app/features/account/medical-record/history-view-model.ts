@@ -236,10 +236,10 @@ function diagnosticoVisible(
     hechos.push({ etiqueta: 'Nota del profesional', valor: condicion.noteText });
   }
 
-  // TODO C8: «quién lo confirmó» (§4 del carril) no se puede completar: el
-  // contrato de `Condition` no declara autor ni profesional, y el paciente no
-  // puede leer el padrón. Inventar el dato sería atribuirle el diagnóstico a
-  // alguien. Cuando el resumen lo exponga, entra como una fila más acá.
+  // Sin fila de «quién lo confirmó»: el contrato de `Condition` sólo trae el
+  // id del perfil que decidió (`verification.decidedByProfileId`) y el
+  // paciente no puede leer el padrón para ponerle nombre. Inventar el dato
+  // sería atribuirle el diagnóstico a alguien.
 
   return {
     id: condicion.id,
@@ -276,9 +276,10 @@ function plazoDe(
  * Por qué un diagnóstico es histórico: resolución, plazo vencido o estado.
  * El vencimiento del plazo no afirma que el profesional lo haya resuelto.
  *
- * // TODO C8: C3 iba a dejar `verification.reasonText` —el motivo escrito del
- * // rechazo— y no llegó. Mientras tanto se dice la **etiqueta del catálogo**
- * // («Descartado»), que es un hecho publicado, en vez de un texto inventado.
+ * Un diagnóstico descartado dice la **etiqueta del catálogo** («Descartado») y,
+ * si quien lo rechazó dejó el motivo escrito (`verification.reasonText`, C3),
+ * también ese motivo. Sin motivo queda sólo la etiqueta: nunca un texto
+ * inventado.
  */
 function razonDelHistorico(
   condicion: Condition,
@@ -298,7 +299,11 @@ function razonDelHistorico(
     return `plazo esperado vencido el ${fechaClinica(condicion.expectedResolutionAt)}`;
   }
   if (condicion.verificationStatusConceptId !== undefined) {
-    return etiqueta(condicion.verificationStatusConceptId);
+    const estadoDeVerificacion = etiqueta(condicion.verificationStatusConceptId);
+    const motivo = condicion.verification?.outcome === 'REFUTED'
+      ? condicion.verification.reasonText?.trim() ?? ''
+      : '';
+    return motivo === '' ? estadoDeVerificacion : `${estadoDeVerificacion}: ${motivo}`;
   }
   return etiqueta(condicion.clinicalStatusConceptId);
 }
@@ -426,8 +431,8 @@ function reconsultaDeLaLinea(
  * profesional sobre si esa nota se comparte, y aunque el servidor ya filtre,
  * esta pantalla no puede ser la que la muestre si alguna vez dejara de hacerlo.
  *
- * // TODO C8: cuando llegue `entries` de C1, los apartados salen de lo que la
- * // nota declara en vez de estos cinco campos fijos.
+ * Las filas campo/valor de C1 (`entries`) van primero; los cinco campos fijos
+ * de la nota siguen después y sólo aparecen los que traen texto.
  */
 function notaDeLaLinea(nota: ChartNote): TimelineNote {
   // C1: las filas campo/valor van primero, como las escribió quien atendió.
@@ -455,9 +460,8 @@ function notaDeLaLinea(nota: ChartNote): TimelineNote {
 /**
  * Una orden del portal, en la línea.
  *
- * // TODO C8: C2 iba a dejar `category` ya resuelta. Mientras tanto la
- * // categoría se traduce del `categoryConceptId` contra el catálogo, que es
- * // exactamente lo que el carril indica hacer si C2 no llega.
+ * La categoría se traduce del `categoryConceptId` contra el catálogo: la API
+ * no publica la categoría ya resuelta (`category`, C2).
  */
 function ordenDeLaLinea(orden: PatientOrder, etiqueta: ResolverEtiqueta): TimelineOrder {
   return {

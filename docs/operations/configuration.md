@@ -181,17 +181,3 @@ peticiones salen relativas, no hace falta CORS y la CSP se queda en
 artefacto y hacía que el servidor devolviera **400 ante cualquier dominio real**.
 Se quitó, y la validación vive en nginx, donde es configuración en caliente. Ver
 [despliegue](deployment.md#validación-del-host).
-
-## Lo que falta
-
-| # | Qué | Severidad |
-|---|---|---|
-| 1 | Variables del entorno productivo | BLOCKER |
-| 2 | Banderas de funcionalidad | Ver [feature flags](feature-flags.md) |
-
-Cerradas: el dominio de la API (va detrás, `deploy/nginx.conf`), el identificador
-de build en el artefacto (`buildInfo`), y la comprobación de que los proxys
-coinciden (`scripts/check-api-prefixes.mjs`, que compara los seis prefijos entre
-`proxy.conf.json`, `proxy.conf.docker.json` y `deploy/nginx.conf`, y corre en CI).
-
-Registradas en [el análisis de brechas](../reports/documentation-gap-analysis.md).

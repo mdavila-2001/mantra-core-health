@@ -14,7 +14,7 @@ import { entrar, irA } from './support/sesion';
  * Comprueba la separación en escritorio y en móvil, que el fondo es blanco y
  * que el contenido ocupa el ancho del área, y deja una foto de cada pestaña.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-30-contabilidad-en-pestanas', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-30-contabilidad-en-pestanas', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',

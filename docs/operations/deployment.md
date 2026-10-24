@@ -44,20 +44,6 @@ el certificado.
 docker compose -f deploy/docker-compose.prod.yml up -d --build
 ```
 
-## Lo que falta, y no es código
-
-| # | Qué | Quién |
-|---|---|---|
-| 1 | Host, orquestador o PaaS de destino | Operaciones |
-| 2 | Dominio y certificado TLS | Operaciones |
-| 3 | Que la API sea alcanzable como `api:3000` en la red del proxy | Operaciones + API |
-| 4 | **Que el dominio de los enlaces del correo coincida con el del frontend** | API |
-| 5 | Credenciales del primer administrador | API |
-
-**El 4 se pasa por alto y rompe dos journeys completos.**
-
----
-
 ## Lo que sí existe
 
 ```bash
@@ -166,40 +152,6 @@ Se pierde poco al moverlo: la protección existe contra un `Host` manipulado que
 lleve al servidor a pedirle algo a un host interno, y **este servidor SSR no hace
 ninguna petición saliente** — no habla con la API.
 
-## Propuesta de imagen de producción
-
-```dockerfile
-# PROPUESTA, no implementada — requiere verificación
-FROM node:24-bookworm-slim AS build
-RUN corepack enable
-WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --immutable
-COPY . .
-ARG PUBLIC_API_BASE_URL=""
-ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
-RUN yarn build
-
-FROM node:24-bookworm-slim AS runtime
-WORKDIR /app
-COPY --from=build /app/dist/mantra-core-health ./dist/mantra-core-health
-# Express y @angular/ssr son las únicas dependencias en ejecución:
-# hay que verificar cómo resolverlas bajo PnP en la imagen final.
-ENV PORT=4000
-EXPOSE 4000
-CMD ["node", "dist/mantra-core-health/server/server.mjs"]
-```
-
-**Tres cosas hay que verificar antes de usarla**, y por eso está marcada como
-propuesta:
-
-1. **PnP en la etapa final.** El artefacto necesita resolver `express` y
-   `@angular/ssr`. Con PnP hay que copiar `.pnp.cjs` y `.yarn/`, o cambiar el
-   `nodeLinker` solo para el build de producción.
-2. **`PUBLIC_API_BASE_URL` es de build, no de ejecución.** Queda compilada dentro
-   del paquete. **Una imagen por entorno**, o rutas relativas siempre.
-3. **Usuario no root** y comprobación de salud.
-
 ## Checklist de un despliegue
 
 Para cuando exista:
@@ -255,11 +207,3 @@ Ver [sesión y tokens](../security/session-and-tokens.md#el-orden-al-cerrar-sesi
 **La segunda rompe dos journeys completos y no está documentada en ninguno de los
 dos repositorios.** Ver
 [servicios externos](../integrations/external-services.md#la-coordinación-con-el-correo).
-
-## Estado
-
-**`BLOCKER`.** Bloquea a su vez: monitoreo, alertas, CSP probada, smoke,
-rollback y Web Vitals de campo.
-
-Registrado en
-[el informe de preparación productiva](../reports/production-readiness.md).

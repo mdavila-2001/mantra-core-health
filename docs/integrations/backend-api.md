@@ -1332,9 +1332,6 @@ del backend es que alguien lo note. Los comentarios rastrean el origen
 («verificadas una por una contra `iam-auth.controller.ts`»), pero eso es
 trazabilidad, no verificación.
 
-Las dos están en [el análisis de brechas](../reports/documentation-gap-analysis.md),
-la segunda como `HIGH`.
-
 ---
 
 ## Verificación
@@ -1457,7 +1454,7 @@ alcanzable desde este repositorio.
 
 ## Consumos incorporados en Hito 2
 
-Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no una API implementada ni un flujo real verificado. Para disponibilidad y divergencias con H1, consultar [la matriz contractual](../trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md). Contabilidad simple, portal laboratorio, acciones received-claims y facturacion simulated siguen siendo contratos demo pendientes de backend. Los restantes consumidores requieren validar su implementacion y runtime por separado.
+Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no una API implementada ni un flujo real verificado. Contabilidad simple, portal laboratorio y las acciones de factura de received-claims son contratos que sólo sirve el simulador (`simulatorOnly()` en su cliente). Los restantes consumidores requieren validar su implementacion y runtime por separado.
 
 | Metodo | Ruta | Cliente y fuente | Evidencia |
 |---|---|---|---|

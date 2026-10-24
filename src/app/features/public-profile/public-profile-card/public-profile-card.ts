@@ -82,10 +82,9 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  * inventado en una ficha de salud no es un detalle pendiente: es alguien que se
  * cruza la ciudad a las 14:00 porque la pantalla se lo dijo.
  *
- * Lo de «los lugares donde atiende» que el cliente pidió está a medias por eso
- * mismo: se muestra la ciudad y la dirección, que es lo que la API sirve. Las
- * sedes con sus días viven detrás de `GET /scheduling/slots`, que exige sesión,
- * y esta ficha es anónima. Queda anotado en `PENDIENTES-BACKEND.md`.
+ * Por eso mismo esta tarjeta muestra la ciudad y la dirección, y no los días
+ * de cada sede: viven detrás de `GET /scheduling/slots`, que exige sesión, y
+ * esta ficha es anónima.
  */
 @Component({
   selector: 'app-public-profile-card',
