@@ -38,11 +38,17 @@
   "33": [
     {
       "ruta": "/administration/medical-organization?tab=memberships",
-      "nombre": "vinculaciones-en-el-panel"
+      "nombre": "vinculaciones-tabla"
     },
     {
       "ruta": "/my-organizations",
-      "nombre": "mis-organizaciones-redirige"
+      "nombre": "redirige-a-organizacion-medica",
+      "destino": "/administration/medical-organization?tab=memberships"
+    },
+    {
+      "ruta": "/administration/medical-organization?tab=memberships&empty=1",
+      "nombre": "vinculaciones-vacio",
+      "fixture": "empty-memberships"
     }
   ],
   "34": [
@@ -201,16 +207,40 @@
     {
       "ruta": "/my-account/identity?tab=cases",
       "nombre": "identidad-tramites"
+    },
+    {
+      "ruta": "/my-account/identity/cases",
+      "nombre": "identidad-ruta-casos-antigua",
+      "esperado": "redirige",
+      "destino": "/my-account/identity"
+    },
+    {
+      "ruta": "/my-account/identity/cases/b1eb2350-dc62-4c14-a7dc-12c4547ab0a4",
+      "nombre": "identidad-detalle-dialog",
+      "esperado": "redirige",
+      "destino": "/my-account/identity"
+    },
+    {
+      "ruta": "/my-account/identity/verify",
+      "nombre": "identidad-ruta-verificar-antigua",
+      "esperado": "redirige",
+      "destino": "/my-account/identity"
     }
   ],
   "37": [
     {
       "ruta": "/my-account",
-      "nombre": "perfil-medico"
+      "nombre": "practitioner-profile-overview"
     },
     {
-      "ruta": "/my-account/edit",
-      "nombre": "perfil-medico-editar"
+      "ruta": "/my-account",
+      "nombre": "practitioner-profile-practice",
+      "accion": "practitioner-practice-tab"
+    },
+    {
+      "ruta": "/my-account",
+      "nombre": "practitioner-profile-credentials",
+      "accion": "practitioner-credentials-tab"
     }
   ],
   "38": [
@@ -244,7 +274,7 @@
     },
     {
       "ruta": "/my-account/preview",
-      "nombre": "vitrina-borrada",
+      "nombre": "preview-no-existe",
       "esperado": "no-encontrado"
     },
     {

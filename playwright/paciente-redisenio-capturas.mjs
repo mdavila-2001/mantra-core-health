@@ -37,6 +37,24 @@ const PANTALLAS = [
   ['resultados', '/my-account/diagnostic-results'],
   ['tutoriales', '/tutorials'],
   ['chats', '/messaging'],
+  ['dependientes', '/my-account/dependents'],
+];
+
+// Las del médico (rediseño del 22/10/2026, mismo tratamiento que el paciente).
+const PANTALLAS_MEDICO = [
+  ['panel', '/dashboard'],
+  ['mi-perfil', '/my-account'],
+  ['notificaciones', '/notification-center'],
+  ['directorios', '/directories'],
+  ['consultas', '/schedule'],
+  ['archivo-clinico', '/medical-records'],
+  ['glosario', '/glossary'],
+  ['formularios', '/form-builder'],
+  ['mis-servicios', '/my-services'],
+  ['cotizaciones', '/my-quotations'],
+  ['contabilidad', '/administration/accounting'],
+  ['chats', '/messaging'],
+  ['tutoriales', '/tutorials'],
 ];
 
 const ANCHOS = [
@@ -65,7 +83,7 @@ try {
     await page.waitForURL('**/dashboard', { timeout: 60_000 });
     await page.addStyleTag({ content: '[aria-label="Modo de demostración"]{display:none!important}' });
 
-    for (const [nombre, ruta] of PANTALLAS) {
+    for (const [nombre, ruta] of cuenta.startsWith('medica') ? PANTALLAS_MEDICO : PANTALLAS) {
       if (solo && !solo.includes(nombre)) continue;
       if (!page.url().endsWith(ruta)) {
         // Dentro de la SPA: el router de Angular, no una carga nueva.

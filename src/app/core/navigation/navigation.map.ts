@@ -294,6 +294,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'General',
     icon: 'heart',
     roles: ['PATIENT'],
+    exclusiveRoles: true,
     availability: 'disponible',
     summary: 'Apoyo emocional, videos de la OPS y acceso a psicólogos y psiquiatras.',
     module: 'M-mental-health-support',

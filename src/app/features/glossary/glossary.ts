@@ -337,15 +337,27 @@ export class Glossary {
     this.navegar({ category: null, q: null, tag: null });
   }
 
+  /** Desplaza suavemente la vista al encabezado del listado filtrado. */
+  protected desplazarACuerpo(): void {
+    afterNextRender(
+      () => {
+        this.document
+          .getElementById('glosario-cuerpo-titulo')
+          ?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      },
+      { injector: this.injector },
+    );
+  }
+
   /** Cambia de página y lleva la lectura al principio del cuerpo, no al pie donde quedó. */
   protected irAPagina(pagina: number): void {
     this.pagina.set(pagina);
     afterNextRender(
       () => {
-        this.document.getElementById('glosario-lista')?.scrollTo({ top: 0 });
+        this.document.getElementById('glosario-lista')?.scrollTo?.({ top: 0 });
         this.document
           .getElementById('glosario-cuerpo-titulo')
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          ?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       },
       { injector: this.injector },
     );

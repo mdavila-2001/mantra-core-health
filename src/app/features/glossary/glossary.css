@@ -243,19 +243,11 @@
   font-style: italic;
 }
 
-/* La lista de la página: desplazamiento sólo vertical (ADR-0015, regla 6).
-   Tiene su propio alto para que el paginador de abajo quede siempre a la
-   vista; `overflow-x: hidden` porque una tarjeta nunca debe abrir un
-   desplazamiento lateral. El borde de arriba y abajo marca que es una caja
-   que se recorre, no el final de la página. */
+/* La lista de la página: flujo vertical integrado en la página sin scrollbars
+   anidadas que atrapen la rueda del ratón; la paginación queda claramente visible. */
 .glosario__lista {
-  max-block-size: min(75vh, 60rem);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding-block: var(--sp-4);
   padding-inline: var(--sp-1);
-  border-block: 1px solid var(--border-subtle);
   scroll-padding-block-start: var(--sp-4);
 }
 

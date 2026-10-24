@@ -27,7 +27,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { MyOrganizations } from '../../organizations/my-organizations';
+import { MembershipsTab } from './memberships-tab/memberships-tab';
 
 /** El índice de «Mis vinculaciones», para no escribir `7` en dos lugares. */
 const PESTANA_VINCULACIONES = 7;
@@ -110,7 +110,7 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [AppButton, Badge, DataTable, FormField, MyOrganizations, PageHeader, Select, Tab, Tabs],
+  imports: [AppButton, Badge, DataTable, FormField, MembershipsTab, PageHeader, Select, Tab, Tabs],
   templateUrl: './medical-organization.html',
   styleUrl: './medical-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
