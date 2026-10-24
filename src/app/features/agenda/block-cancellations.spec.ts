@@ -116,6 +116,34 @@ describe('BlockCancellations · retirar un horario', () => {
     expect(await resultado).toBeNull();
   });
 
+  it.each([404, 403])(
+    'si la vista previa responde %i, retira como siempre: conserva las citas y no pregunta',
+    async (status) => {
+      const resultado = firstValueFrom(service.retireTemplate('tpl-1'));
+      http
+        .expectOne('/scheduling/templates/tpl-1/live-bookings')
+        .flush({ code: 'NOT_FOUND', message: 'x' }, { status, statusText: 'x' });
+      await tick();
+
+      const borrar = http.expectOne((r) => r.url === '/scheduling/templates/tpl-1');
+      expect(borrar.request.params.has('affectedBookings')).toBe(false);
+      borrar.flush(retirado);
+
+      expect(await resultado).toEqual(retirado);
+      expect(dialogos).toHaveLength(0);
+    },
+  );
+
+  it('un fallo real de la vista previa (500) NO retira nada a ciegas', async () => {
+    const resultado = firstValueFrom(service.retireTemplate('tpl-1'));
+    http
+      .expectOne('/scheduling/templates/tpl-1/live-bookings')
+      .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+
+    await expect(resultado).rejects.toBeTruthy();
+    // `http.verify()` del afterEach falla si salió un DELETE.
+  });
+
   it('la frase del aviso cuenta las citas, y calla cuando no hubo ninguna', () => {
     expect(cancelledBookingsText(0)).toBe('');
     expect(cancelledBookingsText(undefined)).toBe('');

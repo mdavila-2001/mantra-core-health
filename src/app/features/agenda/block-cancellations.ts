@@ -91,6 +91,15 @@ export class BlockCancellations {
    */
   retireTemplate(templateId: string): Observable<RetiredTemplate | null> {
     return this.scheduling.listTemplateLiveBookings(templateId).pipe(
+      // Sin vista previa —una API anterior a este cambio responde 404, y quien
+      // no administra la agenda recibe 403— se retira como siempre: conservando
+      // las citas. Perder el retiro entero por no poder mostrar la lista sería
+      // una regresión; cancelar sin mostrarla, un daño.
+      catchError((error: unknown) =>
+        error instanceof HttpErrorResponse && (error.status === 404 || error.status === 403)
+          ? of<TemplateLiveBookings>({ templateId, total: 0, bookings: [], present: [] })
+          : throwError(() => error),
+      ),
       switchMap((live) => from(this.decideRetire(live))),
       switchMap((decision) =>
         decision === 'abort' ? of(null) : this.scheduling.retireTemplate(templateId, decision),
