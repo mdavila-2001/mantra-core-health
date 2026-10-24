@@ -1120,8 +1120,11 @@ export function pendingImagingStudies(
     const category = categoriaDeAnalisis(
       order.categoryConceptId === undefined ? undefined : labels.get(order.categoryConceptId)?.code,
     );
+    // `LAB` también es una modalidad (la toma de muestras): sin categoría, un
+    // análisis no es imagen.
+    const modality = modalidadDeEstudio(study.code);
     const imaging =
-      category === 'IMAGING' || (category === 'OTHER' && modalidadDeEstudio(study.code) !== null);
+      category === 'IMAGING' || (category === 'OTHER' && modality !== null && modality !== 'LAB');
     if (imaging) {
       byConcept.set(order.codeConceptId, { conceptId: order.codeConceptId, name: study.display });
     }
