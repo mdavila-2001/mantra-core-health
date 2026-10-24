@@ -10,7 +10,9 @@
   /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
   --card-body-display: grid;
   --card-body-gap: var(--sp-4);
-  max-inline-size: 68ch;
+  /* El tope de lectura vale en la página; dentro del modal el ancho ya lo
+     fija el diálogo y la tarjeta lo llena (ver `consultation.css`). */
+  max-inline-size: var(--expediente-card-max, 68ch);
 }
 
 .reconsulta__titulo {
