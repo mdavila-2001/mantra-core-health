@@ -725,6 +725,10 @@ function drawQrModules(composer: PdfComposer, qr: PdfQrMatrix, x: number, y: num
  */
 function drawWritingLines(composer: PdfComposer, count = 1): void {
   const lines = Math.max(1, Math.trunc(count));
+  // Un hueco de hasta seis renglones —una respuesta— va entero en una hoja:
+  // dos renglones en una y dos en la otra obligan a escribir la respuesta en
+  // dos papeles.
+  if (lines <= 6) composer.ensure(lines * PDF_SPACE.writingLine);
   for (let index = 0; index < lines; index += 1) {
     composer.ensure(PDF_SPACE.writingLine);
     composer.y += PDF_SPACE.writingLine;

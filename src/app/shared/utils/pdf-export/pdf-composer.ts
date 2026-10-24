@@ -165,8 +165,8 @@ export class PdfComposer {
   wrap(text: string, width: number, style: PdfTextStyle): string[] {
     const shaped = this.shape(text, style);
     // Sólo los blancos comunes cuentan como vacío: un espacio duro (U+00A0) es
-    // un renglón deliberado —la factura lo usa para reservar el lugar del QR—,
-    // y `trim()` lo borraría.
+    // un renglón deliberado —un hueco pedido a propósito—, y `trim()` lo
+    // borraría.
     if (/^[ \t\r\n]*$/.test(shaped)) {
       return [];
     }

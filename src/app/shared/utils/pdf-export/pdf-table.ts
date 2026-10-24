@@ -27,7 +27,7 @@ const COLUMN_SEPARATOR = /\t|\s{3,}/;
  * separadores, porcentaje. Una fecha («8 de septiembre») o un documento
  * («6543210 SC») tienen cifras y **no** son números.
  */
-const NUMERIC = /^[-+]?(?:Bs\.?\s*|\$\s*)?[\d.,\s]+(?:\s*(?:%|Bs\.?))?$/;
+const NUMERIC = /^[-+\u2212]?(?:Bs\.?\s*|\$\s*)?[\d.,\s]+(?:\s*(?:%|Bs\.?))?$/;
 
 /** La raya con que un dato ausente ocupa su columna. No decide la alineación. */
 const EMPTY_CELL = /^[—–-]?$/;
@@ -51,6 +51,26 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[], trai
   // seguidas, o una con varias cabeceras, repiten cada una la suya.
   let header: RowLayout | null = null;
 
+  /**
+   * Lo que tiene que entrar junto con la fila `index` para que nada quede solo
+   * en una hoja: la cabecera va con lo que necesite la fila que la sigue; la
+   * penúltima, con la última; y las dos últimas, con lo que cierra la tabla
+   * (`trailing`). Antes la cabecera se reservaba sólo con una fila, y si esa
+   * era la penúltima la cabecera quedaba sola al pie.
+   */
+  const heights = rows.map((row, index) => layoutRow(composer, cells[index], widths, row.header === true).height);
+  const neededFrom = (index: number): number => {
+    const row = rows[index];
+    const next = rows[index + 1];
+    if (row.header === true) {
+      return heights[index] + (next !== undefined && next.header !== true ? neededFrom(index + 1) : 0);
+    }
+    if (index === rows.length - 2 && next !== undefined && next.header !== true) {
+      return heights[index] + heights[index + 1] + trailing;
+    }
+    return heights[index] + (index === rows.length - 1 ? trailing : 0);
+  };
+
   composer.space(PDF_SPACE.sm);
   let bodyIndex = 0;
 
@@ -58,16 +78,8 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[], trai
     const isHeader = row.header === true;
     const layout = layoutRow(composer, cells[index], widths, isHeader);
 
-    // Ni la cabecera ni la última fila quedan solas en una hoja: la cabecera
-    // se reserva con la fila que la sigue, y la penúltima con la última.
-    const next = rows[index + 1];
-    const keepsNext =
-      next !== undefined && next.header !== true && (isHeader || index === rows.length - 2);
+    const needed = neededFrom(index);
     const last = index === rows.length - 1;
-    const needed =
-      (keepsNext ? layout.height + layoutRow(composer, cells[index + 1], widths, false).height : layout.height) +
-      (last || index === rows.length - 2 ? trailing : 0);
-
     if (composer.y + needed > composer.bottom && !composer.atPageTop) {
       if (!isHeader && index > 0) {
         composer.write(TABLE_CONTINUES, composer.right, composer.y + PDF_SPACE.xs, PDF_TYPE.caption, {

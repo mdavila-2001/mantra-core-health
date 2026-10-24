@@ -351,5 +351,9 @@ export const PDF_SIGNATURE = {
   clearance: 22,
 } as const;
 
-/** El código QR: ≥ 3 × 3 cm, lo que pide el SIN para una representación gráfica. */
-export const PDF_QR = { size: 92, quietZone: 5 } as const;
+/**
+ * El código QR: el **símbolo** —sin contar la zona de silencio— mide ≥ 3 × 3
+ * cm, lo que pide el SIN para una representación gráfica (98 − 2 × 5 = 88 pt
+ * ≈ 3,1 cm).
+ */
+export const PDF_QR = { size: 98, quietZone: 5 } as const;

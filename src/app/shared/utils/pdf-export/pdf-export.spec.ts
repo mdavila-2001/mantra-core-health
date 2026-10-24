@@ -167,6 +167,7 @@ const { DocumentoFalso } = vi.hoisted(() => {
     }
 
     line(x1: number, y1: number, x2: number, y2: number): this {
+      this.llamadas.orden.push('— filete —');
       this.llamadas.line.push([x1, y1, x2, y2]);
       return this;
     }
@@ -1135,6 +1136,36 @@ describe('las tablas', () => {
   });
 
   /**
+   * Con una tabla de dos filas la cabecera se reservaba sólo con la primera,
+   * que a su vez se reservaba con la última: la cabecera quedaba sola al pie.
+   */
+  it('una cabecera nunca queda sola al pie de una hoja, ni con una tabla de dos filas', () => {
+    for (let relleno = 20; relleno <= 50; relleno += 1) {
+      buildBlocksPdf([
+        ...Array.from({ length: relleno }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+        { kind: 'row', text: '', cells: ['Concepto', 'Importe'], header: true },
+        { kind: 'row', text: '', cells: ['Cuota 1', '100,00'] },
+        { kind: 'row', text: '', cells: ['Cuota 2', '100,00'] },
+      ]);
+      const { orden } = ultimoDocumento().llamadas;
+      const cabecera = orden.indexOf('CONCEPTO');
+      const hoja = orden.indexOf('— hoja nueva —', cabecera);
+      const filas = orden.slice(cabecera, hoja === -1 ? undefined : hoja).filter((linea) => linea.startsWith('Cuota '));
+      expect(filas.length, `con ${relleno} párrafos antes`).toBe(2);
+    }
+  });
+
+  it('un negativo con el signo menos es un número y va a la derecha', () => {
+    buildBlocksPdf([
+      { kind: 'row', text: '', cells: ['Concepto', 'Importe'], header: true },
+      { kind: 'row', text: '', cells: ['Consulta', '100,00'] },
+      { kind: 'row', text: '', cells: ['Descuento', '−10,00'] },
+    ]);
+    const x = new Map(ultimoDocumento().llamadas.text.map(([linea, posicion]) => [linea, posicion]));
+    expect(x.get('100,00')! + '100,00'.length * 5).toBeCloseTo(x.get('−10,00')! + '−10,00'.length * 5, 5);
+  });
+
+  /**
    * El defecto que esto cierra (revisión de código): cada fila marcada como
    * cabecera se dibujaba con el texto de la **primera** cabecera. Con dos
    * cabeceras seguidas, la segunda salía con los nombres de la primera.
@@ -1220,6 +1251,25 @@ describe('los bloques', () => {
     ]);
 
     expect(ultimoDocumento().llamadas.line).toHaveLength(sinRenglones + 3);
+  });
+
+  /** Una respuesta de pocos renglones partida entre dos hojas obliga a escribirla en dos papeles. */
+  it('un hueco de hasta seis renglones no se parte entre hojas', () => {
+    for (let relleno = 20; relleno <= 50; relleno += 1) {
+      buildBlocksPdf([
+        ...Array.from({ length: relleno }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+        { kind: 'blank', text: '', lines: 6 },
+        { kind: 'paragraph', text: 'Después' },
+      ]);
+      const { orden } = ultimoDocumento().llamadas;
+      const membrete = ['— hoja nueva —', 'AloVida', '— filete —'];
+      let hueco = orden.slice(orden.indexOf(`Línea ${relleno - 1}`) + 1, orden.indexOf('Después'));
+      // Un corte de hoja antes del hueco o antes del párrafo siguiente trae su
+      // membrete (marca y filete): ése no es parte del hueco.
+      if (JSON.stringify(hueco.slice(0, 3)) === JSON.stringify(membrete)) hueco = hueco.slice(3);
+      if (JSON.stringify(hueco.slice(-3)) === JSON.stringify(membrete)) hueco = hueco.slice(0, -3);
+      expect(hueco, `con ${relleno} párrafos antes`).toEqual(Array.from({ length: 6 }, () => '— filete —'));
+    }
   });
 
   it('un renglón en blanco sin cantidad declarada es uno solo', () => {

@@ -5,7 +5,12 @@ import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../forms/paginated/paginated-form.types';
-import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-export';
+import {
+  buildBlocksPdf,
+  noteBlock,
+  type PdfBlock,
+  type PdfExportOptions,
+} from '../pdf-export/pdf-export';
 
 /* ============================================================================
     El PDF de un formulario: el formulario **en blanco**, para imprimirlo.
@@ -44,9 +49,6 @@ import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-
     cuidado en `pdf-theme.ts` sobre lo que sobrevive una fotocopia.
     ========================================================================== */
 
-/** Cómo se imprime una fecha. Local y en palabras: lo lee gente. */
-const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
-
 /** De dónde salió el formulario estándar, ya en palabras. */
 export interface ProcedenciaParaPdf {
   /** Título del documento tal como lo publica el organismo. */
@@ -83,42 +85,69 @@ export interface FormularioParaPdf {
   readonly profesional: string;
 }
 
-/** Cuántos renglones se dejan para escribir, según lo que se pregunta. */
+/**
+ * Cuántos renglones se dejan para escribir, según lo que se escribe encima.
+ *
+ * Una fecha, un teléfono o un número entran en un renglón; un texto libre
+ * —un motivo de consulta, unos antecedentes— no, y apretarlo en uno deja la
+ * respuesta escrita en el margen.
+ */
 const RENGLONES_POR_CONTROL: Readonly<Partial<Record<CampoDeFormulario['control'], number>>> = {
-  textarea: 3,
+  textarea: 4,
 };
 
 /** Los renglones de cualquier campo de escribir que no pida otra cosa. */
 const RENGLONES_POR_OMISION = 1;
 
 /**
+ * Cómo se escribe el dato, cuando el renglón solo no lo dice: en papel no hay
+ * selector de fecha que imponga el formato.
+ */
+const FORMATO_A_MANO: Readonly<Partial<Record<CampoDeFormulario['control'], string>>> = {
+  date: 'Formato: DD/MM/AAAA.',
+  datetime: 'Formato: DD/MM/AAAA, HH:MM.',
+};
+
+/**
+ * Hasta cuántos caracteres entran las opciones en un solo renglón, casillas y
+ * aire incluidos. Más allá, cada opción va en su propio renglón: una casilla
+ * que el corte de línea separa de su rótulo se marca en la opción equivocada.
+ */
+const OPCIONES_EN_UN_RENGLON = 72;
+
+/** Cuántas opciones, como mucho, van en un solo renglón. */
+const MAX_OPCIONES_EN_UN_RENGLON = 4;
+
+/** El aire entre dos opciones del mismo renglón. */
+const ENTRE_OPCIONES = '      ';
+
+/** Lo que se lee antes de la primera pregunta. */
+export const INSTRUCCIONES_DE_LLENADO =
+  'Escriba en imprenta y marque con una X: las casillas redondas ( ) admiten una sola respuesta y las cuadradas [ ], varias. Las preguntas con asterisco (*) son obligatorias al responder en el sistema.';
+
+/**
  * Las líneas del documento, en orden de lectura.
  *
  * Exportada para que el spec fije **qué dice** el papel sin pasar por jsPDF,
  * que ya tiene sus propias pruebas en `pdf-export.spec.ts`.
+ *
+ * El nombre, el código, la versión, la especialidad, el conteo de preguntas y
+ * quién lo descargó no se repiten acá: van en la portada (título, folio,
+ * bajada y metadatos), que es donde se buscan.
  */
 export function bloquesDeFormulario(datos: FormularioParaPdf): readonly PdfBlock[] {
-  const bloques: PdfBlock[] = [
-    {
-      kind: 'note',
-      text: 'Formulario en blanco, para completar a mano. Las preguntas marcadas con asterisco son obligatorias cuando se responde en el sistema.',
-    },
-    { kind: 'heading', text: 'El formulario', level: 2 },
-    campoDeBloque('Código', datos.codigo),
-    campoDeBloque('Versión', String(datos.version)),
-  ];
+  const bloques: PdfBlock[] = [noteBlock(INSTRUCCIONES_DE_LLENADO, 'info', 'Cómo completar este formulario')];
 
-  if (datos.especialidad !== null && datos.especialidad.trim() !== '') {
-    bloques.push(campoDeBloque('Especialidad', datos.especialidad));
-  }
-
-  // Cuántas preguntas son del estándar y cuántas las agregó el consultorio: es
-  // la diferencia entre un formulario comparable entre consultorios y uno
-  // propio, y en el papel no se ve de ninguna otra forma.
-  bloques.push(campoDeBloque('Preguntas', enPalabrasLosCampos(datos)));
-
-  if (datos.profesional.trim() !== '') {
-    bloques.push(campoDeBloque('Descargado por', datos.profesional));
+  // La procedencia va en el papel y no solo en la pantalla: muchos de estos
+  // formularios tienen derechos de autor, y una copia impresa que no diga de
+  // quién es circula sin su licencia. Es la misma razón por la que el
+  // generador la muestra junto al formulario. Va arriba y en letra chica,
+  // como los créditos de un formulario impreso: al final quedaba sola en una
+  // carilla propia, y como aviso empujaba las preguntas de la primera página a
+  // una hoja más.
+  if (datos.procedencia !== null) {
+    const { titulo, organizacion, licencia } = datos.procedencia;
+    bloques.push({ kind: 'caption', text: `Formulario estándar: ${titulo} · ${organizacion} · ${licencia}.` });
   }
 
   // La numeración es corrida y no por página: en el papel las preguntas se
@@ -149,28 +178,8 @@ export function bloquesDeFormulario(datos: FormularioParaPdf): readonly PdfBlock
   });
 
   if (datos.paginas.length === 0) {
-    bloques.push({
-      kind: 'paragraph',
-      text: 'Este formulario todavía no tiene preguntas.',
-    });
+    bloques.push(noteBlock('Este formulario todavía no tiene preguntas.', 'neutral'));
   }
-
-  // La procedencia va en el papel y no sólo en la pantalla: muchos de estos
-  // formularios tienen derechos de autor, y una copia impresa que no diga de
-  // quién es circula sin su licencia. Es la misma razón por la que el
-  // generador la muestra junto al formulario.
-  if (datos.procedencia !== null) {
-    const { titulo, organizacion, licencia } = datos.procedencia;
-    bloques.push({
-      kind: 'note',
-      text: `Formulario estándar: ${titulo} · ${organizacion} · ${licencia}.`,
-    });
-  }
-
-  bloques.push({
-    kind: 'caption',
-    text: `Documento generado el ${FORMATO_FECHA.format(new Date())} desde AloVida.`,
-  });
 
   return bloques;
 }
@@ -220,13 +229,13 @@ function bloquesDePregunta(
     { kind: 'heading', text: `${numero}. ${campo.label}${marca}`, level: 4 },
   ];
 
-  // En pantalla un «¿cuál?» aparece sólo con el «sí»; en papel están todas las
+  // En pantalla un «¿cuál?» aparece solo con el «sí»; en papel están todas las
   // preguntas a la vista, así que se dice cuándo se contesta.
   const padre = campo.showWhen === undefined ? undefined : citas.get(campo.showWhen.key);
   if (campo.showWhen !== undefined && padre !== undefined) {
     bloques.push({
       kind: 'caption',
-      text: `Sólo si en la ${padre.numero} («${padre.enunciado}») respondió ${enPalabrasLaCondicion(campo.showWhen.equals)}.`,
+      text: `Solo si en la ${padre.numero} («${padre.enunciado}») respondió ${enPalabrasLaCondicion(campo.showWhen.equals)}.`,
     });
   }
 
@@ -259,17 +268,19 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
   }
 
   if (opciones.length > 0) {
-    const casilla = campo.control === 'checkboxes' ? '[ ]' : '( )';
-    const bloques: PdfBlock[] = opciones.map((opcion) => ({
-      kind: 'paragraph' as const,
-      text: `${casilla} ${opcion.label}`,
-    }));
+    const varias = campo.control === 'checkboxes';
+    const casilla = varias ? '[ ]' : '( )';
+    const rotulos = opciones.map((opcion) => `${casilla} ${opcion.label}`);
     // «Otro» es una opción **y** un renglón: marcarla sin poder escribir al
     // lado la deja sin la respuesta que la lista no previó, que es lo único
     // para lo que existe.
+    if (campo.otro === true) rotulos.push(`${casilla} Otro:`);
+    const bloques: PdfBlock[] = [
+      { kind: 'caption', text: varias ? 'Marque todas las que correspondan.' : 'Marque una sola opción.' },
+      ...opcionesEnRenglones(rotulos),
+    ];
     if (campo.otro === true) {
-      bloques.push({ kind: 'paragraph', text: `${casilla} Otro:` });
-      bloques.push({ kind: 'blank', text: '' });
+      bloques.push({ kind: 'blank', text: '', lines: 1 });
     }
     return bloques;
   }
@@ -279,16 +290,19 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
     campo.control === 'switch' ||
     campo.control === 'yes-no'
   ) {
-    return [{ kind: 'paragraph', text: '[ ] Sí    [ ] No' }];
+    // Redondas: se contesta una sola de las dos, como dicen las instrucciones.
+    return [{ kind: 'paragraph', text: '( ) Sí    ( ) No' }];
   }
 
   // Lo que no se escribe con una lapicera —el odontograma de la ficha
   // clínica— se dice, en vez de dejar un renglón que nadie puede llenar.
   if (campo.control === 'custom') {
-    return [{ kind: 'caption', text: 'Este campo se completa en el sistema.' }];
+    return [noteBlock('Este campo se completa en el sistema.', 'neutral')];
   }
 
+  const formato = FORMATO_A_MANO[campo.control];
   return [
+    ...(formato === undefined ? [] : [{ kind: 'caption' as const, text: formato }]),
     {
       kind: 'blank',
       text: '',
@@ -298,20 +312,43 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
 }
 
 /**
+ * Las opciones como párrafos: todas en un renglón si son pocas y cortas, una
+ * por renglón si no. Una lista de cuatro respuestas cortas —«Nunca», «A
+ * veces»…— en cuatro renglones estira la hoja sin decir más; ocho opciones
+ * largas en un renglón partirían una casilla de su rótulo.
+ */
+function opcionesEnRenglones(rotulos: readonly string[]): readonly PdfBlock[] {
+  const renglon = rotulos.join(ENTRE_OPCIONES);
+  if (rotulos.length <= MAX_OPCIONES_EN_UN_RENGLON && renglon.length <= OPCIONES_EN_UN_RENGLON) {
+    return [{ kind: 'paragraph', text: renglon }];
+  }
+  return rotulos.map((rotulo) => ({ kind: 'paragraph' as const, text: rotulo }));
+}
+
+/**
  * La cuadrícula en papel: una tabla con las columnas de cabecera y una casilla
  * por celda.
  *
  * Cuadrada o redonda según cuántas admita cada fila, igual que en la lista de
- * opciones. La restricción de «una respuesta por columna» se dice debajo: en
- * papel no hay nada que la impida, así que hay que leerla.
+ * opciones. La restricción de «una respuesta por columna» se dice antes de la
+ * tabla, junto con cómo marcar: en papel no hay nada que la impida, así que
+ * hay que leerla antes de empezar a contestar.
  */
 function cuadriculaEnPapel(
   campo: CampoDeFormulario,
   filas: readonly { readonly label: string }[],
   columnas: readonly { readonly label: string }[],
 ): readonly PdfBlock[] {
-  const casilla = campo.control === 'grid-checkboxes' ? '[ ]' : '( )';
+  const varias = campo.control === 'grid-checkboxes';
+  const casilla = varias ? '[ ]' : '( )';
   const bloques: PdfBlock[] = [
+    {
+      kind: 'caption',
+      text: [
+        varias ? 'Marque en cada fila todas las columnas que correspondan.' : 'Marque una sola columna en cada fila.',
+        ...(campo.oneResponsePerColumn === true ? ['Solo una respuesta por columna.'] : []),
+      ].join(' '),
+    },
     {
       kind: 'row',
       header: true,
@@ -324,34 +361,62 @@ function cuadriculaEnPapel(
       cells: [fila.label, ...columnas.map(() => casilla)],
     })),
   ];
-
-  if (campo.oneResponsePerColumn === true) {
-    bloques.push({ kind: 'caption', text: 'Sólo una respuesta por columna.' });
-  }
   return bloques;
 }
 
-/** «14 preguntas · 11 del estándar y 3 de tu organización». */
-function enPalabrasLosCampos(datos: FormularioParaPdf): string {
+/**
+ * Cuántas preguntas tiene y de dónde salen, corto para la columna de
+ * metadatos de la portada: «14 · 11 del estándar y 3 propias». La frase larga
+ * («14 preguntas · 11 del estándar y 3 de su organización») partía la columna
+ * en tres renglones.
+ */
+function enPalabrasLosCamposCorto(datos: FormularioParaPdf): string {
   const total = datos.camposEstandar + datos.camposPropios;
-  const preguntas = `${total} ${total === 1 ? 'pregunta' : 'preguntas'}`;
-  if (datos.camposPropios === 0) {
-    return `${preguntas}, todas del estándar`;
-  }
-  if (datos.camposEstandar === 0) {
-    return `${preguntas}, todas de su organización`;
-  }
-  return `${preguntas} · ${datos.camposEstandar} del estándar y ${datos.camposPropios} de su organización`;
+  if (total === 0) return 'Ninguna';
+  if (datos.camposPropios === 0) return `${total} · todas del estándar`;
+  if (datos.camposEstandar === 0) return `${total} · todas propias`;
+  const propias = datos.camposPropios === 1 ? '1 propia' : `${datos.camposPropios} propias`;
+  return `${total} · ${datos.camposEstandar} del estándar y ${propias}`;
+}
+
+/**
+ * Las opciones del documento: la portada y el pie.
+ *
+ * - **Sin `issuedAt`**: un formulario en blanco no se emite, se imprime. El
+ *   motor rotula entonces «Fecha de generación», que es lo que la fecha es.
+ * - **Sin firma** (`firma: null`): el papel sale en blanco, y la firma y el
+ *   sello del médico de la sesión estampados sobre un formulario sin llenar
+ *   avalarían respuestas que todavía no existen.
+ * - **Papel claro** (`plainPaper`): es un papel que se imprime por tandas, casi
+ *   siempre en una impresora de oficina en blanco y negro. La portada oscura
+ *   salía como una banda de tóner gris que no dice nada y deja el título en
+ *   gris sobre gris; en claro, el título y el folio quedan en negro sobre blanco.
+ *
+ * Exportada para que el spec fije la portada sin abrir el PDF.
+ */
+export function formTemplatePdfOptions(datos: FormularioParaPdf): PdfExportOptions {
+  const especialidad = datos.especialidad?.trim() ?? '';
+  return {
+    title: datos.nombre,
+    kind: 'Formulario en blanco',
+    subtitle: especialidad === '' ? 'Para completar a mano' : `${especialidad} · Para completar a mano`,
+    reference: datos.codigo,
+    // Cuántas preguntas son del estándar y cuántas las agregó el consultorio: es
+    // la diferencia entre un formulario comparable entre consultorios y uno
+    // propio, y en el papel no se ve de ninguna otra forma.
+    meta: [
+      { label: 'Versión', value: String(datos.version) },
+      { label: 'Preguntas', value: enPalabrasLosCamposCorto(datos) },
+      { label: 'Descargado por', value: datos.profesional },
+    ],
+    firma: null,
+    plainPaper: true,
+  };
 }
 
 /** Arma el PDF. No lo guarda: devuelve el documento. */
 export function buildFormTemplatePdf(datos: FormularioParaPdf): jsPDF {
-  return buildBlocksPdf(bloquesDeFormulario(datos), {
-    title: datos.nombre,
-    kind: 'Formulario',
-    reference: datos.codigo,
-    subtitle: `Versión ${datos.version} · ${FORMATO_FECHA.format(new Date())}`,
-  });
+  return buildBlocksPdf(bloquesDeFormulario(datos), formTemplatePdfOptions(datos));
 }
 
 /**
