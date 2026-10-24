@@ -106,17 +106,39 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     );
   });
 
-  it('C8 · una pregunta de opción no se declara a medias', async () => {
-    const error = await firstValueFrom(
-      TestBed.inject(FormsClient).createFieldDefinition({
+  it('C8 · una pregunta de opción viaja con sus opciones', () => {
+    TestBed.inject(FormsClient)
+      .createFieldDefinition({
         code: 'fuma',
         name: '¿Fuma?',
         dataType: 'code',
         options: ['Sí', 'No'],
+        multiple: false,
+        allowOther: true,
+      })
+      .subscribe();
+    expect(cuerpoAceptado('POST', '/forms/field-definitions')).toEqual({
+      code: 'fuma',
+      name: '¿Fuma?',
+      dataType: 'code',
+      options: ['Sí', 'No'],
+      multiple: false,
+      allowOther: true,
+    });
+  });
+
+  it('C8 · una cuadrícula no se declara a medias', async () => {
+    const error = await firstValueFrom(
+      TestBed.inject(FormsClient).createFieldDefinition({
+        code: 'sintomas',
+        name: 'Síntomas',
+        dataType: 'code',
+        options: ['Nunca', 'A veces'],
+        rows: ['Disnea', 'Edema'],
       }),
     ).catch((e: unknown) => e);
     http.expectNone('/forms/field-definitions');
-    expect(unavailableMessageOf(error)).toContain('Guardar las opciones de una pregunta');
+    expect(unavailableMessageOf(error)).toContain('Guardar las filas de la cuadrícula de una pregunta');
   });
 
   it('C8 · una pregunta de texto sí se declara', () => {
@@ -126,12 +148,19 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     cuerpoAceptado('POST', '/forms/field-definitions');
   });
 
-  it('C13 · quitar todos los idiomas tampoco manda un PATCH vacío', async () => {
+  it('C13 · quitar todos los idiomas manda la lista vacía', () => {
+    TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({ languages: [] }).subscribe();
+    expect(cuerpoAceptado('PATCH', '/profiles/practitioners/me')).toEqual({ languages: [] });
+  });
+
+  it('C13 · sólo la frecuencia de facturación no manda un PATCH vacío', async () => {
     const error = await firstValueFrom(
-      TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({ languages: [] }),
+      TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({
+        insuranceBillingFrequency: 'MONTHLY',
+      } as never),
     ).catch((e: unknown) => e);
     http.expectNone('/profiles/practitioners/me');
-    expect(unavailableMessageOf(error)).toContain('Los idiomas de atención');
+    expect(unavailableMessageOf(error)).toContain('La frecuencia de facturación a seguros');
   });
 
   it('C13 · con otros cambios, la frecuencia de facturación se queda afuera y el resto viaja', () => {
@@ -146,14 +175,12 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     });
   });
 
-  it('C13 · los idiomas con dato no viajan y el error los nombra', async () => {
-    const error = await firstValueFrom(
-      TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({
-        languages: [{ languageConceptId: UUID, proficiencyConceptId: UUID }] as never,
-      }),
-    ).catch((e: unknown) => e);
-    http.expectNone('/profiles/practitioners/me');
-    expect(unavailableMessageOf(error)).toContain('Los idiomas de atención');
+  it('C13 · los idiomas con dato viajan enteros', () => {
+    const languages = [
+      { languageConceptId: UUID, proficiencyConceptId: UUID, clinicalInterpretationAllowed: true },
+    ];
+    TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({ languages } as never).subscribe();
+    expect(cuerpoAceptado('PATCH', '/profiles/practitioners/me')).toEqual({ languages });
   });
 
   it('C14 · la búsqueda filtrada por sangre o idioma no sale sin filtrar', async () => {

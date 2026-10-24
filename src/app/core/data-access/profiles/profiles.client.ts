@@ -618,12 +618,12 @@ export class ProfilesClient {
          títulos. `[]` quita el último. Hasta el 02/10/2026 el perfil los leía
          (`OwnPractitionerProfile.languages`) y nadie los escribía.
 
-         VERIFICADO CONTRA EL DTO (09/10/2026, informe B C13):
-         `UpdateOwnPractitionerProfileDto` de `origin/dev` NO declara
-         `languages` ni `insuranceBillingFrequency`, y valida con
-         `forbidNonWhitelisted`. Son extensiones de la maqueta
-         (`PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS`): contra la API real no
-         viajan, y si el `PATCH` no tenía otra cosa el error nombra qué falta. */
+         `UpdateOwnPractitionerProfileDto` declara `languages` con esta misma
+         forma y la reemplaza entera (`MAX_PRACTITIONER_LANGUAGES`). La que
+         sigue sin declarar es `insuranceBillingFrequency`, extensión de la
+         maqueta (`PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS`): contra la API
+         real no viaja, y si el `PATCH` no tenía otra cosa el error nombra qué
+         falta. */
       readonly languages: readonly PractitionerLanguage[];
     }>,
   ): Observable<OwnPractitionerProfile> {

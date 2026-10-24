@@ -509,10 +509,9 @@ export interface PatientListItem {
    * El documento de identidad y el teléfono, que es lo que el médico usa para
    * reconocer y llamar a la persona (propietario, 19/09/2026).
    *
-   * **Opcionales porque hoy sólo los sirve la maqueta de `mockup`.** El
-   * listado de la API todavía no los devuelve (TODO: exponerlos en
-   * `profiles/dto` a partir de `person_identifiers` y del contacto). Donde
-   * falten, la celda lo dice con palabras en vez de dejar el hueco.
+   * **Opcionales porque sólo los sirve la maqueta de `mockup`:**
+   * `PatientListItemDto` no los declara. Donde falten, la celda lo dice con
+   * palabras en vez de dejar el hueco.
    */
   readonly nationalId?: string;
   readonly phone?: string;
@@ -1316,15 +1315,13 @@ export interface IncomingDependentLinkRequest {
 /**
  * Claves del `PATCH /profiles/practitioners/me` que
  * `UpdateOwnPractitionerProfileDto` no declara (informe B, C13): la maqueta
- * las guarda, la API real todavía no.
+ * las guarda, la API real no. Los idiomas (`languages`) sí los declara.
  */
 export const PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS: readonly string[] = [
-  'languages',
   'insuranceBillingFrequency',
 ];
 
 const PRACTITIONER_PROFILE_EXTENSION_LABELS: Readonly<Record<string, string>> = {
-  languages: 'Los idiomas de atención',
   insuranceBillingFrequency: 'La frecuencia de facturación a seguros',
 };
 
