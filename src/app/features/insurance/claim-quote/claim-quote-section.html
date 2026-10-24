@@ -1,0 +1,101 @@
+<section class="cq" aria-labelledby="cq-titulo" data-testid="claim-quote-section">
+  <h3 id="cq-titulo" class="cq__titulo">Cobro con seguro</h3>
+
+  @switch (coberturas().status) {
+    @case ('loading') {
+      <p class="cq__secundario" role="status">Buscando el seguro de la persona…</p>
+    }
+    @case ('empty') {
+      <app-alert tone="info" title="Sin seguro vigente">
+        {{ avisoSinCobertura() }}
+      </app-alert>
+    }
+    @case ('error') {
+      <app-alert tone="error" title="No pudimos leer los seguros de esta persona">
+        Intente de nuevo en unos segundos.
+      </app-alert>
+    }
+    @default {
+      @if (cobertura(); as cob) {
+        <p class="cq__cobertura" data-testid="claim-quote-coverage">
+          {{ cob.carrierName }}@if (cob.planName) { · {{ cob.planName }} }
+        </p>
+
+        <div class="cq__campos">
+          <div class="cq__servicio" data-testid="claim-quote-service">
+            <app-form-field label="Servicio" [required]="true">
+              <app-reference-combobox
+                [value]="servicioId()"
+                (valueChange)="elegirServicio($event)"
+                [options]="opciones()"
+                placeholder="Busque por nombre o código"
+                emptyMessage="Ningún servicio del arancel coincide"
+                (searched)="busquedaDeServicio.set($event)"
+              />
+            </app-form-field>
+          </div>
+
+          <app-form-field label="Monto a cobrar (Bs)" [required]="true" [errorMessage]="montoIncompleto() ? 'Indique un importe en bolivianos, con hasta dos decimales.' : ''">
+            <app-input
+              [(value)]="montoTexto"
+              inputMode="decimal"
+              placeholder="0.00"
+              testId="claim-quote-amount"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Número de aprobación previa"
+            hint="Solo si el servicio lo exige. Quien lo indica es la aseguradora."
+          >
+            <app-input
+              [(value)]="autorizacionTexto"
+              placeholder="Número de la aprobación"
+              testId="claim-quote-prior-auth"
+            />
+          </app-form-field>
+        </div>
+
+        @if (vista() === null) {
+          <p class="cq__secundario" data-testid="claim-quote-pending">
+            Elija el servicio y el monto para ver el reparto del cobro.
+          </p>
+        }
+
+        @if (vista(); as vm) {
+          <app-claim-quote-breakdown [vm]="vm" />
+        }
+
+        @if (motivo(); as texto) {
+          <app-alert tone="warning" title="Todavía no puede enviar el cobro" data-testid="claim-quote-alert">
+            {{ texto }}
+          </app-alert>
+        }
+
+        @if (errorDeEnvio(); as error) {
+          <app-alert tone="error" title="No se envió el cobro" data-testid="claim-quote-send-error">
+            {{ error }}
+          </app-alert>
+        }
+
+        <div class="cq__acciones">
+          <button
+            app-button
+            type="button"
+            data-testid="claim-quote-submit"
+            [disabled]="!puedeEnviar()"
+            (clicked)="enviar()"
+          >
+            Enviar a la aseguradora
+          </button>
+        </div>
+
+        @if (identificadorEnviado(); as identificador) {
+          <p class="cq__enviado" data-testid="claim-quote-sent" role="status">
+            Cobro enviado a la aseguradora con el identificador {{ identificador }}.
+          </p>
+        }
+      }
+    }
+  }
+</section>
