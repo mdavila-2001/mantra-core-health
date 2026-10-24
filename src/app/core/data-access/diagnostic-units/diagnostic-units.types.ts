@@ -157,3 +157,53 @@ export interface DiagnosticUnitSearchPage {
   readonly limit: number;
   readonly offset: number;
 }
+
+/* ============================================================================
+    Cobertura de varios estudios a la vez.
+
+    La misma búsqueda, preguntada como la disponibilidad de farmacia pregunta
+    por los medicamentos: «qué centros tienen todos mis estudios, y a los demás
+    qué les falta». Una sola petición con todos los códigos, nunca una por
+    estudio.
+
+    El contrato lo implementa el backend de `diagnostic_units`; hasta que se
+    fusione, sólo lo contesta la maqueta de `mockup`.
+    ========================================================================== */
+
+/** Los filtros de la búsqueda por cobertura. */
+export interface DiagnosticUnitCoverageQuery {
+  /**
+   * Los estudios pedidos, por su concepto (`study_concept_id` de la oferta, el
+   * mismo `codeConceptId` de la orden). No por `studyCode`: ese es el código
+   * propio de cada centro y cambia de un centro a otro. Al menos uno.
+   */
+  readonly studyConceptIds: readonly string[];
+  /** Laboratorio o imagenología. */
+  readonly kind?: DiagnosticUnitKind;
+  /** Desde dónde medir la distancia en línea recta; sin origen, `distanceKm` es `null`. */
+  readonly origin?: { readonly lat: number; readonly lng: number };
+  /** Tope de filas. */
+  readonly limit?: number;
+}
+
+/** Un centro, evaluado contra los estudios pedidos. */
+export interface DiagnosticUnitCoverageItem extends DiagnosticUnitSearchItem {
+  /** Si el centro ofrece todos los estudios pedidos. */
+  readonly complete: boolean;
+  /** Los conceptos pedidos que este centro no ofrece. */
+  readonly missingStudyConceptIds: readonly string[];
+  /** Distancia en línea recta desde el origen; `null` sin origen o sin coordenadas. */
+  readonly distanceKm: number | null;
+  /** La sede principal: dirección y coordenadas WGS84, `null` si no las publica. */
+  readonly addressText: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+}
+
+/** Página de la búsqueda por cobertura: completos primero, después por distancia. */
+export interface DiagnosticUnitCoveragePage {
+  readonly items: readonly DiagnosticUnitCoverageItem[];
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
+}
