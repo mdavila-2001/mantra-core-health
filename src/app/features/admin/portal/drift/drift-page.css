@@ -1,0 +1,50 @@
+.drift {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.drift__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.drift__note {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.drift__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.drift__title {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.drift__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.drift__chips code,
+.drift__source {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.drift__source {
+  display: block;
+  color: var(--text-secondary);
+}

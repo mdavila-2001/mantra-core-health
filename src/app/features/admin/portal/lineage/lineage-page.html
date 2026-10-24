@@ -1,0 +1,57 @@
+<app-page-header
+  title="Linaje"
+  subtitle="Qué operación toca qué tabla y qué tabla depende de cuál. Busque una tabla para ver su linaje."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="lineage" data-testid="portal-lineage">
+  <app-view-state-host [state]="metrics()" (retry)="loadMetrics()">
+    @if (metrics(); as state) {
+      @if (state.status === 'ready') {
+        <section class="lineage__metrics" aria-label="Tamaño del grafo de linaje" data-testid="portal-lineage-metrics">
+          @for (m of state.data; track m.key) {
+            <app-metric-card [label]="m.label" [value]="m.value" tone="neutral" />
+          }
+        </section>
+      }
+    }
+  </app-view-state-host>
+
+  <app-filter-bar
+    searchLabel="Buscar una tabla"
+    searchPlaceholder="schema.tabla o dominio"
+    [searchLoading]="tables.state().status === 'loading'"
+  />
+
+  <app-data-table
+    data-testid="portal-lineage-tables"
+    caption="Tablas para ver su linaje"
+    heading="Tablas"
+    [totalCount]="tables.total()"
+    [state]="tables.state()"
+    [columns]="columns()"
+    [trackBy]="byId"
+    [rowLabel]="rowName"
+    [cursor]="tables.cursor()"
+    rowNavigable
+    stackedOnMobile
+    (rowActivated)="open($event)"
+    (cursorChanged)="tables.move($event)"
+    (retry)="tables.reload()"
+  />
+</div>
+
+<app-portal-table-lineage-drawer [qualified]="selected()" (closed)="close()" />
+
+<ng-template #nameCell let-row>
+  <a
+    app-link
+    class="lineage__name"
+    [routerLink]="[]"
+    [queryParams]="{ tabla: row.id }"
+    queryParamsHandling="merge"
+    data-testid="portal-lineage-link"
+  >
+    {{ row.id }}
+  </a>
+</ng-template>

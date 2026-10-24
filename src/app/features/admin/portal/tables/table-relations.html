@@ -1,0 +1,69 @@
+<section class="relations" aria-label="Relaciones e índices" data-testid="portal-table-relations">
+  <h3 class="relations__title">A qué apunta</h3>
+  <ul class="relations__list">
+    @for (r of outgoing(); track r.constraint) {
+      <li class="relations__item">
+        <span class="relations__head">
+          <code>({{ r.columnas.join(', ') }})</code>
+          →
+          @if (r.hacia; as to) {
+            <a app-link class="relations__table" [routerLink]="tableUrl()(to.schema, to.tabla)">
+              {{ to.schema }}.{{ to.tabla }}
+            </a>
+            <code>({{ to.columnas.join(', ') }})</code>
+          }
+          <app-badge size="sm" [variant]="resolution(r.resolucion).tone">{{ resolution(r.resolucion).label }}</app-badge>
+        </span>
+        <span class="relations__source">{{ r.constraint }} · {{ r.fuente }}</span>
+      </li>
+    } @empty {
+      <li class="relations__muted">No apunta a ninguna otra tabla.</li>
+    }
+  </ul>
+
+  <h3 class="relations__title">Quién la apunta</h3>
+  <ul class="relations__list">
+    @for (r of incoming(); track r.constraint) {
+      <li class="relations__item">
+        <span class="relations__head">
+          @if (r.desde; as from) {
+            <a app-link class="relations__table" [routerLink]="tableUrl()(from.schema, from.tabla)">
+              {{ from.schema }}.{{ from.tabla }}
+            </a>
+            <code>({{ from.columnas.join(', ') }})</code>
+          }
+          →
+          <code>({{ r.columnas.join(', ') }})</code>
+        </span>
+        <span class="relations__source">{{ r.constraint }} · {{ r.fuente }}</span>
+      </li>
+    } @empty {
+      <li class="relations__muted">Ninguna tabla la apunta.</li>
+    }
+  </ul>
+
+  <h3 class="relations__title">Índices</h3>
+  <ul class="relations__list">
+    @for (ix of indexes(); track ix.nombre) {
+      <li class="relations__item">
+        <span class="relations__head">
+          <code>{{ ix.nombre }}</code>
+          @if (ix.unico) {
+            <app-badge size="sm" variant="info">Único</app-badge>
+          }
+          <span class="relations__muted">sobre {{ ix.columnas.map(columnName).join(', ') }}</span>
+        </span>
+        @if (ix.predicado) {
+          <span class="relations__source">Sólo donde {{ ix.predicado }}</span>
+        }
+        @for (why of ix.paraQue; track $index) {
+          <span class="relations__why">{{ why.texto }}</span>
+        } @empty {
+          <span class="relations__muted">Nadie anotó para qué sirve.</span>
+        }
+      </li>
+    } @empty {
+      <li class="relations__muted">No tiene índices.</li>
+    }
+  </ul>
+</section>

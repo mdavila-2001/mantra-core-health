@@ -1,0 +1,50 @@
+<section class="stages" aria-label="Etapas del proceso" data-testid="portal-process-stages">
+  @for (stage of stages(); track stage.codigo; let i = $index) {
+    <article class="stages__stage">
+      <h3 class="stages__title">
+        <span class="stages__number">{{ i + 1 }}</span>
+        {{ stage.nombre }}
+      </h3>
+      @if (stage.fuente) {
+        <p class="stages__source">{{ stage.fuente }}</p>
+      }
+      <ul class="stages__operations">
+        @for (op of stage.operaciones; track $index) {
+          <li class="stages__operation">
+            <span class="stages__head">
+              <app-badge size="sm" [variant]="method(op.metodo).tone">{{ method(op.metodo).label }}</app-badge>
+              <a app-link class="stages__route" [routerLink]="operationUrl()(op.operacionId)">{{ op.ruta }}</a>
+              <app-badge size="sm" [variant]="risk(op.riesgo).tone">{{ risk(op.riesgo).label }}</app-badge>
+            </span>
+            <span>{{ op.queHace || 'Sin descripción' }}</span>
+            <span class="stages__muted">Actúa: {{ op.quienActua || 'sin dato' }}</span>
+            @if (op.efectos.tablas.length > 0) {
+              <span class="stages__effects">
+                @for (t of op.efectos.tablas; track $index) {
+                  <span class="stages__effect">
+                    <app-badge size="sm" [variant]="effect(t.operacion).tone">{{ effect(t.operacion).label }}</app-badge>
+                    @if (tableUrl()(t.tabla); as url) {
+                      <a app-link class="stages__table" [routerLink]="url">{{ t.tabla }}</a>
+                    } @else {
+                      <span class="stages__table">{{ t.tabla }}</span>
+                    }
+                  </span>
+                }
+              </span>
+            }
+            @if (op.efectos.eventos.length > 0) {
+              <span class="stages__muted">Eventos: {{ op.efectos.eventos.join(', ') }}</span>
+            }
+            @if (op.efectos.trabajos.length > 0) {
+              <span class="stages__muted">Trabajos: {{ op.efectos.trabajos.join(', ') }}</span>
+            }
+          </li>
+        } @empty {
+          <li class="stages__muted">Esta etapa no tiene operaciones.</li>
+        }
+      </ul>
+    </article>
+  } @empty {
+    <p class="stages__muted">El inventario no describe etapas para este proceso.</p>
+  }
+</section>

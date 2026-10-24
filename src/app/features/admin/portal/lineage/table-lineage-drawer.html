@@ -1,0 +1,63 @@
+<app-drawer-panel
+  [open]="qualified() !== ''"
+  heading="Linaje de la tabla"
+  [subheading]="qualified()"
+  closeLabel="Cerrar el linaje"
+  (closed)="closed.emit()"
+>
+  <app-view-state-host [state]="lineage()" (retry)="reload()">
+    @if (lineage(); as state) {
+      @if (state.status === 'ready') {
+        <div class="table-lineage" data-testid="portal-table-lineage">
+          @if (sheetUrl(); as url) {
+            <a app-link [routerLink]="url">Abrir la ficha de la tabla</a>
+          }
+
+          <h3 class="table-lineage__title">Operaciones que la tocan</h3>
+          @for (group of groups(); track group.effect) {
+            <section class="table-lineage__group" [attr.aria-label]="effect(group.effect).label">
+              <app-badge size="sm" [variant]="effect(group.effect).tone">
+                {{ effect(group.effect).label }} · {{ group.operations.length }}
+              </app-badge>
+              <ul class="table-lineage__list">
+                @for (op of group.operations; track op.id) {
+                  <li>
+                    <a app-link class="table-lineage__op" [routerLink]="operationUrl(op.id)">{{ op.operacion }}</a>
+                  </li>
+                }
+              </ul>
+            </section>
+          } @empty {
+            <p class="table-lineage__muted">Ninguna operación de la API la toca.</p>
+          }
+
+          <h3 class="table-lineage__title">Apunta a</h3>
+          <ul class="table-lineage__list">
+            @for (t of state.data.referencia; track t) {
+              <li>
+                <a app-link class="table-lineage__op" [routerLink]="[]" [queryParams]="{ tabla: t }" queryParamsHandling="merge">
+                  {{ t }}
+                </a>
+              </li>
+            } @empty {
+              <li class="table-lineage__muted">No apunta a ninguna otra tabla.</li>
+            }
+          </ul>
+
+          <h3 class="table-lineage__title">La apuntan</h3>
+          <ul class="table-lineage__list">
+            @for (t of state.data.referenciadaPor; track t) {
+              <li>
+                <a app-link class="table-lineage__op" [routerLink]="[]" [queryParams]="{ tabla: t }" queryParamsHandling="merge">
+                  {{ t }}
+                </a>
+              </li>
+            } @empty {
+              <li class="table-lineage__muted">Ninguna tabla la apunta.</li>
+            }
+          </ul>
+        </div>
+      }
+    }
+  </app-view-state-host>
+</app-drawer-panel>

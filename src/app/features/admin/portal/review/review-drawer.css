@@ -1,0 +1,59 @@
+.decision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.decision__title {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.decision__answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.decision__answer dt {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.decision__answer dd {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.decision__answer .decision__missing {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.decision__note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.decision__evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.decision__evidence .decision__note {
+  flex-basis: 100%;
+}
+
+.decision__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

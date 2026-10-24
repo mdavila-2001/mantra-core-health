@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   confianza,
   datosPersonales,
+  ddlSource,
+  decisionStep,
   metodoHttp,
+  optionsOf,
+  processKind,
   nombreDeOperacion,
   partirTabla,
   resumenDePagina,
@@ -61,5 +65,20 @@ describe('portal-labels', () => {
     expect(resumenDePagina(1, 50, 1254)).toMatch(/^Página 1 de 26 · 1.?254 registros$/);
     expect(resumenDePagina(3, 50, 1)).toBe('Página 1 de 1 · 1 registro');
     expect(resumenDePagina(1, 50, 0)).toBe('Página 1 de 1 · 0 registros');
+  });
+
+  it('las opciones de un filtro salen de los códigos que la tabla conoce, con su texto', () => {
+    expect(optionsOf(riesgo)).toEqual([
+      { value: 'ALTO', label: 'Riesgo alto' },
+      { value: 'MEDIO', label: 'Riesgo medio' },
+      { value: 'BAJO', label: 'Riesgo bajo' },
+    ]);
+  });
+
+  it('un paso de árbol o un origen de DDL nuevos se muestran tal cual', () => {
+    expect(decisionStep('SI').label).toBe('Condición');
+    expect(decisionStep('OTRO')).toEqual({ label: 'OTRO', tone: 'secondary' });
+    expect(ddlSource('NOSQL').label).toBe('Almacén no relacional');
+    expect(processKind('CRITICO').label).toBe('Flujo crítico');
   });
 });

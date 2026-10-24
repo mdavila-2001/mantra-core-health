@@ -27,6 +27,12 @@
 
 .page-header__title {
     margin: 0;
+    /* Un título sin espacios (un nombre calificado como `esquema.tabla`) no
+       parte en ningún lado y, en la fila de tablet, estira al encabezado más
+       allá de su caja. `anywhere` —y no `break-word`— también baja el ancho
+       mínimo del ítem flex, así que el título cede en vez de desbordar. Los
+       títulos con espacios no cambian. */
+    overflow-wrap: anywhere;
 }
 
 .page-header__subtitle {

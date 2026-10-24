@@ -1,0 +1,51 @@
+<app-drawer-panel
+  [open]="findingId() !== ''"
+  [heading]="heading()"
+  subheading="Los casos que el generador encontró, con dónde mirar."
+  closeLabel="Cerrar el hallazgo"
+  (closed)="closed.emit()"
+>
+  <app-view-state-host [state]="detail()" (retry)="reload()">
+    @if (detail(); as state) {
+      @if (state.status === 'ready') {
+        <div class="finding" data-testid="portal-finding-detail">
+          <p class="finding__todo"><strong>Qué hacer:</strong> {{ state.data.queHacer }}</p>
+          <p class="finding__count">
+            {{ items().length }} de {{ state.data.cuenta }} casos a la vista.
+          </p>
+          <ol class="finding__items">
+            @for (item of items(); track $index) {
+              <li class="finding__item">
+                @if (item.operationId) {
+                  <a app-link class="finding__title" [routerLink]="operationUrl(item.operationId)">{{ item.title }}</a>
+                } @else {
+                  <span class="finding__title">{{ item.title }}</span>
+                }
+                @if (item.detail) {
+                  <span class="finding__detail">{{ item.detail }}</span>
+                }
+                @if (item.source) {
+                  <span class="finding__source">{{ item.source }}</span>
+                }
+              </li>
+            }
+          </ol>
+          @if (moreError(); as message) {
+            <app-alert tone="error">{{ message }}</app-alert>
+          }
+          @if (state.data.nextCursor) {
+            <button
+              app-button
+              variant="outline"
+              data-testid="portal-finding-more"
+              [isLoading]="loadingMore()"
+              (clicked)="loadMore()"
+            >
+              Ver más casos
+            </button>
+          }
+        </div>
+      }
+    }
+  </app-view-state-host>
+</app-drawer-panel>

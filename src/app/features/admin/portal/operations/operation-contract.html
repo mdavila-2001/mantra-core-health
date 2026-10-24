@@ -1,0 +1,65 @@
+@let op = operation();
+
+<section class="contract" aria-label="Contrato de la operación" data-testid="portal-operation-contract">
+  <h3 class="contract__title">Parámetros</h3>
+  @if (op.parametros.length > 0) {
+    <app-data-table
+      caption="Parámetros de la operación"
+      [state]="parameters()"
+      [columns]="fieldColumns"
+      [trackBy]="byField"
+      stackedOnMobile
+    />
+  } @else {
+    <p class="contract__muted">No recibe parámetros de ruta ni de consulta.</p>
+  }
+
+  <h3 class="contract__title">Cuerpo de la petición</h3>
+  @if (op.cuerpo; as body) {
+    <p class="contract__muted">
+      {{ body.dto ?? 'Sin DTO declarado' }} · {{ body.contentType ?? 'tipo de contenido sin dato' }}
+      @if (body.obligatorio === true) {
+        · obligatorio
+      }
+    </p>
+    @if (body.campos.length > 0) {
+      <app-data-table
+        caption="Campos del cuerpo"
+        [state]="bodyFields()"
+        [columns]="fieldColumns"
+        [trackBy]="byField"
+        stackedOnMobile
+      />
+    }
+  } @else {
+    <p class="contract__muted">No lleva cuerpo.</p>
+  }
+
+  <h3 class="contract__title">Respuesta</h3>
+  <p class="contract__muted">
+    {{ op.respuesta.httpCode ?? 'Código sin dato' }} ·
+    {{ op.respuesta.dto ?? op.respuesta.tipoRetorno ?? 'tipo de retorno sin dato' }}
+  </p>
+  @if (op.respuesta.campos.length > 0) {
+    <app-data-table
+      caption="Campos de la respuesta"
+      [state]="responseFields()"
+      [columns]="fieldColumns"
+      [trackBy]="byField"
+      stackedOnMobile
+    />
+  }
+
+  <h3 class="contract__title">Respuestas posibles</h3>
+  @if (op.respuestasPosibles.length > 0) {
+    <app-data-table
+      caption="Respuestas posibles de la operación"
+      [state]="responses()"
+      [columns]="responseColumns"
+      [trackBy]="byResponse"
+      stackedOnMobile
+    />
+  } @else {
+    <p class="contract__muted">El inventario no enumeró respuestas.</p>
+  }
+</section>
