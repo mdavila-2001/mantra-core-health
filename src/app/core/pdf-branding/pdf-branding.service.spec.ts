@@ -17,7 +17,9 @@ import { PdfBrandingService, PREPARAR_FUENTES, PREPARAR_LOGO } from './pdf-brand
 const LOGO = { dataUrl: 'data:image/png;base64,AAAA', formato: 'PNG' as const, ancho: 3, alto: 1 };
 const FUENTES = {
   titulos: { archivo: 'poppins-600.ttf', base64: 'AA==' },
-  cuerpo: { archivo: 'inter-400.ttf', base64: 'AA==' },
+  rotulos: { archivo: 'poppins-500.ttf', base64: 'AA==' },
+  cuerpo: { archivo: 'nunito-sans-400.ttf', base64: 'AA==' },
+  cuerpoDestacado: { archivo: 'nunito-sans-700.ttf', base64: 'AA==' },
 };
 
 describe('PdfBrandingService', () => {
@@ -34,6 +36,15 @@ describe('PdfBrandingService', () => {
     await Promise.resolve();
     await Promise.resolve();
   };
+
+  // El builder de Angular no aísla los archivos: lo que este spec deja fijado en
+  // los holders del papel (el logo, la firma, las fuentes) lo heredaría el
+  // siguiente. Se limpia también al salir.
+  afterEach(() => {
+    establecerLogoDeDocumentos(null);
+    setDocumentSignature(null);
+    setDocumentFonts(null);
+  });
 
   beforeEach(() => {
     vi.resetAllMocks();
