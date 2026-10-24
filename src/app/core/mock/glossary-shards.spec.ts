@@ -193,6 +193,22 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     expect(sinTilde.items.map((t) => t.conceptId)).toEqual(conTilde.items.map((t) => t.conceptId));
   });
 
+  it('la búsqueda ordena por relevancia: lo que empieza con lo escrito va antes que lo que lo contiene', async () => {
+    const { get } = montar();
+    const pagina = await get<Pagina>('/terminology/concepts', {
+      includeValueSets: 'true',
+      q: 'hipertension',
+      limit: '48',
+    });
+    const norm = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    const empiezan = pagina.items.map((t) => norm(t.display).startsWith('hipertension'));
+    expect(empiezan.length).toBeGreaterThan(0);
+    // Ningún resultado que empiece con lo buscado puede aparecer después de uno que no.
+    const primeroQueNo = empiezan.indexOf(false);
+    if (primeroQueNo >= 0) expect(empiezan.slice(primeroQueNo)).not.toContain(true);
+    expect(empiezan[0]).toBe(true);
+  });
+
   it('la etiqueta se intersecta con la categoría en el servidor, no en la pantalla', async () => {
     const { almacen, get } = montar();
     const manifiesto: ManifiestoDelGlosario = await almacen.manifiesto();

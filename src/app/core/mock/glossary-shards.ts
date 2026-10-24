@@ -180,6 +180,27 @@ function palabrasDe(texto: string): string[] {
     .filter((palabra) => palabra !== '');
 }
 
+/**
+ * Qué tan arriba va un término en los resultados de una búsqueda; menor es
+ * mejor. `texto` es el nombre, luego los sinónimos y el código, sin tildes.
+ *
+ * - 0: el nombre empieza exactamente con lo escrito («hipertension arterial»).
+ * - 1: el nombre empieza con la primera palabra buscada.
+ * - 2: lo escrito aparece más adelante, en el nombre, un sinónimo o el código.
+ *
+ * Dentro de cada grupo un nombre más corto va antes: «Diabetes» es más lo que
+ * se buscó que «Diabetes mellitus gestacional con complicaciones».
+ */
+function puntajeDeRelevancia(texto: string, palabras: readonly string[]): number {
+  const frase = palabras.join(' ');
+  const suyas = texto.split(' ');
+  const largo = Math.min(suyas.length, 99) / 100;
+  if (texto === frase || texto.startsWith(`${frase} `)) return 0 + largo;
+  const primera = palabras[0];
+  if (primera !== undefined && suyas[0]?.startsWith(primera) === true) return 1 + largo;
+  return 2 + largo;
+}
+
 /** El id de un value set del glosario: la misma fórmula que usaban los fixtures. */
 export function idDeConjunto(internalCode: string): string {
   return uuid(`value-set-${internalCode}`);
@@ -435,8 +456,20 @@ export class AlmacenDeGlosario {
           const suyas = texto.split(' ');
           return palabras.every((buscada) => suyas.some((suya) => suya.startsWith(buscada)));
         })
-        .map(([categoria, pagina, indice]) => [categoria, pagina, indice] as const);
-      return { lista };
+        .map((entrada) => ({
+          entrada,
+          puntaje: puntajeDeRelevancia(entrada[3], palabras),
+        }));
+      // Sin esto los resultados salían en orden alfabético del corpus: buscar
+      // «diabetes» traía primero cualquier nombre que *contuviera* la palabra
+      // en un sinónimo. `sort` es estable: a igual puntaje se conserva el orden
+      // castellano de la fuente.
+      lista.sort((a, b) => a.puntaje - b.puntaje);
+      return {
+        lista: lista.map(
+          ({ entrada: [categoria, pagina, indice] }) => [categoria, pagina, indice] as const,
+        ),
+      };
     }
 
     if (pedido.tagKey !== undefined) {
