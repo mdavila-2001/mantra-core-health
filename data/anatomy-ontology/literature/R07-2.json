@@ -3,14 +3,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En tomografía computarizada, el ligamento rotuliano normal se presenta como una banda plana cuya densidad media ronda las 110 HE.",
+        "es": "La tomografía computarizada muestra el ligamento rotuliano sano como una cinta aplanada de unas 110 HE de densidad media.",
         "cites": [
           "PMID:4017441"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En la porción central de 10 mm de ancho, tomada de donantes varones jóvenes, el área de sección del ligamento rotuliano midió 36,8 ± 5,7 mm2, claramente menor que la del tendón del cuádriceps.",
+        "es": "En piezas no precondicionadas de la porción central de 10 mm de ancho, tomadas de donantes varones jóvenes, el área de sección del ligamento rotuliano fue de 36,8 ± 5,7 mm², significativamente menor que la del tendón del cuádriceps.",
         "cites": [
           "PMID:8884731",
           "PMID:9934415"
@@ -18,7 +18,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Su inserción tibial contiene en la parte proximal una cuña marcada de fibrocartílago, ausente en las fibras más superficiales, mientras que en la inserción rotuliana el fibrocartílago es escaso.",
+        "es": "Su extremo rotuliano contiene poco fibrocartílago; en cambio, la parte proximal de su anclaje en la tibia forma una cuña fibrocartilaginosa prominente, que no llega a las fibras más superficiales.",
         "cites": [
           "PMID:2081702"
         ]
@@ -32,7 +32,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Tras un traumatismo o por sobrecarga crónica, la tomografía muestra un aumento de su sección transversal junto con una caída de la densidad.",
+        "es": "Tanto las lesiones traumáticas como la sobrecarga crónica se traducen en la tomografía en un ligamento de mayor sección y menor densidad.",
         "cites": [
           "PMID:4017441"
         ]
@@ -50,14 +50,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "El tendón calcáneo surge de la unión de los tendones de los músculos gastrocnemio y sóleo, y se lo considera el tendón más grande y resistente del cuerpo.",
+        "es": "Formado por la confluencia de los tendones del gastrocnemio y del sóleo, el tendón calcáneo es, según esta revisión, el más grande y fuerte del organismo.",
         "cites": [
           "PMID:37016428"
         ]
       },
       {
         "aspect": "parts",
-        "es": "No es una estructura homogénea: está organizado en capas que se disponen de maneras diversas.",
+        "es": "Lejos de ser uniforme, su interior se compone de capas cuya disposición varía.",
         "cites": [
           "PMID:37016428"
         ]
@@ -71,21 +71,21 @@
       },
       {
         "aspect": "relations",
-        "es": "En fetos próximos al término, la vaina del tendón calcáneo mostraba tres capas y el tendón del plantar quedaba alojado siempre en la capa interna o en la intermedia.",
+        "es": "En el estudio histológico de 20 fetos, la vaina del tendón calcáneo podía dividirse a grandes rasgos en tres capas entre las semanas 26 y 39, y en los fetos próximos al término el tendón del plantar quedaba siempre dentro de la capa interna o de la intermedia.",
         "cites": [
           "PMID:36689056"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Un estudio de inyección en tendones de cadáver halló menos vasos, y de menor área relativa, en el segmento medio del tendón, zona que podría intervenir en la génesis de la rotura.",
+        "es": "En tendones de cadáver inyectados, la porción media fue la peor irrigada, con menos vasos y menor área vascular relativa, lo que podría tener relación con su rotura.",
         "cites": [
           "PMID:2914976"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una serie de 28 pacientes estudiados con resonancia magnética, las lesiones se agruparon en cuatro tipos: inflamatoria, degenerativa, rotura incompleta y rotura completa.",
+        "es": "Una clasificación por resonancia magnética, elaborada con 28 pacientes con sospecha de lesión, distingue cuatro tipos: reacción inflamatoria, cambio degenerativo, rotura parcial y rotura completa.",
         "cites": [
           "PMID:2071660"
         ]
@@ -96,28 +96,28 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "En 229 caderas de cadáver, el ligamento de la cabeza del fémur se aplanaba en su extremo distal hasta converger sobre la fosita de la cabeza femoral.",
+        "es": "En 229 caderas de cadáver, el ligamento de la cabeza del fémur terminaba distalmente sobre la fosita de la cabeza femoral, donde se volvía plano.",
         "cites": [
           "PMID:30318771"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "En esas disecciones, ramas de la arteria obturatriz penetraban el tercio medio del ligamento y sus vasos parecían llegar a la fosita de la cabeza.",
+        "es": "Esas disecciones mostraron vasos, procedentes de ramas de la arteria obturatriz que entraban por el tercio medio del ligamento, que al parecer alcanzaban la fosita.",
         "cites": [
           "PMID:30318771"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Según una serie de 40 cadáveres, el ligamento de la cabeza del fémur lleva una arteria hacia la cabeza femoral en los jóvenes.",
+        "es": "Una serie de 40 cadáveres sugiere que, en los jóvenes, el ligamento sirve de vía a una arteria destinada a la cabeza femoral.",
         "cites": [
           "PMID:2124003"
         ]
       },
       {
         "aspect": "irrigation",
-        "es": "Un estudio histológico de 10 caderas encontró mayor vascularización del ligamento junto a su inserción en la fosita, lo que sugiere un posible papel nutricio para la cabeza femoral del adulto.",
+        "es": "El análisis histológico de 10 caderas de edad avanzada halló el índice de vascularidad más alto en el extremo foveal del ligamento, dato que, según los autores, apunta a que podría nutrir la cabeza femoral también en el adulto.",
         "cites": [
           "PMID:30882902"
         ]
@@ -135,14 +135,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Ese mismo estudio advirtió que la amplia variación morfológica del fémur queda en buena parte fuera del rango que cubren los clavos intramedulares disponibles.",
+        "es": "En esa serie, la anteversión del cuello y el ángulo cervicodiafisario variaron tanto que en su mayoría quedaban fuera del rango de los clavos intramedulares, por lo que los autores piden implantes adaptables a morfologías diversas.",
         "cites": [
           "PMID:26969959"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Un análisis tomográfico seriado mostró que los parámetros geométricos de las secciones transversales de la diáfisis femoral son mayores en el ser humano que en el chimpancé.",
+        "es": "Medidas tomográficas seriadas a lo largo de la diáfisis, comparadas con fémures de tres chimpancés, indicaron que los parámetros geométricos de sección del fémur humano alcanzan valores mayores.",
         "cites": [
           "PMID:12050906"
         ]
@@ -160,28 +160,28 @@
       },
       {
         "aspect": "clinical",
-        "es": "La seudoartrosis del cuello femoral se asocia a tasas altas de necrosis avascular, atribuidas a una irrigación precaria y a una biomecánica desfavorable.",
+        "es": "Por la irrigación precaria del cuello y su biomecánica desfavorable, la falta de consolidación de sus fracturas, difícil de tratar sobre todo en jóvenes, conlleva muchas complicaciones por necrosis avascular.",
         "cites": [
           "PMID:27190758"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La osteotomía intertrocantérea en valgo favorece la consolidación porque transforma las fuerzas de cizallamiento sobre el foco en fuerzas de compresión.",
+        "es": "Convertir en compresión el cizallamiento que actúa sobre el foco es el mecanismo con el que la osteotomía intertrocantérea en valgo, un tratamiento biomecánico muy difundido, crea condiciones favorables para consolidar.",
         "cites": [
           "PMID:27190758"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La cirugía es el tratamiento de elección de la fractura del cuello femoral; si se fija preservando la cabeza, se aconseja hacerlo en las primeras 6 horas y nunca después de 24 horas.",
+        "es": "Esta revisión considera la cirugía como el tratamiento de elección y recomienda que la osteosíntesis con conservación de la cabeza se haga idealmente en las primeras 6 horas, con un máximo de 24.",
         "cites": [
           "PMID:20589205"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En una cohorte de 1913 pacientes mayores de 60 años, cada hora de demora quirúrgica elevó el riesgo de muerte un 1,8 %, aunque la asociación sólo fue significativa al superar las 24 horas.",
+        "es": "En una cohorte de 1913 pacientes mayores de 60 años, cada hora de demora quirúrgica elevó el riesgo de muerte a 30 días un 1,8 %, aunque la asociación sólo fue significativa al superar las 24 horas.",
         "cites": [
           "PMID:28325670"
         ]
@@ -192,35 +192,35 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En ocho piezas de cadáver por debajo de la rodilla, el abductor del dedo gordo se originaba en la cara posteromedial del calcáneo y se insertaba en el sesamoideo tibial.",
+        "es": "Las ocho piezas de cadáver por debajo de la rodilla coincidieron en el trayecto del abductor del dedo gordo: desde la cara posteromedial del calcáneo hasta el sesamoideo tibial.",
         "cites": [
           "PMID:17559771"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esas piezas, una cincha fascial del retropié elevaba el músculo y le daba forma de «V» invertida.",
+        "es": "La forma de «V» invertida que adoptaba el músculo en esas piezas se debía a una cincha fascial del retropié que lo levantaba.",
         "cites": [
           "PMID:17559771"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 109 pies disecados se reconocieron tres tipos de inserción: en la falange proximal (42), en el ligamento sesamoideo medial y el sesamoideo medial (65) o sólo en el sesamoideo medial (2).",
+        "es": "De 109 pies disecados, 65 tenían la inserción en el ligamento sesamoideo medial y el sesamoideo medial, 42 en la falange proximal y apenas 2 sólo en el sesamoideo medial.",
         "cites": [
           "PMID:10096675"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Su tendón cruza la articulación metatarsofalángica del primer dedo por debajo de su eje transversal y puede unirse al tendón de la cabeza medial del flexor corto del dedo gordo, donde aparece una bolsa subtendinosa.",
+        "es": "Puede fusionarse con el tendón de la cabeza medial del flexor corto del dedo gordo, con una bolsa subtendinosa en ese punto, y pasa por el lado plantar del eje transversal de la articulación metatarsofalángica del primer dedo.",
         "cites": [
           "PMID:10096675"
         ]
       },
       {
         "aspect": "function",
-        "es": "La contracción simulada en cadáver flexionó y supinó el primer metatarsiano, invirtió el calcáneo y rotó la tibia hacia fuera, de modo que el músculo actúa como elevador dinámico del arco medial.",
+        "es": "Al tensarlo para simular su contracción en cadáver, el arco medial se elevaba (flexión y supinación del primer metatarsiano, inversión del calcáneo y rotación externa de la tibia), por lo que los autores lo consideran un elevador dinámico del arco.",
         "cites": [
           "PMID:17559771"
         ]
@@ -237,8 +237,8 @@
   "UBERON:0009984": {
     "sentences": [
       {
-        "aspect": "relations",
-        "es": "En ocho rodillas de cadáver, el ligamento patelofemoral medial, que une la rótula con el cóndilo medial del fémur, resistió una tracción de 146,91 ± 25,30 N.",
+        "aspect": "function",
+        "es": "En ocho rodillas de cadáver en las que la rótula quedaba unida al cóndilo medial del fémur sólo por el ligamento patelofemoral medial, éste resistió una tracción de 146,91 ± 25,30 N.",
         "cites": [
           "PMID:24382220"
         ]
@@ -252,7 +252,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Una serie de casos con fractura de Hoffa del cóndilo medial mostró que la reconstrucción tridimensional y el prototipado rápido ayudaban a entender la configuración de la fractura.",
+        "es": "En una serie de casos de fracturas complejas que incluía una de Hoffa del cóndilo medial, el prototipado rápido a partir de la reconstrucción tridimensional ayudó a entender la configuración de la fractura.",
         "cites": [
           "PMID:21256690"
         ]
@@ -263,7 +263,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "Los cóndilos del fémur se articulan con el extremo superior de la tibia y con la rótula.",
+        "es": "Ambos cóndilos femorales forman articulación tanto con el extremo superior de la tibia como con la rótula.",
         "cites": [
           "PMID:41914101"
         ]
@@ -345,14 +345,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El tercer peroneo es uno de los tres músculos del compartimento anterior de la pierna.",
+        "es": "Junto con otros dos músculos, el tercer peroneo integra el compartimento anterior de la pierna.",
         "cites": [
           "PMID:39674898"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 41 cadáveres faltó en 5 miembros (6,1 %); cuando existía nacía de la porción distal del peroné y su origen abarcaba en promedio un (28,4 ± 9,1) % de la longitud de la diáfisis.",
+        "es": "Ausente en 5 miembros (6,1 %) de una serie de 41 cadáveres, cuando existía tomaba origen en el peroné distal, a lo largo de un 28,4 ± 9,1 % de la diáfisis en promedio.",
         "cites": [
           "PMID:17584875"
         ]
@@ -380,7 +380,7 @@
       },
       {
         "aspect": "innervation",
-        "es": "Recibe un ramo pequeño del nervio peroneo profundo que nace cerca del origen del extensor largo de los dedos y discurre entre éste y el extensor largo del dedo gordo antes de penetrar en el músculo.",
+        "es": "Lo inerva un ramo fino del nervio peroneo profundo que, tras salir cerca del origen del extensor largo de los dedos, desciende entre este músculo y el extensor largo del dedo gordo hasta entrar en el tercer peroneo.",
         "cites": [
           "PMID:17584875"
         ]
@@ -391,14 +391,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El peroneo corto forma parte del compartimento lateral de la pierna y se origina en los dos tercios inferiores de la cara lateral del peroné y en el tabique intermuscular anterior.",
+        "es": "Situado en el compartimento lateral de la pierna, el peroneo corto toma origen en el tabique intermuscular anterior y en la cara lateral del peroné, en sus dos tercios inferiores.",
         "cites": [
           "PMID:38211662"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Habitualmente se inserta en la tuberosidad de la base del quinto metatarsiano, por su lado lateral, aunque la inserción distal es variable.",
+        "es": "Su anclaje distal varía, pero lo habitual es que termine en el lado lateral de la tuberosidad de la base del quinto metatarsiano.",
         "cites": [
           "PMID:38211662"
         ]
@@ -419,14 +419,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 24 tendones de 12 cadáveres, los 7 con rotura longitudinal de espesor completo presentaban una unión musculotendinosa más proximal, con una distancia media de 28,86 ± 3,02 mm frente a 16,29 ± 7,30 mm en los sanos.",
+        "es": "En 24 tendones de 12 cadáveres, los 7 con rotura longitudinal de espesor completo tenían la unión musculotendinosa más alta: estaba a 28,86 ± 3,02 mm de la punta del maléolo lateral, frente a 16,29 ± 7,30 mm en los tendones sin rotura.",
         "cites": [
           "PMID:27989344"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las variantes distales del tendón pueden confundirse en la imagen con roturas longitudinales o con seudomasas y modificar el abordaje quirúrgico.",
+        "es": "Según una revisión narrativa, las variantes distales del tendón pueden confundirse en la imagen con roturas longitudinales o con seudomasas y cambiar el planteo quirúrgico.",
         "cites": [
           "PMID:42262541"
         ]
@@ -437,7 +437,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "En 100 piezas de 53 cadáveres, la primera articulación tarsometatarsiana sólo mostró aducción y abducción en cerca del 10 %; su eversión, de 6,2° en promedio, se debía a un desplazamiento dorsal medio de 2,6 mm del primer metatarsiano respecto de la primera cuña.",
+        "es": "En 100 piezas de 53 cadáveres, el movimiento de aducción-abducción descrito antes para la primera articulación tarsometatarsiana apareció apenas en un 10 %; la eversión, de 6,2° de media, solía deberse a que el primer metatarsiano se desplazaba en dorsal unos 2,6 mm sobre la primera cuña.",
         "cites": [
           "PMID:2731824"
         ]
@@ -450,8 +450,8 @@
         ]
       },
       {
-        "aspect": "parts",
-        "es": "En 20 pares de pies de cadáver, los ligamentos plantar y de Lisfranc de la segunda articulación tarsometatarsiana fueron más rígidos y resistentes que el dorsal, y el de Lisfranc superó al plantar.",
+        "aspect": "function",
+        "es": "De los tres ligamentos de la segunda articulación tarsometatarsiana ensayados en 20 pares de pies de cadáver, el de Lisfranc fue el más rígido y resistente, seguido del plantar, y el dorsal el más débil.",
         "cites": [
           "PMID:11527024"
         ]
@@ -465,7 +465,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Un desplazamiento dorsolateral de 3 mm del segundo metatarsiano redujo un 38,6 % el área de contacto articular, por lo que se aconseja la tomografía para detectar desplazamientos mínimos.",
+        "es": "En una simulación por computadora, desplazar 3 mm en dirección dorsolateral el segundo metatarsiano redujo un 38,6 % el área de contacto articular, por lo que se aconseja la tomografía para detectar desplazamientos mínimos.",
         "cites": [
           "PMID:8946183"
         ]
@@ -483,7 +483,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El plantar es un músculo pequeño y fusiforme situado entre el gastrocnemio y el sóleo, en el compartimento posterior superficial de la pierna.",
+        "es": "Pequeño y de forma fusiforme, el plantar ocupa el compartimento posterior superficial de la pierna, interpuesto entre el gastrocnemio y el sóleo.",
         "cites": [
           "PMID:34217832",
           "PMID:38757503"
@@ -491,14 +491,14 @@
       },
       {
         "aspect": "parts",
-        "es": "Nace en la línea supracondílea lateral del fémur y en la cápsula de la rodilla, y se continúa con un tendón largo y delgado que llega a la tuberosidad del calcáneo.",
+        "es": "De la línea supracondílea lateral del fémur y de la cápsula de la rodilla parte un vientre que se continúa en un tendón largo y fino, anclado abajo en la tuberosidad del calcáneo.",
         "cites": [
           "PMID:38757503"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En 108 pies de cadáveres coreanos faltaba en 7 (6,5 %); su tendón era grueso y estrecho arriba, se adelgazaba y ensanchaba en el tramo medio y volvía a engrosarse antes de fijarse en la tuberosidad calcánea.",
+        "es": "En 108 pies de cadáveres coreanos, el tendón, ausente en 7 (6,5 %), cambiaba de forma a lo largo de su trayecto: grueso y angosto arriba y justo antes de la inserción, delgado y ancho en el tramo medio.",
         "cites": [
           "PMID:35627332"
         ]
@@ -512,7 +512,7 @@
       },
       {
         "aspect": "function",
-        "es": "Contribuye a los movimientos de la rodilla y del tobillo.",
+        "es": "Colabora en los movimientos de la rodilla y del tobillo.",
         "cites": [
           "PMID:34217832"
         ]
@@ -530,21 +530,21 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 162 personas de 0 a 70 años estudiadas con ecografía, el ángulo de peneación del gastrocnemio medial creció desde el nacimiento hasta estabilizarse pasado el estirón puberal y guardó relación lineal con el grosor del músculo.",
+        "es": "La ecografía de 162 personas de entre 0 y 70 años mostró que el ángulo de peneación del gastrocnemio medial no es fijo: aumenta de forma continua desde el nacimiento, se estabiliza después del estirón puberal y guarda relación lineal con el grosor muscular.",
         "cites": [
           "PMID:11759268"
         ]
       },
       {
         "aspect": "function",
-        "es": "Con cargas transversales de 2, 4,5 y 10 kg aplicadas sobre la pantorrilla, la fuerza longitudinal de sus sacudidas evocadas cayó un 9, un 13 y un 16 %, respectivamente.",
+        "es": "Cargar transversalmente la pantorrilla redujo, en proporción al peso, la fuerza longitudinal de las sacudidas evocadas de sus músculos (9 %, 13 % y 16 % con 2, 4,5 y 10 kg), y bajo la carga el gastrocnemio medial perdió grosor y ángulo de peneación.",
         "cites": [
           "PMID:30792071"
         ]
       },
       {
         "aspect": "function",
-        "es": "En reposo, la rotación pasiva del tobillo alarga de forma notable su unidad musculotendinosa, mientras que la de la rodilla sólo influye sobre los fascículos con ángulos superiores a 144°.",
+        "es": "En diez varones en reposo, girar pasivamente el tobillo estiraba de forma apreciable la unidad musculotendinosa, en tanto que la rotación de la rodilla sólo modificaba la longitud fascicular y la peneación por encima de 144°.",
         "cites": [
           "PMID:16309922"
         ]
@@ -558,7 +558,7 @@
       },
       {
         "aspect": "function",
-        "es": "Al correr con calzado de suela más rígida, sus fascículos se acortaron menos y con menor velocidad, y aumentó el retorno de energía estimado del tendón calcáneo.",
+        "es": "Al correr con una entresuela más rígida a la flexión, sus fascículos se acortaron menos y con menor velocidad, y aumentó el retorno de energía estimado del tendón calcáneo.",
         "cites": [
           "PMID:33436965"
         ]
@@ -590,7 +590,7 @@
       },
       {
         "aspect": "function",
-        "es": "Ante inversiones bruscas del tobillo repetidas al caminar, la respuesta tardía terminó reclutando sobre todo a los peroneos y, en menor grado, al gastrocnemio lateral.",
+        "es": "En 12 sujetos sometidos a inversiones bruscas del tobillo repetidas al caminar, la respuesta tardía terminó reclutando sobre todo a los peroneos y, en menor grado, al gastrocnemio lateral.",
         "cites": [
           "PMID:17715190"
         ]
@@ -629,21 +629,21 @@
       },
       {
         "aspect": "function",
-        "es": "Permite que el pie pase de ser una estructura flexible que amortigua el apoyo y recibe el peso del cuerpo a una estructura rígida apta para el despegue.",
+        "es": "Gracias a ella, el pie se comporta primero como una estructura flexible que amortigua el choque del apoyo y recibe el peso, y luego se vuelve rígido para propulsar con eficacia en el despegue.",
         "cites": [
           "PMID:15062218"
         ]
       },
       {
         "aspect": "function",
-        "es": "Las estructuras de sostén de la articulación talonavicular controlan el arco longitudinal medial del pie.",
+        "es": "Del control del arco longitudinal medial se encargan los elementos de sostén de la articulación talonavicular.",
         "cites": [
           "PMID:15062218"
         ]
       },
       {
         "aspect": "function",
-        "es": "En tomografías en carga de cinco voluntarios, al llevar el retropié de valgo a varo el navicular giró 25,4° en varo respecto del astrágalo y el cuboides se desplazó 3,9 mm en sentido medial; el bloqueo articular podría deberse al tensado de ligamentos y cápsulas.",
+        "es": "En tomografías en carga de cinco voluntarios, al llevar el retropié de valgo a varo el navicular giró 25,4° en varo respecto del astrágalo y el cuboides se desplazó 3,9 mm en sentido medial respecto del calcáneo; el bloqueo articular podría deberse al tensado de ligamentos y cápsulas.",
         "cites": [
           "PMID:34378428"
         ]
@@ -696,7 +696,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En doce tobillos de cadáver, cuanto mayor fue la tensión inicial del injerto al reconstruir este ligamento, más anómalas resultaron la cinemática y la laxitud del tobillo.",
+        "es": "En doce tobillos de cadáver, cuanto mayor fue la tensión inicial del injerto al reconstruir este ligamento, más tendieron a alterarse la cinemática y la laxitud del tobillo.",
         "cites": [
           "PMID:30125125"
         ]
@@ -707,21 +707,21 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En pacientes jóvenes y activos con dolor isquémico de la pierna, intermitente o súbito, debe considerarse un síndrome de atrapamiento de la arteria poplítea, que se reconoce por la interrupción del segmento medio del vaso.",
+        "es": "Ante un dolor isquémico de pierna, intermitente o de comienzo brusco, en una persona joven y activa conviene pensar en un atrapamiento de la arteria poplítea, que se comprueba por la interrupción de la continuidad en el tramo medio del vaso.",
         "cites": [
           "PMID:3441390"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En el síndrome del sóleo, menos frecuente, quedan comprimidos en la fosa poplítea no sólo la arteria sino también nervios y venas.",
+        "es": "El síndrome del sóleo, relativamente raro, se distingue porque el atrapamiento alcanza, además de la arteria, a venas y nervios.",
         "cites": [
           "PMID:3441390"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "En 37 pacientes con traumatismo cerrado grave del miembro inferior y lesión vascular poplítea, se registraron errores de manejo en 10, sobre todo demoras en el diagnóstico de la lesión arterial.",
+        "es": "En 37 pacientes con traumatismo cerrado grave del miembro inferior y lesión vascular poplítea, se registraron errores de manejo graves en 10, en 7 de ellos por demora en el diagnóstico de la lesión vascular.",
         "cites": [
           "PMID:1864745"
         ]
@@ -784,7 +784,7 @@
         ]
       },
       {
-        "aspect": "parts",
+        "aspect": "function",
         "es": "En tobillos frescos congelados, el ligamento intacto soportó una carga de rotura media de 154,0 ± 63,7 N y mostró una rigidez de 14,5 ± 4,4 N por mm.",
         "cites": [
           "PMID:24280308",
@@ -793,7 +793,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En ese modelo, la reparación de Broström sin refuerzo ofrecía de entrada menos de la mitad de la resistencia del ligamento intacto, mientras que el refuerzo con cinta de sutura la igualaba o superaba.",
+        "es": "Los autores señalan que la reparación de Broström convencional ofrece de entrada menos de la mitad de la resistencia del ligamento intacto; en su modelo cadavérico, el refuerzo con cinta de sutura, solo o asociado a esa reparación, igualó o superó la resistencia y la rigidez del ligamento nativo.",
         "cites": [
           "PMID:24275864"
         ]
@@ -818,28 +818,28 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "En doce tobillos frescos congelados, el ligamento talofibular posterior se originaba siempre en la fosa maleolar lateral.",
+        "es": "La fosa maleolar lateral fue el origen constante del ligamento talofibular posterior en los doce tobillos frescos congelados disecados.",
         "cites": [
           "PMID:39818474"
         ]
       },
       {
         "aspect": "parts",
-        "es": "En esas piezas tenía dos fascículos con inserciones separadas: el superficial en la cara posterolateral del astrágalo y el profundo en la parte posterior de su apófisis lateral.",
+        "es": "Esas disecciones mostraron que no es un haz único sino dos, superficial y profundo, que se fijan por separado en el astrágalo: el primero en su cara posterolateral y el segundo en la parte posterior de la apófisis lateral.",
         "cites": [
           "PMID:39818474"
         ]
       },
       {
         "aspect": "situation",
-        "es": "En diez tobillos disecados discurría en sentido horizontal desde el peroné hasta un tubérculo saliente de la cara posterior del astrágalo.",
+        "es": "Al abrir por detrás las articulaciones tibioastragalina y subastragalina de diez tobillos, se lo veía recorrer horizontalmente el trayecto entre el peroné y un tubérculo prominente de la cara posterior del astrágalo.",
         "cites": [
           "PMID:18633563"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Las cápsulas de las articulaciones tibioastragalina y subastragalina se reunían lateralmente sobre su borde posterior.",
+        "es": "Por fuera, su borde posterior es el punto donde confluyen las cápsulas tibioastragalina y subastragalina.",
         "cites": [
           "PMID:18633563"
         ]
@@ -871,7 +871,7 @@
       },
       {
         "aspect": "parts",
-        "es": "Un metaanálisis de 2789 pies estimó una prevalencia real del 31,3 % para la ausencia de su cuarto fascículo, con cifras del 77,3 % en poblaciones de la India y cercanas al 20 % en otras.",
+        "es": "Un metaanálisis de 22 estudios con 2789 pies estimó una prevalencia real del 31,3 % para la ausencia de su cuarto fascículo, del 77,3 % en poblaciones de la India y en torno al 20 % en poblaciones japonesas, chinas, estadounidenses, europeas y turcas.",
         "cites": [
           "PMID:26738260"
         ]
@@ -892,7 +892,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 18 personas con puntos gatillo miofasciales en este músculo, la punción seca modificó las presiones plantares: bajó la presión máxima del retropié y aumentaron las del mediopié.",
+        "es": "En 18 personas con puntos gatillo miofasciales en este músculo, la punción seca modificó las presiones plantares: bajó la presión máxima del retropié y subió la presión media del mediopié.",
         "cites": [
           "PMID:33451013"
         ]
@@ -903,7 +903,7 @@
     "sentences": [
       {
         "aspect": "irrigation",
-        "es": "En 11 cadáveres, la rama descendente de la arteria circunfleja femoral lateral emitía perforantes hacia el vasto intermedio y nutría un colgajo musculoperióstico de unos 128 cm2 de superficie media.",
+        "es": "En 11 cadáveres, la rama descendente de la arteria circunfleja femoral lateral, con sus perforantes hacia el vasto intermedio, nutría un colgajo musculoperióstico de unos 128 cm² de superficie media.",
         "cites": [
           "PMID:20186660"
         ]
@@ -949,7 +949,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "El nervio sural es un nervio sensitivo de pequeño calibre que discurre por el tejido subcutáneo de la pantorrilla.",
+        "es": "Se trata de un nervio fino, de función sensitiva, que recorre el tejido subcutáneo de la pantorrilla.",
         "cites": [
           "PMID:29027686"
         ]
@@ -1020,7 +1020,7 @@
       },
       {
         "aspect": "function",
-        "es": "Junto con el gemelo superior, contribuye a la rotación lateral y a la estabilización de la cadera.",
+        "es": "Su función, compartida con el gemelo superior, es la de rotar lateralmente la cadera y contribuir a estabilizarla.",
         "cites": [
           "PMID:42455141"
         ]
@@ -1041,7 +1041,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Se ha descrito un caso en que la tumefacción del gemelo inferior con un hematoma simulaba una ciática; la ecografía puede pasarla por alto, por lo que se prefirió confirmarla con resonancia.",
+        "es": "En un caso, la tumefacción del gemelo inferior con un hematoma simuló una ciática; la ecografía orientó el diagnóstico y la resonancia lo confirmó, y los autores advierten que en la ecografía el músculo es fácil de pasar por alto.",
         "cites": [
           "PMID:35626236"
         ]
@@ -1059,7 +1059,7 @@
       },
       {
         "aspect": "function",
-        "es": "Interviene en la rotación lateral y la estabilización de la articulación de la cadera.",
+        "es": "Colabora en la rotación lateral de la cadera y en su estabilidad.",
         "cites": [
           "PMID:42455141"
         ]
@@ -1073,7 +1073,7 @@
       },
       {
         "aspect": "relations",
-        "es": "Se ha descrito una variante en la que el nervio peroneo común pasaba por encima del gemelo superior y el nervio tibial por debajo de él.",
+        "es": "En una variante con división alta del nervio ciático, el gemelo superior quedaba entre sus dos componentes: el peroneo común por encima y el tibial por debajo.",
         "cites": [
           "PMID:15121548"
         ]
@@ -1084,14 +1084,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "En 4 pies fetales y 34 adultos, el primer ramo del nervio plantar lateral estuvo siempre presente y se dirigía lateralmente, justo distal a la apófisis medial de la tuberosidad calcánea, hacia la porción proximal del abductor del quinto dedo.",
+        "es": "Constante en 4 pies fetales y 34 adultos, el primer ramo del nervio plantar lateral se dirige hacia fuera, hasta la parte proximal del abductor del quinto dedo, pasando justo distal a la apófisis medial de la tuberosidad del calcáneo.",
         "cites": [
           "PMID:3425404"
         ]
       },
       {
         "aspect": "innervation",
-        "es": "Ese ramo inerva el flexor corto de los dedos y, en los adultos, envía fibras al periostio de la apófisis medial de la tuberosidad calcánea y al ligamento plantar largo.",
+        "es": "Por sus dos ramas inerva el flexor corto de los dedos y, en los adultos, aporta fibras al periostio que rodea la apófisis medial de la tuberosidad calcánea y al ligamento plantar largo.",
         "cites": [
           "PMID:3425404"
         ]
@@ -1112,7 +1112,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El primer ramo puede quedar atrapado entre el abductor del dedo gordo y la cabeza medial del cuadrado plantar, lo que podría explicar el dolor característico del síndrome doloroso del talón.",
+        "es": "Su posible punto de atrapamiento está entre el abductor del dedo gordo y la cabeza medial del cuadrado plantar; los autores sugieren que su carácter mixto, sensitivo para el periostio calcáneo y motor para varios músculos, podría explicar el dolor típico del síndrome doloroso del talón.",
         "cites": [
           "PMID:3425404"
         ]

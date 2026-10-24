@@ -3,14 +3,14 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es una cavidad neumática del esqueleto facial alojada dentro del hueso maxilar.",
+        "es": "Cavidad aérea excavada en el maxilar, forma parte del esqueleto de la cara.",
         "cites": [
           "PMID:2098563"
         ]
       },
       {
         "aspect": "relations",
-        "es": "Guarda una relación muy estrecha con las raíces de los dientes maxilares posteriores.",
+        "es": "Las raíces de los dientes posteriores del maxilar superior quedan en contacto íntimo con su cavidad.",
         "cites": [
           "PMID:31386556",
           "PMID:39142996"
@@ -18,7 +18,7 @@
       },
       {
         "aspect": "relations",
-        "es": "Se vincula con ramas del nervio trigémino y de la arteria carótida externa, cuyo conocimiento es necesario para interpretar su imagen.",
+        "es": "Interpretar bien sus imágenes exige conocer cómo se vincula con los espacios fasciales profundos y con ramas del trigémino y de la carótida externa.",
         "cites": [
           "PMID:31386556"
         ]
@@ -32,7 +32,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Por su vecindad con la dentición maxilar, es el primer seno paranasal que se afecta en las infecciones de origen dental.",
+        "es": "De todos los senos paranasales, es el que primero se compromete en las infecciones odontógenas, por su cercanía con los dientes superiores.",
         "cites": [
           "PMID:39142996"
         ]
@@ -50,14 +50,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Los colobomas congénitos del iris se deben a un cierre incompleto de la fisura fetal durante la organogénesis.",
+        "es": "El coloboma congénito, que puede reducirse a un orificio en el iris, obedece a que la fisura fetal no termina de cerrarse durante la organogénesis.",
         "cites": [
           "PMID:30123404"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "De 1.043 melanomas de iris recopilados en la literatura, 31 (3 %) dieron metástasis.",
+        "es": "Sólo 31 de 1043 melanomas de iris publicados (3 %) llegaron a metastatizar.",
         "cites": [
           "PMID:4014387"
         ]
@@ -82,14 +82,14 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Es un tejido conectivo denso, fibroso y viscoelástico que constituye la capa externa del globo ocular.",
+        "es": "La cubierta más externa del globo ocular corresponde a este tejido conectivo denso y fibroso, de comportamiento viscoelástico.",
         "cites": [
           "PMID:16202407"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su matriz se organiza en láminas de fibrillas colágenas de disposición irregular, entre las que se sitúan los fibroblastos esclerales que la sintetizan.",
+        "es": "Los fibroblastos esclerales, alojados entre láminas de fibrillas colágenas dispuestas sin orden regular, producen la matriz que los rodea.",
         "cites": [
           "PMID:16202407"
         ]
@@ -117,7 +117,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La miopía alta se caracteriza por adelgazamiento escleral y ectasia localizada de la esclera posterior.",
+        "es": "En la miopía alta la esclera se adelgaza y su segmento posterior puede formar una ectasia localizada.",
         "cites": [
           "PMID:16202407"
         ]
@@ -128,14 +128,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Situada en la retina, reúne conos densamente agrupados y es responsable de la visión de alta agudeza.",
+        "es": "En esta región de la retina se apiñan los conos que sostienen la visión de máxima agudeza.",
         "cites": [
           "PMID:25709091"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su porción central e interna está formada por una zona de células de Müller con forma de cono.",
+        "es": "Un cono de células de Müller, poco reconocido por anatomistas y patólogos, ocupa su parte central e interna.",
         "cites": [
           "PMID:10369597"
         ]
@@ -206,7 +206,7 @@
     "sentences": [
       {
         "aspect": "parts",
-        "es": "Su epitelio contiene células caliciformes especializadas que vierten mucinas sobre la superficie ocular.",
+        "es": "Intercaladas en su epitelio, las células caliciformes liberan mucinas hacia la superficie del ojo.",
         "cites": [
           "PMID:27091323"
         ]
@@ -220,14 +220,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los linfomas conjuntivales representan el 25 % de los linfomas de los anexos oculares, y el 98 % de ellos son linfomas no hodgkinianos de células B.",
+        "es": "Una cuarta parte de los linfomas de los anexos oculares asientan aquí, y casi todos ellos (98 %) son no hodgkinianos de estirpe B.",
         "cites": [
           "PMID:26003619"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Las proliferaciones melanocíticas figuran entre las neoplasias conjuntivales más frecuentes.",
+        "es": "Entre los tumores de esta mucosa, los de origen melanocítico están entre los más comunes.",
         "cites": [
           "PMID:21128776"
         ]
@@ -245,7 +245,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es la principal fuente de la capa acuosa de la película lagrimal, a la que aporta agua, electrolitos y proteínas.",
+        "es": "El agua, los electrolitos y las proteínas de la capa acuosa de la lágrima provienen sobre todo de esta glándula.",
         "cites": [
           "PMID:16309672",
           "PMID:19376264"
@@ -268,14 +268,14 @@
       },
       {
         "aspect": "innervation",
-        "es": "En ese material, la mayoría de las terminaciones del parénquima tenían aspecto de terminales parasimpáticas colinérgicas.",
+        "es": "En ese material, todas las fibras del parénquima y la mayoría de las intersticiales tenían el aspecto de terminales colinérgicas parasimpáticas.",
         "cites": [
           "PMID:1149078"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La disminución de su secreción es la causa principal del ojo seco por déficit acuoso.",
+        "es": "El ojo seco por déficit acuoso obedece ante todo a que esta glándula secreta poco o nada.",
         "cites": [
           "PMID:16309672"
         ]
@@ -300,7 +300,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La disfunción de las glándulas de Meibomio es una inflamación ocular crónica muy extendida.",
+        "es": "Su disfunción, una inflamación ocular crónica de alcance epidémico, todavía carece de un tratamiento eficaz bien establecido.",
         "cites": [
           "PMID:31119774"
         ]
@@ -318,14 +318,14 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Es el receptor auditivo: las vibraciones del estribo generan ondas que recorren la membrana basilar, alargada y enrollada en espiral.",
+        "es": "Actúa como receptor del oído: al vibrar, el estribo desencadena ondas de desplazamiento a lo largo de una membrana basilar larga y espiral.",
         "cites": [
           "PMID:11427697"
         ]
       },
       {
         "aspect": "function",
-        "es": "Las ondas de alta frecuencia alcanzan su máximo en la base, cerca del estribo, y las de baja frecuencia se acercan al vértice.",
+        "es": "Cada punto de la membrana responde mejor a una frecuencia: los agudos en la base, junto al estribo, y los graves hacia el vértice.",
         "cites": [
           "PMID:11427697"
         ]
@@ -346,7 +346,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Más del 80 % de las sorderas se relacionan con la muerte o degeneración de las células ciliadas cocleares y de las neuronas del ganglio espiral.",
+        "es": "La muerte o degeneración de sus células ciliadas y de las neuronas del ganglio espiral interviene en más del 80 % de las sorderas.",
         "cites": [
           "PMID:29770645"
         ]
@@ -385,7 +385,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La resonancia de alta resolución a 3 T permite visualizar su epitelio neurosensorial.",
+        "es": "Con técnicas rápidas de espín-eco, la resonancia a 3 T ya alcanza a mostrar su epitelio neurosensorial.",
         "cites": [
           "PMID:18388217"
         ]
@@ -410,7 +410,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La dilatación del conducto y del saco endolinfáticos es una de las anomalías más frecuentes en la hipoacusia neurosensorial congénita.",
+        "es": "En la hipoacusia neurosensorial congénita, pocas anomalías se ven tanto como el agrandamiento conjunto del conducto y del saco endolinfáticos.",
         "cites": [
           "PMID:10512225"
         ]
@@ -424,7 +424,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Esa dilatación acompaña con frecuencia al síndrome de Pendred.",
+        "es": "El síndrome de Pendred suele cursar con ese agrandamiento, aunque las mutaciones del gen PDS quizá no sean su única causa.",
         "cites": [
           "PMID:14972391"
         ]
@@ -449,14 +449,14 @@
       },
       {
         "aspect": "parts",
-        "es": "Su altura y su anchura se reducen con rapidez en los primeros 1,5 mm desde la ventana redonda y después de forma gradual.",
+        "es": "Desde la ventana redonda, sus dimensiones caen bruscamente en el primer milímetro y medio y luego decrecen de manera paulatina.",
         "cites": [
           "PMID:2241011"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su anchura supera de forma constante a su altura.",
+        "es": "Es sistemáticamente más ancha que alta.",
         "cites": [
           "PMID:2241011"
         ]
@@ -477,7 +477,7 @@
       },
       {
         "aspect": "relations",
-        "es": "Por detrás de esa zona, el acueducto coclear y la vena coclear inferior quedaban expuestos a lesión.",
+        "es": "Más atrás de esa zona corren peligro el acueducto coclear y la vena coclear inferior.",
         "cites": [
           "PMID:30100542"
         ]
@@ -491,14 +491,14 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "Su dilatación es la anomalía del oído interno más frecuente en niños con hipoacusia neurosensorial.",
+        "es": "En los niños con hipoacusia neurosensorial, ninguna malformación del oído interno se detecta tanto como su agrandamiento.",
         "cites": [
           "PMID:22116369"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "El síndrome de Pendred, causado por mutaciones de SLC26A4, combina hipoacusia neurosensorial bilateral con acueducto vestibular dilatado.",
+        "es": "Las mutaciones de SLC26A4 producen el síndrome de Pendred, en el que un acueducto agrandado se asocia a sordera neurosensorial bilateral.",
         "cites": [
           "PMID:22116369"
         ]
@@ -537,7 +537,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Convierte las ondas sonoras del conducto auditivo externo en vibración mecánica que transmite al oído medio.",
+        "es": "Recibe el sonido que llega por el conducto auditivo y lo entrega al oído medio en forma de vibración mecánica.",
         "cites": [
           "PMID:21376326",
           "PMID:17160465"
@@ -566,7 +566,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La perforación timpánica es el signo más frecuente en las personas expuestas a una onda expansiva.",
+        "es": "Entre quienes sufren una onda expansiva, ningún hallazgo es tan habitual como su perforación.",
         "cites": [
           "PMID:35243914"
         ]
@@ -612,7 +612,7 @@
       },
       {
         "aspect": "parts",
-        "es": "En fetos humanos normales, su base o placa podal se forma desde la semana 16 de edad menstrual a partir de osificaciones bilaterales situadas bajo un cuerpo en forma de U.",
+        "es": "Durante el desarrollo fetal normal, su placa podal aparece hacia la semana 16 de edad menstrual a partir de dos osificaciones situadas bajo el cuerpo en U.",
         "cites": [
           "PMID:15352859"
         ]
@@ -634,7 +634,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 95 pacientes con fisura labiopalatina unilateral, el cierre del paladar duro con colgajo de vómer afectó menos el crecimiento maxilar que la técnica de dos colgajos.",
+        "es": "En 95 pacientes con fisura labiopalatina unilateral, cerrar el paladar duro con colgajo de vómer pareció perjudicar menos el crecimiento maxilar que la técnica de dos colgajos.",
         "cites": [
           "PMID:23943257"
         ]
@@ -776,7 +776,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es un músculo cervical pequeño que nace de la apófisis transversa del atlas y se inserta en la apófisis yugular del occipital.",
+        "es": "Este pequeño músculo del cuello va de la apófisis transversa del atlas a la apófisis yugular del occipital.",
         "cites": [
           "PMID:31082563",
           "PMID:37658911"
@@ -784,14 +784,14 @@
       },
       {
         "aspect": "relations",
-        "es": "Se sitúa inmediatamente por detrás de la vena yugular interna y de los nervios craneales IX a XI a su salida del agujero yugular.",
+        "es": "La vena yugular interna y los nervios IX a XI, al abandonar el agujero yugular, pasan justo por delante de él.",
         "cites": [
           "PMID:31082563"
         ]
       },
       {
         "aspect": "relations",
-        "es": "La arteria occipital discurre entre este músculo y el vientre posterior del digástrico.",
+        "es": "Entre él y el vientre posterior del digástrico se abre paso la arteria occipital.",
         "cites": [
           "PMID:31082563"
         ]
@@ -812,7 +812,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Es una referencia quirúrgica clave en los abordajes posterior y lateral del agujero yugular.",
+        "es": "En los abordajes del agujero yugular sirve de hito para reconocer pronto la arteria vertebral, la vena yugular interna, el nervio facial y los pares IX a XII.",
         "cites": [
           "PMID:31082563"
         ]
@@ -837,7 +837,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La fisura palatina submucosa, la malformación congénita más común del paladar posterior, se caracteriza en parte por la diástasis de estos músculos.",
+        "es": "La diástasis de estos músculos es uno de los rasgos de la fisura submucosa, la malformación congénita que más a menudo afecta al paladar posterior.",
         "cites": [
           "PMID:30368399"
         ]
@@ -862,7 +862,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los meningiomas de esta localización crecen despacio y sus síntomas dependen de la afectación de la médula, la arteria vertebral, los nervios craneales bajos y el bulbo raquídeo.",
+        "es": "Los meningiomas ubicados aquí son de crecimiento lento y dan síntomas distintos según comprometan la médula, el bulbo, la arteria vertebral o los nervios craneales bajos.",
         "cites": [
           "PMID:32586488"
         ]
@@ -891,7 +891,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La siringomielia se acompaña a menudo de una lesión extramedular en este agujero, sobre todo una malformación de Chiari I.",
+        "es": "La malformación de Chiari I es la lesión extramedular de este agujero que con más frecuencia acompaña a la siringomielia.",
         "cites": [
           "PMID:15140600"
         ]
@@ -1008,7 +1008,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "En las fracturas desplazadas de la apófisis condilar a nivel del cuello mandibular se observaron siempre alteraciones de las partes blandas vecinas y de los elementos de la articulación temporomandibular.",
+        "es": "Cuando la fractura del cóndilo a la altura del cuello se desplaza, invariablemente se alteran las partes blandas del foco y las estructuras de la articulación temporomandibular.",
         "cites": [
           "PMID:21378713"
         ]
@@ -1029,7 +1029,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "Da inserción a los músculos temporal y masetero, por lo que participa en la masticación.",
+        "es": "Los músculos temporal y masetero se fijan en ella, lo que le da un papel importante en la masticación.",
         "cites": [
           "PMID:32190994"
         ]
@@ -1061,14 +1061,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "Desde el fondo del conducto auditivo interno llega a la cóclea a través del canal óseo del nervio coclear.",
+        "es": "Para alcanzar la cóclea desde el fondo del conducto auditivo interno recorre un canal óseo propio.",
         "cites": [
           "PMID:33683976"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La estenosis de ese canal, definida por un diámetro transversal menor de 1,0 mm, se asocia con anomalías del oído interno e hipoacusia congénita severa a profunda.",
+        "es": "Se habla de estenosis cuando ese canal mide menos de 1,0 mm de diámetro transversal, hallazgo que se acompaña de malformaciones del oído interno y de sordera congénita severa o profunda.",
         "cites": [
           "PMID:33683976",
           "PMID:30353559"
@@ -1076,14 +1076,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "Alrededor del 2 % de las sorderas profundas congénitas se deben a deficiencia del nervio coclear.",
+        "es": "Su deficiencia explica cerca del 2 % de las sorderas profundas de origen congénito.",
         "cites": [
           "PMID:29794457"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La resonancia es esencial para confirmar esa deficiencia, aunque a menudo no permite distinguir entre hipoplasia y aplasia.",
+        "es": "Aunque la resonancia es imprescindible para confirmar esa deficiencia, su resolución a menudo no basta para separar la hipoplasia de la aplasia.",
         "cites": [
           "PMID:29794457"
         ]
@@ -1140,7 +1140,7 @@
       },
       {
         "aspect": "parts",
-        "es": "En 1.338 escolares egipcios de 7 a 12 años se establecieron valores de referencia de su longitud, con diferencias por sexo en algunos grupos.",
+        "es": "En 1338 escolares egipcios de 7 a 12 años se establecieron valores de referencia de su longitud, con diferencias por sexo en algunos grupos.",
         "cites": [
           "PMID:29681097"
         ]
@@ -1158,7 +1158,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Se abre en el ala mayor del esfenoides y comunica la fosa craneal media con la fosa pterigopalatina.",
+        "es": "Ubicado en el ala mayor del esfenoides, pone en comunicación la fosa craneal media con la fosa pterigopalatina.",
         "cites": [
           "PMID:42406098"
         ]
@@ -1206,21 +1206,21 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Es un conducto óseo complejo que lleva vasos y nervios desde la fosa craneal posterior, a través de la base del cráneo, hasta el espacio carotídeo.",
+        "es": "A través de este complejo canal de la base del cráneo, vasos y nervios pasan de la fosa posterior al espacio carotídeo.",
         "cites": [
           "PMID:9651055"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Desde el punto de vista microquirúrgico se divide en tres compartimentos: dos venosos y uno nervioso o intrayugular.",
+        "es": "Los estudios microquirúrgicos le reconocen tres compartimentos: uno nervioso, llamado intrayugular, y dos venosos.",
         "cites": [
           "PMID:9218307"
         ]
       },
       {
         "aspect": "parts",
-        "es": "Su porción sigmoidea, posterolateral y mayor, recibe el seno sigmoideo, y la petrosa, anteromedial y menor, el seno petroso inferior.",
+        "es": "El seno petroso inferior drena en el compartimento venoso anteromedial, más pequeño, y el seno sigmoideo en el posterolateral, más amplio.",
         "cites": [
           "PMID:9218307"
         ]
@@ -1241,7 +1241,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Los paragangliomas son los tumores más frecuentes de esta región.",
+        "es": "Ningún tumor asienta aquí con tanta frecuencia como el paraganglioma.",
         "cites": [
           "PMID:38700686"
         ]
@@ -1273,14 +1273,14 @@
       },
       {
         "aspect": "irrigation",
-        "es": "En 24 colgajos musculocutáneos de platisma, el pedículo superior fue la rama submentoniana de la arteria facial y el inferior, la rama superficial de la arteria cervical transversa.",
+        "es": "En 24 colgajos musculocutáneos de platisma se usó casi siempre como pedículo la rama submentoniana de la arteria facial (22 casos) y, en dos, la rama superficial de la arteria cervical transversa.",
         "cites": [
           "PMID:6611753"
         ]
       },
       {
         "aspect": "function",
-        "es": "Interviene en rasgos del cuello envejecido, como las bandas verticales y la pérdida del contorno facial inferior.",
+        "es": "Las bandas verticales y la pérdida del contorno inferior de la cara propias del cuello envejecido guardan relación con este músculo superficial.",
         "cites": [
           "PMID:28394862"
         ]
@@ -1358,7 +1358,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "El volumen de sus células podría ser un factor importante en la salida del humor acuoso.",
+        "es": "Se ha propuesto que el volumen de sus células podría condicionar en buena medida el drenaje del humor acuoso.",
         "cites": [
           "PMID:16769051"
         ]
@@ -1376,7 +1376,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "Se une a la división posterior de la vena retromandibular para formar la vena yugular externa.",
+        "es": "Junto con la rama posterior de la vena retromandibular, da origen a la yugular externa.",
         "cites": [
           "PMID:32149966"
         ]
@@ -1433,7 +1433,7 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "La capa superficial de la fascia temporal forma parte de ella y cubre casi toda la cara lateral del cráneo.",
+        "es": "Se prolonga por los lados del cráneo como capa superficial de la fascia temporal, que tapiza casi toda su cara lateral.",
         "cites": [
           "PMID:1875131"
         ]
@@ -1447,7 +1447,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La hemorragia subgaleal se acumula entre esta aponeurosis y el periostio, tras la rotura de venas emisarias.",
+        "es": "La rotura de venas emisarias puede llenar de sangre el espacio que la separa del periostio: es la hemorragia subgaleal.",
         "cites": [
           "PMID:27483567"
         ]
@@ -1514,7 +1514,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Se aloja en la porción petrosa del temporal y conduce la arteria carótida interna, su plexo venoso y el plexo simpático desde el cuello hasta la cavidad craneal.",
+        "es": "Excavado en el peñasco del temporal, lleva del cuello al interior del cráneo la carótida interna junto con su plexo venoso y el plexo simpático.",
         "cites": [
           "PMID:27714731"
         ]
@@ -1560,14 +1560,14 @@
     "sentences": [
       {
         "aspect": "relations",
-        "es": "Por él pasa el nervio hipogloso, que inerva los músculos de la lengua.",
+        "es": "Lo recorre el nervio destinado a la musculatura de la lengua, el hipogloso.",
         "cites": [
           "PMID:9560291"
         ]
       },
       {
-        "aspect": "parts",
-        "es": "Es absoluta y relativamente mayor en el ser humano actual que en los grandes simios africanos.",
+        "aspect": "function",
+        "es": "Su tamaño, mayor en el ser humano actual que en chimpancés y gorilas tanto en términos absolutos como relativos, se ha propuesto como posible indicio de la evolución del habla.",
         "cites": [
           "PMID:9560291"
         ]
@@ -1581,7 +1581,7 @@
       },
       {
         "aspect": "irrigation",
-        "es": "Un plexo venoso rodea los haces del nervio en toda la longitud del conducto.",
+        "es": "A lo largo de todo su paso por el conducto, el nervio va envuelto por un plexo venoso.",
         "cites": [
           "PMID:10853319"
         ]
@@ -1613,7 +1613,7 @@
       },
       {
         "aspect": "situation",
-        "es": "En 55 especímenes de varones japoneses, sus haces de origen se fijaban, según el tipo, mediante un tendón a la lámina pterigoidea medial o a la pared posterior del maxilar, o directamente al periostio de la cara interna de la lámina lateral.",
+        "es": "En un estudio en varones japoneses, sus haces de origen se fijaban, según el tipo, mediante un tendón a la lámina pterigoidea medial o a la pared posterior del maxilar, o directamente al periostio de la cara interna de la lámina lateral.",
         "cites": [
           "PMID:9566137"
         ]
@@ -1634,14 +1634,14 @@
       },
       {
         "aspect": "clinical",
-        "es": "En 83 pacientes tratados con quimiorradioterapia, la dosis media recibida por este músculo predijo el trismo, con un punto de corte óptimo de 58 Gy.",
+        "es": "En 83 pacientes tratados con quimiorradioterapia, la dosis media en el pterigoideo medial homolateral predijo el trismo, con un punto de corte óptimo de 58 Gy.",
         "cites": [
           "PMID:30652390"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "La miositis osificante traumática de los músculos masticadores se comunica poco y suele manifestarse por una limitación progresiva del movimiento mandibular.",
+        "es": "Hay pocos casos publicados de miositis osificante traumática en los músculos masticadores, y en ellos el hallazgo dominante es que la movilidad de la mandíbula se va limitando.",
         "cites": [
           "PMID:24624256"
         ]
@@ -1666,7 +1666,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "Su deficiencia se considera la forma más leve de displasia coclear.",
+        "es": "Dentro del espectro de las displasias cocleares, su deficiencia se ha descrito como el grado más leve.",
         "cites": [
           "PMID:15318954"
         ]
@@ -1684,7 +1684,7 @@
     "sentences": [
       {
         "aspect": "situation",
-        "es": "Suele situarse a la altura del ápice del segundo premolar inferior o entre los ápices de ambos premolares.",
+        "es": "Lo habitual es encontrarlo bajo el ápice del segundo premolar inferior o entre los ápices de los dos premolares.",
         "cites": [
           "PMID:17209776"
         ]
@@ -1719,7 +1719,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "El agujero mentoniano accesorio es una variante rara, con una prevalencia descrita entre el 1,4 y el 10 %.",
+        "es": "Como variante poco común puede existir además un agujero mentoniano accesorio, cuya prevalencia publicada va del 1,4 al 10 %.",
         "cites": [
           "PMID:22707601"
         ]
@@ -1765,7 +1765,7 @@
       },
       {
         "aspect": "clinical",
-        "es": "La otorraquia espontánea de líquido cefalorraquídeo en adultos suele asociarse a defectos del tegmen.",
+        "es": "Cuando un adulto pierde líquido cefalorraquídeo por el oído sin causa identificable, lo habitual es encontrar un defecto del tegmen.",
         "cites": [
           "PMID:29283104"
         ]
@@ -1804,14 +1804,14 @@
       },
       {
         "aspect": "relations",
-        "es": "Se articula con el cartílago septal dorsal.",
+        "es": "La pieza con la que se articula es el cartílago septal dorsal.",
         "cites": [
           "PMID:38747457"
         ]
       },
       {
         "aspect": "clinical",
-        "es": "Cuando se debilita tiende a colapsarse y puede causar obstrucción nasal.",
+        "es": "Su debilitamiento lo predispone al colapso, con la consiguiente posibilidad de obstrucción nasal.",
         "cites": [
           "PMID:38747457"
         ]
@@ -1892,7 +1892,7 @@
       },
       {
         "aspect": "function",
-        "es": "En sujetos asintomáticos, su actividad electromiográfica aumentó de forma significativa durante la retracción voluntaria de la cabeza.",
+        "es": "Retraer voluntariamente la cabeza lo activa de forma significativa, según electromiografía intramuscular en adultos asintomáticos de 20 a 40 años.",
         "cites": [
           "PMID:25108753"
         ]
@@ -1910,7 +1910,7 @@
       },
       {
         "aspect": "relations",
-        "es": "Las fibras de ese puente se orientaban sobre todo en perpendicular a la duramadre, disposición que parece oponerse a su desplazamiento hacia la médula.",
+        "es": "Como sus fibras corren mayormente perpendiculares a la duramadre, ese puente parecería impedir que esta se desplace hacia la médula.",
         "cites": [
           "PMID:8610241"
         ]
@@ -1971,7 +1971,7 @@
       },
       {
         "aspect": "parts",
-        "es": "El omohioideo tiene un origen embriológico distinto del de los demás músculos del cuello y presenta variaciones como ausencia, orígenes e inserciones variables o vientres múltiples.",
+        "es": "Dentro de este grupo, el omohioideo se distingue por su origen embriológico propio y por variaciones como su ausencia, orígenes o inserciones atípicos o la presencia de varios vientres.",
         "cites": [
           "PMID:20879073"
         ]
@@ -1996,7 +1996,7 @@
     "sentences": [
       {
         "aspect": "clinical",
-        "es": "La inyección percutánea de toxina botulínica en este músculo, guiada por electromiografía laríngea, se considera el tratamiento de referencia de varios trastornos neurolaríngeos.",
+        "es": "Para varios trastornos neurolaríngeos, el patrón de referencia es inyectarle toxina botulínica por vía anterior percutánea bajo control electromiográfico.",
         "cites": [
           "PMID:36773100"
         ]
@@ -2068,7 +2068,7 @@
     "sentences": [
       {
         "aspect": "function",
-        "es": "Al sonreír desciende la punta nasal y acorta el labio superior.",
+        "es": "Durante la sonrisa tira hacia abajo de la punta de la nariz y reduce la altura del labio superior.",
         "cites": [
           "PMID:25076456",
           "PMID:10627007"
