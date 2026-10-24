@@ -67,8 +67,10 @@ export interface PdfExportOptions {
   /** Datos de más para el bloque de metadatos (vigencia, estado). */
   readonly meta?: readonly PdfMetaEntry[];
   /**
-   * Cuándo se emitió el papel. Va en el bloque de metadatos y en el pie de
-   * todas las páginas. Por omisión, el momento en que se genera.
+   * Cuándo se emitió el papel. Va en la portada («Fecha de emisión») y en el
+   * pie de todas las páginas («Emitido el …»). Sin ella, el papel dice la fecha
+   * en que **se generó** y lo rotula así («Fecha de generación», «Generado el
+   * …»): nunca presenta la fecha de descarga como si fuera la de emisión.
    */
   readonly issuedAt?: Date;
   /** Quién lo emite. Por omisión, AloVida. */
@@ -80,7 +82,10 @@ export interface PdfExportOptions {
    * del contenido.
    */
   readonly watermark?: string;
-  /** Papel sin la franja de marca, para artículos extensos con imágenes clínicas. */
+  /**
+   * Papel claro: portada sin el degradado oscuro y sin las franjas de borde,
+   * para artículos extensos con imágenes clínicas.
+   */
   readonly plainPaper?: boolean;
   /**
    * El logo del consultorio, arriba a la derecha de la primera página.

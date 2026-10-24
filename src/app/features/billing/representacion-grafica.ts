@@ -183,6 +183,9 @@ export function construirRepresentacionGrafica(factura: SimulatedInvoice, qrPng:
     reference: `N.º ${factura.invoiceNumber}`,
     subtitle: `${factura.issuer.legalName} · ${fechaYHora(factura.issuedAt)}`,
     footerNote: 'Factura SIMULADA · Sin validez fiscal · No emitida ante el SIN · AloVida',
+    // Una factura la emite la razón social, no el médico de la sesión: sin
+    // bloque de firma. Además, el bloque iría donde se estampa el QR.
+    firma: null,
   });
   marcarComoSimulado(documento);
   if (qrPng !== null) agregarQr(documento, qrPng);

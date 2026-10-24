@@ -29,7 +29,6 @@ en el paquete inicial.
 | `poppins-500.ttf` | Poppins Medium (v4.004) | Subtítulos y rótulos | `500Medium/Poppins_500Medium.ttf` del paquete npm **`@expo-google-fonts/poppins` 0.4.1** (Google Fonts), recortado con `pyftsubset` al rango latino de abajo | SIL Open Font License 1.1 |
 | `poppins-600.ttf` | Poppins SemiBold (v4.004) | Títulos, portada, secciones, total a pagar | Mismo binario que `assets/fonts/Poppins-SemiBold.ttf` del repo móvil (Google Fonts) | SIL Open Font License 1.1 |
 | `nunito-sans-400.ttf` | Nunito Sans Regular (v3.101) | Cuerpo y datos | `400Regular/NunitoSans_400Regular.ttf` del paquete npm **`@expo-google-fonts/nunito-sans` 0.4.2** (Google Fonts), recortado con `pyftsubset` | SIL Open Font License 1.1 |
-| `nunito-sans-600.ttf` | Nunito Sans SemiBold (v3.101) | Reserva: peso intermedio, por si un rótulo de texto lo pide | `600SemiBold/NunitoSans_600SemiBold.ttf` del mismo paquete, recortado igual | SIL Open Font License 1.1 |
 | `nunito-sans-700.ttf` | Nunito Sans Bold (v3.101) | Datos destacados y cifras | `700Bold/NunitoSans_700Bold.ttf` del mismo paquete, recortado igual | SIL Open Font License 1.1 |
 | `inter-400.ttf` | Inter Regular (estática) | **Ya no la usa el papel** desde que adoptó la identidad AloVida (Nunito Sans); queda por compatibilidad con enlaces viejos | `extras/ttf/Inter-Regular.ttf` del release **Inter 4.1** (github.com/rsms/inter, 2024-11-15), bajado el 2026-10-02 | SIL Open Font License 1.1 |
 

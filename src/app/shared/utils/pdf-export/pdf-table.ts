@@ -43,19 +43,17 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[]): voi
 
   const widths = columnWidths(composer, rows, cells, columns);
   const numeric = numericColumns(rows, cells, columns);
-  const headerIndex = rows.findIndex((row) => row.header === true);
-  const header =
-    headerIndex === -1 ? null : layoutRow(composer, cells[headerIndex], widths, true);
+  // La cabecera que se repite al cortar es la **última** vista: dos tablas
+  // seguidas, o una con varias cabeceras, repiten cada una la suya.
+  let header: RowLayout | null = null;
 
   composer.space(PDF_SPACE.sm);
   let bodyIndex = 0;
 
   for (const [index, row] of rows.entries()) {
     const isHeader = row.header === true;
-    const layout = isHeader ? header! : layoutRow(composer, cells[index], widths, false);
+    const layout = layoutRow(composer, cells[index], widths, isHeader);
 
-    // La cabecera nunca queda sola al pie de una hoja: se reserva con la
-    // primera fila de datos que la sigue.
     // Ni la cabecera ni la última fila quedan solas en una hoja: la cabecera
     // se reserva con la fila que la sigue, y la penúltima con la última.
     const next = rows[index + 1];
@@ -72,12 +70,13 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[]): voi
         });
       }
       composer.newPage();
-      if (!isHeader && header !== null && index > headerIndex) {
+      if (!isHeader && header !== null) {
         drawRow(composer, header, widths, numeric, 'header');
       }
     }
 
     if (isHeader) {
+      header = layout;
       drawRow(composer, layout, widths, numeric, 'header');
       continue;
     }

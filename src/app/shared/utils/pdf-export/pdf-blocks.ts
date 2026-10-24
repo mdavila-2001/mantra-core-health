@@ -178,7 +178,7 @@ function drawHeading(composer: PdfComposer, block: PdfBlock): void {
 /**
  * Un párrafo, partido entre hojas renglón por renglón.
  *
- * Va alineado a la izquierda y no justificado: Inter justificada abre ríos
+ * Va alineado a la izquierda y no justificado: una columna justificada abre ríos
  * blancos en una columna de este ancho. Nunca deja un renglón suelto al pie de
  * una hoja si el párrafo sigue: pasa los dos juntos.
  */
@@ -253,24 +253,35 @@ function drawFieldList(composer: PdfComposer, fields: readonly PdfField[]): void
   const valueX = composer.left + labelWidth;
   const valueWidth = composer.width - labelWidth;
   const padding = 6;
+  // La etiqueta, más chica, se baja hasta que su línea base coincide con la
+  // del valor: así se leen como un solo renglón.
+  const labelOffset = composer.baseline(PDF_TYPE.value) - composer.baseline(PDF_TYPE.label);
   composer.space(PDF_SPACE.xs);
   for (const field of fields) {
     const labelLines = composer.wrap(field.label, labelWidth - PDF_SPACE.md, PDF_TYPE.label);
-    const valueLines = composer.wrap(field.value, valueWidth, PDF_TYPE.value);
-    const height =
-      Math.max(
-        labelLines.length * PDF_TYPE.label.leading + 3,
-        valueLines.length * PDF_TYPE.value.leading,
-      ) +
-      padding * 2;
-    composer.ensure(height);
-    // La etiqueta, más chica, se baja hasta que su línea base coincide con la
-    // del valor: así se leen como un solo renglón.
-    const labelOffset = composer.baseline(PDF_TYPE.value) - composer.baseline(PDF_TYPE.label);
-    composer.writeLines(labelLines, composer.left, composer.y + padding + labelOffset, PDF_TYPE.label);
-    composer.writeLines(valueLines, valueX, composer.y + padding, PDF_TYPE.value);
-    composer.y += height;
-    composer.rule(composer.y, PDF_COLORS.ruleSoft, 0.6);
+    let valueLines = composer.wrap(field.value, valueWidth, PDF_TYPE.value);
+    const labelHeight = labelLines.length * PDF_TYPE.label.leading + 3;
+    // Un valor más largo que lo que queda de hoja —una evolución, unas
+    // indicaciones— sigue en la siguiente, renglón por renglón; nunca se sale
+    // de la hoja ni pisa el pie.
+    composer.ensure(Math.min(Math.max(labelHeight, valueLines.length * PDF_TYPE.value.leading), PDF_TYPE.value.leading * 3) + padding * 2);
+    let first = true;
+    while (first || valueLines.length > 0) {
+      const room = Math.max(1, Math.floor((composer.remaining - padding * 2) / PDF_TYPE.value.leading));
+      const chunk = valueLines.slice(0, room);
+      const height =
+        Math.max(first ? labelHeight : 0, chunk.length * PDF_TYPE.value.leading) + padding * 2;
+      if (first) composer.writeLines(labelLines, composer.left, composer.y + padding + labelOffset, PDF_TYPE.label);
+      composer.writeLines(chunk, valueX, composer.y + padding, PDF_TYPE.value);
+      composer.y += height;
+      valueLines = valueLines.slice(chunk.length);
+      first = false;
+      if (valueLines.length > 0) {
+        composer.newPage();
+      } else {
+        composer.rule(composer.y, PDF_COLORS.ruleSoft, 0.6);
+      }
+    }
   }
   composer.y += PDF_SPACE.md;
 }
@@ -328,6 +339,15 @@ function drawFieldGrid(composer: PdfComposer, fields: readonly PdfField[], reque
     row.push(cell);
   }
   close();
+
+  // Un dato que ni solo entra en una hoja no puede ir en una tarjeta: va como
+  // dato de lista, que sí se parte entre hojas.
+  const tooTall = (row: { readonly height: number }): boolean =>
+    row.height + pad * 2 > composer.usableHeight;
+  if (rows.some(tooTall)) {
+    drawFieldList(composer, fields.filter((field) => field.value.trim() !== ''));
+    return;
+  }
 
   const rowGap = PDF_SPACE.md;
   composer.space(PDF_SPACE.sm);
@@ -717,9 +737,10 @@ const SIGNATURE_HEIGHT =
  * El bloque de firma, a la derecha y al final del contenido: la firma y el
  * sello arriba, una línea, y el nombre, la matrícula y el rótulo debajo.
  *
- * Va pegado al contenido y no al pie de la hoja, que dejaba un hueco en medio
- * del papel o mandaba la firma sola a una hoja nueva. Si no entra entero en la
- * hoja en curso, pasa a la siguiente sin dejar nada a medias.
+ * Va pegado al contenido y no clavado al pie de la hoja, que dejaba un hueco
+ * en medio del papel con poco contenido. Si no entra entero en la hoja en
+ * curso, pasa a la siguiente sin dejar nada a medias: puede quedar solo en esa
+ * hoja, y es preferible a partir la firma de su nombre.
  *
  * Sin imágenes —o con imágenes que `jsPDF` no acepta— el bloque sale igual, con
  * la línea vacía: un documento que se firma a mano después necesita justo eso.

@@ -20,7 +20,7 @@ import {
     Lo dibuja **el motor**, no cada documento: un membrete que cada pantalla
     arme por su cuenta deja de ser un membrete.
 
-    - La **primera hoja** abre con la portada: una banda a sangre en el
+    - La **primera hoja** abre con la portada (clara con `plainPaper`): una banda a sangre en el
       degradado de los azules profundos de AloVida, con el isotipo y la marca
       en blanco, el logo del consultorio en su ficha, la clase de documento, el
       título y, a la derecha, el folio y la fecha de emisión. Un filo
@@ -62,6 +62,37 @@ export function drawContinuationPage(composer: PdfComposer): number {
 
 /* ---- la portada -------------------------------------------------------- */
 
+/**
+ * Los estilos de la portada. Con `plainPaper` la portada es **clara**: sin el
+ * degradado ni las franjas, con la tinta de la marca sobre el blanco del papel.
+ * Es la de los artículos largos con ilustraciones clínicas, que no necesitan
+ * una banda oscura antes de cada imagen.
+ */
+function coverStyles(light: boolean) {
+  if (!light) {
+    return {
+      eyebrow: PDF_TYPE.eyebrow,
+      title: PDF_TYPE.title,
+      subtitle: PDF_TYPE.subtitle,
+      reference: PDF_TYPE.coverReference,
+      label: PDF_TYPE.coverLabel,
+      value: PDF_TYPE.coverValue,
+      brand: PDF_COLORS.onBrand,
+      secondaryOpacity: COVER_SECONDARY_OPACITY,
+    };
+  }
+  return {
+    eyebrow: { ...PDF_TYPE.eyebrow, color: PDF_COLORS.accentInk },
+    title: { ...PDF_TYPE.title, color: PDF_COLORS.brandDeep },
+    subtitle: { ...PDF_TYPE.subtitle, color: PDF_COLORS.inkMuted },
+    reference: { ...PDF_TYPE.coverReference, color: PDF_COLORS.brandDeep },
+    label: { ...PDF_TYPE.coverLabel, color: PDF_COLORS.inkSubtle },
+    value: { ...PDF_TYPE.coverValue, color: PDF_COLORS.ink },
+    brand: PDF_COLORS.brand,
+    secondaryOpacity: 1,
+  };
+}
+
 /** Las líneas de la portada ya partidas: se mide todo antes de pintar el fondo. */
 interface CoverLayout {
   readonly eyebrow: readonly string[];
@@ -75,20 +106,21 @@ interface CoverLayout {
 
 function layoutCover(composer: PdfComposer): CoverLayout {
   const { kind, title, subtitle, reference } = composer.options;
+  const styles = coverStyles(composer.options.plainPaper === true);
   const meta = metaEntries(composer);
   const hasMeta = meta.length > 0 || hasText(reference);
   const titleWidth = composer.width - (hasMeta ? PDF_META.width + PDF_META.gap : 0);
   const blockTop = PDF_SPACE.xl + PDF_PRACTICE_LOGO.height + PDF_PRACTICE_LOGO.padding * 2 + PDF_SPACE.xl;
 
-  const eyebrow = hasText(kind) ? composer.wrap(kind, titleWidth, PDF_TYPE.eyebrow) : [];
-  const titleLines = hasText(title) ? composer.wrap(title, titleWidth, PDF_TYPE.title) : [];
-  const subtitleLines = hasText(subtitle) ? composer.wrap(subtitle, titleWidth, PDF_TYPE.subtitle) : [];
+  const eyebrow = hasText(kind) ? composer.wrap(kind, titleWidth, styles.eyebrow) : [];
+  const titleLines = hasText(title) ? composer.wrap(title, titleWidth, styles.title) : [];
+  const subtitleLines = hasText(subtitle) ? composer.wrap(subtitle, titleWidth, styles.subtitle) : [];
   const referenceLines = hasText(reference)
-    ? composer.wrap(reference, PDF_META.width, PDF_TYPE.coverReference)
+    ? composer.wrap(reference, PDF_META.width, styles.reference)
     : [];
   const metaLines = meta.map((entry) => ({
-    label: composer.wrap(entry.label, PDF_META.width, PDF_TYPE.coverLabel),
-    value: composer.wrap(entry.value, PDF_META.width, PDF_TYPE.coverValue),
+    label: composer.wrap(entry.label, PDF_META.width, styles.label),
+    value: composer.wrap(entry.value, PDF_META.width, styles.value),
   }));
 
   const left =
@@ -118,75 +150,92 @@ function layoutCover(composer: PdfComposer): CoverLayout {
 
 /** La portada de la primera hoja. Devuelve dónde empieza el contenido. */
 function drawCover(composer: PdfComposer): number {
+  const light = composer.options.plainPaper === true;
+  const styles = coverStyles(light);
   const layout = layoutCover(composer);
   const { height } = layout;
   const width = composer.pageWidth;
 
-  // El fondo: el degradado a sangre, el isotipo grande y tenue que firma la
-  // portada arriba a la derecha, y un halo aguamarina en el mismo rincón. Todo recortado a
-  // la banda: nada de la decoración puede asomar sobre el contenido.
-  composer.gradient(0, 0, width, height, PDF_GRADIENTS.cover);
-  composer.clipped(0, 0, width, height, () => {
-    composer.withOpacity(0.07, () => {
-      composer.doc.setFillColor(PDF_COLORS.accent[0], PDF_COLORS.accent[1], PDF_COLORS.accent[2]);
-      composer.doc.circle(width - 40, -10, 190, 'F');
-      composer.doc.circle(width - 40, -10, 120, 'F');
+  if (!light) {
+    // El fondo: el degradado a sangre, el isotipo grande y tenue que firma la
+    // portada arriba a la derecha, y un halo aguamarina en el mismo rincón.
+    // Todo recortado a la banda: nada de la decoración puede asomar sobre el
+    // contenido.
+    composer.gradient(0, 0, width, height, PDF_GRADIENTS.cover);
+    composer.clipped(0, 0, width, height, () => {
+      composer.withOpacity(0.07, () => {
+        composer.doc.setFillColor(PDF_COLORS.accent[0], PDF_COLORS.accent[1], PDF_COLORS.accent[2]);
+        composer.doc.circle(width - 40, -10, 190, 'F');
+        composer.doc.circle(width - 40, -10, 120, 'F');
+      });
+      const markWidth = PDF_MARK.coverWidth;
+      dibujarMarcaAlovida(composer.doc, {
+        // Asoma desde el borde superior, detrás de la ficha del logo: nunca
+        // debajo del folio ni del título.
+        x: width - markWidth * 0.62,
+        y: -altoDeMarca(markWidth) * 0.42,
+        ancho: markWidth,
+        color: PDF_COLORS.onBrand,
+        opacidad: PDF_MARK.coverOpacity,
+      });
     });
-    const markWidth = PDF_MARK.coverWidth;
-    dibujarMarcaAlovida(composer.doc, {
-      // Asoma desde el borde superior, detrás de la ficha del logo: nunca
-      // debajo del folio ni del título.
-      x: width - markWidth * 0.62,
-      y: -altoDeMarca(markWidth) * 0.42,
-      ancho: markWidth,
-      color: PDF_COLORS.onBrand,
-      opacidad: PDF_MARK.coverOpacity,
-    });
-  });
-  composer.gradient(0, height, width, PDF_PAGE.coverEdge, PDF_GRADIENTS.edge);
+    composer.gradient(0, height, width, PDF_PAGE.coverEdge, PDF_GRADIENTS.edge);
+  }
 
   // La marca y la ficha del consultorio, en la misma fila.
   const chipHeight = PDF_PRACTICE_LOGO.height + PDF_PRACTICE_LOGO.padding * 2;
   const rowTop = PDF_SPACE.xl;
   const markHeight = altoDeMarca(PDF_MARK.width);
-  drawBrand(composer, rowTop + (chipHeight - markHeight) / 2, PDF_MARK.width, PDF_TYPE.wordmark, PDF_COLORS.onBrand);
-  drawPracticeLogo(composer, rowTop);
+  drawBrand(
+    composer,
+    rowTop + (chipHeight - markHeight) / 2,
+    PDF_MARK.width,
+    { ...PDF_TYPE.wordmark, color: light ? PDF_COLORS.brandDeep : PDF_TYPE.wordmark.color },
+    styles.brand,
+  );
+  drawPracticeLogo(composer, rowTop, light);
 
   // El bloque del título.
   let y = layout.blockTop;
   if (layout.eyebrow.length > 0) {
-    y += composer.writeLines(layout.eyebrow, composer.left, y, PDF_TYPE.eyebrow) + PDF_SPACE.xs;
+    y += composer.writeLines(layout.eyebrow, composer.left, y, styles.eyebrow) + PDF_SPACE.xs;
   }
-  y += composer.writeLines(layout.title, composer.left, y, PDF_TYPE.title);
+  y += composer.writeLines(layout.title, composer.left, y, styles.title);
   if (layout.subtitle.length > 0) {
     y += PDF_SPACE.xs;
     const top = y;
-    composer.withOpacity(COVER_SECONDARY_OPACITY, () =>
-      composer.writeLines(layout.subtitle, composer.left, top, PDF_TYPE.subtitle),
+    composer.withOpacity(styles.secondaryOpacity, () =>
+      composer.writeLines(layout.subtitle, composer.left, top, styles.subtitle),
     );
   }
 
   // Los metadatos, a la derecha: el folio destacado y cada dato con su rótulo.
   let metaY = layout.blockTop;
   if (layout.reference.length > 0) {
-    metaY += composer.writeLines(layout.reference, composer.right, metaY, PDF_TYPE.coverReference, {
-      align: 'right',
-    });
+    metaY += composer.writeLines(layout.reference, composer.right, metaY, styles.reference, { align: 'right' });
     metaY += PDF_SPACE.sm;
   }
   for (const entry of layout.meta) {
-    metaY += composer.writeLines(entry.label, composer.right, metaY, PDF_TYPE.coverLabel, { align: 'right' });
-    metaY += composer.writeLines(entry.value, composer.right, metaY, PDF_TYPE.coverValue, { align: 'right' });
+    metaY += composer.writeLines(entry.label, composer.right, metaY, styles.label, { align: 'right' });
+    metaY += composer.writeLines(entry.value, composer.right, metaY, styles.value, { align: 'right' });
     metaY += PDF_SPACE.xs;
   }
 
+  if (light) {
+    // Sin banda, un filete estructural separa la portada del contenido.
+    composer.rule(height - PDF_SPACE.md, PDF_COLORS.rule, 0.8);
+    return height + PDF_SPACE.lg;
+  }
   return height + PDF_PAGE.coverEdge + PDF_SPACE.xxl;
 }
 
 /** Lo que va en la columna de metadatos, además del folio. */
 function metaEntries(composer: PdfComposer): readonly PdfMetaEntry[] {
   return [
-    { label: 'Fecha de emisión', value: formatIssuedAt(composer.issuedAt) },
+    {
+      label: composer.issuedAtDeclared ? 'Fecha de emisión' : 'Fecha de generación',
+      value: formatIssuedAt(composer.issuedAt),
+    },
     ...(composer.options.meta ?? []).filter((entry) => hasText(entry.value)),
   ];
 }
@@ -214,16 +263,21 @@ function drawBrand(
  * El logo del consultorio en su ficha blanca, arriba a la derecha. Sin logo no
  * hay ficha. Un logo defectuoso se omite: nunca puede impedir una receta.
  */
-function drawPracticeLogo(composer: PdfComposer, top: number): void {
+function drawPracticeLogo(composer: PdfComposer, top: number, light: boolean): void {
   const { logo } = composer;
   if (logo === null) return;
   const fit = contenerLogo(logo, { ancho: PDF_PRACTICE_LOGO.width, alto: PDF_PRACTICE_LOGO.height });
-  if (fit === null) return;
+  // Sin una imagen que se pueda dibujar no hay ficha: una ficha blanca vacía
+  // en la portada se lee como un logo roto.
+  if (fit === null || !composer.canDraw(logo)) return;
   const pad = PDF_PRACTICE_LOGO.padding;
   const chipWidth = fit.ancho + pad * 2;
   const chipHeight = PDF_PRACTICE_LOGO.height + pad * 2;
   const x = composer.right - chipWidth;
-  composer.box(x, top, chipWidth, chipHeight, PDF_SPACE.radius, { fill: PDF_COLORS.onBrand });
+  composer.box(x, top, chipWidth, chipHeight, PDF_SPACE.radius, {
+    fill: PDF_COLORS.onBrand,
+    ...(light ? { stroke: PDF_COLORS.ruleSoft, weight: 0.7 } : {}),
+  });
   composer.image(logo, x + pad, top + pad + fit.arriba, fit.ancho, fit.alto);
 }
 
@@ -234,7 +288,9 @@ function drawPracticeLogo(composer: PdfComposer, top: number): void {
  * chica a la izquierda y, a la derecha, el título y el folio en letra de pie.
  */
 function drawContinuationHeader(composer: PdfComposer): number {
-  composer.gradient(0, 0, composer.pageWidth, PDF_PAGE.bandHeight, PDF_GRADIENTS.cover);
+  if (composer.options.plainPaper !== true) {
+    composer.gradient(0, 0, composer.pageWidth, PDF_PAGE.bandHeight, PDF_GRADIENTS.cover);
+  }
   const top = PDF_PAGE.continuationHeaderTop;
   const markWidth = PDF_MARK.continuationWidth;
   const markHeight = altoDeMarca(markWidth);
@@ -243,7 +299,10 @@ function drawContinuationHeader(composer: PdfComposer): number {
   const parts = [hasText(title) ? title : kind, reference].filter(hasText);
   if (parts.length > 0) {
     const style = PDF_TYPE.footer;
-    composer.write(parts.join('  ·  '), composer.right, top + markHeight - style.leading + 2, style, {
+    // Lo que queda a la derecha de la marca, con aire: un título larguísimo se
+    // recorta con puntos suspensivos en vez de pisar el nombre de la marca.
+    const room = composer.width - 120;
+    composer.write(fitWidth(composer, parts.join('  ·  '), room, style), composer.right, top + markHeight - style.leading + 2, style, {
       align: 'right',
     });
   }
@@ -300,7 +359,8 @@ export function stampFooters(composer: PdfComposer): void {
   const textWidth = composer.width - pillColumn - PDF_SPACE.md;
 
   const issuer = [composer.issuer.name, ...(composer.issuer.details ?? [])].filter(hasText);
-  const note = [composer.options.footerNote ?? DEFAULT_FOOTER_NOTE, `Emitido el ${formatIssuedAt(composer.issuedAt)}`]
+  const dated = `${composer.issuedAtDeclared ? 'Emitido' : 'Generado'} el ${formatIssuedAt(composer.issuedAt)}`;
+  const note = [composer.options.footerNote ?? DEFAULT_FOOTER_NOTE, dated]
     .filter(hasText)
     .join('  ·  ');
   const issuerLines = composer.wrap(issuer.join('  ·  '), textWidth, PDF_TYPE.footer).slice(0, 2);
@@ -310,7 +370,9 @@ export function stampFooters(composer: PdfComposer): void {
     doc.setPage(page);
     drawWatermark(composer);
     composer.rule(ruleY, PDF_COLORS.rule, 0.6);
-    composer.gradient(0, composer.pageHeight - PDF_PAGE.footerBand, composer.pageWidth, PDF_PAGE.footerBand, PDF_GRADIENTS.cover);
+    if (composer.options.plainPaper !== true) {
+      composer.gradient(0, composer.pageHeight - PDF_PAGE.footerBand, composer.pageWidth, PDF_PAGE.footerBand, PDF_GRADIENTS.cover);
+    }
 
     let y = ruleY + PDF_SPACE.sm + 1;
     // El nombre del emisor en Poppins y sus datos en Nunito Sans, en la misma línea.
@@ -346,6 +408,14 @@ export function stampFooters(composer: PdfComposer): void {
     composer.write(label, composer.right - pillWidth / 2, pillTop + 3.5, style, { align: 'center' });
   }
   doc.setPage(total);
+}
+
+/** El texto recortado con «…» hasta que entra en `width`. */
+function fitWidth(composer: PdfComposer, text: string, width: number, style: PdfTextStyle): string {
+  if (composer.measure(text, style) <= width) return text;
+  let cut = text;
+  while (cut.length > 1 && composer.measure(`${cut}…`, style) > width) cut = cut.slice(0, -1);
+  return `${cut.trimEnd()}…`;
 }
 
 function hasText(value: string | undefined | null): value is string {

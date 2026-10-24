@@ -38,7 +38,7 @@ export type {
  * ## Cómo está armado
  *
  * - `pdf-theme.ts` — el sistema de diseño: retícula, escala tipográfica,
- *   paleta REDSAT y ritmo vertical.
+ *   paleta de AloVida y ritmo vertical.
  * - `pdf-composer.ts` — la pluma: cuánto lugar queda, cómo se escribe cada
  *   estilo, cuándo se pasa de hoja.
  * - `pdf-page.ts` — el marco de cada hoja: franja, membrete, marca de agua y
@@ -101,9 +101,10 @@ function withoutRepeatedTitle(blocks: readonly PdfBlock[], title: string | undef
  */
 export function buildBlocksPdf(blocks: readonly PdfBlock[], options: PdfExportOptions = {}): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
+  // La bajada no va a los metadatos: en los papeles clínicos dice de quién es,
+  // y los metadatos viajan con el archivo sin que nadie los mire.
   doc.setProperties({
     ...(options.title === undefined ? {} : { title: options.title }),
-    ...(options.subtitle === undefined ? {} : { subject: options.subtitle }),
     author: options.issuer?.name ?? 'AloVida',
     creator: 'AloVida',
   });
@@ -231,13 +232,16 @@ function walk(node: Element, blocks: PdfBlock[]): void {
         .map((cell) => textoVisible(cell));
       const texto = celdas.join('   ');
       if (texto.trim() !== '') {
-        // La fila de `th` es la cabecera de la tabla: se marca acá, donde se
-        // sabe, y no se adivina después mirando el texto.
         blocks.push({
           kind: 'row',
           text: texto,
           cells: celdas,
-          header: row.querySelector('th') !== null,
+          // Cabecera es la fila de `thead` o la que es toda de `th`: un
+          // `<th scope="row">` al principio de una fila de datos es el rótulo
+          // de esa fila, no el nombre de las columnas.
+          header:
+            row.parentElement?.tagName === 'THEAD' ||
+            Array.from(row.querySelectorAll('th, td')).every((cell) => cell.tagName === 'TH'),
         });
       }
     }

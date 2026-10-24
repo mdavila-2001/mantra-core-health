@@ -202,6 +202,13 @@ const { DocumentoFalso } = vi.hoisted(() => {
       return this;
     }
 
+    getImageProperties(): { width: number; height: number } {
+      if (DocumentoFalso.fallarAlDibujarImagenes) {
+        throw new Error('imagen no soportada');
+      }
+      return { width: 1, height: 1 };
+    }
+
     addFileToVFS(): this {
       return this;
     }
@@ -286,6 +293,7 @@ vi.mock('jspdf', () => ({ jsPDF: DocumentoFalso, ShadingPattern: undefined }));
  * primero. Con `resetModules` + import dinámico deja de depender de nadie.
  */
 let buildPdfDocument: typeof import('./pdf-export').buildPdfDocument;
+let campoDeBloque: typeof import('./pdf-export').campoDeBloque;
 let buildBlocksPdf: typeof import('./pdf-export').buildBlocksPdf;
 let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
 let establecerLogoDeDocumentos: typeof import('./pdf-logo').establecerLogoDeDocumentos;
@@ -337,9 +345,11 @@ function textosDelCuerpo(): string[] {
       (linea) =>
         linea !== 'AloVida' &&
         linea !== 'FECHA DE EMISIÓN' &&
+        linea !== 'FECHA DE GENERACIÓN' &&
         !FECHA_DE_EMISION.test(linea) &&
         !linea.startsWith('Página ') &&
         !linea.includes('Emitido el') &&
+        !linea.includes('Generado el') &&
         !titulos.includes(linea),
     );
 }
@@ -352,7 +362,7 @@ beforeEach(async () => {
   // `pdf-export.ts` — esta vez con el `vi.mock` de arriba ya registrado, corra
   // lo que corra antes en este trabajador.
   vi.resetModules();
-  ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf } = await import('./pdf-export'));
+  ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf, campoDeBloque } = await import('./pdf-export'));
   ({ establecerLogoDeDocumentos } = await import('./pdf-logo'));
   ({ establecerFirmaDeDocumentos } = await import('./pdf-firma'));
   ({ establecerFuentesDeDocumentos } = await import('./pdf-fuentes'));
@@ -360,6 +370,22 @@ beforeEach(async () => {
   establecerFuentesDeDocumentos(null);
   DocumentoFalso.fallarAlDibujarImagenes = false;
   establecerLogoDeDocumentos(null);
+});
+
+/**
+ * El builder de Angular corre todos los archivos en el mismo entorno, sin
+ * aislar módulos: lo que este archivo deja —el logo o la firma de la sesión
+ * fijados en un holder, `pdf-export.ts` evaluado con el jsPDF falso en la
+ * caché— lo heredaría el archivo siguiente. Se limpia al salir.
+ */
+afterEach(() => {
+  establecerLogoDeDocumentos(null);
+  establecerFirmaDeDocumentos(null);
+  establecerFuentesDeDocumentos(null);
+});
+
+afterAll(() => {
+  vi.resetModules();
 });
 
 
@@ -484,12 +510,8 @@ describe('buildPdfDocument', () => {
     const doc = ultimoDocumento();
     expect(doc.llamadas.setProperties).toEqual([
       [
-        {
-          title: 'Presupuesto de Ana Pérez',
-          subject: 'Consultorio Illimani',
-          author: 'AloVida',
-          creator: 'AloVida',
-        },
+        // La bajada no va a los metadatos: en un papel clínico dice de quién es.
+        { title: 'Presupuesto de Ana Pérez', author: 'AloVida', creator: 'AloVida' },
       ],
     ]);
     expect(doc.llamadas.text.map(([linea]) => linea)).toContain('Presupuesto de Ana Pérez');
@@ -681,7 +703,47 @@ describe('la portada, el membrete y el pie', () => {
 
     const lineas = ultimoDocumento().llamadas.text.map(([linea]) => linea);
     expect(lineas.filter((linea) => linea === 'AloVida')).toHaveLength(2);
-    expect(lineas.some((linea) => linea.startsWith('Documento confidencial  ·  Emitido el '))).toBe(true);
+    expect(lineas.some((linea) => linea.startsWith('Documento confidencial  ·  Generado el '))).toBe(true);
+  });
+
+  /**
+   * El defecto que esto cierra: sin fecha declarada, el papel ponía la de la
+   * descarga como «Fecha de emisión», y una factura del 15/09 bajada el 24/10
+   * decía dos fechas de emisión distintas.
+   */
+  it('sin fecha de emisión declarada rotula la fecha como de generación', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], { title: 'Receta' });
+
+    const lineas = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(lineas).toContain('FECHA DE GENERACIÓN');
+    expect(lineas).not.toContain('FECHA DE EMISIÓN');
+    expect(lineas.some((linea) => linea.includes('Emitido el'))).toBe(false);
+  });
+
+  it('con `plainPaper` la portada es clara: ni banda a sangre ni franjas de borde', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], { title: 'Artículo', plainPaper: true });
+    const claro = ultimoDocumento().llamadas;
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], { title: 'Artículo' });
+    const oscuro = ultimoDocumento().llamadas;
+
+    const aSangre = (rect: [number, number, number, number, string]): boolean => rect[0] === 0 && rect[2] === 595;
+    expect(oscuro.rect.filter(aSangre).length).toBeGreaterThan(0);
+    expect(claro.rect.filter(aSangre)).toHaveLength(0);
+    // Sin el isotipo grande de la portada: sólo el de la marca.
+    expect(claro.lines).toHaveLength(4);
+    expect(claro.text.map(([linea]) => linea)).toContain('Artículo');
+  });
+
+  it('en las hojas siguientes, un título larguísimo se recorta y no pisa la marca', () => {
+    const titulo = 'Historia clínica completa '.repeat(12).trim();
+    buildBlocksPdf(
+      Array.from({ length: 80 }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+      { title: titulo },
+    );
+
+    const corto = ultimoDocumento().llamadas.text.find(([linea]) => linea.endsWith('…'))!;
+    expect(corto).toBeDefined();
+    expect(corto[1]).toBeGreaterThan(48 + 100);
   });
 
   it('la marca de agua va en diagonal en cada hoja, en mayúsculas', () => {
@@ -803,10 +865,11 @@ describe('el logo del consultorio en la portada', () => {
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
   });
 
-  it('si la imagen no se puede dibujar, el documento sale igual', () => {
+  it('si la imagen no se puede dibujar, el documento sale igual y sin ficha vacía', () => {
     DocumentoFalso.fallarAlDibujarImagenes = true;
 
     expect(() => buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(360, 120) })).not.toThrow();
+    expect(ultimoDocumento().llamadas.roundedRect.some(([, y]) => y === 24)).toBe(false);
 
     expect(xDe('RECETA MÉDICA')).toBe(48);
     expect(yDe('Una línea')).toBeGreaterThan(0);
@@ -1051,6 +1114,46 @@ describe('las tablas', () => {
   });
 
   /**
+   * El defecto que esto cierra (revisión de código): cada fila marcada como
+   * cabecera se dibujaba con el texto de la **primera** cabecera. Con dos
+   * cabeceras seguidas, la segunda salía con los nombres de la primera.
+   */
+  it('cada fila de cabecera dice lo suyo, y al cortar se repite la última', () => {
+    buildBlocksPdf([
+      { kind: 'row', text: '', cells: ['Pregunta', 'Respuesta'], header: true },
+      { kind: 'row', text: '', cells: ['Dolor', 'Sí'] },
+      { kind: 'row', text: '', cells: ['Fecha', 'Valor'], header: true },
+      ...Array.from({ length: 70 }, (_, i) => ({ kind: 'row' as const, text: '', cells: [`Día ${i + 1}`, '12'] })),
+    ]);
+
+    const doc = ultimoDocumento();
+    const textos = doc.llamadas.text.map(([linea]) => linea);
+    expect(textos.filter((linea) => linea === 'PREGUNTA')).toHaveLength(1);
+    expect(textos.filter((linea) => linea === 'FECHA')).toHaveLength(doc.llamadas.addPage + 1);
+    expect(textos).toContain('Día 70');
+  });
+
+  /**
+   * Un `<th scope="row">` es el rótulo de su fila, no el nombre de las
+   * columnas: marcarla como cabecera borraba el dato de la fila entera.
+   */
+  it('desde el DOM, sólo es cabecera la fila de `thead` o la que es toda de `th`', () => {
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <table>
+        <thead><tr><th>Sesión</th><th>Peso</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">12/10/2026</th><td>68 kg</td></tr>
+          <tr><th scope="row">19/10/2026</th><td>67 kg</td></tr>
+        </tbody>
+      </table>`;
+
+    buildPdfDocument(el);
+
+    expect(textosDelCuerpo()).toEqual(['SESIÓN', 'PESO', '12/10/2026', '68 kg', '19/10/2026', '67 kg']);
+  });
+
+  /**
    * El defecto que esto cierra: con una tabla que no entra a lo ancho, repartir
    * la falta entre todas las columnas por igual partía en dos renglones un
    * encabezado de una sola palabra, que es lo primero que se lee como descuido.
@@ -1160,6 +1263,48 @@ describe('los bloques', () => {
 
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
     expect(ultimoDocumento().llamadas.text.map(([line]) => line)).toContain('Autor · CC BY 4.0');
+  });
+
+  /**
+   * La factura reserva el pie de la última hoja para su QR con párrafos de un
+   * espacio duro: `trim()` lo borra, y la reserva medía cero.
+   */
+  it('un párrafo de un espacio duro ocupa su renglón', () => {
+    const duro = String.fromCharCode(0xa0);
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Antes' }, { kind: 'paragraph', text: 'Después' }]);
+    const sinReserva = ultimoDocumento().llamadas.text.find(([linea]) => linea === 'Después')![2];
+
+    buildBlocksPdf([
+      { kind: 'paragraph', text: 'Antes' },
+      ...Array.from({ length: 3 }, () => ({ kind: 'paragraph' as const, text: duro })),
+      { kind: 'paragraph', text: 'Después' },
+    ]);
+
+    const conReserva = ultimoDocumento().llamadas.text.find(([linea]) => linea === 'Después')![2];
+    expect(conReserva - sinReserva).toBeGreaterThanOrEqual(3 * 14.5);
+  });
+
+  /** Un dato más largo que una hoja seguía de largo por debajo del pie. */
+  it('un dato con un valor más largo que una hoja sigue en la siguiente sin salirse', () => {
+    DocumentoFalso.lineasForzadas = 120;
+    buildBlocksPdf([campoDeBloque('Evolución', 'PÁRRAFO_LARGO')], { logo: null, firma: null });
+
+    const doc = ultimoDocumento();
+    expect(doc.llamadas.addPage).toBeGreaterThan(0);
+    const renglones = doc.llamadas.text.filter(([linea]) => linea.startsWith('Renglón '));
+    expect(renglones).toHaveLength(120);
+    // Ningún renglón cae debajo del filete del pie.
+    expect(Math.max(...renglones.map(([, , y]) => y))).toBeLessThan(842 - 54);
+  });
+
+  it('una rejilla con un dato más largo que una hoja cae a la lista, que sí se parte', async () => {
+    const { fieldsBlock } = await import('./pdf-export');
+    DocumentoFalso.lineasForzadas = 120;
+    buildBlocksPdf([fieldsBlock([{ label: 'Fecha', value: '22/10/2026' }, { label: 'Motivo', value: 'PÁRRAFO_LARGO' }])]);
+
+    const renglones = ultimoDocumento().llamadas.text.filter(([linea]) => linea.startsWith('Renglón '));
+    expect(renglones).toHaveLength(120);
+    expect(Math.max(...renglones.map(([, , y]) => y))).toBeLessThan(842 - 54);
   });
 
   it('una rejilla de datos reparte los datos en columnas y omite los vacíos', async () => {

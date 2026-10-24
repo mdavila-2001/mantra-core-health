@@ -46,6 +46,12 @@ export class PdfComposer {
   readonly signature: PdfFirma | null;
   readonly issuer: PdfIssuer;
   readonly issuedAt: Date;
+  /**
+   * El documento declaró su fecha de emisión. Si no, la fecha es la de
+   * **generación** y se rotula así: una factura del 15/09 bajada el 24/10 no
+   * puede decir «emitida el 24/10».
+   */
+  readonly issuedAtDeclared: boolean;
 
   /** Dónde va el próximo bloque. */
   y = 0;
@@ -74,6 +80,7 @@ export class PdfComposer {
     this.signature = options.firma === undefined ? firmaDeDocumentos() : options.firma;
     this.issuer = options.issuer ?? { name: 'AloVida' };
     this.issuedAt = options.issuedAt ?? new Date();
+    this.issuedAtDeclared = options.issuedAt !== undefined;
     const fuentes = fuentesDeDocumentos();
     this.hasBrandFonts = fuentes !== null;
     this.fonts = registerFonts(doc, fuentes);
@@ -157,7 +164,10 @@ export class PdfComposer {
    */
   wrap(text: string, width: number, style: PdfTextStyle): string[] {
     const shaped = this.shape(text, style);
-    if (shaped.trim() === '') {
+    // Sólo los blancos comunes cuentan como vacío: un espacio duro (U+00A0) es
+    // un renglón deliberado —la factura lo usa para reservar el lugar del QR—,
+    // y `trim()` lo borraría.
+    if (/^[ \t\r\n]*$/.test(shaped)) {
       return [];
     }
     if ((style.tracking ?? 0) === 0) {
@@ -274,9 +284,7 @@ export class PdfComposer {
     options: { readonly radius?: number; readonly direction?: 'horizontal' | 'vertical' } = {},
   ): void {
     const radius = options.radius ?? 0;
-    const doc = this.doc as jsPDF & {
-      advancedAPI?: (body: (doc: AdvancedDoc) => void) => jsPDF;
-    };
+    const { doc } = this;
     if (typeof doc.advancedAPI !== 'function' || typeof ShadingPattern !== 'function') {
       // Sin la API avanzada (un doble de prueba), el color del medio del degradado.
       const middle = stops[Math.floor(stops.length / 2)]?.color ?? [0, 0, 0];
@@ -350,6 +358,17 @@ export class PdfComposer {
    *
    * @returns `true` si quedó dibujada.
    */
+  /** La imagen se puede dibujar: `jsPDF` entiende sus datos. */
+  canDraw(image: PdfLogo): boolean {
+    if (typeof this.doc.getImageProperties !== 'function') return true;
+    try {
+      this.doc.getImageProperties(image.dataUrl);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   image(image: PdfLogo, x: number, y: number, width: number, height: number): boolean {
     try {
       this.doc.addImage(image.dataUrl, image.formato, x, y, width, height);
@@ -358,15 +377,6 @@ export class PdfComposer {
       return false;
     }
   }
-}
-
-/** Lo que la API avanzada de `jsPDF` ofrece para rellenar con un degradado. */
-interface AdvancedDoc {
-  addShadingPattern(key: string, pattern: ShadingPattern): AdvancedDoc;
-  rect(x: number, y: number, width: number, height: number, style: null): AdvancedDoc;
-  roundedRect(x: number, y: number, width: number, height: number, rx: number, ry: number, style: null): AdvancedDoc;
-  fill(pattern: { key: string; matrix: unknown }): AdvancedDoc;
-  Matrix(a: number, b: number, c: number, d: number, e: number, f: number): unknown;
 }
 
 /** Qué archivo de `PdfFuentes` cubre cada pieza tipográfica del tema. */
@@ -388,7 +398,12 @@ const FONT_FILES: Readonly<Record<PdfFontRole, keyof PdfFuentes>> = {
 function registerFonts(doc: jsPDF, fuentes: PdfFuentes | null): Readonly<Record<PdfFontRole, string>> {
   const roles = Object.keys(FONT_FILES) as PdfFontRole[];
   if (fuentes === null) {
-    return Object.fromEntries(roles.map((role) => [role, PDF_FONTS.fallback])) as Record<PdfFontRole, string>;
+    return {
+      display: PDF_FONTS.fallback,
+      displayMedium: PDF_FONTS.fallback,
+      text: PDF_FONTS.fallback,
+      textBold: PDF_FONTS.fallback,
+    };
   }
   for (const role of roles) {
     const fuente = fuentes[FONT_FILES[role]];
