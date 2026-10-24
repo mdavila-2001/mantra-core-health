@@ -1,6 +1,6 @@
 # Reporte — carril 2 · Pablo · comprobantes y cierre con pago (C-01), CI único (C-10) — corte del 2026-10-24
 
-> **AVANCE: 30 / 80 — 37,5 %.** H1 y H2 (C-01) cerrados salvo 3 microtareas; H3 (C-10) 7 de 11 (3 a medias, 1 móvil sin empezar); H4–H8 sin empezar; carril de Justin sin empezar.
+> **AVANCE: 30 / 81 — 37,0 %.** H1 y H2 (C-01) cerrados salvo 3 microtareas; H3 (C-10) 7 de 12 (3 a medias; móvil y normalización del número sin empezar); H4–H8 sin empezar; carril de Justin sin empezar.
 
 - Fecha: 2026-10-23 (H1–H2) y 2026-10-24 (H3) · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/intelligent-faraday-444u25` en `mantra-core-health`, `mantra-core-health-api`, `mantra-core-health-model`, `mantra_core_technologies_health_docs`
 - Peldaño de evidencia alcanzado, por área:
@@ -69,6 +69,7 @@
 | ID | Estado | Qué lo destraba |
 |---|---|---|
 | H3.S2.M6 (móvil: validador en Flutter) | TODO | Siguiente turno. |
+| H3.S1.M5 (normalizar el número de la cédula) | TODO | Decidir la forma canónica (¿se quitan `.` y `-`? ¿el complemento?) y si cambia el identificador con el que entra el paciente. Dueño: propietario + Richard/Leo (alta de paciente). |
 | H4 (Colegio Médico) · H5 (consentimiento por sección) · H6 (encuestas) · H7 (Coolify) · H8 (cierre) | TODO | Siguiente turno. Kill-tests MD-02, MD-03 y MD-05 siguen en rojo. |
 | Carril de Justin | TODO | El usuario pidió correrlo al terminar el de Pablo; no se empezó. |
 
@@ -124,6 +125,12 @@ $ yarn ng test (auth, motor de formularios, simulador, iam)
 
 ## Riesgos residuales
 
+- **H3: revisión de seguridad automática sobre los commits (5 hallazgos MEDIUM).**
+  - Relleno de v4248 que etiquetaba también el NIT y dejaba como «paciente» a quien tiene los dos perfiles → **corregido** en v4249 (índice sólo para la cédula; aplicado dos veces; int-spec 12/12).
+  - Índice único con `NULL` distintos: las cédulas sin departamento (sólo el alta de mostrador, donde es opcional; 3 filas locales) no chocan en la base. El alta de mostrador ya rechaza cualquier CI activo repetido. El generador de DDL no admite `NULLS NOT DISTINCT`: queda registrado.
+  - Número sin normalizar (`1234567` y `1.234.567` no chocan) → microtarea H3.S1.M5, TODO.
+  - **Ocupación de identidad:** alguien puede registrarse como médico con el CI de otra persona y bloquear el alta legítima. Hoy la matrícula queda PENDIENTE hasta que un administrador la verifica, pero el CI se reserva al registrarse. Hace falta decidir si se reserva recién al verificar (estado pendiente fuera del índice) o si se agrega un flujo de disputa. **Decisión del propietario.**
+  - Consulta pública como oráculo de enumeración: ver el punto siguiente.
 - **H3: enumeración.** La consulta pública dice si un CI + departamento tiene cuenta de ese tipo. MD-01 lo pide; queda acotado por el límite de 60/min por IP y la respuesta sólo trae `available`. El alta ya lo revelaba con su 409.
 - **H3: deuda del sistema de diseño** (dueño: sistema de diseño): los bordes de error siguen en `--c-error-500` en unos 10 controles (2,99:1 en oscuro), en claro el error se ve marrón y en oscuro el asterisco casi blanco. A esto se suman el hueco de la región de estado vacía en la grilla del motor y el aviso «sin catálogo» gris con «Reintentar» sin affordance.
 
@@ -135,6 +142,7 @@ $ yarn ng test (auth, motor de formularios, simulador, iam)
 
 ## Decisiones y ambigüedades
 
+- **H3 · reserva del CI:** ¿el CI se reserva al registrarse (como pide C-10) o recién al verificar la identidad o la matrícula? Riesgo de ocupación de identidad; ver «Riesgos residuales». Dueño: propietario.
 - **H3 · Q-13:** ¿se une la persona del médico con la del paciente cuando comparten CI? Se tomó «no, en el alta»; queda escalada al propietario (identidad maestra).
 - **H3:** ¿el representante de organización entra en la unicidad? Supuesto: no (representa a varias empresas). Confirmar con el dueño del alta de organizaciones.
 
