@@ -65,6 +65,19 @@
       </p>
       @for (filter of grupo.filters; track filter.key) {
         @if (isAvailable(filter)) {
+          <!-- Una faceta larga trae su buscador y se recorre por páginas
+               (propietario, 24/10/2026): la columna ya no se estira con
+               «Ver 38 más». -->
+          @if (llevaBuscador(filter)) {
+            <app-search-field
+              class="filter-bar__faceta-buscar"
+              [value]="busquedasDeFaceta().get(filter.key) ?? ''"
+              [label]="'Buscar en ' + grupo.label"
+              [placeholder]="'Buscar ' + grupo.label.toLowerCase()"
+              [debounceMs]="0"
+              (searched)="buscarEnFaceta(filter, $event)"
+            />
+          }
           <ul class="filter-bar__faceta-lista">
             @for (opcion of opcionesALaVista(filter); track opcion.value) {
               <li>
@@ -82,22 +95,57 @@
                   }
                 </button>
               </li>
+            } @empty {
+              <li class="filter-bar__faceta-sin-coincidencias" role="status">
+                Ninguna opción coincide con «{{ busquedasDeFaceta().get(filter.key) }}».
+              </li>
             }
           </ul>
-          @if (filter.options.length > opcionesALaVista(filter).length) {
-            <button type="button" class="filter-bar__faceta-mas" (click)="alternarFaceta(filter)">
-              Ver {{ filter.options.length - opcionesALaVista(filter).length }} más
-              <app-nav-icon class="filter-bar__faceta-mas-icono" name="arrow-right" />
-            </button>
-          } @else if (facetasAbiertas().has(filter.key)) {
-            <button
-              type="button"
-              class="filter-bar__faceta-mas filter-bar__faceta-mas--abierta"
-              (click)="alternarFaceta(filter)"
-            >
-              Ver menos
-              <app-nav-icon class="filter-bar__faceta-mas-icono" name="arrow-right" />
-            </button>
+          @if (paginasDe(filter) > 1) {
+            <!-- Botones de ícono a los lados (cuadrados, con nombre accesible)
+                 y, en el medio, un punto por página o «2 de 9». -->
+            <nav class="filter-bar__faceta-paginas" [attr.aria-label]="'Páginas de ' + grupo.label">
+              <button
+                app-button
+                iconOnly
+                variant="ghost"
+                size="sm"
+                class="filter-bar__faceta-flecha"
+                [disabled]="paginaDe(filter) === 1"
+                aria-label="Página anterior"
+                (clicked)="irAPaginaDeFaceta(filter, paginaDe(filter) - 1)"
+              >
+                <app-nav-icon name="arrow-left" />
+              </button>
+              @if (puntosDe(filter).length > 0) {
+                <span class="filter-bar__faceta-puntos">
+                  @for (numero of puntosDe(filter); track numero) {
+                    <button
+                      type="button"
+                      class="filter-bar__faceta-punto"
+                      [attr.aria-label]="'Página ' + numero"
+                      [attr.aria-current]="numero === paginaDe(filter) ? 'page' : null"
+                      (click)="irAPaginaDeFaceta(filter, numero)"
+                    ></button>
+                  }
+                </span>
+              }
+              <span class="filter-bar__faceta-pagina" aria-live="polite">
+                {{ paginaDe(filter) }} de {{ paginasDe(filter) }}
+              </span>
+              <button
+                app-button
+                iconOnly
+                variant="ghost"
+                size="sm"
+                class="filter-bar__faceta-flecha"
+                [disabled]="paginaDe(filter) === paginasDe(filter)"
+                aria-label="Página siguiente"
+                (clicked)="irAPaginaDeFaceta(filter, paginaDe(filter) + 1)"
+              >
+                <app-nav-icon name="arrow-right" />
+              </button>
+            </nav>
           }
         } @else {
           <p class="filter-bar__unavailable">

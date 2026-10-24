@@ -23,8 +23,18 @@ import type { SelectOption } from '../../atoms/select/select.types';
 /** Clave por omisión del término de búsqueda en la URL (ver `FilterBar.searchParam`). */
 export const SEARCH_PARAM = 'q';
 
-/** Cuántas opciones de una faceta se ven antes de «Ver más». */
-const OPCIONES_DE_FACETA_A_LA_VISTA = 10;
+/**
+ * Cuántas opciones de una faceta se ven por página.
+ *
+ * Desde el 24/10/2026 la columna no se estira con «Ver 38 más» (propietario:
+ * «un buscador y un paginador estético para los filtros»): la faceta larga
+ * trae su propio buscador y se recorre por páginas de este tamaño, así que la
+ * columna mide lo mismo con 12 especialidades que con 50.
+ */
+export const OPCIONES_DE_FACETA_POR_PAGINA = 8;
+
+/** Desde cuántas opciones la faceta lleva buscador propio. */
+export const OPCIONES_PARA_BUSCAR_EN_FACETA = OPCIONES_DE_FACETA_POR_PAGINA;
 
 /**
  * Un filtro de value set. **Siempre selector, nunca texto libre**: todo lo que
@@ -318,35 +328,65 @@ export class FilterBar {
     return grupos;
   });
 
-  /** Los filtros de la columna de facetas que se abrieron con «Ver más». */
-  protected readonly facetasAbiertas = signal<ReadonlySet<string>>(new Set<string>());
+  /** Lo escrito en el buscador de cada faceta, por clave de filtro. */
+  protected readonly busquedasDeFaceta = signal<ReadonlyMap<string, string>>(new Map());
 
-  /**
-   * Las opciones de una faceta que se ven: las primeras
-   * {@link OPCIONES_DE_FACETA_A_LA_VISTA}, más la elegida si quedó abajo del
-   * corte. Sesenta especialidades seguidas tapan el resto de la columna.
-   */
-  protected opcionesALaVista(filter: FilterDef): FilterDef['options'] {
-    const opciones = filter.options;
-    if (
-      this.facetasAbiertas().has(filter.key) ||
-      opciones.length <= OPCIONES_DE_FACETA_A_LA_VISTA
-    ) {
-      return opciones;
-    }
-    const vista = opciones.slice(0, OPCIONES_DE_FACETA_A_LA_VISTA);
-    const elegida = opciones.find((opcion) => this.isChipSelected(filter, opcion.value));
-    return elegida !== undefined && !vista.includes(elegida) ? [...vista, elegida] : vista;
+  /** La página en la que está cada faceta, por clave de filtro (desde 1). */
+  private readonly paginasDeFaceta = signal<ReadonlyMap<string, number>>(new Map());
+
+  /** Si la faceta es lo bastante larga como para llevar buscador. */
+  protected llevaBuscador(filter: FilterDef): boolean {
+    return filter.options.length > OPCIONES_PARA_BUSCAR_EN_FACETA;
   }
 
-  protected alternarFaceta(filter: FilterDef): void {
-    this.facetasAbiertas.update((abiertas) => {
-      const nuevas = new Set(abiertas);
-      if (!nuevas.delete(filter.key)) {
-        nuevas.add(filter.key);
-      }
-      return nuevas;
-    });
+  /** Las opciones que pasan el buscador de la faceta, todas las páginas. */
+  protected opcionesQueCoinciden(filter: FilterDef): FilterDef['options'] {
+    const termino = normalizarTexto(this.busquedasDeFaceta().get(filter.key) ?? '');
+    if (termino === '') {
+      return filter.options;
+    }
+    return filter.options.filter((opcion) =>
+      normalizarTexto(this.partirCantidad(opcion.label).texto).includes(termino),
+    );
+  }
+
+  protected paginasDe(filter: FilterDef): number {
+    return Math.max(1, Math.ceil(this.opcionesQueCoinciden(filter).length / OPCIONES_DE_FACETA_POR_PAGINA));
+  }
+
+  protected paginaDe(filter: FilterDef): number {
+    const pedida = this.paginasDeFaceta().get(filter.key) ?? 1;
+    return Math.min(this.paginasDe(filter), Math.max(1, pedida));
+  }
+
+  /**
+   * Las opciones de una faceta que se ven: las de la página actual, más la
+   * elegida arriba de todo si quedó en otra página. Sin eso, elegir algo en la
+   * página 3 y volver a la 1 dejaba el filtro puesto sin verse en la lista.
+   */
+  protected opcionesALaVista(filter: FilterDef): FilterDef['options'] {
+    const coinciden = this.opcionesQueCoinciden(filter);
+    const desde = (this.paginaDe(filter) - 1) * OPCIONES_DE_FACETA_POR_PAGINA;
+    const vista = coinciden.slice(desde, desde + OPCIONES_DE_FACETA_POR_PAGINA);
+    const elegida = coinciden.find((opcion) => this.isChipSelected(filter, opcion.value));
+    return elegida !== undefined && !vista.includes(elegida) ? [elegida, ...vista] : vista;
+  }
+
+  /** Los números de página que se dibujan como puntos; con muchas, ninguno. */
+  protected puntosDe(filter: FilterDef): readonly number[] {
+    const paginas = this.paginasDe(filter);
+    return paginas > MAXIMO_DE_PUNTOS ? [] : Array.from({ length: paginas }, (_, i) => i + 1);
+  }
+
+  protected irAPaginaDeFaceta(filter: FilterDef, pagina: number): void {
+    const destino = Math.min(this.paginasDe(filter), Math.max(1, pagina));
+    this.paginasDeFaceta.update((paginas) => new Map(paginas).set(filter.key, destino));
+  }
+
+  /** Buscar dentro de una faceta vuelve a su primera página. */
+  protected buscarEnFaceta(filter: FilterDef, termino: string): void {
+    this.busquedasDeFaceta.update((busquedas) => new Map(busquedas).set(filter.key, termino));
+    this.paginasDeFaceta.update((paginas) => new Map(paginas).set(filter.key, 1));
   }
 
   /**
@@ -447,4 +487,12 @@ export class FilterBar {
     }
     this.filtersChanged.emit(activos);
   }
+}
+
+/** Con más páginas que esto, el paginador dice «3 de 9» en vez de puntos. */
+const MAXIMO_DE_PUNTOS = 5;
+
+/** Sin mayúsculas ni tildes: «cardiologia» encuentra «Cardiología». */
+function normalizarTexto(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
