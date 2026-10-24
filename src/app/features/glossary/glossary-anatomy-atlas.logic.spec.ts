@@ -65,8 +65,15 @@ describe('glossary-anatomy-atlas.logic', () => {
   it('agrupa por relación, sin repetir, y dice qué se puede abrir y qué tiene pieza', () => {
     const grupos = groupRelations(FEMUR, new Set(['UBERON:0001377']), new Set(['UBERON:0001377']));
     expect(grupos.map((g) => g.name)).toEqual(['forma parte de', 'es origen del músculo']);
-    expect(grupos[1].items).toEqual([{ id: 'UBERON:0001377', label: 'cuádriceps femoral', hasMesh: true, inCatalog: true }]);
+    expect(grupos[1].items).toEqual([
+      { id: 'UBERON:0001377', label: 'cuádriceps femoral', hasMesh: true, highlighted: true, inCatalog: true },
+    ]);
     expect(grupos[0].items[0]).toMatchObject({ label: 'skeleton of lower leg', hasMesh: false, inCatalog: false });
+  });
+
+  it('no dice «resaltada» de una pieza cuya capa está apagada', () => {
+    const grupos = groupRelations(FEMUR, new Set(['UBERON:0001377']), new Set(['UBERON:0001377']), new Set());
+    expect(grupos[1].items[0]).toMatchObject({ hasMesh: true, highlighted: false });
   });
 
   it('muestra el nombre castellano si existe y si no el de la ontología', () => {

@@ -64,7 +64,10 @@ export function relatedMeshes(parts: readonly AnatomyPart[], structure: AnatomyS
 export interface RelatedItem {
   readonly id: string;
   readonly label: string;
+  /** Tiene pieza en el modelo, esté o no encendida su capa. */
   readonly hasMesh: boolean;
+  /** Se está dibujando resaltada ahora: tiene pieza y su capa está encendida. */
+  readonly highlighted: boolean;
   readonly inCatalog: boolean;
 }
 
@@ -79,7 +82,12 @@ export function displayName(labelEs: string | null, labelEn: string | null, id: 
 }
 
 /** Agrupa salientes y entrantes por nombre de relación, en el orden en que aparecen. */
-export function groupRelations(structure: AnatomyStructure, withMesh: ReadonlySet<string>, inCatalog: ReadonlySet<string>): RelationGroup[] {
+export function groupRelations(
+  structure: AnatomyStructure,
+  withMesh: ReadonlySet<string>,
+  inCatalog: ReadonlySet<string>,
+  drawn: ReadonlySet<string> = withMesh,
+): RelationGroup[] {
   const grupos = new Map<string, RelatedItem[]>();
   const agregar = (nombre: string, item: RelatedItem) => {
     const lista = grupos.get(nombre) ?? [];
@@ -91,6 +99,7 @@ export function groupRelations(structure: AnatomyStructure, withMesh: ReadonlySe
       id: r.target,
       label: displayName(r.labelEs, r.labelEn, r.target),
       hasMesh: withMesh.has(r.target),
+      highlighted: drawn.has(r.target),
       inCatalog: inCatalog.has(r.target),
     });
   }
@@ -99,6 +108,7 @@ export function groupRelations(structure: AnatomyStructure, withMesh: ReadonlySe
       id: r.source,
       label: displayName(r.labelEs, r.labelEn, r.source),
       hasMesh: withMesh.has(r.source),
+      highlighted: drawn.has(r.source),
       inCatalog: inCatalog.has(r.source),
     });
   }
