@@ -5,18 +5,17 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { WorkHistory } from '../../account/my-profile/work-history/work-history';
 
 /**
- * **Mis organizaciones** — dónde atiende el profesional: su consultorio propio
- * y las organizaciones donde trabaja.
+ * **Mi consultorio propio** — acceso del profesional a sus lugares de atención.
  *
- * Se llamó «Mi consultorio propio» hasta que el propietario la renombró el
- * 19/09/2026: lista los dos, no sólo el propio.
+ * El propietario ratificó este nombre el 13/10/2026. La lista compartida
+ * conserva tanto el consultorio propio como las organizaciones afiliadas.
  *
  * ## Por qué existe
  *
  * Ocupa el lugar que tenía «Tu organización» en Administración (pedido del
  * propietario, 2026-09-10). Aquella pantalla mostraba la organización del
  * *tenant activo* —la clínica donde el médico está afiliado—, que no es suya:
- * junto a la vieja «Mis organizaciones» y a «Organización médica» eran tres
+ * junto a «Mis organizaciones» y «Organización médica» eran tres
  * tarjetas
  * parecidas y ninguna contestaba «¿dónde atiendo yo?».
  *

@@ -199,6 +199,8 @@ test('la médica bloquea el rato de una cita: ve a la paciente, confirma, y la c
     clave: escenario.medica.clave,
     nombre: 'médica del bloqueo',
   });
+  // Sin fundidos entre pantallas: la captura sale entera, no a medio animar.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await irA(page, '/schedule/blocks');
   await estable(page);
 
@@ -308,6 +310,8 @@ test('a la paciente le llega «Su cita se canceló» con el motivo del bloqueo',
     clave: escenario.paciente.clave,
     nombre: 'paciente del bloqueo',
   });
+  // Sin fundidos entre pantallas: la captura sale entera, no a medio animar.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await irA(page, '/notification-center');
   await estable(page);
   await expect(page.locator('app-root')).toContainText('Su cita se canceló');

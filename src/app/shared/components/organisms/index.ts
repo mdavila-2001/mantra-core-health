@@ -31,7 +31,7 @@ export type {
 export { DatePicker } from './date-picker/date-picker';
 export type { CalendarDay } from './date-picker/date-picker';
 export { DATE_PICKER_MODES } from './date-picker/date-picker.types';
-export type { DatePickerMode } from './date-picker/date-picker.types';
+export type { DatePickerMode, DateTextProblem } from './date-picker/date-picker.types';
 
 export { EncounterTimeline } from './encounter-timeline/encounter-timeline';
 export { TIPOS_DE_HECHO } from './encounter-timeline/encounter-timeline.types';

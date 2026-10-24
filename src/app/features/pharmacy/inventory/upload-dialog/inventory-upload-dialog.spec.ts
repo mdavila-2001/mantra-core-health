@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import { InventoryUploadDialog } from './inventory-upload-dialog';
+import { afterAll, beforeAll } from 'vitest';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * «Subir inventario por CSV»: se revisa el archivo sin mandar nada y recién con
@@ -41,6 +43,11 @@ interface Internal {
 }
 
 describe('InventoryUploadDialog', () => {
+  // Las escrituras de farmacia son «sólo simulador»: sin esto la petición no sale.
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
+
   let fixture: ComponentFixture<InventoryUploadDialog>;
   let http: HttpTestingController;
   let applied: number;

@@ -144,10 +144,8 @@ const OCUPACION_DE_LA_PLANILLA: Readonly<Record<string, string>> = {
   'INGENIERIA INDUSTRIAL': 'occupation:bo:INGENIERO',
   'INGENIERO DE SISTEMAS': 'occupation:bo:INGENIERO',
   ODONTOLOGO: 'occupation:bo:ODONTOLOGO',
-  'ADMINISTRACION DE EMPRESAS': 'occupation:bo:ADMINISTRADOR',
   ARQUITECTO: 'occupation:bo:ARQUITECTO',
   CONTADORA: 'occupation:bo:CONTADOR',
-  AGRICULTOR: 'occupation:bo:AGRICULTOR',
   MECANICO: 'occupation:bo:MECANICO',
   'SECRETARIA EJECUTIVA': 'occupation:bo:SECRETARIO',
   PSICOLOGA: 'occupation:bo:PSICOLOGO',
@@ -165,7 +163,16 @@ const MUNICIPIO_DE_LA_PLANILLA: Readonly<Record<string, string>> = {
 function pacienteRegistrado(p: RegisteredPerson): PacienteSimulado {
   const clave = `usuario-paciente-${p.sourceRow}`;
   const ocupacion = p.occupation ?? null;
-  const codigo = ocupacion === null ? undefined : (OCUPACION_DE_LA_PLANILLA[ocupacion] ?? 'occupation:bo:OTRA');
+  // Sólo códigos que el catálogo trae: «Administración de empresas» es una
+  // carrera y «Agricultor» no tiene equivalente directo, así que van como
+  // «Otra ocupación» con su texto, no como un código que no existe.
+  const equivalente = ocupacion === null ? undefined : OCUPACION_DE_LA_PLANILLA[ocupacion];
+  const codigo =
+    ocupacion === null
+      ? undefined
+      : equivalente !== undefined && OCCUPATION[equivalente] !== undefined
+        ? equivalente
+        : 'occupation:bo:OTRA';
   const municipio = p.municipality === null || p.municipality === undefined ? undefined : MUNICIPIO_DE_LA_PLANILLA[p.municipality];
   if (p.municipality && municipio === undefined) {
     throw new Error(`Municipio de USUARIO_PACIENTES sin mapear: «${p.municipality}».`);

@@ -13,6 +13,12 @@
   display: block;
 }
 
+/* Dentro del modal las tarjetas de los bloques llenan el ancho del diálogo en
+   vez de quedar con su tope de 68ch pegadas a la izquierda. */
+app-content-dialog {
+  --expediente-card-max: none;
+}
+
 .consulta {
   display: grid;
   gap: var(--sp-5);
