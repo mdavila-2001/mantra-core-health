@@ -8,6 +8,7 @@ import { BodyMap } from '@shared/components/organisms/body-map/body-map';
 import { VOICE_RECOGNIZER } from './dictation';
 import type { VoiceErrorEvent, VoiceResultEvent, VoiceRecognizer } from './dictation.types';
 import { SymptomCheck } from './symptom-check';
+import { ESPERAR_IMAGEN_DE_VISTA } from '../../shared/components/organisms/body-map/body-map';
 
 /**
  * Responde el `GET /profiles/patients/me` que se pide al abrir, con sesión
@@ -44,7 +45,12 @@ describe('SymptomCheck · a dónde lleva «ver quién atiende»', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -209,7 +215,12 @@ describe('SymptomCheck · la silueta', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -308,7 +319,12 @@ describe('SymptomCheck · el área de texto', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -357,7 +373,12 @@ describe('SymptomCheck · mientras la IA lee', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -369,7 +390,9 @@ describe('SymptomCheck · mientras la IA lee', () => {
   afterEach(() => vi.useRealTimers());
 
   function escribir(texto: string): void {
-    const control = html.querySelector<HTMLTextAreaElement>('[data-testid="sintomas-texto"] textarea');
+    const control = html.querySelector<HTMLTextAreaElement>(
+      '[data-testid="sintomas-texto"] textarea',
+    );
     if (control === null) throw new Error('no está el área de texto');
     control.value = texto;
     control.dispatchEvent(new Event('input', { bubbles: true }));
@@ -379,7 +402,9 @@ describe('SymptomCheck · mientras la IA lee', () => {
   it('dice que está leyendo, no «no reconocimos», hasta que el servicio contesta', () => {
     // Un texto que el motor local no reconoce: sólo el servicio puede leerlo.
     escribir('algo raro me pasa desde ayer');
-    expect(html.querySelector('[data-testid="sintomas-leyendo"]')?.textContent).toContain('Estamos leyendo');
+    expect(html.querySelector('[data-testid="sintomas-leyendo"]')?.textContent).toContain(
+      'Estamos leyendo',
+    );
     expect(html.textContent).not.toContain('No reconocimos');
 
     vi.advanceTimersByTime(700);
@@ -554,7 +579,12 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -591,24 +621,32 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('manchas en la espalda');
     expect(html.querySelector('.sintomas__recomendaciones')?.textContent).toContain('Dermatología');
-    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain('Gracias por contarnos');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain(
+      'Gracias por contarnos',
+    );
   });
 
   it('si el servicio no responde, la pantalla sigue con lo que reconoce sola', () => {
     escribir('me duele la cabeza');
     vi.advanceTimersByTime(600);
-    http.expectOne('/ai/v1/triage/analyze').flush('caído', { status: 503, statusText: 'Service Unavailable' });
+    http
+      .expectOne('/ai/v1/triage/analyze')
+      .flush('caído', { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('dolor de cabeza');
-    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain('Gracias por contarnos');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain(
+      'Gracias por contarnos',
+    );
   });
 
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
     escribir('me duele la rodilla y ando triste');
     fixture.detectChanges();
 
-    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Rodillas');
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
+      'Rodillas',
+    );
     expect(
       html.querySelector('[data-testid="body-map-rodillas"]')?.closest('g')?.classList,
     ).toContain('body-map__zona--marcada');
@@ -617,22 +655,30 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
 
     // La lectura del servicio se pide igual; se la da por atendida.
     vi.advanceTimersByTime(600);
-    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
   });
 
   it('sin certeza manda a Medicina general: nada reconocido, o sólo lo que interpretó MedGemma', () => {
     escribir('tengo un problema que no se explicar');
     vi.advanceTimersByTime(600);
-    http.expectOne('/ai/v1/triage/analyze').flush({ symptoms: [], urgency: 'programada', source: 'catalog' });
+    http
+      .expectOne('/ai/v1/triage/analyze')
+      .flush({ symptoms: [], urgency: 'programada', source: 'catalog' });
     fixture.detectChanges();
     expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).not.toBeNull();
-    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain('Medicina general');
+    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain(
+      'Medicina general',
+    );
 
     escribir('me siento rarisimo desde ayer');
     vi.advanceTimersByTime(600);
     http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'model' });
     fixture.detectChanges();
-    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) => e.textContent?.trim());
+    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) =>
+      e.textContent?.trim(),
+    );
     expect(especialidades[0]).toBe('Medicina general');
     expect(especialidades).toContain('Dermatología');
     expect(html.querySelector('.sintomas__porque')?.textContent).toContain('interpretamos con IA');
@@ -641,28 +687,38 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     vi.advanceTimersByTime(600);
     http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'semantic' });
     fixture.detectChanges();
-    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain('Medicina general');
+    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain(
+      'Medicina general',
+    );
   });
 
   it('los síntomas reconocidos se muestran con su término del glosario médico y la forma llana', () => {
     escribir('eyaculo sangre y me duele la cabeza');
     vi.advanceTimersByTime(600);
-    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
     const chips = [...html.querySelectorAll('[data-testid="sintoma-reconocido"]')];
     const textos = chips.map((c) => c.textContent?.trim());
     expect(textos).toContain('Cefalea (dolor de cabeza)');
     expect(textos).toContain('Hematospermia (sangre en el semen)');
-    expect(chips.find((c) => c.textContent?.includes('Cefalea'))?.getAttribute('data-glossary-code')).toBe('CIE-10 R51');
+    expect(
+      chips.find((c) => c.textContent?.includes('Cefalea'))?.getAttribute('data-glossary-code'),
+    ).toBe('CIE-10 R51');
   });
 
   it('con un síntoma reconocido con certeza Medicina general igual va primero, y el especialista debajo', () => {
     // Decisión del propietario (2026-10-08): Medicina general siempre primero.
     escribir('me salieron granos en la cara');
     vi.advanceTimersByTime(600);
-    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
-    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) => e.textContent?.trim());
+    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) =>
+      e.textContent?.trim(),
+    );
     expect(especialidades[0]).toBe('Medicina general');
     expect(especialidades).toContain('Dermatología');
     expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).toBeNull();
@@ -690,7 +746,12 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -874,14 +935,18 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(crisis).not.toBeNull();
     expect(escribir).not.toBeNull();
     // La crisis debe aparecer después en el árbol DOM (la escritura ARRIBA, y el soporte ABAJO)
-    expect(escribir!.compareDocumentPosition(crisis!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      escribir!.compareDocumentPosition(crisis!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(crisis?.textContent).toContain('800-11-3040');
     expect(crisis?.textContent).toContain('772-22123');
   });
 
   it('no confunde «necesito ayuda» con ideación suicida ni bloquea la orientación médica', () => {
     responderSexoPropio(http);
-    (componente as unknown as { escribir(v: string): void }).escribir('necesito ayuda me duele la rodilla');
+    (componente as unknown as { escribir(v: string): void }).escribir(
+      'necesito ayuda me duele la rodilla',
+    );
     fixture.detectChanges();
     http.match(() => true);
 
@@ -896,7 +961,9 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     fixture.detectChanges();
     html = fixture.nativeElement as HTMLElement;
 
-    const botonTop = html.querySelector<HTMLButtonElement>('[data-testid="sintomas-boton-ayuda-top"]');
+    const botonTop = html.querySelector<HTMLButtonElement>(
+      '[data-testid="sintomas-boton-ayuda-top"]',
+    );
     expect(botonTop).not.toBeNull();
     expect(html.querySelector('[data-testid="sintomas-crisis-soporte"]')).toBeNull();
 
@@ -924,7 +991,12 @@ describe('SymptomCheck · la silueta', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -1023,7 +1095,12 @@ describe('SymptomCheck · el área de texto', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);

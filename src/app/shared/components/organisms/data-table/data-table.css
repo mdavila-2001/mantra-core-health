@@ -411,6 +411,7 @@ thead .data-table__cell {
     :host(.data-table--apilada) .data-table__row:hover {
         background: transparent;
     }
+}
 
 /* ─── Encabezado de la tarjeta («REGISTROS · n») ─────────────────────────── */
 .data-table__heading {
