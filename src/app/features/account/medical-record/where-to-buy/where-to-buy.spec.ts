@@ -30,6 +30,7 @@ import {
   cartLinesFromDraft,
   coberturaConSeguro,
   ordenarSedes,
+  pendingImagingStudies,
   WhereToBuy,
   type ItemDeReceta,
 } from './where-to-buy';
@@ -1597,3 +1598,25 @@ describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
 function byTestId(id: string): string {
   return `[data-testid="${id}"]`;
 }
+
+describe('pendingImagingStudies', () => {
+  const concepto = (conceptId: string, code: string, display: string) =>
+    [conceptId, { conceptId, code, display, codeSystemVersionId: 'v1' }] as const;
+  const labels = new Map([
+    concepto('c-eco', 'STUDY-ECO-ABD', 'Ecografía abdominal'),
+    concepto('c-glu', 'STUDY-GLUCOSA', 'Glucosa'),
+  ]);
+  const orden = (id: string, codeConceptId: string) => ({
+    id,
+    codeConceptId,
+    statusConceptId: 's-1',
+    createdAt: new Date('2026-10-01T10:00:00Z'),
+    hasReleasedResult: false,
+  });
+
+  it('sin categoría, un análisis de laboratorio no cuenta como imagen', () => {
+    expect(pendingImagingStudies([orden('o-1', 'c-eco'), orden('o-2', 'c-glu')], labels)).toEqual([
+      { conceptId: 'c-eco', name: 'Ecografía abdominal' },
+    ]);
+  });
+});
