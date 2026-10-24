@@ -233,6 +233,9 @@ export class ChatStore {
    */
   readonly editando = signal<MensajeDelHilo | null>(null);
 
+  /** El último adjunto en la fila para salir (ver `enviarAdjunto`). */
+  private turnoDeAdjuntos: Promise<void> = Promise.resolve();
+
   /**
    * Cuántos sin leer tenía la conversación al abrirla.
    *
@@ -1201,9 +1204,10 @@ export class ChatStore {
     );
   }
 
-  private despachar(pendiente: MensajePendiente): void {
+  private despachar(pendiente: MensajePendiente, alTerminar?: () => void): void {
     const propio = this.perfil();
     if (propio === null) {
+      alTerminar?.();
       return;
     }
     this.enviando.set(true);
@@ -1225,6 +1229,7 @@ export class ChatStore {
       .subscribe({
         next: (acuse) => {
           this.enviando.set(false);
+          alTerminar?.();
           // El mensaje real entra en la lista y el pendiente sale en el mismo
           // paso, así la burbuja no parpadea.
           if (pendiente.conversationId === this.activaId()) {
@@ -1258,6 +1263,7 @@ export class ChatStore {
         },
         error: (error: unknown) => {
           this.enviando.set(false);
+          alTerminar?.();
           this.pendientes.update((lista) =>
             lista.map((p) =>
               p.claveTemporal === pendiente.claveTemporal
@@ -1321,6 +1327,14 @@ export class ChatStore {
       lector.readAsDataURL(archivo);
     }
 
+    // Las subidas corren a la par, pero los mensajes salen **en el orden en que
+    // se eligieron**: cada uno espera su turno, que se libera cuando el
+    // anterior terminó de salir (bien o mal). Sin esto, de varias fotos
+    // mandadas juntas llegaba primero la que menos pesaba.
+    const turnoAnterior = this.turnoDeAdjuntos;
+    let liberarTurno: () => void = () => undefined;
+    this.turnoDeAdjuntos = new Promise<void>((liberar) => (liberarTurno = liberar));
+
     // `PHI` y no `NORMAL`: lo que se adjunta en un chat entre paciente y
     // profesional es, con toda probabilidad, la foto de un análisis o de una
     // receta. La sensibilidad cambia cómo se guarda y quién puede descargarlo,
@@ -1344,7 +1358,7 @@ export class ChatStore {
             p.claveTemporal === pendiente.claveTemporal ? conFileId : p,
           ),
         );
-        this.despachar(conFileId);
+        void turnoAnterior.then(() => this.despachar(conFileId, liberarTurno));
       },
       error: (error: unknown) => {
         this.pendientes.update((lista) =>
@@ -1355,6 +1369,9 @@ export class ChatStore {
           ),
         );
         this.fallar(error, 'No pudimos subir el archivo.');
+        // El que falló cede su turno igual: el siguiente no puede quedar
+        // esperando a un mensaje que no va a salir.
+        void turnoAnterior.then(liberarTurno);
       },
     });
   }
@@ -1395,6 +1412,12 @@ export class ChatStore {
     if (conversationId === null || profileId === null) return;
     const yaResueltos = this.urlesDeArchivo();
     for (const mensaje of mensajes) {
+      // Uno en vuelo ya tiene su vista local y su archivo todavía no viaja en
+      // ningún mensaje: pedirlo daría 404 y ese «no disponible» quedaría
+      // anotado para cuando el mensaje sí exista.
+      if (mensaje.pendiente !== undefined) {
+        continue;
+      }
       const fileId = mensaje.attachmentFileId;
       const key = fileId ? `${conversationId}:${fileId}` : '';
       // Un sticker no se pide: su URL sale del pack, que viene con la
