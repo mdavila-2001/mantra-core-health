@@ -70,6 +70,78 @@ const BIENVENIDA: TutorialDefinition = {
   ],
 };
 
+/**
+ * El recorrido de quien viene a atenderse.
+ *
+ * `bienvenida` habla de organizaciones y del panel de accesos, que el paciente
+ * no tiene: con su sesión casi todos sus pasos se saltaban. Éste señala sólo lo
+ * que el paciente ve en su inicio y en la cabecera, en palabras de todos los
+ * días, y lo ofrece el propio inicio con un botón —no se abre solo—.
+ */
+export const PATIENT_WELCOME_ID = 'bienvenida-paciente';
+
+const BIENVENIDA_PACIENTE: TutorialDefinition = {
+  id: PATIENT_WELCOME_ID,
+  version: '1.0',
+  title: 'Conozca AloVida en un minuto',
+  description:
+    'Dónde pedir ayuda urgente, cómo contar lo que le pasa, dónde ver sus citas y dónde están sus cosas.',
+  category: 'General',
+  route: '/dashboard',
+  roles: ['PATIENT'],
+  estimatedMinutes: 1,
+  level: 'inicial',
+  steps: [
+    {
+      id: 'saludo',
+      title: '¡Bienvenido a AloVida!',
+      body: 'Le mostramos lo importante en seis pasos cortos. Toque «Siguiente» para avanzar; puede salir cuando quiera.',
+    },
+    {
+      id: 'emergencia',
+      title: 'Si es urgente',
+      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba, en todas las pantallas.',
+      target: 'header-emergencia',
+      placement: 'bottom',
+    },
+    {
+      id: 'sintomas',
+      title: 'Cuéntenos qué le pasa',
+      body: 'Toque en la figura dónde le duele, o escríbalo con sus palabras. Le decimos a qué especialista ir.',
+      target: 'mi-salud-sintomas',
+      placement: 'top',
+    },
+    {
+      id: 'cita',
+      title: 'Su próxima cita',
+      body: 'Acá ve el día, la hora y con quién es su próxima cita. Desde el botón la puede cambiar.',
+      target: 'mi-salud-proxima-cita',
+      placement: 'top',
+    },
+    {
+      id: 'menu',
+      title: 'Sus cosas, en el menú',
+      body: 'A la izquierda están sus citas, su historia clínica, sus resultados, sus órdenes y la farmacia.',
+      target: 'shell-nav',
+      placement: 'right',
+    },
+    {
+      id: 'atajos',
+      title: 'Atajos con nombre',
+      body: 'Arriba tiene los chats con su médico, sus facturas, sus gastos, promociones y su carrito. Cada uno dice qué es.',
+      target: 'header-atajos',
+      placement: 'bottom',
+    },
+    {
+      id: 'ayuda',
+      title: 'Si se pierde',
+      body: 'Toque «Tutoriales» para repetir este recorrido o aprender algo nuevo. ¡Listo, ya conoce AloVida!',
+      target: 'header-tutoriales',
+      placement: 'bottom',
+    },
+  ],
+};
+
 /** Cómo está organizado el menú y por qué se ve lo que se ve. */
 const NAVEGACION: TutorialDefinition = {
   id: 'navegacion',
@@ -419,6 +491,7 @@ const NOTIFICACIONES: TutorialDefinition = {
  */
 export const TUTORIALS: readonly TutorialDefinition[] = [
   BIENVENIDA,
+  BIENVENIDA_PACIENTE,
   NAVEGACION,
   AGENDA_DEL_DIA,
   EXPEDIENTE,

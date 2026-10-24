@@ -220,7 +220,7 @@ describe('PatientHome', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      expect(texto()).toContain('Ana Quispe');
+      expect(texto()).toContain(', Ana');
       expect(texto()).not.toContain('Beneficios preventivos');
     });
   });
@@ -229,7 +229,12 @@ describe('PatientHome', () => {
     await montar();
     responder([], null);
 
-    expect(texto()).toContain('Ana Quispe');
+    // Rediseño del 22/10/2026: saluda con el nombre de pila —«Ana», no «Ana
+    // Quispe»— y con el saludo de la hora. El apellido en el saludo lo volvía
+    // un trámite; se exige que no esté.
+    const titulo = fixture.nativeElement.querySelector('#portada-titulo')?.textContent ?? '';
+    expect(titulo).toMatch(/^\s*(Buenos días|Buenas tardes|Buenas noches|Hola), Ana\s*$/);
+    expect(titulo).not.toContain('Quispe');
     // El subtítulo cambió con C5: el panel ahora encabeza con los síntomas.
     expect(texto()).toContain('Cuéntenos qué le pasa');
   });
