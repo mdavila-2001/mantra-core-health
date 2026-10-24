@@ -1,7 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { pdfDePrueba } from './helpers/documentos-legales';
-import { avanzarHasta, elegirLocalidadDeResidencia, empezarElAlta } from './support/registro-paciente';
+import {
+  PASOS_DEL_ALTA,
+  completarContacto,
+  elegirLocalidadDeResidencia,
+  empezarElAlta,
+} from './support/registro-paciente';
 
 /**
  * Las tres altas públicas que no tenían ninguna prueba de punta a punta:
@@ -71,13 +76,8 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
    */
   test('paciente: la fecha de nacimiento se escribe tecleando, sin abrir el calendario', async ({ page }) => {
     await page.goto('/auth/register/patient');
-    await page.getByTestId('registro-nombre').fill('Ana');
-    await page.getByTestId('registro-apellido-paterno').fill('Paz');
-    await continuar(page);
-    await page.getByTestId('registro-documento').fill('9876543');
-    await page.getByTestId('registro-departamento-ci').locator('select').selectOption({ index: 1 });
-    await continuar(page);
-    await enLaPagina(page, 'Cuéntenos un poco sobre usted');
+    // La fecha va en el primer paso, junto al nombre y el documento.
+    await enLaPagina(page, PASOS_DEL_ALTA.identidad);
 
     const fecha = page.getByPlaceholder('DD/MM/AAAA');
     await fecha.click();
@@ -88,13 +88,13 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
   test('paciente: lo obligatorio alcanza para crear la cuenta', async ({ page }) => {
     await empezarElAlta(page, `CI-ALTA-${Date.now()}`);
 
-    await avanzarHasta(page, '¿Dónde vive?');
     await elegirLocalidadDeResidencia(page);
-    await continuarHasta(page, 'Su acceso');
+    await continuar(page);
+    await completarContacto(page);
+    await continuarHasta(page, PASOS_DEL_ALTA.resto);
 
     await page.getByTestId('registro-correo').fill(`paciente-${Date.now()}@alovida.test`);
     await page.getByTestId('registro-password').fill('Alta-Paciente1!');
-    await continuarHasta(page, 'Datos de facturación');
 
     const enviar = page.getByTestId('paginated-form-continuar');
     await expect(enviar).toHaveText(/Crear cuenta/);

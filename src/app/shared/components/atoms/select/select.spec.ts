@@ -51,13 +51,14 @@ describe('Select', () => {
     await fixture.whenStable();
   }
 
-  const DIEZ: SelectOption<string>[] = [
+  const ONCE: SelectOption<string>[] = [
     'Cardiología',
     'Dermatología',
     'Ginecología',
     'Medicina general',
     'Neurología',
     'Oftalmología',
+    'Otorrinolaringología',
     'Pediatría',
     'Psiquiatría',
     'Traumatología',
@@ -261,7 +262,7 @@ describe('Select', () => {
     });
 
     it(`sin buscador hasta ${SEARCH_FROM} opciones`, async () => {
-      const fixture = crear<string>(DIEZ.slice(0, SEARCH_FROM));
+      const fixture = crear<string>(ONCE.slice(0, SEARCH_FROM));
       await fixture.whenStable();
       await abrir(fixture);
 
@@ -269,7 +270,7 @@ describe('Select', () => {
     });
 
     it('con más opciones busca sin tildes, por etiqueta y descripción', async () => {
-      const fixture = crear<string>(DIEZ);
+      const fixture = crear<string>(ONCE);
       await fixture.whenStable();
       await abrir(fixture);
 
@@ -285,7 +286,7 @@ describe('Select', () => {
     });
 
     it('una búsqueda sin coincidencias lo dice', async () => {
-      const fixture = crear<string>(DIEZ);
+      const fixture = crear<string>(ONCE);
       await fixture.whenStable();
       await abrir(fixture);
 

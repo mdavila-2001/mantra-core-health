@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
-import { RegisterPatient } from './register-patient';
+import { MAX_TELEFONOS_EXTRA, RegisterPatient } from './register-patient';
 import { chooseSelectOptionNow, selectOptionLabelsNow } from '../../../../testing/select';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
@@ -501,9 +501,13 @@ describe('RegisterPatient', () => {
       ]);
       expect(porClave('contact')).toEqual([
         'phone',
+        // Carril 03: los celulares que se suman con el «+», debajo del principal.
+        'additionalPhones',
         'guardianName',
         'guardianPhone',
         'guardianRelationshipConceptId',
+        // Y los contactos de emergencia que se suman, debajo del primero.
+        'additionalEmergencyContacts',
         'trustedAmbulanceService',
         'trustedAmbulanceName',
         'trustedAmbulancePhone',
@@ -950,6 +954,39 @@ describe('RegisterPatient', () => {
     });
 
     /**
+     * `Validators.email` acepta `ana@gmail`, que el `@IsEmail` de la API
+     * rechaza con un 400 recién al enviar. El alta lo frena antes.
+     */
+    /**
+     * La fecha de nacimiento va de 1910 a **hoy**: el tope es la palabra
+     * `'today'`, que el calendario resuelve con la fecha del día al abrirse, y
+     * no un año escrito a mano que habría que actualizar cada enero.
+     */
+    it('la fecha de nacimiento va de 1910 a hoy, sin un año fijo', () => {
+      const campo = component
+        .paginasPaciente()
+        .flatMap((pagina) => pagina.campos)
+        .find((c) => c.key === 'birthDate');
+
+      expect(campo?.minDate).toEqual(new Date(1910, 0, 1));
+      expect(campo?.maxDate).toBe('today');
+    });
+
+    it('un correo sin terminación de dominio no sale', () => {
+      completar({ email: 'ana@gmail' });
+
+      expect(component.formPaciente.controls.email.hasError('pattern')).toBe(true);
+      component.submit();
+      http.expectNone('/iam/auth/register-patient');
+    });
+
+    it('un correo con subdominio y terminación sí es válido', () => {
+      completar({ email: 'ana.quispe@correo.umsa.bo' });
+
+      expect(component.formPaciente.controls.email.valid).toBe(true);
+    });
+
+    /**
      * AG49-FT03-R04-001: el `BLOCKER` no era que `name`/`lastName` sean
      * obligatorios —eso ya lo fija la prueba de arriba, a propósito—, sino que
      * ningún artefacto decía POR QUÉ, dejando la lista de la fuente literal
@@ -1123,6 +1160,96 @@ describe('RegisterPatient', () => {
     component.quitarNombre(0);
 
     expect(component.nombresExtra()).toEqual(['Belén']);
+  });
+
+  /**
+   * Carril 03: los multicampos son arreglos de verdad, no estado de pantalla.
+   * Lo que se suma con el «+» viaja como colección en el cuerpo del alta.
+   */
+  describe('teléfonos y contactos de emergencia con «+»', () => {
+    it('sin «+» no viaja ninguno de los dos arreglos', () => {
+      completar();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(req.request.body).not.toHaveProperty('additionalPhones');
+      expect(req.request.body).not.toHaveProperty('additionalEmergencyContacts');
+      req.flush(RESPUESTA);
+    });
+
+    it('los celulares sumados viajan como arreglo, en orden', () => {
+      completar();
+      component.agregarTelefono();
+      component.agregarTelefono();
+      component.telefonosExtra.at(0).setValue('+591 71111111');
+      component.telefonosExtra.at(1).setValue('+591 72222222');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(req.request.body.additionalPhones).toEqual(['+591 71111111', '+591 72222222']);
+      req.flush(RESPUESTA);
+    });
+
+    it('una casilla de celular agregada y vacía frena el alta', () => {
+      completar();
+      component.agregarTelefono();
+      component.submit();
+
+      expect(component.telefonosExtra.at(0).hasError('required')).toBe(true);
+      http.expectNone('/iam/auth/register-patient');
+    });
+
+    it('quitar una casilla la saca del cuerpo', () => {
+      completar();
+      component.agregarTelefono();
+      component.agregarTelefono();
+      component.telefonosExtra.at(1).setValue('+591 72222222');
+      component.quitarTelefono(0);
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(req.request.body.additionalPhones).toEqual(['+591 72222222']);
+      req.flush(RESPUESTA);
+    });
+
+    it('no deja sumar más celulares que el tope de la API', () => {
+      for (let i = 0; i < MAX_TELEFONOS_EXTRA + 2; i++) component.agregarTelefono();
+
+      expect(component.telefonosExtra.length).toBe(MAX_TELEFONOS_EXTRA);
+    });
+
+    it('los contactos sumados viajan con nombre, teléfono y parentesco', () => {
+      completar();
+      component.agregarContacto();
+      component.agregarContacto();
+      component.contactosExtra.at(0).setValue({
+        name: ' Luis Paz ',
+        phone: '+591 73333333',
+        relationshipConceptId: 'rel-padre',
+      });
+      component.contactosExtra.at(1).setValue({
+        name: 'Marta Rojas',
+        phone: '',
+        relationshipConceptId: null,
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(req.request.body.additionalEmergencyContacts).toEqual([
+        { name: 'Luis Paz', phone: '+591 73333333', relationshipConceptId: 'rel-padre' },
+        { name: 'Marta Rojas' },
+      ]);
+      req.flush(RESPUESTA);
+    });
+
+    it('un contacto sumado sin nombre frena el alta', () => {
+      completar();
+      component.agregarContacto();
+      component.submit();
+
+      expect(component.contactosExtra.at(0).controls.name.hasError('required')).toBe(true);
+      http.expectNone('/iam/auth/register-patient');
+    });
   });
 
   it('incluye el correo cuando se completó', () => {
