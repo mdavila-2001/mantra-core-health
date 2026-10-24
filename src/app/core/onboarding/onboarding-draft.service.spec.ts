@@ -34,6 +34,18 @@ describe('OnboardingDraftService', () => {
     expect(id2).toBe(id1);
   });
 
+  it('la telemetría no lleva el draftId del borrador', () => {
+    vi.useFakeTimers();
+    const draftId = service.getOrCreateDraftId('patient');
+    service.trackEvent('start', 'patient', 0);
+    vi.advanceTimersByTime(1000);
+    const req = http.expectOne((r) => r.method === 'POST' && r.body !== undefined);
+    const enviado = JSON.stringify(req.request.body);
+    expect(enviado).not.toContain(draftId);
+    req.flush({});
+    vi.useRealTimers();
+  });
+
   it('guarda el borrador en localStorage y lo detecta', () => {
     expect(service.detectDraft('patient')).toBeNull();
 

@@ -2391,10 +2391,13 @@ export class RegisterPatient {
       const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
       const titulo = paginas[indice]?.titulo ?? clave;
       const raw = this.formPaciente.getRawValue();
-      const valores = {
+      // La contraseña nunca se escribe en el almacenamiento del navegador.
+      const valores: Record<string, unknown> = {
         ...raw,
         birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
       };
+      delete valores['password'];
+      delete valores['confirmPassword'];
       const extraData = {
         nombresExtra: this.nombresExtra(),
         empresaSeleccionada: this.empresaSeleccionada(),

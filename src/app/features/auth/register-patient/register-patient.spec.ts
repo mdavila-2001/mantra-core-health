@@ -2614,6 +2614,16 @@ describe('RegisterPatient', () => {
       expect(datos.pasoClave).toBe('residence');
     });
 
+    it('nunca escribe la contraseña en localStorage', () => {
+      component.formPaciente.controls.name.setValue('Carlos');
+      component.formPaciente.controls.password.setValue('secreto12');
+      component.recordarPaso({ titulo: '¿Dónde vive?', clave: 'residence', campos: [] });
+
+      const guardado = localStorage.getItem(component.STORAGE_KEY)!;
+      expect(guardado).not.toContain('secreto12');
+      expect(JSON.parse(guardado).formValores.password).toBeUndefined();
+    });
+
     it('restaura el avance previo desde localStorage', () => {
       const borrador = {
         version: 1,
