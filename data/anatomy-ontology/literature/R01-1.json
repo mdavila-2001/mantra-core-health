@@ -1,0 +1,2495 @@
+{
+  "UBERON:0000019": {
+    "sentences": []
+  },
+  "UBERON:0000053": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Un examen con microscopía electrónica de barrido de la mácula lútea humana describió unas 15 prolongaciones filiformes en el segmento interno de cada cono.",
+        "cites": [
+          "PMID:546002"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La microcirugía macular se practica desde 1965; se indicó primero para retirar membranas epirretinianas idiopáticas y, desde 1991, para tratar agujeros maculares.",
+        "cites": [
+          "PMID:8766243"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio con tomografía de coherencia óptica en 72 personas, el volumen de la mácula lútea fue menor en pacientes con enfermedad de Alzheimer y con deterioro cognitivo leve que en los controles.",
+        "cites": [
+          "PMID:25459918"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 58 ojos con desprendimiento de retina regmatógeno, la posición de la mácula lútea y la vitreorretinopatía proliferativa influyeron en la concentración de citocinas del vítreo.",
+        "cites": [
+          "PMID:32542038"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000130": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "La arteria vertebral ingresa habitualmente por el agujero transverso de la sexta vértebra cervical; a veces lo hace por el quinto y rara vez por el cuarto o el séptimo.",
+        "cites": [
+          "PMID:33386927"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 266 cadáveres, 14 arterias vertebrales izquierdas (5,3 %) nacían del arco aórtico y el 78,6 % de ellas penetraba por el agujero transverso de C5, mientras que las de origen subclavio lo hacían casi siempre por el de C6 (94,7 % a la izquierda y 99,2 % a la derecha).",
+        "cites": [
+          "PMID:30806941"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Según disecciones de 10 especímenes y resonancia de 10 voluntarios sanos, las venas vertebrales se disponen como un plexo en la parte alta del conducto transverso y se reúnen en una sola vena junto a la arteria vertebral desde el agujero transverso de C6.",
+        "cites": [
+          "PMID:25526272"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Un estudio de microdisección e histología observó que la sangre venosa del conducto transverso circula por un espacio limitado por el periostio, organizado como un seno y no como una vena individual.",
+        "cites": [
+          "PMID:16195811"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 40 vértebras axis secas, las dimensiones del agujero transverso de C2 variaron más entre sexos que entre el lado derecho y el izquierdo.",
+        "cites": [
+          "PMID:9884298"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En angiotomografías de 208 pacientes, el área del agujero transverso entre C3 y C6 se correlacionó de forma lineal con la de la arteria vertebral del mismo lado.",
+        "cites": [
+          "PMID:23323133"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000348": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En 30 fosas craneales medias de cadáveres adultos disecadas por vía endonasal endoscópica, el nervio oftálmico fue la rama trigeminal más alta y ascendía en sentido oblicuo por la porción media de la pared lateral del seno cavernoso.",
+        "cites": [
+          "PMID:25425506"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, el nervio oftálmico se asociaba a los nervios oculomotor y troclear para abandonar el seno cavernoso y llegar a la órbita a través de la fisura orbitaria superior.",
+        "cites": [
+          "PMID:25425506"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En el 10 % de esos especímenes, el nervio troclear discurría acompañando al nervio oftálmico.",
+        "cites": [
+          "PMID:25425506"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 45 cadáveres humanos, los parámetros morfométricos de los axones del nervio oftálmico se correlacionaron de forma inversa con la edad.",
+        "cites": [
+          "PMID:10998941"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La sensibilidad de la superficie ocular se emplea como medida de la función de la primera rama del trigémino.",
+        "cites": [
+          "PMID:8249592"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En pacientes con neurinoma acústico unilateral, la instilación de solución salina al 3 % en el saco conjuntival mostró menor sensibilidad del lado tumoral en el 50 % de los casos.",
+        "cites": [
+          "PMID:8249592"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000389": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Un estudio densitométrico de imágenes de Scheimpflug en 50 ojos distinguió tres zonas principales (C1, C2 y C3) en las capas corticales anteriores del cristalino humano.",
+        "cites": [
+          "PMID:1426401"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa muestra, el engrosamiento cortical ocurrió sobre todo en la zona C2, mientras que C1 tendió a adelgazarse con los años.",
+        "cites": [
+          "PMID:1426401"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La zona C3 no existe al nacer ni en la primera infancia y se reconoce como capa propia durante la segunda década de la vida.",
+        "cites": [
+          "PMID:1426401"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El análisis proteómico de un cristalino humano de 69 años sugirió que la degradación de las cristalinas comienza en la corteza y continúa en el núcleo conforme las fibras se desplazan hacia el centro.",
+        "cites": [
+          "PMID:20352024"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la catarata senil incipiente de cualquier tipo, la corteza del cristalino medida con lámpara de hendidura resulta más delgada que en ojos normales de la misma edad.",
+        "cites": [
+          "PMID:1262175"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En cuatro pacientes con distrofia corneorretiniana de Bietti avanzada seguidos más de 12 años, aparecieron depósitos de aspecto cristalino en la corteza anterior y posterior del cristalino.",
+        "cites": [
+          "PMID:34310258"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000390": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 100 ojos sometidos a extracción extracapsular, el núcleo central aislado por hidrodisección midió en promedio 6,43 ± 0,86 mm de diámetro y 2,93 ± 0,36 mm de espesor central.",
+        "cites": [
+          "PMID:8285150"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, el espesor central del núcleo mostró una correlación positiva con la edad.",
+        "cites": [
+          "PMID:8285150"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La aplicación de energía de láser YAG permitió poner de manifiesto la superficie del núcleo central del cristalino y una organización radial en su interior.",
+        "cites": [
+          "PMID:1494437"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Mediante hidrodisección, el núcleo del cristalino puede separarse en un epinúcleo y un núcleo central duro.",
+        "cites": [
+          "PMID:2040979"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En el cristalino fetal humano, la criofractura reveló numerosas uniones comunicantes en el núcleo y en la corteza, sin diferencias significativas de superficie entre ambas regiones.",
+        "cites": [
+          "PMID:2029845"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 105 núcleos obtenidos por extracción extracapsular, el pretratamiento con láser Nd:YAG acortó la facoemulsificación; en los moderadamente escleróticos, el tiempo medio pasó de 40,1 a 23,9 segundos (40,4 %).",
+        "cites": [
+          "PMID:3661647"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000401": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 16 ramas mandibulares de adultos, el grosor óseo aumentaba de manera gradual dentro de los 15 mm vecinos al borde posterior.",
+        "cites": [
+          "PMID:15854328"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa misma muestra, algunas ramas no tenían hueso esponjoso a 10 mm por encima del agujero mandibular.",
+        "cites": [
+          "PMID:15854328"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Al seccionar 49 mandíbulas, las corticales vestibular y lingual de la parte alta de la rama se fusionaban entre 7,5 y 13,3 mm por encima de la língula.",
+        "cites": [
+          "PMID:1990086"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cráneos macerados, el agujero mandibular quedaba, en sentido anteroposterior, a mitad de distancia entre la cresta temporal y el borde posterior de la rama.",
+        "cites": [
+          "PMID:9225514"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 200 mandíbulas adultas de sexo conocido, el borde posterior de la rama de los varones presentaba una angulación a la altura de la superficie oclusal de los molares, mientras que en la mayoría de las mujeres mantenía el perfil recto juvenil.",
+        "cites": [
+          "PMID:8850186"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 251 cráneos secos se halló una depresión en la cara medial de la rama en el 33,9 % de las mandíbulas.",
+        "cites": [
+          "PMID:11681482"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000711": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "El cruce entre el esternocleidomastoideo y el esplenio de la cabeza sirve de referencia para identificar el tramo de la arteria occipital con más riesgo de lesión al extraerla para un bypass.",
+        "cites": [
+          "PMID:34673238"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En muestras de autopsia de 13 varones jóvenes, el esplenio de la cabeza contenía un 51,2 % de fibras de tipo 1, frente al 39,7 % del vasto lateral.",
+        "cites": [
+          "PMID:39340391"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 10 especímenes teñidos con el método de Sihler, la arborización nerviosa del esplenio de la cabeza partía de la zona media del músculo y se repartía por igual hacia su origen y hacia su inserción.",
+        "cites": [
+          "PMID:31894602"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Una ecografía en 10 mujeres diestras de 19 a 29 años mostró un área de sección del esplenio de la cabeza mayor en el lado dominante.",
+        "cites": [
+          "PMID:8915268"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un colgajo de esplenio de la cabeza para rellenar el espacio muerto tras una fístula de líquido cefalorraquídeo recurrente después de una craniectomía suboccipital por malformación de Arnold-Chiari.",
+        "cites": [
+          "PMID:8134469"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000941": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "El nervio óptico, segundo par craneal, es la vía nerviosa de la visión.",
+        "cites": [
+          "PMID:19855858"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "El nervio óptico tiene una porción intracraneal y otra intracanalicular, a las que se accede por diferentes vías quirúrgicas transcraneales y endoscópicas.",
+        "cites": [
+          "PMID:31002303"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 12 especímenes cadavéricos (24 lados), la vía endonasal endoscópica dio acceso a los cuadrantes inferior y medial del nervio óptico, y la vía pterional, a su cara superolateral.",
+        "cites": [
+          "PMID:31002303"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Un atlas de tractografía por difusión construido con 50 sujetos del Human Connectome Project permitió trazar de forma automática el recorrido del nervio óptico.",
+        "cites": [
+          "PMID:40758488"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre las enfermedades del nervio óptico se cuentan las anomalías congénitas del disco, las neuropatías ópticas isquémicas, la neuritis óptica, las neuropatías tóxicas o nutricionales y el papiledema.",
+        "cites": [
+          "PMID:8722657"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la autopsia de 12 personas fallecidas por traumatismo craneal cerrado no se encontraron lesiones visibles en los nervios ópticos, aunque sí en otros pares craneales.",
+        "cites": [
+          "PMID:9101199"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000942": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El nervio frontal es un ramo del nervio oftálmico cuyo recorrido orbitario puede seguirse hasta la fisura orbitaria superior.",
+        "cites": [
+          "PMID:41418286"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En una cohorte australiana estudiada con resonancia ponderada en T1 con gadolinio y supresión grasa, el diámetro máximo medio del nervio frontal fue de 0,74 ± 0,18 mm, sin diferencias entre sexos.",
+        "cites": [
+          "PMID:39878888"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 13 pacientes con schwannoma del nervio frontal, el 84,6 % de los tumores ocupaba el trayecto entre la escotadura supraorbitaria y la fisura orbitaria superior.",
+        "cites": [
+          "PMID:29197538"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En cuatro pacientes con sospecha de diseminación perineural de un carcinoma epidermoide, el nervio frontal se resecó hasta la fisura orbitaria superior por vía endoscópica transorbitaria.",
+        "cites": [
+          "PMID:41418286"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000964": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La córnea protege el contenido del globo ocular, aporta poder refractivo y dirige la luz hacia la retina con escasa dispersión y degradación óptica.",
+        "cites": [
+          "PMID:29380756"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Su transparencia es una condición necesaria para que el ojo pueda ejercer su función visual.",
+        "cites": [
+          "PMID:21333881"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Diversas enfermedades sistémicas endocrinas, infecciosas, autoinmunitarias, por depósito o genéticas alteran la córnea, y esas alteraciones pueden ser la primera señal de un trastorno general aún no diagnosticado.",
+        "cites": [
+          "PMID:33485845"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La falta de tejido donante de calidad ha llevado a desarrollar queratoprótesis y técnicas regenerativas que sustituyen una o varias capas corneales.",
+        "cites": [
+          "PMID:23690003"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un caso publicado, la coloración parda progresiva de la córnea se debió a pigmento liberado por melanomas del iris, que atravesó el endotelio, se acumuló entre las láminas del estroma y se eliminó por el limbo.",
+        "cites": [
+          "PMID:18193447"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000966": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La neurorretina procede del neuroectodermo del diencéfalo y es un tejido en capas con seis clases de neuronas: conos, bastones y células horizontales, bipolares, amacrinas y ganglionares.",
+        "cites": [
+          "PMID:32614310"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Incluye además tres clases de células gliales: las de Müller, los astrocitos y la microglía.",
+        "cites": [
+          "PMID:32614310"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La neurorretina se apoya sobre el epitelio pigmentario, y el conjunto de ambos constituye la retina.",
+        "cites": [
+          "PMID:32614310"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Las barreras hematorretinianas interna y externa regulan con precisión el intercambio entre la retina y la circulación.",
+        "cites": [
+          "PMID:32614310"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La neurorretina convierte el estímulo luminoso en impulso nervioso como parte del sistema nervioso central.",
+        "cites": [
+          "PMID:32614310"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La retina figura entre los tejidos de mayor actividad metabólica del cuerpo, y sus fotorreceptores dependen de un aporte suficiente de oxígeno.",
+        "cites": [
+          "PMID:31884647"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001107": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "En ocho hemicuellos humanos disecados, el pedículo vascular del músculo esternohioideo provenía de la arteria tiroidea superior en cinco casos (62 %).",
+        "cites": [
+          "PMID:34020902"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En esa misma serie, el asa cervical entraba en el músculo de manera constante a 1,8 cm de su inserción distal.",
+        "cites": [
+          "PMID:34020902"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio electromiográfico de 20 adultos jóvenes, la actividad más marcada del esternohioideo se registró al llevar la punta de la lengua al paladar, a la vez que se desplazaba ampliamente el hioides.",
+        "cites": [
+          "PMID:8558355"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En esa muestra, el esternohioideo no intervino en los movimientos de la cabeza.",
+        "cites": [
+          "PMID:8558355"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Entre el esternocleidomastoideo y el esternohioideo existe un grupo de ganglios linfáticos que, en 115 pacientes con carcinoma papilar de tiroides y adenopatías clínicas, presentó metástasis en el 22,6 %.",
+        "cites": [
+          "PMID:22927223"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 39 pacientes con laringectomía subtotal, un colgajo de esternohioideo se empleó para reconstruir en un solo tiempo el defecto laringofaríngeo.",
+        "cites": [
+          "PMID:19460199"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001108": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El omohioideo es un músculo infrahioideo largo y delgado formado por un vientre superior y uno inferior unidos por un tendón intermedio, que atraviesa en diagonal la región lateral del cuello.",
+        "cites": [
+          "PMID:18719765"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Su vientre inferior es una cinta plana y estrecha que por lo general se origina en el borde superior de la escápula, por dentro de la escotadura escapular.",
+        "cites": [
+          "PMID:35148950"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El tendón intermedio está adherido a la cara anterior de la vena yugular interna y unido a ella por una fina lámina de la hoja pretraqueal de la fascia cervical.",
+        "cites": [
+          "PMID:18719765"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 10 voluntarios sanos, la ecografía mostró que la superficie de la vena yugular interna aumentaba por encima del omohioideo al abrir la boca y en inspiración profunda, lo que respalda que el músculo comprime la vena.",
+        "cites": [
+          "PMID:3135615"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En los vaciamientos cervicales, el omohioideo es la referencia quirúrgica para las metástasis ganglionares de los niveles III y IV.",
+        "cites": [
+          "PMID:18719765"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 35 cadáveres masculinos, un individuo tenía omohioideo doble y en tres el vientre inferior se originaba en la clavícula.",
+        "cites": [
+          "PMID:18719765"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001109": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Junto con el resto de los infrahioideos, el esternotiroideo moviliza el hioides y el cartílago tiroides y así participa en la fonación, la deglución y la masticación.",
+        "cites": [
+          "PMID:19434329"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El esternotiroideo procede de una lámina muscular primitiva común, y una diferenciación incorrecta de esta puede dar lugar a variantes morfológicas.",
+        "cites": [
+          "PMID:28003898"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la disección de un varón de 70 años, un esternotiroideo anómalo se originaba en la cara posterior del manubrio y en parte del primer cartílago costal, y a los 3,3 cm se dividía en un vientre lateral y otro medial.",
+        "cites": [
+          "PMID:19434329"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En ese caso, el músculo recibía su inervación de un ramo del asa cervical.",
+        "cites": [
+          "PMID:19434329"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un cadáver de 46 años se describió un vientre accesorio del esternotiroideo que tapaba por delante la glándula tiroides, irrigado por la arteria tiroidea inferior e inervado desde el asa cervical.",
+        "cites": [
+          "PMID:24740147"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 62 pacientes operados de carcinoma diferenciado de tiroides sin signos ecográficos de invasión muscular, el 16 % tenía infiltración microscópica oculta del esternotiroideo.",
+        "cites": [
+          "PMID:29181617"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001110": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El tirohioideo es un músculo infrahioideo del triángulo carotídeo que habitualmente se extiende desde el cartílago tiroides hasta el hioides.",
+        "cites": [
+          "PMID:38874604"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "A menudo se continúa sin límite neto con el músculo esternohioideo.",
+        "cites": [
+          "PMID:38874604"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Sus fibras motoras provienen del ramo anterior de C1 y lo alcanzan por medio del nervio hipogloso, y no del asa cervical.",
+        "cites": [
+          "PMID:37302849"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En diez cadáveres, el nervio del tirohioideo estuvo presente en ambos lados, midió en promedio 27 mm y terminó en todos los casos en el cuarto superior y externo del músculo.",
+        "cites": [
+          "PMID:30374740"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 36 cadáveres adultos, el ramo interno del nervio laríngeo superior perforaba la membrana tirohioidea, en más del 80 % de los casos, a 0,1-0,9 cm del borde posterior del tirohioideo.",
+        "cites": [
+          "PMID:21523845"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En dos pacientes con lesión del nervio laríngeo recurrente, el nervio del tirohioideo sirvió como nervio donante para reinervar la laringe.",
+        "cites": [
+          "PMID:31735062"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001122": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 15 cadáveres frescos, los ramos de C5 y C6 del nervio torácico largo se unían por debajo del escaleno medio para constituir la división superior de ese nervio.",
+        "cites": [
+          "PMID:15866961"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En seis hombros cadavéricos, una banda fascial tensa salía de la parte inferior del plexo braquial y pasaba inmediatamente por encima de la inserción del escaleno medio en la primera costilla.",
+        "cites": [
+          "PMID:10717860"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Un estudio con resonancia magnética observó que el escaleno medio se reclutaba durante la extensión submáxima de la cabeza antes de un entrenamiento de resistencia específico y dejaba de hacerlo después.",
+        "cites": [
+          "PMID:9390988"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una banda fibrosa del escaleno medio, cuando está presente, une la apófisis transversa de C7 con la primera costilla y en un caso comprimía el tronco inferior del plexo braquial.",
+        "cites": [
+          "PMID:7297393"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de 55 pacientes con dolor interescapular unilateral, se propuso que el atrapamiento del nervio escapular dorsal en el escaleno medio, o su estiramiento al elevar los brazos, contribuye a ese dolor.",
+        "cites": [
+          "PMID:23220342"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001123": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 26 cadáveres, los ramos dorsolaterales de los ramos ventrales cervicales que inervan el escaleno medio lo perforaban para llegar al escaleno posterior.",
+        "cites": [
+          "PMID:22209543"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En una disección de 10 cadáveres, la mitad de los escalenos posteriores se originaba entre C4 y C6 y la otra mitad entre C5 y C6.",
+        "cites": [
+          "PMID:11232741"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esa serie, las inserciones y el tamaño de los escalenos, entre ellos el posterior, fueron variables, lo que puede alterar las dimensiones del triángulo de los escalenos.",
+        "cites": [
+          "PMID:11232741"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001128": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El esternocleidomastoideo es un músculo par y voluminoso del cuello que se extiende desde el manubrio esternal y la clavícula, por abajo, hasta la apófisis mastoides y el hueso occipital, por arriba.",
+        "cites": [
+          "PMID:35607877"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "De acuerdo con sus inserciones, se le reconocen porciones esternomastoidea, esternooccipital, cleidomastoidea y cleidooccipital.",
+        "cites": [
+          "PMID:35607877"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la disección de 27 fetos (54 lados), el músculo presentaba dos cabezas en 42 lados.",
+        "cites": [
+          "PMID:36872466"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En esa serie fetal, la distancia entre la clavícula y el punto motor por el que el nervio accesorio entra en el músculo fue mayor en los varones que en las mujeres.",
+        "cites": [
+          "PMID:36872466"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 11 voluntarios, la zona de inervación de las cabezas esternal y clavicular se localizó siempre hacia la mitad o en la parte superior del vientre muscular.",
+        "cites": [
+          "PMID:11801425"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 20 voluntarios sanos, estímulos acústicos intensos transmitidos por vía aérea u ósea generaron potenciales miogénicos de origen vestibular en el esternocleidomastoideo homolateral al oído estimulado.",
+        "cites": [
+          "PMID:11099149"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001352": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La porción ósea del conducto auditivo externo se desarrolla después del nacimiento a partir del anillo timpánico, mientras que sus cartílagos se forman mucho antes y con independencia de ella.",
+        "cites": [
+          "PMID:23036351"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En cortes de 22 fetos, el tejido subcutáneo grueso que cubre la porción cartilaginosa del conducto contenía abundantes glándulas ceruminosas.",
+        "cites": [
+          "PMID:23036351"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En resonancias con contraste de 85 pacientes, la distancia mínima entre la pared posterior del conducto y el borde anterior del seno sigmoideo fue de 12,3 ± 3,9 mm a la derecha y de 13,0 ± 2,9 mm a la izquierda.",
+        "cites": [
+          "PMID:32270228"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa muestra, la relación con el seno sigmoideo fue muy variable y asimétrica, y el tipo en que el seno se interpone a la altura del conducto representó el 85 %.",
+        "cites": [
+          "PMID:32270228"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 17 de 18 hemicabezas cadavéricas, la pared posterosuperior del conducto recibía ramos que emergían por la fisura timpanomastoidea y procedían del ganglio superior del nervio vago.",
+        "cites": [
+          "PMID:24604237"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La atresia adquirida del conducto es una obliteración de su parte medial por un tapón fibroso blando que suele aparecer como fase final de una otitis externa granulante.",
+        "cites": [
+          "PMID:28631687"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001564": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El milohioideo pertenece al grupo suprahioideo, junto con el genihioideo, el digástrico y el estilohioideo.",
+        "cites": [
+          "PMID:37948619"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Se ubica entre el vientre anterior del digástrico, que queda por debajo, y el genihioideo, que queda por encima.",
+        "cites": [
+          "PMID:37948619"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Este músculo separa los espacios submandibular y sublingual y constituye una referencia clave en la imagen de la cavidad oral y de la parte alta del cuello.",
+        "cites": [
+          "PMID:20410390"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En milohioideos de adultos obtenidos en autopsias, las fibras con miosina lenta de tipo I sumaron en promedio el 54 % y las de tipo II el 46 %, con una mayoría de fibras híbridas (85 %).",
+        "cites": [
+          "PMID:15278946"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Al examinar 205 hemicabezas, 25 presentaban hendiduras entre las fibras del milohioideo y en 18 de ellas (72 %) la glándula sublingual se deslizaba hacia la parte anterior del triángulo submandibular.",
+        "cites": [
+          "PMID:15213531"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la tomografía de 41 pacientes con ránula sumergida, el 88 % de las lesiones pasaba a través de un defecto del milohioideo, situado sobre todo en su tercio anterior.",
+        "cites": [
+          "PMID:26957912"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001565": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "El genihioideo ayuda a elevar y fijar el hioides durante la deglución, con lo que contribuye a proteger la vía aérea.",
+        "cites": [
+          "PMID:23112114"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En siete varones sanos, su electromiograma mostró actividad fásica en cada inspiración tanto en vigilia como durante el sueño.",
+        "cites": [
+          "PMID:2262443"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 68 personas mayores, el grosor ecográfico del genihioideo se asoció positivamente con la fuerza de apertura de la mandíbula.",
+        "cites": [
+          "PMID:32399534"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tomografías de 40 adultos mayores sanos y 40 jóvenes, la atrofia del genihioideo se relacionó con la edad y con la presencia de aspiración.",
+        "cites": [
+          "PMID:23112114"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 36 pacientes con disfagia sarcopénica, el área ecográfica media del genihioideo fue de 140 ± 47 mm² y se correlacionó de forma positiva con la presión lingual máxima.",
+        "cites": [
+          "PMID:33575728"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 337 adultos operados por lesión medular cervical traumática, un área de sección del genihioideo más pequeña en la tomografía de ingreso se asoció de manera independiente con complicaciones respiratorias en los 30 días siguientes.",
+        "cites": [
+          "PMID:42309228"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001566": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 30 hemilaringes humanas de autopsia, el músculo cricotiroideo se componía de tres vientres: recto, oblicuo y horizontal.",
+        "cites": [
+          "PMID:18191374"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En esa serie, el ramo externo del nervio laríngeo superior llegaba al músculo como un tronco único en el 37,5 % de los casos y dividido en dos a cinco ramas en el 62,5 %.",
+        "cites": [
+          "PMID:18191374"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En la electromiografía de 70 cricotiroideos durante tiroidectomías, la estimulación del nervio laríngeo recurrente provocó contracción visible y respuesta eléctrica nítida en el 39 % de los músculos.",
+        "cites": [
+          "PMID:25581356"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se considera que la contracción del cricotiroideo, al acercar los cartílagos tiroides y cricoides, es el principal mecanismo de alargamiento de los pliegues vocales.",
+        "cites": [
+          "PMID:9591880"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de tres pacientes con parálisis bilateral del nervio laríngeo recurrente, la inyección de toxina botulínica en ambos cricotiroideos alivió de forma sostenida la disnea.",
+        "cites": [
+          "PMID:25814315"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 41 pacientes tiroidectomizados, la electromiografía con aguja del cricotiroideo detectó respuesta en los 67 ramos externos del nervio laríngeo superior estimulados (100 %).",
+        "cites": [
+          "PMID:38130395"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001570": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El constrictor inferior de la faringe nace de los cartílagos tiroides y cricoides y termina en el rafe faríngeo.",
+        "cites": [
+          "PMID:31726208"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 30 cadáveres, el músculo constaba de fibras oblicuas originadas en los cartílagos tiroides y cricoides y de fibras horizontales procedentes del cricoides.",
+        "cites": [
+          "PMID:23515953"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En esa serie, las fibras oblicuas recibían ramos del plexo faríngeo y del nervio laríngeo externo, mientras que las horizontales los recibían del nervio laríngeo recurrente.",
+        "cites": [
+          "PMID:23515953"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En músculos humanos de autopsia se reconocieron al menos dos compartimentos neuromusculares, rostral y caudal, cada uno inervado por un ramo propio del ramo faríngeo del vago.",
+        "cites": [
+          "PMID:11745092"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En ese estudio, el compartimento caudal contenía un 70 % de fibras lentas de tipo I y el rostral un 39 %.",
+        "cites": [
+          "PMID:11745092"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "El constrictor inferior interviene en la deglución, la respiración y la fonación, y su parte más caudal se considera integrante del esfínter esofágico superior funcional.",
+        "cites": [
+          "PMID:11745092"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001574": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El palatogloso figura entre los cuatro músculos extrínsecos de la lengua y entre los músculos pares del paladar blando.",
+        "cites": [
+          "PMID:31751013"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Los dos palatoglosos forman en la pared lateral de la faringe los arcos palatoglosos, que separan la cavidad oral de la orofaringe.",
+        "cites": [
+          "PMID:31751013"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Su acción se opone a la del músculo elevador del velo del paladar.",
+        "cites": [
+          "PMID:31751013"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En nueve lados de cadáveres adultos, el ramo lingual del nervio glosofaríngeo enviaba ramos al palatogloso, al palatofaríngeo y a la porción glosofaríngea del constrictor superior.",
+        "cites": [
+          "PMID:32960308"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En resonancias de 10 niños de 4 a 7 años, el palatogloso midió entre 17,95 y 26,96 mm de longitud y entre 2,32 y 3,08 mm de anchura.",
+        "cites": [
+          "PMID:36283682"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 121 pacientes con carcinoma epidermoide de orofaringe, la invasión de la porción orofaríngea del palatogloso se acompañó de una supervivencia similar a la de los tumores T1-T2, a diferencia de la invasión de su porción oral.",
+        "cites": [
+          "PMID:39189151"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001577": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Con ecografía cuantitativa en 12 personas sanas, el grosor de varios músculos faciales osciló entre 0,15 y 0,30 mm, con la excepción del prócer, de 0,06 mm.",
+        "cites": [
+          "PMID:23893891"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Registros electromiográficos simultáneos en distintos puntos del orbicular de la boca mostraron que sus sectores se activan de manera diferente según la tarea, por ejemplo al hablar.",
+        "cites": [
+          "PMID:6468573"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En los primates, incluido el ser humano, parte de las motoneuronas faciales recibe activación monosináptica desde el área 4 de la corteza motora.",
+        "cites": [
+          "PMID:6468573"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 24 pacientes con parálisis facial periférica, la estimulación eléctrica de superficie generó en algunos músculos un movimiento mayor que el voluntario, siempre que no hubiera denervación total.",
+        "cites": [
+          "PMID:31305190"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 11 niños con enfermedad de Pompe infantil clásica tratados con reemplazo enzimático, la debilidad de los músculos faciales apareció en todos antes de los 15 meses.",
+        "cites": [
+          "PMID:22008944"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001580": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En 20 caras de cadáveres disecadas, el elevador del labio superior se originaba en todos los casos en el reborde orbitario inferior.",
+        "cites": [
+          "PMID:9497543"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, su longitud media fue de 24,66 mm y su grosor medio de 3,57 mm.",
+        "cites": [
+          "PMID:9497543"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El músculo quedaba por delante del elevador del ángulo de la boca y por detrás del cigomático menor.",
+        "cites": [
+          "PMID:9497543"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Su inervación provenía de un ramo cigomático inferior del nervio facial y del nervio infraorbitario, rama del trigémino.",
+        "cites": [
+          "PMID:9497543"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Su porción inferior recibía ramas de la arteria angular y la superior, de la arteria infraorbitaria.",
+        "cites": [
+          "PMID:9497543"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 102 especímenes de cadáveres adultos, el músculo tenía forma rectangular en el 83 %, de abanico en el 10 % y trapezoidal en el 7 %, y sus fibras mediales se fijaban en la profundidad del surco alar.",
+        "cites": [
+          "PMID:20098192"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001581": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "El depresor del labio inferior y el depresor del ángulo de la boca se superponen parcialmente, por lo que una inyección mal situada puede alterar la mímica.",
+        "cites": [
+          "PMID:32232427"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 40 hemicaras de cadáveres, en el 45 % se observaron fibras mediales del depresor del ángulo de la boca que transcurrían por debajo del depresor del labio inferior.",
+        "cites": [
+          "PMID:24448530"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 45 cadáveres estudiados con escaneo tridimensional, el espesor de piel y tejido subcutáneo sobre el punto de referencia de este músculo fue de 6,4 [1,7] mm.",
+        "cites": [
+          "PMID:32232427"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La parálisis del ramo marginal mandibular del nervio facial suprime la acción depresora y causa una asimetría notoria del labio inferior.",
+        "cites": [
+          "PMID:15308395"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 42 adultos con esa parálisis, la resección del depresor del labio inferior del lado sano dio el resultado buscado en 36 casos tras la primera intervención.",
+        "cites": [
+          "PMID:15308395"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La hipoplasia congénita del depresor del labio inferior puede originar la facies de llanto asimétrica.",
+        "cites": [
+          "PMID:39733048"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001582": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "El buccinador es un músculo cutáneo derivado del segundo arco faríngeo e inervado por el nervio facial.",
+        "cites": [
+          "PMID:15214310"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Está formado por tres haces que recorren la mejilla desde el ligamento pterigomandibular hasta el modiolo.",
+        "cites": [
+          "PMID:15214310"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En el adulto, el conducto parotídeo, de unos 6 a 8 cm, pasa sobre el masetero y perfora el buccinador para desembocar en la boca.",
+        "cites": [
+          "PMID:20821401"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En los 22 especímenes disecados de un estudio, pequeñas fibras del buccinador llegaban a la porción terminal del conducto parotídeo y se insertaban en ella.",
+        "cites": [
+          "PMID:16637883"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En cinco hemicaras, ramos del trigémino y del facial establecían anastomosis sensitivomotoras dentro del buccinador y en su entorno.",
+        "cites": [
+          "PMID:39508330"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Con la reabsorción alveolar de la vejez, las fibras del buccinador dejan de nacer en el proceso alveolar, y en personas sin dientes su porción inferior adopta un trayecto casi paralelo a la mandíbula.",
+        "cites": [
+          "PMID:3887988"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001586": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La vena yugular interna es una de las grandes venas del cuello: prolonga el seno sigmoideo y, al unirse con la vena subclavia, forma la vena braquiocefálica.",
+        "cites": [
+          "PMID:39630963"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En una ecografía de 200 pacientes, la vena se encontraba por fuera y por delante de la arteria carótida en el 92 % y se dilataba con la maniobra de Valsalva.",
+        "cites": [
+          "PMID:1959371"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, la vena quedaba en posición medial sobre la carótida en el 2 %, y en el 5,5 % su posición no coincidía con la estimada a partir de los reparos externos.",
+        "cites": [
+          "PMID:1959371"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 200 angiotomografías, la duplicación unilateral de la vena yugular interna se observó en el 0,75 % y la fenestración en el 0,25 %.",
+        "cites": [
+          "PMID:39630963"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un ensayo con 900 pacientes críticos, la canulación con ecografía en tiempo real se logró en todos, frente al 94,4 % con la técnica basada en reparos anatómicos.",
+        "cites": [
+          "PMID:17112371"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 116 venas yugulares internas conservadas tras un vaciamiento cervical con reconstrucción mediante colgajo libre, 25 (21,6 %) presentaron trombosis.",
+        "cites": [
+          "PMID:33288470"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001598": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "El sistema arterial temporal aporta al músculo temporal una vascularización fiable que permite emplearlo como colgajo.",
+        "cites": [
+          "PMID:25086696"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 14 disecciones de cadáveres frescos, la arteria temporal media fue suficiente para mantener la irrigación de un colgajo de temporal dividido y pediculado en los vasos temporales superficiales.",
+        "cites": [
+          "PMID:23508929"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 21 colgajos de temporal se repararon defectos de la lengua, la mucosa yugal, el maxilar, el paladar blando, el trígono retromolar y la región amigdalina.",
+        "cites": [
+          "PMID:9451347"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Este colgajo también se ha aplicado a defectos extensos de la frente, la duramadre y la base anterior del cráneo, y al cierre de defectos orbitarios.",
+        "cites": [
+          "PMID:3940514"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En dos cohortes sin demencia, de 750 y 532 participantes, ciertos patrones de textura del temporal en resonancias cerebrales de rutina se asociaron con más riesgo de demencia.",
+        "cites": [
+          "PMID:42559821"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001601": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Del tejido muscular extraocular humano se han aislado células madre mesenquimales que, en cultivo, se diferencian con especial facilidad hacia células neuroectodérmicas.",
+        "cites": [
+          "PMID:27248788"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En nueve pacientes con oftalmoplejía externa progresiva crónica por deleción única del ADN mitocondrial, el área de sección media de los músculos extraoculares equivalía al 43 % de la de los controles.",
+        "cites": [
+          "PMID:25994195"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esos pacientes, el T2 medio de estos músculos estaba alargado (75,6 ± 7,0 ms frente a 55,2 ± 4,1 ms en controles) y se correlacionaba de forma inversa con la amplitud de los movimientos oculares.",
+        "cites": [
+          "PMID:25994195"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 28 pacientes con miopatía mitocondrial, las manifestaciones cardíacas y del sistema nervioso central predominaron en el grupo con afectación de los músculos extraoculares.",
+        "cites": [
+          "PMID:3463270"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tres pacientes tratados con toxina botulínica antes de operarse de estrabismo, el estudio histológico halló atrofia y fibrosis permanentes de los músculos extraoculares.",
+        "cites": [
+          "PMID:27553530"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001605": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "El control autónomo de la acomodación es sobre todo parasimpático, aunque datos anatómicos, fisiológicos y farmacológicos apoyan una inervación simpática adicional del músculo ciliar.",
+        "cites": [
+          "PMID:2872644"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En dos grupos de 10 sujetos, las diferencias individuales de la acomodación tónica se debieron al tono parasimpático del músculo ciliar más que al simpático.",
+        "cites": [
+          "PMID:2989210"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 58 adultos jóvenes, el 26 % presentó signos de una inhibición simpática funcional del músculo liso ciliar.",
+        "cites": [
+          "PMID:15792840"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 26 adultos emétropes de 30 a 50 años, la contracción del músculo ciliar por cada dioptría de acomodación fue independiente de la edad, pese a la disminución de la amplitud acomodativa total.",
+        "cites": [
+          "PMID:23287789"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 80 ojos de voluntarios sanos, el tono del músculo ciliar en reposo no se redujo con la presbicia.",
+        "cites": [
+          "PMID:28238194"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 35 adultos jóvenes examinados con tomografía de coherencia óptica, el músculo ciliar se adelgazó tras 30 minutos de lectura a 25 cm.",
+        "cites": [
+          "PMID:31336108"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001620": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La arteria central de la retina se desprende de la arteria oftálmica; en resonancias axiales de 81 pacientes, su origen distaba del límite posterior del globo 18,8 ± 3,9 mm a la derecha y 18,9 ± 3,3 mm a la izquierda.",
+        "cites": [
+          "PMID:35499642"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En la disección de 67 órbitas, la arteria entraba en la vaina meníngea externa del nervio óptico a una media de 10,65 mm por detrás del globo, con un rango de 5 a 18 mm.",
+        "cites": [
+          "PMID:32530060"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, la penetración se producía casi siempre por el meridiano inferior y, en algunos casos, ligeramente inferomedial o inferolateral.",
+        "cites": [
+          "PMID:32530060"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su oclusión es una urgencia oftalmológica análoga al ictus cerebral, y más de tres cuartas partes de los afectados presentan una pérdida visual aguda intensa, con agudeza de 20/400 o inferior.",
+        "cites": [
+          "PMID:23470793"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las personas con esta oclusión tienen además un riesgo aumentado de cardiopatía isquémica e ictus, vinculado a factores de riesgo aterosclerótico.",
+        "cites": [
+          "PMID:38548943"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se describen cuatro entidades clínicas: la oclusión no arterítica, la no arterítica transitoria, la no arterítica con respeto de la arteria ciliorretiniana y la arterítica.",
+        "cites": [
+          "PMID:30451166"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001633": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La arteria basilar se origina por la fusión de dos arterias longitudinales, y un desarrollo incompleto de ese proceso puede dejar una fenestración.",
+        "cites": [
+          "PMID:38783494"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "De ella salen numerosas arterias perforantes cortas y arterias pontinas laterales largas destinadas al tronco del encéfalo.",
+        "cites": [
+          "PMID:38783494"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La arteria cerebelosa anteroinferior nace por lo general del tercio proximal de la basilar.",
+        "cites": [
+          "PMID:38783494"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 cerebros de cadáver no se observaron ramas que partieran de la cara anterior de la bifurcación basilar, y el 46 % mostraba anomalías en la mitad posterior del polígono de Willis.",
+        "cites": [
+          "PMID:845644"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 82 pacientes con oclusión sintomática de la arteria basilar tratados con antiagregación, anticoagulación o ambas, la letalidad fue del 40 %.",
+        "cites": [
+          "PMID:16107358"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 20 pacientes sintomáticos con dolicoectasia vertebrobasilar, la basilar tortuosa de calibre normal se asoció más con afectación aislada de un par craneal, y la dilatación marcada, con déficits neurológicos múltiples.",
+        "cites": [
+          "PMID:3082145"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001643": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El nervio oculomotor, tercer par craneal, sale del tronco del encéfalo por el borde medial del pedúnculo cerebral y desde allí se dirige en línea recta hacia la fisura orbitaria superior.",
+        "cites": [
+          "PMID:36116851"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Es un nervio motor que inerva todos los músculos extraoculares excepto el oblicuo superior y el recto lateral.",
+        "cites": [
+          "PMID:36116851"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Lleva también fibras parasimpáticas preganglionares que gobiernan el esfínter de la pupila y el músculo ciliar.",
+        "cites": [
+          "PMID:36116851"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su parálisis es la más frecuente entre las de los nervios craneales, con una incidencia de 3 a 4 casos por 100 000.",
+        "cites": [
+          "PMID:41325007"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según una serie de 13 pacientes, el realce con gadolinio del segmento cisternal del nervio en la resonancia es siempre patológico y traduce un proceso inflamatorio o neoplásico.",
+        "cites": [
+          "PMID:1414843"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 37 pacientes con parálisis del oculomotor por aneurisma de la arteria comunicante posterior tratados por vía endovascular, la recuperación del nervio fue completa en el 37,8 % y parcial en el 51,4 %.",
+        "cites": [
+          "PMID:23042929"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001644": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En resonancias de 30 sujetos (60 nervios), el punto de emergencia del nervio troclear se hallaba a 3-9 mm de la línea media.",
+        "cites": [
+          "PMID:11930045"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Con resonancia de alta resolución en 32 personas sanas, el segmento cisternal del nervio troclear tuvo un diámetro medio de 0,54 mm, con un rango de 0,35 a 0,96 mm.",
+        "cites": [
+          "PMID:20093316"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En la serie de 60 nervios, una arteria contactaba con el troclear en la zona de salida de la raíz en el 14 % y, a una media de 3,4 mm más allá de la emergencia, en el 51 %.",
+        "cites": [
+          "PMID:11930045"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un cadáver adulto se describió un ramo aberrante del nervio troclear derecho que inervaba el músculo orbicular del ojo, además de un ramo hacia el nervio supratroclear.",
+        "cites": [
+          "PMID:30157598"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La desviación oblicua puede imitar una parálisis troclear; una desviación vertical que se reduce un 50 % o más al pasar de la posición erguida al decúbito supino sugiere desviación oblicua.",
+        "cites": [
+          "PMID:20227626"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001645": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El trigémino es el nervio craneal de mayor tamaño.",
+        "cites": [
+          "PMID:11770929"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Es la principal vía de la sensibilidad de la cabeza y el cuello y proporciona inervación motora, sobre todo, a los músculos de la masticación.",
+        "cites": [
+          "PMID:11770929"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Sus tres ramas principales son el nervio oftálmico (V1), el nervio maxilar (V2) y el nervio mandibular (V3).",
+        "cites": [
+          "PMID:30206021"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 20 cadáveres de personas sin dolor facial, 14 de 40 trigéminos tocaban una arteria en la zona de entrada de la raíz, aunque sólo cuatro mostraban compresión o distorsión.",
+        "cites": [
+          "PMID:7359193"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 40 trigéminos expuestos quirúrgicamente por neuralgia, 31 estaban comprimidos por arterias adyacentes, lo que apoya la relación entre compresión arterial y esa neuralgia.",
+        "cites": [
+          "PMID:7359193"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El trigémino y sus ramas constituyen una vía relevante de extensión tumoral en varios cánceres de cabeza y cuello.",
+        "cites": [
+          "PMID:30206021"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001646": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El nervio abducens, sexto par craneal, se origina en el surco bulbopontino.",
+        "cites": [
+          "PMID:17876228"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Es un nervio puramente motor que recorre un largo camino desde el tronco del encéfalo hasta el músculo recto lateral.",
+        "cites": [
+          "PMID:36116854"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Pasa por el conducto de Dorello acompañado del seno petroso inferior y luego entra en el seno cavernoso.",
+        "cites": [
+          "PMID:36116854"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "A partir de la disección de 55 cabezas se propuso dividirlo en cinco segmentos: tres intracraneales (cisternal, del golfo y cavernoso) y dos orbitarios (fisural e intraconal).",
+        "cites": [
+          "PMID:17876228"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En diez especímenes, la separación horizontal entre ambos abducens fue de 10 mm en el surco bulbopontino y de 18,5 mm en el segmento interdural.",
+        "cites": [
+          "PMID:20559102"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La paresia del abducens es la manifestación neurológica más habitual de la hipotensión intracraneal espontánea.",
+        "cites": [
+          "PMID:35342130"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001647": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El nervio facial, séptimo par craneal, contiene fibras motoras, parasimpáticas y sensitivas que proceden de tres núcleos distintos del tronco del encéfalo.",
+        "cites": [
+          "PMID:37055142"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Tras salir del tronco del encéfalo recorre cinco segmentos intracraneales (cisternal, canalicular, laberíntico, timpánico y mastoideo) y prosigue como segmento extracraneal dentro de la parótida.",
+        "cites": [
+          "PMID:37055142"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Diversas enfermedades congénitas, traumáticas, infecciosas, inflamatorias o tumorales pueden dañarlo en cualquier punto de su trayecto y producir debilidad o parálisis de la musculatura facial.",
+        "cites": [
+          "PMID:37055142"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La monitorización electrofisiológica intraoperatoria disminuye el riesgo de disfunción facial postoperatoria temprana en la parotidectomía primaria, aunque no en la de revisión.",
+        "cites": [
+          "PMID:27093339"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 200 pacientes operados de schwannoma vestibular por vía retrosigmoidea, el nervio facial se conservó anatómicamente en el 98,5 %.",
+        "cites": [
+          "PMID:17044553"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la ritidectomía, la lesión del nervio facial ha ocurrido en menos del 1 % de los casos, y más del 80 % de ellas se recuperó de forma espontánea en 6 meses.",
+        "cites": [
+          "PMID:515227"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001648": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El nervio vestibulococlear, octavo par craneal, es sensitivo y se compone del nervio coclear, que conduce el sonido, y del nervio vestibular, que interviene en el equilibrio.",
+        "cites": [
+          "PMID:24095603"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Tras recorrer el conducto auditivo interno y la cisterna del ángulo pontocerebeloso, entra en el tronco del encéfalo por el surco bulbopontino.",
+        "cites": [
+          "PMID:37055143"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Sus fibras nacen en los ganglios de Scarpa y espiral, y sus seis núcleos se sitúan en la parte inferior del puente.",
+        "cites": [
+          "PMID:37055143"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Su porción vestibular recoge información de los conductos semicirculares, sensibles a la aceleración angular, y de los órganos otolíticos, sensibles a la lineal, mientras que la coclear la recibe del órgano de Corti.",
+        "cites": [
+          "PMID:19214934"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 ángulos pontocerebelosos de 25 cadáveres adultos, todos presentaban al menos un tronco de la arteria cerebelosa anteroinferior en estrecha proximidad con los nervios facial y vestibulococlear.",
+        "cites": [
+          "PMID:6251396"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En esa serie, las ramas de dicha arteria vecinas a los nervios dieron origen a las arterias auditivas internas en el 100 % de los ángulos.",
+        "cites": [
+          "PMID:6251396"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001649": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El glosofaríngeo es un nervio mixto que reúne fibras sensitivas, motoras, parasimpáticas y viscerales.",
+        "cites": [
+          "PMID:38380502"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Participa en el gusto, la salivación y la deglución.",
+        "cites": [
+          "PMID:38380502"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Sus núcleos en el tronco del encéfalo son el núcleo y tracto espinal del trigémino, el núcleo del tracto solitario, el núcleo ambiguo y el núcleo salival inferior.",
+        "cites": [
+          "PMID:38380502"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En tres lenguas de cadáver teñidas con el método de Sihler, ramos del glosofaríngeo avanzaban por delante del surco terminal y de las papilas caliciformes, y se anastomosaban con el nervio lingual.",
+        "cites": [
+          "PMID:18607984"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 16 lados cadavéricos, el nervio timpánico o de Jacobson salía siempre del ganglio inferior del glosofaríngeo; este ramo contribuye al plexo timpánico del promontorio.",
+        "cites": [
+          "PMID:9728277"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cerca del 20 % de 138 niños sometidos a amigdalectomía, la musculatura faríngea lateral no separaba por completo el ramo lingual del glosofaríngeo de la cápsula amigdalina.",
+        "cites": [
+          "PMID:26645534"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001650": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El hipogloso, duodécimo par craneal, emerge del tronco del encéfalo por el surco preolivar, atraviesa la cisterna premedular y sale del cráneo por el conducto del hipogloso.",
+        "cites": [
+          "PMID:37055141"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Es un nervio exclusivamente motor que inerva todos los músculos intrínsecos de la lengua, tres extrínsecos (estilogloso, hiogloso y geniogloso) y el genihioideo.",
+        "cites": [
+          "PMID:37055141"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 20 pacientes con estimulación selectiva de la vía aérea superior, la monitorización nerviosa diferenció los ramos del hipogloso que protruyen y tensan la lengua de los ramos retractores.",
+        "cites": [
+          "PMID:27345949"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su lesión desequilibra la acción del geniogloso y hace que la lengua se desvíe hacia el lado afectado.",
+        "cites": [
+          "PMID:31034896"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La causa más común de parálisis del hipogloso es tumoral, aunque también la provocan lesiones vasculares, inflamatorias, infecciosas y traumáticas.",
+        "cites": [
+          "PMID:37055141"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 31 pacientes con apnea obstructiva del sueño moderada o grave, la estimulación del hipogloso redujo a los 12 meses el índice de apnea-hipopnea de 45,4 ± 17,5 a 25,3 ± 20,6 eventos por hora.",
+        "cites": [
+          "PMID:24033656"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001676": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En un estudio biométrico de 125 cráneos, las dimensiones de la escama occipital mantuvieron correlación entre sí, lo que la define como una estructura estable a pesar de su doble origen histológico.",
+        "cites": [
+          "PMID:1213952"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa muestra, la porción basilar resultó biométricamente independiente de la escama y podría entenderse como una prolongación del cuerpo del esfenoides, lo que respalda la noción de un clivus esfenooccipital.",
+        "cites": [
+          "PMID:1213952"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La forma de los cóndilos occipitales tuvo más valor para estimar el sexo que la de las crestas nucales.",
+        "cites": [
+          "PMID:1213952"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 10 cabezas disecadas, el ligamento nucal se prolongaba a cada lado sobre el occipital hasta las suturas occipitotemporales, en las proximidades de la línea nucal inferior.",
+        "cites": [
+          "PMID:9567232"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 160 cráneos secos, los surcos venosos de la cara interna del occipital indicaron que el seno sagital superior desembocaba sólo en el seno transverso derecho en el 41 % de los casos.",
+        "cites": [
+          "PMID:15290106"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se han descrito cuatro casos de neumatización del occipital complicada con fractura patológica, enfisema subcutáneo espontáneo o formación de neumatoceles.",
+        "cites": [
+          "PMID:15230770"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001677": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 100 cráneos macerados, el agujero redondo y el agujero espinoso estuvieron presentes en todos los casos en el ala mayor del esfenoides, mientras que el agujero de Vesalio apareció en el 17 % y el foramen cavernoso en el 33 %.",
+        "cites": [
+          "PMID:16228954"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, el agujero oval se hallaba dividido en dos o tres compartimentos en el 4,5 % de los cráneos.",
+        "cites": [
+          "PMID:16228954"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Los agujeros del ala mayor contienen sobre todo anastomosis venosas que comunican el interior del cráneo con las venas extracraneales.",
+        "cites": [
+          "PMID:16228954"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 296 tomografías sin patología sinusal, la neumatización de los senos esfenoidales sobrepasaba el cuerpo del esfenoides en el 93,92 % de los pacientes.",
+        "cites": [
+          "PMID:33084012"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El esfenoides mantiene relaciones estrechas con el seno esfenoidal, la silla turca y el seno cavernoso, de importancia en los abordajes quirúrgicos transcraneales y subcraneales.",
+        "cites": [
+          "PMID:451866"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001679": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En tomografías de 212 pacientes se identificaron celdas de Haller en el 21,2 %, celdas de Onodi en el 10,4 % y una crista galli neumatizada en el 2,4 %.",
+        "cites": [
+          "PMID:10068893"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 32 pacientes con desviación del tabique nasal, la lámina perpendicular del etmoides estaba neumatizada en seis (18 %).",
+        "cites": [
+          "PMID:14743638"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 783 tomografías de senos paranasales se halló de forma incidental una dehiscencia de la lámina papirácea en seis pacientes, con paso de grasa orbitaria a través de un defecto del etmoides anterior.",
+        "cites": [
+          "PMID:8141047"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esos seis casos, el límite posterior de la dehiscencia coincidía siempre con la lámina basal, mientras que el anterior era variable.",
+        "cites": [
+          "PMID:8141047"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El conocimiento de las variantes anatómicas del etmoides es esencial para el diagnóstico radiológico de la patología paranasal y para planificar la cirugía evitando complicaciones.",
+        "cites": [
+          "PMID:29934677"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001680": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 10 hemicabezas de cadáver, la parte del hueso lagrimal visible en la pared lateral de la nariz se encontraba siempre justo por delante del tercio medio de la apófisis unciforme.",
+        "cites": [
+          "PMID:10472456"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, su longitud media fue de 7,4 mm y su anchura media de 2,5 mm.",
+        "cites": [
+          "PMID:10472456"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La porción de la vía lagrimal cubierta por este hueso correspondía a la cara posteromedial del segmento superior del conducto lagrimal y del segmento inferior del saco.",
+        "cites": [
+          "PMID:10472456"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En otras 10 cabezas de cadáver, el lagrimal de la pared lateral nasal midió en promedio 9,23 mm de largo, 3,63 mm de ancho y 0,06 mm de espesor.",
+        "cites": [
+          "PMID:17993012"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 69 huesos lagrimales de 48 pacientes, el espesor medio en la fosa del saco lagrimal fue de 106 micras, y el hueso estaba formado por una fina lámina de hueso laminar.",
+        "cites": [
+          "PMID:8858634"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Por su escaso grosor, durante la dacriocistorrinostomía endoscópica suele bastar una gubia para fracturarlo y retirarlo sin fresa ni escoplo.",
+        "cites": [
+          "PMID:17993012",
+          "PMID:10472456"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001681": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En tomografías tridimensionales de 75 pacientes coreanos, el hueso nasal midió en promedio 20,95 ± 5,99 mm de longitud.",
+        "cites": [
+          "PMID:17929046"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, su espesor medio fue de 2,03 ± 0,35 mm en el punto de osteotomía lateral y de 1,75 ± 0,37 mm en el medial.",
+        "cites": [
+          "PMID:17929046"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 203 pacientes con desviación septal, el grosor y la longitud del hueso nasal fueron significativamente mayores del lado hacia el que se desviaba el tabique.",
+        "cites": [
+          "PMID:28245851"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El hueso nasal figura entre los huesos de la cara que más se fracturan y es el más afectado en los accidentes de tráfico.",
+        "cites": [
+          "PMID:21050587"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En impactos anteroposteriores sobre cadáveres masculinos, un riesgo de fractura del 50 % se correspondió con una fuerza aproximada de 450 a 850 N.",
+        "cites": [
+          "PMID:21050587"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 26 fetos con ausencia del hueso nasal en el segundo trimestre, el 30,8 % presentaba aneuploidía, siempre acompañada de otra anomalía ecográfica o de un cribado bioquímico de alto riesgo.",
+        "cites": [
+          "PMID:32521052"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001682": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 54 cráneos secos desdentados, la apófisis piramidal del palatino midió en promedio 13,1 mm de altura, 6,5 mm en sentido anteroposterior y 9,5 mm en sentido mediolateral.",
+        "cites": [
+          "PMID:11298260"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La tuberosidad del maxilar, la apófisis piramidal del palatino y la apófisis pterigoides del esfenoides componen un pilar óseo empleado para anclar implantes en la región molar superior.",
+        "cites": [
+          "PMID:11298260"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cortes histológicos de fetos, las paredes medial y posterior del conducto palatino mayor, orientadas hacia el nervio palatino mayor, correspondían siempre al palatino.",
+        "cites": [
+          "PMID:36645485"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 40 fetos humanos, las láminas verticales de ambos palatinos rotaban sobre su eje vertical durante el cierre del paladar, y el ángulo interpalatino medio pasó de 23,7° a 13,3°.",
+        "cites": [
+          "PMID:8478415"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 59 cráneos, la apófisis orbitaria del palatino tuvo un radio medio de 0,47 ± 0,28 cm y su presencia restringe el acceso endoscópico al vértice orbitario inferomedial.",
+        "cites": [
+          "PMID:28658180"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La apófisis esfenoidal del palatino y los orificios del conducto palatovaginal se han propuesto como referencias para localizar el nervio vidiano en la cirugía endoscópica.",
+        "cites": [
+          "PMID:35959578"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001684": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La mandíbula, junto con las articulaciones temporomandibulares y los dientes, integra los elementos duros que participan en la respiración, la masticación, la deglución y el habla.",
+        "cites": [
+          "PMID:36244721"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las fracturas mandibulares son lesiones habituales en la práctica de la cirugía plástica, y algunos aspectos de su tratamiento siguen siendo objeto de controversia.",
+        "cites": [
+          "PMID:40561449"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La reconstrucción microvascular continúa siendo el tratamiento de referencia de los defectos mandibulares complejos tras grandes resecciones oncológicas de cabeza y cuello.",
+        "cites": [
+          "PMID:20485172"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El ameloblastoma de los maxilares, que puede asentar en la mandíbula, es un tumor odontogénico benigno de origen epitelial con una incidencia de 0,92 por millón de personas-año.",
+        "cites": [
+          "PMID:36705195"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001689": {
+    "sentences": []
+  },
+  "UBERON:0001690": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "El oído interno responde al sonido, a la gravedad y al movimiento, y cumple así funciones auditivas y de equilibrio.",
+        "cites": [
+          "PMID:25796080"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Casi todas las clases celulares del oído interno, incluidas las células ciliadas sensoriales y las neuronas sensitivas, proceden de la placoda ótica.",
+        "cites": [
+          "PMID:25796080"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "La cymba conchae del oído externo recibe inervación exclusiva del ramo auricular del nervio vago.",
+        "cites": [
+          "PMID:25573069"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 12 adultos sanos, la estimulación eléctrica de esa zona activó en resonancia funcional las proyecciones vagales centrales, entre ellas el núcleo del tracto solitario homolateral.",
+        "cites": [
+          "PMID:25573069"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En biopsias de mucosa del oído medio de 26 niños con otitis media crónica o recurrente, se visualizaron biopelículas bacterianas en 46 de 50 muestras (92 %).",
+        "cites": [
+          "PMID:16835426"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las neoplasias primarias del conducto auditivo externo pueden ser benignas o malignas y de origen óseo, glandular o cutáneo.",
+        "cites": [
+          "PMID:37495430"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001698": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "El agujero oval es uno de los agujeros más importantes de la base del cráneo y da paso al nervio mandibular.",
+        "cites": [
+          "PMID:36032599"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 200 agujeros ovales de 100 cráneos secos de adultos, los diámetros anteroposterior y transversal medios fueron de 8,16 y 4,97 mm a la derecha y de 7,68 y 4,74 mm a la izquierda.",
+        "cites": [
+          "PMID:36032599"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie se encontraron formas diversas y variantes como espinas, crestas, barras óseas o pequeños agujeros adicionales.",
+        "cites": [
+          "PMID:36032599"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El ángulo medio que formaba el agujero con el plano mediosagital fue de 45,44° en el lado derecho y de 45,78° en el izquierdo.",
+        "cites": [
+          "PMID:36032599"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su conocimiento detallado resulta clave para tratar la neuralgia del trigémino y para diversos procedimientos diagnósticos.",
+        "cites": [
+          "PMID:36032599"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001700": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 24 huesos temporales, el ganglio geniculado se apoyaba a modo de copa sobre la porción anterior de la rodilla del nervio facial.",
+        "cites": [
+          "PMID:1166771"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie sus dimensiones variaron poco, con desviaciones estándar de la longitud, la altura y la anchura medias por debajo del 10 %.",
+        "cites": [
+          "PMID:1166771"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Un estudio histológico describió el ganglio humano como una pirámide con una base de 1050 µm de lado medio y una altura media de 1800 µm.",
+        "cites": [
+          "PMID:7415790"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Contenía en promedio 1070 neuronas, agrupadas en racimos separados por haces longitudinales de fibras nerviosas.",
+        "cites": [
+          "PMID:7415790"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Los vasos extraganglionares llegaban perpendiculares al eje mayor del ganglio, mientras que los intraganglionares corrían paralelos a ese eje y formaban densos canales alrededor de las cápsulas neuronales.",
+        "cites": [
+          "PMID:7415790"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La resección del tercio anterior de la rodilla del facial abarca el 90 % de las células del ganglio sin comprometer las fibras motoras, lo que fundamenta su extirpación en la neuralgia geniculada.",
+        "cites": [
+          "PMID:1166771"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001707": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La vía aérea nasal es la primera estructura de la vía olfatoria y resulta determinante para la llegada y la percepción de los estímulos olfativos.",
+        "cites": [
+          "PMID:31604553"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La rinometría acústica estima el área de sección de la cavidad nasal en función de la distancia, con valores muy correlacionados con los de la tomografía (r = 0,94).",
+        "cites": [
+          "PMID:2917933"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una revisión sistemática de neoplasias malignas nasosinusales, el carcinoma epidermoide fue el tipo histológico predominante (54 %).",
+        "cites": [
+          "PMID:38935225"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la revisión de 29 tumores nasales, nueve se reclasificaron como neuroblastomas y veinte como carcinomas neuroendocrinos.",
+        "cites": [
+          "PMID:7139532"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el estudio de la flora nasal aerobia de 216 voluntarios sanos, la colonización por Staphylococcus aureus se asoció de forma inversa con la de Corynebacterium y la de estafilococos no aureus.",
+        "cites": [
+          "PMID:12513972"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001711": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Los párpados pueden describirse por planos: piel y tejido subcutáneo, músculo orbicular y capa fibroadiposa submuscular, septo orbitario, grasa preaponeurótica, músculos retractores y, por último, los tarsos con la conjuntiva.",
+        "cites": [
+          "PMID:1430562"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Una forma, un contorno, una altura y una movilidad adecuados de los párpados son imprescindibles para proteger el ojo y para su correcto funcionamiento.",
+        "cites": [
+          "PMID:1430562"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En personas privadas de sueño, los periodos con cierres palpebrales espontáneos coincidieron con estados de conectividad funcional cerebral asociados a baja vigilancia.",
+        "cites": [
+          "PMID:27512040"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El entropión es una malposición frecuente en la que el borde palpebral se invierte contra el globo y, sin tratamiento, puede causar abrasión corneal, queratitis microbiana y pérdida de visión.",
+        "cites": [
+          "PMID:20590413"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su forma involutiva es la más habitual en la consulta oftalmológica general y se vuelve más prevalente con el envejecimiento de la población.",
+        "cites": [
+          "PMID:20590413"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La reconstrucción del párpado superior debe preservar su movilidad, su flexibilidad y una superficie mucosa apropiada sobre la córnea.",
+        "cites": [
+          "PMID:27105803"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001724": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 70 esfenoides de adultos obtenidos en autopsia, la neumatización del seno fue de tipo selar en el 85,7 %, preselar en el 11,4 % y conchal en el 2,8 %.",
+        "cites": [
+          "PMID:6668290"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa misma serie había un único tabique intersinusal en el 61 % de los huesos y ninguno en el 11,4 %.",
+        "cites": [
+          "PMID:6668290"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En tomografías de 60 adultos nigerianos, se observó un tabique intersfenoidal principal único en el 95 % y una neumatización selar en el 83 %.",
+        "cites": [
+          "PMID:19950072"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El seno esfenoidal se encuentra muy cerca de la arteria carótida y del conducto óptico.",
+        "cites": [
+          "PMID:19950072"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Por medio de la pared anterior de la silla turca y del clivus, la cavidad sinusal se vincula con la hipófisis y el tronco del encéfalo.",
+        "cites": [
+          "PMID:9199113"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 243 pacientes operados por vía transesfenoidal por lesiones selares, 15 con un seno esfenoidal poco neumatizado se trataron con éxito con ayuda de neuronavegación y ecografía Doppler.",
+        "cites": [
+          "PMID:28065874"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001734": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "La hipertrofia y las alteraciones morfológicas del paladar blando y de la úvula palatina se cuentan entre los factores que favorecen los trastornos respiratorios obstructivos del sueño.",
+        "cites": [
+          "PMID:12737337"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001757": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La exploración ecográfica sistemática de la oreja en 11 voluntarios sanos permitió describir su anatomía normal, incluido el grosor del cartílago y del lóbulo.",
+        "cites": [
+          "PMID:18424652"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 12 pares de orejas de cadáveres adultos, una vez retirados el epitelio y la grasa sólo quedaba el armazón cartilaginoso, cuyo módulo de Young medido antes de descelularizar fue de 2,6 MPa.",
+        "cites": [
+          "PMID:34568774"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un experimento de escucha virtual, los oyentes localizaron con menos precisión la elevación de los sonidos en el plano medio cuando la oreja simulada tenía conchas más grandes que las suyas.",
+        "cites": [
+          "PMID:42505054"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La deformidad de tipo V de Tanzer, u oreja prominente, es el defecto genético más común del pabellón auricular y se corrige mediante otoplastia.",
+        "cites": [
+          "PMID:28262543"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La ecografía del pabellón ayuda a diferenciar procesos inflamatorios, lesiones vasculares y tumores.",
+        "cites": [
+          "PMID:18424652"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001759": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "El nervio vago es el principal componente del sistema nervioso parasimpático e interviene en el control del ánimo, la respuesta inmunitaria, la digestión y la frecuencia cardíaca.",
+        "cites": [
+          "PMID:29593576"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Por medio de sus fibras aferentes comunica al encéfalo el estado de las vísceras y constituye uno de los enlaces entre el cerebro y el tubo digestivo.",
+        "cites": [
+          "PMID:29593576"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "El vago proporciona la inervación parasimpática del tracto gastrointestinal.",
+        "cites": [
+          "PMID:27988382"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Su ramo auricular aporta inervación somatosensitiva a varias regiones del oído externo.",
+        "cites": [
+          "PMID:31742681"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Sus componentes aferente y eferente participan en la regulación del apetito, del estado de ánimo y del sistema inmunitario.",
+        "cites": [
+          "PMID:27988382"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Hay datos preliminares de que la estimulación vagal podría ser un tratamiento complementario útil en la depresión resistente, el trastorno de estrés postraumático y la enfermedad inflamatoria intestinal.",
+        "cites": [
+          "PMID:29593576"
+        ]
+      }
+    ]
+  }
+}

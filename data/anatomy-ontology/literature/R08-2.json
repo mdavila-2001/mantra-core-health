@@ -1,0 +1,1543 @@
+{
+  "FMA:46020": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En una serie de 91 pies de cadáver, el origen de la cabeza transversa del aductor del dedo gordo solía abarcar los ligamentos metatarsianos transversos profundos y los ligamentos plantares de las articulaciones metatarsofalángicas laterales.",
+        "cites": [
+          "PMID:546271"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa misma serie, la inserción se hacía por lo general mediante fibras carnosas en el borde lateral de la cabeza oblicua del músculo, y la cabeza transversa faltaba en el 6 % de los especímenes.",
+        "cites": [
+          "PMID:546271"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La cabeza transversa recibe fijaciones de la banda profunda de la aponeurosis plantar, que se dirige al ligamento plantar de la cuarta articulación metatarsofalángica.",
+        "cites": [
+          "PMID:7158798"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su trayecto discurre paralelo al arco metatarsiano transverso distal.",
+        "cites": [
+          "PMID:33497968"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio electromiográfico con electrodos de alambre fino en diez adultos jóvenes sanos, el músculo mostró dos picos de actividad, entre el 0-20 % y el 50-65 % del ciclo de la marcha, lo que sugiere un papel estabilizador del antepié en el contacto inicial y el despegue.",
+        "cites": [
+          "PMID:33497968"
+        ]
+      }
+    ]
+  },
+  "FMA:46021": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En una serie de 91 pies de cadáver, el origen de la cabeza transversa del aductor del dedo gordo solía abarcar los ligamentos metatarsianos transversos profundos y los ligamentos plantares de las articulaciones metatarsofalángicas laterales.",
+        "cites": [
+          "PMID:546271"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa misma serie, la inserción se hacía por lo general mediante fibras carnosas en el borde lateral de la cabeza oblicua del músculo, y la cabeza transversa faltaba en el 6 % de los especímenes.",
+        "cites": [
+          "PMID:546271"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La cabeza transversa recibe fijaciones de la banda profunda de la aponeurosis plantar, que se dirige al ligamento plantar de la cuarta articulación metatarsofalángica.",
+        "cites": [
+          "PMID:7158798"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su trayecto discurre paralelo al arco metatarsiano transverso distal.",
+        "cites": [
+          "PMID:33497968"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio electromiográfico con electrodos de alambre fino en diez adultos jóvenes sanos, el músculo mostró dos picos de actividad, entre el 0-20 % y el 50-65 % del ciclo de la marcha, lo que sugiere un papel estabilizador del antepié en el contacto inicial y el despegue.",
+        "cites": [
+          "PMID:33497968"
+        ]
+      }
+    ]
+  },
+  "FMA:46110": {
+    "sentences": []
+  },
+  "FMA:46111": {
+    "sentences": []
+  },
+  "FMA:46123": {
+    "sentences": []
+  },
+  "FMA:46124": {
+    "sentences": []
+  },
+  "FMA:46442": {
+    "sentences": []
+  },
+  "FMA:46763": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El temporoparietal se describe como un músculo delgado en forma de abanico que se continúa con el sistema musculoaponeurótico superficial y con la galea aponeurótica.",
+        "cites": [
+          "PMID:42325484"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la disección por planos de 60 hemicabezas de 30 cadáveres embalsamados, el músculo se identificó en 37 lados (61.7 %), pero sólo en 10 (16.7 %) tenía un grosor bien visible.",
+        "cites": [
+          "PMID:42325484"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esa serie el músculo estuvo ausente en 23 de los 60 lados (38.3 %), una variabilidad que los autores consideran útil para interpretar los planos de disección temporal.",
+        "cites": [
+          "PMID:42325484"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha empleado un colgajo pediculado vascularizado de temporoparietal, cubierto con injerto de piel total, en la reconstrucción completa del pabellón auricular cuando la piel local está cicatrizada.",
+        "cites": [
+          "PMID:6532170"
+        ]
+      }
+    ]
+  },
+  "FMA:46764": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El temporoparietal se describe como un músculo delgado en forma de abanico que se continúa con el sistema musculoaponeurótico superficial y con la galea aponeurótica.",
+        "cites": [
+          "PMID:42325484"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la disección por planos de 60 hemicabezas de 30 cadáveres embalsamados, el músculo se identificó en 37 lados (61.7 %), pero sólo en 10 (16.7 %) tenía un grosor bien visible.",
+        "cites": [
+          "PMID:42325484"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esa serie el músculo estuvo ausente en 23 de los 60 lados (38.3 %), una variabilidad que los autores consideran útil para interpretar los planos de disección temporal.",
+        "cites": [
+          "PMID:42325484"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha empleado un colgajo pediculado vascularizado de temporoparietal, cubierto con injerto de piel total, en la reconstrucción completa del pabellón auricular cuando la piel local está cicatrizada.",
+        "cites": [
+          "PMID:6532170"
+        ]
+      }
+    ]
+  },
+  "FMA:46796": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El corrugador superciliar es un músculo facial de la frente situado en la región supraorbitaria.",
+        "cites": [
+          "PMID:18835209"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 16 lados de cadáver, el músculo nacía de una base ósea amplia entre un punto a 0.6 cm de la línea media y la escotadura o agujero supraorbitario, en forma de 3 o 4 haces delgados y rectangulares de curso oblicuo y paralelo.",
+        "cites": [
+          "PMID:12975140"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 50 músculos de cadáveres frescos, el origen más medial quedó a 2.9 +/- 1.0 mm del nasion y la inserción más lateral a 43.3 +/- 2.9 mm del nasion, sin diferencias entre ambos lados.",
+        "cites": [
+          "PMID:18040200"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esas mismas 50 disecciones, tanto la división profunda como la superficial del nervio supraorbitario se relacionaron estrechamente con las fibras del músculo, con cuatro patrones de ramificación; en el tipo I (40 %) sólo la división profunda corría bajo su cara inferior.",
+        "cites": [
+          "PMID:18176226"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En nueve hemicabezas, las ramas motoras del nervio facial para la cabeza transversa discurrían entre 15 y 32 mm por encima del reborde orbitario lateral, y la porción medial recibía una rama cigomática superficial, bucal o bucocigomática.",
+        "cites": [
+          "PMID:27300459"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Las contracciones repetidas de este músculo son la causa principal de las arrugas glabelares del entrecejo.",
+        "cites": [
+          "PMID:18835209"
+        ]
+      }
+    ]
+  },
+  "FMA:46797": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El corrugador superciliar es un músculo facial de la frente situado en la región supraorbitaria.",
+        "cites": [
+          "PMID:18835209"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 16 lados de cadáver, el músculo nacía de una base ósea amplia entre un punto a 0.6 cm de la línea media y la escotadura o agujero supraorbitario, en forma de 3 o 4 haces delgados y rectangulares de curso oblicuo y paralelo.",
+        "cites": [
+          "PMID:12975140"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 50 músculos de cadáveres frescos, el origen más medial quedó a 2.9 +/- 1.0 mm del nasion y la inserción más lateral a 43.3 +/- 2.9 mm del nasion, sin diferencias entre ambos lados.",
+        "cites": [
+          "PMID:18040200"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esas mismas 50 disecciones, tanto la división profunda como la superficial del nervio supraorbitario se relacionaron estrechamente con las fibras del músculo, con cuatro patrones de ramificación; en el tipo I (40 %) sólo la división profunda corría bajo su cara inferior.",
+        "cites": [
+          "PMID:18176226"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En nueve hemicabezas, las ramas motoras del nervio facial para la cabeza transversa discurrían entre 15 y 32 mm por encima del reborde orbitario lateral, y la porción medial recibía una rama cigomática superficial, bucal o bucocigomática.",
+        "cites": [
+          "PMID:27300459"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Las contracciones repetidas de este músculo son la causa principal de las arrugas glabelares del entrecejo.",
+        "cites": [
+          "PMID:18835209"
+        ]
+      }
+    ]
+  },
+  "FMA:4685": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Un caso clínico describe una disección coronaria espontánea del tronco principal izquierdo, con hematoma intramural extenso y oclusión, en una mujer de 30 años al día siguiente del parto, que requirió cirugía cardíaca urgente.",
+        "cites": [
+          "PMID:35891630"
+        ]
+      }
+    ]
+  },
+  "FMA:51144": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En un caso de variantes bilaterales, tendones accesorios del extensor largo y del extensor corto del dedo gordo se unían en ambos lados para formar un tendón común.",
+        "cites": [
+          "PMID:36198656"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En otro caso, el tendón del músculo extensor primi internodii hallucis de Wood se unía al del extensor corto del dedo gordo por encima de la articulación tarsometatarsiana de Lisfranc.",
+        "cites": [
+          "PMID:30146339"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La tenodesis con el extensor corto del dedo gordo se ha usado para corregir el hallux varus sintomático en una serie de seis pacientes, con corrección mantenida a una media de 28 meses.",
+        "cites": [
+          "PMID:8821282"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un colgajo libre dorsal del pie que incluía el tendón del extensor corto del dedo gordo permitió restaurar la abducción del pulgar tras una quemadura eléctrica.",
+        "cites": [
+          "PMID:16425119"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio transversal de 90 participantes con elastografía de onda de corte, la rigidez media del músculo fue de 11.88 kPa en controles, 15.78 kPa en diabetes tipo 2 sin complicaciones y 18.57 kPa con complicaciones microvasculares.",
+        "cites": [
+          "PMID:40771279"
+        ]
+      }
+    ]
+  },
+  "FMA:51145": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En un caso de variantes bilaterales, tendones accesorios del extensor largo y del extensor corto del dedo gordo se unían en ambos lados para formar un tendón común.",
+        "cites": [
+          "PMID:36198656"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En otro caso, el tendón del músculo extensor primi internodii hallucis de Wood se unía al del extensor corto del dedo gordo por encima de la articulación tarsometatarsiana de Lisfranc.",
+        "cites": [
+          "PMID:30146339"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La tenodesis con el extensor corto del dedo gordo se ha usado para corregir el hallux varus sintomático en una serie de seis pacientes, con corrección mantenida a una media de 28 meses.",
+        "cites": [
+          "PMID:8821282"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un colgajo libre dorsal del pie que incluía el tendón del extensor corto del dedo gordo permitió restaurar la abducción del pulgar tras una quemadura eléctrica.",
+        "cites": [
+          "PMID:16425119"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio transversal de 90 participantes con elastografía de onda de corte, la rigidez media del músculo fue de 11.88 kPa en controles, 15.78 kPa en diabetes tipo 2 sin complicaciones y 18.57 kPa con complicaciones microvasculares.",
+        "cites": [
+          "PMID:40771279"
+        ]
+      }
+    ]
+  },
+  "FMA:55680": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "En estudios en humanos, la presión mecánica lenta sobre un incisivo lateral superior activa mecanorreceptores periodontales capaces de provocar reflejos tanto excitadores como inhibidores en el músculo masetero.",
+        "cites": [
+          "PMID:9134124"
+        ]
+      }
+    ]
+  },
+  "FMA:55683": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "En estudios en humanos, la presión mecánica lenta sobre un incisivo lateral superior activa mecanorreceptores periodontales capaces de provocar reflejos tanto excitadores como inhibidores en el músculo masetero.",
+        "cites": [
+          "PMID:9134124"
+        ]
+      }
+    ]
+  },
+  "FMA:55681": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 15 participantes, la estimulación eléctrica selectiva de la pulpa de un incisivo central superior provocó sobre todo sensaciones agudas o dolorosas e inhibición refleja de los músculos elevadores mandibulares; en dientes no vitales no hubo respuesta.",
+        "cites": [
+          "PMID:23640774"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 19 sujetos, estímulos mecánicos de 1 N aplicados a un incisivo central superior desencadenaron en el masetero homolateral un reflejo inhibidor de latencia corta, de unos 12 ms, atribuido a mecanorreceptores del ligamento periodontal.",
+        "cites": [
+          "PMID:8883855"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 315 pacientes con espondilosis cervical, la posición del punto anteroinferior del incisivo central superior se asoció de forma independiente con la laringoscopia difícil.",
+        "cites": [
+          "PMID:29388207"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 73 niños con fisura alveolar tratados con gingivoperiostioplastia e injerto de cresta ilíaca en dentición temporal, mejoró de forma significativa la rotación axial de los incisivos centrales.",
+        "cites": [
+          "PMID:26004807"
+        ]
+      }
+    ]
+  },
+  "FMA:55682": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 15 participantes, la estimulación eléctrica selectiva de la pulpa de un incisivo central superior provocó sobre todo sensaciones agudas o dolorosas e inhibición refleja de los músculos elevadores mandibulares; en dientes no vitales no hubo respuesta.",
+        "cites": [
+          "PMID:23640774"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 19 sujetos, estímulos mecánicos de 1 N aplicados a un incisivo central superior desencadenaron en el masetero homolateral un reflejo inhibidor de latencia corta, de unos 12 ms, atribuido a mecanorreceptores del ligamento periodontal.",
+        "cites": [
+          "PMID:8883855"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 315 pacientes con espondilosis cervical, la posición del punto anteroinferior del incisivo central superior se asoció de forma independiente con la laringoscopia difícil.",
+        "cites": [
+          "PMID:29388207"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 73 niños con fisura alveolar tratados con gingivoperiostioplastia e injerto de cresta ilíaca en dentición temporal, mejoró de forma significativa la rotación axial de los incisivos centrales.",
+        "cites": [
+          "PMID:26004807"
+        ]
+      }
+    ]
+  },
+  "FMA:55686": {
+    "sentences": []
+  },
+  "FMA:55687": {
+    "sentences": []
+  },
+  "FMA:55688": {
+    "sentences": []
+  },
+  "FMA:55691": {
+    "sentences": []
+  },
+  "FMA:55798": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En tomografía de haz cónico, el ángulo ampular del conducto sinuoso de Wood Jones, que lleva el nervio y la arteria alveolares superiores anteriores, se sitúa por encima del canino superior.",
+        "cites": [
+          "PMID:32239084"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La retención del canino superior permanente se vincula con causas genéticas, nutricionales y locales.",
+        "cites": [
+          "PMID:19601494"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En radiografías de 33 escolares de 3 a 9 años, la distancia del germen del canino superior a la sutura intermaxilar difirió entre niños con peso normal y con sobrepeso.",
+        "cites": [
+          "PMID:19601494"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de valoración con 180 evaluadores, la sonrisa resultó más atractiva cuando el eje del canino superior era paralelo a la línea que une el canto lateral del ojo con la comisura labial homolateral.",
+        "cites": [
+          "PMID:25244536"
+        ]
+      }
+    ]
+  },
+  "FMA:55799": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En tomografía de haz cónico, el ángulo ampular del conducto sinuoso de Wood Jones, que lleva el nervio y la arteria alveolares superiores anteriores, se sitúa por encima del canino superior.",
+        "cites": [
+          "PMID:32239084"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La retención del canino superior permanente se vincula con causas genéticas, nutricionales y locales.",
+        "cites": [
+          "PMID:19601494"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En radiografías de 33 escolares de 3 a 9 años, la distancia del germen del canino superior a la sutura intermaxilar difirió entre niños con peso normal y con sobrepeso.",
+        "cites": [
+          "PMID:19601494"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de valoración con 180 evaluadores, la sonrisa resultó más atractiva cuando el eje del canino superior era paralelo a la línea que une el canto lateral del ojo con la comisura labial homolateral.",
+        "cites": [
+          "PMID:25244536"
+        ]
+      }
+    ]
+  },
+  "FMA:58776": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En diez rodillas de cadáver fresco, la cintilla iliotibial se organizaba en capas superficial, profunda y cápsulo-ósea, con fijaciones en la línea áspera, el borde superior del epicóndilo lateral, la rótula y el tubérculo de Gerdy.",
+        "cites": [
+          "PMID:17349469"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 100 rodillas, su fijación femoral distal mostró tres grupos de fibras: un haz supracondíleo, fibras transversas junto al tabique y fibras retrógradas que unen el tubérculo de Gerdy con la cara dorsolateral del fémur.",
+        "cites": [
+          "PMID:3632313"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 39 miembros de cadáver inyectados, la irrigación provenía de la arteria circunfleja femoral lateral, que nutría un segmento de 162.3 ± 36.2 mm, sin aporte comprobado de la femoral profunda ni de la genicular superior lateral.",
+        "cites": [
+          "PMID:26563447"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se considera un estabilizador anterolateral de la rodilla, sobre todo por su capa cápsulo-ósea, que junto con el ligamento cruzado anterior forma una unidad funcional.",
+        "cites": [
+          "PMID:17349469"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 17 pacientes con fractura de Segond, el fragmento arrancado de la tibia lateral solía conservar inserciones de la cintilla iliotibial y de la banda oblicua anterior del ligamento colateral peroneo.",
+        "cites": [
+          "PMID:11323461"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancia de 61 pacientes pediátricos, las fijaciones profundas de la cintilla al fémur distal se identificaron con alta concordancia entre observadores.",
+        "cites": [
+          "PMID:30391071"
+        ]
+      }
+    ]
+  },
+  "FMA:58777": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En diez rodillas de cadáver fresco, la cintilla iliotibial se organizaba en capas superficial, profunda y cápsulo-ósea, con fijaciones en la línea áspera, el borde superior del epicóndilo lateral, la rótula y el tubérculo de Gerdy.",
+        "cites": [
+          "PMID:17349469"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 100 rodillas, su fijación femoral distal mostró tres grupos de fibras: un haz supracondíleo, fibras transversas junto al tabique y fibras retrógradas que unen el tubérculo de Gerdy con la cara dorsolateral del fémur.",
+        "cites": [
+          "PMID:3632313"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 39 miembros de cadáver inyectados, la irrigación provenía de la arteria circunfleja femoral lateral, que nutría un segmento de 162.3 ± 36.2 mm, sin aporte comprobado de la femoral profunda ni de la genicular superior lateral.",
+        "cites": [
+          "PMID:26563447"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se considera un estabilizador anterolateral de la rodilla, sobre todo por su capa cápsulo-ósea, que junto con el ligamento cruzado anterior forma una unidad funcional.",
+        "cites": [
+          "PMID:17349469"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 17 pacientes con fractura de Segond, el fragmento arrancado de la tibia lateral solía conservar inserciones de la cintilla iliotibial y de la banda oblicua anterior del ligamento colateral peroneo.",
+        "cites": [
+          "PMID:11323461"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancia de 61 pacientes pediátricos, las fijaciones profundas de la cintilla al fémur distal se identificaron con alta concordancia entre observadores.",
+        "cites": [
+          "PMID:30391071"
+        ]
+      }
+    ]
+  },
+  "FMA:65198": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 60 regiones palmares de 30 cadáveres adultos, la rama muscular del nervio mediano inervaba la cabeza superficial del flexor corto del pulgar, junto con el abductor corto y el oponente, en el 50 % de los casos; en el 40 % sólo llegaba a estos dos últimos.",
+        "cites": [
+          "PMID:7649846",
+          "PMID:8886966"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En seis manos de cadáver, una rama propia del mediano para la cabeza superficial nacía del nervio digital común del pulgar, a una media de 8.3 ± 5.3 mm distal a la rama tenar, con una longitud media de 11.5 ± 1.5 mm.",
+        "cites": [
+          "PMID:39805349"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En diez manos de cadáver, la carga aislada de la cabeza superficial no modificó de forma significativa la altura ni el área del arco carpiano formado por el ligamento transverso del carpo.",
+        "cites": [
+          "PMID:33938948"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La transferencia de esa rama motora a la rama profunda del nervio cubital se ha estudiado en cadáver como opción para acortar la distancia de reinervación en la parálisis cubital.",
+        "cites": [
+          "PMID:39805349"
+        ]
+      }
+    ]
+  },
+  "FMA:65199": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 60 regiones palmares de 30 cadáveres adultos, la rama muscular del nervio mediano inervaba la cabeza superficial del flexor corto del pulgar, junto con el abductor corto y el oponente, en el 50 % de los casos; en el 40 % sólo llegaba a estos dos últimos.",
+        "cites": [
+          "PMID:7649846",
+          "PMID:8886966"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En seis manos de cadáver, una rama propia del mediano para la cabeza superficial nacía del nervio digital común del pulgar, a una media de 8.3 ± 5.3 mm distal a la rama tenar, con una longitud media de 11.5 ± 1.5 mm.",
+        "cites": [
+          "PMID:39805349"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En diez manos de cadáver, la carga aislada de la cabeza superficial no modificó de forma significativa la altura ni el área del arco carpiano formado por el ligamento transverso del carpo.",
+        "cites": [
+          "PMID:33938948"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La transferencia de esa rama motora a la rama profunda del nervio cubital se ha estudiado en cadáver como opción para acortar la distancia de reinervación en la parálisis cubital.",
+        "cites": [
+          "PMID:39805349"
+        ]
+      }
+    ]
+  },
+  "FMA:79979": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "La agenesia de la porción esternocostal del pectoral mayor es la anomalía constante del síndrome de Poland, y la maniobra de aducción forzada la pone en evidencia.",
+        "cites": [
+          "PMID:27567946"
+        ]
+      }
+    ]
+  },
+  "FMA:79980": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "La agenesia de la porción esternocostal del pectoral mayor es la anomalía constante del síndrome de Poland, y la maniobra de aducción forzada la pone en evidencia.",
+        "cites": [
+          "PMID:27567946"
+        ]
+      }
+    ]
+  },
+  "FMA:7875": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La mineralización del primer cartílago costal comienza al final de la pubertad bajo el pericondrio, y el hueso avanza en espolones desde el borde superior del manubrio y desde el extremo óseo de la costilla.",
+        "cites": [
+          "PMID:7741279"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Desde mediados de la segunda década aparecen en su zona central grandes conductos cartilaginosos con vasos, y esas áreas son las últimas en osificarse; los autores interpretan el proceso como un cambio fisiológico de la edad.",
+        "cites": [
+          "PMID:7741279"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 62 adultos, el diámetro medio de la arteria torácica interna a la altura del primer cartílago costal fue de 2.85 +/- 0.4 mm a la derecha y 2.67 +/- 0.3 mm a la izquierda.",
+        "cites": [
+          "PMID:9787389"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tomografías de 154 personas de 15 a 35 años, la radiodensidad del primer cartílago costal se correlacionó con la edad y se propone como apoyo para estimarla.",
+        "cites": [
+          "PMID:24957198"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una variante del abordaje hemi-clamshell para tumores de la unión cervicotorácica reseca el primer cartílago costal y el ligamento costoclavicular para abrir más el colgajo esternocostal.",
+        "cites": [
+          "PMID:10892967"
+        ]
+      }
+    ]
+  },
+  "FMA:8005": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La mineralización del primer cartílago costal comienza al final de la pubertad bajo el pericondrio, y el hueso avanza en espolones desde el borde superior del manubrio y desde el extremo óseo de la costilla.",
+        "cites": [
+          "PMID:7741279"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Desde mediados de la segunda década aparecen en su zona central grandes conductos cartilaginosos con vasos, y esas áreas son las últimas en osificarse; los autores interpretan el proceso como un cambio fisiológico de la edad.",
+        "cites": [
+          "PMID:7741279"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 62 adultos, el diámetro medio de la arteria torácica interna a la altura del primer cartílago costal fue de 2.85 +/- 0.4 mm a la derecha y 2.67 +/- 0.3 mm a la izquierda.",
+        "cites": [
+          "PMID:9787389"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tomografías de 154 personas de 15 a 35 años, la radiodensidad del primer cartílago costal se correlacionó con la edad y se propone como apoyo para estimarla.",
+        "cites": [
+          "PMID:24957198"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una variante del abordaje hemi-clamshell para tumores de la unión cervicotorácica reseca el primer cartílago costal y el ligamento costoclavicular para abrir más el colgajo esternocostal.",
+        "cites": [
+          "PMID:10892967"
+        ]
+      }
+    ]
+  },
+  "FMA:7886": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En tomografías de 60 adolescentes, la vena cava superior se formaba cerca del segundo cartílago costal, a ±16.3 mm a la derecha de la línea media.",
+        "cites": [
+          "PMID:30758865"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 hemitórax de 25 cadáveres se halló un único músculo esternal anómalo, que ascendía desde cerca del séptimo cartílago costal hasta insertarse en el segundo, junto al esternón.",
+        "cites": [
+          "PMID:19452102"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tomografías de 200 personas de 30 a 80 años, la calcificación del segundo cartílago costal aumentó con la edad, aunque con un rango amplio que impide usarla sola para estimarla.",
+        "cites": [
+          "PMID:34893986"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En dos casos de linfadenectomía de rescate por cáncer de esófago, el abordaje anterior incluyó la resección del primer y segundo cartílago costal.",
+        "cites": [
+          "PMID:17593480"
+        ]
+      }
+    ]
+  },
+  "FMA:8031": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En tomografías de 60 adolescentes, la vena cava superior se formaba cerca del segundo cartílago costal, a ±16.3 mm a la derecha de la línea media.",
+        "cites": [
+          "PMID:30758865"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 hemitórax de 25 cadáveres se halló un único músculo esternal anómalo, que ascendía desde cerca del séptimo cartílago costal hasta insertarse en el segundo, junto al esternón.",
+        "cites": [
+          "PMID:19452102"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tomografías de 200 personas de 30 a 80 años, la calcificación del segundo cartílago costal aumentó con la edad, aunque con un rango amplio que impide usarla sola para estimarla.",
+        "cites": [
+          "PMID:34893986"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En dos casos de linfadenectomía de rescate por cáncer de esófago, el abordaje anterior incluyó la resección del primer y segundo cartílago costal.",
+        "cites": [
+          "PMID:17593480"
+        ]
+      }
+    ]
+  },
+  "FMA:7913": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Para exponer los vasos mamarios internos como receptores en la reconstrucción mamaria con colgajo libre se suele extirpar un segmento medial del tercer cartílago costal homolateral.",
+        "cites": [
+          "PMID:10624295",
+          "PMID:21102306"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 25 reconstrucciones consecutivas con esa técnica no se registraron neumotórax, neuralgia intercostal, hernias torácicas ni defectos de contorno en la zona resecada.",
+        "cites": [
+          "PMID:10624295"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una variante con preservación parcial limita el recorte a la mitad superior del tercer cartílago costal, lo que en 137 procedimientos dio vasos receptores más largos que la preservación costal total (mediana 20.5 mm frente a 17.6 mm).",
+        "cites": [
+          "PMID:36253301"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En un caso de músculo esternal bilateral, el vientre izquierdo se insertaba en el tercer cartílago costal en su unión con el esternón.",
+        "cites": [
+          "PMID:19957564"
+        ]
+      }
+    ]
+  },
+  "FMA:8058": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Para exponer los vasos mamarios internos como receptores en la reconstrucción mamaria con colgajo libre se suele extirpar un segmento medial del tercer cartílago costal homolateral.",
+        "cites": [
+          "PMID:10624295",
+          "PMID:21102306"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 25 reconstrucciones consecutivas con esa técnica no se registraron neumotórax, neuralgia intercostal, hernias torácicas ni defectos de contorno en la zona resecada.",
+        "cites": [
+          "PMID:10624295"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una variante con preservación parcial limita el recorte a la mitad superior del tercer cartílago costal, lo que en 137 procedimientos dio vasos receptores más largos que la preservación costal total (mediana 20.5 mm frente a 17.6 mm).",
+        "cites": [
+          "PMID:36253301"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En un caso de músculo esternal bilateral, el vientre izquierdo se insertaba en el tercer cartílago costal en su unión con el esternón.",
+        "cites": [
+          "PMID:19957564"
+        ]
+      }
+    ]
+  },
+  "FMA:7976": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 62 adultos, el diámetro medio de la arteria torácica interna a la altura del cuarto cartílago costal fue de 2.33 +/- 0.6 mm a la derecha y 2.22 +/- 0.3 mm a la izquierda.",
+        "cites": [
+          "PMID:9787389"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En arteriografías de 100 pacientes, el 15 % de las arterias mamarias internas tenía una luz menor de 2 mm a la altura del cuarto cartílago costal.",
+        "cites": [
+          "PMID:7326733"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 12 lados de cadáver, los vasos de estrangulamiento del pectoral mayor a la altura del cuarto cartílago costal separaban dos territorios vasculares, craneal y caudal.",
+        "cites": [
+          "PMID:15809597"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En un caso de músculo esternal bilateral, el vientre derecho se fijaba al cuarto cartílago costal en su unión con el esternón.",
+        "cites": [
+          "PMID:19957564"
+        ]
+      }
+    ]
+  },
+  "FMA:8167": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 62 adultos, el diámetro medio de la arteria torácica interna a la altura del cuarto cartílago costal fue de 2.33 +/- 0.6 mm a la derecha y 2.22 +/- 0.3 mm a la izquierda.",
+        "cites": [
+          "PMID:9787389"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En arteriografías de 100 pacientes, el 15 % de las arterias mamarias internas tenía una luz menor de 2 mm a la altura del cuarto cartílago costal.",
+        "cites": [
+          "PMID:7326733"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 12 lados de cadáver, los vasos de estrangulamiento del pectoral mayor a la altura del cuarto cartílago costal separaban dos territorios vasculares, craneal y caudal.",
+        "cites": [
+          "PMID:15809597"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En un caso de músculo esternal bilateral, el vientre derecho se fijaba al cuarto cartílago costal en su unión con el esternón.",
+        "cites": [
+          "PMID:19957564"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la tomografía post mortem de un varón de unos 70 años, el cuarto cartílago costal izquierdo se bifurcaba en Y y una de sus ramas estaba osificada a modo de costilla, sin continuidad posterior.",
+        "cites": [
+          "PMID:41112816"
+        ]
+      }
+    ]
+  },
+  "FMA:8070": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En un análisis morfométrico geométrico de 96 cartílagos costales de cadáver, el quinto resultó el de forma más recta.",
+        "cites": [
+          "PMID:29195250"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Por esa forma rectilínea, el quinto cartílago se considera especialmente apto como injerto de aposición sobre el dorso nasal en la rinoplastia.",
+        "cites": [
+          "PMID:29195250"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tres casos de estenosis subglótica o traqueal alta se usó un injerto de quinto cartílago costal pediculado sobre los vasos torácicos internos e intercostales, sin formación de tejido de granulación.",
+        "cites": [
+          "PMID:15616924"
+        ]
+      }
+    ]
+  },
+  "FMA:8112": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En un análisis morfométrico geométrico de 96 cartílagos costales de cadáver, el quinto resultó el de forma más recta.",
+        "cites": [
+          "PMID:29195250"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Por esa forma rectilínea, el quinto cartílago se considera especialmente apto como injerto de aposición sobre el dorso nasal en la rinoplastia.",
+        "cites": [
+          "PMID:29195250"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tres casos de estenosis subglótica o traqueal alta se usó un injerto de quinto cartílago costal pediculado sobre los vasos torácicos internos e intercostales, sin formación de tejido de granulación.",
+        "cites": [
+          "PMID:15616924"
+        ]
+      }
+    ]
+  },
+  "FMA:8194": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En tomografías de 156 niños, el borde inferior de los pulmones en la línea medioclavicular se situaba a la altura del sexto cartílago costal en el grupo de 15 a 18 años, y más alto en los menores.",
+        "cites": [
+          "PMID:36088577"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 2500 tomografías torácicas, todos los agujeros esternales hallados (4.44 %) se localizaban en el cuerpo del esternón a la altura del cuarto al sexto cartílago costal.",
+        "cites": [
+          "PMID:37596889"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 22 pacientes con pectus carinatum asimétrico, la longitud del sexto cartílago costal fue de 97.8 ± 13.2 mm en el lado más prominente y de 99.8 ± 15.5 mm en el contrario, sin diferencia significativa.",
+        "cites": [
+          "PMID:23868604"
+        ]
+      }
+    ]
+  },
+  "FMA:8221": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En tomografías de 156 niños, el borde inferior de los pulmones en la línea medioclavicular se situaba a la altura del sexto cartílago costal en el grupo de 15 a 18 años, y más alto en los menores.",
+        "cites": [
+          "PMID:36088577"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 2500 tomografías torácicas, todos los agujeros esternales hallados (4.44 %) se localizaban en el cuerpo del esternón a la altura del cuarto al sexto cartílago costal.",
+        "cites": [
+          "PMID:37596889"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 22 pacientes con pectus carinatum asimétrico, la longitud del sexto cartílago costal fue de 97.8 ± 13.2 mm en el lado más prominente y de 99.8 ± 15.5 mm en el contrario, sin diferencia significativa.",
+        "cites": [
+          "PMID:23868604"
+        ]
+      }
+    ]
+  },
+  "FMA:8248": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "El nervio torácico interno desciende junto a la arteria torácica interna hasta el nivel del séptimo cartílago costal, donde deja de identificarse.",
+        "cites": [
+          "PMID:5089505"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 hemitórax de 25 cadáveres se halló un único músculo esternal anómalo, que nacía cerca del séptimo cartílago costal, a 3.5 cm de la línea medioesternal.",
+        "cites": [
+          "PMID:19452102"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 103 adultos con microtia congénita, el séptimo cartílago costal se extrajo para fabricar el armazón auricular en 74 de ellos, sin deformidades torácicas posoperatorias.",
+        "cites": [
+          "PMID:22948643"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 12 pacientes con enoftalmos postraumático se obtuvieron, por una incisión sobre el séptimo cartílago costal, láminas de hueso y cartílago de 2 mm para la corrección orbitaria.",
+        "cites": [
+          "PMID:28027179"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 658 niños con microtia de tipo lobulillar, el resto del séptimo cartílago costal se reorientó 90° para construir el trago.",
+        "cites": [
+          "PMID:39527044"
+        ]
+      }
+    ]
+  },
+  "FMA:8275": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "El nervio torácico interno desciende junto a la arteria torácica interna hasta el nivel del séptimo cartílago costal, donde deja de identificarse.",
+        "cites": [
+          "PMID:5089505"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 50 hemitórax de 25 cadáveres se halló un único músculo esternal anómalo, que nacía cerca del séptimo cartílago costal, a 3.5 cm de la línea medioesternal.",
+        "cites": [
+          "PMID:19452102"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 103 adultos con microtia congénita, el séptimo cartílago costal se extrajo para fabricar el armazón auricular en 74 de ellos, sin deformidades torácicas posoperatorias.",
+        "cites": [
+          "PMID:22948643"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 12 pacientes con enoftalmos postraumático se obtuvieron, por una incisión sobre el séptimo cartílago costal, láminas de hueso y cartílago de 2 mm para la corrección orbitaria.",
+        "cites": [
+          "PMID:28027179"
+        ]
+      }
+    ]
+  },
+  "FMA:83740": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "En 56 hemisferios de cadáver, las ramas perforantes de los últimos 5 mm de la arteria basilar, de los primeros 7 mm de las cerebelosas superiores y del segmento P1 de la cerebral posterior penetraban por un espacio pequeño en la parte alta de la fosa interpeduncular.",
+        "cites": [
+          "PMID:3950725"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Los dos tercios anteriores de ese espacio corresponden a la sustancia perforada posterior, y el tercio posterior da paso a las ramas para el mesencéfalo inferior.",
+        "cites": [
+          "PMID:3950725"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "La mitad anterior de la sustancia perforada posterior la atraviesan las arterias talámicas paramedianas (0.57 +/- 0.11 mm de diámetro) y la mitad posterior las mesencefálicas paramedianas superiores (0.20 +/- 0.06 mm).",
+        "cites": [
+          "PMID:3950725"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 100 encéfalos se distinguieron tres grupos de perforantes: arterias interpedunculares cortas hacia los pedúnculos cerebrales y los nervios oculomotores, arterias diencefálicas sobre todo para los cuerpos mamilares, y arterias mesencefálicas.",
+        "cites": [
+          "PMID:20673399"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La fosa interpeduncular se ha propuesto como zona de entrada segura para resecar lesiones mesencefálicas ventromediales situadas medialmente al nervio oculomotor, aprovechando el espacio entre los cuerpos mamilares y el vértice basilar.",
+        "cites": [
+          "PMID:28298049"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000002": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "El adenocarcinoma representa del 10 al 20 % de las lesiones premalignas y malignas del cuello uterino, y su desarrollo endocervical dificulta el diagnóstico.",
+        "cites": [
+          "PMID:22921356"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 1526 pacientes con carcinoma escamoso en estadio IB tratadas con radioterapia, el control tumoral y la supervivencia se correlacionaron fuertemente con el diámetro del tumor.",
+        "cites": [
+          "PMID:8175451"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 53 adenocarcinomas mucinosos cervicales, los de tipo gástrico tuvieron una supervivencia específica a 5 años del 30 % frente al 77 % de los demás.",
+        "cites": [
+          "PMID:17460448"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los sarcomas constituyen menos del 1 % de los tumores malignos cervicales; en una serie de 8 casos todas las pacientes consultaron por sangrado y flujo vaginal.",
+        "cites": [
+          "PMID:22740005"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El papilomavirus humano tipo 31, aislado de una mujer con displasia cervical, apareció en cerca del 20 % de las displasias leves y moderadas y en el 6 % de los cánceres invasores estudiados.",
+        "cites": [
+          "PMID:3005652"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000007": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La hipófisis se aloja en la silla turca, tiene un doble origen embrionario y una vascularización compleja.",
+        "cites": [
+          "PMID:40500594"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 517 resonancias de niños turcos de 0 a 18 años, la altura máxima mediana de la glándula fue de 8.48±1.08 mm en niñas y 6.19±0.88 mm en varones.",
+        "cites": [
+          "PMID:25367689"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En autopsias de 86 personas de 90 a 98 años, el 88 % de las adenohipófisis presentaba fibrosis intersticial y perivascular, con menos somatotropas en las alas laterales.",
+        "cites": [
+          "PMID:8412363"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 69 hipófisis de mujeres fallecidas durante el embarazo o el puerperio se observó una hiperplasia de células de prolactina, visible desde el primer mes y que remitía meses después del parto o del aborto.",
+        "cites": [
+          "PMID:2159093"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Todos los tipos celulares adenohipofisarios reconocidos pueden originar adenomas, y cualquiera de las hormonas hipofisarias conocidas puede secretarse en exceso.",
+        "cites": [
+          "PMID:3290865"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las alteraciones del desarrollo hipofisario se asocian con hipopituitarismo congénito, cuya forma aislada más frecuente es el déficit de hormona de crecimiento.",
+        "cites": [
+          "PMID:19837867"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000051": {
+    "sentences": []
+  },
+  "UBERON:0000052": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "El fórnix es uno de los grandes haces de fibras del circuito cerebral de la memoria.",
+        "cites": [
+          "PMID:27567810"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un ensayo aleatorizado de 42 pacientes con enfermedad de Alzheimer leve, la estimulación cerebral profunda bilateral del fórnix fue segura, pero a los 12 meses no mejoró los resultados cognitivos principales del conjunto.",
+        "cites": [
+          "PMID:27567810"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000057": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Un atlas celular de la próstata y la uretra prostática de adultos jóvenes, basado en unas 98 000 células, describe la distribución de cada tipo epitelial y estromal.",
+        "cites": [
+          "PMID:30566875"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Los receptores adrenérgicos alfa1, en especial el subtipo alfa1A, favorecen la contracción del cuello vesical, la uretra y la próstata, lo que aumenta la resistencia de salida vesical.",
+        "cites": [
+          "PMID:16465187"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La relajación del músculo liso uretral depende de receptores beta, entre los que el subtipo beta2 parece el más relevante en la uretra humana.",
+        "cites": [
+          "PMID:16465187"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La resonancia de alta resolución es una herramienta clave para diagnosticar lesiones de la uretra femenina, como divertículos y tumores, y para estadificar sus neoplasias.",
+        "cites": [
+          "PMID:31541277"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 176 pacientes con estenosis uretrales complejas tratados con uretroplastia en dos tiempos con injerto en malla, el resultado fue satisfactorio en 162 (92 %) con al menos 7 años de seguimiento.",
+        "cites": [
+          "PMID:9540183"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000159": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "El complejo esfinteriano anal mantiene la continencia fecal y participa de forma coordinada en la defecación.",
+        "cites": [
+          "PMID:31115134"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 192 pacientes con tumores malignos del conducto anal, el 74 % eran carcinomas escamosos, el 19 % adenocarcinomas y el 4 % melanomas, con una supervivencia global bruta a 5 años del 53 %.",
+        "cites": [
+          "PMID:10223561"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El cáncer del conducto anal es poco frecuente pero a menudo curable, y su estadificación depende de una imagen precisa.",
+        "cites": [
+          "PMID:27889036"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La duplicación del conducto anal es una anomalía congénita muy rara: un segundo orificio por detrás del ano verdadero que termina en fondo ciego sin comunicar con el recto.",
+        "cites": [
+          "PMID:19856187"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000160": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Las distintas estirpes celulares del epitelio intestinal proceden de células madre comprometidas alojadas en las criptas.",
+        "cites": [
+          "PMID:8815796"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Las neuronas sensitivas que inervan el tubo digestivo tienen sus somas en los ganglios de la raíz dorsal espinales o en los ganglios nodosos vagales.",
+        "cites": [
+          "PMID:39892315"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La glutamina es un sustrato principal de las células intestinales y favorece la proliferación de los enterocitos.",
+        "cites": [
+          "PMID:28498331"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En autopsias de muertes súbitas, la concentración de ácidos grasos de cadena corta fue baja en el íleon terminal (13 +/- 6 mmol/kg) y alta en el colon, de 131 +/- 9 en el ciego a 80 +/- 11 en el descendente, lo que indica fermentación sobre todo en ciego y colon ascendente.",
+        "cites": [
+          "PMID:3678950"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 22 pacientes con malrotación intestinal, 14 consultaron en el primer mes de vida y 15 (68 %) presentaban vólvulo.",
+        "cites": [
+          "PMID:8337878"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000167": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La cavidad oral comprende varias subregiones: labios, lengua, suelo de la boca, paladar duro, dientes, distintas áreas mucosas y conductos salivales.",
+        "cites": [
+          "PMID:36244723"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La boca alberga hábitats microbianos diversos, y el desequilibrio de su flora contribuye a enfermedades orales y sistémicas.",
+        "cites": [
+          "PMID:29736705"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El cáncer de la cavidad oral figura entre los tumores malignos más comunes del mundo, y su tratamiento estándar es la resección quirúrgica con o sin terapia adyuvante.",
+        "cites": [
+          "PMID:25979396"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los epitelios de las glándulas salivales menores y de la mucosa oral expresan factores de entrada del SARS-CoV-2, y se comprobó la infección viral en ambos tejidos.",
+        "cites": [
+          "PMID:33767405"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Enfermedades ampollares de base inmunitaria, como el pénfigo vulgar y el penfigoide de mucosas, pueden manifestarse en la cavidad oral.",
+        "cites": [
+          "PMID:37019505"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000315": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Se ha descrito en el encéfalo de ratón y de humano una cuarta capa meníngea de tipo mesotelial, que divide el espacio subaracnoideo en compartimentos, envuelve vasos y contiene células inmunitarias.",
+        "cites": [
+          "PMID:36603070"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 12 nervios ópticos humanos, el espacio subaracnoideo contenía trabéculas, tabiques y pilares entre la aracnoides y la piamadre, con una malla densa y ramificada en el segmento bulbar.",
+        "cites": [
+          "PMID:12770980"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "El líquido cefalorraquídeo, producido sobre todo por los plexos coroideos y el epéndimo, pasa de los ventrículos a las cisternas y espacios subaracnoideos y se dirige hacia las vellosidades aracnoideas.",
+        "cites": [
+          "PMID:23733131"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la hidrocefalia normotensiva idiopática, la imagen muestra con frecuencia un aumento desproporcionado del espacio subaracnoideo y de los ventrículos respecto del volumen cerebral.",
+        "cites": [
+          "PMID:39332282"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 168 pacientes con hidrocefalia normotensiva idiopática, el 36 % mostraba ese patrón desproporcionado, y su ausencia no debería excluir a un paciente de la derivación.",
+        "cites": [
+          "PMID:30523139"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000320": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En biopsias de 50 voluntarios sin antecedentes digestivos, el epitelio de superficie duodenal variaba mucho dentro de cada sujeto y entre sujetos, y el 64 % tenía metaplasia gástrica superficial en el bulbo.",
+        "cites": [
+          "PMID:342548"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La mucosa gástrica y duodenal humana tiene un contenido elevado de histamina en todas sus áreas.",
+        "cites": [
+          "PMID:685756"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esos voluntarios, el 12 % mostraba signos histológicos de inflamación crónica duodenal.",
+        "cites": [
+          "PMID:342548"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el diagnóstico de duodenitis resulta decisiva la densidad del infiltrado celular de la lámina propia, mientras que la longitud de vellosidades y criptas no sirve como criterio diferencial.",
+        "cites": [
+          "PMID:7433239"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la mucosa plana de pacientes celíacos se registró menor actividad de enzimas del borde en cepillo y mayor de enzimas lisosómicas que en controles y en fase de remisión.",
+        "cites": [
+          "PMID:6813957"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000325": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La mucina glandular gástrica la secretan células mucosas de la capa inferior de la mucosa, como las de las glándulas pilóricas y las células mucosas del cuello.",
+        "cites": [
+          "PMID:24761044"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la mucosa gástrica humana normal, el marcaje con actinomicina sugiere que las células principales probablemente no derivan de las células mucosas.",
+        "cites": [
+          "PMID:90638"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Los O-glucanos de esa mucina, con residuos αGlcNAc unidos a MUC6, actúan como antibiótico natural frente a Helicobacter pylori.",
+        "cites": [
+          "PMID:24761044"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 56 piezas quirúrgicas con enfermedades intestinales ulcerosas, el 55.4 % presentaba metaplasia de glándulas pilóricas, y cinco casos mostraban metaplasia gástrica verdadera con células parietales, principales y mucosas del cuello.",
+        "cites": [
+          "PMID:856679"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La glándula gástrica heterotópica submucosa que aumenta de tamaño se ha asociado con cáncer gástrico, aunque su diagnóstico preoperatorio es difícil.",
+        "cites": [
+          "PMID:36792191"
+        ]
+      }
+    ]
+  }
+}

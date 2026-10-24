@@ -1,0 +1,2085 @@
+{
+  "BP3D:BP24": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 25 muestras cadavéricas de cartílago costal humano irradiado, el diámetro mediano fue de 8,20 mm (rango intercuartílico de 1,59 mm).",
+        "cites": [
+          "PMID:36097422"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esas muestras, las proporciones medianas de colágeno y de mineral alcanzaron el 45,17 % y el 71,82 %, con notable variación histológica de un espécimen a otro.",
+        "cites": [
+          "PMID:36097422"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El cartílago costal humano se emplea con frecuencia como material de injerto para reconstruir partes blandas en cirugía plástica y ortopédica.",
+        "cites": [
+          "PMID:36097422"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Con cartílago de las costillas 3 a 9 procedente de cadáveres, el tallado concéntrico de los injertos produjo menos alabeo que el tallado excéntrico.",
+        "cites": [
+          "PMID:16415446"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un metanálisis de 28 estudios sobre rinoplastia de aumento dorsal no encontró diferencias entre injertos costales autólogos y homólogos irradiados en alabeo, reabsorción, infección, irregularidad del contorno ni reintervención.",
+        "cites": [
+          "PMID:32077916"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de pacientes, la resonancia magnética resultó útil para diagnosticar lesiones del cartílago costal.",
+        "cites": [
+          "PMID:18562735"
+        ]
+      }
+    ]
+  },
+  "BP3D:BP28": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 25 muestras cadavéricas de cartílago costal humano irradiado, el diámetro mediano fue de 8,20 mm (rango intercuartílico de 1,59 mm).",
+        "cites": [
+          "PMID:36097422"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esas muestras, las proporciones medianas de colágeno y de mineral alcanzaron el 45,17 % y el 71,82 %, con notable variación histológica de un espécimen a otro.",
+        "cites": [
+          "PMID:36097422"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El cartílago costal humano se emplea con frecuencia como material de injerto para reconstruir partes blandas en cirugía plástica y ortopédica.",
+        "cites": [
+          "PMID:36097422"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Con cartílago de las costillas 3 a 9 procedente de cadáveres, el tallado concéntrico de los injertos produjo menos alabeo que el tallado excéntrico.",
+        "cites": [
+          "PMID:16415446"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un metanálisis de 28 estudios sobre rinoplastia de aumento dorsal no encontró diferencias entre injertos costales autólogos y homólogos irradiados en alabeo, reabsorción, infección, irregularidad del contorno ni reintervención.",
+        "cites": [
+          "PMID:32077916"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de pacientes, la resonancia magnética resultó útil para diagnosticar lesiones del cartílago costal.",
+        "cites": [
+          "PMID:18562735"
+        ]
+      }
+    ]
+  },
+  "BP3D:BP49": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Disecciones cadavéricas combinadas con tractografía describieron un segmento del fascículo longitudinal medio que une el polo temporal dorsolateral y la circunvolución temporal superior con el lobulillo parietal superior y el precúneo, pasando por la circunvolución de Heschl.",
+        "cites": [
+          "PMID:31773331"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 40 voluntarios sanos, tanto la actividad en reposo como la activación de esta región durante una tarea de memoria de trabajo se correlacionaron con el rendimiento en dicha tarea.",
+        "cites": [
+          "PMID:22711376"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Un estudio de resonancia funcional observó que preparar un movimiento de señalar activaba, con predominio izquierdo, el lobulillo parietal superior y el precúneo, entre otras áreas.",
+        "cites": [
+          "PMID:12805308"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 62 pacientes con enfermedad de Parkinson, quienes la iniciaron después de los 63 años mostraban una corteza más delgada en el lobulillo parietal superior y el precúneo, entre otras regiones.",
+        "cites": [
+          "PMID:36809440"
+        ]
+      }
+    ]
+  },
+  "BP3D:BP50": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Disecciones cadavéricas combinadas con tractografía describieron un segmento del fascículo longitudinal medio que une el polo temporal dorsolateral y la circunvolución temporal superior con el lobulillo parietal superior y el precúneo, pasando por la circunvolución de Heschl.",
+        "cites": [
+          "PMID:31773331"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 40 voluntarios sanos, tanto la actividad en reposo como la activación de esta región durante una tarea de memoria de trabajo se correlacionaron con el rendimiento en dicha tarea.",
+        "cites": [
+          "PMID:22711376"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Un estudio de resonancia funcional observó que preparar un movimiento de señalar activaba, con predominio izquierdo, el lobulillo parietal superior y el precúneo, entre otras áreas.",
+        "cites": [
+          "PMID:12805308"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 62 pacientes con enfermedad de Parkinson, quienes la iniciaron después de los 63 años mostraban una corteza más delgada en el lobulillo parietal superior y el precúneo, entre otras regiones.",
+        "cites": [
+          "PMID:36809440"
+        ]
+      }
+    ]
+  },
+  "FMA:11336": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Mantiene a los músculos abdominales a cierta distancia entre sí, y se ensancha cuando la presión intraabdominal permanece elevada durante mucho tiempo.",
+        "cites": [
+          "PMID:19637295"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 12 cadáveres, su recorrido craneocaudal se dividió en porción supraumbilical, porción umbilical, zona de transición y porción infraarcuata.",
+        "cites": [
+          "PMID:11181006"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 150 mujeres nulíparas estudiadas con ecografía, la anchura media fue de 7 ± 5 mm en el xifoides, de 13 ± 7 mm a 3 cm sobre el ombligo y de 8 ± 6 mm a 2 cm bajo él.",
+        "cites": [
+          "PMID:19637295"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 12 paredes abdominales de cadáver, el grosor medio fue mayor por encima de la línea semicircular que por debajo (1,19 frente a 0,77 mm).",
+        "cites": [
+          "PMID:2530644"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Según un estudio en 12 cadáveres, sus fibras transversales contrarrestan la presión intraabdominal y las oblicuas participan sobre todo en los movimientos del tronco.",
+        "cites": [
+          "PMID:11266279"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Al ser la vía principal de acceso en la cirugía abdominal, es también el asiento más habitual de la hernia incisional.",
+        "cites": [
+          "PMID:8983107"
+        ]
+      }
+    ]
+  },
+  "FMA:13381": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En 44 sujetos sanos, la palpación de la costilla subyacente al romboides mayor acertó en el 66,3 % de los casos, con más errores a mayor grosor muscular e índice de masa corporal.",
+        "cites": [
+          "PMID:28271533"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 18 escápulas de nueve cadáveres, su inserción distal en el borde medial de la escápula se situó a una media de 1,8 ± 0,4 cm por encima del ángulo inferior.",
+        "cites": [
+          "PMID:36099586"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 25 fetos de 18 a 27 semanas, su superficie, anchura y longitud aumentaron de forma lineal, sin diferencias por sexo ni lado.",
+        "cites": [
+          "PMID:29541801"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 62 pacientes con dolor de hombro o de espalda alta, la distancia ecográfica media de la piel al músculo fue de 1,2 ± 0,2 cm con IMC inferior a 23 kg/m² y de 1,8 ± 0,3 cm con IMC de 25 kg/m² o más.",
+        "cites": [
+          "PMID:24639929"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según la experiencia clínica y disecciones de cadáver, el colgajo de romboides mayor tiene una irrigación excelente y permite reparar lesiones de la mitad superior del esófago.",
+        "cites": [
+          "PMID:7092388"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la ecografía de 25 adultos sanos, en su punto más grueso el músculo quedaba a 9,7 ± 3,1 mm de la piel y medía 9,9 ± 1,8 mm de espesor.",
+        "cites": [
+          "PMID:29783066"
+        ]
+      }
+    ]
+  },
+  "FMA:13382": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En 44 sujetos sanos, la palpación de la costilla subyacente al romboides mayor acertó en el 66,3 % de los casos, con más errores a mayor grosor muscular e índice de masa corporal.",
+        "cites": [
+          "PMID:28271533"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 18 escápulas de nueve cadáveres, su inserción distal en el borde medial de la escápula se situó a una media de 1,8 ± 0,4 cm por encima del ángulo inferior.",
+        "cites": [
+          "PMID:36099586"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 25 fetos de 18 a 27 semanas, su superficie, anchura y longitud aumentaron de forma lineal, sin diferencias por sexo ni lado.",
+        "cites": [
+          "PMID:29541801"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 62 pacientes con dolor de hombro o de espalda alta, la distancia ecográfica media de la piel al músculo fue de 1,2 ± 0,2 cm con IMC inferior a 23 kg/m² y de 1,8 ± 0,3 cm con IMC de 25 kg/m² o más.",
+        "cites": [
+          "PMID:24639929"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según la experiencia clínica y disecciones de cadáver, el colgajo de romboides mayor tiene una irrigación excelente y permite reparar lesiones de la mitad superior del esófago.",
+        "cites": [
+          "PMID:7092388"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha comunicado un caso de neuropatía parcial del nervio dorsal de la escápula atribuida a la aguja de una inyección en un punto gatillo de este músculo.",
+        "cites": [
+          "PMID:28854498"
+        ]
+      }
+    ]
+  },
+  "FMA:13383": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En ocho miembros superiores disecados, el romboides menor integraba la capa intermedia de la articulación escapulotorácica junto con el romboides mayor, el elevador de la escápula y el nervio accesorio.",
+        "cites": [
+          "PMID:10078149"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En una serie de donantes, el romboides menor y el elevador de la escápula aparecieron unidos por tejido conectivo, formando una unidad separada del romboides mayor aunque superpuesta a él por detrás.",
+        "cites": [
+          "PMID:35367623"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 11 cadáveres, bajo el trapecio se encontró un triángulo muscular cuyo límite inferomedial era el romboides menor, con una longitud de ese borde de 55 mm (48-80).",
+        "cites": [
+          "PMID:31948270"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 25 fetos de 18 a 27 semanas, su superficie, anchura y longitud aumentaron de forma lineal, sin diferencias por sexo ni lado.",
+        "cites": [
+          "PMID:29541801"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un injerto óseo vascularizado del borde medial de la escápula, pediculado en el romboides menor, para reforzar la artrodesis cervicotorácica.",
+        "cites": [
+          "PMID:33616164"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la parálisis del trapecio, se ha propuesto transferir el romboides menor junto con el elevador de la escápula y el dorsal ancho.",
+        "cites": [
+          "PMID:33294332"
+        ]
+      }
+    ]
+  },
+  "FMA:13384": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En ocho miembros superiores disecados, el romboides menor integraba la capa intermedia de la articulación escapulotorácica junto con el romboides mayor, el elevador de la escápula y el nervio accesorio.",
+        "cites": [
+          "PMID:10078149"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En una serie de donantes, el romboides menor y el elevador de la escápula aparecieron unidos por tejido conectivo, formando una unidad separada del romboides mayor aunque superpuesta a él por detrás.",
+        "cites": [
+          "PMID:35367623"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 11 cadáveres, bajo el trapecio se encontró un triángulo muscular cuyo límite inferomedial era el romboides menor, con una longitud de ese borde de 55 mm (48-80).",
+        "cites": [
+          "PMID:31948270"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 25 fetos de 18 a 27 semanas, su superficie, anchura y longitud aumentaron de forma lineal, sin diferencias por sexo ni lado.",
+        "cites": [
+          "PMID:29541801"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un injerto óseo vascularizado del borde medial de la escápula, pediculado en el romboides menor, para reforzar la artrodesis cervicotorácica.",
+        "cites": [
+          "PMID:33616164"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la parálisis del trapecio, se ha propuesto transferir el romboides menor junto con el elevador de la escápula y el dorsal ancho.",
+        "cites": [
+          "PMID:33294332"
+        ]
+      }
+    ]
+  },
+  "FMA:22546": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Su tendón principal termina en la cara dorsal de la falange distal del dedo gordo.",
+        "cites": [
+          "PMID:33427925"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 60 cadáveres adultos, el 65 % tenía una sola inserción tendinosa en la base de la falange distal, el 26,67 % acababa en dos tendones y el 8,33 % en tres.",
+        "cites": [
+          "PMID:12866676"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 48 pies de cadáveres taiwaneses se halló un tendón accesorio en el 97,92 %, fijado sobre todo a la cápsula de la primera articulación metatarsofalángica y a la falange proximal.",
+        "cites": [
+          "PMID:33427925"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 29 miembros inferiores de cadáver, la primera rama destinada al músculo nacía a 7 ± 2 cm del origen del nervio peroneo profundo en el 72,4 % de los casos.",
+        "cites": [
+          "PMID:19730770"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 26 pacientes a quienes se extrajo peroné proximal y medio como injerto, 10 presentaron debilidad aislada del músculo por lesión de su nervio, en general incompleta y recuperada en cuatro a seis meses.",
+        "cites": [
+          "PMID:15125126"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 98 pies de cadáveres de mujeres, el tendón accesorio estaba en el 26,5 %; en esos pies el hallux valgus fue frecuente (65,4 %), pero sin relación con su gravedad.",
+        "cites": [
+          "PMID:28601923"
+        ]
+      }
+    ]
+  },
+  "FMA:22547": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Su tendón principal termina en la cara dorsal de la falange distal del dedo gordo.",
+        "cites": [
+          "PMID:33427925"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 60 cadáveres adultos, el 65 % tenía una sola inserción tendinosa en la base de la falange distal, el 26,67 % acababa en dos tendones y el 8,33 % en tres.",
+        "cites": [
+          "PMID:12866676"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 48 pies de cadáveres taiwaneses se halló un tendón accesorio en el 97,92 %, fijado sobre todo a la cápsula de la primera articulación metatarsofalángica y a la falange proximal.",
+        "cites": [
+          "PMID:33427925"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 29 miembros inferiores de cadáver, la primera rama destinada al músculo nacía a 7 ± 2 cm del origen del nervio peroneo profundo en el 72,4 % de los casos.",
+        "cites": [
+          "PMID:19730770"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 26 pacientes a quienes se extrajo peroné proximal y medio como injerto, 10 presentaron debilidad aislada del músculo por lesión de su nervio, en general incompleta y recuperada en cuatro a seis meses.",
+        "cites": [
+          "PMID:15125126"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 98 pies de cadáveres de mujeres, el tendón accesorio estaba en el 26,5 %; en esos pies el hallux valgus fue frecuente (65,4 %), pero sin relación con su gravedad.",
+        "cites": [
+          "PMID:28601923"
+        ]
+      }
+    ]
+  },
+  "FMA:22878": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En ocho columnas lumbares de cadáver, el multífido lumbar tuvo una masa media de 146 ± 8,7 g y un área de sección fisiológica media de 23,9 ± 3,0 cm².",
+        "cites": [
+          "PMID:19122093"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esa arquitectura, con gran área de sección y fibras cortas respecto de la longitud muscular, lo adapta a generar fuerzas elevadas como estabilizador de la columna lumbar.",
+        "cites": [
+          "PMID:19122093"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Entre C5 y C7, en 16 individuos, el multífido cervical presentó pocos husos musculares, en su mayoría aislados y próximos a la lámina vertebral.",
+        "cites": [
+          "PMID:11923661"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 412 adultos daneses de 40 años, la infiltración grasa intensa del multífido lumbar en la resonancia se asoció con haber tenido lumbalgia alguna vez (OR 9,2), asociación ausente en 442 adolescentes.",
+        "cites": [
+          "PMID:17254322"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 35 pacientes con lumbalgia crónica, la infiltración grasa media fue del 22,91 ± 13,19 % en L4/L5 y del 26,37 ± 12,89 % en L5/S1, con baja correlación con la degeneración discal.",
+        "cites": [
+          "PMID:31488112"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Mediante ecografía, su área de sección fue menor en adultos mayores y disminuyó ya al cuarto día de reposo en cama en 10 varones jóvenes.",
+        "cites": [
+          "PMID:41802687"
+        ]
+      }
+    ]
+  },
+  "FMA:22879": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En ocho columnas lumbares de cadáver, el multífido lumbar tuvo una masa media de 146 ± 8,7 g y un área de sección fisiológica media de 23,9 ± 3,0 cm².",
+        "cites": [
+          "PMID:19122093"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esa arquitectura, con gran área de sección y fibras cortas respecto de la longitud muscular, lo adapta a generar fuerzas elevadas como estabilizador de la columna lumbar.",
+        "cites": [
+          "PMID:19122093"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Entre C5 y C7, en 16 individuos, el multífido cervical presentó pocos husos musculares, en su mayoría aislados y próximos a la lámina vertebral.",
+        "cites": [
+          "PMID:11923661"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 412 adultos daneses de 40 años, la infiltración grasa intensa del multífido lumbar en la resonancia se asoció con haber tenido lumbalgia alguna vez (OR 9,2), asociación ausente en 442 adolescentes.",
+        "cites": [
+          "PMID:17254322"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 35 pacientes con lumbalgia crónica, la infiltración grasa media fue del 22,91 ± 13,19 % en L4/L5 y del 26,37 ± 12,89 % en L5/S1, con baja correlación con la degeneración discal.",
+        "cites": [
+          "PMID:31488112"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Mediante ecografía, su área de sección fue menor en adultos mayores y disminuyó ya al cuarto día de reposo en cama en 10 varones jóvenes.",
+        "cites": [
+          "PMID:41802687"
+        ]
+      }
+    ]
+  },
+  "FMA:23707": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Se tiende entre las diáfisis del radio y del cúbito a lo largo de unos 10,6 cm de promedio.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Contiene fibras dispuestas en dos direcciones opuestas, y su banda central tiene un comportamiento mecánico similar al de un ligamento.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Estabiliza ambos huesos del antebrazo en sentido transversal y longitudinal, y transfiere cargas del radio al cúbito.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Junto con las dos diáfisis puede entenderse como una articulación radiocubital media, intercalada entre las radiocubitales proximal y distal.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tres fracturas-luxaciones del antebrazo intervenidas, la membrana mostraba un desgarro longitudinal y oblicuo, paralelo a sus fibras palmares principales.",
+        "cites": [
+          "PMID:10194008"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 16 antebrazos de cadáver, las placas de osteosíntesis en la diáfisis, colocadas por vía volar o dorsal, no produjeron pinzamiento de la membrana.",
+        "cites": [
+          "PMID:20306912"
+        ]
+      }
+    ]
+  },
+  "FMA:23708": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Se tiende entre las diáfisis del radio y del cúbito a lo largo de unos 10,6 cm de promedio.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Contiene fibras dispuestas en dos direcciones opuestas, y su banda central tiene un comportamiento mecánico similar al de un ligamento.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Estabiliza ambos huesos del antebrazo en sentido transversal y longitudinal, y transfiere cargas del radio al cúbito.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Junto con las dos diáfisis puede entenderse como una articulación radiocubital media, intercalada entre las radiocubitales proximal y distal.",
+        "cites": [
+          "PMID:18023237"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tres fracturas-luxaciones del antebrazo intervenidas, la membrana mostraba un desgarro longitudinal y oblicuo, paralelo a sus fibras palmares principales.",
+        "cites": [
+          "PMID:10194008"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 16 antebrazos de cadáver, las placas de osteosíntesis en la diáfisis, colocadas por vía volar o dorsal, no produjeron pinzamiento de la membrana.",
+        "cites": [
+          "PMID:20306912"
+        ]
+      }
+    ]
+  },
+  "FMA:258850": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Los músculos digástrico y omohioideo tienen dos vientres musculares unidos por un tendón intermedio.",
+        "cites": [
+          "PMID:21538565"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 22 fetos de 7 a 20 semanas, el tendón intermedio del digástrico derivaba mayormente del vientre posterior, mientras que el del omohioideo surgía hacia la semana 15 como una lámina conectiva corta.",
+        "cites": [
+          "PMID:21538565"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En el adulto, el tendón intermedio del digástrico suele discurrir por dentro o por fuera de la inserción del músculo estilohioideo.",
+        "cites": [
+          "PMID:38460858"
+        ]
+      }
+    ]
+  },
+  "FMA:264840": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Los músculos digástrico y omohioideo tienen dos vientres musculares unidos por un tendón intermedio.",
+        "cites": [
+          "PMID:21538565"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 22 fetos de 7 a 20 semanas, el tendón intermedio del digástrico derivaba mayormente del vientre posterior, mientras que el del omohioideo surgía hacia la semana 15 como una lámina conectiva corta.",
+        "cites": [
+          "PMID:21538565"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En el adulto, el tendón intermedio del digástrico suele discurrir por dentro o por fuera de la inserción del músculo estilohioideo.",
+        "cites": [
+          "PMID:38460858"
+        ]
+      }
+    ]
+  },
+  "FMA:32534": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Forma parte de los músculos del triángulo suboccipital.",
+        "cites": [
+          "PMID:37658911"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 60 hemicuerpos de cadáver, un músculo atlantomastoideo accesorio, presente en el 15 %, nacía de la apófisis transversa del atlas por fuera del origen del oblicuo superior de la cabeza.",
+        "cites": [
+          "PMID:36155834"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cortes histológicos de fetos, ningún nervio cruzaba entre el recto lateral de la cabeza y el oblicuo superior.",
+        "cites": [
+          "PMID:37658911"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 13 columnas cervicales de cadáver llevadas a la postura de cabeza adelantada, este músculo se acortó un 6,6 ± 3,3 %.",
+        "cites": [
+          "PMID:30876933"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ocho cadáveres, el 94 % de las inserciones de aguja a ciegas guiadas por referencias palpables alcanzó este músculo.",
+        "cites": [
+          "PMID:18627103"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su inserción se ha medido como referencia para orientar el abordaje retrosigmoideo de la fosa craneal posterior.",
+        "cites": [
+          "PMID:1950689"
+        ]
+      }
+    ]
+  },
+  "FMA:32535": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Forma parte de los músculos del triángulo suboccipital.",
+        "cites": [
+          "PMID:37658911"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 60 hemicuerpos de cadáver, un músculo atlantomastoideo accesorio, presente en el 15 %, nacía de la apófisis transversa del atlas por fuera del origen del oblicuo superior de la cabeza.",
+        "cites": [
+          "PMID:36155834"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cortes histológicos de fetos, ningún nervio cruzaba entre el recto lateral de la cabeza y el oblicuo superior.",
+        "cites": [
+          "PMID:37658911"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 13 columnas cervicales de cadáver llevadas a la postura de cabeza adelantada, este músculo se acortó un 6,6 ± 3,3 %.",
+        "cites": [
+          "PMID:30876933"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ocho cadáveres, el 94 % de las inserciones de aguja a ciegas guiadas por referencias palpables alcanzó este músculo.",
+        "cites": [
+          "PMID:18627103"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su inserción se ha medido como referencia para orientar el abordaje retrosigmoideo de la fosa craneal posterior.",
+        "cites": [
+          "PMID:1950689"
+        ]
+      }
+    ]
+  },
+  "FMA:32536": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 20 cabezas de cadáver, el músculo midió 5,60 ± 0,46 cm de longitud.",
+        "cites": [
+          "PMID:31461039"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, el nervio occipital mayor lo cruzaba a 6,80 ± 0,68 cm por debajo del occipital y a 3,56 ± 0,36 cm de la línea media, donde el músculo tenía 1,20 ± 0,25 cm de grosor.",
+        "cites": [
+          "PMID:31461039"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 14 músculos disecados de nueve cadáveres, todos enviaban bandas fibrosas que, a través del espacio atlantoaxial, se fijaban a la duramadre cervical posterolateral.",
+        "cites": [
+          "PMID:22836789"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El examen histológico confirmó ese puente de tejido conectivo hacia la duramadre en el 75 % de 12 muestras, y en una de ellas se detectaron fascículos nerviosos en su interior.",
+        "cites": [
+          "PMID:23867598"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 30 adultos asintomáticos, su área de sección ecográfica fue de 1,86 ± 0,51 cm².",
+        "cites": [
+          "PMID:20544865"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 5 cadáveres y 10 voluntarios, una aguja introducida entre la apófisis espinosa de C2 y la transversa de C1 penetró el músculo hasta apoyarse en la lámina de C2.",
+        "cites": [
+          "PMID:31662275"
+        ]
+      }
+    ]
+  },
+  "FMA:32537": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 20 cabezas de cadáver, el músculo midió 5,60 ± 0,46 cm de longitud.",
+        "cites": [
+          "PMID:31461039"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, el nervio occipital mayor lo cruzaba a 6,80 ± 0,68 cm por debajo del occipital y a 3,56 ± 0,36 cm de la línea media, donde el músculo tenía 1,20 ± 0,25 cm de grosor.",
+        "cites": [
+          "PMID:31461039"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 14 músculos disecados de nueve cadáveres, todos enviaban bandas fibrosas que, a través del espacio atlantoaxial, se fijaban a la duramadre cervical posterolateral.",
+        "cites": [
+          "PMID:22836789"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El examen histológico confirmó ese puente de tejido conectivo hacia la duramadre en el 75 % de 12 muestras, y en una de ellas se detectaron fascículos nerviosos en su interior.",
+        "cites": [
+          "PMID:23867598"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 30 adultos asintomáticos, su área de sección ecográfica fue de 1,86 ± 0,51 cm².",
+        "cites": [
+          "PMID:20544865"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 5 cadáveres y 10 voluntarios, una aguja introducida entre la apófisis espinosa de C2 y la transversa de C1 penetró el músculo hasta apoyarse en la lámina de C2.",
+        "cites": [
+          "PMID:31662275"
+        ]
+      }
+    ]
+  },
+  "FMA:33586": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La porción superior del trapecio, con el elevador de la escápula y los romboides, eleva el hombro.",
+        "cites": [
+          "PMID:27629832"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 30 fetos de 13 a 19 semanas, la porción descendente fue la más larga de las tres partes del trapecio y su longitud creció linealmente con la edad.",
+        "cites": [
+          "PMID:27629832"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 26 especímenes de cadáveres coreanos, la arborización densa de las ramas perforantes del nervio accesorio en esta porción se concentró en dos de sus sectores (66,7 % y 33,3 % de 81 puntos).",
+        "cites": [
+          "PMID:29946827"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Esta porción se asocia con la cervicalgia y recibe inyecciones estéticas de toxina botulínica para modificar el contorno del hombro.",
+        "cites": [
+          "PMID:29946827"
+        ]
+      }
+    ]
+  },
+  "FMA:33587": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "La porción superior del trapecio, con el elevador de la escápula y los romboides, eleva el hombro.",
+        "cites": [
+          "PMID:27629832"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 30 fetos de 13 a 19 semanas, la porción descendente fue la más larga de las tres partes del trapecio y su longitud creció linealmente con la edad.",
+        "cites": [
+          "PMID:27629832"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 26 especímenes de cadáveres coreanos, la arborización densa de las ramas perforantes del nervio accesorio en esta porción se concentró en dos de sus sectores (66,7 % y 33,3 % de 81 puntos).",
+        "cites": [
+          "PMID:29946827"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Esta porción se asocia con la cervicalgia y recibe inyecciones estéticas de toxina botulínica para modificar el contorno del hombro.",
+        "cites": [
+          "PMID:29946827"
+        ]
+      }
+    ]
+  },
+  "FMA:34690": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 30 miembros superiores, la fascia que cubre la porción clavicular del pectoral mayor enviaba una expansión hacia la fascia braquial anterior.",
+        "cites": [
+          "PMID:17574470"
+        ]
+      }
+    ]
+  },
+  "FMA:34691": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 30 miembros superiores, la fascia que cubre la porción clavicular del pectoral mayor enviaba una expansión hacia la fascia braquial anterior.",
+        "cites": [
+          "PMID:17574470"
+        ]
+      }
+    ]
+  },
+  "FMA:37390": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 10 manos disecadas, la rama tenar del nervio mediano inervaba el oponente del pulgar en todos los especímenes.",
+        "cites": [
+          "PMID:30366737"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un modelo cadavérico de subluxación trapeciometacarpiana, cargar el oponente redujo la subluxación de forma proporcional a la carga, y se lo consideró la principal fuerza reductora.",
+        "cites": [
+          "PMID:28719976"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancias de 3 T, 133 de 307 pacientes con artrosis trapeciometacarpiana (43,3 %) tenían infiltración grasa limitada al oponente, hallazgo ausente en 440 pacientes sin artrosis.",
+        "cites": [
+          "PMID:41606999"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Tras lesiones del nervio cubital cerca del codo, su rama motora se ha transferido a la división terminal de la rama profunda del cubital para reconstruir la pinza.",
+        "cites": [
+          "PMID:30366737",
+          "PMID:37585813"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 16 pacientes así operados, 15 mostraron reinervación del primer interóseo dorsal.",
+        "cites": [
+          "PMID:37585813"
+        ]
+      }
+    ]
+  },
+  "FMA:37391": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 10 manos disecadas, la rama tenar del nervio mediano inervaba el oponente del pulgar en todos los especímenes.",
+        "cites": [
+          "PMID:30366737"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un modelo cadavérico de subluxación trapeciometacarpiana, cargar el oponente redujo la subluxación de forma proporcional a la carga, y se lo consideró la principal fuerza reductora.",
+        "cites": [
+          "PMID:28719976"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancias de 3 T, 133 de 307 pacientes con artrosis trapeciometacarpiana (43,3 %) tenían infiltración grasa limitada al oponente, hallazgo ausente en 440 pacientes sin artrosis.",
+        "cites": [
+          "PMID:41606999"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Tras lesiones del nervio cubital cerca del codo, su rama motora se ha transferido a la división terminal de la rama profunda del cubital para reconstruir la pinza.",
+        "cites": [
+          "PMID:30366737",
+          "PMID:37585813"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 16 pacientes así operados, 15 mostraron reinervación del primer interóseo dorsal.",
+        "cites": [
+          "PMID:37585813"
+        ]
+      }
+    ]
+  },
+  "FMA:37465": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En el ser humano es un músculo de gran tamaño, rasgo que el pie adquirió a lo largo de su evolución.",
+        "cites": [
+          "PMID:6409715",
+          "PMID:6409717"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio electromiográfico con cuatro personas, actuó junto con los flexores largo y corto de los dedos para oponerse a la extensión de los dedos durante el apoyo.",
+        "cites": [
+          "PMID:6409717"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En ese estudio no se reclutó con preferencia sobre el flexor largo de los dedos en ninguna postura ni locomoción normales.",
+        "cites": [
+          "PMID:6409717"
+        ]
+      }
+    ]
+  },
+  "FMA:37466": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En el ser humano es un músculo de gran tamaño, rasgo que el pie adquirió a lo largo de su evolución.",
+        "cites": [
+          "PMID:6409715",
+          "PMID:6409717"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un estudio electromiográfico con cuatro personas, actuó junto con los flexores largo y corto de los dedos para oponerse a la extensión de los dedos durante el apoyo.",
+        "cites": [
+          "PMID:6409717"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En ese estudio no se reclutó con preferencia sobre el flexor largo de los dedos en ninguna postura ni locomoción normales.",
+        "cites": [
+          "PMID:6409717"
+        ]
+      }
+    ]
+  },
+  "FMA:37695": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 27 brazos de cadáver, la cabeza medial tuvo unas dimensiones medias de 10,7 cm por 2,5 cm por 3,3 cm y un peso de 30,1 g.",
+        "cites": [
+          "PMID:20976453"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En esa serie, un pedículo único y constante, con la arteria colateral media, dos venas y un nervio, abastecía toda la cabeza medial.",
+        "cites": [
+          "PMID:20976453"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 17 de 18 miembros disecados recibía ramas por encima de los epicóndilos: 11 del tronco del nervio cubital y 6 de la rama colateral cubital del nervio radial.",
+        "cites": [
+          "PMID:18850256"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Gracias a ese pedículo, puede obtenerse como colgajo muscular libre o pediculado.",
+        "cites": [
+          "PMID:20976453"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Esas ramas motoras deben conservarse en los abordajes mediales por encima del codo.",
+        "cites": [
+          "PMID:18850256"
+        ]
+      }
+    ]
+  },
+  "FMA:37696": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 27 brazos de cadáver, la cabeza medial tuvo unas dimensiones medias de 10,7 cm por 2,5 cm por 3,3 cm y un peso de 30,1 g.",
+        "cites": [
+          "PMID:20976453"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En esa serie, un pedículo único y constante, con la arteria colateral media, dos venas y un nervio, abastecía toda la cabeza medial.",
+        "cites": [
+          "PMID:20976453"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 17 de 18 miembros disecados recibía ramas por encima de los epicóndilos: 11 del tronco del nervio cubital y 6 de la rama colateral cubital del nervio radial.",
+        "cites": [
+          "PMID:18850256"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Gracias a ese pedículo, puede obtenerse como colgajo muscular libre o pediculado.",
+        "cites": [
+          "PMID:20976453"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Esas ramas motoras deben conservarse en los abordajes mediales por encima del codo.",
+        "cites": [
+          "PMID:18850256"
+        ]
+      }
+    ]
+  },
+  "FMA:37697": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En cortes completos de cadáver, las fibras de tipo I supusieron entre el 32 % y el 40 % de la cabeza lateral del tríceps.",
+        "cites": [
+          "PMID:3569244"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "A diferencia del ancóneo, clasificado como músculo lento, la cabeza lateral no lo es; el tiempo de contracción registrado en el tríceps fue de 68 ± 9 ms.",
+        "cites": [
+          "PMID:3569244"
+        ]
+      }
+    ]
+  },
+  "FMA:37698": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En cortes completos de cadáver, las fibras de tipo I supusieron entre el 32 % y el 40 % de la cabeza lateral del tríceps.",
+        "cites": [
+          "PMID:3569244"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "A diferencia del ancóneo, clasificado como músculo lento, la cabeza lateral no lo es; el tiempo de contracción registrado en el tríceps fue de 68 ± 9 ms.",
+        "cites": [
+          "PMID:3569244"
+        ]
+      }
+    ]
+  },
+  "FMA:37699": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 11 pacientes estimulados durante la cirugía, la respuesta máxima de la cabeza larga se obtuvo sobre todo desde las divisiones posteriores de los troncos medio e inferior del plexo braquial (6 y 5 casos).",
+        "cites": [
+          "PMID:21953911"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En el estudio anatómico de una técnica de transposición, su nervio midió de media 5,5 cm y daba 3-4 ramas terminales.",
+        "cites": [
+          "PMID:10641328"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En ese estudio, el 70 % del aporte vascular procedía de la arteria braquial, y en el 33 % había un segundo hilio neurovascular 2-3 cm distal al principal.",
+        "cites": [
+          "PMID:10641328"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 10 especímenes de miembro superior, su brazo de momento fue de 2,3 cm y su cambio de longitud equivalió al 28 % de la longitud óptima.",
+        "cites": [
+          "PMID:10828324"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su transposición pediculada se ha descrito para restablecer la flexión del codo en lesiones antiguas del plexo braquial.",
+        "cites": [
+          "PMID:10641328"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una disección se describió un músculo axilopectoral (de Langer) que iba de la apófisis coracoides hasta la cabeza larga del tríceps.",
+        "cites": [
+          "PMID:15768417"
+        ]
+      }
+    ]
+  },
+  "FMA:37700": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 11 pacientes estimulados durante la cirugía, la respuesta máxima de la cabeza larga se obtuvo sobre todo desde las divisiones posteriores de los troncos medio e inferior del plexo braquial (6 y 5 casos).",
+        "cites": [
+          "PMID:21953911"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En el estudio anatómico de una técnica de transposición, su nervio midió de media 5,5 cm y daba 3-4 ramas terminales.",
+        "cites": [
+          "PMID:10641328"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En ese estudio, el 70 % del aporte vascular procedía de la arteria braquial, y en el 33 % había un segundo hilio neurovascular 2-3 cm distal al principal.",
+        "cites": [
+          "PMID:10641328"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 10 especímenes de miembro superior, su brazo de momento fue de 2,3 cm y su cambio de longitud equivalió al 28 % de la longitud óptima.",
+        "cites": [
+          "PMID:10828324"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su transposición pediculada se ha descrito para restablecer la flexión del codo en lesiones antiguas del plexo braquial.",
+        "cites": [
+          "PMID:10641328"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una disección se describió un músculo axilopectoral (de Langer) que iba de la apófisis coracoides hasta la cabeza larga del tríceps.",
+        "cites": [
+          "PMID:15768417"
+        ]
+      }
+    ]
+  },
+  "FMA:3802": {
+    "sentences": []
+  },
+  "FMA:38454": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Es un músculo cuadrilátero situado en la cara volar distal del antebrazo.",
+        "cites": [
+          "PMID:35124737"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Presenta de forma constante dos cabezas diferenciadas, una superficial y otra profunda.",
+        "cites": [
+          "PMID:8982912"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La cabeza superficial es el motor principal de la pronación, y la profunda estabiliza dinámicamente la articulación radiocubital distal.",
+        "cites": [
+          "PMID:8982912"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 25 disecciones de cadáver, su irrigación principal provenía de la arteria interósea anterior, con abundantes anastomosis con ramas radiales y cubitales.",
+        "cites": [
+          "PMID:9752923"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 14 cadáveres, su borde proximal midió de media 41,92 ± 2,05 mm de ancho y el distal 42,84 ± 4,04 mm.",
+        "cites": [
+          "PMID:35124737"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha propuesto como colgajo local para cubrir partes blandas del antebrazo distal y como colgajo pediculado con hueso del radio distal.",
+        "cites": [
+          "PMID:6725904",
+          "PMID:2380528",
+          "PMID:9752923"
+        ]
+      }
+    ]
+  },
+  "FMA:38455": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Es un músculo cuadrilátero situado en la cara volar distal del antebrazo.",
+        "cites": [
+          "PMID:35124737"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Presenta de forma constante dos cabezas diferenciadas, una superficial y otra profunda.",
+        "cites": [
+          "PMID:8982912"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La cabeza superficial es el motor principal de la pronación, y la profunda estabiliza dinámicamente la articulación radiocubital distal.",
+        "cites": [
+          "PMID:8982912"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 25 disecciones de cadáver, su irrigación principal provenía de la arteria interósea anterior, con abundantes anastomosis con ramas radiales y cubitales.",
+        "cites": [
+          "PMID:9752923"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 14 cadáveres, su borde proximal midió de media 41,92 ± 2,05 mm de ancho y el distal 42,84 ± 4,04 mm.",
+        "cites": [
+          "PMID:35124737"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha propuesto como colgajo local para cubrir partes blandas del antebrazo distal y como colgajo pediculado con hueso del radio distal.",
+        "cites": [
+          "PMID:6725904",
+          "PMID:2380528",
+          "PMID:9752923"
+        ]
+      }
+    ]
+  },
+  "FMA:38525": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Un metanálisis de 29 estudios en cadáver con 3858 manos estimó su prevalencia global en el 96,5 %.",
+        "cites": [
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En ese metanálisis, su tendón era único en el 92,6 %, doble en el 7,2 % y triple en el 0,3 % de los casos.",
+        "cites": [
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Normalmente se fija en el lado cubital del capuchón extensor, mientras que el tendón del extensor común destinado al índice lo hace en el lado radial.",
+        "cites": [
+          "PMID:41748548",
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 164 manos de cadáveres japoneses, 22 tenían músculos o tendones supernumerarios del grupo del extensor del índice, y el extensor propio del dedo medio fue la variante más común.",
+        "cites": [
+          "PMID:10597935"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su tendón se usa a menudo como donante en transferencias tendinosas.",
+        "cites": [
+          "PMID:41748548",
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 24 pacientes con artritis reumatoide, su transferencia al extensor largo del pulgar roto obtuvo resultados perfectos en el 56 % y buenos en el 24 % de los dedos.",
+        "cites": [
+          "PMID:17483636"
+        ]
+      }
+    ]
+  },
+  "FMA:38526": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Un metanálisis de 29 estudios en cadáver con 3858 manos estimó su prevalencia global en el 96,5 %.",
+        "cites": [
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En ese metanálisis, su tendón era único en el 92,6 %, doble en el 7,2 % y triple en el 0,3 % de los casos.",
+        "cites": [
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Normalmente se fija en el lado cubital del capuchón extensor, mientras que el tendón del extensor común destinado al índice lo hace en el lado radial.",
+        "cites": [
+          "PMID:41748548",
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 164 manos de cadáveres japoneses, 22 tenían músculos o tendones supernumerarios del grupo del extensor del índice, y el extensor propio del dedo medio fue la variante más común.",
+        "cites": [
+          "PMID:10597935"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su tendón se usa a menudo como donante en transferencias tendinosas.",
+        "cites": [
+          "PMID:41748548",
+          "PMID:25096501"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 24 pacientes con artritis reumatoide, su transferencia al extensor largo del pulgar roto obtuvo resultados perfectos en el 56 % y buenos en el 24 % de los dedos.",
+        "cites": [
+          "PMID:17483636"
+        ]
+      }
+    ]
+  },
+  "FMA:38560": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 10 miembros superiores de cadáver, la cabeza humeral del pronador redondo tuvo la mayor longitud de fibra de los compartimentos analizados (6,23 ± 0,31 cm).",
+        "cites": [
+          "PMID:24836406"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En ese estudio, cada compartimento del pronador redondo conservaba su propio aporte neurovascular tras dividir el músculo.",
+        "cites": [
+          "PMID:24836406"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un caso de síndrome del pronador por compresión del nervio mediano bajo una banda fibrosa a su paso por la cabeza humeral.",
+        "cites": [
+          "PMID:7706870"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un cadáver se encontró una cabeza humeral accesoria que cubría la arteria braquial y el nervio mediano en la región del codo antes de unirse a la cabeza humeral.",
+        "cites": [
+          "PMID:28050354"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 24 cadáveres, el centro de su región más rica en husos musculares se proyectó al 45,52 % de la línea que une ambos epicóndilos, lugar propuesto para inyectar toxina botulínica.",
+        "cites": [
+          "PMID:38155435"
+        ]
+      }
+    ]
+  },
+  "FMA:38561": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 10 miembros superiores de cadáver, la cabeza humeral del pronador redondo tuvo la mayor longitud de fibra de los compartimentos analizados (6,23 ± 0,31 cm).",
+        "cites": [
+          "PMID:24836406"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En ese estudio, cada compartimento del pronador redondo conservaba su propio aporte neurovascular tras dividir el músculo.",
+        "cites": [
+          "PMID:24836406"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un caso de síndrome del pronador por compresión del nervio mediano bajo una banda fibrosa a su paso por la cabeza humeral.",
+        "cites": [
+          "PMID:7706870"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un cadáver se encontró una cabeza humeral accesoria que cubría la arteria braquial y el nervio mediano en la región del codo antes de unirse a la cabeza humeral.",
+        "cites": [
+          "PMID:28050354"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 24 cadáveres, el centro de su región más rica en husos musculares se proyectó al 45,52 % de la línea que une ambos epicóndilos, lugar propuesto para inyectar toxina botulínica.",
+        "cites": [
+          "PMID:38155435"
+        ]
+      }
+    ]
+  },
+  "FMA:38562": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 54 miembros superiores disecados, el nervio mediano pasó entre las dos cabezas del pronador redondo en el 92,60 % y por debajo de la cabeza cubital en el 7,40 %.",
+        "cites": [
+          "PMID:35199666"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 112 antebrazos de cadáver, la anchura media de la cabeza cubital fue de 16,3 ± 8,2 mm.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie era fibromuscular en el 53,6 %, muscular en el 20,5 %, una simple banda fibrosa en el 16,1 % y faltaba en el 8 %.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El nervio mediano pasaba por delante de ella a 50,4 ± 10,7 mm de la línea interepicondílea.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "De los compartimentos estudiados en 10 miembros, tuvo la menor área de sección fisiológica (0,67 ± 0,06 cm²) y la mayor relación entre longitud de fibra y de músculo (0,72 ± 0,05).",
+        "cites": [
+          "PMID:24836406"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se la señala como la causa principal del atrapamiento en la mayoría de los casos de síndrome del pronador.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      }
+    ]
+  },
+  "FMA:38563": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 54 miembros superiores disecados, el nervio mediano pasó entre las dos cabezas del pronador redondo en el 92,60 % y por debajo de la cabeza cubital en el 7,40 %.",
+        "cites": [
+          "PMID:35199666"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 112 antebrazos de cadáver, la anchura media de la cabeza cubital fue de 16,3 ± 8,2 mm.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie era fibromuscular en el 53,6 %, muscular en el 20,5 %, una simple banda fibrosa en el 16,1 % y faltaba en el 8 %.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El nervio mediano pasaba por delante de ella a 50,4 ± 10,7 mm de la línea interepicondílea.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "De los compartimentos estudiados en 10 miembros, tuvo la menor área de sección fisiológica (0,67 ± 0,06 cm²) y la mayor relación entre longitud de fibra y de músculo (0,72 ± 0,05).",
+        "cites": [
+          "PMID:24836406"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se la señala como la causa principal del atrapamiento en la mayoría de los casos de síndrome del pronador.",
+        "cites": [
+          "PMID:27843079"
+        ]
+      }
+    ]
+  },
+  "FMA:43886": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 54 muslos de cadáveres coreanos fue un músculo pequeño y aplanado, presente en el 94,4 % de los especímenes.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "En esa serie se originaba en la rama inferior del pubis como parte superior del aductor mayor y se insertaba desde el trocánter menor hasta la porción alta de la línea áspera.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Se mostró completamente independiente del aductor mayor en el 63,0 % de los casos.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La arteria circunfleja femoral medial se encontró siempre en su borde superior.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En otra disección de 40 cadáveres apareció en alrededor de la mitad, con una longitud máxima media de 14,6 cm y una anchura de 7 cm.",
+        "cites": [
+          "PMID:21052670"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Cuando faltaba, el cuadrado femoral era más prominente y se prolongaba más hacia abajo.",
+        "cites": [
+          "PMID:21052670"
+        ]
+      }
+    ]
+  },
+  "FMA:43887": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 54 muslos de cadáveres coreanos fue un músculo pequeño y aplanado, presente en el 94,4 % de los especímenes.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "En esa serie se originaba en la rama inferior del pubis como parte superior del aductor mayor y se insertaba desde el trocánter menor hasta la porción alta de la línea áspera.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Se mostró completamente independiente del aductor mayor en el 63,0 % de los casos.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La arteria circunfleja femoral medial se encontró siempre en su borde superior.",
+        "cites": [
+          "PMID:32896868"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En otra disección de 40 cadáveres apareció en alrededor de la mitad, con una longitud máxima media de 14,6 cm y una anchura de 7 cm.",
+        "cites": [
+          "PMID:21052670"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Cuando faltaba, el cuadrado femoral era más prominente y se prolongaba más hacia abajo.",
+        "cites": [
+          "PMID:21052670"
+        ]
+      }
+    ]
+  },
+  "FMA:44249": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 50 piernas de cadáveres japoneses tenía forma de reloj de arena en el 62 %, triangular en el 26 % y rectangular en el 12 %.",
+        "cites": [
+          "PMID:33413502"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "No hubo diferencias morfométricas significativas entre esas formas, por lo que no parecen implicar diferencias funcionales.",
+        "cites": [
+          "PMID:33413502"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 100 pies de donantes, la cabeza medial del cuadrado plantar se originaba en él en el 93 % y la cabeza lateral en el 90 %.",
+        "cites": [
+          "PMID:29166622"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 45 pies de cadáver, figuraba entre los orígenes habituales de la cabeza oblicua del aductor del dedo gordo.",
+        "cites": [
+          "PMID:14704005"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un modelo cadavérico de pie plano, al alargar la columna lateral del calcáneo sólo se tensaba el tercio más lateral del ligamento y los dos tercios mediales se relajaban.",
+        "cites": [
+          "PMID:14752758"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 11 pacientes con fiebre mediterránea familiar y dolor de pierna al esfuerzo, 10 mostraron en la resonancia signos de entesitis del tendón calcáneo, de este ligamento o de la fascia plantar.",
+        "cites": [
+          "PMID:22950526"
+        ]
+      }
+    ]
+  },
+  "FMA:44250": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 50 piernas de cadáveres japoneses tenía forma de reloj de arena en el 62 %, triangular en el 26 % y rectangular en el 12 %.",
+        "cites": [
+          "PMID:33413502"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "No hubo diferencias morfométricas significativas entre esas formas, por lo que no parecen implicar diferencias funcionales.",
+        "cites": [
+          "PMID:33413502"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 100 pies de donantes, la cabeza medial del cuadrado plantar se originaba en él en el 93 % y la cabeza lateral en el 90 %.",
+        "cites": [
+          "PMID:29166622"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 45 pies de cadáver, figuraba entre los orígenes habituales de la cabeza oblicua del aductor del dedo gordo.",
+        "cites": [
+          "PMID:14704005"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un modelo cadavérico de pie plano, al alargar la columna lateral del calcáneo sólo se tensaba el tercio más lateral del ligamento y los dos tercios mediales se relajaban.",
+        "cites": [
+          "PMID:14752758"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 11 pacientes con fiebre mediterránea familiar y dolor de pierna al esfuerzo, 10 mostraron en la resonancia signos de entesitis del tendón calcáneo, de este ligamento o de la fascia plantar.",
+        "cites": [
+          "PMID:22950526"
+        ]
+      }
+    ]
+  },
+  "FMA:45888": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 20 músculos estudiados, la cabeza larga midió de media 36,8 cm y su pedículo vascular mayor superior penetraba a una media de 12 cm.",
+        "cites": [
+          "PMID:9147233"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Se observaron anastomosis arteriales intramusculares entre sus pedículos y entre las cabezas larga y corta.",
+        "cites": [
+          "PMID:9147233"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la ecografía de 19 varones jóvenes, sus fascículos eran más cortos y con mayor ángulo de peneación en la porción distal que en las proximales.",
+        "cites": [
+          "PMID:27012306"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 35 muslos, un grupo de fibras del semitendinoso nacía de su cara medial proximal a 67 ± 12 mm de la tuberosidad isquiática.",
+        "cites": [
+          "PMID:34472147"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las lesiones isquiotibiales de los deportistas que esprintan asientan sobre todo donde la cabeza larga se une al semitendinoso para formar el tendón conjunto.",
+        "cites": [
+          "PMID:34472147"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 28 pacientes con lesión posterolateral crónica de rodilla, su tendón sirvió para reconstruir el ligamento colateral peroneo, el ligamento popliteoperoneo y el tendón poplíteo.",
+        "cites": [
+          "PMID:16735591"
+        ]
+      }
+    ]
+  },
+  "FMA:45889": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 20 músculos estudiados, la cabeza larga midió de media 36,8 cm y su pedículo vascular mayor superior penetraba a una media de 12 cm.",
+        "cites": [
+          "PMID:9147233"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Se observaron anastomosis arteriales intramusculares entre sus pedículos y entre las cabezas larga y corta.",
+        "cites": [
+          "PMID:9147233"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la ecografía de 19 varones jóvenes, sus fascículos eran más cortos y con mayor ángulo de peneación en la porción distal que en las proximales.",
+        "cites": [
+          "PMID:27012306"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 35 muslos, un grupo de fibras del semitendinoso nacía de su cara medial proximal a 67 ± 12 mm de la tuberosidad isquiática.",
+        "cites": [
+          "PMID:34472147"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las lesiones isquiotibiales de los deportistas que esprintan asientan sobre todo donde la cabeza larga se une al semitendinoso para formar el tendón conjunto.",
+        "cites": [
+          "PMID:34472147"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 28 pacientes con lesión posterolateral crónica de rodilla, su tendón sirvió para reconstruir el ligamento colateral peroneo, el ligamento popliteoperoneo y el tendón poplíteo.",
+        "cites": [
+          "PMID:16735591"
+        ]
+      }
+    ]
+  },
+  "FMA:45891": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En resonancias de 93 adultos coreanos sanos, el nervio peroneo común pasaba en el 38,7 % por un túnel poplíteo formado entre la cabeza corta y la cabeza lateral del gastrocnemio.",
+        "cites": [
+          "PMID:29991110"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 12 piernas de cadáver se diseñó un colgajo de la cabeza corta basado en los vasos perforantes segundo o tercero de la femoral profunda, o en los vasos geniculares superiores laterales.",
+        "cites": [
+          "PMID:11711941"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La pérdida funcional tras obtener la cabeza corta para un colgajo parece mínima.",
+        "cites": [
+          "PMID:11711941"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la resonancia de 14 pacientes con miopatía oculofaringodistal, la cabeza corta permaneció casi indemne incluso en fases avanzadas, a diferencia de la cabeza larga.",
+        "cites": [
+          "PMID:26039504"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "También se mantuvo respetada en cinco pacientes con desminopatía recesiva.",
+        "cites": [
+          "PMID:41406637"
+        ]
+      }
+    ]
+  },
+  "FMA:45892": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En resonancias de 93 adultos coreanos sanos, el nervio peroneo común pasaba en el 38,7 % por un túnel poplíteo formado entre la cabeza corta y la cabeza lateral del gastrocnemio.",
+        "cites": [
+          "PMID:29991110"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 12 piernas de cadáver se diseñó un colgajo de la cabeza corta basado en los vasos perforantes segundo o tercero de la femoral profunda, o en los vasos geniculares superiores laterales.",
+        "cites": [
+          "PMID:11711941"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La pérdida funcional tras obtener la cabeza corta para un colgajo parece mínima.",
+        "cites": [
+          "PMID:11711941"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la resonancia de 14 pacientes con miopatía oculofaringodistal, la cabeza corta permaneció casi indemne incluso en fases avanzadas, a diferencia de la cabeza larga.",
+        "cites": [
+          "PMID:26039504"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "También se mantuvo respetada en cinco pacientes con desminopatía recesiva.",
+        "cites": [
+          "PMID:41406637"
+        ]
+      }
+    ]
+  },
+  "FMA:45973": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En un estudio con 22 pies de cadáver, la liberación lateral percutánea extensa para el hallux valgus incluyó la sección de la cabeza lateral del flexor corto del dedo gordo.",
+        "cites": [
+          "PMID:32456480"
+        ]
+      }
+    ]
+  },
+  "FMA:45974": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En un estudio con 22 pies de cadáver, la liberación lateral percutánea extensa para el hallux valgus incluyó la sección de la cabeza lateral del flexor corto del dedo gordo.",
+        "cites": [
+          "PMID:32456480"
+        ]
+      }
+    ]
+  },
+  "FMA:46018": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En 14 especímenes de cadáver sometidos a liberación lateral con una sola incisión para el hallux valgus, el tendón de la cabeza oblicua se lesionó de forma inadvertida en un caso.",
+        "cites": [
+          "PMID:30326351"
+        ]
+      }
+    ]
+  },
+  "FMA:46019": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En 14 especímenes de cadáver sometidos a liberación lateral con una sola incisión para el hallux valgus, el tendón de la cabeza oblicua se lesionó de forma inadvertida en un caso.",
+        "cites": [
+          "PMID:30326351"
+        ]
+      }
+    ]
+  }
+}

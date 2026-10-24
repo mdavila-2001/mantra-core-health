@@ -1,0 +1,1200 @@
+{
+  "UBERON:0003676": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En tomografía computarizada, el ligamento rotuliano normal se presenta como una banda plana cuya densidad media ronda las 110 HE.",
+        "cites": [
+          "PMID:4017441"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En la porción central de 10 mm de ancho, tomada de donantes varones jóvenes, el área de sección del ligamento rotuliano midió 36,8 ± 5,7 mm2, claramente menor que la del tendón del cuádriceps.",
+        "cites": [
+          "PMID:8884731",
+          "PMID:9934415"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Su inserción tibial contiene en la parte proximal una cuña marcada de fibrocartílago, ausente en las fibras más superficiales, mientras que en la inserción rotuliana el fibrocartílago es escaso.",
+        "cites": [
+          "PMID:2081702"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un modelo musculoesquelético de la marcha, la fuerza soportada por el ligamento rotuliano aumentó a medida que la rótula estaba más alta.",
+        "cites": [
+          "PMID:34008841"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Tras un traumatismo o por sobrecarga crónica, la tomografía muestra un aumento de su sección transversal junto con una caída de la densidad.",
+        "cites": [
+          "PMID:4017441"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un estudio de 15 miembros inferiores inyectados con látex describió que la tuberosidad tibial recibe una red arterial densa, nutrida sobre todo por la arteria recurrente tibial anterior, lo que respalda la seguridad de transponer el ligamento rotuliano en niños.",
+        "cites": [
+          "PMID:22101307"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003701": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El tendón calcáneo surge de la unión de los tendones de los músculos gastrocnemio y sóleo, y se lo considera el tendón más grande y resistente del cuerpo.",
+        "cites": [
+          "PMID:37016428"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "No es una estructura homogénea: está organizado en capas que se disponen de maneras diversas.",
+        "cites": [
+          "PMID:37016428"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 36 fetos del segundo trimestre, sus subtendones ya se veían torsionados: la capa posterior provenía de la cabeza medial del gastrocnemio y la anterior de la cabeza lateral.",
+        "cites": [
+          "PMID:33237333"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En fetos próximos al término, la vaina del tendón calcáneo mostraba tres capas y el tendón del plantar quedaba alojado siempre en la capa interna o en la intermedia.",
+        "cites": [
+          "PMID:36689056"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Un estudio de inyección en tendones de cadáver halló menos vasos, y de menor área relativa, en el segmento medio del tendón, zona que podría intervenir en la génesis de la rotura.",
+        "cites": [
+          "PMID:2914976"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 28 pacientes estudiados con resonancia magnética, las lesiones se agruparon en cuatro tipos: inflamatoria, degenerativa, rotura incompleta y rotura completa.",
+        "cites": [
+          "PMID:2071660"
+        ]
+      }
+    ]
+  },
+  "UBERON:0006767": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 229 caderas de cadáver, el ligamento de la cabeza del fémur se aplanaba en su extremo distal hasta converger sobre la fosita de la cabeza femoral.",
+        "cites": [
+          "PMID:30318771"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En esas disecciones, ramas de la arteria obturatriz penetraban el tercio medio del ligamento y sus vasos parecían llegar a la fosita de la cabeza.",
+        "cites": [
+          "PMID:30318771"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Según una serie de 40 cadáveres, el ligamento de la cabeza del fémur lleva una arteria hacia la cabeza femoral en los jóvenes.",
+        "cites": [
+          "PMID:2124003"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Un estudio histológico de 10 caderas encontró mayor vascularización del ligamento junto a su inserción en la fosita, lo que sugiere un posible papel nutricio para la cabeza femoral del adulto.",
+        "cites": [
+          "PMID:30882902"
+        ]
+      }
+    ]
+  },
+  "UBERON:0006862": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 84 fémures de cadáver de población turca, el radio de la curvatura anterior quedó entre 0,5 y 1,5 m en 76 piezas (91,6 %).",
+        "cites": [
+          "PMID:26969959"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Ese mismo estudio advirtió que la amplia variación morfológica del fémur queda en buena parte fuera del rango que cubren los clavos intramedulares disponibles.",
+        "cites": [
+          "PMID:26969959"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Un análisis tomográfico seriado mostró que los parámetros geométricos de las secciones transversales de la diáfisis femoral son mayores en el ser humano que en el chimpancé.",
+        "cites": [
+          "PMID:12050906"
+        ]
+      }
+    ]
+  },
+  "UBERON:0007119": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En 39 cuellos femorales de cadáver, un modelo estructural basado en medidas de la radiografía anteroposterior permitió estimar con buena correlación la carga de rotura.",
+        "cites": [
+          "PMID:1182254"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La seudoartrosis del cuello femoral se asocia a tasas altas de necrosis avascular, atribuidas a una irrigación precaria y a una biomecánica desfavorable.",
+        "cites": [
+          "PMID:27190758"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La osteotomía intertrocantérea en valgo favorece la consolidación porque transforma las fuerzas de cizallamiento sobre el foco en fuerzas de compresión.",
+        "cites": [
+          "PMID:27190758"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La cirugía es el tratamiento de elección de la fractura del cuello femoral; si se fija preservando la cabeza, se aconseja hacerlo en las primeras 6 horas y nunca después de 24 horas.",
+        "cites": [
+          "PMID:20589205"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una cohorte de 1913 pacientes mayores de 60 años, cada hora de demora quirúrgica elevó el riesgo de muerte un 1,8 %, aunque la asociación sólo fue significativa al superar las 24 horas.",
+        "cites": [
+          "PMID:28325670"
+        ]
+      }
+    ]
+  },
+  "UBERON:0008464": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En ocho piezas de cadáver por debajo de la rodilla, el abductor del dedo gordo se originaba en la cara posteromedial del calcáneo y se insertaba en el sesamoideo tibial.",
+        "cites": [
+          "PMID:17559771"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esas piezas, una cincha fascial del retropié elevaba el músculo y le daba forma de «V» invertida.",
+        "cites": [
+          "PMID:17559771"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 109 pies disecados se reconocieron tres tipos de inserción: en la falange proximal (42), en el ligamento sesamoideo medial y el sesamoideo medial (65) o sólo en el sesamoideo medial (2).",
+        "cites": [
+          "PMID:10096675"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su tendón cruza la articulación metatarsofalángica del primer dedo por debajo de su eje transversal y puede unirse al tendón de la cabeza medial del flexor corto del dedo gordo, donde aparece una bolsa subtendinosa.",
+        "cites": [
+          "PMID:10096675"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La contracción simulada en cadáver flexionó y supinó el primer metatarsiano, invirtió el calcáneo y rotó la tibia hacia fuera, de modo que el músculo actúa como elevador dinámico del arco medial.",
+        "cites": [
+          "PMID:17559771"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una ecografía de 102 pies, el espesor dorsoplantar del músculo difirió entre los pies sin hallux valgus y los de grado 2 y 3.",
+        "cites": [
+          "PMID:23356426"
+        ]
+      }
+    ]
+  },
+  "UBERON:0009984": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En ocho rodillas de cadáver, el ligamento patelofemoral medial, que une la rótula con el cóndilo medial del fémur, resistió una tracción de 146,91 ± 25,30 N.",
+        "cites": [
+          "PMID:24382220"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 40 adultos jóvenes estudiados con resonancia de 3,0 T, el espesor del cartílago del cóndilo medial difirió entre varones y mujeres, no así sus valores T2.",
+        "cites": [
+          "PMID:23642998"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una serie de casos con fractura de Hoffa del cóndilo medial mostró que la reconstrucción tridimensional y el prototipado rápido ayudaban a entender la configuración de la fractura.",
+        "cites": [
+          "PMID:21256690"
+        ]
+      }
+    ]
+  },
+  "UBERON:0009985": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Los cóndilos del fémur se articulan con el extremo superior de la tibia y con la rótula.",
+        "cites": [
+          "PMID:41914101"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 150 fémures secos de población de Bangladés, el diámetro anteroposterior del cóndilo lateral promedió 55,77 ± 4,32 mm a la derecha y 55,65 ± 3,94 mm a la izquierda.",
+        "cites": [
+          "PMID:41914101"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 40 adultos jóvenes estudiados con resonancia de 3,0 T, el grosor del cartílago del cóndilo lateral varió según el sexo, sin diferencias en los valores T2.",
+        "cites": [
+          "PMID:23642998"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 51 jugadoras de balonmano, el ángulo interno del cóndilo lateral medido en resonancia coronal fue mayor en las que tenían rotura del ligamento cruzado anterior y predijo la lesión mejor que la anchura de la escotadura intercondílea.",
+        "cites": [
+          "PMID:22816220"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito el tratamiento de un quiste subcondral del cóndilo lateral mediante bioplastia intraósea, una técnica mínimamente invasiva que conserva la articulación.",
+        "cites": [
+          "PMID:32384650"
+        ]
+      }
+    ]
+  },
+  "UBERON:0009986": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 30 rodillas de cadáver, el centro de la inserción femoral del tendón poplíteo se situaba por detrás y por debajo del epicóndilo lateral, a 11,3 ± 1,2 mm de él.",
+        "cites": [
+          "PMID:21328069"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La línea que une el epicóndilo lateral con esa inserción formaba con el eje longitudinal del fémur un ángulo de 31,4 ± 5,3°.",
+        "cites": [
+          "PMID:21328069"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ocho rodillas frescas, el punto isométrico para reconstruir el tendón poplíteo quedó también posterior y distal al epicóndilo lateral, a 10,4 ± 1,7 mm, y allí se recomienda labrar el túnel femoral.",
+        "cites": [
+          "PMID:21328069"
+        ]
+      }
+    ]
+  },
+  "UBERON:0009990": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La parte más saliente del cóndilo medial de la tibia es palpable y se usa, junto con la punta del maléolo medial, como referencia de superficie para medir la longitud tibial percutánea; en 1000 adultos esa longitud sirvió para estimar la talla con fines forenses.",
+        "cites": [
+          "PMID:9924782"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha comunicado un caso en que un granuloma por desgaste del polietileno tras una prótesis total de rodilla destruyó hueso bajo el implante y acabó en una fractura patológica del cóndilo medial de la tibia.",
+        "cites": [
+          "PMID:11759476"
+        ]
+      }
+    ]
+  },
+  "UBERON:0010524": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El tercer peroneo es uno de los tres músculos del compartimento anterior de la pierna.",
+        "cites": [
+          "PMID:39674898"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 41 cadáveres faltó en 5 miembros (6,1 %); cuando existía nacía de la porción distal del peroné y su origen abarcaba en promedio un (28,4 ± 9,1) % de la longitud de la diáfisis.",
+        "cites": [
+          "PMID:17584875"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie su tendón terminaba siempre en la cara dorsal de las diáfisis de los metatarsianos cuarto y quinto, y no sólo en el quinto como suelen indicar los textos.",
+        "cites": [
+          "PMID:17584875"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En otra serie de 106 miembros estaba presente en el 85,8 %, nacía con más frecuencia en la mitad distal del peroné (67 %) y la inserción más habitual era única, sobre la diáfisis del quinto metatarsiano (45 %).",
+        "cites": [
+          "PMID:31408221"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 50 fetos humanos de 18 a 38 semanas, la inserción más común fue bifurcada, hacia la base del cuarto metatarsiano y el cuarto espacio interóseo (32 %), mientras que la inserción única en el quinto metatarsiano fue poco frecuente.",
+        "cites": [
+          "PMID:33899207"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Recibe un ramo pequeño del nervio peroneo profundo que nace cerca del origen del extensor largo de los dedos y discurre entre éste y el extensor largo del dedo gordo antes de penetrar en el músculo.",
+        "cites": [
+          "PMID:17584875"
+        ]
+      }
+    ]
+  },
+  "UBERON:0010526": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El peroneo corto forma parte del compartimento lateral de la pierna y se origina en los dos tercios inferiores de la cara lateral del peroné y en el tabique intermuscular anterior.",
+        "cites": [
+          "PMID:38211662"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Habitualmente se inserta en la tuberosidad de la base del quinto metatarsiano, por su lado lateral, aunque la inserción distal es variable.",
+        "cites": [
+          "PMID:38211662"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 102 miembros disecados predominó la inserción única en esa tuberosidad (70,6 %), y el peroneo del quinto dedo, hallado en el 17,7 %, apareció siempre junto a ese tipo.",
+        "cites": [
+          "PMID:31031151"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 43 fetos humanos de 18 a 38 semanas, el tendón tenía inserción única en el 77 % de los miembros, bifurcada en el 19 % y triple en el 4 %.",
+        "cites": [
+          "PMID:37757974"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 24 tendones de 12 cadáveres, los 7 con rotura longitudinal de espesor completo presentaban una unión musculotendinosa más proximal, con una distancia media de 28,86 ± 3,02 mm frente a 16,29 ± 7,30 mm en los sanos.",
+        "cites": [
+          "PMID:27989344"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las variantes distales del tendón pueden confundirse en la imagen con roturas longitudinales o con seudomasas y modificar el abordaje quirúrgico.",
+        "cites": [
+          "PMID:42262541"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011118": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "En 100 piezas de 53 cadáveres, la primera articulación tarsometatarsiana sólo mostró aducción y abducción en cerca del 10 %; su eversión, de 6,2° en promedio, se debía a un desplazamiento dorsal medio de 2,6 mm del primer metatarsiano respecto de la primera cuña.",
+        "cites": [
+          "PMID:2731824"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En nueve piezas cadavéricas, el peroneo largo estabilizó la primera articulación tarsometatarsiana.",
+        "cites": [
+          "PMID:10540997"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 20 pares de pies de cadáver, los ligamentos plantar y de Lisfranc de la segunda articulación tarsometatarsiana fueron más rígidos y resistentes que el dorsal, y el de Lisfranc superó al plantar.",
+        "cites": [
+          "PMID:11527024"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancia de seis pies de cadáver, el ligamento de Lisfranc se veía mejor en el plano axial oblicuo, los intermetatarsianos en el coronal y los tarsometatarsianos en el sagital.",
+        "cites": [
+          "PMID:8637997"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un desplazamiento dorsolateral de 3 mm del segundo metatarsiano redujo un 38,6 % el área de contacto articular, por lo que se aconseja la tomografía para detectar desplazamientos mínimos.",
+        "cites": [
+          "PMID:8946183"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 40 adultos con fracturas-luxaciones tarsometatarsianas tratadas con reducción abierta, la artrosis postraumática se vinculó con el daño de las superficies articulares o con una reducción insuficiente.",
+        "cites": [
+          "PMID:3273882"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011905": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El plantar es un músculo pequeño y fusiforme situado entre el gastrocnemio y el sóleo, en el compartimento posterior superficial de la pierna.",
+        "cites": [
+          "PMID:34217832",
+          "PMID:38757503"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Nace en la línea supracondílea lateral del fémur y en la cápsula de la rodilla, y se continúa con un tendón largo y delgado que llega a la tuberosidad del calcáneo.",
+        "cites": [
+          "PMID:38757503"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 108 pies de cadáveres coreanos faltaba en 7 (6,5 %); su tendón era grueso y estrecho arriba, se adelgazaba y ensanchaba en el tramo medio y volvía a engrosarse antes de fijarse en la tuberosidad calcánea.",
+        "cites": [
+          "PMID:35627332"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 47 fetos humanos se halló en el 78,7 % de los miembros, y su origen más frecuente abarcaba la cabeza lateral del gastrocnemio, el cóndilo lateral del fémur y la cápsula articular de la rodilla.",
+        "cites": [
+          "PMID:34217832"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Contribuye a los movimientos de la rodilla y del tobillo.",
+        "cites": [
+          "PMID:34217832"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según ese estudio de disección, la forma en que se inserta su tendón respecto del tendón calcáneo podría influir en la aparición de tendinopatía de este último.",
+        "cites": [
+          "PMID:35627332"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011907": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 162 personas de 0 a 70 años estudiadas con ecografía, el ángulo de peneación del gastrocnemio medial creció desde el nacimiento hasta estabilizarse pasado el estirón puberal y guardó relación lineal con el grosor del músculo.",
+        "cites": [
+          "PMID:11759268"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Con cargas transversales de 2, 4,5 y 10 kg aplicadas sobre la pantorrilla, la fuerza longitudinal de sus sacudidas evocadas cayó un 9, un 13 y un 16 %, respectivamente.",
+        "cites": [
+          "PMID:30792071"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En reposo, la rotación pasiva del tobillo alarga de forma notable su unidad musculotendinosa, mientras que la de la rodilla sólo influye sobre los fascículos con ángulos superiores a 144°.",
+        "cites": [
+          "PMID:16309922"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Las unidades motoras que se activan al estar de pie podrían concentrarse más en la porción distal del músculo que las reclutadas por estimulación del nervio tibial.",
+        "cites": [
+          "PMID:22967836"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Al correr con calzado de suela más rígida, sus fascículos se acortaron menos y con menor velocidad, y aumentó el retorno de energía estimado del tendón calcáneo.",
+        "cites": [
+          "PMID:33436965"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito en una mujer de 55 años un quiste ganglionar intramuscular roto en este músculo, que en la ecografía se veía como una lesión hipoecoica mal delimitada.",
+        "cites": [
+          "PMID:19618443"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011908": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 87 voluntarios jóvenes estudiados con ecografía, el gastrocnemio lateral mostró medianas de longitud fascicular de 65,8-69,3 mm, ángulo de peneación de 11,9-12,5° y grosor de 15,9-16,9 mm.",
+        "cites": [
+          "PMID:34587209"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Durante la marcha normal, la estimulación del nervio tibial de un lado facilitó de forma precoz el gastrocnemio lateral del lado opuesto, y esa respuesta se invirtió al caminar con las piernas en direcciones contrarias.",
+        "cites": [
+          "PMID:23427302"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Ante inversiones bruscas del tobillo repetidas al caminar, la respuesta tardía terminó reclutando sobre todo a los peroneos y, en menor grado, al gastrocnemio lateral.",
+        "cites": [
+          "PMID:17715190"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las mediciones ecográficas de su arquitectura resultaron fiables, pero su cambio mínimo detectable es amplio, por lo que sirven más para comparar poblaciones que para seguir cambios tras una intervención.",
+        "cites": [
+          "PMID:34587209"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la resonancia de 37 pacientes con miopatía dominante por ACTN2, la conservación del gastrocnemio lateral figuró entre los rasgos que distinguían esa enfermedad.",
+        "cites": [
+          "PMID:39812845"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011962": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La articulación transversa del tarso comprende las articulaciones talonavicular y calcaneocuboidea.",
+        "cites": [
+          "PMID:15062218"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En diez pies de cadáver, la resonancia permitió reconocer los ligamentos que la estabilizan, entre ellos el complejo del ligamento calcaneonavicular plantar (en resorte), el ligamento bifurcado y los calcaneocuboideos plantares.",
+        "cites": [
+          "PMID:19696279"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Permite que el pie pase de ser una estructura flexible que amortigua el apoyo y recibe el peso del cuerpo a una estructura rígida apta para el despegue.",
+        "cites": [
+          "PMID:15062218"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Las estructuras de sostén de la articulación talonavicular controlan el arco longitudinal medial del pie.",
+        "cites": [
+          "PMID:15062218"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En tomografías en carga de cinco voluntarios, al llevar el retropié de valgo a varo el navicular giró 25,4° en varo respecto del astrágalo y el cuboides se desplazó 3,9 mm en sentido medial; el bloqueo articular podría deberse al tensado de ligamentos y cápsulas.",
+        "cites": [
+          "PMID:34378428"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su artrodesis se emplea en la artrosis del retropié y en el pie plano adquirido; en nueve piernas de cadáver, un fijador externo circular logró una compresión media del 186 % de la obtenida con tornillos.",
+        "cites": [
+          "PMID:26130579"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011971": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según una revisión sistemática de 16 estudios en cadáver, el ligamento calcaneoperoneo mide entre 18,5 y 35,8 mm de longitud y entre 4,6 y 7,6 mm de anchura.",
+        "cites": [
+          "PMID:27295109"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Esa revisión ubica su origen en el borde anterior del peroné distal, de 5,3 a 8,5 mm por encima de la punta, y su inserción calcánea a 12,1-13 mm de la articulación subastragalina.",
+        "cites": [
+          "PMID:27295109"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En resonancia tridimensional de diez tobillos sanos, el ligamento describía una curva suave apoyada sobre los tendones peroneos, y su ángulo de tortuosidad bajaba de 41,7° ± 8,3° en posición neutra a 30,0° ± 7,4° en flexión plantar.",
+        "cites": [
+          "PMID:30539208"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 18 piezas de cadáver, al tensarse elevó lateralmente los tendones peroneos (2,0 ± 0,8 mm el largo y 1,9 ± 1,0 mm el corto), por lo que podría actuar como tensor de esos tendones.",
+        "cites": [
+          "PMID:36198736"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En diez preparados osteoligamentosos, su sección aumentó la aducción talocalcánea entre 3,1° y 4,6° con un momento de 1,5 Nm, lo que lo señala como estabilizador importante de esa articulación.",
+        "cites": [
+          "PMID:3609987"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En doce tobillos de cadáver, cuanto mayor fue la tensión inicial del injerto al reconstruir este ligamento, más anómalas resultaron la cinemática y la laxitud del tobillo.",
+        "cites": [
+          "PMID:30125125"
+        ]
+      }
+    ]
+  },
+  "UBERON:0013069": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En pacientes jóvenes y activos con dolor isquémico de la pierna, intermitente o súbito, debe considerarse un síndrome de atrapamiento de la arteria poplítea, que se reconoce por la interrupción del segmento medio del vaso.",
+        "cites": [
+          "PMID:3441390"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el síndrome del sóleo, menos frecuente, quedan comprimidos en la fosa poplítea no sólo la arteria sino también nervios y venas.",
+        "cites": [
+          "PMID:3441390"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 37 pacientes con traumatismo cerrado grave del miembro inferior y lesión vascular poplítea, se registraron errores de manejo en 10, sobre todo demoras en el diagnóstico de la lesión arterial.",
+        "cites": [
+          "PMID:1864745"
+        ]
+      }
+    ]
+  },
+  "UBERON:0013633": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En disecciones e imágenes de 17 miembros de cadáver, el punto más bajo de la huella del obturador externo coincidió, con un margen de 1 mm, con el cruce entre la pared lateral de la fosa trocantérea y la línea oblicua de la cresta intertrocantérea.",
+        "cites": [
+          "PMID:32956147"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La superposición radiográfica de la línea de la fosa piriforme con la cresta intertrocantérea define una proyección que, en 16 fémures de cadáver, se lograba con una rotación interna media de 17,5° y servía para localizar la punta del trocánter mayor.",
+        "cites": [
+          "PMID:34526606"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 504 fracturas intertrocantéreas clasificadas por tomografía, dos de los cinco tipos descritos incluían el desprendimiento de la cresta intertrocantérea.",
+        "cites": [
+          "PMID:31003702"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 22 pacientes irradiados por cáncer anal, la cortical se adelgazó de manera significativa en la cresta intertrocantérea tras el tratamiento.",
+        "cites": [
+          "PMID:27780791"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En seis pacientes con fractura conminuta de la pared acetabular posterior, se reconstruyó la pared con un injerto de cresta intertrocantérea pediculado en el glúteo medio.",
+        "cites": [
+          "PMID:23543469"
+        ]
+      }
+    ]
+  },
+  "UBERON:0013725": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según una revisión sistemática de 16 estudios en cadáver, el ligamento talofibular anterior mide entre 12 y 24,8 mm de largo y entre 5 y 11,1 mm de ancho.",
+        "cites": [
+          "PMID:27295109"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Nace en el borde anterior del peroné distal, de 10 a 13,8 mm por encima de su punta, y se fija en el astrágalo a 14,2-18,1 mm de la articulación subastragalina.",
+        "cites": [
+          "PMID:27295109"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En tobillos frescos congelados, el ligamento intacto soportó una carga de rotura media de 154,0 ± 63,7 N y mostró una rigidez de 14,5 ± 4,4 N por mm.",
+        "cites": [
+          "PMID:24280308",
+          "PMID:24275864"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ese modelo, la reparación de Broström sin refuerzo ofrecía de entrada menos de la mitad de la resistencia del ligamento intacto, mientras que el refuerzo con cinta de sutura la igualaba o superaba.",
+        "cites": [
+          "PMID:24275864"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 37 pacientes con inestabilidad lateral crónica tratados con reparación anatómica artroscópica, la puntuación AOFAS media alcanzó 92,53 ± 4,87 tras 24 a 45 meses de seguimiento.",
+        "cites": [
+          "PMID:32124530"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 49 pacientes, la reparación guiada por ecografía tuvo una tasa de complicaciones del 2,0 %, con un único caso de irritación del nervio peroneo superficial.",
+        "cites": [
+          "PMID:39798604"
+        ]
+      }
+    ]
+  },
+  "UBERON:0013726": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En doce tobillos frescos congelados, el ligamento talofibular posterior se originaba siempre en la fosa maleolar lateral.",
+        "cites": [
+          "PMID:39818474"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esas piezas tenía dos fascículos con inserciones separadas: el superficial en la cara posterolateral del astrágalo y el profundo en la parte posterior de su apófisis lateral.",
+        "cites": [
+          "PMID:39818474"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "En diez tobillos disecados discurría en sentido horizontal desde el peroné hasta un tubérculo saliente de la cara posterior del astrágalo.",
+        "cites": [
+          "PMID:18633563"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Las cápsulas de las articulaciones tibioastragalina y subastragalina se reunían lateralmente sobre su borde posterior.",
+        "cites": [
+          "PMID:18633563"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancias de 70 pacientes con hueso trígono, las fibras posteriores del ligamento se insertaban sólo en ese huesecillo, no en el tubérculo lateral de la apófisis posterior del astrágalo.",
+        "cites": [
+          "PMID:25604649"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancia, el ángulo entre los ligamentos talofibulares anterior y posterior midió 90,8° ± 5,7° en 120 pacientes con inestabilidad crónica del tobillo frente a 80,0° ± 3,7° en 120 voluntarios sanos.",
+        "cites": [
+          "PMID:37423946"
+        ]
+      }
+    ]
+  },
+  "UBERON:0014380": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 97 pies de 60 cadáveres, el flexor corto de los dedos carecía de tendón para el quinto dedo en el 48 %, lo tenía muy delgado en el 26 % y bien formado en el 26 % restante.",
+        "cites": [
+          "PMID:23687345"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Un metaanálisis de 2789 pies estimó una prevalencia real del 31,3 % para la ausencia de su cuarto fascículo, con cifras del 77,3 % en poblaciones de la India y cercanas al 20 % en otras.",
+        "cites": [
+          "PMID:26738260"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El músculo, con o sin la piel que lo cubre, puede transponerse como colgajo en isla para cubrir partes blandas del talón; la técnica se aplicó en seis pacientes.",
+        "cites": [
+          "PMID:6996011"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito su uso como colgajo basado en el flujo retrógrado de la arteria plantar lateral para reparar un defecto de la zona plantar distal en un paciente con melanoma.",
+        "cites": [
+          "PMID:11207134"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 18 personas con puntos gatillo miofasciales en este músculo, la punción seca modificó las presiones plantares: bajó la presión máxima del retropié y aumentaron las del mediopié.",
+        "cites": [
+          "PMID:33451013"
+        ]
+      }
+    ]
+  },
+  "UBERON:0014847": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "En 11 cadáveres, la rama descendente de la arteria circunfleja femoral lateral emitía perforantes hacia el vasto intermedio y nutría un colgajo musculoperióstico de unos 128 cm2 de superficie media.",
+        "cites": [
+          "PMID:20186660"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 16 rodillas de cadáver, las fibras proximales del ligamento patelofemoral medial se fijaban principalmente en el tendón del vasto intermedio.",
+        "cites": [
+          "PMID:22491706"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 26 miembros disecados se halló siempre un vientre muscular adicional entre el vasto lateral y el vasto intermedio, el tensor del vasto intermedio, con ramos propios del nervio femoral y de la arteria circunfleja femoral lateral.",
+        "cites": [
+          "PMID:26732825"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En siete varones sometidos a una extensión isométrica de rodilla hasta el agotamiento, la frecuencia mediana electromiográfica del vasto intermedio fue al final mayor que la del vasto lateral.",
+        "cites": [
+          "PMID:20133154"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En once varones, la saturación tisular de oxígeno del vasto intermedio se mantuvo por encima de la del vasto medial durante gran parte de una contracción fatigante.",
+        "cites": [
+          "PMID:27194371"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En diez muslos de cadáver, sólo dos de cinco modelos publicados estimaron con validez la longitud de sus fascículos a partir de la ecografía.",
+        "cites": [
+          "PMID:24485560"
+        ]
+      }
+    ]
+  },
+  "UBERON:0015488": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El nervio sural es un nervio sensitivo de pequeño calibre que discurre por el tejido subcutáneo de la pantorrilla.",
+        "cites": [
+          "PMID:29027686"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 30 miembros inferiores de cadáver, a la altura de la inserción calcánea del tendón de Aquiles el nervio quedaba en promedio a 18,8 mm de su borde lateral, y lo cruzaba más arriba, a una media de 9,8 cm del calcáneo.",
+        "cites": [
+          "PMID:10884105"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En diez cadáveres inyectados, unas arterias acompañantes seguían al nervio sural y a la vena safena menor e irrigaban la piel mediante perforantes neurocutáneas y venocutáneas.",
+        "cites": [
+          "PMID:9915170"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 27 nervios surales de personas sin neuropatía, el diámetro de las fibras mielínicas tenía una distribución bimodal salvo en el primer año, y la densidad de axones disminuía marcadamente entre el nacimiento y la octava década.",
+        "cites": [
+          "PMID:4075078"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En pacientes con diabetes tipo 2 seguidos durante 6 años, la amplitud del potencial sensitivo sural se correlacionó de forma inversa con la gravedad de la polineuropatía distal simétrica.",
+        "cites": [
+          "PMID:31614013"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Por la variabilidad de su trayecto respecto del tendón de Aquiles, se desaconseja colocar suturas percutáneas en la mitad lateral de ese tendón.",
+        "cites": [
+          "PMID:10884105"
+        ]
+      }
+    ]
+  },
+  "UBERON:0018673": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "En 33 miembros inferiores de cadáver, la arteria del cuello del peroné apareció en 24 (72,7 %); en 7 la reemplazaba una arteria recurrente tibial posterior predominante y en 2 no se halló ninguna de las dos.",
+        "cites": [
+          "PMID:17596050"
+        ]
+      }
+    ]
+  },
+  "UBERON:0019202": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 60 miembros de 30 cadáveres centroeuropeos, el gemelo inferior estuvo presente en el 80 %; su forma más común (75 %) era un vientre único que iba de la parte alta de la tuberosidad isquiática a la fosa trocantérea.",
+        "cites": [
+          "PMID:42455141"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En otra serie de 20 piezas existía en todas, aunque en 3 estaba fusionado con el obturador interno.",
+        "cites": [
+          "PMID:9778919"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Junto con el gemelo superior, contribuye a la rotación lateral y a la estabilización de la cadera.",
+        "cites": [
+          "PMID:42455141"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En esa serie recibía siempre, por su cara anterior, ramos del nervio del cuadrado femoral.",
+        "cites": [
+          "PMID:9778919"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Un pequeño nervio sensitivo para el periostio y las bolsas del trocánter mayor, rama del nervio femoral, penetraba el periostio justo por debajo del tendón del gemelo inferior.",
+        "cites": [
+          "PMID:22374737"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un caso en que la tumefacción del gemelo inferior con un hematoma simulaba una ciática; la ecografía puede pasarla por alto, por lo que se prefirió confirmarla con resonancia.",
+        "cites": [
+          "PMID:35626236"
+        ]
+      }
+    ]
+  },
+  "UBERON:0019203": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 60 miembros de 30 cadáveres centroeuropeos, el gemelo superior estuvo presente en el 86,7 %; su tipo más común (65 %) era un vientre único entre la cara externa de la espina ciática y la fosa trocantérea.",
+        "cites": [
+          "PMID:42455141"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Interviene en la rotación lateral y la estabilización de la articulación de la cadera.",
+        "cites": [
+          "PMID:42455141"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 20 piezas disecadas, su nervio procedía del nervio del obturador interno en 7, del nervio del cuadrado femoral en 4 y de ambos en 6.",
+        "cites": [
+          "PMID:9778919"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Se ha descrito una variante en la que el nervio peroneo común pasaba por encima del gemelo superior y el nervio tibial por debajo de él.",
+        "cites": [
+          "PMID:15121548"
+        ]
+      }
+    ]
+  },
+  "UBERON:0035110": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 4 pies fetales y 34 adultos, el primer ramo del nervio plantar lateral estuvo siempre presente y se dirigía lateralmente, justo distal a la apófisis medial de la tuberosidad calcánea, hacia la porción proximal del abductor del quinto dedo.",
+        "cites": [
+          "PMID:3425404"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Ese ramo inerva el flexor corto de los dedos y, en los adultos, envía fibras al periostio de la apófisis medial de la tuberosidad calcánea y al ligamento plantar largo.",
+        "cites": [
+          "PMID:3425404"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 100 pies de cadáver, una banda profunda de la aponeurosis plantar lateral, presente en el 38 %, cruzaba un ramo del nervio a unos 2,0 cm medial y 1,7 cm anterior de la tuberosidad de la base del quinto metatarsiano.",
+        "cites": [
+          "PMID:31387386"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 80 pies de 40 cadáveres, su ramo comunicante existía en el 66,2 %, y en el 60,4 % de los casos surgía con la orientación clásica, desde el cuarto nervio digital plantar común.",
+        "cites": [
+          "PMID:8793217"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El primer ramo puede quedar atrapado entre el abductor del dedo gordo y la cabeza medial del cuadrado plantar, lo que podría explicar el dolor característico del síndrome doloroso del talón.",
+        "cites": [
+          "PMID:3425404"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 12 piezas de cadáver, la ecografía de alta resolución permitió guiar con exactitud inyecciones perineurales sobre ese ramo en el intervalo entre el abductor del dedo gordo y el cuadrado plantar.",
+        "cites": [
+          "PMID:23980227"
+        ]
+      }
+    ]
+  },
+  "UBERON:0035111": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 19 de 22 pies de cadáveres japoneses se halló un ramo que unía el ramo profundo del nervio plantar lateral con el nervio plantar medial, situado entre el tendón del flexor largo y el flexor corto del dedo gordo.",
+        "cites": [
+          "PMID:21400611"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Desde ese ramo de conexión salían fascículos para la cápsula de la articulación metatarsofalángica del primer dedo y ramos musculares para el flexor corto del dedo gordo.",
+        "cites": [
+          "PMID:21400611"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El potencial de acción sensitivo del nervio plantar medial puede registrarse en el tobillo con electrodos de superficie y, según un estudio con 69 controles y 33 pacientes, es una prueba más sensible que otros potenciales sensitivos para diagnosticar neuropatía periférica.",
+        "cites": [
+          "PMID:201733"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha comunicado un neurofibroma plexiforme del nervio plantar medial que durante 15 años se confundió con un neuroma de Morton recidivante.",
+        "cites": [
+          "PMID:25024003"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "También se ha descrito su compresión extrínseca en el tobillo por un schwannoma originado en la adventicia de la arteria tibial.",
+        "cites": [
+          "PMID:17542542"
+        ]
+      }
+    ]
+  },
+  "UBERON:8600083": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 134 piernas de cadáveres coreanos y tailandeses, las venas peroneas se presentaban siempre como un par de venas, a diferencia de la vena tibial posterior, que era muy variable.",
+        "cites": [
+          "PMID:32996214"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 30 miembros inferiores de cadáver, la vena safena menor tenía 1 o 2 comunicantes con el sistema profundo, de 1,7 ± 0,5 mm de diámetro y situadas a 3,4 ± 0,9 cm del vértice del maléolo lateral, que desembocaban en la vena peronea.",
+        "cites": [
+          "PMID:16108327"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La trombosis venosa profunda aislada de la pantorrilla, que puede afectar a la vena peronea, representa cerca de la mitad de todas las trombosis venosas profundas y puede progresar hacia venas proximales.",
+        "cites": [
+          "PMID:35478486"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El aneurisma de la vena peronea es excepcional; un caso en un varón de 20 años se trató con resección y el paciente se recuperó por completo.",
+        "cites": [
+          "PMID:29481933"
+        ]
+      }
+    ]
+  }
+}

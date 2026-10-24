@@ -1,0 +1,1902 @@
+{
+ "UBERON:0001193": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "Los tumores del hígado reciben su sangre sobre todo a través de la arteria hepática, lo que permite aplicar quimioterapia regional mediante una bomba implantada bajo la piel.",
+    "cites": [
+     "PMID:32215927"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Una revisión sistemática de 71 estudios cifró la incidencia de trombosis temprana de la arteria hepática tras el trasplante de hígado en el 4,4 %, con 8,3 % en niños y 2,9 % en adultos.",
+    "cites": [
+     "PMID:19298450"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Entre los factores de riesgo de esa trombosis temprana, la misma revisión incluye la anatomía arterial variante y el uso de conductos arteriales.",
+    "cites": [
+     "PMID:19298450"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una serie de 129 angiografías de adultos trasplantados de hígado, el 19,4 % mostró colaterales arteriales por oclusión crónica de la arteria hepática, con un calibre máximo de 3 mm.",
+    "cites": [
+     "PMID:21693276"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001194": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "En 250 autopsias consecutivas se encontró un aneurisma de la arteria esplénica en el 10,4 %, y la degeneración de la capa media pareció ser su causa más común.",
+    "cites": [
+     "PMID:13688586"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Una revisión de la literatura califica de gigantes los aneurismas esplénicos de 5 cm de diámetro o más y señala la pancreatitis, la aterosclerosis, la hipertensión y la cirrosis como factores predisponentes frecuentes.",
+    "cites": [
+     "PMID:26166071"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El estudio histológico de estos aneurismas muestra una pérdida acusada de células musculares lisas, degradación de la elastina y fibrosis de la adventicia.",
+    "cites": [
+     "PMID:32851875"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La embolización de la arteria esplénica se emplea como alternativa menos invasiva a la esplenectomía en el bazo lesionado, con el fin de conservar su función.",
+    "cites": [
+     "PMID:39276470"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "Simulaciones de dinámica de fluidos basadas en pacientes concretos destacan que los vasos colaterales sostienen la irrigación del bazo después de una embolización proximal.",
+    "cites": [
+     "PMID:39276470"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001199": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "La mucosa oxíntica del estómago alberga una población de células parecidas a las enterocromafines, las células ECL, que fabrican y almacenan histamina y cromogranina A.",
+    "cites": [
+     "PMID:22300082"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "La histamina liberada por las células ECL participa en el control de la secreción de ácido gástrico, en particular cuando actúa la gastrina.",
+    "cites": [
+     "PMID:22300082"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "En un estudio inmunohistoquímico, el péptido antimicrobiano humano AP-57 alcanzó su máxima expresión en la mucosa del estómago y del colon.",
+    "cites": [
+     "PMID:25585381"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001200": {
+  "sentences": []
+ },
+ "UBERON:0001212": {
+  "sentences": [
+   {
+    "aspect": "situation",
+    "es": "En un estudio histopatológico de 88 estómagos resecados, la zona de glándulas duodenales se prolongaba sobre el antro pilórico en el 90 % de las piezas.",
+    "cites": [
+     "PMID:7409378"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001215": {
+  "sentences": [
+   {
+    "aspect": "situation",
+    "es": "En la tomografía computarizada, la vena mesentérica inferior se localiza mejor por su posición detrás o a la izquierda del ángulo duodenoyeyunal.",
+    "cites": [
+     "PMID:6470255"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "Hacia abajo sigue a la izquierda de la cuarta porción del duodeno, dentro del espacio pararrenal anterior izquierdo.",
+    "cites": [
+     "PMID:6470255"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 14 casos normales, su diámetro medido junto al ángulo duodenoyeyunal varió entre 3 y 6 mm, con una media de 3,9 mm.",
+    "cites": [
+     "PMID:6470255"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En 167 pacientes evaluados con angiotomografía tridimensional, la vena terminaba en la vena esplénica en 83 casos, en la mesentérica superior en 44, en la confluencia de ambas en 38 y en la vena cólica media en 3.",
+    "cites": [
+     "PMID:33893527"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una serie prospectiva de 30 pacientes, un vaso colateral hacia el ángulo esplénico cruzaba la raíz de la vena en el 43,3 % y corría próximo a ella en el 13,3 %, por lo que puede ligarse sin querer al seccionarla.",
+    "cites": [
+     "PMID:24142655"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001216": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En 155 adultos estudiados con tomografía multidetector, la primera y la segunda venas yeyunales se unían en un tronco común en el 84 %.",
+    "cites": [
+     "PMID:28342263"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En esa serie, el tronco quedaba dorsal a la arteria mesentérica superior en el 63 % y ventral en el 21 %, y en el 16 % ambas venas drenaban por separado en la vena mesentérica superior.",
+    "cites": [
+     "PMID:28342263"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En otra serie quirúrgica, la primera vena yeyunal pasaba por detrás de la arteria mesentérica superior en la mayoría de los pacientes y por delante en el 16,7 %.",
+    "cites": [
+     "PMID:23076543"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Durante la duodenopancreatectomía, la vena yeyunal se considera el origen más frecuente de hemorragia al disecar el mesoduodeno.",
+    "cites": [
+     "PMID:23076543"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 49 pacientes con cáncer del proceso unciforme del páncreas, el trayecto anterior de la primera vena yeyunal respecto de la arteria mesentérica superior se asoció con una supervivencia a 5 años del 35 %, frente al 70 % con trayecto posterior.",
+    "cites": [
+     "PMID:31570487"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001218": {
+  "sentences": [
+   {
+    "aspect": "irrigation",
+    "es": "En 331 pacientes estudiados con angiotomografía tridimensional, la vena cólica media desembocaba en la vena mesentérica superior en el 62,5 %, en el tronco gastrocólico de Henle en el 29,3 %, en la mesentérica inferior en el 4,8 %, en la esplénica en el 2,7 % y en una vena yeyunal en el 0,6 %.",
+    "cites": [
+     "PMID:27109734"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 300 reconstrucciones vasculares tridimensionales se halló un único tronco de vena cólica media en el 68,7 % de los pacientes, dos en el 30,3 % y tres en el 1,0 %.",
+    "cites": [
+     "PMID:42684439"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En esa misma serie, la vena y la arteria cólica media discurrían separadas en el 67,0 % de los casos, con cruce anterior en el 17,7 % y posterior en el 15,3 %.",
+    "cites": [
+     "PMID:42684439"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En un trasplante hepático con trombosis portal extensa, la vena cólica media se anastomosó a la porta del donante como vía alternativa de aflujo portal.",
+    "cites": [
+     "PMID:9850447"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En tres niños pequeños, la vena cólica media permitió introducir catéteres hasta el tronco portal para infundir hepatocitos.",
+    "cites": [
+     "PMID:18555083"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001245": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "El ano procede embriológicamente del intestino posterior y se subdivide en conducto anal, reborde anal y margen anal.",
+    "cites": [
+     "PMID:39547761"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "El anodermo queda rodeado por los esfínteres anales interno y externo, prolongación distal de la musculatura del suelo pélvico y de la muscular propia del recto.",
+    "cites": [
+     "PMID:39547761"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "La línea dentada o pectínea separa en el conducto anal territorios con revestimiento, irrigación e inervación distintos.",
+    "cites": [
+     "PMID:39547761"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El cáncer anal es infrecuente; en Dinamarca su incidencia, que va en aumento, se situaba en 0,7 por 100 000 mujeres y 0,4 por 100 000 hombres.",
+    "cites": [
+     "PMID:8701522"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001255": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "En el detrusor, los adrenoceptores alfa1 se expresan escasamente y tienen un papel funcional limitado.",
+    "cites": [
+     "PMID:16465187"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "En el cuello vesical, la uretra y la próstata, los adrenoceptores alfa1, sobre todo el subtipo alfa1A, abundan más y contraen el músculo, con lo que aumenta la resistencia a la salida de la orina.",
+    "cites": [
+     "PMID:16465187"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "Los adrenoceptores beta relajan el músculo liso de la vejiga, y en la vejiga humana el subtipo beta3 parece el de mayor peso.",
+    "cites": [
+     "PMID:16465187"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "Las vejigas humanas hipertrofiadas contienen más factor de crecimiento nervioso por miligramo de tejido que las normales.",
+    "cites": [
+     "PMID:1939656"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La melanosis vesical, con manchas negras en la pared visibles en la cistoscopia, es rara: en 2016 sólo se habían comunicado 10 casos.",
+    "cites": [
+     "PMID:26358438"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001257": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "En 40 pacientes parapléjicos o tetrapléjicos sin lesión urotelial visible, la biopsia del trígono reveló en 15 casos hallazgos histológicos relevantes, como cistitis folicular o metaplasia escamosa, que no aparecían en la biopsia de la cúpula.",
+    "cites": [
+     "PMID:8848310"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En un estudio de 40 pacientes con tumores vesicales, la endoscopia virtual por tomografía computarizada permitió ver la estructura del trígono, inaccesible en la cistoscopia real.",
+    "cites": [
+     "PMID:15854346"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001258": {
+  "sentences": []
+ },
+ "UBERON:0001259": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En 100 piezas de cistectomía consecutivas, las fibras musculares de la lámina propia formaban una muscular de la mucosa bien definida en 3 casos, discontinua en 20 y dispersa en haces finos en 71, y faltaban en 6.",
+    "cites": [
+     "PMID:3631381"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "La lámina propia vesical contiene vasos de gran calibre que la recorren a lo largo, y las fibras musculares, cuando existen, se asocian a ellos.",
+    "cites": [
+     "PMID:3631381"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 54 casos de carcinoma urotelial se observaron vasos de pared gruesa en la lámina propia en el 100 % y una capa de músculo liso en el 88,8 %.",
+    "cites": [
+     "PMID:12899220"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Diferenciar la muscular de la mucosa de la muscular propia es relevante en el carcinoma urotelial, porque la profundidad de invasión condiciona el pronóstico y el tratamiento.",
+    "cites": [
+     "PMID:3631381",
+     "PMID:12899220"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001263": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "El acino pancreático es la unidad secretora del páncreas exocrino y produce enzimas digestivas.",
+    "cites": [
+     "PMID:9220418",
+     "PMID:34581719"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En la célula acinar, los orgánulos se reparten en dominios citoplásmicos concretos, estrechamente vinculados a las fases sucesivas de la secreción enzimática.",
+    "cites": [
+     "PMID:9220418"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Tanto la pancreatitis como el cáncer de páncreas pueden tener su origen en los acinos.",
+    "cites": [
+     "PMID:34581719"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001264": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "El páncreas reúne dos componentes: el exocrino, depósito de enzimas digestivas, y los islotes endocrinos, fuente de insulina.",
+    "cites": [
+     "PMID:29769672"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "Los islotes humanos tienen una capacidad regenerativa limitada, de modo que la pérdida de células beta, como en la diabetes tipo 1, exige intervención terapéutica.",
+    "cites": [
+     "PMID:29769672"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "El análisis de ARN de más de 12 000 células pancreáticas de cuatro donantes humanos y dos cepas de ratón las separó en 15 grupos, que incluían todas las células endocrinas, las exocrinas, vasculares, de Schwann, estrelladas e inmunitarias.",
+    "cites": [
+     "PMID:27667365"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En un estudio prospectivo de colangiopancreatografía por resonancia en 202 pacientes, el 97 % presentó variantes ductales normales y el 3 % variantes de páncreas divisum.",
+    "cites": [
+     "PMID:31576611"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El adenocarcinoma ductal de páncreas causa más de 250 000 muertes al año en el mundo y su estroma ocupa la mayor parte de la masa tumoral.",
+    "cites": [
+     "PMID:22896693"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001296": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "A lo largo del embarazo el útero humano multiplica su volumen entre 500 y 1000 veces y su peso por 24, y el miometrio se remodela con hipertrofia e hiperplasia de sus células.",
+    "cites": [
+     "PMID:18003928"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En una revisión de 81 piezas de histerectomía, el 52 % mostraba en el miometrio arterias libres dentro de espacios en hendidura, que las inyecciones de colorante identificaron como canales venosos.",
+    "cites": [
+     "PMID:11812945"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Esa disposición vascular se asoció de forma significativa con antecedentes de menorragia.",
+    "cites": [
+     "PMID:11812945"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "La endotelina 1, que también libera el músculo liso uterino, interviene en la regulación de la contracción miometrial y de la proliferación celular.",
+    "cites": [
+     "PMID:20974279"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En el miometrio humano, gestante y no gestante, existen telocitos, células con prolongaciones muy largas que forman una red tridimensional y podrían modular el ritmo contráctil del músculo liso.",
+    "cites": [
+     "PMID:23404846"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Los leiomiomas son los tumores benignos de músculo liso más comunes del útero.",
+    "cites": [
+     "PMID:31425175"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001298": {
+  "sentences": [
+   {
+    "aspect": "relations",
+    "es": "En 25 piezas cadavéricas, el tendón del psoas mayor dejaba de contactar con la cabeza femoral a unos 14° de flexión de cadera de media y con la eminencia iliopectínea a unos 54°.",
+    "cites": [
+     "PMID:11956980"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "Ese estudio atribuye al músculo una acción por fases: erector lumbar y estabilizador de la cabeza femoral entre 0° y 15° de flexión, y flexor eficaz del miembro inferior entre 45° y 60°.",
+    "cites": [
+     "PMID:11956980"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "Un análisis geométrico basado en 7 cadáveres y en resonancias de 15 varones concluyó que el psoas mayor puede estabilizar la columna lumbar por compresión y flexionarla lateralmente, pero no desrotarla.",
+    "cites": [
+     "PMID:7730392"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 17 personas estudiadas histoquímicamente, las fibras de tipo 1 del psoas mayor eran más gruesas que las de tipo 2, al contrario que en los primates no humanos comparados.",
+    "cites": [
+     "PMID:12050900"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En un cadáver masculino se describió un fascículo aberrante que nacía de un arco tendinoso entre el cuerpo de L4 y la apófisis transversa de L5.",
+    "cites": [
+     "PMID:4096419"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Para extirpar sus tumores, el músculo entero y su irrigación pueden abordarse por vía retroperitoneal, lo que evita sembrar células tumorales en la cavidad peritoneal.",
+    "cites": [
+     "PMID:3035734"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001299": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "El glande humano está revestido por epitelio escamoso estratificado sobre una capa de tejido conectivo denso que equivale a la dermis.",
+    "cites": [
+     "PMID:3697758"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "La capa papilar de esa dermis se continúa con la túnica albugínea del cuerpo esponjoso del glande.",
+    "cites": [
+     "PMID:3697758"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "Predominan las terminaciones nerviosas libres, presentes en casi cada papila dérmica, en una proporción aproximada de 10 a 1 frente a los receptores corpusculares.",
+    "cites": [
+     "PMID:3697758"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "Los corpúsculos genitales se reparten por todo el glande, pero abundan más en la corona y junto al frenillo.",
+    "cites": [
+     "PMID:3697758"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "En cuatro piezas cadavéricas, la densidad de receptores corpusculares del glande varió entre 1 y 3 por campo de 100 aumentos.",
+    "cites": [
+     "PMID:23692408"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Los angioqueratomas del glande son raros: se han descrito en 12 varones, como pápulas de 0,5 a 5 mm a lo largo del borde de la corona.",
+    "cites": [
+     "PMID:29139361"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001300": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "El escroto contiene los testículos y el epidídimo y permite que permanezcan unos grados por debajo de la temperatura central del cuerpo.",
+    "cites": [
+     "PMID:17448228"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Los datos de la criptorquidia y del varicocele indican que un calentamiento escrotal leve puede perjudicar la producción de espermatozoides.",
+    "cites": [
+     "PMID:17448228"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La ecografía con transductor de alta frecuencia, de 7,5 a 10 MHz, se ha convertido en la técnica de imagen preferida para estudiar el escroto.",
+    "cites": [
+     "PMID:12616012"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 221 pacientes con escroto agudo estudiados por ecografía, el signo del remolino del cordón espermático en tiempo real fue el más sensible y específico para la torsión, completa o incompleta.",
+    "cites": [
+     "PMID:16632779"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El síndrome del escroto rojo consiste en un eritema escrotal persistente acompañado de ardor, hiperalgesia y prurito.",
+    "cites": [
+     "PMID:32497688"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001301": {
+  "sentences": [
+   {
+    "aspect": "situation",
+    "es": "El epidídimo es un órgano tubular que comunica el testículo con el conducto deferente.",
+    "cites": [
+     "PMID:32751076",
+     "PMID:33329594"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Se describe dividido en cuatro regiones anatómicas: segmento inicial, cabeza, cuerpo y cola.",
+    "cites": [
+     "PMID:32751076"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "Los espermatozoides salen del testículo inmaduros y adquieren movilidad y capacidad de fecundar durante su tránsito epididimario.",
+    "cites": [
+     "PMID:32751076"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "El órgano también concentra, protege y almacena los espermatozoides.",
+    "cites": [
+     "PMID:32751076"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "En el epidídimo humano, las células epiteliales del cuerpo y de la cola son más ricas en receptores TLR3 y RIG-I y responden con más intensidad a estímulos antivirales que las de la cabeza.",
+    "cites": [
+     "PMID:29339104"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Los leiomiosarcomas primarios del epidídimo son raros, pero constituyen el tipo histológico de sarcoma más común en este órgano.",
+    "cites": [
+     "PMID:22531525"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001305": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "La mayor parte de los folículos ováricos acaba en atresia, una forma de apoptosis sometida a control hormonal.",
+    "cites": [
+     "PMID:9074768"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "Las gonadotropinas, ciertos factores de crecimiento locales y los estrógenos protegen al folículo de la apoptosis, mientras que el TNF-alfa, el ligando de Fas y los andrógenos favorecen la atresia.",
+    "cites": [
+     "PMID:9074768"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La mayoría de los quistes foliculares del ovario no superan los 8 cm en su dimensión mayor, aunque se han comunicado casos de hasta 18,5 cm.",
+    "cites": [
+     "PMID:34166278"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 45 pacientes de fecundación in vitro, la ecografía transvaginal y la transabdominal contaron los mismos folículos en el 78 % de los casos, sin diferencias significativas en su diámetro.",
+    "cites": [
+     "PMID:3049267"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En mujeres mayores con reserva ovárica baja sometidas a fecundación in vitro, el perfil de receptores de FSH y LH de la granulosa de los folículos antrales se invertía respecto del observado en pacientes jóvenes.",
+    "cites": [
+     "PMID:28188844"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001308": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "En 21 controles, el flujo de la arteria ilíaca externa izquierda medido por densitometría fue de 604 ± 104 ml/min en los varones y de 478 ml/min en las mujeres.",
+    "cites": [
+     "PMID:1200242"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En ese estudio, el diámetro de la arteria y el volumen de flujo resultaron mayores en los varones, mientras que la velocidad del flujo fue mayor en las mujeres.",
+    "cites": [
+     "PMID:1200242"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Desde comienzos de los años ochenta se describe en ciclistas de competición una estenosis de la arteria ilíaca externa por endofibrosis, con fibrosis de la íntima y sin lesiones ateroscleróticas ni inflamatorias.",
+    "cites": [
+     "PMID:9339491"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En siete ciclistas operados, la arteriografía mostró un segmento de 5 a 6 cm con estenosis moderada, inferior al 40 % del diámetro, y elongación de la arteria.",
+    "cites": [
+     "PMID:3504340"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 661 pacientes con reparación endovascular de aneurisma aórtico, las ramas de la endoprótesis colocadas en la ilíaca externa se ocluyeron en el 12 % frente al 1 % de las situadas en la ilíaca común, diferencia atribuida probablemente a su mayor tortuosidad y menor calibre.",
+    "cites": [
+     "PMID:22313206"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001309": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "La arteria glútea superior es la rama terminal de mayor tamaño de la arteria ilíaca interna y, en una serie de angiotomografías de 75 pacientes, nacía con más frecuencia de su división posterior.",
+    "cites": [
+     "PMID:37957934"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La ligadura bilateral de la arteria ilíaca interna se utiliza para contener hemorragias obstétricas y ginecológicas masivas cuando fracasan otras medidas.",
+    "cites": [
+     "PMID:34504379"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "Esa ligadura no provoca necrosis de los tejidos porque las grandes anastomosis de la pelvis aportan una circulación colateral abundante.",
+    "cites": [
+     "PMID:34504379"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Una revisión sistemática de 22 estudios halló que la ligadura de la ilíaca interna detenía la hemorragia en fracturas pélvicas inestables con una eficacia del 80 %, sin casos descritos de isquemia de órganos pélvicos.",
+    "cites": [
+     "PMID:39025704"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Al agrupar 634 pacientes con embolización de la ilíaca interna antes de la reparación endovascular de aneurisma, apareció claudicación glútea en el 28 % y disfunción eréctil nueva en el 17 % de los evaluados.",
+    "cites": [
+     "PMID:18338212"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001315": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En una disección bilateral de 30 cadáveres, el pedículo se organizaba en cuatro tipos de rama principal: vertical, horizontal, descendente y penetrante.",
+    "cites": [
+     "PMID:18788698"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En ese estudio, la rama descendente fue la más larga (7,33 ± 1,3 cm) y la horizontal la de mayor calibre (2,7 ± 0,6 mm).",
+    "cites": [
+     "PMID:18788698"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En cadáveres inyectados, se contaron de media cinco perforantes musculocutáneas de la arteria glútea superior, de unos 0,6 mm de diámetro.",
+    "cites": [
+     "PMID:19116539"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En angiotomografías de 71 adultos sanos, la rama profunda superior de la arteria atravesaba la zona ósea segura de entrada de los tornillos sacroilíacos de S1 en el 45,1 %.",
+    "cites": [
+     "PMID:29347992"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El colgajo basado en perforantes de la arteria glútea superior permite reconstruir la mama con piel y grasa de la nalga sin sacrificar el músculo glúteo mayor.",
+    "cites": [
+     "PMID:7761507",
+     "PMID:10474469"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001316": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "El aneurisma primario de la vena ilíaca es una anomalía vascular muy poco común que puede complicarse con rotura, embolia o trombosis.",
+    "cites": [
+     "PMID:26946902"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Los leiomiosarcomas de origen vascular, como los descritos en la vena ilíaca externa, son infrecuentes y proceden del músculo liso de la túnica media de los grandes vasos.",
+    "cites": [
+     "PMID:30500633"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Para tratar el síndrome del cascanueces se ha descrito, como técnica más sencilla, la transposición del extremo distal de la vena ovárica izquierda a la vena ilíaca externa izquierda.",
+    "cites": [
+     "PMID:26946906"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001317": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "Frente a la arteria ilíaca interna, de anatomía poco variable, la vena ilíaca interna presenta una variación considerable según los estudios publicados.",
+    "cites": [
+     "PMID:28669893"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "Con respecto a la arteria homónima, la vena puede situarse por dentro o por fuera.",
+    "cites": [
+     "PMID:28669893"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Con los criterios de normalidad empleados en la bibliografía revisada, el 79,1 % de las personas tiene una anatomía habitual de esta vena.",
+    "cites": [
+     "PMID:28669893"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En disecciones retroperitoneales se hallaron tres variantes raras: en una, ambas venas ilíacas internas formaban un tronco común que terminaba en la ilíaca externa izquierda, y en dos, la vena cruzaba la línea media hasta la ilíaca común del lado opuesto.",
+    "cites": [
+     "PMID:16642280"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La desembocadura de la vena ilíaca interna derecha en una vena ilíaca común izquierda comprimida por la arteria ilíaca común derecha tuvo una prevalencia del 0,9 % en cadáveres y en tomografías de sujetos vivos.",
+    "cites": [
+     "PMID:25956550"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La ecografía de compresión tiene baja sensibilidad para detectar la trombosis aislada de la vena ilíaca interna, que la venografía por resonancia permite estudiar.",
+    "cites": [
+     "PMID:22285351"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001321": {
+  "sentences": [
+   {
+    "aspect": "irrigation",
+    "es": "La vena obturatriz desemboca de forma habitual en la vena ilíaca interna.",
+    "cites": [
+     "PMID:39017716"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En 15 cadáveres femeninos, la vena obturatriz fue el elemento del paquete obturador más cercano a la espina ciática, a una distancia mediana de 3,4 cm (rango de 1,8 a 4,8 cm).",
+    "cites": [
+     "PMID:19766984"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Una revisión sistemática de 44 estudios estimó en un 55 % la incidencia global de vena obturatriz variante, con un calibre medio de 2,98 mm en las estructuras venosas descritas.",
+    "cites": [
+     "PMID:37865385"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Las variantes de la vena obturatriz pueden causar hemorragias importantes en la cirugía pélvica.",
+    "cites": [
+     "PMID:39017716"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En sujetos sudafricanos negros, la anastomosis venosa púbica estaba sustituida por una vena obturatriz única en el 7 % y por el componente superior de una vena obturatriz doble en el 37 %.",
+    "cites": [
+     "PMID:8870790"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001330": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En 13 sujetos sanos, la pared de las venas del plexo pampiniforme presentaba haces longitudinales de músculo liso en la adventicia, de 95 µm de espesor mediano, y células musculares circulares en la media, de 120 µm de espesor mediano.",
+    "cites": [
+     "PMID:18491449"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Fibras musculares de trayecto oblicuo conectan la capa longitudinal externa con la circular interna.",
+    "cites": [
+     "PMID:18491449"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "Según los autores, la acción coordinada de esta musculatura impulsa la sangre en contra de la gravedad hacia la vena renal izquierda y la vena cava inferior.",
+    "cites": [
+     "PMID:18491449"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En una venografía intraoperatoria de 28 varones, el testículo drenaba por la vena espermática interna y la vena pudenda externa, y las venas cremastérica y deferencial actuaban como colaterales menores.",
+    "cites": [
+     "PMID:1569670"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En ese mismo estudio no se observaron comunicaciones entre los sistemas venosos espermáticos derecho e izquierdo en el escroto, el espacio retropúbico ni la pelvis.",
+    "cites": [
+     "PMID:1569670"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El varicocele, dilatación del plexo pampiniforme o del tramo intraescrotal de las venas espermáticas internas, se considera una posible causa de infertilidad masculina.",
+    "cites": [
+     "PMID:18491449"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001335": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "Un atlas celular de la próstata y la uretra prostática de adultos jóvenes, obtenido a partir de unas 98 000 células, ha permitido revisar la anatomía zonal de la glándula.",
+    "cites": [
+     "PMID:30566875"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "La uretra prostática, igual que la próstata, contiene células endocrino-paracrinas de morfología muy variada, tanto de tipo abierto como cerrado.",
+    "cites": [
+     "PMID:6149186"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Los pólipos y las lesiones papilares de la uretra prostática son poco comunes, suelen localizarse en la zona del veru montanum y pueden ser benignos o malignos.",
+    "cites": [
+     "PMID:6888962"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una serie de diez pólipos epiteliales prostáticos de esta porción de la uretra, con una edad media de 44 años, los signos más frecuentes fueron la hematuria, la hemospermia y la disuria.",
+    "cites": [
+     "PMID:2653840"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001342": {
+  "sentences": [
+   {
+    "aspect": "irrigation",
+    "es": "En un estudio de 200 ovarios de fetos, de mujeres en edad reproductiva y de mujeres menopáusicas, el sistema arterial del mesoovario cambiaba a lo largo de la vida.",
+    "cites": [
+     "PMID:3233354"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En casos aislados se han descrito en el mesoovario tumores virilizantes productores de testosterona, como el tumor de células hiliares y el tumor de células esteroideas.",
+    "cites": [
+     "PMID:7129229",
+     "PMID:2068021"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001355": {
+  "sentences": [
+   {
+    "aspect": "irrigation",
+    "es": "La arteria femoral profunda es la mayor rama de la arteria femoral y aporta la irrigación de los músculos del muslo.",
+    "cites": [
+     "PMID:26780216"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Un metaanálisis de 25 estudios con 2502 miembros inferiores identificó seis patrones de origen, el más común de ellos posterior (38,8 %).",
+    "cites": [
+     "PMID:26780216"
+    ]
+   },
+   {
+    "aspect": "situation",
+    "es": "En ese metaanálisis, la distancia media agrupada entre su origen y el punto medio inguinal fue de 41,15 mm.",
+    "cites": [
+     "PMID:26780216"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En la disección de 100 miembros, la arteria nacía a una distancia mediana de 4,4 cm del ligamento inguinal y daba origen a la circunfleja femoral medial en el 63 % de los casos.",
+    "cites": [
+     "PMID:3842043"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "Una rama circunfleja femoral lateral de la vena femoral superficial cruza por delante de la arteria femoral profunda entre 1 y 2 cm por debajo de la bifurcación femoral, lo que ayuda a localizarla en una ingle con cicatrices.",
+    "cites": [
+     "PMID:7404298"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "Cuando se obstruye el eje principal, la angiografía muestra anastomosis entre la femoral profunda y el eje femoropoplíteo a través de las arterias perforantes y de las circunflejas femorales.",
+    "cites": [
+     "PMID:7326450"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001356": {
+  "sentences": [
+   {
+    "aspect": "irrigation",
+    "es": "La arteria circunfleja femoral medial irriga la cabeza del fémur y la fosa trocantérea.",
+    "cites": [
+     "PMID:26966661"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "También aporta sangre a los aductores y a los isquiotibiales, y mediante anastomosis al nervio ciático y a la cabeza y el cuello femorales.",
+    "cites": [
+     "PMID:25883882"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Un metaanálisis de 38 estudios con 4351 miembros inferiores estimó que nace de la femoral profunda en el 64,6 % y de la femoral común en el 32,2 %.",
+    "cites": [
+     "PMID:26966661"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 342 hemipelvis disecadas, se originaba en la femoral común en el 39,3 %, en la femoral profunda en el 57 % y en la femoral superficial en el 2,5 %.",
+    "cites": [
+     "PMID:25883882"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Esta variabilidad debe tenerse en cuenta en las intervenciones ortopédicas de la cadera para no lesionar la circulación de la cabeza femoral.",
+    "cites": [
+     "PMID:26966661"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En siete varones con gangrena de Fournier, el colgajo de perforante de esta arteria, basado en perforantes del músculo grácil, permitió cubrir el escroto.",
+    "cites": [
+     "PMID:21346527"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001373": {
+  "sentences": [
+   {
+    "aspect": "situation",
+    "es": "El sartorio forma parte de la musculatura del compartimento anterior del muslo y es el músculo más largo del cuerpo humano.",
+    "cites": [
+     "PMID:38842079"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Su origen habitual es la espina ilíaca anterosuperior.",
+    "cites": [
+     "PMID:38842079"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En 60 músculos de cadáver, el sartorio recibía entre 5 y 11 vasos procedentes de las arterias circunfleja ilíaca superficial, femoral lateral, femoral profunda, genicular descendente y femoral.",
+    "cites": [
+     "PMID:8908791"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En esa serie, las arterias vecinas apenas se anastomosaban, con conexiones de 0,25 mm de diámetro como máximo, y la irrigación solía ser segmentaria.",
+    "cites": [
+     "PMID:8908791"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En 20 regiones inguinales de cadáveres frescos, la rama profunda de la arteria circunfleja ilíaca superficial perfundía la porción craneal del sartorio hasta 8 cm de la espina ilíaca anterosuperior.",
+    "cites": [
+     "PMID:30531630"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "En 15 músculos teñidos con la técnica de Sihler, la arborización nerviosa intramuscular se concentraba entre el 20 y el 40 % y entre el 60 y el 80 % de la distancia que va de la espina ilíaca anterosuperior al epicóndilo medial del fémur.",
+    "cites": [
+     "PMID:34378107"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001394": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "El aneurisma de la arteria axilar es raro y, aunque suele ser asintomático, puede complicarse con trombosis, embolia distal, compresión o rotura.",
+    "cites": [
+     "PMID:29866229"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La arteria axilar derecha se emplea para perfundir el cerebro en la cirugía del arco aórtico; en 87 autopsias, la configuración del polígono de Willis podría haber hecho insuficiente esa perfusión en el hemisferio izquierdo en el 14 % de los casos con un umbral de 0,5 mm.",
+    "cites": [
+     "PMID:16798193"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 775 reparaciones urgentes de disección aórtica de tipo A, la canulación inicial fue axilar en el 80 % y la mortalidad hospitalaria más baja correspondió a ese acceso (7,3 %).",
+    "cites": [
+     "PMID:30770117"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 113 pacientes con sospecha de arteritis de células gigantes, añadir la ecografía de la arteria axilar a la de la temporal elevó la sensibilidad del 52 % al 71 % sin cambiar la especificidad.",
+    "cites": [
+     "PMID:32240306"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La arteria axilar bífida, una variante asociada a anomalías neurológicas, puede llevar a elegir un bloqueo anestésico distinto del axilar.",
+    "cites": [
+     "PMID:15217666"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001397": {
+  "sentences": [
+   {
+    "aspect": "situation",
+    "es": "La arteria subescapular es la rama más voluminosa y más variable de la arteria axilar.",
+    "cites": [
+     "PMID:8721810"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 60 lados de cadáveres adultos, la arteria estaba presente en el 96,7 %, nacía por fuera del músculo pectoral menor en el 76,7 % y tenía un calibre medio de 5,0 mm y una longitud media de 18,0 mm.",
+    "cites": [
+     "PMID:18335415"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En esa serie, la arteria mantenía relaciones importantes con el nervio axilar en el 69 % de los casos y con el nervio radial en el 82,8 %.",
+    "cites": [
+     "PMID:18335415"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "Sus ramas terminales se dirigían al serrato anterior en el 43,9 %, al dorsal ancho en el 27,6 % y al subescapular en el 23,3 % de los casos estudiados.",
+    "cites": [
+     "PMID:18335415"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Combinando 39 angiotomografías tridimensionales y 22 lados de cadáver, se distinguieron cuatro tipos: S en el 28,2 % de los casos, I en el 7,7 %, P en el 51,3 % y A en el 12,8 %, este último sin arteria subescapular.",
+    "cites": [
+     "PMID:37158665"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Su territorio permite obtener varios colgajos libres a partir de una sola arteria para la reconstrucción maxilofacial, por lo que se recomienda estudiar su morfología antes de la cirugía.",
+    "cites": [
+     "PMID:37158665"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001398": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "En personas sanas, los cambios bruscos de presión transmural en el antebrazo alteraron en menos de 2 s la velocidad media de la sangre en la arteria braquial, que luego volvía a su valor de reposo, lo que indica una respuesta miógena activa.",
+    "cites": [
+     "PMID:12391123"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "En 10 sujetos sanos que pedaleaban con carga sinusoidal, el flujo de la arteria braquial del miembro superior inactivo varió casi en oposición de fase con la carga de trabajo.",
+    "cites": [
+     "PMID:28989117"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El diámetro de la arteria braquial medido por ecografía se usa para valorar la dilatación mediada por flujo y, junto con la presión arterial, la rigidez arterial.",
+    "cites": [
+     "PMID:17354644"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Un metaanálisis de 35 estudios con 17 280 participantes halló que la dilatación mediada por flujo de la arteria braquial predecía los eventos cardiovasculares, con un riesgo relativo ajustado de 0,88 por cada 1 % de aumento.",
+    "cites": [
+     "PMID:26567372"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001400": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "En 80 pacientes asintomáticos con hiperostosis localizada de las costillas posteriores y de las apófisis transversas, los autores plantearon como hipótesis que se debía a la tracción del músculo iliocostal torácico y la consideraron sin importancia clínica.",
+    "cites": [
+     "PMID:2783263"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001401": {
+  "sentences": [
+   {
+    "aspect": "innervation",
+    "es": "En la disección de cinco cadáveres, los ramos mediales de los ramos posteriores de los nervios espinales T12 a L4 discurrían entre el espinoso torácico y el longísimo torácico.",
+    "cites": [
+     "PMID:29231505"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En esa misma disección, los ramos laterales pasaban entre el longísimo torácico y el iliocostal lumbar.",
+    "cites": [
+     "PMID:29231505"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001402": {
+  "sentences": []
+ },
+ "UBERON:0001403": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "El longísimo de la cabeza extiende la cabeza cuando se contrae en ambos lados y la gira cuando lo hace en uno solo.",
+    "cites": [
+     "PMID:32773240"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Su porción craneal contiene un tendón intramuscular y termina insertándose en la apófisis mastoides.",
+    "cites": [
+     "PMID:33459837"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En cadáveres adultos, el tendón de inserción en la mastoides midió de media 17,6 ± 5,7 mm de ancho y 14,7 ± 4,7 mm de largo, y su borde medial quedó a 63,0 ± 7,2 mm de la línea media.",
+    "cites": [
+     "PMID:35155066"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En ese estudio, el seno sigmoideo quedaba centrado por debajo de la inserción mastoidea del músculo, cualquiera que fuese la anchura del tendón.",
+    "cites": [
+     "PMID:35155066"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El tendón intramuscular de su parte craneal se ha propuesto como referencia para inyectar toxina botulínica guiada por ecografía en la distonía cervical.",
+    "cites": [
+     "PMID:33459837"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001404": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "Una revisión sistemática de 71 estudios estimó un diámetro medio de la arteria radial de 2,70 ± 0,15 mm en adultos, con 2,68 ± 0,24 mm en varones y 2,27 ± 0,27 mm en mujeres.",
+    "cites": [
+     "PMID:35169033"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 1540 pacientes estudiados con arteriografía radial retrógrada, el 13,8 % presentaba alguna anomalía: origen alto en el 7,0 %, asa radial completa en el 2,3 % y tortuosidad extrema en el 2,0 %.",
+    "cites": [
+     "PMID:18977799"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "Aunque su anatomía en el antebrazo y la mano es variable, la mayoría de las personas dispone de flujo colateral suficiente hacia la mano si la arteria radial se trombosa.",
+    "cites": [
+     "PMID:19923502"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Es el sitio preferido para la canulación arterial, con una incidencia de complicaciones isquémicas permanentes del 0,09 %.",
+    "cites": [
+     "PMID:19923502"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En esa misma serie de 1540 pacientes, el fracaso del procedimiento coronario transradial fue más frecuente con anatomía anómala que con anatomía normal (14,2 % frente a 0,9 %).",
+    "cites": [
+     "PMID:18977799"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Como injerto para la revascularización coronaria, la arteria radial mostró mejor permeabilidad que la vena safena en varios ensayos aleatorizados.",
+    "cites": [
+     "PMID:29405454"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001405": {
+  "sentences": [
+   {
+    "aspect": "relations",
+    "es": "En la disección de cinco cadáveres, los ramos mediales de los ramos posteriores de los nervios espinales T12 a L4 discurrían entre el espinoso torácico y el longísimo torácico.",
+    "cites": [
+     "PMID:29231505"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001407": {
+  "sentences": []
+ },
+ "UBERON:0001408": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En 24 cadáveres, la inserción del semiespinoso del cuello en la apófisis espinosa de C2 presentó una considerable variación individual en anchura y altura.",
+    "cites": [
+     "PMID:15995430"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "La morfología de esa inserción se correlacionaba con el ángulo de apertura de la apófisis espinosa de C2, que puede medirse antes de operar con tomografía tridimensional.",
+    "cites": [
+     "PMID:15995430"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En la mayoría de los casos, la inserción era más estrecha que los espaciadores de apófisis espinosa empleados habitualmente en la laminoplastia, lo que dificulta reinsertar el músculo.",
+    "cites": [
+     "PMID:15995430"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En el latigazo cervical crónico, la infiltración grasa de los extensores cervicales parece mayor en los músculos más profundos, como el multífido y el semiespinoso del cuello.",
+    "cites": [
+     "PMID:25739843"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 10 mujeres con dolor cervical crónico postraumático, la actividad electromiográfica del semiespinoso del cuello fue menor y menos específica en su dirección que en 10 controles sanos.",
+    "cites": [
+     "PMID:22206690"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001409": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "El semiespinoso de la cabeza extiende la cabeza al contraerse en ambos lados y la rota al hacerlo en uno solo.",
+    "cites": [
+     "PMID:32773240"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "En seis jugadores jóvenes de hockey sobre hielo, el tamaño ecográfico del músculo aumentó a medida que crecía la fuerza de extensión cervical isométrica.",
+    "cites": [
+     "PMID:12173762"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "El nervio occipital mayor sigue un trayecto transmuscular a través del semiespinoso de la cabeza.",
+    "cites": [
+     "PMID:24278663"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una paciente con neuralgia occipital refractaria, el nervio occipital mayor estaba atrapado en su punto de paso por este músculo, y su liberación quirúrgica alivió casi por completo el dolor.",
+    "cites": [
+     "PMID:24278663"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En un estudio de viabilidad en cadáver, dividir longitudinalmente el músculo permitió exponer los puntos de entrada de los tornillos de C1 y C2 para la artrodesis atloaxoidea respetando los músculos intrínsecos de la unión craneocervical.",
+    "cites": [
+     "PMID:30472339"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001437": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "En el deslizamiento de la epífisis femoral proximal, que suele presentarse como dolor de cadera en un niño, la radiografía muestra la epífisis desplazada de su posición normal sobre el cuello del fémur.",
+    "cites": [
+     "PMID:3962834"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La obesidad es un factor de riesgo de este deslizamiento, y se ha descrito una correlación entre el aumento de la obesidad infantil y el de su incidencia.",
+    "cites": [
+     "PMID:23054509"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En los fémures de 2665 esqueletos adultos, el 8 % mostraba una morfología residual de deslizamiento epifisario, asociada a artrosis grave de cadera con más frecuencia que en los controles (38 % frente a 26 %).",
+    "cites": [
+     "PMID:9378734"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 20 pares de tibias de cadáver, el contenido mineral y un índice de resistencia ósea medidos por tomografía periférica en la epífisis distal predijeron el 75 % y el 85 % de la variación de la carga de rotura.",
+    "cites": [
+     "PMID:19147978"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001470": {
+  "sentences": [
+   {
+    "aspect": "function",
+    "es": "Por la forma de sus elementos óseos, la articulación glenohumeral es la de mayor movilidad del cuerpo y, a la vez, una articulación inestable por naturaleza.",
+    "cites": [
+     "PMID:21182115"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "Su alineación depende de estabilizadores de partes blandas, estáticos y dinámicos, entre ellos el rodete glenoideo, los ligamentos glenohumerales y diversos músculos y tendones.",
+    "cites": [
+     "PMID:34509200",
+     "PMID:21182115"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En 36 hombros de cadáver, el músculo subescapular estabilizaba en gran medida la articulación frente a la luxación anterior con el brazo a 0° de abducción.",
+    "cites": [
+     "PMID:7287791"
+    ]
+   },
+   {
+    "aspect": "function",
+    "es": "En ese estudio, a 45° de abducción la estabilidad dependía del subescapular, del ligamento glenohumeral medio y de las fibras anterosuperiores del inferior, y cerca de 90° era el ligamento glenohumeral inferior el que impedía la luxación en rotación externa.",
+    "cites": [
+     "PMID:7287791"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La inestabilidad glenohumeral es más frecuente en dirección anterior y produce patrones lesionales reconocibles en la imagen, como la deformidad de Hill-Sachs y la lesión de Bankart.",
+    "cites": [
+     "PMID:34509200"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En un estudio radiológico, el ángulo crítico del hombro medía de media 33,1° en controles, 38,0° en roturas del manguito rotador y 28,1° en artrosis glenohumeral primaria.",
+    "cites": [
+     "PMID:23814246"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001477": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En 20 cadáveres, el infraespinoso era bipenniforme en todos los especímenes.",
+    "cites": [
+     "PMID:8129093"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 51 hombros de 27 cadáveres japoneses, el músculo se componía de una parte oblicua y otra transversa según la dirección de sus fibras, y la transversa se insertaba en el tendón de la oblicua mediante una fina membrana tendinosa.",
+    "cites": [
+     "PMID:21935693"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "El nervio supraescapular fue la única fuente de inervación del infraespinoso en los 20 cadáveres estudiados, y entraba en la fosa infraespinosa como un tronco único a 22 mm por dentro del borde glenoideo.",
+    "cites": [
+     "PMID:8129093"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "La parte transversa recibía ramos del nervio supraescapular nacidos antes de la escotadura espinoglenoidea.",
+    "cites": [
+     "PMID:21935693"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En tres jugadores de voleibol, el atrapamiento del nervio supraescapular causó una atrofia aislada del infraespinoso.",
+    "cites": [
+     "PMID:7611949"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En ocho niños con parálisis braquial obstétrica, la neurotización del ramo infraespinoso con el nervio accesorio mejoró la rotación externa activa en aducción una media de 47° al año.",
+    "cites": [
+     "PMID:26595018"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001478": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En 28 miembros superiores de 14 cadáveres, la huella de inserción del redondo mayor en la cresta del tubérculo menor medía de media 187 ± 89 mm², con 49,6 ± 7,9 mm de largo y 7,4 ± 2,5 mm de ancho.",
+    "cites": [
+     "PMID:28185265"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "Esa inserción quedaba separada de la del dorsal ancho por 4,4 ± 1,7 mm y tenía aproximadamente el doble de superficie.",
+    "cites": [
+     "PMID:28185265"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "Su pedículo vascular principal procede casi por completo de la arteria circunfleja escapular.",
+    "cites": [
+     "PMID:17312500",
+     "PMID:10472006"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "En 11 hombros de cadáver, el nervio subescapular inferior penetraba en el músculo a 4,1 cm de la escápula.",
+    "cites": [
+     "PMID:10472006"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En un estudio anatómico y de resonancia, la cara anteroinferior de la cabeza humeral se apoyaba sobre el vientre del redondo mayor a partir de 110° de elevación con rotación externa.",
+    "cites": [
+     "PMID:32298921"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En seis pacientes con roturas irreparables del manguito rotador, la transferencia del redondo mayor sustituyendo al infraespinoso elevó la puntuación de Constant-Murley de 40 a 62 de media.",
+    "cites": [
+     "PMID:9814927"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001484": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En el estudio histológico del hombro, la cápsula articular anterior está formada por fibras de colágeno finas y laxas, con abundantes núcleos de fibroblastos intercalados.",
+    "cites": [
+     "PMID:28951280"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En 13 hombros de cadáver, la inserción humeral de la cápsula anterior complementaba la huella del subescapular, con una anchura mínima de 4,2 mm y máxima de 11,1 mm, y ocupaba en el tubérculo menor y la metáfisis más superficie de la descrita hasta entonces.",
+    "cites": [
+     "PMID:28951280"
+    ]
+   },
+   {
+    "aspect": "innervation",
+    "es": "La cinestesia articular requiere receptores capsulares sensibles a distintos estímulos y nervios articulares que transmitan la información.",
+    "cites": [
+     "PMID:7269749"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 52 embriones y fetos humanos, los componentes de la articulación temporomandibular, entre ellos la cápsula medial, se desarrollaban a partir de una masa común de mesénquima, con un periodo crítico entre las semanas 7 y 11 de gestación.",
+    "cites": [
+     "PMID:3467577"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Alrededor de las prótesis articulares, las partículas de desgaste desencadenan en la cápsula neoformada una reacción a cuerpo extraño cuya cicatrización la engrosa y puede reducir la movilidad.",
+    "cites": [
+     "PMID:140168"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001514": {
+  "sentences": [
+   {
+    "aspect": "relations",
+    "es": "En 108 pacientes con fibrilación auricular estudiados por resonancia, la fibrosis de la aurícula izquierda predominaba en la zona contigua a la aorta descendente y aumentaba cuanto menor era la distancia entre ambas.",
+    "cites": [
+     "PMID:33975341"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En la reparación de los aneurismas toracoabdominales, el sacrificio de arterias segmentarias puede alterar de forma irreversible la red arterial de la médula espinal y causar su infarto.",
+    "cites": [
+     "PMID:35772899"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El hematoma intramural y la úlcera aterosclerótica penetrante asientan en la aorta descendente en el 60-70 % de los casos.",
+    "cites": [
+     "PMID:31463208"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 14 pacientes con disección de la aorta descendente, el flujo medio por minuto fue de 1982 ml en la luz verdadera y de 1052 ml en la falsa, según la cuantificación por resonancia.",
+    "cites": [
+     "PMID:11092481"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Las fístulas aortocavas torácicas congénitas, poco frecuentes, suelen comunicar la aorta descendente con los sistemas ácigos y hemiácigos.",
+    "cites": [
+     "PMID:31292677"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001529": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "Un tronco braquiocefálico alto, que puede llegar hasta la glándula tiroides, es una anomalía rara que conviene reconocer para evitar hemorragias graves en procedimientos sobre la tráquea y el cuello.",
+    "cites": [
+     "PMID:17527129"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una paciente sometida a traqueostomía percutánea, el tronco, situado anormalmente alto y oblicuo sobre la tráquea, fue lesionado y causó una hemorragia profusa.",
+    "cites": [
+     "PMID:25723674"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una serie de 104 pacientes con nervio laríngeo inferior no recurrente, todos presentaban ausencia del tronco braquiocefálico y una arteria subclavia aberrante.",
+    "cites": [
+     "PMID:12819946"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La disección aislada del tronco braquiocefálico es excepcional y puede manifestarse como un ictus agudo.",
+    "cites": [
+     "PMID:26315357"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001533": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "La arteria subclavia aberrante, o arteria lusoria, es la malformación congénita del arco aórtico más común en la población general.",
+    "cites": [
+     "PMID:32539083"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 1378 observaciones de arteria lusoria, la forma derecha predominaba en mujeres y la izquierda en varones.",
+    "cites": [
+     "PMID:153045"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El diafragma o membrana de la arteria subclavia es una variante íntima rara de la displasia fibromuscular reconocida como posible causa de ictus de la circulación posterior.",
+    "cites": [
+     "PMID:40952568"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Las guías de la Society for Vascular Surgery sugieren revascularizar de forma sistemática la subclavia izquierda antes de una reparación endovascular torácica electiva que obligue a cubrir su origen, aunque con evidencia de muy baja calidad.",
+    "cites": [
+     "PMID:19878791"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001534": {
+  "sentences": [
+   {
+    "aspect": "clinical",
+    "es": "La arteria subclavia derecha aberrante es la anomalía más frecuente del arco aórtico y aparece en el 0,5-1 % de la población.",
+    "cites": [
+     "PMID:37766474"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "Según distintos estudios, su incidencia en la población normal oscila entre el 0,35 % y el 3,5 %, y cuando no es un hallazgo aislado resulta un marcador ecográfico prenatal útil de trisomía 21.",
+    "cites": [
+     "PMID:35156496"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una revisión de 141 casos, los síntomas más comunes de la arteria derecha aberrante fueron la disfagia (71,2 %), la disnea (18,7 %) y el dolor retroesternal (17,0 %).",
+    "cites": [
+     "PMID:25105156"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En esa revisión, las anomalías vasculares asociadas con más frecuencia fueron el tronco bicarotídeo (19,2 %), el divertículo de Kommerell (14,9 %) y el aneurisma de la propia arteria (12,8 %).",
+    "cites": [
+     "PMID:25105156"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 19 pacientes con dos tomografías separadas unos 29 meses, el diámetro de origen de la arteria derecha aberrante pasó de 16,31 a 16,91 mm de media, un crecimiento lento compatible con una evolución benigna.",
+    "cites": [
+     "PMID:37766474"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001544": {
+  "sentences": [
+   {
+    "aspect": "parts",
+    "es": "En 890 miembros inferiores estudiados con venografía por tomografía, las venas femoral y poplítea presentaban duplicación aislada de la poplítea en el 2 % y de ambas en el 6 %, y unión alta de las venas tibiales en el 83 %.",
+    "cites": [
+     "PMID:21603292"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "En esa serie, el trayecto de estas venas respecto de su arteria acompañante variaba en el 8 % de los miembros, sobre todo por posición medial anómala (7 %).",
+    "cites": [
+     "PMID:21603292"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "El atrapamiento morfológico asintomático de la vena poplítea es frecuente en la población sana (27 %).",
+    "cites": [
+     "PMID:10753270"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En 30 pacientes con insuficiencia venosa crónica grave y atrapamiento poplíteo, la causa fue una anomalía de la cabeza medial del gastrocnemio en el 60 %.",
+    "cites": [
+     "PMID:10753270"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "En una revisión de 120 casos de aneurisma de la vena poplítea, la presentación más frecuente se debió a complicaciones tromboembólicas, a menudo con morfología sacular.",
+    "cites": [
+     "PMID:18166639"
+    ]
+   }
+  ]
+ },
+ "UBERON:0001561": {
+  "sentences": [
+   {
+    "aspect": "situation",
+    "es": "La arteria subcostal corresponde a la duodécima arteria intercostal.",
+    "cites": [
+     "PMID:38541165"
+    ]
+   },
+   {
+    "aspect": "parts",
+    "es": "En 28 colgajos disecados en 14 cadáveres, su perforante estaba presente en todos los casos, con un calibre medio de 2 mm.",
+    "cites": [
+     "PMID:17981523"
+    ]
+   },
+   {
+    "aspect": "relations",
+    "es": "Esa perforante se localizaba de forma constante en el borde lateral del dorsal ancho, entre 1 y 3 cm por debajo del extremo de la última costilla.",
+    "cites": [
+     "PMID:17981523"
+    ]
+   },
+   {
+    "aspect": "irrigation",
+    "es": "En ese estudio, el territorio irrigado por la perforante abarcaba un colgajo de 10 × 14 cm de media, con un pedículo de 10,5 cm hasta el borde de los erectores de la columna.",
+    "cites": [
+     "PMID:17981523"
+    ]
+   },
+   {
+    "aspect": "clinical",
+    "es": "La lesión de la arteria subcostal es una causa rara de hemorragia tras la nefrolitotomía percutánea.",
+    "cites": [
+     "PMID:30124347"
+    ]
+   }
+  ]
+ }
+}
