@@ -1,5 +1,18 @@
 import { isPlatformBrowser } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, PLATFORM_ID, signal, untracked } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  PLATFORM_ID,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, type Subscription } from 'rxjs';
@@ -186,6 +199,9 @@ export class GlossaryAnatomyAtlas {
   });
 
   private structureRequest: Subscription | null = null;
+  private readonly injector = inject(Injector);
+  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
+  private readonly fichaTitulo = viewChild<ElementRef<HTMLElement>>('fichaTitulo');
 
   constructor() {
     // Bajo SSR la pantalla queda inerte (esqueleto de carga): el catálogo y el
@@ -229,9 +245,25 @@ export class GlossaryAnatomyAtlas {
       .structure(id)
       .pipe(map((ficha) => ready(ficha)))
       .subscribe({
-        next: (estado) => this.structureState.set(estado),
+        next: (estado) => {
+          this.structureState.set(estado);
+          // Una ficha recién abierta se ve desde su título y se anuncia:
+          // abrirla desde abajo de la lista femenina dejaba el panel scrolleado
+          // en la lista y la ficha fuera de la vista.
+          afterNextRender(() => this.revealStructure(), { injector: this.injector });
+        },
         error: (error: unknown) => this.structureState.set(errorToViewState(error)),
       });
+  }
+
+  private revealStructure(): void {
+    const titulo = this.fichaTitulo()?.nativeElement;
+    if (titulo === undefined) return;
+    titulo.focus({ preventScroll: true });
+    const panel = this.panel()?.nativeElement;
+    if (panel !== undefined && panel.getBoundingClientRect().top < 0) {
+      panel.scrollIntoView({ block: 'start', behavior: 'auto' });
+    }
   }
 
   private setQuery(params: Record<string, string | null>): void {
