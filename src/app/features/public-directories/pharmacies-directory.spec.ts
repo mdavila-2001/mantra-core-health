@@ -107,8 +107,11 @@ describe('PharmaciesDirectory · la ficha vive dentro del panel', () => {
   it('los enlaces dibujados apuntan al mismo lugar que el modelo', () => {
     const pantalla = fixture.nativeElement as HTMLElement;
     const enlaces = [...pantalla.querySelectorAll<HTMLAnchorElement>('[app-result-card] a')];
+    // Una tarjeta por ficha, contada por su título: además del nombre, cada
+    // tarjeta lleva su acción, que es otro enlace al mismo destino.
+    const titulos = pantalla.querySelectorAll('[app-result-card] .tarjeta-resultado__titulo a');
 
-    expect(enlaces.length).toBe(FICHAS.length);
+    expect(titulos.length).toBe(FICHAS.length);
     for (const enlace of enlaces) {
       // El atributo y no la propiedad: `href` resuelto traería el origen.
       expect(enlace.getAttribute('href')).toMatch(/^\/pharmacies-directory\//u);

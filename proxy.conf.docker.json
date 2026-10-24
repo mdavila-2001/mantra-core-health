@@ -78,7 +78,8 @@
       "/insurance/patients",
       "/insurance/received-claims",
       "/patient-spending",
-      "/promotions/me"
+      "/promotions/me",
+      "/telemetry"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

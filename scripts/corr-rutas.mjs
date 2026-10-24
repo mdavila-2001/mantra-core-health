@@ -15,13 +15,17 @@ const MAPA = 'src/app/core/navigation/navigation.map.ts';
 const ROUTES = 'src/app/app.routes.ts';
 const DESTINO = 'playwright/corr-rutas.json';
 
+// Un checkout con CRLF deja sin entradas al parser del mapa, que busca `{\n`, y el
+// filtro de roles le da al médico las pantallas de farmacia y de aseguradora.
+const readSource = (path) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+
 // Los comentarios guardan rutas históricas para explicar cambios. No son
 // pantallas del mapa vigente y no deben entrar al auditor.
-const fuente = readFileSync(MAPA, 'utf8')
+const fuente = readSource(MAPA)
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/(^|\s)\/\/[^\n]*/gm, '$1')
   .replace(/},[ \t]*\{/g, '},\n  {');
-const routesSource = readFileSync(ROUTES, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/gm, '$1');
+const routesSource = readSource(ROUTES).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/gm, '$1');
 const redirectedRoutes = new Set(
   [...(routesSource.match(/SECCIONES_REDIRIGIDAS[\s\S]*?=\s*\{([\s\S]*?)\n\};/)?.[1] ?? '').matchAll(/^\s*'([^']+)':/gm)].map(([, path]) => `/${path}`),
 );

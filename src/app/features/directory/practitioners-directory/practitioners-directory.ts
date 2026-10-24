@@ -29,7 +29,6 @@ import {
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { inicialesDe } from '../../../shared/text/iniciales';
-import { fotoDeDirectorio } from '../../../shared/utils/foto-de-directorio';
 import { subtituloProfesional } from '../subtitulo-profesional';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
@@ -232,7 +231,11 @@ export class PractitionersDirectory {
     {
       key: PARAM_ESPECIALIDAD,
       label: 'Especialidad',
+      icon: 'stethoscope',
       placeholder: 'Todas las especialidades',
+      // En la columna de facetas, como la categoría de una tienda
+      // (propietario, 23/10/2026).
+      asChips: true,
       options: this.tarjetas().map((tarjeta) => ({
         value: tarjeta.conceptId,
         label: `${tarjeta.nombre} (${tarjeta.cantidad})`,
@@ -660,9 +663,16 @@ function toResultado(
       link: `/directory/${fila.profileId}`,
       fragment: ANCLA_HORARIOS,
     },
+    // Iniciales y no una foto de banco: en el hueco de la foto de perfil, una
+    // persona ajena se lee como la cara del médico. Un lugar admite una imagen
+    // ilustrativa; una persona, no. Cuando la guía resuelva `photoFileId`, su
+    // foto real va acá.
     figureText: inicialesDe(nombre),
-    photoUrl: fotoDeDirectorio('medico', fila.profileId),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
+    // Las reseñas reales, cuando la API las mande en el listado (P61).
+    ...(fila.ratingAverage != null && (fila.ratingCount ?? 0) > 0
+      ? { rating: { average: fila.ratingAverage, count: fila.ratingCount! } }
+      : {}),
     meta,
     seals: sellos,
   };

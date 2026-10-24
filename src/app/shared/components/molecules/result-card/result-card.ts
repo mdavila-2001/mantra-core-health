@@ -1,23 +1,36 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
-import type { SearchResultAction, SearchResultItem, SearchResultRating } from '../search-result/search-result.types';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import type {
+  SearchResultAction,
+  SearchResultItem,
+  SearchResultRating,
+} from '../search-result/search-result.types';
 import { cleanDisplayName } from '../../../utils/clean-display-name';
-import { ratingFallback } from '../../../utils/rating-fallback';
+import { ratingOf } from './rating-of';
 
 /**
  * Un resultado de directorio **en tarjeta de grilla o lista**.
  *
  * Muestra el perfil profesional, centro o entidad con fotografía,
- * nombre higienizado, calificación destacada de pacientes, especialidad,
+ * nombre higienizado, calificación de pacientes cuando existe, especialidad,
  * ubicación y acciones directas.
  */
 @Component({
   selector: 'li[app-result-card]',
-  imports: [AppButtonLink],
+  imports: [AppButtonLink, NavIcon],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
   host: { class: 'tarjeta-resultado', '[class.tarjeta-resultado--lista]': "vista() === 'lista'" },
@@ -50,28 +63,41 @@ export class ResultCard {
     return cleanDisplayName(this.resultado().title);
   });
 
-  /** Calificación de pacientes con fallback realista y determinista. */
-  protected readonly calificacion = computed<SearchResultRating>(() => {
-    const r = this.resultado();
-    if (r.rating && r.rating.count > 0 && r.rating.average > 0) {
-      return r.rating;
-    }
-    const metaScore = (r.meta ?? []).find(
-      (m) => m.iconKey === 'puntuacion' || /reseña/i.test(m.text),
-    );
-    if (metaScore) {
-      const match = metaScore.text.match(/(\d(?:[,.]\d)?)\s*·\s*(\d+)/);
-      if (match) {
-        const average = parseFloat(match[1]!.replace(',', '.'));
-        const count = parseInt(match[2]!, 10);
-        return {
-          average,
-          count,
-          label: average >= 4.8 ? 'Excelente' : 'Muy recomendado',
-        };
-      }
-    }
-    return ratingFallback(r.id || r.title);
+  /** La calificación real, o `null`. Ver {@link ratingOf}. */
+  protected readonly calificacion = computed<SearchResultRating | null>(() =>
+    ratingOf(this.resultado()),
+  );
+
+  /**
+   * Cuánto de las cinco estrellas se rellena, en porcentaje: 3,7 de 5 es el
+   * 74 %. Las estrellas parciales son las de cualquier tienda: se leen de un
+   * vistazo sin tener que leer el número.
+   */
+  protected readonly rellenoDeEstrellas = computed(() => {
+    const nota = this.calificacion();
+    return nota === null ? 0 : Math.min(100, Math.max(0, (nota.average / 5) * 100));
+  });
+
+  /**
+   * La distinción, **sólo para las notas que la merecen**. Antes toda nota por
+   * debajo de 4,8 salía «Muy recomendado», también un 3,7 o un 2,0: un elogio
+   * que las reseñas no dicen.
+   */
+  protected readonly distincion = computed(() => {
+    const nota = this.calificacion();
+    if (nota === null) return null;
+    if (nota.label) return nota.label;
+    if (nota.average >= 4.8) return 'Excelente';
+    if (nota.average >= 4.5) return 'Muy recomendado';
+    return null;
+  });
+
+  /** «4,5 de 5 estrellas, 60 opiniones» o «Sin reseñas todavía», para el lector. */
+  protected readonly textoDeResenas = computed(() => {
+    const nota = this.calificacion();
+    if (nota === null) return 'Sin reseñas todavía';
+    const media = nota.average.toFixed(1).replace('.', ',');
+    return `${media} de 5 estrellas, ${nota.count} ${nota.count === 1 ? 'opinión' : 'opiniones'}`;
   });
 
   /** Si cuenta con sello de verificación activa. */
@@ -92,15 +118,18 @@ export class ResultCard {
     (this.resultado().meta ?? []).slice(0, this.maximoDeMeta()),
   );
 
-  /** Acción de la tarjeta: si no viene explícita pero hay enlace, habilita «Revisar disponibilidad». */
+  /**
+   * Acción de la tarjeta: la que trae el resultado o, si sólo hay enlace,
+   * «Ver ficha». Antes el respaldo era «Revisar disponibilidad», que sólo
+   * tiene sentido en un médico —el directorio de médicos lo declara explícito
+   * con el ancla a sus horarios— y salía también en clínicas, farmacias y
+   * aseguradoras, que no tienen agenda.
+   */
   protected readonly accion = computed<SearchResultAction | undefined>(() => {
     const r = this.resultado();
     if (r.action) return r.action;
     if (r.link) {
-      return {
-        label: 'Revisar disponibilidad',
-        link: r.link,
-      };
+      return { label: 'Ver ficha', link: r.link };
     }
     return undefined;
   });

@@ -27,6 +27,43 @@
     overflow: visible;
 }
 
+/* ---- el latido (`wave`) ---------------------------------------------------- */
+
+/* La barra pasa de riel a trazo: sin fondo hundido, más alta (el latido
+   necesita aire para el pico) y sin recorte, para que la punta asome. El
+   tamaño (`sm`/`md`) sigue mandando sobre el grosor de la punta. */
+:host(.progress--wave) {
+    height: 2rem;
+    overflow: visible;
+    background: transparent;
+    border-radius: 0;
+}
+
+.progress__wave {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+}
+
+.progress__wave-track,
+.progress__wave-fill {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.progress__wave-track {
+    stroke: color-mix(in srgb, var(--_progress-fill) 24%, transparent);
+    stroke-width: 1.5;
+}
+
+.progress__wave-fill {
+    stroke: var(--_progress-fill);
+    stroke-width: 2.25;
+    transition: clip-path var(--dur-fast) var(--ease-standard);
+}
+
 /* ---- tonos --------------------------------------------------------------- */
 
 :host(.progress--success) {

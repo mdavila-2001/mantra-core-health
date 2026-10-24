@@ -2,7 +2,7 @@
   claim="Su salud, en un solo lugar"
   tagline="Lleve su historia clínica, sus citas y sus estudios siempre con usted."
   contentWidth="full"
-  [plainSurface]="true"
+  scene="calm"
 >
   <!-- El alta y la columna que la explica son una sola cosa en pantalla ancha:
        la pregunta a la izquierda y por qué se hace a la derecha. En teléfono la
@@ -13,6 +13,7 @@
     <div class="registro">
       @if (registered()) {
         <div class="registro__header">
+          <app-registration-badge type="patient" celebrate />
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
             ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
@@ -33,6 +34,7 @@
         </button>
       } @else {
         <div class="registro__header">
+          <app-registration-badge type="patient" />
           <h1 class="registro__title">Crear cuenta de paciente</h1>
         </div>
 
@@ -61,10 +63,12 @@
             data-testid="registro-form-paciente"
             [paginas]="paginasPaciente()"
             [form]="formPaciente"
+            [initialStep]="pasoGuardado()"
             label="Crear cuenta"
             submitLabel="Crear cuenta"
             [iconOnlyNav]="true"
-            [compactSteps]="true"
+            [compactSteps]="false"
+            [allowLargePages]="true"
             [pending]="isSubmitting()"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
@@ -474,39 +478,20 @@
               </p>
             </ng-template>
 
-            <!-- El directorio local es una sugerencia con líneas públicas
-                 documentadas. La persona puede seguir usando su ambulancia
-                 privada escribiendo nombre y teléfono abajo. -->
-            <ng-template appCampoPersonalizado="trustedAmbulanceDepartment">
-              <app-form-field
-                label="Departamento"
-                hint="Filtramos los servicios disponibles por departamento."
-                description="Elija dónde necesita una línea local de emergencias."
-              >
-                <app-select
-                  [options]="departamentosAmbulancia"
-                  [value]="formPaciente.controls.trustedAmbulanceDepartment.value"
-                  (valueChange)="elegirDepartamentoAmbulancia($event)"
-                  placeholder="Elija un departamento"
-                  data-testid="registro-ambulancia-departamento"
-                >
-                  <app-nav-icon slot="icon-start" name="pin" class="registro__campo-icono" />
-                </app-select>
-              </app-form-field>
-            </ng-template>
-
+            <!-- El directorio incluye servicios privados y públicos de Bolivia,
+                 filtrados automáticamente por el departamento detectado. -->
             <ng-template appCampoPersonalizado="trustedAmbulanceService">
               <app-form-field
                 label="Servicio de ambulancia"
                 hint="Al elegir uno, se completan nombre y teléfono. Puede editarlos."
-                description="El directorio muestra el alcance y la fuente de cada línea."
+                description="El directorio muestra el alcance y la fuente de cada línea privada o pública."
               >
                 <app-select
                   [options]="opcionesDeAmbulancia()"
                   [value]="formPaciente.controls.trustedAmbulanceService.value"
                   (valueChange)="elegirServicioAmbulancia($event)"
-                  [disabled]="!formPaciente.controls.trustedAmbulanceDepartment.value"
-                  [placeholder]="formPaciente.controls.trustedAmbulanceDepartment.value ? 'Elija un servicio' : 'Elija primero el departamento'"
+                  [searchable]="true"
+                  placeholder="Elija o busque un servicio de ambulancia"
                   data-testid="registro-ambulancia-servicio"
                 >
                   <app-nav-icon slot="icon-start" name="hospital" class="registro__campo-icono" />

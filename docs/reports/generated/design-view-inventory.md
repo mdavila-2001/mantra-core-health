@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -25,6 +25,7 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | cualquier sesión | `/messaging` | `Messaging` | CommunityClient | conectada | ninguna |
 | cualquier sesión | `/directories` | `DirectoriesOverview` | DiagnosticUnitsClient, PublicDirectoryClient | conectada | ninguna |
 | PATIENT · PRACTITIONER | `/directory` | `PractitionersDirectory` | ProfilesClient, TerminologyClient | conectada | ninguna |
+| PATIENT | `/psychological-help` | `PsychologicalHelp` | — | presentacional | verificar que no deba listar |
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/groups` | `Groups` | CommunityClient | conectada | ninguna |
 | cualquier sesión | `/laboratory-directory` | `LaboratoryDirectory` | DiagnosticUnitsClient | conectada | ninguna |
 | cualquier sesión | `/clinics-directory` | `ClinicsDirectory` | InsuranceClient, PublicCatalogClient, PublicDirectoryClient | conectada | ninguna |
@@ -36,7 +37,7 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN | `/interventions` | `Interventions` | ProceduresClient, TerminologyClient | conectada | ninguna |
 | PRACTITIONER · CLINICIAN | `/lab-visits` | `DoctorVisits` | PharmaLabClient | conectada | ninguna |
 | MEDICAL_VISITOR | `/my-visits` | `VisitorVisits` | PharmaLabClient | conectada | ninguna |
-| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary` | `Glossary` | TerminologyClient | conectada | ninguna |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary` | `Glossary` | AnatomyAtlasClient, TerminologyClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/form-builder` | `FormBuilder` | ChartTemplatesClient, FormsClient, ProfilesClient, TerminologyClient | conectada con deuda | resolver: datos de muestra |
 | CLINICIAN · PRACTITIONER | `/my-services` | `MyServices` | SchedulingClient, ServicesCatalogClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/my-quotations` | `QuotationList` | ProfilesClient, QuotationsClient | conectada | ninguna |
@@ -57,14 +58,10 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/terminology` | `TerminologyCatalog` | TerminologyClient | conectada con deuda | resolver: datos de muestra |
 | SUPERADMIN | `/administration/content-packs` | `ContentPacks` | ContentPacksClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/moderation` | `Moderation` | CommunityClient | conectada | ninguna |
-| SECURITY_ADMIN · PLATFORM_ADMIN · GOVERNANCE_ADMIN · DATA_PLATFORM_ADMIN · DPO | `/administration/data-catalog` | `DataCatalog` | DataCatalogClient | conectada | ninguna |
-| PLATFORM_ADMIN · SECURITY_ADMIN · DATA_PLATFORM_ADMIN · MARKETING_MANAGER · DPO | `/administration/web-analytics` | `WebAnalytics` | WebAnalyticsClient | conectada | ninguna |
-| QA_ADMIN · QA_ENGINEER · RELEASE_MANAGER · PLATFORM_ADMIN | `/administration/qa-lab` | `QaLab` | QaLabClient | conectada | ninguna |
-| PLATFORM_ADMIN · SRE · SECURITY_ADMIN · RELEASE_MANAGER · GOVERNANCE_ADMIN | `/administration/operations` | `Operations` | OpsConsoleClient | conectada | ninguna |
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context` | `HealthContextHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/geolocation` | `GeoHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/services-catalog` | `ServicesCatalog` | ServicesCatalogClient | conectada | ninguna |
-| SECURITY_ADMIN · PERIOP_ADMIN · PRACTITIONER | `/administration/medical-organization` | `MedicalOrganization` | MedicalOrganizationClient | conectada | ninguna |
+| SECURITY_ADMIN · PERIOP_ADMIN · PRACTITIONER | `/administration/medical-organization` | `MedicalOrganization` | AccountingClient, MedicalOrganizationClient, PracticeSitesClient, TerminologyClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/medical-laboratory` | `MedicalLaboratory` | DiagnosticUnitsAdminClient, SystemContextClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/clinical-forms` | `ClinicalForms` | ChartTemplatesClient, TerminologyClient | conectada | ninguna |
 | BILLING · FINANCE · CASHIER · PAYMENTS_ADMIN | `/billing` | `Billing` | BillingSimulatedClient | conectada | ninguna |
@@ -72,10 +69,10 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Resumen` | AccountingClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | cualquier sesión | `/my-account/dependents` | `Dependents` | ProfilesClient | conectada | ninguna |
 | cualquier sesión | `/my-account` | `MyAccount` | — | presentacional | verificar que no deba listar |
-| cualquier sesión | `/my-account/appointments` | `Appointments` | SchedulingClient, TerminologyClient | conectada con deuda | resolver: promesa sin pantalla |
+| cualquier sesión | `/my-account/appointments` | `Appointments` | BillingSimulatedClient, SchedulingClient, TerminologyClient | conectada con deuda | resolver: promesa sin pantalla |
 | cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, DiagnosticsClient, FormsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, SchedulingClient, TerminologyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | cualquier sesión | `/my-account/diagnostic-results` | `DiagnosticResults` | DiagnosticsClient, FilesClient, TerminologyClient | conectada | ninguna |
-| cualquier sesión | `/my-account/diagnostic-orders` | `DiagnosticOrders` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/my-account/diagnostic-orders` | `DiagnosticOrders` | CenterScheduleClient, DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/cotizaciones` | `Cotizaciones` | DiagnosticUnitsClient, PharmacyClient, ProfilesClient, ServicesCatalogClient | conectada | ninguna |
 | cualquier sesión | `/my-account/questionnaires` | `Questionnaires` | ClinicalClient, SurveysClient | conectada | ninguna |
 | cualquier sesión | `/settings` | `Settings` | — | presentacional | verificar que no deba listar |
@@ -104,6 +101,7 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | cualquier sesión | `/laboratorio/cola` | `Diagnostics` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/administration/laboratory-results` | `LaboratoryResults` | LabPortalClient | conectada | ninguna |
 | cualquier sesión | `/administration/laboratory-prices` | `LaboratoryPrices` | LabPortalClient | conectada | ninguna |
+| cualquier sesión | `/administration/center-schedule` | `CenterSchedulePage` | CenterScheduleClient | conectada | ninguna |
 | cualquier sesión | `/administration/laboratory-branches` | `OrganizationBranches` | DirectoryClient | conectada | ninguna |
 
 ## Pantallas hijas y de operación
@@ -112,9 +110,8 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 |---|---|---|---|---|
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/assets-liabilities` | `AssetsLiabilities` | AccountingClient, AssetsLiabilitiesClient | conectada |
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/cockpit` | `Cockpit` | AccountingClient | conectada |
-| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/libros` | `Accounting` | AccountingClient, SimpleAccountingClient | conectada con deuda |
+| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/libros` | `Accounting` | AccountingClient, BillingSimulatedClient, SimpleAccountingClient | conectada con deuda |
 | SECURITY_ADMIN | `/administration/brokers/:brokerId` | `BrokerDetail` | InsuranceClient | conectada |
-| SECURITY_ADMIN · PLATFORM_ADMIN · GOVERNANCE_ADMIN · DATA_PLATFORM_ADMIN · DPO | `/administration/data-catalog/:objectId` | `CatalogObjectDetail` | DataCatalogClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/assignments/edit` | `OrgAssignmentUpdate` | DelegatedAccessClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/assignments/new` | `OrgAssignmentForm` | DelegatedAccessClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/delegations/grants/new` | `GrantForm` | DelegatedAccessClient | conectada |
@@ -189,13 +186,12 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/patients/merge` | `PatientMerge` | ProfilesClient | conectada |
 | SECURITY_ADMIN | `/administration/patients/new` | `PatientNew` | ProfilesClient | conectada |
 | cualquier sesión | `/administration/pharmacy-orders/:orderId` | `InboxOrder` | PharmacyOrdersClient, PharmacyClient | conectada |
-| QA_ADMIN · QA_ENGINEER · RELEASE_MANAGER · PLATFORM_ADMIN | `/administration/qa-lab/plans/:planId` | `QaPlanDetail` | QaLabClient | conectada |
 | SECURITY_ADMIN | `/administration/services-catalog/import` | `ProcedureImport` | ServicesCatalogClient | conectada |
 | SECURITY_ADMIN | `/administration/terminology/import` | `VersionImport` | TerminologyClient | conectada con deuda |
 | cualquier sesión | `/clinics-directory/:slug` | `ClinicDetail` | PublicCatalogClient | conectada |
-| PATIENT · PRACTITIONER | `/directory/:profileId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
-| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/:conceptId` | `GlossaryTerm` | TerminologyClient | conectada |
-| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/network` | `GlossaryNetwork` | TerminologyClient | conectada |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/:conceptId` | `GlossaryTerm` | AnatomyAtlasClient, TerminologyClient | conectada |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/anatomy-atlas` | `GlossaryAnatomyAtlas` | AnatomyAtlasClient, TerminologyClient | conectada |
+| PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/network` | `GlossaryNetwork` | AnatomyAtlasClient, TerminologyClient | conectada |
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/groups/:groupId` | `GroupDetail` | CommunityClient | conectada |
 | cualquier sesión | `/insurers-directory/:slug` | `InsurerDetail` | InsuranceClient | conectada |
 | cualquier sesión | `/laboratory-directory/:unitId` | `LaboratoryDetail` | DiagnosticUnitsClient | conectada |
@@ -205,8 +201,9 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | cualquier sesión | `/my-account/access-requests` | `AccessRequests` | AuthzClient, ProfilesClient | conectada |
 | cualquier sesión | `/my-account/appointments/book/:slotId` | `BookingNew` | ProfilesClient, SchedulingClient | conectada |
 | cualquier sesión | `/my-account/articles` | `MedicalArticles` | CommunityClient, FilesClient | conectada |
+| cualquier sesión | `/my-account/diagnostic-orders/:orderId/book` | `OrderBooking` | CenterScheduleClient | conectada |
 | cualquier sesión | `/my-account/edit` | `PractitionerProfileEdit` | FilesClient, LogoDelConsultorioClient, FirmaYSelloClient, ProfilesClient, TerminologyClient | conectada |
-| cualquier sesión | `/my-account/identity/cases/:caseId` | `VerificationCaseDetail` | IdentityClient | conectada |
+| cualquier sesión | `/my-account/identity/cases/:caseId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
 | cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, TerminologyClient | conectada con deuda |
 | PATIENT | `/my-account/pharmacy-orders/:orderId` | `OrderDetail` | NotificationsClient, PharmacyOrdersClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId/invoice` | `OrderInvoice` | PharmacyOrdersClient | conectada con deuda |
@@ -226,6 +223,9 @@ Carril 01. 85 secciones del registro, 116 pantallas hijas o de operación y 126 
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/book/:slotId` | `BookingNew` | ProfilesClient, SchedulingClient | conectada |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/edit` | `AgendaCreate` | SchedulingClient | conectada |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/new` | `AgendaCreate` | SchedulingClient | conectada |
+| cualquier sesión | `/superadmin/data-catalog/:objectId` | `CatalogObjectDetail` | DataCatalogClient | conectada |
+| cualquier sesión | `/superadmin/flows/:flowId` | `FlowDetailPage` | FlowsClient | conectada |
+| cualquier sesión | `/superadmin/qa-lab/plans/:planId` | `QaPlanDetail` | QaLabClient | conectada |
 
 ## Vistas del diseñador portadas desde la bóveda
 
@@ -364,8 +364,8 @@ Las 126 pantallas de `features/alovida/`, generadas por `scripts/port-vistas-alo
 
 | Estado | Pantallas |
 |---|---|
-| conectada | 177 |
+| conectada | 176 |
 | maqueta portada | 119 |
 | conectada con deuda | 19 |
-| presentacional | 10 |
+| presentacional | 11 |
 | sin pantalla | 2 |

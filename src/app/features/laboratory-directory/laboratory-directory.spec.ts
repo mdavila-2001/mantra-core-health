@@ -167,37 +167,59 @@ describe('LaboratoryDirectory', () => {
       const raiz = fixture.nativeElement as HTMLElement;
       expect(raiz.querySelector('[data-testid="portada-categorias"]')).toBeNull();
       expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(2);
+      // Los grupos son la faceta «Categoría» de la columna (marketplace).
       expect(
-        [...raiz.querySelectorAll('.directorio__rotulo')].map((rotulo) =>
-          rotulo.textContent?.replace(/\d+/g, '').trim(),
-        ),
+        [...raiz.querySelectorAll('.mercado__opcion-texto')]
+          .map((rotulo) => rotulo.textContent?.trim())
+          .filter((rotulo) => rotulo !== 'Ver todo'),
       ).toEqual(['Imagenología diagnóstica', 'Laboratorio clínico']);
     });
   });
 
-  describe('the Bolivia map as a filter, like clinics and pharmacies', () => {
+  // Sin mapa desde el 23/10/2026 (propietario): el departamento es una
+  // faceta de la columna, con cuántos centros tiene cada uno.
+  describe('the department as a facet, in place of the Bolivia map', () => {
     const EN_LA_PAZ = { ...LAB, cities: ['La Paz'] };
     const EN_SANTA_CRUZ = { ...IMAGING, cities: ['Santa Cruz de la Sierra'] };
 
-    function mapa(): HTMLElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector('app-department-map');
+    function opcionesDeDepartamento(): readonly HTMLButtonElement[] {
+      const pantalla = fixture.nativeElement as HTMLElement;
+      const grupo = [...pantalla.querySelectorAll<HTMLElement>('[role="group"]')].find(
+        (candidato) =>
+          candidato.querySelector('.filter-bar__faceta-rotulo')?.textContent?.trim() ===
+          'Departamento',
+      );
+      return grupo === undefined
+        ? []
+        : [...grupo.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-opcion')];
     }
 
-    it('draws the map when the centres carry their cities', () => {
+    it('offers each department with its count when the centres carry their cities', () => {
+      parametros.next({ kind: 'LABORATORY' });
       mount();
       responder([EN_LA_PAZ, EN_SANTA_CRUZ]);
       fixture.detectChanges();
 
-      expect(mapa()).not.toBeNull();
+      expect((fixture.nativeElement as HTMLElement).querySelector('app-department-map')).toBeNull();
+      // El nombre y la cantidad van en piezas separadas: la cantidad es una
+      // pastilla a la derecha.
+      const leidas = opcionesDeDepartamento().map(
+        (opcion) =>
+          `${opcion.querySelector('.filter-bar__faceta-texto')?.textContent?.trim()} (${opcion
+            .querySelector('.filter-bar__faceta-cantidad')
+            ?.textContent?.trim()})`,
+      );
+      expect(leidas).toEqual(expect.arrayContaining(['La Paz (1)', 'Santa Cruz (1)']));
     });
 
-    it('does not draw a map that could not filter anything', () => {
+    it('does not offer a department facet that could not filter anything', () => {
       // La búsqueda de la API todavía no manda `cities`.
+      parametros.next({ kind: 'LABORATORY' });
       mount();
       responder([LAB, IMAGING]);
       fixture.detectChanges();
 
-      expect(mapa()).toBeNull();
+      expect(opcionesDeDepartamento()).toEqual([]);
     });
 
     it('keeps only the centres with a site in the chosen department', () => {
@@ -212,11 +234,6 @@ describe('LaboratoryDirectory', () => {
       expect(groups().flatMap((grupo) => grupo.resultados.map((r) => r.title))).toEqual([
         'Imagen Diagnóstica',
       ]);
-      expect(
-        (fixture.nativeElement as HTMLElement)
-          .querySelector('[data-testid="laboratorios-mapa-resumen"]')
-          ?.textContent?.trim(),
-      ).toBe('1 en Santa Cruz. Toque otra vez el departamento para ver todo el país.');
     });
 
     it('says so when the chosen department has no centres', () => {

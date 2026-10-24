@@ -45,4 +45,15 @@ describe('temas', () => {
     expect(fotoDeVertical('/laboratory-directory')).toContain('/laboratorio-');
     expect(fotoDeVertical('/directory')).toContain('/medico-');
   });
+
+  it('las cinco puertas de la portada llevan fotos distintas (22/10/2026)', () => {
+    const rutas = [
+      'directory',
+      'laboratory-directory',
+      'clinics-directory',
+      'pharmacies-directory',
+      'insurers-directory',
+    ];
+    expect(new Set(rutas.map(fotoDeVertical)).size).toBe(rutas.length);
+  });
 });

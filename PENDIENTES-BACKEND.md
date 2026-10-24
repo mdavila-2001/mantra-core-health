@@ -2545,3 +2545,19 @@ reintento; visor) y `features/laboratory/summary/`.
 > **Qué hay en el front (sólo simulador):** `core/mock/handlers/centros.handlers.ts`, cuenta
 > `imagen@alovida.mock`. Los precios son los de ejemplo del catálogo y son iguales entre centros.
 
+
+## P61 · Las reseñas en el listado de médicos — 23/10/2026
+
+> **Qué pide el front.** El propietario quiere las reseñas en **cada** tarjeta del directorio
+> (marketplace, #1159). Farmacias, clínicas, aseguradoras y laboratorios ya las traen
+> (`ratingAverage`/`ratingCount` de la búsqueda pública y `rating`/`ratingCount` de
+> `/diagnostic-units/search`). El listado de médicos (`GET /profiles/practitioners`) **no**: la
+> nota sólo viaja en la ficha.
+>
+> **Contrato esperado:** `PractitionerListItem` suma `ratingAverage: number | null` y
+> `ratingCount: number`, del mismo agregado que ya sirve `community-reviews-read.service`
+> (`null`/`0` sin reseñas publicadas). Ya están declarados como opcionales en
+> `profiles.types.ts`, y la tarjeta los usa en cuanto lleguen.
+>
+> **Mientras tanto:** la tarjeta del médico dice «Sin reseñas todavía» con las estrellas vacías.
+> No se inventa una nota.

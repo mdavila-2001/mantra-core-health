@@ -1,5 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of, type OperatorFunction } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -17,7 +24,15 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+import { TutorialEngine } from '../../../core/tutorials/tutorial.engine';
+import { TutorialProgressStore } from '../../../core/tutorials/tutorial-progress.store';
+import { TutorialRegistry } from '../../../core/tutorials/tutorial.registry';
+import { PATIENT_WELCOME_ID } from '../../../core/tutorials/definitions';
+import { FirstStepsCard } from './first-steps/first-steps-card';
+import { FirstStepsStore } from './first-steps/first-steps.store';
+import { greetingFor, firstNameOf } from './patient-home.copy';
+import { PatientTipCard } from './patient-tip/patient-tip-card';
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
 import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.routes';
 import { SymptomCheck } from '../../symptom-check/symptom-check';
@@ -98,11 +113,13 @@ const SIN_AGENDA: DondeYConQuien = { profesional: '', lugar: '' };
     AppButtonLink,
     Card,
     DatePipe,
+    FirstStepsCard,
     NavIcon,
-    PageHeader,
     PatientCampaignsWidget,
+    PatientTipCard,
     RouterLink,
     SymptomCheck,
+    TutorialTarget,
   ],
   templateUrl: './patient-home.html',
   styleUrl: './patient-home.css',
@@ -116,8 +133,36 @@ export class PatientHome {
   protected readonly misTurnos = MIS_TURNOS_ROUTE;
   protected readonly miHistoria = MI_HISTORIA_ROUTE;
 
+  private readonly tutorialEngine = inject(TutorialEngine);
+  private readonly tutorialRegistry = inject(TutorialRegistry);
+  private readonly tutorialProgress = inject(TutorialProgressStore);
+
   /** El nombre con el que saludar. Vacío si el token no lo trae. */
   protected readonly nombre = computed(() => this.auth.displayName() ?? '');
+
+  /** Sólo los nombres, sin apellidos: «Hola, Ana Lucía» se siente cercano; el nombre completo, un trámite. */
+  protected readonly nombreDePila = computed(() => firstNameOf(this.nombre()));
+
+  /**
+   * «Buenos días», «Buenas tardes» o «Buenas noches». Se resuelve en el
+   * navegador después del primer dibujo: el servidor no conoce la hora de quien
+   * mira, y decidirla allá sería un saludo equivocado que además no hidrata.
+   */
+  protected readonly saludo = signal('Hola');
+
+  /** La fecha de hoy, en palabras. Igual que el saludo: la del navegador. */
+  protected readonly hoy = signal<Date | null>(null);
+
+
+  /** Los primeros pasos: la tarjeta se va cuando la persona la cierra completa. */
+  protected readonly firstSteps = inject(FirstStepsStore);
+
+  /** Si ya hizo el recorrido guiado: decide si se lo ofrecemos con un botón grande. */
+  protected readonly recorridoHecho = computed(() => {
+    this.tutorialProgress.all();
+    const tutorial = this.tutorialRegistry.find(PATIENT_WELCOME_ID);
+    return tutorial !== null && this.tutorialProgress.statusOf(tutorial) === 'completado';
+  });
 
   /** Perfil del paciente en sesión: lo necesita el widget de beneficios del seguro. */
   protected readonly profileId = this.auth.patientProfileId;
@@ -183,6 +228,16 @@ export class PatientHome {
 
   constructor() {
     this.cargar();
+    afterNextRender(() => {
+      const ahora = new Date();
+      this.saludo.set(greetingFor(ahora));
+      this.hoy.set(ahora);
+    });
+  }
+
+  /** Abre el recorrido guiado del paciente. */
+  protected empezarRecorrido(): void {
+    void this.tutorialEngine.start(PATIENT_WELCOME_ID);
   }
 
   /**
@@ -324,3 +379,4 @@ function ultimaFecha(historia: ClinicalSummary | null, que: 'receta' | 'atencion
   if (validas.length === 0) return null;
   return validas.reduce((mayor, fecha) => (fecha.getTime() > mayor.getTime() ? fecha : mayor));
 }
+

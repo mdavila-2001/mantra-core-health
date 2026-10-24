@@ -1,0 +1,678 @@
+{
+ "UBERON:0000056": {
+  "labelEs": "uréter",
+  "definitionEs": "Conducto muscular que impulsa la orina desde los riñones hasta la vejiga urinaria, u órganos relacionados."
+ },
+ "UBERON:0001222": {
+  "labelEs": "uréter derecho",
+  "definitionEs": "Uréter que forma parte del lado derecho del organismo."
+ },
+ "UBERON:0001223": {
+  "labelEs": "uréter izquierdo",
+  "definitionEs": "Uréter que forma parte del lado izquierdo del organismo."
+ },
+ "UBERON:0001252": {
+  "labelEs": "adventicia del uréter",
+  "definitionEs": "Adventicia que forma parte de un uréter."
+ },
+ "UBERON:0001253": {
+  "labelEs": "lámina propia del uréter",
+  "definitionEs": "Lámina propia que forma parte de un uréter."
+ },
+ "UBERON:0001254": {
+  "labelEs": "urotelio del uréter",
+  "definitionEs": "Epitelio luminal del tubo que conduce la orina desde la pelvis renal hasta la vejiga."
+ },
+ "UBERON:0001269": {
+  "labelEs": "acetábulo",
+  "definitionEs": "El acetábulo es una superficie cóncava de la pelvis. La cabeza del fémur se encuentra con la pelvis en el acetábulo, formando la articulación de la cadera. Tres huesos del coxal (hueso de la cadera) se unen para formar el acetábulo. El isquion aporta algo más de dos quintos de la estructura y proporciona los límites inferior y lateral del acetábulo. El ilion forma el límite superior y aporta algo menos de dos quintos de la estructura del acetábulo. El resto lo forma el pubis, cerca de la línea media. Está delimitado por un reborde prominente e irregular, grueso y fuerte en su parte superior, que sirve de inserción al labrum acetabular, el cual reduce su abertura y profundiza la superficie para la formación de la articulación de la cadera. En la parte inferior del acetábulo se encuentra la escotadura acetabular, que se continúa con una depresión circular, la fosa acetabular, en el fondo de la cavidad del acetábulo. El resto del acetábulo está formado por una superficie curva en forma de media luna, la superficie semilunar, donde se articula con la cabeza del fémur. Su homólogo en la cintura escapular es la cavidad glenoidea."
+ },
+ "UBERON:0001270": {
+  "labelEs": "pelvis ósea",
+  "definitionEs": "Anillo óseo formado por el sacro y las primeras vértebras coccígeas como techo, el pubis y los isquiones como suelo, y los iliones y la porción acetabular de los isquiones como paredes."
+ },
+ "UBERON:0001271": {
+  "labelEs": "región de la cintura pélvica",
+  "definitionEs": "Subdivisión del organismo que incluye el esqueleto de la cintura pélvica y los tejidos blandos asociados. Obsérvese que incluye tanto los elementos esqueléticos como los tejidos asociados (tegumento, músculo, etc.). Ejemplos: solo existen dos instancias en un organismo, las regiones de la cintura pélvica derecha e izquierda."
+ },
+ "UBERON:0001272": {
+  "labelEs": "hueso coxal",
+  "definitionEs": "Hueso fusionado constituido por el ilion, el isquion y el pubis. Junto con el sacro y el cóccix, compone la pelvis."
+ },
+ "UBERON:0001273": {
+  "labelEs": "ilion",
+  "definitionEs": "Hueso endocondral par que es el más dorsal de los huesos pélvicos y que ofrece en su superficie principal áreas de inserción para los músculos glúteos."
+ },
+ "UBERON:0001274": {
+  "labelEs": "isquion",
+  "definitionEs": "Hueso endocondral par que forma la parte posterior de la pelvis y se articula con el pubis y el ilion."
+ },
+ "UBERON:0001275": {
+  "labelEs": "pubis",
+  "definitionEs": "Hueso endocondral par que constituye la región anteroventral de la cintura pélvica tripartita y forma parte del borde ventral del acetábulo. Lugar de origen de muchos músculos proximales del miembro posterior. [PHENOSCAPE:ad]"
+ },
+ "UBERON:0001302": {
+  "labelEs": "trompa uterina derecha",
+  "definitionEs": "Trompa uterina que forma parte del lado derecho del organismo."
+ },
+ "UBERON:0001303": {
+  "labelEs": "trompa uterina izquierda",
+  "definitionEs": "Trompa uterina que forma parte del lado izquierdo del organismo."
+ },
+ "UBERON:0001325": {
+  "labelEs": "músculo de la pelvis",
+  "definitionEs": "Músculo (órgano) que forma parte de la pelvis. Ejemplos: elevador del ano."
+ },
+ "UBERON:0001326": {
+  "labelEs": "músculo elevador del ano",
+  "definitionEs": "El elevador del ano es un músculo ancho y delgado, situado en el lado de la pelvis. Se inserta en la superficie interna de la pared lateral de la pelvis menor y se une con su homólogo del lado opuesto para formar la mayor parte del suelo de la cavidad pélvica. Sostiene las vísceras de la cavidad pélvica y rodea las diversas estructuras que lo atraviesan. Junto con el músculo coccígeo, forma el diafragma pélvico."
+ },
+ "UBERON:0001327": {
+  "labelEs": "músculo coccígeo",
+  "definitionEs": "El coccígeo es un músculo de la pared pélvica (es decir, periférico al suelo pélvico), situado detrás del elevador del ano y delante del ligamento sacroespinoso. Es un plano triangular de fibras musculares y tendinosas que se origina por su vértice en la espina del isquion y el ligamento sacroespinoso, y se inserta por su base en el borde del cóccix y en el lado de la pieza más inferior del sacro. Ayuda al elevador del ano y al piriforme a cerrar la parte posterior de la abertura inferior de la pelvis."
+ },
+ "UBERON:0001339": {
+  "labelEs": "músculo isquiocavernoso",
+  "definitionEs": "El músculo isquiocavernoso es un músculo situado justo por debajo de la superficie del periné, presente tanto en hombres como en mujeres."
+ },
+ "UBERON:0001357": {
+  "labelEs": "arteria rectal inferior",
+  "definitionEs": "La arteria rectal inferior (arteria hemorroidal inferior) es una arteria que irriga la mitad inferior del conducto anal."
+ },
+ "UBERON:0001365": {
+  "labelEs": "articulación sacroilíaca",
+  "definitionEs": "Articulación de la pelvis ósea entre el sacro y el ilion de la pelvis, que están unidos por ligamentos fuertes."
+ },
+ "UBERON:0001367": {
+  "labelEs": "músculo esfínter externo del ano",
+  "definitionEs": "El esfínter externo del ano es una lámina plana de fibras musculares, de forma elíptica e íntimamente adherido al tegumento que rodea el margen del ano."
+ },
+ "UBERON:0001368": {
+  "labelEs": "músculo obturador externo",
+  "definitionEs": "Músculo aductor que se inserta en el fémur y en la pelvis. En los seres humanos, el músculo obturador externo es un músculo plano y triangular que cubre la superficie externa de la pared anterior de la pelvis. A veces se considera parte del compartimento medial del muslo y a veces parte de la región glútea."
+ },
+ "UBERON:0001369": {
+  "labelEs": "músculo ilíaco",
+  "definitionEs": "El ilíaco es un músculo plano y triangular que ocupa la fosa ilíaca."
+ },
+ "UBERON:0001370": {
+  "labelEs": "músculo glúteo mayor",
+  "definitionEs": "El más grande y superficial de los tres músculos glúteos."
+ },
+ "UBERON:0001371": {
+  "labelEs": "músculo glúteo medio",
+  "definitionEs": "Uno de los tres músculos glúteos; es un músculo ancho, grueso y radiado, situado en la superficie externa de la pelvis. Su tercio posterior está cubierto por el glúteo mayor y sus dos tercios anteriores por la aponeurosis glútea, que lo separa de la fascia superficial y del tegumento."
+ },
+ "UBERON:0001376": {
+  "labelEs": "músculo tensor de la fascia lata",
+  "definitionEs": "El tensor de la fascia lata es un músculo del muslo."
+ },
+ "UBERON:0001415": {
+  "labelEs": "piel de la pelvis",
+  "definitionEs": "Zona de piel que forma parte de una pelvis."
+ },
+ "UBERON:0001486": {
+  "labelEs": "articulación de la cadera",
+  "definitionEs": "Articulación sinovial que conecta el fémur con el acetábulo del hueso coxal."
+ },
+ "UBERON:0001497": {
+  "labelEs": "músculo de la cintura pélvica",
+  "definitionEs": "Cualquier órgano muscular que forma parte de una cintura pélvica."
+ },
+ "UBERON:0002000": {
+  "labelEs": "músculo glúteo",
+  "definitionEs": "Uno de los músculos que forman las nalgas: el músculo glúteo mayor, el músculo glúteo medio y el músculo glúteo menor."
+ },
+ "UBERON:0002355": {
+  "labelEs": "región pélvica del tronco",
+  "definitionEs": "Segmento inferior del tronco, inferoposterior al abdomen propiamente dicho, en la zona de transición entre el tronco y los miembros inferiores."
+ },
+ "UBERON:0002356": {
+  "labelEs": "periné",
+  "definitionEs": "Subdivisión del tronco propiamente dicho, delimitada de la pelvis por la superficie inferior del diafragma pélvico y de los miembros inferiores por las líneas perineofemorales; junto con el tórax, el abdomen y la pelvis, constituye el tronco."
+ },
+ "UBERON:0002379": {
+  "labelEs": "músculo del periné",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un periné."
+ },
+ "UBERON:0002528": {
+  "labelEs": "nódulo linfático sacro",
+  "definitionEs": "Nódulo linfático situado en la región sacra."
+ },
+ "UBERON:0003699": {
+  "labelEs": "sínfisis del pubis",
+  "definitionEs": "Articulación fibrocartilaginosa firme situada en el plano medio entre las dos superficies opuestas de los huesos pubianos, que están unidas por un disco interpúbico de fibrocartílago, así como por los ligamentos púbico superior y arqueado del pubis."
+ },
+ "UBERON:0003889": {
+  "labelEs": "trompa uterina",
+  "definitionEs": "Sección inicial del oviducto por la que los óvulos pasan desde el ovario hasta el útero."
+ },
+ "UBERON:0003984": {
+  "labelEs": "infundíbulo de la trompa uterina",
+  "definitionEs": "Expansión en forma de embudo del extremo abdominal de la trompa uterina."
+ },
+ "UBERON:0004470": {
+  "labelEs": "musculatura de la cintura pélvica",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de una cintura pélvica."
+ },
+ "UBERON:0004486": {
+  "labelEs": "musculatura del periné",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un periné."
+ },
+ "UBERON:0004496": {
+  "labelEs": "tejido muscular esquelético del ilíaco",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un músculo ilíaco."
+ },
+ "UBERON:0004497": {
+  "labelEs": "tejido muscular esquelético del glúteo mayor",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un glúteo mayor."
+ },
+ "UBERON:0004519": {
+  "labelEs": "músculo del triángulo anal",
+  "definitionEs": "Cualquier órgano muscular que forma parte de la porción anal del periné."
+ },
+ "UBERON:0004980": {
+  "labelEs": "mucosa del uréter",
+  "definitionEs": "Mucosa que forma parte de un uréter."
+ },
+ "UBERON:0005004": {
+  "labelEs": "mucosa del uréter derecho",
+  "definitionEs": "Mucosa que forma parte de un uréter derecho."
+ },
+ "UBERON:0005005": {
+  "labelEs": "mucosa del uréter izquierdo",
+  "definitionEs": "Mucosa que forma parte de un uréter izquierdo."
+ },
+ "UBERON:0005011": {
+  "labelEs": "mucosa de la trompa uterina derecha",
+  "definitionEs": "Mucosa que forma parte de una trompa uterina derecha."
+ },
+ "UBERON:0005012": {
+  "labelEs": "mucosa de la trompa uterina izquierda",
+  "definitionEs": "Mucosa que forma parte de una trompa uterina izquierda."
+ },
+ "UBERON:0005048": {
+  "labelEs": "mucosa de la trompa uterina",
+  "definitionEs": "Mucosa que forma parte de una trompa uterina."
+ },
+ "UBERON:0005049": {
+  "labelEs": "mucosa del infundíbulo de la trompa uterina",
+  "definitionEs": "Mucosa que forma parte de un infundíbulo de la trompa uterina."
+ },
+ "UBERON:0005473": {
+  "labelEs": "región sacra",
+  "definitionEs": "Subdivisión de un organismo a lo largo del eje anteroposterior, en la región pélvica, inmediatamente posterior a la región lumbar y anterior a la región caudal. A veces se define una región intermedia entre la sacra y la caudal."
+ },
+ "UBERON:0006642": {
+  "labelEs": "capa muscular de la trompa uterina",
+  "definitionEs": "Capa muscular que forma parte de una trompa uterina."
+ },
+ "UBERON:0006654": {
+  "labelEs": "cuerpo perineal",
+  "definitionEs": "El cuerpo perineal (o centro tendinoso del periné) es una masa fibromuscular piramidal situada en la línea media del periné, en la unión entre el triángulo urogenital y el triángulo anal. Se encuentra tanto en hombres como en mujeres. En los hombres se encuentra entre el bulbo del pene y el ano; en las mujeres, entre la vagina y el ano, y aproximadamente 1,25 cm por delante de este. El cuerpo perineal es esencial para la integridad del suelo pélvico, especialmente en las mujeres. Su rotura durante el parto provoca el ensanchamiento del espacio entre los bordes libres anteriores del músculo elevador del ano de ambos lados, lo que predispone a la mujer al prolapso del útero, del recto o incluso de la vejiga urinaria."
+ },
+ "UBERON:0006802": {
+  "labelEs": "reborde acetabular",
+  "definitionEs": "Reborde prominente e irregular que delimita el acetábulo y sirve de inserción al labrum acetabular, el cual reduce su abertura y profundiza la superficie para la formación de la articulación de la cadera."
+ },
+ "UBERON:0006803": {
+  "labelEs": "agujero obturado",
+  "definitionEs": "El agujero obturado es el orificio formado por los huesos isquion y pubis de la pelvis, a través del cual pasan nervios y músculos."
+ },
+ "UBERON:0006855": {
+  "labelEs": "túnica muscular del uréter",
+  "definitionEs": "Túnica muscular que forma parte de un uréter."
+ },
+ "UBERON:0006867": {
+  "labelEs": "triángulo anal",
+  "definitionEs": "El triángulo anal es la parte posterior del periné. Contiene el conducto anal."
+ },
+ "UBERON:0007181": {
+  "labelEs": "serosa del infundíbulo de la trompa uterina",
+  "definitionEs": "Membrana serosa que forma parte de un infundíbulo de la trompa uterina."
+ },
+ "UBERON:0007182": {
+  "labelEs": "capa muscular del infundíbulo de la trompa uterina",
+  "definitionEs": "Capa muscular que forma parte de un infundíbulo de la trompa uterina."
+ },
+ "UBERON:0007315": {
+  "labelEs": "arteria pudenda interna",
+  "definitionEs": "La arteria pudenda interna es una arteria que se ramifica de la arteria ilíaca interna y aporta sangre a los genitales externos. La arteria pudenda interna es la rama terminal del tronco anterior de la arteria ilíaca interna. Es más pequeña en la mujer que en el hombre."
+ },
+ "UBERON:0007618": {
+  "labelEs": "cavidad sinovial de la articulación de la cadera",
+  "definitionEs": "Cavidad sinovial articular que forma parte de una articulación de la cadera."
+ },
+ "UBERON:0007832": {
+  "labelEs": "esqueleto de la cintura pélvica",
+  "definitionEs": "Subdivisión esquelética constituida por un conjunto de huesos que unen la serie axial con el zeugopodio del miembro posterior y que ofrecen áreas de anclaje para la musculatura del miembro posterior y caudal."
+ },
+ "UBERON:0008203": {
+  "labelEs": "cavidad pélvica",
+  "definitionEs": "Parte de la cavidad corporal ventral que se encuentra dentro de la pelvis."
+ },
+ "UBERON:0008521": {
+  "labelEs": "músculo glúteo menor",
+  "definitionEs": "El más pequeño de los tres músculos glúteos, situado inmediatamente por debajo del glúteo medio."
+ },
+ "UBERON:0008529": {
+  "labelEs": "músculo piriforme",
+  "definitionEs": "El piriforme es un músculo de la región glútea que se origina en la parte anterior (frontal) del sacro, la parte de la columna vertebral situada en la región glútea, y en el borde superior de la escotadura ciática mayor (así como en la cápsula de la articulación sacroilíaca y en el ligamento sacrotuberoso). Sale de la pelvis a través del agujero ciático mayor para insertarse en el trocánter mayor del fémur. Su tendón a menudo se une con los tendones de los músculos gemelo superior, gemelo inferior y obturador interno antes de la inserción."
+ },
+ "UBERON:0008537": {
+  "labelEs": "músculo cuadrado femoral",
+  "definitionEs": "El cuadrado femoral es, como su nombre indica, un músculo esquelético plano y cuadrilátero. Situado en la cara posterior de la articulación de la cadera, es un potente rotador lateral y aductor del muslo, pero también actúa estabilizando la cabeza femoral en el acetábulo."
+ },
+ "UBERON:0008612": {
+  "labelEs": "músculo del diafragma pélvico",
+  "definitionEs": "Tabique muscular formado por los elevadores del ano y los coccígeos, con el que puede incluirse la fascia pélvica parietal de sus caras superior e inferior. Separa la cavidad pélvica, situada por encima, de la región perineal, situada por debajo."
+ },
+ "UBERON:0008888": {
+  "labelEs": "plexo venoso vesical",
+  "definitionEs": "El plexo vesical envuelve la parte inferior de la vejiga y la base de la próstata y se comunica con los plexos pudendo y prostático. Drena, mediante varias venas vesicales, en las venas hipogástricas."
+ },
+ "UBERON:0009000": {
+  "labelEs": "espina isquiática",
+  "definitionEs": "Proceso óseo que se proyecta hacia atrás y medialmente desde el borde posterior del isquion."
+ },
+ "UBERON:0009048": {
+  "labelEs": "vena pudenda externa profunda",
+  "definitionEs": null
+ },
+ "UBERON:0009049": {
+  "labelEs": "vena pudenda externa superficial",
+  "definitionEs": null
+ },
+ "UBERON:0009916": {
+  "labelEs": "pared del uréter",
+  "definitionEs": "Pared anatómica que forma parte de un uréter."
+ },
+ "UBERON:0010746": {
+  "labelEs": "ala del ilion",
+  "definitionEs": "Extensión del ilion por encima del nivel del acetábulo. Lugar de inserción de la musculatura del miembro posterior y de la musculatura caudal. Medialmente es el lugar de inserción de las costillas sacras, donde estas existen."
+ },
+ "UBERON:0010747": {
+  "labelEs": "cuerpo del ilion",
+  "definitionEs": "El cuerpo del ilion participa en la formación del acetábulo, del que constituye algo menos de dos quintos. Su superficie externa es en parte articular y en parte no articular; el segmento articular forma parte de la superficie semilunar del acetábulo y la porción no articular contribuye a la fosa acetabular. La superficie interna del cuerpo forma parte de la pared de la pelvis menor y da origen a algunas fibras del obturador interno. Por debajo, se continúa con las superficies pélvicas del isquion y del pubis, y solo una línea tenue indica el lugar de unión."
+ },
+ "UBERON:0011015": {
+  "labelEs": "fosa ilíaca",
+  "definitionEs": null
+ },
+ "UBERON:0011043": {
+  "labelEs": "músculo obturador",
+  "definitionEs": "Uno de los siguientes: obturador externo u obturador interno."
+ },
+ "UBERON:0011048": {
+  "labelEs": "músculo obturador interno",
+  "definitionEs": "El músculo obturador interno se origina en la superficie medial de la membrana obturatriz, en el isquion cerca de la membrana y en el borde del pubis. Sale de la cavidad pélvica a través del agujero ciático menor. El obturador interno está situado en parte dentro de la pelvis menor y en parte en la cara posterior de la articulación de la cadera. Su función es ayudar a la rotación lateral del muslo extendido y a la abducción del muslo flexionado, así como estabilizar la cabeza femoral en el acetábulo."
+ },
+ "UBERON:0011090": {
+  "labelEs": "esqueleto de la cintura pélvica derecha",
+  "definitionEs": "Esqueleto de la cintura pélvica que forma parte de una región de la cintura pélvica derecha."
+ },
+ "UBERON:0011091": {
+  "labelEs": "esqueleto de la cintura pélvica izquierda",
+  "definitionEs": "Esqueleto de la cintura pélvica que forma parte de una región de la cintura pélvica izquierda."
+ },
+ "UBERON:0011092": {
+  "labelEs": "región de la cintura pélvica derecha",
+  "definitionEs": "Región de la cintura pélvica situada en el lado derecho de un organismo multicelular."
+ },
+ "UBERON:0011093": {
+  "labelEs": "región de la cintura pélvica izquierda",
+  "definitionEs": "Región de la cintura pélvica situada en el lado izquierdo de un organismo multicelular."
+ },
+ "UBERON:0011107": {
+  "labelEs": "articulación sinovial de la cintura pélvica",
+  "definitionEs": "Articulación sinovial que forma parte de una región de la cintura pélvica."
+ },
+ "UBERON:0011389": {
+  "labelEs": "músculo bulboesponjoso",
+  "definitionEs": "El bulboesponjoso es la gruesa continuación extrapélvica del músculo uretral. Se origina en el cuerpo perineal (y en el rafe medio sobre el cuerpo esponjoso en el varón) y se inserta en la membrana perineal superficial y en la aponeurosis dorsal del pene o del clítoris. En los varones, los músculos bulboesponjosos están unidos y rodean la base del pene. Ayudan a vaciar la orina y el eyaculado de la uretra. En las mujeres, estos músculos están separados en la línea media por la vagina y actúan constriñendo el introito vaginal. También pueden detener el flujo de sangre hacia las venas, lo que mantiene la erección del pene en el varón y del clítoris en la mujer. Su conexión nerviosa es el ramo perineal del nervio pudendo (S2, 3, 4)."
+ },
+ "UBERON:0011390": {
+  "labelEs": "nervio pudendo",
+  "definitionEs": "El nervio pudendo es un nervio somático de la región pélvica que inerva los genitales externos de ambos sexos, así como los esfínteres de la vejiga y del recto. Se origina en el núcleo de Onuf, en la región sacra de la médula espinal."
+ },
+ "UBERON:0011391": {
+  "labelEs": "nervio perineal",
+  "definitionEs": "Nervio que nace del nervio pudendo y que inerva el periné."
+ },
+ "UBERON:0011511": {
+  "labelEs": "músculo iliococcígeo",
+  "definitionEs": "El iliococcígeo se origina en la espina isquiática y en la parte posterior del arco tendinoso de la fascia obturatriz, y se inserta en el cóccix y en el rafe anococcígeo; suele ser delgado y puede faltar por completo o estar sustituido en gran parte por tejido fibroso. Forma parte del grupo de músculos elevadores del ano. Un fascículo accesorio en su parte posterior recibe a veces el nombre de iliosacro."
+ },
+ "UBERON:0011512": {
+  "labelEs": "músculo puborrectal",
+  "definitionEs": "Las fibras que forman un cabestrillo para el recto se denominan puborrectal o esfínter del recto. Se originan en la parte inferior de la sínfisis del pubis y en la fascia superior del diafragma urogenital. Se reúnen con las fibras correspondientes del lado opuesto alrededor de la parte inferior del recto y forman para este un cabestrillo resistente. Su relajación reduce el ángulo entre el recto y el ano, lo que permite la defecación junto con la relajación de los esfínteres interno y externo. El puborrectal forma parte del grupo de músculos elevadores del ano."
+ },
+ "UBERON:0011528": {
+  "labelEs": "músculo pubococcígeo",
+  "definitionEs": "El músculo pubococcígeo o músculo PC es un músculo en forma de hamaca, presente en ambos sexos, que se extiende desde el hueso pubiano hasta el cóccix (hueso de la cola), forma el suelo de la cavidad pélvica y sostiene los órganos pélvicos. Forma parte del grupo de músculos elevadores del ano."
+ },
+ "UBERON:0011958": {
+  "labelEs": "labrum acetabular",
+  "definitionEs": "Anillo de cartílago que rodea el acetábulo."
+ },
+ "UBERON:0011961": {
+  "labelEs": "cápsula articular de la articulación de la cadera",
+  "definitionEs": "Cápsula articular que forma parte de la articulación de la cadera."
+ },
+ "UBERON:0012336": {
+  "labelEs": "piel perianal",
+  "definitionEs": "Zona de piel que forma parte del área que rodea el ano."
+ },
+ "UBERON:0012499": {
+  "labelEs": "serosa de la trompa uterina",
+  "definitionEs": "Membrana serosa que forma parte de una trompa uterina."
+ },
+ "UBERON:0012648": {
+  "labelEs": "ampolla de la trompa uterina",
+  "definitionEs": "La ampolla es la segunda porción de la trompa uterina. Es una porción intermedia dilatada que se curva sobre el ovario. Es el lugar más frecuente de la fecundación humana. La palabra ampulla procede del latín y significa frasco."
+ },
+ "UBERON:0013691": {
+  "labelEs": "nalga",
+  "definitionEs": "Zona de tejido blando situada en la parte posterior del lado lateral de la región pélvica, correspondiente a los músculos glúteos."
+ },
+ "UBERON:0013707": {
+  "labelEs": "espina ilíaca",
+  "definitionEs": "Espina ósea que forma parte de un ilion."
+ },
+ "UBERON:0013708": {
+  "labelEs": "espina ilíaca anterosuperior",
+  "definitionEs": "La espina ilíaca anterosuperior (EIAS) es un importante punto de referencia de la anatomía de superficie. Se refiere al extremo anterior de la cresta ilíaca de la pelvis, que proporciona inserción al ligamento inguinal, al músculo sartorio y al tensor de la fascia lata. La EIAS proporciona una pista para identificar algunos otros puntos de referencia clínicos, entre ellos: el punto de McBurney, la línea de Gardner y la línea de Roser-Nélaton. A - anterior (delante, como la cara); S - superior (hacia la cabeza, opuesto a los pies); I - ilíaca; S - espina."
+ },
+ "UBERON:0013709": {
+  "labelEs": "espina ilíaca anteroinferior",
+  "definitionEs": "La espina ilíaca anteroinferior (EIAI) es una eminencia ósea en el borde anterior del hueso coxal o, más precisamente, del ala del ilion (es decir, las partes laterales superiores de la pelvis)."
+ },
+ "UBERON:0013710": {
+  "labelEs": "espina ilíaca posterosuperior",
+  "definitionEs": "El borde posterior del ala, más corto que el anterior, presenta también dos salientes separados por una escotadura, la espina ilíaca posterosuperior y la espina ilíaca posteroinferior. La espina ilíaca posterosuperior sirve de inserción a la porción oblicua de los ligamentos sacroilíacos posteriores y al multífido."
+ },
+ "UBERON:0013711": {
+  "labelEs": "espina ilíaca posteroinferior",
+  "definitionEs": "El borde posterior del ala, más corto que el anterior, presenta también dos salientes separados por una escotadura, la espina ilíaca posterosuperior y la espina ilíaca posteroinferior. La espina ilíaca posteroinferior corresponde al extremo posterior de la superficie auricular."
+ },
+ "UBERON:0014411": {
+  "labelEs": "escotadura ciática mayor",
+  "definitionEs": "En el borde dorsal del ala del ilion, en su unión con el cuerpo, hay un entrante. Este forma la escotadura ciática mayor. El nervio ciático pasa sobre la escotadura en su trayecto hacia el miembro posterior."
+ },
+ "UBERON:0014436": {
+  "labelEs": "escotadura ciática menor",
+  "definitionEs": "Por debajo de la espina isquiática hay una escotadura más pequeña, la escotadura ciática menor; es lisa, está recubierta de cartílago en el estado reciente y su superficie presenta dos o tres crestas que corresponden a las subdivisiones del tendón del obturador interno, que se enrolla sobre ella. Los ligamentos sacrotuberoso y sacroespinoso la convierten en un agujero, el agujero ciático menor, que da paso al tendón del obturador interno, al nervio que inerva dicho músculo y a los vasos y el nervio pudendos internos."
+ },
+ "UBERON:0014437": {
+  "labelEs": "cresta ilíaca",
+  "definitionEs": "Es parte de la pelvis, en el borde del ala del ilion. De forma redondeada, dorsal al pubis y al isquion. Actúa como estructura a la que pueden insertarse músculos."
+ },
+ "UBERON:0014438": {
+  "labelEs": "rama superior del pubis",
+  "definitionEs": "La rama superior del pubis es una parte del hueso pubiano que forma una porción del agujero obturado. Se extiende desde el cuerpo hasta el plano medio, donde se articula con su homóloga del lado opuesto. Se describe convenientemente en dos porciones, a saber, una parte medial aplanada y una porción lateral estrecha y prismática."
+ },
+ "UBERON:0014439": {
+  "labelEs": "rama inferior del pubis",
+  "definitionEs": "La rama inferior del pubis es delgada y aplanada. Se dirige lateralmente y hacia abajo desde el extremo medial de la rama superior; se estrecha a medida que desciende y se une con la rama inferior del isquion por debajo del agujero obturado."
+ },
+ "UBERON:0014440": {
+  "labelEs": "rama isquiopubiana",
+  "definitionEs": "La rama isquiopubiana es una estructura compuesta formada por las dos estructuras siguientes: del pubis, la rama inferior del pubis; del isquion, la rama inferior del isquion. Sirve como parte del origen del músculo obturador interno. También marca un vértice del triángulo anal y del triángulo urogenital. La fascia de Colles se inserta en su borde."
+ },
+ "UBERON:0014441": {
+  "labelEs": "rama del isquion",
+  "definitionEs": null
+ },
+ "UBERON:0014442": {
+  "labelEs": "rama superior del isquion",
+  "definitionEs": "La rama superior del isquion (rama descendente) se proyecta hacia abajo y hacia atrás desde el cuerpo y presenta para su estudio tres superficies: externa, interna y posterior. La superficie externa es de forma cuadrilátera. Está limitada por arriba por un surco que aloja el tendón del obturador externo; por abajo se continúa con la rama inferior; por delante está limitada por el borde posterior del agujero obturado; por detrás, un borde prominente la separa de la superficie posterior. Por delante de este borde, la superficie da origen al cuadrado femoral y, anteriormente a este, a algunas de las fibras de origen del obturador externo; la parte inferior de la superficie da origen a parte del aductor mayor. La superficie interna forma parte de la pared ósea de la pelvis menor. Por delante está limitada por el borde posterior del agujero obturado. Por abajo está limitada por una cresta aguda que da inserción a una prolongación falciforme del ligamento sacrotuberoso y, más anteriormente, da origen al transverso del periné y al isquiocavernoso. Por detrás, la rama forma un gran abultamiento, la tuberosidad del isquion."
+ },
+ "UBERON:0014445": {
+  "labelEs": "fosa acetabular",
+  "definitionEs": "La fosa acetabular es la depresión rugosa situada en el centro del acetábulo, rodeada por la superficie semilunar del acetábulo y la escotadura acetabular. La fosa acetabular proporciona un punto de inserción a los ligamentos redondos que fijan la cabeza femoral."
+ },
+ "UBERON:0014446": {
+  "labelEs": "escotadura acetabular",
+  "definitionEs": "El acetábulo presenta por debajo una escotadura profunda, la escotadura acetabular, que se continúa con una depresión circular no articular, la fosa acetabular, en el fondo de la cavidad: esta depresión está perforada por numerosos orificios y aloja una masa de grasa. El ligamento transverso convierte la escotadura en un agujero; a través de este agujero entran en la articulación vasos nutricios y nervios; los bordes de la escotadura sirven de inserción al ligamento de la cabeza del fémur."
+ },
+ "UBERON:0015876": {
+  "labelEs": "nódulo linfático pélvico",
+  "definitionEs": "Cualquier nódulo linfático situado dentro de la región pélvica abdominal."
+ },
+ "UBERON:0015877": {
+  "labelEs": "nódulo linfático pélvico parietal",
+  "definitionEs": null
+ },
+ "UBERON:0015878": {
+  "labelEs": "nódulo linfático ilíaco común",
+  "definitionEs": "Los nódulos linfáticos ilíacos externos, en número de ocho a diez, se sitúan a lo largo de los vasos ilíacos externos. Se disponen en tres grupos, uno en la cara lateral, otro en la cara medial y un tercero en la cara anterior de los vasos; sin embargo, el tercer grupo a veces falta. Sus principales vasos aferentes proceden de los nódulos linfáticos inguinales, de los linfáticos profundos de la pared abdominal por debajo del ombligo y de la región aductora del muslo, y de los linfáticos del glande del pene o del clítoris, de la uretra membranosa, de la próstata, del fondo de la vejiga urinaria, del cuello del útero y de la parte superior de la vagina."
+ },
+ "UBERON:0015880": {
+  "labelEs": "nódulo linfático ilíaco externo",
+  "definitionEs": null
+ },
+ "UBERON:0015881": {
+  "labelEs": "nódulo linfático ilíaco interno",
+  "definitionEs": "Los nódulos linfáticos ilíacos internos (o hipogástricos) rodean la arteria ilíaca interna y sus ramas (los vasos hipogástricos) y reciben los linfáticos correspondientes a la distribución de sus ramas, es decir, reciben linfáticos de todas las vísceras pélvicas, de las partes más profundas del periné, incluidas las porciones membranosa y cavernosa de la uretra, y de la nalga y la cara posterior del muslo. No recibe linfa del ovario, del testículo ni de la mitad superior del recto; las gónadas drenan en los nódulos linfáticos paraaórticos, mientras que la mitad superior del recto drena en los nódulos linfáticos pararrectales."
+ },
+ "UBERON:0015883": {
+  "labelEs": "nódulo linfático glúteo",
+  "definitionEs": null
+ },
+ "UBERON:0015884": {
+  "labelEs": "nódulo linfático presinfisario",
+  "definitionEs": null
+ },
+ "UBERON:0016632": {
+  "labelEs": "istmo de la trompa uterina",
+  "definitionEs": null
+ },
+ "UBERON:0016883": {
+  "labelEs": "fosa ovárica",
+  "definitionEs": "Depresión poco profunda de la pared lateral de la pelvis, en la que se aloja el ovario. Esta fosa tiene los siguientes límites: superiormente, los vasos ilíacos externos; anterior e inferiormente, el ligamento ancho del útero; posteriormente, el uréter y los vasos ilíacos internos."
+ },
+ "UBERON:0017732": {
+  "labelEs": "rafe del escroto",
+  "definitionEs": "Cresta de tejido que se extiende a lo largo de la línea media del escroto."
+ },
+ "UBERON:0018230": {
+  "labelEs": "conducto femoral",
+  "definitionEs": "Compartimento de la vaina femoral que contiene vasos linfáticos eferentes y un nódulo linfático incluido en una pequeña cantidad de tejido areolar. Tiene forma cónica y mide unos 2 cm de longitud. El conducto femoral está limitado: anteriormente por el ligamento inguinal; posteriormente por el ligamento pectíneo; medialmente por el ligamento lacunar; lateralmente por la vena femoral. Contiene los nódulos linfáticos de Cloquet o de Rosenmüller. No debe confundirse con el cercano conducto aductor."
+ },
+ "UBERON:0018252": {
+  "labelEs": "vena pudenda interna",
+  "definitionEs": "Vena acompañante de la arteria pudenda interna."
+ },
+ "UBERON:0018253": {
+  "labelEs": "vena pudenda externa",
+  "definitionEs": "Una de las venas de la pelvis que drenan en la vena safena mayor."
+ },
+ "UBERON:0018411": {
+  "labelEs": "ligamento de la articulación de la cadera",
+  "definitionEs": "Ligamento esquelético que forma parte de una articulación de la cadera."
+ },
+ "UBERON:0019197": {
+  "labelEs": "nervio dorsal del pene",
+  "definitionEs": "División terminal profunda del nervio pudendo que discurre a lo largo del dorso del pene e inerva el cuerpo cavernoso del pene, el prepucio y el glande del pene."
+ },
+ "UBERON:0019198": {
+  "labelEs": "nervio dorsal del clítoris",
+  "definitionEs": "División terminal profunda del nervio pudendo que discurre a lo largo del dorso del cuerpo del clítoris e inerva el glande del clítoris."
+ },
+ "UBERON:0034902": {
+  "labelEs": "tronco simpático sacro",
+  "definitionEs": null
+ },
+ "UBERON:0035104": {
+  "labelEs": "rafe del pene",
+  "definitionEs": null
+ },
+ "UBERON:0035106": {
+  "labelEs": "rafe del periné",
+  "definitionEs": "El rafe perineal se extiende desde el ano, a través de la línea media del escroto (rafe escrotal), y hacia arriba por la cara posterior de la línea media del pene (rafe peniano)."
+ },
+ "UBERON:0035171": {
+  "labelEs": "nódulo linfático obturador",
+  "definitionEs": null
+ },
+ "UBERON:0035445": {
+  "labelEs": "diafragma urogenital",
+  "definitionEs": "Componentes musculares del espacio perineal profundo."
+ },
+ "UBERON:0036375": {
+  "labelEs": "pared del uréter derecho",
+  "definitionEs": null
+ },
+ "UBERON:0036376": {
+  "labelEs": "pared del uréter izquierdo",
+  "definitionEs": null
+ },
+ "UBERON:0036441": {
+  "labelEs": "pared de la trompa uterina",
+  "definitionEs": null
+ },
+ "UBERON:0037532": {
+  "labelEs": "nódulo linfático ilíaco común medial",
+  "definitionEs": null
+ },
+ "UBERON:0037533": {
+  "labelEs": "nódulo linfático ilíaco común intermedio",
+  "definitionEs": null
+ },
+ "UBERON:0037534": {
+  "labelEs": "nódulo linfático ilíaco común lateral",
+  "definitionEs": null
+ },
+ "UBERON:0037535": {
+  "labelEs": "nódulo linfático ilíaco común subaórtico",
+  "definitionEs": null
+ },
+ "UBERON:0037536": {
+  "labelEs": "nódulo linfático del promontorio",
+  "definitionEs": null
+ },
+ "UBERON:0037538": {
+  "labelEs": "nódulo linfático ilíaco externo medial",
+  "definitionEs": null
+ },
+ "UBERON:0037539": {
+  "labelEs": "nódulo linfático ilíaco externo intermedio",
+  "definitionEs": null
+ },
+ "UBERON:0037540": {
+  "labelEs": "nódulo linfático ilíaco externo lateral",
+  "definitionEs": null
+ },
+ "UBERON:0037541": {
+  "labelEs": "nódulo linfático interilíaco",
+  "definitionEs": null
+ },
+ "UBERON:0037548": {
+  "labelEs": "nódulo linfático glúteo superior",
+  "definitionEs": null
+ },
+ "UBERON:0037549": {
+  "labelEs": "nódulo linfático glúteo inferior",
+  "definitionEs": null
+ },
+ "UBERON:0039163": {
+  "labelEs": "nódulo linfático sacro lateral",
+  "definitionEs": null
+ },
+ "UBERON:0039164": {
+  "labelEs": "nódulo linfático sacro medial",
+  "definitionEs": null
+ },
+ "UBERON:8410010": {
+  "labelEs": "fimbria de la trompa uterina",
+  "definitionEs": "Franja de tejido alrededor del orificio de la trompa uterina, en dirección al ovario."
+ },
+ "UBERON:8480045": {
+  "labelEs": "nódulo linfático subilíaco",
+  "definitionEs": "Nódulo linfático situado inferiormente al ilion."
+ },
+ "UBERON:8600056": {
+  "labelEs": "vena sacra lateral",
+  "definitionEs": "Vena tributaria de la vena ilíaca interna que drena la superficie anterior del sacro."
+ },
+ "UBERON:8600105": {
+  "labelEs": "vena lumbar",
+  "definitionEs": "Vena tributaria de la vena cava inferior que drena la sangre de la pared abdominal posterior y de la región lumbar."
+ },
+ "UBERON:8600108": {
+  "labelEs": "uréter proximal",
+  "definitionEs": "Segmento del uréter que se extiende desde la pelvis renal hasta la bifurcación de la arteria ilíaca común (que forma las arterias ilíacas interna y externa)."
+ },
+ "UBERON:8600109": {
+  "labelEs": "uréter distal",
+  "definitionEs": "Segmento del uréter que se extiende desde la bifurcación de la arteria ilíaca común hasta la vejiga. Desde allí, el uréter se curva hacia atrás y sigue inferiormente la pared lateral de la pelvis para unirse a la pared posterolateral de la vejiga."
+ },
+ "UBERON:8600110": {
+  "labelEs": "uréter intramural",
+  "definitionEs": "Segmento terminal del uréter, continuo con el uréter distal, que se sitúa donde el uréter entra en la vejiga y se extiende dentro de la pared vesical. El uréter intramural es aperistáltico y actúa como mecanismo antirreflujo, impidiendo el retroceso de la orina desde la vejiga hacia los uréteres."
+ },
+ "UBERON:8600111": {
+  "labelEs": "uréter distal derecho",
+  "definitionEs": "Uréter distal que forma parte del uréter derecho."
+ },
+ "UBERON:8600112": {
+  "labelEs": "uréter distal izquierdo",
+  "definitionEs": "Uréter distal que forma parte del uréter izquierdo."
+ },
+ "UBERON:8600113": {
+  "labelEs": "uréter proximal derecho",
+  "definitionEs": "Uréter proximal que forma parte del uréter derecho."
+ },
+ "UBERON:8600114": {
+  "labelEs": "uréter proximal izquierdo",
+  "definitionEs": "Uréter proximal que forma parte del uréter izquierdo."
+ },
+ "UBERON:8600122": {
+  "labelEs": "ganglio sacro",
+  "definitionEs": "Ganglio que forma parte de la porción sacra del tronco simpático. Un ganglio sacro está formado por neuronas simpáticas posganglionares que reciben aferencias presinápticas de axones simpáticos preganglionares que descienden por el tronco simpático desde niveles toracolumbares."
+ },
+ "UBERON:8920051": {
+  "labelEs": "arteria escrotal posterior",
+  "definitionEs": "Arteria que se ramifica de la arteria pudenda interna e irriga el escroto."
+ },
+ "UBERON:8920052": {
+  "labelEs": "arteria vaginal",
+  "definitionEs": "Arteria que se ramifica de la arteria ilíaca interna e irriga la parte inferior de la vagina y el fondo de la vejiga."
+ },
+ "UBERON:8920053": {
+  "labelEs": "vena rectal superior",
+  "definitionEs": "Vena tributaria de la vena mesentérica inferior que drena los dos tercios superiores del recto y la parte superior del conducto anal."
+ },
+ "UBERON:8920054": {
+  "labelEs": "vena rectal inferior",
+  "definitionEs": "Vena tributaria de la vena pudenda interna que drena el tercio inferior del recto y el conducto anal."
+ },
+ "UBERON:8920055": {
+  "labelEs": "vena escrotal posterior",
+  "definitionEs": "Vena tributaria de la vena pudenda interna que drena la piel y las capas fasciales de la parte posterior del escroto."
+ },
+ "UBERON:8930040": {
+  "labelEs": "membrana basal del istmo de la trompa uterina",
+  "definitionEs": "Membrana acelular que forma parte del epitelio del istmo de la trompa uterina, situada junto a las células epiteliales, entre la capa epitelial y la lámina propia subyacente."
+ },
+ "UBERON:8930047": {
+  "labelEs": "capa muscular interna del infundíbulo de la trompa uterina",
+  "definitionEs": "Capa componente de órgano compuesta principalmente por tejido muscular liso de disposición circular, que forma la capa más interna de la túnica muscular del infundíbulo de la trompa uterina y contribuye a las contracciones peristálticas que ayudan al transporte de los gametos y del embrión."
+ },
+ "UBERON:8930054": {
+  "labelEs": "lámina propia de la porción intramural de la trompa uterina",
+  "definitionEs": "Lámina propia que forma la capa de tejido conjuntivo situada bajo el epitelio en la mucosa de la porción intramural de la trompa uterina, que es la porción de la trompa uterina que atraviesa la pared del útero."
+ },
+ "UBERON:8930070": {
+  "labelEs": "capa muscular del istmo de la trompa uterina",
+  "definitionEs": "Túnica muscular que forma parte del istmo de la trompa uterina, constituida por capas externa longitudinal e interna circular de músculo liso, responsables de las contracciones peristálticas que impulsan el óvulo hacia el útero."
+ },
+ "UBERON:8930078": {
+  "labelEs": "capa muscular externa del infundíbulo de la trompa uterina",
+  "definitionEs": "Capa componente de órgano compuesta principalmente por tejido muscular liso de disposición longitudinal, que forma la capa más externa de la túnica muscular del infundíbulo de la trompa uterina y contribuye a las contracciones peristálticas que ayudan al transporte de los gametos y del embrión."
+ },
+ "UBERON:8930088": {
+  "labelEs": "serosa del istmo de la trompa uterina",
+  "definitionEs": "Membrana serosa que forma la capa más externa del istmo de la trompa uterina, derivada del peritoneo visceral."
+ }
+}

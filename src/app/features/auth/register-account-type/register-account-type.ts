@@ -6,9 +6,18 @@ import type { AccountIconName } from '../../../shared/components/atoms/account-i
 import { Link } from '../../../shared/components/atoms/link/link';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 
+/**
+ * El tono de una tarjeta. Son los cuatro tríos de estado del sistema
+ * (`--st-*-bg|fg|bd`), que ya traen su versión oscura y su contraste medido:
+ * cada tipo tiene su color sin que esta pantalla elija un solo valor. El ámbar
+ * no está a propósito: es el punto de acción único del producto.
+ */
+type TypeTone = 'primary' | 'secondary' | 'success' | 'info';
+
 /** Una tarjeta de la rejilla: a dónde lleva y qué promete. */
 interface TipoDeCuenta {
   readonly icono: AccountIconName;
+  readonly tone: TypeTone;
   readonly titulo: string;
   readonly detalle: string;
   readonly ruta: string;
@@ -49,6 +58,7 @@ interface TipoDeCuenta {
 const CUENTAS_PERSONALES: readonly TipoDeCuenta[] = [
   {
     icono: 'patient',
+    tone: 'secondary',
     titulo: 'Paciente',
     detalle: 'Su historia clínica, sus citas y sus estudios, siempre con usted.',
     ruta: '/auth/register/patient',
@@ -56,6 +66,7 @@ const CUENTAS_PERSONALES: readonly TipoDeCuenta[] = [
   },
   {
     icono: 'practitioner',
+    tone: 'primary',
     titulo: 'Médico',
     detalle: 'Atienda, recete y lleve su agenda. Necesita matrícula y colegio.',
     ruta: '/auth/register/practitioner',
@@ -73,6 +84,7 @@ const CUENTAS_PERSONALES: readonly TipoDeCuenta[] = [
 const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
   {
     icono: 'insurer',
+    tone: 'primary',
     titulo: 'Aseguradora',
     detalle: 'Registre su organización y administre el padrón de sus afiliados.',
     ruta: '/auth/register/organization',
@@ -80,6 +92,7 @@ const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
   },
   {
     icono: 'laboratory',
+    tone: 'info',
     titulo: 'Laboratorio',
     detalle: 'Reciba las órdenes médicas de la red y entregue los resultados por la app.',
     ruta: '/auth/register/laboratory',
@@ -87,6 +100,7 @@ const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
   },
   {
     icono: 'imaging',
+    tone: 'secondary',
     titulo: 'Imagenología',
     detalle: 'Rayos X, ecografía, tomografía y resonancia. Reciba las órdenes de la red.',
     ruta: '/auth/register/imaging-center',
@@ -94,6 +108,7 @@ const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
   },
   {
     icono: 'pharmacy',
+    tone: 'success',
     titulo: 'Farmacia',
     detalle: 'Publique su catálogo, reciba pedidos con receta y atienda desde un solo lugar.',
     ruta: '/auth/register/pharmacy',
@@ -168,4 +183,15 @@ function audienciaDe(valor: unknown): Audiencia {
 export class RegisterAccountType {
   protected readonly catalogo =
     CATALOGOS[audienciaDe(inject(ActivatedRoute).snapshot.data['audience'])];
+
+  /**
+   * Cuántas columnas tiene la rejilla en pantalla ancha.
+   *
+   * Sale de cuántas tarjetas hay y no de un número fijo: con tres columnas
+   * fijas, dos tarjetas dejaban la tercera vacía y la fila pegada a la
+   * izquierda, que es un hueco que se lee como «algo no cargó». Dos o cuatro se
+   * reparten de a dos —cuatro en 2×2, no 3+1—; el resto, de a tres.
+   */
+  protected readonly columns =
+    this.catalogo.tipos.length <= 2 || this.catalogo.tipos.length === 4 ? 2 : 3;
 }

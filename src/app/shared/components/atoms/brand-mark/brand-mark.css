@@ -1,0 +1,82 @@
+:host {
+  display: inline-flex;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  line-height: 1;
+}
+
+/* El glifo se pinta con `mask` sobre `currentColor`: el archivo es petróleo
+   fijo y en oscuro desaparecería contra la superficie; con máscara toma el
+   color del tema y basta un solo archivo. */
+.brand-mark__glyph {
+  display: block;
+  inline-size: 1.9rem;
+  block-size: 1.4rem;
+  background: var(--brand-primary);
+  -webkit-mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
+  mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
+}
+
+/* Poppins Bold y -0,02em: el rótulo del arte del diseñador. Siempre texto
+   grande (≥ 1,2 rem en negrita): ver el comentario de `BrandMark` sobre el
+   contraste de «Vida». */
+.brand-mark__word {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.brand-mark__alo {
+  color: var(--brand-primary);
+}
+
+.brand-mark__vida {
+  color: color-mix(in srgb, var(--brand-secondary) 60%, var(--brand-primary));
+}
+
+/* ---- Grande: la columna de marca de una pantalla de acceso. ---------------- */
+.brand-mark--lg {
+  gap: var(--sp-3);
+}
+
+.brand-mark--lg .brand-mark__glyph {
+  inline-size: 3.4rem;
+  block-size: 2.5rem;
+}
+
+.brand-mark--lg .brand-mark__word {
+  font-size: 2.4rem;
+}
+
+/* ---- Lub-dub, una sola vez. ---------------------------------------------- */
+.brand-mark--beat .brand-mark__glyph {
+  animation: brand-mark-beat 900ms var(--ease-out) 520ms both;
+}
+
+@keyframes brand-mark-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  22% {
+    transform: scale(1.18);
+  }
+  40% {
+    transform: scale(1);
+  }
+  58% {
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark--beat .brand-mark__glyph {
+    animation: none;
+  }
+}

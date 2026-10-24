@@ -11,19 +11,6 @@
           <p class="ficha-publica__bio">{{ perfil.biography }}</p>
         }
 
-        <!-- El mapa va DENTRO de la card del resumen y no en una segunda:
-             es el mismo dato que la fila «Dirección», dibujado en vez de
-             escrito, y dos cards apiladas para decir lo mismo dos veces son
-             justo lo que prohíbe la regla §5 de `composition-rules.md`.
-
-             Sin coordenadas no se dibuja nada: un mapa centrado en la ciudad
-             no ubica una farmacia, y un hueco gris se lee como algo que no
-             cargó. La dirección de arriba sigue siendo la respuesta. -->
-        @if (pines().length > 0) {
-          <div class="ficha-publica__mapa">
-            <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" />
-          </div>
-        }
       </app-card>
     }
   </app-view-state-host>

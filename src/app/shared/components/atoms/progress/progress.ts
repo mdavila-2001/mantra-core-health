@@ -75,6 +75,18 @@ export class Progress {
    */
   readonly showMarker = input(false, { transform: booleanAttribute });
 
+  /**
+   * Dibuja la barra como un trazo de latido —la firma de la marca— en vez de un
+   * riel liso: el avance es el trazo dibujado hasta donde va la persona.
+   *
+   * Apagado por defecto por la misma razón que `showMarker`: una subida de ocho
+   * archivos no necesita ocho latidos. Es para recorridos —el alta de una
+   * cuenta, donde importa que cuanto más cerca del final, más ganas de
+   * terminar—. No cambia el `role` ni los `aria-value*`. Con `value` ausente
+   * (indeterminada) se ignora: no hay posición que dibujar.
+   */
+  readonly wave = input(false, { transform: booleanAttribute });
+
   protected readonly min = PROGRESS_MIN;
   protected readonly max = PROGRESS_MAX;
 
@@ -101,10 +113,20 @@ export class Progress {
     () => this.showMarker() && !this.isIndeterminate(),
   );
 
+  protected readonly waveVisible = computed(() => this.wave() && !this.isIndeterminate());
+
+  /** Recorte por ancho del trazo dibujado; holgura vertical para no cortar el pico. */
+  protected readonly waveClip = computed(
+    () => `inset(-6px ${100 - (this.clampedValue() ?? 0)}% -6px 0)`,
+  );
+
   readonly progressClasses = computed(() => {
     const classes = ['progress', `progress--${this.tone()}`, `progress--${this.size()}`];
     if (this.isIndeterminate()) {
       classes.push('progress--indeterminate');
+    }
+    if (this.waveVisible()) {
+      classes.push('progress--wave');
     }
     if (this.markerVisible()) {
       // El riel recorta su contenido; con punta tiene que dejarla asomar.

@@ -18,7 +18,14 @@
      hace esta región. `<output>` ya es una región viva por sí misma. -->
 <output class="solo-lectores" aria-live="polite">{{ anuncio() }}</output>
 
-<div class="app-shell" app-shell [class.is-nav-recogido]="navRecogido()">
+<div
+  class="app-shell"
+  app-shell
+  [class.is-nav-recogido]="navRecogido()"
+  [class.app-shell--paciente]="esPacienteDelCarrito()"
+  [class.app-shell--medico]="esMedico()"
+  [class.app-shell--redesign]="usaRediseno()"
+>
   <!-- El `id` se declara acá y no lo inventa nadie en caliente: es el destino
        del `aria-controls` del botón que la recoge, y también el que busca el
        cajón de ancho chico (`AlovidaRuntimeService`, que sólo lo pone si falta).
@@ -271,7 +278,7 @@
         <!-- Emergencia a un toque, para todos (propietario, 2026-10-08): con
              ambulancia de confianza llama directo; si no, abre los números
              oficiales. Va antes que la campana: una urgencia no compite. -->
-        <app-panic-button />
+        <app-panic-button appTutorialTarget="header-emergencia" />
         <app-notification-bell />
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
@@ -386,6 +393,7 @@
              presentan en línea, con el mismo enlace y sin duplicar rutas. -->
         <div
           class="app-header__rapidos"
+          tabindex="-1"
           [class.is-open]="accesosRapidosAbiertos()"
           (keydown.escape)="cerrarAccesosRapidos($event)"
         >
@@ -408,6 +416,7 @@
             class="app-header__rapidos-lista"
             id="header-accesos-rapidos"
             aria-label="Accesos rápidos"
+            appTutorialTarget="header-atajos"
           >
             <a
               app-button
@@ -440,6 +449,7 @@
           class="app-header__ajustes"
           routerLink="/tutorials"
           data-testid="header-tutoriales"
+          appTutorialTarget="header-tutoriales"
           appTooltip="Tutoriales"
           appTooltipPosition="bottom"
           aria-label="Tutoriales"

@@ -1031,6 +1031,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El atlas anatómico 3D cuelga del glosario: miga, menú y roles son los
+    // suyos, y la ruta va antes de `glossary/:conceptId` para no confundirse
+    // con un término. three.js entra sólo con esta pantalla.
+    path: 'glossary/anatomy-atlas',
+    title: `${APP_TITLE} - Atlas anatómico 3D`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-anatomy-atlas')
+        .then((m) => m.GlossaryAnatomyAtlas)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'glossary/network',
     title: `${APP_TITLE} - Mapa de relaciones del glosario`,
     canActivate: [seccionRolesGuard],

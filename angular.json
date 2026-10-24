@@ -44,7 +44,12 @@
               "src/styles.css",
               "src/styles/alovida.css",
               "src/styles/pulse.css",
-              "src/styles/perfil-publico.css"
+              "src/styles/perfil-publico.css",
+              {
+                "input": "src/styles/paciente.css",
+                "bundleName": "paciente",
+                "inject": false
+              }
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",

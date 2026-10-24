@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   DOCUMENT,
   effect,
   HostListener,
@@ -41,6 +42,17 @@ import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ChatStore } from '../../core/messaging/chat.store';
+import { FirstStepsStore } from '../dashboard/patient-home/first-steps/first-steps.store';
+
+/**
+ * El `<link>` de la hoja del paciente: `bundleName` de `angular.json`.
+ *
+ * El `?v=2` es para los navegadores que la guardaron por un año antes de que
+ * el servidor la sirviera con `no-cache` (`server/build-assets.ts`): con la
+ * URL de siempre no la vuelven a pedir. No hace falta subirlo en cada cambio.
+ */
+const PATIENT_STYLESHEET_ID = 'alovida-paciente-css';
+const PATIENT_STYLESHEET_HREF = 'paciente.css?v=2';
 import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 
@@ -109,6 +121,7 @@ export class ShellLayout {
   // Sólo se instancia: mantiene listo el logo del consultorio para los PDF.
   private readonly membretePdf = inject(PdfBrandingService);
   private readonly router = inject(Router);
+  private readonly firstSteps = inject(FirstStepsStore);
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
   /* El estado de la barra recogida no es de este componente: ya vivía en
@@ -207,6 +220,15 @@ export class ShellLayout {
   private readonly cart = inject(CartStore);
   protected readonly unidadesDelCarrito = this.cart.unitCount;
   protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
+
+  /**
+   * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la
+   * cuarta vuelta, quien atiende. El resto de los roles, la de siempre.
+   */
+  protected readonly esMedico = computed(
+    () => !this.esPacienteDelCarrito() && this.auth.roles().includes('PRACTITIONER'),
+  );
+  protected readonly usaRediseno = computed(() => this.esPacienteDelCarrito() || this.esMedico());
   protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
   protected readonly pharmacyTestids = PHARMACY_TESTIDS;
 
@@ -244,6 +266,25 @@ export class ShellLayout {
       if (this.user() !== null) {
         untracked(() => this.chats.prepararContador());
       }
+    });
+
+    /* «Primeros pasos» del paciente: anota qué secciones ya conoció para que el
+       inicio le muestre el avance. Sólo para el paciente —a quien atiende no se
+       le ofrece la lista— y sólo en el navegador, donde hay dónde guardarlo. */
+    const destroyRef = inject(DestroyRef);
+    effect(() => {
+      if (this.esPacienteDelCarrito()) {
+        untracked(() => this.firstSteps.track(this.router, destroyRef));
+      }
+    });
+
+    /* La hoja visual del rediseño (`styles/paciente.css`) se compila aparte y
+       sin inyectar: sólo la descarga quien la usa —el paciente y el médico—.
+       Se pone el `<link>` desde acá —también bajo SSR, así llega en el HTML y
+       no hay parpadeo— y se quita si la sesión deja de ser de uno de ellos. */
+    effect(() => {
+      const rediseno = this.usaRediseno();
+      untracked(() => this.hojaDelPaciente(rediseno));
     });
 
     this.urlActual.set(this.rutaLimpia());
@@ -622,6 +663,20 @@ export class ShellLayout {
   protected changeTenant(tenantId: string): void {
     this.auth.selectTenant(tenantId);
     void this.router.navigateByUrl('/dashboard');
+  }
+
+  /** Pone o quita el `<link>` de la hoja visual del paciente. Idempotente. */
+  private hojaDelPaciente(paciente: boolean): void {
+    const actual = this.document.getElementById(PATIENT_STYLESHEET_ID);
+    if (paciente && actual === null) {
+      const link = this.document.createElement('link');
+      link.id = PATIENT_STYLESHEET_ID;
+      link.rel = 'stylesheet';
+      link.href = PATIENT_STYLESHEET_HREF;
+      this.document.head.appendChild(link);
+    } else if (!paciente && actual !== null) {
+      actual.remove();
+    }
   }
 
   /**
