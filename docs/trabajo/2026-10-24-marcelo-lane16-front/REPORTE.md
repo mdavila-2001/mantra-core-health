@@ -1,6 +1,6 @@
 # Reporte — Carril 16 · Fase 3 frontend: cobro con seguro, desglose y objeción
 
-- Fecha: 2026-10-24 · Plan: [PLAN.md](./PLAN.md) · Rama: `marcelo/lane16-insurance-ui` (base `origin/mockup` = `3cda242fd`)
+- Fecha: 2026-10-24 · Plan: [PLAN.md](./PLAN.md) · Rama: `marcelo/lane16-insurance-ui` (base `origin/mockup` = `3cda242fd`) · PR: [#1227](https://github.com/mdavila-2001/mantra-core-health/pull/1227) contra `mockup`
 - Peldaño de evidencia alcanzado: `TESTED` para el cotizador, el desglose y la objeción en el backend simulado. `VERIFIED` en navegador sobre la maqueta (25 pruebas Playwright). **No** `REGRESSION_VERIFIED`: la suite real de la API no corrió y el gate de PR no está demostrado.
 - Avance: 18 de 27 microtareas HECHO = 66,7 % (cálculo sobre la tabla de hitos de [PLAN.md](./PLAN.md)).
 
@@ -64,9 +64,19 @@ Nota de los comandos: `corepack yarn test --include=…` filtra por archivo. Los
 - Qué no anda: `lint` del repo tiene 266 errores en 197 archivos anteriores a este carril. La suite completa de tests tiene 5 fallos que ya están en `origin/mockup` (ver abajo). `gen-mock-contract --check` no corre.
 
 ### H6.M4 — PR mergeable
-- Qué anda: rama creada y commiteada (ver Evidencia).
-- Qué no anda: el estado del PR no está demostrado hasta la consulta posterior al último push.
-- Qué falta exactamente: `gh pr view` y `gh pr checks` después del último push. CLAUDE.md del repo indica que el CI propio está caído: si no hay checks, la entrega queda A MEDIAS por esa causa.
+- Qué anda: PR #1227 contra `mockup`, no es borrador, sin conflictos, estado `CLEAN`.
+- Qué no anda: `gh pr checks` no reporta ningún check. El CI del repo está caído (CLAUDE.md), así que el criterio de checks en verde no se puede demostrar.
+- Qué falta exactamente: un CI que corra sobre el PR. Hasta entonces la entrega es A MEDIAS por esa causa, no HECHO.
+
+Salida literal, consultada después del último push (`14495e3a4`):
+
+```text
+$ gh pr view 1227 --json isDraft,mergeable,mergeStateStatus,headRefOid,baseRefName
+{"baseRefName":"mockup","headRefOid":"14495e3a46c4f8ac72b06c79946136cdb55247f6","isDraft":false,"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}
+
+$ gh pr checks 1227
+no checks reported on the 'marcelo/lane16-insurance-ui' branch
+```
 
 ## Pendiente
 
