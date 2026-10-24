@@ -1815,8 +1815,20 @@ describe('RegisterPatient', () => {
         email: '',
       });
 
-      // Mismo `@Matches` que el DTO: letras, dígitos, punto y guion.
+      // La cédula son sólo dígitos (ver `national-id.ts`).
       expect(component.formPaciente.controls.nationalId.invalid).toBe(true);
+    });
+
+    it('valida la cédula de verdad: de 5 a 9 dígitos y no un relleno', () => {
+      const control = component.formPaciente.controls.nationalId;
+      for (const invalida of ['QA-123', '1234', '1234567890', '1.234.567', '0000000', '4444444']) {
+        control.setValue(invalida);
+        expect(control.invalid, `«${invalida}» no es una cédula`).toBe(true);
+      }
+      for (const valida of ['12345', '1234567', '12345678', '123456789']) {
+        control.setValue(valida);
+        expect(control.valid, `«${valida}» sí lo es`).toBe(true);
+      }
     });
 
     it('exige los 8 caracteres de contraseña que pide el backend', () => {

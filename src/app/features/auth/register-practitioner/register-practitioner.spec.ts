@@ -192,6 +192,7 @@ describe('RegisterPractitioner', () => {
       // El respaldo de «Tus títulos» para el motor de pasos: lo sincroniza un
       // `effect` con las filas, así que acá arranca «completo».
       academicTitles: !component.tituloSinNumeroEnAlgunaFila(),
+      especialidadesExtra: true,
       phone: extra.phone ?? '',
       mobilePhone: extra.mobilePhone ?? '+591 70011111',
       workMobilePhone: extra.workMobilePhone ?? '',
@@ -276,8 +277,8 @@ describe('RegisterPractitioner', () => {
 
     it('presenta los bloques en el orden pedido (AC-05-1)', () => {
       expect(component.paginasProfesional().map((pagina) => pagina.clave)).toEqual([
+        // Nombre y cédula comparten página, como en el alta de paciente.
         'name',
-        'document',
         'profile',
         'personal-contact',
         'access',
@@ -306,8 +307,14 @@ describe('RegisterPractitioner', () => {
     });
 
     it('cada bloque trae los campos que le tocan, en su orden', () => {
-      expect(camposDe('name')).toEqual(['name', 'lastName', 'motherLastName']);
-      expect(camposDe('document')).toEqual(['nationalId', 'issuerAdministrativeAreaConceptId']);
+      expect(camposDe('name')).toEqual([
+        'name',
+        'lastName',
+        'motherLastName',
+        'nationalId',
+        'issuerAdministrativeAreaConceptId',
+      ]);
+      expect(camposDe('document')).toBeUndefined();
       // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
       // nacimiento, como pide el orden.
       // La ocupación se quitó del alta de profesional: lo que dice qué clase de
@@ -454,7 +461,7 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene dieciséis páginas, ninguna de más de cuatro preguntas', () => {
+  it('tiene quince páginas, y sólo la de nombre y cédula pasa de cuatro preguntas', () => {
     // Dieciséis páginas porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
@@ -469,12 +476,15 @@ describe('RegisterPractitioner', () => {
     // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(16);
+    // Nombre y cédula se juntaron (propietario, 22/10/2026): cinco preguntas,
+    // la única excepción al tope. Cualquier otra página sigue en cuatro.
+    expect(paginas.length).toBe(15);
     for (const pagina of paginas) {
+      const tope = pagina.clave === 'name' ? 5 : 4;
       expect(
         pagina.campos.length,
         `«${pagina.titulo}» pide ${pagina.campos.length}`,
-      ).toBeLessThanOrEqual(4);
+      ).toBeLessThanOrEqual(tope);
     }
   });
 
@@ -933,6 +943,25 @@ describe('RegisterPractitioner', () => {
   it('si se ingresa un documento de identidad con formato inválido, el control se invalida', () => {
     completarProfesional({ nationalId: 'CI Con Espacios!' });
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
+  });
+
+  it('la cédula se valida de verdad: sólo dígitos, de 5 a 9, y no un relleno', () => {
+    const control = component.formProfesional.controls.nationalId;
+    for (const invalida of ['QA-123', '1234', '1234567890', '1.234.567', '0000000', '9999999']) {
+      control.setValue(invalida);
+      expect(control.invalid, `«${invalida}» no es una cédula`).toBe(true);
+    }
+    for (const valida of ['12345', '1234567', '12345678', '123456789']) {
+      control.setValue(valida);
+      expect(control.valid, `«${valida}» sí lo es`).toBe(true);
+    }
+  });
+
+  it('con la cédula inválida no se puede enviar el alta', () => {
+    completarProfesional({ nationalId: 'QA-123' });
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
   });
 
   it('agrega segundo nombre y apellido materno solo si se completaron', () => {
@@ -1410,9 +1439,114 @@ describe('RegisterPractitioner', () => {
             { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
             { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
             { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
+            {
+              conceptId: 'c-specialty',
+              code: 'CREDENTIAL_TYPE_SPECIALTY',
+              label: 'Specialty title',
+            },
           ],
         });
     }
+
+    describe('el estudio de cada especialidad', () => {
+      /** Responde el catálogo de especialidades para que las casillas tengan nombre. */
+      function catalogoDeEspecialidades(): void {
+        http.expectOne(CATALOGO_ESPECIALIDADES).flush({
+          items: [{ id: 'vs-esp', internalCode: 'VS_MEDICAL_SPECIALTY', name: 'Especialidades' }],
+        });
+        http.expectOne('/terminology/value-sets/vs-esp/$expand?limit=200').flush({
+          items: [
+            { conceptId: 'e-cardio', code: 'CARDIOLOGIA', display: 'Cardiología' },
+            { conceptId: 'e-pedia', code: 'PEDIATRIA', display: 'Pediatría' },
+          ],
+          count: 2,
+          limit: 200,
+          nextCursor: null,
+        });
+      }
+
+      it('viaja como credencial de especialidad, con su universidad, país, ciudad y PDF', () => {
+        catalogoDeTiposDeTitulo();
+        catalogoDeEspecialidades();
+        component.especialidadesExtra.set(['e-cardio', 'e-pedia']);
+        component.writeSpecialtyStudy(0, 'number', 'ESP-77');
+        component.chooseSpecialtyCountry(0, 'Bolivia');
+        component.chooseSpecialtyUniversity(
+          0,
+          component.specialtyUniversityOptions(0)[0].value,
+        );
+        component.updateSpecialtyFiles(0, [archivoDe('cardio.pdf', 'application/pdf', 2048)]);
+
+        completarProfesional({ especialidadesExtra: ['e-cardio', 'e-pedia'] });
+        component.submit();
+
+        http.expectOne('/iam/auth/upload-registration-document').flush({
+          fileId: 'file-esp-1',
+          originalName: 'cardio.pdf',
+          sizeBytes: 2048,
+          mimeType: 'application/pdf',
+        });
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        const [credencial, ...otras] = req.request.body.credentials;
+        expect(otras).toEqual([]);
+        expect(credencial).toMatchObject({
+          credentialTypeConceptId: 'c-specialty',
+          number: 'ESP-77',
+          issuingCountryText: 'Bolivia',
+          titleText: 'Cardiología',
+          fileId: 'file-esp-1',
+        });
+        expect(credencial.issuingInstitutionText).toBeTruthy();
+        // La segunda especialidad no declaró estudio: no genera fila.
+        expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio', 'e-pedia']);
+        req.flush(RESPUESTA_PRO);
+      });
+
+      it('con datos y sin número frena el paso y el envío, y nombra la casilla', () => {
+        catalogoDeTiposDeTitulo();
+        component.especialidadesExtra.set(['e-cardio', 'e-pedia']);
+        component.chooseSpecialtyCountry(1, 'Bolivia');
+
+        expect(component.formProfesional.controls.especialidadesExtra.invalid).toBe(true);
+        expect(component.specialtyStudyMissingNumber(1)).toBe(true);
+        expect(component.specialtyStudyMissingNumber(0)).toBe(false);
+
+        completarProfesional({ especialidadesExtra: ['e-cardio', 'e-pedia'] });
+        component.submit();
+        http.expectNone('/iam/auth/register-practitioner');
+        expect(component.state().status).toBe('validation');
+
+        component.writeSpecialtyStudy(1, 'number', 'ESP-2');
+        expect(component.formProfesional.controls.especialidadesExtra.valid).toBe(true);
+      });
+
+      it('cambiar de país reinicia la universidad, y la ciudad sigue a la universidad', () => {
+        component.especialidadesExtra.set(['e-cardio']);
+        component.chooseSpecialtyCountry(0, 'Bolivia');
+        const universidad = component
+          .specialtyUniversityOptions(0)
+          .find((opcion) => component.specialtyCityOptions(0).length >= 0 && opcion.value)!;
+        component.chooseSpecialtyUniversity(0, universidad.value);
+        expect(component.specialtyStudyAt(0).university).toBe(universidad.value);
+
+        component.chooseSpecialtyCountry(0, null);
+        expect(component.specialtyStudyAt(0).university).toBe('');
+        expect(component.specialtyStudyAt(0).pickedUniversity).toBeNull();
+      });
+
+      it('quitar una especialidad quita su estudio y sube el diploma de las siguientes', () => {
+        component.especialidadesExtra.set(['e-cardio', 'e-pedia']);
+        component.writeSpecialtyStudy(0, 'number', 'A');
+        component.writeSpecialtyStudy(1, 'number', 'B');
+        component.updateSpecialtyFiles(1, [archivoDe('b.pdf', 'application/pdf', 10)]);
+
+        component.quitarEspecialidad(0);
+
+        expect(component.specialtyStudies().map((study) => study.number)).toEqual(['B']);
+        expect(component.attachmentFiles()['especialidad-0']?.[0]?.name).toBe('b.pdf');
+        expect(component.attachmentFiles()['especialidad-1']).toBeUndefined();
+      });
+    });
 
     it('los títulos declarados VIAJAN en el alta, uno por fila', () => {
       catalogoDeTiposDeTitulo();
