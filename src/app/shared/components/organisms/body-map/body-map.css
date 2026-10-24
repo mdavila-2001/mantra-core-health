@@ -107,48 +107,23 @@
 
 /* ─── La figura ─────────────────────────────────────────────────────────── */
 
-/* El volumen del contorno: costados más oscuros que el centro, con un tinte
-   apenas frío de la marca para que la figura se lea como un modelo clínico y
-   no como un recorte gris. */
-.body-map__volumen-borde {
-  stop-color: color-mix(in srgb, color-mix(in srgb, var(--brand-primary) 18%, var(--text-secondary)) 34%, var(--bg-surface));
-}
-
-.body-map__volumen-centro {
-  stop-color: color-mix(in srgb, color-mix(in srgb, var(--brand-primary) 12%, var(--text-secondary)) 13%, var(--bg-surface));
-}
-
-/* La luz: un brillo que cae de arriba a la izquierda y se apaga antes del
-   borde. Es lo que le da redondez al pecho, los hombros y la cabeza. */
-.body-map__luz-fuerte {
-  stop-color: var(--bg-surface);
-  stop-opacity: 0.55;
-}
-
-.body-map__luz-nula {
-  stop-color: var(--bg-surface);
-  stop-opacity: 0;
-}
-
-/* El contorno entero, debajo de todo: da el borde exterior parejo. El relleno
-   es el degradado de volumen (atributo `fill` en la plantilla). */
-.body-map__contorno {
-  stroke: color-mix(in srgb, var(--text-secondary) 62%, var(--bg-surface));
-  stroke-width: 1.4;
-  stroke-linejoin: round;
+/* El maniquí renderizado: decorativo y sin clic (lo reciben las zonas). En
+   oscuro se apaga apenas: el yeso claro a pleno brillo sobre la superficie
+   oscura encandilaba y se comía las zonas. */
+.body-map__render {
   pointer-events: none;
 }
 
-.body-map__luz {
-  pointer-events: none;
+:host-context([data-theme='dark']) .body-map__render {
+  filter: brightness(0.86) saturate(0.9);
 }
 
-/* Las zonas son transparentes: el volumen se ve a través. La costura entre
+/* Las zonas son transparentes: el maniquí se ve a través. La costura entre
    ellas es un hilo tenue: se adivina dónde termina cada parte sin cortar la
    figura en pedazos. */
 .body-map__forma {
   fill: transparent;
-  stroke: color-mix(in srgb, var(--text-secondary) 13%, transparent);
+  stroke: color-mix(in srgb, var(--text-secondary) 22%, transparent);
   stroke-width: 0.5;
   stroke-linejoin: round;
   /* Una zona con hueco (la cara sin ojos, nariz ni boca) no lo rellena: el
@@ -159,30 +134,6 @@
     fill var(--dur-fast) var(--ease-out),
     stroke var(--dur-fast) var(--ease-out),
     stroke-width var(--dur-fast) var(--ease-out);
-}
-
-/* Pelo, cejas y labios: formas llenas y tenues, un tono más hondo que la piel. */
-.body-map__rellenos {
-  fill: color-mix(in srgb, var(--text-primary) 34%, var(--bg-surface));
-  fill-opacity: 0.85;
-  pointer-events: none;
-}
-
-/* Iris y fosas nasales: lo más oscuro del dibujo, lo que hace que la cara mire. */
-.body-map__acentos {
-  fill: color-mix(in srgb, var(--text-primary) 72%, var(--bg-surface));
-  pointer-events: none;
-}
-
-/* Los rasgos no se pulsan: el clic atraviesa hasta la zona de abajo. Van
-   finos y tenues: ayudan a leer la figura sin competir con las zonas. */
-.body-map__detalles {
-  fill: none;
-  stroke: color-mix(in srgb, var(--text-secondary) 52%, transparent);
-  stroke-width: 0.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  pointer-events: none;
 }
 
 /* ─── Estados ───────────────────────────────────────────────────────────── */
@@ -234,6 +185,9 @@
    ojos, nariz y boca— se tragaba los clics de esas zonas. */
 .body-map__zona--elegida .body-map__forma {
   fill: var(--body-map-relleno-elegida, var(--brand-primary));
+  /* Translúcido: debajo hay un cuerpo, y la parte elegida tiene que seguir
+     viéndose como cuerpo, no como un recorte de color. */
+  fill-opacity: 0.62;
   stroke: color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary));
   stroke-width: 1.8;
   stroke-dasharray: none;
