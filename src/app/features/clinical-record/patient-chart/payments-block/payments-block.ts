@@ -14,6 +14,7 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/facturacion-disponible';
 import { CobrosDelPaciente } from './cobros-del-paciente/cobros-del-paciente';
+import { ClaimQuoteSection } from '../../../insurance/claim-quote/claim-quote-section';
 
 /**
  * Cuántos pagos se muestran. Lo que quede afuera se dice, no se calla.
@@ -104,7 +105,7 @@ export interface PagosDelPaciente {
  */
 @Component({
   selector: 'app-payments-block',
-  imports: [Alert, AppButton, Badge, CobrosDelPaciente, DatePipe],
+  imports: [Alert, AppButton, Badge, ClaimQuoteSection, CobrosDelPaciente, DatePipe],
   templateUrl: './payments-block.html',
   styleUrl: './payments-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

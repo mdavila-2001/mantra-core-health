@@ -98,7 +98,7 @@
 
 <ng-template #statusCell let-claim>
   @if (claim.status) {
-    <app-badge variant="info" size="sm">{{ claim.status.display }}</app-badge>
+    <app-badge [variant]="tonoDeEstado(claim.status.code)" size="sm">{{ claim.status.display }}</app-badge>
   } @else {
     <span class="claims__absent">Sin estado</span>
   }

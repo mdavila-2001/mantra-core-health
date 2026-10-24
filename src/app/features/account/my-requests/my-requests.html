@@ -128,7 +128,7 @@
       }}</time>
     </span>
   } @else if (fila.status) {
-    <app-status-seal [variant]="selloDe(fila)" [label]="fila.status.display" />
+    <app-status-seal [variant]="selloDe(fila)" [label]="etiquetaDeEstado(fila)" />
   } @else {
     <span class="mis-solicitudes__secundario">Sin estado</span>
   }
@@ -181,6 +181,14 @@
         <dt>Monto aprobado</dt>
         <dd class="mis-solicitudes__monto">{{ formatMoney(fila.approvedTotal) }}</dd>
       </div>
+      @if (vista() === 'PATIENT' && fila.breakdown && desgloseVm(); as vm) {
+        <div class="mis-solicitudes__dato-ancho" data-testid="mis-solicitudes-desglose">
+          <dt>Qué paga usted y qué paga su aseguradora</dt>
+          <dd>
+            <app-claim-quote-breakdown [vm]="vm" />
+          </dd>
+        </div>
+      }
       @if (fila.patientName) {
         <div>
           <dt>Paciente</dt>
@@ -203,5 +211,60 @@
         </div>
       }
     </dl>
+    @if (vista() === 'PATIENT') {
+      <div class="mis-solicitudes__objecion" data-testid="mis-solicitudes-objecion">
+        @if (fila.patientObjection) {
+          <app-badge variant="warning" data-testid="mis-solicitudes-objecion-sello">Objeción presentada</app-badge>
+          <p>El cobro está en pausa mientras el consultorio revisa su objeción, con copia a su aseguradora.</p>
+        } @else {
+          <button
+            app-button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="mis-solicitudes-objetar"
+            (clicked)="abrirObjecion(fila)"
+          >
+            Objetar cobro
+          </button>
+        }
+      </div>
+    }
+  </app-content-dialog>
+}
+
+@if (objetando(); as fila) {
+  <app-content-dialog
+    heading="Objetar cobro"
+    [description]="'Solicitud ' + fila.claimIdentifier"
+    size="sm"
+    [dismissible]="!enviandoObjecion()"
+    (dismissAttempt)="cerrarObjecion()"
+    (closed)="cerrarObjecion()"
+    data-testid="mis-solicitudes-objecion-modal"
+  >
+    <p>
+      Elija el motivo. El cobro queda en pausa mientras el consultorio revisa su objeción, con copia a su
+      aseguradora. No se envía texto libre.
+    </p>
+    <app-form-field label="Motivo" [required]="true">
+      <app-radio-group [(value)]="motivo" data-testid="mis-solicitudes-objecion-motivo">
+        @for (opcion of motivos; track opcion.value) {
+          <app-radio [value]="opcion.value" [label]="opcion.label" />
+        }
+      </app-radio-group>
+    </app-form-field>
+    @if (errorDeObjecion(); as error) {
+      <app-alert tone="error" data-testid="mis-solicitudes-objecion-error">{{ error }}</app-alert>
+    }
+    <app-form-actions
+      dialog-actions
+      submitLabel="Presentar objeción"
+      cancelLabel="Cancelar"
+      [disabled]="!puedeObjetar()"
+      [pending]="enviandoObjecion()"
+      (submitted)="presentarObjecion()"
+      (cancelled)="cerrarObjecion()"
+    />
   </app-content-dialog>
 }

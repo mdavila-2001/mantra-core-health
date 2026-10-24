@@ -71,6 +71,9 @@ describe('PaymentsBlock', () => {
   });
 
   afterEach(() => {
+    // La cotización de cobro con seguro lee las coberturas de la persona: no es lo que
+    // estas pruebas miden, así que se responde vacía antes de verificar.
+    http.match((r) => r.url.includes('/patient-coverages/by-patient/')).forEach((r) => r.flush({ items: [] }));
     http.verify();
   });
 
