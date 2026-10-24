@@ -41,7 +41,8 @@ describe('AnatomyViewer', () => {
   it('el lienzo toma foco y explica cómo se maneja con el teclado', () => {
     const lienzo = (fixture.nativeElement as HTMLElement).querySelector('canvas');
     expect(lienzo?.getAttribute('tabindex')).toBe('0');
-    expect(lienzo?.getAttribute('role')).toBe('img');
+    expect(lienzo?.getAttribute('role')).toBe('application');
+    expect(lienzo?.getAttribute('aria-roledescription')).toBe('modelo 3D');
     expect(lienzo?.getAttribute('aria-label')).toContain('Use las flechas para girar');
   });
 });

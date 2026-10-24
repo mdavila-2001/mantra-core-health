@@ -1317,7 +1317,7 @@
   },
   "UBERON:0009041": {
     "labelEs": "arteria circunfleja ilíaca superficial",
-    "definitionEs": "La arteria circunfleja ilíaca superficial, la más pequeña de las ramas cutáneas de la arteria femoral, se origina cerca de la arteria epigástrica superficial y, perforando la fascia lata, discurre lateralmente, paralela al ligamento inguinal, hasta la cresta del ilion. Se divide en ramas que irrigan el tegumento de la ingle, la fascia superficial y los ganglios linfáticos subinguinales superficiales, y se anastomosa con las arterias circunfleja ilíaca profunda, glútea superior y circunfleja femoral lateral."
+    "definitionEs": "La arteria circunfleja ilíaca superficial (o circunfleja ilíaca superficial), la más pequeña de las ramas cutáneas de la arteria femoral, se origina cerca de la arteria epigástrica superficial y, perforando la fascia lata, discurre lateralmente, paralela al ligamento inguinal, hasta la cresta del ilion. Se divide en ramas que irrigan el tegumento de la ingle, la fascia superficial y los ganglios linfáticos subinguinales superficiales, y se anastomosa con las arterias circunfleja ilíaca profunda, glútea superior y circunfleja femoral lateral."
   },
   "UBERON:0009050": {
     "labelEs": "núcleo del tracto solitario",
@@ -1413,7 +1413,7 @@
   },
   "UBERON:0009857": {
     "labelEs": "cavidad del septo pelúcido",
-    "definitionEs": "Espacio encerrado entre las láminas del septo pelúcido, el tabique membranoso que separa las astas frontales del ventrículo. Contiene líquido cefalorraquídeo (LCR) que se filtra desde los ventrículos a través de las láminas septales. Está limitado por delante por la rodilla del cuerpo calloso; por arriba por el cuerpo del cuerpo calloso; por detrás por el brazo anterior y los pilares del fórnix; por abajo por la comisura anterior y la tribuna del cuerpo calloso; y lateralmente por las hojillas del septo pelúcido."
+    "definitionEs": "Espacio encerrado entre las láminas del septo pelúcido, el tabique membranoso que separa las astas frontales del ventrículo. Contiene líquido cefalorraquídeo (LCR) que se filtra desde los ventrículos a través de las láminas septales. Está limitado por delante por la rodilla del cuerpo calloso; por arriba por el cuerpo del cuerpo calloso; por detrás por el brazo anterior y los pilares del fórnix; por abajo por la comisura anterior y el pico (rostro) del cuerpo calloso; y lateralmente por las hojillas del septo pelúcido."
   },
   "UBERON:0009859": {
     "labelEs": "endostio",

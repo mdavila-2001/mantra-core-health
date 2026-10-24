@@ -473,7 +473,7 @@
  },
  "UBERON:0001684": {
   "labelEs": "mandíbula",
-  "definitionEs": "Hueso dentario que es el único hueso de cada una de las mitades laterales del esqueleto de la mandíbula inferior."
+  "definitionEs": "Hueso dentario que es el único hueso de una de las mitades laterales del esqueleto de la mandíbula."
  },
  "UBERON:0001686": {
   "labelEs": "huesecillo del oído",
@@ -3064,7 +3064,7 @@
   "definitionEs": "Anillo de tejido fibroso que rodea el nervio óptico en su entrada, en el vértice de la órbita."
  },
  "UBERON:0014802": {
-  "labelEs": "línea nucal suprema",
+  "labelEs": "sitio de fijación de la línea nucal suprema",
   "definitionEs": "De las líneas nucales, la superior, a menudo poco marcada, se denomina línea nucal suprema, aunque a veces se la conoce como línea de Mempin, y a ella se fija la galea aponeurótica."
  },
  "UBERON:0014803": {

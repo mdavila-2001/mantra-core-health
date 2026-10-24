@@ -49,7 +49,7 @@
  },
  "UBERON:0001275": {
   "labelEs": "pubis",
-  "definitionEs": "Hueso endocondral par que constituye la región anteroventral de la cintura pélvica tripartita y forma parte del borde ventral del acetábulo. Lugar de origen de muchos músculos proximales del miembro posterior."
+  "definitionEs": "Hueso endocondral par que constituye la región anteroventral de la cintura pélvica tripartita y forma parte del borde ventral del acetábulo. Lugar de origen de muchos músculos proximales del miembro posterior. [PHENOSCAPE:ad]"
  },
  "UBERON:0001302": {
   "labelEs": "trompa uterina derecha",

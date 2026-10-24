@@ -62,9 +62,12 @@ export interface AnatomyIncomingRelation {
   readonly labelEs: string | null;
 }
 
+/**
+ * Una referencia al índice de Netter: qué láminas. El texto del índice no se
+ * publica (es de Elsevier y trae ruido de OCR); sólo el número de lámina.
+ */
 export interface AnatomyNetterEntry {
   readonly netterId: string;
-  readonly name: string;
   readonly plates: readonly number[];
   readonly matchKind: 'exact' | 'laterality_dropped';
 }

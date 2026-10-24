@@ -1017,7 +1017,7 @@
   },
   "UBERON:0001609": {
     "labelEs": "istmo de la glándula tiroides",
-    "definitionEs": "Puente medio y estrecho que une los tercios inferiores de los dos lóbulos laterales (derecho e izquierdo) de la glándula tiroides y que habitualmente cubre el segundo y el tercer anillo traqueal; la presencia y el tamaño del istmo tiroideo son variables, puede cambiar de forma y tamaño y puede abarcar un lóbulo piramidal que se extiende cranealmente (lobus pyramidalis o processus pyramidalis), resto del conducto tirogloso."
+    "definitionEs": "Puente mediano y estrecho que une los tercios inferiores de los dos lóbulos laterales (derecho e izquierdo) de la glándula tiroides y que habitualmente cubre el segundo y el tercer anillo traqueal; la presencia y el tamaño del istmo tiroideo son variables, puede cambiar de forma y tamaño y puede abarcar un lóbulo piramidal que se extiende cranealmente (lobus pyramidalis o processus pyramidalis), resto del conducto tirogloso."
   },
   "UBERON:0001611": {
     "labelEs": "arteria sublingual",
@@ -3341,7 +3341,7 @@
   },
   "UBERON:0004475": {
     "labelEs": "musculatura de la cadera",
-    "definitionEs": "Conjunto de músculos que se insertan en el esqueleto de la cadera."
+    "definitionEs": "Conjunto de músculos que se fijan al el esqueleto de la cadera."
   },
   "UBERON:0004478": {
     "labelEs": "musculatura de la laringe",

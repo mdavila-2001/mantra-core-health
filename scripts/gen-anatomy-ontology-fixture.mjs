@@ -157,7 +157,9 @@ function main() {
     cruce.aceptadas++;
     const e = netter.get(m.netterId);
     const lista = netterPorEstructura.get(m.uberon) ?? [];
-    lista.push({ netterId: e.id, name: e.name, plates: e.plates, matchKind: m.matchKind });
+    // Sólo la referencia (qué láminas): el texto del índice es de la obra de
+    // Elsevier y trae fragmentos de su cabecera leídos por OCR; no se publica.
+    lista.push({ netterId: e.id, plates: e.plates, matchKind: m.matchKind });
     netterPorEstructura.set(m.uberon, lista);
   }
   const sinRevisar = [...netter.keys()].filter((id) => !vistas.has(id));
@@ -286,13 +288,26 @@ function main() {
 
   /* ---- estructuras exclusivas de cada sexo ------------------------------- */
   const padres = new Map(uberon.map((t) => [t.id, [...t.isA.map((r) => r.target), ...t.relations.filter((r) => r.type === 'part_of').map((r) => r.target)]]));
-  const alcanza = (id, raiz, vistos = new Set()) => {
-    if (id === raiz) return true;
+  const alcanza = (id, raices, vistos = new Set()) => {
+    if (raices.has(id)) return true;
     if (vistos.has(id)) return false;
     vistos.add(id);
-    return (padres.get(id) ?? []).some((p) => alcanza(p, raiz, vistos));
+    return (padres.get(id) ?? []).some((p) => alcanza(p, raices, vistos));
   };
-  const femeninas = uberon.filter((t) => alcanza(t.id, 'UBERON:0000474')).map((t) => t.id);
+  // UBERON cuelga el útero de «internal genitalia», que no tiene sexo: con la
+  // sola raíz del sistema reproductor femenino, útero y cuello quedaban
+  // afuera. Por eso las raíces son también los órganos exclusivamente
+  // femeninos. La mama no entra: existe en los dos sexos.
+  const RAICES_FEMENINAS = new Set([
+    'UBERON:0000474', // female reproductive system
+    'UBERON:0000995', // uterus
+    'UBERON:0000992', // ovary
+    'UBERON:0000993', // oviduct
+    'UBERON:0003889', // fallopian tube
+    'UBERON:0000996', // vagina
+    'UBERON:0000997', // mammalian vulva
+  ]);
+  const femeninas = uberon.filter((t) => alcanza(t.id, RAICES_FEMENINAS)).map((t) => t.id);
 
   const relaciones = fichas.reduce((n, f) => n + f.relations.length, 0);
   const definiciones = fichas.filter((f) => f.definition).length;
