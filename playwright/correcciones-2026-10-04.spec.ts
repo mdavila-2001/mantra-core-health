@@ -336,7 +336,7 @@ test('perfil sin desbordes: 5 tamaños × claro y oscuro', async ({ page }) => {
 
 /* ------------------------------------------------- 8 · directorio de médicos */
 
-test('directorio: filas de médicos primero y, en una especialidad, su nombre en cada fila', async ({ page }) => {
+test('directorio: grilla de especialidades primero y, en una especialidad, su nombre en cada fila', async ({ page }) => {
   const { contextoDeApi, crearPaciente } = await import('./support/actores');
   const api = await contextoDeApi();
   const paciente = await crearPaciente(api);
@@ -344,16 +344,16 @@ test('directorio: filas de médicos primero y, en una especialidad, su nombre en
   await entrar(page, paciente.identificador, paciente.clave);
   await page.goto('/directory', { waitUntil: 'domcontentloaded' });
 
-  // Sin grid de especialidades: la lista de médicos, en filas.
-  await expect(page.getByTestId('portada-especialidades')).toHaveCount(0);
-  await expect(page.locator('li.tarjeta-resultado--lista').first()).toBeVisible({ timeout: 30_000 });
-  await foto(page, '08-directorio-filas');
+  // Carril 18 (REQ-18-002) reemplaza la entrada «en filas» del 04/10: primero
+  // la grilla de especialidades; el clic despliega la lista, que sigue en filas.
+  const grilla = page.getByTestId('portada-especialidades');
+  await expect(grilla).toBeVisible({ timeout: 30_000 });
+  await foto(page, '08-directorio-grilla');
 
-  // El filtro de especialidad: la primera que tenga gente.
-  const filtro = page.locator('app-filter-bar select').first();
-  const etiqueta = (await filtro.locator('option').nth(1).textContent())?.trim() ?? '';
-  const especialidad = etiqueta.replace(/\s*\(\d+\)$/, '');
-  await filtro.selectOption({ index: 1 });
+  // La primera especialidad con gente (la tarjeta 0 es «Todos los médicos»).
+  const tarjeta = grilla.locator('a.rejilla__tarjeta').nth(1);
+  const especialidad = (await tarjeta.locator('.rejilla__nombre').innerText()).trim();
+  await tarjeta.click();
   await expect(page).toHaveURL(/especialidad=/);
   const filas = page.locator('li.tarjeta-resultado--lista');
   await expect(filas.first()).toBeVisible({ timeout: 30_000 });
