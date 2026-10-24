@@ -277,11 +277,13 @@ export class InsuranceClient {
       .get<{
         readonly carrier: WireCarrierDetail | null;
         readonly brokers: readonly MarketplaceBroker[];
+        readonly exampleCatalog?: boolean;
       }>(this.url(`/insurance-marketplace/insurers/${encodeURIComponent(slug)}`))
       .pipe(
         map((body) => ({
           carrier: body.carrier === null ? null : toCarrierDetail(body.carrier),
           brokers: body.brokers,
+          exampleCatalog: body.exampleCatalog === true,
         })),
       );
   }
