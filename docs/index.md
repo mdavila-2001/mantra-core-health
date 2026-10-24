@@ -162,9 +162,7 @@ acuse**. → [reglas de negocio](business/business-rules.md#reglas-de-privacidad
 - [Diagnóstico (fases 0–1)](auditoria/01-diagnostico.md)
 - [Fases ejecutadas 2–6](auditoria/02-fases-ejecutadas.md)
 
-Igual que `README.md`, `ESTADO-FRONTEND.md`, `AVANCE-FRONTEND-*.md`,
-`COORDINACION-AGENTES.md` y `PENDIENTES-BACKEND.md`, que esta documentación
-**cita pero no reemplaza**.
+Igual que `README.md`, que esta documentación **cita pero no reemplaza**.
 
 ## Cómo se lee esta documentación
 

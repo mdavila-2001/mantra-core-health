@@ -6,7 +6,7 @@ import { isMockReply, type MockMethod } from './mock-router';
 
 /* ============================================================================
     Las dos lecturas que alimentan las fichas de clínica y de farmacia dentro
-    del panel (P30 y P31 de `PENDIENTES-BACKEND.md`).
+    del panel (P30 y P31).
 
     El barrido general sólo comprueba que ningún manejador lance; esto
     comprueba lo que las pantallas necesitan: que cada ficha publique un

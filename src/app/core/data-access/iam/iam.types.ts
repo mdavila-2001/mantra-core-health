@@ -716,11 +716,8 @@ export interface PharmacyBranchRegistration {
  * laboratorio e imagenología (Módulo Farmacia §1). Es una interfaz aparte y
  * no una unión con `OrganizationRegistration` porque el bloque específico del
  * tipo de tenant no coincide: la aseguradora exige `payer` siempre; la
- * farmacia no tiene bloque propio en el DTO real (no hay `PharmacyProfileDto`
- * — el backend sólo declara `payer`, `broker` y `diagnosticUnit`), así que
- * `pharmacy.branches` es una clave que **este cliente inventa** para no
- * perder las sucursales que la persona cargó; el backend real todavía no la
- * reconoce (ver `PENDIENTES-BACKEND.md`, P49).
+ * farmacia manda su bloque `pharmacy` (`RegisterPharmacyBlockDto`), con las
+ * coordenadas de la casa matriz y las sucursales que la persona cargó (P49).
  *
  * A diferencia de la aseguradora, acá **lo obligatorio es lo más básico**
  * (decisión D2 del carril de farmacia): razón social, tipo societario, NIT,
@@ -803,7 +800,7 @@ export interface DiagnosticUnitBranchRegistration {
  * real **sí** tiene bloque propio para este tipo: `diagnosticUnit`
  * (`DiagnosticUnitProfileDto`, con `name` y `primarySite.address`). Se usa ése
  * y no uno inventado; lo único que el cliente le suma es `branches`, que el
- * DTO no declara (ver `PENDIENTES-BACKEND.md`, P51).
+ * DTO no declara (P51).
  *
  * Mismo criterio de obligatoriedad que la farmacia (D2): sólo lo básico para
  * nacer. Los seis papeles, el punto de la central, las sucursales y las tres

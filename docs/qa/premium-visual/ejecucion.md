@@ -42,7 +42,7 @@ scripts/premium-visual.sh 34 --antes          # acabado: nombres, globos, foco, 
 
 Sale `MATRIZ-visual-antes.md`, `MATRIZ-premium-antes.md`,
 `premium-hallazgos-antes.json` y las fotos, en
-`docs/progress/evidence/lane-34/`. Para una sola ruta:
+`../docs/progress/evidence/lane-34/`. Para una sola ruta:
 `scripts/premium-visual.sh 34 --antes --ruta=/schedule`.
 
 **Antes de arreglar nada, leer `premium-hallazgos-antes.json` y descartar lo que
@@ -114,13 +114,13 @@ Evidencia y claim:
 python3 .claude/hooks/progress.py --lane 34 --phase "cierre" --state done \
   --qa pass --message "<qué quedó>"
 python3 .claude/hooks/claim.py --lane 34 --level REGRESSION_VERIFIED \
-  --evidence "docs/progress/evidence/lane-34/REPORT.md"
+  --evidence "../docs/progress/evidence/lane-34/REPORT.md"
 python3 -S scripts/atlas/fable-proof-check.py --lane 34   # desde la raíz del proyecto
 ```
 
 El `REPORT.md` dice qué se midió, qué se miró a ojo y qué quedó fuera. Se
-escriben también los defectos en `docs/progress/BUGS.md` y las decisiones en
-`docs/progress/DECISIONS.md`.
+escriben también los defectos en `../docs/progress/BUGS.md` y las decisiones en
+`../docs/progress/DECISIONS.md`.
 
 ## 7 · Presupuesto y freno
 
@@ -136,7 +136,7 @@ escriben también los defectos en `docs/progress/BUGS.md` y las decisiones en
 
 | Artefacto | Dónde |
 |---|---|
-| Matriz de composición | `docs/progress/evidence/lane-34/MATRIZ-visual.md` |
+| Matriz de composición | `../docs/progress/evidence/lane-34/MATRIZ-visual.md` |
 | Matriz de acabado | `…/MATRIZ-premium.md` |
 | Hallazgos accionables | `…/premium-hallazgos.json` |
 | Fotos por ruta y viewport | `…/fotos/` y `…/fotos/premium/` |

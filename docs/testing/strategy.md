@@ -135,7 +135,7 @@ Ver cada una en su página.
 ### El argumento de la E2E, concretamente
 
 Seis flujos fueron verificados **a mano** contra la API viva
-(`ESTADO-FRONTEND.md` §«El recorrido que se verificó en un navegador real»).
+(el recorrido del 2026-08-01, cuyo informe queda en el historial de git).
 Funcionaron. **Y nada garantiza que sigan funcionando.**
 
 Los que más la necesitan:

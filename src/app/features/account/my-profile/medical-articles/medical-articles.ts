@@ -260,7 +260,7 @@ export class MedicalArticles {
    * artículo con un hueco donde iba la radiografía es peor que uno que todavía
    * no salió, y lo escrito queda intacto en el compositor para reintentar.
    * Los archivos que sí subieron quedan huérfanos en `common.files`; no hay
-   * contrato para borrarlos desde acá (anotado en PENDIENTES-BACKEND).
+   * contrato para borrarlos desde acá.
    *
    * @param borrador - Lo que armó el compositor.
    */

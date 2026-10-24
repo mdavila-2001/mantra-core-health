@@ -255,8 +255,8 @@ export interface CarrierDetail extends CarrierSummary {
    puede hablar. El catálogo comercial completo (`GET /insurance-carriers/:id`)
    sólo lo lee la propia aseguradora; esto es la vitrina.
 
-   **Contrato pendiente en la API** (P48 de `PENDIENTES-BACKEND.md`): hoy
-   existe sólo en la maqueta de `mockup`. */
+   **La API no publica este contrato** (P48): sólo existe en la maqueta de
+   `mockup`. */
 
 /** Un broker que vende productos de la aseguradora, con cómo escribirle. */
 export interface MarketplaceBroker {

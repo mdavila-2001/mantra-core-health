@@ -48,4 +48,4 @@ Ninguno se veía leyendo el código; los cuatro aparecieron al usarlo.
   `dev` y el autodespliegue pase.
 - Las cuentas son de prueba y sus perfiles están casi vacíos: la ficha se ve con
   presentación cargada a mano, sin foto, sin especialidades y sin sedes —esos
-  datos la API pública no los sirve, y está anotado en `PENDIENTES-BACKEND.md`—.
+  datos la API pública no los servía ese día—.

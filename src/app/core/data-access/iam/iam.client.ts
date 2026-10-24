@@ -445,9 +445,8 @@ export class IamClient {
           ? {}
           : { legalDocuments: registration.legalDocuments }),
         ...(registration.executives === undefined ? {} : { executives: registration.executives }),
-        // `pharmacy.branches`: clave que el backend real todavía no declara
-        // (ver el JSDoc de `PharmacyOrganizationRegistration`, P49). Se manda
-        // igual para que el simulador —que sí la valida— la ejercite.
+        // `pharmacy`: el bloque `RegisterPharmacyBlockDto` del DTO real, con
+        // las coordenadas de la casa matriz y las sucursales (P49).
         ...(registration.headquarters === undefined && registration.branches === undefined
           ? {}
           : {
@@ -482,7 +481,8 @@ export class IamClient {
    * tipo— y no `payer` ni `pharmacy`. Campo por campo y no con un spread del
    * registro, por lo mismo que el resto del cliente: `forbidNonWhitelisted`
    * rechaza toda clave que el DTO no declare. La única que el DTO no tiene es
-   * `diagnosticUnit.branches` (ver `PENDIENTES-BACKEND.md`, P51).
+   * `diagnosticUnit.branches` (P51): `DiagnosticUnitProfileDto` no declara
+   * sucursales.
    */
   registerLaboratoryOrganization(
     registration: LaboratoryOrganizationRegistration,

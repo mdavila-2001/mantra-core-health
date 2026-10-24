@@ -187,8 +187,7 @@ Estas seis ausencias son el material de
 ## 6. Flujos que se sabe que funcionan
 
 Verificado por las 804 pruebas unitarias y de componente, y por el registro
-previo del equipo en `ESTADO-FRONTEND.md` §«El recorrido que se verificó en un
-navegador real»:
+previo del equipo (el recorrido del 2026-08-01, cuyo informe queda en el historial de git):
 
 - Alta de paciente por documento y de profesional por correo.
 - Inicio de sesión con correo o documento, con y sin varias organizaciones.

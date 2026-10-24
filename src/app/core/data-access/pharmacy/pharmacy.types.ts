@@ -76,7 +76,7 @@ export interface PharmacyProduct {
   readonly requiresPrescription: boolean | null;
   /*
    * Los cuatro de abajo son del catálogo que administra la farmacia y **sólo
-   * los sirve el simulador** (P47 de PENDIENTES-BACKEND): la API real no los
+   * los sirve el simulador** (P47): la API real no los
    * manda, por eso son opcionales y cada pantalla tiene que tolerar que
    * falten.
    */

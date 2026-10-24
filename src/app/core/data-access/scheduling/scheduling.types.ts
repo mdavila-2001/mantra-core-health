@@ -640,8 +640,8 @@ export interface NewScheduleTemplate {
    * corta en turnos fijos** — el paciente pide la hora que quiera dentro de la
    * franja (propietario, 18/09).
    *
-   * **Todavía no existe en la API real** (P36 de `PENDIENTES-BACKEND.md`): hoy
-   * sólo lo entiende el simulador de `mockup`. Ausente ≡ turnos fijos.
+   * **No existe en la API real** (P36): sólo lo entiende el simulador de
+   * `mockup`. Ausente ≡ turnos fijos.
    */
   readonly flexibleHours?: boolean;
 }

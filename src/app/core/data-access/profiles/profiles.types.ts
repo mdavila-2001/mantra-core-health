@@ -11,7 +11,7 @@ import type { BirthSexCode } from '../iam/iam.types';
  * mostrador (nombre, documento, ocupación, tutor…) **no** la acepta este
  * endpoint —sólo el alta que la persona hace de sí misma— y por eso no está
  * declarada: el tipo tiene que impedir construir un cuerpo que la API rechaza
- * (ID-23). Su destino es el registro asistido (`PENDIENTES-BACKEND.md`, P22).
+ * (ID-23). Su destino es el registro asistido.
  */
 export interface NewPatientProfile {
   /** Único en toda la instalación; el DTO lo exige. */
@@ -92,7 +92,7 @@ export interface NewJurisdictionAuthorization {
    *
    * Existe desde el 13/09/2026 (modelo v4.2.11 + API). Hasta entonces el
    * contrato no tenía dónde llevarlo y el selector del formulario tiraba el
-   * archivo en silencio; ver `docs/progress/BLOCKERS.md`.
+   * archivo en silencio.
    */
   readonly fileId?: string;
 }
@@ -178,8 +178,8 @@ export interface PractitionerCredential {
    * a verlo, ni siquiera para quien lo subió. Lo pidió el propietario el
    * 13/09/2026 («descargar elementos»).
    *
-   * Hoy lo sirve el simulador de la rama `mockup`; el `PractitionerCredentialDto`
-   * de la API todavía no lo declara. Ver `docs/progress/BLOCKERS.md`.
+   * `PractitionerCredentialDto` lo declara en la lectura, igual que el
+   * simulador de `mockup`.
    */
   readonly fileId?: string;
 }
@@ -224,11 +224,8 @@ export interface PractitionerLicense {
    Los tres `PATCH` que la tabla de «Configurar tu perfil» necesita para que
    «Editar» no sea borrar y volver a cargar.
 
-   **Ninguno existe todavía en la API.** Están escritos con la forma REST que le
-   corresponde a cada recurso —y el simulador de la rama `mockup` los atiende—
-   para que el día que el backend los publique no haya que rehacer la pantalla:
-   lo que cambia es quién responde, no qué se pide. Ver
-   `docs/progress/BLOCKERS.md`.
+   Los tres existen en la API con la forma REST que le corresponde a cada
+   recurso, y el simulador de `mockup` los atiende igual.
 
    Los tres son PARCIALES: lo que no viaja no se toca. Un `undefined` no borra
    —`stripUndefined` lo quita del cuerpo—, así que corregir el número de un
@@ -1091,8 +1088,7 @@ export interface PractitionerListItem {
   readonly workplaces: readonly string[];
   /**
    * La media de las reseñas publicadas y cuántas son. **Opcionales: la API
-   * todavía no los manda en el listado** (PENDIENTES-BACKEND, P61) —sólo en
-   * la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
+   * no los manda en el listado** (P61) —sólo en la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
    * inventada.
    */
   readonly ratingAverage?: number | null;

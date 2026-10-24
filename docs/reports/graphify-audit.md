@@ -261,8 +261,7 @@ producto. Están priorizadas en
 Pero `login.html` **sí tiene ese enlace** (`routerLink="/auth/forgot-password"`), la
 ruta existe, el componente `ForgotPassword` existe y `IamClient.forgotPassword`
 llama a `POST /iam/auth/forgot-password`. El comentario quedó de una etapa
-anterior; `PENDIENTES-BACKEND.md` §«La recuperación de contraseña llegó» confirma
-que el endpoint se entregó después.
+anterior: el endpoint se entregó después.
 
 **Comportamiento real: el enlace funciona.** Es el comentario el que está viejo.
 

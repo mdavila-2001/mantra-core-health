@@ -298,11 +298,10 @@ export function registrarAuth(router: MockRouter): void {
         jurisdictionConceptId?: string;
         legalDocuments?: Partial<Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>>;
         payer?: { latitude?: number; longitude?: number };
-        // Bloque de farmacia (carril de farmacia, 2026-09-29): clave que el
-        // DTO real todavía no declara (ver `PENDIENTES-BACKEND.md`, P49). El
-        // simulador la valida igual, con la misma forma que `payer` —ambas
-        // coordenadas o ninguna, cada una en rango—, para que el alta
-        // pública de farmacia tenga contra qué ejercitarse.
+        // Bloque de farmacia (carril de farmacia, 2026-09-29;
+        // `RegisterPharmacyBlockDto` en el DTO real, P49). El simulador lo
+        // valida con la misma forma que `payer` —ambas coordenadas o
+        // ninguna, cada una en rango—.
         pharmacy?: {
           latitude?: number;
           longitude?: number;
@@ -312,7 +311,7 @@ export function registrarAuth(router: MockRouter): void {
         // laboratorio, 2026-09-30): éste SÍ lo declara el DTO real
         // (`DiagnosticUnitProfileDto`), con la sede primaria y su dirección.
         // `branches` es lo único que el cliente le suma y el DTO no tiene
-        // (ver `PENDIENTES-BACKEND.md`, P51).
+        // (P51).
         diagnosticUnit?: {
           diagnosticUnitTypeConceptId?: string;
           modalityConceptIds?: readonly string[];

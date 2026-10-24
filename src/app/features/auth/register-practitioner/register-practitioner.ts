@@ -371,9 +371,7 @@ interface TituloDeclarado {
  *   `ciudadAlCambiarDeUniversidad`). Lo pidió el propietario el 03/10/2026
  *   («debe mostrar la ciudad por defecto»). Las de varias sedes y las del
  *   padrón importado no proponen nada, y ahí se escribe.
- *   `profiles.professional_credentials` **no tiene columna de ciudad**; se
- *   pregunta porque el propietario la pidió y el hueco queda declarado en
- *   `docs/handoff/`, no inventado acá.
+ *   Viaja en el título como `issuingCityText`.
  */
 type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
 
@@ -2409,8 +2407,9 @@ export class RegisterPractitioner {
         // La universidad y el lugar de estudio SÍ se preguntan acá desde el
         // 09/09: el propietario los pidió en el alta, no en el perfil. Desde el
         // 02/10 país y universidad son desplegables en árbol (ver
-        // `CampoDeEstudio`). Siguen sin viajar —viven en `credentials`, detrás
-        // de la sesión— y el mapeo campo por campo está en `docs/handoff/`.
+        // `CampoDeEstudio`). Viajan dentro de cada título de `credentials`
+        // (`issuingInstitutionText`, `issuingCityText`, `issuingCountryText`),
+        // no como campos del perfil.
         hint: 'Lo que van a ver sus pacientes. Puede cambiarlo cuando quiera.',
         campos: [
           {

@@ -84,7 +84,7 @@ primero.
 | Contrato de la API | Equipo de la API | **Sin OpenAPI alcanzable** |
 | Códigos de error | Ídem | Copiados a mano, con la referencia anotada |
 | **Dominio de los enlaces del correo** | Ídem | **Sin documentar en ningún repositorio** |
-| Primer administrador sembrado | Ídem | Documentado en `ESTADO-FRONTEND.md` |
+| Primer administrador sembrado | Ídem | Bootstrap de la API (ver su README) |
 | `identidad-visual.md` (ALOVIDA) | Diseño | Fuente normativa del sistema |
 | Modelo M34 | Arquitectura | Fuente normativa de los 9 estados |
 

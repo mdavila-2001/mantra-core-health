@@ -79,5 +79,5 @@ saltea el alta y sigue por la edición.
   profesionales con «Medicina general» registrada, y el flujo **no recomienda lo
   que no existe**: por eso `11` muestra una sola. Es el comportamiento correcto,
   visible.
-- **Las sedes en la ficha pública y la foto del perfil**: siguen bloqueadas por
-  backend (P16 y P17 en `PENDIENTES-BACKEND.md`).
+- **Las sedes en la ficha pública y la foto del perfil**: ese día dependían del
+  backend (P16 y P17, publicados después).

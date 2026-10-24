@@ -7,8 +7,8 @@ import { registrarAuth } from './auth.handlers';
  * El alta pública de laboratorio contra el simulador (carril A de la cuenta de
  * laboratorio, 2026-09-30): `POST /iam/auth/register-organization` con
  * `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit` que el DTO
- * real ya declara, más `diagnosticUnit.branches`, que el cliente le suma (ver
- * `PENDIENTES-BACKEND.md`, P51). Se ejercita el router directo, como el spec
+ * real ya declara, más `diagnosticUnit.branches`, que el cliente le suma
+ * (P51). Se ejercita el router directo, como el spec
  * de farmacia, para no depender del `HttpClient` real ni de la pantalla.
  */
 describe('alta pública de laboratorio en el simulador', () => {

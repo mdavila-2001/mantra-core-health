@@ -555,9 +555,9 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
   });
 
   /* ---- las opiniones de una ficha, con quién las dio ----------------------
-     Contrato del simulador: la API real todavía no lo publica (ver
-     «Opiniones públicas de una ficha» en PENDIENTES-BACKEND.md). Cuelga de
-     `/public/profiles/:prefijo/:slug/…` por lo mismo que los servicios. */
+     Mismo contrato que `GET /public/profiles/:prefijo/:slug/reviews` de la
+     API. Cuelga de `/public/profiles/:prefijo/:slug/…` por lo mismo que los
+     servicios. */
 
   router.get('/public/profiles/:prefix/:slug/reviews', async ({ params, query }) => {
     const v = showcaseBySlug(params['slug']!);
@@ -594,7 +594,7 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
     return paginaPublica(items, query, 20);
   });
 
-  /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
+  /* ---- lo que cada ficha OFRECE (P30 y P31) ---------------------------------
      Las dos cuelgan de `/public/profiles/:prefijo/:slug/…` y no de `/o/:slug/…`
      por lo mismo que la ficha: `/o` es también una ruta del router, y el proxy
      de desarrollo enruta comparando el comienzo de la ruta. */

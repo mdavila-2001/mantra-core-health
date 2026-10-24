@@ -6,7 +6,7 @@ import { buscarUsuario, TENANT_ASEGURADORA, TENANT_FARMACIA } from '../mock-sess
 import { registrarDirectorio } from './directory.handlers';
 
 /**
- * El logo de una organización en la maqueta (PENDIENTES-BACKEND P58): lo lee cualquiera
+ * El logo de una organización en la maqueta (P58): lo lee cualquiera
  * que vea la ficha, lo escribe sólo quien administra esa organización.
  */
 describe('handlers del logo de una organización', () => {

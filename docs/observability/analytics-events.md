@@ -6,7 +6,7 @@ una propuesta sin implementar.
 
 > El plan maestro es explícito: *«No añadir telemetría nueva como parte implícita
 > de la documentación.»* La captura de interacciones se agregó como trabajo
-> propio: `docs/trabajo/2026-10-21-mapa-de-calor-ux/`.
+> propio (mapa de calor de UX, 2026-10-21).
 
 ---
 

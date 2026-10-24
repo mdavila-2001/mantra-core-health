@@ -2393,8 +2393,7 @@ export class PractitionerProfileEdit {
    * `FilesClient.upload` y su identificador viaja como `fileId`. Hasta el
    * 13/09/2026 el contrato no tenía ese campo —`NewJurisdictionAuthorization`
    * no lo declaraba— así que este formulario aceptaba el PDF, lo mostraba con
-   * su nombre y su peso, y lo **tiraba en silencio** al guardar: el defecto que
-   * el bloqueo de `docs/progress/BLOCKERS.md` describía. Ya no.
+   * su nombre y su peso, y lo **tiraba en silencio** al guardar. Ya no.
    *
    * Si la subida falla **no se crea la matrícula**: una matrícula sin el carnet
    * que la persona creyó haber adjuntado es peor que un error, porque nadie se
@@ -2698,12 +2697,10 @@ export class PractitionerProfileEdit {
       era una tabla de sólo lectura: para corregir el número de un título mal
       tecleado no quedaba otra que cargarlo de nuevo y convivir con los dos.
 
-      **De las cinco operaciones, sólo el retiro del título existe en la API.**
-      Las otras cuatro las atiende el simulador de la rama `mockup`, que es el
-      backend de esta rama (`mockBackend: true` fijo). El hueco del servidor
-      está anotado en `docs/progress/BLOCKERS.md`: acá no se esconde, y el
-      cliente ya pide la ruta REST que le corresponde a cada recurso, así que
-      publicarlas del otro lado no obliga a tocar esta pantalla.
+      Las cinco operaciones existen en la API (corregir y retirar títulos,
+      especialidades y matrículas propias mientras siguen pendientes de
+      verificación), con la ruta REST que le corresponde a cada recurso; el
+      simulador de `mockup` las atiende con la misma forma.
      ====================================================================== */
 
   /** Qué fila está bajando su archivo, para apagar sólo ese botón. */

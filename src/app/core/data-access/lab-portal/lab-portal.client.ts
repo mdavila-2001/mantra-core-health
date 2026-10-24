@@ -195,8 +195,7 @@ export class LabPortalClient {
 
   /**
    * Ninguna ruta de este portal existe en la API de `origin/dev` (informe B,
-   * §2; figura en `PENDIENTES-BACKEND.md`): todo el portal es **sólo
-   * simulador**. Contra la API real no sale ninguna petición y el error nombra
+   * §2; P52): todo el portal es **sólo simulador**. Contra la API real no sale ninguna petición y el error nombra
    * la función que falta, en vez de un 404 genérico.
    */
   private simulated<T>(feature: string, request: () => Observable<T>): Observable<T> {

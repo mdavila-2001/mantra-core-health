@@ -874,7 +874,7 @@ export class ProfilesClient {
    * Sin `profileId`: el sujeto sale de la sesión, como el resto del
    * autoservicio. Hasta el 13/09/2026 `isPrimary` sólo podía fijarse al
    * agregar, así que una especialidad cargada después del alta quedaba
-   * adicional para siempre; ver `docs/progress/BLOCKERS.md`.
+   * adicional para siempre.
    *
    * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
    *
@@ -946,12 +946,9 @@ export class ProfilesClient {
      propietario el 13/09/2026: «que en la tabla se pueda eliminar registros,
      editar registros o descargar elementos».
 
-     **De los cinco, sólo `removeOwnCredential` existe hoy en la API.** Los
-     otros cuatro los atiende el simulador de la rama `mockup` —que es el
-     backend de esta rama, `mockBackend: true` fijo— y están escritos con la
-     forma REST que le toca a cada recurso, para que publicarlos del lado del
-     servidor no obligue a tocar la pantalla. El hueco queda anotado en
-     `docs/progress/BLOCKERS.md`, no escondido acá. */
+     Los cinco existen en la API (`PATCH`/`DELETE` de títulos, especialidades
+     y matrículas propias, sólo mientras siguen pendientes de verificación) y
+     el simulador de `mockup` los atiende con la misma forma. */
 
   /**
    * `PATCH /profiles/practitioners/me/credentials/:id` — corrige un título

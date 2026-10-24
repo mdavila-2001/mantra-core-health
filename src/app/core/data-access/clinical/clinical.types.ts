@@ -104,8 +104,8 @@ export interface MedicationRequest {
    * El motivo escrito a mano, cuando no hay condición registrada detrás.
    *
    * Es lo que el cliente pidió para los casos psiquiátricos y para quien «sólo
-   * fue a que le receten». **Todavía no existe en el backend**: ver P24 en
-   * `PENDIENTES-BACKEND.md`.
+   * fue a que le receten». La API lo guarda en `medication_requests`
+   * (`indicationText`, P24).
    */
   readonly indicationText?: string;
   readonly prescriberProfileId?: string;

@@ -32,7 +32,6 @@ Los contratos publicados por SHA se congelan para los carriles dependientes. Cam
 
 ## Evidencia y revisión
 
-- [Plan C0](../trabajo/2026-09-25-encuentro-clinico/c0/PLAN.md).
 - [Glosario](../business/glossary.md).
 - [Guardián Playwright](../testing/pw-guard.md).
 - Código: `core/data-access/{clinical,chart-notes,diagnostics,scheduling}`, `shared/clinical/diagnosis-state`, `features/clinical-record/consultation`.

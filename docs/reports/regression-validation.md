@@ -43,7 +43,7 @@ mkdocs.yml
 | `yarn.lock` | Sin modificar **por este trabajo** — ver §2 |
 | `Dockerfile.dev`, `docker-compose.yml`, `.dockerignore` | Sin modificar **por este trabajo** — ver §2 |
 | `docs/auditoria/**` | **Preservado íntegro** |
-| `README.md`, `ESTADO-FRONTEND.md`, `AVANCE-*`, `COORDINACION-AGENTES.md`, `PENDIENTES-BACKEND.md` | **Preservados íntegros** |
+| `README.md` | **Preservado íntegro** |
 | `scripts/generate-env.mjs` | De otro trabajo. **Preservado** |
 
 ## 2 · Trabajo concurrente, y por qué no lo confunde

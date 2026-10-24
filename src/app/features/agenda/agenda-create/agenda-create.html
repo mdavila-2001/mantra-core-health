@@ -49,8 +49,7 @@
   <form class="agenda-create" (ngSubmit)="publicar()" [formGroup]="formGeneral">
     <!-- Sin avisos arriba del formulario (propietario, 19/09/2026): ni el de
          alcance («consulta y cita, no cirugías») ni el de «los turnos ya
-         abiertos no se cierran solos». La limitación de `M41 scheduling` sigue
-         anotada en `PENDIENTES-BACKEND.md`. -->
+         abiertos no se cierran solos». -->
 
     @if (publicaSoloLaPropia()) {
       <p class="agenda-create__titular">
