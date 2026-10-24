@@ -118,7 +118,7 @@ for (const caso of CASOS) {
   }
 }
 
-test('en la vista «Mujer» no queda ninguna pieza genital masculina tocable, y las femeninas se listan sin pieza', async ({ page }) => {
+test('la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y abre la del útero', async ({ page }) => {
   await entrarComoMedica(page);
   await page.goto(`${RUTA}?sex=female`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
   await esperarModelo(page);

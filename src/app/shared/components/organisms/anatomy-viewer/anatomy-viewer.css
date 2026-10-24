@@ -42,6 +42,16 @@
   font-size: var(--fs-caption);
 }
 
+/* Fuera de la vista pero en el árbol de accesibilidad: el anuncio llega. */
+.anatomy-viewer__aviso--oculto {
+  clip-path: inset(50%);
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  padding: 0;
+  white-space: nowrap;
+}
+
 .anatomy-viewer__aviso--error {
   color: var(--text-danger);
 }

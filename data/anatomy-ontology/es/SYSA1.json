@@ -549,7 +549,7 @@
  },
  "UBERON:0001132": {
   "labelEs": "glándula paratiroides",
-  "definitionEs": "La glándula paratiroides es una glándula endocrina que secreta la hormona paratiroidea; por lo general se presenta en número par, incluida en la cápsula de tejido conjuntivo de la cara posterior de la glándula tiroides. La paratiroides regula el metabolismo del calcio y del fósforo."
+  "definitionEs": "La glándula paratiroides es una glándula endocrina que secreta la hormona paratiroidea; por lo general se presenta como un par, incluida en la cápsula de tejido conjuntivo de la cara posterior de la glándula tiroides. La paratiroides regula el metabolismo del calcio y del fósforo."
  },
  "UBERON:0001134": {
   "labelEs": "tejido muscular esquelético",
@@ -1668,7 +1668,7 @@
   "definitionEs": "Núcleos del puente basilar, entremezclados con los axones descendentes procedentes de la corteza, que reciben aferencias neocorticales y dan origen a muchos axones que cruzan la línea media para entrar en el cerebelo contralateral (Butler y Hodos, Comparative Vertebrate Neuroanatomy, 2.ª ed., 2005, pág. 135)."
  },
  "UBERON:0002153": {
-  "labelEs": "núcleo fastigio",
+  "labelEs": "núcleo fastigial",
   "definitionEs": "El más medial de los núcleos cerebelosos; recibe sus aferencias de las células de Purkinje del lóbulo floculonodular y del vermis, y la mayoría de sus conexiones eferentes discurren a través del pedúnculo cerebeloso inferior hacia los núcleos vestibulares y la formación reticular bulbar."
  },
  "UBERON:0002155": {

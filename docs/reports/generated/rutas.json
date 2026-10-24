@@ -73,6 +73,19 @@
       "parametrizada": false
     },
     {
+      "ruta": "/psychological-help",
+      "etiqueta": "Ayuda psicológica",
+      "grupo": "General",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": true,
+      "componente": "PsychologicalHelp",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
       "ruta": "/groups",
       "etiqueta": "Grupos y foros",
       "grupo": "General",
@@ -297,6 +310,7 @@
       "rolesExclusivos": false,
       "componente": "Glossary",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -602,81 +616,6 @@
       "parametrizada": false
     },
     {
-      "ruta": "/administration/data-catalog",
-      "etiqueta": "Catálogo de datos",
-      "grupo": "Administración",
-      "roles": [
-        "SECURITY_ADMIN",
-        "PLATFORM_ADMIN",
-        "GOVERNANCE_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "DPO"
-      ],
-      "rolesExclusivos": false,
-      "componente": "DataCatalog",
-      "apis": [
-        "DataCatalogClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/web-analytics",
-      "etiqueta": "Analítica web",
-      "grupo": "Administración",
-      "roles": [
-        "PLATFORM_ADMIN",
-        "SECURITY_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "MARKETING_MANAGER",
-        "DPO"
-      ],
-      "rolesExclusivos": false,
-      "componente": "WebAnalytics",
-      "apis": [
-        "WebAnalyticsClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/qa-lab",
-      "etiqueta": "QA Lab",
-      "grupo": "Administración",
-      "roles": [
-        "QA_ADMIN",
-        "QA_ENGINEER",
-        "RELEASE_MANAGER",
-        "PLATFORM_ADMIN"
-      ],
-      "rolesExclusivos": false,
-      "componente": "QaLab",
-      "apis": [
-        "QaLabClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/operations",
-      "etiqueta": "Operación",
-      "grupo": "Administración",
-      "roles": [
-        "PLATFORM_ADMIN",
-        "SRE",
-        "SECURITY_ADMIN",
-        "RELEASE_MANAGER",
-        "GOVERNANCE_ADMIN"
-      ],
-      "rolesExclusivos": false,
-      "componente": "Operations",
-      "apis": [
-        "OpsConsoleClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
       "ruta": "/administration/health-context",
       "etiqueta": "Contexto sanitario",
       "grupo": "Administración",
@@ -733,7 +672,10 @@
       "rolesExclusivos": false,
       "componente": "MedicalOrganization",
       "apis": [
-        "MedicalOrganizationClient"
+        "AccountingClient",
+        "MedicalOrganizationClient",
+        "PracticeSitesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -854,6 +796,7 @@
       "rolesExclusivos": false,
       "componente": "Appointments",
       "apis": [
+        "BillingSimulatedClient",
         "SchedulingClient",
         "TerminologyClient"
       ],
@@ -904,6 +847,7 @@
       "rolesExclusivos": false,
       "componente": "DiagnosticOrders",
       "apis": [
+        "CenterScheduleClient",
         "DiagnosticsClient",
         "TerminologyClient"
       ],
@@ -1079,7 +1023,7 @@
     },
     {
       "ruta": "/administration/my-practice",
-      "etiqueta": "Mis organizaciones",
+      "etiqueta": "Mi consultorio propio",
       "grupo": "Administración",
       "roles": [
         "PRACTITIONER"
@@ -1092,7 +1036,7 @@
     },
     {
       "ruta": "/administration/my-organization",
-      "etiqueta": "Tu organización",
+      "etiqueta": "Mi organización",
       "grupo": "Administración",
       "roles": [],
       "rolesExclusivos": false,
@@ -1188,7 +1132,7 @@
     },
     {
       "ruta": "/administration/pharmacy-orders",
-      "etiqueta": "Solicitudes de retiro",
+      "etiqueta": "Pedidos",
       "grupo": "General",
       "roles": [],
       "rolesExclusivos": false,
@@ -1294,6 +1238,19 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/center-schedule",
+      "etiqueta": "Horarios y equipos",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "CenterSchedulePage",
+      "apis": [
+        "CenterScheduleClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/laboratory-branches",
       "etiqueta": "Sucursales",
       "grupo": "General",
@@ -1350,6 +1307,7 @@
       "componente": "Accounting",
       "apis": [
         "AccountingClient",
+        "BillingSimulatedClient",
         "SimpleAccountingClient"
       ],
       "estado": "conectada con deuda",
@@ -1364,23 +1322,6 @@
       "componente": "BrokerDetail",
       "apis": [
         "InsuranceClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
-      "ruta": "/administration/data-catalog/:objectId",
-      "seccion": "Catálogo de datos",
-      "roles": [
-        "SECURITY_ADMIN",
-        "PLATFORM_ADMIN",
-        "GOVERNANCE_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "DPO"
-      ],
-      "componente": "CatalogObjectDetail",
-      "apis": [
-        "DataCatalogClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2393,28 +2334,12 @@
     },
     {
       "ruta": "/administration/pharmacy-orders/:orderId",
-      "seccion": "Solicitudes de retiro",
+      "seccion": "Pedidos",
       "roles": [],
       "componente": "InboxOrder",
       "apis": [
         "PharmacyOrdersClient",
         "PharmacyClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
-      "ruta": "/administration/qa-lab/plans/:planId",
-      "seccion": "QA Lab",
-      "roles": [
-        "QA_ADMIN",
-        "QA_ENGINEER",
-        "RELEASE_MANAGER",
-        "PLATFORM_ADMIN"
-      ],
-      "componente": "QaPlanDetail",
-      "apis": [
-        "QaLabClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2457,22 +2382,6 @@
       "parametrizada": true
     },
     {
-      "ruta": "/directory/:profileId",
-      "seccion": "Directorio de médicos",
-      "roles": [
-        "PATIENT",
-        "PRACTITIONER"
-      ],
-      "componente": "PractitionerDetail",
-      "apis": [
-        "FilesClient",
-        "ProfilesClient",
-        "TerminologyClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
       "ruta": "/glossary/:conceptId",
       "seccion": "Glosario",
       "roles": [
@@ -2490,10 +2399,35 @@
       ],
       "componente": "GlossaryTerm",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": true
+    },
+    {
+      "ruta": "/glossary/anatomy-atlas",
+      "seccion": "Glosario",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GlossaryAnatomyAtlas",
+      "apis": [
+        "AnatomyAtlasClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
     },
     {
       "ruta": "/glossary/network",
@@ -2513,6 +2447,7 @@
       ],
       "componente": "GlossaryNetwork",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -2661,6 +2596,17 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/diagnostic-orders/:orderId/book",
+      "seccion": "Mis órdenes",
+      "roles": [],
+      "componente": "OrderBooking",
+      "apis": [
+        "CenterScheduleClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
       "ruta": "/my-account/edit",
       "seccion": "Mi perfil",
       "roles": [],
@@ -2679,9 +2625,11 @@
       "ruta": "/my-account/identity/cases/:caseId",
       "seccion": "Mi identidad",
       "roles": [],
-      "componente": "VerificationCaseDetail",
+      "componente": "PractitionerDetail",
       "apis": [
-        "IdentityClient"
+        "FilesClient",
+        "ProfilesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2949,6 +2897,39 @@
       ],
       "estado": "conectada",
       "parametrizada": false
+    },
+    {
+      "ruta": "/superadmin/data-catalog/:objectId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "CatalogObjectDetail",
+      "apis": [
+        "DataCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/flows/:flowId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "FlowDetailPage",
+      "apis": [
+        "FlowsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/qa-lab/plans/:planId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "QaPlanDetail",
+      "apis": [
+        "QaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
     }
   ],
   "portadas": [

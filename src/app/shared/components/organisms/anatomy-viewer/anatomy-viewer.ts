@@ -21,16 +21,24 @@ type Mesh = import('three').Mesh<import('three').BufferGeometry, import('three')
 /** Estado de la carga del modelo, para que quien monta el visor lo cuente. */
 export type AnatomyViewerStatus = 'idle' | 'loading' | 'ready' | 'unsupported' | 'error';
 
-/** El token de color de cada capa; se leen en tiempo de ejecución para seguir al tema. */
-const COLOR_DE_CAPA: Readonly<Record<AnatomyLayer, string>> = {
-  skeleton: '--c-amber-300',
+/**
+ * El token de color de cada capa; se leen en tiempo de ejecución.
+ *
+ * Elegidos para que ni la pieza elegida (verde) ni sus relacionadas (ocre)
+ * se confundan con una capa en ningún tema: los tokens de marca cambian con
+ * el tema oscuro y `--brand-accent` llegaba a ser el mismo ámbar del sistema
+ * nervioso. Además del color, lo que no está en foco se atenúa: la diferencia
+ * no depende sólo del tono (WCAG 1.4.1).
+ */
+export const COLOR_DE_CAPA: Readonly<Record<AnatomyLayer, string>> = {
+  skeleton: '--c-amber-200',
   muscles: '--c-error-400',
   vessels: '--c-error-600',
-  nervous: '--c-warning-400',
+  nervous: '--c-ivory-700',
   organs: '--c-petrol-300',
 };
-const COLOR_ELEGIDO = '--brand-primary';
-const COLOR_RELACIONADO = '--brand-accent';
+export const COLOR_ELEGIDO = '--c-success-500';
+export const COLOR_RELACIONADO = '--c-amber-600';
 /** Cuánto se ve lo que no es la pieza ni sus relacionadas cuando hay una elegida. */
 const OPACIDAD_DE_FONDO = 0.16;
 /** Paso de giro con el teclado, en radianes, y factor de acercamiento. */
@@ -101,6 +109,12 @@ export class AnatomyViewer {
 
     afterNextRender(() => {
       void this.arrancar();
+    });
+
+    // Las piezas pueden llegar después que el motor: se le pasan cada vez.
+    effect(() => {
+      const partes = this.parts();
+      untracked(() => this.motor?.ponerPartes(partes));
     });
 
     effect(() => {
@@ -189,7 +203,11 @@ class Motor {
   private readonly rayo: import('three').Raycaster;
   private readonly mallas = new Map<string, Mesh>();
   private readonly capasCargadas = new Map<AnatomyLayer, Promise<void>>();
-  private readonly partePorMalla: ReadonlyMap<string, AnatomyPart>;
+  private readonly listas = new Set<AnatomyLayer>();
+  private readonly fallidas = new Set<AnatomyLayer>();
+  private readonly punteros = new Set<number>();
+  private partePorMalla: ReadonlyMap<string, AnatomyPart>;
+  private liberado = false;
   private readonly observador: ResizeObserver;
   private readonly temaObservado: MutationObserver;
   private readonly movimiento: MediaQueryList;
@@ -235,6 +253,7 @@ class Motor {
     lienzo.addEventListener('pointerup', this.alSoltar);
     lienzo.addEventListener('pointermove', this.alMover);
     lienzo.addEventListener('pointerleave', this.alSalir);
+    lienzo.addEventListener('pointercancel', this.alSalir);
 
     this.observador = new ResizeObserver(() => this.redimensionar());
     this.observador.observe(lienzo);
@@ -248,32 +267,68 @@ class Motor {
     this.movimiento.addEventListener('change', this.alCambiarMovimiento);
   }
 
+  ponerPartes(partes: readonly AnatomyPart[]): void {
+    this.partePorMalla = new Map(partes.map((p) => [p.meshId, p]));
+    this.pintar();
+  }
+
   aplicar(capas: readonly AnatomyLayer[], sexo: AnatomySex, elegidas: readonly string[], relacionadas: readonly string[]): void {
+    if (this.liberado) return;
     this.estado = { capas, sexo, elegidas: new Set(elegidas), relacionadas: new Set(relacionadas) };
-    const faltan = capas.filter((c) => !this.capasCargadas.has(c));
-    if (faltan.length > 0) {
-      this.opciones.alCargar('loading');
-      Promise.all(faltan.map((c) => this.cargarCapa(c)))
-        .then(() => {
-          this.opciones.alCargar('ready');
-          this.pintar();
-        })
-        .catch(() => this.opciones.alCargar('error'));
+    for (const capa of capas) {
+      if (!this.capasCargadas.has(capa)) {
+        this.fallidas.delete(capa);
+        void this.cargarCapa(capa).then(
+          () => this.informarCarga(),
+          () => {
+            this.fallidas.add(capa);
+            this.informarCarga();
+          },
+        );
+      }
     }
+    this.informarCarga();
+    this.pintar();
+  }
+
+  /**
+   * El estado de carga sale de TODAS las capas pedidas, no de la última
+   * tanda: un éxito posterior no tapa un fallo, ni una capa lista oculta
+   * otra que sigue bajando.
+   */
+  private informarCarga(): void {
+    if (this.liberado) return;
+    const pedidas = this.estado.capas;
+    if (pedidas.some((c) => this.fallidas.has(c))) this.opciones.alCargar('error');
+    else if (pedidas.some((c) => !this.listas.has(c))) this.opciones.alCargar('loading');
+    else this.opciones.alCargar('ready');
     this.pintar();
   }
 
   private cargarCapa(capa: AnatomyLayer): Promise<void> {
     const pedido = this.cargador.loadAsync(this.opciones.urls[capa]).then((gltf) => {
+      // Una capa que termina de bajar después de salir de la pantalla no se
+      // agrega a un renderer ya liberado: se libera ella también.
+      if (this.liberado) {
+        gltf.scene.traverse((objeto) => {
+          const malla = objeto as Mesh;
+          if (!malla.isMesh) return;
+          malla.geometry.dispose();
+          malla.material.dispose();
+        });
+        return;
+      }
       gltf.scene.traverse((objeto) => {
         const malla = objeto as Mesh;
         if (!malla.isMesh) return;
         malla.geometry.computeVertexNormals();
+        malla.material.dispose();
         malla.material = new this.THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0 });
         malla.userData['meshId'] = malla.name;
         this.mallas.set(malla.name, malla);
       });
       this.escena.add(gltf.scene);
+      this.listas.add(capa);
       if (!this.encuadrado) {
         this.encuadrado = true;
         this.encuadrar();
@@ -287,6 +342,7 @@ class Motor {
 
   /** Aplica capas, sexo y resaltado a cada malla, con los colores del tema vigente. */
   private pintar(): void {
+    if (this.liberado) return;
     const estilo = getComputedStyle(this.host);
     const color = (token: string) => new this.THREE.Color(estilo.getPropertyValue(token).trim() || '#999999');
     const colores = Object.fromEntries(
@@ -295,7 +351,12 @@ class Motor {
     const elegido = color(COLOR_ELEGIDO);
     const relacionado = color(COLOR_RELACIONADO);
     const capas = new Set(this.estado.capas);
-    const hayFoco = this.estado.elegidas.size > 0;
+    // Hay foco sólo si la pieza elegida se está dibujando: una elegida en una
+    // capa apagada no debe atenuar el resto sin resaltar nada.
+    const hayFoco = [...this.estado.elegidas].some((id) => {
+      const parte = this.partePorMalla.get(id);
+      return parte !== undefined && capas.has(parte.layer) && this.mallas.has(id);
+    });
 
     for (const [id, malla] of this.mallas) {
       const parte = this.partePorMalla.get(id);
@@ -387,7 +448,7 @@ class Motor {
     );
     this.rayo.setFromCamera(punto, this.camara);
     const visibles = [...this.mallas.values()].filter((m) => m.visible);
-    const hayFoco = this.estado.elegidas.size > 0;
+    const hayFoco = visibles.some((m) => this.estado.elegidas.has(m.name));
     // Con una pieza elegida, lo atenuado no tapa: se elige lo que se ve entero.
     const enFoco = hayFoco ? visibles.filter((m) => !m.material.transparent) : visibles;
     const impacto = this.rayo.intersectObjects(enFoco, false)[0] ?? this.rayo.intersectObjects(visibles, false)[0];
@@ -395,11 +456,15 @@ class Motor {
   }
 
   private readonly alBajar = (evento: PointerEvent) => {
-    this.inicio = { x: evento.clientX, y: evento.clientY };
+    this.punteros.add(evento.pointerId);
+    // Sólo un toque o el botón principal elige; un pellizco o el clic
+    // derecho son para mover la cámara.
+    this.inicio = evento.button === 0 && this.punteros.size === 1 ? { x: evento.clientX, y: evento.clientY } : null;
   };
 
   private readonly alSoltar = (evento: PointerEvent) => {
-    if (this.inicio === null) return;
+    this.punteros.delete(evento.pointerId);
+    if (this.inicio === null || evento.button !== 0) return;
     const movido = Math.hypot(evento.clientX - this.inicio.x, evento.clientY - this.inicio.y);
     this.inicio = null;
     if (movido > TOLERANCIA_DE_CLIC) return;
@@ -415,7 +480,10 @@ class Motor {
     });
   };
 
-  private readonly alSalir = () => this.opciones.alPasar(null);
+  private readonly alSalir = (evento: PointerEvent) => {
+    this.punteros.delete(evento.pointerId);
+    this.opciones.alPasar(null);
+  };
   private readonly alCambiarTema = () => this.pintar();
   private readonly alCambiarMovimiento = () => {
     this.controles.enableDamping = !this.movimiento.matches;
@@ -431,7 +499,7 @@ class Motor {
   }
 
   private pedirDibujo(): void {
-    if (this.pendiente !== 0) return;
+    if (this.pendiente !== 0 || this.liberado) return;
     this.pendiente = requestAnimationFrame(() => {
       this.pendiente = 0;
       // Con inercia, `update` sigue moviendo la cámara unos cuadros y vuelve a
@@ -442,6 +510,7 @@ class Motor {
   }
 
   liberar(): void {
+    this.liberado = true;
     cancelAnimationFrame(this.pendiente);
     cancelAnimationFrame(this.cuadroDePaso);
     this.observador.disconnect();
@@ -452,11 +521,15 @@ class Motor {
     this.lienzo.removeEventListener('pointerup', this.alSoltar);
     this.lienzo.removeEventListener('pointermove', this.alMover);
     this.lienzo.removeEventListener('pointerleave', this.alSalir);
+    this.lienzo.removeEventListener('pointercancel', this.alSalir);
     this.controles.dispose();
     for (const malla of this.mallas.values()) {
       malla.geometry.dispose();
       malla.material.dispose();
     }
     this.renderer.dispose();
+    // Sin esto el contexto WebGL vive hasta que pase el recolector, y Chromium
+    // corta en unos 16 contextos: volver varias veces al atlas los agotaría.
+    this.renderer.forceContextLoss();
   }
 }
