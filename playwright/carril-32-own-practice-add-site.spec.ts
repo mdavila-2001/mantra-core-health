@@ -64,6 +64,14 @@ function siteRow(page: Page) {
   return page.getByTestId('sedes-propias').getByRole('row').filter({ hasText: SITE_NAME });
 }
 
+/** La tabla pagina de a diez: se busca por nombre para no depender de la página 1. */
+async function searchSite(page: Page, text = SITE_NAME): Promise<void> {
+  await page
+    .getByTestId('sedes-propias')
+    .getByRole('textbox', { name: 'Buscar por nombre o dirección' })
+    .fill(text);
+}
+
 async function listedSiteNames(s: RealSession): Promise<string[]> {
   const response = await s.api.get(`/practitioners/${s.practitionerProfileId()}/sites`, {
     headers: s.authHeaders(),
@@ -88,7 +96,7 @@ test('agrega un consultorio propio por «Cargarlo yo» y la lista lo trae del se
   const dialog = page.getByRole('dialog', { name: 'Nuevo lugar de atención' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByTestId('sede-guardar')).toBeDisabled();
-  await dialog.getByLabel('Nombre', { exact: true }).fill(SITE_NAME);
+  await dialog.getByPlaceholder('Consultorio Dra. Pérez').fill(SITE_NAME);
   await dialog.getByLabel('Dirección', { exact: true }).fill(SITE_ADDRESS);
   await dialog.getByLabel('Ciudad', { exact: true }).fill(SITE_CITY);
   await expect(dialog.getByTestId('sede-guardar')).toBeEnabled();
@@ -114,6 +122,7 @@ test('agrega un consultorio propio por «Cargarlo yo» y la lista lo trae del se
 
   await expect(page.getByText('Ya figura entre sus consultorios.')).toBeVisible();
   await expect(dialog).toBeHidden();
+  await searchSite(page);
   await expect(siteRow(page)).toBeVisible();
   // La dirección se lista en mayúsculas (work-history.spec.ts).
   await expect(siteRow(page)).toContainText(SITE_ADDRESS.toUpperCase());
@@ -122,6 +131,7 @@ test('agrega un consultorio propio por «Cargarlo yo» y la lista lo trae del se
 test('el consultorio sigue después de recargar y la API lo lista', async () => {
   const { page } = session;
   await reloadApp(page);
+  await searchSite(page);
   await expect(siteRow(page)).toBeVisible();
   await expect(siteRow(page).getByTestId('sede-telefono')).toHaveText(/Sin teléfono registrado/);
   expect(await listedSiteNames(session)).toContain(SITE_NAME);
@@ -144,6 +154,7 @@ test('corrige el teléfono del consultorio y se ve tras recargar', async () => {
   expect(saved.request().postDataJSON()).toEqual({ contactPhone: SITE_PHONE });
 
   await reloadApp(page);
+  await searchSite(page);
   await expect(siteRow(page).getByTestId('sede-telefono')).toContainText(SITE_PHONE);
 });
 
@@ -152,6 +163,7 @@ test('la ficha propia lo muestra en «Dónde atiendo»', async () => {
   await irA(page, '/my-account');
   await page.getByRole('tab', { name: 'Dónde atiendo' }).click();
   await expect(page.getByTestId('perfil-consultorio')).toBeVisible();
+  await searchSite(page);
   await expect(siteRow(page)).toBeVisible();
 });
 
@@ -166,6 +178,7 @@ test('al cerrar el vínculo por API deja de figurar tras recargar (limpieza)', a
   await irA(page, MY_PRACTICE);
   await reloadApp(page);
   await expect(page.getByTestId('sedes-propias')).toBeVisible();
+  await searchSite(page);
   await expect(siteRow(page)).toHaveCount(0);
   expect(await listedSiteNames(session)).not.toContain(SITE_NAME);
 });

@@ -78,8 +78,14 @@ test('guarda la biografía y la muestra igual después de recargar', async () =>
     page.getByRole('button', { name: 'Guardar cambios' }).click(),
   );
   expect(response.status(), await response.text()).toBe(200);
-  // Sólo se manda lo que cambió: la biografía, y nada que la persona no tocó.
-  expect(response.request().postDataJSON()).toEqual({ professionalBio: testBio });
+  // Sólo se manda lo que cambió. La única clave extra legítima es
+  // `acceptsNewPatients: true`, que el editor agrega si el perfil la tenía en
+  // `false` (`guardarPresentacion`).
+  const sent = response.request().postDataJSON() as Record<string, unknown>;
+  expect(sent['professionalBio']).toBe(testBio);
+  expect(Object.keys(sent).filter((key) => key !== 'acceptsNewPatients')).toEqual([
+    'professionalBio',
+  ]);
   expect(((await response.json()) as { professionalBio?: string }).professionalBio).toBe(testBio);
   await expect(page.getByText('Su perfil quedó actualizado.')).toBeVisible();
 

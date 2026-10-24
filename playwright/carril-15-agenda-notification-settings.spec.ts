@@ -20,7 +20,7 @@ import {
  *
  * 1. **Avisos** (`/settings`, pestaña «Avisos»,
  *    `notification-preferences.ts`): cambiar una categoría manda
- *    `PUT /notifications/preferences/me` con sólo esa categoría, confirma con
+ *    `PUT /notifications/preferences/me` con esa categoría cambiada, confirma con
  *    «Guardamos sus preferencias.» y el cambio sobrevive a la recarga. Se
  *    elige «Actividad social» —no toca nada clínico— y se devuelve a su valor.
  * 2. **Avisar demora** (`/schedule`, `agenda.ts`): el panel se abre con sus
@@ -132,10 +132,11 @@ test('«Avisar demora» abre el panel y «Volver» lo cierra sin avisar a nadie'
   };
   page.on('request', track);
 
-  await page.getByRole('button', { name: 'Avisar demora' }).first().click();
+  // La de la agenda entera: en el encabezado de la página o en el del día.
+  await page.getByTestId('agenda-avisar-demora').or(page.getByTestId('dia-avisar-demora')).first().click();
   const panel = page.getByTestId('agenda-demora-panel');
   await expect(panel).toBeVisible();
-  await expect(panel.getByRole('heading', { name: /^Avisar demora de / })).toBeVisible();
+  await expect(panel.getByRole('heading', { name: 'Avisar demora de la agenda' })).toBeVisible();
   await expect(panel.getByText('Cuánto se demora')).toBeVisible();
   await expect(panel.getByLabel('Mensaje para el paciente')).toBeVisible();
   await expect(panel.getByTestId('agenda-demora-confirmar')).toBeEnabled();

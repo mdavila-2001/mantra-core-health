@@ -123,7 +123,11 @@ test('pide una vinculación nueva y queda pendiente después de recargar', async
   ).toBeVisible();
 
   await reloadApp(page);
-  const row = page.getByTestId('mis-vinculaciones').getByRole('row').filter({ hasText: target!.name });
+  const row = page
+    .getByTestId('mis-vinculaciones')
+    .getByRole('row')
+    .filter({ hasText: target!.name })
+    .first();
   await expect(row).toBeVisible();
   await expect(row).toContainText('Pendiente de aprobación');
 });

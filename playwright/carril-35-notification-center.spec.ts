@@ -46,6 +46,7 @@ interface NotificationItem {
 interface NotificationPage {
   readonly items: readonly NotificationItem[];
   readonly nextCursor: string | null;
+  readonly unreadCount: number;
 }
 
 let session: RealSession;
@@ -134,40 +135,46 @@ test('«Ver más notificaciones» sigue por cursor y agrega filas', async () => 
 
 test('abrir una notificación sin leer la marca leída y así sigue al recargar', async () => {
   const { page } = session;
-  await irA(page, CENTER);
+  const before = await centerList(page, () => irA(page, CENTER));
+  const { unreadCount: unreadBefore } = (await before.json()) as NotificationPage;
   const unreadRow = page.locator('li.avisos__fila.is-sin-leer').filter({
     has: page.locator('button[data-testid="aviso"]'),
   });
-  await expect(page.locator('li.avisos__fila').first().or(page.getByText('Todavía no tiene notificaciones'))).toBeVisible();
   test.skip(
     (await unreadRow.count()) === 0,
     'Omitido: la médica no tiene notificaciones sin leer con destino; ningún endpoint del front las crea.',
   );
 
-  const row = unreadRow.first();
-  const subject = ((await row.locator('.avisos__titulo').textContent()) ?? '').trim();
   const marked = await responseOf(page, 'POST', /\/notifications\/in-app\/[^/]+\/read$/, () =>
-    row.getByTestId('aviso').click(),
+    unreadRow.first().getByTestId('aviso').click(),
   );
   expect([200, 201], await marked.text()).toContain(marked.status());
   const notificationId = new URL(marked.url()).pathname.split('/').at(-2) ?? '';
-  expect(((await marked.json()) as { id: string }).id).toBe(notificationId);
+  const result = (await marked.json()) as { id: string; alreadyRead?: boolean };
+  expect(result.id).toBe(notificationId);
+  expect(result.alreadyRead, 'estaba sin leer: no puede volver como ya leída').not.toBe(true);
 
-  // Persistencia: la API la devuelve leída...
-  const check = await session.api.get('/notifications/me', {
-    headers: session.authHeaders(),
-    params: { limit: '100' },
-  });
-  expect(check.status()).toBe(200);
-  const stored = ((await check.json()) as NotificationPage).items.find(
-    (item) => item.id === notificationId,
-  );
-  expect(stored?.unread, 'la notificación abierta tiene que quedar leída').toBe(false);
+  // Persistencia en la API: ya no figura entre las sin leer (se recorre por cursor).
+  let cursor: string | null = null;
+  const stillUnread: string[] = [];
+  do {
+    const unreadPage = await session.api.get('/notifications/me', {
+      headers: session.authHeaders(),
+      params: { limit: '25', unread: 'true', ...(cursor === null ? {} : { cursor }) },
+    });
+    expect(unreadPage.status()).toBe(200);
+    const body = (await unreadPage.json()) as NotificationPage;
+    stillUnread.push(...body.items.map((item) => item.id));
+    cursor = body.nextCursor;
+  } while (cursor !== null);
+  expect(stillUnread).not.toContain(notificationId);
 
-  // ...y la bandeja, recargada, ya no la pinta como nueva.
+  // Y en la pantalla recargada: una sin leer menos, en la respuesta y en la pestaña.
   await irA(page, CENTER);
-  await reloadApp(page);
-  const sameRow = page.locator('li.avisos__fila').filter({ hasText: subject }).first();
-  await expect(sameRow).toBeVisible();
-  await expect(sameRow).not.toHaveClass(/is-sin-leer/);
+  const after = await centerList(page, () => reloadApp(page));
+  const { unreadCount: unreadAfter } = (await after.json()) as NotificationPage;
+  expect(unreadAfter).toBe(unreadBefore - 1);
+  await expect(page.getByRole('tab', { name: /^Sin leer/ })).toHaveText(
+    unreadAfter > 0 ? new RegExp(`Sin leer \\(${unreadAfter}\\)`) : /^\s*Sin leer\s*$/,
+  );
 });

@@ -91,11 +91,20 @@ test('busca un término en el glosario y abre su ficha', async () => {
   const searchBox = page.getByRole('textbox', { name: 'Buscar un término' });
   await expect(searchBox).toBeVisible();
 
-  const response = await responseOf(page, 'GET', /\/terminology\/concepts$/, () =>
+  // La pantalla ya pidió la lista sin filtro al entrar: se espera la que lleva
+  // `q`, que sale después del debounce del buscador.
+  const [response] = await Promise.all([
+    page.waitForResponse((res) => {
+      const url = new URL(res.url());
+      return (
+        res.request().method() === 'GET' &&
+        url.pathname.endsWith('/terminology/concepts') &&
+        url.searchParams.get('q') === term.query
+      );
+    }),
     searchBox.fill(term.query),
-  );
+  ]);
   expect(response.status()).toBe(200);
-  expect(new URL(response.url()).searchParams.get('q')).toBe(term.query);
 
   // La búsqueda queda en la dirección: se puede compartir y sobrevive a recargar.
   await expect(page).toHaveURL(new RegExp(`[?&]q=${encodeURIComponent(term.query)}`));

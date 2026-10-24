@@ -40,12 +40,11 @@ export const REAL_API_SKIP_REASON =
 export interface RealSession {
   readonly page: Page;
   readonly api: APIRequestContext;
-  /** El último `Bearer` que mandó el navegador. */
+  /**
+   * El último `Bearer` que mandó el navegador, con su `X-Tenant-Id`: sin él,
+   * una cuenta con varias organizaciones vería otro alcance que la pantalla.
+   */
   authHeaders(): Record<string, string>;
-  /** Claims del token vigente (`tenants`, `hpid`, `sub`…). */
-  claims(): Record<string, unknown>;
-  /** El primer tenant del token. */
-  tenantId(): string;
   /** El perfil profesional del token (`hpid`). */
   practitionerProfileId(): string;
   close(): Promise<void>;
@@ -78,9 +77,14 @@ export async function openRealSession(browser: Browser, actor: Actor): Promise<R
 
   const page = await browser.newPage();
   let token: string | null = null;
+  let tenant: string | null = null;
   const captureToken = (req: Request): void => {
-    const header = req.headers()['authorization'];
-    if (header?.startsWith('Bearer ')) token = header.slice('Bearer '.length);
+    const headers = req.headers();
+    const header = headers['authorization'];
+    if (header?.startsWith('Bearer ')) {
+      token = header.slice('Bearer '.length);
+      tenant = headers['x-tenant-id'] ?? tenant;
+    }
   };
   page.on('request', captureToken);
 
@@ -97,13 +101,10 @@ export async function openRealSession(browser: Browser, actor: Actor): Promise<R
   return {
     page,
     api,
-    authHeaders: () => ({ Authorization: `Bearer ${current()}` }),
-    claims: () => decodeJwt(current()),
-    tenantId: () => {
-      const [first] = (decodeJwt(current())['tenants'] as string[] | undefined) ?? [];
-      if (first === undefined) throw new Error('El token no declara ninguna organización.');
-      return first;
-    },
+    authHeaders: () => ({
+      Authorization: `Bearer ${current()}`,
+      ...(tenant === null ? {} : { 'X-Tenant-Id': tenant }),
+    }),
     practitionerProfileId: () => {
       const hpid = decodeJwt(current())['hpid'];
       if (typeof hpid !== 'string') throw new Error('El token no declara perfil profesional (hpid).');

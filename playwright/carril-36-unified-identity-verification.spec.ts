@@ -75,7 +75,7 @@ async function registerSyntheticPractitioner(api: APIRequestContext): Promise<Ac
       name: 'Marcelo',
       lastName: 'Ávila',
       licenseNumber: `LIC-C36-${suffix}`,
-      credentialNumber: `CRED-C36-${suffix}`,
+      sedesLicenseNumber: `SEDES-C36-${suffix}`,
       nationalId: `CI-C36-${suffix}`,
       issuerAdministrativeAreaConceptId: await firstDepartmentConceptId(api),
     },
@@ -137,8 +137,20 @@ test('envía las cinco evidencias y abre un caso de verificación del profesiona
     .setInputFiles({ name: 'reverso-e2e.png', mimeType: 'image/png', buffer: PNG });
 
   await page.getByRole('button', { name: 'Iniciar prueba de vida' }).click();
+  // `capturarPose()` no hace nada mientras el video no tenga cuadros: se
+  // espera al primero del dispositivo falso antes de capturar.
+  await expect
+    .poll(() =>
+      page
+        .getByLabel('Vista previa de la cámara frontal')
+        .evaluate((video) => (video as HTMLVideoElement).videoWidth),
+    )
+    .toBeGreaterThan(0);
   for (const step of [1, 2, 3]) {
     await page.getByRole('button', { name: `Capturar ${step} de 3` }).click();
+    if (step < 3) {
+      await expect(page.getByRole('button', { name: `Capturar ${step + 1} de 3` })).toBeVisible();
+    }
   }
   await expect(page.getByText('Las tres capturas están listas.')).toBeVisible();
   await expect(send).toBeEnabled();
