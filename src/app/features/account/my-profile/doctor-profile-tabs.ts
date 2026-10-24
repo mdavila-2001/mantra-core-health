@@ -199,6 +199,7 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
   municipioConsultorio: DOCTOR_TAB.dondeAtiendo,
   officeAddressLines: DOCTOR_TAB.dondeAtiendo,
   gpsConsultorio: DOCTOR_TAB.dondeAtiendo,
+  officeContactPhone: DOCTOR_TAB.dondeAtiendo,
 
   /* 8 · Tu título profesional y foto */
   profilePhotoBase64: DOCTOR_TAB.personales,

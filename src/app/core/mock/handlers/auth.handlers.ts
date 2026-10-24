@@ -2,7 +2,7 @@ import { STATUS, CORPORATE_TYPE } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
-import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
+import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRequest, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
@@ -663,6 +663,25 @@ export function registrarAuth(router: MockRouter): void {
       sizeBytes: archivo.size,
       mimeType: 'application/pdf',
     });
+  });
+
+  const mockBorradoresOnboarding = new Map<string, unknown>();
+
+  router.get('/iam/onboarding-drafts/:formType/:draftId', (req: MockRequest) => {
+    const clave = `${req.params['formType']}_${req.params['draftId']}`;
+    return mockBorradoresOnboarding.get(clave) ?? null;
+  });
+
+  router.put('/iam/onboarding-drafts/:formType/:draftId', ({ params, body }) => {
+    const clave = `${params['formType']}_${params['draftId']}`;
+    mockBorradoresOnboarding.set(clave, body);
+    return { ok: true, savedAt: new Date().toISOString() };
+  });
+
+  router.delete('/iam/onboarding-drafts/:formType/:draftId', ({ params }) => {
+    const clave = `${params['formType']}_${params['draftId']}`;
+    mockBorradoresOnboarding.delete(clave);
+    return { ok: true };
   });
 
   router.post('/iam/auth/verify-email', ({ body }) => {

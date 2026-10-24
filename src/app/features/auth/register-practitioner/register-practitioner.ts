@@ -7,14 +7,19 @@ import {
   Component,
   computed,
   inject,
+  PLATFORM_ID,
   signal,
   type WritableSignal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { HttpResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { concatMap, filter, from, map, of, throwIfEmpty, toArray, type Observable } from 'rxjs';
+import { concat, concatMap, filter, from, map, of, throwIfEmpty, toArray, type Observable } from 'rxjs';
 
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
@@ -88,6 +93,19 @@ import {
   MESSAGE_SHORT_PASSWORD,
   passwordValidators,
 } from '../shared-registration/password-policy';
+import {
+  INVALID_IDENTITY_DOCUMENT_MESSAGE,
+  identityDocumentValidators,
+} from '../shared-registration/national-id';
+import {
+  EMPTY_STUDY,
+  isStudyMissingNumber,
+  withCountry as studyWithCountry,
+  withStudyField,
+  withUniversity as studyWithUniversity,
+  type EditableStudyField,
+  type SpecialtyStudy,
+} from '../shared-registration/specialty-study';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
@@ -110,15 +128,20 @@ function fechaIso(fecha: Date): string {
   return `${anio}-${mes}-${dia}`;
 }
 
-/** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
-const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
-
 /**
  * El registro del cliente permite cuatro especialidades (L0174): eran la
  * principal y tres más. Desde D-01 (23/09/2026) no se elige una principal, así
  * que el techo es de la lista entera.
  */
 const MAXIMO_DE_ESPECIALIDADES = 4;
+
+/**
+ * El código del tipo de credencial «título de especialidad» en el catálogo
+ * `professional-credential-type`. Va aparte de `codigoDeConceptoPorTipo` porque
+ * ese mapa es de los cuatro tipos de la página «Sus títulos»; el de especialidad
+ * se declara en «Sus especialidades».
+ */
+const SPECIALTY_CREDENTIAL_CODE = 'CREDENTIAL_TYPE_SPECIALTY';
 
 /**
  * Códigos odontológicos mantenidos para comprobar la cobertura del catálogo.
@@ -436,8 +459,6 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
       texto:
         'El nombre de su ficha pública sale de acá, y se escribe como figura en su documento: es lo que un paciente contrasta antes de elegirle.',
     },
-  ],
-  document: [
     {
       icono: 'patients',
       titulo: 'Su cédula queda como documento oficial',
@@ -631,15 +652,21 @@ function sinTildes(texto: string): string {
     AppInput,
     Select,
     Avatar,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-practitioner.html',
   styleUrls: ['../shared-registration/registration.css', './register-practitioner.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPractitioner {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
   private readonly systemContext = inject(SystemContextClient);
+  private readonly draftService = inject(OnboardingDraftService);
+
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
 
   /* ---- «Otra profesión»: lista normalizada (COB-2023) --------------------
 
@@ -813,10 +840,14 @@ export class RegisterPractitioner {
    * que esta subtarea vino a corregir, así que el envío se frena y lo dice.
    */
   protected hayTitulosSinTipo(): boolean {
-    return this.titulosParaRegistro().some(
-      (titulo) =>
-        titulo.numero.trim() !== '' &&
-        this.conceptoPorCodigo().get(this.codigoDeConceptoPorTipo[titulo.tipo]) === undefined,
+    return (
+      this.titulosParaRegistro().some(
+        (titulo) =>
+          titulo.numero.trim() !== '' &&
+          this.conceptoPorCodigo().get(this.codigoDeConceptoPorTipo[titulo.tipo]) === undefined,
+      ) ||
+      (this.specialtyStudies().some((study) => study.number.trim() !== '') &&
+        this.conceptoPorCodigo().get(SPECIALTY_CREDENTIAL_CODE) === undefined)
     );
   }
 
@@ -899,6 +930,45 @@ export class RegisterPractitioner {
    */
   private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
     const conceptos = this.conceptoPorCodigo();
+    return [...this.titleCredentials(conceptos), ...this.specialtyCredentials(conceptos)];
+  }
+
+  /**
+   * El estudio de cada especialidad, como credencial `CREDENTIAL_TYPE_SPECIALTY`.
+   * El nombre de la especialidad viaja como `titleText`: es lo que distingue una
+   * fila de la otra en el perfil. Sin número no hay fila (la columna es NOT NULL),
+   * y eso ya frenó el envío antes de llegar acá.
+   */
+  private specialtyCredentials(
+    conceptos: ReadonlyMap<string, string>,
+  ): readonly NewRegistrationCredential[] {
+    const conceptId = conceptos.get(SPECIALTY_CREDENTIAL_CODE);
+    if (conceptId === undefined) return [];
+    const labels = new Map(this.allSpecialtyOptions().map((option) => [option.value, option.label]));
+    return this.specialtyStudies().flatMap((study, index) => {
+      const number = study.number.trim();
+      if (number === '') return [];
+      const university = study.university.trim();
+      const city = study.city.trim();
+      const country = study.country.trim();
+      const specialty = labels.get(this.especialidadesExtra()[index] ?? '') ?? '';
+      return [
+        {
+          credentialTypeConceptId: conceptId,
+          number,
+          ...(university === '' ? {} : { issuingInstitutionText: university }),
+          ...(city === '' ? {} : { issuingCityText: city }),
+          ...(country === '' ? {} : { issuingCountryText: country }),
+          ...(specialty === '' ? {} : { titleText: specialty }),
+          ...(study.fileId === null ? {} : { fileId: study.fileId }),
+        },
+      ];
+    });
+  }
+
+  private titleCredentials(
+    conceptos: ReadonlyMap<string, string>,
+  ): readonly NewRegistrationCredential[] {
     const filaPrincipal = this.filaDeLaUniversidadPrincipal();
     return this.titulosParaRegistro().flatMap((titulo) => {
       const numero = titulo.numero.trim();
@@ -1012,7 +1082,7 @@ export class RegisterPractitioner {
     // a una persona verificable. Además del formato válido, ahora tiene que estar.
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(DOCUMENTO_VALIDO)],
+      validators: [...identityDocumentValidators],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     sedesLicenseNumber: new FormControl('', {
@@ -1055,6 +1125,13 @@ export class RegisterPractitioner {
     academicTitles: new FormControl(true, {
       nonNullable: true,
       validators: [(control) => (control.value === true ? null : { tituloSinNumero: true })],
+    }),
+    // Lo mismo para la página «Sus especialidades»: vale `true` mientras
+    // ninguna especialidad tenga datos de estudio sin número de diploma. Lleva
+    // la clave del campo de la página para que el motor la frene ahí, y NO viaja.
+    especialidadesExtra: new FormControl(true, {
+      nonNullable: true,
+      validators: [(control) => (control.value === true ? null : { estudioSinNumero: true })],
     }),
     // El control guarda lo que `app-phone-input` compone —el prefijo del país
     // elegido y su número—, así que el validador comprueba justamente eso, y
@@ -1673,6 +1750,125 @@ export class RegisterPractitioner {
   /** Para que la plantilla deje de ofrecer «Agregar» al llegar al techo. */
   protected readonly maximoDeEspecialidades = MAXIMO_DE_ESPECIALIDADES;
 
+  /**
+   * Dónde estudió cada especialidad, **en el mismo orden** que
+   * {@link especialidadesExtra}: la fila `i` es el estudio de la casilla `i`.
+   * Es un arreglo aparte y no un objeto por casilla porque `especialidadesExtra`
+   * es lo que ya leen las pruebas y el envío (`specialtyConceptIds`); una fila
+   * que falte se lee como vacía (ver {@link specialtyStudyAt}).
+   */
+  readonly specialtyStudies = signal<readonly SpecialtyStudy[]>([]);
+
+  /** El estudio de la casilla `index`; en blanco si todavía no se tocó. */
+  specialtyStudyAt(index: number): SpecialtyStudy {
+    return this.specialtyStudies()[index] ?? EMPTY_STUDY;
+  }
+
+  /** La clave del PDF de una especialidad en {@link attachmentFiles}. */
+  protected specialtyFileKey(index: number): string {
+    return `especialidad-${index}`;
+  }
+
+  /**
+   * Cambia el estudio de una casilla y, en el mismo paso, el control que respalda
+   * la página ante el motor. Síncrono por lo mismo que {@link actualizarTitulos}.
+   */
+  private updateSpecialtyStudy(
+    index: number,
+    change: (study: SpecialtyStudy) => SpecialtyStudy,
+  ): void {
+    this.specialtyStudies.update((studies) => {
+      const next = [...studies];
+      while (next.length <= index) next.push(EMPTY_STUDY);
+      next[index] = change(next[index]);
+      return next;
+    });
+    this.syncSpecialtyStudiesControl();
+    this.limpiarAvisoDeTitulos();
+  }
+
+  private syncSpecialtyStudiesControl(): void {
+    this.formProfesional.controls.especialidadesExtra.setValue(!this.hasStudiesMissingNumber());
+  }
+
+  /** Si alguna especialidad declara estudio sin el número que la hace guardable. */
+  protected hasStudiesMissingNumber(): boolean {
+    return this.specialtyStudies().some((study) => isStudyMissingNumber(study));
+  }
+
+  /** Si esta casilla declara estudio pero le falta el número. Público para la plantilla. */
+  specialtyStudyMissingNumber(index: number): boolean {
+    return isStudyMissingNumber(this.specialtyStudyAt(index));
+  }
+
+  /** Qué falta en «Sus especialidades», nombrando las casillas tal como se ven. */
+  protected readonly incompleteStudiesNotice = computed<string | null>(() => {
+    const missing = this.specialtyStudies()
+      .map((study, index) => (isStudyMissingNumber(study) ? `Especialidad ${index + 1}` : null))
+      .filter((name): name is string => name !== null);
+    if (missing.length === 0) return null;
+    const where =
+      missing.length === 1
+        ? `«${missing[0]}»`
+        : `${missing
+            .slice(0, -1)
+            .map((name) => `«${name}»`)
+            .join(', ')} y «${missing.at(-1)}»`;
+    return `Falta el número del diploma en ${where}. Complételo o quite la especialidad para seguir.`;
+  });
+
+  /** Escribe el número, el país, la universidad o la ciudad de una especialidad. */
+  writeSpecialtyStudy(
+    index: number,
+    field: EditableStudyField,
+    value: string | number | null,
+  ): void {
+    const text = value === null ? '' : String(value);
+    this.updateSpecialtyStudy(index, (study) => withStudyField(study, field, text, this.padron));
+  }
+
+  /** Elige el país de una especialidad; reinicia su universidad si cambia. */
+  chooseSpecialtyCountry(index: number, choice: string | null): void {
+    this.updateSpecialtyStudy(index, (study) => studyWithCountry(study, choice, this.padron));
+  }
+
+  /** Elige la universidad de una especialidad; su ciudad la acompaña. */
+  chooseSpecialtyUniversity(index: number, choice: string | null): void {
+    this.updateSpecialtyStudy(index, (study) => studyWithUniversity(study, choice, this.padron));
+  }
+
+  /** Elige la ciudad de una especialidad, que sólo puede ser una sede de su universidad. */
+  chooseSpecialtyCity(index: number, city: string | null): void {
+    this.updateSpecialtyStudy(index, (study) => ({ ...study, city: city ?? '' }));
+  }
+
+  /** Las universidades de una especialidad: las de salud del país elegido. */
+  specialtyUniversityOptions(index: number): readonly SelectOption<string>[] {
+    return this.padron.universityOptions(this.specialtyStudyAt(index).country, 'salud');
+  }
+
+  /** Las sedes de la universidad elegida para una especialidad. */
+  specialtyCityOptions(index: number): readonly SelectOption<string>[] {
+    const study = this.specialtyStudyAt(index);
+    return opcionesDeCiudad(this.padron.citiesOf(study.country, study.university));
+  }
+
+  /** Adjunta (o quita) el diploma de una especialidad. */
+  updateSpecialtyFiles(index: number, files: readonly File[]): void {
+    this.attachmentFiles.update((current) => ({
+      ...current,
+      [this.specialtyFileKey(index)]: files,
+    }));
+    const file = files[0];
+    this.updateSpecialtyStudy(index, (study) => ({
+      ...study,
+      fileName: file?.name ?? null,
+      fileBytes: file?.size ?? null,
+      fileId: null,
+    }));
+    this.errorAdjunto.set(null);
+  }
+
   /** Suma una casilla vacía de especialidad. */
   agregarEspecialidad(): void {
     if (this.especialidadesExtra().length >= MAXIMO_DE_ESPECIALIDADES) return;
@@ -1686,6 +1882,22 @@ export class RegisterPractitioner {
    */
   quitarEspecialidad(indice: number): void {
     this.especialidadesExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+    this.specialtyStudies.update((studies) => studies.filter((_, i) => i !== indice));
+    // Los PDF van por posición: al quitar una casilla, las de después suben un
+    // lugar y su archivo con ellas; el de la quitada se descarta.
+    this.attachmentFiles.update((current) => {
+      const next: Partial<Record<string, readonly File[]>> = {};
+      for (const [key, files] of Object.entries(current)) {
+        const position = /^especialidad-(\d+)$/.exec(key);
+        if (position === null || Number(position[1]) < indice) {
+          next[key] = files;
+        } else if (Number(position[1]) > indice) {
+          next[this.specialtyFileKey(Number(position[1]) - 1)] = files;
+        }
+      }
+      return next;
+    });
+    this.syncSpecialtyStudiesControl();
   }
 
   /**
@@ -2059,9 +2271,9 @@ export class RegisterPractitioner {
    *
    * ## El tope de cuatro campos por página no se relaja (AC-05-2)
    *
-   * Ninguna sección de acá llega a cinco, y aun así todas pasan por
-   * `paginarCampos`: es la función la que hace cumplir el tope, y declararlo a
-   * mano sería confiar en que quien agregue el campo trece se acuerde de contar.
+   * Todas pasan por `paginateFields`, que es la función que hace cumplir el tope,
+   * salvo **nombre y cédula**: son cinco campos en una sola página, como en el
+   * alta de paciente (propietario, 22/10/2026), y es la única excepción.
    */
   readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() => {
     const titulo = this.tituloProfesionalElegido();
@@ -2086,74 +2298,72 @@ export class RegisterPractitioner {
     // lo que el padrón real trae en esa casilla —y lo que la gente cargaba— es
     // el número del SEDES, que además es una habilitación y no un título.
 
-    return paginateFields([
-      {
-        titulo: '¿Cómo se llama?',
-        clave: 'name',
-        icon: 'people',
-        hint: 'Como figura en su documento. Si no tiene alguno, déjelo vacío.',
-        // Nombres y apellidos van juntos en una página, como pide el registro
-        // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
-        // `key` de `name`, para que el motor siga validando el obligatorio y
-        // sepa a qué página volver al enviar— porque son cuatro casillas y el
-        // tope del motor es de cuatro campos por página.
-        campos: [
-          {
-            key: 'name',
-            label: '',
-            control: 'custom',
-            mensajeDeError: 'Ingrese su nombre.',
-          },
-          {
-            key: 'lastName',
-            label: 'Apellido paterno',
-            control: 'text',
-            required: true,
-            autocomplete: 'family-name',
-            placeholder: 'Rojas',
-            testId: 'registro-pro-apellido-paterno',
-            ancho: 'mitad',
-            mensajeDeError: 'Ingrese su apellido paterno.',
-          },
-          {
-            key: 'motherLastName',
-            label: 'Apellido materno',
-            hint: 'Si no lleva, déjelo vacío.',
-            control: 'text',
-            autocomplete: 'family-name',
-            placeholder: 'Paz',
-            testId: 'registro-pro-apellido-materno',
-            ancho: 'mitad',
-          },
-        ],
-      },
-      {
-        titulo: 'Su documento de identidad',
-        clave: 'document',
-        icon: 'patients',
-        hint: 'Los dos hacen falta. Identifican a la persona detrás de la matrícula.',
-        campos: [
-          {
-            key: 'nationalId',
-            label: 'Cédula de identidad',
-            required: true,
-            hint: 'Se guarda como su documento oficial.',
-            description:
-              'No es con lo que inicia sesión —eso es su correo—, pero es lo que ata su matrícula a una persona.',
-            control: 'text',
-            autocomplete: 'off',
-            placeholder: '1234567',
-            testId: 'registro-pro-documento',
-            icono: 'patients',
-            // Media línea, con su departamento de emisión al lado: la misma
-            // pareja que en el alta de paciente, y por lo mismo — el número y
-            // su expedición son un solo documento.
-            ancho: 'mitad',
-            mensajeDeError: 'Ingrese un documento válido: letras, números, punto y guion.',
-          },
-          this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
-        ],
-      },
+    // Nombre y cédula van en UNA página, como en el alta de paciente (propietario,
+    // 22/10/2026): son el mismo documento —el nombre se escribe «como figura» en
+    // la cédula— y partirlos obligaba a dos pasos para lo que se contesta con el
+    // carnet en la mano. Son cinco campos, uno más que el tope del motor, así que
+    // esta página **no** pasa por `paginateFields` (que la partiría otra vez); el
+    // resto sí, y el tope de cuatro sigue valiendo para todas las demás.
+    const identityPage: PaginaDeFormulario = {
+      titulo: 'Su nombre y su cédula',
+      clave: 'name',
+      icon: 'people',
+      hint: 'Como figuran en su documento. Si no tiene algún apellido, déjelo vacío. La cédula se revisa antes de pasar al paso siguiente.',
+      // Los tres nombres entran en UN campo proyectado —bajo la `key` de
+      // `name`, para que el motor siga validando el obligatorio y sepa a qué
+      // página volver al enviar— porque son tres casillas de texto y se leen
+      // como una sola pregunta.
+      campos: [
+        {
+          key: 'name',
+          label: '',
+          control: 'custom',
+          mensajeDeError: 'Ingrese su nombre.',
+        },
+        {
+          key: 'lastName',
+          label: 'Apellido paterno',
+          control: 'text',
+          required: true,
+          autocomplete: 'family-name',
+          placeholder: 'Rojas',
+          testId: 'registro-pro-apellido-paterno',
+          ancho: 'mitad',
+          mensajeDeError: 'Ingrese su apellido paterno.',
+        },
+        {
+          key: 'motherLastName',
+          label: 'Apellido materno',
+          hint: 'Si no lleva, déjelo vacío.',
+          control: 'text',
+          autocomplete: 'family-name',
+          placeholder: 'Paz',
+          testId: 'registro-pro-apellido-materno',
+          ancho: 'mitad',
+        },
+        {
+          key: 'nationalId',
+          label: 'Cédula de identidad',
+          required: true,
+          hint: 'Se guarda como su documento oficial.',
+          description:
+            'Sólo el número, sin el complemento: el departamento que la emitió va en la casilla de al lado. No es con lo que inicia sesión —eso es su correo—, pero es lo que ata su matrícula a una persona.',
+          control: 'text',
+          autocomplete: 'off',
+          placeholder: '1234567',
+          testId: 'registro-pro-documento',
+          icono: 'patients',
+          // Media línea, con su departamento de emisión al lado: la misma
+          // pareja que en el alta de paciente, y por lo mismo — el número y
+          // su expedición son un solo documento.
+          ancho: 'mitad',
+          mensajeDeError: INVALID_IDENTITY_DOCUMENT_MESSAGE,
+        },
+        this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
+      ],
+    };
+
+    const remainingPages = paginateFields([
       {
         titulo: 'Cuéntenos un poco sobre usted',
         clave: 'profile',
@@ -2545,6 +2755,10 @@ export class RegisterPractitioner {
             key: 'especialidadesExtra',
             label: '',
             control: 'custom',
+            // Vacío a propósito: sin mensaje propio el motor escribe «Revise .»
+            // cuando el control de respaldo (estudio sin número) está inválido.
+            // Lo que falta lo dicen el error de la casilla y el aviso del paso.
+            mensajeDeError: '',
           },
         ],
       },
@@ -2596,6 +2810,8 @@ export class RegisterPractitioner {
         ],
       },
     ]);
+
+    return [identityPage, ...remainingPages];
   });
 
   /**
@@ -2668,9 +2884,94 @@ export class RegisterPractitioner {
     () => AYUDA_PROFESIONAL[this.claveVisible()] ?? [],
   );
 
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginasProfesional();
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.formProfesional.getRawValue();
+      const extraData = {
+        nombresExtra: this.nombresExtra(),
+        especialidadesExtra: this.especialidadesExtra(),
+        gpsDomicilio: this.gpsDomicilio(),
+        gpsTrabajo: this.gpsTrabajo(),
+        gpsConsultorio: this.gpsConsultorio(),
+      };
+      this.draftService.saveProgress(
+        'practitioner',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'practitioner', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('practitioner');
+      if (!draft) return;
+      if (draft.data) {
+        this.formProfesional.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (Array.isArray(extra['nombresExtra'])) {
+        this.nombresExtra.set(extra['nombresExtra'] as readonly string[]);
+      }
+      if (Array.isArray(extra['especialidadesExtra'])) {
+        this.especialidadesExtra.set(extra['especialidadesExtra'] as readonly string[]);
+      }
+      if (extra['gpsDomicilio'] !== undefined) {
+        this.gpsDomicilio.set(extra['gpsDomicilio'] as Coordinates | null);
+      }
+      if (extra['gpsTrabajo'] !== undefined) {
+        this.gpsTrabajo.set(extra['gpsTrabajo'] as Coordinates | null);
+      }
+      if (extra['gpsConsultorio'] !== undefined) {
+        this.gpsConsultorio.set(extra['gpsConsultorio'] as Coordinates | null);
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'practitioner', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('practitioner');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
   /** Lo que el motor avisa al cambiar de página. */
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   readonly errorMessage = computed<string | null>(() => {
@@ -2688,6 +2989,12 @@ export class RegisterPractitioner {
   });
 
   constructor() {
+    const detectado = this.draftService.detectDraft('practitioner');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    }
+    this.draftService.trackEvent('start', 'practitioner', 0);
+
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarEspecialidades();
@@ -2698,11 +3005,11 @@ export class RegisterPractitioner {
     void this.padron.cargar();
     this.syncCollegeWithProfession();
 
+    this.formProfesional.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
+
     // El aviso de un envío fallido se va en cuanto se corrige algo.
-    //
-    // Se ata a lo único que de verdad significa «estoy corrigiendo» —que el
-    // formulario cambie—, que cubre además el caso que el avance de página no
-    // cubría: corregir en la misma página donde falló el envío.
     this.limpiarElErrorAlCorregir();
   }
 
@@ -2916,7 +3223,11 @@ export class RegisterPractitioner {
     // que «Tus títulos» tiene su control de respaldo, una fila sin número
     // también deja el formulario inválido, y cortar primero escondería el
     // mensaje que dice qué sección corregir.
-    if (this.formProfesional.invalid && !this.hayTitulosSinNumero()) {
+    if (
+      this.formProfesional.invalid &&
+      !this.hayTitulosSinNumero() &&
+      !this.hasStudiesMissingNumber()
+    ) {
       this.formProfesional.markAllAsTouched();
       return;
     }
@@ -2939,6 +3250,20 @@ export class RegisterPractitioner {
             field: 'academicTitles',
             message:
               `Vuelva al paso «Sus títulos». ${this.avisoDeTitulosIncompletos() ?? ''}`.trim(),
+          },
+        ]),
+      );
+      return;
+    }
+    // Lo mismo para el estudio de una especialidad: sin número de diploma no se
+    // puede guardar, y se dice en qué casilla y en qué paso.
+    if (this.hasStudiesMissingNumber()) {
+      this.state.set(
+        validation([
+          {
+            field: 'especialidadesExtra',
+            message:
+              `Vuelva al paso «Sus especialidades». ${this.incompleteStudiesNotice() ?? ''}`.trim(),
           },
         ]),
       );
@@ -2983,6 +3308,8 @@ export class RegisterPractitioner {
             next: () => {
               this.state.set(ready(null));
               this.registered.set(true);
+              this.limpiarBorrador();
+              this.draftService.trackEvent('complete', 'practitioner', 4);
             },
             error: (error: unknown) =>
               this.state.set(registrationErrorToViewState(error, 'practitioner')),
@@ -2999,6 +3326,48 @@ export class RegisterPractitioner {
    * progreso disponible para reintentar sin reclamar dos veces el mismo PDF.
    */
   private subirPdfDeTitulosPendientes(): Observable<void> {
+    return concat(this.uploadTitlePdfs(), this.uploadSpecialtyPdfs()).pipe(
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /** Sube el diploma de cada especialidad con número, y lo recuerda en su fila. */
+  private uploadSpecialtyPdfs(): Observable<void> {
+    const pending = this.specialtyStudies()
+      .map((study, index) => ({ study, index }))
+      .filter(({ study }) => study.number.trim() !== '');
+    return from(pending).pipe(
+      concatMap(({ study, index }) => {
+        const file = this.attachmentFiles()[this.specialtyFileKey(index)]?.[0];
+        if (study.fileId !== null || file === undefined) {
+          return of(undefined);
+        }
+        return this.iam.uploadRegistrationDocument(file).pipe(
+          filter(
+            (evento): evento is HttpResponse<UploadedRegistrationDocument> =>
+              evento instanceof HttpResponse,
+          ),
+          map((respuesta) => {
+            const documento = respuesta.body;
+            if (!documento?.fileId || documento.fileId.trim() === '') {
+              throw new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.');
+            }
+            this.updateSpecialtyStudy(index, (current) => ({
+              ...current,
+              fileId: documento.fileId,
+            }));
+            return undefined;
+          }),
+          throwIfEmpty(
+            () => new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.'),
+          ),
+        );
+      }),
+    );
+  }
+
+  private uploadTitlePdfs(): Observable<void> {
     const titulosConNumero = this.titulosParaRegistro().filter(
       (titulo) => titulo.numero.trim() !== '',
     );
