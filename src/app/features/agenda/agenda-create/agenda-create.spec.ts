@@ -189,7 +189,16 @@ describe('AgendaCreate', () => {
    * Contesta el retiro del horario vigente, que desde el arreglo del cierre de
    * turnos precede a toda publicación de un cambio.
    */
-  function retirarVigente(id = 'tpl-1'): void {
+  /**
+   * Desde el 24/10/2026 el retiro va precedido de la vista previa de citas
+   * vivas (`live-bookings`): sin ninguna, se retira como siempre. La decisión
+   * se toma en una promesa, así que el DELETE sale un tick después del GET.
+   */
+  async function retirarVigente(id = 'tpl-1'): Promise<void> {
+    http
+      .expectOne(`/scheduling/templates/${id}/live-bookings`)
+      .flush({ templateId: id, total: 0, bookings: [], present: [] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
     http.expectOne(`/scheduling/templates/${id}`).flush({
       id,
       statusConceptId: 'archived',
@@ -255,10 +264,15 @@ describe('AgendaCreate', () => {
      * anterior; como `generate-slots` es idempotente **por instante de
      * inicio**, el cupo viejo de las 08:00 sobrevivía con su fin viejo.
      */
-    it('cambiar el horario retira el vigente ANTES de crear el nuevo', () => {
+    it('cambiar el horario retira el vigente ANTES de crear el nuevo', async () => {
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
 
+      // Primero la vista previa de citas vivas; sin ninguna, se retira directo.
+      http
+        .expectOne('/scheduling/templates/tpl-1/live-bookings')
+        .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       const retiro = http.expectOne('/scheduling/templates/tpl-1');
       expect(retiro.request.method).toBe('DELETE');
       // Todavía no se creó nada: el orden es lo que impide dos horarios vivos.
@@ -284,10 +298,14 @@ describe('AgendaCreate', () => {
      * El 409 son citas de pacientes. Publicar igual las movería sin avisar, así
      * que no se publica nada y el mensaje del servidor se muestra tal cual.
      */
-    it('si el retiro responde 409, no crea la plantilla nueva', () => {
+    it('si el retiro responde 409, no crea la plantilla nueva', async () => {
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
 
+      http
+        .expectOne('/scheduling/templates/tpl-1/live-bookings')
+        .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       http.expectOne('/scheduling/templates/tpl-1').flush(
         {
           code: 'CONFLICT',
@@ -349,7 +367,7 @@ describe('AgendaCreate', () => {
 
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
-      retirarVigente();
+      await retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -366,7 +384,7 @@ describe('AgendaCreate', () => {
       respuestaDelDialogo = true;
     });
 
-    it('reusa el recurso: cambiar el horario NO crea una segunda agenda', () => {
+    it('reusa el recurso: cambiar el horario NO crea una segunda agenda', async () => {
       crearConHorarioVigente(VIGENTE);
 
       acc.publicar();
@@ -375,7 +393,7 @@ describe('AgendaCreate', () => {
       // el defecto que este carril arregla — «Cambiar mi horario» dejaba al
       // médico con dos agendas y a los pacientes viendo los turnos de las dos.
       http.expectNone((r) => r.url === '/scheduling/resources' && r.method === 'POST');
-      retirarVigente();
+      await retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
