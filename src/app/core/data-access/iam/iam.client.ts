@@ -140,6 +140,9 @@ export class IamClient {
             residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
           }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+      ...(registration.additionalPhones === undefined
+        ? {}
+        : { additionalPhones: registration.additionalPhones }),
       ...(registration.gender === undefined ? {} : { gender: registration.gender }),
       ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
       ...(registration.occupationConceptId === undefined
@@ -186,6 +189,9 @@ export class IamClient {
         : {
             guardianRelationshipConceptId: registration.guardianRelationshipConceptId,
           }),
+      ...(registration.additionalEmergencyContacts === undefined
+        ? {}
+        : { additionalEmergencyContacts: registration.additionalEmergencyContacts }),
       ...(registration.privateInsurancePlanId === undefined
         ? {}
         : { privateInsurancePlanId: registration.privateInsurancePlanId }),
