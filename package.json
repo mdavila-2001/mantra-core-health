@@ -41,6 +41,7 @@
     "recorrido": "node scripts/run-recorrido.mjs",
     "recorrido:real": "node scripts/run-recorrido-real.mjs",
     "recorrido:report": "node scripts/generate-recorrido-report.mjs",
+    "pdf:samples": "vitest run --config scripts/pdf-samples/vitest.config.mjs",
     "pw": "playwright test",
     "pw:baseline": "playwright test playwright/carril-01-baseline.spec.ts",
     "pw:rutas": "playwright test playwright/carril-19-route-health.spec.ts",
