@@ -1,0 +1,15 @@
+# Prueba de red — paso 0 (2026-10-24, sesión programada)
+# Comando literal del pedido; salida literal debajo.
+https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi 000
+https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=femur&format=json 000
+https://api.openalex.org/works?search=femur 000
+https://api.crossref.org/works/10.1111/joa.12345 000
+https://commons.wikimedia.org/w/api.php?action=query&format=json 000
+https://www.ebi.ac.uk/ols4/api/ontologies/uberon 000
+https://ta2viewer.openanatomy.org/ 000
+https://purl.obolibrary.org/obo/UBERON_0000981 000
+
+# Diagnóstico del proxy del entorno ($HTTPS_PROXY/__agentproxy/status, recentRelayFailures):
+# cada host -> 'gateway answered 403 to CONNECT (policy denial or upstream failure)'
+# curl -sS https://api.crossref.org/works/10.1111/joa.12345 -> curl: (56) CONNECT tunnel failed, response 403
+# Resultado: los 8 hosts bloqueados por la política de red. Por regla del pedido, no se escribió ninguna descripción, imagen ni código TA2.
