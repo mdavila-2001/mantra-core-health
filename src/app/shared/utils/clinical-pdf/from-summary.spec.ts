@@ -1,4 +1,5 @@
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
+import { COPIA_DE_TRABAJO, prescriptionPdfOptions, visitPdfOptions } from './clinical-pdf';
 import { atencionDesdeResumen, recetaDesdeResumen } from './from-summary';
 
 /**
@@ -96,6 +97,22 @@ describe('recetaDesdeResumen', () => {
       recetaDesdeResumen(INDICACION, CONTEXTO, etiqueta).medicamentos[0].vigencia,
     ).toBeUndefined();
   });
+
+  /**
+   * De punta a punta: la fecha de emisión de la portada es la `issuedAt` del
+   * registro, no la del reloj. Sin emitir, la portada no inventa una y el
+   * papel sale marcado como copia de trabajo.
+   */
+  it('la portada de la receta lleva la fecha de emisión del registro', () => {
+    const { issuedAt: _emitida, ...borrador } = INDICACION;
+
+    expect(prescriptionPdfOptions(recetaDesdeResumen(INDICACION, CONTEXTO, etiqueta)).issuedAt).toEqual(
+      INDICACION.issuedAt,
+    );
+    const sinEmitir = prescriptionPdfOptions(recetaDesdeResumen(borrador, CONTEXTO, etiqueta));
+    expect(sinEmitir).not.toHaveProperty('issuedAt');
+    expect(sinEmitir.watermark).toBe(COPIA_DE_TRABAJO);
+  });
 });
 
 /**
@@ -140,6 +157,12 @@ describe('la firma del documento', () => {
 });
 
 describe('atencionDesdeResumen', () => {
+  it('la portada de la atención se fecha con el cierre del encuentro', () => {
+    const atencion = atencionDesdeResumen(ENCUENTRO, resumen(), CONTEXTO, etiqueta);
+
+    expect(visitPdfOptions(atencion).issuedAt).toEqual(ENCUENTRO.endAt);
+  });
+
   it('lleva el motivo y las dos fechas de la consulta', () => {
     const atencion = atencionDesdeResumen(ENCUENTRO, resumen(), CONTEXTO, etiqueta);
 

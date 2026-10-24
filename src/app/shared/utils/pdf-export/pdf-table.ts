@@ -192,9 +192,11 @@ function columnWidths(
         narrow = Math.max(narrow, composer.measure(word, style));
       }
     }
-    preferred.push(wide + padding);
+    // Un punto de tolerancia: una palabra que entra justo en su columna se
+    // partía por el redondeo de `splitTextToSize` («Confirmad|o»).
+    preferred.push(wide + padding + 1);
     // Una palabra interminable no puede quedarse con la hoja entera.
-    minimum.push(Math.min(narrow + padding, composer.width / 2));
+    minimum.push(Math.min(narrow + padding + 1, composer.width / 2));
   }
 
   const sum = (values: readonly number[]): number => values.reduce((a, b) => a + b, 0);

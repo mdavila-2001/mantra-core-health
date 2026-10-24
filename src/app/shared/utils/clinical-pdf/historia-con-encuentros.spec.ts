@@ -155,6 +155,40 @@ describe('bloquesDeHistoriaConEncuentros', () => {
     expect(texto).toContain('Resultados');
   });
 
+  /**
+   * Cada sección donde se lee: los diagnósticos por estado abren la historia
+   * —antes de las atenciones— y la línea de cada atención sigue a las
+   * atenciones, antes de las recetas.
+   */
+  it('ubica los diagnósticos antes de las atenciones y la línea antes de las recetas', () => {
+    const textos = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS).map(
+      (bloque) => bloque.text,
+    );
+    const paciente = textos.indexOf('Datos del paciente');
+    const diagnosticos = textos.indexOf('Diagnósticos por estado');
+    const atenciones = textos.indexOf('Atenciones');
+    const lineas = textos.indexOf('Línea de cada atención');
+    const recetas = textos.indexOf('Recetas');
+
+    expect(paciente).toBeGreaterThan(-1);
+    expect(diagnosticos).toBeGreaterThan(paciente);
+    expect(atenciones).toBeGreaterThan(diagnosticos);
+    expect(lineas).toBeGreaterThan(atenciones);
+    expect(recetas).toBeGreaterThan(lineas);
+  });
+
+  it('los hechos de una atención son una lista, en el orden dado', () => {
+    const lista = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS).find(
+      (bloque) => bloque.kind === 'list',
+    );
+
+    expect(lista?.items).toEqual([
+      'Nota #a1b2 (1 de marzo de 2026)',
+      'Análisis de laboratorio: Hemograma — resultado disponible (1 de marzo de 2026)',
+      'Receta: Losartán — por Hipertensión',
+    ]);
+  });
+
   it('ningún identificador interno llega al papel', () => {
     const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS));
 

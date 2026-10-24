@@ -1,5 +1,11 @@
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
-import { bloquesDeHistoria, bloquesDeOrden, VALOR_ENMASCARADO } from './clinical-pdf';
+import {
+  bloquesDeHistoria,
+  bloquesDeOrden,
+  historyPdfOptions,
+  orderPdfOptions,
+  VALOR_ENMASCARADO,
+} from './clinical-pdf';
 import type { DocumentoDeHistoria, DocumentoDeOrden } from './clinical-pdf.types';
 import { historiaDesdeFuentes } from './from-summary';
 
@@ -65,8 +71,13 @@ describe('bloquesDeOrden', () => {
       bloquesDeOrden({ ...ORDEN, preparacion: 'Ayuno de 8 horas. Traer carnet.' }),
     );
 
-    expect(texto).toContain('Cómo prepararse');
     expect(texto).toContain('Ayuno de 8 horas. Traer carnet.');
+    // Su propia sección: el aviso, con su título.
+    expect(
+      bloquesDeOrden({ ...ORDEN, preparacion: 'Ayuno de 8 horas. Traer carnet.' }).find(
+        (bloque) => bloque.kind === 'note',
+      ),
+    ).toMatchObject({ title: 'Cómo prepararse', text: 'Ayuno de 8 horas. Traer carnet.' });
   });
 
   it('sin preparación NO afirma que no haga falta: dice que no hay indicaciones', () => {
@@ -89,6 +100,47 @@ describe('bloquesDeOrden', () => {
 
   it('declara cuándo y de dónde salió el papel', () => {
     expect(textoDe(bloquesDeOrden(ORDEN))).toContain('Documento generado el');
+  });
+
+  it('se emite cuando se pide: la portada lleva esa fecha, el estado y a qué mostrador va', () => {
+    const opciones = orderPdfOptions(ORDEN);
+
+    expect(opciones.issuedAt).toEqual(ORDEN.pedidaEl);
+    expect(opciones.kind).toBe('Laboratorio');
+    expect(opciones.title).toBe('Orden de estudio');
+    expect(opciones.meta).toEqual([{ label: 'Estado', value: 'Activa' }]);
+    expect(opciones.issuer).toEqual({ name: 'Consultorio Central' });
+    // La orden la firma quien la pide: la firma de la sesión no se apaga.
+    expect(opciones).not.toHaveProperty('firma');
+  });
+
+  it('sin categoría resuelta, la portada no imprime «No registrado» como clase', () => {
+    expect(orderPdfOptions({ ...ORDEN, categoria: '' }).kind).toBe('Documento clínico');
+    expect(orderPdfOptions({ ...ORDEN, categoria: 'No registrado' }).kind).toBe('Documento clínico');
+  });
+
+  it('abre con paciente y profesional en tarjetas, y el estudio en una rejilla', () => {
+    const bloques = bloquesDeOrden(ORDEN);
+
+    expect(bloques[0]?.kind).toBe('panels');
+    expect(bloques[0]?.panels?.map((tarjeta) => tarjeta.title)).toEqual(['Paciente', 'Profesional']);
+    expect(bloques.find((bloque) => bloque.kind === 'fields')?.fields).toEqual([
+      { label: 'Estudio', value: 'Hemograma completo' },
+      { label: 'Tipo', value: 'Laboratorio' },
+    ]);
+  });
+
+  it('la preparación es una precondición: va en un aviso de advertencia', () => {
+    const conPreparacion = bloquesDeOrden({ ...ORDEN, preparacion: 'Ayuno de 8 horas.' });
+    const sinPreparacion = bloquesDeOrden(ORDEN);
+
+    expect(conPreparacion.filter((bloque) => bloque.kind === 'note')).toEqual([
+      expect.objectContaining({ tone: 'warning', text: 'Ayuno de 8 horas.' }),
+    ]);
+    // Sin indicaciones publicadas es información, no una instrucción.
+    expect(sinPreparacion.filter((bloque) => bloque.kind === 'note')).toEqual([
+      expect.objectContaining({ tone: 'info', title: 'Cómo prepararse' }),
+    ]);
   });
 });
 
@@ -185,6 +237,70 @@ describe('bloquesDeHistoria', () => {
     const texto = textoDe(bloquesDeHistoria({ ...HISTORIA_VACIA, ordenes: [ORDEN] }));
 
     expect(texto).not.toContain(ORDEN.id);
+  });
+
+  it('las recetas van en una sola tabla con la fecha delante, y sus indicaciones debajo', () => {
+    const receta = {
+      id: 'r-1',
+      paciente: HISTORIA_VACIA.paciente,
+      profesional: { nombre: 'Dra. Salas' },
+      creadaEl: new Date(2026, 7, 14, 10, 0),
+      emitidaEl: new Date(2026, 7, 14, 10, 5),
+      medicamentos: [{ medicamento: 'Amoxicilina', dosis: '500 mg', frecuencia: 'cada 8 horas' }],
+      indicaciones: 'Tomar con las comidas.',
+    };
+    const { emitidaEl: _emitida, ...borrador } = receta;
+    const bloques = bloquesDeHistoria({
+      ...HISTORIA_VACIA,
+      recetas: [receta, { ...borrador, id: 'r-2', medicamentos: [] }],
+    });
+    const tabla = bloques.filter((bloque) => bloque.kind === 'row');
+
+    expect(tabla.map((fila) => fila.cells)).toEqual([
+      ['Fecha', 'Medicamento', 'Dosis y frecuencia', 'Vigencia', 'Estado'],
+      ['14/08/2026', 'Amoxicilina', '500 mg · cada 8 horas', '—', 'Emitida'],
+      ['14/08/2026', 'Sin medicamentos indicados.', '—', '—', 'Sin emitir'],
+    ]);
+    expect(textoDe(bloques)).toContain('Amoxicilina (14/08/2026): Tomar con las comidas.');
+  });
+
+  it('las alergias de la persona van en un aviso de alerta, junto a sus datos', () => {
+    const bloques = bloquesDeHistoria({ ...HISTORIA_VACIA, alergias: ['Penicilina'] });
+    const alergia = bloques.findIndex((bloque) => bloque.kind === 'note');
+
+    expect(bloques[alergia]).toMatchObject({ tone: 'alert', title: 'Alergias registradas' });
+    expect(alergia).toBeLessThan(bloques.findIndex((bloque) => bloque.text === 'Atenciones'));
+  });
+
+  it('cada atención es una tabla con una banda por bloque, vacíos incluidos', () => {
+    const tabla = bloquesDeHistoria({
+      ...HISTORIA_VACIA,
+      atenciones: [
+        {
+          titulo: 'Atención del 14/08/2026',
+          bloques: [
+            { titulo: 'Diagnósticos', datos: [{ etiqueta: 'Faringitis aguda', valor: 'Activa' }] },
+            { titulo: 'Observaciones', datos: [] },
+          ],
+        },
+      ],
+    }).filter((bloque) => bloque.kind === 'row');
+
+    expect(tabla.map((fila) => [fila.header === true, fila.cells])).toEqual([
+      [true, ['Diagnósticos', 'Estado clínico']],
+      [false, ['Faringitis aguda', 'Activa']],
+      [true, ['Observaciones', 'Resultado']],
+      [false, ['Sin registros.', '—']],
+    ]);
+  });
+
+  it('es una compilación: sin fecha de emisión inventada y sin bloque de firma', () => {
+    const opciones = historyPdfOptions({ ...HISTORIA_VACIA, organizacion: 'Consultorio Central' });
+
+    expect(opciones).not.toHaveProperty('issuedAt');
+    expect(opciones.firma).toBeNull();
+    expect(opciones.subtitle).toBe('Ana Quispe · 36 años');
+    expect(opciones.issuer).toEqual({ name: 'Consultorio Central' });
   });
 });
 

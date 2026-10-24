@@ -82,6 +82,10 @@ export function drawContent(composer: PdfComposer, blocks: readonly PdfBlock[]):
       drawTable(composer, element.rows, trailing);
     } else if (element.type === 'fieldList') {
       drawFieldList(composer, element.fields);
+    } else if (element.block.kind === 'heading' && elements[index + 1]?.type === 'table') {
+      // Un título seguido de una tabla reserva la cabecera y una fila, no dos
+      // renglones de texto: si no, quedaba solo al pie de la hoja.
+      drawHeading(composer, element.block, TABLE_START_HEIGHT);
     } else {
       drawBlock(composer, element.block);
     }
@@ -148,14 +152,22 @@ function drawBlock(composer: PdfComposer, block: PdfBlock): void {
  * de una hoja, con su contenido en la siguiente, se lee como si la sección
  * estuviera vacía.
  */
-function drawHeading(composer: PdfComposer, block: PdfBlock): void {
+/** Lo que mide el arranque de una tabla: el aire, la cabecera y una fila de una línea. */
+const TABLE_START_HEIGHT =
+  PDF_SPACE.sm +
+  PDF_TYPE.cellHead.leading +
+  PDF_TYPE.cell.leading +
+  PDF_SPACE.cellPaddingY * 4;
+
+/** @param keep - Lo que se reserva de lo que viene después, para no dejar el título solo. */
+function drawHeading(composer: PdfComposer, block: PdfBlock, keep: number = PDF_TYPE.body.leading * 2): void {
   const level = block.level ?? 6;
   if (level <= 2) {
     const style = level === 1 ? PDF_TYPE.section : PDF_TYPE.subsection;
     const indent = 11;
     const lines = composer.wrap(block.text, composer.width - indent, style);
     const height = lines.length * style.leading + PDF_SPACE.sm + PDF_SPACE.afterSection;
-    composer.ensure(PDF_SPACE.beforeSection + height + PDF_TYPE.body.leading * 2);
+    composer.ensure(PDF_SPACE.beforeSection + height + keep);
     composer.space(PDF_SPACE.beforeSection);
     const barHeight = style.size * 0.95;
     composer.box(
@@ -176,7 +188,7 @@ function drawHeading(composer: PdfComposer, block: PdfBlock): void {
   // se leían como tres jerarquías distintas.
   const style = PDF_TYPE.heading;
   const lines = composer.wrap(block.text, composer.width, style);
-  composer.ensure(PDF_SPACE.md + lines.length * style.leading + PDF_TYPE.body.leading * 2);
+  composer.ensure(PDF_SPACE.md + lines.length * style.leading + keep);
   composer.space(PDF_SPACE.md);
   composer.y += composer.writeLines(lines, composer.left, composer.y, style);
   composer.y += PDF_SPACE.xs;

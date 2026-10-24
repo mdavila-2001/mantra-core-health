@@ -78,6 +78,13 @@ export interface DocumentoDeReceta {
    * desde v4.1.6. Pendiente de que esos archivos agreguen el campo.
    */
   readonly porQueEs?: { readonly tipo: 'diagnostico' | 'motivo'; readonly texto: string };
+  /**
+   * Las alergias de la persona, ya en palabras —«Penicilina (reacción grave)»—.
+   * Van en un aviso destacado, antes de lo indicado: es lo primero que tiene que
+   * ver quien prescribe o dispensa. Opcional: quien arma el documento hoy
+   * todavía no la puebla, y ausente no se imprime nada (no es «sin alergias»).
+   */
+  readonly alergias?: readonly string[];
 }
 
 /** Una línea de un bloque de la historia: «Diagnóstico: Faringitis aguda». */
@@ -116,6 +123,13 @@ export interface DocumentoDeAtencion {
    * los leen siguen produciendo exactamente el mismo papel que antes.
    */
   readonly formularios?: readonly DocumentoDeFormulario[];
+  /**
+   * Las alergias de la persona, ya en palabras —«Penicilina (reacción grave)»—.
+   * Van en un aviso destacado, antes de lo indicado: es lo primero que tiene que
+   * ver quien prescribe o dispensa. Opcional: quien arma el documento hoy
+   * todavía no la puebla, y ausente no se imprime nada (no es «sin alergias»).
+   */
+  readonly alergias?: readonly string[];
 }
 
 /**
@@ -222,4 +236,11 @@ export interface DocumentoDeHistoria {
   readonly ordenes: readonly DocumentoDeOrden[];
   /** Resultados liberados, ya en palabras. */
   readonly resultados: readonly DocumentoBloque[];
+  /**
+   * Las alergias de la persona, ya en palabras —«Penicilina (reacción grave)»—.
+   * Van en un aviso destacado, antes de lo indicado: es lo primero que tiene que
+   * ver quien prescribe o dispensa. Opcional: quien arma el documento hoy
+   * todavía no la puebla, y ausente no se imprime nada (no es «sin alergias»).
+   */
+  readonly alergias?: readonly string[];
 }

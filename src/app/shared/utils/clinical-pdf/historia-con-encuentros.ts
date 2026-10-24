@@ -1,5 +1,5 @@
-import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-export';
-import { bloquesDeHistoria } from './clinical-pdf';
+import { buildBlocksPdf, campoDeBloque, listBlock, type PdfBlock } from '../pdf-export/pdf-export';
+import { bloquesDeHistoria, historyPdfOptions } from './clinical-pdf';
 import type { DocumentoDeHistoria } from './clinical-pdf.types';
 
 /* ============================================================================
@@ -68,24 +68,38 @@ export interface SeccionesNuevasDeLaHistoria {
  * La historia completa **con** los diagnósticos por estado y la línea de cada
  * atención.
  *
- * Las secciones nuevas se insertan **antes del pie** y no después: el pie dice
- * cuándo y desde dónde salió el papel, y algo impreso después de esa línea se
- * lee como un anexo de otro documento. Se localiza por su tipo (`caption`, el
- * único que `bloquesDeHistoria` pone al final) en vez de por un índice fijo,
- * que se rompería en cuanto aquélla agregara una sección.
+ * Cada sección nueva va donde se lee: los **diagnósticos por estado**, antes de
+ * las atenciones —es la lista de problemas con que se abre una historia—, y la
+ * **línea de cada atención**, justo después de las atenciones y antes de las
+ * recetas. Las dos se ubican por el título de la sección de
+ * `bloquesDeHistoria` y no por un índice fijo, que se rompería en cuanto
+ * aquélla agregara una sección.
+ *
+ * Si alguno de esos títulos faltara, la sección cae **antes del pie** y nunca
+ * después: el pie dice cuándo y desde dónde salió el papel, y algo impreso
+ * después de esa línea se lee como un anexo de otro documento.
  */
 export function bloquesDeHistoriaConEncuentros(
   historia: DocumentoDeHistoria,
   nuevas: SeccionesNuevasDeLaHistoria,
 ): readonly PdfBlock[] {
   const base = bloquesDeHistoria(historia);
-  const corte = base.at(-1)?.kind === 'caption' ? base.length - 1 : base.length;
+  const pie = base.at(-1)?.kind === 'caption' ? base.length - 1 : base.length;
+  const antesDe = (titulo: string): number => {
+    const indice = base.findIndex(
+      (bloque) => bloque.kind === 'heading' && bloque.level === 2 && bloque.text === titulo,
+    );
+    return indice === -1 ? pie : indice;
+  };
+  const diagnosticos = antesDe('Atenciones');
+  const lineas = Math.max(diagnosticos, antesDe('Recetas'));
 
   return [
-    ...base.slice(0, corte),
+    ...base.slice(0, diagnosticos),
     ...bloquesDeDiagnosticos(nuevas.diagnosticos),
+    ...base.slice(diagnosticos, lineas),
     ...bloquesDeLasLineas(nuevas.lineas),
-    ...base.slice(corte),
+    ...base.slice(lineas),
   ];
 }
 
@@ -94,11 +108,9 @@ export function buildHistoriaConEncuentrosPdf(
   historia: DocumentoDeHistoria,
   nuevas: SeccionesNuevasDeLaHistoria,
 ) {
-  return buildBlocksPdf(bloquesDeHistoriaConEncuentros(historia, nuevas), {
-    title: 'Historia clínica',
-    kind: 'Historia clínica',
-    subtitle: bajada(historia.paciente.nombre),
-  });
+  // La misma portada que la historia de siempre: es el mismo documento con
+  // dos secciones más, no otro papel.
+  return buildBlocksPdf(bloquesDeHistoriaConEncuentros(historia, nuevas), historyPdfOptions(historia));
 }
 
 /**
@@ -188,9 +200,8 @@ export function bloquesDeLasLineas(lineas: readonly LineaDeAtencion[]): readonly
       bloques.push({ kind: 'paragraph', text: 'De esta atención no quedó nada registrado.' });
       continue;
     }
-    for (const hecho of linea.hechos) {
-      bloques.push({ kind: 'paragraph', text: frase(hecho) });
-    }
+    // Los hechos son una enumeración: una viñeta por hecho, en el orden dado.
+    bloques.push(listBlock(linea.hechos.map(frase)));
   }
   return bloques;
 }
@@ -201,17 +212,7 @@ function frase(hecho: HechoDeLaAtencion): string {
   return hecho.cuando === null ? conDetalle : `${conDetalle} (${hecho.cuando})`;
 }
 
-/* ---- membrete y nombre de archivo ---------------------------------------- */
-
-/** La fecha sola, como la imprime el resto de los documentos clínicos. */
-const DIA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
-
-/** La bajada del membrete: de quién es el papel y de cuándo. */
-function bajada(nombre: string): string | undefined {
-  const quien = nombre.trim();
-  const cuando = DIA.format(new Date());
-  return quien === '' ? cuando : `${quien} · ${cuando}`;
-}
+/* ---- nombre de archivo ---------------------------------------------------- */
 
 /**
  * `historia-perez-2026-09-25.pdf`.

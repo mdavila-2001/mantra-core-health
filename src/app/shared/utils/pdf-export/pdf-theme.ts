@@ -347,8 +347,8 @@ export const PDF_SIGNATURE = {
   signatureBox: { width: 140, height: 52 },
   stampBox: { width: 60, height: 60 },
   gap: 12,
-  /** Aire mínimo entre el contenido y el bloque. */
-  clearance: 36,
+  /** Aire mínimo entre el contenido y el bloque: lo justo para que se lea aparte. */
+  clearance: 22,
 } as const;
 
 /** El código QR: ≥ 3 × 3 cm, lo que pide el SIN para una representación gráfica. */

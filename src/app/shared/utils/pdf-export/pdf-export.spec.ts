@@ -995,7 +995,7 @@ describe('el bloque de firma y sello', () => {
   it('sigue al contenido: va debajo de la última línea, con su aire', () => {
     buildBlocksPdf(lineas(3), { title: 'Receta', firma: SIN_IMAGENES });
     const conPoco = yDe('Dra. Valeria Rojas');
-    expect(conPoco).toBeGreaterThan(yDe('Línea 2') + 36);
+    expect(conPoco).toBeGreaterThan(yDe('Línea 2') + 22);
 
     buildBlocksPdf(lineas(8), { title: 'Receta', firma: SIN_IMAGENES });
     expect(yDe('Dra. Valeria Rojas')).toBeGreaterThan(conPoco);
