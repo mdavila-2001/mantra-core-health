@@ -2457,19 +2457,22 @@ export class RegisterPatient {
         }
         // `patchValue` no crea filas en un `FormArray`: sólo llena las que hay.
         // Se arman primero, del largo guardado, y después se llenan.
-        if (Array.isArray(valores.additionalPhones)) {
+        if (Array.isArray(valores['additionalPhones'])) {
           this.telefonosExtra.clear();
-          for (const telefono of valores.additionalPhones.slice(0, MAX_TELEFONOS_EXTRA)) {
+          for (const telefono of valores['additionalPhones'].slice(0, MAX_TELEFONOS_EXTRA)) {
             this.telefonosExtra.push(nuevoTelefonoExtra(String(telefono ?? '')));
           }
-          delete valores.additionalPhones;
+          delete valores['additionalPhones'];
         }
-        if (Array.isArray(valores.additionalEmergencyContacts)) {
+        if (Array.isArray(valores['additionalEmergencyContacts'])) {
           this.contactosExtra.clear();
-          for (const contacto of valores.additionalEmergencyContacts.slice(0, MAX_CONTACTOS_EXTRA)) {
+          const contactos = valores['additionalEmergencyContacts'] as Parameters<
+            typeof nuevoContactoExtra
+          >[0][];
+          for (const contacto of contactos.slice(0, MAX_CONTACTOS_EXTRA)) {
             this.contactosExtra.push(nuevoContactoExtra(contacto ?? {}));
           }
-          delete valores.additionalEmergencyContacts;
+          delete valores['additionalEmergencyContacts'];
         }
         this.formPaciente.patchValue(valores);
       }
