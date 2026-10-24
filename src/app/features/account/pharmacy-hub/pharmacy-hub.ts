@@ -7,7 +7,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { Cotizaciones } from '../cotizaciones/cotizaciones';
+import { Quotations } from '../quotations/quotations';
 import { PharmacyOrders } from '../pharmacy-orders/pharmacy-orders';
 import { PharmacyShop } from './pharmacy-shop/pharmacy-shop';
 
@@ -61,7 +61,7 @@ const PESTANA = { pedidos: 0, cotizaciones: 1, comprar: 2 } as const;
  */
 @Component({
   selector: 'app-pharmacy-hub',
-  imports: [Card, Cotizaciones, PageHeader, PharmacyOrders, PharmacyShop, Spinner, Tab, Tabs],
+  imports: [Card, Quotations, PageHeader, PharmacyOrders, PharmacyShop, Spinner, Tab, Tabs],
   templateUrl: './pharmacy-hub.html',
   styleUrl: './pharmacy-hub.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

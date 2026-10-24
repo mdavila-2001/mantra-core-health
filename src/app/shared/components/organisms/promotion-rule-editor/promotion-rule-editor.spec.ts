@@ -7,6 +7,7 @@ import type {
   DraftFailure,
   PromotableItem,
 } from '../../../../core/promotions-engine/promotion-mechanics.types';
+import { chooseSelectOption, selectOptionLabels } from '../../../../../testing/select';
 import { PromotionRuleEditor } from './promotion-rule-editor';
 
 const ITEMS: readonly PromotableItem[] = [
@@ -103,17 +104,13 @@ describe('PromotionRuleEditor', () => {
       expect(text()).toContain('Lleve X, pague Y');
     });
 
-    it('el desplegable de pantalla angosta elige la misma familia, con su nombre completo', () => {
-      const select = root().querySelector('[data-testid="regla-familias-select"] select') as HTMLSelectElement;
-      // La opción oculta del placeholder no cuenta: los valores son índices de las reales.
-      const nombres = Array.from(select.options)
-        .filter((opcion) => opcion.value !== '')
-        .map((opcion) => opcion.textContent?.trim());
+    it('el desplegable de pantalla angosta elige la misma familia, con su nombre completo', async () => {
+      const select = root().querySelector('[data-testid="regla-familias-select"]') as HTMLElement;
+      const nombres = await selectOptionLabels(fixture, select);
 
       expect(nombres).toContain('Total de la compra');
       expect(nombres).toContain('Combos y regalos');
-      select.value = String(nombres.indexOf('Cantidad'));
-      select.dispatchEvent(new Event('change', { bubbles: true }));
+      await chooseSelectOption(fixture, select, 'Cantidad');
       render();
 
       expect(host.fields()).toMatchObject({ family: 'QUANTITY', kind: 'BUY_X_PAY_Y' });

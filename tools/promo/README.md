@@ -52,7 +52,7 @@ para interfaz) y con el logotipo de `public/alovida/imagenes/`. **No son captura
 en ejecución**: es material de comunicación, no evidencia de funcionamiento. Para evidencia real
 están Playwright y `evidencias/`.
 
-Los personajes son los de la maqueta (`src/app/core/mock/fixtures/personas.ts`): Clínica Los Olivos,
+Los personajes son los de la maqueta (`src/app/core/mock/fixtures/people.ts`): Clínica Los Olivos,
 Dra. Valeria Rojas, Hospital San Lucas. La aseguradora aparece **sin marca**, a propósito: nombrar a
 una real insinúa un acuerdo que no existe. Las cifras del gráfico de la lámina 11 están rotuladas
 como datos de demostración.

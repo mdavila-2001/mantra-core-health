@@ -6,7 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { AltaDeCentroDiagnostico } from '../registro-compartido/alta-de-centro-diagnostico';
+import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterPharmacy } from './register-pharmacy';
 
 /** La forma que espera `IamClient.registerPharmacyOrganization`, según lo arma el cliente. */
@@ -69,7 +69,7 @@ describe('RegisterPharmacy', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AltaDeCentroDiagnostico, useValue: { catalogos: () => of(CATALOGOS_DE_PRUEBA) } },
+        { provide: DiagnosisCenterEnrollment, useValue: { catalogs: () => of(CATALOGOS_DE_PRUEBA) } },
         // El mapa (GPS de la central/sucursales) no debe cargar Leaflet de
         // verdad en jsdom: ver el mismo provider en `register-organization.spec.ts`.
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
@@ -193,16 +193,41 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
-  it('una sucursal sin punto confirmado no viaja: incompleta se descarta, no se manda a medias', () => {
+  it('una sucursal sin punto NO se descarta en silencio: el envío espera y la nombra', () => {
     completarObligatorio();
     component.agregarSucursal();
     const [sucursal] = component.sucursales();
     component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal sin mapa');
-    component.submit();
 
+    expect(component.sucursalesIncompletas().map((s) => s.rotulo)).toEqual(['Sucursal sin mapa']);
+    expect(component.avisoDeSucursalesIncompletas()).toContain('«Sucursal sin mapa»');
+
+    component.submit();
+    http.expectNone(RUTA_ALTA);
+    expect(component.errorMessage()).toContain('«Sucursal sin mapa»');
+
+    // Completarla (aquí con el enlace con el punto escrito) desbloquea el envío.
+    component.escribirUrlDeSucursal(
+      sucursal!.id,
+      'https://www.google.com/maps/@-17.7833,-63.1821,17z',
+    );
+    expect(component.sucursalesIncompletas()).toEqual([]);
+    component.submit();
     const req = http.expectOne(RUTA_ALTA);
-    expect('pharmacy' in (req.request.body as CuerpoDelAlta).organization).toBe(false);
+    expect((req.request.body as CuerpoDelAlta).organization.pharmacy?.branches?.[0]).toMatchObject({
+      name: 'Sucursal sin mapa',
+      latitude: -17.7833,
+      longitude: -63.1821,
+    });
     req.flush(RESPUESTA_201);
+  });
+
+  it('un enlace con punto no pisa un pin ya marcado a mano', () => {
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.fijarGpsDeSucursal(sucursal!.id, { lat: -17.75, lng: -63.15 });
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps/@-10.1,-60.2,17z');
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.75, lng: -63.15 });
   });
 
   it('los cinco documentos legales viajan sólo si los cinco están cargados', () => {

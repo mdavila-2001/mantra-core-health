@@ -3,7 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { CarePlanRegistration, NewCarePlan } from './chart-care-plans.types';
+import { withSimulatorExtensions } from '../simulator-only';
+import { CARE_PLAN_SIMULATOR_EXTENSIONS, type CarePlanRegistration, type NewCarePlan } from './chart-care-plans.types';
 
 /** Lo que viaja por el cable: el instante llega como texto ISO. */
 interface WireCarePlanRegistration {
@@ -45,7 +46,7 @@ export class ChartCarePlansClient {
   createCarePlan(plan: NewCarePlan): Observable<CarePlanRegistration> {
     return this.http
       .post<WireCarePlanRegistration>(this.url('/charts/care-plans'), sinAusentes({
-        ...plan,
+        ...withSimulatorExtensions(plan, CARE_PLAN_SIMULATOR_EXTENSIONS),
         startDate: diaDe(plan.startDate),
         endDate: diaDe(plan.endDate),
         activities:

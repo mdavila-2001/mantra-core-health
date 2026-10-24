@@ -1,21 +1,21 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import {
-  CATEGORIA_DX,
-  condiciones,
-  notas,
-  ordenes,
-  type CondicionSimulada,
-  type VerificacionSimulada,
-} from '../fixtures/clinica';
+  DX_CATEGORY,
+  conditionList,
+  noteList,
+  orderList,
+  type SimulatedCondition,
+  type SimulatedVerification,
+} from '../fixtures/clinic';
 import {
-  CURSO_CLINICO,
-  DIAGNOSTICO,
-  ESTADO_CONDICION,
-  SEVERIDAD,
-  VERIFICACION_DX,
-} from '../fixtures/conceptos';
-import { PACIENTE, PACIENTES } from '../fixtures/personas';
+  CLINICAL_COURSE,
+  DIAGNOSIS,
+  CONDITION_STATUS,
+  SEVERITY,
+  VERIFICATION_DX,
+} from '../fixtures/concepts';
+import { PACIENTE, PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
@@ -31,7 +31,7 @@ interface CondicionWire {
   readonly onsetAt: string;
   readonly expectedResolutionAt?: string;
   readonly resolvedAt?: string;
-  readonly verification?: VerificacionSimulada;
+  readonly verification?: SimulatedVerification;
 }
 
 interface Fallo {
@@ -87,29 +87,29 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
   let contador = 0;
 
   /** Un presuntivo nuevo por prueba: la colección es un singleton del módulo. */
-  function presuntivo(patientProfileId = PACIENTE.id): CondicionSimulada {
+  function presuntivo(patientProfileId = PACIENTE.id): SimulatedCondition {
     contador += 1;
-    const fila: CondicionSimulada = {
+    const fila: SimulatedCondition = {
       id: uuid(`spec-c3-${contador}`),
       patientProfileId,
-      codeConceptId: DIAGNOSTICO['I10']!,
-      categoryConceptId: CATEGORIA_DX,
-      clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
-      verificationStatusConceptId: VERIFICACION_DX['COND_PROVISIONAL']!,
-      severityConceptId: SEVERIDAD['SEV-MILD']!,
+      codeConceptId: DIAGNOSIS['I10']!,
+      categoryConceptId: DX_CATEGORY,
+      clinicalStatusConceptId: CONDITION_STATUS['COND_ACTIVE']!,
+      verificationStatusConceptId: VERIFICATION_DX['COND_PROVISIONAL']!,
+      severityConceptId: SEVERITY['SEV-MILD']!,
       onsetAt: '2026-09-01T10:00:00.000Z',
       noteText: 'Presuntivo de prueba',
       createdAt: '2026-09-01T10:00:00.000Z',
     };
-    condiciones.agregar(fila);
+    conditionList.agregar(fila);
     return fila;
   }
 
-  const otroPaciente = PACIENTES.find((p) => p.id !== PACIENTE.id)!;
+  const otroPaciente = PATIENTS.find((p) => p.id !== PACIENTE.id)!;
   const ordenDe = (patientProfileId: string) =>
-    ordenes.todos().find((o) => o.patientProfileId === patientProfileId)!;
+    orderList.todos().find((o) => o.patientProfileId === patientProfileId)!;
   const notaDe = (patientProfileId: string) =>
-    notas.todos().find((n) => n.patientProfileId === patientProfileId)!;
+    noteList.todos().find((n) => n.patientProfileId === patientProfileId)!;
 
   it('un diagnóstico inexistente es 404', () => {
     expect(estado(verificar('no-existe', { outcome: 'REFUTED', reasonText: 'x' }))).toBe(404);
@@ -169,8 +169,8 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
 
     expect(estado(respuesta)).toBe(200);
     const decidida = condicion(respuesta);
-    expect(decidida.verificationStatusConceptId).toBe(VERIFICACION_DX['COND_CONFIRMED']);
-    expect(decidida.clinicalStatusConceptId).toBe(ESTADO_CONDICION['COND_ACTIVE']);
+    expect(decidida.verificationStatusConceptId).toBe(VERIFICATION_DX['COND_CONFIRMED']);
+    expect(decidida.clinicalStatusConceptId).toBe(CONDITION_STATUS['COND_ACTIVE']);
     expect(decidida.onsetAt).toBe('2026-09-05T00:00:00.000Z');
     expect(decidida.expectedResolutionAt).toBe('2026-10-05T00:00:00.000Z');
     expect(decidida.verification?.outcome).toBe('CONFIRMED');
@@ -188,12 +188,12 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
     const respuesta = verificar(presuntivo().id, {
       outcome: 'CONFIRMED',
       basedOn: { kind: 'NOTE', noteId: nota.noteId },
-      clinicalCourseConceptId: CURSO_CLINICO['COND_COURSE_CHRONIC'],
+      clinicalCourseConceptId: CLINICAL_COURSE['COND_COURSE_CHRONIC'],
     });
 
     expect(estado(respuesta)).toBe(200);
     const decidida = condicion(respuesta);
-    expect(decidida.clinicalCourseConceptId).toBe(CURSO_CLINICO['COND_COURSE_CHRONIC']);
+    expect(decidida.clinicalCourseConceptId).toBe(CLINICAL_COURSE['COND_COURSE_CHRONIC']);
     expect(decidida.expectedResolutionAt).toBeUndefined();
     expect(decidida.verification?.reasonText).toBeNull();
     expect(decidida.verification?.basedOn).toEqual({
@@ -212,7 +212,7 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
 
     expect(estado(respuesta)).toBe(200);
     const decidida = condicion(respuesta);
-    expect(decidida.verificationStatusConceptId).toBe(VERIFICACION_DX['COND_REFUTED']);
+    expect(decidida.verificationStatusConceptId).toBe(VERIFICATION_DX['COND_REFUTED']);
     expect(decidida.resolvedAt).toBeDefined();
     expect(decidida.verification?.basedOn).toEqual({
       kind: 'ANALYSIS',

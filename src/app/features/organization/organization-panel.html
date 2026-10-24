@@ -48,6 +48,7 @@
           <form class="organizacion__formulario" (submit)="$event.preventDefault()">
             <app-form-field
               label="Razón social"
+              [errorMessage]="errorDelServidor('legalName')"
               hint="El nombre legal, tal como figura en los papeles."
             >
               <app-input [(value)]="razonSocial" placeholder="Razón social" />
@@ -55,6 +56,7 @@
 
             <app-form-field
               label="Nombre comercial"
+              [errorMessage]="errorDelServidor('tradeName')"
               hint="Con el que la conocen los pacientes. Es el que se muestra en el directorio."
             >
               <app-input [(value)]="nombreComercial" placeholder="Nombre comercial" />
@@ -62,6 +64,7 @@
 
             <app-form-field
               label="Zona horaria"
+              [errorMessage]="errorDelServidor('timeZone')"
               hint="No es un detalle: es la zona en la que se leen los horarios de sus agendas."
             >
               <app-input [(value)]="zonaHoraria" placeholder="America/La_Paz" />
@@ -70,6 +73,7 @@
             @if (esAseguradora()) {
               <app-form-field
                 label="Sigla"
+                [errorMessage]="errorDelServidor('payer.sigla')"
                 hint="Las pocas letras con las que se la nombra en tablas y comprobantes."
               >
                 <app-input [(value)]="sigla" placeholder="Sigla" />
@@ -77,6 +81,7 @@
 
               <app-form-field
                 label="NIT"
+                [errorMessage]="errorDelServidor('payer.regulatorIdentifier')"
                 hint="El número de identificación tributaria, para la facturación."
               >
                 <app-input [(value)]="nit" placeholder="NIT" />
@@ -84,6 +89,7 @@
 
               <app-form-field
                 label="Dirección"
+                [errorMessage]="errorDelServidor('payer.address')"
                 hint="La de la casa matriz. Las de cada sucursal se cargan en su sede."
               >
                 <app-input [(value)]="direccion" placeholder="Dirección" />

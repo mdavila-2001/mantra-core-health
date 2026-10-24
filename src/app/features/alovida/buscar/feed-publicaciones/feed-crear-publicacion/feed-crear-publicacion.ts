@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import { ROLES_DE_QUIEN_ATIENDE } from '@core/navigation/navigation.map';
 import type { OwnPublicProfile } from '@core/data-access/community/community.types';
-import { inicialesDe } from '@shared/text/iniciales';
+import { initialsOf } from '@shared/text/initials';
 import { Composer } from '../../../../feed/composer/composer';
 
 /**
@@ -51,7 +51,7 @@ export class FeedCrearPublicacion {
     () => this.perfil()?.displayName ?? this.sesion.displayName() ?? 'Su cuenta',
   );
 
-  protected readonly iniciales = computed(() => inicialesDe(this.nombre()));
+  protected readonly iniciales = computed(() => initialsOf(this.nombre()));
 
   /**
    * Si «Escribir artículo» lleva al compositor de artículos médicos.

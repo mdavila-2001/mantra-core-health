@@ -12,15 +12,18 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
+import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
 import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
+import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from './core/navigation/navigation.map';
 import {
-  APP_SECTIONS,
-  ROLES_DE_QUIEN_ATIENDE,
-} from './core/navigation/navigation.map';
+  RUTAS_HEREDADAS_CON_PARAMETRO,
+  rutasHeredadasConParametro,
+} from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
   ROLES_ROUTE_DATA,
@@ -92,6 +95,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
+  'psychological-help': () =>
+    import('./features/psychological-help/psychological-help').then((m) => m.PsychologicalHelp),
   'laboratory-directory': () =>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,
@@ -101,14 +106,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'clinics-directory': () =>
     import('./features/public-directories/clinics-directory').then((m) => m.ClinicsDirectory),
   'pharmacies-directory': () =>
-    import('./features/public-directories/pharmacies-directory').then(
-      (m) => m.PharmaciesDirectory,
-    ),
+    import('./features/public-directories/pharmacies-directory').then((m) => m.PharmaciesDirectory),
   // El mercado de seguros del paciente (28/09/2026). Ver su fila del registro.
   'insurers-directory': () =>
-    import('./features/public-directories/insurers-directory').then(
-      (m) => m.InsurersDirectory,
-    ),
+    import('./features/public-directories/insurers-directory').then((m) => m.InsurersDirectory),
   // §4.H del plan de UX · las dos pantallas nuevas del panel del médico.
   // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
   // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
@@ -145,9 +146,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // TP-1: la organización mirándose a sí misma. Diferida por lo mismo que sus
   // hermanas de administración.
   'administration/my-organization': () =>
-    import('./features/organization/organization-panel').then(
-      (m) => m.OrganizationPanel,
-    ),
+    import('./features/organization/organization-panel').then((m) => m.OrganizationPanel),
   // Carril 16: la consola del laboratorio. Distinta de `laboratory-directory`,
   // que es la vitrina del paciente y sigue en pie sin cambios.
   'administration/medical-laboratory': () =>
@@ -161,9 +160,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/brokers': () =>
     import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
   'administration/insurance-claims': () =>
-    import('./features/insurance/insurance-claims/insurance-claims').then(
-      (m) => m.InsuranceClaims,
-    ),
+    import('./features/insurance/insurance-claims/insurance-claims').then((m) => m.InsuranceClaims),
   'administration/insurance-analytics': () =>
     import('./features/insurance/insurance-analytics/insurance-analytics').then(
       (m) => m.InsuranceAnalytics,
@@ -173,9 +170,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
       (m) => m.InsuranceCampaigns,
     ),
   'administration/received-claims': () =>
-    import('./features/insurance/received-claims/received-claims').then(
-      (m) => m.ReceivedClaims,
-    ),
+    import('./features/insurance/received-claims/received-claims').then((m) => m.ReceivedClaims),
   'administration/insurance-patients': () =>
     import('./features/insurance/insurance-patients/insurance-patients').then(
       (m) => m.InsurancePatients,
@@ -190,7 +185,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // `administration/accounting/cockpit` y los libros en `.../libros`, los dos
   // enlazados al pie del resumen.
   'administration/accounting': () =>
-    import('./features/accounting/resumen/resumen').then((m) => m.Resumen),
+    import('./features/accounting/summary/summary').then((m) => m.Summary),
   'my-organizations': () =>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
@@ -199,12 +194,21 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
-  'administration/data-catalog': () =>
+  // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
+  // vivían bajo `administration/*`; esas direcciones redirigen (ver
+  // `SECCIONES_REDIRIGIDAS`).
+  'superadmin/observability': () =>
+    import('./features/admin/observability/observability').then((m) => m.Observability),
+  'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
-  'administration/web-analytics': () =>
+  // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
+  'superadmin/portal': () =>
+    import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
+  'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
+  'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
-  'administration/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
-  'administration/operations': () =>
+  'superadmin/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
+  'superadmin/operations': () =>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
@@ -231,7 +235,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
       (m) => m.DiagnosticOrders,
     ),
   'my-account/cotizaciones': () =>
-    import('./features/account/cotizaciones/cotizaciones').then((m) => m.Cotizaciones),
+    import('./features/account/quotations/quotations').then((m) => m.Quotations),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   // «Farmacia»: el punto de entrada del menú desde el 24/09/2026 (pedido del
@@ -255,9 +259,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account/requests': () =>
     import('./features/account/my-requests/my-requests').then((m) => m.MyRequests),
   'administration/pharmacy-orders': () =>
-    import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
-      (m) => m.PharmacyInbox,
-    ),
+    import('./features/organization/pharmacy-inbox/pharmacy-inbox').then((m) => m.PharmacyInbox),
   // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
   // sección dentro del panel de organización, por el mismo motivo que aquélla:
   // el panel es de TP-1 y así no se le toca una línea.
@@ -273,9 +275,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // la paga una vez quien cae en un 403 —un camino de error, ya interrumpido— en
   // vez de pagarla **toda** primera visita a la aplicación.
   'my-account/identity': () =>
-    import('./features/identity-verification/identity-hub/identity-hub').then(
-      (m) => m.IdentityHub,
-    ),
+    import('./features/identity-verification/identity-hub/identity-hub').then((m) => m.IdentityHub),
   'administration/my-practice': () =>
     import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>
@@ -289,7 +289,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/pharmacy-catalog': () =>
     environment.mockBackend
       ? import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts)
-      : import('./features/organization/pharmacy-catalog/pharmacy-catalog').then((m) => m.PharmacyCatalog),
+      : import('./features/organization/pharmacy-catalog/pharmacy-catalog').then(
+          (m) => m.PharmacyCatalog,
+        ),
   'administration/pharmacy': () =>
     import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
   'administration/pharmacy-categories': () =>
@@ -360,8 +362,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // login de nadie y arrastra el motor de formularios por partes para la vista
   // previa. La ruta **no puede llamarse `forms`** — es prefijo del proxy hacia
   // la API y lo verifica `check-route-prefixes.mjs`.
-  'form-builder': () =>
-    import('./features/form-builder/form-builder').then((m) => m.FormBuilder),
+  'form-builder': () => import('./features/form-builder/form-builder').then((m) => m.FormBuilder),
   // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
   // distinto —el administrador del laboratorio, el visitador y el doctor— y
   // ninguna es el destino del login de nadie.
@@ -694,6 +695,7 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.AssistedRegistration)
         .catch(() => chunkFallido()),
   },
+  PRACTITIONER_ASSISTED_ROUTE,
   {
     path: 'administration/patients/:profileId',
     title: `${APP_TITLE} - Ficha de paciente`,
@@ -889,8 +891,8 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Detalle de un plan de QA. Hereda los roles de `administration/qa-lab`.
-    path: 'administration/qa-lab/plans/:planId',
+    // Detalle de un plan de QA. Hereda los roles de `superadmin/qa-lab`.
+    path: 'superadmin/qa-lab/plans/:planId',
     title: `${APP_TITLE} - Plan de QA`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -899,9 +901,19 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Un flujo del catálogo. Hereda los roles de `superadmin/flows` (prefijo más largo).
+    path: 'superadmin/flows/:flowId',
+    title: `${APP_TITLE} - Flujo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/flows/flow-detail/flow-detail')
+        .then((m) => m.FlowDetailPage)
+        .catch(() => chunkFallido()),
+  },
+  {
     // Ficha de un objeto del catálogo. Hereda los roles de la sección
-    // `administration/data-catalog` (prefijo más largo).
-    path: 'administration/data-catalog/:objectId',
+    // `superadmin/data-catalog` (prefijo más largo).
+    path: 'superadmin/data-catalog/:objectId',
     title: `${APP_TITLE} - Ficha del catálogo`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -1006,6 +1018,15 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    path: 'glossary/network',
+    title: `${APP_TITLE} - Mapa de relaciones del glosario`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-network')
+        .then((m) => m.GlossaryNetwork)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un término del glosario. Es ruta y no panel porque un término
     // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
     // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la
@@ -1047,37 +1068,19 @@ function pantallaDeOperacion(
   };
 }
 
-function pantallaDeAccesoDelegado(
-  subpath: string,
-  titulo: string,
-  loader: () => Promise<Type<unknown>>,
-): Routes[number] {
-  return pantallaDeOperacion('administration/delegated-access', subpath, titulo, loader);
-}
+/** Fija la sección de `pantallaDeOperacion` para no repetir el envoltorio por sección. */
+const pantallaDeSeccion =
+  (seccion: string) =>
+  (subpath: string, titulo: string, loader: () => Promise<Type<unknown>>): Routes[number] =>
+    pantallaDeOperacion(seccion, subpath, titulo, loader);
 
-function pantallaDeProveedoresDeIdentidad(
-  subpath: string,
-  titulo: string,
-  loader: () => Promise<Type<unknown>>,
-): Routes[number] {
-  return pantallaDeOperacion('administration/identity-providers', subpath, titulo, loader);
-}
+const pantallaDeAccesoDelegado = pantallaDeSeccion('administration/delegated-access');
 
-function pantallaDeVerificacionIdentidad(
-  subpath: string,
-  titulo: string,
-  loader: () => Promise<Type<unknown>>,
-): Routes[number] {
-  return pantallaDeOperacion('administration/identity-assurance', subpath, titulo, loader);
-}
+const pantallaDeProveedoresDeIdentidad = pantallaDeSeccion('administration/identity-providers');
 
-function pantallaDeContextoSanitario(
-  subpath: string,
-  titulo: string,
-  loader: () => Promise<Type<unknown>>,
-): Routes[number] {
-  return pantallaDeOperacion('administration/health-context', subpath, titulo, loader);
-}
+const pantallaDeVerificacionIdentidad = pantallaDeSeccion('administration/identity-assurance');
+
+const pantallaDeContextoSanitario = pantallaDeSeccion('administration/health-context');
 
 /**
  * La sección cuelga de `administration/` a propósito: `/geo` es un prefijo del
@@ -1115,6 +1118,7 @@ function pantallaDeGeolocalizacion(
  * hijas, que es justo lo que se quiere.
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
+  'superadmin/portal': PORTAL_RUTAS,
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
@@ -1193,7 +1197,7 @@ function rutasDeSecciones(): Routes {
  * `my-account/loyalty` (N-03/Q-17, 2026-09-22): «Mis puntos» es una pestaña
  * del perfil del paciente desde el #606 (Itzan, 24/09/2026), y la ficha la
  * abre por URL con `?pestana=puntos` (`indiceDePestana` en
- * `pestanas-del-perfil.ts`). La dirección vieja va directo a esa pestaña; el
+ * `profile-tabs.ts`). La dirección vieja va directo a esa pestaña; el
  * destino provisorio a la primera pestaña, que la regla 65 dejó mientras la
  * pestaña no existía, quedó reemplazado.
  *
@@ -1205,6 +1209,12 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   // La ficha de la farmacia es el «Mi perfil» de la cuenta de farmacia
   // (01/10/2026): la cuenta es la organización, no una persona que la administra.
   'administration/pharmacy-profile': { ruta: '/my-account' },
+  // El portal de plataforma pasó al dominio «Superadministración» (17/10/2026).
+  // Query conservado: `?pestana=` y `?search=` viajaban en los favoritos.
+  'administration/data-catalog': { ruta: '/superadmin/data-catalog' },
+  'administration/web-analytics': { ruta: '/superadmin/web-analytics' },
+  'administration/qa-lab': { ruta: '/superadmin/qa-lab' },
+  'administration/operations': { ruta: '/superadmin/operations' },
 };
 
 /** A dónde manda una sección redirigida: la ruta y el query que le suma. */
@@ -1225,9 +1235,11 @@ export interface DestinoRedirigido {
  * puntos»—.
  */
 export function redireccionConQuery(destino: DestinoRedirigido): RedirectFunction {
-  return ({ queryParams }) =>
+  return ({ queryParams, fragment }) =>
     inject(Router).createUrlTree([destino.ruta], {
       queryParams: { ...queryParams, ...destino.query },
+      // El `#ancla` también es parte del enlace: un `redirectTo` de texto lo pierde.
+      ...(fragment === null || fragment === undefined ? {} : { fragment }),
     });
 }
 
@@ -1328,6 +1340,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // farmacia se elige ahora desde la tienda y el carrito, no desde una
   // pantalla de "cerca de mí" aparte. Sigue en historiales y en favoritos.
   'nearby-places': '/my-account/pharmacy',
+  // «Superadministración» (17/10/2026). La portada del dominio es
+  // Observabilidad; las hijas con parámetro de las cuatro secciones que se
+  // mudaron conservan el identificador (`:objectId`, `:planId`) y el query.
+  superadmin: '/superadmin/observability',
 };
 
 /**
@@ -1700,19 +1716,13 @@ export const routes: Routes = [
       // El importador del arancel (TAREA-22 · S2). Cuelga del catálogo de
       // servicios: se llega desde ahí, que es donde uno mira su lista y se da
       // cuenta de que le falta un procedimiento.
-      pantallaDeOperacion(
-        'administration/services-catalog',
-        'import',
-        'Importar del arancel',
-        () =>
-          import(
-            './features/admin/services-catalog/procedure-import/procedure-import'
-          ).then((m) => m.ProcedureImport),
+      pantallaDeOperacion('administration/services-catalog', 'import', 'Importar del arancel', () =>
+        import('./features/admin/services-catalog/procedure-import/procedure-import').then(
+          (m) => m.ProcedureImport,
+        ),
       ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
-        import('./features/agenda/appointment-new/appointment-new').then(
-          (m) => m.AppointmentNew,
-        ),
+        import('./features/agenda/appointment-new/appointment-new').then((m) => m.AppointmentNew),
       ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(
@@ -1877,6 +1887,9 @@ export const routes: Routes = [
           (m) => m.CaseExpireSweep,
         ),
       ),
+      pantallaDeVerificacionIdentidad('cases/:caseId', 'Expediente de identidad', () =>
+        import('./features/identity-assurance/case-detail/case-detail').then((m) => m.CaseDetail),
+      ),
       pantallaDeVerificacionIdentidad(
         'checks/attempt',
         'Registrar intento contra la autoridad',
@@ -2017,6 +2030,7 @@ export const routes: Routes = [
       // `pathMatch: 'full'`—, pero el día que una ruta nueva se llame como una
       // vieja, gana la que pinta algo. Es más barato ordenarlas que acordarse.
       ...rutasHeredadas(RUTAS_HEREDADAS),
+      ...rutasHeredadasConParametro(RUTAS_HEREDADAS_CON_PARAMETRO),
     ],
   },
   {
@@ -2182,9 +2196,7 @@ export const routes: Routes = [
     // subidor de PDF.
     path: 'auth/register/pharmacy',
     loadComponent: () =>
-      import('./features/auth/register-pharmacy/register-pharmacy').then(
-        (m) => m.RegisterPharmacy,
-      ),
+      import('./features/auth/register-pharmacy/register-pharmacy').then((m) => m.RegisterPharmacy),
     title: 'AloVida - Registrar farmacia',
   },
   {

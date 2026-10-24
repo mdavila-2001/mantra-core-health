@@ -98,7 +98,7 @@
           <!-- Diferido como en el chat: el catálogo son 1 946 emojis y quien
                nunca abre el panel no tiene por qué descargarlo. -->
           @defer (on immediate) {
-            <app-selector-emojis (elegido)="insertarEmoji($event)" />
+            <app-emoji-picker (elegido)="insertarEmoji($event)" />
           } @placeholder {
             <p class="compositor-articulo__cargando" role="status">Cargando emojis…</p>
           }

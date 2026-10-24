@@ -21,7 +21,7 @@ import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
-import { registrarFirmaYSello } from './firma-y-sello.handlers';
+import { registerSignatureAndSeal } from './signature-and-seal.handlers';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
@@ -34,6 +34,9 @@ import { registrarSeguros } from './insurance.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
+import { registrarAltaDeMedicoAsistida } from './assisted-practitioner.handlers';
+import { registrarFlujos } from './flows.handlers';
+import { registrarTrafico } from './ops-traffic.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 
@@ -47,7 +50,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarAuth(router);
   registrarTerminologia(router);
   registrarPerfiles(router);
-  registrarFirmaYSello(router);
+  registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
   registrarPracticas(router);
@@ -81,6 +84,9 @@ export function crearRouterSimulado(): MockRouter {
   registrarVarios(router);
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
+  registrarTrafico(router);
+  registrarFlujos(router);
+  registrarAltaDeMedicoAsistida(router);
   registerPromotions(router);
   registerPatientSpending(router);
   return router;

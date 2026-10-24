@@ -17,9 +17,8 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '@core/data-access/terminology/bo-municipalities.service';
-import type { DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
@@ -142,27 +141,8 @@ export abstract class PublicDirectoryListing {
   /** El catálogo no llegó: el mapa no se dibuja y se ofrece reintentar. */
   protected readonly catalogoGeoCaido = signal(false);
 
-  /**
-   * Los nueve departamentos, para el mapa.
-   *
-   * **Todos**, no sólo los que tienen algo publicado, al revés que los chips de
-   * ciudad. No es una inconsistencia: un chip que siempre devuelve cero es un
-   * botón inútil, pero un mapa de Bolivia al que le faltan seis departamentos
-   * no es un filtro honesto, es un dibujo roto — y quien lo mira no sabría si
-   * Pando no está porque no hay farmacias o porque el mapa está mal. Se dibuja
-   * el país entero y cada departamento dice **cuántos** tiene, que es la
-   * información que el chip escondía.
-   */
-  protected readonly departamentos = computed<readonly DepartamentoElegible[]>(() =>
-    this.ramas().map((rama) => ({
-      conceptId: rama.conceptId,
-      sigla: rama.sigla,
-      nombre: rama.nombre,
-    })),
-  );
-
   /** De cada ciudad publicada al `conceptId` de su departamento. */
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /**
    * Los parámetros de la URL, que son **la** fuente de los tres cortes en
@@ -188,8 +168,22 @@ export abstract class PublicDirectoryListing {
   /** El departamento elegido en el mapa. */
   protected readonly departamentoElegido = computed(() => this.parametro(PARAM_DEPARTAMENTO));
 
-  /** La ciudad elegida por chip, dentro del departamento. */
-  protected readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
+  /**
+   * La ciudad elegida por chip, dentro del departamento.
+   *
+   * Una ciudad que no es del departamento elegido no cuenta: el departamento
+   * se cambia desde la columna de facetas, que no sabe soltar la ciudad, y
+   * Cochabamba dentro de La Paz dejaría la lista en cero sin nada que lo
+   * explique.
+   */
+  protected readonly ciudad = computed(() => {
+    const ciudad = this.parametro(PARAM_CIUDAD);
+    const departamento = this.departamentoElegido();
+    if (ciudad === null || departamento === null) {
+      return ciudad;
+    }
+    return this.porCiudad().get(normalizePlace(ciudad)) === departamento ? ciudad : null;
+  });
 
   protected readonly soloVerificados = computed(() => this.parametro(PARAM_VERIFICADO) === 'true');
 
@@ -215,32 +209,11 @@ export abstract class PublicDirectoryListing {
     const porCiudad = this.porCiudad();
     const cuenta = new Map<string, number>();
     for (const fila of this.paraElMapa()) {
-      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
+      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizePlace(fila.city));
       if (conceptId === undefined) continue;
       cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
     }
     return cuenta;
-  });
-
-  /**
-   * El resumen que acompaña al mapa: cuántos hay y cómo se vuelve.
-   *
-   * `null` cuando no hay departamento elegido, y no un «tocá un departamento»:
-   * el propio mapa ya escribe «Todavía no elegiste departamento» en su línea
-   * viva —es la tercera señal de su estado, la que no depende del color— y dos
-   * renglones seguidos diciendo lo mismo se leen como un error de la pantalla.
-   */
-  protected readonly resumenDelMapa = computed<string | null>(() => {
-    const elegido = this.departamentoElegido();
-    if (elegido === null) {
-      return null;
-    }
-    const nombre = this.ramas().find((rama) => rama.conceptId === elegido)?.nombre ?? '';
-    const cuantos = this.cuentaPorDepartamento().get(elegido) ?? 0;
-    if (cuantos === 0) {
-      return `Todavía no hay nada publicado en ${nombre}.`;
-    }
-    return `${cuantos} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /**
@@ -333,7 +306,7 @@ export abstract class PublicDirectoryListing {
     }
     const porCiudad = this.porCiudad();
     return todas.filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizarLugar(fila.city)) === departamento,
+      (fila) => fila.city !== null && porCiudad.get(normalizePlace(fila.city)) === departamento,
     );
   });
 
@@ -468,6 +441,7 @@ export abstract class PublicDirectoryListing {
       {
         key: PARAM_VERIFICADO,
         label: 'Verificación',
+        icon: 'shield',
         asChips: true,
         options: [{ value: 'true', label: 'Sólo verificadas' }],
       },
@@ -483,12 +457,34 @@ export abstract class PublicDirectoryListing {
       filtros.unshift({
         key: PARAM_CATEGORIA,
         label: 'Categoría',
+        icon: 'tag',
         asChips: true,
         options: categorias.map(({ code, label }) => ({ value: code, label })),
       });
     }
 
-    if (this.departamentoElegido() === null) {
+    /* ---- el departamento, en lugar del mapa (propietario, 23/10/2026) ---
+       Sólo los que tienen algo, con cuántos: una opción que devuelve cero es
+       un botón inútil. */
+    const cuentas = this.cuentaPorDepartamento();
+    const conFichas = this.ramas()
+      .filter((rama) => (cuentas.get(rama.conceptId) ?? 0) > 0)
+      .map((rama) => ({
+        value: rama.conceptId,
+        label: `${rama.nombre} (${cuentas.get(rama.conceptId)})`,
+      }));
+    const elegido = this.departamentoElegido();
+    if (conFichas.length > 1 || elegido !== null) {
+      filtros.unshift({
+        key: PARAM_DEPARTAMENTO,
+        label: 'Departamento',
+        icon: 'pin',
+        asChips: true,
+        options: conFichas,
+      });
+    }
+
+    if (elegido === null) {
       return filtros;
     }
 
@@ -505,8 +501,17 @@ export abstract class PublicDirectoryListing {
 
     if (ciudades.length > 1) {
       // Con una sola ciudad el chip no acota nada: sería un botón que no hace
-      // nada, dibujado con la misma pinta que los que sí.
-      filtros.unshift({ key: PARAM_CIUDAD, label: 'Ciudad', asChips: true, options: ciudades });
+      // nada, dibujado con la misma pinta que los que sí. Va debajo del
+      // departamento: acota dentro de él.
+      const despuesDelDepartamento =
+        filtros.findIndex((filtro) => filtro.key === PARAM_DEPARTAMENTO) + 1;
+      filtros.splice(despuesDelDepartamento, 0, {
+        key: PARAM_CIUDAD,
+        label: 'Ciudad',
+        icon: 'building',
+        asChips: true,
+        options: ciudades,
+      });
     }
     return filtros;
   });
@@ -517,7 +522,7 @@ export abstract class PublicDirectoryListing {
     }
     return this.departamentoElegido() === null
       ? 'Ninguno de los resultados coincide con los filtros que puso. Pruebe quitando alguno.'
-      : 'No hay nada publicado en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.';
+      : 'No hay nada publicado en ese departamento con los filtros que puso. Quite el departamento para ver todo el país.';
   });
 
   /**

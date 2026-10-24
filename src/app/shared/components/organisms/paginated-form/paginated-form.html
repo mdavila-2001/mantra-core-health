@@ -82,6 +82,7 @@
                     [options]="campo.options ?? []"
                     [placeholder]="campo.placeholder ?? campo.description ?? 'Seleccionar opción'"
                     [hasError]="errorDe(campo) !== ''"
+                    [searchable]="campo.searchable ?? true"
                   >
                     <!-- El desplegable dibuja su glifo igual que el campo de
                        texto, y por la misma razón: dentro del marco, para
@@ -110,7 +111,7 @@
                     }
                     <!-- «Otro», con su renglón: ver `otro` en el contrato. -->
                     @if (campo.otro) {
-                      <app-radio-otro [valores]="valoresDe(campo)" />
+                      <app-other-radio [valores]="valoresDe(campo)" />
                     }
                   </app-radio-group>
                 }

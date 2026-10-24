@@ -156,4 +156,52 @@ describe('AssetsLiabilities — FT-26', () => {
 
     await flushRecarga();
   });
+  it('si el cambio de automatización de un activo falla, avisa con el código de soporte y relee la lista', async () => {
+    fixture.detectChanges();
+    flushCarga();
+    fixture.detectChanges();
+
+    const componente = fixture.componentInstance as unknown as {
+      alternarAutomatizacionDeActivo: (a: { id: string; name: string }, automated: boolean) => void;
+      errorDeAutomatizacionDeActivo: () => string | null;
+    };
+    componente.alternarAutomatizacionDeActivo({ id: 'as1', name: 'Ecógrafo' }, true);
+
+    const req = http.expectOne((r) => r.url === '/accounting/practitioner/assets/as1/automation');
+    expect(req.request.method).toBe('PATCH');
+    req.flush(
+      { code: 'INTERNAL', message: 'Internal', correlationId: 'corr-as1', timestamp: '', path: '' },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(componente.errorDeAutomatizacionDeActivo()).toBe(
+      'No se pudo cambiar la automatización de «Ecógrafo». Intente de nuevo. (Código de soporte: corr-as1)',
+    );
+    // La relectura es la que devuelve el interruptor a la posición del servidor.
+    await flushRecarga();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('corr-as1');
+  });
+
+  it('si el cambio de automatización de un pasivo choca con una regla, muestra el motivo de la API', async () => {
+    fixture.detectChanges();
+    flushCarga();
+    fixture.detectChanges();
+
+    const componente = fixture.componentInstance as unknown as {
+      alternarAutomatizacionDePasivo: (l: { id: string; name: string }, automated: boolean) => void;
+      errorDeAutomatizacionDePasivo: () => string | null;
+    };
+    componente.alternarAutomatizacionDePasivo({ id: 'liab1', name: 'Préstamo equipo' }, false);
+
+    http
+      .expectOne((r) => r.url === '/accounting/practitioner/liabilities/liab1/automation')
+      .flush(
+        { code: 'CONFLICT', message: 'El pasivo ya está saldado.', timestamp: '', path: '' },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+    expect(componente.errorDeAutomatizacionDePasivo()).toBe('El pasivo ya está saldado.');
+    await flushRecarga();
+  });
 });

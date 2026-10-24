@@ -180,8 +180,8 @@ function entero(texto: string): number | null {
   // Al revés, `.rejilla` pisaría a `.mis-servicios__rejilla` —misma
   // especificidad, gana la última— y el ancho de columna de acá no se aplicaría.
   styleUrls: [
-    '../../shared/styles/rejilla-de-tarjetas.css',
-    '../../shared/styles/tarjeta-de-servicio.css',
+    '../../shared/styles/card-grid.css',
+    '../../shared/styles/service-card.css',
     './my-services.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

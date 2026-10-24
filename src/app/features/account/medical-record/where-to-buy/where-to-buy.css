@@ -237,3 +237,44 @@
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
+
+/* ─── El recorrido sugerido ─────────────────────────────────────────────── */
+
+.compra__recorrido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.compra__subtitulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.compra__paradas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.compra__parada {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.compra__parada .compra__sede-datos {
+  flex: 1 1 12rem;
+}

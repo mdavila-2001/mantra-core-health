@@ -1,0 +1,49 @@
+<nav class="agenda__paginacion" aria-label="Navegar la ventana">
+  <span class="agenda__paginacion-rango" data-testid="agenda-ventana-rango">{{ rango() }}</span>
+  <div class="agenda__paginacion-controles">
+    @if (!enHoy()) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        data-testid="agenda-ventana-hoy"
+        (clicked)="hoy.emit()"
+      >
+        Volver a hoy
+      </button>
+    }
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      [iconOnly]="true"
+      type="button"
+      data-testid="agenda-ventana-anterior"
+      aria-label="Ventana anterior"
+      appTooltip="Ventana anterior"
+      (clicked)="mover.emit(-1)"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
+    </button>
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      [iconOnly]="true"
+      type="button"
+      data-testid="agenda-ventana-siguiente"
+      aria-label="Ventana siguiente"
+      appTooltip="Ventana siguiente"
+      (clicked)="mover.emit(1)"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
+  </div>
+</nav>

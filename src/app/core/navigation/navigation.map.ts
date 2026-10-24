@@ -1,5 +1,6 @@
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../identity-assurance/verificacion-ofrecida';
+import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
+import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import type { AppSection } from './navigation.types';
 
 /* ============================================================================
@@ -285,6 +286,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Todos los médicos de la red, agrupados por especialidad.',
     module: 'M05 profiles',
+  },
+  {
+    path: 'psychological-help',
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Ayuda psicológica',
+    group: 'General',
+    icon: 'heart',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Apoyo emocional, videos de la OPS y acceso a psicólogos y psiquiatras.',
+    module: 'M-mental-health-support',
   },
   {
     // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
@@ -959,52 +971,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Trabaje la cola de contenido reportado y las apelaciones.',
     module: 'M19 community',
   },
-  {
-    // Portal administrativo · catálogo de datos (API módulo 67). Los roles son
-    // los mismos que exige `GET /admin/catalog/*`: la guarda evita llegar a
-    // una pantalla que sólo devolvería 403; la autoridad sigue siendo la API.
-    path: 'administration/data-catalog',
-    label: 'Catálogo de datos',
-    group: 'Administración',
-    icon: 'book',
-    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN', 'GOVERNANCE_ADMIN', 'DATA_PLATFORM_ADMIN', 'DPO'],
-    availability: 'disponible',
-    summary: 'Qué tablas existen, por qué existen, quién responde por ellas y con qué evidencia.',
-    module: 'M67 data_catalog',
-  },
-  {
-    // Analítica de producto y RUM sobre `telemetry` (`/admin/analytics`).
-    path: 'administration/web-analytics',
-    label: 'Analítica web',
-    group: 'Administración',
-    icon: 'chart',
-    roles: ['PLATFORM_ADMIN', 'SECURITY_ADMIN', 'DATA_PLATFORM_ADMIN', 'MARKETING_MANAGER', 'DPO'],
-    availability: 'disponible',
-    summary: 'Tráfico, embudos, Core Web Vitals y salud del pipeline de eventos.',
-    module: 'M28 telemetry',
-  },
-  {
-    // QA Lab: lectura del laboratorio (M36) y runner en el servidor (M68).
-    path: 'administration/qa-lab',
-    label: 'QA Lab',
-    group: 'Administración',
-    icon: 'flask',
-    roles: ['QA_ADMIN', 'QA_ENGINEER', 'RELEASE_MANAGER', 'PLATFORM_ADMIN'],
-    availability: 'disponible',
-    summary: 'Suites, planes de ejecución con aprobación y resultados con evidencia.',
-    module: 'M36 qa_lab · M68 qa_execution',
-  },
-  {
-    // Consola de operación y preparación para producción (`/admin/ops`).
-    path: 'administration/operations',
-    label: 'Operación',
-    group: 'Administración',
-    icon: 'monitor',
-    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
-    availability: 'disponible',
-    summary: 'Preparación para producción con evidencia, incidentes, SLO y backups.',
-    module: 'M11 system_ops · M46 platform_ops',
-  },
+  ...SECCIONES_DE_PLATAFORMA,
   {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
@@ -1485,7 +1452,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Fuera del menú mientras el producto no ofrezca la verificación: ver
     // `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. La sección sigue entera —la ruta,
     // la pantalla y la salida del 403—, lo único que pierde es el renglón.
-    ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
+    ...(OFFERED_IDENTITY_VERIFICATION ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
     availability: 'disponible',
     summary: 'Valide su identidad o su matrícula, y siga el estado de sus trámites.',
     module: 'M27 identity_assurance',

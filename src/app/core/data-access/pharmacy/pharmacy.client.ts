@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable } from 'rxjs';
+import { throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
@@ -29,6 +29,16 @@ import type {
   PharmacySummary,
   PharmacyStatusResult,
 } from './pharmacy.types';
+import {
+  PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
+  pharmacyProductExtensionsLabel,
+} from './pharmacy.types';
+import {
+  droppedSimulatorExtensions,
+  simulatorOnly,
+  unavailableInApiError,
+  withSimulatorExtensions,
+} from '../simulator-only';
 
 /**
  * Cliente del directorio de farmacias y su disponibilidad (carril E3).
@@ -108,14 +118,18 @@ export class PharmacyClient {
    * `POST /pharmacies/:pharmacyId/catalog-requests` — «no encuentro mi
    * medicamento»: pide que un administrador lo incorpore al catálogo. La
    * farmacia no publica un producto libre.
+   *
+   * **Sólo existe en el simulador**: la API de `origin/dev` no publica esta
+   * ruta (informe B, §2). Contra la API real no sale la petición y el error
+   * dice que la función no está disponible.
    */
   requestCatalogEntry(
     pharmacyId: string,
     draft: CatalogRequestDraft,
   ): Observable<CatalogRequestCreated> {
-    return this.http.post<CatalogRequestCreated>(
-      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/catalog-requests`),
-      sinVaciosDeSolicitud(draft),
+    const url = this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/catalog-requests`);
+    return simulatorOnly('Pedir que se incorpore un medicamento al catálogo', url, () =>
+      this.http.post<CatalogRequestCreated>(url, sinVaciosDeSolicitud(draft)),
     );
   }
 
@@ -197,9 +211,7 @@ export class PharmacyClient {
   availability(query: AvailabilityQuery): Observable<AvailabilityResult> {
     let params = new HttpParams().set('products', query.productIds.join(','));
     if (query.origin !== undefined) {
-      params = params
-        .set('lat', String(query.origin.lat))
-        .set('lng', String(query.origin.lng));
+      params = params.set('lat', String(query.origin.lat)).set('lng', String(query.origin.lng));
     }
     if (query.limit !== undefined) {
       params = params.set('limit', String(query.limit));
@@ -224,32 +236,40 @@ export class PharmacyClient {
   ): Observable<PharmacyProductCreated> {
     return this.http.post<PharmacyProductCreated>(
       this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/products`),
-      sinVacios(draft),
+      withSimulatorExtensions(sinVacios(draft), PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS),
     );
   }
 
   /**
    * `PATCH /pharmacies/:pharmacyId/products/:productId` — edita un producto
-   * del catálogo (P47).
+   * del catálogo.
    *
-   * **La API real sólo persiste marca, genérico, concentración, empaque y
-   * receta** (P47 §2, desde el Hito 3) y devuelve el producto como lo lista la
-   * búsqueda. Precio, categoría, descripción, `inStock`, `status`, existencias
-   * e imágenes son extensión del simulador (P47 §3-5): contra la API real
-   * viajan igual y vuelven con un 400 (`forbidNonWhitelisted`), como ya pasa
-   * con `publishProduct`.
+   * La API real **sí** publica esta ruta, pero `PharmacyUpdateProductDto` sólo
+   * acepta los datos del catálogo (`brandName`, `genericName`, `strengthText`,
+   * `packageSizeText`, `requiresPrescription`). Precio, categoría,
+   * descripción, disponibilidad, publicación, existencias e imágenes son
+   * extensión de la maqueta (P47): contra la API real no viajan, y si el
+   * cambio no tenía otra cosa, el error dice qué no está disponible.
    */
   updateProduct(
     pharmacyId: string,
     productId: string,
     changes: PharmacyProductChanges,
   ): Observable<PharmacyProduct> {
-    return this.http.patch<PharmacyProduct>(
-      this.url(
-        `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
-      ),
-      changes,
+    const url = this.url(
+      `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
     );
+    const body = withSimulatorExtensions(changes, PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS);
+    const unsaved = droppedSimulatorExtensions(changes, PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS);
+    if (unsaved.length > 0 && Object.keys(body).length === 0) {
+      return throwError(() =>
+        unavailableInApiError(
+          `Cambiar ${pharmacyProductExtensionsLabel(unsaved)} de un producto`,
+          url,
+        ),
+      );
+    }
+    return this.http.patch<PharmacyProduct>(url, body);
   }
 
   /**
@@ -272,7 +292,10 @@ export class PharmacyClient {
 
   /** `POST /pharmacies/:id/categories` — crea una categoría. 409 si el nombre ya existe. */
   createCategory(pharmacyId: string, name: string): Observable<PharmacyCategory> {
-    return this.http.post<PharmacyCategory>(this.categoriesUrl(pharmacyId), { name });
+    const url = this.categoriesUrl(pharmacyId);
+    return simulatorOnly('Crear una categoría de la farmacia', url, () =>
+      this.http.post<PharmacyCategory>(url, { name }),
+    );
   }
 
   /** `PATCH /pharmacies/:id/categories/:categoryId` — renombra; los productos siguen. */
@@ -281,16 +304,17 @@ export class PharmacyClient {
     categoryId: string,
     name: string,
   ): Observable<PharmacyCategory> {
-    return this.http.patch<PharmacyCategory>(
-      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
-      { name },
+    const url = `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`;
+    return simulatorOnly('Renombrar una categoría de la farmacia', url, () =>
+      this.http.patch<PharmacyCategory>(url, { name }),
     );
   }
 
   /** `DELETE /pharmacies/:id/categories/:categoryId` — 409 si tiene productos. */
   deleteCategory(pharmacyId: string, categoryId: string): Observable<PharmacyStatusResult> {
-    return this.http.delete<PharmacyStatusResult>(
-      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
+    const url = `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`;
+    return simulatorOnly('Eliminar una categoría de la farmacia', url, () =>
+      this.http.delete<PharmacyStatusResult>(url),
     );
   }
 
@@ -302,9 +326,9 @@ export class PharmacyClient {
     pharmacyId: string,
     lines: readonly PharmacyInventoryLine[],
   ): Observable<{ readonly updated: number }> {
-    return this.http.patch<{ readonly updated: number }>(
-      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`),
-      { lines },
+    const url = this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`);
+    return simulatorOnly('Guardar las existencias de la farmacia', url, () =>
+      this.http.patch<{ readonly updated: number }>(url, { lines }),
     );
   }
 

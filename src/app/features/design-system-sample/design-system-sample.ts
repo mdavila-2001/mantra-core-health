@@ -171,11 +171,12 @@ export class DesignSystemSample {
   protected readonly themeOptions: readonly { mode: ThemeMode; label: string }[] = [
     { mode: 'light', label: 'Claro' },
     { mode: 'dark', label: 'Oscuro' },
-    { mode: 'system', label: 'Sistema' },
   ];
 
   protected readonly savingDemo = signal(false);
   protected readonly searchingDemo = signal(false);
+  /** Tras la carga simulada, el botón se confirma 1,6 s con el check. */
+  protected readonly savedDemo = signal(false);
 
   /* Señales para pruebas de controles de formulario */
   protected readonly textVal = signal('Juan Pérez');
@@ -323,6 +324,10 @@ export class DesignSystemSample {
 
   protected simulateSave(): void {
     this.runDemoLoading(this.savingDemo);
+    setTimeout(() => {
+      this.savedDemo.set(true);
+      setTimeout(() => this.savedDemo.set(false), 1600);
+    }, DEMO_LOADING_MS);
   }
 
   protected simulateSearch(): void {

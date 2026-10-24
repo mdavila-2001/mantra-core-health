@@ -39,7 +39,7 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  * ## Contra el simulador
  *
  * `mockup` declara `mockBackend: true`. Todo lo que acá se observa está contra
- * el simulador, con cuentas sintéticas de `core/mock/fixtures/personas.ts`. No
+ * el simulador, con cuentas sintéticas de `core/mock/fixtures/people.ts`. No
  * se toca ninguna API real, y ninguna afirmación de este archivo debe leerse
  * como verificación contra backend.
  */

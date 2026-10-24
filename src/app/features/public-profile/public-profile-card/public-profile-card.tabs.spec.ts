@@ -11,10 +11,10 @@ import type {
 import { PublicProfileCard } from './public-profile-card';
 
 /**
- * Pestañas, paginado y opiniones de la ficha pública (pedido del 13/09/2026):
+ * Pestañas, paginado y reseñas de la ficha pública (pedido del 13/09/2026):
  * - las pestañas eran anclas que sacaban de la ficha;
  * - publicaciones y sedes se pagina con anterior / siguiente;
- * - «N opiniones» y la estrella abren un modal con quién opinó y quién calificó.
+ * - el promedio y la cantidad abren la pestaña con reseñas verificadas.
  */
 describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
   const post = (i: number): PublicPostSummary => ({
@@ -70,8 +70,8 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
   it('las pestañas son botones, no anclas que naveguen fuera de la ficha', () => {
     const { el } = crear();
     const pestanas = el.querySelectorAll('[role="tab"]');
-    // Inicio, Acerca de, Especialidades, Dónde atiende y Publicaciones: sin trayectoria no hay pestaña.
-    expect(pestanas.length).toBe(5);
+    // Inicio, Acerca de, Especialidades, Dónde atiende, Publicaciones y Reseñas.
+    expect(pestanas.length).toBe(6);
     expect(el.querySelector('.perfil__tabs a[href^="#"]')).toBeNull();
   });
 
@@ -113,22 +113,12 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
     expect(sedes()).toBe(1);
   });
 
-  /**
-   * Hasta el merge de `dev` esto abría un modal con dos pestañas —«2 opiniones»
-   * una, la estrella la otra— y el cable traía `rating`, `text` y `reviewer`.
-   * Ese componente ya no existe: quedó la versión que se monta en línea, con el
-   * contrato nuevo (`overallRating`, `reviewText`, `reviewerDisplayName`), que
-   * es el único que soporta que alguien opine en anónimo.
-   *
-   * Lo que sigue valiendo, y es lo que se prueba, es que los dos botones de la
-   * calificación abran las opiniones y que las opiniones se lean. Las pestañas
-   * son una función a recuperar aparte, no algo que este archivo deba fingir.
-   */
-  it('«2 opiniones» despliega las opiniones y se leen', async () => {
+  /** La cabecera y la pestaña muestran el agregado y las reseñas del perfil. */
+  it('«2 reseñas» abre la pestaña y las reseñas se leen', async () => {
     const { fixture, el, q } = crear();
     const http = TestBed.inject(HttpTestingController);
 
-    expect(q('perfil-opiniones')!.textContent!.trim()).toBe('2 opiniones');
+    expect(q('perfil-opiniones')!.textContent!.trim()).toBe('2 reseñas');
     q('perfil-opiniones')!.click();
     fixture.detectChanges();
 

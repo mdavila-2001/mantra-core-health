@@ -1,5 +1,35 @@
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (patron(); as p) {
+    <!-- Una lectura que falló deja su lista vacía, y vacía se ve igual que un
+         día libre. Este aviso es lo que los distingue: dice qué no se cargó,
+         con el código de soporte, y ofrece pedirlo de nuevo. -->
+    @if (avisosDeLectura().length > 0) {
+      <app-alert
+        tone="error"
+        title="Parte de su agenda no se pudo cargar"
+        class="mi-agenda__aviso"
+        data-testid="agenda-lecturas-fallidas"
+      >
+        Lo que ve puede estar incompleto: un día sin citas aquí no significa que esté libre.
+        <ul class="mi-agenda__lecturas-fallidas">
+          @for (aviso of avisosDeLectura(); track aviso) {
+            <li>{{ aviso }}</li>
+          }
+        </ul>
+        <div alert-actions>
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="agenda-reintentar-lecturas"
+            (clicked)="reintentarLecturas()"
+          >
+            Volver a cargar
+          </button>
+        </div>
+      </app-alert>
+    }
     @if (mode() === 'calendar') {
       <!-- La agenda del día, que es lo que `/schedule` abre por defecto
            (propietario, 18/09): el día de hoy, con Semana y Mes a un toque y
@@ -72,7 +102,7 @@
             </a>
             <a
               app-button
-              variant="secondary"
+              variant="primary"
               size="sm"
               data-testid="calendario-agendar-cita"
               [routerLink]="rutaAgendarCita"
@@ -187,6 +217,7 @@
                   [puedeIngresarPorMostrador]="puedeIngresarPorMostrador()"
                   [puedeAvisarDemora]="puedeAvisarDemora()"
                   [visitas]="visitasDelDia()"
+                  [incompleteLoad]="dayLoadFailed()"
                   (accionPedida)="ejecutar($event)"
                   (diaCambiado)="moverDia($event)"
                   (detallePedido)="verDetalleDelBloque($event)"
@@ -204,7 +235,7 @@
                      esa franja ya puesta. -->
                 @if (ratoParaCrear(); as rato) {
                   @if (recurso(); as elRecurso) {
-                    <app-tarjeta-del-dia
+                    <app-day-card
                       [dia]="dia"
                       [resourceId]="elRecurso.id"
                       [desdeInicial]="rato.desde"

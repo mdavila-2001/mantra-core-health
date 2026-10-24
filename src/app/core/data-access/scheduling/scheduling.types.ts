@@ -646,6 +646,9 @@ export interface NewScheduleTemplate {
    */
   readonly flexibleHours?: boolean;
 }
+/** Claves de {@link NewScheduleTemplate} que el DTO real no declara (P36): sólo van a la maqueta. */
+export const SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS: readonly string[] = ['flexibleHours'];
+
 
 export interface ScheduleTemplateCreated {
   readonly id: string;

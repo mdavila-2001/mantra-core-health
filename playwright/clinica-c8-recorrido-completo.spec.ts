@@ -46,7 +46,7 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  * Igual que C4: la rama `mockup` declara `mockBackend: true` y el interceptor de
  * `src/app/core/mock/` contesta todo. Las cuentas son las del propio simulador
  * (`medica@alovida.mock`, `paciente@alovida.mock`), personas **sintéticas**
- * declaradas en `core/mock/fixtures/personas.ts`.
+ * declaradas en `core/mock/fixtures/people.ts`.
  *
  * ## Qué demuestra, y qué no
  *

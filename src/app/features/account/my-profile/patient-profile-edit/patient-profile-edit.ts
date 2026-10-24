@@ -30,6 +30,7 @@ import {
   BoOccupationsCatalog,
   CODIGO_OCUPACION_OTRA,
 } from '../../../../core/data-access/terminology/bo-occupations.service';
+import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -47,23 +48,23 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+  NOTICE_REWRITE_ADDRESS,
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
+import { TAB, PROFILE_TABS } from '../profile-tabs';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
   PhoneInput,
   telefonoCompleto,
 } from '../../../../shared/components/molecules/phone-input/phone-input';
 import {
-  nacionalDelNumero,
-  paisDelNumero,
-} from '../../../../shared/components/molecules/phone-input/phone-input.paises';
+  numberNational,
+  numberCountry,
+} from '../../../../shared/components/molecules/phone-input/phone-input.countries';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -77,6 +78,31 @@ const MI_PERFIL = '/my-account';
 
 /** El rótulo con el que se agrupan los avisos de esta pantalla. */
 const AMBITO = 'Mi perfil';
+
+/**
+ * En qué pestaña se ve cada campo del `PATCH` que la plantilla ancla con
+ * `errorDelServidor`. Un campo que no figura acá no tiene dónde pintarse, así
+ * que su mensaje va entero en el aviso.
+ */
+const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
+  name: TAB.personales,
+  middleName: TAB.personales,
+  lastName: TAB.personales,
+  motherLastName: TAB.personales,
+  birthDate: TAB.personales,
+  sexAtBirth: TAB.personales,
+  occupationConceptId: TAB.personales,
+  occupationFreeText: TAB.personales,
+  phone: TAB.contacto,
+  residenceMunicipalityConceptId: TAB.contacto,
+  homeAddressLines: TAB.contacto,
+  workAddressLines: TAB.contacto,
+  taxId: TAB.facturacion,
+  taxHolderName: TAB.facturacion,
+};
+
+/** «a», «a y b», «a, b y c». */
+const LISTA = new Intl.ListFormat('es', { type: 'conjunction' });
 
 /** Nadie nació antes de 1900 y sigue usando la plataforma. El mismo tope del alta. */
 const NACIMIENTO_MAS_ANTIGUO = new Date(1900, 0, 1);
@@ -139,7 +165,7 @@ function mismoDia(una: Date, otra: Date): boolean {
     Alert,
     AnnounceOnAppear,
     ReferenceCombobox,
-    UbicacionPicker,
+    MapLocationPicker,
     AppButton,
     BackLink,
     Card,
@@ -229,8 +255,8 @@ export class PatientProfileEdit {
    * el lápiz abre el formulario en la pestaña que se estaba mirando, y al
    * guardar o cancelar la ficha vuelve a esa misma.
    */
-  readonly pestana = model<number>(PESTANA.personales);
-  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+  readonly pestana = model<number>(TAB.personales);
+  protected readonly pestanas = PROFILE_TABS;
 
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 
@@ -300,7 +326,7 @@ export class PatientProfileEdit {
    *
    * Es el patrón de una app de pedidos, y a propósito: se pide la ubicación al
    * navegador o se marca el pin a mano sobre el mapa, y se confirma mirándolo.
-   * El mismo bloque que usa el registro (`app-ubicacion-picker`), no una copia:
+   * El mismo bloque que usa el registro (`app-map-location-picker`), no una copia:
    * la dirección se escribe igual en los dos lados y ninguno adivina la calle a
    * partir del punto —eso necesita un geocodificador que la política de
    * seguridad del servidor no permite—.
@@ -309,8 +335,8 @@ export class PatientProfileEdit {
    * distintas al armar el cuerpo del PATCH, y confundirlas borraría la
    * ubicación de quien sólo vino a cambiar el teléfono.
    */
-  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
-  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsDomicilio = signal<Coordinates | null | undefined>(undefined);
+  protected readonly gpsTrabajo = signal<Coordinates | null | undefined>(undefined);
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -328,7 +354,7 @@ export class PatientProfileEdit {
   protected readonly trabajoPorReescribir = computed(
     () => this.trabajoVaciadoPorElMapa() && this.direccionTrabajo().trim() === '',
   );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Tocaron el mapa del domicilio: la dirección escrita ya no vale (D-06). */
   protected vaciarDomicilioPorElMapa(): void {
@@ -343,8 +369,8 @@ export class PatientProfileEdit {
   }
 
   /** El punto guardado que el selector muestra al abrir. */
-  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
-  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsDomicilioGuardado = signal<Coordinates | null>(null);
+  protected readonly gpsTrabajoGuardado = signal<Coordinates | null>(null);
 
   /**
    * Los identificadores de prueba de cada mapa.
@@ -353,7 +379,7 @@ export class PatientProfileEdit {
    * prefijo porque los que ya existen no son uniformes, y renombrarlos rompería
    * recorridos que hoy funcionan.
    */
-  protected readonly idsGpsDomicilio: IdsDePrueba = {
+  protected readonly idsGpsDomicilio: TestIds = {
     mapa: 'perfil-domicilio-mapa',
     confirmada: 'perfil-domicilio-confirmada',
     avisoGeocodificacion: 'perfil-domicilio-aviso-geo',
@@ -363,7 +389,7 @@ export class PatientProfileEdit {
     marcarEnMapa: 'perfil-domicilio-marcar',
   };
 
-  protected readonly idsGpsTrabajo: IdsDePrueba = {
+  protected readonly idsGpsTrabajo: TestIds = {
     mapa: 'perfil-trabajo-mapa',
     confirmada: 'perfil-trabajo-confirmada',
     avisoGeocodificacion: 'perfil-trabajo-aviso-geo',
@@ -616,7 +642,7 @@ export class PatientProfileEdit {
    * desplegable se dibuja con su marcador y se llena al hidratar.
    */
   protected cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
         this.opcionesOcupacion.set(
@@ -637,7 +663,7 @@ export class PatientProfileEdit {
 
   /** Reintenta la lectura del catálogo de ocupaciones. Ver `reintentarMunicipios`. */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 
@@ -682,6 +708,7 @@ export class PatientProfileEdit {
       return;
     }
 
+    this.erroresDelServidor.set({});
     this.guardando.set(true);
     this.profiles.updateOwnPatientProfile(cambios).subscribe({
       next: (perfil) => {
@@ -696,11 +723,61 @@ export class PatientProfileEdit {
           this.cerrado.emit();
         }
       },
-      error: () => {
+      error: (error: unknown) => {
+        // El formulario no se toca: lo escrito sigue ahí para corregirlo.
         this.guardando.set(false);
-        this.toasts.error('No pudimos guardar los cambios. Pruebe de nuevo.', AMBITO);
+        this.avisarRechazo(error);
       },
     });
+  }
+
+  /**
+   * Los rechazos del servidor, por campo del contrato (`taxId`, `phone`…).
+   *
+   * Antes, cualquier fallo decía «No pudimos guardar los cambios» y nada más:
+   * con catorce campos en tres pestañas, la persona no sabía qué corregir.
+   */
+  private readonly erroresDelServidor = signal<Readonly<Record<string, string>>>({});
+
+  /** El mensaje que el servidor dio para ese campo, o vacío. */
+  protected errorDelServidor(campo: string): string {
+    return this.erroresDelServidor()[campo] ?? '';
+  }
+
+  /**
+   * Ancla el rechazo a sus campos y avisa una vez, en la pestaña donde está.
+   *
+   * Regla 6 del criterio humano: el error se dice donde se comete. Si el campo
+   * rechazado está en otra pestaña, el aviso la nombra y la pantalla la abre
+   * —lo mismo que ya hace {@link pendienteEnOtraPestana} con lo que falta
+   * antes de guardar—. Lo que no nombra campo sale con el motivo de la API y
+   * el código de soporte.
+   */
+  private avisarRechazo(error: unknown): void {
+    const porCampo = fieldErrorsOf(error);
+    this.erroresDelServidor.set(porCampo);
+
+    const campos = Object.keys(porCampo);
+    const anclados = campos.filter((campo) => campo in PESTANA_DEL_CAMPO);
+    const sinLugar = campos.filter((campo) => !(campo in PESTANA_DEL_CAMPO)).map((campo) => porCampo[campo]);
+
+    if (anclados.length > 0) {
+      const pestanas = [...new Set(anclados.map((campo) => PESTANA_DEL_CAMPO[campo]))].sort((a, b) => a - b);
+      if (!pestanas.includes(this.pestana())) {
+        this.pestana.set(pestanas[0]);
+      }
+      const donde = LISTA.format(pestanas.map((indice) => `«${PROFILE_TABS[indice]}»`));
+      this.toasts.error(
+        [`Revise los campos marcados en ${donde} y vuelva a guardar.`, ...sinLugar].join(' '),
+        AMBITO,
+      );
+      return;
+    }
+    if (sinLugar.length > 0) {
+      this.toasts.error(sinLugar.join(' '), AMBITO);
+      return;
+    }
+    this.toasts.error(describeApiFailure(error, 'No pudimos guardar los cambios. Pruebe de nuevo.'), AMBITO);
   }
 
   /**
@@ -745,13 +822,13 @@ export class PatientProfileEdit {
   protected readonly pendienteEnOtraPestana = computed<string | null>(() => {
     const abierta = this.pestana();
     if (
-      abierta !== PESTANA.personales &&
+      abierta !== TAB.personales &&
       (this.nombreVacio() || this.apellidoVacio() || this.sexoVacio())
     ) {
-      return `Falta completar «${PESTANAS_DEL_PERFIL[PESTANA.personales]}».`;
+      return `Falta completar «${PROFILE_TABS[TAB.personales]}».`;
     }
-    if (abierta !== PESTANA.contacto && this.telefonoMalEscrito()) {
-      return `Revise el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
+    if (abierta !== TAB.contacto && this.telefonoMalEscrito()) {
+      return `Revise el teléfono en «${PROFILE_TABS[TAB.contacto]}».`;
     }
     return null;
   });
@@ -969,8 +1046,8 @@ function telefonoCanonico(guardado: string | undefined): string {
   if (!/[0-9]/.test(crudo)) {
     return '';
   }
-  const pais = paisDelNumero(crudo);
-  return `${pais.prefijo} ${nacionalDelNumero(crudo, pais)}`;
+  const pais = numberCountry(crudo);
+  return `${pais.prefijo} ${numberNational(crudo, pais)}`;
 }
 
 /**
@@ -993,7 +1070,7 @@ function textoCambiado(actual: string, guardado: string | undefined): string | u
  */
 function puntoDe(
   direccion: { latitude?: number; longitude?: number } | undefined,
-): Coordenadas | null {
+): Coordinates | null {
   if (direccion?.latitude === undefined || direccion.longitude === undefined) {
     return null;
   }
@@ -1009,7 +1086,7 @@ function puntoDe(
  */
 function coordenadasCambiadas(
   cual: 'home' | 'work',
-  intencion: Coordenadas | null | undefined,
+  intencion: Coordinates | null | undefined,
 ): Record<string, number | null> {
   if (intencion === undefined) return {};
   if (intencion === null) {

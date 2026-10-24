@@ -22,7 +22,7 @@ automáticamente**.
 | Token | Contraste | Nivel |
 |---|---:|---|
 | `--border-strong` (claro) | 3,34:1 | AA para componentes (≥3:1) |
-| `--border-strong` (oscuro) | <3:1 | **E3** |
+| `--border-strong` (oscuro) | 3,27–3,78:1 | AA para componentes (era E3, <3:1; cerrada el 2026-10-11) |
 | `--border-default` | — | **No delimita controles.** Es decorativo |
 
 Confundir los dos bordes es el error más fácil: un `<input>` con
@@ -48,13 +48,22 @@ tinta oscura encima**.
 **Las dos excepciones traen su medición.** Ése es el estándar de rigor del
 sistema: no se cambia un token sin decir cuánto mide.
 
-## Las excepciones E1–E3
+## Las excepciones E1–E3 (y R1–R3 de la hoja de la bóveda)
 
 | # | Qué | Regla |
 |---|---|---|
 | ~~E1~~ | `--text-muted` en claro — **cerrada el 2026-09-26**: pasó a `--c-ivory-800` (5,13:1 en el peor caso) y `check-contrast.mjs` ya lo exige | Sigue siendo terciario: **jamás información clínica** |
 | **E2** | `--text-muted` en oscuro, 4,45:1 | Ídem |
-| **E3** | `--border-strong` en oscuro, <3:1 | Sin foco. Con foco manda el anillo |
+| ~~E3~~ | `--border-strong` en oscuro — **cerrada el 2026-10-11**: velo blanco del 24 % al 40 %, 3,27:1 en el peor caso (surface-alt) | Ya no necesita el anillo para verse |
+
+En `src/styles/alovida.css` (la hoja de la bóveda) también se cerraron el 2026-10-11:
+
+| # | Qué | Antes | Después |
+|---|---|---:|---:|
+| ~~R2~~ | `--borde-ctrl` en oscuro | #4A5F64 · 2,47:1 tarjeta | #627A82 · 3,68 tarjeta · 3,87 inset · 4,05 página |
+| ~~R3~~ | `--petroleo` en oscuro (tinta de enlace) | #12719F · 3,09:1 tarjeta | #4FA8D6 · 6,29 tarjeta · 6,92 página |
+
+R3 no tenía solución de un valor: `--petroleo` era a la vez tinta de enlace y relleno del botón primario. Se partió en dos: `--petroleo` es la tinta y `--petroleo-relleno` el fondo que lleva texto blanco (#0B557E en claro, #12719F en oscuro: 5,40:1 con blanco). Todo fondo con texto blanco encima usa `--petroleo-relleno`, nunca `--petroleo`. `check-contrast.mjs` mide los dos trabajos y ya no declara excepciones.
 
 `design-tokens.types.ts` repite la regla de E1 junto al token para que se lea al
 autocompletar.

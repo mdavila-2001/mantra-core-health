@@ -1,7 +1,7 @@
-import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
-import { pacientes, type PacienteSimulado } from '../fixtures/personas';
+import { STATUS, CORPORATE_TYPE } from '../fixtures/concepts';
+import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { guardarImagenDeDataUrl } from './files.handlers';
-import { guardarActivosDeFirma } from './firma-y-sello.handlers';
+import { signatureSaveAssets } from './signature-and-seal.handlers';
 import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
@@ -96,7 +96,7 @@ const usuariosAdicionales: UsuarioListado[] = [
 ].map(([nombre, creado, ultimo], i) => ({
   id: uuid(`user-extra-${i}`),
   displayName: nombre as string,
-  statusConceptId: ultimo === null ? ESTADO['ST-PENDING']! : ESTADO['ST-ACTIVE']!,
+  statusConceptId: ultimo === null ? STATUS['ST-PENDING']! : STATUS['ST-ACTIVE']!,
   emailVerified: ultimo !== null,
   lastLoginAt: ultimo === null ? null : iso(ultimo as number, 10),
   createdAt: iso(creado as number, 8),
@@ -125,7 +125,7 @@ function cuentaDe(p: PacienteSimulado): MockUser {
 }
 
 resolverCuentasDePacientes(({ identificador, id, key }) => {
-  const p = pacientes
+  const p = patientList
     .todos()
     .find(
       (c) =>
@@ -270,7 +270,7 @@ export function registrarAuth(router: MockRouter): void {
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);
     if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
-      guardarActivosDeFirma(practitionerProfileId, {
+      signatureSaveAssets(practitionerProfileId, {
         ...(datos.signatureImageBase64 === undefined
           ? {}
           : { signatureFileId: guardarImagenDeDataUrl(datos.signatureImageBase64, 'firma.png') }),
@@ -363,7 +363,7 @@ export function registrarAuth(router: MockRouter): void {
     const legalEntityType = datos.organization?.legalEntityType;
     // Mismo contrato que el `ValidationPipe` real: un código fuera del
     // diccionario es 400, no un 422 de negocio (subtarea 1.1).
-    if (legalEntityType !== undefined && !(legalEntityType in TIPO_SOCIETARIO)) {
+    if (legalEntityType !== undefined && !(legalEntityType in CORPORATE_TYPE)) {
       return reply(400, {
         statusCode: 400,
         code: 'VALIDATION_FAILED',
@@ -371,7 +371,7 @@ export function registrarAuth(router: MockRouter): void {
         error: 'Bad Request',
         details: {
           messages: [
-            `organization.legalEntityType must be one of the following values: ${Object.keys(TIPO_SOCIETARIO).join(', ')}`,
+            `organization.legalEntityType must be one of the following values: ${Object.keys(CORPORATE_TYPE).join(', ')}`,
           ],
         },
       });
@@ -706,7 +706,7 @@ export function registrarAuth(router: MockRouter): void {
     const base: UsuarioListado[] = MOCK_USERS.map((u, i) => ({
       id: u.id,
       displayName: u.displayName,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       emailVerified: true,
       lastLoginAt: iso(-i, 9),
       createdAt: iso(-400 + i * 7, 8),
@@ -725,7 +725,7 @@ export function registrarAuth(router: MockRouter): void {
     const nuevo: UsuarioListado = {
       id: nuevoId('user'),
       displayName: datos.displayName ?? 'Usuario nuevo',
-      statusConceptId: ESTADO['ST-PENDING']!,
+      statusConceptId: STATUS['ST-PENDING']!,
       emailVerified: false,
       lastLoginAt: null,
       createdAt: ahora(),
@@ -740,7 +740,7 @@ export function registrarAuth(router: MockRouter): void {
     usuariosAdicionales.unshift({
       id,
       displayName: `${datos.name ?? 'Paciente'} ${datos.lastName ?? 'Asistido'}`.trim(),
-      statusConceptId: ESTADO['ST-PENDING']!,
+      statusConceptId: STATUS['ST-PENDING']!,
       emailVerified: false,
       lastLoginAt: null,
       createdAt: ahora(),

@@ -1022,7 +1022,8 @@ describe('PatientChart', () => {
     responderExpediente();
 
     const texto = papelDeLaReceta();
-    expect(texto).toContain('Profesional: Dra. Salas');
+    // Paciente y profesional van en tarjetas: el nombre, bajo la de «Profesional».
+    expect(texto).toContain('Profesional\nNombre: Dra. Salas');
     expect(texto).toContain('Matrícula: MP 4821');
     expect(texto).toContain('Organización: Hospital Central');
     expect(texto).not.toContain('undefined');
@@ -1074,7 +1075,8 @@ describe('PatientChart', () => {
     responderExpediente();
 
     const texto = papelDeLaReceta();
-    expect(texto).toContain('Profesional: Dra. Salas');
+    // Paciente y profesional van en tarjetas: el nombre, bajo la de «Profesional».
+    expect(texto).toContain('Profesional\nNombre: Dra. Salas');
     expect(texto).not.toContain('Matrícula');
     expect(texto).not.toContain('Organización');
     expect(texto).not.toContain('undefined');
@@ -1185,7 +1187,7 @@ describe('PatientChart', () => {
     responderExpediente();
 
     const texto = papelDeLaReceta();
-    expect(texto).toContain('Profesional: No registrado');
+    expect(texto).toContain('Profesional\nNombre: No registrado');
     expect(texto).not.toContain('Matrícula');
     expect(texto).toContain('Organización: Hospital Central');
   });

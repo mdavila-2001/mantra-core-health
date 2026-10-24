@@ -1,0 +1,35 @@
+[
+  {
+    "viewport": "1440-claro",
+    "theme": "light",
+    "hasButton": false,
+    "unreadBefore": true,
+    "unreadAfter": null,
+    "overflow": false,
+    "comboboxNamed": 0,
+    "ariaLabel": null,
+    "consoleErrors": []
+  },
+  {
+    "viewport": "390-claro",
+    "theme": "light",
+    "hasButton": false,
+    "unreadBefore": true,
+    "unreadAfter": null,
+    "overflow": false,
+    "comboboxNamed": 0,
+    "ariaLabel": null,
+    "consoleErrors": []
+  },
+  {
+    "viewport": "1440-oscuro",
+    "theme": "dark",
+    "hasButton": false,
+    "unreadBefore": true,
+    "unreadAfter": null,
+    "overflow": false,
+    "comboboxNamed": 0,
+    "ariaLabel": null,
+    "consoleErrors": []
+  }
+]

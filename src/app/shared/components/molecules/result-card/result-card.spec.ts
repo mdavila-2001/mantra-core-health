@@ -67,6 +67,42 @@ describe('ResultCard', () => {
     expect(host!.hasAttribute('app-result-card')).toBe(true);
   });
 
+  /*
+   * Un paciente lee «4,9 · 55 opiniones» como «otros pacientes opinaron». Sin
+   * reseñas reales la tarjeta no puede decirlo: antes un respaldo inventaba
+   * la nota con un hash del nombre.
+   */
+  it('sin reseñas reales lo dice, con las estrellas vacías y sin número', () => {
+    const resenas = elemento('.tarjeta-resultado__resenas')!;
+    expect(resenas.classList).toContain('tarjeta-resultado__resenas--vacias');
+    expect(resenas.getAttribute('aria-label')).toBe('Sin reseñas todavía');
+    expect(resenas.textContent).toContain('Sin reseñas todavía');
+    expect(fixture.nativeElement.textContent).not.toMatch(/\d,\d|Excelente|Muy recomendado/u);
+  });
+
+  it('con reseñas reales dibuja las estrellas, la nota y cuántas son', () => {
+    anfitrion.dato.update((d) => ({ ...d, rating: { average: 4.6, count: 12 } }));
+    fixture.detectChanges();
+
+    const resenas = elemento('.tarjeta-resultado__resenas')!;
+    expect(resenas.textContent).toContain('4,6');
+    expect(resenas.textContent).toContain('(12)');
+    expect(resenas.getAttribute('aria-label')).toBe('4,6 de 5 estrellas, 12 opiniones');
+    expect(
+      elemento('.tarjeta-resultado__estrellas-relleno')!.style.inlineSize,
+    ).toBe('92%');
+    expect(elemento('.tarjeta-resultado__distincion')!.textContent).toContain('Muy recomendado');
+  });
+
+  // Antes toda nota menor a 4,8 salía «Muy recomendado»: un 3,7 también.
+  it('una nota mediana no se lleva un elogio que las reseñas no dicen', () => {
+    anfitrion.dato.update((d) => ({ ...d, rating: { average: 3.7, count: 60 } }));
+    fixture.detectChanges();
+
+    expect(elemento('.tarjeta-resultado__resenas')!.textContent).toContain('3,7');
+    expect(elemento('.tarjeta-resultado__distincion')).toBeNull();
+  });
+
   it('sin imagen pinta `figureText`', () => {
     anfitrion.dato.update((d) => ({ ...d, figureText: 'MQ' }));
     fixture.detectChanges();
@@ -155,6 +191,14 @@ describe('ResultCard', () => {
     expect(link.getAttribute('aria-busy')).toBeNull();
   });
 
+  /* Clínicas, farmacias y aseguradoras no tienen agenda: su botón no puede
+     ofrecer «Revisar disponibilidad». */
+  it('sin acción propia, el botón lleva a la ficha', () => {
+    const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
+    expect(accion.textContent?.trim()).toBe('Ver ficha');
+    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle');
+  });
+
   it('muestra la acción distinta y tampoco la navega dos veces', () => {
     anfitrion.dato.update((dato) => ({
       ...dato,
@@ -180,7 +224,11 @@ describe('ResultCard', () => {
   });
 
   it('con `photoUrl` pinta la foto de cabecera en vez de la figura', () => {
-    anfitrion.dato.update((d) => ({ ...d, figureText: 'MQ', photoUrl: '/alovida/directorio/medico-01.jpg' }));
+    anfitrion.dato.update((d) => ({
+      ...d,
+      figureText: 'MQ',
+      photoUrl: '/alovida/directorio/medico-01.jpg',
+    }));
     fixture.detectChanges();
 
     expect(elemento('.tarjeta-resultado__foto img')?.getAttribute('src')).toBe(

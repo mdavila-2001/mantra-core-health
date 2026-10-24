@@ -149,20 +149,18 @@ export class DirectoryClient {
    * `PATCH /tenants/{id}/branches/{branchId}` — edita el nombre, la
    * descripción y la ubicación de una sucursal.
    *
-   * **Sólo existe en el simulador** (P54): la API real no publica edición de
-   * sucursales. `null` borra el dato; una clave ausente lo deja como está.
+   * La API la publica desde el 11/10/2026 (P54). `null` borra el dato; una clave ausente lo deja como está.
    */
   updateBranch(
     tenantId: string,
     branchId: string,
     changes: BranchChanges,
   ): Observable<BranchListItem> {
+    const url = this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`);
     return this.http
-      .patch<ConNulos<WireBranchListItem>>(
-        this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`),
-        stripUndefined(changes),
-        { headers: deLaOrganizacion(tenantId) },
-      )
+      .patch<ConNulos<WireBranchListItem>>(url, stripUndefined(changes), {
+        headers: deLaOrganizacion(tenantId),
+      })
       .pipe(map(toBranchListItem));
   }
 

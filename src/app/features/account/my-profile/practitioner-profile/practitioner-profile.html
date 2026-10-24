@@ -4,6 +4,43 @@
      vista que usa la guía de profesionales para el perfil de otro doctor. -->
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   @if (visible(); as perfil) {
+    <!-- Lo que no llegó se dice, aunque la ficha siga en pie: un catálogo
+         caído pinta «Sin registrar» en datos que sí están, y una lista de
+         sedes vacía por un fallo se lee como «no atiendo en ningún lado». -->
+    @if (lecturasIncompletas(); as aviso) {
+      <app-alert tone="warning" class="perfil__aviso" data-testid="perfil-lecturas-incompletas">
+        {{ aviso }}
+        <div alert-actions>
+          <button app-button type="button" variant="outline" size="sm" (clicked)="recargar()">
+            Volver a cargar
+          </button>
+        </div>
+      </app-alert>
+    }
+    <!-- La foto profesional se guardó pero la vitrina pública no la tomó:
+         éxito parcial, dicho como tal y con su reintento (hallazgo C4). -->
+    @if (errorDeVitrina(); as motivo) {
+      <app-alert
+        tone="warning"
+        class="perfil__aviso"
+        title="Su foto se guardó, pero su perfil público no se actualizó"
+        data-testid="perfil-vitrina-sin-actualizar"
+      >
+        {{ motivo }}
+        <div alert-actions>
+          <button
+            app-button
+            type="button"
+            variant="outline"
+            size="sm"
+            [isLoading]="reintentandoVitrina()"
+            (clicked)="reintentarVitrina()"
+          >
+            Actualizar perfil público
+          </button>
+        </div>
+      </app-alert>
+    }
     <!-- Las tres entradas de abajo son el estado de operaciones que ocurren
          ACÁ —subir la foto, y por eso su curso y su fallo—; las tres salidas
          son intenciones, no resultados: la vista pide, este contenedor decide

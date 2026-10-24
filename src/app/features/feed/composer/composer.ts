@@ -10,6 +10,7 @@ import {
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
 import type { PostVisibility } from '../../../core/data-access/community/community.types';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -217,11 +218,11 @@ export class Composer {
           this.enviando.set(false);
           this.publicado.emit(id);
         },
-        error: () => {
+        error: (error: unknown) => {
           // El cuerpo **no** se limpia: si falló, lo que se escribió es lo único
           // que no se puede recuperar.
           this.enviando.set(false);
-          this.error.set('No pudimos publicar. Revise y reintente.');
+          this.error.set(describeApiFailure(error, 'No pudimos publicar. Revise y reintente.'));
         },
       });
   }

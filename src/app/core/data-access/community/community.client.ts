@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, switchMap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { simulatorOnly } from '../simulator-only';
 import { maybeDate, sinNulos } from '../wire';
 import { blobToDataUrl } from '../files/blob-to-data-url';
 import type {
@@ -1177,10 +1178,12 @@ export class CommunityClient {
    * @returns El identificador de la conversación.
    */
   createConversation(datos: NewConversation): Observable<{ readonly id: string }> {
-    return this.http.post<{ readonly id: string }>(
-      this.url('/community/conversations'),
-      datos,
-    );
+    // El cuerpo se arma clave por clave con lo que declara
+    // `CreateConversationDto`: la API rechaza con 400 cualquier clave de más.
+    return this.http.post<{ readonly id: string }>(this.url('/community/conversations'), {
+      participantProfileIds: [...datos.participantProfileIds],
+      ...(datos.conversationType === undefined ? {} : { conversationType: datos.conversationType }),
+    });
   }
 
   /**
@@ -1255,14 +1258,12 @@ export class CommunityClient {
     messageId: string,
     datos: NewMessageReaction,
   ): Observable<DirectMessage> {
-    return this.http
-      .put<WireMessage>(
-        this.url(
-          `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/reaction`,
-        ),
-        datos,
-      )
-      .pipe(map(toMessage));
+    const url = this.url(
+      `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/reaction`,
+    );
+    return simulatorOnly('Reaccionar a un mensaje', url, () =>
+      this.http.put<WireMessage>(url, datos),
+    ).pipe(map(toMessage));
   }
 
   /**

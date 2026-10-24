@@ -67,6 +67,7 @@
       "/auth-providers",
       "/admin/tenants",
       "/admin/catalog",
+      "/admin/portal",
       "/admin/analytics",
       "/admin/qa",
       "/admin/ops",
@@ -123,7 +124,10 @@
       "/diagnostics/lab",
       "/patient-spending",
       "/promotions/me",
-      "/patients/me/reviews"
+      "/patients/me/reviews",
+      "/patients/me/",
+      "/insurance/patients",
+      "/telemetry"
     ],
     "target": "http://localhost:3000",
     "secure": false,

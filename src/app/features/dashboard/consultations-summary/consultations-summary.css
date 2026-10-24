@@ -1,0 +1,199 @@
+.consultas-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4, 1rem);
+}
+
+.consultas-resumen__skeleton {
+  min-height: 12rem;
+}
+
+/* Mismo tratamiento que `.panel__card-title` de `dashboard.css`: no se
+   comparte la clase entre componentes porque el encapsulamiento de Angular
+   la deja sin efecto acá adentro (regla `native-code-patterns`: se copia la
+   receta visual, no el selector). */
+.consultas-resumen__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}
+
+.consultas-resumen__ayuda {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  border-radius: var(--r-full, 999px);
+  color: var(--text-secondary, currentColor);
+  cursor: help;
+}
+
+.consultas-resumen__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 0.5rem);
+}
+
+.consultas-resumen__cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+  border-block: 1px solid var(--border-default);
+}
+
+.consultas-resumen__cifra {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1, 0.25rem);
+  min-inline-size: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--border-default);
+}
+
+.consultas-resumen__numero {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.consultas-resumen__etiqueta {
+  color: var(--text-secondary, currentColor);
+  font-size: var(--fs-caption);
+}
+
+.consultas-resumen__subtitulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 0.5rem);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  margin: 0 0 var(--sp-2, 0.5rem);
+}
+
+.consultas-resumen__lista-otras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2, 0.5rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.consultas-resumen__tabla-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* Hay más columnas de las que caben en un teléfono: el borde derecho se
+   desvanece mientras queden horas por ver, y se retira al llegar al final. */
+@property --calor-fin {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0rem;
+}
+
+@keyframes calor-fin {
+  from {
+    --calor-fin: 2rem;
+  }
+
+  to {
+    --calor-fin: 0rem;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .consultas-resumen__tabla-scroll {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--calor-fin)), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - var(--calor-fin)), transparent);
+    animation: calor-fin linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: calc(100% - 3rem) 100%;
+  }
+}
+
+.consultas-resumen__tabla {
+  border-collapse: separate;
+  border-spacing: 3px;
+  width: 100%;
+  min-width: 44rem;
+  padding: var(--sp-2);
+  font-size: var(--fs-caption);
+}
+
+.consultas-resumen__tabla th,
+.consultas-resumen__tabla td {
+  padding: var(--sp-1, 0.25rem) var(--sp-2, 0.5rem);
+  text-align: center;
+  border: 0;
+  border-radius: var(--r-xs);
+  background-clip: padding-box;
+}
+
+.consultas-resumen__tabla thead th,
+.consultas-resumen__tabla th[scope='row'] {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.consultas-resumen__tabla th[scope='row'] {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* Escala de calor: misma familia de marca (petróleo), nunca ámbar — el ámbar
+   es el único punto de acción del sistema y una celda de reporte no lo es.
+   El número siempre está en el texto: la intensidad es un refuerzo visual,
+   nunca el único portador del dato (regla 95.4.6). */
+.consultas-resumen__tabla td[data-intensidad='0'] {
+  background: transparent;
+}
+
+.consultas-resumen__tabla td[data-intensidad='1'] {
+  background: var(--heat-1-bg);
+  color: var(--heat-1-fg);
+}
+
+.consultas-resumen__tabla td[data-intensidad='2'] {
+  background: var(--heat-2-bg);
+  color: var(--heat-2-fg);
+  font-weight: 600;
+}
+
+.consultas-resumen__tabla td[data-intensidad='3'] {
+  background: var(--heat-3-bg);
+  color: var(--heat-3-fg);
+  font-weight: 600;
+}
+
+.consultas-resumen__tabla td[data-intensidad='4'] {
+  background: var(--heat-4-bg);
+  color: var(--heat-4-fg);
+  font-weight: 700;
+}
+
+.consultas-resumen__aviso {
+  margin-block-end: var(--sp-4);
+}
+
+/* Un código de soporte largo se parte en vez de desbordar el aviso. */
+.consultas-resumen__sedes-sin-cargar {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+  overflow-wrap: anywhere;
+}

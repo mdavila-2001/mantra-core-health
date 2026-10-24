@@ -1,0 +1,120 @@
+<app-content-dialog
+  [heading]="title()"
+  size="md"
+  [dismissible]="!saving()"
+  data-testid="registro-dialog"
+  (closed)="closed.emit()"
+>
+  @if (error(); as mensaje) {
+    <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
+  }
+  <form class="registros-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="registros-form__tipo">
+      <app-form-field
+        [label]="texts().tipo"
+        [required]="true"
+        [errorMessage]="
+          form.controls.accountId.touched && form.controls.accountId.invalid ? 'Elija el tipo.' : ''
+        "
+      >
+        <app-select
+          formControlName="accountId"
+          [options]="typeOptions()"
+          placeholder="Elija el tipo"
+          [ariaLabel]="texts().tipo"
+          data-testid="registro-tipo"
+        />
+      </app-form-field>
+      <!-- La cuenta que falta se crea acá mismo, sin salir del formulario. -->
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="registros-form__nueva-cuenta"
+        data-testid="registro-nueva-cuenta"
+        [disabled]="saving()"
+        (clicked)="accountCreating.set(true)"
+      >
+        Nueva cuenta
+      </button>
+    </div>
+
+    <app-form-field
+      [label]="texts().descripcion"
+      [required]="true"
+      [errorMessage]="
+        form.controls.description.touched && form.controls.description.invalid
+          ? 'Escriba una descripción de hasta 160 caracteres.'
+          : ''
+      "
+    >
+      <app-input
+        formControlName="description"
+        autocomplete="off"
+        [placeholder]="texts().ejemploDescripcion"
+        testId="registro-descripcion"
+      />
+    </app-form-field>
+
+    <div class="registros-form__par">
+      <app-form-field
+        label="Fecha"
+        [required]="true"
+        [errorMessage]="touchedDate() && date() === null ? 'Elija la fecha.' : ''"
+      >
+        <app-date-picker
+          [value]="date()"
+          (valueChange)="date.set($event)"
+          data-testid="registro-fecha"
+        />
+      </app-form-field>
+      <app-form-field
+        [label]="texts().monto"
+        [required]="true"
+        hint="En bolivianos."
+        [errorMessage]="
+          invalidAmount() ? 'Escriba un monto mayor a cero, con hasta dos decimales.' : ''
+        "
+      >
+        <app-input
+          formControlName="amount"
+          inputMode="decimal"
+          placeholder="1250,00"
+          testId="registro-monto"
+        />
+      </app-form-field>
+    </div>
+  </form>
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    [disabled]="saving()"
+    (clicked)="dialog().close()"
+  >
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="saving()"
+    [disabled]="saving()"
+    data-testid="registro-guardar"
+    (clicked)="save()"
+  >
+    Guardar
+  </button>
+</app-content-dialog>
+
+@if (accountCreating()) {
+  <app-account-dialog
+    [practiceId]="practiceId()"
+    [claseFija]="class()"
+    (saved)="toCreateAccount($event)"
+    (closed)="accountCreating.set(false)"
+  />
+}

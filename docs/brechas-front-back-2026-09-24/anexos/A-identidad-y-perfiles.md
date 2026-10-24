@@ -192,7 +192,7 @@
 - **Evidencia API y modelo:**
   - `professional_credentials` tiene `issuing_institution_text` e `issuing_country_concept_id`, pero **no tiene ciudad** (`02_tables.sql:134-156`).
   - `AddOwnCredentialDto` (`own-credential.dto.ts:22-75`) y `RegisterPractitionerCredentialDto` no exponen `issuingCountryConceptId`.
-  - La subtarea 1.6 (`PROMPT_SUBTAREA_1_6_UNIVERSIDAD_TITULOS.md`) pedía `university`, `degreeCountryConceptId`, `degreeCityText`, `diplomaFileId`, `academicTitles[]` e `issuingCityText`: ninguno existe en dev. `issuingCityText` **no tiene columna**, así que sería dato inventado.
+  - La subtarea 1.6 (`docs/progress/archive/PROMPT_SUBTAREA_1_6_UNIVERSIDAD_TITULOS.md`) pedía `university`, `degreeCountryConceptId`, `degreeCityText`, `diplomaFileId`, `academicTitles[]` e `issuingCityText`: ninguno existe en dev. `issuingCityText` **no tiene columna**, así que sería dato inventado.
 - **Qué hacer:**
   - Front: enviar la universidad del título principal como `issuingInstitutionText` de una credencial tipo título universitario, o dejar de preguntar lo que no se guarda.
   - Backend: exponer `issuingCountryConceptId` en `AddOwnCredentialDto` y en `RegisterPractitionerCredentialDto`, y sembrar `VS_COUNTRY`.

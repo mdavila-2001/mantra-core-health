@@ -7,11 +7,15 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { WorkHistory } from '../work-history/work-history';
 
-import { PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
+import { EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
+import { accessibleName } from '../../../../../testing/a11y';
+import { selectOptionLabels } from '../../../../../testing/select';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * Configurar el perfil profesional.
@@ -53,6 +57,14 @@ const PERFIL_BASE = {
   activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
   createdAt: '2024-02-01T00:00:00.000Z',
 };
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('PractitionerProfileEdit', () => {
   let componente: PractitionerProfileEdit;
@@ -270,6 +282,23 @@ describe('PractitionerProfileEdit', () => {
    * veces que se preguntó. `confirmarCambios` y `confirmarDescarte` pasan por
    * `confirm`, así que alcanza con reemplazar ése.
    */
+  /** El último aviso encolado, sin pasar por el contenedor que lo pinta. */
+  function ultimoAviso(): { readonly title?: string; readonly message: string } | undefined {
+    return TestBed.inject(ToastService).toasts().at(-1);
+  }
+
+  /** Un rechazo de validación con la forma estructurada (`details.fields`). */
+  function rechazoPorCampo(field: string, mensaje: string): object {
+    return {
+      code: 'VALIDATION_FAILED',
+      message: 'Error de validación',
+      correlationId: 'corr-val',
+      details: { fields: [{ field, constraints: ['isValid'], messages: [mensaje] }] },
+      timestamp: '2026-10-08T00:00:00.000Z',
+      path: '/profiles',
+    };
+  }
+
   function responderConfirmacion(respuesta: boolean): { preguntas: number } {
     const registro = { preguntas: 0 };
     const dialogos = interno<{ confirm: () => Promise<boolean> }>('dialogs');
@@ -809,6 +838,81 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
   });
 
+  /* ---- el rechazo del alta de matrícula, dicho en el diálogo (2026-10-08) ----
+     Antes: «No se pudo agregar la matrícula. Pruebe de nuevo.» ante cualquier
+     fallo. Es el defecto del «paso 15»: el alta se caía sin decir por qué. */
+
+  it('un número rechazado queda pegado al campo del diálogo y lo escrito sigue ahí', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http
+      .expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations')
+      .flush(rechazoPorCampo('licenseNumber', 'El número de matrícula ya está registrado.'), {
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('licenseNumber')).toBe(
+      'El número de matrícula ya está registrado.',
+    );
+    // En el diálogo la sección visible es el diálogo: no se nombra pestaña.
+    expect(ultimoAviso()).toEqual(
+      expect.objectContaining({
+        title: 'Matrículas',
+        message: 'Revise los campos marcados y vuelva a guardar.',
+      }),
+    );
+    expect(señal<string>('nuevoNumeroDeMatricula')()).toBe('LIC-9');
+    expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
+  });
+
+  it('un rechazo de negocio de la matrícula dice el motivo y el código de soporte', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush(
+      {
+        code: 'CONFLICT',
+        message: 'Esa matrícula ya figura en su perfil.',
+        correlationId: 'corr-mat',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(ultimoAviso()?.message).toBe(
+      'Esa matrícula ya figura en su perfil. (Código de soporte: corr-mat)',
+    );
+  });
+
+  it('un respaldo demasiado grande lo dice, en vez de un genérico', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+    señal<readonly File[]>('archivoDeMatricula').set([
+      new File(['x'], 'matricula.pdf', { type: 'application/pdf' }),
+    ]);
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush(
+      {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'El archivo supera los 5 MB.',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/common/files/upload',
+      },
+      { status: 413, statusText: 'Payload Too Large' },
+    );
+
+    expect(ultimoAviso()?.message).toBe('El archivo supera los 5 MB.');
+  });
+
   it('la matrícula ofrece tres autoridades, con el colegio del título', () => {
     montarYCargar({ professionalTitle: 'Odontólogo / Odontóloga' });
 
@@ -1044,8 +1148,8 @@ describe('PractitionerProfileEdit', () => {
     fixture.detectChanges();
 
     const panel = panelAbierto(fixture);
-    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
-    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+    expect(panel.querySelector('app-map-location-picker[pinid="edicion-domicilio"]')).not.toBeNull();
+    expect(panel.querySelector('app-map-location-picker[pinid="edicion-trabajo"]')).not.toBeNull();
   });
 
   /* ---- Trayectoria son los cargos; los títulos, Credenciales -------------- */
@@ -1191,6 +1295,51 @@ describe('PractitionerProfileEdit', () => {
 
     expect(http.match('/profiles/practitioners/me/credentials')).toHaveLength(0);
     expect(interno<() => boolean>('guardandoCredencial')()).toBe(false);
+  });
+
+  it('un título rechazado por campo ancla el mensaje y cerrar el diálogo lo limpia', async () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
+    http
+      .expectOne('/profiles/practitioners/me/credentials')
+      .flush(rechazoPorCampo('number', 'El número no puede superar 60 caracteres.'), {
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('number')).toContain('60 caracteres');
+    expect(ultimoAviso()?.title).toBe('Formación');
+    expect(señal<string>('nuevoNumeroCredencial')()).toBe('Médico cirujano');
+
+    interno<() => void>('cerrarAltaDeTitulo')();
+    expect(interno<(c: string) => string>('errorDelServidor')('number')).toBe('');
+  });
+
+  it('un 500 del título lleva el código de soporte con el que se encuentra en el log', async () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
+    http.expectOne('/profiles/practitioners/me/credentials').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-500',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(ultimoAviso()?.message).toBe(
+      'No se pudo agregar el título. Intente de nuevo. (Código de soporte: corr-500)',
+    );
   });
 
   /* ======================================================================
@@ -2155,6 +2304,48 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => boolean>('guardandoEdicion')()).toBe(false);
     });
 
+    it('una corrección rechazada se pinta debajo del campo del diálogo, que sigue abierto', async () => {
+      const fixture = montarConVista(PERFIL_CON_FILAS);
+      abrirTitulo();
+      fixture.detectChanges();
+      // El selector de tipo del diálogo pide su catálogo al dibujarse.
+      for (const pendiente of http.match((r) => r.url.startsWith('/system-context/'))) {
+        pendiente.flush({
+          code: 'credential-type',
+          name: 'Tipo de credencial',
+          definitionId: 'def-1',
+          valueSetId: 'vs-1',
+          allowCustomValue: false,
+          options: [],
+        });
+      }
+      fixture.detectChanges();
+      señal<string>('edicionNumero').set('TIT-1-corregido');
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('guardarEdicion')();
+      http
+        .expectOne('/profiles/practitioners/me/credentials/cred-9')
+        .flush(rechazoPorCampo('number', 'Ese número ya está en otro título.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+      fixture.detectChanges();
+
+      const dialogo: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="edicion-dialogo"]',
+      );
+      const campos = [...dialogo.querySelectorAll('app-form-field')];
+      const numero = campos.find((c) => (c.textContent ?? '').includes('Número / título obtenido'));
+      const fecha = campos.find((c) => (c.textContent ?? '').includes('Fecha de emisión'));
+      expect(numero?.textContent).toContain('Ese número ya está en otro título.');
+      expect(fecha?.textContent).not.toContain('Ese número');
+      expect(ultimoAviso()?.title).toBe('Formación');
+      // Lo corregido no se pierde: se ajusta y se vuelve a guardar.
+      expect(señal<string>('edicionNumero')()).toBe('TIT-1-corregido');
+      expect(señal<unknown>('edicion')()).not.toBeNull();
+    });
+
     it('corregir una matrícula con un respaldo nuevo también manda fileId', async () => {
       montarYCargar(PERFIL_CON_FILAS);
       const fila = interno<() => readonly { id: string }[]>('filasMatriculas')().find(
@@ -2814,9 +3005,35 @@ describe('PractitionerProfileEdit', () => {
     const pestanas = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]'),
     ).map((boton) => boton.textContent?.trim() ?? '');
-    expect(pestanas).toEqual([...PESTANAS_DEL_EDITOR_MEDICO]);
+    expect(pestanas).toEqual([...EDITOR_DOCTOR_TABS]);
     expect(pestanas).not.toContain('Actividad');
     expect(fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]')).toBeNull();
+  });
+
+  /**
+   * Cada pestaña del editor tiene nombre accesible, y es su rótulo.
+   *
+   * La auditoría del 23/10/2026 las reportó como `tab` sin nombre; no se
+   * reprodujo en el navegador. Esta prueba fija el patrón del molecule `tabs`
+   * tal como lo usa el editor: el nombre y la relación con su panel.
+   */
+  it('cada pestaña se nombra por su rótulo y controla un panel que existe', () => {
+    const fixture = montarConVista();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    const tablist = raiz.querySelector('[data-testid="edicion-pestanas"] [role="tablist"]');
+    expect(tablist).not.toBeNull();
+
+    const pestanas = Array.from(tablist?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+    expect(pestanas.map((pestana) => accessibleName(pestana))).toEqual([...EDITOR_DOCTOR_TABS]);
+
+    const seleccionadas = pestanas.filter((p) => p.getAttribute('aria-selected') === 'true');
+    expect(seleccionadas).toHaveLength(1);
+    for (const pestana of pestanas) {
+      const panel = raiz.querySelector(`#${pestana.getAttribute('aria-controls') ?? ''}`);
+      expect(panel?.getAttribute('role')).toBe('tabpanel');
+      expect(panel?.getAttribute('aria-labelledby')).toBe(pestana.id);
+    }
   });
 
   /**
@@ -3137,6 +3354,82 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/profiles/practitioners/me').flush(PERFIL_BASE);
 
       expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+
+    /**
+     * Regla 6 del criterio humano: el error se dice donde se comete. El NIT
+     * vive en «Facturación»; si la persona guardó desde «Datos personales», el
+     * aviso nombra la pestaña y la pantalla la abre.
+     */
+    it('un campo rechazado en otra pestaña la nombra en el aviso y la abre', () => {
+      montarYCargar();
+      señal<number>('pestana').set(0);
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe(
+        'El NIT no figura en el padrón.',
+      );
+      expect(señal<number>('pestana')()).toBe(2);
+      expect(ultimoAviso()?.message).toBe(
+        `Revise los campos marcados en «${EDITOR_DOCTOR_TABS[2]}» y vuelva a guardar.`,
+      );
+    });
+
+    it('un campo rechazado en la pestaña abierta no mueve a la persona de donde está', () => {
+      montarYCargar();
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      expect(señal<number>('pestana')()).toBe(2);
+    });
+
+    it('un campo que la pantalla no muestra va con su mensaje en el aviso', () => {
+      montarYCargar();
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('practiceStatus', 'El estado de práctica no admite ese valor.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      // Nada de «revise los campos marcados» sin campo marcado.
+      expect(ultimoAviso()?.message).toBe('El estado de práctica no admite ese valor.');
+    });
+
+    it('un rechazo sin campo dice qué no se pudo hacer y el código de soporte', () => {
+      rechazar(
+        {
+          code: 'INTERNAL',
+          message: 'Algo salió mal',
+          correlationId: 'corr-perfil',
+          timestamp: '2026-09-21T00:00:00.000Z',
+          path: '/profiles/practitioners/me',
+        },
+        500,
+      );
+
+      expect(ultimoAviso()).toEqual(
+        expect.objectContaining({
+          title: 'Perfil',
+          message: 'No se pudo guardar el cambio. Intente de nuevo. (Código de soporte: corr-perfil)',
+        }),
+      );
     });
 
     /**
@@ -3554,7 +3847,7 @@ describe('PractitionerProfileEdit', () => {
 
     interface Imagen {
       visible(): string | null;
-      cambio: string | null | undefined;
+      change: string | null | undefined;
       error(): string;
     }
     const firma = (): Imagen => interno<Imagen>('firma');
@@ -3597,8 +3890,8 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
       await esperar(() => firma().visible());
 
-      expect(firma().cambio).toBe('file-firma');
-      expect(sello().cambio).toBeUndefined();
+      expect(firma().change).toBe('file-firma');
+      expect(sello().change).toBeUndefined();
       http.expectNone((r) => r.method === 'PUT');
       http.expectNone('/profiles/practitioners/me');
     });
@@ -3616,7 +3909,7 @@ describe('PractitionerProfileEdit', () => {
       expect(put.request.method).toBe('PUT');
       expect(put.request.body).toEqual({ signatureFileId: 'file-firma' });
       put.flush({ signatureFileId: 'file-firma', sealFileId: null });
-      expect(firma().cambio).toBeUndefined();
+      expect(firma().change).toBeUndefined();
     });
 
     it('firma y sello elegidos juntos viajan en un solo PUT', async () => {
@@ -3641,7 +3934,7 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/common/files/s1/content').flush(new Blob([bytes()], { type: 'image/png' }));
       await esperar(() => firma().visible() && sello().visible());
 
-      (componente as unknown as { sello: { quitar(): void } }).sello.quitar();
+      (componente as unknown as { sello: { remove(): void } }).sello.remove();
       expect(sello().visible()).toBeNull();
       interno<() => void>('guardarPresentacion')();
 
@@ -3661,7 +3954,7 @@ describe('PractitionerProfileEdit', () => {
       await interno<() => Promise<void>>('cancelarEdicion')();
 
       expect(firma().visible()).toBeNull();
-      expect(firma().cambio).toBeUndefined();
+      expect(firma().change).toBeUndefined();
       interno<() => void>('guardarPresentacion')();
       http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
     });
@@ -3684,7 +3977,7 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/common/files/upload').flush('boom', { status: 500, statusText: 'x' });
 
       expect(firma().error()).toContain('No se pudo subir la firma');
-      expect(firma().cambio).toBeUndefined();
+      expect(firma().change).toBeUndefined();
     });
 
     it('el logo y la firma guardan cada uno por su ruta cuando cambian a la vez', async () => {
@@ -3726,6 +4019,28 @@ describe('PractitionerProfileEdit', () => {
         clinicalInterpretationAllowed: false,
       },
     ];
+
+    /** Responde sólo el catálogo de idiomas (dos opciones); el de niveles queda pendiente. */
+    function responderSoloIdiomas(): void {
+      pedidoDeConjunto('VS_LANGUAGE').flush({
+        items: [{ id: 'vs-lang', internalCode: 'VS_LANGUAGE', name: 'Idiomas', defaultVersionId: 'v1' }],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+      http
+        .expectOne((r) => r.url.includes('/terminology/value-sets/vs-lang/$expand'))
+        .flush({
+          valueSetId: 'vs-lang',
+          items: [
+            { conceptId: 'lang-es', code: 'LANG-ES', display: 'Español', codeSystemVersionId: 'csv-1' },
+            { conceptId: 'lang-en', code: 'LANG-EN', display: 'Inglés', codeSystemVersionId: 'csv-1' },
+          ],
+          count: 2,
+          limit: 200,
+          nextCursor: null,
+        });
+    }
 
     /** Responde los dos catálogos —idiomas y niveles— con una opción cada uno de más. */
     function responderCatalogoDeIdiomas(): void {
@@ -3796,6 +4111,16 @@ describe('PractitionerProfileEdit', () => {
       expect(etiquetas('opcionesDeIdioma')).toEqual(['Español', 'Inglés']);
       expect(etiquetas('opcionesDeNivel')).toEqual(['Sin especificar', 'Avanzado']);
       expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+    });
+
+    it('sin el catálogo de niveles, igual ofrece los idiomas con «Sin especificar»', () => {
+      montarYCargar();
+      responderSoloIdiomas();
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+      expect(interno<() => readonly unknown[]>('opcionesDeIdioma')()).toHaveLength(2);
+      expect(interno<() => readonly { label: string }[]>('opcionesDeNivel')()).toHaveLength(1);
     });
 
     it('si el catálogo no llega, lo dice y no ofrece un desplegable vacío', () => {
@@ -3946,7 +4271,7 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => readonly unknown[]>('opcionesDeIdioma')()).toHaveLength(2);
     });
 
-    it('con vista: Datos personales conserva idiomas y su guardado; Credenciales los excluye', () => {
+    it('con vista: Datos personales conserva idiomas y su guardado; Credenciales los excluye', async () => {
       parametros = { pestana: '0' };
       const fixture = montarConVista({ languages: IDIOMAS });
       responderCatalogoDeIdiomas();
@@ -3956,7 +4281,9 @@ describe('PractitionerProfileEdit', () => {
       const bloque = panel.querySelector('[data-testid="edicion-idiomas"]');
       expect(bloque).not.toBeNull();
       expect(bloque?.querySelectorAll('[data-testid^="idioma-select-"]')).toHaveLength(2);
-      expect(bloque?.querySelector('[data-testid="idioma-select-0"] select')?.textContent).toContain('Español');
+      const idioma0 = bloque?.querySelector('[data-testid="idioma-select-0"]');
+      expect(idioma0).toBeTruthy();
+      expect(await selectOptionLabels(fixture, idioma0!)).toContain('Español');
       expect(bloque?.querySelector('[data-testid="idioma-interpreta-0"] [role="switch"]')?.getAttribute('aria-checked')).toBe('true');
       const guardar = [...(bloque?.querySelectorAll('button') ?? [])].find((b) =>
         b.textContent?.includes('Guardar idiomas'),

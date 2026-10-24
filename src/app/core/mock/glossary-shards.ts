@@ -1,12 +1,13 @@
 import { ArchivoAusente, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
 export { ArchivoAusente, leerConFetch, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
+import type { GlossaryArticle } from '../data-access/terminology/glossary-article.types';
 import { uuid } from './mock-store';
 
 /* ============================================================================
     El glosario del simulador, **bajo demanda**.
 
     Hasta el 2026-09-30 el simulador importaba el glosario entero
-    (`fixtures/glosario.generated.ts`, 1 MB, y el atlas anatómico, otro
+    (`fixtures/glossary.generated.ts`, 1 MB, y el atlas anatómico, otro
     1,7 MB) dentro del trozo de los manejadores. Con el glosario en castellano
     de cientos de miles de términos eso ya no entra en un bundle: ahora lee
     **shards** estáticos con `fetch` diferido, igual que la API pagina en la
@@ -292,6 +293,21 @@ export class AlmacenDeGlosario {
           plainSummaryEs: fila.plainSummaryEs,
           lang: fila.lang,
         };
+  }
+
+  /** El artículo del término, buscando primero el corpus completo y luego la semilla. */
+  async articulo(id: string): Promise<GlossaryArticle | null> {
+    const shard = `mock/articles/${id.slice(0, 2).toLowerCase()}.json`;
+    for (const base of RAICES_DEL_GLOSARIO) {
+      try {
+        const bucket = await this.leer(`${base}/${shard}`) as Record<string, GlossaryArticle>;
+        const article = bucket[id];
+        if (article !== undefined) return article;
+      } catch (error: unknown) {
+        if (!(error instanceof ArchivoAusente)) throw error;
+      }
+    }
+    return null;
   }
 
   /**

@@ -17,8 +17,8 @@
     ========================================================================== */
 
 import type { SearchResultItem } from '@shared/components/molecules';
-import { inicialesDe } from '@shared/text/iniciales';
-import { fotoDeDirectorio, temaDeCentroDiagnostico } from '@shared/utils/foto-de-directorio';
+import { initialsOf } from '@shared/text/initials';
+import { directoryPhoto, diagnosisCenterTheme } from '@shared/utils/directory-photo';
 
 import type { CentroAtributo, CentroTarjeta } from './centro-card/centro-card.types';
 import {
@@ -30,7 +30,7 @@ import {
 // Se reexporta porque las pantallas del buscador la importan de acá desde el
 // carril P4. La implementación se mudó a `shared/text` al descubrirse que el
 // directorio de médicos tenía una copia que no descartaba el tratamiento.
-export { inicialesDe } from '@shared/text/iniciales';
+export { initialsOf as inicialesDe } from '@shared/text/initials';
 
 /** Cómo se rotula cada vertical en la insignia junto al nombre. */
 const ROTULO_POR_TIPO: Readonly<Record<PublicResultKind, string>> = {
@@ -136,14 +136,14 @@ export function fotoDelResultado(resultado: PublicSearchResult): string | null {
   switch (resultado.kind) {
     case 'PHARMACY':
     case 'MEDICATION':
-      return fotoDeDirectorio('farmacia', clave);
+      return directoryPhoto('farmacia', clave);
     case 'ORGANIZATION':
     case 'INSURER':
-      return fotoDeDirectorio('clinica', clave);
+      return directoryPhoto('clinica', clave);
     case 'PRACTITIONER':
-      return fotoDeDirectorio('medico', clave);
+      return directoryPhoto('medico', clave);
     case 'DIAGNOSTIC_UNIT':
-      return fotoDeDirectorio(temaDeCentroDiagnostico(resultado.headline ?? ''), clave);
+      return directoryPhoto(diagnosisCenterTheme(resultado.headline ?? ''), clave);
     default:
       return null;
   }
@@ -207,7 +207,7 @@ export function aTarjeta(
     id: `${resultado.kind}:${resultado.slug}`,
     title: resultado.displayName,
     link: (opciones.ruta ?? rutaDeFicha)(resultado),
-    figureText: inicialesDe(resultado.displayName),
+    figureText: initialsOf(resultado.displayName),
     ...(resultado.avatarUrl === null ? {} : { figureImageUrl: resultado.avatarUrl }),
     ...fotoDeTarjeta(resultado),
     // El titular es el subtítulo, no la primera línea de contexto: es qué es
@@ -306,7 +306,7 @@ export function aCentro(resultado: PublicSearchResult): CentroTarjeta {
     donde: dondeQueda(resultado),
     portada: fotoDelResultado(resultado),
     logo: resultado.avatarUrl,
-    iniciales: inicialesDe(resultado.displayName),
+    iniciales: initialsOf(resultado.displayName),
     // El sello dice «Declarado» cuando no está verificado, y no se calla: una
     // tarjeta sin sello se leería como verificada por omisión.
     sellos: [

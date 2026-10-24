@@ -12,6 +12,7 @@ import {
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartCarePlansClient } from '../../../../core/data-access/chart-care-plans/chart-care-plans.client';
 import type { NewCarePlanActivity } from '../../../../core/data-access/chart-care-plans/chart-care-plans.types';
+import { simulatorAvailable } from '../../../../core/data-access/simulator-only';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -28,7 +29,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { writeMessage } from '../../write-message';
 
 /** Un diagnóstico del expediente, para colgar el plan de él. */
 export interface DiagnosticoDelPlan {
@@ -247,7 +248,7 @@ export class CarePlanBlock implements DraftBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDelPlan = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), { accion: 'abrir el plan' }),
+    writeMessage(this.registro(), { accion: 'abrir el plan' }),
   );
 
   protected registrar(): void {
@@ -273,6 +274,8 @@ export class CarePlanBlock implements DraftBlock {
     // diagnóstico ya **es** el motivo, y mandar los dos duplicaría el dato.
     const motivo = diagnostico === null ? this.motivo().trim() : '';
     const autor = this.auth.practitionerProfileId();
+    // `reasonText` es extensión de la maqueta: contra la API real no viaja.
+    const motivoSinGuardar = motivo !== '' && !simulatorAvailable();
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -305,6 +308,11 @@ export class CarePlanBlock implements DraftBlock {
               : `Queda en el expediente con ${abierto.activityCount} actividad${abierto.activityCount === 1 ? '' : 'es'}.`,
             'Plan de cuidados abierto',
           );
+          if (motivoSinGuardar) {
+            this.toasts.warning(
+              'El motivo escrito todavía no se guarda: el servidor aún no lo recibe. Elija el diagnóstico si quiere que quede registrado.',
+            );
+          }
           this.cambio.emit();
         },
         error: (error: unknown) => {

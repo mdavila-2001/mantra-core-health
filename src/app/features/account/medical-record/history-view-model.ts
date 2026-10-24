@@ -21,10 +21,11 @@ import type {
 } from '../../../shared/components/organisms/encounter-timeline/encounter-timeline.types';
 import type { Tone } from '../../../shared/components/tone/tone.types';
 import type {
-  DiagnosticoDeLaHistoria,
-  LineaDeAtencion,
-  SeccionesNuevasDeLaHistoria,
-} from '../../../shared/utils/clinical-pdf/historia-con-encuentros';
+  HistoryDiagnosis,
+  CareLinea,
+  HistoryNewSections,
+} from '../../../shared/utils/clinical-pdf/history-with-encounters';
+import { formatDate } from '../../../shared/utils/pdf-export/pdf-format';
 import {
   CODIGO_ACTIVA,
   CODIGO_CONFIRMADO,
@@ -557,7 +558,7 @@ function recetaDeLaLinea(
 export function seccionesNuevasDeLaHistoria(
   bloques: readonly BloqueDeDiagnosticos[],
   atenciones: readonly EncounterInHistory[],
-): SeccionesNuevasDeLaHistoria {
+): HistoryNewSections {
   return {
     diagnosticos: {
       enEstudio: filasDelBloque(bloques, 'en-estudio'),
@@ -571,7 +572,7 @@ export function seccionesNuevasDeLaHistoria(
 function filasDelBloque(
   bloques: readonly BloqueDeDiagnosticos[],
   estado: HistoryDiagnosisGroup,
-): readonly DiagnosticoDeLaHistoria[] {
+): readonly HistoryDiagnosis[] {
   const bloque = bloques.find((candidato) => candidato.estado === estado);
   return (bloque?.filas ?? []).map((fila) => ({
     nombre: fila.nombre,
@@ -597,7 +598,7 @@ function detalleDeLaFila(fila: DiagnosticoVisible): string | null {
  * orden del relato— porque el organismo la aplica de puertas adentro y el papel
  * no puede leerle el DOM.
  */
-function lineaDeAtencion(atencion: EncounterInHistory): LineaDeAtencion {
+function lineaDeAtencion(atencion: EncounterInHistory): CareLinea {
   const hechos = [
     ...atencion.notas.map((nota, indice) => ({
       titulo: nota.rotulo,
@@ -625,13 +626,16 @@ function lineaDeAtencion(atencion: EncounterInHistory): LineaDeAtencion {
     })),
   ].sort(porInstanteYRelato);
 
+  // El papel escribe las fechas como el resto de los documentos clínicos
+  // (`01/03/2026`), no con la fecha larga del acordeón de la pantalla.
+  const { motivo, cuando } = atencion.encabezado;
   return {
-    titulo: atencion.titulo,
+    titulo: cuando === null ? motivo : `${motivo} · ${formatDate(cuando)}`,
     sello: atencion.sello,
     hechos: hechos.map((hecho) => ({
       titulo: hecho.titulo,
       detalle: hecho.detalle,
-      cuando: hecho.cuando === null ? null : DIA_LARGO.format(hecho.cuando),
+      cuando: hecho.cuando === null ? null : formatDate(hecho.cuando),
     })),
   };
 }

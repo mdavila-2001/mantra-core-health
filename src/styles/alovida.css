@@ -121,8 +121,13 @@
   --tinta-3:      #656768;
   --tinta-nav:    #FFFFFF;
 
-  /* Marca */
+  /* Marca
+     --petroleo es TINTA (enlaces, iconos, bordes activos); --petroleo-relleno
+     es el FONDO que lleva texto blanco encima (botón primario, chips
+     elegidos, enviar). En claro valen lo mismo; en oscuro se separan, porque
+     un solo valor no podía cumplir los dos umbrales (era la excepción R3). */
   --petroleo:     #0B557E;
+  --petroleo-relleno: #0B557E;
   --petroleo-h:   #0B4768;
   --petroleo-p:   #0B3953;
   --aguamarina:   #4FB3A9;
@@ -487,7 +492,7 @@ router-outlet { display: none; }
   z-index: 1100;
   padding: var(--e2) var(--e4);
   border-radius: var(--r-ctrl);
-  background: var(--petroleo);
+  background: var(--petroleo-relleno);
   color: #fff;
   font-weight: 600;
   text-decoration: none;
@@ -753,7 +758,12 @@ app-shell-layout { display: block; }
   color: #fff;
   background: rgba(159, 216, 208, .16);
 }
-.app-side-nav__item:hover .icono { opacity: 1; }
+.app-side-nav__item:hover .icono,
+.app-side-nav__item:hover app-nav-icon {
+  opacity: 1;
+  transform: scale(1.15) translateY(-1px);
+  filter: drop-shadow(0 2px 8px rgba(159, 216, 208, .45));
+}
 .app-side-nav__item[aria-current="true"],
 .app-side-nav__item.is-activo {
   color: #fff; font-weight: 600;
@@ -1065,7 +1075,7 @@ app-shell-layout { display: block; }
   transition: background-color var(--mov-rapido) var(--curva), border-color var(--mov-rapido) var(--curva), box-shadow var(--mov-rapido) var(--curva);
 }
 [app-button][data-variante="primario"] {
-  background: var(--petroleo); border-color: var(--petroleo); color: #fff;
+  background: var(--petroleo-relleno); border-color: var(--petroleo-relleno); color: #fff;
   box-shadow: var(--sombra-1);
 }
 [app-button][data-variante="primario"]:hover { background: var(--petroleo-h); border-color: var(--petroleo-h); box-shadow: var(--sombra-2); }
@@ -1870,10 +1880,23 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 /* Fantasma — sin caja hasta que se lo toca. */
 [app-button][data-variante="fantasma"]:hover { background: var(--info-bg); color: var(--tinta-marca); }
 
-/* El icono acompaña al texto: se corre 1 px cuando el botón responde. */
-[app-button] .icono { transition: transform var(--mov-medio) var(--curva); }
-[app-button]:hover .icono { transform: translateX(1px); }
-[app-button][data-variante="secundario"]:hover .icono { transform: translateX(-1px); }
+/* El icono acompaña al texto con respuesta elástica viva. */
+[app-button] .icono {
+  transform-origin: center center;
+  transition: transform var(--dur-base) var(--pulse-icon-ease, var(--curva)), filter var(--dur-base) var(--pulse-ease);
+}
+[app-button]:hover .icono {
+  transform: scale(1.12) translateY(-0.5px);
+  filter: drop-shadow(0 2px 6px var(--pulse-icon-glow, rgba(79, 179, 169, .35)));
+}
+[app-button]:active .icono {
+  transform: scale(0.92);
+  transition-duration: var(--dur-fast);
+}
+[app-button][data-variante="secundario"]:hover .icono,
+[app-button].btn--secondary:hover .icono {
+  transform: translateX(-2px) scale(1.1);
+}
 
 /* Los demás controles con superficie propia también reaccionan. */
 .app-tenant-switcher:hover { border-color: var(--aguamarina); background: var(--info-bg); }
@@ -1999,8 +2022,12 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   --tinta-3:      #7C97A5;
   --tinta-nav:    #FFFFFF;
 
-  /* Marca — el petróleo se aclara para seguir leyéndose sobre fondo oscuro. */
-  --petroleo:     #12719F;
+  /* Marca — el petróleo se aclara para seguir leyéndose sobre fondo oscuro.
+     CORRECCIÓN DE CONTRASTE (cierra R3). Como tinta, #12719F daba 3,41:1 sobre
+     la página y 3,09:1 sobre la tarjeta. #4FA8D6 da 6,92 y 6,29. El relleno
+     del botón conserva #12719F: 5,40:1 con blanco encima. */
+  --petroleo:     #4FA8D6;
+  --petroleo-relleno: #12719F;
   --petroleo-h:   #1580B4;
   --petroleo-p:   #0E5F87;
   --aguamarina:   #57C2B7;
@@ -2016,7 +2043,10 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   /* Líneas */
   --filete:       #1E3138;
   --filete-2:     #17272D;
-  --borde-ctrl:   #4A5F64;
+  /* CORRECCIÓN DE CONTRASTE (cierra R2). #4A5F64 daba 2,47:1 sobre la
+     tarjeta: el campo no se distinguía. #627A82 da 3,68 tarjeta, 3,87 inset
+     y 4,05 página (WCAG 1.4.11 pide 3:1). */
+  --borde-ctrl:   #627A82;
   --anillo-foco:  #57C2B7; /* sólido: la aguamarina nocturna, ≥6,5:1 (sync-alovida.mjs) */
 
   /* Estados: fondo tintado oscuro + tinta clara del mismo tono */
@@ -2151,6 +2181,15 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 :root[data-theme="dark"] .app-theme-toggle__sol { color: var(--tinta-3); }
 :root[data-tema="oscuro"] .app-theme-toggle__luna,
 :root[data-theme="dark"] .app-theme-toggle__luna { color: var(--tinta-nav); }
+
+/* En un teléfono de 400 px o menos la barra de arriba no entraba y el avatar
+   quedaba cortado (propietario, 23/10/2026): el interruptor cede 12 px. La
+   perilla recorre lo que queda de pista: 52 − 2 de borde − 24 − 2 × 3. */
+@media (max-width: 400px) {
+  .app-theme-toggle__pista { width: 52px; padding: 0 5px; }
+  :root[data-tema="oscuro"] .app-theme-toggle__perilla,
+  :root[data-theme="dark"] .app-theme-toggle__perilla { transform: translateX(20px); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .app-theme-toggle__pista, .app-theme-toggle .icono, .app-theme-toggle__perilla { transition: none; }
@@ -2961,7 +3000,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 /* El nav de la ventana lleva sus etiquetas escritas. Barras grises darían la
    idea de «maqueta»; los nombres dan la de «sistema». */
 .landing-ventana__nav {
-  background: linear-gradient(168deg, var(--petroleo) 0%, var(--petroleo-x) 100%);
+  background: linear-gradient(168deg, var(--petroleo-relleno) 0%, var(--petroleo-x) 100%);
   padding: var(--e4) var(--e2); display: flex; flex-direction: column; gap: 2px;
 }
 .landing-ventana__nav span {
@@ -3084,7 +3123,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .landing-hito b { font-size: 14px; font-weight: 600; color: var(--tinta-marca); line-height: 20px; }
 .landing-hito small { font-size: 12px; line-height: 17px; color: var(--tinta-3); display: block; }
 /* El último hito es la conclusión: se marca sin cambiar de color de marca. */
-.landing-hito--cierre .landing-hito__nodo { background: var(--petroleo); color: #fff; box-shadow: none; }
+.landing-hito--cierre .landing-hito__nodo { background: var(--petroleo-relleno); color: #fff; box-shadow: none; }
 .landing-hito--cierre.esta-alcanzado .landing-hito__nodo { box-shadow: 0 0 0 5px rgba(79, 179, 169, .18); }
 
 .landing-hilo__cierre {
@@ -3220,7 +3259,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .landing-org__nodo {
   display: inline-flex; align-items: center; gap: var(--e2);
   height: 34px; padding: 0 var(--e4); border-radius: var(--r-ctrl);
-  background: var(--petroleo); color: #fff; font-size: var(--fs-caption); font-weight: 600;
+  background: var(--petroleo-relleno); color: #fff; font-size: var(--fs-caption); font-weight: 600;
 }
 .landing-org__linea { width: var(--rail); height: 18px; background: var(--filete); }
 .landing-org__hijos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); width: 100%; }
@@ -3343,7 +3382,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .landing-telefono__barra {
   height: 52px; flex: none; display: flex; align-items: center; gap: var(--e2);
   padding: 0 var(--e4);
-  background: linear-gradient(180deg, var(--petroleo), var(--petroleo-h)); color: #fff;
+  background: linear-gradient(180deg, var(--petroleo-relleno), var(--petroleo-h)); color: #fff;
 }
 .landing-telefono__barra b { font-family: var(--f-titulo); font-size: 14px; font-weight: 600; }
 .landing-telefono__barra .landing-telefono__ruta { margin-left: auto; font-size: 10px; color: rgba(255, 255, 255, .72); font-weight: 600; }

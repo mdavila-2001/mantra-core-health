@@ -9,8 +9,8 @@ import type {
   PharmacyProductSearchPage,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
-import type { CamposDelProducto } from './catalogo.reglas';
-import { CAMPOS_VACIOS } from './catalogo.reglas';
+import type { ProductFields } from './catalog.rules';
+import { EMPTY_FIELDS } from './catalog.rules';
 import { PharmacyCatalog } from './pharmacy-catalog';
 
 /**
@@ -52,7 +52,7 @@ function pagina(items: readonly PharmacyProduct[]): PharmacyProductSearchPage {
 /** Lo que la spec toca del componente: señales y métodos protegidos. */
 interface Interno {
   pestana: { set: (indice: number) => void; (): number };
-  campos: { set: (campos: CamposDelProducto) => void };
+  campos: { set: (campos: ProductFields) => void };
   alElegirArchivo: (archivos: readonly File[]) => Promise<void>;
   publicarCarga: () => void;
   alElegirAccion: (codigo: string, producto: PharmacyProduct) => Promise<void>;
@@ -132,10 +132,10 @@ describe('PharmacyCatalog', () => {
   });
 
   describe('alta de un producto', () => {
-    function completarYGuardar(campos: Partial<CamposDelProducto>): void {
+    function completarYGuardar(campos: Partial<ProductFields>): void {
       interno().pestana.set(1);
       fixture.detectChanges();
-      interno().campos.set({ ...CAMPOS_VACIOS, ...campos });
+      interno().campos.set({ ...EMPTY_FIELDS, ...campos });
       fixture.detectChanges();
       (raiz().querySelector('[data-testid="catalogo-guardar"]') as HTMLButtonElement).click();
       fixture.detectChanges();

@@ -363,11 +363,12 @@ describe('MedicalRecord', () => {
   let http: HttpTestingController;
 
   /** Espía de los toasts (B.3): esta pantalla no monta el contenedor real. */
-  const toasts = { success: vi.fn(), error: vi.fn() };
+  const toasts = { success: vi.fn(), error: vi.fn(), warning: vi.fn() };
 
   beforeEach(() => {
     toasts.success.mockClear();
     toasts.error.mockClear();
+    toasts.warning.mockClear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -716,9 +717,10 @@ describe('MedicalRecord', () => {
 
     // Un PDF con las atenciones y sin las órdenes sigue sirviendo; negarle la
     // descarga entera a alguien porque una lectura secundaria falló, no.
-    http
-      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
-      .flush(null, { status: 500, statusText: 'Server Error' });
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-ord-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
     http
       .expectOne((r) => r.url === '/diagnostic-results/me')
       .flush(null, { status: 500, statusText: 'Server Error' });
@@ -726,6 +728,39 @@ describe('MedicalRecord', () => {
     harness.detectChanges();
 
     expect(harness.routeNativeElement?.textContent).not.toContain('No pudimos armar');
+    // …pero un PDF sin órdenes ni resultados no se anuncia como «completa»:
+    // antes el toast de éxito callaba lo que faltaba.
+    expect(toasts.success).not.toHaveBeenCalled();
+    expect(toasts.warning).toHaveBeenCalledWith(
+      'Descargamos su historia, pero sin las órdenes de estudios ni los resultados de estudios. ' +
+        'No se pudieron traer. (Código de soporte: corr-ord-1)',
+      'Historia clínica incompleta',
+    );
+  });
+
+  it('con órdenes y resultados leídos, la descarga se anuncia completa', async () => {
+    await montar();
+    responder();
+
+    const boton = [
+      ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
+    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    boton.click();
+    harness.detectChanges();
+
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    harness.detectChanges();
+
+    expect(toasts.warning).not.toHaveBeenCalled();
+    expect(toasts.success).toHaveBeenCalledWith(
+      'Descargamos su historia completa.',
+      'Historia clínica',
+    );
   });
 
   /* ---- FT-20 · la historia por pestañas ----------------------------------- */
@@ -1158,6 +1193,51 @@ describe('MedicalRecord', () => {
     // que esa lectura aportaba, y nada más.
     expect(linea?.textContent ?? '').toContain('Nota #a1b2');
     expect(linea?.textContent ?? '').not.toContain('Reconsulta');
+    // …y la pérdida se dice: sin el aviso, «sin reconsulta» y «no se pudo
+    // saber» se veían iguales.
+    const aviso = harness.routeNativeElement?.querySelector(
+      '[data-testid="historia-citas-sin-cargar"]',
+    );
+    expect(aviso).not.toBeNull();
+    expect(aviso?.textContent).toContain('No pudimos traer sus citas.');
+    expect(aviso?.textContent).toContain('sin indicar cuáles tuvieron reconsulta');
+  });
+
+  it('el aviso de citas sin cargar trae el código de soporte, y releer lo quita', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+
+    http.expectOne((r) => r.url === '/charts/patients/pp-1/chart').flush(EXPEDIENTE);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES);
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-citas-9' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    harness.detectChanges();
+
+    const raiz = harness.routeNativeElement;
+    expect(raiz?.querySelector('[data-testid="historia-citas-sin-cargar"]')?.textContent).toContain(
+      'Código de soporte: corr-citas-9',
+    );
+
+    (raiz?.querySelector('[data-testid="historia-citas-reintentar"]') as HTMLButtonElement).click();
+    harness.detectChanges();
+    responderDetalle();
+
+    expect(raiz?.querySelector('[data-testid="historia-citas-sin-cargar"]')).toBeNull();
+  });
+
+  it('con las citas leídas no aparece el aviso de reconsultas', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    responderDetalle();
+
+    expect(
+      harness.routeNativeElement?.querySelector('[data-testid="historia-citas-sin-cargar"]'),
+    ).toBeNull();
   });
 
   it('una nota no liberada al paciente no se dibuja', async () => {

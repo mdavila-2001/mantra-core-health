@@ -42,6 +42,7 @@ const RESPUESTA_REAL = {
     },
   ],
   urgency: 'programada',
+  response: 'Gracias por contarnos cómo se siente. Un profesional puede orientarle.',
   knowledgeVersion: 'symptom-check-bb8e00d6+anatomia-v1',
 };
 
@@ -76,6 +77,7 @@ describe('TriageIaClient', () => {
     const resultado = await lectura;
     expect(resultado?.symptoms.map((s) => s.code)).toEqual(['hormigueo', 'mancha:espalda']);
     expect(resultado?.urgency).toBe('programada');
+    expect(resultado?.response).toContain('Gracias por contarnos');
   });
 
   it('no atraviesa los interceptores de la aplicación: el servicio no recibe el JWT del paciente', async () => {
@@ -105,5 +107,11 @@ describe('leerLectura', () => {
     expect(leerLectura({ symptoms: [], urgency: 'otra' })).toBeNull();
     const conBasura = leerLectura({ symptoms: [RESPUESTA_REAL.symptoms[0], { code: 1 }, null], urgency: 'urgente' });
     expect(conBasura?.symptoms.map((s) => s.code)).toEqual(['hormigueo']);
+  });
+
+  it('ignora una respuesta vacía o desproporcionada y conserva la lectura', () => {
+    expect(leerLectura({ ...RESPUESTA_REAL, response: '   ' })?.response).toBeUndefined();
+    expect(leerLectura({ ...RESPUESTA_REAL, response: 'x'.repeat(701) })?.response).toBeUndefined();
+    expect(leerLectura({ ...RESPUESTA_REAL, response: '  Gracias.  ' })?.response).toBe('Gracias.');
   });
 });

@@ -1,0 +1,23 @@
+Ficha: iam.mfa_factors → /superadmin/data-catalog/23aad559-73bc-4d92-a4df-bfa178b66e67
+Base antes: DRAFT|IMPORTED_VAULT|1||
+✓ la ficha parte como borrador importado de la bóveda
+✓ no hay ninguna decisión de revisión
+✓ «Enviar a revisión» viene encendido por omisión
+Cuerpo enviado: {"expectedVersion":1,"submit":true,"sensitivity":"UNKNOWN","businessName":null,"purpose":"…","existenceRationale":"…","rowGrain":"…","deletionImpact":null,"businessOwner":null,"dataSteward":null,"technicalOwner":null,"processSupported":null,"sourceOfTruth":null,"producers":[]}
+✓ PUT annotation → 200
+✓ respuesta: NEEDS_REVIEW · origen MANUAL
+Base tras enviar: NEEDS_REVIEW|MANUAL|2||
+✓ en la base: la ficha está en revisión y ya es de origen manual
+✓ A intenta aprobar su propia revisión → 403
+✓ la pantalla explica la segregación de funciones
+✓ en la base: sigue sin haber ninguna decisión
+✓ B ve la ficha: «Ficha: En revisión · revisión 2»
+✓ B aprueba → 200
+✓ la pantalla avisa «Ficha aprobada»
+Base tras aprobar: ficha APPROVED|MANUAL|2|2|0fde8ca8-b6fc-4c97-816f-827a30689ee2 · decisión APPROVED|2|0fde8ca8-b6fc-4c97-816f-827a30689ee2
+✓ en la base: ficha APPROVED sobre la revisión vigente
+✓ en la base: una decisión APPROVED, y quien aprobó es quien figura como aprobador
+✓ en la base: quien escribió la revisión no es quien la aprobó
+✓ al volver a leer desde el servidor: «Ficha: Aprobada · revisión 2»
+✓ ya no figura como «Importado de la bóveda»: una persona la escribió
+✓ el historial registra la aprobación

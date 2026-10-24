@@ -1,4 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { BodyMap, ZONAS_CON_SILUETA, type ZonaElegible } from './body-map';
 import {
@@ -37,21 +39,29 @@ const ZONAS: readonly ZonaElegible[] = [
   { id: 'piel', nombre: 'Piel y pelo' },
 ];
 
+// El orden sale del centro de cada zona sobre el maniquí (2026-10-23): los
+// brazos del render bajan más que los del dibujo anterior, y las piernas son
+// muslo y pantorrilla juntas, con el centro cerca de la rodilla.
 const FRENTE = [
   'cabeza',
   'garganta',
   'hombros',
   'pecho',
-  'estomago',
   'brazos',
+  'estomago',
   'abdomen',
+  'manos',
   'intima',
   'caderas',
-  'manos',
-  'piernas',
   'rodillas',
+  'piernas',
   'pies',
 ];
+
+/** Las imágenes del maniquí viven en `public/`: lo que baja el navegador. */
+const PUBLICO = join(process.cwd(), 'public');
+/** Tope por imagen: la figura se descarga en cada consulta de síntomas. */
+const PESO_MAXIMO_IMAGEN = 150 * 1024;
 
 describe('BodyMap', () => {
   let fixture: ComponentFixture<BodyMap>;
@@ -108,6 +118,23 @@ describe('BodyMap', () => {
    * rellena, así que no se puede pulsar en su interior —sólo sobre la línea—,
    * y la silueta se volvería inusable con el dedo sin que nada fallara a la vista.
    */
+  it('cada vista trae el render de su maniquí, publicado y liviano', () => {
+    for (const vistas of [VISTAS_DEL_CUERPO, VISTAS_DEL_CUERPO_MASCULINA, VISTAS_DEL_CUERPO_FEMENINA]) {
+      for (const vista of vistas) {
+        const archivo = join(PUBLICO, vista.image);
+        expect(existsSync(archivo), `${vista.image} no está en public/`).toBe(true);
+        expect(statSync(archivo).size, `${vista.image} pesa de más`).toBeLessThan(PESO_MAXIMO_IMAGEN);
+      }
+    }
+  });
+
+  it('las tres proporciones usan imágenes distintas', () => {
+    const imagenes = [VISTAS_DEL_CUERPO, VISTAS_DEL_CUERPO_MASCULINA, VISTAS_DEL_CUERPO_FEMENINA].flatMap((vistas) =>
+      vistas.map((vista) => vista.image),
+    );
+    expect(new Set(imagenes).size).toBe(imagenes.length);
+  });
+
   it('cada zona es un contorno cerrado con vértices', () => {
     for (const vista of VISTAS_DEL_CUERPO) {
       for (const silueta of vista.zonas) {
@@ -128,6 +155,20 @@ describe('BodyMap', () => {
   });
 
   /* ---- El control ---- */
+
+  it('dibuja el maniquí de la vista puesta, decorativo, debajo de las zonas', () => {
+    const render = html.querySelector('[data-testid="body-map-render"]');
+    expect(render?.getAttribute('href')).toBe(VISTAS_DEL_CUERPO[0].image);
+    expect(render?.getAttribute('aria-hidden')).toBe('true');
+    // Debajo: en SVG lo que va antes en el documento se pinta primero.
+    const primeraZona = formaDe('cabeza');
+    expect(render?.compareDocumentPosition(primeraZona) ?? 0).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    pasarA('Espalda');
+    expect(html.querySelector('[data-testid="body-map-render"]')?.getAttribute('href')).toBe(
+      VISTAS_DEL_CUERPO[1].image,
+    );
+  });
 
   it('empieza de frente, con un control por zona y su nombre accesible completo', () => {
     expect(vistaPuesta()).toBe('frente');
@@ -373,8 +414,13 @@ describe('BodyMap · el sexo de la silueta', () => {
     return html.querySelector(`[data-testid="body-map-${id}"]`)?.getAttribute('d') ?? null;
   }
 
+  function imagenDibujada(): string | null {
+    return html.querySelector('[data-testid="body-map-render"]')?.getAttribute('href') ?? null;
+  }
+
   it('sin `sexo`, dibuja la silueta neutra', () => {
     expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO));
+    expect(imagenDibujada()).toBe(VISTAS_DEL_CUERPO[0].image);
   });
 
   it('con `sexo` "MALE", dibuja la silueta masculina', () => {
@@ -383,6 +429,7 @@ describe('BodyMap · el sexo de la silueta', () => {
 
     expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_MASCULINA));
     expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
+    expect(imagenDibujada()).toBe(VISTAS_DEL_CUERPO_MASCULINA[0].image);
   });
 
   it('con `sexo` "FEMALE", dibuja la silueta femenina', () => {
@@ -391,5 +438,6 @@ describe('BodyMap · el sexo de la silueta', () => {
 
     expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_FEMENINA));
     expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
+    expect(imagenDibujada()).toBe(VISTAS_DEL_CUERPO_FEMENINA[0].image);
   });
 });

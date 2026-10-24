@@ -30,6 +30,8 @@ import { entrar, estable, irA } from './support/sesion';
  */
 
 const RUTA_GUIA = '/directory';
+/** La portada que ocupa el renglón del menú desde el 08/09/2026. */
+const RUTA_DIRECTORIOS = '/directories';
 
 /** Los identificadores de las zonas de la primera pantalla del árbol. */
 async function idsDeZonas(page: Page): Promise<string[]> {
@@ -101,7 +103,14 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
 
     await abrirPanel(page, paciente);
 
-    expect(await rutasDelMenu(page)).toContain(RUTA_GUIA);
+    // En el menú lateral se entra por la portada «Directorios», no por la Guía:
+    // desde el 08/09/2026 los cuatro directorios salen del menú con
+    // `fueraDelMenuPara: [ANY_ROLE]` (motivo en `navigation.map.ts`, sección
+    // `directories`). La puerta sigue cerrada por `roles` + `exclusiveRoles`;
+    // esto sólo fija dónde se ofrece.
+    const menu = await rutasDelMenu(page);
+    expect(menu).toContain(RUTA_DIRECTORIOS);
+    expect(menu).not.toContain(RUTA_GUIA);
     expect(await rutasDeAccesos(page)).toContain(RUTA_GUIA);
 
     // Se entra por el acceso, no escribiendo la dirección: lo que hay que

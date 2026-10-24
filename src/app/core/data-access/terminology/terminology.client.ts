@@ -1,10 +1,11 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { expand, forkJoin, map, of, reduce, type Observable } from 'rxjs';
+import { catchError, expand, forkJoin, map, of, reduce, throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type { ConNulos } from '../wire';
+import type { GlossaryArticle } from './glossary-article.types';
 import type {
   CodeSystemListItem,
   CodeSystemVersionListItem,
@@ -17,6 +18,8 @@ import type {
   ConceptSearchQuery,
   GlossaryFacets,
   GlossaryQuery,
+  GlossaryNeighborhood,
+  GlossaryNeighborhoodQuery,
   GlossaryTagPage,
   GlossaryTagQuery,
   GlossaryTermDetail,
@@ -399,6 +402,53 @@ export class TerminologyClient {
     return this.http.get<GlossaryTermDetail>(
       this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
       { params: new HttpParams().set('lang', IDIOMA_DEL_CATALOGO) },
+    );
+  }
+
+  /**
+   * El artículo enciclopédico de un término (TAREA-41 §12.3), o `null` si el
+   * término no tiene: un término sin artículo es el caso normal, no un error.
+   * Cualquier otro fallo sí se propaga.
+   *
+   * @param conceptId - Término a leer.
+   * @returns El artículo, o `null` si no existe.
+   */
+  readGlossaryArticle(conceptId: string): Observable<GlossaryArticle | null> {
+    return this.http
+      .get<GlossaryArticle>(
+        this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}/glossary-article`),
+      )
+      .pipe(
+        catchError((error: unknown) =>
+          error instanceof HttpErrorResponse && error.status === 404 ? of(null) : throwError(() => error),
+        ),
+      );
+  }
+
+  /**
+   * El vecindario de un término: sus relaciones salientes y entrantes, por
+   * tipo y sentido (TAREA-41 §5). Con `perGroup` llega una muestra de cada
+   * grupo; con `type` y `direction`, una página de un solo grupo.
+   *
+   * @param conceptId - Término central.
+   * @param query - Muestra por grupo, o la página de un grupo.
+   * @returns Los grupos no vacíos, cada uno con su total real.
+   */
+  readGlossaryNeighborhood(
+    conceptId: string,
+    query: GlossaryNeighborhoodQuery = {},
+  ): Observable<GlossaryNeighborhood> {
+    let params = new HttpParams().set('lang', IDIOMA_DEL_CATALOGO);
+    if ('type' in query) {
+      params = params.set('type', query.type).set('direction', query.direction);
+      if (query.offset !== undefined) params = params.set('offset', String(query.offset));
+      if (query.limit !== undefined) params = params.set('limit', String(query.limit));
+    } else if (query.perGroup !== undefined) {
+      params = params.set('perGroup', String(query.perGroup));
+    }
+    return this.http.get<GlossaryNeighborhood>(
+      this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}/glossary-neighborhood`),
+      { params },
     );
   }
 

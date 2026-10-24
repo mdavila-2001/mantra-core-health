@@ -191,7 +191,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo">
-                <app-logo-consultorio data-testid="edicion-logo-vista" [src]="logoVisible()" />
+                <app-practice-logo data-testid="edicion-logo-vista" [src]="logoVisible()" />
 
                 <div class="edicion__logo-acciones">
                   <app-file-input
@@ -248,7 +248,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-firma">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="firma"
                   data-testid="edicion-firma-vista"
                   [src]="firma.visible()"
@@ -258,13 +258,13 @@
                   <app-file-input
                     data-testid="edicion-firma-archivo"
                     testId="edicion-firma-archivo"
-                    [files]="firma.archivos()"
+                    [files]="firma.files()"
                     (filesChange)="alElegirFirma($event)"
-                    (rejected)="firma.rechazar($event)"
+                    (rejected)="firma.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="firma.subiendo()"
+                    [disabled]="firma.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="firma.visible() ? 'Cambiar firma' : 'Subir firma'"
@@ -277,12 +277,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-firma-quitar"
-                      (clicked)="firma.quitar()"
+                      (clicked)="firma.remove()"
                     >
                       Quitar firma
                     </button>
                   }
-                  @if (firma.subiendo()) {
+                  @if (firma.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo firma…</p>
                   }
                   @if (firma.error()) {
@@ -294,7 +294,7 @@
               </div>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-sello">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="sello"
                   data-testid="edicion-sello-vista"
                   [src]="sello.visible()"
@@ -304,13 +304,13 @@
                   <app-file-input
                     data-testid="edicion-sello-archivo"
                     testId="edicion-sello-archivo"
-                    [files]="sello.archivos()"
+                    [files]="sello.files()"
                     (filesChange)="alElegirSello($event)"
-                    (rejected)="sello.rechazar($event)"
+                    (rejected)="sello.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="sello.subiendo()"
+                    [disabled]="sello.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="sello.visible() ? 'Cambiar sello' : 'Subir sello'"
@@ -323,12 +323,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-sello-quitar"
-                      (clicked)="sello.quitar()"
+                      (clicked)="sello.remove()"
                     >
                       Quitar sello
                     </button>
                   }
-                  @if (sello.subiendo()) {
+                  @if (sello.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo sello…</p>
                   }
                   @if (sello.error()) {
@@ -664,7 +664,7 @@
                      mover el pin, confirmar y quitar. Abre con lo último que la
                      persona dejó, no siempre con lo guardado: ver
                      `gpsDomicilioInicial`. -->
-                <app-ubicacion-picker
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
                   etiquetaConfirmada="Su domicilio"
@@ -693,7 +693,7 @@
                   />
                 </app-form-field>
 
-                <app-ubicacion-picker
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
                   etiquetaConfirmada="Su lugar de trabajo"
@@ -1018,8 +1018,8 @@
             guardandoIdiomas() ||
             cancelandoEdicion() ||
             subiendoLogo() ||
-            firma.subiendo() ||
-            sello.subiendo()
+            firma.uploading() ||
+            sello.uploading()
           "
           (submitted)="guardarPresentacion()"
           (cancelled)="cancelarEdicion()"
@@ -1203,7 +1203,7 @@
     <form class="edicion__formulario edicion__formulario--modal" (submit)="$event.preventDefault()">
       @switch (enCurso.recurso) {
         @case ('formacion') {
-          <app-form-field label="Tipo de título" [required]="true">
+          <app-form-field label="Tipo de título" [required]="true" [errorMessage]="errorDelServidor('credentialTypeConceptId')">
             <app-concept-select
               data-testid="edicion-credencial-tipo"
               [target]="targetCredencial"
@@ -1215,12 +1215,17 @@
           <app-form-field
             label="Número / título obtenido"
             [required]="true"
+            [errorMessage]="errorDelServidor('number')"
             hint="El número de su diploma, o el nombre del título si no tiene número."
           >
             <app-input data-testid="edicion-credencial-numero" [(value)]="edicionNumero" />
           </app-form-field>
 
-          <app-form-field class="edicion__campo-ancho" label="Institución">
+          <app-form-field
+            class="edicion__campo-ancho"
+            label="Institución"
+            [errorMessage]="edicionInstitucionFueraDeCatalogo() ? '' : errorDelServidor('issuingInstitutionText')"
+          >
             <app-select
               data-testid="edicion-credencial-institucion"
               [options]="opcionesInstitucion"
@@ -1234,6 +1239,7 @@
           <app-form-field
             class="edicion__campo-ancho"
             label="Ciudad de estudio"
+            [errorMessage]="errorDelServidor('issuingCityText')"
             hint="Sale de la institución que elija."
           >
             <app-select
@@ -1246,7 +1252,7 @@
           </app-form-field>
 
           @if (edicionInstitucionFueraDeCatalogo()) {
-            <app-form-field class="edicion__campo-ancho" label="¿Cuál?">
+            <app-form-field class="edicion__campo-ancho" label="¿Cuál?" [errorMessage]="errorDelServidor('issuingInstitutionText')">
               <app-input
                 data-testid="edicion-credencial-institucion-otra"
                 [(value)]="edicionInstitucionEscrita"
@@ -1255,7 +1261,7 @@
             </app-form-field>
           }
 
-          <app-form-field label="Fecha de emisión">
+          <app-form-field label="Fecha de emisión" [errorMessage]="errorDelServidor('issueDate')">
             <app-date-picker [(value)]="edicionEmision" placeholder="Seleccionar fecha" />
           </app-form-field>
 
@@ -1268,6 +1274,7 @@
                 ? 'Reemplazar el diploma (opcional)'
                 : 'Diploma o certificado (opcional)'
             "
+            [errorMessage]="errorDelServidor('fileId')"
             [hint]="
               enCurso.archivoActual
                 ? 'Ya hay uno cargado. Elija otro sólo si quiere reemplazarlo. PDF, JPG o PNG, hasta 5 MB.'
@@ -1288,7 +1295,7 @@
         }
 
         @case ('especialidad') {
-          <app-form-field label="Especialidad" [required]="true">
+          <app-form-field label="Especialidad" [required]="true" [errorMessage]="errorDelServidor('specialtyConceptId')">
             <app-select
               data-testid="edicion-especialidad"
               [options]="especialidades()"
@@ -1299,11 +1306,11 @@
         }
 
         @case ('matricula') {
-          <app-form-field label="Nº de matrícula" [required]="true">
+          <app-form-field label="Nº de matrícula" [required]="true" [errorMessage]="errorDelServidor('licenseNumber')">
             <app-input data-testid="edicion-matricula-numero" [(value)]="edicionNumero" />
           </app-form-field>
 
-          <app-form-field label="Autoridad que la emitió">
+          <app-form-field label="Autoridad que la emitió" [errorMessage]="errorDelServidor('regulatoryAuthority')">
             <app-select
               data-testid="edicion-matricula-autoridad"
               [options]="opcionesAutoridad()"
@@ -1313,7 +1320,7 @@
             />
           </app-form-field>
 
-          <app-form-field label="Fecha de inscripción">
+          <app-form-field label="Fecha de inscripción" [errorMessage]="errorDelServidor('validFrom')">
             <app-date-picker [(value)]="edicionInscripcion" placeholder="Seleccionar fecha" />
           </app-form-field>
 
@@ -1324,6 +1331,7 @@
                 ? 'Reemplazar el respaldo (opcional)'
                 : 'Respaldo de matrícula (opcional)'
             "
+            [errorMessage]="errorDelServidor('fileId')"
             [hint]="
               enCurso.archivoActual
                 ? 'Ya hay uno cargado. Elija otro sólo si quiere reemplazarlo. PDF, JPG o PNG, hasta 5 MB.'
@@ -1374,7 +1382,7 @@
     (closed)="cerrarAltaDeTitulo()"
   >
     <form class="edicion__formulario edicion__formulario--modal" (submit)="$event.preventDefault()">
-      <app-form-field label="Tipo de título" [required]="true">
+      <app-form-field label="Tipo de título" [required]="true" [errorMessage]="errorDelServidor('credentialTypeConceptId')">
         <app-concept-select
           data-testid="credencial-tipo"
           [target]="targetCredencial"
@@ -1386,6 +1394,7 @@
       <app-form-field
         label="Número / título obtenido"
         [required]="true"
+        [errorMessage]="errorDelServidor('number')"
         hint="El número de su diploma, o el nombre del título si no tiene número."
       >
         <app-input
@@ -1402,6 +1411,7 @@
       <app-form-field
         class="edicion__campo-ancho"
         label="Institución (opcional)"
+        [errorMessage]="institucionFueraDeCatalogo() ? '' : errorDelServidor('issuingInstitutionText')"
         hint="Las universidades del sistema boliviano y las privadas autorizadas."
       >
         <app-select
@@ -1417,6 +1427,7 @@
       <app-form-field
         class="edicion__campo-ancho"
         label="Ciudad de estudio"
+        [errorMessage]="errorDelServidor('issuingCityText')"
         hint="Sale de la institución que elija."
       >
         <app-select
@@ -1436,6 +1447,7 @@
         <app-form-field
           class="edicion__campo-ancho"
           label="¿Cuál?"
+          [errorMessage]="errorDelServidor('issuingInstitutionText')"
           hint="El nombre completo de la institución, como figura en su diploma."
         >
           <app-input
@@ -1446,7 +1458,7 @@
         </app-form-field>
       }
 
-      <app-form-field label="Fecha de emisión (opcional)">
+      <app-form-field label="Fecha de emisión (opcional)" [errorMessage]="errorDelServidor('issueDate')">
         <app-date-picker [(value)]="nuevaFechaEmisionCredencial" placeholder="Seleccionar fecha" />
       </app-form-field>
 
@@ -1457,6 +1469,7 @@
       <app-form-field
         class="edicion__campo-ancho"
         label="Diploma o certificado (opcional)"
+        [errorMessage]="errorDelServidor('fileId')"
         hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
       >
         <app-file-input
@@ -1508,6 +1521,7 @@
       <app-form-field
         label="Nº de matrícula"
         [required]="true"
+        [errorMessage]="errorDelServidor('licenseNumber')"
         hint="Como figura en su credencial."
       >
         <app-input
@@ -1519,9 +1533,10 @@
 
       <!-- Tres autoridades y no diez (propietario, 13/09/2026). El
            colegio sale del título profesional: ver
-           `core/profesion/autoridades-reguladoras.ts`. -->
+           `core/profession/regulatory-authorities.ts`. -->
       <app-form-field
         label="Autoridad que la emitió"
+        [errorMessage]="errorDelServidor('regulatoryAuthority')"
         hint="El Ministerio de Salud, el SEDES de su gobernación o el colegio de su profesión."
       >
         <app-select
@@ -1535,6 +1550,7 @@
 
       <app-form-field
         label="Fecha de inscripción (opcional)"
+        [errorMessage]="errorDelServidor('validFrom')"
         hint="Cuándo se registró, no cuándo vence."
       >
         <app-date-picker [(value)]="nuevaFechaInscripcion" placeholder="Seleccionar fecha" />
@@ -1547,6 +1563,7 @@
       <app-form-field
         class="edicion__campo-ancho"
         label="Respaldo de matrícula (opcional)"
+        [errorMessage]="errorDelServidor('fileId')"
         hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
       >
         <app-file-input

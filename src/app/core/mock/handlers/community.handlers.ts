@@ -1,28 +1,28 @@
 import {
-  comentarios,
-  CONCEPTO,
-  conversaciones,
-  encuestaDePublicacion,
-  grupos,
-  mensajes,
-  miembrosDeGrupo,
-  muroDeGrupo,
-  publicaciones,
-  resenas,
-  SOPORTE_ID,
-  TEMAS,
-  TIPO_VITRINA,
-  VITRINA_MEDICA,
-  vitrinaDe,
-  vitrinaPorSlug,
-  vitrinas,
-  type ComentarioSimulado,
-  type MensajeSimulado,
-  type PublicacionSimulada,
-  type VitrinaSimulada,
-} from '../fixtures/comunidad';
-import { encuentros } from '../fixtures/clinica';
-import { ESTADO } from '../fixtures/conceptos';
+  commentList,
+  CONCEPT,
+  conversationList,
+  postSurvey,
+  groupList,
+  messageList,
+  groupMembers,
+  groupWall,
+  postList,
+  reviewList,
+  SUPPORT_ID,
+  THEMES,
+  SHOWCASE_TYPE,
+  MEDICAL_SHOWCASE,
+  showcaseOf,
+  showcaseBySlug,
+  showcases,
+  type SimulatedComment,
+  type SimulatedMessage,
+  type SimulatedPost,
+  type SimulatedShowcase,
+} from '../fixtures/community';
+import { encounterList } from '../fixtures/clinic';
+import { STATUS } from '../fixtures/concepts';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
@@ -56,11 +56,11 @@ function conjunto(mapa: Map<string, Set<string>>, clave: string): Set<string> {
 }
 
 // La médica sigue a algunos colegas y la paciente a su médica.
-for (const v of vitrinas.todos().slice(1, 6)) conjunto(seguimientos, VITRINA_MEDICA.id).add(v.id);
-conjunto(seguimientos, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(VITRINA_MEDICA.id);
-conjunto(seguimientos, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(vitrinas.todos()[1]!.id);
-conjunto(marcadores, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(publicaciones.todos()[0]!.id);
-conjunto(marcadores, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(publicaciones.todos()[6]!.id);
+for (const v of showcases.todos().slice(1, 6)) conjunto(seguimientos, MEDICAL_SHOWCASE.id).add(v.id);
+conjunto(seguimientos, showcaseOf(uuid('pid-paciente'))?.id ?? '').add(MEDICAL_SHOWCASE.id);
+conjunto(seguimientos, showcaseOf(uuid('pid-paciente'))?.id ?? '').add(showcases.todos()[1]!.id);
+conjunto(marcadores, showcaseOf(uuid('pid-paciente'))?.id ?? '').add(postList.todos()[0]!.id);
+conjunto(marcadores, showcaseOf(uuid('pid-paciente'))?.id ?? '').add(postList.todos()[6]!.id);
 
 /**
  * `true` si quien usa la maqueta encendió la respuesta automática.
@@ -88,17 +88,17 @@ function respuestaAutomaticaEncendida(): boolean {
  */
 const respuestasAutomaticas = new Map<string, Record<string, unknown>>();
 
-function vitrinaDeSesion(request: MockRequest): VitrinaSimulada | undefined {
+function vitrinaDeSesion(request: MockRequest): SimulatedShowcase | undefined {
   const user = request.user;
   if (user === null) return undefined;
-  return vitrinaDe(user.practitionerProfileId ?? user.patientProfileId ?? user.id) ?? vitrinaDe(user.id);
+  return showcaseOf(user.practitionerProfileId ?? user.patientProfileId ?? user.id) ?? showcaseOf(user.id);
 }
 
-function perfilPublico(v: VitrinaSimulada) {
+function perfilPublico(v: SimulatedShowcase) {
   return {
     id: v.id,
     tenantId: v.tenantId,
-    targetTypeConceptId: TIPO_VITRINA[v.kind],
+    targetTypeConceptId: SHOWCASE_TYPE[v.kind],
     // La vertical en claro, además del concepto. `targetTypeConceptId` es un
     // uuid de terminología que el cliente no puede interpretar sin su tabla, y
     // sin esto el panel de contacto del chat no sabe si la ficha tiene URL
@@ -111,15 +111,15 @@ function perfilPublico(v: VitrinaSimulada) {
     biography: v.biography,
     avatarFileId: v.avatarFileId,
     coverFileId: v.coverFileId,
-    verificationStatusConceptId: v.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-UNVERIFIED']!,
+    verificationStatusConceptId: v.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-UNVERIFIED']!,
     acceptsReviews: v.acceptsReviews,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
-    badges: v.verified ? [{ id: uuid(`badge-${v.id}`), badgeTypeConceptId: CONCEPTO.badgeVerified, verificationMethodConceptId: CONCEPTO.badgeMethod, validFrom: iso(-300), validTo: null }] : [],
-    prestige: v.kind === 'PRACTITIONER' ? { totalPoints: String(120 + v.seguidores * 3), levelConceptId: CONCEPTO.prestigeLevel, rankPosition: 1 + (v.seguidores % 40), calculatedAt: iso(-1) } : null,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    badges: v.verified ? [{ id: uuid(`badge-${v.id}`), badgeTypeConceptId: CONCEPT.badgeVerified, verificationMethodConceptId: CONCEPT.badgeMethod, validFrom: iso(-300), validTo: null }] : [],
+    prestige: v.kind === 'PRACTITIONER' ? { totalPoints: String(120 + v.seguidores * 3), levelConceptId: CONCEPT.prestigeLevel, rankPosition: 1 + (v.seguidores % 40), calculatedAt: iso(-1) } : null,
   };
 }
 
-function vitrinaPropia(v: VitrinaSimulada) {
+function vitrinaPropia(v: SimulatedShowcase) {
   return {
     id: v.id,
     tenantId: v.tenantId,
@@ -132,25 +132,25 @@ function vitrinaPropia(v: VitrinaSimulada) {
     visibility: v.visibility,
     avatarFileId: v.avatarFileId,
     coverFileId: v.coverFileId,
-    verificationStatusConceptId: v.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-UNVERIFIED']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    verificationStatusConceptId: v.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-UNVERIFIED']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
   };
 }
 
-function resumenDeReacciones(p: PublicacionSimulada, actor: string | null) {
+function resumenDeReacciones(p: SimulatedPost, actor: string | null) {
   const tallies = (Object.entries(p.reacciones) as [Reaccion, number][])
     .filter(([, count]) => count > 0)
-    .map(([reactionType, count]) => ({ reactionTypeConceptId: CONCEPTO.reaction[reactionType], reactionType, count }));
+    .map(([reactionType, count]) => ({ reactionTypeConceptId: CONCEPT.reaction[reactionType], reactionType, count }));
   const propia = actor === null ? undefined : p.reaccionDelActor[actor];
   return {
     tallies,
     total: tallies.reduce((s, t) => s + t.count, 0),
-    actorReactionTypeConceptId: propia === undefined ? null : CONCEPTO.reaction[propia],
+    actorReactionTypeConceptId: propia === undefined ? null : CONCEPT.reaction[propia],
     actorReactionType: propia ?? null,
   };
 }
 
-function publicacion(p: PublicacionSimulada, actor: string | null) {
+function publicacion(p: SimulatedPost, actor: string | null) {
   return {
     id: p.id,
     authorPublicProfileId: p.authorPublicProfileId,
@@ -161,17 +161,17 @@ function publicacion(p: PublicacionSimulada, actor: string | null) {
     publishedAt: p.publishedAt,
     editedAt: p.editedAt,
     reactions: resumenDeReacciones(p, actor),
-    commentCount: comentarios.filtrar((c) => c.postId === p.id).length,
+    commentCount: commentList.filtrar((c) => c.postId === p.id).length,
   };
 }
 
-function detalleDePublicacion(p: PublicacionSimulada, actor: string | null) {
+function detalleDePublicacion(p: SimulatedPost, actor: string | null) {
   return {
     ...publicacion(p, actor),
     media: p.mediaUrls.map((_url, i) => ({
       id: uuid(`media-${p.id}-${i}`),
       fileId: p.media?.[i]?.fileId ?? uuid(`file-media-${p.id}-${i}`),
-      mediaRoleConceptId: CONCEPTO.mediaImage,
+      mediaRoleConceptId: CONCEPT.mediaImage,
       altText: p.media?.[i]?.altText ?? 'Imagen de la publicación',
       ordinal: p.media === undefined ? i + 1 : i,
     })),
@@ -181,8 +181,8 @@ function detalleDePublicacion(p: PublicacionSimulada, actor: string | null) {
 }
 
 function hiloDeComentarios(postId: string) {
-  const todos = comentarios.filtrar((c) => c.postId === postId);
-  const armar = (c: ComentarioSimulado): unknown => ({
+  const todos = commentList.filtrar((c) => c.postId === postId);
+  const armar = (c: SimulatedComment): unknown => ({
     id: c.id,
     authorProfileId: c.authorProfileId,
     bodyText: c.bodyText,
@@ -191,13 +191,13 @@ function hiloDeComentarios(postId: string) {
     replyCount: todos.filter((r) => r.parentCommentId === c.id).length,
     createdAt: c.createdAt,
     replies: todos.filter((r) => r.parentCommentId === c.id).map(armar),
-    media: c.mediaUrl === undefined ? [] : [{ id: uuid(`cmedia-${c.id}`), fileId: uuid(`cfile-${c.id}`), mediaRoleConceptId: CONCEPTO.mediaImage, altText: 'Imagen del comentario', ordinal: 1 }],
+    media: c.mediaUrl === undefined ? [] : [{ id: uuid(`cmedia-${c.id}`), fileId: uuid(`cfile-${c.id}`), mediaRoleConceptId: CONCEPT.mediaImage, altText: 'Imagen del comentario', ordinal: 1 }],
   });
   return todos.filter((c) => c.parentCommentId === null).map(armar);
 }
 
 function conversacion(c: { id: string; conversationTypeConceptId: string; groupId: string | null; participantes: readonly string[]; noLeidosPor: Record<string, number> }, yo: string) {
-  const delHilo = mensajes.filtrar((m) => m.conversationId === c.id).sort((a, b) => a.sentAt.localeCompare(b.sentAt));
+  const delHilo = messageList.filtrar((m) => m.conversationId === c.id).sort((a, b) => a.sentAt.localeCompare(b.sentAt));
   const ultimo = delHilo.at(-1);
   return {
     id: c.id,
@@ -210,8 +210,8 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
     peers: c.participantes
       .filter((p) => p !== yo)
       .map((p) => {
-        if (p === SOPORTE_ID) return { profileId: p, displayName: 'Soporte AloVida', avatarUrl: null };
-        const v = vitrinas.get(p);
+        if (p === SUPPORT_ID) return { profileId: p, displayName: 'Soporte AloVida', avatarUrl: null };
+        const v = showcases.get(p);
         return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null };
       }),
   };
@@ -230,7 +230,7 @@ export function registrarComunidad(router: MockRouter): void {
     const existente = vitrinaDeSesion(request);
     const user = request.user;
     if (user === null) return forbidden();
-    const base: VitrinaSimulada = existente ?? {
+    const base: SimulatedShowcase = existente ?? {
       id: nuevoId('public-profile'),
       tenantId: datos.tenantId ?? user.tenants[0] ?? '',
       targetId: user.practitionerProfileId ?? user.patientProfileId ?? user.id,
@@ -259,7 +259,7 @@ export function registrarComunidad(router: MockRouter): void {
       categoria: null,
       seguidores: 0,
     };
-    const actualizada: VitrinaSimulada = {
+    const actualizada: SimulatedShowcase = {
       ...base,
       slug: datos.slug ?? base.slug,
       displayName: datos.displayName ?? base.displayName,
@@ -270,17 +270,17 @@ export function registrarComunidad(router: MockRouter): void {
       avatarFileId: datos.avatarFileId === null ? '' : (datos.avatarFileId ?? base.avatarFileId),
       coverFileId: datos.coverFileId === null ? '' : (datos.coverFileId ?? base.coverFileId),
     };
-    vitrinas.agregar(actualizada);
+    showcases.agregar(actualizada);
     return vitrinaPropia(actualizada);
   });
 
   router.get('/community/profiles/by-slug/:slug', ({ params }) => {
-    const v = vitrinaPorSlug(params['slug']!);
+    const v = showcaseBySlug(params['slug']!);
     return v === undefined ? notFound('Perfil no encontrado') : perfilPublico(v);
   });
 
   router.get('/community/profiles/:id', ({ params }) => {
-    const v = vitrinas.get(params['id']!) ?? vitrinaDe(params['id']!);
+    const v = showcases.get(params['id']!) ?? showcaseOf(params['id']!);
     return v === undefined ? notFound('Perfil no encontrado') : perfilPublico(v);
   });
 
@@ -331,7 +331,7 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.get('/community/profiles/:id/posts', ({ params, query }) => {
     const actor = texto(query, 'actorProfileId');
-    const todas = publicaciones
+    const todas = postList
       .filtrar((p) => p.authorPublicProfileId === params['id'])
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .map((p) => publicacion(p, actor));
@@ -353,12 +353,12 @@ export function registrarComunidad(router: MockRouter): void {
     const media = [...(datos.media ?? [])]
       .map((m, i) => ({ ...m, ordinal: m.ordinal ?? i }))
       .sort((a, b) => a.ordinal - b.ordinal);
-    const nueva: PublicacionSimulada = {
+    const nueva: SimulatedPost = {
       id: nuevoId('post'),
       authorPublicProfileId: request.params['id']!,
-      postTypeConceptId: (datos.hashtags ?? []).includes('articulomedico') ? CONCEPTO.postArticle : CONCEPTO.postText,
+      postTypeConceptId: (datos.hashtags ?? []).includes('articulomedico') ? CONCEPT.postArticle : CONCEPT.postText,
       bodyText: datos.bodyText ?? '',
-      visibilityConceptId: datos.visibility === 'FOLLOWERS' ? CONCEPTO.visibilityFollowers : CONCEPTO.visibilityPublic,
+      visibilityConceptId: datos.visibility === 'FOLLOWERS' ? CONCEPT.visibilityFollowers : CONCEPT.visibilityPublic,
       commentsEnabled: datos.commentsEnabled ?? true,
       publishedAt: ahora(),
       editedAt: null,
@@ -368,19 +368,19 @@ export function registrarComunidad(router: MockRouter): void {
       reacciones: { LIKE: 0, LOVE: 0, INSIGHTFUL: 0, CELEBRATE: 0, SUPPORT: 0 },
       reaccionDelActor: {},
     };
-    publicaciones.agregar(nueva);
+    postList.agregar(nueva);
     return { status: 201, body: { id: nueva.id } };
   });
 
   router.get('/community/posts/:id', ({ params, query }) => {
-    const p = publicaciones.get(params['id']!);
+    const p = postList.get(params['id']!);
     return p === undefined ? notFound('Publicación no encontrada') : detalleDePublicacion(p, texto(query, 'actorProfileId'));
   });
 
   router.get('/community/posts/:id/comments', ({ params, query }) => paginar(hiloDeComentarios(params['id']!), query, 20));
 
   router.get('/community/posts/:id/reactions', ({ params, query }) => {
-    const p = publicaciones.get(params['id']!);
+    const p = postList.get(params['id']!);
     return p === undefined ? notFound() : resumenDeReacciones(p, texto(query, 'actorProfileId'));
   });
 
@@ -389,7 +389,7 @@ export function registrarComunidad(router: MockRouter): void {
   // Responde 200, como la API (`@HttpCode(OK)`): un upsert no es un alta.
   const reaccionar = (request: MockRequest) => {
     const datos = cuerpo<{ actorProfileId: string; reactableType: string; reactableRefId: string; reactionType: Reaccion }>(request);
-    const p = publicaciones.get(datos.reactableRefId ?? '');
+    const p = postList.get(datos.reactableRefId ?? '');
     if (p !== undefined && datos.actorProfileId !== undefined && datos.reactionType !== undefined) {
       const previa = p.reaccionDelActor[datos.actorProfileId];
       const reacciones = { ...p.reacciones };
@@ -401,7 +401,7 @@ export function registrarComunidad(router: MockRouter): void {
         reacciones[datos.reactionType] += 1;
         reaccionDelActor[datos.actorProfileId] = datos.reactionType;
       }
-      publicaciones.actualizar(p.id, { reacciones, reaccionDelActor });
+      postList.actualizar(p.id, { reacciones, reaccionDelActor });
     }
     return { id: nuevoId('reaction') };
   };
@@ -409,7 +409,7 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.post('/community/comments', (request) => {
     const datos = cuerpo<{ authorProfileId: string; commentableRefId: string; bodyText: string; parentCommentId?: string; media?: { fileId: string }[] }>(request);
-    const nuevo = comentarios.agregar({
+    const nuevo = commentList.agregar({
       id: nuevoId('comment'),
       postId: datos.commentableRefId ?? '',
       authorProfileId: datos.authorProfileId ?? '',
@@ -440,7 +440,7 @@ export function registrarComunidad(router: MockRouter): void {
   });
   router.get('/community/follows', ({ query }) => {
     const follower = texto(query, 'followerProfileId') ?? '';
-    const items = [...conjunto(seguimientos, follower)].map((ref, i) => ({ id: uuid(`follow-${follower}-${ref}`), followerProfileId: follower, followableTypeConceptId: CONCEPTO.followProfile, followableRefId: ref, notificationLevelConceptId: null, createdAt: iso(-30 - i) }));
+    const items = [...conjunto(seguimientos, follower)].map((ref, i) => ({ id: uuid(`follow-${follower}-${ref}`), followerProfileId: follower, followableTypeConceptId: CONCEPT.followProfile, followableRefId: ref, notificationLevelConceptId: null, createdAt: iso(-30 - i) }));
     return paginar(items, query, 20);
   });
 
@@ -455,7 +455,7 @@ export function registrarComunidad(router: MockRouter): void {
   });
   router.get('/community/bookmarks', ({ query }) => {
     const profileId = texto(query, 'profileId') ?? '';
-    const items = [...conjunto(marcadores, profileId)].map((ref, i) => ({ id: uuid(`bookmark-${profileId}-${ref}`), bookmarkableTypeConceptId: CONCEPTO.bookmarkPost, bookmarkableRefId: ref, collectionName: 'Guardados', createdAt: iso(-10 - i) }));
+    const items = [...conjunto(marcadores, profileId)].map((ref, i) => ({ id: uuid(`bookmark-${profileId}-${ref}`), bookmarkableTypeConceptId: CONCEPT.bookmarkPost, bookmarkableRefId: ref, collectionName: 'Guardados', createdAt: iso(-10 - i) }));
     return paginar(items, query, 20);
   });
 
@@ -479,16 +479,16 @@ export function registrarComunidad(router: MockRouter): void {
   router.get('/community/feed', ({ query }) => {
     const profileId = texto(query, 'profileId') ?? '';
     const seguidos = conjunto(seguimientos, profileId);
-    const items = publicaciones
+    const items = postList
       .todos()
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .map((p) => ({
         id: uuid(`feed-${profileId}-${p.id}`),
-        itemTypeConceptId: CONCEPTO.feedPost,
-        sourceTypeConceptId: CONCEPTO.sourcePost,
+        itemTypeConceptId: CONCEPT.feedPost,
+        sourceTypeConceptId: CONCEPT.sourcePost,
         sourceRefId: p.id,
-        originConceptId: seguidos.has(p.authorPublicProfileId) ? CONCEPTO.feedOriginFollow : CONCEPTO.feedOriginRecommended,
-        rankScore: String((100 - publicaciones.todos().indexOf(p)).toFixed(2)),
+        originConceptId: seguidos.has(p.authorPublicProfileId) ? CONCEPT.feedOriginFollow : CONCEPT.feedOriginRecommended,
+        rankScore: String((100 - postList.todos().indexOf(p)).toFixed(2)),
         isSeen: false,
         createdAt: p.publishedAt,
         post: publicacion(p, profileId),
@@ -498,13 +498,13 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.get('/community/notifications', ({ query }) => {
     const profileId = texto(query, 'profileId') ?? '';
-    const propias = publicaciones.filtrar((p) => p.authorPublicProfileId === profileId).slice(0, 3);
+    const propias = postList.filtrar((p) => p.authorPublicProfileId === profileId).slice(0, 3);
     const items = [
       ...propias.flatMap((p, i) => [
-        { id: uuid(`snotif-r-${p.id}`), notificationTypeConceptId: CONCEPTO.notifReaction, actorProfileId: vitrinas.todos()[(i + 1) % 5]!.id, sourceTypeConceptId: CONCEPTO.sourcePost, sourceRefId: p.id, previewText: `Le gustó su publicación «${p.bodyText.slice(0, 40)}…»`, isRead: i > 0, readAt: i > 0 ? iso(-i) : null, createdAt: iso(-i, 8) },
-        { id: uuid(`snotif-c-${p.id}`), notificationTypeConceptId: CONCEPTO.notifComment, actorProfileId: vitrinas.todos()[(i + 2) % 5]!.id, sourceTypeConceptId: CONCEPTO.sourceComment, sourceRefId: p.id, previewText: 'Comentó: «Excelente explicación, gracias por compartir.»', isRead: i > 1, readAt: i > 1 ? iso(-i) : null, createdAt: iso(-i, 12) },
+        { id: uuid(`snotif-r-${p.id}`), notificationTypeConceptId: CONCEPT.notifReaction, actorProfileId: showcases.todos()[(i + 1) % 5]!.id, sourceTypeConceptId: CONCEPT.sourcePost, sourceRefId: p.id, previewText: `Le gustó su publicación «${p.bodyText.slice(0, 40)}…»`, isRead: i > 0, readAt: i > 0 ? iso(-i) : null, createdAt: iso(-i, 8) },
+        { id: uuid(`snotif-c-${p.id}`), notificationTypeConceptId: CONCEPT.notifComment, actorProfileId: showcases.todos()[(i + 2) % 5]!.id, sourceTypeConceptId: CONCEPT.sourceComment, sourceRefId: p.id, previewText: 'Comentó: «Excelente explicación, gracias por compartir.»', isRead: i > 1, readAt: i > 1 ? iso(-i) : null, createdAt: iso(-i, 12) },
       ]),
-      { id: uuid(`snotif-f-${profileId}`), notificationTypeConceptId: CONCEPTO.notifFollow, actorProfileId: vitrinas.todos()[3]!.id, sourceTypeConceptId: CONCEPTO.sourcePost, sourceRefId: profileId, previewText: 'Empezó a seguirle', isRead: false, readAt: null, createdAt: iso(-1, 19) },
+      { id: uuid(`snotif-f-${profileId}`), notificationTypeConceptId: CONCEPT.notifFollow, actorProfileId: showcases.todos()[3]!.id, sourceTypeConceptId: CONCEPT.sourcePost, sourceRefId: profileId, previewText: 'Empezó a seguirle', isRead: false, readAt: null, createdAt: iso(-1, 19) },
     ];
     return { ...paginar(items, query, 20), unreadCount: items.filter((n) => !n.isRead).length };
   });
@@ -512,7 +512,7 @@ export function registrarComunidad(router: MockRouter): void {
   /* ---- reseñas -------------------------------------------------------------- */
 
   router.get('/community/profiles/:id/reviews', ({ params, query }) => {
-    const items = resenas
+    const items = reviewList
       .filtrar((r) => r.targetPublicProfileId === params['id'])
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
       .map(({ reviewerProfileId: _r, ...resto }) => ({ ...resto, editedAt: null }));
@@ -520,21 +520,21 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   router.post('/community/profiles/:id/reviews', (request) => {
-    const datos = cuerpo<{ verifiedEncounterId: string; overallRating: number; reviewText?: string; displayMode?: string; dimensions?: { dimension: keyof typeof CONCEPTO.reviewDim; score: number }[] }>(request);
+    const datos = cuerpo<{ verifiedEncounterId: string; overallRating: number; reviewText?: string; displayMode?: string; dimensions?: { dimension: keyof typeof CONCEPT.reviewDim; score: number }[] }>(request);
     const actor = vitrinaDeSesion(request);
-    if (resenas.filtrar((r) => r.targetPublicProfileId === request.params['id'] && r.reviewerProfileId === actor?.id && r.id.startsWith('n')).length > 0) {
+    if (reviewList.filtrar((r) => r.targetPublicProfileId === request.params['id'] && r.reviewerProfileId === actor?.id && r.id.startsWith('n')).length > 0) {
       return conflict('Ya publicó una reseña de esta atención');
     }
-    const nueva = resenas.agregar({
+    const nueva = reviewList.agregar({
       id: nuevoId('review'),
       targetPublicProfileId: request.params['id']!,
       reviewerProfileId: actor?.id ?? '',
       overallRating: datos.overallRating ?? 5,
       reviewText: datos.reviewText ?? '',
-      reviewerDisplayModeConceptId: datos.displayMode === 'ANONYMOUS' ? CONCEPTO.reviewDisplayAnon : CONCEPTO.reviewDisplayReal,
-      verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+      reviewerDisplayModeConceptId: datos.displayMode === 'ANONYMOUS' ? CONCEPT.reviewDisplayAnon : CONCEPT.reviewDisplayReal,
+      verificationStatusConceptId: STATUS['ST-VERIFIED']!,
       publishedAt: ahora(),
-      dimensionScores: (datos.dimensions ?? []).map((d) => ({ dimensionConceptId: CONCEPTO.reviewDim[d.dimension] ?? CONCEPTO.reviewDim.OUTCOME, score: d.score })),
+      dimensionScores: (datos.dimensions ?? []).map((d) => ({ dimensionConceptId: CONCEPT.reviewDim[d.dimension] ?? CONCEPT.reviewDim.OUTCOME, score: d.score })),
       responses: [],
     });
     return { status: 201, body: { id: nueva.id, overallRating: nueva.overallRating, verified: true, dimensionCount: nueva.dimensionScores.length } };
@@ -556,26 +556,26 @@ export function registrarComunidad(router: MockRouter): void {
     if (atencionId === undefined || atencionId === '') {
       return validation('Falta la atención que respalda la calificación');
     }
-    const atencion = encuentros.get(atencionId);
+    const atencion = encounterList.get(atencionId);
     if (atencion === undefined) return notFound('Esa atención no existe');
-    const destino = vitrinaDe(atencion.primaryPractitionerId);
+    const destino = showcaseOf(atencion.primaryPractitionerId);
     if (destino === undefined) return notFound('Quien le atendió no tiene ficha pública');
     const actor = vitrinaDeSesion(request);
-    if (actor !== undefined && actor.id !== atencion.patientProfileId && vitrinaDe(atencion.patientProfileId)?.id !== actor.id) {
+    if (actor !== undefined && actor.id !== atencion.patientProfileId && showcaseOf(atencion.patientProfileId)?.id !== actor.id) {
       return forbidden('Esa atención no es suya');
     }
-    const yaCalificada = resenas.filtrar(
+    const yaCalificada = reviewList.filtrar(
       (r) => r.targetPublicProfileId === destino.id && r.reviewerProfileId === (actor?.id ?? ''),
     );
     if (yaCalificada.length > 0) return conflict('Ya calificó esta atención');
-    const nueva = resenas.agregar({
+    const nueva = reviewList.agregar({
       id: nuevoId('review'),
       targetPublicProfileId: destino.id,
       reviewerProfileId: actor?.id ?? '',
       overallRating: datos.overallRating ?? 5,
       reviewText: datos.reviewText ?? '',
-      reviewerDisplayModeConceptId: datos.displayMode === 'ANONYMOUS' ? CONCEPTO.reviewDisplayAnon : CONCEPTO.reviewDisplayReal,
-      verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+      reviewerDisplayModeConceptId: datos.displayMode === 'ANONYMOUS' ? CONCEPT.reviewDisplayAnon : CONCEPT.reviewDisplayReal,
+      verificationStatusConceptId: STATUS['ST-VERIFIED']!,
       publishedAt: ahora(),
       dimensionScores: [],
       responses: [],
@@ -584,22 +584,22 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   router.post('/community/profiles/:id/reviews/:reviewId/responses', (request) => {
-    const r = resenas.get(request.params['reviewId']!);
+    const r = reviewList.get(request.params['reviewId']!);
     if (r === undefined) return notFound('Reseña no encontrada');
     const datos = cuerpo<{ responseText: string }>(request);
     const respuesta = { id: nuevoId('review-response'), responderPublicProfileId: request.params['id']!, responseText: datos.responseText ?? '', publishedAt: ahora() };
-    resenas.actualizar(r.id, { responses: [...r.responses, respuesta] });
+    reviewList.actualizar(r.id, { responses: [...r.responses, respuesta] });
     return { status: 201, body: respuesta };
   });
 
   /* ---- grupos y temas ------------------------------------------------------- */
 
-  router.get('/community/topics', () => ({ items: TEMAS, count: TEMAS.length, limit: 50 }));
+  router.get('/community/topics', () => ({ items: THEMES, count: THEMES.length, limit: 50 }));
 
   router.get('/community/groups', ({ query }) => {
     const q = texto(query, 'q');
     const topicId = texto(query, 'topicId');
-    const items = grupos
+    const items = groupList
       .todos()
       .filter((g) => contiene(g.name, q) || contiene(g.description, q))
       .filter((g) => topicId === null || g.topicId === topicId)
@@ -635,34 +635,34 @@ export function registrarComunidad(router: MockRouter): void {
       };
     }
 
-    const owner = datos.ownerProfileId ?? propia?.id ?? VITRINA_MEDICA.id;
-    const nuevo = grupos.agregar({
+    const owner = datos.ownerProfileId ?? propia?.id ?? MEDICAL_SHOWCASE.id;
+    const nuevo = groupList.agregar({
       id: nuevoId('group'),
       tenantId: request.user?.tenants[0] ?? '',
       slug: datos.slug ?? 'grupo-nuevo',
       name: datos.name ?? 'Grupo nuevo',
       description: datos.description ?? '',
-      visibilityConceptId: datos.visibility === 'PRIVATE' || datos.visibility === 'SECRET' ? CONCEPTO.groupPrivate : CONCEPTO.groupPublic,
-      groupTypeConceptId: datos.groupType === 'SUPPORT' ? CONCEPTO.groupSupport : CONCEPTO.groupGeneral,
+      visibilityConceptId: datos.visibility === 'PRIVATE' || datos.visibility === 'SECRET' ? CONCEPT.groupPrivate : CONCEPT.groupPublic,
+      groupTypeConceptId: datos.groupType === 'SUPPORT' ? CONCEPT.groupSupport : CONCEPT.groupGeneral,
       ...(datos.topicId === undefined ? {} : { topicId: datos.topicId }),
       ownerProfileId: owner,
       coverFileId: '',
       memberCount: 1,
       postCount: 0,
       pendingCount: 0,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
     });
-    miembrosDeGrupo.agregar({ id: nuevoId('member'), groupId: nuevo.id, memberProfileId: owner, memberRoleConceptId: CONCEPTO.memberRole.ADMIN, joinStatusConceptId: CONCEPTO.joinStatus.ACTIVE, joinedAt: ahora(), invitedByProfileId: null });
+    groupMembers.agregar({ id: nuevoId('member'), groupId: nuevo.id, memberProfileId: owner, memberRoleConceptId: CONCEPT.memberRole.ADMIN, joinStatusConceptId: CONCEPT.joinStatus.ACTIVE, joinedAt: ahora(), invitedByProfileId: null });
     return { status: 201, body: { id: nuevo.id } };
   });
 
   router.get('/community/groups/:id', ({ params, query }) => {
-    const g = grupos.get(params['id']!);
+    const g = groupList.get(params['id']!);
     if (g === undefined) return notFound('Grupo no encontrado');
     const actor = texto(query, 'actorProfileId');
-    const membresia = actor === null ? undefined : miembrosDeGrupo.filtrar((m) => m.groupId === g.id && m.memberProfileId === actor)[0];
-    const activa = membresia?.joinStatusConceptId === CONCEPTO.joinStatus.ACTIVE;
-    const admin = activa && membresia?.memberRoleConceptId !== CONCEPTO.memberRole.MEMBER;
+    const membresia = actor === null ? undefined : groupMembers.filtrar((m) => m.groupId === g.id && m.memberProfileId === actor)[0];
+    const activa = membresia?.joinStatusConceptId === CONCEPT.joinStatus.ACTIVE;
+    const admin = activa && membresia?.memberRoleConceptId !== CONCEPT.memberRole.MEMBER;
     return {
       ...g,
       viewer: {
@@ -678,43 +678,43 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.get('/community/groups/:id/members', ({ params, query }) => {
     const estado = texto(query, 'joinStatus');
-    const items = miembrosDeGrupo
+    const items = groupMembers
       .filtrar((m) => m.groupId === params['id'])
-      .filter((m) => estado === null || m.joinStatusConceptId === CONCEPTO.joinStatus[estado as keyof typeof CONCEPTO.joinStatus])
+      .filter((m) => estado === null || m.joinStatusConceptId === CONCEPT.joinStatus[estado as keyof typeof CONCEPT.joinStatus])
       .map(({ groupId: _g, ...m }) => m);
     return paginar(items, query, 20);
   });
 
   router.post('/community/groups/:id/members', (request) => {
-    const g = grupos.get(request.params['id']!);
+    const g = groupList.get(request.params['id']!);
     if (g === undefined) return notFound();
     const datos = cuerpo<{ memberProfileId?: string; actorProfileId?: string }>(request);
     const perfil = datos.memberProfileId ?? datos.actorProfileId ?? vitrinaDeSesion(request)?.id ?? '';
-    const privado = g.visibilityConceptId === CONCEPTO.groupPrivate;
-    const nuevo = miembrosDeGrupo.agregar({ id: nuevoId('member'), groupId: g.id, memberProfileId: perfil, memberRoleConceptId: CONCEPTO.memberRole.MEMBER, joinStatusConceptId: privado ? CONCEPTO.joinStatus.PENDING : CONCEPTO.joinStatus.ACTIVE, joinedAt: privado ? null : ahora(), invitedByProfileId: null });
-    grupos.actualizar(g.id, privado ? { pendingCount: g.pendingCount + 1 } : { memberCount: g.memberCount + 1 });
+    const privado = g.visibilityConceptId === CONCEPT.groupPrivate;
+    const nuevo = groupMembers.agregar({ id: nuevoId('member'), groupId: g.id, memberProfileId: perfil, memberRoleConceptId: CONCEPT.memberRole.MEMBER, joinStatusConceptId: privado ? CONCEPT.joinStatus.PENDING : CONCEPT.joinStatus.ACTIVE, joinedAt: privado ? null : ahora(), invitedByProfileId: null });
+    groupList.actualizar(g.id, privado ? { pendingCount: g.pendingCount + 1 } : { memberCount: g.memberCount + 1 });
     return { status: 201, body: { id: nuevo.id, memberRoleConceptId: nuevo.memberRoleConceptId, joinStatusConceptId: nuevo.joinStatusConceptId } };
   });
 
   router.delete('/community/groups/:id/members/:memberId', ({ params }) => {
-    const m = miembrosDeGrupo.get(params['memberId']!);
-    if (m !== undefined) miembrosDeGrupo.actualizar(m.id, { joinStatusConceptId: CONCEPTO.joinStatus.LEFT });
+    const m = groupMembers.get(params['memberId']!);
+    if (m !== undefined) groupMembers.actualizar(m.id, { joinStatusConceptId: CONCEPT.joinStatus.LEFT });
     return { removed: m !== undefined };
   });
 
   router.patch('/community/groups/:id/members/:memberId', (request) => {
-    const m = miembrosDeGrupo.get(request.params['memberId']!);
+    const m = groupMembers.get(request.params['memberId']!);
     if (m === undefined) return notFound();
     const datos = cuerpo<{ role?: 'MEMBER' | 'MODERATOR' | 'ADMIN'; decision?: 'APPROVE' | 'REJECT' }>(request);
-    const actualizado = miembrosDeGrupo.actualizar(m.id, {
-      ...(datos.role === undefined ? {} : { memberRoleConceptId: CONCEPTO.memberRole[datos.role] }),
-      ...(datos.decision === undefined ? {} : { joinStatusConceptId: datos.decision === 'APPROVE' ? CONCEPTO.joinStatus.ACTIVE : CONCEPTO.joinStatus.REJECTED, joinedAt: datos.decision === 'APPROVE' ? ahora() : null }),
+    const actualizado = groupMembers.actualizar(m.id, {
+      ...(datos.role === undefined ? {} : { memberRoleConceptId: CONCEPT.memberRole[datos.role] }),
+      ...(datos.decision === undefined ? {} : { joinStatusConceptId: datos.decision === 'APPROVE' ? CONCEPT.joinStatus.ACTIVE : CONCEPT.joinStatus.REJECTED, joinedAt: datos.decision === 'APPROVE' ? ahora() : null }),
     })!;
     return { id: actualizado.id, memberRoleConceptId: actualizado.memberRoleConceptId, joinStatusConceptId: actualizado.joinStatusConceptId };
   });
 
   router.get('/community/groups/:id/posts', ({ params, query }) => {
-    const todos = muroDeGrupo.filtrar((m) => m.groupId === params['id']);
+    const todos = groupWall.filtrar((m) => m.groupId === params['id']);
     const armar = (m: (typeof todos)[number]): unknown => ({
       id: m.id,
       authorProfileId: m.authorProfileId,
@@ -730,7 +730,7 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.post('/community/groups/:id/posts', (request) => {
     const datos = cuerpo<{ authorProfileId: string; bodyText: string; parentCommentId?: string }>(request);
-    const nuevo = muroDeGrupo.agregar({ id: nuevoId('wall'), groupId: request.params['id']!, authorProfileId: datos.authorProfileId ?? '', bodyText: datos.bodyText ?? '', parentCommentId: datos.parentCommentId ?? null, createdAt: ahora() });
+    const nuevo = groupWall.agregar({ id: nuevoId('wall'), groupId: request.params['id']!, authorProfileId: datos.authorProfileId ?? '', bodyText: datos.bodyText ?? '', parentCommentId: datos.parentCommentId ?? null, createdAt: ahora() });
     return { status: 201, body: { id: nuevo.id } };
   });
 
@@ -738,7 +738,7 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.get('/community/conversations', ({ query }) => {
     const yo = texto(query, 'profileId') ?? '';
-    const items = conversaciones
+    const items = conversationList
       .filtrar((c) => c.participantes.includes(yo))
       .map((c) => conversacion(c, yo))
       .sort((a, b) => (b.lastMessageAt ?? '').localeCompare(a.lastMessageAt ?? ''));
@@ -748,14 +748,14 @@ export function registrarComunidad(router: MockRouter): void {
   router.post('/community/conversations', (request) => {
     const datos = cuerpo<{ participantProfileIds: string[]; conversationType?: string; groupId?: string }>(request);
     const participantes = [...new Set([...(datos.participantProfileIds ?? []), vitrinaDeSesion(request)?.id ?? ''])].filter((p) => p !== '');
-    const existente = conversaciones.filtrar((c) => c.participantes.length === participantes.length && participantes.every((p) => c.participantes.includes(p)))[0];
+    const existente = conversationList.filtrar((c) => c.participantes.length === participantes.length && participantes.every((p) => c.participantes.includes(p)))[0];
     if (existente !== undefined) return { status: 201, body: { id: existente.id } };
-    const nueva = conversaciones.agregar({ id: nuevoId('conv'), conversationTypeConceptId: datos.conversationType === 'GROUP' ? CONCEPTO.conversationGroup : CONCEPTO.conversationDirect, groupId: datos.groupId ?? null, participantes, noLeidosPor: {} });
+    const nueva = conversationList.agregar({ id: nuevoId('conv'), conversationTypeConceptId: datos.conversationType === 'GROUP' ? CONCEPT.conversationGroup : CONCEPT.conversationDirect, groupId: datos.groupId ?? null, participantes, noLeidosPor: {} });
     return { status: 201, body: { id: nueva.id } };
   });
 
   router.get('/community/conversations/:id/messages', ({ params, query }) => {
-    const items = mensajes
+    const items = messageList
       .filtrar((m) => m.conversationId === params['id'])
       .sort((a, b) => b.sentAt.localeCompare(a.sentAt));
     const pagina = paginar(items, query, 30);
@@ -768,12 +768,12 @@ export function registrarComunidad(router: MockRouter): void {
     const peerReadUpTo =
       items.find((m) => m.senderProfileId === yo && new Date(m.sentAt).getTime() <= corte)
         ?.sentAt ?? null;
-    const c = conversaciones.get(params['id']!);
+    const c = conversationList.get(params['id']!);
     const otros = (c?.participantes ?? []).filter((p) => p !== yo);
     // Los recibos de lo propio. La maqueta los **simula** con reglas fijas —
     // llega al segundo y lo leen a los dos minutos si está dentro de lo leído—
     // porque la API real todavía no publica las horas (PLAN-CHAT-WHATSAPP.md).
-    const conRecibos = (pagina.items as readonly MensajeSimulado[]).map((m) =>
+    const conRecibos = (pagina.items as readonly SimulatedMessage[]).map((m) =>
       m.senderProfileId !== yo
         ? m
         : {
@@ -795,7 +795,7 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   router.post('/community/conversations/:id/messages', (request) => {
-    const c = conversaciones.get(request.params['id']!);
+    const c = conversationList.get(request.params['id']!);
     if (c === undefined) return notFound('Conversación no encontrada');
     const datos = cuerpo<{
       senderProfileId: string;
@@ -811,7 +811,7 @@ export function registrarComunidad(router: MockRouter): void {
       (p) => p !== (datos.senderProfileId ?? '') && conjunto(bloqueos, datos.senderProfileId ?? '').has(p),
     );
     if (bloqueado) return forbidden('Bloqueó a esta persona: desbloquéela para escribirle');
-    const nuevo: MensajeSimulado = {
+    const nuevo: SimulatedMessage = {
       id: nuevoId('msg'),
       conversationId: c.id,
       senderProfileId: datos.senderProfileId ?? '',
@@ -820,21 +820,21 @@ export function registrarComunidad(router: MockRouter): void {
       // `attachmentFileId`, así que mandar una foto se veía como un mensaje de
       // texto vacío. El contrato real los acepta desde siempre.
       contentTypeConceptId:
-        datos.contentType === 'MEDIA' ? CONCEPTO.messageMedia : CONCEPTO.messageText,
+        datos.contentType === 'MEDIA' ? CONCEPT.messageMedia : CONCEPT.messageText,
       bodyText: datos.bodyText ?? '',
       attachmentFileId: datos.attachmentFileId ?? null,
       isEdited: false,
       sentAt: ahora(),
       ...(datos.contentType === 'STICKER' ? { contentType: 'STICKER' as const } : {}),
     };
-    mensajes.agregar(nuevo);
+    messageList.agregar(nuevo);
     const noLeidos = { ...c.noLeidosPor };
     for (const p of c.participantes) if (p !== nuevo.senderProfileId) noLeidos[p] = (noLeidos[p] ?? 0) + 1;
-    conversaciones.actualizar(c.id, { noLeidosPor: noLeidos });
+    conversationList.actualizar(c.id, { noLeidosPor: noLeidos });
     // Soporte responde solo, para que el chat se sienta vivo.
-    if (c.participantes.includes(SOPORTE_ID) && nuevo.senderProfileId !== SOPORTE_ID) {
+    if (c.participantes.includes(SUPPORT_ID) && nuevo.senderProfileId !== SUPPORT_ID) {
       setTimeout(() => {
-        mensajes.agregar({ ...nuevo, id: nuevoId('msg-soporte'), senderProfileId: SOPORTE_ID, bodyText: 'Gracias por escribirnos. Un agente va a responderle en breve.', sentAt: ahora() });
+        messageList.agregar({ ...nuevo, id: nuevoId('msg-soporte'), senderProfileId: SUPPORT_ID, bodyText: 'Gracias por escribirnos. Un agente va a responderle en breve.', sentAt: ahora() });
       }, 1500);
     }
     // El otro lado también contesta, para poder ver la respuesta automática
@@ -845,13 +845,13 @@ export function registrarComunidad(router: MockRouter): void {
       const otro = c.participantes.find((p) => p !== nuevo.senderProfileId);
       if (otro !== undefined) {
         setTimeout(() => {
-          mensajes.agregar({
+          messageList.agregar({
             ...nuevo,
             id: nuevoId('msg-eco'),
             senderProfileId: otro,
             bodyText: 'Hola, ¿está por ahí?',
             attachmentFileId: null,
-            contentTypeConceptId: CONCEPTO.messageText,
+            contentTypeConceptId: CONCEPT.messageText,
             sentAt: ahora(),
           });
         }, 2000);
@@ -868,7 +868,7 @@ export function registrarComunidad(router: MockRouter): void {
    * lo que responde la API del proyecto ante una precondición incumplida.
    */
   router.patch('/community/conversations/:id/messages/:messageId', (request) => {
-    const m = mensajes.get(request.params['messageId']!);
+    const m = messageList.get(request.params['messageId']!);
     if (m === undefined || m.conversationId !== request.params['id']) {
       return notFound('Mensaje no encontrado');
     }
@@ -884,7 +884,7 @@ export function registrarComunidad(router: MockRouter): void {
     if (Date.now() - new Date(m.sentAt).getTime() > VENTANA_DE_EDICION_MS) {
       return validation('Pasaron más de 5 minutos: el mensaje ya no se puede editar');
     }
-    return mensajes.actualizar(m.id, { bodyText: texto, isEdited: true });
+    return messageList.actualizar(m.id, { bodyText: texto, isEdited: true });
   });
 
   /**
@@ -893,8 +893,8 @@ export function registrarComunidad(router: MockRouter): void {
    * conversación puede reaccionar.
    */
   router.put('/community/conversations/:id/messages/:messageId/reaction', (request) => {
-    const c = conversaciones.get(request.params['id']!);
-    const m = mensajes.get(request.params['messageId']!);
+    const c = conversationList.get(request.params['id']!);
+    const m = messageList.get(request.params['messageId']!);
     if (c === undefined || m === undefined || m.conversationId !== c.id) {
       return notFound('Mensaje no encontrado');
     }
@@ -911,7 +911,7 @@ export function registrarComunidad(router: MockRouter): void {
         : sinYo.some((r) => r.emoji === emoji)
           ? sinYo.map((r) => (r.emoji === emoji ? { ...r, profileIds: [...r.profileIds, yo] } : r))
           : [...sinYo, { emoji, profileIds: [yo] }];
-    return mensajes.actualizar(m.id, { reactions });
+    return messageList.actualizar(m.id, { reactions });
   });
 
   /**
@@ -926,13 +926,13 @@ export function registrarComunidad(router: MockRouter): void {
    */
   router.get('/community/conversations/:id/attachments/:fileId/content', (request) => {
     const notFoundReply = () => notFound('Adjunto no encontrado');
-    const c = conversaciones.get(request.params['id']!);
+    const c = conversationList.get(request.params['id']!);
     const fileId = request.params['fileId']!;
     const profileId = texto(request.query, 'profileId') ?? '';
     const sessionProfile = vitrinaDeSesion(request);
     if (c === undefined || sessionProfile === undefined || sessionProfile.id !== profileId) return notFoundReply();
     if (!c.participantes.includes(profileId)) return notFoundReply();
-    const isAttachedHere = mensajes.filtrar(
+    const isAttachedHere = messageList.filtrar(
       (m) => m.conversationId === c.id && m.attachmentFileId === fileId,
     ).length > 0;
     if (!isAttachedHere) return notFoundReply();
@@ -940,33 +940,33 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   router.post('/community/conversations/:id/read', (request) => {
-    const c = conversaciones.get(request.params['id']!);
+    const c = conversationList.get(request.params['id']!);
     if (c === undefined) return notFound();
     const datos = cuerpo<{ profileId?: string; readerProfileId?: string }>(request);
     const yo = datos.profileId ?? datos.readerProfileId ?? vitrinaDeSesion(request)?.id ?? '';
-    conversaciones.actualizar(c.id, { noLeidosPor: { ...c.noLeidosPor, [yo]: 0 } });
-    const ultimo = mensajes.filtrar((m) => m.conversationId === c.id).sort((a, b) => b.sentAt.localeCompare(a.sentAt))[0];
+    conversationList.actualizar(c.id, { noLeidosPor: { ...c.noLeidosPor, [yo]: 0 } });
+    const ultimo = messageList.filtrar((m) => m.conversationId === c.id).sort((a, b) => b.sentAt.localeCompare(a.sentAt))[0];
     return { receiptsRecorded: 1, lastReadMessageId: ultimo?.id ?? null };
   });
 
   router.get('/community/polls/:id', ({ params, query }) => {
-    if (params['id'] !== encuestaDePublicacion.id) return notFound('Encuesta no encontrada');
+    if (params['id'] !== postSurvey.id) return notFound('Encuesta no encontrada');
     const actor = texto(query, 'actorProfileId');
-    return { ...encuestaDePublicacion, actorVotedOptionIds: actor === null ? [] : [] };
+    return { ...postSurvey, actorVotedOptionIds: actor === null ? [] : [] };
   });
 
   /* ---- moderación ------------------------------------------------------------ */
 
   const cola = [
-    { id: uuid('mod-q-1'), contentTypeConceptId: CONCEPTO.moderation.contentPost, contentRefId: publicaciones.todos()[4]!.id, sourceConceptId: CONCEPTO.moderation.sourceReport, priorityConceptId: CONCEPTO.moderation.priorityHigh, statusConceptId: CONCEPTO.moderation.queued, assignedToUserId: null, queuedAt: iso(-1, 10), reportCount: 3, report: { id: uuid('report-1'), reasonConceptId: CONCEPTO.moderation.reasonMisinfo, detailText: 'Afirma que el protector solar causa deficiencia de vitamina D sin evidencia.', createdAt: iso(-1, 9) } },
-    { id: uuid('mod-q-2'), contentTypeConceptId: CONCEPTO.moderation.contentComment, contentRefId: comentarios.todos()[3]!.id, sourceConceptId: CONCEPTO.moderation.sourceAuto, priorityConceptId: CONCEPTO.moderation.priorityNormal, statusConceptId: CONCEPTO.moderation.inReview, assignedToUserId: uuid('user-admin'), queuedAt: iso(-3, 15), reportCount: 1, report: { id: uuid('report-2'), reasonConceptId: CONCEPTO.moderation.reasonSpam, detailText: 'Enlace repetido a una tienda externa.', createdAt: iso(-3, 14) } },
-    { id: uuid('mod-q-3'), contentTypeConceptId: CONCEPTO.moderation.contentReview, contentRefId: resenas.todos()[3]!.id, sourceConceptId: CONCEPTO.moderation.sourceReport, priorityConceptId: CONCEPTO.moderation.priorityHigh, statusConceptId: CONCEPTO.moderation.resolved, assignedToUserId: uuid('user-admin'), queuedAt: iso(-10, 11), reportCount: 2, report: { id: uuid('report-3'), reasonConceptId: CONCEPTO.moderation.reasonPhi, detailText: 'La reseña menciona el diagnóstico de otra persona.', createdAt: iso(-10, 10) } },
+    { id: uuid('mod-q-1'), contentTypeConceptId: CONCEPT.moderation.contentPost, contentRefId: postList.todos()[4]!.id, sourceConceptId: CONCEPT.moderation.sourceReport, priorityConceptId: CONCEPT.moderation.priorityHigh, statusConceptId: CONCEPT.moderation.queued, assignedToUserId: null, queuedAt: iso(-1, 10), reportCount: 3, report: { id: uuid('report-1'), reasonConceptId: CONCEPT.moderation.reasonMisinfo, detailText: 'Afirma que el protector solar causa deficiencia de vitamina D sin evidencia.', createdAt: iso(-1, 9) } },
+    { id: uuid('mod-q-2'), contentTypeConceptId: CONCEPT.moderation.contentComment, contentRefId: commentList.todos()[3]!.id, sourceConceptId: CONCEPT.moderation.sourceAuto, priorityConceptId: CONCEPT.moderation.priorityNormal, statusConceptId: CONCEPT.moderation.inReview, assignedToUserId: uuid('user-admin'), queuedAt: iso(-3, 15), reportCount: 1, report: { id: uuid('report-2'), reasonConceptId: CONCEPT.moderation.reasonSpam, detailText: 'Enlace repetido a una tienda externa.', createdAt: iso(-3, 14) } },
+    { id: uuid('mod-q-3'), contentTypeConceptId: CONCEPT.moderation.contentReview, contentRefId: reviewList.todos()[3]!.id, sourceConceptId: CONCEPT.moderation.sourceReport, priorityConceptId: CONCEPT.moderation.priorityHigh, statusConceptId: CONCEPT.moderation.resolved, assignedToUserId: uuid('user-admin'), queuedAt: iso(-10, 11), reportCount: 2, report: { id: uuid('report-3'), reasonConceptId: CONCEPT.moderation.reasonPhi, detailText: 'La reseña menciona el diagnóstico de otra persona.', createdAt: iso(-10, 10) } },
   ];
   const decisiones = [
-    { id: uuid('mod-d-1'), moderationQueueId: uuid('mod-q-3'), decisionConceptId: CONCEPTO.moderation.decisionRemoved, policyConceptId: CONCEPTO.moderation.policy, rationaleText: 'Expone información clínica de un tercero.', actionTakenConceptId: CONCEPTO.moderation.actionHide, decidedByUserId: uuid('user-admin'), decidedAt: iso(-9, 9) },
+    { id: uuid('mod-d-1'), moderationQueueId: uuid('mod-q-3'), decisionConceptId: CONCEPT.moderation.decisionRemoved, policyConceptId: CONCEPT.moderation.policy, rationaleText: 'Expone información clínica de un tercero.', actionTakenConceptId: CONCEPT.moderation.actionHide, decidedByUserId: uuid('user-admin'), decidedAt: iso(-9, 9) },
   ];
   const apelaciones = [
-    { id: uuid('mod-a-1'), moderationDecisionId: uuid('mod-d-1'), appellantProfileId: vitrinas.todos()[4]!.id, reasonText: 'No menciono a nadie por su nombre; hablo de mi propia experiencia.', statusConceptId: CONCEPTO.moderation.appealOpen, resolutionConceptId: null, reviewedByUserId: null, resolvedAt: null, createdAt: iso(-8, 16), decision: decisiones[0]! },
+    { id: uuid('mod-a-1'), moderationDecisionId: uuid('mod-d-1'), appellantProfileId: showcases.todos()[4]!.id, reasonText: 'No menciono a nadie por su nombre; hablo de mi propia experiencia.', statusConceptId: CONCEPT.moderation.appealOpen, resolutionConceptId: null, reviewedByUserId: null, resolvedAt: null, createdAt: iso(-8, 16), decision: decisiones[0]! },
   ];
 
   router.get('/community/moderation/queue', ({ query }) => paginar(cola, query, 20));
@@ -983,7 +983,7 @@ export function registrarComunidad(router: MockRouter): void {
    * puede apelar—.
    */
   const strikes: { readonly id: string; readonly moderationDecisionId: string; readonly subjectProfileId: string }[] = [
-    { id: uuid('mod-s-1'), moderationDecisionId: uuid('mod-d-1'), subjectProfileId: vitrinas.todos()[4]!.id },
+    { id: uuid('mod-s-1'), moderationDecisionId: uuid('mod-d-1'), subjectProfileId: showcases.todos()[4]!.id },
   ];
 
   /**
@@ -1011,7 +1011,7 @@ export function registrarComunidad(router: MockRouter): void {
         decisionConceptId: d.decisionConceptId,
         rationaleText: d.rationaleText === '' ? null : d.rationaleText,
         decidedAt: d.decidedAt,
-        appealable: !apelaciones.some((a) => a.moderationDecisionId === d.id && a.statusConceptId === CONCEPTO.moderation.appealOpen),
+        appealable: !apelaciones.some((a) => a.moderationDecisionId === d.id && a.statusConceptId === CONCEPT.moderation.appealOpen),
       }));
     const page = paginar(own, request.query, 20);
     // `count` es lo que trae ESTA página, como en la API; no el total.
@@ -1023,8 +1023,8 @@ export function registrarComunidad(router: MockRouter): void {
   router.post('/community/moderation/queue/:id/decision', (request) => {
     const datos = cuerpo<{ decision: string; rationaleText: string; subjectProfileId?: string; strikeSeverity?: string }>(request);
     const item = cola.find((q) => q.id === request.params['id']);
-    if (item !== undefined) (item as { statusConceptId: string }).statusConceptId = CONCEPTO.moderation.resolved;
-    const nueva = { id: nuevoId('mod-d'), moderationQueueId: request.params['id']!, decisionConceptId: datos.decision === 'REMOVED' ? CONCEPTO.moderation.decisionRemoved : datos.decision === 'WARNED' ? CONCEPTO.moderation.decisionWarned : CONCEPTO.moderation.decisionDismissed, policyConceptId: CONCEPTO.moderation.policy, rationaleText: datos.rationaleText ?? '', actionTakenConceptId: CONCEPTO.moderation.actionHide, decidedByUserId: request.user?.id ?? '', decidedAt: ahora() };
+    if (item !== undefined) (item as { statusConceptId: string }).statusConceptId = CONCEPT.moderation.resolved;
+    const nueva = { id: nuevoId('mod-d'), moderationQueueId: request.params['id']!, decisionConceptId: datos.decision === 'REMOVED' ? CONCEPT.moderation.decisionRemoved : datos.decision === 'WARNED' ? CONCEPT.moderation.decisionWarned : CONCEPT.moderation.decisionDismissed, policyConceptId: CONCEPT.moderation.policy, rationaleText: datos.rationaleText ?? '', actionTakenConceptId: CONCEPT.moderation.actionHide, decidedByUserId: request.user?.id ?? '', decidedAt: ahora() };
     decisiones.push(nueva);
     // Como en la API: hay strike sólo si la decisión sanciona y trae sujeto y
     // severidad. Sin él, la decisión no aparece en «Mis sanciones» de nadie.
@@ -1039,7 +1039,7 @@ export function registrarComunidad(router: MockRouter): void {
   router.post('/community/moderation/decisions/:id/appeal', (request) => {
     const datos = cuerpo<{ appellantProfileId: string; reasonText: string }>(request);
     const decision = decisiones.find((d) => d.id === request.params['id']);
-    const nueva = { id: nuevoId('mod-a'), moderationDecisionId: request.params['id']!, appellantProfileId: datos.appellantProfileId ?? '', reasonText: datos.reasonText ?? '', statusConceptId: CONCEPTO.moderation.appealOpen, resolutionConceptId: null, reviewedByUserId: null, resolvedAt: null, createdAt: ahora(), decision: decision ?? decisiones[0]! };
+    const nueva = { id: nuevoId('mod-a'), moderationDecisionId: request.params['id']!, appellantProfileId: datos.appellantProfileId ?? '', reasonText: datos.reasonText ?? '', statusConceptId: CONCEPT.moderation.appealOpen, resolutionConceptId: null, reviewedByUserId: null, resolvedAt: null, createdAt: ahora(), decision: decision ?? decisiones[0]! };
     apelaciones.push(nueva);
     return { status: 201, body: { id: nueva.id } };
   });
@@ -1049,7 +1049,7 @@ export function registrarComunidad(router: MockRouter): void {
     const a = apelaciones.find((x) => x.id === request.params['id']);
     if (a === undefined) return notFound();
     const mutable = a as { statusConceptId: string; resolutionConceptId: string | null; reviewedByUserId: string | null; resolvedAt: string | null };
-    mutable.statusConceptId = datos.resolution === 'OVERTURNED' ? CONCEPTO.moderation.appealOverturned : CONCEPTO.moderation.appealUpheld;
+    mutable.statusConceptId = datos.resolution === 'OVERTURNED' ? CONCEPT.moderation.appealOverturned : CONCEPT.moderation.appealUpheld;
     mutable.resolutionConceptId = mutable.statusConceptId;
     mutable.reviewedByUserId = request.user?.id ?? '';
     mutable.resolvedAt = ahora();

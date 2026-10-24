@@ -5,7 +5,7 @@
 **Rama al momento de escribir:** `refactor/auditoria-atomic-design`
 
 Este documento reúne en un solo lugar lo que hoy está repartido en `ESTADO-FRONTEND.md`,
-`AVANCE-FRONTEND-2026-08-01.md`, `PENDIENTES-BACKEND.md`, `COORDINACION-AGENTES.md` y
+`docs/progress/archive/AVANCE-FRONTEND-2026-08-01.md`, `PENDIENTES-BACKEND.md`, `COORDINACION-AGENTES.md` y
 `docs/auditoria/`. No los reemplaza: cada uno conserva el detalle fino de su tema.
 
 ---
@@ -46,7 +46,7 @@ ca3a245  ← merge-base: el ancestro común de las dos líneas
 | Commits desde el ancestro | 24 | 3 |
 | Qué hizo | Ciclo de autenticación completo, 7 pantallas, capa HTTP, modelo de errores | Reparó el build, reclasificó el design system, alias e ESLint |
 | Pruebas al cierre | **778** en 68 archivos | **211** en 22 archivos |
-| Documentado en | `ESTADO-FRONTEND.md`, `AVANCE-FRONTEND-2026-08-01.md` | `docs/auditoria/01`, `docs/auditoria/02` |
+| Documentado en | `ESTADO-FRONTEND.md`, `docs/progress/archive/AVANCE-FRONTEND-2026-08-01.md` | `docs/auditoria/01`, `docs/auditoria/02` |
 
 **Por qué chocan:** la línea B **movió y renombró media estructura** de `shared/` (componentes que
 cambiaron de nivel atómico, tipos que cambiaron de archivo, alias `@shared` nuevos). La línea A
@@ -54,7 +54,7 @@ construyó todo un sistema de autenticación **sobre las rutas viejas**, sin sab
 De ahí los errores de import de ahora.
 
 **Además, dentro de la propia línea A hubo un segundo tenedor** (documentado en
-`AVANCE-FRONTEND-2026-08-01.md` §2): dos implementaciones independientes de login, recuperación de
+`docs/progress/archive/AVANCE-FRONTEND-2026-08-01.md` §2): dos implementaciones independientes de login, recuperación de
 contraseña, `AuthService`, guard y modelo de errores — una del agente de Pablo en `origin/dev`, otra
 en `justin/avance-2026-08-01`. Ambas funcionan y ambas tienen pruebas. Esa reconciliación **es una
 decisión de qué implementación queda en cada pieza**, no un conflicto textual.
@@ -326,6 +326,6 @@ porque instancia el sistema de diseño entero, y nunca se descarga si nadie la a
 
 ---
 
-*Consolidado a partir de `ESTADO-FRONTEND.md`, `AVANCE-FRONTEND-2026-08-01.md`,
+*Consolidado a partir de `ESTADO-FRONTEND.md`, `docs/progress/archive/AVANCE-FRONTEND-2026-08-01.md`,
 `PENDIENTES-BACKEND.md`, `COORDINACION-AGENTES.md`, `docs/auditoria/01-diagnostico.md` y
 `docs/auditoria/02-fases-ejecutadas.md`, más inspección directa del repositorio.*

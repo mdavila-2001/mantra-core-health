@@ -23,11 +23,12 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 
 /** Largos que declara `CreateChildTenantDto`. */
@@ -58,7 +59,7 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
   imports: [
     Alert,
     AnnounceOnAppear,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -74,6 +75,20 @@ export class ChildOrganizationNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  /** Si ya se avisó que la búsqueda de personas no está en la API. */
+  private busquedaNoDisponibleAvisada = false;
+
+  /**
+   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
+   * §2): se dice qué falta, una sola vez y no en cada tecla.
+   */
+  private avisarBusquedaNoDisponible(error: unknown): void {
+    const aviso = unavailableMessageOf(error);
+    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
+    this.busquedaNoDisponibleAvisada = true;
+    this.toast.warning(aviso);
+  }
 
   /**
    * La organización madre, del segmento `:tenantId`.
@@ -130,7 +145,7 @@ export class ChildOrganizationNew {
    * controles de texto.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Identificación',
         hint: 'Con qué se la encuentra en la plataforma.',
@@ -291,9 +306,10 @@ export class ChildOrganizationNew {
         );
         this.buscandoAdmin.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.candidatosAdmin.set([]);
         this.buscandoAdmin.set(false);
+        this.avisarBusquedaNoDisponible(error);
       },
     });
   }

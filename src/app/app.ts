@@ -7,7 +7,7 @@ import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 import { environment } from '../environments/environment';
 import { MockBanner } from './core/mock/mock-banner';
-import { AvisoDeHuecoLibre } from './features/notifications/aviso-de-hueco-libre';
+import { FreeGapNotice } from './features/notifications/free-slot-notice';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +20,7 @@ export class App {
   private readonly alovida = inject(AlovidaRuntimeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly huecosLibres = inject(AvisoDeHuecoLibre);
+  private readonly huecosLibres = inject(FreeGapNotice);
 
   /**
    * Sólo con el simulador encendido (H1.S2.M1). Contra la API real el cartel
@@ -38,8 +38,8 @@ export class App {
     this.alovida.instalar();
     /* El aviso de cupo libre del punto 3.4 del registro de procesos. Se
        enciende solo en la maqueta y sólo con sesión abierta: contra la API real
-       el empujón lo da el servidor (módulo 35). Ver `aviso-de-hueco-libre.ts`. */
-    this.huecosLibres.empezar();
+       el empujón lo da el servidor (módulo 35). Ver `free-slot-notice.ts`. */
+    this.huecosLibres.start();
     this.aplicarPantalla();
     this.router.events
       .pipe(

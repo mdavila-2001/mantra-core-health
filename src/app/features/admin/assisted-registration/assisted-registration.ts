@@ -24,11 +24,11 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CamposDeNombreEnLinea } from '../../auth/registro-compartido/campos-de-nombre-en-linea/campos-de-nombre-en-linea';
-import { grupoDeNombre } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { InlineNameFields } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
+import { nameGroup } from '../../auth/shared-registration/name-fields/person-name';
+import { joinNames } from '../../../core/profession/additional-names';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Largos que exige `AssistedRegistrationDto` en el backend. */
@@ -76,8 +76,8 @@ const MAX_MOTIVO = 500;
     Link,
     PageHeader,
     PaginatedForm,
-    CampoPersonalizado,
-    CamposDeNombreEnLinea,
+    CustomField,
+    InlineNameFields,
     RouterLink,
   ],
   templateUrl: './assisted-registration.html',
@@ -98,7 +98,7 @@ export class AssistedRegistration {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Datos del paciente',
       hint: 'Lo mínimo para crear la cuenta; el resto lo completa su filiación.',
@@ -122,7 +122,7 @@ export class AssistedRegistration {
     // El nombre va desglosado, no en un campo libre: es como lo emite el
     // documento de identidad y como se comparan dos personas al buscar
     // duplicados.
-    patientName: grupoDeNombre(true),
+    patientName: nameGroup(true),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -211,7 +211,7 @@ export class AssistedRegistration {
     const { patientName, email, reason } = this.form.getRawValue();
     // El backend no tiene columna para el tercer nombre ni los agregados: se
     // pliegan en `middleName`, igual que en el alta de paciente.
-    const segundoNombre = unirNombres([
+    const segundoNombre = joinNames([
       patientName.middleName,
       patientName.thirdName,
       ...patientName.extraNames,

@@ -1,0 +1,269 @@
+:host {
+  display: block;
+}
+
+/* Centrado y a lo ancho del área de contenido (regla §6 del front). */
+.ruta {
+  display: grid;
+  gap: var(--sp-6);
+  inline-size: 100%;
+  margin-inline: auto;
+  padding-block: var(--sp-4) var(--sp-12);
+}
+
+.ruta__buscador {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-6);
+}
+
+/* ---- recorrido ------------------------------------------------------------ */
+
+.ruta__recorrido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.ruta__recorrido ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ruta__recorrido li + li::before {
+  content: '›';
+  margin-inline-end: var(--sp-2);
+}
+
+.ruta__recorrido button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---- el mapa: término central y zonas ----------------------------------- */
+
+/* Móvil primero: el término arriba y las zonas apiladas en orden clínico. */
+.ruta__mapa {
+  display: grid;
+  gap: var(--sp-6);
+  grid-template-areas:
+    'foco'
+    'hallazgos'
+    'siguiente'
+    'contexto';
+}
+
+.ruta__foco {
+  grid-area: foco;
+  display: grid;
+  gap: var(--sp-2);
+  align-content: start;
+  padding: var(--sp-5);
+  border: 2px solid var(--st-primary-bd);
+  border-radius: var(--r-xl);
+  background: var(--st-primary-bg);
+  color: var(--text-primary);
+}
+
+.ruta__foco h2 {
+  margin: 0;
+  font-size: var(--fs-h2);
+  overflow-wrap: anywhere;
+}
+
+.ruta__foco-categoria,
+.ruta__zona-titulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ruta__foco-categoria {
+  color: var(--st-primary-fg);
+}
+
+.ruta__foco-definicion {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+}
+
+.ruta__foco-resumen,
+.ruta__grupo-aviso {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.ruta__foco-enlace {
+  justify-self: start;
+  color: var(--text-link);
+  font-weight: 600;
+}
+
+.ruta__zona {
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+  min-inline-size: 0;
+}
+
+.ruta__zona--hallazgos {
+  grid-area: hallazgos;
+}
+
+.ruta__zona--siguiente {
+  grid-area: siguiente;
+}
+
+.ruta__zona--contexto {
+  grid-area: contexto;
+}
+
+.ruta__columnas {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  align-items: start;
+}
+
+/* ---- columnas ----------------------------------------------------------- */
+
+.ruta__grupo {
+  display: grid;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-block-start: 3px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+/* La zona se lee también por el borde, nunca sólo por él: cada una tiene título. */
+.ruta__zona--hallazgos .ruta__grupo {
+  border-block-start-color: var(--st-secondary-bd);
+}
+
+.ruta__zona--siguiente .ruta__grupo {
+  border-block-start-color: var(--st-primary-bd);
+}
+
+.ruta__grupo-titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+
+.ruta__grupo-total {
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.ruta__vecinos {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ruta__vecino,
+.ruta__grupo-accion {
+  min-block-size: 2.75rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ruta__vecino {
+  inline-size: 100%;
+  color: var(--text-primary);
+  line-height: 1.35;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.ruta__vecino:hover {
+  background: var(--bg-hover);
+}
+
+.ruta__grupo-accion {
+  justify-self: start;
+  border: 1px solid var(--border-default);
+  color: var(--text-link);
+  font-weight: 600;
+}
+
+.ruta__aviso {
+  margin: var(--sp-6) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* ---- escritorio: lo que se observa | término | lo que sigue -------------- */
+
+@media (min-width: 1024px) {
+  .ruta__mapa {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem) minmax(0, 2fr);
+    grid-template-areas:
+      'hallazgos foco siguiente'
+      'contexto contexto contexto';
+    align-items: start;
+  }
+
+  /* Sin una de las zonas laterales no queda una columna vacía reservada. */
+  .ruta__mapa--sin-hallazgos {
+    grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+    grid-template-areas:
+      'foco siguiente'
+      'contexto contexto';
+  }
+
+  .ruta__mapa--sin-siguiente {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    grid-template-areas:
+      'hallazgos foco'
+      'contexto contexto';
+  }
+
+  .ruta__mapa--sin-hallazgos.ruta__mapa--sin-siguiente {
+    grid-template-columns: minmax(16rem, 1fr);
+    grid-template-areas:
+      'foco'
+      'contexto';
+  }
+
+  .ruta__zona--hallazgos .ruta__columnas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

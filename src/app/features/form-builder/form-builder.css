@@ -112,7 +112,7 @@
 /* ---- el catálogo de formularios -----------------------------------------
 
    La rejilla, la tarjeta, el ícono, el nombre y el renglón de dato los pone
-   `rejilla-de-tarjetas.css`, que es la MISMA disciplina de «Mis servicios» y
+   `card-grid.css`, que es la MISMA disciplina de «Mis servicios» y
    de las portadas de los directorios. Acá abajo va sólo lo que esta pantalla
    suma: el rótulo de especialidad, el pie con el conteo y la flecha, y el
    organismo de origen. Nada de colores ni radios propios — la tarjeta de este

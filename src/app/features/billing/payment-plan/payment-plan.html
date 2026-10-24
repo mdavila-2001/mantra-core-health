@@ -1,0 +1,177 @@
+@if (plan(); as p) {
+  <section class="plan" aria-labelledby="plan-titulo" data-testid="plan-de-pagos">
+    <header class="plan__encabezado">
+      <h3 id="plan-titulo" class="plan__titulo">Plan de pagos · {{ p.serviceName }}</h3>
+      <app-chip size="sm" [variant]="statusTone[status()]">{{ statusLabel[status()] }}</app-chip>
+    </header>
+
+    <!-- Las tres cifras primero: es la pregunta que se hace con la persona enfrente. -->
+    <dl class="plan__cifras" data-testid="plan-cifras">
+      <div class="plan__cifra">
+        <dt>Monto a cobrar</dt>
+        <dd>{{ bs(p.expectedTotal) }}</dd>
+      </div>
+      <div class="plan__cifra">
+        <dt>Monto pagado</dt>
+        <dd data-testid="plan-pagado">{{ bs(p.paidTotal) }}</dd>
+      </div>
+      <div class="plan__cifra" [class.plan__cifra--saldo]="!p.complete">
+        <dt>Saldo</dt>
+        <dd data-testid="plan-saldo">{{ bs(p.balance) }}</dd>
+      </div>
+    </dl>
+
+    <app-data-table
+      [state]="rows()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      [rowLabel]="rowName"
+      caption="Instancias del servicio: lo que se esperaba cobrar, lo pagado y su nota de venta"
+      fitContainer
+      data-testid="plan-tabla"
+    />
+
+    <!-- Saldado, lo dice el cierre de abajo: dos avisos verdes seguidos repetían lo mismo.
+         Sin rol propio: `app-alert` ya es la región viva. -->
+    @if (ultimaNote(); as aviso) {
+      @if (!p.complete && !focusClosing()) {
+        <!-- tabindex -1: recibe el foco después de registrar el pago. -->
+        <div #avisoDeNota class="plan__aviso" tabindex="-1" data-testid="plan-ultima-nota">
+          <app-alert tone="success" title="Pago registrado (SIMULADO)">{{ aviso }}</app-alert>
+        </div>
+      }
+    }
+
+    @if (paying(); as instancia) {
+      <form class="plan__pago" [formGroup]="form" (ngSubmit)="registerPayment()" data-testid="plan-formulario-de-pago">
+        <!-- tabindex -1: recibe el foco al abrirse, sin entrar en el orden de tabulación. -->
+        <h4 #tituloDelPago class="plan__pago-titulo" tabindex="-1">
+          Pago de «{{ instancia.label }}» · saldo {{ bs(instancia.balance) }}
+        </h4>
+        <p class="plan__nota">
+          Mientras el plan tenga saldo, cada pago lleva <strong>nota de venta</strong>, no factura. La factura se
+          emite por el total del servicio cuando el plan queda saldado.
+        </p>
+        <div class="plan__campos">
+          <app-form-field label="Medio de pago" [required]="true" hint="Catálogo simulado">
+            <app-select formControlName="methodCode" [options]="metodos()" placeholder="Elija un medio" />
+          </app-form-field>
+          <app-form-field
+            label="Monto recibido (Bs)"
+            [required]="true"
+            [hint]="'Hasta ' + bs(instancia.balance)"
+            [errorMessage]="
+              amountError() ??
+              (form.controls.amount.touched && form.controls.amount.invalid
+                ? 'Un importe con hasta dos decimales, por ejemplo 180.00.'
+                : '')
+            "
+          >
+            <app-input formControlName="amount" inputMode="decimal" testId="plan-monto" />
+          </app-form-field>
+        </div>
+        @if (error(); as mensaje) {
+          <app-alert tone="error" title="No se registró el pago">{{ mensaje }}</app-alert>
+        }
+        <div class="plan__acciones">
+          <button app-button type="submit" [isLoading]="sending()" [disabled]="sending()" data-testid="plan-confirmar-pago">
+            Emitir nota de venta
+          </button>
+          <button app-button type="button" variant="ghost" [disabled]="sending()" (clicked)="cancelPayment()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (p.complete) {
+      <!-- tabindex -1: recibe el foco cuando el último pago salda el plan. -->
+      <div #cierre class="plan__cierre" tabindex="-1" data-testid="plan-saldado">
+        @if (current()) {
+          <p class="plan__nota">
+            Plan saldado y facturado: la factura N.º {{ cobro().latestInvoice?.invoiceNumber }} cubre el total del
+            servicio.
+          </p>
+          @if (ofrecerFactura()) {
+            <button app-button variant="outline" (clicked)="facturar.emit()" data-testid="plan-ver-factura">Ver factura</button>
+          }
+        } @else {
+          <app-alert tone="success" title="Plan saldado">
+            @if (ultimaNote(); as aviso) {
+              {{ aviso }}
+            } @else {
+              Ya no quedan instancias por pagar.
+            }
+            Corresponde la factura por el total del servicio, {{ bs(p.expectedTotal) }}, emitida contra el
+            SIAT simulado.
+          </app-alert>
+          @if (ofrecerFactura()) {
+            <button app-button (clicked)="facturar.emit()" data-testid="plan-generar-factura">Generar factura</button>
+          }
+        }
+      </div>
+    }
+  </section>
+}
+
+<!-- Celdas con presentación propia: la tabla las instancia por fila. -->
+<ng-template #itemCell let-instancia>
+  <span class="plan__item">{{ instancia.label }}</span>
+  <span class="plan__secundario plan__solo-movil">
+    Pagado {{ bs(instancia.paidAmount) }} de {{ bs(instancia.expectedAmount) }}
+  </span>
+  <span class="plan__secundario">
+    @if (instancia.scheduledAt) {
+      {{ instancia.kind === 'CONSULTATION' ? 'Atendida' : 'Agendada' }} el {{ date(instancia.scheduledAt) }}
+    } @else {
+      Sin agendar
+    }
+  </span>
+</ng-template>
+
+<ng-template #esperadoCell let-instancia>
+  <span class="plan__importe">{{ bs(instancia.expectedAmount) }}</span>
+</ng-template>
+
+<ng-template #pagadoCell let-instancia>
+  <span class="plan__importe">{{ bs(instancia.paidAmount) }}</span>
+  @if (instancia.balance !== '0.00' && instancia.paidAmount !== '0.00') {
+    <span class="plan__secundario">Saldo {{ bs(instancia.balance) }}</span>
+  }
+</ng-template>
+
+<ng-template #comprobanteCell let-instancia>
+  @for (nota of instancia.salesNotes; track nota.id) {
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      class="plan__nota-de-venta"
+      title="Descargar la nota de venta (PDF)"
+      [attr.aria-label]="'Descargar la nota de venta ' + nota.number + ' de ' + instancia.label"
+      (clicked)="download(instancia, nota)"
+    >
+      <span aria-hidden="true">⤓</span> {{ nota.number }} · {{ bs(nota.amount) }}
+    </button>
+  } @empty {
+    <span class="plan__secundario">Sin pagos</span>
+  }
+</ng-template>
+
+<ng-template #accionCell let-instancia>
+  @if (instancia.balance === '0.00') {
+    <app-chip size="sm" variant="success">Pagada</app-chip>
+  } @else {
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      [attr.aria-label]="'Registrar pago de ' + instancia.label"
+      [attr.data-instancia-id]="instancia.id"
+      [disabled]="sending()"
+      (clicked)="openPayment(instancia)"
+    >
+      Registrar pago
+    </button>
+  }
+</ng-template>

@@ -9,7 +9,7 @@ import type {
   MyInvoicesView,
 } from '@core/data-access/billing-simulated/billing-simulated.types';
 
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
+import { SIMULATED_AVAILABLE_INVOICING } from '../../billing/invoicing-availability';
 import { MyInvoices } from './my-invoices';
 
 /**
@@ -55,7 +55,7 @@ describe('MyInvoices', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => disponible },
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => disponible },
       ],
     });
     http = TestBed.inject(HttpTestingController);

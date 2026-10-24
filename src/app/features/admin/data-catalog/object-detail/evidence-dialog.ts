@@ -3,6 +3,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 
 import { DataCatalogClient } from '../../../../core/data-access/admin-portal/data-catalog.client';
 import type { Evidence, EvidenceKind } from '../../../../core/data-access/admin-portal/data-catalog.types';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -10,7 +11,6 @@ import { Textarea } from '../../../../shared/components/atoms/textarea/textarea'
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import { errorDeApi } from '../../platform/platform-labels';
 
 export const EVIDENCE_KINDS: readonly { readonly value: EvidenceKind; readonly label: string }[] = [
   { value: 'VAULT_NOTE', label: 'Nota de la bóveda del modelo' },
@@ -110,7 +110,7 @@ export class EvidenceDialog {
         },
         error: (e: unknown) => {
           this.guardando.set(false);
-          this.error.set(errorDeApi(e).message ?? 'No se pudo añadir la evidencia.');
+          this.error.set(describeApiFailure(e, 'No se pudo añadir la evidencia. Intente de nuevo.'));
         },
       });
   }

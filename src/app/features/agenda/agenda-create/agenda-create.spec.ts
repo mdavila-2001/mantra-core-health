@@ -9,6 +9,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { AgendaCreate } from './agenda-create';
+import { environment } from '../../../../environments/environment';
 
 const TENANT = '11111111-1111-1111-1111-111111111111';
 const PERFIL = '22222222-2222-2222-2222-222222222222';
@@ -65,6 +66,14 @@ interface Testable {
  * aserciones de contrato son las más importantes de este archivo: si alguna se
  * cae, el rediseño dejó de ser un rediseño.
  */
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
+
 describe('AgendaCreate', () => {
   let fixture: ComponentFixture<AgendaCreate>;
   let http: HttpTestingController;

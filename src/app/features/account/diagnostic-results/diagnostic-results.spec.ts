@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { selectOptionLabels } from '../../../../testing/select';
 import { DiagnosticResults } from './diagnostic-results';
 
 const REPORT_ID = '11111111-1111-4111-8111-111111111111';
@@ -181,7 +182,8 @@ describe('DiagnosticResults', () => {
 
     const texto = fixture.nativeElement.textContent as string;
     expect(texto).toContain('Valores dentro de rango.');
-    expect(texto).toContain('Descargar Archivo 1');
+    // Un solo archivo y el catálogo sin resolver: «Informe», no «Archivo 1».
+    expect(texto).toContain('Descargar Informe');
     // Ni el identificador del informe ni el del archivo llegan a pantalla.
     expect(texto).not.toContain(REPORT_ID);
     expect(texto).not.toContain(FILE_ID);
@@ -272,7 +274,7 @@ describe('DiagnosticResults', () => {
     expect(texto).toContain('Vigente');
   });
 
-  it('aceptado: ofrece elegir por nombre entre las relaciones asistenciales vigentes', () => {
+  it('aceptado: ofrece elegir por nombre entre las relaciones asistenciales vigentes', async () => {
     configurar(PROFILE_ID);
     mount();
     responderResultados([RESULTADO]);
@@ -300,8 +302,11 @@ describe('DiagnosticResults', () => {
 
     const select = fixture.nativeElement.querySelector('#destinatario');
     expect(select).not.toBeNull();
+    // Las opciones viven en la lista del desplegable, que se abre al tocarlo.
+    const opciones = await selectOptionLabels(fixture, select);
+    expect(opciones).toContain('Marta Rivas');
+    expect(opciones).not.toContain('Juan Paz');
     const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('Marta Rivas');
     expect(texto).not.toContain('Juan Paz');
   });
 

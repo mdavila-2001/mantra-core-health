@@ -151,6 +151,25 @@ describe('Composer', () => {
     expect(area.value).toBe('Un texto que costó escribir.');
   });
 
+  it('si la API explica el rechazo, lo dice con el código de soporte y conserva lo escrito', () => {
+    montar();
+    escribir('Un texto que costó escribir.');
+    publicar();
+
+    http
+      .expectOne((r) => r.url === '/community/profiles/pp-1/posts')
+      .flush(
+        { code: 'RATE_LIMITED', message: 'Publicó demasiadas veces seguidas. Espere un momento.', correlationId: 'corr-pub', timestamp: '', path: '' },
+        { status: 429, statusText: 'Too Many Requests' },
+      );
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Publicó demasiadas veces seguidas. Espere un momento. (Código de soporte: corr-pub)');
+    expect((fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement).value).toBe(
+      'Un texto que costó escribir.',
+    );
+  });
+
   /**
    * El punto de extensión de P5 tiene que estar visible y apagado, con el motivo
    * escrito. Un selector de archivos que no sube nada sería peor.

@@ -1,0 +1,9 @@
+{
+  "neutro sin sesión: las tres vistas en 375, 768 y 1440 claro, y 1440 oscuro": [
+    "[API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}",
+    "[API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}",
+    "[API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}",
+    "[API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}",
+    "[API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}"
+  ]
+}

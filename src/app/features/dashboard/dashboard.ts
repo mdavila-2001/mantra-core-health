@@ -19,8 +19,8 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { AccessTree } from './access-tree/access-tree';
-import { AgendaDeHoy } from './agenda-de-hoy/agenda-de-hoy';
-import { ConsultasResumen } from './consultas-resumen/consultas-resumen';
+import { TodayAgenda } from './today-agenda/today-agenda';
+import { SummaryConsultations } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -58,7 +58,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
  *
  * Lo que quedó responde tres preguntas, en este orden:
  *
- * 1. **¿Qué toca hoy?** — `app-agenda-de-hoy`: la jornada de quien atiende, con
+ * 1. **¿Qué toca hoy?** — `app-today-agenda`: la jornada de quien atiende, con
  *    su forma, lo que pasa ahora y salida a la agenda completa.
  * 2. **¿A dónde puedo ir?** — las secciones que los roles de la sesión
  *    habilitan, repartidas por zonas. Es la misma lista que arma el menú
@@ -78,9 +78,9 @@ const ROLES_DE_TRABAJO: readonly string[] = [
   selector: 'app-dashboard',
   imports: [
     AccessTree,
-    AgendaDeHoy,
+    TodayAgenda,
     Card,
-    ConsultasResumen,
+    SummaryConsultations,
     Alert,
     AppButtonLink,
     PageHeader,
@@ -136,6 +136,17 @@ export class Dashboard {
    * que se quedaría siempre en el vacío.
    */
   protected readonly atiendePacientes = computed(() => this.auth.practitionerProfileId() !== null);
+
+  /**
+   * El título saluda por el nombre, igual que el panel del paciente.
+   *
+   * Si el token no trae nombre vuelve a «Panel»: un «Hola, » colgando se lee
+   * como un error.
+   */
+  protected readonly tituloDelPanel = computed(() => {
+    const nombre = this.auth.displayName() ?? '';
+    return nombre === '' ? 'Panel' : `Hola, ${nombre}`;
+  });
 
   /** El subtítulo dice lo que la pantalla trae, y eso depende de quién entró. */
   protected readonly subtituloDelPanel = computed(() =>

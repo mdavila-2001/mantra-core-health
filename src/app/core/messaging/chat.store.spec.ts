@@ -372,13 +372,39 @@ describe('ChatStore', () => {
       http
         .expectOne((r) => r.url === '/community/conversations/c-1/messages/m-1')
         .flush(
-          { statusCode: 422, message: 'Fuera de ventana' },
+          {
+            code: 'PRECONDITION_FAILED',
+            message: 'Pasaron más de 5 minutos: el mensaje ya no se puede editar',
+            correlationId: 'corr-edit',
+            timestamp: '',
+            path: '',
+          },
           { status: 422, statusText: 'Unprocessable Entity' },
         );
 
       expect(store.enOrden()[0].bodyText).toBe('Original');
       expect(store.enOrden()[0].isEdited).toBe(false);
-      expect(store.error()).toContain('5 minutos');
+      // El plazo lo dice la API, no la pantalla.
+      expect(store.error()).toBe(
+        'Pasaron más de 5 minutos: el mensaje ya no se puede editar (Código de soporte: corr-edit)',
+      );
+    });
+
+    it('un fallo del servidor al editar no se presenta como plazo vencido', () => {
+      conHilo([propio('m-1', 60_000, 'Original')]);
+      store.editar(store.enOrden()[0]);
+      store.confirmarEdicion('Cambiado');
+
+      http
+        .expectOne((r) => r.url === '/community/conversations/c-1/messages/m-1')
+        .flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-500', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        );
+
+      expect(store.enOrden()[0].bodyText).toBe('Original');
+      expect(store.error()).toBe('No pudimos editar el mensaje. Intente de nuevo. (Código de soporte: corr-500)');
+      expect(store.error()).not.toContain('5 minutos');
     });
 
     it('sin cambios no manda nada: no marca editado lo que nadie editó', () => {
@@ -652,11 +678,14 @@ describe('ChatStore', () => {
       store.exportarConversacion((salida) => (json = salida));
       http
         .expectOne((r) => r.url === '/community/conversations/c-1/messages')
-        .error(new ProgressEvent('error'));
+        .flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-exp', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        );
 
       expect(json).toBeNull();
       expect(store.exportando()).toBe(false);
-      expect(store.error()).toContain('descargar la conversación');
+      expect(store.error()).toBe('No pudimos descargar la conversación. (Código de soporte: corr-exp)');
     });
   });
 
@@ -774,9 +803,63 @@ describe('ChatStore', () => {
     store.recargarBandeja();
     http
       .expectOne((r) => r.url === '/community/conversations')
-      .error(new ProgressEvent('error'));
+      .flush(
+        { code: 'DEPENDENCY_UNAVAILABLE', message: '', correlationId: 'corr-bandeja', timestamp: '', path: '' },
+        { status: 503, statusText: 'Service Unavailable' },
+      );
 
     expect(store.conversaciones().length).toBe(1);
-    expect(store.error()).toBe('No pudimos cargar sus conversaciones.');
+    expect(store.error()).toBe('No pudimos cargar sus conversaciones. (Código de soporte: corr-bandeja)');
+  });
+
+  it('sin conexión, el aviso lo dice en vez de culpar a la conversación', () => {
+    encender();
+
+    store.recargarBandeja();
+    http
+      .expectOne((r) => r.url === '/community/conversations')
+      .error(new ProgressEvent('error'));
+
+    expect(store.error()).toBe('No hay conexión con el servidor. Revise su conexión e intente de nuevo.');
+  });
+
+  it('si falla la lectura de bloqueos, la lista vacía no se confunde con «no bloqueó a nadie»', () => {
+    encender();
+
+    http
+      .match((r) => r.url === '/community/blocks')
+      .forEach((pedido) =>
+        pedido.flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-blk', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        ),
+      );
+
+    expect(store.bloqueados()).toEqual([]);
+    expect(store.bloqueosFallaron()).toBe(true);
+    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. (Código de soporte: corr-blk)');
+  });
+
+  it('un envío que falla dice por qué, y reintentar limpia el aviso', () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([]);
+
+    store.enviar('Hola');
+    http
+      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
+      .flush(
+        { code: 'FORBIDDEN', message: 'Esta persona no recibe mensajes suyos.', correlationId: 'corr-env', timestamp: '', path: '' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+
+    expect(store.enOrden()[0].estado).toBe('fallado');
+    expect(store.error()).toBe('Esta persona no recibe mensajes suyos. (Código de soporte: corr-env)');
+
+    store.reintentar(store.enOrden()[0].pendiente!);
+    expect(store.error()).toBe('');
+    http
+      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
+      .flush({ id: 'm-9', conversationId: 'c-1', sentAt: '2026-09-08T11:00:00.000Z' });
   });
 });

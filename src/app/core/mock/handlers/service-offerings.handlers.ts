@@ -1,7 +1,7 @@
-import { ESTADO, ESTADO_RESERVA } from '../fixtures/conceptos';
+import { STATUS, BOOKING_STATUS } from '../fixtures/concepts';
 import { bloqueos, cupos, plantillas, recursos, reservas, type CupoSimulado, type RecursoSimulado, type ReservaSimulada } from '../fixtures/agenda';
-import { ofertas, type OfertaSimulada } from '../fixtures/servicios-ofrecidos';
-import { cabe, proponerInicios, sePuedenReabrir, tramoOcupado, type DuracionDeServicio, type Tramo } from '../disponibilidad-de-servicios';
+import { offers, type SimulatedOffer } from '../fixtures/offered-services';
+import { fits, proposeStarts, canReopen, busyBracket, type ServiceDuration, type Bracket } from '../service-availability';
 import { conflict, forbidden, notFound, reply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, texto } from '../mock-store';
 import { servicios } from './practice.handlers';
@@ -33,8 +33,8 @@ const COMPROMETEN = ['BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS'] as const
 
 const ROLES_QUE_ADMINISTRAN = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
 
-function estaEn(r: ReservaSimulada, estados: readonly (keyof typeof ESTADO_RESERVA)[]): boolean {
-  return estados.some((e) => ESTADO_RESERVA[e] === r.statusConceptId);
+function estaEn(r: ReservaSimulada, estados: readonly (keyof typeof BOOKING_STATUS)[]): boolean {
+  return estados.some((e) => BOOKING_STATUS[e] === r.statusConceptId);
 }
 
 function administra(request: MockRequest): boolean {
@@ -47,7 +47,7 @@ function preconditionFailed422(message: string, details: unknown = {}) {
 }
 
 /** La oferta con lo que el catálogo dice del servicio, como la sirve la API. */
-function aDto(o: OfertaSimulada) {
+function aDto(o: SimulatedOffer) {
   const s = servicios.get(o.serviceCatalogId);
   return {
     id: o.id,
@@ -68,7 +68,7 @@ function aDto(o: OfertaSimulada) {
   };
 }
 
-function duracionDe(o: OfertaSimulada): DuracionDeServicio {
+function duracionDe(o: SimulatedOffer): ServiceDuration {
   return { min: o.minDurationMinutes, max: o.maxDurationMinutes, preparacion: o.prepMinutes, limpieza: o.cleanupMinutes };
 }
 
@@ -89,10 +89,10 @@ function ymd(d: Date): string {
  * Una franja admite servicios si su modo es `SERVICES` o `MIXED`. Sin modo (la
  * franja de siempre) es sólo consultas: así se comportaba antes de este cambio.
  */
-function franjasDeServicios(sedes: readonly RecursoSimulado[], desde: number, hasta: number): { readonly resourceId: string; readonly franjas: Tramo[] }[] {
+function franjasDeServicios(sedes: readonly RecursoSimulado[], desde: number, hasta: number): { readonly resourceId: string; readonly franjas: Bracket[] }[] {
   return sedes.map((sede) => {
-    const franjas: Tramo[] = [];
-    const plantillasDeLaSede = plantillas.filtrar((t) => t.resourceId === sede.id && !t.retired && t.statusConceptId === ESTADO['ST-PUBLISHED']);
+    const franjas: Bracket[] = [];
+    const plantillasDeLaSede = plantillas.filtrar((t) => t.resourceId === sede.id && !t.retired && t.statusConceptId === STATUS['ST-PUBLISHED']);
     // Un día de margen por lado: un día local puede arrancar antes de `desde`.
     for (let d = new Date(desde - MS_POR_DIA); d.getTime() <= hasta + MS_POR_DIA; d.setDate(d.getDate() + 1)) {
       const dia = ymd(d);
@@ -134,12 +134,12 @@ function purgarRetencionesVencidas(sedes: readonly RecursoSimulado[]): void {
  * Todo lo que ocupa el tiempo del profesional en un rango, en todas sus sedes:
  * consultas confirmadas, bloqueos, y los turnos de servicio vivos con sus colchones.
  */
-function ocupadoDelProfesional(sedes: readonly RecursoSimulado[], desde: number, hasta: number): Tramo[] {
+function ocupadoDelProfesional(sedes: readonly RecursoSimulado[], desde: number, hasta: number): Bracket[] {
   const ids = new Set(sedes.map((s) => s.id));
   const desdeAncho = desde - MARGEN_DE_COLCHONES_MS;
   const hastaAncho = hasta + MARGEN_DE_COLCHONES_MS;
   const enRango = (inicio: number, fin: number): boolean => inicio < hastaAncho && fin > desdeAncho;
-  const ocupado: Tramo[] = [];
+  const ocupado: Bracket[] = [];
 
   for (const r of reservas.todos()) {
     if (!ids.has(r.resourceId) || !estaEn(r, COMPROMETEN)) continue;
@@ -159,26 +159,26 @@ function ocupadoDelProfesional(sedes: readonly RecursoSimulado[], desde: number,
     const inicio = new Date(c.startAt).getTime();
     const fin = new Date(c.endAt).getTime();
     if (!enRango(inicio, fin)) continue;
-    const oferta = ofertas.get(c.serviceOfferingId);
-    ocupado.push(tramoOcupado(inicio, fin, { preparacion: oferta?.prepMinutes ?? 0, limpieza: oferta?.cleanupMinutes ?? 0 }));
+    const oferta = offers.get(c.serviceOfferingId);
+    ocupado.push(busyBracket(inicio, fin, { preparacion: oferta?.prepMinutes ?? 0, limpieza: oferta?.cleanupMinutes ?? 0 }));
   }
   return ocupado;
 }
 
 /** Retira de la oferta los cupos de consulta intactos que el rango pisa. */
-function retraerConsultas(sedes: readonly RecursoSimulado[], tramo: Tramo): number {
+function retraerConsultas(sedes: readonly RecursoSimulado[], tramo: Bracket): number {
   const ids = new Set(sedes.map((s) => s.id));
   const pisados = cupos.filtrar(
     (c) =>
       ids.has(c.resourceId) &&
       (c.serviceOfferingId === undefined || c.serviceOfferingId === null) &&
-      c.statusConceptId === ESTADO['ST-ACTIVE'] &&
+      c.statusConceptId === STATUS['ST-ACTIVE'] &&
       c.remainingCapacity === c.capacity &&
       new Date(c.startAt).getTime() < tramo.hasta &&
       new Date(c.endAt).getTime() > tramo.desde,
   );
   // Retraído y no bloqueado: al bloqueado nadie lo devuelve, y al retraído sí.
-  for (const c of pisados) cupos.actualizar(c.id, { statusConceptId: ESTADO['ST-INACTIVE']!, retractedByService: true });
+  for (const c of pisados) cupos.actualizar(c.id, { statusConceptId: STATUS['ST-INACTIVE']!, retractedByService: true });
   return pisados.length;
 }
 
@@ -190,9 +190,9 @@ function reabrirConsultas(sedes: readonly RecursoSimulado[]): void {
   const desde = Math.min(...retraidos.map((c) => new Date(c.startAt).getTime()));
   const hasta = Math.max(...retraidos.map((c) => new Date(c.endAt).getTime()));
   const ocupado = ocupadoDelProfesional(sedes, desde, hasta);
-  const reabribles = new Set(sePuedenReabrir(retraidos.map((c) => ({ id: c.id, desde: new Date(c.startAt).getTime(), hasta: new Date(c.endAt).getTime() })), ocupado));
+  const reabribles = new Set(canReopen(retraidos.map((c) => ({ id: c.id, desde: new Date(c.startAt).getTime(), hasta: new Date(c.endAt).getTime() })), ocupado));
   for (const c of retraidos) {
-    if (reabribles.has(c.id)) cupos.actualizar(c.id, { statusConceptId: ESTADO['ST-ACTIVE']!, retractedByService: false });
+    if (reabribles.has(c.id)) cupos.actualizar(c.id, { statusConceptId: STATUS['ST-ACTIVE']!, retractedByService: false });
   }
 }
 
@@ -232,8 +232,8 @@ export function liberarSobranteDeServicio(reserva: ReservaSimulada): void {
 }
 
 /** La oferta, si quien pide puede verla. Un paciente sólo ve lo activo y reservable. */
-function ofertaVisible(request: MockRequest, id: string): OfertaSimulada | undefined {
-  const oferta = ofertas.get(id);
+function ofertaVisible(request: MockRequest, id: string): SimulatedOffer | undefined {
+  const oferta = offers.get(id);
   if (oferta === undefined) return undefined;
   if (administra(request) || request.user?.practitionerProfileId === oferta.practitionerProfileId) return oferta;
   const servicio = servicios.get(oferta.serviceCatalogId);
@@ -254,7 +254,7 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
     const pedido = texto(request.query, 'practitionerProfileId') ?? request.user?.practitionerProfileId;
     if (pedido === undefined || pedido === null) return preconditionFailed422('Indique de qué profesional quiere ver los servicios.');
     const veTodo = administra(request) || request.user?.practitionerProfileId === pedido;
-    const items = ofertas
+    const items = offers
       .filtrar((o) => o.practitionerProfileId === pedido)
       .filter((o) => veTodo || (o.isActive && o.isPatientBookable))
       .map(aDto)
@@ -271,7 +271,7 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
       cleanupMinutes: number;
       isPatientBookable: boolean;
       requiresApproval: boolean;
-      channel: OfertaSimulada['channel'];
+      channel: SimulatedOffer['channel'];
       practitionerProfileId: string;
     }>(request);
     // Sin pedido explícito la oferta es de quien atiende: hay quien atiende Y administra
@@ -290,10 +290,10 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
     const invalida = validarDuraciones(datos.minDurationMinutes ?? 0, datos.maxDurationMinutes ?? 0);
     if (invalida !== null) return invalida;
     if (!servicio.isActive) return preconditionFailed422('Ese servicio está inactivo en el catálogo.');
-    const existente = ofertas.todos().find((o) => o.practitionerProfileId === dueno && o.serviceCatalogId === servicio.id);
+    const existente = offers.todos().find((o) => o.practitionerProfileId === dueno && o.serviceCatalogId === servicio.id);
     if (existente !== undefined) return conflict('Ya ofrece ese servicio. Edite la oferta que ya tiene.', { offeringId: existente.id });
 
-    const nueva = ofertas.agregar({
+    const nueva = offers.agregar({
       id: nuevoId('offering'),
       practitionerProfileId: dueno,
       serviceCatalogId: servicio.id,
@@ -310,17 +310,17 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
   });
 
   router.patch('/scheduling/service-offerings/:id', (request) => {
-    const oferta = ofertas.get(request.params['id']!);
+    const oferta = offers.get(request.params['id']!);
     // 404 y no 403: una oferta ajena no se distingue de una inexistente.
     if (oferta === undefined || (!administra(request) && request.user?.practitionerProfileId !== oferta.practitionerProfileId)) {
       return notFound('Oferta no encontrada');
     }
-    const c = cuerpo<Omit<OfertaSimulada, 'id' | 'practitionerProfileId' | 'serviceCatalogId'>>(request);
+    const c = cuerpo<Omit<SimulatedOffer, 'id' | 'practitionerProfileId' | 'serviceCatalogId'>>(request);
     const min = c.minDurationMinutes ?? oferta.minDurationMinutes;
     const max = c.maxDurationMinutes ?? oferta.maxDurationMinutes;
     const invalida = validarDuraciones(min, max);
     if (invalida !== null) return invalida;
-    const cambios: Partial<OfertaSimulada> = {
+    const cambios: Partial<SimulatedOffer> = {
       minDurationMinutes: min,
       maxDurationMinutes: max,
       ...(c.prepMinutes === undefined ? {} : { prepMinutes: c.prepMinutes }),
@@ -330,7 +330,7 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
       ...(c.channel === undefined ? {} : { channel: c.channel }),
       ...(c.isActive === undefined ? {} : { isActive: c.isActive }),
     };
-    return aDto(ofertas.actualizar(oferta.id, cambios)!);
+    return aDto(offers.actualizar(oferta.id, cambios)!);
   });
 
   router.get('/scheduling/service-availability', (request) => {
@@ -348,7 +348,7 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
     const ocupado = ocupadoDelProfesional(sedesDe(oferta.practitionerProfileId), desde, hasta);
 
     const items = franjasDeServicios(sedes, desde, hasta).flatMap(({ resourceId, franjas }) =>
-      proponerInicios({ franjas, ocupado, duracion: duracionDe(oferta), noAntesDe: ahoraMs, noDespuesDe: hasta }).map((h) => ({
+      proposeStarts({ franjas, ocupado, duracion: duracionDe(oferta), noAntesDe: ahoraMs, noDespuesDe: hasta }).map((h) => ({
         resourceId,
         startAt: new Date(h.inicio).toISOString(),
         endAtMax: new Date(h.finMaximo).toISOString(),
@@ -375,11 +375,11 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
     purgarRetencionesVencidas(todasLasSedes);
     const ocupado = ocupadoDelProfesional(todasLasSedes, inicio, fin);
     const franjas = franjasDeServicios([sede], inicio - MS_POR_DIA, fin + MS_POR_DIA).flatMap((g) => g.franjas);
-    if (!cabe(franjas, ocupado, duracion, inicio)) {
+    if (!fits(franjas, ocupado, duracion, inicio)) {
       return conflict('Ese horario ya no está disponible para este servicio. Elija otro.', { offeringId: oferta.id, startAt: new Date(inicio).toISOString() });
     }
 
-    const retractedSlots = retraerConsultas(todasLasSedes, tramoOcupado(inicio, fin, duracion));
+    const retractedSlots = retraerConsultas(todasLasSedes, busyBracket(inicio, fin, duracion));
     const servicio = servicios.get(oferta.serviceCatalogId);
     const cupo = cupos.agregar({
       id: nuevoId('slot'),
@@ -389,7 +389,7 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
       endAt: new Date(fin).toISOString(),
       capacity: 1,
       remainingCapacity: 0,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       serviceConceptId: servicio?.serviceConceptId ?? null,
       serviceOfferingId: oferta.id,
       heldUntil: new Date(Date.now() + RETENCION_MINUTOS * MS_POR_MINUTO).toISOString(),
@@ -411,8 +411,8 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
 }
 
 /** Lo que `confirmar()` necesita saber de la oferta de un cupo. */
-export function ofertaDelCupo(cupo: CupoSimulado): { readonly oferta: OfertaSimulada; readonly dto: ReturnType<typeof aDto> } | undefined {
+export function ofertaDelCupo(cupo: CupoSimulado): { readonly oferta: SimulatedOffer; readonly dto: ReturnType<typeof aDto> } | undefined {
   if (cupo.serviceOfferingId === undefined || cupo.serviceOfferingId === null) return undefined;
-  const oferta = ofertas.get(cupo.serviceOfferingId);
+  const oferta = offers.get(cupo.serviceOfferingId);
   return oferta === undefined ? undefined : { oferta, dto: aDto(oferta) };
 }

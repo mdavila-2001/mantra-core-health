@@ -1,5 +1,5 @@
-import { encuentros } from '../fixtures/clinica';
-import { PACIENTE } from '../fixtures/personas';
+import { encounterList } from '../fixtures/clinic';
+import { PACIENTE } from '../fixtures/people';
 import { forbidden, notFound, preconditionFailed, unauthorized, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
@@ -184,7 +184,7 @@ export function registrarConsentimientos(router: MockRouter): void {
     if (!user.roles.some((rol) => ['CLINICIAN', 'PRACTITIONER'].includes(rol))) {
       return forbidden('Rol insuficiente para la operación');
     }
-    const encuentro = encuentros.get(request.params['encounterId']!);
+    const encuentro = encounterList.get(request.params['encounterId']!);
     if (encuentro === undefined) return notFound('Encuentro no encontrado');
     // Sin vínculo (o con vínculo revocado) no se escribe la historia.
     if (relacionDelProfesional(user.practitionerProfileId, encuentro.patientProfileId) === 'REVOCADA') {

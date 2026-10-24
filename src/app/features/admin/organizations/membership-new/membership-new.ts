@@ -30,6 +30,7 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
@@ -99,6 +100,20 @@ export class MembershipNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  /** Si ya se avisó que la búsqueda de personas no está en la API. */
+  private busquedaNoDisponibleAvisada = false;
+
+  /**
+   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
+   * §2): se dice qué falta, una sola vez y no en cada tecla.
+   */
+  private avisarBusquedaNoDisponible(error: unknown): void {
+    const aviso = unavailableMessageOf(error);
+    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
+    this.busquedaNoDisponibleAvisada = true;
+    this.toast.warning(aviso);
+  }
 
   /**
    * La organización a la que se suma la persona, del segmento `:tenantId`.
@@ -226,9 +241,10 @@ export class MembershipNew {
         );
         this.buscando.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.candidatos.set([]);
         this.buscando.set(false);
+        this.avisarBusquedaNoDisponible(error);
       },
     });
   }

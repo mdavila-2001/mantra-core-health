@@ -257,18 +257,9 @@
     }
 }
 
-/* Entrada corta; la regla global de `prefers-reduced-motion` la vuelve
+/* La entrada es `.panel-muelle` (styles.css): muelle `suave` desde el control
+   que abrió el modal. La regla global de `prefers-reduced-motion` la vuelve
    instantánea, que para un modal es exactamente lo correcto. */
-.content-dialog[open] .content-dialog__panel {
-    animation: content-dialog-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes content-dialog-in {
-    from {
-        opacity: 0;
-        transform: translateY(var(--sp-4)) scale(0.985);
-    }
-}
 
 @keyframes content-dialog-backdrop-in {
     from {

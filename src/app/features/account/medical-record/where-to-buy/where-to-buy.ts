@@ -55,25 +55,33 @@ import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type {
-  EstadoDePin,
-  PinMapa,
-} from '../../../../shared/components/organisms/map/pin-mapa.types';
+  PinStatus,
+  PinMap,
+} from '../../../../shared/components/organisms/map/map-pin.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { PHARMACY_CART_ROUTE } from '../../pharmacy/pharmacy.routes';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
 import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
+import { coverageRoute, directionsUrl, type CoverageRoute } from './where-to-buy.route';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
-const MIS_ESTUDIOS_ROUTE = '/my-account/diagnostic-orders';
+const MY_STUDIES_ROUTE = '/my-account/diagnostic-orders';
 
 /** La guía de laboratorios y centros de diagnóstico, sin cercanía. */
-const LABORATORIOS_ROUTE = '/laboratory-directory';
+const LABORATORY_DIRECTORY_ROUTE = '/laboratory-directory';
 
 /** La guía de clínicas y hospitales. */
-const CLINICAS_ROUTE = '/clinics-directory';
+const CLINICS_DIRECTORY_ROUTE = '/clinics-directory';
+
+/**
+ * Las pestañas, en el orden de la plantilla, por su valor en `?tab=`. La
+ * pestaña viaja en la URL para que recargar o compartir el enlace vuelva a la
+ * misma; un valor desconocido abre Farmacias.
+ */
+export const WHERE_TO_BUY_TABS = ['pharmacies', 'imaging', 'medical-centers'] as const;
 
 /** Mismo tope que la historia: es la misma lectura del resumen clínico. */
 const TOPE = 50;
@@ -101,7 +109,7 @@ const CANTIDAD_POR_RENGLON = 1;
  * paciente son otro juego de puntos, `lugaresGuardados` más abajo, que se
  * ofrecen primero porque ya sabemos que le quedan cerca.
  */
-const CIUDADES: readonly PuntoDeReferencia[] = [
+const CITIES: readonly PuntoDeReferencia[] = [
   { etiqueta: 'Santa Cruz de la Sierra', lat: -17.7833, lng: -63.1821 },
   { etiqueta: 'La Paz', lat: -16.4957, lng: -68.1335 },
   { etiqueta: 'Cochabamba', lat: -17.3895, lng: -66.1568 },
@@ -165,6 +173,10 @@ interface SedeVisible {
   readonly completa: boolean;
   /** Los medicamentos de la receta que esta sede NO puede confirmar. */
   readonly faltantes: readonly string[];
+  /** Los medicamentos que sí confirma, por concepto: lo que pesa el recorrido. */
+  readonly covers: ReadonlySet<string>;
+  /** «Cómo llegar»: el punto en el mapa, o `null` sin coordenadas. */
+  readonly directions: string | null;
   /** «96.50 BOB», o `null` si falta un precio o las listas mezclan monedas. */
   readonly total: string | null;
   /** El total en centavos, o `null` si no es un importe: la clave de «Más barato». */
@@ -209,6 +221,9 @@ interface ResultadoDeSedes {
 
 /** Sin sucursales que mostrar: la pantalla no llegó a consultar. */
 const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [], aprobadosIncluidos: 0 };
+
+/** Una sede como parada del recorrido: la misma, con la distancia que pesa el criterio. */
+type RouteStop = SedeVisible & { readonly distanceKm: number | null };
 
 /**
  * **Dónde comprar mi receta** (carril E3, sobre las lecturas E2 del backend).
@@ -302,17 +317,35 @@ export class WhereToBuy {
   protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
 
   /**
-   * Los destinos que ofrecen las dos pestañas que todavía no pueden ordenar por
-   * cercanía. No son un consuelo: son lo que hoy sí resuelve parte de la
-   * pregunta —qué me pidieron, y qué lugares hay— mientras el dato que falta
-   * (la dirección de los centros) no exista.
+   * Las salidas de las dos pestañas que todavía no muestran centros: qué me
+   * pidieron, y qué lugares hay.
    */
-  protected readonly rutaDeEstudios = MIS_ESTUDIOS_ROUTE;
-  protected readonly rutaDeLaboratorios = LABORATORIOS_ROUTE;
-  protected readonly rutaDeClinicas = CLINICAS_ROUTE;
-  protected readonly ciudades = CIUDADES;
+  protected readonly myStudiesRoute = MY_STUDIES_ROUTE;
+  protected readonly laboratoryDirectoryRoute = LABORATORY_DIRECTORY_ROUTE;
+  protected readonly clinicsDirectoryRoute = CLINICS_DIRECTORY_ROUTE;
+  protected readonly ciudades = CITIES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
   protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
+
+  /* ---- la pestaña activa, en la URL ---------------------------------------- */
+
+  protected readonly tabIndex = signal(
+    tabIndexOf(this.route.snapshot.queryParamMap.get('tab')),
+  );
+
+  /**
+   * Cambia de pestaña y la deja en la URL (`replaceUrl`: cambiar de pestaña no
+   * apila pasos en el historial).
+   */
+  protected selectTab(index: number): void {
+    this.tabIndex.set(index);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: WHERE_TO_BUY_TABS[index] ?? null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   /**
    * Maqueta (`true`) o API real (`false`). La variante con seguro es una
@@ -411,7 +444,7 @@ export class WhereToBuy {
   protected readonly sedeElegida = signal<string | null>(null);
 
   /** Las sedes ubicables, traducidas al contrato del organismo de mapa. */
-  protected readonly pinesDeSedes = computed<readonly PinMapa[]>(() =>
+  protected readonly pinesDeSedes = computed<readonly PinMap[]>(() =>
     this.sedesEnElMapa().map((sede) => ({
       // La letra de la tarjeta es la referencia compartida: ningún uuid
       // llega al mapa, la misma regla de cero identificadores visibles.
@@ -425,6 +458,45 @@ export class WhereToBuy {
       ctaEtiqueta: 'Ver en la lista',
     })),
   );
+
+  /**
+   * El recorrido que cubre los medicamentos consultables (ver
+   * `where-to-buy.route.ts`). Con la variante con seguro no se ofrece: esa
+   * vista evalúa otra receta, la aprobada, y mezclar los dos criterios en la
+   * misma pantalla confundiría más de lo que ayuda.
+   */
+  protected readonly coverage = computed<CoverageRoute<RouteStop> | null>(() => {
+    const sedes = this.resultado()?.sedes ?? [];
+    if (this.conSeguro() || sedes.length === 0) {
+      return null;
+    }
+    const needed = this.items()
+      .filter((item) => item.productId !== null && this.incluidos().has(item.conceptId))
+      .map((item) => item.conceptId);
+    if (needed.length === 0) {
+      return null;
+    }
+    return coverageRoute(
+      sedes.map((sede) => ({ ...sede, distanceKm: sede.distanciaKm })),
+      needed,
+    );
+  });
+
+  /** Los medicamentos de la receta, por su nombre, a partir de sus conceptos. */
+  protected nombresDe(conceptIds: readonly string[]): string {
+    return this.items()
+      .filter((item) => conceptIds.includes(item.conceptId))
+      .map((item) => item.medicamento)
+      .join(', ');
+  }
+
+  /** Los medicamentos que esta parada aporta al recorrido, por su nombre. */
+  protected coveredBy(sede: SedeVisible): string {
+    return this.items()
+      .filter((item) => sede.covers.has(item.conceptId) && this.incluidos().has(item.conceptId))
+      .map((item) => item.medicamento)
+      .join(', ');
+  }
 
   protected readonly etiquetaDelMapa = computed(() => {
     const cantidad = this.sedesEnElMapa().length;
@@ -863,6 +935,17 @@ function geoPuntoDe(punto: PuntoDeReferencia): GeoPoint {
   return { lat: punto.lat, lng: punto.lng };
 }
 
+/** «1,2 km»: un decimal y coma, como el resto de la pantalla. */
+function formatKm(km: number): string {
+  return `${km.toFixed(1).replace('.', ',')} km`;
+}
+
+/** El índice de la pestaña pedida en `?tab=`; desconocida o ausente, Farmacias. */
+export function tabIndexOf(tab: string | null): number {
+  const index = (WHERE_TO_BUY_TABS as readonly string[]).indexOf(tab ?? '');
+  return index < 0 ? 0 : index;
+}
+
 /**
  * El renglón secundario del pin: distancia rotulada y dirección, lo que haya;
  * con seguro, primero la cobertura de lo aprobado — lo mismo que dice la tarjeta.
@@ -877,7 +960,7 @@ function subtituloDePin(sede: SedeVisible, conSeguro: boolean): string | undefin
 }
 
 /** El estado del pin: el mismo criterio que el badge de la tarjeta. */
-function estadoDePin(sede: SedeVisible, conSeguro: boolean): EstadoDePin {
+function estadoDePin(sede: SedeVisible, conSeguro: boolean): PinStatus {
   if (conSeguro) {
     return sede.conSeguro.completa
       ? { etiqueta: 'Tiene todo lo aprobado', tono: 'success' }
@@ -1094,11 +1177,16 @@ function evaluar(
       farmacia: sede.pharmacyName,
       sede: sede.siteName,
       direccion: sede.addressText,
-      distancia:
-        sede.distanceKm === null ? null : `${sede.distanceKm.toFixed(1).replace('.', ',')} km`,
+      distancia: sede.distanceKm === null ? null : formatKm(sede.distanceKm),
       distanciaKm: sede.distanceKm,
       completa: faltantes.length === 0,
       faltantes,
+      covers: new Set(
+        consultables
+          .filter((item) => !sede.missingProductIds.includes(item.productId))
+          .map((item) => item.conceptId),
+      ),
+      directions: directionsUrl(sede.latitude, sede.longitude),
       total:
         sede.totalAmount === null
           ? null

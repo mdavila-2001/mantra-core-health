@@ -11,6 +11,7 @@ export const environment: Environment = {
   loyaltyDemo: false,
   campaignsDemo: false,
   billingSiatDemo: false,
+  billingSimulatedApi: false,
   designMockups: false,
   mockBackend: false,
   telemetry: {
@@ -20,5 +21,17 @@ export const environment: Environment = {
     environment: envFromProcess.telemetry?.environment ?? 'production',
     tracesEndpoint: envFromProcess.telemetry?.tracesEndpoint ?? '/otel/v1/traces',
     sampleRatio: envFromProcess.telemetry?.sampleRatio ?? 0.1,
+  },
+
+  /**
+   * Captura de interacciones **apagada** salvo que el despliegue la encienda
+   * con `PUBLIC_UX_ANALYTICS_ENABLED=true` y el id del esquema registrado en la
+   * API (`PUBLIC_UX_ANALYTICS_EVENT_SCHEMA_ID`). Sin esquema la API rechazaría
+   * cada lote, así que sin él tampoco se enciende.
+   */
+  uxAnalytics: {
+    enabled: envFromProcess.uxAnalytics?.enabled ?? false,
+    eventSchemaDefinitionId: envFromProcess.uxAnalytics?.eventSchemaDefinitionId ?? '',
+    sampleRatio: envFromProcess.uxAnalytics?.sampleRatio ?? 1,
   },
 };

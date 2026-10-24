@@ -51,8 +51,15 @@
      blanca en ambos temas */
   background-color: #ffffff;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--dur-base) var(--ease-standard);
+  /* la perilla viaja con el muelle `rápido`: arranca decidida y se posa */
+  transition: transform var(--spring-rapido-dur) var(--spring-rapido), width var(--dur-fast) var(--ease-out);
   transform: translateX(0);
+}
+
+/* Al presionar, la perilla se estira un poco (respuesta inmediata): el recorrido
+   no cambia, sólo cuánto ocupa mientras el dedo está sobre ella. */
+.switch-container:not(.is-disabled):active .switch-thumb {
+  width: 24px;
 }
 
 /* Estado Marcado */
@@ -62,6 +69,11 @@
 
 .switch-container.is-checked .switch-thumb {
   transform: translateX(18px);
+}
+
+/* Estirada y marcada, la perilla conserva el borde derecho en su sitio. */
+.switch-container.is-checked:not(.is-disabled):active .switch-thumb {
+  transform: translateX(14px);
 }
 
 /* Base = móvil (área táctil 44px, pista 44×26 pad 3px, perilla 20px, recorrido 18px).
@@ -81,6 +93,14 @@
   .switch-thumb {
     width: 18px;
     height: 18px;
+  }
+
+  .switch-container:not(.is-disabled):active .switch-thumb {
+    width: 22px;
+  }
+
+  .switch-container.is-checked:not(.is-disabled):active .switch-thumb {
+    transform: translateX(12px);
   }
 
   .switch-container.is-checked .switch-thumb {

@@ -30,20 +30,15 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
-import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
-import {
-  DepartmentMap,
-  type DepartamentoElegible,
-} from '../../shared/components/organisms/department-map/department-map';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../core/data-access/terminology/bo-municipalities.service';
-import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/departamento-de-ciudad';
+import { departmentByCity, normalizePlace } from '../../shared/geo/city-department';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
-import { fotoDeDirectorio, temaDeCentroDiagnostico } from '../../shared/utils/foto-de-directorio';
+import { directoryPhoto, diagnosisCenterTheme } from '../../shared/utils/directory-photo';
 
 /**
  * Un tramo del directorio de laboratorios.
@@ -77,6 +72,7 @@ const FILTROS: readonly FilterDef[] = [
   {
     key: 'kind',
     label: 'Tipo de centro',
+    icon: 'flask',
     // Chips y no desplegable (A3 del plan de UX): son dos opciones, y
     // esconderlas detrás de un control que hay que abrir era la razón por la
     // que casi nadie acotaba el directorio.
@@ -89,6 +85,7 @@ const FILTROS: readonly FilterDef[] = [
   {
     key: 'homeCollection',
     label: 'Toma a domicilio',
+    icon: 'home',
     // Las dos comodidades comparten renglón: son dos claves de la URL y una
     // sola pregunta de quien busca. Y van en forma **afirmativa** — «no toma a
     // domicilio» es un filtro que nadie pone a propósito, y ocupaba la mitad
@@ -168,19 +165,19 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
  */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [AppButton, AppButtonLink, DepartmentMap, DirectoryPage, NavIcon, RouterLink],
+  imports: [AppButtonLink, DirectoryPage, NavIcon, RouterLink],
   templateUrl: './laboratory-directory.html',
   // El mapa comparte la hoja de clínicas y farmacias: es el mismo filtro.
   styleUrls: [
-    '../../shared/styles/rejilla-de-tarjetas.css',
-    '../public-directories/mapa-directorio.css',
+    '../../shared/styles/card-grid.css',
+    '../public-directories/directory-map.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
   /** La foto de la tarjeta de una categoría de la portada. */
   protected fotoDe(codigo: string): string {
-    return fotoDeDirectorio(temaDeCentroDiagnostico(codigo), codigo);
+    return directoryPhoto(diagnosisCenterTheme(codigo), codigo);
   }
 
   /**
@@ -195,7 +192,29 @@ export class LaboratoryDirectory {
   private readonly units = inject(DiagnosticUnitsClient);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly filtros = FILTROS;
+  /**
+   * Los filtros de la columna, más el departamento en lugar del mapa
+   * (propietario, 23/10/2026): sólo los departamentos con algún centro, con
+   * cuántos tienen.
+   */
+  protected readonly filtros = computed<readonly FilterDef[]>(() => {
+    const cuenta = new Map<string, number>();
+    for (const unidad of dataOf(this.unidades()) ?? []) {
+      for (const departamento of this.departamentosDe(unidad)) {
+        cuenta.set(departamento, (cuenta.get(departamento) ?? 0) + 1);
+      }
+    }
+    const opciones = this.ramas()
+      .filter((rama) => (cuenta.get(rama.conceptId) ?? 0) > 0)
+      .map((rama) => ({ value: rama.conceptId, label: `${rama.nombre} (${cuenta.get(rama.conceptId)})` }));
+    if (opciones.length < 2 && this.departamentoElegido() === null) {
+      return FILTROS;
+    }
+    return [
+      ...FILTROS,
+      { key: PARAM_DEPARTAMENTO, label: 'Departamento', icon: 'pin', asChips: true, options: opciones },
+    ];
+  });
   protected readonly sustantivo = SUSTANTIVO;
 
   /** Lo que devolvió el buscador, sin agrupar: el mapa necesita las ciudades. */
@@ -227,25 +246,7 @@ export class LaboratoryDirectory {
   /** El catálogo no llegó: el mapa no se dibuja y se ofrece reintentar. */
   protected readonly catalogoGeoCaido = signal(false);
 
-  /** Los nueve departamentos, todos: ver `departamentos` en `PublicDirectoryListing`. */
-  protected readonly departamentos = computed<readonly DepartamentoElegible[]>(() =>
-    this.ramas().map((rama) => ({
-      conceptId: rama.conceptId,
-      sigla: rama.sigla,
-      nombre: rama.nombre,
-    })),
-  );
-
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
-
-  /**
-   * Si los resultados traen ciudades. Hoy sólo la maqueta las sirve (ver
-   * `cities` en el tipo): sin ellas el mapa no acotaría nada, y un filtro que
-   * no filtra no se dibuja.
-   */
-  protected readonly hayCiudades = computed(() =>
-    (dataOf(this.unidades()) ?? []).some((unidad) => (unidad.cities?.length ?? 0) > 0),
-  );
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   protected readonly departamentoElegido = computed(() => {
     const valor: unknown = this.parametros()[PARAM_DEPARTAMENTO];
@@ -257,7 +258,7 @@ export class LaboratoryDirectory {
     const porCiudad = this.porCiudad();
     const departamentos = new Set<string>();
     for (const ciudad of unidad.cities ?? []) {
-      const conceptId = porCiudad.get(normalizarLugar(ciudad));
+      const conceptId = porCiudad.get(normalizePlace(ciudad));
       if (conceptId !== undefined) departamentos.add(conceptId);
     }
     return departamentos;
@@ -272,24 +273,10 @@ export class LaboratoryDirectory {
       : unidades.filter((unidad) => this.departamentosDe(unidad).has(elegido));
   }
 
-  /** El resumen bajo el mapa: cuántos centros hay en el departamento elegido. */
-  protected readonly resumenDelMapa = computed<string | null>(() => {
-    const elegido = this.departamentoElegido();
-    if (elegido === null) {
-      return null;
-    }
-    const nombre = this.ramas().find((rama) => rama.conceptId === elegido)?.nombre ?? '';
-    const cuantos = this.delDepartamento(dataOf(this.unidades()) ?? []).length;
-    if (cuantos === 0) {
-      return `Todavía no hay nada publicado en ${nombre}.`;
-    }
-    return `${cuantos} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
-  });
-
   /** Sin centros en el departamento elegido: lo dice la lista, no un vacío genérico. */
   protected readonly sinCoincidencias = computed<string | null>(() =>
     this.state().status === 'ready' && this.groups().length === 0
-      ? 'No hay centros publicados en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.'
+      ? 'No hay centros publicados en ese departamento con los filtros que puso. Quite el departamento para ver todo el país.'
       : null,
   );
 
@@ -382,7 +369,7 @@ export class LaboratoryDirectory {
   protected readonly subtitulo = computed(() =>
     this.enPortada()
       ? `Elija qué necesita hacerse o busque el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
-      : 'Centros verificados de toda la red, agrupados por categoría. Toque un chip para acotar.',
+      : 'Centros verificados de toda la red, con filtros a la izquierda para acotar.',
   );
 
   /**
@@ -579,7 +566,7 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
     title: unit.name,
     link: `/laboratory-directory/${unit.id}`,
     figureText: initials(unit.name),
-    photoUrl: fotoDeDirectorio(temaDeCentroDiagnostico(`${unit.type.code} ${unit.type.display}`), unit.id),
+    photoUrl: directoryPhoto(diagnosisCenterTheme(`${unit.type.code} ${unit.type.display}`), unit.id),
     // La categoría como subtítulo y no como insignia: desde que la portada
     // obliga a elegirla antes de entrar, todas las tarjetas de la lista son de
     // la misma, así que la insignia repetía en cada una la categoría que se

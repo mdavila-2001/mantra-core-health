@@ -424,6 +424,67 @@ describe('AnalysisOrderBlock', () => {
       responderCircuito();
     });
 
+    it('repetir sobre una orden activa sin informe manda sólo la justificación (la API enlaza la orden)', () => {
+      componente['pedir']();
+      const chequeo = http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check');
+      chequeo.flush({
+        isDuplicate: true,
+        previousStudy: { ...PREVIOUS_STUDY_WIRE, reportId: null, serviceRequestId: 'sr-previa' },
+        warningMessage: 'Hay una orden activa de este estudio, sin informe.',
+        requiresJustification: true,
+        pendingReport: true,
+        windowDays: 30,
+      });
+      fixture.detectChanges();
+
+      componente['confirmRepeat']('Muestra anterior hemolizada, hay que repetirla hoy.');
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect('previousDiagnosticReportId' in req.request.body).toBe(false);
+      expect(req.request.body.duplicateOverrideReason).toBe(
+        'Muestra anterior hemolizada, hay que repetirla hoy.',
+      );
+      req.flush({
+        id: 'sr-4',
+        patientProfileId: 'p-1',
+        status: 'st-activa',
+        intent: 'st-orden',
+        createdAt: '2026-08-14T10:00:00.000Z',
+        previousServiceRequestId: 'sr-previa',
+        duplicateOverrideReason: 'Muestra anterior hemolizada, hay que repetirla hoy.',
+      });
+      responderCircuito();
+    });
+
+    it('el histórico muestra la justificación guardada de una orden repetida sobre otra orden', () => {
+      componente['pedir']();
+      responderChequeo(false);
+      http.expectOne((r) => r.url === '/clinical/service-requests').flush({
+        id: 'sr-5',
+        patientProfileId: 'p-1',
+        status: 'st-activa',
+        intent: 'st-orden',
+        createdAt: '2026-08-14T10:00:00.000Z',
+      });
+      responderCircuito({
+        ...CIRCUITO_VACIO,
+        orders: [
+          {
+            ...ORDEN,
+            id: 'sr-5',
+            previousServiceRequestId: 'sr-previa',
+            duplicateOverrideReason: 'Muestra anterior hemolizada, hay que repetirla hoy.',
+            previousDiagnosticReportId: null,
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      expect(componente['estudios']()[0].duplicado).toBe('repeated');
+      const texto = fixture.nativeElement.querySelector('[data-testid="estudios-justificacion"]');
+      expect(texto?.textContent).toContain('Muestra anterior hemolizada');
+    });
+
     it('no emite cambio si el servidor rechaza el alta', () => {
       const changed = vi.fn();
       componente.cambio.subscribe(changed);

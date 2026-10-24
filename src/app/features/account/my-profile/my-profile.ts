@@ -5,6 +5,7 @@ import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -23,7 +24,8 @@ import {
   errorToViewState,
   IDENTITY_VERIFICATION_ROUTE,
 } from '../../../core/http/error-to-view-state';
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assurance/verificacion-ofrecida';
+import { OFFERED_IDENTITY_VERIFICATION } from '../../../core/identity-assurance/offered-verification';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -46,10 +48,15 @@ import {
 } from '../../identity-verification/case-status';
 import { Loyalty } from '../loyalty/loyalty';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
-import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
+import { tabIndex, PROFILE_TABS } from './profile-tabs';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 import { ResidenceReadonly } from './practitioner-profile/practitioner-profile-view/residence-readonly/residence-readonly';
-import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/map-pin.types';
+
+/** Lo que se dice cuando la ficha completa no llegó y la API no explicó por qué. */
+const FICHA_INCOMPLETA =
+  'No pudimos traer el resto de su ficha: documento, contacto, domicilio, facturación, ' +
+  'seguros y tutores. Lo que se muestra está al día.';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -187,6 +194,15 @@ export class MyProfile {
    */
   protected readonly perfil = signal<OwnPatientProfile | null>(null);
 
+  /**
+   * Por qué no llegó la ficha completa; vacío si llegó o si no correspondía.
+   *
+   * Regla 14 del criterio humano: sin esto, una caída de
+   * `GET /profiles/patients/me` dejaba la tarjeta sin documento, contacto,
+   * domicilio ni facturación, y se leía igual que una ficha que nunca los tuvo.
+   */
+  protected readonly errorDePerfil = signal('');
+
   /* -- La foto de perfil ---------------------------------------------------
      Mismo patrón que `practitioner-profile-view` y `public-profile-preview`:
      el id viaja en `perfil().photoFileId`, y pintarlo exige bajar los bytes
@@ -235,7 +251,7 @@ export class MyProfile {
    * son estados momentáneos de la pantalla, no lugares, y no se escriben de
    * vuelta en la URL.
    */
-  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+  protected readonly pestanas = PROFILE_TABS;
   private readonly pestanaPedida = inject(ActivatedRoute).snapshot.queryParamMap.get('pestana');
   protected readonly pestana = signal(0);
   private pestanaInicialAplicada = false;
@@ -300,7 +316,7 @@ export class MyProfile {
    * Campo y no import suelto porque la plantilla sólo lee miembros de la clase.
    * Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
    */
-  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+  protected readonly verificacionOfrecida = OFFERED_IDENTITY_VERIFICATION;
 
   /**
    * Si el lateral tiene algo que dibujar.
@@ -488,6 +504,7 @@ export class MyProfile {
   private cargarPerfil(): void {
     this.perfil.set(null);
     this.fotoUrl.set(null);
+    this.errorDePerfil.set('');
     if (!this.debeLeerResumenDePaciente()) return;
 
     this.profiles.getOwnPatientProfile().subscribe({
@@ -526,7 +543,15 @@ export class MyProfile {
           });
         }
       },
-      error: () => this.perfil.set(null),
+      error: (error: unknown) => {
+        this.perfil.set(null);
+        // El 404 de una cuenta sin perfil de paciente sigue siendo silencioso:
+        // a esa persona no le falta nada. Cualquier otro fallo se dice.
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          return;
+        }
+        this.errorDePerfil.set(describeApiFailure(error, FICHA_INCOMPLETA));
+      },
     });
   }
 
@@ -534,7 +559,7 @@ export class MyProfile {
   private aplicarPestanaInicial(tieneTutores: boolean): void {
     if (this.pestanaInicialAplicada) return;
     this.pestanaInicialAplicada = true;
-    const pedida = indiceDePestana(this.pestanaPedida) ?? 0;
+    const pedida = tabIndex(this.pestanaPedida) ?? 0;
     if (pedida === 5) {
       this.pestana.set(tieneTutores ? 5 : 4);
     } else if (pedida === 4 && !tieneTutores) {
@@ -660,9 +685,11 @@ export class MyProfile {
           this.subiendoFoto.set(false);
           this.fotoUrl.set(url);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.subiendoFoto.set(false);
-          this.errorDeFoto.set('No pudimos subir la foto. Pruebe con otra imagen.');
+          this.errorDeFoto.set(
+            describeApiFailure(error, 'No pudimos subir la foto. Pruebe de nuevo o con otra imagen.'),
+          );
         },
       });
   }

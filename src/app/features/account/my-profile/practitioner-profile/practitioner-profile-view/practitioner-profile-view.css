@@ -2,7 +2,7 @@
    cliente pidió que las dos se vean igual, y una copia se separa de su original
    en el primer retoque que se haga en una sola. Lo de abajo es la ficha AJENA
    —la Guía de profesionales y la vista previa—, que conserva su dibujo. */
-@import '../../ficha-de-perfil.css';
+@import '../../profile-sheet.css';
 
 /* ============================================================================
     La vista del perfil profesional (R2-4). Sólo distribución — ni un color ni
@@ -647,7 +647,7 @@
    Nombre arriba y más grande, cargo · fecha debajo, el estado al filo
    derecho: nombre y fechas van en un `trayecto__cuerpo` anidado, que es la
    primera columna, y el sello la segunda. El anillo va lleno y con halo: es lo único de la
-   historia que todavía está pasando. Este archivo y `ficha-de-perfil.css`
+   historia que todavía está pasando. Este archivo y `profile-sheet.css`
    rozan el presupuesto de 12 kB del build: cada selector nuevo cuenta. */
 .trayecto__cuerpo--curso {
   grid-template-columns: minmax(0, 1fr) auto;
@@ -662,7 +662,7 @@
 }
 
 /* ─── El chip de telemedicina en la cabecera de la ficha propia ────────────
-   Vive acá y no en `ficha-de-perfil.css` a propósito: ese archivo lo comparte
+   Vive acá y no en `profile-sheet.css` a propósito: ese archivo lo comparte
    literalmente la ficha del paciente —el cliente pidió que las dos se vean
    igual—, y un paciente no atiende por telemedicina.
 
@@ -681,7 +681,7 @@
 }
 
 /* ─── El logo del consultorio dentro del recuadro de Facturación ───────────
-   Va acá y no en `ficha-de-perfil.css`: el paciente no factura. El logo ocupa
+   Va acá y no en `profile-sheet.css`: el paciente no factura. El logo ocupa
    una columna de tamaño fijo y los datos la otra; en móvil se apilan con el
    logo arriba. La caja del logo mide lo mismo con o sin imagen. */
 .factura--con-logo {
@@ -703,7 +703,7 @@
 }
 
 /* ─── El logo del consultorio en «Datos personales» ────────────────────────
-   Va acá y no en `ficha-de-perfil.css`: el paciente no tiene consultorio. El
+   Va acá y no en `profile-sheet.css`: el paciente no tiene consultorio. El
    título es `.mi-perfil__subtitulo`, que ya existe. Este archivo y aquél están
    pegados al presupuesto de 12 kB: cada selector nuevo cuenta. */
 .mi-perfil__logo {
@@ -714,7 +714,7 @@
 
 /* ─── Firma y sello en «Datos personales» ──────────────────────────────────
    El título es `.mi-perfil__subtitulo`, que ya existe. Este archivo y
-   `ficha-de-perfil.css` están pegados al presupuesto de 12 kB del build. */
+   `profile-sheet.css` están pegados al presupuesto de 12 kB del build. */
 .mi-perfil__firma-cajas {
   display: flex;
   flex-wrap: wrap;

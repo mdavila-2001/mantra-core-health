@@ -12,6 +12,7 @@ import {
 import type { Observable } from 'rxjs';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import type {
   CommentThreadItem,
   NewCommentMedia,
@@ -239,11 +240,11 @@ export class PostCard {
           this.reaccionando.set(false);
           this.cambio.emit();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.reaccionLocal.set(anterior);
           this.deltaReacciones.set(deltaAnterior);
           this.reaccionando.set(false);
-          this.error.set('No pudimos guardar su reacción.');
+          this.error.set(describeApiFailure(error, 'No pudimos guardar su reacción.'));
         },
       });
   }
@@ -292,11 +293,12 @@ export class PostCard {
         this.guardarCambiado.emit(!estaba);
         this.cambio.emit();
       },
-      error: () =>
+      error: (error: unknown) =>
         this.error.set(
-          estaba
-            ? 'No pudimos quitar el marcador.'
-            : 'No pudimos guardar la publicación.',
+          describeApiFailure(
+            error,
+            estaba ? 'No pudimos quitar el marcador.' : 'No pudimos guardar la publicación.',
+          ),
         ),
     });
   }
@@ -333,9 +335,9 @@ export class PostCard {
           this.cargarHilo();
           this.cambio.emit();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.comentando.set(false);
-          this.error.set('No pudimos publicar su comentario.');
+          this.error.set(describeApiFailure(error, 'No pudimos publicar su comentario.'));
         },
       });
   }
@@ -354,9 +356,9 @@ export class PostCard {
           this.comentarios.set(pagina.items);
           this.cargandoHilo.set(false);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.cargandoHilo.set(false);
-          this.error.set('No pudimos cargar los comentarios.');
+          this.error.set(describeApiFailure(error, 'No pudimos cargar los comentarios.'));
         },
       });
   }

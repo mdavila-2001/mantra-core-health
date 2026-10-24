@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { CreatedUser, InitialRole, NewUser } from '../../../core/data-access/iam/iam.types';
@@ -10,8 +11,9 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Mínimo que exige `CreateUserDto` en el backend. */
@@ -46,8 +48,10 @@ const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
     Alert,
     AnnounceOnAppear,
     AppButton,
+    AppButtonLink,
     PageHeader,
     PaginatedForm,
+    RouterLink,
   ],
   templateUrl: './user-registration.html',
   styleUrl: './user-registration.css',
@@ -66,7 +70,7 @@ export class UserRegistration {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Identificación',
       hint: 'Con qué entra y cómo se lo nombra.',

@@ -5,6 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
+import { simulatorOnly } from '../simulator-only';
 import type {
   AccountActivation,
   ActivationResult,
@@ -31,8 +32,8 @@ import type {
   UserPage,
   UserSearchQuery,
   VerifiedEmail,
-  DiagnosticCenterRegistration,
 } from './iam.types';
+import { cuerpoDeCentroDiagnostico } from './diagnostic-center.body';
 
 /** Respuestas de la API tal como viajan: las fechas son texto. */
 interface TokenResponseBody {
@@ -139,6 +140,9 @@ export class IamClient {
             residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
           }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+      ...(registration.additionalPhones === undefined
+        ? {}
+        : { additionalPhones: registration.additionalPhones }),
       ...(registration.gender === undefined ? {} : { gender: registration.gender }),
       ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
       ...(registration.occupationConceptId === undefined
@@ -185,6 +189,9 @@ export class IamClient {
         : {
             guardianRelationshipConceptId: registration.guardianRelationshipConceptId,
           }),
+      ...(registration.additionalEmergencyContacts === undefined
+        ? {}
+        : { additionalEmergencyContacts: registration.additionalEmergencyContacts }),
       ...(registration.privateInsurancePlanId === undefined
         ? {}
         : { privateInsurancePlanId: registration.privateInsurancePlanId }),
@@ -421,6 +428,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        taxIdentifier: registration.taxIdentifier,
         legalEntityType: registration.legalEntityType,
         tenantType: 'PHARMACY',
         countryConceptId: registration.countryConceptId,
@@ -698,7 +706,13 @@ export class IamClient {
     if (query.cursor !== undefined) filters['cursor'] = query.cursor;
     if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    return this.http.post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters).pipe(
+    // Sólo simulador: `POST /iam/users/search` vive en una rama de la API que
+    // no llegó a dev (informe B, §2). Contra la API real el error dice qué no
+    // está disponible en vez de un 404 genérico.
+    const url = this.url('/iam/users/search');
+    return simulatorOnly('Buscar personas registradas', url, () =>
+      this.http.post<RespuestaPaginaUsuarios>(url, filters),
+    ).pipe(
       map((body) => ({
         ...body,
         items: body.items.map(toUserListItem),
@@ -765,54 +779,5 @@ function toAssistedResult(body: AssistedRegistrationBody): AssistedRegistrationR
     activationToken: body.activationToken,
     activationExpiresAt: new Date(body.activationExpiresAt),
     status: body.status,
-  };
-}
-
-/**
- * El cuerpo del alta de un laboratorio o centro de imagenología.
- *
- * Campo por campo y no con un `...registration`, por lo mismo que el resto del
- * cliente: `forbidNonWhitelisted` rechaza toda clave que el DTO no declare.
- */
-function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistration): unknown {
-  const { diagnosticUnit } = registration;
-  const { address } = diagnosticUnit.primarySite;
-  return {
-    organization: {
-      code: registration.code,
-      legalName: registration.legalName,
-      legalEntityType: registration.legalEntityType,
-      ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
-      tenantType: 'DIAGNOSTIC_CENTER',
-      ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
-      countryConceptId: registration.countryConceptId,
-      jurisdictionConceptId: registration.jurisdictionConceptId,
-      diagnosticUnit: {
-        diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
-        modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
-        primarySite: {
-          name: diagnosticUnit.primarySite.name,
-          ...(diagnosticUnit.primarySite.timeZone === undefined
-            ? {}
-            : { timeZone: diagnosticUnit.primarySite.timeZone }),
-          address: {
-            lines: [...address.lines],
-            ...(address.latitude === undefined || address.longitude === undefined
-              ? {}
-              : { latitude: address.latitude, longitude: address.longitude }),
-          },
-        },
-      },
-      legalDocuments: registration.legalDocuments,
-      ...(registration.legalRepresentative === undefined
-        ? {}
-        : { legalRepresentative: registration.legalRepresentative }),
-      ...(registration.executives === undefined ? {} : { executives: registration.executives }),
-    },
-    owner: {
-      email: registration.owner.email,
-      password: registration.owner.password,
-      displayName: registration.owner.displayName,
-    },
   };
 }

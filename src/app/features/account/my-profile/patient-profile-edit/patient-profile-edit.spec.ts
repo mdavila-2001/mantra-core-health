@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
+import { getDebugNode, type WritableSignal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -9,7 +9,9 @@ import { provideRouter, Router } from '@angular/router';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { CODIGO_OCUPACION_OTRA } from '../../../../core/data-access/terminology/bo-occupations.service';
 import { PatientProfileEdit } from './patient-profile-edit';
-import { UbicacionPicker } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import type { Select } from '../../../../shared/components/atoms/select/select';
+import { selectOptionLabels } from '../../../../../testing/select';
+import { MapLocationPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 
 /**
  * Editar los datos propios del paciente.
@@ -238,17 +240,27 @@ describe('PatientProfileEdit', () => {
     return 0;
   }
 
-  /** El `<select>` real de un campo, que vive dentro del átomo. */
-  function desplegable(testId: string): HTMLSelectElement | null {
+  /** El `app-select` de un campo, en su pestaña. */
+  function desplegable(testId: string): HTMLElement | null {
     abrirPestana(pestanaDe(testId));
-    return (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
-      `[data-testid="${testId}"] select`,
+    const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      `[data-testid="${testId}"]`,
     );
+    return campo?.matches('app-select') ? campo : (campo?.querySelector('app-select') ?? null);
   }
 
-  /** Las etiquetas que ofrece un desplegable, marcador incluido. */
-  function opcionesDe(testId: string): readonly string[] {
-    return [...(desplegable(testId)?.options ?? [])].map((opcion) => opcion.text.trim());
+  /**
+   * Las etiquetas que ofrece un desplegable, marcador incluido. El marcador ya
+   * no es una fila de la lista: es lo que el campo muestra sin elección, y sale
+   * de su `placeholder`.
+   */
+  async function opcionesDe(testId: string): Promise<readonly string[]> {
+    const host = desplegable(testId);
+    if (host === null) {
+      return [];
+    }
+    const marcador = (getDebugNode(host)?.componentInstance as Select<unknown>).placeholder();
+    return [marcador, ...(await selectOptionLabels(fixture, host))];
   }
 
   /** El `<input>` real del teléfono, que vive dentro de `app-phone-input`. */
@@ -575,11 +587,11 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
       const raiz = fixture.nativeElement as HTMLElement;
       const [domicilio, trabajo] = fixture.debugElement
-        .queryAll(By.directive(UbicacionPicker))
-        .map((el) => el.componentInstance as UbicacionPicker);
+        .queryAll(By.directive(MapLocationPicker))
+        .map((el) => el.componentInstance as MapLocationPicker);
       expect(señal<string>('domicilio')()).toBe('Av. Banzer 3er anillo');
 
-      domicilio.fijarPunto({ lat: -17.79, lng: -63.19 });
+      domicilio.pinPunto({ lat: -17.79, lng: -63.19 });
       fixture.detectChanges();
 
       expect(señal<string>('domicilio')()).toBe('');
@@ -595,7 +607,7 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
       expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')).toBeNull();
 
-      trabajo.fijarPunto({ lat: -17.8, lng: -63.2 });
+      trabajo.pinPunto({ lat: -17.8, lng: -63.2 });
       fixture.detectChanges();
       expect(señal<string>('direccionTrabajo')()).toBe('');
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).not.toBeNull();
@@ -626,7 +638,7 @@ describe('PatientProfileEdit', () => {
       abrirPestana(pestanaDe('perfil-domicilio'));
       fixture.detectChanges();
 
-      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll('app-ubicacion-picker');
+      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll('app-map-location-picker');
       expect(mapas).toHaveLength(2);
     });
 
@@ -727,6 +739,97 @@ describe('PatientProfileEdit', () => {
     expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo.');
     expect(interno<() => boolean>('guardando')()).toBe(false);
     expect(señal<string>('nombre')()).toBe('Ana María');
+  });
+
+  /* ---- el rechazo del servidor, dicho donde se comete (2026-10-08) -------- */
+
+  /** Un rechazo de validación con la forma estructurada (`details.fields`). */
+  function rechazoPorCampo(field: string, mensaje: string): object {
+    return {
+      code: 'VALIDATION_FAILED',
+      message: 'Error de validación',
+      correlationId: 'corr-pac',
+      details: { fields: [{ field, constraints: ['isValid'], messages: [mensaje] }] },
+      timestamp: '2026-10-08T00:00:00.000Z',
+      path: '/profiles/patients/me',
+    };
+  }
+
+  it('un campo rechazado en otra pestaña queda pegado a él, y la pantalla lo lleva ahí', () => {
+    montarPintadoYCargado();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+    fixture.detectChanges();
+
+    expect(señal<number>('pestana')()).toBe(2);
+    expect(toasts.toasts().at(-1)?.message).toBe(
+      'Revise los campos marcados en «Facturación» y vuelva a guardar.',
+    );
+    // Se pinta debajo del NIT, no en otro campo.
+    const campos = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-form-field')];
+    const nit = campos.find((c) => (c.textContent ?? '').includes('NIT'));
+    const razon = campos.find((c) => (c.textContent ?? '').includes('Razón social'));
+    expect(nit?.textContent).toContain('El NIT no figura en el padrón.');
+    expect(razon?.textContent).not.toContain('padrón');
+    // Lo escrito en otra pestaña sigue ahí.
+    expect(señal<string>('nombre')()).toBe('Ana María');
+  });
+
+  it('un rechazo de un campo que la pantalla no muestra lleva su mensaje en el aviso', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('email', 'El correo no se cambia desde aquí.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+
+    expect(toasts.toasts().at(-1)?.message).toBe('El correo no se cambia desde aquí.');
+  });
+
+  it('un 500 lleva el código de soporte con el que se encuentra en el registro', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-500',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles/patients/me',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(toasts.toasts().at(-1)?.message).toBe(
+      'No pudimos guardar los cambios. Pruebe de nuevo. (Código de soporte: corr-500)',
+    );
+  });
+
+  it('un guardado nuevo limpia los rechazos del anterior', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('name', 'El nombre tiene caracteres no válidos.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+    expect(interno<(c: string) => string>('errorDelServidor')('name')).toContain('no válidos');
+
+    señal<string>('nombre').set('Ana Lucía');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush({ ...PERFIL_BASE, name: 'Ana Lucía' });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('name')).toBe('');
   });
 
   /* ---- validación mínima --------------------------------------------------- */
@@ -1066,10 +1169,10 @@ describe('PatientProfileEdit', () => {
    * Dos opciones, las del alta. Ofrecer más acá dejaría corregir los datos con
    * un valor que el alta no admite, y esa diferencia no la explica nada.
    */
-  it('el sexo se ofrece con las dos opciones del alta', () => {
+  it('el sexo se ofrece con las dos opciones del alta', async () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
+    expect(await opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
   });
 
   /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */

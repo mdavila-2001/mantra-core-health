@@ -100,11 +100,24 @@ describe('contabilidad demo: saldos y transiciones', () => {
     );
     const receivable = open.items.find((item) => item.side === 'RECEIVABLE')!;
     expect(Number(receivable.openAmount)).toBeGreaterThan(0);
-    expect(status(request('POST', '/accounting/clearing-documents', { openItemIds: ['inexistente'] }))).toBe(422);
-    const cleared = data<{ clearedItems: number; clearedAmount: string }>(
-      request('POST', '/accounting/clearing-documents', { openItemIds: [receivable.id] }),
+    const compensar = (items: { openItemId: string; clearedAmount: string }[]) =>
+      request('POST', '/accounting/clearing-documents', {
+        practiceId: 'p',
+        bankAccountId: 'banco',
+        clearingDate: '2026-10-09',
+        items,
+      });
+    expect(status(compensar([{ openItemId: 'inexistente', clearedAmount: '1.00' }]))).toBe(404);
+    expect(status(compensar([]))).toBe(422);
+    // Más de lo pendiente es 422, igual que `SubledgerService.clearOpenItems`.
+    expect(
+      status(compensar([{ openItemId: receivable.id, clearedAmount: String(Number(receivable.openAmount) + 1) }])),
+    ).toBe(422);
+    const cleared = data<{ id: string; clearingNumber: string; clearedItems: number }>(
+      compensar([{ openItemId: receivable.id, clearedAmount: receivable.openAmount }]),
     );
-    expect(cleared).toMatchObject({ clearedItems: 1, clearedAmount: receivable.openAmount });
+    expect(cleared.clearedItems).toBe(1);
+    expect(cleared.clearingNumber).toMatch(/^CLR-/);
     const after = data<{ items: { id: string }[]; totalReceivable: string }>(request('GET', '/accounting/open-items'));
     expect(after.items.some((item) => item.id === receivable.id)).toBe(false);
     expect(Number(open.totalReceivable) - Number(after.totalReceivable)).toBeCloseTo(Number(receivable.openAmount), 2);
@@ -193,23 +206,31 @@ describe('contabilidad demo: saldos y transiciones', () => {
     const before = data<{ items: { code: string; netBookValue: string; depreciable: boolean }[]; monthlyCharge: string }>(request('GET', '/accounting/assets'));
     expect(before.items.some((asset) => asset.code.startsWith('EQ') && asset.depreciable)).toBe(true);
     expect(Number(before.monthlyCharge)).toBeGreaterThan(0);
-    const depreciation = data<{ assets: number; amount: string }>(request('POST', '/accounting/depreciation/run'));
-    expect(depreciation.assets).toBeGreaterThan(0);
-    expect(Number(depreciation.amount)).toBeGreaterThan(0);
+    const depreciation = data<{ depreciatedAssets: number; transactionIds: string[] }>(
+      request('POST', '/accounting/depreciation/run', {
+        depreciationExpenseAccountId: 'gasto',
+        accumulatedDepreciationAccountId: 'acumulada',
+      }),
+    );
+    expect(depreciation.depreciatedAssets).toBeGreaterThan(0);
+    // Un asiento por activo, como la corrida real.
+    expect(depreciation.transactionIds).toHaveLength(depreciation.depreciatedAssets);
     const after = data<{ items: { code: string; netBookValue: string }[] }>(request('GET', '/accounting/assets'));
     expect(Number(after.items.find((asset) => asset.code === 'EQ-001')!.netBookValue))
       .toBeLessThan(Number(before.items.find((asset) => asset.code === 'EQ-001')!.netBookValue));
 
-    const accruals = data<{ items: { completed: boolean; pendingAmount: string }[]; pendingTotal: string }>(request('GET', '/accounting/accrual-objects'));
-    expect(accruals.items.some((item) => !item.completed && Number(item.pendingAmount) > 0)).toBe(true);
-    const run = data<{ objects: number; amount: string; transactionNumbers: string[] }>(request('POST', '/accounting/accruals/run'));
-    expect(run.objects).toBeGreaterThan(0);
-    expect(run.transactionNumbers).toHaveLength(run.objects);
-    expect(Number(run.amount)).toBeGreaterThan(0);
-    for (let period = 0; period < 8; period += 1) {
-      expect(status(request('POST', '/accounting/accruals/run'))).toBe(201);
+    const accruals = data<{ items: { id: string; completed: boolean; pendingAmount: string; remainingPeriods: number }[]; pendingTotal: string }>(request('GET', '/accounting/accrual-objects'));
+    const pending = accruals.items.find((item) => !item.completed && Number(item.pendingAmount) > 0)!;
+    expect(pending).toBeDefined();
+    // Un objeto por llamada (informe B, C11).
+    const devengar = (accrualObjectId: string) => request('POST', '/accounting/accruals/run', { accrualObjectId });
+    expect(status(devengar('inexistente'))).toBe(404);
+    const run = data<{ postedLines: number; transactionIds: string[] }>(devengar(pending.id));
+    expect(run).toMatchObject({ postedLines: 1, transactionIds: [expect.any(String)] });
+    for (let period = 1; period < pending.remainingPeriods; period += 1) {
+      expect(status(devengar(pending.id))).toBe(201);
     }
-    expect(status(request('POST', '/accounting/accruals/run'))).toBe(422);
+    expect(status(devengar(pending.id))).toBe(422);
     expect(data<{ totalRevenue: string; totalExpense: string; netIncome: string }>(
       request('GET', '/accounting/income-statement', {}, new URLSearchParams({ from: '2026-10-01' })),
     ).netIncome).toBeDefined();

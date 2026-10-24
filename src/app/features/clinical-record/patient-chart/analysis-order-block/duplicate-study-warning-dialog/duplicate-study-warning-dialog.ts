@@ -91,6 +91,10 @@ export class DuplicateStudyWarningDialog {
     if (!study) return null;
     const fecha = this.datePipe.transform(study.performedAt, 'd MMM y') ?? '';
     const dias = study.daysAgo === 1 ? 'día' : 'días';
+    if (!study.reportId) {
+      // Orden activa sin informe: nadie «informó» nada todavía.
+      return `${study.providerName} tiene una orden activa desde el ${fecha} (hace ${study.daysAgo} ${dias}), todavía sin informe.`;
+    }
     return `${study.providerName} lo informó el ${fecha} (hace ${study.daysAgo} ${dias}).`;
   });
 

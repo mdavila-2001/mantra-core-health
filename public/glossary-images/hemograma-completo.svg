@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué mide y qué calcula el hemograma completo</title>
+  <desc id="d">Tres columnas que representan las series de la sangre. Serie roja: recuento de glóbulos rojos, hemoglobina, hematocrito e índices. Serie blanca: recuento total de leucocitos y diferencial de neutrófilos, linfocitos, monocitos, eosinófilos y basófilos. Plaquetas: recuento y volumen medio.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --red:#d6453d; --red-l:#f6d3cf; --wht:#5b7fb8; --wht-l:#d9e4f4; --plt:#b8861f; --plt-l:#f3e4be; --acc:#2b6cb0; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --red:#e8695f; --red-l:#4a2a2a; --wht:#86a6da; --wht-l:#26364d; --plt:#e0b24d; --plt-l:#4a3f1f; --acc:#7fb2e8; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 17px; font-weight: 700; }
+    .t { font-size: 13.5px; }
+    .s { font-size: 13px; }
+    .tag { font-size: 12px; font-weight: 600; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="36" text-anchor="middle" class="title">Hemograma completo: tres series celulares</text>
+
+  <!-- Serie roja -->
+  <rect x="20" y="56" width="248" height="372" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="20" y="56" width="248" height="52" rx="14" fill="var(--red-l)"/>
+  <ellipse cx="62" cy="82" rx="20" ry="14" fill="var(--red)"/>
+  <ellipse cx="62" cy="82" rx="8" ry="5" fill="var(--red-l)"/>
+  <text x="96" y="78" class="h">Serie roja</text>
+  <text x="96" y="97" class="s muted">Eritrocitos</text>
+  <text x="36" y="136" class="tag" style="fill:var(--red)">MEDIDOS</text>
+  <text x="36" y="158" class="t">• Recuento de glóbulos rojos</text>
+  <text x="36" y="180" class="t">• Hemoglobina</text>
+  <text x="36" y="202" class="t">• Volumen corpuscular medio</text>
+  <text x="36" y="236" class="tag" style="fill:var(--red)">CALCULADOS</text>
+  <text x="36" y="258" class="t">• Hematocrito</text>
+  <text x="36" y="280" class="t">• Hb corpuscular media</text>
+  <text x="36" y="302" class="t">• Concentración Hb corpuscular</text>
+  <text x="36" y="324" class="t">• Amplitud de distribución (ADE)</text>
+  <text x="36" y="358" class="tag" style="fill:var(--red)">OPCIONAL</text>
+  <text x="36" y="380" class="t">• Reticulocitos</text>
+  <text x="36" y="410" class="s muted">¿Hay anemia? ¿De qué tipo?</text>
+
+  <!-- Serie blanca -->
+  <rect x="276" y="56" width="248" height="372" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="276" y="56" width="248" height="52" rx="14" fill="var(--wht-l)"/>
+  <circle cx="316" cy="82" r="16" fill="var(--wht)"/>
+  <path d="M308 78 q4 -8 10 -2 q6 -4 6 4 q-2 8 -8 6 q-8 2 -8 -8z" fill="var(--wht-l)"/>
+  <text x="346" y="78" class="h">Serie blanca</text>
+  <text x="346" y="97" class="s muted">Leucocitos</text>
+  <text x="292" y="136" class="tag" style="fill:var(--wht)">RECUENTO TOTAL</text>
+  <text x="292" y="158" class="t">• Leucocitos totales</text>
+  <text x="292" y="192" class="tag" style="fill:var(--wht)">DIFERENCIAL (ABSOLUTO Y %)</text>
+  <text x="292" y="214" class="t">• Neutrófilos (segm. y bandas)</text>
+  <text x="292" y="236" class="t">• Linfocitos</text>
+  <text x="292" y="258" class="t">• Monocitos</text>
+  <text x="292" y="280" class="t">• Eosinófilos</text>
+  <text x="292" y="302" class="t">• Basófilos</text>
+  <text x="292" y="336" class="tag" style="fill:var(--wht)">ALERTAS</text>
+  <text x="292" y="358" class="t">• Formas inmaduras, blastos,</text>
+  <text x="292" y="378" class="t">  linfocitos atípicos</text>
+  <text x="292" y="410" class="s muted">¿Infección? ¿Inflamación?</text>
+
+  <!-- Plaquetas -->
+  <rect x="532" y="56" width="248" height="372" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="532" y="56" width="248" height="52" rx="14" fill="var(--plt-l)"/>
+  <ellipse cx="566" cy="82" rx="9" ry="6" fill="var(--plt)"/>
+  <ellipse cx="584" cy="76" rx="7" ry="5" fill="var(--plt)"/>
+  <ellipse cx="582" cy="90" rx="6" ry="4" fill="var(--plt)"/>
+  <text x="608" y="78" class="h">Plaquetas</text>
+  <text x="608" y="97" class="s muted">Trombocitos</text>
+  <text x="548" y="136" class="tag" style="fill:var(--plt)">MEDIDOS</text>
+  <text x="548" y="158" class="t">• Recuento de plaquetas</text>
+  <text x="548" y="180" class="t">• Volumen plaquetario medio</text>
+  <text x="548" y="214" class="tag" style="fill:var(--plt)">REVISIÓN DEL FROTIS</text>
+  <text x="548" y="236" class="t">• Descarta agregados y artefactos</text>
+  <text x="548" y="258" class="t">  (pseudotrombocitopenia)</text>
+  <text x="548" y="280" class="t">• Tamaño y granulación</text>
+  <text x="548" y="410" class="s muted">¿Sangrado o trombosis?</text>
+
+  <text x="400" y="458" text-anchor="middle" class="s muted">Los rangos de referencia dependen de cada laboratorio. Ilustración original de AloVida.</text>
+</svg>

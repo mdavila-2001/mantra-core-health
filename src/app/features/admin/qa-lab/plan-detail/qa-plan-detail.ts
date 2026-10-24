@@ -71,7 +71,7 @@ export class QaPlanDetail {
   });
   protected readonly vivo = computed(() => VIVOS.includes(this.datos()?.status ?? ''));
   protected readonly breadcrumbs = [
-    { label: 'QA Lab', routerLink: '/administration/qa-lab' },
+    { label: 'QA Lab', routerLink: '/superadmin/qa-lab' },
     { label: 'Plan de ejecución' },
   ];
 

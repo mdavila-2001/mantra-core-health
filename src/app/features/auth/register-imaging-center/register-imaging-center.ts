@@ -19,46 +19,46 @@ import { telefonoCompleto } from '../../../shared/components/molecules/phone-inp
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
 import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
-import { MAX_ATTACHMENT_BYTES } from '../registro-compartido/credenciales-del-medico';
+  RegistrationHelp,
+  type HelpCard,
+} from '../../../shared/components/organisms/registration-help/registration-help';
+import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+  NOTICE_REWRITE_ADDRESS,
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { generarCodigoLegible } from '../../../core/codigo-legible/codigo-legible';
+import { generateReadableCode } from '../../../core/readable-code/readable-code';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
   DiagnosticCenterRegistration,
   OrganizationContactPerson,
   OrganizationExecutives,
 } from '../../../core/data-access/iam/iam.types';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { codigoDesdeSigla } from '../register-organization/codigo-desde-sigla';
+import { codeFromAcronym } from '../register-organization/code-from-acronym';
 import {
-  AVISO_CATALOGO_DE_DIAGNOSTICO,
-  AltaDeCentroDiagnostico,
-  CODIGOS_DE_DIAGNOSTICO,
-  CatalogoIncompleto,
-  type CatalogosDeDiagnostico,
-} from '../registro-compartido/alta-de-centro-diagnostico';
-import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
-import { grupoDeNombre, nombreCompleto } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+  DIAGNOSIS_CATALOG_NOTICE,
+  DiagnosisCenterEnrollment,
+  DIAGNOSIS_CODES,
+  IncompleteCatalog,
+  type DiagnosisCatalogs,
+} from '../shared-registration/diagnostic-center-enrollment';
+import { NameFields } from '../shared-registration/name-fields/name-fields';
+import { nameGroup, completeName } from '../shared-registration/name-fields/person-name';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -111,12 +111,12 @@ export const TIPOS_DE_SOCIEDAD: readonly SelectOption<string>[] = [
  * etiqueta que ve la persona; el concepto se resuelve por código al enviar.
  */
 const CODIGO_DE_MODALIDAD: Readonly<Record<string, string>> = {
-  'Rayos X': CODIGOS_DE_DIAGNOSTICO.modalidades.rayosX,
-  Ecografía: CODIGOS_DE_DIAGNOSTICO.modalidades.ecografia,
-  'Tomografía computarizada': CODIGOS_DE_DIAGNOSTICO.modalidades.tomografia,
-  'Resonancia magnética': CODIGOS_DE_DIAGNOSTICO.modalidades.resonancia,
-  Mamografía: CODIGOS_DE_DIAGNOSTICO.modalidades.mamografia,
-  'Densitometría ósea': CODIGOS_DE_DIAGNOSTICO.modalidades.densitometria,
+  'Rayos X': DIAGNOSIS_CODES.modalidades.rayosX,
+  Ecografía: DIAGNOSIS_CODES.modalidades.ecografia,
+  'Tomografía computarizada': DIAGNOSIS_CODES.modalidades.tomografia,
+  'Resonancia magnética': DIAGNOSIS_CODES.modalidades.resonancia,
+  Mamografía: DIAGNOSIS_CODES.modalidades.mamografia,
+  'Densitometría ósea': DIAGNOSIS_CODES.modalidades.densitometria,
 };
 
 /**
@@ -178,7 +178,7 @@ export interface SucursalDeclarada {
   readonly descripcion: string;
   /** El enlace de mapa que pegó la persona o que trajo la carga en lote. */
   readonly urlUbicacion: string;
-  readonly gps: Coordenadas | null;
+  readonly gps: Coordinates | null;
 }
 
 /**
@@ -233,7 +233,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * Mismo mecanismo que las otras altas largas: la columna cambia con el paso,
  * porque «¿por qué me piden ESTO?» es una pregunta distinta en cada página.
  */
-const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   empresa: [
     {
       icono: 'building',
@@ -440,26 +440,26 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AnnounceOnAppear,
     Alert,
     PaginatedForm,
-    CampoPersonalizado,
-    RegistroAyuda,
-    UbicacionPicker,
-    CamposDeNombre,
+    CustomField,
+    RegistrationHelp,
+    MapLocationPicker,
+    NameFields,
   ],
   templateUrl: './register-imaging-center.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-imaging-center.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-imaging-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterImagingCenter {
   private readonly router = inject(Router);
   private readonly iam = inject(IamClient);
-  private readonly alta = inject(AltaDeCentroDiagnostico);
+  private readonly alta = inject(DiagnosisCenterEnrollment);
 
   /**
    * El código de organización se deriva del nombre y lleva un sufijo propio de
    * esta pantalla (único en la plataforma; fijo por instancia, así un reintento
    * manda el mismo).
    */
-  private readonly sufijoDeCodigo = generarCodigoLegible(5);
+  private readonly sufijoDeCodigo = generateReadableCode(5);
 
   constructor() {
     // La constitución de la empresa (y el poder de su representante) se exigen
@@ -533,7 +533,7 @@ export class RegisterImagingCenter {
     }),
     // --- 1.8 · representante legal -----------------------------------------
     // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
-    legalRepName: grupoDeNombre(true),
+    legalRepName: nameGroup(true),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -545,7 +545,7 @@ export class RegisterImagingCenter {
     }),
     poderFile: new FormControl<AdjuntoDeclarado | null>(null),
     // --- 1.9 a 1.17 · los tres cargos, todos opcionales --------------------
-    generalManagerName: grupoDeNombre(false),
+    generalManagerName: nameGroup(false),
     generalManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -554,7 +554,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    salesManagerName: grupoDeNombre(false),
+    salesManagerName: nameGroup(false),
     salesManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -563,7 +563,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    marketingManagerName: grupoDeNombre(false),
+    marketingManagerName: nameGroup(false),
     marketingManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -575,7 +575,7 @@ export class RegisterImagingCenter {
     // --- la cuenta ---------------------------------------------------------
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
   });
 
@@ -590,7 +590,7 @@ export class RegisterImagingCenter {
    * un alta con cuatro cajas de «adjuntá un archivo» es la forma más rápida de
    * que alguien la deje para después y no vuelva.
    */
-  readonly paginas = paginarCampos([
+  readonly paginas = paginateFields([
     {
       titulo: 'La empresa',
       clave: 'empresa',
@@ -753,7 +753,7 @@ export class RegisterImagingCenter {
       icon: 'shield' as const,
       campos: [
         {
-          // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+          // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
           // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
           key: 'legalRepName',
           label: '',
@@ -895,7 +895,7 @@ export class RegisterImagingCenter {
           icono: 'lock' as const,
           autocomplete: 'new-password',
           testId: 'registro-imagen-password',
-          mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+          mensajeDeError: MESSAGE_SHORT_PASSWORD,
         },
       ],
     },
@@ -945,10 +945,10 @@ export class RegisterImagingCenter {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en las otras altas: `app-ubicacion-picker` emite
+   * Fuera del formulario, como en las otras altas: `app-map-location-picker` emite
    * **sólo lo confirmado** y se guarda para sí el estado intermedio.
    */
-  readonly gpsCentral = signal<Coordenadas | null>(null);
+  readonly gpsCentral = signal<Coordinates | null>(null);
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -965,7 +965,7 @@ export class RegisterImagingCenter {
     () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
   );
   private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
   vaciarDireccionPorElMapa(): void {
@@ -988,7 +988,7 @@ export class RegisterImagingCenter {
     return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
   }
 
-  protected readonly idsUbicacionCentral: IdsDePrueba = {
+  protected readonly idsUbicacionCentral: TestIds = {
     mapa: 'registro-imagen-central-map',
     confirmada: 'registro-imagen-central-location-confirmed',
     avisoGeocodificacion: 'registro-imagen-central-geocoding-notice',
@@ -1080,7 +1080,7 @@ export class RegisterImagingCenter {
     this.sucursales.update((lista) => [...lista, ...nuevas]);
   }
 
-  fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {
+  fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
     this.actualizarSucursal(id, { gps });
   }
 
@@ -1091,7 +1091,7 @@ export class RegisterImagingCenter {
   }
 
   /** Los identificadores de prueba del mapa de una sucursal. */
-  idsDeSucursal(id: string): IdsDePrueba {
+  idsDeSucursal(id: string): TestIds {
     return {
       mapa: `registro-imagen-${id}-map`,
       confirmada: `registro-imagen-${id}-location-confirmed`,
@@ -1107,7 +1107,7 @@ export class RegisterImagingCenter {
 
   private readonly claveVisible = signal('empresa');
 
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA[this.claveVisible()] ?? [],
   );
 
@@ -1158,14 +1158,14 @@ export class RegisterImagingCenter {
     }
     this.estado.set(loading());
     this.alta
-      .catalogos()
+      .catalogs()
       .pipe(
         // Los conceptos se resuelven antes de subir nada: si el catálogo no trae
         // uno, no quedan PDF subidos a una alta que no va a salir.
         map((catalogos) => this.conceptos(catalogos)),
         switchMap((conceptos) =>
           this.alta
-            .subirDocumentos(this.archivosDelAlta())
+            .uploadDocuments(this.archivosDelAlta())
             .pipe(switchMap((ids) => this.iam.registerOrganization(this.datos(conceptos, ids)))),
         ),
       )
@@ -1192,12 +1192,12 @@ export class RegisterImagingCenter {
   }
 
   /** Los ids de concepto que el alta necesita, por su código. Falla si el catálogo no trae alguno. */
-  private conceptos(catalogos: CatalogosDeDiagnostico) {
-    const concepto = AltaDeCentroDiagnostico.concepto;
+  private conceptos(catalogos: DiagnosisCatalogs) {
+    const concepto = DiagnosisCenterEnrollment.concept;
     return {
-      pais: concepto(catalogos.pais, CODIGOS_DE_DIAGNOSTICO.pais),
-      jurisdiccion: concepto(catalogos.jurisdiccion, CODIGOS_DE_DIAGNOSTICO.jurisdiccionNacional),
-      tipoDeUnidad: concepto(catalogos.tipoDeUnidad, CODIGOS_DE_DIAGNOSTICO.imagenes),
+      pais: concepto(catalogos.pais, DIAGNOSIS_CODES.pais),
+      jurisdiccion: concepto(catalogos.jurisdiccion, DIAGNOSIS_CODES.jurisdiccionNacional),
+      tipoDeUnidad: concepto(catalogos.tipoDeUnidad, DIAGNOSIS_CODES.imagenes),
       modalidades: this.form.controls.modalidades.value.map((etiqueta) =>
         concepto(catalogos.modalidad, CODIGO_DE_MODALIDAD[etiqueta] ?? etiqueta),
       ),
@@ -1228,7 +1228,7 @@ export class RegisterImagingCenter {
     }
     return {
       tenantType: 'DIAGNOSTIC_CENTER',
-      code: `${codigoDesdeSigla(nombre).slice(0, 60)}_${this.sufijoDeCodigo}`,
+      code: `${codeFromAcronym(nombre).slice(0, 60)}_${this.sufijoDeCodigo}`,
       legalName: nombre,
       legalEntityType: raw.companyType ?? '',
       timeZone: 'America/La_Paz',
@@ -1250,7 +1250,7 @@ export class RegisterImagingCenter {
       owner: {
         email: raw.legalRepEmail.trim(),
         password: raw.password,
-        displayName: nombreCompleto(raw.legalRepName),
+        displayName: completeName(raw.legalRepName),
       },
       legalDocuments: {
         ...(ids.constitutionFileId === undefined
@@ -1262,7 +1262,7 @@ export class RegisterImagingCenter {
         healthAuthorityCertificateFileId,
       },
       legalRepresentative: {
-        fullName: nombreCompleto(raw.legalRepName),
+        fullName: completeName(raw.legalRepName),
         idNumber: raw.legalRepIdNumber.trim(),
         email: raw.legalRepEmail.trim(),
         ...(ids.powerOfAttorneyFileId === undefined
@@ -1286,10 +1286,10 @@ export class RegisterImagingCenter {
       fullName.trim() === '' || phone.trim() === '' || email.trim() === ''
         ? null
         : { fullName: fullName.trim(), phone: phone.trim(), email: email.trim() };
-    const general = contacto(nombreCompleto(raw.generalManagerName), raw.generalManagerPhone, raw.generalManagerEmail);
-    const comercial = contacto(nombreCompleto(raw.salesManagerName), raw.salesManagerPhone, raw.salesManagerEmail);
+    const general = contacto(completeName(raw.generalManagerName), raw.generalManagerPhone, raw.generalManagerEmail);
+    const comercial = contacto(completeName(raw.salesManagerName), raw.salesManagerPhone, raw.salesManagerEmail);
     const marketing = contacto(
-      nombreCompleto(raw.marketingManagerName),
+      completeName(raw.marketingManagerName),
       raw.marketingManagerPhone,
       raw.marketingManagerEmail,
     );
@@ -1300,8 +1300,8 @@ export class RegisterImagingCenter {
 
   /** Traduce lo que falló a un estado que la pantalla sabe decir. */
   private fallaDelEnvio(error: unknown): ViewState<null> {
-    if (error instanceof CatalogoIncompleto) {
-      return validation([{ field: 'catalogos', message: AVISO_CATALOGO_DE_DIAGNOSTICO }]);
+    if (error instanceof IncompleteCatalog) {
+      return validation([{ field: 'catalogos', message: DIAGNOSIS_CATALOG_NOTICE }]);
     }
     if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
       return validation([{ field: 'alta', message: error.message }]);

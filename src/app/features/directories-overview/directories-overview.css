@@ -1,88 +1,228 @@
-/* ============================================================================
-    La portada de los cuatro directorios.
+/* Portada de los directorios: una puerta por directorio.
 
-    El grafo es puramente visual: el nodo central y las líneas de conexión son
-    decorativos (`aria-hidden`). Lo único que importa para navegar es la lista
-    de enlaces — por eso el layout se apoya en un `<ul>` normal, y el «mapa» es
-    una capa de fondo que se dibuja con `grid` y pseudo-elementos, no un canvas
-    ni una librería de grafos.
+   La primera puerta —la tarea principal de la sesión— ocupa la fila entera y,
+   cuando hay ancho, pone la foto al costado. Las demás se reparten parejas en
+   la fila siguiente: cuatro en escritorio, dos en tableta, una en el teléfono.
+   Mobile-first: todo lo que no es teléfono entra por `min-width`. */
 
-    La rejilla y la tarjeta salen de `shared/styles/rejilla-de-tarjetas.css`,
-    la misma hoja que pinta la portada de cada uno de los directorios que esta
-    pantalla presenta.
-
-    Antes esta pantalla se pintaba con el juego de tokens ALOVIDA —`--tinta`,
-    `--sup-tarjeta`, `--e5`, `--r-card`, `--sombra-1`—, que es **disjunto** del
-    de `styles.css` (lo dice el encabezado de `styles/alovida.css`): otra
-    tipografía, otro radio y una sombra que las portadas de los directorios no
-    tienen. El resultado era que la puerta de los cuatro directorios se veía
-    como otra aplicación que los cuatro directorios. Acá ya no hay ni un token
-    de aquel juego.
-    ========================================================================== */
-
-:host {
-  display: block;
+.directories {
+  container-type: inline-size;
+  margin-top: var(--sp-2);
 }
 
-.mapa {
-  position: relative;
+.directories__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.directories__item {
+  display: flex;
+  min-width: 0;
+}
+
+/* ---- la tarjeta ----------------------------------------------------------- */
+
+.directories__card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--sp-6);
-  padding-block: var(--sp-6);
+  width: 100%;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--dur-base) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard);
 }
 
-/* La baldosa del nodo central, con la misma pareja `--st-*` con la que el
-   árbol de accesos pinta las suyas: ya está medida contra WCAG por
-   `scripts/check-contrast.mjs` y ya tiene su versión de tema oscuro. El aro
-   interior la despega del fondo sin gastar un borde propio. */
-.mapa__centro {
+.directories__card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.directories__card:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* El anillo lo pone la regla global de `:focus-visible`; acá sólo se lo
+   despega del borde para que se lean como dos cosas. */
+.directories__card:focus-visible {
+  outline-offset: 3px;
+}
+
+/* La foto es ilustrativa del tipo de lugar (ver `foto-de-directorio.ts`), a
+   sangre y con proporción fija para que nada salte al cargar. */
+.directories__photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 14rem;
+  object-fit: cover;
+  background: var(--bg-inset);
+  transition: transform var(--dur-slow) var(--ease-standard);
+}
+
+.directories__card:hover .directories__photo {
+  transform: scale(1.03);
+}
+
+.directories__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+}
+
+.directories__heading {
   display: flex;
   align-items: center;
-  justify-content: center;
-  inline-size: 3.5rem;
-  block-size: 3.5rem;
-  border-radius: var(--r-full);
-  background: var(--st-primary-bg);
+  gap: var(--sp-3);
+}
+
+.directories__icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
   color: var(--st-primary-fg);
-  box-shadow: inset 0 0 0 1px var(--st-primary-bd);
+  background: var(--st-primary-bg);
+  border-radius: var(--r-full);
 }
 
-.mapa__centro app-nav-icon {
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-}
-
-/* La rejilla compartida, con el ancho que esta pantalla necesita: acá la
-   tarjeta lleva una línea de resumen y no una cifra, así que 16rem en vez de
-   las 14 del catálogo de especialidades. El máximo la mantiene centrada bajo
-   el nodo en un monitor ancho. */
-.mapa__nodos {
-  --rejilla-min: 16rem;
-
-  gap: var(--sp-5);
-  inline-size: 100%;
-  max-inline-size: 60rem;
+.directories__name {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+  text-wrap: balance;
 }
 
-/* Las «líneas» hacia cada nodo: un filete vertical arriba de cada tarjeta que
-   sube hasta encontrarse visualmente con el nodo central. Es deliberadamente
-   discreto —un filo, no un cable— y desaparece en el layout angosto, donde la
-   lista pasa a ser una columna sin pretender ser un grafo. */
-.mapa__item {
-  position: relative;
+.directories__summary {
+  flex: 1;
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
 }
 
-@media (min-width: 40rem) {
-  .mapa__item::before {
-    content: '';
-    position: absolute;
-    inset-block-start: calc(-1 * var(--sp-5));
-    inset-inline-start: 50%;
-    inline-size: 1px;
-    block-size: var(--sp-5);
-    background: var(--border-default);
+.directories__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  font-weight: 600;
+  color: var(--text-link);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.directories__action svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+.directories__card:hover .directories__action svg {
+  transform: translateX(3px);
+}
+
+/* ---- tableta: dos por fila ------------------------------------------------ */
+
+@container (min-width: 36rem) {
+  .directories__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-5);
+  }
+
+  .directories__item--featured {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- la puerta destacada, con la foto al costado -------------------------- */
+
+@container (min-width: 44rem) {
+  .directories__item--featured .directories__card {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  .directories__item--featured .directories__photo {
+    height: 100%;
+    min-height: 15rem;
+    max-height: none;
+    aspect-ratio: auto;
+  }
+
+  .directories__item--featured .directories__body {
+    justify-content: center;
+    gap: var(--sp-4);
+    padding: var(--sp-8);
+  }
+
+  .directories__item--featured .directories__icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .directories__item--featured .directories__name {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+  }
+
+  .directories__item--featured .directories__summary {
+    flex: none;
+    max-width: 52ch;
+    font-size: var(--fs-body-lg);
+    line-height: var(--lh-body-lg);
+  }
+
+  .directories__item--featured .directories__action {
+    align-self: flex-start;
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+
+/* ---- escritorio: las demás, en una sola fila ------------------------------ */
+
+@container (min-width: 64rem) {
+  .directories__grid[data-count='5'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .directories__grid[data-count='4'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .directories__card,
+  .directories__photo,
+  .directories__action svg {
+    transition: none;
+  }
+
+  .directories__card:hover,
+  .directories__card:hover .directories__photo,
+  .directories__card:hover .directories__action svg {
+    transform: none;
   }
 }

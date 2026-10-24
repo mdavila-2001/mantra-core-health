@@ -2562,3 +2562,19 @@ reintento; visor) y `features/laboratory/summary/`.
 > **Falta.** Confirmar el DTO. Si no existe: el modelo (`mantra-core-health-model`) tiene que
 > decir dónde se guardan idioma y nivel, y recién después el backend lo acepta y lo devuelve. El
 > supuesto original, con su razonamiento, está en `docs/progress/BLOCKERS.md`.
+
+## P61 · Las reseñas en el listado de médicos — 23/10/2026
+
+> **Qué pide el front.** El propietario quiere las reseñas en **cada** tarjeta del directorio
+> (marketplace, #1159). Farmacias, clínicas, aseguradoras y laboratorios ya las traen
+> (`ratingAverage`/`ratingCount` de la búsqueda pública y `rating`/`ratingCount` de
+> `/diagnostic-units/search`). El listado de médicos (`GET /profiles/practitioners`) **no**: la
+> nota sólo viaja en la ficha.
+>
+> **Contrato esperado:** `PractitionerListItem` suma `ratingAverage: number | null` y
+> `ratingCount: number`, del mismo agregado que ya sirve `community-reviews-read.service`
+> (`null`/`0` sin reseñas publicadas). Ya están declarados como opcionales en
+> `profiles.types.ts`, y la tarjeta los usa en cuanto lleguen.
+>
+> **Mientras tanto:** la tarjeta del médico dice «Sin reseñas todavía» con las estrellas vacías.
+> No se inventa una nota.

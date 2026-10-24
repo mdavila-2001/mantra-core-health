@@ -44,23 +44,23 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import {
   ArchivoInvalido,
-  BYTES_MAXIMOS_DEL_ARCHIVO,
-  CATEGORIAS,
-  COLUMNAS_DEL_CSV,
-  ETIQUETAS_DE_CAMPO,
-  FILAS_DE_EJEMPLO,
-  FILAS_MAXIMAS_POR_CARGA,
-  cambiosDelBorrador,
+  FILE_MAX_BYTES,
+  CATEGORIES,
+  CSV_COLUMNS,
+  FIELD_LABELS,
+  EXAMPLE_ROWS,
+  MAX_ROWS_BY_LOAD,
+  draftChanges,
   decodificarCsv,
-  leerCsv,
-  revisarCarga,
-  type CamposDelProducto,
+  readCsv,
+  reviewLoad,
+  type ProductFields,
   type CodificacionDelCsv,
   type CsvColumnMapping,
-  type FilaRevisada,
-  type LecturaDelCsv,
-  type ModoDeCarga,
-} from '../catalog-rules/catalogo.reglas';
+  type ReviewedRow,
+  type CsvReading,
+  type LoadMode,
+} from '../catalog-rules/catalog.rules';
 import { PharmacyScope } from '../pharmacy-scope';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 
@@ -123,13 +123,13 @@ const OUTCOME_BADGE: Readonly<Record<RowOutcome, { variant: BadgeVariant; label:
   PENDING: { variant: 'secondary', label: 'Sin enviar' },
 };
 
-const MODE_OPTIONS: readonly SelectOption<ModoDeCarga>[] = [
+const MODE_OPTIONS: readonly SelectOption<LoadMode>[] = [
   { value: 'CREAR_Y_ACTUALIZAR', label: 'Crear y actualizar' },
   { value: 'SOLO_CREAR', label: 'Sólo crear' },
   { value: 'SOLO_ACTUALIZAR', label: 'Sólo actualizar' },
 ];
 
-const MODE_HINTS: Readonly<Record<ModoDeCarga, string>> = {
+const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
   CREAR_Y_ACTUALIZAR:
     'Los códigos nuevos se crean y los que ya están en su catálogo se actualizan con lo que traiga el archivo.',
   SOLO_CREAR: 'Sólo se crean los códigos nuevos; los que ya están en su catálogo se rechazan.',
@@ -202,8 +202,8 @@ export class PharmacyImport {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly maxRows = FILAS_MAXIMAS_POR_CARGA;
-  protected readonly maxBytes = BYTES_MAXIMOS_DEL_ARCHIVO;
+  protected readonly maxRows = MAX_ROWS_BY_LOAD;
+  protected readonly maxBytes = FILE_MAX_BYTES;
   protected readonly modeOptions = MODE_OPTIONS;
 
   protected readonly pharmacyOptions = computed<readonly SelectOption<string>[]>(
@@ -218,14 +218,14 @@ export class PharmacyImport {
 
   /** Con las categorías sin cargar no hay contra qué revisar: se usa la lista fija sólo de relleno. */
   private readonly allowedCategories = computed<readonly string[]>(
-    () => dataOf(this.categories()) ?? CATEGORIAS,
+    () => dataOf(this.categories()) ?? CATEGORIES,
   );
 
   protected readonly categoriesReady = computed(() => this.categories().status === 'ready');
 
   /* ─── El recorrido ────────────────────────────────────────────────────── */
 
-  protected readonly mode = signal<ModoDeCarga>('CREAR_Y_ACTUALIZAR');
+  protected readonly mode = signal<LoadMode>('CREAR_Y_ACTUALIZAR');
   protected readonly modeHint = computed(() => MODE_HINTS[this.mode()]);
   protected readonly modeLabel = computed(
     () => MODE_OPTIONS.find((option) => option.value === this.mode())?.label ?? '',
@@ -239,7 +239,7 @@ export class PharmacyImport {
   protected readonly encoding = signal<CodificacionDelCsv>('utf-8');
 
   /** Lo que salió del archivo; `null` mientras no hay uno leído. */
-  protected readonly reading = signal<LecturaDelCsv | null>(null);
+  protected readonly reading = signal<CsvReading | null>(null);
   /** Los productos que la farmacia ya tiene, por código → id. */
   private readonly catalog = signal<ReadonlyMap<string, string>>(new Map());
   /** El catálogo pasó del tope de lectura: puede haber códigos que no se compararon. */
@@ -249,11 +249,11 @@ export class PharmacyImport {
    * Las filas revisadas. Es derivado, no guardado: cambiar el modo con el
    * archivo ya leído recalcula la revisión sin volver a subir nada.
    */
-  protected readonly reviewed = computed<readonly FilaRevisada[]>(() => {
+  protected readonly reviewed = computed<readonly ReviewedRow[]>(() => {
     const reading = this.reading();
     return reading === null
       ? []
-      : revisarCarga(reading.filas, this.catalog(), this.mode(), this.allowedCategories());
+      : reviewLoad(reading.filas, this.catalog(), this.mode(), this.allowedCategories());
   });
 
   protected readonly mappings = computed<readonly CsvColumnMapping[]>(
@@ -271,8 +271,8 @@ export class PharmacyImport {
   /** Los campos de Mantra que el archivo no trae. */
   protected readonly missingFields = computed<readonly string[]>(() => {
     const present = new Set(this.mappings().flatMap((mapping) => (mapping.field ? [mapping.field] : [])));
-    return COLUMNAS_DEL_CSV.filter((column) => !present.has(column.campo)).map(
-      (column) => ETIQUETAS_DE_CAMPO[column.campo],
+    return CSV_COLUMNS.filter((column) => !present.has(column.campo)).map(
+      (column) => FIELD_LABELS[column.campo],
     );
   });
 
@@ -440,7 +440,7 @@ export class PharmacyImport {
   /** Las columnas de la ayuda; la categoría dice las de **esta** farmacia. */
   protected readonly csvColumns = computed(() => {
     const categories = dataOf(this.categories());
-    return COLUMNAS_DEL_CSV.map((column) =>
+    return CSV_COLUMNS.map((column) =>
       column.campo !== 'categoria' || categories === null
         ? column
         : {
@@ -458,13 +458,13 @@ export class PharmacyImport {
    * farmacia (o ninguna): con la de siempre, la plantilla bajada y subida tal
    * cual se rechazaría en una farmacia que no la tiene.
    */
-  private readonly templateRows = computed<readonly CamposDelProducto[]>(() => {
+  private readonly templateRows = computed<readonly ProductFields[]>(() => {
     const first = dataOf(this.categories())?.[0] ?? '';
-    return FILAS_DE_EJEMPLO.map((row) => ({ ...row, categoria: first }));
+    return EXAMPLE_ROWS.map((row) => ({ ...row, categoria: first }));
   });
 
-  protected readonly fieldLabel = (field: keyof CamposDelProducto | null): string =>
-    field === null ? '—' : ETIQUETAS_DE_CAMPO[field];
+  protected readonly fieldLabel = (field: keyof ProductFields | null): string =>
+    field === null ? '—' : FIELD_LABELS[field];
 
   constructor() {
     // Cada vez que cambia la farmacia —incluida la que se elige sola al
@@ -539,7 +539,7 @@ export class PharmacyImport {
     );
   }
 
-  protected setMode(mode: ModoDeCarga | null): void {
+  protected setMode(mode: LoadMode | null): void {
     this.mode.set(mode ?? 'CREAR_Y_ACTUALIZAR');
   }
 
@@ -566,9 +566,9 @@ export class PharmacyImport {
     const { texto, codificacion } = decodificarCsv(bytes);
     this.encoding.set(codificacion);
 
-    let reading: LecturaDelCsv;
+    let reading: CsvReading;
     try {
-      reading = leerCsv(texto);
+      reading = readCsv(texto);
     } catch (error: unknown) {
       this.analyzing.set(false);
       this.fileError.set(
@@ -661,7 +661,7 @@ export class PharmacyImport {
             ? EMPTY
             : (row.accion === 'ACTUALIZAR' && row.productId !== null
                 ? this.pharmacy
-                    .updateProduct(pharmacyId, row.productId, cambiosDelBorrador(row.borrador, false))
+                    .updateProduct(pharmacyId, row.productId, draftChanges(row.borrador, false))
                     .pipe(map(() => 'Actualizado'))
                 : this.pharmacy
                     .publishProduct(pharmacyId, row.borrador)
@@ -759,10 +759,10 @@ export class PharmacyImport {
         return row === undefined ? [] : [{ campos: row.campos, problema: result.message }];
       }),
     ];
-    const columns: CsvColumn<{ campos: CamposDelProducto; problema: string }>[] = [
-      ...COLUMNAS_DEL_CSV.map((column) => ({
+    const columns: CsvColumn<{ campos: ProductFields; problema: string }>[] = [
+      ...CSV_COLUMNS.map((column) => ({
         header: column.encabezado,
-        value: (row: { campos: CamposDelProducto }) => row.campos[column.campo],
+        value: (row: { campos: ProductFields }) => row.campos[column.campo],
       })),
       { header: 'problema', value: (row) => row.problema },
     ];
@@ -803,14 +803,14 @@ function draftName(draft: PharmacyProductDraft): string {
   return draft.brandName ?? draft.genericName ?? draft.productCode;
 }
 
-function nameOfFields(fields: CamposDelProducto): string {
+function nameOfFields(fields: ProductFields): string {
   return fields.marca.trim() || fields.generico.trim() || '—';
 }
 
 /** Las columnas de la plantilla: el encabezado canónico de cada una. */
-function templateColumns(): CsvColumn<CamposDelProducto>[] {
-  return COLUMNAS_DEL_CSV.map((column) => ({
+function templateColumns(): CsvColumn<ProductFields>[] {
+  return CSV_COLUMNS.map((column) => ({
     header: column.encabezado,
-    value: (row: CamposDelProducto) => row[column.campo],
+    value: (row: ProductFields) => row[column.campo],
   }));
 }

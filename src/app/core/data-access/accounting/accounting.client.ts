@@ -7,14 +7,18 @@ import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccrualRegister,
   BalanceSheet,
+  ClearingRequest,
   ClearingResult,
+  DepreciationRunRequest,
+  DepreciationRunResult,
+  AccrualRunRequest,
+  AccrualRunResult,
   ControllingObject,
   DocumentFlowNode,
   FiscalPeriod,
   FiscalYear,
   FixedAssetRegister,
   OpenItemsPage,
-  RunResult,
   WorkflowAction,
   ChartOfAccounts,
   FinancialStatementLine,
@@ -300,10 +304,24 @@ export class AccountingClient {
     });
   }
 
-  /** `POST /accounting/clearing-documents` — compensar partidas contra su cobro. */
-  clearOpenItems(openItemIds: readonly string[]): Observable<ClearingResult> {
+  /**
+   * `POST /accounting/clearing-documents` — compensar partidas contra su cobro
+   * o su pago.
+   *
+   * Informe B, C9: el cuerpo es el de `CreateClearingDto`, con la cuenta de
+   * banco que eligió la persona y el importe de cada partida. Antes se mandaba
+   * sólo `openItemIds` y la API respondía 400 siempre.
+   */
+  clearOpenItems(request: ClearingRequest): Observable<ClearingResult> {
     return this.http.post<ClearingResult>(this.url('/accounting/clearing-documents'), {
-      openItemIds,
+      ...(request.tenantId === undefined ? {} : { tenantId: request.tenantId }),
+      practiceId: request.practiceId,
+      bankAccountId: request.bankAccountId,
+      clearingDate: request.clearingDate,
+      items: request.items.map((item) => ({
+        openItemId: item.openItemId,
+        clearedAmount: item.clearedAmount,
+      })),
     });
   }
 
@@ -353,11 +371,19 @@ export class AccountingClient {
   /**
    * `POST /accounting/depreciation/run` — la corrida de amortización.
    *
-   * No es un informe: crea el asiento del período y mueve los saldos. Por eso
-   * falla si el período está cerrado, igual que cualquier otro posteo.
+   * No es un informe: crea un asiento por activo en el período y mueve los
+   * saldos. Por eso falla si el período está cerrado, igual que cualquier
+   * otro posteo. Informe B, C10: las dos cuentas las elige la persona; el
+   * activo no declara su clase en el modelo, así que la API no las deduce.
    */
-  runDepreciation(practiceId: string): Observable<RunResult> {
-    return this.http.post<RunResult>(this.url('/accounting/depreciation/run'), { practiceId });
+  runDepreciation(request: DepreciationRunRequest): Observable<DepreciationRunResult> {
+    return this.http.post<DepreciationRunResult>(this.url('/accounting/depreciation/run'), {
+      practiceId: request.practiceId,
+      fiscalPeriodId: request.fiscalPeriodId,
+      depreciationExpenseAccountId: request.depreciationExpenseAccountId,
+      accumulatedDepreciationAccountId: request.accumulatedDepreciationAccountId,
+      postingDate: request.postingDate,
+    });
   }
 
   /** `GET /accounting/accrual-objects` — devengos y cuánto queda por reconocer. */
@@ -367,9 +393,19 @@ export class AccountingClient {
     });
   }
 
-  /** `POST /accounting/accruals/run` — reconoce el período de cada devengo. */
-  runAccruals(practiceId: string): Observable<RunResult> {
-    return this.http.post<RunResult>(this.url('/accounting/accruals/run'), { practiceId });
+  /**
+   * `POST /accounting/accruals/run` — reconoce el período de **un** devengo.
+   *
+   * Informe B, C11: la API corre un objeto por vez y sus cuentas las declara
+   * el objeto; la pantalla recorre los pendientes.
+   */
+  runAccruals(request: AccrualRunRequest): Observable<AccrualRunResult> {
+    return this.http.post<AccrualRunResult>(this.url('/accounting/accruals/run'), {
+      accrualObjectId: request.accrualObjectId,
+      fiscalPeriodId: request.fiscalPeriodId,
+      practiceId: request.practiceId,
+      postingDate: request.postingDate,
+    });
   }
 
   private url(path: string): string {

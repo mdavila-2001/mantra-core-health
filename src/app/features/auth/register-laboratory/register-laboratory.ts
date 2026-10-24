@@ -11,16 +11,16 @@ import type {
   DiagnosticUnitBranchRegistration,
   LaboratoryOrganizationRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import {
-  AVISO_CATALOGO_DE_DIAGNOSTICO,
-  AltaDeCentroDiagnostico,
-  CODIGOS_DE_DIAGNOSTICO,
-  CatalogoIncompleto,
-  type CatalogosDeDiagnostico,
-} from '../registro-compartido/alta-de-centro-diagnostico';
+  DIAGNOSIS_CATALOG_NOTICE,
+  DiagnosisCenterEnrollment,
+  DIAGNOSIS_CODES,
+  IncompleteCatalog,
+  type DiagnosisCatalogs,
+} from '../shared-registration/diagnostic-center-enrollment';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -39,36 +39,36 @@ import { telefonoCompleto } from '../../../shared/components/molecules/phone-inp
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
 import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+  RegistrationHelp,
+  type HelpCard,
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import {
-  campoDelPoderNotariado,
-  camposDeDocumentosLegales,
-  DOCUMENTOS_LEGALES_DEL_REGISTRO,
-  type ClaveDeDocumentoDelAlta,
-} from '../registro-compartido/documentos-legales';
+  notarizedPowerField,
+  legalDocumentsFields,
+  RECORD_LEGAL_DOCUMENTS,
+  type EnrollmentDocumentKey,
+} from '../shared-registration/legal-documents';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+  NOTICE_REWRITE_ADDRESS,
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+import { NameFields } from '../shared-registration/name-fields/name-fields';
 import {
-  grupoDeNombre,
-  nombreCompleto,
-} from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+  nameGroup,
+  completeName,
+} from '../shared-registration/name-fields/person-name';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -125,7 +125,7 @@ export interface SucursalDeclarada {
   readonly descripcion: string;
   /** El enlace de mapa que pegó la persona o que trajo la carga en lote. */
   readonly urlUbicacion: string;
-  readonly gps: Coordenadas | null;
+  readonly gps: Coordinates | null;
 }
 
 const MAX_NOMBRE = 300;
@@ -145,7 +145,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * Mismo mecanismo que el alta de profesional: la columna cambia con el paso,
  * porque «¿por qué me piden ESTO?» es una pregunta distinta en cada página.
  */
-const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   empresa: [
     {
       icono: 'building',
@@ -292,20 +292,20 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AnnounceOnAppear,
     Alert,
     PaginatedForm,
-    CampoPersonalizado,
-    RegistroAyuda,
-    UbicacionPicker,
+    CustomField,
+    RegistrationHelp,
+    MapLocationPicker,
     DropzonePdf,
-    CamposDeNombre,
+    NameFields,
   ],
   templateUrl: './register-laboratory.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-laboratory.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-laboratory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterLaboratory {
   private readonly iam = inject(IamClient);
   /** Resuelve del catálogo los conceptos de país y jurisdicción que la API exige. */
-  private readonly alta = inject(AltaDeCentroDiagnostico);
+  private readonly alta = inject(DiagnosisCenterEnrollment);
   private readonly router = inject(Router);
 
   readonly form = new FormGroup({
@@ -341,7 +341,7 @@ export class RegisterLaboratory {
     }),
     // --- 4.1.8 · representante legal ---------------------------------------
     // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
-    legalRepName: grupoDeNombre(true),
+    legalRepName: nameGroup(true),
     // La API exige el documento del representante legal (4 a 50 caracteres).
     legalRepIdNumber: new FormControl('', {
       nonNullable: true,
@@ -352,7 +352,7 @@ export class RegisterLaboratory {
       validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     // --- 4.1.9 a 4.1.17 · los tres cargos, todos opcionales ----------------
-    generalManagerName: grupoDeNombre(false),
+    generalManagerName: nameGroup(false),
     generalManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -361,7 +361,7 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    salesManagerName: grupoDeNombre(false),
+    salesManagerName: nameGroup(false),
     salesManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -370,7 +370,7 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    marketingManagerName: grupoDeNombre(false),
+    marketingManagerName: nameGroup(false),
     marketingManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -382,7 +382,7 @@ export class RegisterLaboratory {
     // --- la cuenta ---------------------------------------------------------
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
   });
 
@@ -393,7 +393,7 @@ export class RegisterLaboratory {
    * los cuatro campos, así que cada sección es una página y conserva su rótulo.
    */
   readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'La empresa',
         clave: 'empresa',
@@ -442,7 +442,7 @@ export class RegisterLaboratory {
         hint: 'Opcionales: puede adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
         // Los seis, en el orden del registro de procesos: el motor parte la
         // página sola en «(1 de 2)» y «(2 de 2)».
-        campos: camposDeDocumentosLegales(PAIS, uiLanguage(), false),
+        campos: legalDocumentsFields(PAIS, uiLanguage(), false),
       },
       {
         titulo: 'Dónde está la central',
@@ -487,7 +487,7 @@ export class RegisterLaboratory {
         icon: 'shield' as const,
         campos: [
           {
-            // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+            // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
             // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
             key: 'legalRepName',
             label: '',
@@ -516,7 +516,7 @@ export class RegisterLaboratory {
             mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
           // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
-          campoDelPoderNotariado(PAIS, uiLanguage(), this.poderObligatorio()),
+          notarizedPowerField(PAIS, uiLanguage(), this.poderObligatorio()),
         ],
       },
       {
@@ -624,7 +624,7 @@ export class RegisterLaboratory {
             icono: 'lock' as const,
             autocomplete: 'new-password',
             testId: 'registro-lab-password',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
         ],
       },
@@ -639,15 +639,15 @@ export class RegisterLaboratory {
 
   /** Lo ya subido por cada dropzone, para sobrevivir a que el asistente destruya y recree la página. */
   protected readonly documentosSubidos = signal<
-    Partial<Record<ClaveDeDocumentoDelAlta, UploadedDocument>>
+    Partial<Record<EnrollmentDocumentKey, UploadedDocument>>
   >({});
 
-  protected readonly clavesDeDocumento: readonly ClaveDeDocumentoDelAlta[] = [
-    ...DOCUMENTOS_LEGALES_DEL_REGISTRO.map((d) => d.key),
+  protected readonly clavesDeDocumento: readonly EnrollmentDocumentKey[] = [
+    ...RECORD_LEGAL_DOCUMENTS.map((d) => d.key),
     'powerOfAttorneyFileId',
   ];
 
-  registrarDocumento(clave: ClaveDeDocumentoDelAlta, fileId: string | null): void {
+  registrarDocumento(clave: EnrollmentDocumentKey, fileId: string | null): void {
     this.form.controls[clave].setValue(fileId ?? '');
     if (fileId === null) {
       this.documentosSubidos.update((actual) => {
@@ -657,16 +657,16 @@ export class RegisterLaboratory {
     }
   }
 
-  protected recordarDocumento(clave: ClaveDeDocumentoDelAlta, documento: UploadedDocument): void {
+  protected recordarDocumento(clave: EnrollmentDocumentKey, documento: UploadedDocument): void {
     this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
   }
 
-  protected documentoInicialDe(clave: ClaveDeDocumentoDelAlta): UploadedDocument | null {
+  protected documentoInicialDe(clave: EnrollmentDocumentKey): UploadedDocument | null {
     return this.documentosSubidos()[clave] ?? null;
   }
 
   /** El rótulo ya resuelto del documento, sin el sufijo «(opcional)» que lleva el campo. */
-  protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
+  protected etiquetaDeDocumento(clave: EnrollmentDocumentKey): string {
     const campo = this.paginas()
       .flatMap((pagina) => pagina.campos)
       .find((c) => c.key === clave);
@@ -678,10 +678,10 @@ export class RegisterLaboratory {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en el alta de profesional: `app-ubicacion-picker`
+   * Fuera del formulario, como en el alta de profesional: `app-map-location-picker`
    * emite **sólo lo confirmado** y se guarda para sí el estado intermedio.
    */
-  readonly gpsCentral = signal<Coordenadas | null>(null);
+  readonly gpsCentral = signal<Coordinates | null>(null);
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -725,7 +725,7 @@ export class RegisterLaboratory {
     () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
   );
   private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
   vaciarDireccionPorElMapa(): void {
@@ -748,7 +748,7 @@ export class RegisterLaboratory {
     return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
   }
 
-  protected readonly idsUbicacionCentral: IdsDePrueba = {
+  protected readonly idsUbicacionCentral: TestIds = {
     mapa: 'registro-lab-central-map',
     confirmada: 'registro-lab-central-location-confirmed',
     avisoGeocodificacion: 'registro-lab-central-geocoding-notice',
@@ -844,7 +844,7 @@ export class RegisterLaboratory {
     this.sucursales.update((lista) => [...lista, ...nuevas]);
   }
 
-  fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {
+  fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
     this.actualizarSucursal(id, { gps });
   }
 
@@ -855,7 +855,7 @@ export class RegisterLaboratory {
   }
 
   /** Los identificadores de prueba del mapa de una sucursal. */
-  idsDeSucursal(id: string): IdsDePrueba {
+  idsDeSucursal(id: string): TestIds {
     return {
       mapa: `registro-lab-${id}-map`,
       confirmada: `registro-lab-${id}-location-confirmed`,
@@ -871,7 +871,7 @@ export class RegisterLaboratory {
 
   private readonly claveVisible = signal('empresa');
 
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA[this.claveVisible()] ?? [],
   );
 
@@ -910,7 +910,7 @@ export class RegisterLaboratory {
     // conceptos: se resuelven del catálogo antes de enviar. Sin ellos la API
     // responde 422 «exige país y jurisdicción».
     this.alta
-      .catalogos()
+      .catalogs()
       .pipe(
         map((catalogos) => this.datos(catalogos)),
         switchMap((datos) => this.iam.registerLaboratoryOrganization(datos)),
@@ -927,8 +927,8 @@ export class RegisterLaboratory {
 
   /** Un catálogo incompleto se explica; el resto, como cualquier error de la API. */
   private fallaDelEnvio(error: unknown): ViewState<null> {
-    if (error instanceof CatalogoIncompleto) {
-      return validation([{ field: 'catalogos', message: AVISO_CATALOGO_DE_DIAGNOSTICO }]);
+    if (error instanceof IncompleteCatalog) {
+      return validation([{ field: 'catalogos', message: DIAGNOSIS_CATALOG_NOTICE }]);
     }
     if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
       return validation([{ field: 'alta', message: error.message }]);
@@ -950,8 +950,8 @@ export class RegisterLaboratory {
     return cargo.name.trim() !== '' && cargo.phone.trim() !== '' && cargo.email.trim() !== '';
   }
 
-  private datos(catalogos: CatalogosDeDiagnostico): LaboratoryOrganizationRegistration {
-    const concepto = AltaDeCentroDiagnostico.concepto;
+  private datos(catalogos: DiagnosisCatalogs): LaboratoryOrganizationRegistration {
+    const concepto = DiagnosisCenterEnrollment.concept;
     const raw = this.form.getRawValue();
     const central = this.gpsCentral();
 
@@ -968,17 +968,17 @@ export class RegisterLaboratory {
 
     const cargos = {
       generalManager: {
-        name: nombreCompleto(raw.generalManagerName),
+        name: completeName(raw.generalManagerName),
         phone: raw.generalManagerPhone,
         email: raw.generalManagerEmail,
       },
       commercialManager: {
-        name: nombreCompleto(raw.salesManagerName),
+        name: completeName(raw.salesManagerName),
         phone: raw.salesManagerPhone,
         email: raw.salesManagerEmail,
       },
       marketingManager: {
-        name: nombreCompleto(raw.marketingManagerName),
+        name: completeName(raw.marketingManagerName),
         phone: raw.marketingManagerPhone,
         email: raw.marketingManagerEmail,
       },
@@ -1002,24 +1002,24 @@ export class RegisterLaboratory {
     const documentosCompletos = Object.values(documentos).every((v) => v !== '');
 
     const razonSocial = raw.legalName.trim();
-    const nombreDelRepresentante = nombreCompleto(raw.legalRepName);
+    const nombreDelRepresentante = completeName(raw.legalRepName);
     return {
       code: this.codigoDesdeNit(raw.taxId),
       legalName: razonSocial,
       legalEntityType: raw.companyType ?? '',
-      countryConceptId: concepto(catalogos.pais, CODIGOS_DE_DIAGNOSTICO.pais),
+      countryConceptId: concepto(catalogos.pais, DIAGNOSIS_CODES.pais),
       jurisdictionConceptId: concepto(
         catalogos.jurisdiccion,
-        CODIGOS_DE_DIAGNOSTICO.jurisdiccionNacional,
+        DIAGNOSIS_CODES.jurisdiccionNacional,
       ),
       diagnosticUnit: {
         name: razonSocial,
         diagnosticUnitTypeConceptId: concepto(
           catalogos.tipoDeUnidad,
-          CODIGOS_DE_DIAGNOSTICO.laboratorio,
+          DIAGNOSIS_CODES.laboratorio,
         ),
         modalityConceptIds: [
-          concepto(catalogos.modalidad, CODIGOS_DE_DIAGNOSTICO.modalidades.laboratorio),
+          concepto(catalogos.modalidad, DIAGNOSIS_CODES.modalidades.laboratorio),
         ],
         primarySite: {
           name: NOMBRE_DE_LA_CENTRAL,

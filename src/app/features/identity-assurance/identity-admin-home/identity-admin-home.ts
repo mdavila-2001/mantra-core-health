@@ -33,7 +33,7 @@ const BASE = '/administration/identity-assurance';
   selector: 'app-identity-admin-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './identity-admin-home.html',
-  styleUrl: '../../portada.css',
+  styleUrl: '../../cover.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IdentityAdminHome {

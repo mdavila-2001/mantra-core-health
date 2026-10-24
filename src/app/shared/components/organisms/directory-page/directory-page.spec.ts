@@ -63,3 +63,163 @@ describe('DirectoryPage · grilla o lista', () => {
     localStorage.removeItem(claveMedicos);
   });
 });
+
+describe('DirectoryPage · tope progresivo', () => {
+  /** `cuantos` resultados repartidos en grupos de `porGrupo`. */
+  function grupos(cuantos: number, porGrupo: number) {
+    const lista = [];
+    for (let inicio = 0; inicio < cuantos; inicio += porGrupo) {
+      const resultados = [];
+      for (let i = inicio; i < Math.min(inicio + porGrupo, cuantos); i++) {
+        resultados.push({ id: String(i), title: `Resultado ${i}`, link: `/r/${i}` });
+      }
+      lista.push({ id: `g${inicio}`, nombre: `Grupo ${inicio}`, resultados });
+    }
+    return lista;
+  }
+
+  function montar(cuantos: number, porGrupo = cuantos) {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(DirectoryPage);
+    fixture.componentRef.setInput('titulo', 'Directorio de médicos');
+    fixture.componentRef.setInput('subtitulo', 'Sub');
+    fixture.componentRef.setInput('estado', { kind: 'ready', data: null });
+    fixture.componentRef.setInput('sustantivo', { singular: 'médico', plural: 'médicos' });
+    fixture.componentRef.setInput('grupos', grupos(cuantos, porGrupo));
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const tarjetas = (f: ReturnType<typeof montar>) =>
+    f.nativeElement.querySelectorAll('li.tarjeta-resultado').length;
+  const botonMas = (f: ReturnType<typeof montar>): HTMLButtonElement | null =>
+    f.nativeElement.querySelector('.directorio__mas button');
+
+  /* La guía real tenía 804 y las dibujaba todas: 190 000 px de página. */
+  it('dibuja una tanda de 24 y dice cuántas hay en total', () => {
+    const f = montar(804);
+
+    expect(tarjetas(f)).toBe(24);
+    expect(f.nativeElement.querySelector('.directorio__cuenta').textContent).toContain(
+      '804 médicos',
+    );
+    expect(f.nativeElement.querySelector('.directorio__progreso').textContent).toContain(
+      'Se muestran 24 de 804 médicos.',
+    );
+    expect(botonMas(f)!.textContent!.trim()).toBe('Mostrar 24 más');
+  });
+
+  it('«Mostrar más» suma otra tanda y desaparece al llegar al final', () => {
+    const f = montar(30);
+    botonMas(f)!.click();
+    f.detectChanges();
+
+    expect(tarjetas(f)).toBe(30);
+    expect(botonMas(f)).toBeNull();
+  });
+
+  it('el último botón nombra sólo los que faltan', () => {
+    const f = montar(25);
+    expect(botonMas(f)!.textContent!.trim()).toBe('Mostrar 1 más');
+  });
+
+  it('con pocos resultados no hay botón', () => {
+    const f = montar(5);
+    expect(tarjetas(f)).toBe(5);
+    expect(botonMas(f)).toBeNull();
+  });
+
+  // Marketplace (propietario, 23/10/2026): los grupos ya no cortan la grilla
+  // en bandas; son una faceta de la columna con su cantidad.
+  it('los grupos no cortan la grilla: son una faceta que acota', () => {
+    const f = montar(40, 20);
+    expect(f.nativeElement.querySelector('.directorio__rotulo')).toBeNull();
+    expect(f.nativeElement.querySelectorAll('ul.directorio__grilla').length).toBe(1);
+
+    const opciones = Array.from<HTMLButtonElement>(
+      f.nativeElement.querySelectorAll('.mercado__opcion'),
+    );
+    expect(
+      opciones.map((o) =>
+        Array.from(o.querySelectorAll('span'))
+          .map((span) => span.textContent!.trim())
+          .join(' '),
+      ),
+    ).toEqual([
+      'Ver todo',
+      'Grupo 0 20',
+      'Grupo 20 20',
+    ]);
+
+    opciones[2]!.click();
+    f.detectChanges();
+    expect(tarjetas(f)).toBe(20);
+    expect(f.nativeElement.querySelector('.directorio__cuenta').textContent).toContain(
+      '20 médicos',
+    );
+  });
+
+  it('ordena por nombre al elegirlo en «Ordenar por»', () => {
+    const f = montar(3);
+    const select = f.nativeElement.querySelector('.mercado__orden select') as HTMLSelectElement;
+    select.value = 'nombre-desc';
+    select.dispatchEvent(new Event('change'));
+    f.detectChanges();
+
+    const titulos = Array.from<HTMLElement>(
+      f.nativeElement.querySelectorAll('.tarjeta-resultado__titulo a'),
+    ).map((a) => a.textContent!.trim());
+    expect(titulos).toEqual(['Resultado 2', 'Resultado 1', 'Resultado 0']);
+  });
+
+  it('dice el rango cuando no entran todas: «1–24 de 804»', () => {
+    const f = montar(804);
+    expect(f.nativeElement.querySelector('.directorio__cuenta').textContent).toContain(
+      '1–24 de 804 médicos',
+    );
+  });
+
+  it('un filtro nuevo vuelve a la primera tanda', () => {
+    const f = montar(100);
+    botonMas(f)!.click();
+    f.detectChanges();
+    expect(tarjetas(f)).toBe(48);
+
+    f.componentRef.setInput('grupos', grupos(90, 90));
+    f.detectChanges();
+    expect(tarjetas(f)).toBe(24);
+  });
+
+  // Con reseñas en las tarjetas, el directorio ofrece ordenar por ellas.
+  it('«Mejor calificadas» pone primero la nota más alta y al final las sin reseñas', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const f = TestBed.createComponent(DirectoryPage);
+    f.componentRef.setInput('titulo', 'Directorio');
+    f.componentRef.setInput('subtitulo', 'Sub');
+    f.componentRef.setInput('estado', { kind: 'ready', data: null });
+    f.componentRef.setInput('sustantivo', { singular: 'clínica', plural: 'clínicas' });
+    f.componentRef.setInput('grupos', [
+      {
+        id: 'g',
+        nombre: '',
+        resultados: [
+          { id: 'a', title: 'Sin nota', link: '/a' },
+          { id: 'b', title: 'Tres siete', link: '/b', rating: { average: 3.7, count: 60 } },
+          { id: 'c', title: 'Cuatro cinco', link: '/c', rating: { average: 4.5, count: 60 } },
+        ],
+      },
+    ]);
+    f.detectChanges();
+
+    const select = f.nativeElement.querySelector('.mercado__orden select') as HTMLSelectElement;
+    expect([...select.options].map((o) => o.text)).toContain('Mejor calificadas');
+    select.value = 'calificacion';
+    select.dispatchEvent(new Event('change'));
+    f.detectChanges();
+
+    const titulos = Array.from<HTMLElement>(
+      f.nativeElement.querySelectorAll('.tarjeta-resultado__titulo a'),
+    ).map((a) => a.textContent!.trim());
+    expect(titulos).toEqual(['Cuatro cinco', 'Tres siete', 'Sin nota']);
+  });
+});

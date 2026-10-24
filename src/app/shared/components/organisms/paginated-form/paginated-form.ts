@@ -17,9 +17,9 @@ import {
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { mensajeDeError } from '../../../forms/paginated/mensaje-de-error';
-import { camposOcultos } from '../../../forms/paginated/visibilidad-condicional';
-import { esPreguntaPrincipal } from '../../../forms/paginated/paginar-campos';
+import { mensajeDeError } from '../../../forms/paginated/error-message';
+import { hiddenFields } from '../../../forms/paginated/conditional-visibility';
+import { isMainQuestion } from '../../../forms/paginated/paginate-fields';
 import {
   MAX_CAMPOS_POR_PAGINA,
   type CampoDeFormulario,
@@ -42,13 +42,13 @@ import { GridGroup } from '../../molecules/grid-group/grid-group';
 import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
-import { RadioOtro } from '../../molecules/radio-otro/radio-otro';
+import { OtherRadio } from '../../molecules/other-radio/other-radio';
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
 import { Stepper } from '../../molecules/stepper/stepper';
 import type { StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
-import { CampoPersonalizado } from './campo-personalizado';
+import { CustomField } from './custom-field';
 
 /**
  * Cuántas páginas admite el stepper **con rótulos** antes de estorbar.
@@ -178,7 +178,7 @@ type RespuestaSiNo = 'si' | 'no' | '';
     Progress,
     Radio,
     RadioGroup,
-    RadioOtro,
+    OtherRadio,
     SegmentedControl,
     Select,
     Stepper,
@@ -215,6 +215,9 @@ export class PaginatedForm {
 
   readonly pending = input(false, { transform: booleanAttribute });
 
+  /** Paso inicial en base 0 para reanudar el formulario desde un borrador. */
+  readonly initialStep = input<number>(0);
+
   /**
    * El envío es destructivo y se confirma antes de emitirse.
    *
@@ -246,6 +249,9 @@ export class PaginatedForm {
    * tabulación de arriba.
    */
   readonly interactiveSteps = input(true, { transform: booleanAttribute });
+
+  /** Permite páginas explícitas con más de 4 campos cuando la vista define pasos consolidados */
+  readonly allowLargePages = input(false, { transform: booleanAttribute });
 
   /**
    * «Atrás» y «Siguiente» pasan a ser botones de sólo ícono.
@@ -318,7 +324,7 @@ export class PaginatedForm {
   readonly rechazada = output<PaginaDeFormulario>();
 
   /** Las plantillas de los campos `custom`, por `key`. */
-  private readonly personalizados = contentChildren(CampoPersonalizado);
+  private readonly personalizados = contentChildren(CustomField);
 
   private readonly titulo = viewChild<ElementRef<HTMLElement>>('titulo');
 
@@ -344,7 +350,7 @@ export class PaginatedForm {
   /** Las claves de los campos que su condición deja fuera de la vista. */
   protected readonly ocultos = computed(() => {
     const valores = this.valores();
-    return camposOcultos(
+    return hiddenFields(
       this.paginas().flatMap((pagina) => pagina.campos),
       (key) => valores[key],
     );
@@ -438,6 +444,18 @@ export class PaginatedForm {
     // un polígono pide vértices—, y esos declaran `paginas` como un `computed`.
     // Si el formulario encoge, el índice puede quedar apuntando a una página que
     // ya no existe: se ve como una pantalla en blanco con «paso 4 de 3».
+    // Reanuda el formulario desde el paso guardado si se especificó initialStep.
+    let pasoInicialAplicado = false;
+    effect(() => {
+      const inicio = this.initialStep();
+      const activas = this.paginasActivas();
+      if (!pasoInicialAplicado && inicio > 0 && activas.length > inicio) {
+        pasoInicialAplicado = true;
+        this.indice.set(inicio);
+        this.visitedIndex.set(inicio);
+      }
+    });
+
     effect(() => {
       const ultima = Math.max(0, this.paginasActivas().length - 1);
       if (this.indice() > ultima) {
@@ -449,10 +467,10 @@ export class PaginatedForm {
     // en vez de por `paginarCampos`. En desarrollo se avisa fuerte: en
     // producción el fallo no es una excepción, es una pantalla con nueve campos.
     effect(() => {
-      if (!isDevMode()) return;
+      if (!isDevMode() || this.allowLargePages()) return;
       for (const pagina of this.paginas()) {
         // Los «¿cuál?» condicionales no cuentan: viajan con su pregunta.
-        const principales = pagina.campos.filter(esPreguntaPrincipal).length;
+        const principales = pagina.campos.filter(isMainQuestion).length;
         if (principales > MAX_CAMPOS_POR_PAGINA) {
           console.error(
             `[app-paginated-form] La página «${pagina.titulo}» trae ${principales} campos y el tope es ${MAX_CAMPOS_POR_PAGINA}. Páselos por paginarCampos().`,
@@ -652,7 +670,7 @@ export class PaginatedForm {
    *   que esté mal, el salto se detiene ahí —con los errores ya pintados— en
    *   vez de llevar a destino saltando la validación.
    */
-  protected goToStep(destino: number): void {
+  goToStep(destino: number): void {
     const actual = this.indice();
     if (destino === actual || destino < 0 || destino >= this.total()) return;
 

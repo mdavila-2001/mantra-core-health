@@ -41,7 +41,7 @@ import {
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { aTarjeta, rutaDeFicha } from '../alovida/buscar/public-result.mapper';
-import { fotoDeVertical } from '../../shared/utils/foto-de-directorio';
+import { verticalPhoto } from '../../shared/utils/directory-photo';
 import { groupUnits } from '../laboratory-directory/laboratory-directory';
 
 /** Rótulo del bloque de `navigation.subgroups.ts` del que salen los nodos. */
@@ -114,23 +114,30 @@ type Buscador = (termino: string) => Observable<readonly SearchResultItem[]>;
  * de rutas. Si mañana se agrega un quinto directorio, alcanza con sumarlo ahí
  * — esta portada lo dibuja solo.
  *
- * ## Por qué son nodos y no una lista
+ * ## Por qué son puertas y no una lista
  *
- * Es la forma que pidió el carril, y separa la pregunta «¿a qué tipo de cosa
- * quiero buscar?» —que es lo que estos cuatro tienen en común— de la lista
- * plana que ya ofrece el menú lateral. El nodo central es puramente
- * decorativo (`aria-hidden`): lo único navegable es cada directorio, y cada
- * uno es un enlace entero — el título y la descripción viajan dentro del
- * mismo `<a>`, así que el nombre accesible del enlace ya dice de qué se trata,
- * sin depender del color ni de la posición para entenderlo.
+ * Separa la pregunta «¿a qué tipo de cosa quiero buscar?» de la lista plana
+ * que ya ofrece el menú lateral. Cada puerta es un enlace entero cuyo nombre
+ * accesible es el rótulo completo de la sección más su descripción, así que
+ * se entiende sin depender del color ni de la posición.
+ *
+ * ## Por qué la tarjeta no lleva cifras (22/10/2026)
+ *
+ * Hasta esta fecha las tarjetas mostraban calificaciones, reseñas, conteos y
+ * sellos («4.9 · 1.4k+ reseñas», «+350 Especialistas», «Red Premium») escritos
+ * a mano en este archivo: no salían de ningún dato. Se quitaron junto con el
+ * núcleo decorativo del centro. Si algún día se muestra cuántos hay en cada
+ * directorio, tiene que salir de la API, no de una constante.
+ *
+ * La primera puerta va a lo ancho porque es la tarea principal de la sesión:
+ * el orden es el del menú, que pone primero la guía de médicos para quien la
+ * puede ver.
  */
 @Component({
   selector: 'app-directories-overview',
   imports: [DirectoryPage, NavIcon, RouterLink],
   templateUrl: './directories-overview.html',
-  // La hoja compartida va **primera**: lo de abajo son los ajustes de esta
-  // pantalla sobre esa base, y Angular concatena en este orden.
-  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './directories-overview.css'],
+  styleUrl: './directories-overview.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DirectoriesOverview {
@@ -162,7 +169,15 @@ export class DirectoriesOverview {
   });
 
   protected readonly routeOf = routeOf;
-  protected readonly fotoDe = fotoDeVertical;
+  protected readonly fotoDe = verticalPhoto;
+
+  /** «Directorio de clínicas» → «Clínicas»: el título de la tarjeta. */
+  protected readonly shortName = nombreCorto;
+
+  /** Lo que dice el pie de la tarjeta: «Ver clínicas». */
+  protected actionLabel(nodo: AppSection): string {
+    return `Ver ${nombreCorto(nodo).toLocaleLowerCase('es')}`;
+  }
 
   /** Los nodos que se dibujan: todos, o sólo el elegido en el desplegable. */
   protected readonly nodosVisibles = computed<readonly AppSection[]>(() => {

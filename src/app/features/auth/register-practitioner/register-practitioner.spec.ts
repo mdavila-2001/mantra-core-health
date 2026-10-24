@@ -8,12 +8,19 @@ import { vi } from 'vitest';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
-import { ESPECIALIDAD } from '../../../core/mock/fixtures/conceptos';
-import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituciones-educativas';
 import {
-  PAIS_FUERA_DE_CATALOGO,
-  PadronDeUniversidades,
-} from '../../../core/profesion/padron-de-universidades';
+  chooseSelectOptionNow,
+  selectHasValue,
+  selectOptionLabelsNow,
+  selectShownLabel,
+  selectTrigger,
+} from '../../../../testing/select';
+import { SPECIALTY } from '../../../core/mock/fixtures/concepts';
+import { CATALOG_OUTSIDE_INSTITUTION } from '../../../core/profession/educational-institutions';
+import {
+  CATALOG_OUTSIDE_COUNTRY,
+  UniversitiesRegistry,
+} from '../../../core/profession/university-registry';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
@@ -168,6 +175,7 @@ describe('RegisterPractitioner', () => {
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
       workAddressLines: '',
+      officeContactPhone: '',
       officeName: '',
       officeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
@@ -275,6 +283,7 @@ describe('RegisterPractitioner', () => {
         'access',
         'residence',
         'workplace-location',
+        'own-office-contact',
         // El consultorio propio es una sede del profesional, separada de la
         // dirección laboral que se declara arriba.
         'own-office',
@@ -317,12 +326,12 @@ describe('RegisterPractitioner', () => {
       // profesional no tuvo dónde poner las otras dos.
       expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
       expect(camposDe('workplace-location')).toEqual(['workAddressLines', 'gpsTrabajo']);
-      // El consultorio propio: cuatro campos, todos opcionales. Es un calco del
+      // El consultorio propio: contacto y ubicación en dos páginas opcionales. Es un calco del
       // lugar de trabajo del alta de paciente, con el nombre que le da el
       // dominio — quien ejerce puede atender en varios lugares, y éste es el
       // único que no depende de que otro lo acepte.
+      expect(camposDe('own-office-contact')).toEqual(['officeName', 'officeContactPhone']);
       expect(camposDe('own-office')).toEqual([
-        'officeName',
         'municipioConsultorio',
         'officeAddressLines',
         'gpsConsultorio',
@@ -445,8 +454,8 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene quince páginas, ninguna de más de cuatro preguntas', () => {
-    // Quince (catorce más la opcional de firma y sello) y no menos porque el límite es de **campos por página**, no de
+  it('tiene dieciséis páginas, ninguna de más de cuatro preguntas', () => {
+    // Dieciséis páginas porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
     // de contactos privados —separada de la del acceso al dejar de mezclar el
@@ -460,7 +469,7 @@ describe('RegisterPractitioner', () => {
     // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(15);
+    expect(paginas.length).toBe(16);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -1064,7 +1073,7 @@ describe('RegisterPractitioner', () => {
     /** Lleva la pantalla hasta el paso «Tus títulos», «Siguiente» de a uno. */
     function irAlPasoDeTitulos(): void {
       fixture.detectChanges();
-      for (let pagina = 0; pagina < 12; pagina += 1) {
+      for (let pagina = 0; pagina < 13; pagina += 1) {
         if (fixture.nativeElement.querySelector('.registro-titulos') !== null) return;
         const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
           '[data-testid="paginated-form-continuar"]',
@@ -1106,41 +1115,44 @@ describe('RegisterPractitioner', () => {
       fixture.detectChanges();
     }
 
-    /** El `<select>` nativo de un `app-select` del paso, por el `data-testid` de su host. */
-    function desplegable(testId: string): HTMLSelectElement {
-      const select = enElPaso<HTMLElement>(testId)?.querySelector('select') ?? null;
-      if (select === null) throw new Error(`No está el desplegable ${testId}`);
-      return select;
+    /** El `app-select` del paso, por el `data-testid` de su host. */
+    function hostDelDesplegable(testId: string): HTMLElement {
+      const host = enElPaso<HTMLElement>(testId);
+      if (host === null) throw new Error(`No está el desplegable ${testId}`);
+      return host;
     }
 
-    /** Las etiquetas que ofrece un desplegable del paso, sin el placeholder oculto. */
+    /** El botón que hace de campo en un `app-select` del paso (donde vive `disabled`). */
+    function desplegable(testId: string): HTMLButtonElement {
+      return selectTrigger(hostDelDesplegable(testId));
+    }
+
+    /** Las etiquetas que ofrece un desplegable del paso (el placeholder no es una fila). */
     function etiquetasDe(testId: string): readonly string[] {
-      return Array.from(desplegable(testId).options)
-        .filter((opcion) => !opcion.hidden)
-        .map((opcion) => opcion.textContent?.trim() ?? '');
+      // Deshabilitado no se abre: leer su lista daría vacío y una aserción
+      // negativa pasaría sin mirar nada.
+      if (desplegable(testId).disabled) {
+        throw new Error(`El desplegable ${testId} está deshabilitado y no muestra su lista`);
+      }
+      return selectOptionLabelsNow(fixture, hostDelDesplegable(testId));
     }
 
     /** La etiqueta marcada en un desplegable del paso, o `null` si está en el placeholder. */
     function elegidoEn(testId: string): string | null {
-      const select = desplegable(testId);
-      const opcion = select.options[select.selectedIndex];
-      return opcion === undefined || opcion.hidden ? null : (opcion.textContent?.trim() ?? '');
+      const host = hostDelDesplegable(testId);
+      return selectHasValue(host) ? selectShownLabel(host) : null;
     }
 
     /**
-     * Elige en un desplegable como lo hace el ratón: la opción por su etiqueta
-     * y el evento `change`. `app-select` indexa las opciones por posición, así
-     * que escribir el valor a mano no sirve.
+     * Elige en un desplegable como lo hace el ratón: abre la lista y toca la
+     * opción por su etiqueta.
      */
     function elegirEnDesplegable(testId: string, etiqueta: string): void {
-      const select = desplegable(testId);
-      const opcion = Array.from(select.options).find(
-        (candidata) => candidata.textContent?.trim() === etiqueta,
-      );
-      if (opcion === undefined) throw new Error(`No hay «${etiqueta}» en ${testId}`);
-      select.value = opcion.value;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-      fixture.detectChanges();
+      const host = hostDelDesplegable(testId);
+      if (!selectOptionLabelsNow(fixture, host).includes(etiqueta)) {
+        throw new Error(`No hay «${etiqueta}» en ${testId}`);
+      }
+      chooseSelectOptionNow(fixture, host, etiqueta);
     }
 
     it('permite cargar más de un título del mismo tipo', () => {
@@ -1344,7 +1356,7 @@ describe('RegisterPractitioner', () => {
       it('cambiar de país se lleva la ciudad propuesta junto con la universidad', () => {
         component.elegirPaisDelTitulo('Bolivia');
         component.elegirUniversidadDelTitulo(UMSS);
-        component.elegirPaisDelTitulo(PAIS_FUERA_DE_CATALOGO);
+        component.elegirPaisDelTitulo(CATALOG_OUTSIDE_COUNTRY);
 
         expect(component.valorDeEstudio('professionalTitleUniversity')).toBe('');
         expect(component.valorDeEstudio('professionalTitleCity')).toBe('');
@@ -1363,7 +1375,7 @@ describe('RegisterPractitioner', () => {
         expect(fila().ciudad).toBe('La Paz');
 
         // Otro país: se van la universidad y la ciudad que ella había puesto.
-        component.elegirEnFila(id, 'pais', PAIS_FUERA_DE_CATALOGO);
+        component.elegirEnFila(id, 'pais', CATALOG_OUTSIDE_COUNTRY);
         expect([fila().universidad, fila().ciudad]).toEqual(['', '']);
 
         // La ciudad sólo puede ser una sede: con varias, se elige entre ellas.
@@ -1838,7 +1850,7 @@ describe('RegisterPractitioner', () => {
       /** Lleva la pantalla hasta «Tu título profesional y foto». */
       function irAlPasoDelTitulo(): void {
         fixture.detectChanges();
-        for (let pagina = 0; pagina < 12; pagina += 1) {
+        for (let pagina = 0; pagina < 13; pagina += 1) {
           if (fixture.nativeElement.querySelector('.registro__estudio') !== null) return;
           const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
             '[data-testid="paginated-form-continuar"]',
@@ -1853,7 +1865,7 @@ describe('RegisterPractitioner', () => {
       }
 
       it('el país acota la universidad: Bolivia ofrece la lista curada y Argentina la importada', async () => {
-        await TestBed.inject(PadronDeUniversidades).cargar();
+        await TestBed.inject(UniversitiesRegistry).cargar();
         completarProfesional();
         irAlPasoDelTitulo();
 
@@ -1878,7 +1890,7 @@ describe('RegisterPractitioner', () => {
       });
 
       it('elegir del padrón guarda el nombre, y cambiar de país reinicia la universidad', async () => {
-        await TestBed.inject(PadronDeUniversidades).cargar();
+        await TestBed.inject(UniversitiesRegistry).cargar();
         completarProfesional();
         irAlPasoDelTitulo();
 
@@ -1919,18 +1931,14 @@ describe('RegisterPractitioner', () => {
         // se puede cambiar, pero sólo por otra de sus sedes.
         expect(elegidoEn('registro-pro-titulo-ciudad')).toBe('Cochabamba');
         expect(
-          Array.from(desplegable('registro-pro-titulo-ciudad').options)
-            .map((o) => o.textContent?.trim())
-            .filter((t) => t !== '' && t !== undefined),
+          etiquetasDe('registro-pro-titulo-ciudad').filter((t) => t !== ''),
         ).toContain('Punata');
 
         // Un médico no ve la UPSA (no dicta Medicina): el filtro de salud ya
         // actúa sobre el título elegido.
-        expect(
-          Array.from(desplegable('registro-pro-titulo-universidad').options).map((o) =>
-            o.textContent?.trim(),
-          ),
-        ).not.toContain('Universidad Privada de Santa Cruz de la Sierra (UPSA)');
+        expect(etiquetasDe('registro-pro-titulo-universidad')).not.toContain(
+          'Universidad Privada de Santa Cruz de la Sierra (UPSA)',
+        );
 
         // Con una sola sede el desplegable queda fijo.
         elegirEnDesplegable(
@@ -2010,7 +2018,7 @@ describe('RegisterPractitioner', () => {
         expect([otra.pais, otra.universidad, otra.paisElegido, otra.universidadElegida]).toEqual([
           '',
           '',
-          PAIS_FUERA_DE_CATALOGO,
+          CATALOG_OUTSIDE_COUNTRY,
           null,
         ]);
         escribirEnCasilla(`registro-pro-titulo-pais-otro-${fila.id}`, 'Cuba');
@@ -2023,7 +2031,7 @@ describe('RegisterPractitioner', () => {
         expect([cubana.pais, cubana.universidad, cubana.universidadElegida]).toEqual([
           'Cuba',
           'Universidad de La Habana',
-          INSTITUCION_FUERA_DE_CATALOGO,
+          CATALOG_OUTSIDE_INSTITUTION,
         ]);
 
         component.submit();
@@ -2855,7 +2863,7 @@ describe('RegisterPractitioner', () => {
   describe('el filtro de especialidades odontológicas', () => {
     it('cada código que nombra existe en el catálogo', () => {
       for (const codigo of ESPECIALIDADES_ODONTOLOGICAS) {
-        expect(ESPECIALIDAD[codigo], codigo).toBeDefined();
+        expect(SPECIALTY[codigo], codigo).toBeDefined();
       }
     });
 
@@ -2863,7 +2871,7 @@ describe('RegisterPractitioner', () => {
       // La otra mitad del corte: si el complemento quedara vacío, el filtro
       // estaría bien escrito y aun así ninguna profesión médica tendría qué
       // ofrecer. Son las 52 restantes de las 63.
-      const medicas = Object.keys(ESPECIALIDAD).filter(
+      const medicas = Object.keys(SPECIALTY).filter(
         (codigo) => !ESPECIALIDADES_ODONTOLOGICAS.has(codigo),
       );
 
@@ -2901,6 +2909,26 @@ describe('RegisterPractitioner', () => {
       // Sin dirección y no con una vacía: una dirección vacía no es «sin
       // dirección», es una fila vacía en `common.addresses`. Misma regla que
       // `work-history.ts` al registrar una sede desde el perfil.
+      expect(cuerpoDelAlta()['ownSite']).toEqual({ name: 'Consultorio Suárez' });
+    });
+
+    it('el teléfono opcional crea el consultorio y queda dentro de esa sede', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeContactPhone: '+591 72123456' });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        contactPhone: '+591 72123456',
+      });
+    });
+
+    it('un teléfono vacío no agrega un campo de contacto al consultorio', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({
+        officeName: 'Consultorio Suárez',
+        officeContactPhone: '',
+      });
+
       expect(cuerpoDelAlta()['ownSite']).toEqual({ name: 'Consultorio Suárez' });
     });
 

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Vía de señalización del receptor beta 2 activado por salbutamol</title>
+  <desc id="d">Secuencia en la célula del músculo liso bronquial. El salbutamol se une al receptor beta 2 de la membrana, activa la proteína Gs, esta activa la adenilato ciclasa, que convierte ATP en AMP cíclico. El AMP cíclico activa la proteína quinasa A, que reduce el calcio libre y la actividad contráctil, y el resultado es la relajación del músculo liso y la apertura de la vía aérea.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --mem:#cfe0f2; --mem-d:#7aa3cf; --rec:#2a6fb0; --drug:#c26a1b; --g:#6a4fb3; --enz:#1f8a5b; --out:#b0384f; --onc:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --mem:#26405c; --mem-d:#4e7cab; --rec:#6fb0ee; --drug:#f0a15a; --g:#a28ee6; --enz:#4cc38a; --out:#f07a90; --onc:#10161d; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 14px; }
+    .lab { font-size: 15px; font-weight: 600; }
+    .small { font-size: 13px; }
+    .wh { fill: var(--onc); font-weight: 700; font-size: 14px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="16" y="16" width="768" height="410" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="46" text-anchor="middle" class="title">Cómo relaja el salbutamol el músculo bronquial</text>
+
+  <!-- espacio extracelular -->
+  <text x="40" y="82" class="sub muted">Fuera de la célula</text>
+  
+
+  <!-- membrana -->
+  <rect x="30" y="140" width="740" height="46" rx="10" fill="var(--mem)" stroke="var(--mem-d)" stroke-width="2"/>
+  <text x="750" y="168" text-anchor="end" class="small muted">Membrana celular</text>
+  <text x="42" y="160" class="small muted">↑ Exterior</text>
+  <text x="42" y="178" class="small muted">↓ Interior</text>
+
+  <!-- receptor -->
+  <g stroke="var(--rec)" stroke-width="2">
+    <rect x="150" y="128" width="16" height="70" rx="8" fill="var(--rec)" opacity=".85"/>
+    <rect x="172" y="128" width="16" height="70" rx="8" fill="var(--rec)" opacity=".85"/>
+    <rect x="194" y="128" width="16" height="70" rx="8" fill="var(--rec)" opacity=".85"/>
+    <rect x="216" y="128" width="16" height="70" rx="8" fill="var(--rec)" opacity=".85"/>
+  </g>
+  <text x="191" y="222" text-anchor="middle" class="lab" style="fill:var(--rec)">Receptor β2</text>
+
+  <!-- fármaco -->
+  <circle cx="191" cy="98" r="20" fill="var(--drug)"/>
+  <text x="191" y="103" text-anchor="middle" class="wh">SAL</text>
+  <path d="M191 120 v-4" stroke="var(--drug)" stroke-width="3"/>
+  <path d="M191 124 l-6 -9 h12z" fill="var(--drug)"/>
+  <text x="240" y="92" class="lab" style="fill:var(--drug)">Salbutamol</text>
+  <text x="240" y="110" class="small muted">se une al receptor</text>
+
+  <!-- Gs -->
+  <ellipse cx="190" cy="262" rx="46" ry="26" fill="var(--g)"/>
+  <text x="190" y="267" text-anchor="middle" class="wh">Gαs</text>
+  <ellipse cx="248" cy="270" rx="26" ry="18" fill="var(--g)" opacity=".6"/>
+  <text x="248" y="275" text-anchor="middle" class="wh">βγ</text>
+  <text x="190" y="304" text-anchor="middle" class="small muted">Proteína Gs</text>
+
+  <!-- adenilato ciclasa -->
+  <rect x="352" y="130" width="140" height="66" rx="14" fill="var(--enz)" opacity=".9"/>
+  <text x="422" y="158" text-anchor="middle" class="wh">Adenilato</text>
+  <text x="422" y="178" text-anchor="middle" class="wh">ciclasa</text>
+  <path d="M240 255 C 290 255 330 230 380 198" fill="none" stroke="var(--g)" stroke-width="3" stroke-dasharray="6 5"/>
+  <path d="M380 198 l-4 -12 l12 5z" fill="var(--g)"/>
+  <text x="300" y="222" class="small muted">activa</text>
+
+  <!-- ATP -> cAMP -->
+  <text x="422" y="252" text-anchor="middle" class="lab">ATP → AMPc</text>
+  <path d="M422 200 v30" stroke="var(--enz)" stroke-width="3"/>
+  <path d="M422 236 l-6 -10 h12z" fill="var(--enz)"/>
+  <circle cx="422" cy="288" r="26" fill="var(--enz)"/>
+  <text x="422" y="293" text-anchor="middle" class="wh">AMPc</text>
+  <text x="422" y="330" text-anchor="middle" class="small muted">segundo mensajero</text>
+
+  <!-- PKA -->
+  <path d="M450 288 H 528" stroke="var(--enz)" stroke-width="3"/>
+  <path d="M534 288 l-10 -6 v12z" fill="var(--enz)"/>
+  <rect x="536" y="258" width="110" height="60" rx="14" fill="var(--g)"/>
+  <text x="591" y="284" text-anchor="middle" class="wh">Proteína</text>
+  <text x="591" y="303" text-anchor="middle" class="wh">quinasa A</text>
+
+  <!-- efectos -->
+  <path d="M646 288 H 668" stroke="var(--g)" stroke-width="3"/>
+  <rect x="670" y="214" width="96" height="46" rx="10" fill="none" stroke="var(--out)" stroke-width="2"/>
+  <text x="718" y="234" text-anchor="middle" class="small">Menos calcio</text>
+  <text x="718" y="251" text-anchor="middle" class="small">libre</text>
+  <rect x="670" y="268" width="96" height="46" rx="10" fill="none" stroke="var(--out)" stroke-width="2"/>
+  <text x="718" y="288" text-anchor="middle" class="small">Canales de K⁺</text>
+  <text x="718" y="305" text-anchor="middle" class="small">se abren</text>
+  <path d="M668 288 v-50 h2 M668 288 v6 h2" fill="none" stroke="var(--g)" stroke-width="3"/>
+
+  <!-- resultado -->
+  <rect x="150" y="352" width="500" height="54" rx="14" fill="var(--out)" opacity=".15" stroke="var(--out)" stroke-width="2"/>
+  <text x="400" y="376" text-anchor="middle" class="lab" style="fill:var(--out)">Relajación del músculo liso bronquial</text>
+  <text x="400" y="396" text-anchor="middle" class="small">La luz de la vía aérea se ensancha y el aire pasa con menos resistencia</text>
+  <path d="M766 237 H 777 V 380 H 654 M766 291 H 777" fill="none" stroke="var(--out)" stroke-width="3"/>
+  <path d="M654 380 l10 -6 v12z" fill="var(--out)"/>
+
+  <text x="400" y="456" text-anchor="middle" class="sub muted">Esquema simplificado, sin escala. Ilustración original de AloVida.</text>
+</svg>

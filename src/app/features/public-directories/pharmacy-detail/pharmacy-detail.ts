@@ -35,8 +35,6 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '@shared/components/molecules/section-heading/section-heading';
 import { distanciaEnLineaRectaKm } from '@shared/components/organisms/map/geo';
-import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
@@ -92,14 +90,11 @@ function normalizar(texto: string): string {
  * falta antes de mandar a alguien con una receta. Sin edición de precio: el
  * catálogo es de la farmacia.
  *
- * ## Por qué el mapa
+ * ## Sin mapa
  *
- * Porque «Av. 6 de Marzo N.º 220, El Alto» no contesta la pregunta que trae a
- * alguien a la ficha de una farmacia —si le queda cerca— y el punto ya viaja en
- * la ficha (`location`). Es el organismo compartido, el mismo de «Dónde comprar
- * mi receta»: Leaflet sobre mosaicos de CARTO, porque la política de seguridad
- * de contenido no abre `frame-src` para un *embed* ajeno. Sin coordenadas no se
- * dibuja nada — un mapa de la ciudad entera no ubica una farmacia.
+ * Tuvo un mapa de Leaflet con las sucursales hasta el 23/10/2026: el
+ * propietario pidió sacar los mapas de todo el directorio. La dirección va
+ * escrita en el resumen y en la lista de sucursales.
  *
  * ## Por qué el grupo terapéutico es un chip y ya no un encabezado
  *
@@ -115,7 +110,6 @@ function normalizar(texto: string): string {
   selector: 'app-pharmacy-detail',
   imports: [
     AppButton,
-    AppMap,
     Badge,
     Card,
     Chip,
@@ -132,7 +126,7 @@ function normalizar(texto: string): string {
     ViewStateHost,
   ],
   templateUrl: './pharmacy-detail.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../../../shared/styles/ficha-publica.css'],
+  styleUrls: ['../../../shared/styles/card-grid.css', '../../../shared/styles/public-sheet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
@@ -156,52 +150,6 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
 
   protected readonly soloConStock = signal(false);
   protected readonly soloSinReceta = signal(false);
-
-  /**
-   * Los pines del mapa: **una sucursal, un pin**, y la que se está mirando
-   * distinguida por su tono.
-   *
-   * Mientras las sucursales viajan —o si su lectura falla— queda el pin de la
-   * propia ficha: el mapa nunca se va en blanco por una lectura que es
-   * adicional. Sin coordenadas no hay pin, y ahí no se dibuja nada.
-   */
-  protected readonly pines = computed<readonly PinMapa[]>(() => {
-    const sucursales = this.sucursales();
-    if (sucursales.length > 0) {
-      return sucursales
-        .filter((sucursal) => sucursal.location !== null)
-        .map((sucursal) => ({
-          // La sede, no el slug: dos sedes del mismo tenant comparten ficha y
-          // por eso slug, y con él como clave el mapa pisaría un pin con otro.
-          id: sucursal.id,
-          lat: sucursal.location!.lat,
-          lng: sucursal.location!.lng,
-          titulo: sucursal.name,
-          ...(sucursal.addressText === null ? {} : { subtitulo: sucursal.addressText }),
-          estado: sucursal.isCurrent
-            ? { etiqueta: 'Está viendo ésta', tono: 'info' as const }
-            : { etiqueta: 'Otra sucursal', tono: 'neutral' as const },
-        }));
-    }
-
-    const perfil = this.ficha();
-    if (perfil?.location == null) return [];
-    return [
-      {
-        id: perfil.slug,
-        lat: perfil.location.lat,
-        lng: perfil.location.lng,
-        titulo: perfil.displayName,
-        ...(perfil.address === null ? {} : { subtitulo: perfil.address }),
-      },
-    ];
-  });
-
-  protected readonly etiquetaDelMapa = computed(() =>
-    this.sucursales().length > 1
-      ? `Las ${this.sucursales().length} sucursales de ${this.titulo()}, en el mapa. La lista con sus direcciones está debajo.`
-      : `Dónde queda ${this.titulo()}, en el mapa. La dirección está arriba, en el resumen.`,
-  );
 
   /**
    * Los grupos terapéuticos del catálogo de **esta** farmacia, para los chips.

@@ -12,7 +12,7 @@
  * - **Taxonomía**: `categoryKey` y `tagKeys` tienen que existir en
  *   `glossary-taxonomy.ts`; el generador ya lo exige para los curados y la grilla
  *   se queda muda ante una categoría fantasma.
- * - **`symptomIds`** existentes en `sintomas.datos.ts`: son el puente entre lo que
+ * - **`symptomIds`** existentes en `symptoms.data.ts`: son el puente entre lo que
  *   el motor reconoce y la enfermedad; un id inventado es una relación muerta.
  * - **Relaciones** con tipo válido y destino resoluble en el corpus completo.
  * - **`code` único por archivo**: es lo que el motor de carga masiva rechaza

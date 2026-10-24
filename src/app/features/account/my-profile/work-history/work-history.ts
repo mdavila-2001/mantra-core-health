@@ -31,7 +31,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import { LocationPicker } from '../../../auth/shared-registration/location-picker/location-picker';
 import { SiteBankQrDialog } from './site-bank-qr-dialog/site-bank-qr-dialog';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -49,7 +49,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap, PuntoGeo } from '../../../../shared/components/organisms/map/map-pin.types';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import {
@@ -57,6 +57,13 @@ import {
 } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+
+const SITE_PHONE_PATTERN = /^[+]?[0-9 ()-]{6,}$/;
+
+function telefonoDeSedeValido(value: string): boolean {
+  const trimmed = value.trim();
+  return trimmed === '' || (trimmed.length <= 40 && SITE_PHONE_PATTERN.test(trimmed));
+}
 
 /**
  * **Historial laboral** del profesional — punto 9 del reclamo del cliente —
@@ -377,6 +384,10 @@ export class WorkHistory implements OnInit {
   protected readonly altaDeSedeAbierta = signal(false);
 
   protected readonly nombreDeSedeNueva = signal('');
+  protected readonly telefonoDeSedeNueva = signal('');
+  protected readonly telefonoDeSedeNuevaValido = computed(() =>
+    telefonoDeSedeValido(this.telefonoDeSedeNueva()),
+  );
   protected readonly direccionDeSede = signal('');
   protected readonly ciudadDeSede = signal('');
   /** Municipio elegido en el mapa de Bolivia (concept id), o `null`. */
@@ -445,7 +456,7 @@ export class WorkHistory implements OnInit {
   protected readonly errorDeSede = computed<string | null>(() => mensajeDe(this.registroDeSede()));
 
   /** El punto marcado, como el único pin del mapa. */
-  protected readonly pinesDeSede = computed<readonly PinMapa[]>(() => {
+  protected readonly pinesDeSede = computed<readonly PinMap[]>(() => {
     const punto = this.puntoDeSede();
     if (punto === null) {
       return [];
@@ -554,6 +565,49 @@ export class WorkHistory implements OnInit {
    */
   protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
 
+  /** Editor del contacto particular del profesional en una sede. */
+  protected readonly sedeConTelefonoAbierto = signal<PracticeSite | null>(null);
+  protected readonly telefonoEnEdicion = signal('');
+  protected readonly guardandoTelefono = signal(false);
+  protected readonly errorDelTelefono = signal<string | null>(null);
+  protected readonly telefonoEnEdicionValido = computed(() =>
+    telefonoDeSedeValido(this.telefonoEnEdicion()),
+  );
+
+  protected abrirTelefonoDeSede(sede: PracticeSite): void {
+    this.sedeConTelefonoAbierto.set(sede);
+    this.telefonoEnEdicion.set(sede.contactPhone ?? '');
+    this.errorDelTelefono.set(null);
+  }
+
+  protected cerrarTelefonoDeSede(): void {
+    if (this.guardandoTelefono()) return;
+    this.sedeConTelefonoAbierto.set(null);
+  }
+
+  protected guardarTelefonoDeSede(): void {
+    const sede = this.sedeConTelefonoAbierto();
+    if (sede === null || this.guardandoTelefono() || !this.telefonoEnEdicionValido()) return;
+    const telefono = this.telefonoEnEdicion().trim();
+    this.guardandoTelefono.set(true);
+    this.errorDelTelefono.set(null);
+    this.sites.setSiteContactPhone(sede.id, telefono === '' ? null : telefono).subscribe({
+      next: (actualizada) => {
+        this.sedes.update((sedes) =>
+          sedes.map((actual) => actual.id === sede.id ? { ...actual, contactPhone: actualizada.contactPhone ?? null } : actual),
+        );
+        this.guardandoTelefono.set(false);
+        this.sedeConTelefonoAbierto.set(null);
+        this.toasts.success('El contacto de esta sede quedó actualizado.', 'Teléfono guardado');
+        this.added.emit();
+      },
+      error: () => {
+        this.guardandoTelefono.set(false);
+        this.errorDelTelefono.set('No pudimos guardar el teléfono. Reintente.');
+      },
+    });
+  }
+
   /** La sede cuyo QR bancario está abierto, o `null` si no hay ninguno. */
   protected readonly sedeConQrAbiertoId = signal<string | null>(null);
 
@@ -570,7 +624,8 @@ export class WorkHistory implements OnInit {
   });
 
   protected readonly puedeRegistrarSede = computed(
-    () => this.nombreDeSedeNueva().trim() !== '' && !this.registrandoSede(),
+    () => this.nombreDeSedeNueva().trim() !== '' &&
+      this.telefonoDeSedeNuevaValido() && !this.registrandoSede(),
   );
 
   /**
@@ -1143,6 +1198,9 @@ export class WorkHistory implements OnInit {
     const enEdicion = this.sedeEnEdicion();
     const cuerpo = {
       name: this.nombreDeSedeNueva().trim(),
+      ...(enEdicion !== null || this.telefonoDeSedeNueva().trim() === ''
+        ? {}
+        : { contactPhone: this.telefonoDeSedeNueva().trim() }),
       ...(address === undefined ? {} : { address }),
     };
 
@@ -1401,11 +1459,13 @@ export class WorkHistory implements OnInit {
    */
   protected accionesDeSede(sede: PracticeSite): readonly RowAction[] {
     const qr: RowAction = { code: 'qr', label: this.etiquetaDelQr(sede), icon: 'qr' };
+    const telefono: RowAction = { code: 'telefono', label: 'Editar teléfono', icon: 'phone' };
     if (sede.isOwnSite === true) {
-      return [qr];
+      return [qr, telefono];
     }
     return [
       qr,
+      telefono,
       {
         code: 'retirar',
         label: this.etiquetaDeRetiro(sede),
@@ -1417,6 +1477,10 @@ export class WorkHistory implements OnInit {
 
   /** Despacha el `code` que emitió `app-row-actions` sobre esa sede. */
   protected ejecutarAccionDeSede(code: string, sede: PracticeSite): void {
+    if (code === 'telefono') {
+      this.abrirTelefonoDeSede(sede);
+      return;
+    }
     if (code === 'qr') {
       this.abrirQrDeSede(sede);
       return;
@@ -1778,6 +1842,7 @@ export class WorkHistory implements OnInit {
 
   private limpiarSede(): void {
     this.nombreDeSedeNueva.set('');
+    this.telefonoDeSedeNueva.set('');
     this.direccionDeSede.set('');
     this.ciudadDeSede.set('');
     this.municipioDeSede.set(null);
@@ -1842,8 +1907,8 @@ function comoOpcion(establecimiento: LinkableOrganization): ReferenceOption {
 /**
  * Sin acentos y en minúsculas, para que el buscador de «Dónde atiendo»
  * encuentre «clinica» aunque se haya guardado «Clínica» (ADR-0015, regla 5).
- * Misma receta que ya usa el resto del proyecto (`symptom-check/texto.ts`,
- * `shared/geo/departamento-de-ciudad.ts`); se repite acá en vez de importar
+ * Misma receta que ya usa el resto del proyecto (`symptom-check/text.ts`,
+ * `shared/geo/city-department.ts`); se repite acá en vez de importar
  * de una feature ajena.
  */
 function normalizarTexto(texto: string): string {

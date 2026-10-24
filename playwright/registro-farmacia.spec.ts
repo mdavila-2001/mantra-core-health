@@ -73,7 +73,7 @@ async function saltarSucursales(page: Page): Promise<void> {
 }
 
 /**
- * Escribe un nombre desglosado (`app-campos-de-nombre`): primer nombre y
+ * Escribe un nombre desglosado (`app-name-fields`): primer nombre y
  * apellido paterno, que son las dos partes obligatorias desde e1acc37a.
  */
 async function escribirNombre(page: Page, prefijo: string, nombre: string, apellido: string): Promise<void> {

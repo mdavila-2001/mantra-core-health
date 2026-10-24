@@ -1,4 +1,4 @@
-import { ESTADO_RESERVA } from './conceptos';
+import { BOOKING_STATUS } from './concepts';
 
 /**
  * Las reservas de la maqueta sobreviven a F5 (`sessionStorage`) y los cupos se
@@ -38,7 +38,7 @@ describe('agenda de la maqueta — ids de cupo estables entre días', () => {
 
   it('la capacidad libre de cada cupo sale de las reservas vigentes que tiene encima', async () => {
     const { cupos, reservas } = await import('./agenda');
-    const anuladas = new Set([ESTADO_RESERVA['BK-CANCELLED'], ESTADO_RESERVA['BK-REJECTED']]);
+    const anuladas = new Set([BOOKING_STATUS['BK-CANCELLED'], BOOKING_STATUS['BK-REJECTED']]);
 
     for (const cupo of cupos.todos()) {
       const encima = reservas

@@ -19,6 +19,7 @@ import type {
 } from '../../../core/data-access/insurance/insurance-analytics.types';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierDetail } from '../../../core/data-access/insurance/insurance.types';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -31,6 +32,7 @@ import { SegmentedControl } from '../../../shared/components/molecules/segmented
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
@@ -141,6 +143,7 @@ interface FilaDeExportacion {
 @Component({
   selector: 'app-insurance-analytics',
   imports: [
+    Alert,
     AppButton,
     Badge,
     Card,
@@ -192,6 +195,12 @@ export class InsuranceAnalytics {
 
   protected readonly data = signal<ViewState<InsuranceDashboardAnalytics>>(loading());
   private readonly carrier = signal<CarrierDetail | null>(null);
+  /**
+   * Por qué no llegaron los planes de la aseguradora, o `null`. Sin planes el
+   * filtro queda en «Todos los planes» y la prima por persona no se estima:
+   * antes eso pasaba sin decir nada.
+   */
+  protected readonly carrierError = signal<string | null>(null);
 
   protected readonly planOptions = computed<readonly SelectOption<string>[]>(() => {
     const detalle = this.carrier();
@@ -230,21 +239,32 @@ export class InsuranceAnalytics {
   });
 
   constructor() {
-    this.insurance.listCarriers().subscribe({
-      next: (directory) => {
-        const first = directory.items[0];
-        if (first === undefined) return;
-        this.insurance.getCarrier(first.id).subscribe({
-          next: (detail) => this.carrier.set(detail),
-        });
-      },
-    });
+    this.loadCarrier();
 
     effect(() => {
       // Se leen para que el efecto se re-dispare con cada cambio de filtro.
       this.range();
       this.planId();
       untracked(() => this.load());
+    });
+  }
+
+  protected loadCarrier(): void {
+    this.carrierError.set(null);
+    const failed = (error: unknown): void =>
+      this.carrierError.set(
+        describeApiFailure(error, 'No pudimos traer los planes de su aseguradora, así que no se puede filtrar por plan.'),
+      );
+    this.insurance.listCarriers().subscribe({
+      next: (directory) => {
+        const first = directory.items[0];
+        if (first === undefined) return;
+        this.insurance.getCarrier(first.id).subscribe({
+          next: (detail) => this.carrier.set(detail),
+          error: failed,
+        });
+      },
+      error: failed,
     });
   }
 

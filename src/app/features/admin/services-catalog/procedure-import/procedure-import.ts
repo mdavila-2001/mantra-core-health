@@ -8,6 +8,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
@@ -18,6 +19,8 @@ import type {
   ProcedureNomenclatureItem,
   ProcedureSpecialty,
 } from '../../../../core/data-access/services-catalog/services-catalog.types';
+import { readApiError } from '../../../../core/http/api-error';
+import { describeApiFailure, fieldErrorsOf, supportCodeOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -322,14 +325,9 @@ export class ProcedureImport {
             item.display,
           );
         },
-        error: () => {
+        error: (error: unknown) => {
           this.importando.set(null);
-          this.toasts.show({
-            type: 'error',
-            title: 'No pudimos importarlo',
-            message:
-              'El alta de servicios exige permiso de administración. Pídalo a quien administre la organización.',
-          });
+          this.toasts.show({ type: 'error', title: 'No pudimos importarlo', message: motivoDelRechazo(error, item) });
         },
       });
   }
@@ -386,4 +384,35 @@ export class ProcedureImport {
       error: () => this.yaImportados.set(new Set()),
     });
   }
+}
+
+/** Lo que dice la pantalla cuando la API rechaza el alta por rol. */
+const SIN_PERMISO_DE_ADMINISTRACION =
+  'El alta de servicios exige permiso de administración. Pídalo a quien administre la organización.';
+
+/**
+ * Por qué no se importó un procedimiento.
+ *
+ * Sólo un `FORBIDDEN` es falta de permiso: antes cualquier fallo —un 422, un
+ * 500, un corte de red— se presentaba así, y la persona salía a pedir un
+ * permiso que ya tenía. Un `VALIDATION_FAILED` no tiene campo que corregir en
+ * esta pantalla (los datos salen del arancel tal cual), así que se dice eso.
+ */
+function motivoDelRechazo(error: unknown, item: ProcedureNomenclatureItem): string {
+  if (error instanceof HttpErrorResponse) {
+    const body = readApiError(error);
+    if (body?.code === 'FORBIDDEN') {
+      const supportCode = supportCodeOf(error, body);
+      return supportCode === null
+        ? SIN_PERMISO_DE_ADMINISTRACION
+        : `${SIN_PERMISO_DE_ADMINISTRACION} (Código de soporte: ${supportCode})`;
+    }
+  }
+  if (Object.keys(fieldErrorsOf(error)).length > 0) {
+    return describeApiFailure(
+      error,
+      `El catálogo no admite los datos de «${item.display}» tal como vienen del arancel.`,
+    );
+  }
+  return describeApiFailure(error, `No se pudo importar «${item.display}». Intente de nuevo.`);
 }

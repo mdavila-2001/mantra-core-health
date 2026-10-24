@@ -95,7 +95,7 @@ describe('Groups', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        // `displayName` lo lee `app-vitrina-minima`, que esta pantalla monta
+        // `displayName` lo lee `app-minimal-showcase`, que esta pantalla monta
         // cuando falta la vitrina: propone el enlace a partir del nombre.
         {
           provide: AuthService,

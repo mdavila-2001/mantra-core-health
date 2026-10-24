@@ -1,6 +1,6 @@
 /**
  * Trae el Arancel FONASA 2026 (Chile, Modalidad Libre Elección) a la maqueta,
- * convertido a bolivianos: `src/app/core/mock/fixtures/fonasa-aranceles.generated.ts`.
+ * convertido a bolivianos: `src/app/core/mock/fixtures/fonasa-tariffs.generated.ts`.
  *
  * Para qué: Bolivia no publica un arancel oficial de imagenología, y el de
  * INLASA cubre sólo los análisis que hace el laboratorio estatal. FONASA es la
@@ -37,7 +37,7 @@ const SALIDA = join(
   'core',
   'mock',
   'fixtures',
-  'fonasa-aranceles.generated.ts',
+  'fonasa-tariffs.generated.ts',
 );
 
 const CONVERSION = {

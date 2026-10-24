@@ -16,7 +16,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const ENVIRONMENTS: readonly IdpEnvironment[] = ['DEVELOPMENT', 'STAGING', 'PRODUCTION'];
@@ -61,7 +61,7 @@ export class LoginStartForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Contra qué proveedor',
       hint: 'El proveedor se busca por su código, no por su identificador.',

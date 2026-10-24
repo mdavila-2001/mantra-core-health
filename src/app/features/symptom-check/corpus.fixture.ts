@@ -264,6 +264,7 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'estoy embarazada y sangro', sintomas: [], alarmas: ['sangrado-en-el-embarazo'] },
   { texto: 'me tome muchas pastillas', sintomas: [], alarmas: ['intoxicacion'] },
   { texto: 'me quiero morir', sintomas: [], alarmas: ['ideas-suicidas'] },
+  { texto: 'me voy a matar', sintomas: [], alarmas: ['ideas-suicidas'] },
   { texto: 'tengo pensamientos suicidas', sintomas: [], alarmas: ['ideas-suicidas'] },
   {
     texto: 'es el peor dolor de cabeza de mi vida',
@@ -276,6 +277,9 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'me agarran ataques de ansiedad', sintomas: ['ansiedad'] },
   { texto: 'siento ardor en el pecho despues de comer', sintomas: ['acidez'] },
   { texto: 'me toque un bulto en la mama', sintomas: ['bulto-en-la-mama'] },
+  { texto: 'necesito un mastologo por un bulto en la mama', sintomas: ['bulto-en-la-mama'] },
+  { texto: 'tengo una bolita en el seno', sintomas: ['bulto-en-la-mama'] },
+  { texto: 'siento una bolita en el pecho', sintomas: ['bulto-en-la-mama'] },
   { texto: 'me sangran las encias al cepillarme', sintomas: ['dolor-de-muelas'] },
   { texto: 'sangre al obrar', sintomas: ['hemorroides'] },
   { texto: 'me sangra la nariz seguido', sintomas: ['sangrado-de-nariz'] },

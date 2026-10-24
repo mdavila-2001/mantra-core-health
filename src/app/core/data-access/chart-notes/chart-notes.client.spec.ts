@@ -67,4 +67,12 @@ describe('ChartNotesClient payload compatibility', () => {
     expect(request.request.body).toBe(input);
     request.flush({});
   });
+
+  it('signVersion manda el perfil de quien firma: SignVersionDto lo exige (informe B, C5)', () => {
+    client.signVersion('note-1', 'version-1', 'profile-1').subscribe({ error: () => undefined });
+    const request = http.expectOne('/charts/notes/note-1/versions/version-1/sign');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ signerProfileId: 'profile-1' });
+    request.flush({});
+  });
 });

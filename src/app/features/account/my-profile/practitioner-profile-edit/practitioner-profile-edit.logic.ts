@@ -1,8 +1,8 @@
 import {
-  OPCIONES_INSTITUCION_EDUCATIVA,
-  UNIVERSIDADES_DEL_SISTEMA,
-  UNIVERSIDADES_PRIVADAS,
-} from '../../../../core/profesion/instituciones-educativas';
+  OPTIONS_EDUCATIONAL_INSTITUTION,
+  SYSTEM_UNIVERSITIES,
+  PRIVATE_UNIVERSITIES,
+} from '../../../../core/profession/educational-institutions';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 
 /*
@@ -148,7 +148,7 @@ export function coincideConElEstado(filtro: string | null, pendiente: boolean): 
 /*
  * La institución con su código (Q-8).
  *
- * El catálogo de `core/profesion/instituciones-educativas.ts` no tiene un campo
+ * El catálogo de `core/profession/educational-institutions.ts` no tiene un campo
  * de código, y ninguna capa del proyecto tiene un padrón de instituciones con
  * id. Lo que sí tiene cada casa de estudios es su sigla dentro de la etiqueta,
  * entre paréntesis —«Universidad Mayor de San Andrés (UMSA) — La Paz»—. El
@@ -157,7 +157,7 @@ export function coincideConElEstado(filtro: string | null, pendiente: boolean): 
  */
 
 /** Las instituciones que se eligen del desplegable, sin separadores de grupo. */
-const INSTITUCIONES_DEL_CATALOGO = [...UNIVERSIDADES_DEL_SISTEMA, ...UNIVERSIDADES_PRIVADAS];
+const INSTITUCIONES_DEL_CATALOGO = [...SYSTEM_UNIVERSITIES, ...PRIVATE_UNIVERSITIES];
 
 /**
  * Las sedes de una institución del catálogo, como opciones del desplegable de
@@ -225,4 +225,4 @@ export function conSiglaAdelante<T extends { readonly label: string }>(opcion: T
 
 /** El desplegable de institución del editor, con cada sigla adelante. */
 export const OPCIONES_DE_INSTITUCION_CON_SIGLA =
-  OPCIONES_INSTITUCION_EDUCATIVA.map(conSiglaAdelante);
+  OPTIONS_EDUCATIONAL_INSTITUTION.map(conSiglaAdelante);

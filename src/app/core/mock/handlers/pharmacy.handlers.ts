@@ -1,17 +1,17 @@
-import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/catalogo-medicamentos.generated';
-import { FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
+import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/medication-catalog.generated';
+import { CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
-import { vitrinas } from '../fixtures/comunidad';
-import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
-import { recetas } from '../fixtures/clinica';
-import { PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
+import { showcases } from '../fixtures/community';
+import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
+import { prescriptionList } from '../fixtures/clinic';
+import { PACIENTE, patientById, professionalById } from '../fixtures/people';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
 // un solo lugar, porque la pantalla también los usa.
 import {
   DELIVERY_ORDER_ADDRESS,
-  ID_PEDIDO_CON_DELIVERY,
-  ID_PEDIDO_CON_SEGURO,
-} from '../fixtures/pedidos-de-farmacia';
+  ID_ORDER_WITH_DELIVERY,
+  ID_ORDER_WITH_INSURANCE,
+} from '../fixtures/pharmacy-orders';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_TYPES } from '../mock-session';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -47,7 +47,7 @@ interface FarmaciaSimulada {
 }
 
 /** Las 50 sucursales del corpus, por su slug: da el nombre y el horario reales. */
-const DEL_CORPUS = new Map(FARMACIAS_DEL_CORPUS.map((farmacia) => [farmacia.slug, farmacia]));
+const DEL_CORPUS = new Map(CORPUS_PHARMACIES.map((farmacia) => [farmacia.slug, farmacia]));
 
 /**
  * Las farmacias del mostrador, sacadas de sus vitrinas públicas.
@@ -61,7 +61,7 @@ const DEL_CORPUS = new Map(FARMACIAS_DEL_CORPUS.map((farmacia) => [farmacia.slug
  * corpus no declara qué sucursal reparte. Ponérselo a todas sería prometer un
  * servicio en nombre de un negocio que existe.
  */
-const FARMACIAS: readonly FarmaciaSimulada[] = vitrinas
+const FARMACIAS: readonly FarmaciaSimulada[] = showcases
   .filtrar((v) => v.kind === 'PHARMACY')
   .map((v, i) => {
     const corpus = DEL_CORPUS.get(v.slug);
@@ -280,7 +280,7 @@ const CATALOGO_POR_ID = new Map<string, CatalogFixtureRow>(CATALOGO_MEDICAMENTOS
 function medicamentoPorCodigo(code: string | null): { conceptId: string; code: string; display: string } | null {
   if (code === null || !(code in MEDICAMENTO)) return null;
   const conceptId = MEDICAMENTO[code as keyof typeof MEDICAMENTO];
-  return { conceptId, code, display: displayDe(conceptId) };
+  return { conceptId, code, display: displayOf(conceptId) };
 }
 
 /** Lo que el servidor lee del catálogo cuando la farmacia sólo mandó el id. */
@@ -348,7 +348,7 @@ function medicamentoDe(generico: string | null | undefined): { conceptId: string
   const limpio = (generico ?? '').trim().toLocaleLowerCase('es');
   if (limpio === '') return null;
   for (const [code, conceptId] of Object.entries(MEDICAMENTO)) {
-    const display = displayDe(conceptId);
+    const display = displayOf(conceptId);
     if (display.toLocaleLowerCase('es').split(' ')[0] === limpio.split(' ')[0]) {
       return { conceptId, code, display };
     }
@@ -407,7 +407,7 @@ const STOCK_SIN_CONTEO = 100;
 const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
     Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
-      const display = displayDe(conceptId);
+      const display = displayOf(conceptId);
       const [generico, ...resto] = display.split(' ');
       const forma = display.includes('inhalador') ? c('INHALER', 'Inhalador') : display.includes('cápsulas') ? c('CAPSULE', 'Cápsula') : display.includes('UI/ml') ? c('INJECTABLE', 'Inyectable') : c('TABLET', 'Comprimido');
       return {
@@ -662,7 +662,7 @@ const pedidos = new Coleccion<PedidoSimulado>(
   (() => {
     const f0 = FARMACIAS[0]!;
     const f1 = FARMACIAS[1] ?? f0;
-    const receta = recetas.filtrar((r) => r.patientProfileId === PACIENTE.id)[0];
+    const receta = prescriptionList.filtrar((r) => r.patientProfileId === PACIENTE.id)[0];
     return [
       { id: uuid('pharmacy-order-1'), estado: 'LISTO_PARA_RETIRO' as const, createdAt: iso(-4, 15), expiresAt: iso(1, 15), pharmacyId: f0.id, medicationRequestId: receta?.id ?? null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-4821', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-ENALAPRIL').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-ATORVASTATINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-2'), estado: 'ACEPTACION_PENDIENTE' as const, createdAt: iso(-1, 10), expiresAt: iso(2, 10), pharmacyId: f1.id, medicationRequestId: null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-5107', rejectionReasonText: null, lineas: [{ productId: productoDe(f1.id, 'MED-PARACETAMOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f1.id, 'MED-LORATADINA').id, requestedQuantity: 1, reservedQuantity: 0, fulfilledQuantity: 0, status: 'OUT_OF_STOCK' as const }], sustituciones: [{ id: uuid('subst-1'), originalProductId: productoDe(f1.id, 'MED-LORATADINA').id, proposedProductId: productoDe(f1.id, 'MED-IBUPROFENO').id, status: 'PROPOSED' as const, decidedAt: null }] },
@@ -674,11 +674,11 @@ const pedidos = new Coleccion<PedidoSimulado>(
       // lo aprobado y lo no aprobado renglón por renglón. La cobertura no viaja en este DTO —el
       // contrato de `pharmacy-orders` no la publica—, así que vive junto a la pantalla y se
       // reconoce por el identificador; acá sólo nace el pedido.
-      { id: ID_PEDIDO_CON_SEGURO, estado: 'EN_REVISION' as const, createdAt: iso(0, 10, 15), expiresAt: iso(3, 10), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-quispe'), patientName: 'Rosa Elena Quispe Vargas', pickupCode: 'AV-6003', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-LEVOTIROXINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      { id: ID_ORDER_WITH_INSURANCE, estado: 'EN_REVISION' as const, createdAt: iso(0, 10, 15), expiresAt: iso(3, 10), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-quispe'), patientName: 'Rosa Elena Quispe Vargas', pickupCode: 'AV-6003', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-LEVOTIROXINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       // T-I3 · el pedido que sale a domicilio. El medio de entrega y la dirección son parte del
       // contrato (`deliveryMode`, `deliveryAddressText`), así que los declara el backend simulado
       // y la pantalla los lee de la respuesta, igual que con la API real.
-      { id: ID_PEDIDO_CON_DELIVERY, deliveryMode: 'DOMICILIO' as const, deliveryAddressText: DELIVERY_ORDER_ADDRESS, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      { id: ID_ORDER_WITH_DELIVERY, deliveryMode: 'DOMICILIO' as const, deliveryAddressText: DELIVERY_ORDER_ADDRESS, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       ...pedidosDelTablero(),
     ];
   })(),
@@ -752,13 +752,13 @@ export function renglonesDePedidoSimulado(id: string): {
  */
 function prescriberOf(p: PedidoSimulado) {
   if (p.medicationRequestId === null) return null;
-  const receta = recetas.get(p.medicationRequestId);
-  const profesional = receta === undefined ? undefined : profesionalPorId(receta.prescriberProfileId);
+  const receta = prescriptionList.get(p.medicationRequestId);
+  const profesional = receta === undefined ? undefined : professionalById(receta.prescriberProfileId);
   if (profesional === undefined) return null;
   const especialidad = profesional.especialidades[0];
   return {
     name: profesional.displayName,
-    specialty: especialidad === undefined ? null : displayDe(especialidad),
+    specialty: especialidad === undefined ? null : displayOf(especialidad),
   };
 }
 
@@ -1440,7 +1440,7 @@ export function registrarFarmacia(router: MockRouter): void {
   router.post('/pharmacy/orders', (request) => {
     const datos = cuerpo<{ siteId: string; medicationRequestId?: string; lines?: { productId: string; quantity: number }[] }>(request);
     const farmacia = FARMACIAS.find((f) => f.siteId === datos.siteId) ?? FARMACIAS[0]!;
-    const paciente = pacientePorId(request.user?.patientProfileId ?? '') ?? PACIENTE;
+    const paciente = patientById(request.user?.patientProfileId ?? '') ?? PACIENTE;
     const nuevo = pedidos.agregar({
       id: nuevoId('pharmacy-order'),
       estado: 'ENVIADO',

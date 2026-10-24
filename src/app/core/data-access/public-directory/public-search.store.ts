@@ -80,18 +80,18 @@ export interface FilaConCiudad {
  * entrega al store.
  *
  * Es una interfaz y no la clase porque la implementación,
- * `shared/geo/filtro-territorial.ts`, habla con el catálogo de municipios y con
+ * `shared/geo/territorial-filter.ts`, habla con el catálogo de municipios y con
  * el router, y `core` no depende de `shared`. Al store le basta con saber qué
  * está elegido y cómo recortar.
  */
 export interface CorteTerritorial {
-  readonly departamentoElegido: Signal<string | null>;
-  readonly ciudad: Signal<string | null>;
-  readonly nombreDelDepartamento: Signal<string | null>;
-  recortar<T extends FilaConCiudad>(filas: readonly T[]): readonly T[];
-  ciudades(filas: readonly FilaConCiudad[]): readonly string[];
-  cuentaPorDepartamento(filas: readonly FilaConCiudad[]): ReadonlyMap<string, number>;
-  sinUbicar(filas: readonly FilaConCiudad[]): number;
+  readonly chosenDepartment: Signal<string | null>;
+  readonly city: Signal<string | null>;
+  readonly departmentName: Signal<string | null>;
+  crop<T extends FilaConCiudad>(filas: readonly T[]): readonly T[];
+  cities(filas: readonly FilaConCiudad[]): readonly string[];
+  accountByDepartment(filas: readonly FilaConCiudad[]): ReadonlyMap<string, number>;
+  withoutLocate(filas: readonly FilaConCiudad[]): number;
 }
 
 /** Lo que una pantalla puede encender además de la lectura y sus filtros de URL. */
@@ -261,7 +261,7 @@ export class BusquedaPublica {
   private readonly llaveDelLugar = computed(() =>
     this.territorio === null
       ? ''
-      : `${this.territorio.departamentoElegido() ?? ''}|${this.territorio.ciudad() ?? ''}|${this.categoria() ?? ''}`,
+      : `${this.territorio.chosenDepartment() ?? ''}|${this.territorio.city() ?? ''}|${this.categoria() ?? ''}`,
   );
 
   private readonly indiceLocal = computed(() => {
@@ -306,7 +306,7 @@ export class BusquedaPublica {
       return [];
     }
     const base =
-      this.territorio === null ? this._todos() : this.territorio.recortar(this._todos());
+      this.territorio === null ? this._todos() : this.territorio.crop(this._todos());
     const cuenta = new Map<string, { label: string; total: number }>();
     for (const fila of base) {
       const categoria = fila.category;
@@ -326,7 +326,7 @@ export class BusquedaPublica {
 
   /** Lo que queda del directorio después de los cortes de lugar y categoría. */
   private readonly filtradas = computed<readonly PublicSearchResult[]>(() =>
-    this.territorio === null ? [] : this.territorio.recortar(this.deLaCategoria()),
+    this.territorio === null ? [] : this.territorio.crop(this.deLaCategoria()),
   );
 
   /* ---- lo que lee la pantalla ------------------------------------------- */
@@ -399,12 +399,12 @@ export class BusquedaPublica {
 
   /** Los municipios del departamento elegido con algo publicado, para los chips. */
   readonly ciudadesDelLugar = computed<readonly string[]>(
-    () => this.territorio?.ciudades(this._todos()) ?? [],
+    () => this.territorio?.cities(this._todos()) ?? [],
   );
 
   /** Cuánto tiene cada departamento, sin el corte del propio mapa. */
   readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(
-    () => this.territorio?.cuentaPorDepartamento(this._todos()) ?? new Map<string, number>(),
+    () => this.territorio?.accountByDepartment(this._todos()) ?? new Map<string, number>(),
   );
 
   /**
@@ -413,11 +413,11 @@ export class BusquedaPublica {
    */
   readonly resumenDelLugar = computed<string | null>(() => {
     const territorio = this.territorio;
-    const elegido = territorio?.departamentoElegido() ?? null;
+    const elegido = territorio?.chosenDepartment() ?? null;
     if (territorio === null || elegido === null) {
       return null;
     }
-    const nombre = territorio.nombreDelDepartamento() ?? '';
+    const nombre = territorio.departmentName() ?? '';
     const cuantos = this.cuentaPorDepartamento().get(elegido) ?? 0;
     if (cuantos === 0) {
       return `Todavía no hay nada publicado en ${nombre}.`;
@@ -443,8 +443,8 @@ export class BusquedaPublica {
         'Se muestran los primeros resultados del directorio: use el buscador para encontrar lo que no aparezca.',
       );
     }
-    if (this.territorio.departamentoElegido() !== null) {
-      const sinUbicar = this.territorio.sinUbicar(this._todos());
+    if (this.territorio.chosenDepartment() !== null) {
+      const sinUbicar = this.territorio.withoutLocate(this._todos());
       if (sinUbicar === 1) {
         avisos.push(
           '1 resultado no declara una ciudad que diga de qué departamento es; aparece al ver todo el país.',

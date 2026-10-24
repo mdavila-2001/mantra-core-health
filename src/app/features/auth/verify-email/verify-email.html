@@ -25,6 +25,25 @@
         </p>
       }
 
+      @case ('no-se-pudo') {
+        <h1 appAnuncio class="verificacion__title" data-testid="verificar-no-se-pudo">
+          No pudimos confirmar su correo todavía
+        </h1>
+        <p class="verificacion__text" data-testid="verificar-motivo">{{ motivoDelFallo() }}</p>
+        <p class="verificacion__text">
+          Su enlace puede seguir sirviendo: inténtelo otra vez ahora o más tarde.
+        </p>
+        <button
+          app-button
+          variant="outline"
+          class="verificacion__reintento"
+          data-testid="verificar-reintentar"
+          (clicked)="reintentar()"
+        >
+          Intentar de nuevo
+        </button>
+      }
+
       @case ('invalido') {
         <h1 appAnuncio [asertivo]="false" class="verificacion__title" data-testid="verificar-invalido">
           Ese enlace ya no sirve

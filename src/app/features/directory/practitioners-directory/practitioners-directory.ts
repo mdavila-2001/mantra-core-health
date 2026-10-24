@@ -28,9 +28,8 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
-import { inicialesDe } from '../../../shared/text/iniciales';
-import { fotoDeDirectorio } from '../../../shared/utils/foto-de-directorio';
-import { subtituloProfesional } from '../subtitulo-profesional';
+import { initialsOf } from '../../../shared/text/initials';
+import { professionalSubtitle } from '../professional-subtitle';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
 interface TarjetaDeEspecialidad {
@@ -154,7 +153,7 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
   selector: 'app-practitioners-directory',
   imports: [DirectoryPage],
   templateUrl: './practitioners-directory.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', './practitioners-directory.css'],
+  styleUrls: ['../../../shared/styles/card-grid.css', './practitioners-directory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
@@ -182,6 +181,17 @@ export class PractitionersDirectory {
       }),
     ),
     { initialValue: null },
+  );
+
+  /** Búsqueda inicial en URL, para que los enlaces de ayuda abran el filtro ya aplicado. */
+  private readonly busquedaEnUrl = toSignal(
+    this.route.queryParams.pipe(
+      map((params) => {
+        const valor = params[SEARCH_PARAM];
+        return typeof valor === 'string' ? valor : '';
+      }),
+    ),
+    { initialValue: '' },
   );
 
   /** El recuento por especialidad: lo que dibuja la portada. */
@@ -221,7 +231,11 @@ export class PractitionersDirectory {
     {
       key: PARAM_ESPECIALIDAD,
       label: 'Especialidad',
+      icon: 'stethoscope',
       placeholder: 'Todas las especialidades',
+      // En la columna de facetas, como la categoría de una tienda
+      // (propietario, 23/10/2026).
+      asChips: true,
       options: this.tarjetas().map((tarjeta) => ({
         value: tarjeta.conceptId,
         label: `${tarjeta.nombre} (${tarjeta.cantidad})`,
@@ -317,6 +331,10 @@ export class PractitionersDirectory {
     // cambio del parámetro es una pantalla distinta y una lectura distinta.
     // El recuento alimenta el filtro de especialidad: se pide una vez.
     this.cargarRecuento();
+    effect(() => {
+      const busqueda = this.busquedaEnUrl();
+      untracked(() => this.filtro.set(busqueda));
+    });
     effect(() => {
       const elegida = this.especialidadEnUrl();
       untracked(() => this.cargarLista(elegida));
@@ -594,7 +612,7 @@ function toResultado(
   // escrito a mano sólo cuando no declaró ninguna.
   const subtitulo =
     especialidadesDe(fila, etiquetas, elegida) ??
-    subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
+    professionalSubtitle(fila.professionalTitle, nombre, nombresDeOtros);
   // El subtítulo del profesional —«Cardióloga · Clínica Los Olivos»— NO va en
   // `meta`: es qué es esta persona, no un dato de contexto, y en el gris de
   // 13 px se leía igual que la lista de sedes de abajo. Va en `subtitle`, que
@@ -645,9 +663,16 @@ function toResultado(
       link: `/directory/${fila.profileId}`,
       fragment: ANCLA_HORARIOS,
     },
-    figureText: inicialesDe(nombre),
-    photoUrl: fotoDeDirectorio('medico', fila.profileId),
+    // Iniciales y no una foto de banco: en el hueco de la foto de perfil, una
+    // persona ajena se lee como la cara del médico. Un lugar admite una imagen
+    // ilustrativa; una persona, no. Cuando la guía resuelva `photoFileId`, su
+    // foto real va acá.
+    figureText: initialsOf(nombre),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
+    // Las reseñas reales, cuando la API las mande en el listado (P61).
+    ...(fila.ratingAverage != null && (fila.ratingCount ?? 0) > 0
+      ? { rating: { average: fila.ratingAverage, count: fila.ratingCount! } }
+      : {}),
     meta,
     seals: sellos,
   };

@@ -14,7 +14,7 @@ const PACIENTE: Actor = {
 };
 
 /**
- * Escrita a mano en `fixtures/personas.ts` (índice 0): es una persona
+ * Escrita a mano en `fixtures/people.ts` (índice 0): es una persona
  * **sintética**, no un médico real, y es la única cardióloga con agenda
  * publicada en los dos cortes que se comparan.
  *

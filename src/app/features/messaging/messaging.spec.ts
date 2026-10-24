@@ -5,7 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
+import { ChatPreferences } from '../../core/messaging/chat-preferences';
 
 /**
  * Lo que estas pruebas fijan.
@@ -301,7 +301,7 @@ describe('Messaging', () => {
       conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
     ]);
 
-    TestBed.inject(ChatPreferencias).alternarArchivado('c-1');
+    TestBed.inject(ChatPreferences).toggleArchived('c-1');
     fixture.detectChanges();
 
     expect(todas('conversacion').length).toBe(1);
@@ -324,7 +324,7 @@ describe('Messaging', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('Dra. Quispe');
-    expect(texto()).toContain('No pudimos cargar sus conversaciones.');
+    expect(texto()).toContain('No hay conexión con el servidor.');
   });
 
   function escribir(valor: string): void {

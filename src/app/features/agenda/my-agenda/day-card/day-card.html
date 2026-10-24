@@ -1,0 +1,124 @@
+<!-- C-10 (2026-09-20) · La tarjeta es un MODAL, no un formulario al pie.
+
+     Antes se dibujaba debajo del día: había que bajar para encontrarla, y el
+     día seguía siendo tocable detrás. `app-content-dialog` monta el `<dialog>`
+     nativo y con él trae lo difícil —fondo, inertización de lo que queda
+     detrás, trampa de foco, `Escape` y devolución del foco al disparador— sin
+     que haya que escribirlo acá. Se reusa y no se crea uno propio: además,
+     `shared/**` no es de este carril.
+
+     `dismissible` en `false`: es una edición. `Escape` y el fondo dejan de
+     cerrar solos y pasan por `(dismissAttempt)`, que pregunta si se descarta lo
+     escrito **sólo si hay algo escrito**. Sin eso, un `Escape` de reflejo pierde
+     el paciente y el motivo ya cargados. -->
+<app-content-dialog
+  [heading]="title()"
+  description="Agregue una cita o un rato ocupado a este día."
+  size="md"
+  [dismissible]="!hasWrittenContent()"
+  (dismissAttempt)="requestDiscard()"
+  (closed)="cerrada.emit()"
+>
+  <form class="tarjeta__cuerpo" (submit)="$event.preventDefault(); save()">
+    <!-- C-10 · sobre un cupo ya programado la franja NO se pregunta: es dato.
+         Sobre aire —un hueco sin cupo detrás— los campos siguen, porque ahí la
+         franja no existe hasta que alguien la escriba. -->
+    @if (fromSlot()) {
+      <p class="tarjeta__franja" data-testid="tarjeta-franja-del-cupo">
+        <span class="tarjeta__franja-rotulo">Franja</span>
+        <strong class="tarjeta__franja-valor">{{ slotBand() }}</strong>
+        <span class="tarjeta__franja-nota">La pone el cupo del horario publicado.</span>
+      </p>
+    } @else {
+      <div class="tarjeta__rango">
+        <app-form-field label="Desde" [required]="true">
+          <app-input [(value)]="from" placeholder="10:00" />
+        </app-form-field>
+        <app-form-field label="Hasta" [required]="true">
+          <app-input [(value)]="hasta" placeholder="10:45" />
+        </app-form-field>
+      </div>
+    }
+
+    <app-form-field
+      label="¿Con quién?"
+      hint="Busque al paciente, o déjelo vacío si es un rato suyo."
+    >
+      <app-reference-combobox
+        [selected]="patient()"
+        [options]="candidates()"
+        [loading]="searching()"
+        placeholder="Nombre o código del paciente"
+        [emptyMessage]="failedSearch() ?? 'Ningún paciente coincide'"
+        (searched)="searchPatient($event)"
+        (selectionChange)="patient.set($event)"
+      />
+    </app-form-field>
+
+    <!-- La modalidad sólo existe si hay paciente: un rato ocupado del doctor no
+         se atiende «por videollamada», y ofrecerlo sería un control que no
+         significa nada. Aparece con el paciente, como la pregunta que sigue.
+
+         C-21 · alternancia y no radios: tres opciones excluyentes, que es para
+         lo que existe `segmented-control`. Se elige con flechas y un solo
+         tabulador, y anuncia su estado como `radiogroup`. -->
+    @if (patient() !== null) {
+      <div class="tarjeta__modalidad">
+        <span class="tarjeta__modalidad-titulo" id="tarjeta-modalidad">¿Cómo lo atiende?</span>
+        <app-segmented-control
+          data-testid="tarjeta-modalidad"
+          ariaLabel="¿Cómo lo atiende?"
+          size="md"
+          [options]="modalityOptions"
+          [value]="modality()"
+          (valueChange)="modality.set($event)"
+        />
+      </div>
+    }
+
+    <app-form-field
+      label="¿Qué pasa?"
+      hint="El motivo de la cita, o el rótulo del rato ocupado (reunión, guardia…)."
+    >
+      <app-input [(value)]="reason" placeholder="Control · Cirugía · Reunión de equipo…" />
+    </app-form-field>
+
+    <!-- La inferencia hecha visible: qué va a crear, dicho ANTES de apretar. -->
+    @if (willHappen(); as aviso) {
+      <p class="tarjeta__inferencia" role="status">{{ aviso }}</p>
+    }
+
+    <!-- El choque con lo ya cargado del día, en vivo. El servidor cruza además
+         las otras sedes al guardar: esto es el aviso temprano, no la regla. -->
+    @if (clashInLive(); as choque) {
+      <app-alert tone="warning" title="Ese rato ya está tomado">
+        {{ choque }}
+      </app-alert>
+    }
+
+    @if (error(); as mensaje) {
+      <app-alert tone="error" title="No se pudo guardar">
+        {{ mensaje }}
+      </app-alert>
+    }
+
+    <!-- El horario fijo semanal no vive acá: la tarjeta cubre lo puntual de UN
+         día. El enlace es para quien cayó buscando eso. -->
+    <a class="tarjeta__publicar" routerLink="/agenda">¿Horario fijo semanal? → Publicar agenda</a>
+  </form>
+
+  <!-- El pie se proyecta fuera del cuerpo con scroll: en un formulario largo el
+       botón que guarda tiene que seguir alcanzable sin llegar al final. -->
+  <button
+    dialog-actions
+    app-button
+    variant="primary"
+    type="button"
+    data-testid="tarjeta-guardar"
+    [disabled]="!canSave()"
+    [isLoading]="saving()"
+    (clicked)="save()"
+  >
+    Guardar
+  </button>
+</app-content-dialog>

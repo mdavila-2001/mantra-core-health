@@ -109,7 +109,8 @@
               <legend class="catalogo__subtitulo">Identificación</legend>
               <div class="catalogo__campos">
                 <app-form-field
-                  label="Código interno (SKU)"
+                  icon="tag"
+                  
                   [hint]="'Único en su catálogo. Hasta ' + largoDelCodigo + ' caracteres: letras, números, punto, guion o barra.'"
                   [required]="true"
                 >
@@ -121,7 +122,7 @@
                     testId="catalogo-campo-codigo"
                   />
                 </app-form-field>
-                <app-form-field label="Marca o nombre comercial" hint="Con el genérico alcanza si no tiene marca.">
+                <app-form-field icon="bag"  hint="Con el genérico alcanza si no tiene marca.">
                   <app-input
                     [value]="campos().marca"
                     (valueChange)="fijarCampo('marca', $event)"
@@ -129,7 +130,7 @@
                     testId="catalogo-campo-marca"
                   />
                 </app-form-field>
-                <app-form-field label="Nombre genérico o principio activo">
+                <app-form-field icon="pill" >
                   <app-input
                     [value]="campos().generico"
                     (valueChange)="fijarCampo('generico', $event)"
@@ -138,7 +139,8 @@
                   />
                 </app-form-field>
                 <app-form-field
-                  label="Código de barras (GTIN)"
+                  icon="qr"
+                  
                   hint="Opcional. Los 8, 12, 13 o 14 dígitos impresos bajo las barras."
                 >
                   <app-input
@@ -155,7 +157,7 @@
             <fieldset class="catalogo__grupo">
               <legend class="catalogo__subtitulo">Presentación y dispensa</legend>
               <div class="catalogo__campos">
-                <app-form-field label="Concentración" hint="Ej. 500 mg, 100 UI/ml.">
+                <app-form-field icon="sliders"  hint="Ej. 500 mg, 100 UI/ml.">
                   <app-input
                     [value]="campos().concentracion"
                     (valueChange)="fijarCampo('concentracion', $event)"
@@ -163,7 +165,7 @@
                     testId="catalogo-campo-concentracion"
                   />
                 </app-form-field>
-                <app-form-field label="Presentación" hint="Ej. Caja x 20 comprimidos.">
+                <app-form-field icon="package"  hint="Ej. Caja x 20 comprimidos.">
                   <app-input
                     [value]="campos().presentacion"
                     (valueChange)="fijarCampo('presentacion', $event)"
@@ -171,7 +173,7 @@
                     testId="catalogo-campo-presentacion"
                   />
                 </app-form-field>
-                <app-form-field label="¿Se vende bajo receta?">
+                <app-form-field icon="clipboard" >
                   <app-select
                     [options]="opcionesSiNo"
                     [value]="campos().receta"
@@ -179,7 +181,7 @@
                     ariaLabel="¿Se vende bajo receta?"
                   />
                 </app-form-field>
-                <app-form-field label="¿Necesita cadena de frío?">
+                <app-form-field icon="flask" >
                   <app-select
                     [options]="opcionesSiNo"
                     [value]="campos().cadenaDeFrio"

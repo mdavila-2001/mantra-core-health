@@ -10,32 +10,20 @@
       /* Anti-parpadeo: bajo SSR el HTML llega sin data-theme, así que una
          preferencia manual guardada se vería con el tema contrario hasta que
          hidrate. Este script corre en el <head>, antes del primer paint.
-         'system' NO escribe atributo: lo resuelve @media (prefers-color-scheme)
-         en styles.css sin JS. Clave espejo de THEME_STORAGE_KEY
-         (src/app/core/tokens/theme.service.ts). */
+         Clave espejo de THEME_STORAGE_KEY (src/app/core/tokens/theme.service.ts). */
       (function () {
         var raiz = document.documentElement;
-        var preferencia = null;
+        var preferencia = 'light';
         try {
-          preferencia = localStorage.getItem('mantra-core-health.theme');
+          var guardado = localStorage.getItem('mantra-core-health.theme');
+          if (guardado === 'light' || guardado === 'dark') {
+            preferencia = guardado;
+          }
         } catch (e) {
-          /* almacenamiento bloqueado: queda la preferencia del sistema */
           console.error('Error al leer la preferencia del tema:', e);
         }
-        if (preferencia === 'light' || preferencia === 'dark') {
-          raiz.dataset.theme = preferencia;
-        }
-        /* Espejo para la hoja de ALOVIDA (src/styles/alovida.css), que resuelve el
-           tema oscuro SOLO contra un atributo explícito. Acá se resuelve
-           'system' contra el sistema operativo, así que este atributo lleva
-           siempre un valor —claro u oscuro— y nunca falta. Espejo de
-           ALOVIDA_THEME_ATTRIBUTE en core/tokens/theme.service.ts. */
-        var oscuro =
-          preferencia === 'dark' ||
-          (preferencia !== 'light' &&
-            typeof matchMedia === 'function' &&
-            matchMedia('(prefers-color-scheme: dark)').matches);
-        raiz.setAttribute('data-tema', oscuro ? 'oscuro' : 'claro');
+        raiz.dataset.theme = preferencia;
+        raiz.setAttribute('data-tema', preferencia === 'dark' ? 'oscuro' : 'claro');
       })();
     </script>
   </head>

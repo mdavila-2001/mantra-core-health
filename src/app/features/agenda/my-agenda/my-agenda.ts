@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
-import { calcularTurnos } from '../agenda-create/agenda-turnos';
+import { calculateSlots } from '../agenda-create/agenda-slots';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -28,6 +28,7 @@ import type {
   Booking,
   PublishedTemplate,
 } from '../../../core/data-access/scheduling/scheduling.types';
+import { describeApiFailure, fieldErrorsOf } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -39,7 +40,7 @@ import {
 } from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
 import type { VisitRequest } from '../../../core/data-access/pharma-lab/pharma-lab.types';
 import { toVisitStatusPresentation } from '../../pharma-lab/visit-status';
-import { detalleDeLaCita } from './detalle-de-la-cita';
+import { appointmentDetail } from './appointment-detail';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
@@ -55,7 +56,7 @@ import { FactList } from '../../../shared/components/molecules/fact-list/fact-li
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
+import { monthFirstDay, sumMonths } from '../../../shared/date/month-calendar';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import { aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
 import {
@@ -64,7 +65,7 @@ import {
   type PedidoDeAccion,
   type RatoTocado,
 } from './day-view/day-view';
-import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
+import { DayCard, type DayGap } from './day-card/day-card';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
@@ -171,6 +172,23 @@ interface Patron {
  * después de publicarlo.
  */
 /** Lo que se muestra cuando un dato no está. */
+/**
+ * Las lecturas del calendario cuyo fallo cambia lo que el profesional cree que
+ * tiene ese día, y cómo se nombran en el aviso.
+ */
+const LECTURAS_DE_AGENDA = {
+  'citas-del-dia': 'las citas del día',
+  'cupos-del-dia': 'los horarios del día',
+  'citas-de-la-semana': 'las citas de la semana',
+  'bloqueos-de-la-semana': 'los bloqueos de la semana',
+  'cupos-del-mes': 'los horarios del mes',
+  'bloqueos-del-mes': 'los bloqueos del mes',
+  'citas-del-mes': 'las citas del mes',
+  visitas: 'las visitas de laboratorio',
+} as const;
+
+type LecturaDeAgenda = keyof typeof LECTURAS_DE_AGENDA;
+
 const SIN_DATO = 'Sin registrar';
 
 /**
@@ -214,7 +232,7 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
     Tooltip,
     DayView,
     MonthView,
-    TarjetaDelDia,
+    DayCard,
     WeekView,
     ScheduleGrid,
     ContentDialog,
@@ -437,7 +455,7 @@ export class MyAgenda implements OnInit {
   protected readonly solapa = signal<'patron' | 'mes'>('patron');
 
   /** El mes visible; siempre su día 1. */
-  protected readonly mesVisible = signal(primerDiaDelMes(new Date()));
+  protected readonly mesVisible = signal(monthFirstDay(new Date()));
 
   /**
    * Qué se mira en el calendario: el día, la semana o el mes — «un botón para
@@ -471,7 +489,7 @@ export class MyAgenda implements OnInit {
   protected showMonth(): void {
     this.calendarView.set('month');
     this.ratoParaCrear.set(null);
-    const mes = primerDiaDelMes(this.diaDeReferencia());
+    const mes = monthFirstDay(this.diaDeReferencia());
     if (mes.getTime() !== this.mesVisible().getTime()) {
       this.cambiarMes(mes);
     }
@@ -483,7 +501,7 @@ export class MyAgenda implements OnInit {
    */
   protected openDay(fecha: Date): void {
     this.calendarView.set('day');
-    const mes = primerDiaDelMes(fecha);
+    const mes = monthFirstDay(fecha);
     if (mes.getTime() !== this.mesVisible().getTime()) {
       this.mesVisible.set(mes);
       this.cargarMes();
@@ -508,7 +526,7 @@ export class MyAgenda implements OnInit {
       nueva.getFullYear() !== mes.getFullYear() ||
       finDeSemana.getMonth() !== mes.getMonth();
     if (cruza) {
-      this.mesVisible.set(primerDiaDelMes(nueva));
+      this.mesVisible.set(monthFirstDay(nueva));
       this.cargarMes();
     }
   }
@@ -526,6 +544,33 @@ export class MyAgenda implements OnInit {
 
   /** Si la lectura de las citas del mes falló: el globo lo dice en vez de «sin citas». */
   protected readonly monthBookingsFailed = signal(false);
+
+  /**
+   * Las lecturas del calendario que fallaron, con el mensaje de cada una.
+   *
+   * Antes cada `error` hacía `.set([])` y nada más: un día cuya lectura de
+   * citas había fallado se veía **idéntico** a un día libre, y el profesional
+   * podía dar por vacía una mañana con pacientes. Ahora la lista sigue vacía
+   * —no hay nada que pintar— pero el fallo queda anotado acá y la pantalla lo
+   * dice con un aviso, el código de soporte y un botón para volver a pedir.
+   *
+   * Cada lectura borra su entrada cuando vuelve a salir bien, así que el aviso
+   * desaparece solo en cuanto el dato llega. Los catálogos accesorios
+   * (tipologías, motivos de bloqueo, etiquetas de estado) y el «hasta cuándo
+   * hay cupos» quedan fuera a propósito: su falta no cambia qué citas hay.
+   */
+  protected readonly lecturasFallidas = signal<ReadonlyMap<LecturaDeAgenda, string>>(new Map());
+
+  /** Si falló alguna lectura del día: el día no afirma «No atiende» ni «No disponible». */
+  protected readonly dayLoadFailed = computed(() => {
+    const fallidas = this.lecturasFallidas();
+    return fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia');
+  });
+
+  /** Los mensajes del aviso, sin repetir: sin conexión, todas dicen lo mismo. */
+  protected readonly avisosDeLectura = computed(() => [
+    ...new Set(this.lecturasFallidas().values()),
+  ]);
 
   /**
    * Los bloqueos de la semana en curso, para pintarlos en rojo en la grilla
@@ -664,8 +709,14 @@ export class MyAgenda implements OnInit {
    */
   private leerVisitasDeLaboratorio(): void {
     this.pharmaLab.listDoctorVisitRequests().subscribe({
-      next: (visitas) => this.visitasDelDoctor.set(visitas),
-      error: () => this.visitasDelDoctor.set([]),
+      next: (visitas) => {
+        this.visitasDelDoctor.set(visitas);
+        this.lecturaRecuperada('visitas');
+      },
+      error: (error: unknown) => {
+        this.visitasDelDoctor.set([]);
+        this.registrarFalloDeLectura('visitas', error);
+      },
     });
     this.conceptosDeVisitas$.subscribe({
       next: (dic) => this.conceptosDeVisitas.set(dic),
@@ -852,7 +903,7 @@ export class MyAgenda implements OnInit {
     const lunes = lunesDe(new Date());
     const siguiente = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 7);
     this.scheduling.listExceptions(resourceId, { from: lunes, to: siguiente }).subscribe({
-      next: (pagina) =>
+      next: (pagina) => {
         this.bloqueosDeLaSemana.set(
           pagina.items
             // Las excepciones que ABREN disponibilidad no son bloqueos: pintarlas
@@ -864,8 +915,13 @@ export class MyAgenda implements OnInit {
               hasta: new Date(e.endAt),
               motivo: e.reason ?? null,
             })),
-        ),
-      error: () => this.bloqueosDeLaSemana.set([]),
+        );
+        this.lecturaRecuperada('bloqueos-de-la-semana');
+      },
+      error: (error: unknown) => {
+        this.bloqueosDeLaSemana.set([]);
+        this.registrarFalloDeLectura('bloqueos-de-la-semana', error);
+      },
     });
   }
 
@@ -1199,7 +1255,7 @@ export class MyAgenda implements OnInit {
 
     const base = this.mesVisible();
     const desde = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 7);
-    const finDeMes = sumarMeses(base, 1);
+    const finDeMes = sumMonths(base, 1);
     const hasta = new Date(finDeMes.getFullYear(), finDeMes.getMonth(), finDeMes.getDate() + 7);
     this.cargandoMes.set(true);
 
@@ -1209,15 +1265,17 @@ export class MyAgenda implements OnInit {
         next: (pagina) => {
           this.cuposDelMes.set(pagina.items);
           this.cargandoMes.set(false);
+          this.lecturaRecuperada('cupos-del-mes');
         },
-        error: () => {
+        error: (error: unknown) => {
           this.cuposDelMes.set([]);
           this.cargandoMes.set(false);
+          this.registrarFalloDeLectura('cupos-del-mes', error);
         },
       });
 
     this.scheduling.listExceptions(recurso.id, { from: desde, to: hasta }).subscribe({
-      next: (pagina) =>
+      next: (pagina) => {
         this.bloqueosDelMes.set(
           pagina.items
             // Las excepciones que ABREN disponibilidad no son bloqueos: pintarlas
@@ -1228,10 +1286,16 @@ export class MyAgenda implements OnInit {
               hasta: new Date(e.endAt),
               motivo: e.reason ?? null,
             })),
-        ),
+        );
+        this.lecturaRecuperada('bloqueos-del-mes');
+      },
       // Sin los bloqueos el mes sigue sirviendo: muestra la ocupación y los
-      // bloqueados se ven como sin agenda. Peor sería no mostrar nada.
-      error: () => this.bloqueosDelMes.set([]),
+      // bloqueados se ven como sin agenda. Peor sería no mostrar nada — pero
+      // se avisa, para que un día bloqueado no se lea como libre.
+      error: (error: unknown) => {
+        this.bloqueosDelMes.set([]);
+        this.registrarFalloDeLectura('bloqueos-del-mes', error);
+      },
     });
 
     // Una llamada para todo el mes, igual que la semana. Si falla, el globo
@@ -1247,11 +1311,13 @@ export class MyAgenda implements OnInit {
         next: (pagina: { items: readonly Booking[] }) => {
           this.citasDelMes.set(pagina.items);
           this.monthBookingsFailed.set(false);
+          this.lecturaRecuperada('citas-del-mes');
           this.traducirEstados(pagina.items);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.citasDelMes.set([]);
           this.monthBookingsFailed.set(true);
+          this.registrarFalloDeLectura('citas-del-mes', error);
         },
       });
   }
@@ -1275,7 +1341,7 @@ export class MyAgenda implements OnInit {
    * de guardar — con lo que la pantalla ya sabe, sin viaje extra. El servidor
    * cruza además las otras sedes al guardar: esto es aviso temprano, no regla.
    */
-  protected readonly ratosTomadosDelDia = computed<readonly RatoDelDia[]>(() => {
+  protected readonly ratosTomadosDelDia = computed<readonly DayGap[]>(() => {
     const porSlot = new Map(this.citasDelDia().map((c) => [c.bookableSlotId, c]));
     const deCitas = this.cuposDelDia()
       .filter((cupo) => porSlot.has(cupo.id))
@@ -1350,7 +1416,7 @@ export class MyAgenda implements OnInit {
     this.diaAbierto.set(nuevo);
 
     if (nuevo.getMonth() !== actual.getMonth() || nuevo.getFullYear() !== actual.getFullYear()) {
-      this.mesVisible.set(primerDiaDelMes(nuevo));
+      this.mesVisible.set(monthFirstDay(nuevo));
       this.cargarMes();
     }
     this.cargarDia(nuevo);
@@ -1420,7 +1486,7 @@ export class MyAgenda implements OnInit {
       title: 'Detalle de la cita',
       message:
         cuando === undefined ? SIN_DATO : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
-      details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
+      details: [...appointmentDetail(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
     });
@@ -1452,7 +1518,7 @@ export class MyAgenda implements OnInit {
         cita.startAt === undefined
           ? SIN_DATO
           : formatDate(cita.startAt, "EEEE d 'de' MMMM", this.idioma),
-      hechos: detalleDeLaCita(cita, estado, this.idioma).map((par) => ({
+      hechos: appointmentDetail(cita, estado, this.idioma).map((par) => ({
         etiqueta: par.label,
         valor: par.value,
       })),
@@ -1506,7 +1572,7 @@ export class MyAgenda implements OnInit {
 
   /** El total de turnos por semana de un histórico, para el resumen del modal. */
   protected totalTurnosDe(plantilla: PublishedTemplate): number {
-    return calcularTurnos(
+    return calculateSlots(
       plantilla.rules.map((regla) => ({
         dia: NOMBRE_DEL_DIA[regla.dayOfWeek] ?? `Día ${regla.dayOfWeek}`,
         desde: regla.startTime.slice(0, 5),
@@ -1560,7 +1626,7 @@ export class MyAgenda implements OnInit {
       },
       error: (error: unknown) => {
         this.operandoHorario.set(null);
-        this.avisarFallo(error, 'No se pudo reactivar el horario.');
+        this.avisarFallo(error, 'reactivar el horario');
       },
     });
   }
@@ -1763,7 +1829,7 @@ export class MyAgenda implements OnInit {
 
     // El mes se fija antes de leerlo: si no, se pediría el mes de hoy y en
     // seguida el del día pedido, y la primera respuesta no serviría de nada.
-    if (yaAbierto === null) this.mesVisible.set(primerDiaDelMes(dia));
+    if (yaAbierto === null) this.mesVisible.set(monthFirstDay(dia));
     this.cargarMes();
     this.openDay(dia);
     if (vista === 'week') this.showWeek();
@@ -1817,8 +1883,14 @@ export class MyAgenda implements OnInit {
     this.scheduling
       .listSlots({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
       .subscribe({
-        next: (pagina) => this.cuposDelDia.set(pagina.items),
-        error: () => this.cuposDelDia.set([]),
+        next: (pagina) => {
+          this.cuposDelDia.set(pagina.items);
+          this.lecturaRecuperada('cupos-del-dia');
+        },
+        error: (error: unknown) => {
+          this.cuposDelDia.set([]);
+          this.registrarFalloDeLectura('cupos-del-dia', error);
+        },
       });
 
     this.scheduling
@@ -1826,9 +1898,13 @@ export class MyAgenda implements OnInit {
       .subscribe({
         next: (pagina: { items: readonly Booking[] }) => {
           this.citasDelDia.set(pagina.items);
+          this.lecturaRecuperada('citas-del-dia');
           this.traducirEstados(pagina.items);
         },
-        error: () => this.citasDelDia.set([]),
+        error: (error: unknown) => {
+          this.citasDelDia.set([]);
+          this.registrarFalloDeLectura('citas-del-dia', error);
+        },
       });
   }
 
@@ -1858,9 +1934,13 @@ export class MyAgenda implements OnInit {
       .subscribe({
         next: (pagina: { items: readonly Booking[] }) => {
           this.citasDeLaSemana.set(pagina.items);
+          this.lecturaRecuperada('citas-de-la-semana');
           this.traducirEstados(pagina.items);
         },
-        error: () => this.citasDeLaSemana.set([]),
+        error: (error: unknown) => {
+          this.citasDeLaSemana.set([]);
+          this.registrarFalloDeLectura('citas-de-la-semana', error);
+        },
       });
   }
 
@@ -1978,14 +2058,64 @@ export class MyAgenda implements OnInit {
    * quién tiene esperando. Es el mismo patrón que «Mis turnos».
    */
   private avisarFallo(error: unknown, queSeIntentaba: string): void {
-    const estado = errorToViewState<null>(error);
-    const mensaje =
-      estado.status === 'validation'
-        ? estado.issues.map((i) => i.message).join(' ')
-        : estado.status === 'forbidden'
-          ? 'No tiene permiso para esta operación.'
-          : '';
-    this.toast.error(mensaje === '' ? `No pudimos ${queSeIntentaba}.` : mensaje, 'No se pudo');
+    // El motivo de negocio de la API (un 409, un 403) se dice tal cual; las
+    // violaciones por campo se juntan en una frase; y siempre que haya, el
+    // código de soporte con el que se encuentra el fallo en el servidor.
+    const campos = Object.values(fieldErrorsOf(error));
+    const fallback = campos.length > 0 ? campos.join(' ') : `No pudimos ${queSeIntentaba}.`;
+    this.toast.error(describeApiFailure(error, fallback), 'No se pudo');
+  }
+
+  /** Anota que una lectura del calendario falló, con el mensaje para la persona. */
+  private registrarFalloDeLectura(lectura: LecturaDeAgenda, error: unknown): void {
+    const mensaje = describeApiFailure(
+      error,
+      `No se pudieron cargar ${LECTURAS_DE_AGENDA[lectura]}.`,
+    );
+    this.lecturasFallidas.update((actuales) => new Map(actuales).set(lectura, mensaje));
+  }
+
+  /** Borra la marca de fallo de una lectura que volvió a salir bien. */
+  private lecturaRecuperada(lectura: LecturaDeAgenda): void {
+    if (!this.lecturasFallidas().has(lectura)) return;
+    this.lecturasFallidas.update((actuales) => {
+      const siguientes = new Map(actuales);
+      siguientes.delete(lectura);
+      return siguientes;
+    });
+  }
+
+  /**
+   * Vuelve a pedir sólo lo que falló.
+   *
+   * Cada lectura limpia su propia marca al salir bien, así que el aviso se
+   * achica a medida que llegan los datos y desaparece cuando ya no falta nada.
+   */
+  protected reintentarLecturas(): void {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+    const fallidas = this.lecturasFallidas();
+
+    const dia = this.diaAbierto();
+    if (dia !== null && (fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia'))) {
+      this.cargarDia(dia);
+    }
+    if (fallidas.has('citas-de-la-semana')) {
+      this.cargarSemana(this.semanaVisible());
+    }
+    if (
+      fallidas.has('cupos-del-mes') ||
+      fallidas.has('bloqueos-del-mes') ||
+      fallidas.has('citas-del-mes')
+    ) {
+      this.cargarMes();
+    }
+    if (fallidas.has('bloqueos-de-la-semana')) {
+      this.leerBloqueosDeLaSemana(recurso.id);
+    }
+    if (fallidas.has('visitas')) {
+      this.leerVisitasDeLaboratorio();
+    }
   }
 
   /**

@@ -543,6 +543,91 @@ describe('MedicationBlock', () => {
     http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
   });
 
+  /**
+   * Fallar abierto no es fallar en silencio. Antes, un chequeo caído se leía
+   * igual que «sin interacciones»: el médico no tenía cómo saber que el
+   * control de seguridad no corrió. El aviso queda a la vista **después** de
+   * crear la receta —es la que hay que revisar antes de firmar— y trae el
+   * código de soporte para encontrar el fallo en el servidor.
+   */
+  it('si el chequeo falla, avisa que no se revisaron las interacciones, con código de soporte', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<unknown>('medicamentoElegido').set(AMOXICILINA);
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+
+    http.expectOne('/cds/check-interactions').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Error interno',
+        timestamp: '',
+        path: '',
+        correlationId: 'corr-cds-1',
+      },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="receta-interacciones-sin-revisar"]',
+    );
+    expect(aviso).not.toBeNull();
+    expect(aviso?.getAttribute('role')).toBe('status');
+    expect(aviso?.textContent).toContain('No se pudieron revisar las interacciones');
+    expect(aviso?.textContent).toContain('Amoxicilina');
+    expect(aviso?.textContent).toContain('Código de soporte: corr-cds-1');
+  });
+
+  it('el aviso de interacciones sin revisar se va cuando el próximo chequeo responde', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    let prescribiendo = interno<() => Promise<void>>('recetar')();
+    http
+      .expectOne('/cds/check-interactions')
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    expect(interno<() => unknown>('interaccionesSinRevisar')()).not.toBeNull();
+
+    señal<string>('medicamento').set('med-vanco');
+    prescribiendo = interno<() => Promise<void>>('recetar')();
+    http.expectOne('/cds/check-interactions').flush({ alerts: [], count: 0 });
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    fixture.detectChanges();
+
+    expect(interno<() => unknown>('interaccionesSinRevisar')()).toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="receta-interacciones-sin-revisar"]',
+      ),
+    ).toBeNull();
+  });
+
+  it('con interacciones revisadas sin hallazgos, no aparece el aviso de revisión pendiente', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+    http.expectOne('/cds/check-interactions').flush({ alerts: [], count: 0 });
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="receta-interacciones-sin-revisar"]',
+      ),
+    ).toBeNull();
+  });
+
   /* ---- firmar y emitir ---------------------------------------------------- */
 
   it('firmar pega contra `sign` sin cuerpo y pide releer', () => {

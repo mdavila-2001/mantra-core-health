@@ -2,12 +2,12 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { registrarVarios } from '../handlers/misc.handlers';
 import { MockRouter } from '../mock-router';
-import { conceptoPorCodigo, miembrosDe } from './conceptos';
+import { conceptByCode, membersOf } from './concepts';
 import { MEDICAMENTOS_LINAME } from './liname.generated';
 
 describe('vademécum de la receta: la LINAME 2022-2024', () => {
   it('trae los medicamentos esenciales de Bolivia además de los 15 de demostración', () => {
-    const vademecum = miembrosDe('VS_MEDICATION');
+    const vademecum = membersOf('VS_MEDICATION');
     expect(MEDICAMENTOS_LINAME.length).toBeGreaterThan(480);
     expect(vademecum.length).toBeGreaterThan(480);
     // Ningún ATC aparece dos veces: los de demostración absorben su presentación LINAME.
@@ -16,7 +16,7 @@ describe('vademécum de la receta: la LINAME 2022-2024', () => {
   });
 
   it('un medicamento de la LINAME llega con su nombre oficial, formas, concentraciones y código LINAME', () => {
-    const gentamicina = conceptoPorCodigo('J01GB03');
+    const gentamicina = conceptByCode('J01GB03');
     expect(gentamicina?.display).toBe('Gentamicina sulfato');
     expect(gentamicina?.properties?.['dose_forms']).toEqual(['Inyectable']);
     expect(gentamicina?.properties?.['strengths']).toEqual(
@@ -30,7 +30,7 @@ describe('vademécum de la receta: la LINAME 2022-2024', () => {
   });
 
   it('los de demostración conservan su código y toman las formas de la LINAME', () => {
-    const amoxicilina = conceptoPorCodigo('MED-AMOXICILINA');
+    const amoxicilina = conceptByCode('MED-AMOXICILINA');
     // La LINAME publica la amoxicilina en comprimido, inyectable y suspensión
     // (J-01-05, J-01-06, J-01-08, J-01-57): todas bajo J01CA04 tras corregir la
     // numeración propia de la LINAME (J01CA05/06/07 no son amoxicilina en la OMS).
@@ -39,8 +39,8 @@ describe('vademécum de la receta: la LINAME 2022-2024', () => {
       'Inyectable',
       'Suspensión',
     ]);
-    expect(conceptoPorCodigo('J01CA05')).toBeUndefined();
-    expect(conceptoPorCodigo('J01CA04')).toBeUndefined();
+    expect(conceptByCode('J01CA05')).toBeUndefined();
+    expect(conceptByCode('J01CA04')).toBeUndefined();
   });
 
   it('no quedan acentos graves de la fuente («sòdica»)', () => {

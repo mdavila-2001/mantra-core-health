@@ -5,7 +5,14 @@
 />
 
 <div class="solicitudes">
-  @if (!cargando() && solicitudes().length === 0) {
+  @if (errorDeCarga(); as mensaje) {
+    <app-alert tone="error" data-testid="access-requests-error">
+      {{ mensaje }}
+      <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="cargar()">
+        Volver a intentar
+      </button>
+    </app-alert>
+  } @else if (!cargando() && solicitudes().length === 0) {
     <app-empty-state
       title="No tiene solicitudes pendientes"
       description="Cuando un profesional pida acceder a su historia, la va a ver acá."
@@ -21,6 +28,14 @@
 
       <fieldset class="solicitud__especialidades">
         <legend>Elija qué especialidades le autoriza</legend>
+        @if (errorDeEspecialidades(); as mensaje) {
+          <app-alert tone="error" data-testid="access-requests-specialties-error">
+            {{ mensaje }}
+            <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="cargarEspecialidades()">
+              Volver a intentar
+            </button>
+          </app-alert>
+        }
         @for (especialidad of especialidades(); track especialidad.id) {
           <app-checkbox
             [label]="especialidad.nombre"

@@ -30,7 +30,7 @@ describe('BoOccupationsCatalog', () => {
    */
   it('presenta la salida del catálogo como «Otro» en todos sus consumidores', () => {
     let recibidas: readonly ValueSetOption[] = [];
-    catalogo.listar().subscribe((opciones) => (recibidas = opciones));
+    catalogo.list().subscribe((opciones) => (recibidas = opciones));
 
     http
       .expectOne(

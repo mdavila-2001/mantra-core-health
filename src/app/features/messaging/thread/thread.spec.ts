@@ -9,8 +9,9 @@ import { of } from 'rxjs';
 
 import { Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
+import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
+import { environment } from '../../../../environments/environment';
 
 /**
  * Lo que estas pruebas fijan.
@@ -281,7 +282,7 @@ describe('Thread', () => {
 
   it('el menú de la cabecera marca favorito y archiva la conversación abierta', () => {
     abrir([mensaje('m-1', 'pp-2', 'Hola')]);
-    const preferencias = TestBed.inject(ChatPreferencias);
+    const preferencias = TestBed.inject(ChatPreferences);
 
     consultar('hilo-menu')?.click();
     fixture.detectChanges();
@@ -289,7 +290,7 @@ describe('Thread', () => {
 
     consultar('hilo-favorito')?.click();
     fixture.detectChanges();
-    expect(preferencias.esFavorito('c-1')).toBe(true);
+    expect(preferencias.isFavorite('c-1')).toBe(true);
     // Al elegir, el menú se cierra: es un menú, no un panel.
     expect(consultar('hilo-favorito')).toBeNull();
 
@@ -299,12 +300,12 @@ describe('Thread', () => {
 
     consultar('hilo-archivar')?.click();
     fixture.detectChanges();
-    expect(preferencias.estaArchivado('c-1')).toBe(true);
+    expect(preferencias.isArchived('c-1')).toBe(true);
     // Archivar quita el favorito: la misma regla que en la bandeja.
-    expect(preferencias.esFavorito('c-1')).toBe(false);
+    expect(preferencias.isFavorite('c-1')).toBe(false);
 
     // Se deja el navegador como estaba: las preferencias viven en localStorage.
-    preferencias.alternarArchivado('c-1');
+    preferencias.toggleArchived('c-1');
   });
 
   it('buscar en la conversación deja sólo las coincidencias, resaltadas', () => {
@@ -750,6 +751,14 @@ describe('Thread', () => {
   /* --- Reacciones, recibos, info del mensaje y bloqueo ------------------- */
 
   describe('reacciones, recibos y bloqueo', () => {
+    const originalMockBackend = environment.mockBackend;
+    beforeEach(() => {
+      Object.assign(environment, { mockBackend: true });
+    });
+    afterEach(() => {
+      Object.assign(environment, { mockBackend: originalMockBackend });
+    });
+
     const propio = (id: string, extra: Record<string, unknown> = {}) => ({
       ...mensaje(id, 'pp-1', 'Hola doctora'),
       sentAt: new Date(Date.now() - 3_600_000).toISOString(),

@@ -1,0 +1,62 @@
+<app-page-header
+  title="Catálogo de flujos"
+  subtitle="Cada recorrido del usuario como árbol de decisión: pasos, endpoints y casos válidos, límite e inválidos."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="flujos">
+  <app-card variant="outlined" padding="md">
+    <section class="flujos__filtros" aria-label="Filtros de los flujos">
+      <app-search-field
+        label="Buscar por número, título o módulo"
+        placeholder="Ej.: facturación"
+        [(value)]="busqueda"
+        (searched)="cargar()"
+      />
+      <app-select ariaLabel="Módulo" [options]="opcionesModulo()" [value]="modulo()" (valueChange)="cambiarModulo($event)" />
+      <app-select ariaLabel="Cobertura" [options]="opcionesCobertura" [value]="cobertura()" (valueChange)="cambiarCobertura($event)" />
+    </section>
+
+    <app-view-state-host [state]="filas()" (retry)="cargar()">
+      <app-data-table
+        data-testid="flows-table"
+        caption="Flujos del catálogo"
+        [state]="filas()"
+        [columns]="columnas()"
+        [trackBy]="porId"
+        [rowLabel]="nombreDeFila"
+        stackedOnMobile
+        fitContainer
+        rowNavigable
+        (rowActivated)="abrir($event)"
+        (retry)="cargar()"
+      />
+    </app-view-state-host>
+    <p class="flujos__nota">
+      Un flujo es un archivo de la API (<code>qa_lab/flows/catalog</code>) con su fuente en el Registro de procesos. «En el contrato» se compara con las rutas
+      que la API monta ahora; un paso «sin endpoint» es algo que el proceso pide y el sistema todavía no tiene.
+    </p>
+  </app-card>
+</div>
+
+<ng-template #flujoCell let-row>
+  <a class="flujos__nombre" [routerLink]="['/superadmin/flows', row.id]">Flujo {{ row.id }} · {{ row.title }}</a>
+</ng-template>
+
+<ng-template #contratoCell let-row>
+  <span class="flujos__corrida">
+    <app-badge [variant]="row.contractTone">{{ row.contract }}</app-badge>
+    @if (row.contractNote) {
+      <span class="flujos__nota">{{ row.contractNote }}</span>
+    }
+  </span>
+</ng-template>
+
+<ng-template #corridaCell let-row>
+  <span class="flujos__corrida">
+    <app-badge [variant]="row.lastRunTone">{{ row.lastRunLabel }}</app-badge>
+    @if (row.lastRunAt) {
+      <span class="flujos__nota">{{ row.lastRunAt | date: 'dd/MM HH:mm' }}</span>
+    }
+  </span>
+</ng-template>

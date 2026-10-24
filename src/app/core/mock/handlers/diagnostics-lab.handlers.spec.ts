@@ -8,8 +8,8 @@ import {
   SPECIMEN_REJECTION_REASON,
   SPECIMEN_STATUS,
   SPECIMEN_TYPE,
-} from '../fixtures/conceptos';
-import { PACIENTE } from '../fixtures/personas';
+} from '../fixtures/concepts';
+import { PACIENTE } from '../fixtures/people';
 import { MockRouter, isMockReply, preconditionFailed, validation, type MockMethod } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, buscarUsuario } from '../mock-session';
 import { registrarDiagnostico } from './diagnostics.handlers';

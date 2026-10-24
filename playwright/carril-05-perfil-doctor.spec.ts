@@ -1,46 +1,53 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 import { apiViva, contextoDeApi, doctora } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
 
 /**
- * Carril 05 — el perfil del doctor: trayectoria, credenciales y vista previa.
+ * Carril 05 — el perfil del doctor, con la sesión y los datos de verdad.
  *
  * ## Qué comprueba que las unitarias no pueden
  *
  * `practitioner-profile-view.spec.ts` ya fija la estructura contra un perfil
  * fijo. Lo que ninguna prueba con dobles puede decir es si, **con la sesión de
- * verdad y los datos de verdad**, el perfil trae trayectoria y la vista previa
- * muestra lo mismo que ve un paciente. Es justo lo que estaba roto: la tabla
- * `practitioner_affiliations` no existía y el historial respondía 500, sin que
- * ninguna prueba lo notara.
+ * verdad**, cada pestaña llega a dibujar su contenido en vez de un error. Es lo
+ * que estaba roto cuando nació el carril: `practitioner_affiliations` no
+ * existía y la trayectoria respondía 500 sin que ninguna prueba lo notara.
  *
- * ## Un solo ingreso
+ * ## Qué cambió desde que se escribió (y por qué esta prueba se reescribió)
  *
- * `POST /iam/auth/login` admite **diez por minuto y por IP**, así que todo el
- * recorrido va en una sola prueba con una sola sesión — mismo criterio que el
- * carril 02.
+ * - **10/09/2026, `765084431` (carril 37):** la ficha propia del médico pasó a
+ *   ser la MISMA tarjeta del paciente: cabecera «Sus datos» y una sola tira de
+ *   pestañas (`DOCTOR_PROFILE_TABS` en `doctor-profile-tabs.ts`). La portada
+ *   `.profesional__portada` sólo queda en la ficha AJENA (el directorio).
+ * - **10/09/2026, `0e3da9fc2` (carril 40):** se sacó la configuración del
+ *   perfil público de todos lados: ni «Ver cómo me ven» ni la pestaña «Vista
+ *   previa del perfil público». La segunda prueba ahora fija esa ausencia.
  *
- * ## Requiere backend
+ * ## Un solo ingreso por prueba
  *
- * Sin API no hay perfil que mirar, así que la prueba se salta con un motivo
- * legible en vez de fallar con un tiempo de espera agotado que no explica nada.
+ * `POST /iam/auth/login` admite **diez por minuto y por IP**.
  */
 
 const RUTA_PERFIL = '/my-account';
 
-/** Los rótulos de las pestañas superiores del perfil. */
-async function pestanas(page: Page): Promise<string[]> {
-  return page
-    .locator('app-practitioner-profile-view')
-    .first()
-    .locator('> .profesional > app-card app-tabs > .tabs__list [role="tab"]')
-    .evaluateAll((nodos) => nodos.map((n) => (n.textContent ?? '').trim()));
+/** Copia literal de `DOCTOR_PROFILE_TABS`: si el orden cambia, esto debe fallar. */
+const PESTANAS_DEL_MEDICO = [
+  'Datos personales',
+  'Contacto',
+  'Facturación',
+  'Dónde atiendo',
+  'Trayectoria',
+  'Credenciales',
+  'Actividad',
+];
+
+function fichaPropia(page: Page): Locator {
+  return page.locator('app-practitioner-profile-view').first();
 }
 
-/** Selecciona una pestaña superior por su texto. */
-async function abrirPestana(page: Page, texto: string): Promise<void> {
-  await page.getByRole('tab', { name: texto, exact: false }).first().click();
+async function abrirPestana(ficha: Locator, page: Page, texto: string): Promise<void> {
+  await ficha.getByTestId('mi-perfil-pestanas').getByRole('tab', { name: texto, exact: true }).click();
   await estable(page);
 }
 
@@ -52,92 +59,65 @@ test.describe('Carril 05 · perfil del doctor', () => {
     test.skip(!viva, 'La API no responde: el perfil no tiene de dónde salir.');
   });
 
-  test('la doctora ve su trayectoria, sus credenciales y su perfil público', async ({
+  test('la doctora ve su ficha en una tarjeta con sus siete pestañas, y cada una carga', async ({
     page,
   }) => {
     await entrar(page, doctora());
     await irA(page, RUTA_PERFIL);
     await estable(page);
 
-    const perfil = page.locator('app-practitioner-profile-view').first();
-    await expect(perfil).toBeVisible();
+    const ficha = fichaPropia(page);
+    await expect(ficha).toBeVisible();
+    await expect(ficha.getByRole('heading', { name: 'Sus datos' })).toBeVisible();
 
-    /* -- La cabecera: identidad fuera de las pestañas --------------------- */
+    /* -- Las pestañas, en el orden del perfil del paciente ------------------ */
 
-    const portada = perfil.locator('.profesional__portada');
-    await expect(portada).toBeVisible();
-    // El código profesional es el dato que prueba que se leyó un perfil real y
-    // no una pantalla vacía.
-    await expect(portada.locator('.profesional__codigo')).not.toBeEmpty();
+    const rotulos = await ficha
+      .getByTestId('mi-perfil-pestanas')
+      .getByRole('tab')
+      .evaluateAll((nodos) => nodos.map((n) => (n.textContent ?? '').trim()));
+    expect(rotulos).toEqual(PESTANAS_DEL_MEDICO);
 
-    /* -- Las tres pestañas del carril ------------------------------------- */
+    /* -- Datos personales: el código prueba que se leyó un perfil real ------ */
 
-    const rotulos = await pestanas(page);
-    expect(rotulos).toContain('Trayectoria');
-    expect(rotulos).toContain('Credenciales y verificaciones');
-    expect(rotulos).toContain('Vista previa del perfil público');
+    const codigo = ficha
+      .locator('.mi-perfil__dato')
+      .filter({ has: page.getByText('Código profesional', { exact: true }) })
+      .locator('dd');
+    await expect(codigo).toHaveText(/^PRC-/);
 
-    /* -- Trayectoria: las tres fases, con datos reales -------------------- */
+    /* -- Trayectoria, Credenciales y Actividad dibujan su contenido -------- */
 
-    await abrirPestana(page, 'Trayectoria');
-    const trayectoria = perfil.locator('.profesional__fase');
-    await expect(trayectoria.filter({ hasText: 'Actividad actual' })).toBeVisible();
-    await expect(trayectoria.filter({ hasText: 'Experiencia histórica' })).toBeVisible();
-    await expect(trayectoria.filter({ hasText: 'Formación' })).toBeVisible();
+    await abrirPestana(ficha, page, 'Trayectoria');
+    await expect(ficha.locator('app-work-history, .profesional__fase').first()).toBeVisible();
 
-    // La cuenta sembrada tiene una afiliación vigente y una cerrada. Que la
-    // línea de tiempo tenga hitos es lo que distingue «hay trayectoria» de
-    // «la pestaña se dibuja vacía», que es como estaba antes de este carril.
-    await expect(perfil.locator('.profesional__hito').first()).toBeVisible();
+    await abrirPestana(ficha, page, 'Credenciales');
+    await expect(ficha.locator('app-credentials-panel')).toBeVisible();
 
-    // El bloque de ayuda de la pestaña (corrección #6).
-    await expect(perfil.locator('app-tab-help-block').first()).toBeVisible();
+    await abrirPestana(ficha, page, 'Actividad');
+    await expect(ficha.locator('app-practitioner-activity')).toBeVisible();
 
-    /* -- Credenciales: declarado vs verificado ---------------------------- */
-
-    await abrirPestana(page, 'Credenciales y verificaciones');
-    const grupos = perfil.locator('.profesional__seguimiento-grupo');
-    await expect(grupos.filter({ hasText: 'Verificado' })).toBeVisible();
-    await expect(grupos.filter({ hasText: 'Declarado' })).toBeVisible();
-
-    /* -- Vista previa: el MISMO componente, en modo ajeno ----------------- */
-
-    await abrirPestana(page, 'Vista previa del perfil público');
-
-    // La vista previa reinstancia el propio componente: si esto no está, se
-    // volvió a dibujar una maqueta aparte y puede divergir de lo que ve el
-    // paciente — que es exactamente lo que el carril prohíbe.
-    const anidado = perfil.locator('app-practitioner-profile-view').first();
-    await expect(anidado).toBeVisible();
-
-    // En modo previa no hay acciones de dueño.
-    await expect(anidado.locator('.profesional__acciones')).toHaveCount(0);
+    // Ninguna lectura falló a la vista: ni el aviso de lecturas incompletas ni
+    // un `role="alert"` dentro de la ficha.
+    await expect(page.getByTestId('perfil-lecturas-incompletas')).toHaveCount(0);
+    await expect(ficha.getByRole('alert')).toHaveCount(0);
   });
 
-  /**
-   * ALV-004 (2026-09-05): `/my-account/preview` dejó de ser una segunda
-   * pantalla de configuración. «Ver cómo me ven» navega ahí y muestra la
-   * MISMA tarjeta que el directorio, de sólo lectura: sin formulario. Lo que se
-   * configura de la ficha pública vive en «Configurar mi perfil».
-   *
-   * Esta prueba afirmaba lo contrario (que el botón NO navegaba) y ya estaba
-   * desalineada con el HTML antes de este carril; se corrige a propósito.
-   */
-  test('«Ver cómo me ven» navega a la vista previa de sólo lectura', async ({ page }) => {
+  test('sin perfil público que configurar (carril 40) y «Editar perfil» abre el editor', async ({
+    page,
+  }) => {
     await entrar(page, doctora());
     await irA(page, RUTA_PERFIL);
     await estable(page);
 
-    const perfil = page.locator('app-practitioner-profile-view').first();
-    await perfil.getByRole('link', { name: /Ver cómo me ven/i }).click();
-    await estable(page);
+    const ficha = fichaPropia(page);
+    await expect(ficha).toBeVisible();
+    await expect(page.getByRole('link', { name: /Ver cómo me ven/i })).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: /Vista previa/i })).toHaveCount(0);
 
-    expect(page.url()).toContain('/my-account/preview');
-    const previa = page.locator('app-public-profile-preview').first();
-    await expect(previa).toBeVisible();
-    // Sólo lectura: ni un formulario ni un input en la vista previa.
-    await expect(previa.locator('form')).toHaveCount(0);
-    await expect(previa.locator('input')).toHaveCount(0);
-    await expect(previa.getByTestId('previa-configurar')).toHaveAttribute('href', '/my-account/edit');
+    await ficha.getByTestId('mi-perfil-editar').click();
+    await page.waitForURL(/\/my-account\/edit/);
+    await estable(page);
+    await expect(page.locator('app-practitioner-profile-edit')).toBeVisible();
   });
 });

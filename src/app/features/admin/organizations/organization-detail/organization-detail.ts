@@ -278,8 +278,9 @@ export class OrganizationDetail {
     this.creandoLote.set(true);
     this.rechazosDelLote.set([]);
     createBranchesInSeries(this.directory, tenantId, lote, codigosTomados).subscribe(
-      ({ created: creadas, rejected }) => {
+      ({ created: creadas, rejected, unsavedNotice }) => {
         this.creandoLote.set(false);
+        if (unsavedNotice !== null) this.toasts.warning(unsavedNotice);
         if (creadas > 0) {
           this.toasts.success(
             creadas === 1

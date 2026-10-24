@@ -3,7 +3,7 @@
 > **Qué es:** el informe de todo lo que separa al front (`mantra-core-health`) de la API
 > (`mantra-core-health-api`) antes de dar el front por cerrado. Viene con **30 prompts de
 > ejecución** (`prompts/`) escritos con la plantilla oficial
-> (`PLANTILLA_OFICIAL_PROMPTS_TAREAS_MANTRA.md`), para que cualquier persona o agente tome uno y
+> (`docs/progress/archive/PLANTILLA_OFICIAL_PROMPTS_TAREAS_MANTRA.md`), para que cualquier persona o agente tome uno y
 > lo ejecute en modo planificación.
 >
 > **Fuera de alcance, por pedido:** **pasarela de pago** y **delivery**. Donde aparecen, sólo se

@@ -15,7 +15,7 @@ import type { PatientSettlementFields } from '../insurance/patient-insurance-set
  * terminales al final. Es el value set pedido a Marcelo (la solicitud está en
  * `COORDINACION-AGENTES.md`); mientras el catálogo no exista, estos códigos
  * provisorios son la identidad — jamás se muestran: la etiqueta en castellano
- * vive en `pedido-status.ts` de la pantalla.
+ * vive en `order-status.ts` de la pantalla.
  */
 export const ESTADOS_DE_PEDIDO = [
   'ENVIADO',

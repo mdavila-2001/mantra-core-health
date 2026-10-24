@@ -4,7 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { By } from '@angular/platform-browser';
 
 import { PaginatedForm } from './paginated-form';
-import { CampoPersonalizado } from './campo-personalizado';
+import { CustomField } from './custom-field';
 import type { PaginaDeFormulario } from '../../../forms/paginated/paginated-form.types';
 
 /**
@@ -38,7 +38,7 @@ const PAGINAS: readonly PaginaDeFormulario[] = [
 ];
 
 @Component({
-  imports: [PaginatedForm, CampoPersonalizado],
+  imports: [PaginatedForm, CustomField],
   template: `
     <app-paginated-form
       [paginas]="paginas()"

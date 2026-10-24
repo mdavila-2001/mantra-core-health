@@ -18,7 +18,7 @@ import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { statusLabelOf, sufijoDeCodigo } from '../../booking-status';
 import type { EstadoResuelto } from '../day-view/day-view';
-import { detalleDeLaCita, pacienteDeLaCita, type ParDelDetalle } from '../detalle-de-la-cita';
+import { appointmentDetail, appointmentPatient, type DetailPair } from '../appointment-detail';
 import type { BloqueoDelMes, EstadoDelDia } from '../month-view/month-view';
 
 /** Una cita de la semana, reducida a lo que entra en una celda de siete. */
@@ -34,7 +34,7 @@ export interface CitaDeLaSemana {
    * puntero: hacerlo en ese momento metería trabajo en el camino del `hover`,
    * que es donde menos se perdona. Son cuatro o cinco pares por cita.
    */
-  readonly detalle: readonly ParDelDetalle[];
+  readonly detalle: readonly DetailPair[];
   /** La reserva completa, para que quien contiene la semana pueda operarla. */
   readonly reserva: Booking;
 }
@@ -336,7 +336,7 @@ export class WeekView {
    * profesional de esa agenda—, no un error de la pantalla.
    */
   private pacienteDe(cita: Booking): string {
-    return pacienteDeLaCita(cita);
+    return appointmentPatient(cita);
   }
 
   /** Si el paciente de esa cita todavía viene. Ver `ESTADOS_QUE_NO_VIENEN`. */
@@ -373,7 +373,7 @@ export class WeekView {
         desde: cita.startAt as Date,
         paciente: this.pacienteDe(cita),
         // C-08 · el MISMO detalle que el día, calculado con la misma función.
-        detalle: detalleDeLaCita(
+        detalle: appointmentDetail(
           cita,
           statusLabelOf(this.etiquetas().get(cita.statusConceptId)?.code ?? '', 'Reservado'),
           this.idioma(),

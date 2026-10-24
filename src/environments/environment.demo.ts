@@ -10,6 +10,7 @@ export const environment: Environment = {
   loyaltyDemo: true,
   campaignsDemo: true,
   billingSiatDemo: true,
+  billingSimulatedApi: false,
   designMockups: true,
   mockBackend: true,
 };

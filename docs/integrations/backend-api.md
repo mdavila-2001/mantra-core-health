@@ -50,6 +50,7 @@ inyección»*.
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
+| `POST` | `/iam/users/assisted-practitioner-registration` | `PractitionerAssistedRegistration` (vía `AssistedPractitionerClient`) | No |
 | `POST` | `/iam/auth/register-organization` | `ActivateAccount` y 13 pantallas más | Sí |
 
 #### Las tres altas no son la misma operación con distintos campos
@@ -62,6 +63,7 @@ la contraseña de otra persona.
 | `/iam/auth/register-patient` · `register-practitioner` | la persona, sin sesión | su dueño, al registrarse | los ids del perfil |
 | `/iam/users` | un `SECURITY_ADMIN` | **quien crea la cuenta** | la cuenta creada |
 | `/iam/users/assisted-registration` | un `SECURITY_ADMIN` o `CLINICIAN` | su dueño, **al activar** | un **token de activación de un solo uso** |
+| `/iam/users/assisted-practitioner-registration` | un `SECURITY_ADMIN` | su dueño, **al activar** | el **token de un solo uso** y los ids del médico (matrícula `PENDING`) |
 
 `/iam/users` es la única de las tres que fija una clave desde afuera, y por eso
 la pantalla que la usa dice explícitamente que hay que entregarla por un canal
@@ -1492,6 +1494,7 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/admin/analytics/timeseries` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/analytics/web-vitals` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/admin/catalog/annotations/:annotationId/review` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/columns/:columnId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` |
 | `GET` | `/admin/catalog/coverage` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/catalog/objects` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/catalog/objects/:id` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
@@ -1510,8 +1513,12 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/admin/ops/incidents` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/ops/readiness` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/ops/slos` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/traffic` | [`OpsTrafficClient`](../../src/app/core/data-access/admin-portal/ops-traffic.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`OpsConsoleController_trafficOverview`) |
+| `GET` | `/admin/ops/traffic/endpoints` | [`OpsTrafficClient`](../../src/app/core/data-access/admin-portal/ops-traffic.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`OpsConsoleController_trafficEndpoints`) |
 | `GET` | `/admin/qa/defects` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/qa/environments` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/flows` | [`FlowsClient`](../../src/app/core/data-access/admin-portal/flows.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`QaLabReadController_listFlows`) |
+| `GET` | `/admin/qa/flows/:flowId` | [`FlowsClient`](../../src/app/core/data-access/admin-portal/flows.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`QaLabReadController_flow`) |
 | `GET` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/qa/plans/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |

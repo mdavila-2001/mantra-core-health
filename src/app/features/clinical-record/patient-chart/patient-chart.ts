@@ -22,13 +22,10 @@ import { ChartTemplatesClient } from '../../../core/data-access/chart-templates/
 import type { ChartTemplate } from '../../../core/data-access/chart-templates/chart-templates.types';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
-import type { DiagnosticOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
 import { ProceduresClient } from '../../../core/data-access/procedures/procedures.client';
-import type {
-  DentalCatalog,
-  DentalProcedure,
-} from '../../../core/data-access/procedures/procedures.types';
+import type { DentalCatalog } from '../../../core/data-access/procedures/procedures.types';
+import { describirDentales, describirEstudios } from './encounter-descriptions';
 import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import type {
   CarePlan,
@@ -84,8 +81,8 @@ import {
   downloadVisitPdf,
   VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
-import { esCodigoDeAlergia } from '../../../shared/utils/alergias/alergias';
-import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
+import { isAllergyCode } from '../../../shared/utils/allergies/allergies';
+import { sessionContext } from '../../../shared/utils/clinical-pdf/session-signature';
 import {
   atencionDesdeResumen,
   recetaDesdeResumen,
@@ -96,7 +93,7 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
+import { writeFailureMessage } from '../write-message';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -109,11 +106,11 @@ import { MedicationBlock } from './medication-block/medication-block';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import {
-  camposDe,
-  plantillaPorCobertura,
-  respuestasDe,
-  type RespuestaVisible,
-} from './specialty-form-block/lectura-de-formulario';
+  fieldsOf,
+  templateByCoverage,
+  responsesOf,
+  type ResponseVisible,
+} from './specialty-form-block/form-reading';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
@@ -311,7 +308,7 @@ export interface FormularioDelEncuentro {
   readonly id: string;
   readonly titulo: string;
   readonly completadoEl: Date | null;
-  readonly respuestas: readonly RespuestaVisible[];
+  readonly respuestas: readonly ResponseVisible[];
 }
 
 /** Lo leído a demanda para un encuentro: lo que no viaja en el resumen. */
@@ -1450,7 +1447,7 @@ export class PatientChart {
       )
       .subscribe({
         next: ({ plantillas, detalles, catalogoDental, dentales, estudios, etiquetas }) => {
-          const campos = camposDe(plantillas);
+          const campos = fieldsOf(plantillas);
           const leidos = detalles.filter(
             (detalle): detalle is FormInstanceDetail => detalle !== null,
           );
@@ -1471,9 +1468,9 @@ export class PatientChart {
                 const fecha = new Date(detalle.closedAt ?? detalle.createdAt);
                 return {
                   id: detalle.id,
-                  titulo: plantillaPorCobertura(detalle, plantillas)?.name ?? 'Formulario clínico',
+                  titulo: templateByCoverage(detalle, plantillas)?.name ?? 'Formulario clínico',
                   completadoEl: Number.isNaN(fecha.getTime()) ? null : fecha,
-                  respuestas: respuestasDe(detalle, campos),
+                  respuestas: responsesOf(detalle, campos),
                 };
               }),
             }),
@@ -1532,7 +1529,7 @@ export class PatientChart {
    * cliente), así que el aviso junta dos fuentes:
    *
    * - los diagnósticos sin resolver cuyo código CIE-10 es de alergia
-   *   ({@link esCodigoDeAlergia}) — las de ahora en adelante;
+   *   ({@link isAllergyCode}) — las de ahora en adelante;
    * - las `AllergyIntolerance` ya registradas, que no tienen pestaña ni alta
    *   pero esconderlas sería peor que repetirlas.
    *
@@ -1545,7 +1542,7 @@ export class PatientChart {
         .filter(
           (condicion) =>
             condicion.resolvedAt === undefined &&
-            esCodigoDeAlergia(this.etiquetas().get(condicion.codeConceptId)?.code),
+            isAllergyCode(this.etiquetas().get(condicion.codeConceptId)?.code),
         )
         .map((condicion) => condicion.id),
     );
@@ -1870,6 +1867,7 @@ export class PatientChart {
               key: 'acciones',
               header: 'Cambiar estado',
               priority: 2,
+              accion: true,
               cell: this.celdaAcciones(),
             } satisfies ColumnDef<FilaClinica>,
           ]
@@ -1885,6 +1883,7 @@ export class PatientChart {
         key: 'ver',
         header: 'Ver',
         priority: 1,
+        accion: true,
         cell: this.celdaVer(),
       } satisfies ColumnDef<FilaClinica>,
       // «En todos los formularios debe poderse poner un adjunto… incluso en la
@@ -2059,7 +2058,7 @@ export class PatientChart {
       return state.issues.map((issue) => issue.message).join(' ') || 'Esa transición no es válida.';
     }
     return (
-      mensajeDeFalloDeEscritura(state, {
+      writeFailureMessage(state, {
         accion: 'cambiar el estado clínico',
         sinPermiso: 'Su rol no permite cambiar el estado clínico.',
         yaNoExiste: 'La condición ya no existe. Recargue la pantalla.',
@@ -2123,7 +2122,7 @@ export class PatientChart {
    * y el mismo acto clínico no puede salir firmado distinto en cada papel.
    */
   private contextoDelDocumento(): ContextoDelDocumento {
-    return contextoDeLaSesion({
+    return sessionContext({
       paciente: this.nombre(),
       practitionerProfileId: this.auth.practitionerProfileId(),
       displayName: this.auth.displayName(),
@@ -2249,6 +2248,9 @@ function conceptosDe({ resumen, chart }: Expediente): readonly string[] {
     ...resumen.conditions.flatMap((fila) => [
       fila.codeConceptId,
       fila.categoryConceptId,
+      // Sin la certeza, `diagnosisStateOf` no puede distinguir confirmado de
+      // presuntivo y todo diagnóstico sale «En estudio».
+      fila.verificationStatusConceptId,
       fila.clinicalStatusConceptId,
       fila.severityConceptId,
     ]),
@@ -2275,53 +2277,4 @@ function conceptosDe({ resumen, chart }: Expediente): readonly string[] {
     ...chart.carePlans.flatMap((fila) => [fila.statusConceptId, fila.intentConceptId]),
     ...chart.documents.flatMap((fila) => [fila.categoryConceptId, fila.statusConceptId]),
   ].filter((id): id is string => id !== undefined);
-}
-
-/** Los procedimientos odontológicos de un encuentro, en palabras. */
-function describirDentales(
-  dentales: readonly DentalProcedure[] | null,
-  catalogo: DentalCatalog | null,
-): string {
-  if (dentales === null) {
-    return 'No se pudo leer el histórico odontológico';
-  }
-  if (dentales.length === 0) {
-    return 'Sin procedimientos odontológicos en este encuentro';
-  }
-  const nombres = new Map(
-    [
-      ...(catalogo?.procedureCodes ?? []),
-      ...(catalogo?.teeth ?? []),
-      ...(catalogo?.quadrants ?? []),
-    ].map((entrada) => [entrada.conceptId, entrada.display]),
-  );
-  return dentales
-    .map((d) => {
-      const nombre = nombres.get(d.procedureCodeConceptId) ?? 'Procedimiento odontológico';
-      const sitios = d.sites
-        .map((sitio) => nombres.get(sitio.bodySiteConceptId) ?? sitio.description)
-        .filter((sitio): sitio is string => sitio !== undefined && sitio !== '');
-      return sitios.length === 0 ? nombre : `${nombre} (${sitios.join(', ')})`;
-    })
-    .join(', ');
-}
-
-/** Los estudios de laboratorio e imagen pedidos en un encuentro, en palabras. */
-function describirEstudios(
-  estudios: readonly DiagnosticOrder[] | null,
-  etiquetas: ConceptLabels,
-): string {
-  if (estudios === null) {
-    return 'No se pudieron leer los estudios';
-  }
-  if (estudios.length === 0) {
-    return 'Sin estudios pedidos en este encuentro';
-  }
-  return estudios
-    .map((o) => {
-      const nombre = etiquetas.get(o.codeConceptId)?.display ?? 'Estudio';
-      const estado = etiquetas.get(o.statusConceptId)?.display;
-      return estado === undefined ? nombre : `${nombre} (${estado})`;
-    })
-    .join(', ');
 }

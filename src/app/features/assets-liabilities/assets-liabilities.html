@@ -3,13 +3,17 @@
   subtitle="Sus activos fijos y sus deudas, con su avance y su automatización."
 />
 
-<app-form-field icon="building" label="Práctica" hint="Los activos y pasivos que se muestran son los de esta práctica">
-  <app-select
-    [options]="opcionesDePractica()"
-    [(value)]="practicaElegida"
-    placeholder="Elija una práctica"
-  />
-</app-form-field>
+@if (sinPracticaActiva()) {
+  <app-view-state-host [state]="noActivePractice" />
+} @else {
+  <app-form-field icon="building" label="Práctica" hint="Los activos y pasivos que se muestran son los de esta práctica">
+    <app-select
+      [options]="opcionesDePractica()"
+      [(value)]="practicaElegida"
+      placeholder="Elija una práctica"
+    />
+  </app-form-field>
+}
 
 @if (practicaElegida()) {
   <app-tabs [(selectedIndex)]="pestanaActiva">
@@ -61,6 +65,9 @@
           </div>
         </app-card>
         @if (errorDeAvanceDeActivo(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+        }
+        @if (errorDeAutomatizacionDeActivo(); as mensaje) {
           <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
         }
 
@@ -160,6 +167,9 @@
           </p>
         </app-card>
         @if (errorDeAvanceDePasivo(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+        }
+        @if (errorDeAutomatizacionDePasivo(); as mensaje) {
           <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
         }
 

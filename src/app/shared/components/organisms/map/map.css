@@ -14,6 +14,7 @@ app-map {
   position: relative;
   display: block;
   min-height: 320px;
+  height: 360px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   overflow: hidden;
@@ -23,6 +24,8 @@ app-map {
 .mapa__lienzo {
   position: absolute;
   inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
   /* Antes de montar, el lienzo no debe tapar el aviso de espera. */
   z-index: 0;
 }
@@ -34,6 +37,14 @@ app-map {
 .mapa--seleccionable .leaflet-container,
 .mapa--seleccionable .leaflet-grab {
   cursor: crosshair;
+}
+
+.mapa--seleccionable .leaflet-marker-icon {
+  cursor: grab;
+}
+
+.mapa--seleccionable .leaflet-marker-draggable:active {
+  cursor: grabbing;
 }
 
 /* El plano y los pines se recorren con el teclado: el anillo tiene que verse
@@ -134,10 +145,18 @@ app-map {
   border-radius: var(--r-full);
   font-weight: 700;
   font-size: var(--fs-body);
-  background: var(--tono-bg, var(--bg-inset));
-  color: var(--tono-fg, var(--text-secondary));
-  border: 1.5px solid var(--tono-bd, var(--border-default));
-  box-shadow: var(--shadow-sm);
+  background: var(--tono-bg, var(--brand-primary, #007788));
+  color: var(--tono-fg, #ffffff);
+  border: 1.5px solid var(--tono-bd, #ffffff);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
+}
+
+.mapa__pin--neutral {
+  --tono-bg: var(--brand-primary, #007788);
+  --tono-fg: #ffffff;
+  --tono-bd: #ffffff;
 }
 
 .mapa__pin--primary { --tono-bg: var(--st-primary-bg); --tono-fg: var(--st-primary-fg); --tono-bd: var(--st-primary-bd); }
@@ -147,11 +166,35 @@ app-map {
 .mapa__pin--error { --tono-bg: var(--st-error-bg); --tono-fg: var(--st-error-fg); --tono-bd: var(--st-error-bd); }
 .mapa__pin--info { --tono-bg: var(--st-info-bg); --tono-fg: var(--st-info-fg); --tono-bd: var(--st-info-bd); }
 
+/* Pin de ubicación con punta orientada al punto exacto (teardrop) */
+.mapa__pin--ubicacion {
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--brand-primary, #007788);
+  border: 2px solid #ffffff;
+  box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.mapa__pin--ubicacion .mapa__pin-centro {
+  display: block;
+  inline-size: 10px;
+  block-size: 10px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
 .mapa__pin--activo {
   transform: scale(1.2);
   box-shadow:
     0 0 0 3px var(--bg-surface),
     0 0 0 6px var(--focus-ring);
+}
+
+.mapa__pin--ubicacion.mapa__pin--activo {
+  transform: rotate(-45deg) scale(1.2);
 }
 
 @media (prefers-reduced-motion: no-preference) {

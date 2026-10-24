@@ -50,8 +50,8 @@ describe('alta de laboratorio y centro de imagenología en el simulador', () => 
   } as const;
 
   it('correcto — cada catálogo trae los códigos que el alta resuelve', () => {
-    // Los de `CODIGOS_DE_DIAGNOSTICO` (`features/auth/registro-compartido/
-    // alta-de-centro-diagnostico.ts`), repetidos acá porque `core/` no importa
+    // Los de `CODIGOS_DE_DIAGNOSTICO` (`features/auth/shared-registration/
+    // diagnostic-center-enrollment.ts`), repetidos acá porque `core/` no importa
     // de `features/`, ni siquiera en una prueba.
     expect([...catalog(TARGETS.unitType).keys()]).toEqual(['DU_TYPE_LAB', 'DU_TYPE_IMAGING']);
     expect([...catalog(TARGETS.modality).keys()]).toEqual([

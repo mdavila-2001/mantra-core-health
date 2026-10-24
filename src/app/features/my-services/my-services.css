@@ -2,13 +2,13 @@
     Mis servicios.
 
     La rejilla y la tarjeta **no se pintan acá**: salen de
-    `shared/styles/rejilla-de-tarjetas.css`, la misma hoja que pinta las
+    `shared/styles/card-grid.css`, la misma hoja que pinta las
     portadas de los directorios. Antes esta pantalla tenía su propia rejilla,
     su propio nombre y su propio pie de tarjeta —parecidos pero no iguales— y
     por eso se veía como otra aplicación al lado del directorio.
 
     El pie de la tarjeta —el precio, su edición y los botones— tampoco: salió a
-    `shared/styles/tarjeta-de-servicio.css` el 11/09/2026, cuando el catálogo
+    `shared/styles/service-card.css` el 11/09/2026, cuando el catálogo
     de estudios del laboratorio y del centro de imagenología pasó a mostrarse
     con esta misma tarjeta. Era la misma pinta escrita dos veces.
 

@@ -41,6 +41,12 @@ export interface ColumnDef<Row> {
    * hoy. Ver `docs/adr/ADR-0015-tabla-con-acciones.md`.
    */
   readonly sticky?: 'end';
+  /**
+   * La celda sólo contiene controles («Ver», un menú de acciones). En la tabla
+   * apilada de móvil no lleva etiqueta —repetiría el texto del botón— y se
+   * alinea al final de la fila.
+   */
+  readonly accion?: boolean;
   /** Plantilla de celda; sin ella se muestra el valor crudo de `key`. */
   readonly cell?: TemplateRef<{ $implicit: Row }>;
 }

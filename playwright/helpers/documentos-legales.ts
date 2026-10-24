@@ -4,7 +4,7 @@ import { expect, type Page } from '@playwright/test';
 /**
  * Los cinco documentos legales del autorregistro de aseguradora (subtarea 1.2),
  * en el orden del registro de procesos — el mismo de
- * `DOCUMENTOS_LEGALES_DEL_REGISTRO` en `registro-compartido/documentos-legales.ts`.
+ * `DOCUMENTOS_LEGALES_DEL_REGISTRO` en `shared-registration/legal-documents.ts`.
  */
 export const CLAVES_DE_DOCUMENTOS_LEGALES = [
   'constitutionFileId',

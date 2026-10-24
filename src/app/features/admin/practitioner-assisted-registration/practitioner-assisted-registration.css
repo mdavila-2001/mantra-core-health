@@ -1,0 +1,119 @@
+/* Alta asistida de un médico. Centrada y a lo ancho, en UNA tarjeta con
+   pestañas (composition-rules §5): sin tope propio, el que pone es
+   `.app-main__inner`. La pieza que manda en el resultado es el bloque del
+   código: se muestra una sola vez y tiene que poder leerse y dictarse. */
+
+:host {
+  display: block;
+}
+
+.medico {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-6);
+}
+
+.medico__alert,
+.medico__aviso {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.medico__acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.medico__resultado-title {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}
+
+.medico__token {
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  margin-block-end: var(--sp-5);
+}
+
+.medico__token-label {
+  margin: 0 0 var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.medico__token-valor {
+  display: block;
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.medico__token-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.medico__copiado {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.medico__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-4);
+  margin: 0 0 var(--sp-5);
+}
+
+.medico__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.medico__datos dd {
+  margin: 0;
+}
+
+.medico__id {
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.medico__donde {
+  margin: var(--sp-4) 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.medico__especialidad {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+.medico__especialidad app-select {
+  flex: 1 1 auto;
+}
+
+.medico__aviso-catalogo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

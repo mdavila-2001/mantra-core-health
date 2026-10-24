@@ -137,9 +137,9 @@
               </app-alert>
             }
 
-            @if (falloAlConfirmar()) {
+            @if (falloAlConfirmar(); as motivo) {
               <app-alert tone="error" title="No pudimos confirmar su pedido" data-testid="checkout-error-al-confirmar">
-                No se creó ningún pedido duplicado. Puede reintentar.
+                {{ motivo }} Su pedido sigue aquí y no se creó ningún duplicado: puede reintentar.
               </app-alert>
             }
 

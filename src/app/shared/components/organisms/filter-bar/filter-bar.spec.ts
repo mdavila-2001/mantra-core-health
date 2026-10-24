@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { SearchField } from '../../molecules/search-field/search-field';
+import { chooseSelectOption, selectTrigger } from '../../../../../testing/select';
 import { FilterBar, SEARCH_PARAM, type FilterDef } from './filter-bar';
 
 @Component({
@@ -129,8 +130,9 @@ describe('FilterBar', () => {
     return [...root().querySelectorAll<HTMLElement>('app-chip')];
   }
 
-  function selects(): HTMLSelectElement[] {
-    return [...root().querySelectorAll<HTMLSelectElement>('select')];
+  /** Los desplegables de la barra: el host de cada `app-select`. */
+  function selects(): HTMLElement[] {
+    return [...root().querySelectorAll<HTMLElement>('app-select')];
   }
 
   async function irA(queryParams: Record<string, string>): Promise<void> {
@@ -181,9 +183,7 @@ describe('FilterBar', () => {
     });
 
     it('elegir un filtro lo escribe en la URL', async () => {
-      selects()[0].value = '0';
-      selects()[0].dispatchEvent(new Event('change'));
-      await fixture.whenStable();
+      await chooseSelectOption(fixture, selects()[0], 0);
 
       expect(router.url).toContain('servicio=card');
     });
@@ -242,7 +242,7 @@ describe('FilterBar', () => {
     });
 
     it('el filtro queda deshabilitado, nunca como texto libre', () => {
-      const deshabilitados = selects().filter((select) => select.disabled);
+      const deshabilitados = selects().filter((select) => selectTrigger(select).disabled);
 
       expect(deshabilitados).toHaveLength(1);
       // no hay ningún input de texto suelto haciendo de filtro de terminología
@@ -394,10 +394,8 @@ describe('FilterBar', () => {
       withoutUrl.componentInstance.termino.set('Ana');
       await withoutUrl.whenStable();
 
-      const select = (withoutUrl.nativeElement as HTMLElement).querySelector('select')!;
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
-      await withoutUrl.whenStable();
+      const select = (withoutUrl.nativeElement as HTMLElement).querySelector<HTMLElement>('app-select')!;
+      await chooseSelectOption(withoutUrl, select, 0);
 
       expect(router.url).toContain('servicio=card');
       expect(router.url).not.toContain('Ana');
@@ -451,5 +449,50 @@ describe('FilterBar · wrap (opt-in)', () => {
     fixture.detectChanges();
     const barra = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
     expect(barra.classList.contains('filter-bar--wrap')).toBe(true);
+  });
+});
+
+describe('FilterBar · columna de facetas', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  function montar(): HTMLElement {
+    const fixture = TestBed.createComponent(FilterBar);
+    fixture.componentRef.setInput('layout', 'facets');
+    fixture.componentRef.setInput('showSearch', false);
+    fixture.componentRef.setInput('filters', [
+      {
+        key: 'departamento',
+        label: 'Departamento',
+        icon: 'pin',
+        asChips: true,
+        options: [
+          { value: 'sc', label: 'Santa Cruz (160)' },
+          { value: 'lp', label: 'La Paz' },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('dibuja el ícono del filtro en el rótulo, sin buscador', () => {
+    const raiz = montar();
+    expect(raiz.querySelector('.filter-bar__faceta-rotulo app-nav-icon')).not.toBeNull();
+    expect(raiz.querySelector('app-search-field')).toBeNull();
+  });
+
+  it('separa la cantidad del nombre para dibujarla aparte', () => {
+    const raiz = montar();
+    const opciones = [...raiz.querySelectorAll('.filter-bar__faceta-opcion')];
+    expect(opciones[0]!.querySelector('.filter-bar__faceta-texto')!.textContent!.trim()).toBe(
+      'Santa Cruz',
+    );
+    expect(opciones[0]!.querySelector('.filter-bar__faceta-cantidad')!.textContent!.trim()).toBe(
+      '160',
+    );
+    // Un rótulo sin cantidad va entero y sin pastilla.
+    expect(opciones[1]!.querySelector('.filter-bar__faceta-cantidad')).toBeNull();
   });
 });

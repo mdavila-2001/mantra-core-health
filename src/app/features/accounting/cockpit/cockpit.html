@@ -31,6 +31,8 @@
      Práctica, ejercicio y período en una sola fila, con el estado del período
      al final. En una contabilidad el período no es un filtro: decide si un
      asiento se puede postear, así que va siempre a la vista. -->
+<!-- Sin prácticas que elegir, la barra de contexto sobra: el tablero dice qué falta. -->
+@if (opcionesDePractica().length > 0) {
 <app-card variant="outlined" padding="md" class="contexto">
   <div class="contexto__fila">
     <app-form-field label="Práctica" class="contexto__practica">
@@ -110,6 +112,7 @@
     }
   </div>
 </app-card>
+}
 
 <app-view-state-host [state]="estadoDelTablero()" (retry)="recargar()">
   <!-- S4 propio: el 422 de «profesional sin vínculo con la práctica» no es
@@ -441,6 +444,25 @@
             />
           </header>
 
+          <div class="cuentas">
+            <app-form-field
+              label="Cuenta de banco"
+              hint="Donde entra el cobro o de donde sale el pago al compensar una partida."
+            >
+              <app-select
+                testId="cuenta-banco"
+                [options]="opcionesDeCuenta()"
+                [(value)]="cuentaDeBanco"
+                placeholder="Elija una cuenta"
+              />
+            </app-form-field>
+          </div>
+          @if (periodoParaAsentar() === null) {
+            <p class="cuentas__aviso" data-testid="aviso-periodo-partidas">
+              Para compensar, elija un período abierto arriba.
+            </p>
+          }
+
           @if (partidasVisibles().length > 0) {
             <table class="tabla tabla--apilable" data-testid="tabla-partidas">
               <caption class="sr-only">Partidas abiertas</caption>
@@ -484,6 +506,7 @@
                         size="sm"
                         [attr.data-testid]="'compensar-' + partida.id"
                         [attr.aria-label]="'Compensar ' + partida.documentNumber"
+                        [disabled]="cuentaDeBanco() === null || periodoParaAsentar() === null"
                         (clicked)="compensar(partida)"
                       >
                         Compensar
@@ -598,12 +621,35 @@
                     variant="primary"
                     size="sm"
                     [isLoading]="corriendo() === 'amortizacion'"
+                    [disabled]="!puedeAmortizar()"
                     data-testid="correr-amortizacion"
                     (clicked)="amortizar()"
                   >
                     Correr la amortización
                   </button>
                 </div>
+
+                <div class="cuentas">
+                  <app-form-field label="Cuenta de gasto por amortización" hint="Va al debe.">
+                    <app-select
+                      testId="cuenta-gasto-amortizacion"
+                      [options]="opcionesDeCuenta()"
+                      [(value)]="cuentaDeGastoPorAmortizacion"
+                      placeholder="Elija una cuenta"
+                    />
+                  </app-form-field>
+                  <app-form-field label="Cuenta de amortización acumulada" hint="Va al haber.">
+                    <app-select
+                      testId="cuenta-amortizacion-acumulada"
+                      [options]="opcionesDeCuenta()"
+                      [(value)]="cuentaDeAmortizacionAcumulada"
+                      placeholder="Elija una cuenta"
+                    />
+                  </app-form-field>
+                </div>
+                @if (periodoParaAsentar() === null) {
+                  <p class="cuentas__aviso">La corrida necesita un período abierto: elíjalo arriba.</p>
+                }
 
                 <dl class="cifras">
                   <div>
@@ -672,6 +718,7 @@
                     variant="primary"
                     size="sm"
                     [isLoading]="corriendo() === 'devengo'"
+                    [disabled]="!puedeDevengar()"
                     data-testid="correr-devengo"
                     (clicked)="devengar()"
                   >

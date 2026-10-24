@@ -36,9 +36,9 @@ import { FilterBar, type FilterDef } from '../../../shared/components/organisms/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ROTULO_DE_ESTADO, ROTULO_DE_ORIGEN, TONO_DE_ESTADO } from '../../billing/billing-summary';
-import { bs, fechaYHora, mensajeDeError } from '../../billing/cobros-en-pantalla';
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
-import { descargarRepresentacionGrafica, descargarXml } from '../../billing/representacion-grafica';
+import { bs, dateAndTime, errorMessage } from '../../billing/on-screen-charges';
+import { SIMULATED_AVAILABLE_INVOICING } from '../../billing/invoicing-availability';
+import { downloadGraphicRepresentation, downloadXml } from '../../billing/graphic-representation';
 
 const TAMANO_INICIAL = 10;
 
@@ -92,14 +92,14 @@ export class MyInvoices {
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly disponible = inject(FACTURACION_SIMULADA_DISPONIBLE)();
+  protected readonly disponible = inject(SIMULATED_AVAILABLE_INVOICING)();
 
   protected readonly estado = signal<ViewState<readonly MyInvoiceItem[]>>(loading());
   protected readonly vista = signal<MyInvoicesView>('RECEIVED');
   protected readonly subtitulo = computed(() => SUBTITULO[this.vista()]);
 
   protected readonly bs = bs;
-  protected readonly fechaYHora = fechaYHora;
+  protected readonly fechaYHora = dateAndTime;
   protected readonly rotuloDeEstado = ROTULO_DE_ESTADO;
   protected readonly tonoDeEstado = TONO_DE_ESTADO;
 
@@ -272,7 +272,7 @@ export class MyInvoices {
       return;
     }
     if (codigo === 'pdf') {
-      this.conFactura(fila, (f) => void descargarRepresentacionGrafica(f));
+      this.conFactura(fila, (f) => void downloadGraphicRepresentation(f));
     }
   }
 
@@ -291,7 +291,7 @@ export class MyInvoices {
         },
         error: (e: unknown) => {
           this.cargandoFactura.set(false);
-          this.errorDeFactura.set(mensajeDeError(e, 'No se pudo leer la factura.'));
+          this.errorDeFactura.set(errorMessage(e, 'No se pudo leer la factura.'));
         },
       });
   }
@@ -310,11 +310,11 @@ export class MyInvoices {
   }
 
   protected descargarPdf(f: SimulatedInvoice): void {
-    void descargarRepresentacionGrafica(f);
+    void downloadGraphicRepresentation(f);
   }
 
   protected descargarXml(f: SimulatedInvoice): void {
-    descargarXml(f);
+    downloadXml(f);
   }
 
   protected estadoDe(fila: MyInvoiceItem): SimulatedInvoiceStatus {

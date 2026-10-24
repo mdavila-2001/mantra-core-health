@@ -1,4 +1,4 @@
-import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/map-pin.types';
 
 /**
  * **La ficha legal de la farmacia** — las formas que la pantalla dibuja.

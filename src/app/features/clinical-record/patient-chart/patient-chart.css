@@ -209,9 +209,10 @@
 .expediente__activas-item {
   display: grid;
   gap: var(--sp-2);
-  padding: var(--sp-3);
-  background-color: var(--bg-surface-alt);
-  border-radius: var(--r-md);
+  padding: var(--sp-3) 0;
+  /* Fila con separador y sin recuadro: ya está dentro de la tarjeta de la ficha. */
+  background-color: transparent;
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .expediente__activas-nombre {
@@ -219,10 +220,17 @@
   font-weight: 600;
 }
 
-@media (min-width: 48rem) {
-  .expediente__activas-lista {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* Tantas columnas como quepan de 18 rem: con UNA sola enfermedad la ficha se
+   estira a todo el ancho (con dos columnas fijas quedaba en media tarjeta, pegada
+   a la izquierda). */
+.expediente__activas-lista {
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+/* Sin caja alrededor: las fichas de adentro son lo único con superficie. */
+app-card.expediente__activas {
+  background: transparent;
+  margin-block-end: var(--sp-6);
 }
 
 /* Los archivos de un documento, uno por renglón, debajo del detalle. */

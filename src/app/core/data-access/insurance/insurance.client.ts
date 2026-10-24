@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { simulatorOnly } from '../simulator-only';
 import { maybeDate, maybeDateOnly } from '../wire';
 import type {
   BrokerAgreement,
@@ -331,9 +332,9 @@ export class InsuranceClient {
    * producto seguro. **Sólo existe en la maqueta**: la API todavía no lo expone.
    */
   updatePlan(planId: string, body: UpdateInsurancePlanInput): Observable<{ readonly ok: true }> {
-    return this.http.put<{ readonly ok: true }>(
-      this.url(`/insurance-plans/${encodeURIComponent(planId)}`),
-      body,
+    const url = this.url(`/insurance-plans/${encodeURIComponent(planId)}`);
+    return simulatorOnly('Corregir los datos de un producto seguro', url, () =>
+      this.http.put<{ readonly ok: true }>(url, body),
     );
   }
 
@@ -342,7 +343,8 @@ export class InsuranceClient {
    * cláusulas. **Sólo existe en la maqueta**: la API todavía no lo expone.
    */
   deletePlan(planId: string): Observable<void> {
-    return this.http.delete<void>(this.url(`/insurance-plans/${encodeURIComponent(planId)}`));
+    const url = this.url(`/insurance-plans/${encodeURIComponent(planId)}`);
+    return simulatorOnly('Dar de baja un producto seguro', url, () => this.http.delete<void>(url));
   }
 
   /** Crea una cobertura dentro de un plan del carrier del tenant activo. */
@@ -567,27 +569,33 @@ export class InsuranceClient {
   /**
    * `POST /insurance/received-claims/:id/invoice/annulment` — anula la factura
    * vigente, con motivo. El dictamen no cambia.
+   *
+   * **Sólo existe en el simulador** (informe B, §2): el propio controller de
+   * la API lo dice (`insurer-received-claims.controller.ts:42`, «las rutas de
+   * factura del contrato no están»). Contra la API real no sale la petición y
+   * el error dice que la función no está disponible.
    */
   annulReceivedClaimInvoice(claimId: string, reason: string): Observable<ReceivedClaim> {
-    return this.http
-      .post<WireReceivedClaim>(
-        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`),
-        { reason },
-      )
-      .pipe(map(toReceivedClaim));
+    const url = this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`);
+    return simulatorOnly('Anular la factura de una solicitud recibida', url, () =>
+      this.http.post<WireReceivedClaim>(url, { reason }),
+    ).pipe(map(toReceivedClaim));
   }
 
   /**
    * `POST /insurance/received-claims/:id/invoice` — emite la factura corregida
    * de una solicitud aprobada cuya factura se anuló. `409` si ya hay una vigente.
+   *
+   * **Sólo existe en el simulador** (informe B, §2): el propio controller de
+   * la API lo dice (`insurer-received-claims.controller.ts:42`, «las rutas de
+   * factura del contrato no están»). Contra la API real no sale la petición y
+   * el error dice que la función no está disponible.
    */
   reissueReceivedClaimInvoice(claimId: string): Observable<ReceivedClaim> {
-    return this.http
-      .post<WireReceivedClaim>(
-        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice`),
-        {},
-      )
-      .pipe(map(toReceivedClaim));
+    const url = this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice`);
+    return simulatorOnly('Emitir la factura corregida de una solicitud recibida', url, () =>
+      this.http.post<WireReceivedClaim>(url, {}),
+    ).pipe(map(toReceivedClaim));
   }
 
   /**

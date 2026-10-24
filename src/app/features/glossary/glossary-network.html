@@ -1,0 +1,156 @@
+<app-page-header
+  title="Mapa de relaciones del glosario"
+  subtitle="Vea con qué síntomas, estudios, tratamientos y especialidades se relaciona cada término."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<main class="ruta">
+  <app-card variant="outlined" padding="md">
+    <div class="ruta__buscador">
+      <app-form-field
+        label="Término central"
+        hint="Escriba un síntoma, una enfermedad, un medicamento o una especialidad."
+      >
+        <app-reference-combobox
+          label="Término central"
+          placeholder="Por ejemplo: tos, neumonía o cardiología"
+          emptyMessage="No encontramos términos con ese nombre"
+          [options]="searchOptions()"
+          [loading]="searching()"
+          [selected]="selectedOption()"
+          (searched)="search($event)"
+          (selectionChange)="choose($event)"
+        />
+      </app-form-field>
+
+      @if (trail().length > 1) {
+        <nav class="ruta__recorrido" aria-label="Términos que ya recorrió">
+          <span>Recorrido</span>
+          <ol>
+            @for (step of trail(); track step.conceptId; let last = $last) {
+              <li>
+                @if (last) {
+                  <span aria-current="true">{{ step.display }}</span>
+                } @else {
+                  <button type="button" (click)="focusOn(step.conceptId)">{{ step.display }}</button>
+                }
+              </li>
+            }
+          </ol>
+        </nav>
+      }
+    </div>
+
+    @if (focusId() === '') {
+      <app-empty-state
+        title="Elija un término para ver su mapa"
+        description="Busque un síntoma, una enfermedad o un medicamento. El mapa muestra lo que se observa, cómo se estudia, cómo se trata y qué especialidad lo atiende."
+      />
+    } @else {
+      <app-view-state-host [state]="neighborhood()" (retry)="reload()">
+        @if (data(); as data) {
+          @if (clinicalRoute(); as route) {
+            <div
+              class="ruta__mapa"
+              [class.ruta__mapa--sin-hallazgos]="route.findings.length === 0"
+              [class.ruta__mapa--sin-siguiente]="route.next.length === 0"
+            >
+              <section class="ruta__foco" aria-labelledby="ruta-foco-titulo">
+                @if (data.focus.category) {
+                  <p class="ruta__foco-categoria">{{ data.focus.category.name }}</p>
+                }
+                <h2 id="ruta-foco-titulo">{{ data.focus.display }}</h2>
+                @if (data.focus.shortDefinition) {
+                  <p class="ruta__foco-definicion">{{ data.focus.shortDefinition }}</p>
+                }
+                <p class="ruta__foco-resumen">
+                  @switch (route.neighborCount) {
+                    @case (0) { Todavía no tiene relaciones publicadas. }
+                    @case (1) { Se muestra 1 término relacionado. }
+                    @default { Se muestran {{ route.neighborCount }} términos relacionados. }
+                  }
+                </p>
+                <a class="ruta__foco-enlace" [routerLink]="['/glossary', data.focus.conceptId]">Abrir la ficha completa</a>
+              </section>
+
+              @for (zone of [
+                { key: 'hallazgos', title: 'Lo que se observa', columns: route.findings },
+                { key: 'siguiente', title: 'Diagnóstico, estudio y tratamiento', columns: route.next },
+                { key: 'contexto', title: 'Más relaciones', columns: route.context }
+              ]; track zone.key) {
+                @if (zone.columns.length > 0) {
+                  <section
+                    [class]="'ruta__zona ruta__zona--' + zone.key"
+                    [attr.aria-labelledby]="'ruta-zona-' + zone.key"
+                  >
+                    <h3 class="ruta__zona-titulo" [id]="'ruta-zona-' + zone.key">{{ zone.title }}</h3>
+                    <div class="ruta__columnas">
+                      @for (column of zone.columns; track column.key) {
+                        <section class="ruta__grupo" [attr.aria-labelledby]="'ruta-grupo-' + column.key">
+                          <h4 class="ruta__grupo-titulo" [id]="'ruta-grupo-' + column.key">
+                            {{ column.title }}
+                            @if (column.complete) {
+                              <span class="ruta__grupo-total">{{ column.items.length }}</span>
+                            }
+                          </h4>
+                          <ul class="ruta__vecinos">
+                            @for (neighbor of visibleItems(column); track neighbor.conceptId) {
+                              <li>
+                                <button
+                                  type="button"
+                                  class="ruta__vecino"
+                                  [attr.aria-label]="'Ver el mapa de ' + neighbor.display"
+                                  (click)="focusOn(neighbor.conceptId)"
+                                >
+                                  {{ neighbor.display }}
+                                </button>
+                              </li>
+                            }
+                          </ul>
+                          @if (failedColumn() === column.key) {
+                            <p class="ruta__grupo-aviso" role="alert">
+                              No pudimos traer la lista completa. Intente de nuevo.
+                            </p>
+                          }
+                          @if (isOpen(column) && !column.complete) {
+                            <p class="ruta__grupo-aviso">Se muestran los primeros {{ column.items.length }}.</p>
+                          }
+                          @if (hasMore(column)) {
+                            <button
+                              type="button"
+                              class="ruta__grupo-accion"
+                              [attr.aria-busy]="loadingColumn() === column.key"
+                              [disabled]="loadingColumn() === column.key"
+                              (click)="showAll(column)"
+                            >
+                              @if (loadingColumn() === column.key) {
+                                Trayendo la lista…
+                              } @else if (column.complete) {
+                                Ver los {{ column.items.length }}
+                              } @else {
+                                Ver todos
+                              }
+                            </button>
+                          } @else if (isOpen(column) && column.items.length > visibleLimit) {
+                            <button type="button" class="ruta__grupo-accion" (click)="showLess(column)">
+                              Mostrar menos
+                            </button>
+                          }
+                        </section>
+                      }
+                    </div>
+                  </section>
+                }
+              }
+            </div>
+          }
+        }
+      </app-view-state-host>
+    }
+
+    <p class="ruta__aviso">
+      Cada relación proviene de un catálogo publicado. Indica que dos términos se vinculan, pero no
+      indica una causa ni recomienda un tratamiento.
+    </p>
+  </app-card>
+</main>

@@ -71,7 +71,7 @@ guardado y no guardó.
     `_US`, `_AR`); **sin confirmar** si están sembrados como miembros de algún value set en la
     base viva. `VS_BO_DEPARTMENT` se siembra en `src/common/seed/bo-geography-seed.service.ts`:
     es el patrón a seguir.
-  - La subtarea 1.6 (`PROMPT_SUBTAREA_1_6_UNIVERSIDAD_TITULOS.md`, raíz de ambos repos) pedía
+  - La subtarea 1.6 (`docs/progress/archive/PROMPT_SUBTAREA_1_6_UNIVERSIDAD_TITULOS.md`, archivado en ambos repos) pedía
     `university`, `degreeCountryConceptId`, `degreeCityText`, `diplomaFileId`,
     `academicTitles[]` e `issuingCityText`. **Quedó superada en parte:** `credentials[]` ya cumple
     el rol de `academicTitles[]`, y #453 agrega `fileId` por fila. **`issuingCityText` no tiene
@@ -321,7 +321,7 @@ Escenario: Los tipos impiden el cuerpo inválido
 - [ ] **Evidencia de runtime pegada en los PR** (UI → request → response → persistencia →
       recarga → UI): alta del médico con universidad y país; alta de paciente con empresa
       «Otra»; vínculo laboral del padrón; `SELECT` de cada fila.
-- [ ] `PROMPT_SUBTAREA_1_6_UNIVERSIDAD_TITULOS.md` anotado como superado (en la PR, no se borra).
+- [ ] `docs/progress/archive/PROMPT_SUBTAREA_1_6_UNIVERSIDAD_TITULOS.md` anotado como superado (en la PR, no se borra).
 - [ ] PR abiertos con revisores `jsaldias39` y `PabloArauzCaballero`, y `walkthrough.md`.
 
 ---

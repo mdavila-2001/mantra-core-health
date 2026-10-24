@@ -79,6 +79,64 @@ describe('VerifyEmail', () => {
     http.verify();
   });
 
+  /*
+   * Un corte de red o un 500 no dicen nada del enlace. Antes los dos caían en
+   * «Ese enlace ya no sirve», y quien leía eso descartaba un enlace bueno de un
+   * solo uso (hallazgo del 2026-10-08).
+   */
+  it.each([
+    ['sin conexión', 0],
+    ['el servidor falló', 503],
+    ['demasiados intentos', 429],
+  ])('%s: no lo declara inválido y ofrece intentar de nuevo', async (_caso, status) => {
+    const { fixture, http } = await montar('tok-bueno');
+
+    http
+      .expectOne('/iam/auth/verify-email')
+      .flush(
+        status === 0 ? null : { code: 'INTERNAL', message: 'boom', correlationId: 'corr-ver' },
+        { status, statusText: 'Error' },
+      );
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.estado()).toBe('no-se-pudo');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="verificar-invalido"]')).toBeNull();
+    expect(el.querySelector('[data-testid="verificar-reintentar"]')).not.toBeNull();
+    http.verify();
+  });
+
+  it('el fallo del servidor lleva el código de soporte', async () => {
+    const { fixture, http } = await montar('tok-bueno');
+
+    http
+      .expectOne('/iam/auth/verify-email')
+      .flush(
+        { code: 'INTERNAL', message: 'boom', correlationId: 'corr-ver' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="verificar-motivo"]')
+        ?.textContent,
+    ).toContain('(Código de soporte: corr-ver)');
+    http.verify();
+  });
+
+  it('reintentar vuelve a canjear el mismo token y, si sirve, confirma', async () => {
+    const { fixture, http } = await montar('tok-bueno');
+    http.expectOne('/iam/auth/verify-email').flush(null, { status: 0, statusText: 'Unknown Error' });
+
+    fixture.componentInstance.reintentar();
+    const otra = http.expectOne('/iam/auth/verify-email');
+    expect(otra.request.body).toEqual({ token: 'tok-bueno' });
+    otra.flush({ userId: 'u-1', emailVerified: true });
+
+    expect(fixture.componentInstance.estado()).toBe('verificado');
+    http.verify();
+  });
+
   it('si la API responde emailVerified false tampoco lo da por bueno', async () => {
     const { fixture, http } = await montar('tok-raro');
 

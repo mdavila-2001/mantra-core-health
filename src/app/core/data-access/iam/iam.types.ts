@@ -55,6 +55,19 @@ export interface PasswordChanged {
   readonly revokedSessions: number;
 }
 
+/**
+ * Un contacto de emergencia más del alta de paciente.
+ *
+ * Mismas reglas que el primero: el nombre es lo único obligatorio, porque un
+ * teléfono o un parentesco sin persona no describen a nadie.
+ */
+export interface AdditionalEmergencyContact {
+  readonly name: string;
+  readonly phone?: string;
+  /** Concepto del conjunto `related-person-relationship`. */
+  readonly relationshipConceptId?: string;
+}
+
 /** Alta de un paciente por sí mismo. El identificador de acceso es el documento. */
 export interface PatientRegistration {
   readonly nationalId: string;
@@ -96,6 +109,11 @@ export interface PatientRegistration {
   readonly residenceMunicipalityConceptId: string;
   /** Teléfono de contacto, en E.164 o formato nacional. */
   readonly phone: string;
+  /**
+   * Otros teléfonos de la persona, además del principal (botón «+»). La API
+   * los guarda detrás de `phone`, que sigue siendo «el teléfono» del perfil.
+   */
+  readonly additionalPhones?: readonly string[];
   /** Género administrativo (HL7 AdministrativeGender). */
   readonly gender?: AdministrativeGenderCode;
   /** Sexo asignado al nacer. Es dato clínico, distinto del género. */
@@ -194,6 +212,8 @@ export interface PatientRegistration {
    * representante legal», que es lo que escribía antes de que existiera.
    */
   readonly guardianRelationshipConceptId?: string;
+  /** Otros contactos de emergencia, además del primero (botón «+»). */
+  readonly additionalEmergencyContacts?: readonly AdditionalEmergencyContact[];
   /**
    * Plan de la aseguradora privada que la persona declara tener.
    *
@@ -310,7 +330,7 @@ export interface PractitionerRegistration {
    * Latitud del domicilio, confirmada sobre el mapa.
    *
    * Viaja **con** {@link homeLongitude} o no viaja: media coordenada no ubica
-   * nada. Sólo se manda lo confirmado — ver `app-ubicacion-picker`.
+   * nada. Sólo se manda lo confirmado — ver `app-map-location-picker`.
    */
   readonly homeLatitude?: number;
 

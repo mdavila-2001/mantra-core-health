@@ -1,5 +1,5 @@
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../shared/components/organisms/paginated-form/custom-field';
 import type { PaginaDeFormulario } from '../../shared/forms/paginated/paginated-form.types';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DOCUMENT } from '@angular/common';
@@ -54,10 +54,10 @@ import {
   type FiltroDeEstado,
   type FiltroDeOrigen,
 } from './billing-summary';
-import { FACTURACION_SIMULADA_DISPONIBLE } from './facturacion-disponible';
-import { montoLiteral } from './monto-literal';
-import { PlanDePagos } from './plan-de-pagos/plan-de-pagos';
-import { descargarRepresentacionGrafica, descargarXml } from './representacion-grafica';
+import { SIMULATED_AVAILABLE_INVOICING } from './invoicing-availability';
+import { amountLiteral } from './amount-in-words';
+import { PaymentsPlan } from './payment-plan/payment-plan';
+import { downloadGraphicRepresentation, downloadXml } from './graphic-representation';
 
 type Operacion = 'pago' | 'factura' | 'anulacion' | 'reversion' | 'correo' | 'pdf';
 
@@ -89,11 +89,11 @@ function centavos(importe: string): number {
  * Todo lo fiscal de esta pantalla es sintético: lo dice el aviso fijo de
  * arriba, cada estado lleva «(SIMULADO)» y cada documento descargable también.
  * Si la facturación simulada no está disponible (ver
- * {@link FACTURACION_SIMULADA_DISPONIBLE}) la pantalla lo dice y no pide nada.
+ * {@link SIMULATED_AVAILABLE_INVOICING}) la pantalla lo dice y no pide nada.
  */
 @Component({
   selector: 'app-billing',
-  imports: [PaginatedForm, CampoPersonalizado, ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PlanDePagos, Select, ViewStateHost],
+  imports: [PaginatedForm, CustomField, ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PaymentsPlan, Select, ViewStateHost],
   templateUrl: './billing.html',
   styleUrl: './billing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,7 +113,7 @@ export class Billing {
   /** El cobro cuyo «Ver» abrió el detalle: al cerrar, el foco vuelve a esa fila. */
   private abiertoDesde: string | null = null;
 
-  readonly disponible = inject(FACTURACION_SIMULADA_DISPONIBLE)();
+  readonly disponible = inject(SIMULATED_AVAILABLE_INVOICING)();
 
   readonly estado = signal<ViewState<DatosDeFacturacion>>(loading());
   readonly datos = computed(() => {
@@ -257,7 +257,7 @@ export class Billing {
   }
 
   literal(importe: string | null): string {
-    return importe === null ? '' : montoLiteral(importe);
+    return importe === null ? '' : amountLiteral(importe);
   }
 
   // ---- escrituras --------------------------------------------------------------
@@ -340,14 +340,14 @@ export class Billing {
   async descargarPdf(factura: SimulatedInvoice): Promise<void> {
     this.operando.set('pdf');
     try {
-      await descargarRepresentacionGrafica(factura);
+      await downloadGraphicRepresentation(factura);
     } finally {
       this.operando.set(null);
     }
   }
 
   descargarXml(factura: SimulatedInvoice): void {
-    descargarXml(factura);
+    downloadXml(factura);
   }
 
   // ---- privados ----------------------------------------------------------------

@@ -10,8 +10,8 @@ import type {
 import { MockRouter, isMockReply, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
-import { ESQUEMA_COMPRA_VENTA } from '../siat-sim/esquema-siat';
-import { facturaDesdeXml, leerXmlFactura } from '../siat-sim/factura-xml';
+import { PURCHASE_SALE_SCHEMA } from '../siat-sim/siat-schema';
+import { invoiceFromXml, readInvoiceXml } from '../siat-sim/invoice-xml';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { crearRouterSimulado } from './index';
 import { registrarFarmacia } from './pharmacy.handlers';
@@ -261,7 +261,7 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(f.issuer.nit.startsWith('999')).toBe(true);
       expect(f.detalle).toHaveLength(cobro.lines.length);
       expect(f.cabecera['montoTotal']).toBe(cobro.total);
-      const { problemas } = facturaDesdeXml(ESQUEMA_COMPRA_VENTA, leerXmlFactura(f.xml));
+      const { problemas } = invoiceFromXml(PURCHASE_SALE_SCHEMA, readInvoiceXml(f.xml));
       expect(problemas).toEqual([]);
       expect(f.events.map((e) => e.kind)).toEqual(['PAYMENT_REGISTERED', 'INVOICE_BUILT', 'SENT_TO_SIAT', 'SIAT_RESPONSE']);
       expect(f.simulated).toBe(true);

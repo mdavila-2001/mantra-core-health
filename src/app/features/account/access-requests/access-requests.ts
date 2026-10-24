@@ -7,9 +7,11 @@ import { AuthzClient } from '../../../core/data-access/authz/authz.client';
 import type { CareRelationship } from '../../../core/data-access/authz/authz.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../shared/components/atoms/checkbox/checkbox';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -36,7 +38,7 @@ interface SolicitudEnPantalla {
  */
 @Component({
   selector: 'app-access-requests',
-  imports: [AppButton, Card, Checkbox, DatePipe, EmptyState, PageHeader],
+  imports: [Alert, AppButton, Card, Checkbox, DatePipe, EmptyState, PageHeader],
   templateUrl: './access-requests.html',
   styleUrl: './access-requests.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,17 +54,36 @@ export class AccessRequests {
   protected readonly cargando = signal(true);
   protected readonly solicitudes = signal<readonly SolicitudEnPantalla[]>([]);
   protected readonly especialidades = signal<readonly { id: string; nombre: string }[]>([]);
+  /**
+   * Por qué no se pudieron leer las solicitudes, o `null`. Sin esto, una
+   * lectura caída se mostraba como «No tiene solicitudes pendientes».
+   */
+  protected readonly errorDeCarga = signal<string | null>(null);
+  /** Sin especialidades no hay qué autorizar: se dice, en vez de un recuadro vacío. */
+  protected readonly errorDeEspecialidades = signal<string | null>(null);
 
   constructor() {
-    this.specialties.listar().subscribe({
-      next: (opciones) =>
-        this.especialidades.set(opciones.map((o) => ({ id: o.conceptId, nombre: o.display }))),
-      error: () => this.especialidades.set([]),
-    });
+    this.cargarEspecialidades();
     this.cargar();
   }
 
-  private cargar(): void {
+  protected cargarEspecialidades(): void {
+    this.errorDeEspecialidades.set(null);
+    this.specialties.listar().subscribe({
+      next: (opciones) =>
+        this.especialidades.set(opciones.map((o) => ({ id: o.conceptId, nombre: o.display }))),
+      error: (error: unknown) => {
+        this.especialidades.set([]);
+        this.errorDeEspecialidades.set(
+          describeApiFailure(error, 'No pudimos traer la lista de especialidades para elegir qué autoriza.'),
+        );
+      },
+    });
+  }
+
+  protected cargar(): void {
+    this.cargando.set(true);
+    this.errorDeCarga.set(null);
     this.authz.listMyPendingCareRelationshipRequests().subscribe({
       next: (lista) => {
         if (lista.length === 0) {
@@ -75,9 +96,10 @@ export class AccessRequests {
           this.cargando.set(false);
         });
       },
-      error: () => {
+      error: (error: unknown) => {
         this.solicitudes.set([]);
         this.cargando.set(false);
+        this.errorDeCarga.set(describeApiFailure(error, 'No pudimos traer sus solicitudes de vínculo.'));
       },
     });
   }
@@ -128,8 +150,8 @@ export class AccessRequests {
           this.toasts.success('Autorizó el acceso. Ya puede retirarlo cuando quiera.');
           this.quitar(item);
         },
-        error: () => {
-          this.toasts.warning('No se pudo guardar su decisión. Pruebe de nuevo.');
+        error: (error: unknown) => {
+          this.toasts.error(describeApiFailure(error, 'No se pudo guardar su decisión. Intente de nuevo.'));
           this.actualizar(item, { decidiendo: false });
         },
       });
@@ -142,18 +164,27 @@ export class AccessRequests {
         this.toasts.success('Rechazó la solicitud.');
         this.quitar(item);
       },
-      error: () => {
-        this.toasts.warning('No se pudo guardar su decisión. Pruebe de nuevo.');
+      error: (error: unknown) => {
+        this.toasts.error(describeApiFailure(error, 'No se pudo guardar su decisión. Intente de nuevo.'));
         this.actualizar(item, { decidiendo: false });
       },
     });
   }
 
+  /*
+   * Se busca por id y no por referencia: `actualizar` reemplaza el objeto, así
+   * que la referencia que tiene en la mano el `subscribe` de `aceptar` o
+   * `rechazar` ya no está en la lista cuando contesta el servidor. Por
+   * referencia, un fallo dejaba los botones apagados para siempre y un éxito no
+   * quitaba la solicitud de la pantalla.
+   */
   private actualizar(item: SolicitudEnPantalla, cambio: Partial<SolicitudEnPantalla>): void {
-    this.solicitudes.set(this.solicitudes().map((s) => (s === item ? { ...s, ...cambio } : s)));
+    this.solicitudes.set(
+      this.solicitudes().map((s) => (s.solicitud.id === item.solicitud.id ? { ...s, ...cambio } : s)),
+    );
   }
 
   private quitar(item: SolicitudEnPantalla): void {
-    this.solicitudes.set(this.solicitudes().filter((s) => s !== item));
+    this.solicitudes.set(this.solicitudes().filter((s) => s.solicitud.id !== item.solicitud.id));
   }
 }

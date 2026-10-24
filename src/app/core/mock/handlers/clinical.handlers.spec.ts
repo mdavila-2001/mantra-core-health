@@ -1,9 +1,9 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import type { ClinicalNoteVersionRef } from '../../data-access/chart-notes/chart-notes.types';
-import { condiciones, notas, NOTA_TIPO_EVOLUCION, type CondicionSimulada, type NotaSimulada } from '../fixtures/clinica';
-import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
-import { PACIENTE, PACIENTES } from '../fixtures/personas';
+import { conditionList, noteList, PROGRESS_NOTE_TYPE, type SimulatedCondition, type SimulatedNote } from '../fixtures/clinic';
+import { STATUS, ESTUDIO, VERIFICATION_DX } from '../fixtures/concepts';
+import { PACIENTE, PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarClinica } from './clinical.handlers';
@@ -159,14 +159,14 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
     }) as T;
   }
 
-  function condicion(overrides: Partial<CondicionSimulada> = {}): CondicionSimulada {
-    const base: CondicionSimulada = {
+  function condicion(overrides: Partial<SimulatedCondition> = {}): SimulatedCondition {
+    const base: SimulatedCondition = {
       id: `cond-${Math.random().toString(36).slice(2)}`,
       patientProfileId: PACIENTE.id,
       codeConceptId: 'concept-faringitis',
       categoryConceptId: 'cat-dx',
       clinicalStatusConceptId: 'active',
-      verificationStatusConceptId: VERIFICACION_DX['COND_CONFIRMED']!,
+      verificationStatusConceptId: VERIFICATION_DX['COND_CONFIRMED']!,
       severityConceptId: 'sev-mild',
       onsetAt: '2026-01-01T00:00:00.000Z',
       noteText: '',
@@ -185,8 +185,8 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
   });
 
   it('indicationConditionId de un diagnóstico presuntivo/provisional: 400', () => {
-    const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['COND_PROVISIONAL']! });
-    condiciones.agregar(presuntivo);
+    const presuntivo = condicion({ verificationStatusConceptId: VERIFICATION_DX['COND_PROVISIONAL']! });
+    conditionList.agregar(presuntivo);
 
     const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
       ...CUERPO_BASE,
@@ -198,7 +198,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 
   it('indicationConditionId de un diagnóstico confirmado: 201', () => {
     const confirmado = condicion();
-    condiciones.agregar(confirmado);
+    conditionList.agregar(confirmado);
 
     const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
       ...CUERPO_BASE,
@@ -219,7 +219,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 
   it('con los dos, gana la condición y el texto se descarta (criterio P24)', () => {
     const confirmado = condicion();
-    condiciones.agregar(confirmado);
+    conditionList.agregar(confirmado);
 
     const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
       ...CUERPO_BASE,
@@ -232,7 +232,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 
   it('/:id/edit sobre una receta emitida: 409', () => {
     const confirmado = condicion();
-    condiciones.agregar(confirmado);
+    conditionList.agregar(confirmado);
     const creada = call<MockReply>('POST', '/clinical/medication-requests', {
       ...CUERPO_BASE,
       indicationConditionId: confirmado.id,
@@ -250,7 +250,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 });
 
 describe('/charts/notes · contrato tras mudar el handler', () => {
-  const patientWithIndependentAccess = PACIENTES[1]!;
+  const patientWithIndependentAccess = PATIENTS[1]!;
   const router = new MockRouter();
   const doctor = buscarUsuario('medica')!;
 
@@ -314,12 +314,12 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
         noteId: expect.any(String),
         versionId: expect.any(String),
         versionNumber: 1,
-        lifecycleStatusConceptId: ESTADO['ST-DRAFT'],
-        versionStatusConceptId: ESTADO['ST-DRAFT'],
+        lifecycleStatusConceptId: STATUS['ST-DRAFT'],
+        versionStatusConceptId: STATUS['ST-DRAFT'],
       },
     });
     const { patientProfileId: _patientId, ...chartInput } = input;
-    const chart = call<{ notes: readonly Omit<NotaSimulada, 'patientProfileId' | 'id'>[] }>(
+    const chart = call<{ notes: readonly Omit<SimulatedNote, 'patientProfileId' | 'id'>[] }>(
       'GET', `/charts/patients/${patientWithIndependentAccess.id}/chart`, null,
     );
     expect(chart.notes.find((note) => note.noteId === response.body.noteId)).toMatchObject({
@@ -329,7 +329,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
       signedAt: null,
       releasedToPatient: false,
     });
-    const restored = notas;
+    const restored = noteList;
     expect(restored.get(response.body.noteId)).toMatchObject(input);
   });
 
@@ -345,11 +345,11 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
   it('con sólo texto libre conserva los valores por omisión anteriores', () => {
     const response = createNote({ patientProfileId: PACIENTE.id, subjectiveText: 'Sólo texto' });
     expect(response.status).toBe(201);
-    expect(notas.get(response.body.noteId)).toMatchObject({
+    expect(noteList.get(response.body.noteId)).toMatchObject({
       patientProfileId: PACIENTE.id,
       authorProfileId: doctor.practitionerProfileId,
-      noteTypeConceptId: NOTA_TIPO_EVOLUCION,
-      lifecycleStatusConceptId: ESTADO['ST-DRAFT'],
+      noteTypeConceptId: PROGRESS_NOTE_TYPE,
+      lifecycleStatusConceptId: STATUS['ST-DRAFT'],
       entries: [],
       chiefComplaintText: '',
       subjectiveText: 'Sólo texto',
@@ -383,7 +383,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
       entries: [{ label: '  Peso ', value: ' 68 kg ' }],
     });
     expect(bien.status).toBe(201);
-    expect(notas.get(bien.body.noteId)?.entries).toEqual([{ label: 'Peso', value: '68 kg' }]);
+    expect(noteList.get(bien.body.noteId)?.entries).toEqual([{ label: 'Peso', value: '68 kg' }]);
   });
 
   it('lista las notas de una persona, firma la vigente y no deja pisar una firmada sin motivo', () => {
@@ -429,7 +429,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
         },
       });
       expect(response.body.versionId).not.toBe(initial.body.versionId);
-      const restored = notas;
+      const restored = noteList;
       expect(restored.get(initial.body.noteId)).toMatchObject({
         noteId: initial.body.noteId,
         patientProfileId: PACIENTE.id,

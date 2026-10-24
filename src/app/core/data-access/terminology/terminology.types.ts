@@ -279,6 +279,63 @@ export interface GlossaryRelation {
   readonly display: string;
 }
 
+/** Nodo activo incluido en el mapa de relaciones del glosario. */
+export interface GlossaryGraphNode {
+  readonly conceptId: string;
+  readonly slug: string;
+  readonly display: string;
+  readonly category: GlossaryCategoryRef | null;
+  readonly shortDefinition: string;
+}
+
+/** De qué lado de la relación está el término central. */
+export type GlossaryRelationDirection = 'outgoing' | 'incoming';
+
+/** Un término vecino en el mapa: lo justo para pintarlo y navegar a él. */
+export interface GlossaryNeighbor {
+  readonly conceptId: string;
+  readonly slug: string;
+  readonly display: string;
+  readonly category: GlossaryCategoryRef | null;
+}
+
+/**
+ * Los vecinos de un término por tipo y sentido de relación.
+ *
+ * `total` es el tamaño real del grupo, no lo que vino: con `perGroup` llega una
+ * muestra y «Ver los N» pide el grupo entero.
+ */
+export interface GlossaryNeighborGroup {
+  readonly type: GlossaryRelationType;
+  readonly direction: GlossaryRelationDirection;
+  readonly total: number;
+  readonly items: readonly GlossaryNeighbor[];
+}
+
+/**
+ * El vecindario de un término: sus relaciones salientes **y entrantes**.
+ *
+ * Reemplaza, para el mapa, la lectura global de `glossary-graph` (los primeros
+ * 500 términos del catálogo): con ella un término fuera de esos 500 no tenía
+ * vecinos, y un síntoma nunca mostraba las enfermedades que lo presentan,
+ * porque esa relación se guarda en la enfermedad. Contrato fijado en
+ * `tareas/TAREA-41` §5; los campos de peso y evidencia llegan en F1.
+ */
+export interface GlossaryNeighborhood {
+  readonly focus: GlossaryGraphNode;
+  readonly groups: readonly GlossaryNeighborGroup[];
+}
+
+/** Qué parte del vecindario se pide. */
+export type GlossaryNeighborhoodQuery =
+  | { readonly perGroup?: number }
+  | {
+      readonly type: GlossaryRelationType;
+      readonly direction: GlossaryRelationDirection;
+      readonly offset?: number;
+      readonly limit?: number;
+    };
+
 /**
  * Un texto con su bandera de traducción — el mismo patrón que ya usaba
  * `translated` a nivel de término, aplicado ahora a un campo puntual.

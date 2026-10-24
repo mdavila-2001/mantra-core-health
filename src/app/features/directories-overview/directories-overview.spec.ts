@@ -5,6 +5,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { selectOptionLabels } from '../../../testing/select';
 import { DirectoriesOverview } from './directories-overview';
 
 @Component({ template: '' })
@@ -57,26 +58,33 @@ describe('DirectoriesOverview', () => {
     abrirSesion(['PATIENT']);
     crear();
 
-    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
     expect(enlaces.length).toBe(5);
 
     // El mercado de seguros (28/09/2026): el quinto, con la misma tarjeta.
     const aseguradoras = enlaces.find(
       (enlace) => enlace.getAttribute('href') === '/insurers-directory',
     );
-    expect(aseguradoras?.textContent).toContain('Directorio de aseguradoras');
+    expect(aseguradoras?.textContent).toContain('Aseguradoras');
+    expect(aseguradoras?.getAttribute('aria-label')).toContain('Directorio de aseguradoras');
 
     const medicos = enlaces.find((enlace) => enlace.getAttribute('href') === '/directory');
     expect(medicos).toBeDefined();
-    expect(medicos?.textContent).toContain('Directorio de médicos');
+    expect(medicos?.textContent).toContain('Médicos');
+    expect(medicos?.textContent).toContain('Ver médicos');
     expect(medicos?.textContent).toContain('agrupados por especialidad');
+    // El nombre accesible lleva el rótulo completo y la descripción: quien
+    // usa lector de pantalla oye a dónde lleva sin depender del diseño.
+    expect(medicos?.getAttribute('aria-label')).toBe(
+      'Directorio de médicos. Todos los médicos de la red, agrupados por especialidad.',
+    );
   });
 
   it('quien ejerce también ve el nodo del directorio de médicos (24/09/2026)', () => {
     abrirSesion(['PRACTITIONER']);
     crear();
 
-    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
     expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(true);
     expect(enlaces.length).toBe(5);
   });
@@ -85,18 +93,27 @@ describe('DirectoriesOverview', () => {
     abrirSesion(['SECURITY_ADMIN']);
     crear();
 
-    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
     expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(false);
     expect(enlaces.length).toBe(4);
   });
 
-  it('el nodo central es decorativo: no es un enlace ni compite con los cuatro', () => {
+  it('la primera puerta es la tarea principal y va destacada (22/10/2026)', () => {
     abrirSesion(['PATIENT']);
     crear();
 
-    const centro = root().querySelector('.mapa__centro');
-    expect(centro?.getAttribute('aria-hidden')).toBe('true');
-    expect(centro?.querySelector('a')).toBeNull();
+    const destacadas = [...root().querySelectorAll('.directories__item--featured')];
+    expect(destacadas.length).toBe(1);
+    expect(destacadas[0].getAttribute('data-path')).toBe('directory');
+  });
+
+  it('ninguna tarjeta muestra calificaciones ni cifras que no salen de los datos (22/10/2026)', () => {
+    abrirSesion(['PATIENT']);
+    crear();
+
+    const portada = root().querySelector('.directories')?.textContent ?? '';
+    expect(portada).not.toMatch(/★|reseñas|opiniones|pólizas|Premium|\+\d+/u);
+    expect(root().querySelector('.mapa__centro')).toBeNull();
   });
 
   describe('la barra de búsqueda (19/09/2026)', () => {
@@ -109,7 +126,7 @@ describe('DirectoriesOverview', () => {
       expect(barra?.textContent).toContain(
         'médicos, laboratorios, clínicas, farmacias y aseguradoras',
       );
-      expect(root().querySelector('.mapa__nodos')).not.toBeNull();
+      expect(root().querySelector('.directories__grid')).not.toBeNull();
     });
 
     it('un término busca en los cinco directorios y agrupa lo encontrado por directorio', async () => {
@@ -161,8 +178,9 @@ describe('DirectoriesOverview', () => {
       http.verify();
       fixture.detectChanges();
 
-      expect(root().querySelector('.mapa__nodos')).toBeNull();
-      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      expect(root().querySelector('.directories__grid')).toBeNull();
+      // Sin bandas (marketplace): el directorio se nombra en la barra de resultados.
+      const rotulos = [...root().querySelectorAll('.directorio__ambito')];
       expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
         expect.stringContaining('Directorio de farmacias'),
       ]);
@@ -209,7 +227,8 @@ describe('DirectoriesOverview', () => {
       http.verify();
       fixture.detectChanges();
 
-      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      // Sin bandas (marketplace): el directorio se nombra en la barra de resultados.
+      const rotulos = [...root().querySelectorAll('.directorio__ambito')];
       expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
         expect.stringContaining('Directorio de aseguradoras'),
       ]);
@@ -224,21 +243,19 @@ describe('DirectoriesOverview', () => {
   });
 
   describe('el desplegable de directorio (24/09/2026)', () => {
-    function opciones(): string[] {
-      const select = root().querySelector<HTMLSelectElement>('app-filter-bar select');
-      return [...(select?.options ?? [])]
-        .filter((opcion) => !opcion.hidden)
-        .map((opcion) => opcion.textContent?.trim() ?? '');
+    async function opciones(): Promise<string[]> {
+      const select = root().querySelector<HTMLElement>('app-filter-bar app-select');
+      return select ? selectOptionLabels(fixture, select) : [];
     }
 
-    it('va en la misma fila que el buscador, con «Todos» y los cinco directorios', () => {
+    it('va en la misma fila que el buscador, con «Todos» y los cinco directorios', async () => {
       abrirSesion(['PRACTITIONER']);
       crear();
 
       const controles = root().querySelector('app-filter-bar .filter-bar__controls');
       expect(controles?.querySelector('app-search-field')).not.toBeNull();
-      expect(controles?.querySelector('select')).not.toBeNull();
-      expect(opciones()).toEqual([
+      expect(controles?.querySelector('app-select')).not.toBeNull();
+      expect(await opciones()).toEqual([
         'Todos los directorios',
         'Médicos',
         'Laboratorios',
@@ -272,7 +289,7 @@ describe('DirectoriesOverview', () => {
       await TestBed.inject(Router).navigateByUrl('/directories?directorio=pharmacies-directory');
       crear();
 
-      const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+      const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
       expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
         '/pharmacies-directory',
       ]);
@@ -283,7 +300,7 @@ describe('DirectoriesOverview', () => {
       await TestBed.inject(Router).navigateByUrl('/directories?directorio=no-existe');
       crear();
 
-      expect(root().querySelectorAll('.rejilla__tarjeta').length).toBe(5);
+      expect(root().querySelectorAll('.directories__card').length).toBe(5);
     });
   });
 });

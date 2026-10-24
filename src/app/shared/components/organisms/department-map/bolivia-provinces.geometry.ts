@@ -5,7 +5,7 @@
 
     ## Fuente declarada — regla `.claude/rules/70-data-seeders.md`
 
-    La misma que el mapa de Leaflet (`organisms/map/provincias.ts`), donde
+    La misma que el mapa de Leaflet (`organisms/map/provinces.ts`), donde
     están la tabla de la fuente y las dos correcciones que se le hicieron:
     geoBoundaries gbOpen `BOL / ADM2` (`BOL-ADM2-80513517`), GeoBolivia,
     dominio público, obtenido 2026-09-24.

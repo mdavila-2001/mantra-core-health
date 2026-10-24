@@ -1,11 +1,11 @@
 import {
-  notas,
-  NOTA_TIPO_EVOLUCION,
-  type FilaDeNotaSimulada,
-  type NotaSimulada,
-} from '../fixtures/clinica';
-import { ESTADO } from '../fixtures/conceptos';
-import { MEDICA } from '../fixtures/personas';
+  noteList,
+  PROGRESS_NOTE_TYPE,
+  type SimulatedNoteRow,
+  type SimulatedNote,
+} from '../fixtures/clinic';
+import { STATUS } from '../fixtures/concepts';
+import { MEDICAL } from '../fixtures/people';
 import {
   conflict,
   forbidden,
@@ -72,7 +72,7 @@ function normalizado(rotulo: string): string {
  * del mismo rótulo sin ellos.
  */
 function validarFilas(entradas: CuerpoDeNota['entries']): {
-  readonly filas: readonly FilaDeNotaSimulada[];
+  readonly filas: readonly SimulatedNoteRow[];
   readonly problemas: readonly ProblemaDeFila[];
 } {
   if (entradas === undefined) return { filas: [], problemas: [] };
@@ -92,7 +92,7 @@ function validarFilas(entradas: CuerpoDeNota['entries']): {
   }
 
   const problemas: ProblemaDeFila[] = [];
-  const filas: FilaDeNotaSimulada[] = [];
+  const filas: SimulatedNoteRow[] = [];
   const vistos = new Set<string>();
 
   entradas.forEach((fila, index) => {
@@ -132,7 +132,7 @@ function validarFilas(entradas: CuerpoDeNota['entries']): {
 }
 
 /** La nota como la ve el cliente: sin las dos columnas internas de la tabla. */
-function publica(nota: NotaSimulada): Omit<NotaSimulada, 'id' | 'patientProfileId'> {
+function publica(nota: SimulatedNote): Omit<SimulatedNote, 'id' | 'patientProfileId'> {
   const { id: _id, patientProfileId: _paciente, ...resto } = nota;
   return resto;
 }
@@ -158,7 +158,7 @@ export function registerMedicalNotes(router: MockRouter): void {
 
     const encounterId = request.query.get('encounterId');
     const limit = Number(request.query.get('limit') ?? 50) || 50;
-    const items = notas
+    const items = noteList
       .filtrar(
         (n) =>
           n.patientProfileId === patientProfileId &&
@@ -187,16 +187,16 @@ export function registerMedicalNotes(router: MockRouter): void {
     }
 
     const noteId = nuevoId('note');
-    const nueva: NotaSimulada = {
+    const nueva: SimulatedNote = {
       noteId,
       id: noteId,
       patientProfileId: datos.patientProfileId,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
-      noteTypeConceptId: datos.noteTypeConceptId ?? NOTA_TIPO_EVOLUCION,
-      lifecycleStatusConceptId: ESTADO['ST-DRAFT']!,
+      noteTypeConceptId: datos.noteTypeConceptId ?? PROGRESS_NOTE_TYPE,
+      lifecycleStatusConceptId: STATUS['ST-DRAFT']!,
       currentVersionId: nuevoId('note-version'),
       versionNumber: 1,
-      authorProfileId: datos.authorProfileId ?? request.user?.practitionerProfileId ?? MEDICA.id,
+      authorProfileId: datos.authorProfileId ?? request.user?.practitionerProfileId ?? MEDICAL.id,
       entries: filas,
       chiefComplaintText: datos.chiefComplaintText ?? '',
       subjectiveText: textoLibre,
@@ -207,7 +207,7 @@ export function registerMedicalNotes(router: MockRouter): void {
       releasedToPatient: false,
       createdAt: ahora(),
     };
-    notas.agregar(nueva);
+    noteList.agregar(nueva);
     // La nota médica es la otra mitad de la ficha: si la médica empezó por
     // acá y no por el diagnóstico, el aviso al paciente sale igual. Y si ya
     // salió por el diagnóstico, no sale dos veces.
@@ -223,7 +223,7 @@ export function registerMedicalNotes(router: MockRouter): void {
         versionId: nueva.currentVersionId,
         versionNumber: 1,
         lifecycleStatusConceptId: nueva.lifecycleStatusConceptId,
-        versionStatusConceptId: ESTADO['ST-DRAFT']!,
+        versionStatusConceptId: STATUS['ST-DRAFT']!,
       },
     };
   });
@@ -234,7 +234,7 @@ export function registerMedicalNotes(router: MockRouter): void {
   // publica la API. El `POST` que se aceptaba «por si alguna pantalla vieja lo
   // usa» se retiró (Hito 3): ninguna pantalla lo llamaba.
   const agregarVersion = (request: MockRequest) => {
-    const n = notas.get(request.params['id']!);
+    const n = noteList.get(request.params['id']!);
     if (n === undefined) return notFound('Nota no encontrada');
     const datos = cuerpo<CuerpoDeNota>(request);
     // Una nota firmada no se pisa: se corrige diciendo por qué.
@@ -248,7 +248,7 @@ export function registerMedicalNotes(router: MockRouter): void {
       return validation(problemas[0]!.message, problemas);
     }
     const versionId = nuevoId('note-version');
-    notas.actualizar(n.noteId, {
+    noteList.actualizar(n.noteId, {
       ...(datos.entries === undefined ? {} : { entries: filas }),
       ...(datos.chiefComplaintText === undefined
         ? {}
@@ -269,7 +269,7 @@ export function registerMedicalNotes(router: MockRouter): void {
         versionId,
         versionNumber: n.versionNumber + 1,
         lifecycleStatusConceptId: n.lifecycleStatusConceptId,
-        versionStatusConceptId: ESTADO['ST-DRAFT']!,
+        versionStatusConceptId: STATUS['ST-DRAFT']!,
       },
     };
   };
@@ -278,7 +278,7 @@ export function registerMedicalNotes(router: MockRouter): void {
   /* ---- firmar --------------------------------------------------------------- */
 
   router.post('/charts/notes/:id/versions/:versionId/sign', (request) => {
-    const n = notas.get(request.params['id']!);
+    const n = noteList.get(request.params['id']!);
     if (n === undefined) return notFound('Nota no encontrada');
     if (n.currentVersionId !== request.params['versionId']) {
       return notFound('Esa versión ya no es la vigente');
@@ -286,9 +286,9 @@ export function registerMedicalNotes(router: MockRouter): void {
     // Firmar dos veces no es un error: la firma es la misma.
     const firmada =
       n.signedAt === null
-        ? notas.actualizar(n.noteId, {
+        ? noteList.actualizar(n.noteId, {
             signedAt: ahora(),
-            lifecycleStatusConceptId: ESTADO['ST-COMPLETED']!,
+            lifecycleStatusConceptId: STATUS['ST-COMPLETED']!,
           })
         : n;
     return publica(firmada ?? n);

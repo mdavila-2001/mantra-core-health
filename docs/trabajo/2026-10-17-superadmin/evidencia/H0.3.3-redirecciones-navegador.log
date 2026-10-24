@@ -1,0 +1,7 @@
+✓ /administration/data-catalog?schema=iam#tabla  →  /superadmin/data-catalog?schema=iam#tabla
+✓ /administration/web-analytics?rango=7d  →  /superadmin/web-analytics?rango=7d
+✓ /administration/qa-lab?x=1  →  /superadmin/qa-lab?x=1
+✓ /administration/operations?x=1  →  /superadmin/operations?x=1
+✓ /administration/qa-lab/plans/abc-123?x=1  →  /superadmin/qa-lab/plans/abc-123?x=1
+✓ /administration/data-catalog/obj-9?x=1  →  /superadmin/data-catalog/obj-9?x=1
+✓ /superadmin  →  /superadmin/observability

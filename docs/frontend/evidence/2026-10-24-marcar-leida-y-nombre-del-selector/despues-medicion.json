@@ -1,0 +1,35 @@
+[
+  {
+    "viewport": "1440-claro",
+    "theme": "light",
+    "hasButton": true,
+    "unreadBefore": true,
+    "unreadAfter": false,
+    "overflow": false,
+    "comboboxNamed": 1,
+    "ariaLabel": "Organización a la que pide vincularse",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "390-claro",
+    "theme": "light",
+    "hasButton": true,
+    "unreadBefore": true,
+    "unreadAfter": false,
+    "overflow": false,
+    "comboboxNamed": 1,
+    "ariaLabel": "Organización a la que pide vincularse",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "1440-oscuro",
+    "theme": "dark",
+    "hasButton": true,
+    "unreadBefore": true,
+    "unreadAfter": false,
+    "overflow": false,
+    "comboboxNamed": 1,
+    "ariaLabel": "Organización a la que pide vincularse",
+    "consoleErrors": []
+  }
+]

@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { MedicalAspects } from './medical-aspects';
 
 /**
@@ -179,6 +180,43 @@ describe('MedicalAspects', () => {
 
     expect(campo('bloodType').value).toBe('B+');
     expect(apagado('aspectos-guardar')).toBe(false);
+  });
+
+  /** Si la API rechaza un campo, se marca ese campo y el aviso lleva el código de soporte. */
+  it('un campo rechazado por la API queda marcado y el aviso trae el código de soporte', () => {
+    configurar();
+    responder({ bloodType: 'O+' });
+    const avisos = vi.spyOn(TestBed.inject(ToastService), 'error');
+
+    escribir('bloodType', 'B+ con un texto larguísimo');
+    boton('aspectos-guardar')?.click();
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url === RUTA && r.method === 'PUT').flush(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación',
+        correlationId: 'corr-aspectos',
+        timestamp: '',
+        path: RUTA,
+        details: {
+          fields: [
+            { field: 'bloodType', constraints: ['maxLength'], messages: ['bloodType must be shorter than or equal to 20 characters'] },
+          ],
+        },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    fixture.detectChanges();
+
+    expect(avisos).toHaveBeenLastCalledWith(
+      'No pudimos guardar: revise los datos marcados. Lo que escribió sigue aquí. (Código de soporte: corr-aspectos)',
+    );
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('No se pudo guardar así. Revise este dato.');
+    // El inglés del validador no llega a la pantalla.
+    expect(texto).not.toContain('must be shorter');
+    expect(campo('bloodType').value).toBe('B+ con un texto larguísimo');
   });
 
   /** Una lectura caída se dice y se ofrece reintentar, en vez de quedar en blanco. */

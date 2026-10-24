@@ -57,7 +57,7 @@
              pestañas, a lo ancho del área de contenido. Antes las pestañas iban
              sueltas sobre el fondo de la página y cada panel dibujaba sus
              propias cajas, que es la pila de tarjetas que la regla prohíbe. -->
-        <app-card class="historia__tarjeta" variant="outlined" padding="lg">
+        <app-card class="historia__tarjeta" variant="elevated" padding="lg">
           <app-tabs
             class="historia__tabs"
             data-testid="historia-tabs"
@@ -115,6 +115,31 @@
             <app-alert tone="warning" title="Falta parte del detalle">
               No pudimos traer las notas ni los estudios de sus atenciones. Lo demás se muestra
               igual.
+            </app-alert>
+          }
+
+          <!-- Sin las citas, la línea no puede decir qué atención tuvo
+               reconsulta. Se avisa: un hueco callado se lee como «no hubo». -->
+          @if (citasSinCargar(); as motivo) {
+            <app-alert
+              tone="warning"
+              title="Faltan las reconsultas"
+              data-testid="historia-citas-sin-cargar"
+            >
+              {{ motivo }} Sus atenciones se muestran igual, pero sin indicar cuáles tuvieron
+              reconsulta.
+              <div alert-actions>
+                <button
+                  app-button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  data-testid="historia-citas-reintentar"
+                  (clicked)="recargarDetalle()"
+                >
+                  Volver a cargar
+                </button>
+              </div>
             </app-alert>
           }
 
