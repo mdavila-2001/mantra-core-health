@@ -1,0 +1,10 @@
+{
+  "route": "http://localhost:4300/glossary/c70fbafb-fdcb-42d9-a8b3-773ea198bb64",
+  "alignment": "justify",
+  "visibleImages": 3,
+  "curatedRouteFixture": true,
+  "withoutArticle": false,
+  "pdfBytes": 1585005,
+  "pdfName": "glosario-angiografia.pdf",
+  "pageErrors": []
+}
