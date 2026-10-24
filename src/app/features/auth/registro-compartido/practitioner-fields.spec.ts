@@ -24,7 +24,10 @@ describe('practitionerFields', () => {
     const paginas = practitionerFields(context);
 
     expect(paginas.length).toBeGreaterThan(10);
-    expect(paginas.every((pagina) => pagina.campos.length <= 4)).toBe(true);
+    // Nombre y cédula comparten página (cinco preguntas): la única excepción al tope.
+    expect(
+      paginas.every((pagina) => pagina.campos.length <= (pagina.clave === 'name' ? 5 : 4)),
+    ).toBe(true);
     expect(paginas.map((pagina) => pagina.clave)).toContain('specialties');
   });
 
