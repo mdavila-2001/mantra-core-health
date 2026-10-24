@@ -2579,10 +2579,9 @@ reintento; visor) y `features/laboratory/summary/`.
 > `validityStatus` y `currencyCode`. Sin datos clínicos.
 >
 > **Abiertos, a confirmar con el propietario del carril.**
-> 1. Quién puede cotizar: `POST /insurance-claims/quote` exige BILLING, FINANCE o SUPERADMIN, y esos
->    roles no se mapean en `role-mapping.ts` (ambigüedad #1 del carril).
-> 2. De dónde sale el `billingProviderEntityId` del reclamo: la pantalla usa el tenant activo en la
->    maqueta, y la API real puede rechazarlo.
+> 1. **Resuelto por el propietario:** cotiza el rol BILLING. Falta en la API: mapear BILLING en
+>    `role-mapping.ts` (hoy `@Roles` declara BILLING y FINANCE, y esos códigos no se mapean).
+> 2. **Resuelto por el propietario:** el `billingProviderEntityId` sale del tenant activo.
 >
 > **Mientras tanto:** el bloque dice «Sin seguro vigente» o «todavía no está disponible». No se
 > inventa una cobertura.

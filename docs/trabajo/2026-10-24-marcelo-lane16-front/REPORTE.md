@@ -172,9 +172,11 @@ Mapeo archivo → requisito:
 
 ## Decisiones y ambigüedades
 
-- `TAREA-16-solicitudes-de-seguro.md` no existe en ningún repo: se usa `requirements.md` y los AC-16-n del spec. Supuesto a confirmar con el propietario.
-- «Resolicitar»: la UI dice «Reclamar» y «Reclamar otra vez». Se conserva el texto que asevera AC-16-11. Supuesto a confirmar.
+- `TAREA-16-solicitudes-de-seguro.md` no existe en ningún repo. **Confirmado por el propietario:** se usa `requirements.md` y los AC-16-n del spec.
+- «Resolicitar»: la UI dice «Reclamar» y «Reclamar otra vez». **Confirmado por el propietario:** se mantiene «Reclamar».
 - Desglose del paciente en «Mis solicitudes» y no en «Mis citas»: decisión del propietario en la planificación.
+- **Confirmado por el propietario:** cotiza el rol BILLING. Pendiente en la API: su `@Roles` declara BILLING y FINANCE, y `role-mapping.ts` no mapea esos códigos. Sin ese mapeo el envío real falla con 403.
+- **Confirmado por el propietario:** el `billingProviderEntityId` sale del tenant activo.
 - Pantalla de cobro del médico = bloque «Pagos» de la consulta: decisión del propietario en la planificación.
 - Suite E2E híbrida: spec de la operadora contra la API real; flujos nuevos contra la maqueta. Decisión del propietario.
 - La objeción es REQ-16-032, no 031 como dice la tarea. Se trabaja por el número de la fuente.
