@@ -7,19 +7,39 @@
     descuento, gift card, total, monto a pagar, importe base de crédito
     fiscal, total en literal, las tres leyendas y el QR.
 
-    **Nada de este papel tiene validez fiscal**, y lo dice tres veces: título
-    «FACTURA (SIMULADA)», marca de agua en cada hoja y pie. El QR usa la forma
-    oficial (`…/consulta/QR?nit=&cuf=&numero=&t=`) sobre el host
-    `simulado.invalid` (RFC 2606: nunca resuelve), no el del SIN (CA-5).
+    **Nada de este papel tiene validez fiscal**, y lo dice en cada lugar donde
+    se lo puede leer: la clase y el título de la portada («FACTURA SIMULADA ·
+    SIN VALIDEZ FISCAL», «FACTURA (SIMULADA)»), el aviso con que abre el
+    cuerpo, la marca de agua en cada hoja y el pie de cada hoja. El QR usa la
+    forma oficial (`…/consulta/QR?nit=&cuf=&numero=&t=`) sobre el host
+    `simulado.invalid` (RFC 2606: nunca resuelve), no el del SIN (CA-5), y mide
+    más de 3 × 3 cm con su zona de silencio, como recomienda la norma.
 
-    Usa el maquetador único del repo (`buildBlocksPdf`); lo único propio es la
-    marca de agua y el QR, que el maquetador no ofrece.
+    Todo lo dibuja el maquetador único del repo (`buildBlocksPdf`): la marca de
+    agua es la suya (`watermark`, encima del contenido) y el QR es un bloque más
+    del flujo (`qrBlock`), al final, que pasa entero de hoja si no entra. Antes
+    se estampaban a mano después de maquetar, y había que reservar el pie de la
+    última hoja con renglones invisibles para que el código no pisara el texto.
     ========================================================================== */
 
 import type { jsPDF } from 'jspdf';
 
-import type { SimulatedInvoice } from '../../core/data-access/billing-simulated/billing-simulated.types';
-import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../../shared/utils/pdf-export/pdf-export';
+import type {
+  SimulatedInvoice,
+  SimulatedIssuer,
+} from '../../core/data-access/billing-simulated/billing-simulated.types';
+import {
+  buildBlocksPdf,
+  fieldsBlock,
+  formatMoney,
+  noteBlock,
+  panelsBlock,
+  totalsBlock,
+  type PdfBlock,
+  type PdfExportOptions,
+  type PdfIssuer,
+} from '../../shared/utils/pdf-export/pdf-export';
+import { qrBlock } from '../../shared/utils/pdf-export/pdf-qr';
 import { amountLiteral } from './amount-in-words';
 
 export const SIMULATED_QR_HOST = 'https://simulado.invalid/consulta/QR';
@@ -36,9 +56,19 @@ export const INLINE_LEGEND =
 /** `t` del QR oficial: 1 rollo · 2 media hoja. */
 export type QrSize = 1 | 2;
 
+/** La marca de agua de cada hoja (el motor la pasa a versalitas). */
+export const SIMULATED_INVOICE_WATERMARK = 'Simulada · Sin validez fiscal';
+
+/** La línea legal del pie de cada hoja. */
+export const SIMULATED_INVOICE_FOOTER = 'Factura SIMULADA · Sin validez fiscal · No emitida ante el SIN';
+
 /** Espacio duro (U+00A0), escrito por código: invisible en la fuente es lo que el lint impide. */
 const HARD_SPACE = String.fromCharCode(0xa0);
-const BOOKED_LINES_FOR_QR = 7;
+
+/** Un dato del pie que no se parte entre renglones: «Tel. 2 000 0000» partido en «Tel. 2» y «000 0000» es otro número. */
+function sinCortes(dato: string): string {
+  return dato.replace(/ /g, HARD_SPACE);
+}
 
 const UNITS: Readonly<Record<number, string>> = { 58: 'Unidad (servicios)', 1: 'Unidad' };
 
@@ -56,137 +86,219 @@ function texto(valor: unknown): string {
   return valor === null || valor === undefined ? '' : String(valor);
 }
 
+/** El importe del XML como número; vacío o `xsi:nil` es cero. */
+function monto(valor: unknown): number {
+  return Number(texto(valor) === '' ? '0' : texto(valor));
+}
+
+/** `1234.5` → `1.234,50`: el importe sin la moneda, para las columnas que la dicen en la cabecera. */
+function importe(valor: unknown): string {
+  return formatMoney(monto(valor), null);
+}
+
+/** `1234.5` → `1.234,50 Bs`, el formato de montos de todos los papeles. */
 function bs(valor: unknown): string {
-  const n = texto(valor) === '' ? '0' : texto(valor);
-  return `${Number(n).toFixed(2)} Bs`;
+  return formatMoney(monto(valor));
+}
+
+/** Lo que se resta del total, con el signo menos (U+2212); un cero va sin signo. */
+function bsRestado(valor: unknown): string {
+  return formatMoney(-monto(valor));
+}
+
+/** `VALIDADA` → `Validada`: el estado del SIAT llega en mayúsculas y en el papel se lee como palabra. */
+function estadoLegible(descripcion: string): string {
+  const minusculas = descripcion.toLocaleLowerCase('es');
+  return minusculas.charAt(0).toLocaleUpperCase('es') + minusculas.slice(1);
 }
 
 function fila(celdas: readonly string[], header = false): PdfBlock {
   return { kind: 'row', text: celdas.join('\t'), cells: celdas, ...(header ? { header: true } : {}) };
 }
 
-/** `2026-09-15T10:00:00.000` → `15/09/2026 10:00:00`, sin reinterpretar zona. */
-function dateAndTime(fechaEmision: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2}:\d{2})/.exec(fechaEmision);
-  return m === null ? fechaEmision : `${m[3]}/${m[2]}/${m[1]} ${m[4]}`;
+/** La fecha y hora de emisión del XML, sin zona: `2026-09-15T10:00:00.000`. */
+const FECHA_DEL_SIAT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/;
+
+/**
+ * La `fechaEmision` del XML como fecha, **sin reinterpretar zona**: llega sin
+ * zona y es hora de Bolivia, así que se toma la hora tal como está escrita.
+ * `undefined` si no tiene la forma esperada: el motor rotula entonces «Fecha de
+ * generación» en vez de inventar una emisión.
+ */
+export function invoiceIssuedAt(fechaEmision: string): Date | undefined {
+  const m = FECHA_DEL_SIAT.exec(fechaEmision);
+  if (m === null) return undefined;
+  const [, anio, mes, dia, hora, minuto, segundo] = m.map(Number);
+  return new Date(anio!, mes! - 1, dia!, hora!, minuto!, segundo!);
 }
 
-/** Los bloques del PDF en orden de lectura. Exportada para probarla sin jsPDF. */
-export function graphicRepresentationBlocks(factura: SimulatedInvoice): PdfBlock[] {
+/**
+ * El emisor del pie: la razón social, su NIT, su dirección y su teléfono, tal
+ * como el emisor simulado los tiene. El NIT dice que es simulado (CA-4).
+ */
+export function pdfIssuerOf(emisor: SimulatedIssuer): PdfIssuer {
+  const direccion = [emisor.address, emisor.municipality].filter((parte) => parte.trim() !== '').join(', ');
+  return {
+    name: emisor.legalName,
+    details: [
+      sinCortes(`NIT ${emisor.nit} (SIMULADO)`),
+      ...(direccion === '' ? [] : [direccion]),
+      ...(emisor.phone === null || emisor.phone.trim() === '' ? [] : [sinCortes(`Tel. ${emisor.phone}`)]),
+    ],
+  };
+}
+
+/**
+ * El QR de verificación como bloque del flujo, o `null` si la librería no
+ * carga (sin QR el papel sigue siendo legible y simulado). Nunca rechaza.
+ */
+export function invoiceQrBlock(factura: SimulatedInvoice): Promise<PdfBlock | null> {
+  return qrBlock(
+    qrContent(factura),
+    'Este código no consulta al SIN: apunta a simulado.invalid, un dominio reservado que nunca resuelve. La factura no fue registrada ante la Administración Tributaria.',
+    'Verificación SIMULADA',
+  );
+}
+
+/**
+ * Los bloques del PDF en orden de lectura. Exportada para probarla sin jsPDF.
+ *
+ * El título, el subtítulo, el número de factura y la fecha y hora de emisión
+ * van en la portada (ver {@link invoicePdfOptions}) y no se repiten acá.
+ *
+ * @param qr - El bloque del QR ya armado ({@link invoiceQrBlock}), o `null`:
+ *   entonces la dirección de verificación va como texto.
+ */
+export function graphicRepresentationBlocks(factura: SimulatedInvoice, qr: PdfBlock | null = null): PdfBlock[] {
   const c = factura.cabecera;
   const subtotal = factura.detalle.reduce((suma, d) => suma + Number(texto(d['subTotal']) || '0'), 0);
   const documento = texto(c['complemento']) === '' ? texto(c['numeroDocumento']) : `${texto(c['numeroDocumento'])}-${texto(c['complemento'])}`;
+  const literal = amountLiteral(texto(c['montoTotal']));
+  const leyendas = [WITHOUT_LEGEND, texto(c['leyenda']), `“${INLINE_LEGEND}”`].filter((leyenda) => leyenda.trim() !== '');
   const bloques: PdfBlock[] = [
-    { kind: 'note', text: `${SIMULATED_MARK}. Emitida por el simulador de AloVida; no fue enviada al SIN.` },
-    { kind: 'heading', level: 1, text: 'FACTURA (SIMULADA)' },
-    { kind: 'paragraph', text: '(Con Derecho a Crédito Fiscal)' },
-    { kind: 'heading', level: 2, text: 'Emisor' },
-    campoDeBloque('Razón social', texto(c['razonSocialEmisor'])),
-    campoDeBloque('Casa matriz / sucursal', `N.º ${texto(c['codigoSucursal'])}`),
-    campoDeBloque('Punto de venta', `N.º ${texto(c['codigoPuntoVenta']) || '0'}`),
-    campoDeBloque('Dirección', texto(c['direccion'])),
-    campoDeBloque('Municipio', texto(c['municipio'])),
-    ...(texto(c['telefono']) === '' ? [] : [campoDeBloque('Teléfono', texto(c['telefono']))]),
-    campoDeBloque('NIT (SIMULADO)', texto(c['nitEmisor'])),
-    campoDeBloque('Factura N.º', texto(c['numeroFactura'])),
-    // El rótulo oficial; la marca va en el valor para no desbordar la columna de rótulos.
-    campoDeBloque('Cód. Autorización', `${factura.cuf} (SIMULADO)`),
-    campoDeBloque('Actividad', `${texto(factura.detalle[0]?.['actividadEconomica'])} (código simulado)`),
-    { kind: 'heading', level: 2, text: 'Comprador' },
-    campoDeBloque('Fecha', dateAndTime(factura.issuedAt)),
-    campoDeBloque('Nombre / Razón social', texto(c['nombreRazonSocial'])),
-    campoDeBloque('NIT / CI / CEX', documento),
-    campoDeBloque('Cód. cliente', texto(c['codigoCliente'])),
-    { kind: 'heading', level: 2, text: 'Detalle' },
-    fila(['Código', 'Descripción', 'Cantidad', 'Unidad', 'P. unitario', 'Descuento', 'Subtotal'], true),
+    // Un renglón y sin título: la portada ya dice «Factura simulada», y un aviso
+    // de dos renglones con título empujaba el detalle a la segunda hoja.
+    noteBlock(`${SIMULATED_MARK}: emitida por el simulador de AloVida, no enviada al SIN.`, 'alert'),
+    panelsBlock([
+      {
+        title: 'Emisor',
+        fields: [
+          { label: 'Razón social', value: texto(c['razonSocialEmisor']) },
+          { label: 'NIT (SIMULADO)', value: texto(c['nitEmisor']) },
+          // Dirección y municipio en un dato, como los imprimen los ejemplos del
+          // SIN: un panel más alto empujaba el detalle a la segunda hoja.
+          { label: 'Dirección / Municipio', value: [texto(c['direccion']), texto(c['municipio'])].filter((parte) => parte !== '').join(' · ') },
+          { label: 'Teléfono', value: texto(c['telefono']) },
+        ],
+      },
+      {
+        title: 'Comprador',
+        fields: [
+          { label: 'Nombre / Razón social', value: texto(c['nombreRazonSocial']) },
+          { label: 'NIT / CI / CEX', value: documento },
+          { label: 'Cód. cliente', value: texto(c['codigoCliente']) },
+        ],
+      },
+      // Los datos de la factura misma, como en los ejemplos del SIN: arriba y
+      // juntos, al lado de las partes.
+      {
+        title: 'Factura',
+        fields: [
+          // El rótulo oficial; la marca va en el valor.
+          { label: 'Cód. Autorización', value: `${factura.cuf} (SIMULADO)` },
+          { label: 'Actividad', value: `${texto(factura.detalle[0]?.['actividadEconomica'])} (código simulado)` },
+          {
+            label: 'Casa matriz / sucursal',
+            value: `N.º ${texto(c['codigoSucursal'])} · Punto de venta N.º ${texto(c['codigoPuntoVenta']) || '0'}`,
+          },
+        ],
+      },
+    ]),
+    // Sin título de sección: la cabecera de la tabla ya dice qué es, y el título
+    // podía quedar solo al pie de una hoja con la tabla en la siguiente.
+    // La moneda no va en cada celda, como en los ejemplos del SIN: con «Bs» en
+    // siete columnas los importes se partían en dos renglones. La dicen la caja
+    // de totales y la línea de letra chica del final (una línea suelta entre
+    // los totales y lo que sigue quedaba sola arriba de la hoja siguiente). Cabeceras cortas: «P. unitario» —y «P. unit. Bs»—
+    // en versalitas se partían en dos; «Precio» es el precio unitario.
+    fila(['Código', 'Descripción', 'Cant.', 'Unidad', 'Precio', 'Desc.', 'Subtotal'], true),
     ...factura.detalle.map((d) =>
       fila([
         texto(d['codigoProducto']),
         texto(d['descripcion']),
         texto(d['cantidad']),
         UNITS[Number(d['unidadMedida'])] ?? `Código ${texto(d['unidadMedida'])}`,
-        bs(d['precioUnitario']),
-        bs(d['montoDescuento']),
-        bs(d['subTotal']),
+        importe(d['precioUnitario']),
+        importe(d['montoDescuento']),
+        importe(d['subTotal']),
       ]),
     ),
-    campoDeBloque('Subtotal', bs(subtotal)),
-    campoDeBloque('Descuento', bs(c['descuentoAdicional'])),
-    campoDeBloque('Total', bs(c['montoTotal'])),
-    campoDeBloque('Monto gift card', bs(c['montoGiftCard'])),
-    { kind: 'total', text: `Monto a pagar: ${bs(c['montoTotal'])}` },
-    // Línea completa: el rótulo oficial no entra en la columna de rótulos.
-    { kind: 'paragraph', text: `Importe base crédito fiscal: ${bs(c['montoTotalSujetoIva'])}` },
-    { kind: 'paragraph', text: amountLiteral(texto(c['montoTotal'])) },
-    { kind: 'note', text: WITHOUT_LEGEND },
-    { kind: 'note', text: texto(c['leyenda']) },
-    { kind: 'note', text: `“${INLINE_LEGEND}”` },
+    // La caja de totales va pegada a la tabla: el motor la reserva con sus
+    // últimas filas, y un texto en medio los separaba de hoja.
+    totalsBlock([
+      { label: 'Subtotal', value: bs(subtotal) },
+      { label: 'Descuento', value: bsRestado(c['descuentoAdicional']) },
+      { label: 'Total', value: bs(c['montoTotal']) },
+      { label: 'Monto gift card', value: bsRestado(c['montoGiftCard']) },
+      { label: 'Monto a pagar', value: bs(c['montoTotal']), emphasis: true },
+    ]),
+    fieldsBlock(
+      [
+        { label: 'Importe base crédito fiscal', value: bs(c['montoTotalSujetoIva']) },
+        { label: 'Son', value: literal.replace(/^Son:\s*/, '') },
+      ],
+      2,
+    ),
+    // Las tres leyendas juntas, en un solo aviso neutro: son texto obligatorio
+    // que se lee, no tres alertas.
+    noteBlock(leyendas.join('\n'), 'neutral'),
+    // Antes del QR y no después: al final quedaba sola en una hoja propia.
     {
       kind: 'caption',
-      text: `Documento sector ${factura.documentSector} · Factura Compra y Venta · Computarizada en Línea · SIAT SIMULADO: ${factura.siatResponse.codigoEstado} ${factura.siatResponse.codigoDescripcion}`,
+      text: `Importes en bolivianos (Bs) · Documento sector ${factura.documentSector} · Factura Compra y Venta · Computarizada en Línea · SIAT SIMULADO: ${factura.siatResponse.codigoEstado} ${estadoLegible(factura.siatResponse.codigoDescripcion)}`,
     },
-    { kind: 'caption', text: `QR de verificación SIMULADO: ${qrContent(factura)} (no apunta al SIN)` },
-    // Reserva el pie de la última hoja para el QR: si el contenido llega al
-    // final, el maquetador pasa de hoja en vez de dejarlo debajo del código.
-    // Párrafos con un espacio duro y no `blank`, que dibuja renglones para
-    // escribir a mano.
-    ...Array.from({ length: BOOKED_LINES_FOR_QR }, (): PdfBlock => ({ kind: 'paragraph', text: HARD_SPACE })),
+    ...(qr === null
+      ? [{ kind: 'caption' as const, text: `QR de verificación SIMULADO: ${qrContent(factura)} (no apunta al SIN)` }]
+      : [qr]),
   ];
   return bloques;
 }
 
 /**
- * Marca de agua en diagonal, en cada hoja.
+ * La portada, la marca de agua y el pie.
  *
- * jsPDF alinea el texto **antes** de rotarlo, así que `align: 'center'` con
- * ángulo lo corre hacia un costado y lo corta. El punto de partida se calcula
- * a mano para que el centro del texto rotado caiga en el centro de la hoja, y
- * el tamaño se ajusta para que el largo quepa en el 80 % del ancho.
+ * - **Emisor**: la razón social de la factura, con su NIT simulado, su
+ *   dirección y su teléfono —no AloVida—.
+ * - **`issuedAt`**: la `fechaEmision` del XML, la de verdad.
+ * - **Sin firma** (`firma: null`): una factura la emite la razón social, no el
+ *   médico de la sesión.
+ *
+ * Exportada para que el spec fije la portada sin abrir el PDF.
  */
-export function markSimulatedAs(documento: jsPDF): void {
-  const angulo = 35;
-  const radianes = (angulo * Math.PI) / 180;
-  const paginas = documento.getNumberOfPages();
-  for (let pagina = 1; pagina <= paginas; pagina++) {
-    documento.setPage(pagina);
-    const ancho = documento.internal.pageSize.getWidth();
-    const alto = documento.internal.pageSize.getHeight();
-    let tamano = 28;
-    documento.setFontSize(tamano);
-    const largoBase = documento.getTextWidth(SIMULATED_MARK);
-    tamano = Math.min(tamano, (tamano * ancho * 0.8) / (largoBase * Math.cos(radianes)));
-    documento.setFontSize(tamano);
-    const largo = documento.getTextWidth(SIMULATED_MARK);
-    const x = ancho / 2 - (largo / 2) * Math.cos(radianes);
-    const y = alto / 2 + (largo / 2) * Math.sin(radianes);
-    documento.setTextColor(210, 210, 210);
-    documento.text(SIMULATED_MARK, x, y, { angle: angulo });
-  }
-  documento.setTextColor(0, 0, 0);
-}
-
-/** El QR, ≥ 3 × 3 cm como recomienda la norma, abajo a la derecha de la última hoja. */
-export function addQr(documento: jsPDF, qrPng: string): void {
-  const LADO_PT = 90; // ≈ 3,2 cm
-  const MARGEN_PT = 40;
-  documento.setPage(documento.getNumberOfPages());
-  const ancho = documento.internal.pageSize.getWidth();
-  const alto = documento.internal.pageSize.getHeight();
-  documento.addImage(qrPng, 'PNG', ancho - LADO_PT - MARGEN_PT, alto - LADO_PT - MARGEN_PT - 20, LADO_PT, LADO_PT);
-}
-
-/** El PDF armado, sin guardar. `qrPng` es una data URL PNG, o `null` si no se pudo generar. */
-export function buildGraphicRepresentation(factura: SimulatedInvoice, qrPng: string | null): jsPDF {
-  const documento = buildBlocksPdf(graphicRepresentationBlocks(factura), {
-    title: 'Factura (SIMULADA)',
-    kind: 'Factura simulada',
+export function invoicePdfOptions(factura: SimulatedInvoice): PdfExportOptions {
+  const issuedAt = invoiceIssuedAt(factura.issuedAt);
+  return {
+    title: 'FACTURA (SIMULADA)',
+    subtitle: '(Con Derecho a Crédito Fiscal)',
+    kind: 'Factura simulada · Sin validez fiscal',
     reference: `N.º ${factura.invoiceNumber}`,
-    subtitle: `${factura.issuer.legalName} · ${dateAndTime(factura.issuedAt)}`,
-    footerNote: 'Factura SIMULADA · Sin validez fiscal · No emitida ante el SIN · AloVida',
-  });
-  markSimulatedAs(documento);
-  if (qrPng !== null) addQr(documento, qrPng);
-  return documento;
+    meta: [{ label: 'Estado SIAT (SIMULADO)', value: estadoLegible(factura.siatResponse.codigoDescripcion) }],
+    ...(issuedAt === undefined ? {} : { issuedAt }),
+    issuer: pdfIssuerOf(factura.issuer),
+    footerNote: SIMULATED_INVOICE_FOOTER,
+    watermark: SIMULATED_INVOICE_WATERMARK,
+    firma: null,
+  };
+}
+
+/**
+ * El PDF armado, sin guardar.
+ *
+ * @param qr - El bloque del QR ({@link invoiceQrBlock}), o `null` si no se pudo
+ *   generar.
+ */
+export function buildGraphicRepresentation(factura: SimulatedInvoice, qr: PdfBlock | null): jsPDF {
+  return buildBlocksPdf(graphicRepresentationBlocks(factura, qr), invoicePdfOptions(factura));
 }
 
 /** `factura-12-SIMULADA.pdf` / `.xml`: el nombre también lo dice. */
@@ -194,20 +306,9 @@ export function fileName(factura: SimulatedInvoice, extension: 'pdf' | 'xml'): s
   return `factura-${factura.invoiceNumber}-SIMULADA.${extension}`;
 }
 
-/** Genera el QR (lib cargada perezosamente) y descarga el PDF. */
+/** Genera el QR (lib cargada perezosamente por el motor) y descarga el PDF. */
 export async function downloadGraphicRepresentation(factura: SimulatedInvoice): Promise<void> {
-  buildGraphicRepresentation(factura, await qrAsPng(factura)).save(fileName(factura, 'pdf'));
-}
-
-/** El QR como PNG, o `null` si la lib no carga: sin QR el papel sigue siendo legible y simulado. */
-async function qrAsPng(factura: SimulatedInvoice): Promise<string | null> {
-  try {
-    const modulo = (await import('qrcode')) as typeof import('qrcode') & { readonly default?: typeof import('qrcode') };
-    const qr = modulo.default ?? modulo;
-    return await qr.toDataURL(qrContent(factura), { margin: 2, width: 360, color: { dark: '#000000', light: '#ffffff' } });
-  } catch {
-    return null;
-  }
+  buildGraphicRepresentation(factura, await invoiceQrBlock(factura)).save(fileName(factura, 'pdf'));
 }
 
 /** Descarga el XML tal cual se «envió» al SIAT simulado. */
