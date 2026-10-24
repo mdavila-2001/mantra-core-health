@@ -120,6 +120,7 @@ const { DocumentoFalso } = vi.hoisted(() => {
 
     addPage(): this {
       this.llamadas.addPage += 1;
+      this.llamadas.orden.push('— hoja nueva —');
       this.paginas += 1;
       this.paginaActual = this.paginas;
       return this;
@@ -1110,6 +1111,26 @@ describe('las tablas', () => {
           indice > doc.llamadas.text.map(([texto]) => texto).lastIndexOf('IMPORTE'),
       );
       if (doc.llamadas.addPage > 0) expect(enLaUltimaHoja.length, `con ${n} filas`).not.toBe(1);
+    }
+  });
+
+  /**
+   * La caja de totales que cierra una tabla no queda sola arriba de una hoja
+   * nueva: se lleva con ella las últimas filas.
+   */
+  it('los totales que cierran una tabla nunca quedan solos en una hoja', async () => {
+    const { totalsBlock } = await import('./pdf-export');
+    for (let n = 20; n <= 60; n += 1) {
+      buildBlocksPdf([
+        { kind: 'row', text: '', cells: ['Concepto', 'Importe'], header: true },
+        ...Array.from({ length: n }, (_, i) => ({ kind: 'row' as const, text: '', cells: [`Cuota ${i + 1}`, '100,00'] })),
+        totalsBlock([{ label: 'Total a pagar', value: '1,00 Bs', emphasis: true }]),
+      ]);
+      const { orden } = ultimoDocumento().llamadas;
+      const total = orden.indexOf('TOTAL A PAGAR');
+      const hoja = orden.lastIndexOf('— hoja nueva —', total);
+      const filasEnLaHoja = orden.slice(hoja + 1, total).filter((linea) => linea.startsWith('Cuota '));
+      expect(filasEnLaHoja.length, `con ${n} filas`).toBeGreaterThanOrEqual(1);
     }
   });
 

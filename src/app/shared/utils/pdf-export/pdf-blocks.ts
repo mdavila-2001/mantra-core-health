@@ -68,9 +68,18 @@ export function groupBlocks(blocks: readonly PdfBlock[]): readonly Element[] {
 
 /** Dibuja el contenido entero, en orden. */
 export function drawContent(composer: PdfComposer, blocks: readonly PdfBlock[]): void {
-  for (const element of groupBlocks(blocks)) {
+  const elements = groupBlocks(blocks);
+  for (const [index, element] of elements.entries()) {
     if (element.type === 'table') {
-      drawTable(composer, element.rows);
+      // Los totales que cierran una tabla no quedan solos en una hoja nueva:
+      // la última fila se reserva junto con ellos (y con el aire que los separa:
+      // el de fin de tabla más el de antes de la caja).
+      const next = elements[index + 1];
+      const trailing =
+        next?.type === 'block' && (next.block.kind === 'totals' || next.block.kind === 'total')
+          ? PDF_SPACE.md + PDF_SPACE.sm + measureTotals(composer, totalsOf(next.block)).total
+          : 0;
+      drawTable(composer, element.rows, trailing);
     } else if (element.type === 'fieldList') {
       drawFieldList(composer, element.fields);
     } else {
@@ -97,10 +106,8 @@ function drawBlock(composer: PdfComposer, block: PdfBlock): void {
       drawNote(composer, block);
       return;
     case 'total':
-      drawTotals(composer, [totalRowOf(block.text)]);
-      return;
     case 'totals':
-      drawTotals(composer, block.totals ?? []);
+      drawTotals(composer, totalsOf(block));
       return;
     case 'qr':
       drawQr(composer, block);
@@ -566,19 +573,15 @@ function totalRowOf(text: string): PdfTotalRow {
   return { label: text.slice(0, at).trim(), value: text.slice(at + 1).trim(), emphasis: true };
 }
 
-/**
- * La caja de totales, a la derecha: subtotal y descuentos con su importe en
- * negrita y, al final, el total a pagar sobre una banda en el degradado del
- * petróleo, con el rótulo en versalitas menta. Es lo único del papel con un
- * relleno oscuro fuera de la portada, y por eso es lo primero que se encuentra
- * al buscar cuánto se paga.
- */
-function drawTotals(composer: PdfComposer, rows: readonly PdfTotalRow[]): void {
-  if (rows.length === 0) return;
-  const width = gridSpan(5);
-  const x = composer.right - width;
-  const pad = 12;
+/** Las filas de un bloque `totals`, o la de un `total` suelto. */
+function totalsOf(block: PdfBlock): readonly PdfTotalRow[] {
+  return block.kind === 'total' ? [totalRowOf(block.text)] : (block.totals ?? []);
+}
 
+/** La caja de totales medida antes de dibujarla: cada fila y el alto total. */
+function measureTotals(composer: PdfComposer, rows: readonly PdfTotalRow[]) {
+  const width = gridSpan(5);
+  const pad = 12;
   const measured = rows.map((row) => {
     const emphasis = row.emphasis === true;
     const labelStyle = emphasis ? PDF_TYPE.grandTotalLabel : PDF_TYPE.totalRow;
@@ -593,7 +596,22 @@ function drawTotals(composer: PdfComposer, rows: readonly PdfTotalRow[]): void {
     const height = lines + (emphasis ? 22 : 11);
     return { emphasis, labelStyle, valueStyle, label, value, height };
   });
-  const total = measured.reduce((sum, row) => sum + row.height, 0) + 4;
+  return { measured, total: rows.length === 0 ? 0 : measured.reduce((sum, row) => sum + row.height, 0) + 4 };
+}
+
+/**
+ * La caja de totales, a la derecha: subtotal y descuentos con su importe en
+ * negrita y, al final, el total a pagar sobre una banda en el degradado del
+ * petróleo, con el rótulo en versalitas menta. Es lo único del papel con un
+ * relleno oscuro fuera de la portada, y por eso es lo primero que se encuentra
+ * al buscar cuánto se paga.
+ */
+function drawTotals(composer: PdfComposer, rows: readonly PdfTotalRow[]): void {
+  if (rows.length === 0) return;
+  const width = gridSpan(5);
+  const x = composer.right - width;
+  const pad = 12;
+  const { measured, total } = measureTotals(composer, rows);
 
   composer.space(PDF_SPACE.sm);
   composer.ensure(total);

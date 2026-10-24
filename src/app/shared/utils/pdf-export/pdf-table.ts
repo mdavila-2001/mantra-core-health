@@ -36,7 +36,11 @@ const EMPTY_CELL = /^[—–-]?$/;
 export const TABLE_CONTINUES = 'Continúa en la página siguiente';
 
 /** Dibuja las filas seguidas como una tabla. */
-export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[]): void {
+/**
+ * @param trailing - El alto de lo que tiene que ir pegado a la última fila
+ *   (la caja de totales que cierra la tabla): se reserva junto con ella.
+ */
+export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[], trailing = 0): void {
   const cells = rows.map(cellsOf);
   const columns = Math.max(...cells.map((row) => row.length));
   if (columns === 0) return;
@@ -59,9 +63,10 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[]): voi
     const next = rows[index + 1];
     const keepsNext =
       next !== undefined && next.header !== true && (isHeader || index === rows.length - 2);
-    const needed = keepsNext
-      ? layout.height + layoutRow(composer, cells[index + 1], widths, false).height
-      : layout.height;
+    const last = index === rows.length - 1;
+    const needed =
+      (keepsNext ? layout.height + layoutRow(composer, cells[index + 1], widths, false).height : layout.height) +
+      (last || index === rows.length - 2 ? trailing : 0);
 
     if (composer.y + needed > composer.bottom && !composer.atPageTop) {
       if (!isHeader && index > 0) {
@@ -82,7 +87,6 @@ export function drawTable(composer: PdfComposer, rows: readonly PdfBlock[]): voi
     }
     drawRow(composer, layout, widths, numeric, bodyIndex % 2 === 1 ? 'zebra' : 'plain');
     bodyIndex += 1;
-    const last = index === rows.length - 1;
     composer.rule(
       composer.y,
       last ? PDF_COLORS.rule : PDF_COLORS.ruleSoft,
