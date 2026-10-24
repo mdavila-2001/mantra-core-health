@@ -46,12 +46,10 @@ describe('validador de contrato de la maqueta', () => {
     ).toEqual([]);
   });
 
-  it('C5 · firmar una nota sin firmante es un 400', () => {
+  it('C5 · firmar una nota sin firmante pasa: el firmante sale de la sesión', () => {
     expect(
-      contractViolations('POST', `/charts/notes/${REPORT}/versions/${REPORT}/sign`, {})?.map(
-        (v) => v.field,
-      ),
-    ).toEqual(['signerProfileId']);
+      contractViolations('POST', `/charts/notes/${REPORT}/versions/${REPORT}/sign`, {}),
+    ).toEqual([]);
   });
 
   it('C3 · el base64 de la firma en el alta de médico es un 400', () => {
