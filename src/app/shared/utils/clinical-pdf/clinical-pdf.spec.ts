@@ -245,7 +245,7 @@ describe('Documento de receta', () => {
     const { emitidaEl: _emitida, ...sinEmitir } = RECETA;
 
     expect(avisos(bloquesDeReceta(sinEmitir))).toEqual([
-      expect.objectContaining({ tone: 'alert', title: 'Receta sin emitir' }),
+      expect.objectContaining({ tone: 'alert', text: expect.stringContaining('Receta sin emitir') }),
     ]);
     expect(avisos(bloquesDeReceta(RECETA))).toEqual([]);
   });

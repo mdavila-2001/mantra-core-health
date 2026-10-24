@@ -56,7 +56,7 @@ const SERVICIOS = [
  * plantilla imprime «Monto a pagar» desde `montoTotal`.
  */
 function factura(numero: number, renglones: number, descuentoAdicional: number): SimulatedInvoice {
-  const giftCard = 0;
+  const giftCard = Number('0');
   const detalle: SiatRow[] = Array.from({ length: renglones }, (_, i) => {
     const [codigo, descripcion, precio] = SERVICIOS[i % SERVICIOS.length]!;
     const cantidad = 1 + (i % 3);

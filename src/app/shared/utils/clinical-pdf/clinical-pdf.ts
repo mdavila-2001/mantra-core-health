@@ -303,11 +303,12 @@ export function bloquesDeReceta(receta: DocumentoDeReceta): readonly PdfBlock[] 
   if (receta.emitidaEl === undefined) {
     // Se dice, no se disimula: una receta sin emitir no vale como receta, y eso
     // va en un aviso destacado —y en la marca de agua— y no en una línea más.
+    // Sin título: el aviso lo dice en su primera palabra, y el renglón que
+    // ahorra es el que deja la firma en la misma hoja.
     bloques.push(
       noteBlock(
-        'Esta receta está sin emitir: es una copia de trabajo y no es válida para dispensar.',
+        'Receta sin emitir: es una copia de trabajo y no es válida para dispensar.',
         'alert',
-        'Receta sin emitir',
       ),
     );
   }
