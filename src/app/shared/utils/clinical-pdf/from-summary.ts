@@ -303,8 +303,8 @@ export function historiaDesdeFuentes(
     recetas: fuentes.resumen.medicationRequests.map((indicacion) =>
       recetaDesdeResumen(indicacion, contexto, etiqueta),
     ),
-    // Cerrado el TODO(J3/E1): el archivo del paciente ya lee `forms/me` y los
-    // aporta acá como fuente, igual que las órdenes y los resultados.
+    // El archivo del paciente lee `forms/me` y los aporta acá como fuente,
+    // igual que las órdenes y los resultados.
     formularios: fuentes.formularios,
     ordenes: fuentes.ordenes.map((orden) => ordenDesdeElPortal(orden, contexto, etiqueta)),
     resultados: fuentes.resultados.map((resultado) => bloqueDeResultado(resultado, etiqueta)),

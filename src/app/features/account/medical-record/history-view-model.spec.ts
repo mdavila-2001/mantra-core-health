@@ -298,6 +298,36 @@ describe('bloquesDeDiagnosticos', () => {
     expect(porque).toEqual(['resuelto el 03/09/2026', 'Descartado']);
   });
 
+  it('un descartado con motivo escrito lo dice junto a la etiqueta; sin motivo, sólo la etiqueta', () => {
+    const decision = {
+      outcome: 'REFUTED' as const,
+      decidedAt: '2026-09-03T12:00:00.000Z',
+      decidedByProfileId: 'prof-1',
+      basedOn: null,
+    };
+    const [, , historicos] = bloquesDeDiagnosticos(
+      [
+        condicion({
+          id: 'a',
+          verificationStatusConceptId: 'id-descartado',
+          verification: { ...decision, reasonText: '  Descartado por ecografía normal ' },
+        }),
+        condicion({
+          id: 'b',
+          verificationStatusConceptId: 'id-descartado',
+          verification: { ...decision, reasonText: '   ' },
+        }),
+      ],
+      etiqueta,
+      codigo,
+    );
+
+    const porque = historicos!.filas.map(
+      (fila) => fila.hechos.find((hecho) => hecho.etiqueta === 'Por qué')?.valor,
+    );
+    expect(porque).toEqual(['Descartado: Descartado por ecografía normal', 'Descartado']);
+  });
+
   /**
    * El histórico no lleva plazo: una fecha esperada de resolución en algo ya
    * cerrado se leería como que todavía falta.

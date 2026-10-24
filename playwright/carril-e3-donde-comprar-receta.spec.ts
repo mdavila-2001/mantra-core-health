@@ -6,17 +6,14 @@ import { entrar, estable, irA } from './support/sesion';
 /**
  * Carril E3 — dónde comprar mi receta.
  *
- * ## Qué prueba hoy y qué queda esperando al backend
+ * ## Qué prueba
  *
- * El backend del carril E2 (`/pharmacy` y `/pharmacy-inventory`) todavía no
- * está fusionado en `dev`, así que este archivo prueba **el recorrido que ya
- * es real sin él**: que la historia clínica del paciente sigue en pie con el
- * botón nuevo, que la pantalla de compra existe, resuelve una receta
- * inexistente como «no encontrada» sin inventar datos, y que **no toca la
- * geolocalización del navegador ni los endpoints de farmacia** cuando no
- * corresponde. El recorrido completo —receta emitida, sucursales completas
- * primero, faltantes por nombre— está declarado al final como `fixme`: se
- * enciende cuando E2 llegue a `dev`, no antes.
+ * Que la historia clínica del paciente sigue en pie con el botón nuevo, que la
+ * pantalla de compra existe, resuelve una receta inexistente como «no
+ * encontrada» sin inventar datos, y que **no toca la geolocalización del
+ * navegador ni los endpoints de farmacia** cuando no corresponde. El recorrido
+ * con una receta emitida necesitaría que el entorno E2E siembre una receta
+ * comprable, y este archivo no lo cubre.
  *
  * ## Por qué el paciente es nuevo
  *
@@ -82,18 +79,4 @@ test.describe('Carril E3 · dónde comprar mi receta', () => {
     // Sin receta no hay consulta: a los endpoints de farmacia no salió nada.
     expect(consultasAFarmacia).toEqual([]);
   });
-
-  // TODO(E3 · fase 2): encender cuando el carril E2 esté fusionado en `dev` y
-  // el entorno E2E siembre una receta emitida comprable (doctora → prescribir
-  // → firmar → emitir sobre un paciente conocido). El recorrido que este caso
-  // tiene que demostrar, con la API real y sin un solo cuerpo escrito a mano:
-  // entrar como paciente → «Mi historia clínica» → «Dónde comprarla» →
-  // sucursales completas primero, faltantes por nombre, total y distancia →
-  // «Reservar para retirar» y «Pedir delivery» visibles y deshabilitados.
-  test.fixme(
-    'una receta emitida lista sucursales completas primero, con faltantes por nombre',
-    async () => {
-      // Pendiente del backend E2 en `dev`.
-    },
-  );
 });

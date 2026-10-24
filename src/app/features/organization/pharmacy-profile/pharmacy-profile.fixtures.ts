@@ -8,11 +8,12 @@ import type {
 /**
  * **Los datos de ejemplo de la ficha de la farmacia.**
  *
- * Todo lo que esta pantalla muestra —los datos legales, la carpeta de
- * documentos, el representante y los gerentes— describe algo que la API
- * todavía no publica. El contrato de farmacia no tiene ninguno de esos campos,
- * así que **no se inventa un campo en `core/`**: se declara acá, junto a la
- * pantalla que lo dibuja, y la pantalla lo rotula como lo que es.
+ * Son los que la pantalla dibuja sobre la maqueta (`SAMPLE_DATA_ENABLED`):
+ * los datos legales, la carpeta de documentos, el representante y los
+ * gerentes. Contra la API real la pantalla lee el contrato
+ * (`pharmacy-profile.ts`, «De dónde sale cada pestaña»). Las formas de ejemplo
+ * **no inventan un campo en `core/`**: se declaran acá, junto a la pantalla
+ * que las dibuja, y la pantalla las rotula como lo que son.
  *
  * Reglas que este archivo respeta y conviene no perder de vista:
  *
@@ -26,10 +27,6 @@ import type {
  *   hoy y mañana, y dejaría de poder mostrarse dos veces igual.
  * - **Lo que se pinta se rotula.** `NOTA_DE_DATOS_DE_EJEMPLO` es el cartel que
  *   acompaña a todo lo que sale de acá.
- *
- * TODO(API): cuando el backend publique el perfil de la farmacia, estos datos
- * se reemplazan por la respuesta de la API y este archivo se queda sólo con los
- * ejemplos de las pruebas.
  */
 
 /**

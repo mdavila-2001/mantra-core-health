@@ -1245,8 +1245,8 @@ export class CommunityClient {
    * `PUT /community/conversations/:id/messages/:messageId/reaction` —
    * reacciona a un mensaje.
    *
-   * **Pendiente de backend**: la API real todavía no tiene este endpoint (ver
-   * `PLAN-CHAT-WHATSAPP.md` (§ «Retoques del 30/09»)); la maqueta lo responde con el contrato de acá.
+   * La API real no publica este endpoint: sólo lo responde la maqueta, con el
+   * contrato de acá.
    *
    * @param conversationId - El hilo.
    * @param messageId - Qué mensaje.

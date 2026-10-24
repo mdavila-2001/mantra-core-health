@@ -196,8 +196,8 @@ export interface BookingInsuranceClaim {
  * registro posterior, así que se puede citar de nuevo a alguien desde una cita
  * que todavía no abrió su consulta.
  *
- * Contrato compartido de C0/C4; la persistencia y lectura reales de este
- * vínculo siguen pendientes de backend P42. El simulador conserva el origen.
+ * Contrato compartido de C0/C4; la API lo persiste y lo devuelve en la
+ * lectura de la cita (P42).
  */
 export interface FollowUpOrigin {
   /** La reserva de la que nace esta reconsulta. */
@@ -206,7 +206,7 @@ export interface FollowUpOrigin {
   readonly encounterId: string | null;
   /**
    * La respuesta del formulario médico de esa consulta de la que sale la
-   * reconsulta. En la cita es obligatoria; pendiente de backend (P43).
+   * reconsulta. En la cita es obligatoria (P43).
    */
   readonly formInstanceId?: string;
 }
@@ -225,8 +225,7 @@ export interface FollowUpOrigin {
  * Ausente o `null` es un estado corriente: la cita de origen puede haber
  * quedado sin cupo. Ahí el sello va solo, sin la frase.
  *
- * Pendiente de backend **P42**: la lectura tiene que resolverlo en
- * `BookingItemDto`. Hoy sólo lo sirve el simulador.
+ * La API lo resuelve en `BookingItemDto` (`followUpOf`, P42).
  */
 export interface FollowUpOriginRef extends FollowUpOrigin {
   readonly startAt?: Date | null;
@@ -1029,7 +1028,7 @@ export interface NewDirectAppointment {
    * **Ausente es una cita puntual corriente**, que es lo que agendan
    * `appointment-new` y el mostrador: los rechazos propios de la reconsulta
    * —403, 404, 422 y 409— sólo corren cuando este campo viaja.
-   * El simulador asigna `APT-RECONSULTA`; la escritura real depende de P42.
+   * El simulador asigna `APT-RECONSULTA`; la API guarda el vínculo (P42).
    */
   readonly followUpOf?: FollowUpOrigin;
 }

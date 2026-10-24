@@ -447,7 +447,7 @@ export class ClinicalClient {
 
   /**
    * `POST /clinical/conditions/:id/verification` — confirma o rechaza un
-   * diagnóstico presuntivo (C3; pendiente de backend P41).
+   * diagnóstico presuntivo (C3, P41).
    *
    * Vuelve la condición entera, no un recibo: la decisión cambia el estado
    * clínico, el de verificación y las fechas, y la fila de la tabla se

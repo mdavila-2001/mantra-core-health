@@ -31,7 +31,7 @@ export interface CreateClinicalNoteInput {
   readonly encounterId?: string;
   /** Qué clase de nota es; sin él, la que el servidor tome por omisión. */
   readonly noteTypeConceptId?: string;
-  /** Las filas campo/valor de C1. Lectura y escritura reales pendientes de backend (P39). */
+  /** Las filas campo/valor de C1. Sólo las guarda el simulador: la API no las declara (P39). */
   readonly entries?: readonly MedicalNoteEntry[];
   /** Motivo de consulta. */
   readonly chiefComplaintText?: string;
@@ -68,7 +68,7 @@ export interface ClinicalNoteVersionRef {
 export interface AppendClinicalNoteVersionInput {
   /** Quién escribe esta versión. */
   readonly authorProfileId: string;
-  /** Las filas campo/valor de C1. Lectura y escritura reales pendientes de backend (P39). */
+  /** Las filas campo/valor de C1. Sólo las guarda el simulador: la API no las declara (P39). */
   readonly entries?: readonly MedicalNoteEntry[];
   /** Por qué se corrige una nota ya firmada. Obligatorio sólo en ese caso (409 sin él). */
   readonly amendmentReasonText?: string;

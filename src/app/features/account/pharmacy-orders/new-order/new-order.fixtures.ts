@@ -46,10 +46,8 @@ import type {
  *   la línea hace que la demostración funcione con cualquier borrador.
  * - **Los importes son texto**, y la aritmética va en centavos con la misma
  *   biblioteca que las promociones.
- *
- * TODO(FAR-E2 / F2.1.2): cuando la receta llegue completa y la farmacia
- * publique alternativas, {@link DATOS_DE_EJEMPLO_DE_LA_RECETA} se reemplaza por
- * la fuente real y este archivo se queda con los datos de las pruebas.
+ * - **Es de ejemplo porque ningún contrato publica alternativas** de la
+ *   farmacia para un renglón de la receta.
  */
 
 /** El cartel único: quien mira la pantalla sabe qué parte es maqueta. */
