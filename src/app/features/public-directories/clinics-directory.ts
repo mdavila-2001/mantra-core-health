@@ -10,6 +10,7 @@ import type {
 import { DirectoryPage } from '@shared/components/organisms/directory-page/directory-page';
 import type { SustantivoDelDirectorio } from '@shared/components/organisms/directory-page/directory-page.types';
 
+import type { AccionDeLaFicha } from './public-directory-filters';
 import { PublicDirectoryListing } from './public-directory-listing';
 
 const SUSTANTIVO: SustantivoDelDirectorio = {
@@ -49,6 +50,13 @@ export class ClinicsDirectory extends PublicDirectoryListing {
 
   /** La ficha de un resultado, dentro del panel. Ver `rutaDeLaFicha`. */
   protected readonly rutaDeLaFicha = '/clinics-directory';
+
+  /** Directo a la sección donde se elige, sin pasar por la cabecera. */
+  protected override readonly accionDeLaFicha: AccionDeLaFicha = {
+    label: 'Ver servicios y precios',
+    fragment: 'servicios',
+    icon: 'stethoscope',
+  };
 
   protected buscar(
     filtros: PublicSearchQuery,

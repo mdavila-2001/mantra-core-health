@@ -22,6 +22,8 @@ import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
+import * as cortes from './public-directory-filters';
+
 /** Tope por página que acepta el contrato público (`limit` se recorta a 50). */
 const POR_PAGINA = 50;
 
@@ -37,9 +39,6 @@ const MAX_PAGINAS = 10;
 
 /** Clave del chip de ciudad en la URL. */
 const PARAM_CIUDAD = 'ciudad';
-
-/** Clave del chip de verificación en la URL. */
-const PARAM_VERIFICADO = 'verificado';
 
 /** Clave del departamento elegido en el mapa, en la URL. */
 const PARAM_DEPARTAMENTO = 'departamento';
@@ -110,14 +109,20 @@ export abstract class PublicDirectoryListing {
    */
   protected abstract readonly rutaDeLaFicha: string;
 
+  /** El botón de cada tarjeta; `null` deja la tarjeta sin botón. */
+  protected readonly accionDeLaFicha: cortes.AccionDeLaFicha | null = null;
+
+  private tarjetaDe(fila: PublicSearchResult) {
+    return cortes.conAccion(aTarjeta(fila, this.opcionesDeTarjeta), this.accionDeLaFicha);
+  }
+
   /**
    * Cómo se dibuja cada tarjeta: sin la insignia del vertical —este directorio
    * es de una sola clase— y con el destino de arriba.
    */
   private readonly opcionesDeTarjeta = {
     mostrarTipo: false,
-    ruta: (fila: PublicSearchResult) =>
-      `${this.rutaDeLaFicha}/${encodeURIComponent(fila.slug)}`,
+    ruta: (fila: PublicSearchResult) => `${this.rutaDeLaFicha}/${encodeURIComponent(fila.slug)}`,
   } as const;
 
   protected readonly estado = signal<ViewState<readonly PublicSearchResult[]>>(loading());
@@ -185,7 +190,8 @@ export abstract class PublicDirectoryListing {
     return this.porCiudad().get(normalizePlace(ciudad)) === departamento ? ciudad : null;
   });
 
-  protected readonly soloVerificados = computed(() => this.parametro(PARAM_VERIFICADO) === 'true');
+  /** Los cortes comunes puestos: verificación, nota y agenda. */
+  private readonly cortesComunes = computed(() => cortes.cortesComunesDe((c) => this.parametro(c)));
 
   /**
    * La categoría elegida por chip: el código, nunca la etiqueta.
@@ -281,11 +287,10 @@ export abstract class PublicDirectoryListing {
    * siendo la de «cuánto hay ahí si voy».
    */
   private readonly paraElMapa = computed(() => {
-    const soloVerificados = this.soloVerificados();
     const categoria = this.categoria();
     return (dataOf(this.estado()) ?? []).filter(
       (fila) =>
-        (!soloVerificados || fila.verified) &&
+        cortes.pasaLosCortesComunes(fila, this.cortesComunes()) &&
         (categoria === null || fila.category?.code === categoria),
     );
   });
@@ -313,12 +318,11 @@ export abstract class PublicDirectoryListing {
   /** Las filas que quedan después de los tres cortes en memoria. */
   private readonly filtradas = computed(() => {
     const ciudad = this.ciudad();
-    const soloVerificados = this.soloVerificados();
     const categoria = this.categoria();
     return this.delDepartamento().filter(
       (fila) =>
         (ciudad === null || fila.city === ciudad) &&
-        (!soloVerificados || fila.verified) &&
+        cortes.pasaLosCortesComunes(fila, this.cortesComunes()) &&
         (categoria === null || fila.category?.code === categoria),
     );
   });
@@ -351,7 +355,7 @@ export abstract class PublicDirectoryListing {
         // repetirla en cada tarjeta le roba el renglón al subtítulo. Ver
         // `OpcionesDeTarjeta`.
         resultados: filas
-          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
+          .map((fila) => this.tarjetaDe(fila))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
@@ -361,7 +365,7 @@ export abstract class PublicDirectoryListing {
         id: 'sin-ciudad',
         nombre: 'Sin ciudad declarada',
         resultados: sinCiudad
-          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
+          .map((fila) => this.tarjetaDe(fila))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       });
     }
@@ -379,9 +383,10 @@ export abstract class PublicDirectoryListing {
    */
   private readonly paraLasCategorias = computed<readonly PublicSearchResult[]>(() => {
     const ciudad = this.ciudad();
-    const soloVerificados = this.soloVerificados();
     return this.delDepartamento().filter(
-      (fila) => (ciudad === null || fila.city === ciudad) && (!soloVerificados || fila.verified),
+      (fila) =>
+        (ciudad === null || fila.city === ciudad) &&
+        cortes.pasaLosCortesComunes(fila, this.cortesComunes()),
     );
   });
 
@@ -437,15 +442,8 @@ export abstract class PublicDirectoryListing {
    * que siempre devuelve cero es peor que no tenerlo.
    */
   protected readonly filtros = computed<readonly FilterDef[]>(() => {
-    const filtros: FilterDef[] = [
-      {
-        key: PARAM_VERIFICADO,
-        label: 'Verificación',
-        icon: 'shield',
-        asChips: true,
-        options: [{ value: 'true', label: 'Sólo verificadas' }],
-      },
-    ];
+    // Verificación, nota y agenda: ver `public-directory-filters.ts`.
+    const filtros = [...cortes.filtrosComunes(dataOf(this.estado()) ?? [], this.cortesComunes())];
 
     /* ---- la categoría, que es el corte de arriba de todos --------------- */
     const categorias = this.categoriasDisponibles();
@@ -531,7 +529,7 @@ export abstract class PublicDirectoryListing {
    * El texto **vuelve a pedirle al servidor** —es el único filtro que el
    * controlador público aplica de verdad—. Los chips no se copian acá: la
    * barra ya los escribió en la URL antes de emitir, y de la URL los leen
-   * `ciudad` y `soloVerificados`.
+   * `ciudad` y los cortes comunes.
    */
   protected filtrar(activos: Readonly<Record<string, string>>): void {
     const termino = activos[SEARCH_PARAM] ?? '';

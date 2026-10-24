@@ -8,7 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink, type Params } from '@angular/router';
+import { ActivatedRoute, Router, type Params } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of, Subject, switchMap, tap } from 'rxjs';
 
@@ -30,14 +30,11 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
-import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../core/data-access/terminology/bo-municipalities.service';
 import { departmentByCity, normalizePlace } from '../../shared/geo/city-department';
-import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
-import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
 import { directoryPhoto, diagnosisCenterTheme } from '../../shared/utils/directory-photo';
 
 /**
@@ -62,11 +59,12 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
  * nada. El término de búsqueda libre viaja aparte, bajo `q`, y el backend lo
  * aplica sobre el nombre y el código del centro.
  *
- * **Faltan tres de la especificación** —estudio, aseguradora y precio máximo— y
- * no por olvido: el endpoint los acepta, pero dibujarlos como selector exige un
+ * **Faltan dos de la especificación** —estudio y aseguradora— y no por
+ * olvido: el endpoint los acepta, pero dibujarlos como selector exige un
  * catálogo de estudios y uno de aseguradoras que hoy no tienen lectura de
  * colección. Un campo de texto donde va un identificador sería pedirle a la
- * persona que escriba un uuid.
+ * persona que escriba un uuid. El precio máximo sí va desde el 24/10/2026: son
+ * topes fijos, no un catálogo.
  */
 const FILTROS: readonly FilterDef[] = [
   {
@@ -102,8 +100,33 @@ const FILTROS: readonly FilterDef[] = [
     options: [{ value: 'true', label: 'Atiende sin cita' }],
   },
   {
+    key: 'acceptsExternalOrders',
+    label: 'Recibe órdenes externas',
+    asChips: true,
+    chipsGroup: 'Comodidades',
+    options: [{ value: 'true', label: 'Recibe órdenes de otro médico' }],
+  },
+  {
+    // Lo que cuesta el estudio más barato del centro: «¿me alcanza?» es la
+    // pregunta que sigue a «¿dónde?» (propietario, 24/10/2026: todos los
+    // filtros que los datos permitan).
+    key: 'maxAmount',
+    label: 'Precio desde',
+    icon: 'wallet',
+    asChips: true,
+    options: [
+      { value: '50', label: 'Hasta Bs 50' },
+      { value: '100', label: 'Hasta Bs 100' },
+      { value: '200', label: 'Hasta Bs 200' },
+      { value: '500', label: 'Hasta Bs 500' },
+    ],
+  },
+  {
     key: 'minRating',
     label: 'Calificación',
+    icon: 'star',
+    // En la columna con el resto, no en un desplegable escondido arriba.
+    asChips: true,
     options: [
       { value: '4.5', label: '4,5 o más' },
       { value: '4', label: '4 o más' },
@@ -111,32 +134,6 @@ const FILTROS: readonly FilterDef[] = [
     ],
   },
 ];
-
-/** Una categoría en la portada: su nombre, su ícono y cuántos centros tiene. */
-export interface TarjetaDeCategoria {
-  readonly codigo: string;
-  readonly nombre: string;
-  readonly cantidad: number;
-  readonly icono: NavIconName;
-}
-
-/**
- * El ícono de cada categoría de centro.
- *
- * Sale del set del nav y **no** de uno nuevo, al revés que las especialidades:
- * acá son dos categorías y el set ya tiene los dos dibujos exactos —el matraz
- * para el laboratorio y la placa para la imagen—, con esos mismos significados.
- * `flask` es además el que el registro de secciones ya le da a este directorio,
- * así que el menú y la portada muestran la misma cosa, que es lo único que un
- * ícono aporta.
- *
- * El genérico es el estetoscopio: una categoría nueva del catálogo entra con un
- * dibujo honesto —«esto es un centro de salud»— en vez de dejar un hueco.
- */
-const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
-  DU_TYPE_LAB: 'flask',
-  DU_TYPE_IMAGING: 'scan',
-};
 
 /**
  * El buscador de centros de diagnóstico, laboratorio e imagen.
@@ -165,26 +162,17 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
  */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [AppButtonLink, DirectoryPage, NavIcon, RouterLink],
+  imports: [DirectoryPage],
   templateUrl: './laboratory-directory.html',
   // El mapa comparte la hoja de clínicas y farmacias: es el mismo filtro.
-  styleUrls: [
-    '../../shared/styles/card-grid.css',
-    '../public-directories/directory-map.css',
-  ],
+  styleUrls: ['../public-directories/directory-map.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
-  /** La foto de la tarjeta de una categoría de la portada. */
-  protected fotoDe(codigo: string): string {
-    return directoryPhoto(diagnosisCenterTheme(codigo), codigo);
-  }
-
   /**
    * Si va embebido en otro contenedor —el modal de consulta de «Tus accesos»—.
    *
-   * Con `true` no dibuja encabezado de página: ni el de la portada de
-   * categorías ni el de `app-directory-page`. El recorrido es el mismo, la
+   * Con `true` no dibuja el encabezado de página de `app-directory-page`. El recorrido es el mismo, la
    * ruta sigue existiendo y sigue abriendo la pantalla completa.
    */
   readonly embebido = input(false);
@@ -207,13 +195,33 @@ export class LaboratoryDirectory {
     const opciones = this.ramas()
       .filter((rama) => (cuenta.get(rama.conceptId) ?? 0) > 0)
       .map((rama) => ({ value: rama.conceptId, label: `${rama.nombre} (${cuenta.get(rama.conceptId)})` }));
-    if (opciones.length < 2 && this.departamentoElegido() === null) {
-      return FILTROS;
+    const filtros: FilterDef[] = [...FILTROS];
+    if (opciones.length >= 2 || this.departamentoElegido() !== null) {
+      filtros.push({ key: PARAM_DEPARTAMENTO, label: 'Departamento', icon: 'pin', asChips: true, options: opciones });
     }
-    return [
-      ...FILTROS,
-      { key: PARAM_DEPARTAMENTO, label: 'Departamento', icon: 'pin', asChips: true, options: opciones },
-    ];
+    // La ciudad cuelga del departamento, como en clínicas y farmacias: sin él,
+    // serían dos preguntas para una sola decisión.
+    if (this.departamentoElegido() === null) {
+      return filtros;
+    }
+    const porCiudad = new Map<string, number>();
+    for (const unidad of this.delDepartamento(dataOf(this.unidades()) ?? [])) {
+      for (const ciudad of new Set(unidad.cities ?? [])) {
+        porCiudad.set(ciudad, (porCiudad.get(ciudad) ?? 0) + 1);
+      }
+    }
+    if (porCiudad.size >= 2 || this.ciudadElegida() !== null) {
+      filtros.push({
+        key: PARAM_CIUDAD,
+        label: 'Ciudad',
+        icon: 'building',
+        asChips: true,
+        options: [...porCiudad.entries()]
+          .sort(([a, n], [b, m]) => m - n || a.localeCompare(b, 'es'))
+          .map(([ciudad, cuantos]) => ({ value: ciudad, label: `${ciudad} (${cuantos})` })),
+      });
+    }
+    return filtros;
   });
   protected readonly sustantivo = SUSTANTIVO;
 
@@ -226,7 +234,7 @@ export class LaboratoryDirectory {
    * acepta—, igual que en clínicas y farmacias.
    */
   protected readonly state = computed<ViewState<readonly LaboratoryCategoryGroup[]>>(() =>
-    mapData(this.unidades(), (unidades) => groupUnits(this.delDepartamento(unidades))),
+    mapData(this.unidades(), (unidades) => groupUnits(this.deLaCiudad(this.delDepartamento(unidades)))),
   );
   protected readonly groups = computed(() => dataOf(this.state()) ?? []);
 
@@ -252,6 +260,21 @@ export class LaboratoryDirectory {
     const valor: unknown = this.parametros()[PARAM_DEPARTAMENTO];
     return typeof valor === 'string' && valor !== '' ? valor : null;
   });
+
+  /** La ciudad elegida en la faceta. Corta en memoria, como el departamento. */
+  protected readonly ciudadElegida = computed(() => {
+    const valor: unknown = this.parametros()[PARAM_CIUDAD];
+    return typeof valor === 'string' && valor !== '' ? valor : null;
+  });
+
+  private deLaCiudad(
+    unidades: readonly DiagnosticUnitSearchItem[],
+  ): readonly DiagnosticUnitSearchItem[] {
+    const elegida = this.ciudadElegida();
+    return elegida === null
+      ? unidades
+      : unidades.filter((unidad) => (unidad.cities ?? []).includes(elegida));
+  }
 
   /** Los departamentos donde el centro tiene alguna sede. */
   private departamentosDe(unidad: DiagnosticUnitSearchItem): ReadonlySet<string> {
@@ -345,68 +368,15 @@ export class LaboratoryDirectory {
     return activos;
   });
 
-  /**
-   * Sin categoría elegida ni nada buscado se muestra la portada: escribir en
-   * su barra ya es elegir, y los centros aparecen agrupados por categoría.
-   *
-   * El mismo trato que la portada de especialidades del directorio de médicos,
-   * y por el mismo motivo: la categoría se elige **antes** que el centro. Nadie
-   * busca «un centro»; se busca dónde hacerse un análisis o dónde hacerse una
-   * placa, y son dos recorridos que no se mezclan.
-   *
-   * Que lo decida la URL es lo que hace de «los laboratorios clínicos» un
-   * enlace que se puede pegar en un mensaje, y lo que deja que el «atrás» del
-   * navegador devuelva a la portada en vez de sacar de la pantalla.
-   */
-  protected readonly enPortada = computed(
-    () => (this.activos()['kind'] ?? '') === '' && (this.activos()[SEARCH_PARAM] ?? '') === '',
-  );
-
-  /**
-   * La bajada de cada escalón. En la portada, qué hay que elegir y cuántos
-   * centros hay; adentro, qué se está mirando.
-   */
-  protected readonly subtitulo = computed(() =>
-    this.enPortada()
-      ? `Elija qué necesita hacerse o busque el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
-      : 'Centros verificados de toda la red, con filtros a la izquierda para acotar.',
-  );
-
-  /**
-   * Las tarjetas de la portada: las categorías que **tienen** centros.
-   *
-   * Salen de los grupos ya cargados y no de una lista escrita acá ni de una
-   * segunda petición: `groupUnits` ya agrupa por `type.code` y cuenta. Una
-   * tarjeta que promete y abre vacía es peor que no estar, así que una
-   * categoría del catálogo sin centros publicados no se dibuja.
-   */
-  protected readonly categorias = computed<readonly TarjetaDeCategoria[]>(() =>
-    this.groups().map((grupo) => ({
-      codigo: grupo.id,
-      nombre: grupo.nombre,
-      cantidad: grupo.resultados.length,
-      icono: ICONO_POR_CATEGORIA[grupo.id] ?? 'stethoscope',
-    })),
-  );
-
-  /** Cuántos centros hay en total, para el subtítulo de la portada. */
-  protected readonly totalDeCentros = computed(() =>
-    this.groups().reduce((suma, grupo) => suma + grupo.resultados.length, 0),
-  );
-
-  /**
-   * El valor de `kind` con el que se abre cada categoría.
-   *
-   * La portada agrupa por el **código del concepto** (`DU_TYPE_LAB`) y el
-   * filtro del contrato viaja con **otro** vocabulario (`LABORATORY`). Sin esta
-   * traducción la tarjeta navegaría a un `?kind=DU_TYPE_LAB` que `aConsulta`
-   * descarta —sólo reconoce dos valores—, y la categoría se abriría sin filtrar:
-   * la pantalla mostraría los cuatro centros diciendo, sin decirlo, que todos
-   * son laboratorios.
-   */
-  protected filtroDe(codigo: string): string {
-    return codigo === 'DU_TYPE_IMAGING' ? 'IMAGING' : 'LABORATORY';
-  }
+  /** La bajada: qué se puede hacer acá, sin escalones previos. */
+  protected readonly subtitulo = computed(() => {
+    const cuantos = (dataOf(this.unidades()) ?? []).length;
+    return cuantos === 0
+      ? 'Busque el centro por su nombre o código y acote con los filtros.'
+      : `Busque el centro por su nombre o código y acote con los filtros. ${cuantos} ${
+          cuantos === 1 ? 'centro verificado' : 'centros verificados'
+        } en la red.`;
+  });
 
   /**
    * Las lecturas en vuelo, encauzadas por `switchMap`.
@@ -490,6 +460,9 @@ const TOPE_DEL_DIRECTORIO = 100;
 /** Clave del departamento elegido en el mapa, en la URL. La misma que en clínicas y farmacias. */
 const PARAM_DEPARTAMENTO = 'departamento';
 
+/** Clave de la ciudad elegida en la faceta, en la URL. */
+const PARAM_CIUDAD = 'ciudad';
+
 /** ¿Quedó algún filtro puesto? Decide qué texto muestra el vacío. */
 function hayFiltros(activos: Readonly<Record<string, string>>): boolean {
   return Object.values(activos).some((valor) => valor !== '');
@@ -514,11 +487,15 @@ export function aConsulta(activos: Readonly<Record<string, string>>): Diagnostic
   if (activos['kind'] === 'LABORATORY' || activos['kind'] === 'IMAGING') {
     consulta.kind = activos['kind'];
   }
-  for (const clave of ['homeCollection', 'walkIn'] as const) {
+  for (const clave of ['homeCollection', 'walkIn', 'acceptsExternalOrders'] as const) {
     const valor = activos[clave];
     if (valor === 'true' || valor === 'false') {
       consulta[clave] = valor === 'true';
     }
+  }
+  const tope = Number(activos['maxAmount']);
+  if (activos['maxAmount'] !== undefined && activos['maxAmount'] !== '' && !Number.isNaN(tope)) {
+    consulta.maxAmount = tope;
   }
   const nota = Number(activos['minRating']);
   if (activos['minRating'] !== undefined && activos['minRating'] !== '' && !Number.isNaN(nota)) {
@@ -565,6 +542,14 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
     id: unit.id,
     title: unit.name,
     link: `/laboratory-directory/${unit.id}`,
+    // Un clic menos hasta pedir el estudio: el botón cae directo en la lista
+    // de estudios y precios de la ficha, no en su cabecera.
+    action: {
+      label: 'Ver estudios y precios',
+      link: `/laboratory-directory/${unit.id}`,
+      fragment: 'estudios',
+      icon: 'flask',
+    },
     figureText: initials(unit.name),
     photoUrl: directoryPhoto(diagnosisCenterTheme(`${unit.type.code} ${unit.type.display}`), unit.id),
     // La categoría como subtítulo y no como insignia: desde que la portada

@@ -72,6 +72,15 @@
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
+  border-radius: inherit;
+}
+
+/* En la fila el sello tapaba la segunda inicial: va montado en la esquina,
+   con un aro del color de la tarjeta (propietario, 24/10/2026). */
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__figura { overflow: visible; }
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__figura > .tarjeta-resultado__foto-badge {
+  inset: auto -6px -6px auto;
+  box-shadow: 0 0 0 2px var(--bg-surface);
 }
 
 /* ---- foto --------------------------------------------------------------- */
@@ -343,6 +352,7 @@
 .tarjeta-resultado__accion {
   display: inline-flex;
   align-items: center;
+  max-inline-size: 100%;
   gap: 6px;
   font-weight: 600;
   border-radius: var(--r-md);
@@ -448,12 +458,19 @@
     block-size: 64px;
   }
 
+  /* A todo el ancho, como en la grilla: en la columna de al lado de la foto
+     «Ver medicamentos y precios» no entraba y empujaba la página. */
   :host(.tarjeta-resultado--lista) > .tarjeta-resultado__pie {
-    grid-column: 2;
+    grid-column: 1 / -1;
     grid-row: auto;
     align-self: start;
-    justify-self: start;
+    justify-self: stretch;
     padding-block-start: var(--sp-1);
+  }
+
+  :host(.tarjeta-resultado--lista) .tarjeta-resultado__accion {
+    flex: 1;
+    justify-content: center;
   }
 }
 
