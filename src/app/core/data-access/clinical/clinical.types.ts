@@ -740,10 +740,8 @@ export interface ObservationRegistration {
  * tendría forma de comprobar que existe, ni al recargar.
  *
  * El tipo y sus dos métodos entran igual porque el contrato **sí** está
- * verificado, y así el día que el backend publique la lectura la pantalla es lo
- * único que falta. Hasta entonces, la ficha del vault lo dice con el mismo
- * aviso: «Tabla ⚠︎ — la pantalla necesita un listado que el backend todavía no
- * expone».
+ * verificado. La ficha del vault lo dice con el mismo aviso: «Tabla ⚠︎ — la
+ * pantalla necesita un listado que el backend todavía no expone».
  */
 export interface NewDiagnosticReport {
   readonly custodianTenantId: string;

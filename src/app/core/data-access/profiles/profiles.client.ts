@@ -362,9 +362,9 @@ export class ProfilesClient {
    * No crea nada todavía: a esa cuenta le llega una notificación y el vínculo
    * nace recién cuando la acepta. `404` es «no hay cuenta con ese CI».
    *
-   * La publica la API desde mdavila-2001/mantra-core-health-api#493 **sólo con
-   * `nationalId`**: `patientProfileId` lo entiende hoy el simulador de
-   * `mockup`, y queda pendiente en la API junto con la búsqueda por nombre.
+   * La publica la API desde mdavila-2001/mantra-core-health-api#493, con
+   * `nationalId` o con el `patientProfileId` que devuelve la búsqueda por
+   * nombre (`dependent-candidates`).
    */
   requestDependentLink(target: DependentLinkTarget): Observable<DependentLinkRequestSent> {
     return this.http.post<DependentLinkRequestSent>(
@@ -378,8 +378,7 @@ export class ProfilesClient {
    * coincide con lo escrito.
    *
    * Devuelve pocas (el servidor tope), con el CI enmascarado, y nada por debajo
-   * de tres letras: es una búsqueda de personas, no un listado. **Pendiente en
-   * la API**; hoy la responde el simulador de `mockup`.
+   * de tres letras: es una búsqueda de personas, no un listado.
    */
   searchDependentCandidates(query: string): Observable<readonly DependentCandidate[]> {
     return this.http

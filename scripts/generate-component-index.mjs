@@ -234,7 +234,8 @@ function problemasEstaticos(componente, source) {
   if (/console\.(log|debug)\(/.test(source)) {
     problemas.push({ tipo: 'console', detalle: 'deja rastros de console.log en el código' });
   }
-  const todo = /\b(TODO|FIXME)\b/.exec(source);
+  // Sólo el marcador (`TODO:`, `TODO(…)`), no la palabra castellana en mayúsculas.
+  const todo = /\b(TODO|FIXME)\s*[(:]/.exec(source);
   if (todo !== null) problemas.push({ tipo: 'pendiente', detalle: `queda un ${todo[1]} sin resolver` });
   if (/_DE_MUESTRA|próximamente|en construcción/i.test(source)) {
     problemas.push({ tipo: 'de-muestra', detalle: 'contiene datos o texto de muestra' });

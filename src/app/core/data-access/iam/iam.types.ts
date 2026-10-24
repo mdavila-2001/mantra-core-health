@@ -399,11 +399,9 @@ export interface PractitionerRegistration {
    * Correo del trabajo, el institucional. Es un dato de contacto: **no** sirve
    * para entrar.
    *
-   * Pendiente en la API: `RegisterPractitionerDto` todavía no lo declara —y
-   * documenta lo contrario, que el de trabajo es el login—, así que con
-   * `forbidNonWhitelisted` rechazaría el alta. Tiene que aceptarlo antes de que
-   * esto llegue a `dev`. El backend ya sabe guardarlo por uso
-   * (`CONTACT_USE_WORK`) y lo devuelve como `workEmail` al leer el perfil.
+   * `RegisterPractitionerDto` lo declara: con `workEmail`, el correo de acceso
+   * se guarda como personal y éste como contacto de trabajo
+   * (`CONTACT_USE_WORK`), que el perfil devuelve como `workEmail` al leerlo.
    */
   readonly workEmail?: string;
   /**

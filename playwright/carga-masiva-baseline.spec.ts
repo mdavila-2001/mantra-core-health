@@ -36,8 +36,7 @@ test.describe('Carga masiva · baseline (pantalla de hoy, backend simulado)', ()
 
     await expect(page.getByTestId('carga-perfil')).toBeVisible();
 
-    // Perfil «Conceptos» es la única opción hoy (§1 del contrato: el segundo
-    // perfil, «designaciones», está pendiente de Q-9).
+    // Perfil «Conceptos» es la única opción (§1 del contrato).
     await page
       .getByTestId('carga-perfil')
       .locator('select')

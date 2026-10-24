@@ -110,7 +110,7 @@ export interface CreateInsurancePlanInput {
  * endpoint y cambiar la moneda reinterpretaría todos los importes de sus
  * cláusulas—.
  *
- * **Contrato pendiente en la API**: `PUT /insurance-plans/:planId` hoy existe
+ * **La API no publica este contrato**: `PUT /insurance-plans/:planId` existe
  * sólo en la maqueta de `mockup`.
  */
 export interface UpdateInsurancePlanInput {
