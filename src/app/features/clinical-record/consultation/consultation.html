@@ -250,6 +250,16 @@
           (cambio)="altaRegistrada()"
         />
       }
+      @case ('derivacion') {
+        <!-- Derivar a otro profesional (pedido del propietario, 24/10/2026).
+             Atado al encuentro en curso: sin él el bloque lo dice y no ofrece
+             el formulario, porque sin encuentro no hay aviso a la persona. -->
+        <app-referral-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          (cambio)="altaRegistrada()"
+        />
+      }
       @case ('planes') {
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
