@@ -14,7 +14,7 @@ Todo lo que este trabajo añadió vive en cinco lugares, y **ninguno entra al
 bundle**:
 
 ```text
-docs/          (excepto docs/auditoria/, preexistente)
+docs/
 scripts/       (excepto generate-env.mjs, que es de otro trabajo)
 structurizr/
 mkdocs.yml
