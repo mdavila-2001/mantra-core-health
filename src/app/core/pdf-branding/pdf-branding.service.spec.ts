@@ -37,6 +37,15 @@ describe('PdfBrandingService', () => {
     await Promise.resolve();
   };
 
+  // El builder de Angular no aísla los archivos: lo que este spec deja fijado en
+  // los holders del papel (el logo, la firma, las fuentes) lo heredaría el
+  // siguiente. Se limpia también al salir.
+  afterEach(() => {
+    establecerLogoDeDocumentos(null);
+    establecerFirmaDeDocumentos(null);
+    establecerFuentesDeDocumentos(null);
+  });
+
   beforeEach(() => {
     vi.resetAllMocks();
     perfil.set(null);
