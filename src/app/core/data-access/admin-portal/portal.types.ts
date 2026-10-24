@@ -432,9 +432,20 @@ export interface Linaje {
   readonly dominios: readonly LinajeDominio[];
 }
 
+/**
+ * Una operación en el linaje de una tabla. No es `OperacionDeTabla`: la API la
+ * arma desde las aristas del grafo de linaje (`linajeDeTabla`), así que trae la
+ * etiqueta del nodo (`GET /ruta`), su id y el efecto (`LEE`/`ESCRIBE`/`BORRA`).
+ */
+export interface LineageOperation {
+  readonly operacion: string;
+  readonly id: string;
+  readonly efecto: string;
+}
+
 export interface LinajeTabla {
   readonly id: string;
-  readonly operaciones: readonly OperacionDeTabla[];
+  readonly operaciones: readonly LineageOperation[];
   readonly referencia: readonly string[];
   readonly referenciadaPor: readonly string[];
 }

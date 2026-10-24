@@ -1,0 +1,102 @@
+<app-back-link [fallback]="listUrl" label="Volver a los procesos" />
+
+<app-page-header
+  [title]="title()"
+  subtitle="Qué hace este proceso, en qué etapas y con qué operaciones. Lo que nadie documentó se dice así."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="detail()" (retry)="reload()">
+  @if (detail(); as state) {
+    @if (state.status === 'ready') {
+      @let p = state.data;
+      <app-card class="process" variant="outlined" padding="md" data-testid="portal-process-detail">
+        <nav class="process__jumps" aria-label="Ver este proceso en otras vistas">
+          <a app-link [routerLink]="diagramUrl" [queryParams]="{ flujo: p.codigo }">Ver el diagrama</a>
+          <a app-link [routerLink]="operationsUrl" [queryParams]="{ flujo: p.codigo }">Ver sus operaciones</a>
+        </nav>
+
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Para qué sirve">
+            <section class="process__section" aria-label="Para qué sirve">
+              @if (p.paraQueSirve) {
+                <p>{{ p.paraQueSirve }}</p>
+                @if (p.paraQueSirveFuente) {
+                  <p class="process__source">Fuente: {{ p.paraQueSirveFuente }}</p>
+                }
+              } @else {
+                <p class="process__muted">Ningún documento dice para qué sirve este proceso.</p>
+              }
+
+              <app-fact-list [hechos]="facts()" etiqueta="Datos del proceso" />
+
+              @if (p.flujoGeneral) {
+                <h3 class="process__subtitle">Flujo general</h3>
+                <p class="process__flow">{{ p.flujoGeneral }}</p>
+              }
+
+              <h3 class="process__subtitle">Quién actúa</h3>
+              @if (p.actores.length > 0) {
+                <ul class="process__chips">
+                  @for (actor of p.actores; track actor) {
+                    <li><app-badge variant="secondary">{{ actor }}</app-badge></li>
+                  }
+                </ul>
+              } @else {
+                <p class="process__muted">Sin dato.</p>
+              }
+
+              @if (p.fuentes.length > 0) {
+                <h3 class="process__subtitle">Fuentes</h3>
+                <ul class="process__sources">
+                  @for (source of p.fuentes; track source) {
+                    <li class="process__source">{{ source }}</li>
+                  }
+                </ul>
+              }
+            </section>
+          </app-tab>
+
+          <app-tab label="Etapas">
+            <app-portal-process-stages
+              [stages]="p.detalleDeEtapas"
+              [operationUrl]="operationUrl"
+              [tableUrl]="tableUrl"
+            />
+          </app-tab>
+
+          <app-tab label="Máquinas de estado">
+            <section class="process__section" aria-label="Máquinas de estado" data-testid="portal-process-machines">
+              @for (m of p.maquinasDeEstado; track m.codigo) {
+                <article class="process__machine">
+                  <h3 class="process__subtitle"><code>{{ m.codigo }}</code></h3>
+                  <ul class="process__chips" aria-label="Estados">
+                    @for (s of m.estados; track s) {
+                      <li>
+                        <app-badge
+                          [variant]="m.iniciales.includes(s) ? 'info' : m.terminales.includes(s) ? 'success' : 'secondary'"
+                        >
+                          {{ s }}{{ m.iniciales.includes(s) ? ' · inicial' : '' }}{{ m.terminales.includes(s) ? ' · final' : '' }}
+                        </app-badge>
+                      </li>
+                    }
+                  </ul>
+                  @if (m.transiciones.length > 0) {
+                    <ul class="process__transitions" aria-label="Transiciones">
+                      @for (t of m.transiciones; track $index) {
+                        <li><code>{{ t.de }}</code> → <code>{{ t.a }}</code></li>
+                      }
+                    </ul>
+                  }
+                  <p class="process__source">Fuente: {{ m.fuente }}</p>
+                </article>
+              } @empty {
+                <p class="process__muted">Este proceso no gobierna ninguna máquina de estados.</p>
+              }
+            </section>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  }
+</app-view-state-host>

@@ -1,0 +1,65 @@
+<app-page-header
+  title="Esquema"
+  subtitle="Los schemas de la base, el módulo del modelo que declara cada uno y cuánto de lo declarado dejó de verse en la base."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <span page-meta class="schemas__coverage" data-testid="portal-schemas-coverage">
+    Cálculo de cobertura:
+    @if (coverageVersion(); as version) {
+      <span class="schemas__coverage-value">@for (segment of segments(version); track $index) {{{ segment }}<wbr />}</span>
+    } @else {
+      {{ coverageNote() }}
+    }
+  </span>
+</app-page-header>
+
+<div class="schemas" data-testid="portal-schemas">
+  <section class="schemas__metrics" aria-label="Resumen del esquema">
+    <app-metric-card label="Schemas" [value]="totals().schemas" hint="catalogados" icon="folder" />
+    <app-metric-card label="Objetos" [value]="totals().objects" hint="tablas y vistas observadas" />
+    <app-metric-card
+      label="Sin observar"
+      [value]="totals().notObserved"
+      hint="declarados que el último escaneo no vio"
+      [tone]="totals().notObserved > 0 ? 'warning' : 'success'"
+    />
+  </section>
+
+  <app-data-table
+    data-testid="portal-schemas-table"
+    caption="Schemas de la base"
+    heading="Schemas"
+    [state]="rows()"
+    [columns]="columns()"
+    [trackBy]="bySchema"
+    rowNavigable
+    stackedOnMobile
+    fitContainer
+    wrapHeaders
+    (rowActivated)="open($event)"
+    (retry)="loadSchemas()"
+  />
+</div>
+
+<app-portal-schema-drawer [schemaName]="selected()" [summary]="selectedSummary()" (closed)="close()" />
+
+<ng-template #nameCell let-row>
+  <a
+    app-link
+    class="schemas__name"
+    [routerLink]="[]"
+    [queryParams]="{ schema: row.schemaName }"
+    queryParamsHandling="merge"
+    data-testid="portal-schema-link"
+  >
+    {{ row.schemaName }}
+  </a>
+</ng-template>
+
+<ng-template #driftCell let-row>
+  @if (row.notObserved > 0) {
+    <app-badge size="sm" variant="warning">{{ row.notObserved }} sin observar</app-badge>
+  } @else {
+    <app-badge size="sm" variant="success">Coincide</app-badge>
+  }
+</ng-template>

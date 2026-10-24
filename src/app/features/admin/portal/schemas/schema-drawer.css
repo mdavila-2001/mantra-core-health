@@ -1,0 +1,32 @@
+.schema {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.schema p {
+  margin: 0;
+}
+
+.schema__title {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.schema__muted {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.schema__source,
+.schema__object {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.schema__source {
+  color: var(--text-secondary);
+}

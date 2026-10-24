@@ -1,0 +1,83 @@
+<app-page-header
+  title="Dominios y glosario"
+  subtitle="Los términos que usan la API y el frontend, con su definición y su fuente, y los dominios de negocio en que se agrupan las tablas."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="domains" variant="outlined" padding="md" data-testid="portal-domains">
+  <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+    <app-tab label="Glosario">
+      <div class="domains__section">
+        <app-filter-bar
+          searchLabel="Buscar en el glosario"
+          searchPlaceholder="Por ejemplo «PHI», «tenant» o «cupo»"
+          [searchLoading]="glossary.state().status === 'loading'"
+        />
+        <app-data-table
+          data-testid="portal-glossary-table"
+          caption="Términos del glosario"
+          heading="Términos"
+          [totalCount]="glossary.total()"
+          [state]="glossary.state()"
+          [columns]="glossaryColumns()"
+          [trackBy]="byTerm"
+          [rowLabel]="termName"
+          [cursor]="glossary.cursor()"
+          stackedOnMobile
+          (cursorChanged)="glossary.move($event)"
+          (retry)="glossary.reload()"
+        />
+      </div>
+    </app-tab>
+
+    <app-tab label="Dominios">
+      <div class="domains__section">
+        <p class="domains__note">
+          Cada tabla del modelo pertenece a un dominio de negocio. Elija uno para ver sus tablas.
+        </p>
+        <app-data-table
+          data-testid="portal-domains-table"
+          caption="Dominios de negocio"
+          [state]="domains()"
+          [columns]="domainColumns()"
+          [trackBy]="byDomain"
+          stackedOnMobile
+          (retry)="loadDomains()"
+        />
+      </div>
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<ng-template #termCell let-row>
+  <strong class="domains__term">{{ row.termino }}</strong>
+  <span class="domains__source">{{ row.fuente }}</span>
+</ng-template>
+
+<ng-template #definitionCell let-row>
+  {{ plain(row.definicion) }}
+</ng-template>
+
+<ng-template #tablesCell let-row>
+  @if (row.tablasRelacionadas.length === 0) {
+    <span class="domains__muted">Ninguna</span>
+  } @else {
+    <ul class="domains__tables">
+      @for (t of row.tablasRelacionadas; track t) {
+        <li>
+          @if (tableUrl(t); as url) {
+            <a app-link class="domains__table" [routerLink]="url">{{ t }}</a>
+          } @else {
+            <span class="domains__table">{{ t }}</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+</ng-template>
+
+<ng-template #domainCell let-row>
+  <a app-link [routerLink]="tablesRoute" [queryParams]="{ q: row.etiqueta }" data-testid="portal-domain-link">
+    {{ row.etiqueta }}
+  </a>
+</ng-template>
