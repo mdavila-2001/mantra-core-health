@@ -36,10 +36,8 @@ import type {
  *   para sumar y se vuelve a texto con dos decimales, nada más.
  * - **Lo que se pinta se rotula.** `NOTA_DE_DATOS_DE_EJEMPLO` es el cartel
  *   que acompaña a todo lo que sale de acá.
- *
- * TODO(FAR-E2/FAR-E5): cuando el backend publique cobertura y facturación,
- * estos tipos se mudan al contrato y este archivo se queda sólo con los
- * pedidos de ejemplo de las pruebas.
+ * - **Viven acá y no en el contrato** porque el pedido no publica cobertura
+ *   ni facturación.
  */
 
 /** El cartel único: quien mira la pantalla sabe qué parte es maqueta. */

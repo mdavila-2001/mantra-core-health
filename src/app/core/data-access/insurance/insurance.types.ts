@@ -110,7 +110,7 @@ export interface CreateInsurancePlanInput {
  * endpoint y cambiar la moneda reinterpretaría todos los importes de sus
  * cláusulas—.
  *
- * **Contrato pendiente en la API**: `PUT /insurance-plans/:planId` hoy existe
+ * **La API no publica este contrato**: `PUT /insurance-plans/:planId` existe
  * sólo en la maqueta de `mockup`.
  */
 export interface UpdateInsurancePlanInput {
@@ -255,8 +255,8 @@ export interface CarrierDetail extends CarrierSummary {
    puede hablar. El catálogo comercial completo (`GET /insurance-carriers/:id`)
    sólo lo lee la propia aseguradora; esto es la vitrina.
 
-   **Contrato pendiente en la API** (P48 de `PENDIENTES-BACKEND.md`): hoy
-   existe sólo en la maqueta de `mockup`. */
+   **La API no publica este contrato** (P48): sólo existe en la maqueta de
+   `mockup`. */
 
 /** Un broker que vende productos de la aseguradora, con cómo escribirle. */
 export interface MarketplaceBroker {
@@ -283,6 +283,13 @@ export interface InsurerMarketplace {
    */
   readonly carrier: CarrierDetail | null;
   readonly brokers: readonly MarketplaceBroker[];
+  /**
+   * Si los planes son **de ejemplo**: la aseguradora no publicó su catálogo y
+   * la maqueta muestra uno ilustrativo. La pantalla lo dice en el aviso y en
+   * cada plan, para no atribuirle a una compañía real un producto que no
+   * vende. Sin el campo en la respuesta, `false`.
+   */
+  readonly exampleCatalog: boolean;
 }
 
 /** Un vínculo del broker con una aseguradora. */

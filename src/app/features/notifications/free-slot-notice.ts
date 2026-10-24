@@ -22,7 +22,7 @@ import { ToastService } from '@shared/components/molecules/toast/toast.service';
  * esto no se pregunta, se recibe — el módulo 35 ya declara el canal, y el
  * empujón es del servidor. Sondear cada veinte segundos contra un backend real
  * sería multiplicar una consulta por cada pestaña abierta para enterarse tarde
- * igual. Ver `PENDIENTES-BACKEND.md` (P21).
+ * igual (P21).
  */
 const EACH_MS = 20_000;
 

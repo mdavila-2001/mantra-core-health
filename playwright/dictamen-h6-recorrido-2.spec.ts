@@ -15,8 +15,8 @@ import { entrar, estable } from './support/sesion';
  */
 
 const SALIDA = join(
-  'docs',
-  'trabajo',
+  'artifacts',
+  'evidencia',
   '2026-09-20-notas-cuadricula-e-internacion',
   'evidencia',
   'dictamen',

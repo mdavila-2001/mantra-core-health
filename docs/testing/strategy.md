@@ -70,7 +70,7 @@ Diez, y **ocho tienen buena razón**:
 | **`Dashboard`** | **La única pantalla autenticada** |
 | **`ShellLayout`** | **El layout de todo lo autenticado** |
 
-### Las dos últimas son la brecha `HIGH`
+### Las dos últimas, sin prueba
 
 `Dashboard` concentra lógica que merece prueba:
 
@@ -135,7 +135,7 @@ Ver cada una en su página.
 ### El argumento de la E2E, concretamente
 
 Seis flujos fueron verificados **a mano** contra la API viva
-(`ESTADO-FRONTEND.md` §«El recorrido que se verificó en un navegador real»).
+(el recorrido del 2026-08-01, cuyo informe queda en el historial de git).
 Funcionaron. **Y nada garantiza que sigan funcionando.**
 
 Los que más la necesitan:
@@ -146,19 +146,3 @@ Los que más la necesitan:
 | Recarga con sesión | `restoreSession` en el arranque: **nada lo prueba de punta a punta** |
 | Login con varias organizaciones | Tres componentes y dos navegaciones |
 | Recuperación completa | Cruza el correo: **imposible de cubrir con pruebas unitarias** |
-
-## Recomendaciones, en orden
-
-1. **Probar `Dashboard` y `ShellLayout`.** No requiere ninguna herramienta nueva
-   y cubre la única pantalla autenticada.
-2. **Probar `TokenRefreshService`.** Su garantía es exactamente lo que una prueba
-   fija.
-3. **Lighthouse con `npx`.** Sin instalar nada.
-4. **E2E de los cuatro journeys críticos.** Añade una dependencia grande.
-5. **`axe-core` en las pruebas de componente.**
-6. **Regresión visual**, la más cara de mantener.
-
-Ninguna se ejecuta en este trabajo documental: las seis son cambios de producto o
-de herramientas. La 1 y la 2 son las de mejor relación valor/riesgo.
-
-Ver [la matriz de trazabilidad](../governance/traceability-matrix.md).

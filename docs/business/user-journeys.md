@@ -171,8 +171,7 @@ Los seis journeys comparten el mismo vocabulario:
 | J5 Sesión persistente | — | 1 | ⚠️ parcial | **❌** |
 | J6 Verificar correo | 2 | 1 | ✅ | **❌** |
 
-**Los seis fueron verificados a mano contra la API viva** (`ESTADO-FRONTEND.md`
-§«El recorrido que se verificó en un navegador real»). Funcionaron. **Y nada
+**Los seis fueron verificados a mano contra la API viva** (el recorrido del 2026-08-01, cuyo informe queda en el historial de git). Funcionaron. **Y nada
 garantiza que sigan funcionando.**
 
 La excepción formal por la ausencia de E2E está declarada en

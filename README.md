@@ -1,7 +1,7 @@
 # Mantra Core Health
 
 Frontend Angular 21 + SSR del sistema médico de Mantra Core Technologies (nombre de producto
-provisional: **mantra-core-health**; el definitivo está pendiente).
+provisional: **mantra-core-health**).
 
 ## Arranque
 
@@ -72,8 +72,8 @@ ese repositorio. Con el stack en pie, la cuenta sembrada por el bootstrap sirve 
 
 | Archivo | Para qué |
 | --- | --- |
-| [`AVANCE-FRONTEND-CONSOLIDADO.md`](AVANCE-FRONTEND-CONSOLIDADO.md) | Qué hay construido y qué falta |
-| [`ESTADO-FRONTEND.md`](ESTADO-FRONTEND.md) | Detalle del estado por área |
-| [`PENDIENTES-BACKEND.md`](PENDIENTES-BACKEND.md) | Lo que el frontend espera de la API |
 | [`docs/`](docs/index.md) | Documentación técnica (sitio MkDocs) |
-| [`docs/progress/archive/`](docs/progress/archive/) | Informes de proceso históricos (auditorías, reportes de carril, plantillas de prompt, avances fechados) |
+| [`FABLE_FRONTEND_REFACTOR_PLAYBOOK.md`](FABLE_FRONTEND_REFACTOR_PLAYBOOK.md) | Protocolo de calidad de todo cambio de frontend |
+
+Los informes de proceso fechados (planes, reportes de carril, auditorías, listas de pendientes) ya
+no se versionan: quedan en el historial de git.

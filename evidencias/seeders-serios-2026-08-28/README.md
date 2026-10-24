@@ -44,7 +44,7 @@ tema y una respuesta del autor en una de cada tres.
 | archivo | qué prueba |
 | --- | --- |
 | `capturas/01-ficha-publica-completa.png` | La ficha de Marisol Quispe: foto, portada, chip de especialidad, **trayectoria de siete etapas** (UMSA → internado en Hospital de Clínicas → SAFCI rural en Achacachi → residencia en el Hospital Obrero N.º 1 → formación en el Instituto Nacional de Tórax → planta en Clínica del Sur → docencia en la UMSA) y sus cuatro publicaciones con 12, 21, 18 y 14 reacciones y 2–3 comentarios. |
-| `capturas/02-guia-profesionales-por-especialidad.png` | La guía de profesionales con los chips de especialidad ya poblados. Ver el pendiente al final. |
+| `capturas/02-guia-profesionales-por-especialidad.png` | La guía de profesionales con los chips de especialidad ya poblados. |
 | `capturas/03-feed-publico-con-movimiento.png` | `/publicaciones`: la portada pública con avatar, imágenes y el bloque de interacción visible (17 reacciones, 2 comentarios). |
 | `capturas/04-vecina-rosario-choque-con-sesion.png` | Rosario Choque entrando con su documento (`CI 4821337wl`) y su panel de paciente. Las cuentas que comentan **existen y se puede entrar con ellas**. |
 | `capturas/05-publicacion-con-comentarios.png` | El enlace permanente de una publicación, con sus contadores. |
@@ -83,18 +83,3 @@ En `mantra-core-health-api`:
   catálogo de especialidades médicas no está disponible») y **ningún**
   profesional de este entorno podía declarar su especialidad. 23/23 pruebas del
   seed en verde, con tres nuevas que fijan que no pisa el catálogo del modelo.
-
-## Lo que sigue pendiente, y por qué no se resolvió acá
-
-- **100 publicaciones viejas siguen sin imagen.** No hay endpoint para editar
-  una publicación ya creada: el contrato de `community` es de sólo alta. Se les
-  sembraron comentarios y reacciones, que sí se pueden agregar después.
-- **La guía agrupa por el titular, no por la especialidad.**
-  `PublicSearchResultDto` no expone `specialty`, así que
-  `/buscar/profesionales` agrupa por el texto de `headline` y los profesionales
-  nuevos caen en grupos separados de los viejos. Ahora que las especialidades
-  **sí** están asignadas, arreglarlo es agregar el campo al DTO de búsqueda y
-  reagrupar la pantalla — es trabajo de contrato y de front, no del seeder.
-- **La superficie pública muestra los comentarios como número, no como texto.**
-  `GET /p/{slug}` devuelve `commentCount`; el cuerpo de cada comentario sólo se
-  lee con sesión. Es una decisión del contrato actual, no un dato faltante.

@@ -130,5 +130,3 @@ curl -i http://localhost:4200/public/directory
 
 **La 4 se pasa por alto y rompe dos journeys completos.** Ver
 [servicios externos](../integrations/external-services.md#la-coordinación-con-el-correo).
-
-Registradas en [el análisis de brechas](../reports/documentation-gap-analysis.md).

@@ -97,7 +97,7 @@ Declarado, para que nadie confíe de más:
 | Sin texto de relleno | `check-doc-coverage` marca las páginas de menos de 200 caracteres |
 | Sin capturas con datos personales, tokens ni entornos internos | Hoy no hay capturas |
 | Diagramas con propósito | Mermaid para secuencias, Structurizr para C4 |
-| Tablas en el estilo del repositorio | `\|---\|---\|`, como `docs/auditoria/` y `ESTADO-FRONTEND.md` |
+| Tablas en el estilo del repositorio | `\|---\|---\|`, como el resto de `docs/` |
 
 ### La regla de las citas
 
@@ -137,13 +137,10 @@ diferencia entre no encontrar problemas y no haber buscado.
 | Operación de API nueva | Declararla en `backend-api.md` |
 | Decisión de arquitectura | **ADR** |
 | Cambio en un nodo de alta centralidad | Actualizar su página + revisión explícita |
-| Brecha cerrada | Actualizar `documentation-gap-analysis.md` |
 
 Ver [gestión del cambio](change-management.md).
 
 ## Lo preexistente no se toca
 
-`docs/auditoria/` es trabajo previo del equipo y **se conserva sin modificar**.
-Igual que `README.md`, `ESTADO-FRONTEND.md`, `AVANCE-FRONTEND-*.md`,
-`COORDINACION-AGENTES.md` y `PENDIENTES-BACKEND.md`, que esta documentación
-**cita pero no reemplaza**.
+`README.md` es trabajo previo del equipo: esta documentación lo **cita pero no
+lo reemplaza**.

@@ -34,6 +34,8 @@
   display: flex;
   justify-content: center;
   inline-size: 100%;
+  /* Para medir el marco en unidades del propio escenario (`cqi`). */
+  container-type: inline-size;
   padding: var(--sp-5) var(--sp-4) var(--sp-6);
   /* Superficie tonal sin trazo ni sombra: va dentro de una tarjeta, y una caja
      con borde dentro de otra caja con borde era «caja dentro de caja». */
@@ -88,6 +90,27 @@
   pointer-events: none;
 }
 
+/* El marco reserva el alto de la figura entera (240 × 440 de `viewBox`, a lo
+   sumo 16rem de ancho): la cara es más baja y se centra adentro. Así el paso
+   entre vistas no corre lo que hay debajo. */
+.body-map__marco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: calc(min(100cqi, 16rem) * 440 / 240);
+}
+
+/* Mientras llega la imagen de la vista pedida se sigue viendo la anterior,
+   apenas apagada: es la señal de que el toque se recibió. */
+.body-map__lienzo {
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.body-map__escenario--cambiando .body-map__lienzo {
+  opacity: 0.55;
+}
+
 /* Una figura humana es vertical: 16rem de ancho la deja en unos 35rem de alto
    en escritorio. A 375 px ocupa la columna; el `viewBox` conserva la
    proporción. */
@@ -113,10 +136,18 @@
    oscura encandilaba y se comía las zonas. */
 .body-map__render {
   pointer-events: none;
+  /* Yeso claro sobre fondo claro pierde el volumen: un contorno finísimo y una
+     sombra de contacto separan la figura del escenario y dejan leer cintura,
+     cadera y hombros (lo que distingue una silueta de otra). Sólo el `<image>`,
+     que no recibe clics: un `filter` sobre las zonas se tragaba los toques. */
+  filter: contrast(1.07)
+    drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 55%, transparent))
+    drop-shadow(0 1.5px 2.5px color-mix(in srgb, var(--text-primary) 16%, transparent));
 }
 
 :host-context([data-theme='dark']) .body-map__render {
-  filter: brightness(0.86) saturate(0.9);
+  filter: brightness(0.86) saturate(0.9) contrast(1.05)
+    drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 40%, transparent));
 }
 
 /* Las zonas son transparentes: el maniquí se ve a través. La costura entre
@@ -124,9 +155,13 @@
    figura en pedazos. */
 .body-map__forma {
   fill: transparent;
-  stroke: color-mix(in srgb, var(--text-secondary) 22%, transparent);
-  stroke-width: 0.5;
+  stroke: color-mix(in srgb, var(--text-secondary) 30%, transparent);
+  stroke-width: 0.7;
+  /* Punteada, como una marca de sastre: se lee como «división» y no como un
+     contorno duro dibujado sobre el cuerpo. */
+  stroke-dasharray: 0.1 2.6;
   stroke-linejoin: round;
+  stroke-linecap: round;
   /* Una zona con hueco (la cara sin ojos, nariz ni boca) no lo rellena: el
      clic en el hueco llega a la zona de adentro. */
   fill-rule: evenodd;
@@ -135,6 +170,14 @@
     fill var(--dur-fast) var(--ease-out),
     stroke var(--dur-fast) var(--ease-out),
     stroke-width var(--dur-fast) var(--ease-out);
+}
+
+/* La costura se insinúa en reposo y se revela cuando se mira de cerca: al pasar
+   el puntero por la figura, las divisiones suben de tono para que se vea qué
+   se puede tocar sin que el maniquí parezca un plano. */
+:where(.body-map__escenario:hover, .body-map__escenario:focus-within) .body-map__forma {
+  stroke: color-mix(in srgb, var(--text-secondary) 62%, transparent);
+  stroke-dasharray: 2.4 1.8;
 }
 
 /* ─── Estados ───────────────────────────────────────────────────────────── */
@@ -158,9 +201,10 @@
 /* El puntero sólo insinúa: el estado de verdad es `--elegida`, y sobre la
    elegida el puntero no la hace parecer suelta. */
 .body-map__zona:not(.body-map__zona--elegida):hover .body-map__forma {
-  fill: color-mix(in srgb, var(--brand-primary) 20%, transparent);
-  stroke: color-mix(in srgb, var(--brand-primary) 70%, var(--bg-surface));
+  fill: color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  stroke: color-mix(in srgb, var(--brand-primary) 75%, var(--bg-surface));
   stroke-width: 1.2;
+  stroke-dasharray: none;
 }
 
 /* El foco del teclado se ve **sobre el trazo**, no con un `outline` del
@@ -279,7 +323,8 @@
 /* Quien pidió menos movimiento no recibe transiciones ni latido. El estado
    sigue cambiando: lo que se apaga es la animación, no la información. */
 @media (prefers-reduced-motion: reduce) {
-  .body-map__forma {
+  .body-map__forma,
+  .body-map__lienzo {
     transition: none;
   }
 

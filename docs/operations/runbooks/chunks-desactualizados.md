@@ -126,6 +126,5 @@ Frontend. **No es de la API.**
 | 3 | Versionar el artefacto | **No existe** (`HIGH`) |
 | 4 | Telemetría del evento `chunk_fallido` | No existe |
 
-Las cuatro están en
-[el análisis de brechas](../../reports/documentation-gap-analysis.md). La 1 es
+La 1 es
 operativa y no toca código; la 2 son pocas líneas.

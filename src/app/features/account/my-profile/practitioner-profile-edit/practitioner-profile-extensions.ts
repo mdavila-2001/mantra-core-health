@@ -8,8 +8,8 @@ import type { ToastService } from '../../../../shared/components/molecules/toast
 /**
  * Avisa qué parte del guardado no llegó al servidor.
  *
- * El `PATCH` del perfil manda junto lo que la API recibe y lo que todavía no
- * (idiomas, frecuencia de facturación: informe B, C13). Contra la API real el
+ * El `PATCH` del perfil manda junto lo que la API recibe y lo que no (la
+ * frecuencia de facturación a seguros: informe B, C13). Contra la API real el
  * cliente quita esto último para que el resto se guarde; sin este aviso, la
  * recarga devolvería el valor viejo sin que nadie supiera por qué.
  */

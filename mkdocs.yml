@@ -268,7 +268,6 @@ nav:
       - Línea base: reports/baseline.md
       - Auditoría de estructura: reports/graphify-audit.md
       - Inventario funcional: reports/frontend-inventory.md
-      - Análisis de brechas: reports/documentation-gap-analysis.md
       - Auditoría de rendimiento: reports/performance-audit.md
       - Validación de regresiones: reports/regression-validation.md
       - Preparación productiva: reports/production-readiness.md
@@ -279,7 +278,3 @@ nav:
           - Inventario de API: reports/generated/api-inventory.md
           - Grafo de módulos: reports/generated/module-graph.md
           - Inventario E2E (Cypress): reports/generated/e2e-inventory.md
-
-  - Auditoría previa:
-      - Diagnóstico (fases 0–1): auditoria/01-diagnostico.md
-      - Fases ejecutadas 2–6: auditoria/02-fases-ejecutadas.md

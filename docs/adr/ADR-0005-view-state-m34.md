@@ -90,9 +90,6 @@ Más tres piezas de apoyo:
 | Que un código de error nuevo de la API caiga en S9 genérico | **Sin mitigar**: `readApiError` devuelve `null` y se degrada |
 | Que `nextAction.route` apunte a una ruta inexistente | **Materializado**: `IDENTITY_VERIFICATION_ROUTE` vale `/identity/me`, que es de la API |
 
-Los tres están registrados en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
-
 ## Evidencia
 
 - `view-state.types.ts`: 226 líneas, con las tres distinciones explicadas.

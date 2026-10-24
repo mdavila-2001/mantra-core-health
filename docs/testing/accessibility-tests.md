@@ -105,11 +105,4 @@ Corre en CI y bloquea.
 | Área táctil (`target-size`) | Requiere navegador real |
 
 Ninguna de las tres es sustituible por lo automático. La primera es la que más
-información aporta y la que sigue pendiente.
-
-## Estado
-
-La conformidad **AA sigue sin poder declararse**, y ahora por un motivo más
-acotado que antes: lo automatizable está automatizado y en verde, pero
-[el informe de auditoría](../accessibility/audit-report.md) no puede cerrar los
-hallazgos que requieren una persona con un lector de pantalla.
+información aporta.

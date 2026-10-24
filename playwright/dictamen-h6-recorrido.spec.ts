@@ -23,7 +23,7 @@ import { entrar, estable } from './support/sesion';
  * leyendo el código antes de escribir el caso, no adivinado.
  */
 
-const SALIDA = join('docs', 'trabajo', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia', 'dictamen');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia', 'dictamen');
 
 const MEDICA: Actor = {
   rol: 'doctora',

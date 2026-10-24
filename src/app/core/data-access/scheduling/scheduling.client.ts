@@ -211,10 +211,7 @@ export class SchedulingClient {
    * propietario aplicada donde corresponde. Que la pantalla no ofrezca el botón
    * ahí es una cortesía, no la garantía.
    */
-  setPaymentState(
-    bookingId: string,
-    body: NewPaymentState,
-  ): Observable<PaymentStateInfo> {
+  setPaymentState(bookingId: string, body: NewPaymentState): Observable<PaymentStateInfo> {
     return this.http
       .put<WirePaymentState>(
         this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/payment-state`),
@@ -292,30 +289,35 @@ export class SchedulingClient {
   ): Observable<ScheduleTemplateCreated> {
     return this.http.post<ScheduleTemplateCreated>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
-      withSimulatorExtensions({
-        name: template.name,
-        rules: template.rules.map((rule) => ({
-          dayOfWeek: rule.dayOfWeek,
-          startTime: rule.startTime,
-          endTime: rule.endTime,
-          ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
-          ...(rule.capacityPerSlot === undefined ? {} : { capacityPerSlot: rule.capacityPerSlot }),
-          // Omitido y no `0`: la columna es anulable y el servidor distingue
-          // «no lo declaró» de «declaró cero». Este cuerpo se arma campo por
-          // campo a propósito —para no filtrar nada que el DTO no acepte— y
-          // por eso agregar uno al tipo NO alcanza: hay que nombrarlo acá.
-          ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
-          // Ídem: sólo si el médico lo cambió. Ausente ≡ solo consultas.
-          ...(rule.bookingMode === undefined ? {} : { bookingMode: rule.bookingMode }),
-        })),
-        ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
-        ...(template.bookingPolicyId === undefined
-          ? {}
-          : { bookingPolicyId: template.bookingPolicyId }),
-        ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
-        ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
-        ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
-      }, SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS),
+      withSimulatorExtensions(
+        {
+          name: template.name,
+          rules: template.rules.map((rule) => ({
+            dayOfWeek: rule.dayOfWeek,
+            startTime: rule.startTime,
+            endTime: rule.endTime,
+            ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
+            ...(rule.capacityPerSlot === undefined
+              ? {}
+              : { capacityPerSlot: rule.capacityPerSlot }),
+            // Omitido y no `0`: la columna es anulable y el servidor distingue
+            // «no lo declaró» de «declaró cero». Este cuerpo se arma campo por
+            // campo a propósito —para no filtrar nada que el DTO no acepte— y
+            // por eso agregar uno al tipo NO alcanza: hay que nombrarlo acá.
+            ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
+            // Ídem: sólo si el médico lo cambió. Ausente ≡ solo consultas.
+            ...(rule.bookingMode === undefined ? {} : { bookingMode: rule.bookingMode }),
+          })),
+          ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
+          ...(template.bookingPolicyId === undefined
+            ? {}
+            : { bookingPolicyId: template.bookingPolicyId }),
+          ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
+          ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
+          ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
+        },
+        SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS,
+      ),
     );
   }
 
@@ -445,9 +447,7 @@ export class SchedulingClient {
   }
 
   listExceptionTypes(): Observable<AvailabilityExceptionTypeList> {
-    return this.http.get<AvailabilityExceptionTypeList>(
-      this.url('/scheduling/exception-types'),
-    );
+    return this.http.get<AvailabilityExceptionTypeList>(this.url('/scheduling/exception-types'));
   }
 
   listExceptions(
@@ -475,6 +475,11 @@ export class SchedulingClient {
         endAt: exception.endAt,
         ...(exception.reason === undefined ? {} : { reason: exception.reason }),
         ...(exception.isAvailable === undefined ? {} : { isAvailable: exception.isAvailable }),
+        // Sólo cuando la persona ya vio la lista y confirmó: sin esto, un rato
+        // con citas responde 422 con `affectedBookings` y no cancela nada.
+        ...(exception.cancelAffectedBookings === undefined
+          ? {}
+          : { cancelAffectedBookings: exception.cancelAffectedBookings }),
       },
     );
   }
@@ -497,9 +502,7 @@ export class SchedulingClient {
    * consulta ya tiene una reconsulta por venir. Sin el campo, nada de eso
    * corre: una cita puntual se sigue creando como siempre.
    */
-  createDirectAppointment(
-    cita: NewDirectAppointment,
-  ): Observable<DirectAppointmentCreated> {
+  createDirectAppointment(cita: NewDirectAppointment): Observable<DirectAppointmentCreated> {
     return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
       patientProfileId: cita.patientProfileId,
       resourceId: cita.resourceId,
@@ -567,9 +570,7 @@ export class SchedulingClient {
         ...(p.occupationConceptId === undefined
           ? {}
           : { occupationConceptId: p.occupationConceptId }),
-        ...(p.occupationFreeText === undefined
-          ? {}
-          : { occupationFreeText: p.occupationFreeText }),
+        ...(p.occupationFreeText === undefined ? {} : { occupationFreeText: p.occupationFreeText }),
         ...(p.guardianName === undefined ? {} : { guardianName: p.guardianName }),
         ...(p.guardianPhone === undefined ? {} : { guardianPhone: p.guardianPhone }),
         ...(p.guardianRelationshipConceptId === undefined
@@ -584,11 +585,9 @@ export class SchedulingClient {
       ...(turno.channel === undefined ? {} : { channel: turno.channel }),
     };
     return sendIdempotent(this.submissionKeys, 'walk-in', body, (headers) =>
-      this.http.post<WalkInAppointmentCreated>(
-        this.url('/scheduling/appointments/walk-in'),
-        body,
-        { headers },
-      ),
+      this.http.post<WalkInAppointmentCreated>(this.url('/scheduling/appointments/walk-in'), body, {
+        headers,
+      }),
     );
   }
 
@@ -893,9 +892,12 @@ export class SchedulingClient {
         ? new HttpParams()
         : new HttpParams().set('practitionerProfileId', practitionerProfileId);
     return this.http
-      .get<{ readonly items: readonly ServiceOffering[] }>(this.url('/scheduling/service-offerings'), {
-        params,
-      })
+      .get<{ readonly items: readonly ServiceOffering[] }>(
+        this.url('/scheduling/service-offerings'),
+        {
+          params,
+        },
+      )
       .pipe(map((body) => body.items));
   }
 
@@ -991,7 +993,9 @@ export class SchedulingClient {
         {
           resourceId: hold.resourceId,
           startAt: hold.startAt.toISOString(),
-          ...(hold.patientProfileId === undefined ? {} : { patientProfileId: hold.patientProfileId }),
+          ...(hold.patientProfileId === undefined
+            ? {}
+            : { patientProfileId: hold.patientProfileId }),
         },
       )
       .pipe(
@@ -1120,9 +1124,7 @@ function toSlot({ startAt, endAt, ...resto }: WireSlot): AgendaSlot {
  * Se omite en vez de normalizarse a `null`: la clave declarada pisaría, y
  * «no es una reconsulta» tiene que poder distinguirse mirando un solo campo.
  */
-function aOrigenDeReconsulta(
-  origen: WireBooking['followUpOf'],
-): Pick<Booking, 'followUpOf'> {
+function aOrigenDeReconsulta(origen: WireBooking['followUpOf']): Pick<Booking, 'followUpOf'> {
   if (origen === undefined || origen === null) {
     return origen === null ? { followUpOf: null } : {};
   }

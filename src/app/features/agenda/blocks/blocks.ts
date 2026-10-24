@@ -27,6 +27,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { AGENDA_ROUTE } from '../agenda.routes';
+import { BlockCancellations, cancelledBookingsText } from '../block-cancellations';
 import { agendaResourcesMy } from '../my-resource';
 import {
   BlockForm,
@@ -85,6 +86,7 @@ export class Blocks {
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
+  private readonly cancellations = inject(BlockCancellations);
   private readonly toast = inject(ToastService);
   private readonly idioma = inject(LOCALE_ID);
 
@@ -191,23 +193,37 @@ export class Blocks {
       });
   }
 
+  /**
+   * Crea el bloqueo. Si el rato tiene citas, la API lo dice antes de cancelar
+   * nada y `BlockCancellations` muestra a quién se deja sin cita; con el sí se
+   * repite el pedido confirmado y a cada paciente le llega el aviso.
+   */
   private guardarAlta(pedido: BloqueoPedido): void {
     const resourceId = this.recursoId();
     if (resourceId === null) return;
 
     this.guardando.set(true);
-    this.scheduling
-      .createException(resourceId, {
-        exceptionType: pedido.exceptionType,
-        startAt: pedido.desde.toISOString(),
-        endAt: pedido.hasta.toISOString(),
-        ...(pedido.motivo.trim() === '' ? {} : { reason: pedido.motivo.trim() }),
-      })
+    this.cancellations
+      .withConfirmation((confirmed) =>
+        this.scheduling.createException(resourceId, {
+          exceptionType: pedido.exceptionType,
+          startAt: pedido.desde.toISOString(),
+          endAt: pedido.hasta.toISOString(),
+          ...(pedido.motivo.trim() === '' ? {} : { reason: pedido.motivo.trim() }),
+          ...(confirmed ? { cancelAffectedBookings: true } : {}),
+        }),
+      )
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.guardando.set(false);
+          // `null`: la persona vio las citas y eligió no cancelarlas. El
+          // formulario queda como estaba; no hubo error que mostrar.
+          if (res === null) return;
           this.creando.set(false);
-          this.toast.success('El rato queda cerrado.', 'Bloqueo creado');
+          this.toast.success(
+            `El rato queda cerrado.${cancelledBookingsText(res.cancelledBookings)}`,
+            'Bloqueo creado',
+          );
           this.cargar();
         },
         error: (error: unknown) => {
@@ -323,8 +339,7 @@ export class Blocks {
   private aVisible(x: PublishedException): BloqueoVisible {
     const desde = new Date(x.startAt);
     const hasta = new Date(x.endAt);
-    const todoElDia =
-      desde.getHours() === 0 && desde.getMinutes() === 0 && hasta.getHours() === 0;
+    const todoElDia = desde.getHours() === 0 && desde.getMinutes() === 0 && hasta.getHours() === 0;
 
     const dia = (v: Date): string => formatDate(v, "d 'de' MMMM", this.idioma);
     const hora = (v: Date): string => formatDate(v, 'HH:mm', this.idioma);
@@ -339,9 +354,7 @@ export class Blocks {
       // El tipo se resuelve contra el catálogo: la lectura manda el concepto y
       // el formulario necesita la clave. Sin coincidencia cae en `ABSENCE`,
       // que es lo que la pantalla mandaba antes de que hubiera catálogo.
-      tipo:
-        this.motivos().find((m) => m.conceptId === x.exceptionTypeConceptId)?.type ??
-        'ABSENCE',
+      tipo: this.motivos().find((m) => m.conceptId === x.exceptionTypeConceptId)?.type ?? 'ABSENCE',
       descripcion: x.reason ?? null,
       cuando: todoElDia
         ? `${dia(desde)} — días completos`

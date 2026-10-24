@@ -67,34 +67,3 @@ Cuando existan las secciones del modelo, tres casos lo van a pedir:
 **El primero es el que ya tiene la mitad hecha**: la operación de consulta existe
 y nadie la llama. Un sondeo cada N segundos mientras el caso esté abierto sería
 la implementación más simple que funciona, y no requiere infraestructura nueva.
-
-## Lo que habría que resolver antes
-
-Si se decide agregar una conexión persistente:
-
-1. **Autenticación.** Los WebSockets no llevan cabeceras. Habría que negociar el
-   token en la conexión o por un ticket de un solo uso — el patrón `Bearer` +
-   `X-Tenant-Id` del interceptor **no se traslada tal cual**.
-2. **Reconexión y estado.** Una conexión caída necesita reintento con retroceso
-   y, sobre todo, **una forma de decirle a la persona que lo que ve puede estar
-   desactualizado**. El proyecto ya tiene ese estado: es S7.
-3. **Cambio de organización.** `X-Tenant-Id` define el contexto. Cambiar de
-   organización tendría que cerrar y reabrir la conexión, o el servidor estaría
-   mandando eventos de la organización anterior.
-4. **Cierre de sesión.** La conexión debe cerrarse. Hoy `clearLocal()` limpia
-   store y almacenamiento; tendría que cerrar también el socket.
-5. **PHI en tránsito.** Un evento con datos clínicos exige las mismas garantías
-   que una respuesta HTTP: TLS, y nada en registros del cliente.
-6. **SSR.** `EventSource` y `WebSocket` no existen en Node. Toda conexión tiene
-   que abrirse tras `afterNextRender`, como hace `Breakpoints` con `matchMedia`.
-
-El punto 3 es el menos evidente y el más peligroso: es el mismo problema que
-`ShellLayout.changeTenant` ya resuelve para la navegación, y que una conexión
-persistente reintroduciría.
-
-## Estado
-
-**No es una brecha.** Es una ausencia coherente con el alcance actual. Se
-convierte en brecha el día que exista una pantalla cuyo dato cambie mientras se
-mira. Registrado así en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

@@ -64,10 +64,12 @@ describe('Blocks', () => {
 
   /** Responde el recurso y la lista, que es lo que la pantalla pide al abrir. */
   function responder(items: unknown[]): void {
-    http.expectOne((r) => r.url === '/scheduling/resources').flush({
-      items: [{ id: 'res-1', name: 'Consultorio', resourceRefId: PERFIL }],
-      count: 1,
-    });
+    http
+      .expectOne((r) => r.url === '/scheduling/resources')
+      .flush({
+        items: [{ id: 'res-1', name: 'Consultorio', resourceRefId: PERFIL }],
+        count: 1,
+      });
     fixture.detectChanges();
     // El catálogo va PRIMERO: cada bloqueo resuelve su motivo contra él para
     // poder precargarlo al editar. Al revés, todos caerían en el respaldo.
@@ -100,8 +102,16 @@ describe('Blocks', () => {
     crear();
     responder([bloqueo('b-futuro', 5), bloqueo('b-viejo', -30)]);
 
-    expect(acc().vigentes().map((b) => b.id)).toEqual(['b-futuro']);
-    expect(acc().historicos().map((b) => b.id)).toEqual(['b-viejo']);
+    expect(
+      acc()
+        .vigentes()
+        .map((b) => b.id),
+    ).toEqual(['b-futuro']);
+    expect(
+      acc()
+        .historicos()
+        .map((b) => b.id),
+    ).toEqual(['b-viejo']);
   });
 
   it('usa la etiqueta del servidor, y sin ella NO inventa un motivo', () => {
@@ -111,7 +121,9 @@ describe('Blocks', () => {
     crear();
     responder([bloqueo('b-1', 5), bloqueo('b-2', 6, { reasonLabel: undefined })]);
 
-    const motivos = acc().vigentes().map((b) => b.motivo);
+    const motivos = acc()
+      .vigentes()
+      .map((b) => b.motivo);
     expect(motivos).toContain('Vacaciones');
     expect(motivos).toContain('Sin motivo registrado');
   });
@@ -140,6 +152,100 @@ describe('Blocks', () => {
 
     // Y recarga: el bloqueo ya no está, así que la lista de arriba miente.
     responder([]);
+  });
+
+  /**
+   * Bloquear un rato con citas (pedido del propietario, 24/10/2026).
+   *
+   * La API no cancela nada en el primer pedido: responde 422 con la lista de
+   * citas, la pantalla la muestra, y sólo con el sí repite el pedido con
+   * `cancelAffectedBookings: true`. Sin el sí, no hay segundo pedido — y
+   * `http.verify()` del `afterEach` lo comprueba.
+   */
+  describe('bloquear un rato con citas', () => {
+    const pedido = {
+      exceptionType: 'VACATION',
+      motivo: '',
+      desde: new Date('2026-11-02T12:00:00Z'),
+      hasta: new Date('2026-11-02T16:00:00Z'),
+    };
+    const hayCitas = {
+      code: 'PRECONDITION_FAILED',
+      message:
+        'Ese rato tiene 1 cita con paciente. Confirme para cancelarlas y avisar a cada persona.',
+      timestamp: '2026-10-24T12:00:00Z',
+      path: '/scheduling/resources/res-1/exceptions',
+      details: {
+        failureCode: 'BOOKINGS_REQUIRE_CONFIRMATION',
+        affectedBookings: [
+          {
+            bookingId: 'bk-1',
+            startAt: '2026-11-02T13:00:00Z',
+            endAt: '2026-11-02T13:30:00Z',
+            patientName: 'Rosa Quispe',
+            pending: false,
+          },
+        ],
+      },
+    };
+
+    function guardarNuevo(): void {
+      const c = fixture.componentInstance as never as {
+        abrirNuevo(): void;
+        guardar(p: unknown): void;
+      };
+      c.abrirNuevo();
+      c.guardar(pedido);
+    }
+
+    function esperarAlDialogo(): Promise<void> {
+      // El diálogo resuelve en una microtarea; la segunda petición sale después.
+      return new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    it('con el sí, repite el pedido confirmado y avisa cuántas citas canceló', async () => {
+      crear();
+      responder([]);
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm');
+
+      guardarNuevo();
+      const primero = http.expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions');
+      expect(primero.request.body.cancelAffectedBookings).toBeUndefined();
+      primero.flush(hayCitas, { status: 422, statusText: 'Unprocessable Entity' });
+      await esperarAlDialogo();
+
+      // El modal dice a quién se deja sin cita, con su hora.
+      expect(confirm).toHaveBeenCalledTimes(1);
+      const config = confirm.mock.calls[0][0];
+      expect(config.title).toBe('Este bloqueo cancela una cita');
+      expect(config.destructive).toBe(true);
+      expect(config.details?.[0].label).toBe('Rosa Quispe');
+
+      const segundo = http.expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions');
+      expect(segundo.request.body.cancelAffectedBookings).toBe(true);
+      segundo.flush({ id: 'exc-1', blockedSlots: 1, cancelledBookings: 1 });
+      fixture.detectChanges();
+
+      // Y recarga la lista, como cualquier alta.
+      responder([]);
+    });
+
+    it('sin el sí, NO repite el pedido y no cancela nada', async () => {
+      crear();
+      responder([]);
+      respuestaDelDialogo = false;
+
+      guardarNuevo();
+      http
+        .expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions')
+        .flush(hayCitas, { status: 422, statusText: 'Unprocessable Entity' });
+      await esperarAlDialogo();
+      respuestaDelDialogo = true;
+
+      // `http.verify()` del afterEach falla si salió un segundo POST.
+      fixture.detectChanges();
+      expect((fixture.componentInstance as never as { creando(): boolean }).creando()).toBe(true);
+    });
   });
 
   it('si se cancela el diálogo, NO borra nada', async () => {
@@ -203,9 +309,7 @@ describe('Blocks', () => {
       crear();
       responder([bloqueo('b-viejo', -30)]);
 
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="bloqueo-editar"]'),
-      ).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="bloqueo-editar"]')).toBeNull();
     });
   });
 });

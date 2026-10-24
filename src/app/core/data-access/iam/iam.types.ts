@@ -399,11 +399,9 @@ export interface PractitionerRegistration {
    * Correo del trabajo, el institucional. Es un dato de contacto: **no** sirve
    * para entrar.
    *
-   * Pendiente en la API: `RegisterPractitionerDto` todavía no lo declara —y
-   * documenta lo contrario, que el de trabajo es el login—, así que con
-   * `forbidNonWhitelisted` rechazaría el alta. Tiene que aceptarlo antes de que
-   * esto llegue a `dev`. El backend ya sabe guardarlo por uso
-   * (`CONTACT_USE_WORK`) y lo devuelve como `workEmail` al leer el perfil.
+   * `RegisterPractitionerDto` lo declara: con `workEmail`, el correo de acceso
+   * se guarda como personal y éste como contacto de trabajo
+   * (`CONTACT_USE_WORK`), que el perfil devuelve como `workEmail` al leerlo.
    */
   readonly workEmail?: string;
   /**
@@ -716,11 +714,8 @@ export interface PharmacyBranchRegistration {
  * laboratorio e imagenología (Módulo Farmacia §1). Es una interfaz aparte y
  * no una unión con `OrganizationRegistration` porque el bloque específico del
  * tipo de tenant no coincide: la aseguradora exige `payer` siempre; la
- * farmacia no tiene bloque propio en el DTO real (no hay `PharmacyProfileDto`
- * — el backend sólo declara `payer`, `broker` y `diagnosticUnit`), así que
- * `pharmacy.branches` es una clave que **este cliente inventa** para no
- * perder las sucursales que la persona cargó; el backend real todavía no la
- * reconoce (ver `PENDIENTES-BACKEND.md`, P49).
+ * farmacia manda su bloque `pharmacy` (`RegisterPharmacyBlockDto`), con las
+ * coordenadas de la casa matriz y las sucursales que la persona cargó (P49).
  *
  * A diferencia de la aseguradora, acá **lo obligatorio es lo más básico**
  * (decisión D2 del carril de farmacia): razón social, tipo societario, NIT,
@@ -803,7 +798,7 @@ export interface DiagnosticUnitBranchRegistration {
  * real **sí** tiene bloque propio para este tipo: `diagnosticUnit`
  * (`DiagnosticUnitProfileDto`, con `name` y `primarySite.address`). Se usa ése
  * y no uno inventado; lo único que el cliente le suma es `branches`, que el
- * DTO no declara (ver `PENDIENTES-BACKEND.md`, P51).
+ * DTO no declara (P51).
  *
  * Mismo criterio de obligatoriedad que la farmacia (D2): sólo lo básico para
  * nacer. Los seis papeles, el punto de la central, las sucursales y las tres

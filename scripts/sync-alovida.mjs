@@ -98,7 +98,7 @@ const CORRECCIONES = [
   },
 ];
 
-/* PENDIENTE EN LA BÓVEDA (no cabe en CORRECCIONES, que sólo cambia valores):
+/* CAMBIO QUE LA BÓVEDA NO TRAE (no cabe en CORRECCIONES, que sólo cambia valores):
    el 2026-10-11 se partió `--petroleo` en tinta y relleno para cerrar la
    excepción R3. En la hoja generada se agregó `--petroleo-relleno` (#0B557E
    claro, #12719F oscuro), `--petroleo` oscuro pasó a #4FA8D6 y los fondos con

@@ -2,7 +2,6 @@
     Link — el subrayado NO es decoración: es el segundo portador del
     significado «esto se puede seguir», imprescindible cuando el color no se
     distingue. Por eso todas las variantes subrayan, incluida `subtle`.
-    TODO(diseñador): confirmar si `subtle` puede subrayar solo al hover.
 
     El anillo de foco lo pone la regla global de `:focus-visible`.
     ========================================================================== */

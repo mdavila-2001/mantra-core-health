@@ -106,12 +106,3 @@ respuesta:
 
 La cuarta es la más interesante: este proyecto ya modela la obsolescencia de
 datos. Una caché mal integrada mentiría sobre ella.
-
-## Recomendación
-
-**No agregar caché todavía.** Agregarla cuando exista el primer caso concreto —
-una lista con detalle, o dos pantallas que compartan un recurso—, y resolver
-entonces las cuatro preguntas con ese caso a la vista.
-
-Registrado como propuesta, no como brecha bloqueante, en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

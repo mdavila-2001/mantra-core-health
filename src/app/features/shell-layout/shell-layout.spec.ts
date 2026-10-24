@@ -18,6 +18,7 @@ import {
 } from '../../shared/components/organisms/side-nav/side-nav.types';
 import { NAV_STORAGE_KEY } from '../../shared/components/organisms/shell/shell-service';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
+import { accessibleName } from '../../../testing/a11y';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -241,9 +242,8 @@ describe('ShellLayout', () => {
       // consulta después de ver las órdenes y antes de los cuestionarios.
       '/my-account/cotizaciones',
       // «Mis cuestionarios» YA NO está (2026-09-25, dc790b01): el propietario
-      // la sacó del menú mientras decide qué hacer con la sección
-      // (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la pantalla siguen vivas
-      // y se llega por URL — ver docs/pendiente-decision-cuestionarios.md.
+      // la sacó del menú (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la
+      // pantalla siguen vivas y se llega por URL.
       // El centro de notificaciones tampoco aparece acá: es el otro destino
       // fijo. Sigue sin exigir rol —cualquiera con sesión tiene bandeja—; lo
       // que cambió es dónde se dibuja.
@@ -930,6 +930,85 @@ describe('ShellLayout', () => {
       // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
+    });
+
+    /**
+     * El nombre accesible del menú del médico, desplegado y recogido.
+     *
+     * La auditoría del 23/10/2026 reportó enlaces sin nombre con la barra
+     * recogida. No se reprodujo en el navegador, pero el riesgo es real: basta
+     * con que el rótulo pase de `solo-lectores` a `display: none` o que alguien
+     * lo quite «porque no se ve». Estas pruebas afirman el **nombre**
+     * calculado, no la clase que hoy lo sostiene.
+     */
+    describe('nombre accesible del menú del médico', () => {
+      beforeEach(() => {
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay preferencia que limpiar.
+        }
+        abrirSesion({ sub: 'u-med', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        fixture.detectChanges();
+      });
+
+      function destinos(): HTMLElement[] {
+        return [
+          ...raiz().querySelectorAll<HTMLElement>(
+            '[data-testid="nav-enlace"], .app-side-nav__item.is-disabled, .app-side-nav__group-summary',
+          ),
+        ];
+      }
+
+      function rotuloVisible(destino: HTMLElement): string {
+        const rotulo = destino.querySelector('.side-nav__label, .app-side-nav__eyebrow');
+        return rotulo?.textContent?.trim() ?? '';
+      }
+
+      function recoger(): void {
+        raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]')?.click();
+        fixture.detectChanges();
+      }
+
+      it('desplegada, cada destino se nombra por su rótulo visible', () => {
+        expect(destinos().length).toBeGreaterThan(0);
+        for (const destino of destinos()) {
+          const rotulo = rotuloVisible(destino);
+          expect(rotulo, destino.outerHTML.slice(0, 120)).toBeTruthy();
+          expect(accessibleName(destino)).toContain(rotulo);
+        }
+      });
+
+      it('recogida, ningún destino queda mudo: conserva el mismo nombre', () => {
+        const antes = destinos().map((destino) => accessibleName(destino));
+
+        recoger();
+
+        expect(raiz().querySelector('.app-shell')?.classList.contains('is-nav-recogido')).toBe(true);
+        const despues = destinos().map((destino) => accessibleName(destino));
+        expect(despues).toEqual(antes);
+        expect(despues.every((nombre) => nombre.length > 0)).toBe(true);
+      });
+
+      it('recogida, el globo de ayuda repite el rótulo y se abre con el foco', () => {
+        recoger();
+
+        for (const tooltip of fixture.debugElement.queryAll(By.directive(Tooltip))) {
+          const host = tooltip.nativeElement as HTMLElement;
+          if (!host.matches('[data-testid="nav-enlace"]')) {
+            continue;
+          }
+          expect(tooltip.injector.get(Tooltip).appTooltip()).toBe(rotuloVisible(host));
+        }
+
+        const primero = raiz().querySelector<HTMLElement>('[data-testid="nav-enlace"]');
+        primero?.dispatchEvent(new FocusEvent('focus'));
+        fixture.detectChanges();
+
+        const globo = document.body.querySelector('[role="tooltip"]');
+        expect(globo?.textContent?.trim()).toBe(rotuloVisible(primero as HTMLElement));
+        primero?.dispatchEvent(new FocusEvent('blur'));
+      });
     });
 
     /**

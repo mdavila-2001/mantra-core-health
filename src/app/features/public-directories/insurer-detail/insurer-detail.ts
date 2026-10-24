@@ -27,6 +27,7 @@ import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '@shared/components/atoms/button/button-link';
 import { Skeleton } from '@shared/components/atoms/skeleton/skeleton';
+import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FactList } from '@shared/components/molecules/fact-list/fact-list';
 import { Pagination } from '@shared/components/molecules/pagination/pagination';
@@ -214,6 +215,7 @@ const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
 @Component({
   selector: 'app-insurer-detail',
   imports: [
+    Alert,
     AppButton,
     AppButtonLink,
     Badge,
@@ -256,6 +258,12 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
 
   /** Los brokers de la aseguradora. Llegan con el catálogo, en la misma lectura. */
   protected readonly brokers = signal<readonly MarketplaceBroker[]>([]);
+
+  /**
+   * Si los planes son de ejemplo: la aseguradora no publicó su catálogo y la
+   * maqueta muestra uno ilustrativo. Se dice en el aviso y en cada plan.
+   */
+  protected readonly deEjemplo = signal(false);
 
   // ── Buscador y filtros (ADR-0015, regla 5) ─────────────────────────────
   // La URL es la fuente de verdad, como en `app-filter-bar`: la barra escribe
@@ -351,6 +359,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
     return this.seguros.getMarketplace(slug).pipe(
       tap((mercado) => {
         this.brokers.set(mercado.brokers);
+        this.deEjemplo.set(mercado.exampleCatalog);
       }),
       map((mercado) => ({
         items: planesDelMercado(mercado.carrier),

@@ -2,8 +2,8 @@
 
 - **Fecha:** 2026-08-01 (tercera revisión, tras las pruebas contra el artefacto)
 - **Alcance:** frontend `mantra-core-health`
-- **Veredicto:** **APTO A NIVEL DE CÓDIGO** · pendiente de **configuración y
-  credenciales**
+- **Veredicto:** **APTO A NIVEL DE CÓDIGO**; lo demás es **configuración y
+  credenciales** del entorno
 
 ---
 
@@ -11,8 +11,8 @@
 
 > ## ✅ APTO PARA PRODUCCIÓN A NIVEL DE CÓDIGO
 >
-> No queda ningún cambio de código pendiente para desplegar.
-> **Lo que falta es configuración y credenciales**, y está enumerado abajo.
+> Desplegar no requiere cambios de código: el resto es configuración y
+> credenciales del entorno.
 
 La revisión anterior declaraba **NO APTO** por dos bloqueantes y dos críticos.
 Los cuatro se cerraron a nivel de código:
@@ -78,30 +78,6 @@ ya usaba.
 > **Lo que estos tres tienen en común:** ninguno se ve leyendo el código, y los
 > tres se ven a la primera corrida de la herramienta correcta. Es el argumento
 > completo a favor de estas tres capas.
-
-## Lo que queda, y es todo configuración
-
-> ## ✅ La decisión de arquitectura está tomada
->
-> **La API va detrás del mismo dominio.** `PUBLIC_API_BASE_URL` queda vacía en
-> todos los entornos, el reverse proxy enruta los seis prefijos, y con eso
-> desaparecen tres cosas: el CORS, la variable por entorno y la imagen por
-> entorno.
-
-| # | Qué | Tipo | Quién |
-|---|---|---|---|
-| 1 | Host, orquestador o PaaS de destino | Infraestructura | Operaciones |
-| 2 | Dominio y certificado TLS | Infraestructura | Operaciones |
-| 3 | Que la API sea alcanzable como `api:3000` en la red del proxy | Configuración | Operaciones + API |
-| 4 | Que el dominio de los enlaces del correo coincida con el del frontend | Configuración | Equipo de la API |
-| 5 | Credenciales del primer administrador | Credenciales | Equipo de la API |
-| 6 | Destino remoto para la telemetría de errores | Decisión | Producto + Seguridad |
-
-**Ninguno es código.**
-
-> **El 4 se pasa por alto y rompe dos journeys completos.** La API arma los
-> enlaces de verificación de correo y de recuperación de contraseña; si su
-> dominio no es el del frontend, esas dos landings no se alcanzan.
 
 ## Lo que se cerró en esta revisión
 
@@ -234,9 +210,8 @@ dos los encontró probar contra el artefacto construido en vez de contra jsdom.
 
 > ## ✅ APTO PARA PRODUCCIÓN A NIVEL DE CÓDIGO
 >
-> **No queda ningún cambio de código pendiente.** Lo que falta —el destino, el
-> dominio, el certificado y las credenciales— es configuración y decisiones de
-> infraestructura.
+> **Desplegar no requiere cambios de código.** El destino, el certificado y las
+> credenciales son configuración de infraestructura.
 >
 > La decisión de arquitectura ya está tomada —**la API va detrás del mismo
 > dominio**— y el código la refleja entero: imagen, proxy, CSP y variables.
@@ -245,6 +220,3 @@ dos los encontró probar contra el artefacto construido en vez de contra jsdom.
 > **la aplicación se probó construida, servida y pedida por un navegador real.**
 > Esa prueba encontró dos defectos que bloqueaban producción. Los dos están
 > corregidos y los dos tienen ahora una prueba que impide que vuelvan.
-
-Detalle de lo que sigue abierto en
-[el análisis de brechas](documentation-gap-analysis.md).

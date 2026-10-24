@@ -104,7 +104,7 @@ test.describe('liquidación conciliada · vista del prestador (CLM-2026-0177)', 
 
       await sinDesborde(page);
       await page.screenshot({
-        path: `docs/trabajo/2026-09-24-insurance-exclusions-settlement-contracts/evidencia/prestador-${viewport.nombre}.png`,
+        path: `artifacts/evidencia/2026-09-24-insurance-exclusions-settlement-contracts/evidencia/prestador-${viewport.nombre}.png`,
         fullPage: true,
       });
 
@@ -156,7 +156,7 @@ test.describe('liquidación conciliada · vista del paciente (orden parcialmente
 
       await sinDesborde(page);
       await page.screenshot({
-        path: `docs/trabajo/2026-09-24-insurance-exclusions-settlement-contracts/evidencia/paciente-${viewport.nombre}.png`,
+        path: `artifacts/evidencia/2026-09-24-insurance-exclusions-settlement-contracts/evidencia/paciente-${viewport.nombre}.png`,
         fullPage: true,
       });
 

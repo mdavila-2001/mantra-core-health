@@ -73,8 +73,7 @@ hoy**. Están escritos, probados y listos; les falta la interfaz. Ver §3.
 | `GET` | `/public/directory` | `PublicClient.searchDirectory` | Panel | Pública |
 
 Nueve operaciones vivas. Las cinco de registro y recuperación fueron verificadas
-contra la API real por el equipo (`ESTADO-FRONTEND.md` §«El recorrido que se
-verificó en un navegador real»).
+contra la API real por el equipo (el recorrido del 2026-08-01, cuyo informe queda en el historial de git).
 
 ## 2 · Cómo viaja la credencial
 

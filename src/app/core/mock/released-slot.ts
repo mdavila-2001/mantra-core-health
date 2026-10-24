@@ -12,12 +12,11 @@ import { ahora, uuid } from './mock-store';
     > PUEDES RECIBIR UNA NOTIFICACION DE LA APP DONDE TE INFORME QUE UN PACIENTE
     > DESCONFIRMO Y EXISTE UN HORARIO DISPONIBLE.»
 
-    ## Esto lo hace el backend, y todavía no existe
+    ## Esto es del backend
 
     Vive en `core/mock/` porque es **comportamiento de servidor**: decidir que
     un cupo quedó libre y avisarle a quien lo estaba esperando no es trabajo de
-    una pantalla. Acá se simula para poder recorrerlo; lo que la API tiene que
-    construir está anotado en `PENDIENTES-BACKEND.md` (P21).
+    una pantalla. Acá se simula para poder recorrerlo (P21).
 
     ## Qué se toma como «se liberó»
 

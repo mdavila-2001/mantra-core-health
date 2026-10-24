@@ -114,18 +114,3 @@ Escritas ahora, que es cuando son baratas:
    compruebe que no sale, o la regla es una intención.
 
 La 8 es la que convierte las siete anteriores en algo verificable.
-
-## Propuesta
-
-Un `LoggerService` en `core/` con:
-
-- Niveles, y `debug` desactivado en producción.
-- Contexto fijo: versión, ruta, `sub` del usuario (**no** su nombre ni su
-  documento).
-- Una lista de campos prohibidos, con prueba.
-- Un destino conectable — consola hoy, servicio remoto cuando exista.
-
-**No se implementa acá**: es un cambio de producto y añadiría una dependencia si
-el destino es un servicio de terceros, con la discusión de privacidad que eso
-abre. Ver [reporte de errores](error-reporting.md) y
-[privacidad](../security/privacy.md).

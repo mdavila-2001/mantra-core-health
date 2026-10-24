@@ -1,11 +1,5 @@
-import {
-  conflict,
-  notFound,
-  reply,
-  validation,
-  type MockRequest,
-  type MockRouter,
-} from '../mock-router';
+import { conflict, notFound, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { descripcionDeSchema, registrarNotasDeBoveda } from './catalog-vault.mock';
 
 /* ============================================================================
     Backend simulado del portal administrativo (`/admin/catalog`,
@@ -283,6 +277,7 @@ function registrarCatalogo(router: MockRouter): void {
     },
   ];
   const buscar = (id: string) => objetos.find((o) => o.id === id);
+  registrarNotasDeBoveda(router, objetos, ahora, nuevoId);
 
   router.get('/admin/catalog/schemas', () => {
     const porSchema = new Map<string, Objeto[]>();
@@ -293,6 +288,7 @@ function registrarCatalogo(router: MockRouter): void {
       notObserved: lista.filter((o) => o.observationStatus === 'NOT_OBSERVED').length,
       annotated: lista.filter((o) => o.ficha).length,
       approved: lista.filter((o) => cobertura(o).review === 'APPROVED_CURRENT').length,
+      description: descripcionDeSchema(schemaName),
     }));
   });
 

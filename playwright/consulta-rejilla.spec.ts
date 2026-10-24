@@ -10,7 +10,7 @@ import { entrar, irA } from './support/sesion';
 // C0: solo simulador y cuentas sintéticas declaradas; no API externa ni rutas interceptadas.
 const OUTPUT =
   process.env['ALOVIDA_EVIDENCE_DIR'] ??
-  join('docs', 'trabajo', '2026-09-25-encuentro-clinico', 'c0', 'evidencia', 'visual');
+  join('artifacts', 'evidencia', '2026-09-25-encuentro-clinico', 'c0', 'evidencia', 'visual');
 const DOCTOR: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',

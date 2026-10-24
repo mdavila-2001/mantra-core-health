@@ -189,34 +189,6 @@ obligatorio**:
 > leería como ilegible y sacaría al login a alguien con sesión válida, sin
 > explicación.»*
 
-## Riesgos, y qué falta
-
-### 1 · El refresh token es alcanzable por XSS · `MEDIUM`
-
-Cualquier script en el origen puede leer `localStorage`. **Es el riesgo abierto
-que queda**, y no se puede cerrar desde acá.
-
-**Mitigado por:** cero `innerHTML`, cero scripts de terceros, 10 dependencias, y
-[una CSP con `script-src` por hash](content-security-policy.md) que sirve el
-servidor de renderizado.
-**No es del frontend:** convertirlo en cookie `HttpOnly` exige que la API deje de
-entregarlo en el cuerpo.
-
-### 2 · Sin señal de MFA · `LOW`
-
-El campo está siempre visible porque el backend no declara cuándo hace falta. Hay
-un `TODO` en `login.ts`. **Es del backend**, no de acá.
-
-### Cerrados
-
-| Riesgo | Cómo se cerró |
-|---|---|
-| Sin cierre por inactividad | `IdleLogoutService`, 15 min con aviso a los 13 |
-| Sin cierre entre pestañas | Oyente de `storage` sobre `mantra.refresh-token` |
-| `isAccessTokenExpired` sin consumidor | El interceptor la usa para refrescar **antes** de mandar, no después del 401 |
-| Sin CSP | Seis cabeceras de seguridad desde `src/server/security-headers.ts` |
-| El borrado al salir podía no ocurrir | Ver [el orden al cerrar sesión](#el-orden-al-cerrar-sesión) |
-
 ## Lo que está bien y conviene no perder
 
 | Práctica | |

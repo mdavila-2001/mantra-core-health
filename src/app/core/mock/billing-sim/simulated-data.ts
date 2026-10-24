@@ -143,8 +143,8 @@ function consultationLine(monto: string, fecha: string): ChargeLine {
  * catálogo de la práctica (`CONS-CARDIO` y `CONS-CONTROL`,
  * `practice.handlers.ts`).
  *
- * TODO(FACT-SIAT-MOCK): el catálogo de servicios de la API no dice cuántas
- * reconsultas incluye un servicio; mientras no lo diga, el tipo se declara acá.
+ * El catálogo de servicios de la API no dice cuántas reconsultas incluye un
+ * servicio, así que el tipo se declara acá.
  */
 export const SERVICE_WITH_RECONSULTATIONS = {
   code: 'CONS-CARDIO-RECONS',

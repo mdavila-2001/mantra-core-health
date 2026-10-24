@@ -72,7 +72,7 @@ existe de fábrica.
 
 ## Levantar el sistema completo
 
-Orden que funciona, tomado de `ESTADO-FRONTEND.md` (trabajo previo del equipo):
+Orden que funciona (trabajo previo del equipo):
 
 ```bash
 # 1 · Almacenes de la API — NUNCA el servicio `api` del compose de la API:

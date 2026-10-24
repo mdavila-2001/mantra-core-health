@@ -1018,9 +1018,8 @@ export const MEDICAMENTO = define('VS_MEDICATION', [
  *
  * Mismo camino que B-13 (`mantra-core-health-api/REGISTRO-DEFECTOS.md:101`):
  * **dato de desarrollo sin fuente autoritativa, no apto para uso clínico ni
- * producción.** Quién debe proveer la posología real —negocio + un
- * profesional prescriptor, nunca quien escribe el simulador— queda registrado
- * como Q-D6 en `docs/trabajo/2026-09-20-ender-contratos-panel/PLAN.md`.
+ * producción.** La posología real la provee negocio con un profesional
+ * prescriptor, nunca quien escribe el simulador.
  *
  * Deliberadamente en ALGUNOS medicamentos y no en todos (H4.S3.M1): la ficha
  * de un medicamento sin esta propiedad tiene que seguir andando en la receta.

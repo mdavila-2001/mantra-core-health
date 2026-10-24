@@ -14,8 +14,8 @@ const PACIENTE: Actor = {
 };
 
 const SALIDA = join(
-  'docs',
-  'trabajo',
+  'artifacts',
+  'evidencia',
   '2026-09-23-cierre-local-reserva-cotizaciones',
   'evidencia',
   'capturas',

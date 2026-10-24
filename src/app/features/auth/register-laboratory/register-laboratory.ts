@@ -85,7 +85,7 @@ import {
     Sale a la red igual que el alta de farmacia (carril A de la cuenta de
     laboratorio, 30/09/2026): `POST /iam/auth/register-organization` con
     `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit`. Ver
-    `submit()` y `PENDIENTES-BACKEND.md`, P51.
+    `submit()`.
     ========================================================================== */
 
 /**
@@ -251,8 +251,9 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  * `diagnosticUnit` que su DTO ya declara para ese tipo: la central como sede
  * primaria, con su dirección y, si se confirmó, su punto en el mapa. Mismo
  * mecanismo que el alta de farmacia (`RegisterPharmacy`): `IamClient`,
- * `ViewState` y los PDF subidos antes por la pre-carga pública. Lo que la API
- * real todavía no acepta de este cuerpo está en `PENDIENTES-BACKEND.md`, P51.
+ * `ViewState` y los PDF subidos antes por la pre-carga pública. Lo único del
+ * cuerpo que el DTO real no declara son las sucursales
+ * (`diagnosticUnit.branches`, P51).
  *
  * ## De dónde sale cada pregunta
  *

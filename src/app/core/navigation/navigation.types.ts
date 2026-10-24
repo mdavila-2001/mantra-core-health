@@ -15,6 +15,7 @@
 // `core→core` está permitido (`scripts/check-architecture.mjs`): el tipo de
 // organización es del dominio `directory`, no de `shared/`.
 import type { TenantTypeCode } from '../data-access/directory/directory.types';
+import type { NavGroup } from './navigation.groups';
 
 /**
  * Nombres de ícono que el registro puede usar.
@@ -228,23 +229,7 @@ export interface NavBreadcrumbItem {
   readonly routerLink?: string;
 }
 
-/**
- * Grupos de primer nivel del menú. Son **dominios funcionales**, no pantallas.
- *
- * El orden del array es el orden en que se dibujan: lo que se usa todos los
- * días arriba, lo administrativo después, lo propio al final. `Mi cuenta` va
- * último y separado porque el vault lo exige explícitamente — mezclar «mis
- * datos» con «los datos que administro» es lo que hace que alguien edite el
- * registro equivocado.
- */
-export const NAV_GROUPS = [
-  'General',
-  'Atención',
-  'Administración',
-  'Facturación',
-  'Mi cuenta',
-] as const;
-export type NavGroup = (typeof NAV_GROUPS)[number];
+export { NAV_GROUPS, type NavGroup } from './navigation.groups';
 
 /**
  * Si la sección tiene pantalla propia o todavía no.

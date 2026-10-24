@@ -195,9 +195,8 @@ test.describe('C8 · lo que el paquete «Encuentro clínico» entregó de verdad
    * `consultations`, que `pestanas()` sólo arma **cuando el profesional no tiene
    * calendario** (`agenda.ts`: con calendario las solapas son `calendar` y
    * `schedule`). La médica de la maqueta tiene calendario, así que por ese camino
-   * el sello no se alcanza: sus 125 pruebas de unidad lo fijan, y en la
-   * aplicación nadie lo ve. Queda anotado como pendiente de C4 en el reporte del
-   * paquete.
+   * el sello no se alcanza: sus 125 pruebas de unidad lo fijan, pero con
+   * calendario esa tabla no se muestra.
    *
    * Lo que sí ve quien atiende, y es lo que esta prueba ejerce:
    *

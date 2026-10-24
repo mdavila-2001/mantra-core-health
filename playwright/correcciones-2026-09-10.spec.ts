@@ -21,8 +21,7 @@ import { entrar, estable, irA } from './support/sesion';
  *
  * No demuestra la persistencia contra la base real: esta rama se sirve con el
  * backend simulado (`mock-backend.interceptor`), que es el entorno autorizado
- * para probar acá. La persistencia contra la API real queda como comprobación
- * pendiente del entorno de pruebas del backend, y así se declara en el reporte.
+ * para probar acá. La persistencia contra la API real no la cubre esta spec.
  *
  * ## Una sola prueba por área, con un solo ingreso
  *

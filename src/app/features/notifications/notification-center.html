@@ -85,6 +85,23 @@
                     [ngTemplateOutletContext]="{ $implicit: aviso }"
                   />
                 </div>
+                <!-- Sin destino no hay fila que abrir: marcarla leída se ofrece
+                     aparte, de a una, y no sólo con «Marcar todas». -->
+                @if (aviso.unread) {
+                  <div class="avisos__marcar">
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      data-testid="aviso-marcar-leida"
+                      [attr.aria-label]="'Marcar como leída: ' + aviso.subject"
+                      (clicked)="marcarLeida(aviso)"
+                    >
+                      Marcar como leída
+                    </button>
+                  </div>
+                }
               }
 
               <!-- Las acciones que la notificación ofrece, sin salir de la

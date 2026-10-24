@@ -137,12 +137,10 @@ foco al mensaje en S4. Registrada como brecha `MEDIUM` en
 
 ### El campo de MFA
 
-Siempre visible y rotulado «(opcional)». El backend acepta `mfaCode` pero **no
-emite ninguna señal** de cuándo hace falta: no hay código de error propio en el
-catálogo. Antes esto se resolvía olfateando el texto de la respuesta, que era
-adivinar. Mostrarlo siempre como opcional no inventa nada.
-
-Hay un `TODO` en el código para ocultarlo cuando el backend declare el caso.
+Se dibuja **sólo cuando la API lo pide**: con `AUTH_MFA_CHALLENGE_ENABLED` en la
+API, un login sin código recibe `UNAUTHENTICATED` con `details.reason`
+`MFA_REQUIRED` (o `MFA_INVALID` si el código no valida), y recién ahí aparece el
+campo (TX-29, `login.ts`).
 
 ## 9 · Pruebas
 

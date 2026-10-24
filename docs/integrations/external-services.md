@@ -109,5 +109,3 @@ dónde está desplegado el frontend. Si no coinciden, las dos landings no se
 alcanzan y el registro y la recuperación quedan a medias.
 
 Es una dependencia de configuración entre repositorios sin dueño declarado.
-Registrada como brecha `HIGH` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

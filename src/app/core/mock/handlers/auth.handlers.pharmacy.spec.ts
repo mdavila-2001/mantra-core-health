@@ -6,9 +6,9 @@ import { registrarAuth } from './auth.handlers';
 /**
  * El alta pública de farmacia contra el simulador (carril de farmacia,
  * 2026-09-29): `POST /iam/auth/register-organization` con
- * `tenantType: 'PHARMACY'` + el bloque `pharmacy.branches` que el cliente
- * inventa (ver el JSDoc de `PharmacyOrganizationRegistration` en
- * `iam.types.ts` y `PENDIENTES-BACKEND.md`, P49). Se ejercita el router
+ * `tenantType: 'PHARMACY'` + el bloque `pharmacy` con sus sucursales (ver el
+ * JSDoc de `PharmacyOrganizationRegistration` en `iam.types.ts`, P49). Se
+ * ejercita el router
  * directo, como hace `diagnostic-registration.handlers.spec.ts`, para no
  * depender del `HttpClient` real ni de la pantalla.
  */

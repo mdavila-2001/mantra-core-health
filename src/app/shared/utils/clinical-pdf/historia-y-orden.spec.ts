@@ -362,7 +362,7 @@ describe('bloquesDeHistoria', () => {
   });
 });
 
-describe('historiaDesdeFuentes con formularios (cierre del TODO(J3/E1))', () => {
+describe('historiaDesdeFuentes con formularios', () => {
   const RESUMEN_VACIO: ClinicalSummary = {
     patientProfileId: 'pp-1',
     conditions: [],
