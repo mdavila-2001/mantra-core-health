@@ -135,7 +135,9 @@ export function profesionalesRegistrados(): readonly ProfesionalSimulado[] {
 /**
  * Ocupación de la planilla → código del catálogo. Sólo las equivalencias
  * directas; lo demás es «Otra ocupación» con el texto tal cual, que es para lo
- * que existe `occupationFreeText` en el alta.
+ * que existe `occupationFreeText` en el alta. «Administración de empresas» y
+ * «Agricultor» ya no tienen código propio en el catálogo normado (sólo
+ * `ADMINISTRADOR_SISTEMAS` y `AGRONOMO`, que no son lo mismo): van como «Otra».
  */
 const OCUPACION_DE_LA_PLANILLA: Readonly<Record<string, string>> = {
   ESTUDIANTE: 'occupation:bo:ESTUDIANTE',
@@ -144,10 +146,8 @@ const OCUPACION_DE_LA_PLANILLA: Readonly<Record<string, string>> = {
   'INGENIERIA INDUSTRIAL': 'occupation:bo:INGENIERO',
   'INGENIERO DE SISTEMAS': 'occupation:bo:INGENIERO',
   ODONTOLOGO: 'occupation:bo:ODONTOLOGO',
-  'ADMINISTRACION DE EMPRESAS': 'occupation:bo:ADMINISTRADOR',
   ARQUITECTO: 'occupation:bo:ARQUITECTO',
   CONTADORA: 'occupation:bo:CONTADOR',
-  AGRICULTOR: 'occupation:bo:AGRICULTOR',
   MECANICO: 'occupation:bo:MECANICO',
   'SECRETARIA EJECUTIVA': 'occupation:bo:SECRETARIO',
   PSICOLOGA: 'occupation:bo:PSICOLOGO',
