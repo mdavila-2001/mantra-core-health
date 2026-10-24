@@ -18,8 +18,8 @@ import { DataTable } from '../../../../../shared/components/organisms/data-table
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { FilterBar } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
 import { portalUrl } from '../../portal-nav';
-import { cursorList } from '../cursor-list';
-import { queryParamsSignal, urlValues } from '../url-state';
+import { pagedList } from '../../support/paged-list';
+import { queryParamsSignal, queryFilters } from '../../support/route-query';
 
 const PAGE_SIZE = 50;
 /** Parámetro propio del buscador: no comparte el `q` de la lista de usuarios. */
@@ -113,9 +113,9 @@ const SCREEN = portalUrl('gobierno/usuarios');
 export class PermissionCatalog {
   private readonly authz = inject(AuthzAdminClient);
   protected readonly searchParam = PERMISSION_SEARCH_PARAM;
-  private readonly search = urlValues(queryParamsSignal(inject(ActivatedRoute)), [PERMISSION_SEARCH_PARAM]);
+  private readonly search = queryFilters(queryParamsSignal(inject(ActivatedRoute)), [PERMISSION_SEARCH_PARAM]);
 
-  protected readonly list = cursorList<PermissionSummary>(
+  protected readonly list = pagedList<PermissionSummary>(
     (cursor) => {
       const q = this.search()[PERMISSION_SEARCH_PARAM].trim();
       return this.authz.permissions({ limit: PAGE_SIZE, ...(q ? { q } : {}), ...(cursor ? { cursor } : {}) });

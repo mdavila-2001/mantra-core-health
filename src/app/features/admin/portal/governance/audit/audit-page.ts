@@ -35,7 +35,7 @@ import { DataTable } from '../../../../../shared/components/organisms/data-table
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
 import { portalUrl } from '../../portal-nav';
-import { cursorList } from '../cursor-list';
+import { pagedList } from '../../support/paged-list';
 import { FilterForm, type FilterField } from '../filter-form';
 import {
   accessPurpose,
@@ -50,7 +50,7 @@ import {
   resourceKind,
   timeOnly,
 } from '../governance-labels';
-import { patchQuery, queryParamsSignal, urlValues } from '../url-state';
+import { patchQuery, queryParamsSignal, queryFilters } from '../../support/route-query';
 import {
   AUDIT_URL_KEYS,
   AUDIT_VIEWS,
@@ -94,7 +94,7 @@ export class AuditPage {
   private readonly route = inject(ActivatedRoute);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
-  protected readonly values = urlValues(queryParamsSignal(this.route), AUDIT_URL_KEYS);
+  protected readonly values = queryFilters(queryParamsSignal(this.route), AUDIT_URL_KEYS);
   protected readonly view = computed(() => viewOf(this.values()));
   protected readonly tabIndex = computed(() => AUDIT_VIEWS.indexOf(this.view()));
 
@@ -149,12 +149,12 @@ export class AuditPage {
     { key: 'resourceType', label: 'Tipo de recurso', kind: 'text', placeholder: 'Código exacto', advanced: true },
   ]);
 
-  protected readonly log = cursorList<AuditLogEntry>(
+  protected readonly log = pagedList<AuditLogEntry>(
     (cursor) => this.audit.log({ ...logQuery(this.values()), limit: PAGE_SIZE, ...(cursor ? { cursor } : {}) }),
     () => this.whenEmpty('Ninguna acción coincide con los filtros elegidos.', 'No hay acciones registradas en los últimos 30 días.'),
   );
 
-  protected readonly access = cursorList<DataAccessEntry>(
+  protected readonly access = pagedList<DataAccessEntry>(
     (cursor) =>
       this.audit.dataAccess({ ...dataAccessQuery(this.values()), limit: PAGE_SIZE, ...(cursor ? { cursor } : {}) }),
     () =>

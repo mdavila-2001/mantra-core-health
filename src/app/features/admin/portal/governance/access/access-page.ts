@@ -33,9 +33,9 @@ import {
 } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
 import { portalUrl } from '../../portal-nav';
-import { cursorList } from '../cursor-list';
+import { pagedList } from '../../support/paged-list';
 import { dateTime } from '../governance-labels';
-import { patchQuery, queryParamsSignal, urlValues } from '../url-state';
+import { patchQuery, queryParamsSignal, queryFilters } from '../../support/route-query';
 import { roleCodesOf } from './access.model';
 import { PermissionCatalog } from './permission-catalog';
 import { RolePermissionsPanel } from './role-permissions-panel';
@@ -80,7 +80,7 @@ export class AccessPage {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
-  protected readonly values = urlValues(queryParamsSignal(this.route), URL_KEYS);
+  protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   private readonly filters = computed(
     () => ({ q: this.values().q.trim(), roleCode: this.values().roleCode }),
     { equal: (a, b) => a.q === b.q && a.roleCode === b.roleCode },
@@ -109,7 +109,7 @@ export class AccessPage {
     },
   ]);
 
-  protected readonly users = cursorList<InternalUser>(
+  protected readonly users = pagedList<InternalUser>(
     (cursor) => {
       const { q, roleCode } = this.filters();
       return this.authz.internalUsers({

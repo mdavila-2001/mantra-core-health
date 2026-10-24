@@ -32,7 +32,7 @@ import { PageHeader } from '../../../../../shared/components/organisms/page-head
 import { ViewStateHost } from '../../../../../shared/components/organisms/view-state-host/view-state-host';
 import { portalUrl } from '../../portal-nav';
 import { dateTime, httpMethod, pathSegments, roleInDatabase } from '../governance-labels';
-import { patchQuery, queryParamsSignal, urlValues } from '../url-state';
+import { patchQuery, queryParamsSignal, queryFilters } from '../../support/route-query';
 
 const VIEWS = ['used-not-seeded', 'seeded-not-used', 'without-roles'] as const;
 const USERS_SCREEN = portalUrl('gobierno/usuarios');
@@ -61,7 +61,7 @@ export class PermissionDriftPage {
   private readonly route = inject(ActivatedRoute);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
-  private readonly values = urlValues(queryParamsSignal(this.route), ['view']);
+  private readonly values = queryFilters(queryParamsSignal(this.route), ['view']);
   protected readonly tabIndex = computed(() =>
     Math.max(0, VIEWS.indexOf(this.values().view as (typeof VIEWS)[number])),
   );
