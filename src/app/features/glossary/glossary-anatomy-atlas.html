@@ -67,7 +67,7 @@
         </p>
       </section>
 
-      <section class="atlas3d__panel" aria-label="Ficha de la estructura">
+      <section #panel class="atlas3d__panel" aria-label="Ficha de la estructura">
         <app-search-field
           label="Buscar una estructura"
           placeholder="Por ejemplo «fémur», «corazón» o «uterus»"
@@ -96,10 +96,14 @@
           <app-view-state-host [state]="estado">
             @if (structure(); as ficha) {
               <header class="atlas3d__ficha-cabecera">
-                <h2 data-testid="atlas3d-ficha-titulo">{{ displayName(ficha.labelEs, ficha.labelEn, ficha.id) }}</h2>
-                @if (ficha.labelEs) {
-                  <span class="atlas3d__marca">nombre traducido automáticamente</span>
-                }
+                <div class="atlas3d__ficha-nombre">
+                  <h2 #fichaTitulo tabindex="-1" data-testid="atlas3d-ficha-titulo">
+                    {{ displayName(ficha.labelEs, ficha.labelEn, ficha.id) }}
+                  </h2>
+                  @if (ficha.labelEs) {
+                    <span class="atlas3d__marca">nombre traducido automáticamente</span>
+                  }
+                </div>
                 @if (pickedSide(); as lado) {
                   <p class="atlas3d__lado">Pieza tocada: {{ lado }}</p>
                 }
@@ -181,7 +185,7 @@
                   }
                 </app-tab>
 
-                <app-tab label="Relacionadas">
+                <app-tab label="Relaciones">
                   @if (relationGroups().length === 0) {
                     <p class="atlas3d__vacio">La ontología no declara relaciones para esta estructura.</p>
                   }

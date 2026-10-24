@@ -110,7 +110,7 @@ async function lienzoConDibujo(pagina: Page): Promise<{ piezas: number; verdes: 
 
 async function comprobarFicha(pagina: Page): Promise<void> {
   await expect(pagina.getByTestId('atlas3d-ficha-titulo')).toBeVisible({ timeout: 30_000 });
-  await pagina.getByRole('tab', { name: 'Relacionadas' }).click();
+  await pagina.getByRole('tab', { name: 'Relaciones' }).click();
   // Una pieza del modelo siempre forma parte de algo: la lista no queda vacía.
   await expect(pagina.getByTestId('atlas3d-relacionadas').first()).toBeVisible();
   await pagina.getByRole('tab', { name: 'Ficha' }).click();
@@ -147,7 +147,14 @@ for (const caso of CASOS) {
       expect(estructura).toMatch(/^(UBERON|FMA|BP3D):/);
       await comprobarFicha(page);
 
-      await page.screenshot({ path: `${CAPTURAS}/${sexo}-${caso.nombre}.png`, fullPage: true });
+      const dibujo = await lienzoConDibujo(page);
+      expect(dibujo.piezas, 'el lienzo tiene el modelo dibujado').toBeGreaterThan(2000);
+      expect(dibujo.verdes, 'la pieza elegida se ve en verde').toBeGreaterThan(20);
+      await page.mouse.move(0, 0);
+      // La captura de la zona de trabajo no cambia el tamaño de la ventana, así
+      // que el lienzo WebGL no se borra; la de página entera sí lo haría.
+      await page.locator('.atlas3d__trabajo').screenshot({ path: `${CAPTURAS}/${sexo}-${caso.nombre}.png` });
+      await page.screenshot({ path: `${CAPTURAS}/${sexo}-${caso.nombre}-pagina.png`, fullPage: true });
     });
   }
 }
@@ -160,7 +167,10 @@ test('la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y
   await page.getByRole('button', { name: /^uterus$|^útero$/i }).first().click();
   await expect(page).toHaveURL(/structure=UBERON%3A0000995|structure=UBERON:0000995/);
   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeVisible({ timeout: 30_000 });
-  await page.screenshot({ path: `${CAPTURAS}/female-utero-sin-pieza.png`, fullPage: true });
+  await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeInViewport();
+  await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeFocused();
+  await page.mouse.move(0, 0);
+  await page.locator('.atlas3d__trabajo').screenshot({ path: `${CAPTURAS}/female-utero-sin-pieza.png` });
 });
 
 test('se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas', async ({ page }) => {
@@ -174,7 +184,11 @@ test('se elige una pieza con el teclado desde la búsqueda y se resaltan sus rel
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/structure=UBERON(%3A|:)0000981/);
   await comprobarFicha(page);
-  await page.getByRole('tab', { name: 'Relacionadas' }).click();
+  await page.getByRole('tab', { name: 'Relaciones' }).click();
   await expect(page.getByText('resaltada en el modelo').first()).toBeVisible();
-  await page.screenshot({ path: `${CAPTURAS}/teclado-femur-relacionadas.png`, fullPage: true });
+  const dibujo = await lienzoConDibujo(page);
+  expect(dibujo.verdes, 'el fémur elegido se ve en verde').toBeGreaterThan(20);
+  expect(dibujo.ocres, 'sus relacionadas se ven en ocre').toBeGreaterThan(20);
+  await page.mouse.move(0, 0);
+  await page.locator('.atlas3d__trabajo').screenshot({ path: `${CAPTURAS}/teclado-femur-relacionadas.png` });
 });
