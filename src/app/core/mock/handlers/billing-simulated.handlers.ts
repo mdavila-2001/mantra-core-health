@@ -23,10 +23,12 @@ import type {
   RegisterInstancePaymentInput,
   MyInvoiceItem,
   MyInvoicesView,
+  PaymentProof,
   RegisterPaymentInput,
   SimulatedCharge,
 } from '../../data-access/billing-simulated/billing-simulated.types';
-import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../billing-sim/datos-simulados';
+import { PAYMENT_PROOF_MAX_BYTES, PAYMENT_PROOF_MIME_TYPES } from '../../data-access/billing-simulated/billing-simulated.types';
+import { cobroPendienteDeReserva, cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../billing-sim/datos-simulados';
 import { PACIENTE } from '../fixtures/personas';
 import { reservas } from '../fixtures/agenda';
 import { FacturacionSimulada, type ErrorDeFacturacion, type Resultado } from '../billing-sim/facturacion-simulada';
@@ -175,6 +177,36 @@ function errorHttp(error: ErrorDeFacturacion): MockReply {
   }
 }
 
+/**
+ * El comprobante del cuerpo, o el motivo por el que no sirve.
+ *
+ * Se valida en el servidor y no sólo en el formulario: la pantalla no es una
+ * barrera. `undefined` es válido —el aviso sin archivo sigue existiendo—.
+ */
+function comprobanteDelCuerpo(cuerpoDePeticion: { readonly proof?: unknown }): PaymentProof | undefined | { readonly problem: string } {
+  const crudo = cuerpoDePeticion.proof;
+  if (crudo === undefined || crudo === null) return undefined;
+  if (typeof crudo !== 'object') return { problem: 'El comprobante no tiene el formato esperado' };
+  const { fileName, mimeType, sizeBytes, dataUrl } = crudo as Partial<PaymentProof>;
+  if (typeof fileName !== 'string' || fileName.trim() === '' || typeof dataUrl !== 'string') {
+    return { problem: 'El comprobante no tiene el formato esperado' };
+  }
+  if (typeof mimeType !== 'string' || !(PAYMENT_PROOF_MIME_TYPES as readonly string[]).includes(mimeType)) {
+    return { problem: 'El comprobante tiene que ser una imagen JPG, PNG o WEBP, o un PDF' };
+  }
+  if (typeof sizeBytes !== 'number' || sizeBytes <= 0 || sizeBytes > PAYMENT_PROOF_MAX_BYTES || !dataUrl.startsWith(`data:${mimeType};base64,`)) {
+    return { problem: 'El comprobante pesa más de 3 MB o está dañado' };
+  }
+  return { fileName: fileName.trim().slice(0, 120), mimeType, sizeBytes, dataUrl };
+}
+
+/** Los ids con que un cobro puede apuntar a una reserva: la reserva misma o su cita clínica. */
+function referenciasDeReserva(bookingId: string | null): ReadonlySet<string> | null {
+  if (bookingId === null) return null;
+  const reserva = reservas.get(bookingId);
+  return new Set([bookingId, reserva?.appointmentId].filter((id): id is string => id !== null && id !== undefined));
+}
+
 export function registrarFacturacionSimulada(router: MockRouter, opciones: OpcionesDeFacturacionSimulada = {}): void {
   const activa = opciones.activa ?? (() => environment.billingSiatDemo);
   let motor: FacturacionSimulada | null = null;
@@ -205,11 +237,13 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     const paciente = pacienteActivo(request);
     if (isMockReply(paciente)) return paciente;
     const bookingId = request.query.get('bookingId');
-    const reserva = bookingId === null ? undefined : reservas.get(bookingId);
-    const referencias = new Set([bookingId, reserva?.appointmentId].filter((id): id is string => id !== null && id !== undefined));
+    const referencias = referenciasDeReserva(bookingId);
+    const propia = bookingId === null ? undefined : reservas.get(bookingId);
+    // Una cita propia siempre abre su pago: si no tenía cobro, se crea.
+    if (propia !== undefined && propia.patientProfileId === paciente) facturacion().asegurarCobro(cobroPendienteDeReserva(propia));
     const items = facturacion().listarCobros().filter((c) =>
       c.source === 'CONSULTATION' && c.patientProfileId === paciente &&
-      (bookingId === null || referencias.has(c.sourceRef) || c.plan?.instances.some((i) => i.bookingId === bookingId)),
+      (referencias === null || referencias.has(c.sourceRef) || c.plan?.instances.some((i) => i.bookingId === bookingId)),
     );
     return { items, count: items.length, simulated: true };
   });
@@ -219,7 +253,11 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     if (isMockReply(paciente)) return paciente;
     const cobro = facturacion().cobro(request.params['chargeId']!);
     if (cobro === null || cobro.source !== 'CONSULTATION' || cobro.patientProfileId !== paciente) return notFound('El cobro no existe');
-    return aRespuesta(facturacion().informarPagoDelPaciente(cobro.id), 201);
+    const comprobante = comprobanteDelCuerpo(cuerpo<{ proof: unknown }>(request));
+    if (comprobante !== undefined && 'problem' in comprobante) {
+      return validation('El comprobante no es válido', [{ field: 'proof', problem: comprobante.problem }]);
+    }
+    return aRespuesta(facturacion().informarPagoDelPaciente(cobro.id, comprobante), 201);
   });
 
   // «Ver pagos» en la consulta: quien atiende ve los avisos recibidos y puede
@@ -313,10 +351,19 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     con(
       (request, m, alcance) => {
         const paciente = request.query.get('patientProfileId');
+        const bookingId = request.query.get('bookingId');
+        const referencias = referenciasDeReserva(bookingId);
+        // Quien atiende ve el cobro de la cita aunque nadie lo haya cargado todavía.
+        const cita = bookingId === null ? undefined : reservas.get(bookingId);
+        const pendiente = cita === undefined ? null : cobroPendienteDeReserva(cita);
+        if (pendiente !== null && (alcance.todo || pendiente.practitionerProfileId === alcance.profesional)) {
+          m.asegurarCobro(pendiente);
+        }
         const items = m
           .listarCobros()
           .filter((c) => dentroDelAlcance(c, alcance))
-          .filter((c) => paciente === null || paciente === '' || c.patientProfileId === paciente);
+          .filter((c) => paciente === null || paciente === '' || c.patientProfileId === paciente)
+          .filter((c) => referencias === null || referencias.has(c.sourceRef) || (c.plan?.instances.some((i) => i.bookingId === bookingId) ?? false));
         return { items, count: items.length, simulated: true };
       },
       { consultorio: true },

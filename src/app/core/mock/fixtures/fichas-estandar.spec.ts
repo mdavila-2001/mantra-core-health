@@ -22,16 +22,21 @@ import { PLANTILLAS_DE_EXPEDIENTE } from '../handlers/clinical.handlers';
 describe('las fichas clínicas estándar del simulador', () => {
   /** Los JSON del backend, contados desde el disco. */
   function fichasDelBackend(): readonly string[] {
-    const raiz = join(
-      process.cwd(),
-      '..',
-      'mantra-core-health-api',
-      'src',
-      'common',
-      'seed',
-      'data',
-      'clinical-forms',
-    );
+    // Misma convención que `scripts/gen-chart-templates-fixture.mjs`: desde un
+    // worktree, o con la API en otra rama, la carpeta se indica con
+    // `CLINICAL_FORMS_DIR`. Sin ella, el repo de la API que está al lado.
+    const raiz =
+      process.env['CLINICAL_FORMS_DIR'] ??
+      join(
+        process.cwd(),
+        '..',
+        'mantra-core-health-api',
+        'src',
+        'common',
+        'seed',
+        'data',
+        'clinical-forms',
+      );
     return readdirSync(raiz, { withFileTypes: true })
       .filter((entrada) => entrada.isDirectory())
       .flatMap((carpeta) =>
@@ -120,11 +125,12 @@ describe('las fichas clínicas estándar del simulador', () => {
     }
   });
 
-  /** Odontología trae dos, y una de ellas es el odontograma. */
-  it('odontología trae su anamnesis y su odontograma', () => {
+  /** Odontología trae tres: la anamnesis, el control periodontal y el odontograma. */
+  it('odontología trae su anamnesis, su control periodontal y su odontograma', () => {
     const odonto = PLANTILLAS_DE_EXPEDIENTE.filter((p) => p.code.startsWith('ODONTO_'));
     expect(odonto.map((p) => p.code).sort()).toEqual([
       'ODONTO_ANAMNESIS',
+      'ODONTO_CTRL_PERIODONTAL',
       'ODONTO_ODONTOGRAMA_OMS',
     ]);
   });
@@ -153,14 +159,14 @@ describe('las fichas clínicas estándar del simulador', () => {
     expect(asa?.options?.length).toBe(6);
   });
 
-  it('la consulta de medicina general pregunta qué se sospecha y abre lo que el dengue exige', () => {
+  it('la consulta de medicina general pregunta qué se sospecha, y el dengue tiene su propia ficha', () => {
     const medgen = FICHAS_ESTANDAR.find((f) => f.code === 'MEDGEN_CONSULTA_BASE')!;
     const presuntivo = medgen.fields.find((c) => c.code === 'diagnostico_presuntivo');
     expect(presuntivo?.options).toContain('Dengue o síndrome febril agudo');
-    const alarma = medgen.fields.find((c) => c.code === 'dengue_signos_de_alarma');
-    expect(alarma?.showWhen).toEqual({
-      field: 'diagnostico_presuntivo',
-      equals: 'Dengue o síndrome febril agudo',
-    });
+    // La evaluación del dengue ya no cuelga de la consulta base: vive en la ficha
+    // de infectología, que el backend siembra aparte.
+    expect(medgen.fields.some((c) => c.code === 'dengue_signos_de_alarma')).toBe(false);
+    const dengue = FICHAS_ESTANDAR.find((f) => f.code === 'INFECTO_CTRL_DENGUE')!;
+    expect(dengue.fields.some((c) => c.code === 'dengue_signos_de_alarma')).toBe(true);
   });
 });

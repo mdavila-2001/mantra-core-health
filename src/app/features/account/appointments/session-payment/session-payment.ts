@@ -15,7 +15,14 @@ import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../../../../environments/environment';
 import { BillingSimulatedClient } from '../../../../core/data-access/billing-simulated/billing-simulated.client';
-import type { SimulatedCharge } from '../../../../core/data-access/billing-simulated/billing-simulated.types';
+import type { PaymentProof, SimulatedCharge } from '../../../../core/data-access/billing-simulated/billing-simulated.types';
+import {
+  formatProofSize,
+  isValidPaymentProof,
+  PAYMENT_PROOF_ACCEPT,
+  PAYMENT_PROOF_REJECTION,
+  readPaymentProof,
+} from '../../../../core/data-access/billing-simulated/payment-proof';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
@@ -36,6 +43,11 @@ export class SessionPayment {
   readonly failed = signal(false);
   readonly busy = signal(false);
   readonly qrReady = signal(true);
+  /** El comprobante elegido, listo para enviar; `null` mientras no haya uno válido. */
+  readonly proof = signal<PaymentProof | null>(null);
+  readonly proofProblem = signal<string | null>(null);
+  protected readonly proofAccept = PAYMENT_PROOF_ACCEPT;
+  protected readonly formatProofSize = formatProofSize;
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('qr');
 
   constructor() {
@@ -62,17 +74,40 @@ export class SessionPayment {
     effect(() => this.drawQr());
   }
 
+  /** Valida y lee el archivo elegido. Un archivo que no sirve se dice, no se descarta en silencio. */
+  async chooseProof(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.proof.set(null);
+    this.proofProblem.set(null);
+    if (file === undefined) return;
+    if (!isValidPaymentProof(file)) {
+      this.proofProblem.set(PAYMENT_PROOF_REJECTION);
+      input.value = '';
+      return;
+    }
+    try {
+      this.proof.set(await readPaymentProof(file));
+    } catch {
+      this.proofProblem.set('No pudimos leer el archivo. Elija el comprobante otra vez.');
+      input.value = '';
+    }
+  }
+
   report(): void {
     const charge = this.charge();
-    if (charge === null || this.busy()) return;
+    const proof = this.proof();
+    if (charge === null || proof === null || this.busy()) return;
     this.busy.set(true);
-    this.client.reportPatientQrPayment(charge.id).subscribe({
+    this.proofProblem.set(null);
+    this.client.reportPatientQrPayment(charge.id, proof).subscribe({
       next: (updated) => {
         this.charge.set(updated);
+        this.proof.set(null);
         this.busy.set(false);
       },
       error: () => {
-        this.failed.set(true);
+        this.proofProblem.set('No pudimos enviar el comprobante. Intente de nuevo.');
         this.busy.set(false);
       },
     });

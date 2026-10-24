@@ -11,6 +11,7 @@ import type {
   SimulatedCharge,
   SimulatedChargesPage,
   MyInvoicesPage,
+  PaymentProof,
   SimulatedFiscalStatus,
   SimulatedInvoice,
   SimulatedOutboxEntry,
@@ -61,11 +62,19 @@ export class BillingSimulatedClient {
     });
   }
 
-  reportPatientQrPayment(chargeId: string): Observable<SimulatedCharge> {
+  /** El paciente avisa que pagó; con `proof`, adjunta el comprobante. */
+  reportPatientQrPayment(chargeId: string, proof?: PaymentProof): Observable<SimulatedCharge> {
     return this.http.post<SimulatedCharge>(
       this.url(`/billing/simulated/patient/charges/${encodeURIComponent(chargeId)}/report`),
-      {},
+      proof === undefined ? {} : { proof },
     );
+  }
+
+  /** Los cobros de una cita, con los comprobantes que el paciente envió para ella. */
+  chargesOfBooking(bookingId: string): Observable<SimulatedChargesPage> {
+    return this.http.get<SimulatedChargesPage>(this.url('/billing/simulated/charges'), {
+      params: new HttpParams().set('bookingId', bookingId),
+    });
   }
 
   paymentReports(patientProfileId: string): Observable<SimulatedChargesPage> {

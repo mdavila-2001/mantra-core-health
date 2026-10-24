@@ -63,6 +63,16 @@
             @for (pago of pagosPorConfirmar(); track pago.id) {
               <li>
                 <span>{{ pago.patientName }} · {{ pago.description }} · {{ pago.patientPaymentReport?.amount }} Bs</span>
+                @if (pago.patientPaymentReport?.proof; as comprobante) {
+                  <span class="cobros__comprobante" data-testid="pago-recibido-comprobante">
+                    @if (comprobante.mimeType.startsWith('image/')) {
+                      <a [href]="comprobante.dataUrl" target="_blank" rel="noopener">
+                        <img [src]="comprobante.dataUrl" [alt]="'Comprobante enviado: ' + comprobante.fileName" />
+                      </a>
+                    }
+                    <span class="cobros__secundario">Comprobante: {{ comprobante.fileName }}</span>
+                  </span>
+                }
                 <button app-button type="button" variant="primary" size="sm" [isLoading]="confirmandoPago() === pago.id" (clicked)="confirmarPago(pago)">
                   Confirmar recepción
                 </button>

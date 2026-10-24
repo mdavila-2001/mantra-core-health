@@ -10,6 +10,16 @@ const sizes = [
   { name: 'desktop-1440', width: 1440, height: 900 },
 ] as const;
 
+/** Un PNG válido de 1×1: el comprobante es obligatorio para avisar el pago. */
+const proofFile = {
+  name: 'comprobante-transferencia.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    'base64',
+  ),
+};
+
 test('QR del paciente y contabilidad en móvil y escritorio', async ({ browser }) => {
   mkdirSync(photos, { recursive: true });
   for (const size of sizes) {
@@ -22,7 +32,7 @@ test('QR del paciente y contabilidad en móvil y escritorio', async ({ browser }
     await patientPage.getByTestId('mis-citas-ver-pago').first().click();
     const panel = patientPage.getByTestId('session-payment');
     await expect(panel.locator('canvas')).toBeVisible();
-    await expect(panel.getByRole('button', { name: /Ya pagué/ })).toBeVisible();
+    await expect(panel.getByRole('button', { name: /Enviar comprobante/ })).toBeVisible();
     const darkPixels = await panel.locator('canvas').evaluate((canvas) => {
       const ctx = (canvas as HTMLCanvasElement).getContext('2d');
       const pixels = ctx?.getImageData(0, 0, 176, 176).data;
@@ -38,8 +48,11 @@ test('QR del paciente y contabilidad en móvil y escritorio', async ({ browser }
     await expect
       .poll(() => patientPage.evaluate(() => document.documentElement.scrollWidth - innerWidth))
       .toBeLessThanOrEqual(1);
-    await panel.getByRole('button', { name: /Ya pagué/ }).click();
+    await panel.getByTestId('session-payment-proof').setInputFiles(proofFile);
+    await expect(panel.getByTestId('session-payment-chosen')).toBeVisible();
+    await panel.getByRole('button', { name: /Enviar comprobante/ }).click();
     await expect(panel.getByText(/pendiente de confirmación/)).toBeVisible();
+    await expect(panel.getByTestId('session-payment-sent')).toContainText(proofFile.name);
     await panel.screenshot({ path: join(photos, `pago-recibido-${size.name}.png`) });
     await patient.close();
 
@@ -80,7 +93,9 @@ test('el aviso QR llega a Ver pagos y vuelve confirmado a la paciente en móvil'
   await page.goto(`${base}/my-account/appointments`);
   const ownAppointment = page.locator('li.turnos__item').filter({ hasText: 'Consultorio propio · Valeria Rojas Mendoza' });
   await ownAppointment.getByTestId('mis-citas-ver-pago').click();
-  await ownAppointment.getByRole('button', { name: /Ya pagué/ }).click();
+  await ownAppointment.getByTestId('session-payment-proof').setInputFiles(proofFile);
+  await expect(ownAppointment.getByTestId('session-payment-chosen')).toBeVisible();
+  await ownAppointment.getByRole('button', { name: /Enviar comprobante/ }).click();
   await expect(ownAppointment.getByText(/pendiente de confirmación/)).toBeVisible();
 
   await logout();

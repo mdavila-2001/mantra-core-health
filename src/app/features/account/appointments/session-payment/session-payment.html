@@ -12,7 +12,12 @@
     @if (payment.payment !== null) {
       <app-badge variant="success">Pago confirmado · {{ payment.payment.amount }} Bs</app-badge>
     } @else if (payment.patientPaymentReport?.status === 'PENDING_CONFIRMATION') {
-      <app-badge variant="warning">Recibido · pendiente de confirmación</app-badge>
+      <app-badge variant="warning">Comprobante enviado · pendiente de confirmación</app-badge>
+      @if (payment.patientPaymentReport?.proof; as sent) {
+        <p data-testid="session-payment-sent">
+          Archivo enviado: {{ sent.fileName }} ({{ formatProofSize(sent.sizeBytes) }}).
+        </p>
+      }
       <p>Quien le atendió va a revisar el pago y confirmar la recepción.</p>
     } @else if (demoActiva) {
       <p>Escanee el QR con su banca móvil. Este pago de demostración no mueve dinero.</p>
@@ -22,8 +27,39 @@
         <p role="alert">No pudimos dibujar el QR. Puede volver a abrir esta pantalla.</p>
       }
       <p class="session-payment__amount">{{ payment.total }} Bs</p>
-      <button app-button type="button" variant="primary" [isLoading]="busy()" (clicked)="report()">
-        Ya pagué · avisar al consultorio
+      <div class="session-payment__proof">
+        <label for="session-payment-proof" class="session-payment__label">Comprobante de pago</label>
+        <input
+          id="session-payment-proof"
+          type="file"
+          data-testid="session-payment-proof"
+          [attr.accept]="proofAccept"
+          [attr.aria-describedby]="'session-payment-proof-help'"
+          [attr.aria-invalid]="proofProblem() !== null"
+          (change)="chooseProof($event)"
+        />
+        <p id="session-payment-proof-help" class="session-payment__help">
+          Suba la captura o el PDF de su pago. JPG, PNG, WEBP o PDF, hasta 3 MB.
+        </p>
+        @if (proof(); as chosen) {
+          <p data-testid="session-payment-chosen">
+            Listo para enviar: {{ chosen.fileName }} ({{ formatProofSize(chosen.sizeBytes) }})
+          </p>
+        }
+        @if (proofProblem(); as problem) {
+          <p role="alert" class="session-payment__error" data-testid="session-payment-error">{{ problem }}</p>
+        }
+      </div>
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="session-payment-send"
+        [disabled]="proof() === null"
+        [isLoading]="busy()"
+        (clicked)="report()"
+      >
+        Enviar comprobante
       </button>
     }
   } @else {

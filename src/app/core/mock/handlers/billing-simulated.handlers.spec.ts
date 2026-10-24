@@ -161,6 +161,73 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
     }
   });
 
+  describe('comprobante del pago QR', () => {
+    const PNG_MINIMO = 'data:image/png;base64,iVBORw0KGgo=';
+    const comprobante = (extra: Record<string, unknown> = {}) => ({
+      proof: { fileName: 'pago.png', mimeType: 'image/png', sizeBytes: 8, dataUrl: PNG_MINIMO, ...extra },
+    });
+
+    function cobroPropioPendiente(): SimulatedCharge {
+      const propios = (llamar('GET', '/billing/simulated/patient/charges', null, paciente).body as SimulatedChargesPage).items;
+      return propios.find((item) => item.source === 'CONSULTATION' && item.payment === null && item.plan === null && item.practitionerProfileId === medica.practitionerProfileId)!;
+    }
+
+    it('guarda el archivo con el aviso y quien atiende lo ve en los cobros de ESA cita', () => {
+      const cobro = cobroPropioPendiente();
+      const reserva = reservas.todos().find((item) => item.id === cobro.sourceRef || item.appointmentId === cobro.sourceRef)!;
+      const estadoAnterior = reserva.paymentState;
+      const importeAnterior = reserva.paymentAmount;
+      try {
+        const reportado = llamar('POST', `/billing/simulated/patient/charges/${cobro.id}/report`, comprobante(), paciente);
+        expect(reportado.status).toBe(201);
+        expect(reportado.body).toMatchObject({ patientPaymentReport: { status: 'PENDING_CONFIRMATION', proof: { fileName: 'pago.png', mimeType: 'image/png' } } });
+
+        const deLaCita = llamar('GET', `/billing/simulated/charges?bookingId=${reserva.id}`, null, medica).body as SimulatedChargesPage;
+        expect(deLaCita.items.map((item) => item.id)).toContain(cobro.id);
+        expect(deLaCita.items.find((item) => item.id === cobro.id)?.patientPaymentReport?.proof?.dataUrl).toBe(PNG_MINIMO);
+        expect(deLaCita.items.every((item) => item.sourceRef === reserva.id || item.sourceRef === reserva.appointmentId)).toBe(true);
+
+        const confirmado = llamar('POST', `/billing/simulated/payment-reports/${cobro.id}/confirm`, {}, medica);
+        expect(confirmado.body).toMatchObject({ payment: { amount: cobro.total }, patientPaymentReport: { status: 'CONFIRMED', proof: { fileName: 'pago.png' } } });
+        expect(reservas.get(reserva.id)?.paymentState?.state).toBe('PAID');
+      } finally {
+        reservas.actualizar(reserva.id, { paymentState: estadoAnterior, paymentAmount: importeAnterior });
+      }
+    });
+
+    it.each([
+      ['un formato que no es imagen ni PDF', { mimeType: 'text/html', dataUrl: 'data:text/html;base64,PGI+' }],
+      ['un archivo de más de 3 MB', { sizeBytes: 3 * 1024 * 1024 + 1 }],
+      ['un contenido que no corresponde a su tipo', { dataUrl: 'data:image/jpeg;base64,AAAA' }],
+    ])('rechaza con 422 %s y no deja ningún aviso', (_caso, extra) => {
+      const cobro = cobroPropioPendiente();
+      const rechazado = llamar('POST', `/billing/simulated/patient/charges/${cobro.id}/report`, comprobante(extra), paciente);
+      expect(rechazado.status).toBe(422);
+      const releido = (llamar('GET', '/billing/simulated/patient/charges', null, paciente).body as SimulatedChargesPage).items.find((item) => item.id === cobro.id);
+      expect(releido?.patientPaymentReport ?? null).toBeNull();
+    });
+
+    it('abrir una cita que no tenía cobro lo crea, una sola vez, y el paciente de esa cita lo puede pagar', () => {
+      const conCobro = new Set(cobros().map((c) => c.sourceRef));
+      const sinCobro = reservas.todos().find((r) =>
+        r.patientProfileId !== null && !conCobro.has(r.appointmentId ?? r.id) && r.followUpOf === null,
+      );
+      expect(sinCobro, 'la maqueta tiene citas sin cobro sembrado').toBeDefined();
+
+      const primera = llamar('GET', `/billing/simulated/charges?bookingId=${sinCobro!.id}`, null, admin).body as SimulatedChargesPage;
+      expect(primera.items).toHaveLength(1);
+      expect(primera.items[0]).toMatchObject({ source: 'CONSULTATION', payment: null, patientProfileId: sinCobro!.patientProfileId });
+
+      const segunda = llamar('GET', `/billing/simulated/charges?bookingId=${sinCobro!.id}`, null, admin).body as SimulatedChargesPage;
+      expect(segunda.items.map((c) => c.id)).toEqual(primera.items.map((c) => c.id));
+    });
+
+    it('una cita sin cobros devuelve la lista vacía, no los de otras citas', () => {
+      const vacia = llamar('GET', '/billing/simulated/charges?bookingId=reserva-que-no-existe', null, medica).body as SimulatedChargesPage;
+      expect(vacia.items).toEqual([]);
+    });
+  });
+
   describe('cobros', () => {
     it('lista cobros de consultas y de farmacia, todos marcados como simulados', () => {
       const lista = cobros();

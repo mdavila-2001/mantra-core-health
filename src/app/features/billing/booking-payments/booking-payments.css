@@ -1,0 +1,60 @@
+.booking-payments__list {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.booking-payments__item {
+  display: grid;
+  justify-items: start;
+  gap: 0.625rem;
+  padding: 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: 0.75rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.booking-payments__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+  inline-size: 100%;
+}
+
+.booking-payments__amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.booking-payments__meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.booking-payments__proof {
+  display: grid;
+  gap: 0.5rem;
+  max-inline-size: 100%;
+}
+
+.booking-payments__thumb {
+  display: block;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.booking-payments__thumb img {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 18rem;
+  object-fit: contain;
+}
