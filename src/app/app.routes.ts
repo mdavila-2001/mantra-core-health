@@ -802,7 +802,7 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
+    // Se cuelga de «Mi perfil»: se llega por el botón «Editar perfil»,
     // nunca desde el menú. Y sólo la abre quien atiende: «Mi perfil» no
     // declara roles, así que la restricción va en la ruta.
     // TJ-1 · el alta del profesional. Se cuelga fuera de «Mi cuenta» porque no
@@ -818,7 +818,7 @@ const PANTALLAS_HIJAS: Routes = [
   },
   {
     path: 'my-account/edit',
-    title: `${APP_TITLE} - Configurar su perfil`,
+    title: `${APP_TITLE} - Editar perfil`,
     ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
