@@ -107,6 +107,41 @@ describe('ChatStore', () => {
     http.verify();
   });
 
+  it('varios adjuntos salen en el orden elegido aunque las subidas terminen al revés', async () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([mensaje('m-1')]);
+    TestBed.tick();
+
+    const primero = new File(['grande'], 'analisis.pdf', { type: 'application/pdf' });
+    const segundo = new File(['x'], 'foto.png', { type: 'image/png' });
+    store.enviarAdjunto(primero, 'El análisis');
+    store.enviarAdjunto(segundo, 'La foto');
+
+    const subidas = http.match((r) => r.url.endsWith('/common/files/upload'));
+    expect(subidas).toHaveLength(2);
+    // La foto chica termina primero, pero no sale antes que el PDF.
+    subidas[1].flush({ id: 'f-2' });
+    TestBed.tick();
+    await Promise.resolve();
+    await Promise.resolve();
+    const contenidosPedidosEnEspera = http.match((r) => r.url.includes('/attachments/f-2/content'));
+    expect(http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages')).toHaveLength(0);
+
+    subidas[0].flush({ id: 'f-1' });
+    await new Promise((listo) => setTimeout(listo, 0));
+    const [envioPdf] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    expect(envioPdf.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-1', bodyText: 'El análisis' }));
+
+    envioPdf.flush({ id: 'm-pdf', conversationId: 'c-1', sentAt: '2026-09-08T10:01:00.000Z' });
+    await new Promise((listo) => setTimeout(listo, 0));
+    const [envioFoto] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    expect(envioFoto.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-2', bodyText: 'La foto' }));
+    envioFoto.flush({ id: 'm-foto', conversationId: 'c-1', sentAt: '2026-09-08T10:01:01.000Z' });
+    // Mientras esperaban turno no se pidió su contenido: no existían todavía.
+    expect(contenidosPedidosEnEspera).toHaveLength(0);
+  });
+
   it('resuelve adjuntos del hilo sólo por la ruta contextual', () => {
     encender();
     store.abrir('c-1');
