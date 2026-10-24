@@ -180,8 +180,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // enlazados al pie del resumen.
   'administration/accounting': () =>
     import('./features/accounting/summary/summary').then((m) => m.Summary),
-  'my-organizations': () =>
-    import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'administration/content-packs': () =>
@@ -1291,9 +1289,6 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // historiales, en favoritos y en los correos que la plataforma ya mandó.
   'my-account/identity/verify': '/my-account/identity',
   'my-account/identity/cases': '/my-account/identity',
-  // «Mis organizaciones» pasó a ser una pestaña de «Organización médica»
-  // (2026-09-10). Está en historiales y en el lateral de «Mi perfil».
-  'my-organizations': '/administration/medical-organization',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',
@@ -1990,6 +1985,17 @@ export const routes: Routes = [
       // Hoy no podrían tapar a ninguna —son textos distintos y van con
       // `pathMatch: 'full'`—, pero el día que una ruta nueva se llame como una
       // vieja, gana la que pinta algo. Es más barato ordenarlas que acordarse.
+      {
+        // «Mis organizaciones» pasó a «Mis vinculaciones» (2026-09-10).
+        // El enlace viejo conserva la pestaña funcional en vez de dejar al
+        // médico en la primera pestaña administrativa.
+        path: 'my-organizations',
+        pathMatch: 'full',
+        redirectTo: redireccionConQuery({
+          ruta: '/administration/medical-organization',
+          query: { tab: 'memberships' },
+        }),
+      },
       ...rutasHeredadas(RUTAS_HEREDADAS),
     ],
   },
