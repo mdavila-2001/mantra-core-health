@@ -1,0 +1,51 @@
+<fieldset class="performer" data-testid="performer-selector">
+  <legend class="performer__titulo">Quién realiza el procedimiento</legend>
+
+  <app-radio-group
+    [name]="modeGroupName"
+    [value]="mode()"
+    (valueChange)="pickMode($event)"
+  >
+    <app-radio
+      data-testid="performer-option-patient-choice"
+      value="PATIENT_CHOICE"
+      label="Que elija el paciente"
+    />
+    <app-radio
+      data-testid="performer-option-self"
+      value="SELF"
+      label="Lo hago yo"
+      [disabled]="!selfEnabled()"
+    />
+    @if (selfReason(); as motivo) {
+      <p class="performer__motivo" data-testid="performer-self-reason">{{ motivo }}</p>
+    }
+    <app-radio
+      data-testid="performer-option-organization"
+      value="ORGANIZATION"
+      label="En este centro"
+      [disabled]="!organizationEnabled()"
+    />
+    @if (organizationReason(); as motivo) {
+      <p class="performer__motivo" data-testid="performer-organization-reason">{{ motivo }}</p>
+    }
+  </app-radio-group>
+
+  @if (sitesOfMode(); as sedes) {
+    <div class="performer__sedes" data-testid="performer-sites">
+      <p class="performer__subtitulo">Sede que recomienda</p>
+      <app-radio-group
+        [name]="siteGroupName"
+        [value]="choice().siteId"
+        (valueChange)="pickSite($event)"
+        aria-label="Sede que recomienda"
+      >
+        @for (sede of sedes; track sede.practiceSiteId) {
+          <app-radio data-testid="performer-site" [value]="sede.practiceSiteId" [label]="siteLabel(sede)" />
+        }
+      </app-radio-group>
+    </div>
+  }
+
+  <p class="performer__recomendacion" data-testid="performer-recommendation">{{ recommendation }}</p>
+</fieldset>

@@ -324,6 +324,22 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
+### `HealthcareServicesClient` — 4 operaciones
+
+Procedimientos que una sede publica, con su precio propio (carril CM-06).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices/:practiceId/sites` | `ProcedureOffers` (elegir la sede) |
+| `GET` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (con `practiceSiteId` en la consulta) |
+| `POST` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (publicar un procedimiento) |
+| `PATCH` | `/practices/:practiceId/healthcare-services/:id` | `ProcedureOffers` (activar, desactivar, fijar el precio) |
+
+El precio propio se crea antes con `ServicesCatalogClient.create` —un ítem de
+catálogo por sede— y su `id` viaja como `serviceCatalogId`. `serviceCatalogId`
+es opcional al publicar: sin precio el procedimiento queda publicado pero no
+aparece en las búsquedas del paciente.
+
 ### `SchedulingClient` — 33 operaciones
 
 | Método | Ruta | Consumidor |
@@ -404,6 +420,7 @@ paso previo.
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/clinical/patients/:patientProfileId/summary` | `PatientChart` (UC-39-20) |
+| `GET` | `/clinical/patients/:patientProfileId/received-services` | `ReceivedServicesClient` — pestaña «Servicios recibidos» de `MedicalRecord` y de `PatientChart` (ver `contracts/received-services.md`) |
 | `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
 | `POST` | `/clinical/encounters/check-in` | `PatientChart` (UC-08-02) |
 | `POST` | `/clinical/encounters/:encounterId/close` | `PatientChart` (UC-08-14) |

@@ -1,0 +1,29 @@
+[
+  {
+    "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+    "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+    "codeConceptId": "05c8231d-1642-458b-a97e-d60e80341158",
+    "categoryConceptId": "d499f072-ed7e-47b2-ac22-658099fcb344",
+    "encounterId": "5ad97a00-bcc8-44b4-ad1e-9ab4e42f99f4",
+    "performerSelectionConceptId": "f65da5a1-7ec8-47d5-a41f-d65461b2eac6"
+  },
+  {
+    "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+    "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+    "codeConceptId": "05c8231d-1642-458b-a97e-d60e80341158",
+    "categoryConceptId": "d499f072-ed7e-47b2-ac22-658099fcb344",
+    "encounterId": "5ad97a00-bcc8-44b4-ad1e-9ab4e42f99f4",
+    "performerSelectionConceptId": "0474f3bf-19d5-45c5-a3fe-b9e6bb9d85d4",
+    "suggestedPracticeSiteId": "1293b757-9c2c-466f-ac0f-89f8718574b6"
+  },
+  {
+    "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+    "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+    "codeConceptId": "05c8231d-1642-458b-a97e-d60e80341158",
+    "categoryConceptId": "d499f072-ed7e-47b2-ac22-658099fcb344",
+    "encounterId": "5ad97a00-bcc8-44b4-ad1e-9ab4e42f99f4",
+    "performerSelectionConceptId": "f511135a-3b49-43de-a85b-0bc4e4f60518",
+    "performerPractitionerProfileId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+    "suggestedPracticeSiteId": "1293b757-9c2c-466f-ac0f-89f8718574b6"
+  }
+]
