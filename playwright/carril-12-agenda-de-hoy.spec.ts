@@ -293,11 +293,14 @@ for (const ancho of ANCHOS) {
         await page.getByTestId('semana-anterior').click();
         await expect.poll(() => texto(page, '.semana__titulo')).toBe(inicial);
 
-        // La cita es de mañana: si hoy es domingo, cae en la semana siguiente.
-        const cita = page.getByTestId('semana-cita');
-        if ((await cita.count()) === 0) {
+        // La cita es de mañana y la semana empieza el lunes: si hoy es
+        // domingo, cae en la siguiente. Se decide por la fecha, no por si la
+        // cita ya se ve, que depende de cuándo termina de cargar.
+        if (new Date().getDay() === 0) {
           await page.getByTestId('semana-siguiente').click();
+          await expect.poll(() => texto(page, '.semana__titulo')).not.toBe(inicial);
         }
+        const cita = page.getByTestId('semana-cita');
         await expect(cita.first(), 'la cita sembrada no aparece en la semana').toBeVisible();
 
         if (ancho.nombre === '1440x900') {
