@@ -46,7 +46,7 @@ const conjuntos = new Map<string, ConjuntoSimulado>();
 export const CODE_SYSTEM_VERSION_ID = uuid('code-system-version-alovida-1');
 export const CODE_SYSTEM_ID = uuid('code-system-alovida');
 
-function conjunto(internalCode: string, name: string, description: string): ConjuntoSimulado {
+export function conjunto(internalCode: string, name: string, description: string): ConjuntoSimulado {
   const c: ConjuntoSimulado = {
     id: uuid(`value-set-${internalCode}`),
     internalCode,
@@ -58,7 +58,7 @@ function conjunto(internalCode: string, name: string, description: string): Conj
   return c;
 }
 
-function definir(
+export function definir(
   valueSet: string,
   entradas: readonly (readonly [code: string, display: string, definition?: string])[],
   ordinalInicial = 1,
@@ -863,6 +863,23 @@ export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-OTHER', 'Otro', 'Orden de análisis que no pertenece a laboratorio ni imagenología.'],
 ]);
 
+/* Quién realiza una orden de procedimiento. El front nombra el conjunto
+   por su código interno y reconoce los tres modos por el código del concepto,
+   con o sin prefijo de módulo. El `display` está en castellano porque el
+   paciente lo lee en «Mis órdenes» (`readConceptLabels`). */
+conjunto(
+  'service-request-performer-selection',
+  'Quién realiza la orden',
+  'Modo del ejecutor de una orden de procedimiento: el médico, un centro o lo que elija el paciente.',
+);
+export const MODO_EJECUTOR = definir('service-request-performer-selection', [
+  ['SR_PERF_SELF', 'Lo realiza quien indica la orden'],
+  ['SR_PERF_ORGANIZATION', 'Se recomienda un centro'],
+  ['SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente'],
+]);
+/** El mismo conjunto, con el nombre que usan las órdenes de procedimiento de «Mis órdenes». */
+export const PERFORMER_MODE = MODO_EJECUTOR;
+
 conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');
 export const PRIORIDAD = definir('VS_PRIORITY', [
   ['PRI-ROUTINE', 'Rutina'],
@@ -929,6 +946,30 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
   ['PROC-ENDOSCOPIA', 'Endoscopia digestiva alta'],
   ['PROC-SUTURA', 'Sutura de herida'],
   ['PROC-INFILTRACION', 'Infiltración articular'],
+]);
+
+/*
+ * Procedimientos de ejemplo de «Centros médicos» (CONTRATO, «Datos de la maqueta»). Llevan el id
+ * que todos los módulos derivan con `uuid('<semilla>')`, no el de `definir`, para que la orden, el
+ * centro y la búsqueda hablen del mismo concepto.
+ */
+function defineWithId(valueSet: string, entradas: readonly (readonly [seed: string, display: string])[]): void {
+  entradas.forEach(([code, display], indice) => {
+    registro.set(code, {
+      id: uuid(code),
+      code,
+      display,
+      valueSets: [valueSet],
+      selectable: true,
+      ordinal: indice + 1,
+    });
+  });
+}
+
+conjunto('VS_BO_MEDICAL_PROCEDURE', 'Nomenclador de procedimientos médicos', 'Procedimientos del nomenclador boliviano.');
+defineWithId('VS_BO_MEDICAL_PROCEDURE', [
+  ['proc-endoscopia-alta', 'Endoscopia digestiva alta'],
+  ['proc-colonoscopia', 'Colonoscopia'],
 ]);
 
 /* ---- diagnósticos (CIE-10 abreviado, también en el glosario) ------------- */

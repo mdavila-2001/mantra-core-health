@@ -446,33 +446,33 @@ export class WhereToBuy {
    * que tienen una parte se ven a pedido: sirven cuando ninguna tiene todo, y
    * el recorrido sugerido las sigue considerando igual.
    */
-  protected readonly verIncompletas = signal(false);
+  protected readonly showPartialPharmacies = signal(false);
 
   /** «Completa» es contra lo que se mira: la receta entera o, con seguro, lo aprobado. */
-  private esCompleta(sede: SedeVisible): boolean {
+  private isComplete(sede: SedeVisible): boolean {
     return this.conSeguro() ? sede.conSeguro.completa : sede.completa;
   }
 
   /** Cuántas sucursales quedan fuera de la vista por defecto. */
-  protected readonly cantidadIncompletas = computed(
-    () => (this.resultado()?.sedes ?? []).filter((sede) => !this.esCompleta(sede)).length,
+  protected readonly partialPharmacyCount = computed(
+    () => (this.resultado()?.sedes ?? []).filter((sede) => !this.isComplete(sede)).length,
   );
 
-  protected readonly etiquetaDeIncompletas = computed(() =>
-    this.verIncompletas()
+  protected readonly partialPharmaciesLabel = computed(() =>
+    this.showPartialPharmacies()
       ? 'Mostrar solo las que tienen todo'
-      : etiquetaDeParciales(this.cantidadIncompletas(), 'la', 'las'),
+      : partialCountLabel(this.partialPharmacyCount(), 'la', 'las'),
   );
 
   /** Las sucursales que se ven: la lista y el mapa hablan de las mismas. */
-  private readonly sedesVisibles = computed(() => {
+  private readonly visibleBranches = computed(() => {
     const sedes = this.resultado()?.sedes ?? [];
-    return this.verIncompletas() ? sedes : sedes.filter((sede) => this.esCompleta(sede));
+    return this.showPartialPharmacies() ? sedes : sedes.filter((sede) => this.isComplete(sede));
   });
 
   /** La lista en el orden elegido. Una copia: la respuesta no se toca. */
   protected readonly sedesOrdenadas = computed(() =>
-    ordenarSedes(this.sedesVisibles(), this.orden()),
+    ordenarSedes(this.visibleBranches(), this.orden()),
   );
 
   /**
@@ -500,7 +500,7 @@ export class WhereToBuy {
 
   /** Las sedes que el mapa puede ubicar: las que tienen coordenadas. */
   protected readonly sedesEnElMapa = computed(() =>
-    this.sedesVisibles().filter(
+    this.visibleBranches().filter(
       (sede): sede is SedeVisible & { lat: number; lng: number } =>
         sede.lat !== null && sede.lng !== null,
     ),
@@ -549,7 +549,7 @@ export class WhereToBuy {
   });
 
   /** Los medicamentos de la receta, por su nombre, a partir de sus conceptos. */
-  protected nombresDe(conceptIds: readonly string[]): string {
+  protected namesOf(conceptIds: readonly string[]): string {
     return this.items()
       .filter((item) => conceptIds.includes(item.conceptId))
       .map((item) => item.medicamento)
@@ -573,7 +573,7 @@ export class WhereToBuy {
   protected readonly partialCentersLabel = computed(() =>
     this.showPartialCenters()
       ? 'Mostrar solo los que tienen todos'
-      : etiquetaDeParciales(this.partialCenterCount(), 'el', 'los'),
+      : partialCountLabel(this.partialCenterCount(), 'el', 'los'),
   );
 
   protected studyNames(studies: readonly PendingStudy[]): string {
@@ -1136,7 +1136,7 @@ function formatKm(km: number): string {
 }
 
 /** «Ver la que tiene una parte» o «Ver las 3 que tienen una parte», según cuántas sean. */
-export function etiquetaDeParciales(cantidad: number, singular: string, plural: string): string {
+export function partialCountLabel(cantidad: number, singular: string, plural: string): string {
   return cantidad === 1
     ? `Ver ${singular} que tiene una parte`
     : `Ver ${plural} ${cantidad} que tienen una parte`;

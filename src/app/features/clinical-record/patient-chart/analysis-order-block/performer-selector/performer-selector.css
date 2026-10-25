@@ -1,0 +1,57 @@
+/* El selector de ejecutor: tres opciones, la sede del modo elegido y el aviso
+   de que es una recomendación. Es un fieldset para que lector de pantalla lea
+   la pregunta con cada opción. */
+
+:host {
+  display: block;
+}
+
+.performer {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.performer__titulo {
+  padding: 0;
+  margin-block-end: var(--sp-2);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.performer__subtitulo {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* El motivo va pegado a la opción que explica, con la sangría del radio. */
+.performer__motivo {
+  margin: 0;
+  padding-inline-start: var(--sp-6);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.performer__sedes {
+  display: grid;
+  gap: var(--sp-1);
+  /* Con muchas sedes la lista scrollea en vez de empujar el botón fuera de la vista. */
+  max-block-size: 16rem;
+  overflow-y: auto;
+  padding-inline-start: var(--sp-6);
+}
+
+.performer__recomendacion {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

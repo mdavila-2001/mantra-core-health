@@ -704,6 +704,10 @@ export interface OrdenSimulada {
    */
   readonly previousDiagnosticReportId?: string;
   readonly duplicateOverrideReason?: string;
+  /** Quién ejecuta el procedimiento, según el médico (CONTRATO §3, centros médicos). */
+  readonly performerSelectionConceptId?: string;
+  readonly performerPractitionerProfileId?: string;
+  readonly suggestedPracticeSiteId?: string;
 }
 
 export const ordenes = new Coleccion<OrdenSimulada>(

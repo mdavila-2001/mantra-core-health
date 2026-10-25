@@ -1,0 +1,35 @@
+<section class="received-services" aria-labelledby="received-services-title">
+  <h2 id="received-services-title" class="sr-only">Servicios recibidos</h2>
+
+  <!-- Un recorte silencioso en una historia se lee como «no recibió más». -->
+  @if (truncated()) {
+    <app-alert tone="warning" title="Lista recortada">
+      Se muestran los {{ limit }} servicios más recientes. Hay más en la historia.
+    </app-alert>
+  }
+
+  <app-data-table
+    data-testid="received-services-table"
+    [state]="state()"
+    [columns]="columns()"
+    [trackBy]="trackBy"
+    caption="Servicios recibidos"
+    stackedOnMobile
+    (retry)="retry()"
+  />
+</section>
+
+<ng-template #dateCell let-row>
+  <span class="received-services__date">{{ row.performedAt | date: 'd MMM y' }}</span>
+</ng-template>
+
+<ng-template #serviceCell let-row>
+  <span class="received-services__title">{{ row.title }}</span>
+  <!-- El tipo nunca viaja solo en el color: el badge trae su texto. -->
+  <app-badge [variant]="row.typeTone" [value]="row.typeLabel" />
+</ng-template>
+
+<ng-template #performerCell let-row>
+  <span class="received-services__title">{{ row.performer }}</span>
+  <span class="received-services__secondary">{{ row.site }}</span>
+</ng-template>

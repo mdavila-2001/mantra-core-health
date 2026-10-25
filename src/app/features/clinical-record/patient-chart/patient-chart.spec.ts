@@ -328,6 +328,111 @@ describe('PatientChart', () => {
   });
 
   /**
+   * «Servicios recibidos»: las intervenciones realizadas y las vacunas del
+   * paciente de la ficha. Es una lectura aparte con su propio estado, y solo sale
+   * cuando se abre su pestaña: un 403 o un error de esta lectura no puede
+   * tumbar el expediente, ni leerla para cada ficha que se abre.
+   */
+  describe('Servicios recibidos', () => {
+    function tabs(): HTMLButtonElement[] {
+      return [...(harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
+    }
+
+    const SERVICIOS = {
+      patientProfileId: 'p-1',
+      items: [
+        {
+          id: 'rs-1',
+          type: 'VACCINATION',
+          typeConceptId: 'type-vac',
+          serviceConceptId: 'vac-influenza',
+          statusConceptId: 'st-aplicada',
+          performedAt: '2026-05-20T09:08:00.000Z',
+          practiceSiteName: 'Clínica Los Olivos',
+          cost: null,
+        },
+      ],
+      limit: 100,
+      truncated: false,
+      // El personal clínico lee el servicio sin importes.
+      costsVisible: false,
+    };
+
+    const CONCEPTOS_SERVICIOS = {
+      items: [
+        { conceptId: 'vac-influenza', code: 'VAC-INFLUENZA', display: 'Influenza estacional', codeSystemVersionId: 'v1' },
+        { conceptId: 'st-aplicada', code: 'IMM_COMPLETED', display: 'Aplicada', codeSystemVersionId: 'v1' },
+      ],
+      limit: 200,
+      truncated: false,
+    };
+
+    it('es la última pestaña, después de los ocho bloques de la historia', () => {
+      abrirSesion();
+      responderNombre();
+      responderExpediente();
+      harness.detectChanges();
+
+      const rotulos = tabs().map((tab) => tab.textContent?.trim().split(' (')[0]);
+      expect(rotulos).toHaveLength(9);
+      expect(rotulos.at(-1)).toBe('Servicios recibidos');
+    });
+
+    it('no los lee al abrir la ficha: el contenido proyectado se crea aun cerrado', () => {
+      abrirSesion();
+      responderNombre();
+      responderExpediente();
+      harness.detectChanges();
+
+      // `afterEach` verifica que no quedó ninguna petición abierta; acá además se pide explícito.
+      http.expectNone((r) => r.url === '/clinical/patients/p-1/received-services');
+    });
+
+    it('al abrir su pestaña lee los servicios del paciente de la ficha y los dibuja sin importes', async () => {
+      abrirSesion();
+      responderNombre();
+      responderExpediente();
+      harness.detectChanges();
+
+      tabs().at(-1)!.click();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+
+      http.expectOne((r) => r.url === '/clinical/patients/p-1/received-services').flush(SERVICIOS);
+      http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_SERVICIOS);
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      const texto = harness.routeNativeElement?.textContent ?? '';
+      expect(texto).toContain('Influenza estacional');
+      expect(texto).toContain('Vacunación');
+      expect(texto).toContain('Clínica Los Olivos');
+      // Sin importes para quien atiende, y sin un «sin cobro» falso.
+      expect(texto).not.toContain('Sin cobro registrado');
+      expect(harness.routeNativeElement?.querySelector('[data-testid="expediente-servicios"]')).not.toBeNull();
+    });
+
+    it('un error al leer los servicios se queda en su pestaña: el expediente sigue en pie', async () => {
+      abrirSesion();
+      responderNombre();
+      responderExpediente();
+      harness.detectChanges();
+
+      tabs().at(-1)!.click();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+
+      http
+        .expectOne((r) => r.url === '/clinical/patients/p-1/received-services')
+        .flush({ code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '' }, { status: 500, statusText: 'Server Error' });
+      harness.detectChanges();
+
+      expect(estado().status).toBe('ready');
+    });
+  });
+
+  /**
    * Enfermedades activas (C3): la tarjeta que resume qué diagnósticos
    * confirmados siguen activos, con días restantes o «crónica», y el sello de
    * la pestaña Diagnósticos coloreado por estado (no un `info` fijo para los
