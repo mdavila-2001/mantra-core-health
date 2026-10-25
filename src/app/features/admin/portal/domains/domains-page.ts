@@ -35,8 +35,8 @@ import { plainText } from '../support/plain-text';
 import { paramValue, patchQuery, queryParamsSignal } from '../support/route-query';
 
 const PAGE_SIZE = 25;
-const PAGE_ROUTE = portalUrl('catalogo/dominios');
-const TABLES_ROUTE = portalUrl('catalogo/tablas');
+const PAGE_ROUTE = portalUrl('catalog/domains');
+const TABLES_ROUTE = portalUrl('catalog/tables');
 const VIEWS = ['glosario', 'dominios'] as const;
 
 /**

@@ -35,7 +35,7 @@ import { dateTime, httpMethod, pathSegments, roleInDatabase } from '../governanc
 import { patchQuery, queryParamsSignal, queryFilters } from '../../support/route-query';
 
 const VIEWS = ['used-not-seeded', 'seeded-not-used', 'without-roles'] as const;
-const USERS_SCREEN = portalUrl('gobierno/usuarios');
+const USERS_SCREEN = portalUrl('governance/users');
 
 /** Una ruta en una línea: verbo y plantilla. */
 function routeLabel(route: DriftRouteRef): string {
@@ -93,7 +93,7 @@ export class PermissionDriftPage {
     if (!r) return loading();
     return r.routesWithoutRoles.length === 0
       ? empty(
-          { label: 'Ver los roles sin sembrar', route: portalUrl('gobierno/deriva-permisos') },
+          { label: 'Ver los roles sin sembrar', route: portalUrl('governance/permission-drift') },
           'Toda ruta autenticada declara qué roles la pueden llamar.',
         )
       : ready(r.routesWithoutRoles);

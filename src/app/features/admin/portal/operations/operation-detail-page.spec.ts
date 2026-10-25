@@ -8,7 +8,7 @@ import { operationDetail, tree } from '../portal.fixture';
 import { nodeOutcome, nodeText } from './decision-tree';
 import { OperationDetailPage } from './operation-detail-page';
 
-const BASE = '/superadmin/portal/sistemas/operaciones';
+const BASE = '/superadmin/portal/systems/operations';
 const ID = 'SchedulingController_listSlots';
 
 describe('OperationDetailPage', () => {
@@ -20,7 +20,7 @@ describe('OperationDetailPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/sistemas/operaciones/:id', component: OperationDetailPage }]),
+        provideRouter([{ path: 'superadmin/portal/systems/operations/:id', component: OperationDetailPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);

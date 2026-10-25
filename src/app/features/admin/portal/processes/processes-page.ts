@@ -34,7 +34,7 @@ import { hasAny, queryFilters, queryParamsSignal } from '../support/route-query'
 
 const PAGE_SIZE = 25;
 const FILTER_KEYS = ['q', 'tipo', 'modulo', 'agrupacion'] as const;
-const LIST_ROUTE = portalUrl('procesos');
+const LIST_ROUTE = portalUrl('processes');
 
 function processQuery(
   f: Readonly<Record<(typeof FILTER_KEYS)[number], string>>,

@@ -71,7 +71,7 @@ const PAGE_SIZE = 50;
 function shared<Row>(cell: TemplateRef<unknown>): TemplateRef<{ $implicit: Row }> {
   return cell as TemplateRef<{ $implicit: Row }>;
 }
-const SCREEN = portalUrl('gobierno/auditoria');
+const SCREEN = portalUrl('governance/audit');
 /** Cuántos usuarios internos se leen para poner nombre a los actores. */
 const ACTOR_NAMES_LIMIT = AUDIT_MAX_PAGE_SIZE;
 

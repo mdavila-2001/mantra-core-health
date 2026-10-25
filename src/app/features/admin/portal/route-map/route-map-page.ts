@@ -32,7 +32,7 @@ import { OPERATION_FILTER_KEYS, operationQuery } from '../support/operation-quer
 import { hasAny, queryFilters, queryParamsSignal } from '../support/route-query';
 
 const PAGE_SIZE = 25;
-const MAP_ROUTE = portalUrl('sistemas/flujos');
+const MAP_ROUTE = portalUrl('systems/flows');
 
 /**
  * Mapa de rutas: cada ruta de la API con el proceso y la etapa en que
@@ -56,9 +56,9 @@ export class RouteMapPage {
   protected readonly method = metodoHttp;
   protected readonly risk = riesgo;
   protected readonly signalLabel = senal;
-  protected readonly diagramUrl = portalUrl('sistemas/flujos/diagrama');
+  protected readonly diagramUrl = portalUrl('systems/flows/diagram');
   protected readonly operationUrl = (id: string): string =>
-    `${portalUrl('sistemas/operaciones')}/${encodeURIComponent(id)}`;
+    `${portalUrl('systems/operations')}/${encodeURIComponent(id)}`;
 
   private readonly filters = queryFilters(
     queryParamsSignal(inject(ActivatedRoute)),

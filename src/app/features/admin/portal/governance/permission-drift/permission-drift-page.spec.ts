@@ -6,7 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { PermissionDriftPage } from './permission-drift-page';
 
-const SCREEN = '/superadmin/portal/gobierno/deriva-permisos';
+const SCREEN = '/superadmin/portal/governance/permission-drift';
 
 const report = {
   generatedAt: '2026-10-24T12:00:00.000Z',
@@ -34,7 +34,7 @@ describe('PermissionDriftPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/gobierno/deriva-permisos', component: PermissionDriftPage }]),
+        provideRouter([{ path: 'superadmin/portal/governance/permission-drift', component: PermissionDriftPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);
