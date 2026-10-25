@@ -53,7 +53,6 @@ import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox'
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
 import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
@@ -71,6 +70,7 @@ import { PHARMACY_CART_ROUTE } from '../../pharmacy/pharmacy.routes';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
 import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
 import { coverageRoute, directionsUrl, type CoverageRoute } from './where-to-buy.route';
+import { MedicalCentersTab } from './medical-centers-tab/medical-centers-tab';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
@@ -78,9 +78,6 @@ const MY_STUDIES_ROUTE = '/my-account/diagnostic-orders';
 
 /** La guía de laboratorios y centros de diagnóstico, sin cercanía. */
 const LABORATORY_DIRECTORY_ROUTE = '/laboratory-directory';
-
-/** La guía de clínicas y hospitales. */
-const CLINICS_DIRECTORY_ROUTE = '/clinics-directory';
 
 /**
  * Las pestañas, en el orden de la plantilla, por su valor en `?tab=`. La
@@ -317,8 +314,8 @@ const PROMOCIONES_VISIBLES = 3;
     Badge,
     Checkbox,
     Alert,
-    EmptyState,
     Link,
+    MedicalCentersTab,
     PageHeader,
     RouterLink,
     SegmentedControl,
@@ -359,7 +356,6 @@ export class WhereToBuy {
    */
   protected readonly myStudiesRoute = MY_STUDIES_ROUTE;
   protected readonly laboratoryDirectoryRoute = LABORATORY_DIRECTORY_ROUTE;
-  protected readonly clinicsDirectoryRoute = CLINICS_DIRECTORY_ROUTE;
   protected readonly ciudades = CITIES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
   protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
@@ -368,6 +364,9 @@ export class WhereToBuy {
 
   protected readonly tabIndex = signal(
     tabIndexOf(this.route.snapshot.queryParamMap.get('tab')),
+  );
+  protected readonly medicalCentersActive = computed(
+    () => WHERE_TO_BUY_TABS[this.tabIndex()] === 'medical-centers',
   );
 
   /**
