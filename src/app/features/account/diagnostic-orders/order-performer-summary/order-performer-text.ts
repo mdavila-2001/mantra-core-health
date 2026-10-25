@@ -10,13 +10,13 @@ export interface OrderPerformerText {
   readonly site: string | null;
 }
 
-const TEXTO_DEL_MODO: Readonly<Record<PerformerSelectionCode, string>> = {
+const MODE_TEXT: Readonly<Record<PerformerSelectionCode, string>> = {
   PATIENT_CHOICE: 'Puede elegir dónde hacérselo',
   ORGANIZATION: 'Su médico sugirió un centro',
   SELF: 'Su médico se ofreció a hacerlo',
 };
 
-const AVISO_DE_RECOMENDACION = 'Es una recomendación: puede elegir otro centro.';
+const RECOMMENDATION_NOTICE = 'Es una recomendación: puede elegir otro centro.';
 
 /**
  * El texto de la fila de una orden de procedimiento, según el **código** del modo.
@@ -29,8 +29,8 @@ const AVISO_DE_RECOMENDACION = 'Es una recomendación: puede elegir otro centro.
 export function orderPerformerText(mode: PerformerSelectionCode, siteName: string | null): OrderPerformerText {
   const recomienda = mode !== 'PATIENT_CHOICE';
   return {
-    mode: TEXTO_DEL_MODO[mode],
-    recommendation: recomienda ? AVISO_DE_RECOMENDACION : null,
+    mode: MODE_TEXT[mode],
+    recommendation: recomienda ? RECOMMENDATION_NOTICE : null,
     site: recomienda && siteName !== null && siteName.trim() !== '' ? `Sede sugerida: ${siteName}` : null,
   };
 }
