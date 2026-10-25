@@ -1,0 +1,123 @@
+/* Procedimientos por sede. Una tarjeta centrada y a lo ancho del área
+   (composition-rules §5): el tope lo pone `.app-main__inner`, no esta hoja.
+   Sólo distribución — ni un color ni una tipografía que el sistema no tenga. */
+
+:host {
+  display: block;
+}
+
+.offers {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-6);
+}
+
+/* Organización y sede lado a lado desde 780 px; en móvil, una debajo de otra. */
+.offers__scope {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+@media (min-width: 780px) {
+  .offers__scope {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.offers__list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.offer {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* Nombre y referencia a la izquierda; precio y estado al medio; acciones a la derecha. */
+@media (min-width: 780px) {
+  .offer {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) auto;
+  }
+
+  .offer__notice {
+    grid-column: 1 / -1;
+  }
+}
+
+.offer--inactive .offer__name {
+  color: var(--text-secondary);
+}
+
+.offer__name {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.offer__reference {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.offer__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.offer__amount {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.offer__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* Publicar: campos en columnas según el ancho, no un formulario acotado. */
+.publish {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.publish__fields {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+@media (min-width: 780px) {
+  .publish__fields {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.publish__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.price-editor {
+  display: grid;
+  gap: var(--sp-4);
+}

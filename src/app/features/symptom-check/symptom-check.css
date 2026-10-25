@@ -411,8 +411,8 @@
 /* Elegido se marca con fondo, borde y peso — nunca sólo con color, y
    `aria-pressed` lo dice para quien no lo ve. */
 .sintomas__opcion-chip.is-elegido {
-  border-color: var(--petroleo);
-  background: var(--petroleo);
+  border-color: var(--petroleo-relleno);
+  background: var(--petroleo-relleno);
   color: var(--tinta-nav);
   font-weight: 600;
 }
