@@ -6,24 +6,8 @@
   width: 100%;
 }
 
-.setup__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  width: 100%;
-}
 
-.setup__map {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
 
-.setup__error {
-  margin: 0;
-  font-size: var(--fs-caption);
-  color: var(--text-danger);
-}
 
 .setup__done {
   display: flex;

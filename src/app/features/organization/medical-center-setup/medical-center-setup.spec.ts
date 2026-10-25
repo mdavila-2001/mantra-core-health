@@ -17,8 +17,6 @@ import { mensajeDeLaConfiguracion, MedicalCenterSetup } from './medical-center-s
 const TENANT = 'tenant-centro';
 
 interface Internal {
-  set: (field: string, value: string) => void;
-  point: { set: (value: { lat: number; lng: number } | null) => void };
   errorMessage: () => string | null;
   created: () => CreatedOrganizationPractice | null;
   saving: () => boolean;
@@ -32,11 +30,13 @@ describe('MedicalCenterSetup', () => {
   const interno = (): Internal => fixture.componentInstance as unknown as Internal;
 
   function completar(): void {
-    interno().set('practiceName', 'Centro Médico Norte');
-    interno().set('siteName', 'Sede Norte');
-    interno().set('addressText', 'Av. San Martín 123');
-    interno().set('cityText', 'Santa Cruz');
-    interno().point.set({ lat: -17.78, lng: -63.18 });
+    fixture.componentInstance.form.setValue({
+      practiceName: 'Centro Médico Norte',
+      siteName: 'Sede Norte',
+      addressText: 'Av. San Martín 123',
+      cityText: 'Santa Cruz',
+      point: { lat: -17.78, lng: -63.18 },
+    });
   }
 
   beforeEach(async () => {
@@ -75,34 +75,28 @@ describe('MedicalCenterSetup', () => {
 
   it('sin la ciudad no manda la clave', () => {
     completar();
-    interno().set('cityText', '  ');
+    fixture.componentInstance.form.controls.cityText.setValue('  ');
     fixture.componentInstance.save();
 
     const body = createPractice.mock.calls[0]![1];
     expect('cityText' in body.site).toBe(false);
   });
 
-  it('sin punto en el mapa no envía y lo dice', () => {
+  it('sin punto en el mapa no envía y marca el campo', () => {
     completar();
-    interno().point.set(null);
+    fixture.componentInstance.form.controls.point.setValue(null);
     fixture.componentInstance.save();
-    fixture.detectChanges();
 
     expect(createPractice).not.toHaveBeenCalled();
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('[data-testid="centro-medico-setup-point-error"]')?.textContent).toContain(
-      'Marque la sede en el mapa.',
-    );
+    expect(fixture.componentInstance.form.controls.point.touched).toBe(true);
   });
 
-  it('con campos vacíos no envía y muestra los errores', () => {
+  it('con campos vacíos no envía y los marca', () => {
     fixture.componentInstance.save();
-    fixture.detectChanges();
 
     expect(createPractice).not.toHaveBeenCalled();
-    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Escriba el nombre del centro médico.');
-    expect(texto).toContain('Escriba la dirección de la sede.');
+    expect(fixture.componentInstance.form.controls.practiceName.touched).toBe(true);
+    expect(fixture.componentInstance.form.controls.addressText.touched).toBe(true);
   });
 
   it('sin organización activa no envía', () => {

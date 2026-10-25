@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { forkJoin, map, switchMap, type Observable } from 'rxjs';
 
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
@@ -12,15 +13,15 @@ import {
 import { readApiError } from '../../../core/http/api-error';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Select } from '../../../shared/components/atoms/select/select';
+import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   MENSAJE_CONTRASENA_CORTA,
-  MIN_CARACTERES_CONTRASENA,
+  validadoresDeContrasena,
 } from '../registro-compartido/politica-de-contrasena';
 import { RegistrationBadge } from '../registro-compartido/registration-badge';
 import { codigoDelCentroMedico } from './medical-center-code';
@@ -39,23 +40,6 @@ const AVISO_CATALOGO = 'No pudimos cargar los catálogos del alta. Revise su con
 const MAX_RAZON_SOCIAL = 300;
 const MAX_CORREO = 320;
 const MAX_NOMBRE = 200;
-
-/** Lo que se escribe, todavía como texto. */
-interface FormularioDelAlta {
-  readonly legalName: string;
-  readonly legalEntityType: string;
-  readonly ownerName: string;
-  readonly email: string;
-  readonly password: string;
-}
-
-const VACIO: FormularioDelAlta = {
-  legalName: '',
-  legalEntityType: '',
-  ownerName: '',
-  email: '',
-  password: '',
-};
 
 /** Un error de la API, en castellano y sin tecnicismos. */
 export function mensajeDelAlta(error: unknown): string {
@@ -96,7 +80,7 @@ export function mensajeDelAlta(error: unknown): string {
  */
 @Component({
   selector: 'app-register-medical-center',
-  imports: [Alert, AnnounceOnAppear, AppButton, AuthSplit, FormField, Input, RegistrationBadge, Select],
+  imports: [Alert, AnnounceOnAppear, AppButton, AuthSplit, Link, PaginatedForm, RegistrationBadge, RouterLink],
   templateUrl: './register-medical-center.html',
   styleUrls: ['../registro-compartido/registro.css', './register-medical-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -111,56 +95,112 @@ export class RegisterMedicalCenter {
   protected readonly tagline =
     'Publique sus procedimientos y afilie a sus médicos para que los pacientes lo encuentren.';
 
-  protected readonly razonMax = MAX_RAZON_SOCIAL;
-  protected readonly correoMax = MAX_CORREO;
-  protected readonly nombreMax = MAX_NOMBRE;
-  protected readonly claveMin = MIN_CARACTERES_CONTRASENA;
+  readonly form = new FormGroup({
+    legalName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(MAX_RAZON_SOCIAL)],
+    }),
+    legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    ownerName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
+    }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
+    }),
+    password: new FormControl('', { nonNullable: true, validators: [...validadoresDeContrasena] }),
+  });
 
-  protected readonly form = signal<FormularioDelAlta>(VACIO);
-  protected readonly submitted = signal(false);
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly registered = signal(false);
   protected readonly verificationSent = signal(false);
 
   /** Los tipos societarios de Bolivia, del mismo catálogo que las demás altas. */
-  private readonly tiposCrudos = signal<readonly SelectOption<string>[]>([]);
-  protected readonly opcionesTipoSocietario = computed<readonly SelectOption<string>[]>(() =>
-    this.tiposCrudos(),
+  private readonly tiposSocietarios = signal<readonly SelectOption<string>[]>([]);
+
+  /**
+   * Dos páginas, de a cuatro campos como tope: el centro y la cuenta de quien
+   * lo administra. `computed` porque el catálogo de tipos societarios llega
+   * después de que la pantalla se arma.
+   */
+  protected readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'El centro',
+        hint: 'Cómo se llama y qué figura jurídica tiene.',
+        campos: [
+          {
+            key: 'legalName',
+            label: 'Razón social',
+            control: 'text' as const,
+            required: true,
+            testId: 'registro-centro-medico-razon-social',
+            mensajeDeError: 'Escriba la razón social del centro.',
+          },
+          {
+            key: 'legalEntityType',
+            label: 'Tipo societario',
+            hint: 'La figura jurídica con la que está constituido el centro.',
+            control: 'select' as const,
+            options: this.tiposSocietarios(),
+            required: true,
+            testId: 'registro-centro-medico-tipo-societario',
+            mensajeDeError: 'Elija el tipo societario.',
+          },
+        ],
+      },
+      {
+        titulo: 'Su cuenta',
+        hint: 'Quien administra el centro. Con estos datos inicia sesión.',
+        campos: [
+          {
+            key: 'ownerName',
+            label: 'Su nombre',
+            control: 'text' as const,
+            required: true,
+            autocomplete: 'name',
+            testId: 'registro-centro-medico-nombre',
+            mensajeDeError: 'Escriba su nombre.',
+          },
+          {
+            key: 'email',
+            label: 'Correo',
+            control: 'email' as const,
+            required: true,
+            autocomplete: 'email',
+            testId: 'registro-centro-medico-correo',
+            mensajeDeError: 'Escriba un correo válido.',
+          },
+          {
+            key: 'password',
+            label: 'Contraseña',
+            control: 'password' as const,
+            required: true,
+            autocomplete: 'new-password',
+            testId: 'registro-centro-medico-clave',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+          },
+        ],
+      },
+    ]),
   );
-
-  protected readonly errores = computed(() => {
-    const f = this.form();
-    return {
-      legalName: f.legalName.trim() === '' ? 'Escriba la razón social del centro.' : '',
-      legalEntityType: f.legalEntityType === '' ? 'Elija el tipo societario.' : '',
-      ownerName: f.ownerName.trim() === '' ? 'Escriba el nombre de quien administra la cuenta.' : '',
-      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim()) ? '' : 'Escriba un correo válido.',
-      password: f.password.length >= MIN_CARACTERES_CONTRASENA ? '' : MENSAJE_CONTRASENA_CORTA,
-    };
-  });
-
-  protected readonly valido = computed(() => Object.values(this.errores()).every((e) => e === ''));
 
   constructor() {
     this.legalEntityTypes.listar().subscribe({
-      next: (opciones) => this.tiposCrudos.set(this.legalEntityTypes.opcionesPorPais(opciones, 'BO')),
-      error: () => this.tiposCrudos.set([]),
+      next: (opciones) =>
+        this.tiposSocietarios.set(this.legalEntityTypes.opcionesPorPais(opciones, 'BO')),
+      error: () => this.tiposSocietarios.set([]),
     });
-  }
-
-  protected set<K extends keyof FormularioDelAlta>(campo: K, valor: string | number | null): void {
-    this.form.update((f) => ({ ...f, [campo]: String(valor ?? '') }));
-  }
-
-  protected mostrar(campo: keyof FormularioDelAlta): string {
-    return this.submitted() ? this.errores()[campo] : '';
   }
 
   submit(): void {
     if (this.isSubmitting()) return;
-    this.submitted.set(true);
-    if (!this.valido()) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
@@ -200,7 +240,7 @@ export class RegisterMedicalCenter {
   }
 
   private datos(ids: { pais: string; jurisdiccion: string }): MedicalCenterRegistration {
-    const f = this.form();
+    const f = this.form.getRawValue();
     return {
       code: codigoDelCentroMedico(f.legalName),
       legalName: f.legalName.trim(),
