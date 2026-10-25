@@ -12,6 +12,17 @@
   >
     Importar producto
   </a>
+  <button
+    app-button
+    page-actions
+    type="button"
+    variant="secondary"
+    data-testid="my-services-add"
+    [disabled]="practicaElegida() === null"
+    (clicked)="agregando.set(true)"
+  >
+    Agregar servicio adicional
+  </button>
 </app-page-header>
 
 <div class="mis-servicios">
@@ -348,5 +359,14 @@
     [priceLabel]="precio(servicio)"
     (updated)="terminosGuardados($event)"
     (closed)="terminosDe.set(null)"
+  />
+}
+
+@if (agregando() && practicaElegida(); as practiceId) {
+  <app-service-add
+    [practiceId]="practiceId"
+    (created)="servicioAgregado($event)"
+    (chosen)="servicioElegido($event)"
+    (closed)="agregando.set(false)"
   />
 }

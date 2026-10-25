@@ -6,6 +6,7 @@ import {
   corpusTest,
 } from '../fixtures/bolivia-central-axis';
 import { pdfMinimo } from './files.handlers';
+import { searchByCoverage } from './diagnostic-coverage.handlers';
 import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agenda';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
@@ -1541,11 +1542,10 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-units/search', ({ query }) => {
     const q = texto(query, 'q');
-    const kind = texto(query, 'kind');
-    const studyCode = texto(query, 'studyCode');
-    const home = query.get('homeCollection') === 'true';
-    const walkIn = query.get('walkIn') === 'true';
-    const external = query.get('acceptsExternalOrders') === 'true';
+    const [kind, studyCode] = ['kind', 'studyCode'].map((key) => texto(query, key));
+    const [home, walkIn, external] = ['homeCollection', 'walkIn', 'acceptsExternalOrders'].map((key) => query.get(key) === 'true');
+    const searchCard = (u: UnidadSimulada) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: precioMinimoDe(u), minAmountCurrency: estudiosDe(u).find((e) => e.prices[0] !== undefined)?.prices[0]?.currency.code ?? null, cities: ciudadesDe(u) });
+    if (query.has('studyConceptIds')) return searchByCoverage(query, UNIDADES.filter((u) => u.publiclyListed), { card: searchCard, studies: estudiosDe, sites: sedesDe });
     const maxAmount = Number(query.get('maxAmount') ?? Infinity);
     const minRating = Number(query.get('minRating') ?? 0);
     const offset = Number(query.get('offset') ?? 0);
@@ -1556,7 +1556,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       .filter((u) => studyCode === null || estudiosDe(u).some((e) => e.code === studyCode || contiene(e.name, studyCode)))
       .filter((u) => (!home || u.home) && (!walkIn || u.walkIn) && (!external || u.external))
       .filter((u) => u.rating >= minRating)
-      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: precioMinimoDe(u), minAmountCurrency: estudiosDe(u).find((e) => e.prices[0] !== undefined)?.prices[0]?.currency.code ?? null, cities: ciudadesDe(u) }))
+      .map(searchCard)
       .filter((u) => u.minAmount === null || u.minAmount <= maxAmount);
     return { items: todos.slice(offset, offset + limit), total: todos.length, limit, offset };
   });

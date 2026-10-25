@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   catchError,
   forkJoin,
@@ -168,6 +169,17 @@ interface PerfilResuelto {
   readonly faltantes: readonly LecturaLateral[];
 }
 
+/** `?pestana=` leído como índice de {@link DOCTOR_PROFILE_TABS}, o `null`. */
+function pestanaDeLaFicha(valor: string | null): number | null {
+  if (valor === null || valor.trim() === '') {
+    return null;
+  }
+  const indice = Number(valor);
+  return Number.isInteger(indice) && indice >= 0 && indice < DOCTOR_PROFILE_TABS.length
+    ? indice
+    : null;
+}
+
 /**
  * **Perfil profesional propio** — el contenedor de «Mi perfil».
  *
@@ -252,6 +264,16 @@ export class PractitionerProfile {
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
   private readonly ayudas = inject(HelpBlockDismissalStore);
+
+  /**
+   * La pestaña que pide `?pestana=` al entrar: el índice de
+   * `DOCTOR_PROFILE_TABS` con el que el editor devuelve a lectura (CORR-08).
+   * Del snapshot, como en el editor: es la pestaña con la que se entra. Un
+   * valor ilegible o fuera de rango no pide nada y queda la primera.
+   */
+  protected readonly pestanaPedida = pestanaDeLaFicha(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('pestana'),
+  );
 
   protected readonly perfil = signal<ViewState<PerfilResuelto>>(loading());
 

@@ -10,12 +10,7 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
-  FormControl,
-  ReactiveFormsModule,
-  type AbstractControl,
-  type ValidationErrors,
-} from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
 import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-url';
@@ -35,6 +30,12 @@ import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
 } from '../../../auth/shared-registration/doctor-credentials';
+import {
+  practitionerField,
+  validatePractitionerPersonalEmail,
+  validatePractitionerPhone,
+} from '../../../auth/shared-registration/practitioner-fields';
+import type { CampoDeFormulario } from '../../../../shared/forms/paginated/paginated-form.types';
 import { LanguagesCatalog } from '../../../../core/data-access/terminology/languages.service';
 import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
@@ -61,10 +62,7 @@ import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../shared/components/molecules/card/card';
-import {
-  PhoneInput,
-  telefonoCompleto,
-} from '../../../../shared/components/molecules/phone-input/phone-input';
+import { PhoneInput } from '../../../../shared/components/molecules/phone-input/phone-input';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import {
   FileInput,
@@ -112,7 +110,7 @@ import {
   SIGNATURE_IMAGE_FORMATS,
   SIGNATURE_IMAGE_MAX_BYTES,
 } from './image-status';
-import { TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
+import { DOCTOR_PROFILE_TABS, TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { WorkHistory } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
@@ -360,17 +358,50 @@ function marcaDeTiempo(fecha: Date | string | undefined): number {
   return Number.isNaN(valor) ? 0 : valor;
 }
 
-/** Un teléfono vacío es válido (en el editor los tres son opcionales); uno a medias, no. */
-function telefonoOpcional(control: AbstractControl): ValidationErrors | null {
-  return control.value === '' ? null : telefonoCompleto(control);
-}
-
 /**
  * Lo mínimo para que el correo de trabajo llegue al servidor: algo, una @ y un
  * dominio con punto. `Validators.email` deja pasar `ana@clinica`, que el
  * `@IsEmail` del API rechaza.
  */
 const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Qué campos del `PATCH` del perfil guarda cada pestaña (CORR-08, MT-38-02).
+ *
+ * «Guardar cambios» manda sólo lo de la pestaña abierta: lo que quedó a medio
+ * escribir en otra sigue en sus señales, pero no viaja de rebote.
+ */
+/** Marca de «el editor no muestra este campo siempre»: no se le exige. */
+const NOT_SHARED = Symbol('not-shared');
+
+const CAMPOS_POR_PESTANA: Readonly<Record<number, readonly string[]>> = {
+  [TAB_EDITOR.personales]: [
+    'professionalTitle',
+    'professionalBio',
+    'acceptsNewPatients',
+    'telehealthAvailable',
+    'name',
+    'middleName',
+    'lastName',
+    'motherLastName',
+    'birthDate',
+    'sexAtBirth',
+    'issuerAdministrativeAreaConceptId',
+  ],
+  [TAB_EDITOR.contacto]: [
+    'mobilePhone',
+    'personalEmail',
+    'workEmail',
+    'residenceMunicipalityConceptId',
+    'homeAddressLines',
+    'homeLatitude',
+    'homeLongitude',
+    'workAddressLines',
+    'workLatitude',
+    'workLongitude',
+  ],
+  [TAB_EDITOR.facturacion]: ['taxId', 'taxHolderName', 'insuranceBillingFrequency'],
+};
 
 /**
  * El correo de trabajo guardado. Un perfil anterior a los contactos separados
@@ -411,6 +442,9 @@ function correoDeTrabajoDe(perfil: OwnPractitionerProfile): string {
  * una tabla filtraría también la otra.
  */
 const CLAVE_BUSQUEDA_TITULO = 'qTitulos';
+
+/** La ficha de lectura del perfil propio, adonde vuelve el editor. */
+const MI_PERFIL_MEDICO = '/account/profile';
 
 /**
  * La clave de la búsqueda de la tabla de matrículas en la URL. Propia por lo
@@ -805,11 +839,13 @@ export class PractitionerProfileEdit {
      que cambiar de pestaña no lo pierde. */
   protected readonly celularPersonal = new FormControl('', {
     nonNullable: true,
-    validators: [telefonoOpcional],
+    validators: [validatePractitionerPhone],
   });
   /** El mismo texto que el alta pone bajo un teléfono incompleto. */
   protected readonly mensajeTelefonoIncompleto = 'El número está incompleto para el país elegido.';
   protected readonly correoPersonal = signal('');
+  /** Por qué no se guardó el correo personal: la misma regla del alta. */
+  protected readonly personalEmailError = signal('');
   protected readonly correoTrabajo = signal('');
   /**
    * Por qué no se guardó el correo de trabajo. Es obligatorio desde el alta,
@@ -948,6 +984,78 @@ export class PractitionerProfileEdit {
    */
   protected enRojo(control: FormControl<string>): boolean {
     return control.invalid && (control.dirty || control.touched);
+  }
+
+  /**
+   * La definición del alta para un campo que el editor también corrige.
+   *
+   * Rótulo, obligatoriedad, límites y mensaje salen de `practitionerFields`, la
+   * misma lista que arma el alta: si el alta cambia una regla, el editor la
+   * hereda en vez de quedarse con su copia (CORR-08, MT-38-01).
+   */
+  protected practitionerFieldRule(key: string): CampoDeFormulario | undefined {
+    return practitionerField(key, {
+      professionalTitle: this.titulo(),
+      departmentIssuerField: () => ({
+        key: 'issuerAdministrativeAreaConceptId',
+        label: 'Departamento de emisión',
+        control: 'custom',
+      }),
+    });
+  }
+
+  /** El rótulo del alta, o el propio cuando el alta lo proyecta sin rótulo. */
+  protected practitionerFieldLabel(key: string, fallbackLabel: string): string {
+    return this.practitionerFieldRule(key)?.label || fallbackLabel;
+  }
+
+  /** Si el alta exige el campo. */
+  protected practitionerFieldRequired(key: string): boolean {
+    return this.practitionerFieldRule(key)?.required ?? false;
+  }
+
+  /**
+   * El valor que hay hoy en el editor para un campo compartido con el alta,
+   * haya cambiado o no. `undefined` si el editor no lo muestra siempre: el sexo
+   * y el departamento sólo se corrigen con el documento ya cargado, y exigirlos
+   * dejaría sin salida a quien no puede verlos.
+   */
+  private currentFieldValue(key: string): { readonly value: unknown } | undefined {
+    const value = this.sharedFieldValue(key);
+    return value === NOT_SHARED ? undefined : { value };
+  }
+
+  private sharedFieldValue(key: string): unknown {
+    switch (key) {
+      case 'name':
+        return this.nombre();
+      case 'lastName':
+        return this.apellidoPaterno();
+      case 'motherLastName':
+        return this.apellidoMaterno();
+      case 'professionalTitle':
+        return this.titulo();
+      case 'birthDate':
+        return this.fechaNacimiento();
+      case 'mobilePhone':
+        return this.celularPersonal.value;
+      case 'personalEmail':
+        return this.correoPersonal();
+      default:
+        return NOT_SHARED;
+    }
+  }
+
+  /** El primer campo que el alta exige y que la pestaña tiene vacío. */
+  private firstMissingRequiredField(pestana: number): CampoDeFormulario | undefined {
+    return (CAMPOS_POR_PESTANA[pestana] ?? [])
+      .map((key) => this.practitionerFieldRule(key))
+      .find((rule) => {
+        if (rule?.required !== true) return false;
+        const current = this.currentFieldValue(rule.key);
+        if (current === undefined) return false;
+        return current.value === null || String(current.value).trim() === '';
+      });
   }
 
   /** Suma una casilla vacía de nombre, como en el alta. */
@@ -1800,25 +1908,9 @@ export class PractitionerProfileEdit {
    * mientras la pantalla revalida perdería lo que la persona acaba de teclear.
    */
   private sembrarFormulario(perfil: OwnPractitionerProfile): void {
-    this.titulo.set(perfil.professionalTitle ?? '');
-    this.bio.set(perfil.professionalBio ?? '');
-    this.nombre.set(perfil.name ?? '');
-    // `middleName` trae TODOS los nombres que no son el primero, separados por
-    // espacio: se reparten en las mismas casillas que el alta ofrece.
-    const adicionales = splitNames(perfil.middleName);
-    this.segundoNombre.set(adicionales.segundo);
-    this.tercerNombre.set(adicionales.tercero);
-    this.nombresExtra.set(adicionales.extra);
-    this.apellidoPaterno.set(perfil.lastName ?? '');
-    this.apellidoMaterno.set(perfil.motherLastName ?? '');
-    this.celularPersonal.reset(perfil.mobilePhone ?? '');
-    this.correoPersonal.set(perfil.personalEmail ?? '');
-    this.correoTrabajo.set(correoDeTrabajoDe(perfil));
-    this.errorCorreoTrabajo.set('');
-    this.nit.set(perfil.taxId ?? '');
-    this.razonSocial.set(perfil.taxHolderName ?? '');
-    this.frecuenciaFacturacionSeguro.set(perfil.insuranceBillingFrequency ?? null);
-    this.telemedicina.set(perfil.telehealthAvailable);
+    this.sembrarPestana(perfil, TAB_EDITOR.personales);
+    this.sembrarPestana(perfil, TAB_EDITOR.contacto);
+    this.sembrarPestana(perfil, TAB_EDITOR.facturacion);
     // Los idiomas se siembran sólo si no hay una corrección a medias: esta
     // siembra corre tras CADA recarga del perfil —agregar una matrícula en la
     // misma pestaña, guardar «Datos personales»— y pisarlos ahí tiraría lo que
@@ -1827,46 +1919,85 @@ export class PractitionerProfileEdit {
     if (!this.idiomasCambiaron()) {
       this.sembrarIdiomas(perfil);
     }
-    // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
-    // ofrecía. Se siembran desde el perfil, igual que el resto.
-    this.fechaNacimiento.set(perfil.birthDate ?? null);
-    this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
-    this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
-    this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
     if (this.opcionesDepartamento().length === 0) {
       this.cargarDepartamentos();
     }
-    // ALV-009: la calle, si la declaró.
-    this.direccion.set(perfil.homeAddress?.lines ?? '');
-    // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
-    // longitud pondría el pin en el meridiano cero.
-    const lat = perfil.homeAddress?.latitude;
-    const lng = perfil.homeAddress?.longitude;
-    this.gpsDomicilioGuardado.set(lat === undefined || lng === undefined ? null : { lat, lng });
-    this.gpsDomicilio.set(undefined);
-    this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
-    const latTrabajo = perfil.workAddress?.latitude;
-    const lngTrabajo = perfil.workAddress?.longitude;
-    this.gpsTrabajoGuardado.set(
-      latTrabajo === undefined || lngTrabajo === undefined
-        ? null
-        : { lat: latTrabajo, lng: lngTrabajo },
-    );
-    this.gpsTrabajo.set(undefined);
-    if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
-      this.cargarMunicipios();
-    }
-    const nacimiento = this.fechaNacimiento();
-    this.textoNacimientoGuardado =
-      nacimiento === null
-        ? ''
-        : [
-            String(nacimiento.getDate()).padStart(2, '0'),
-            String(nacimiento.getMonth() + 1).padStart(2, '0'),
-            nacimiento.getFullYear(),
-          ].join('/');
-    this.textoNacimientoEditado = null;
     this.presentacionGuardada = this.instantaneaPresentacion();
+  }
+
+  /**
+   * Vuelve a lo guardado sólo una de las tres pestañas que se corrigen.
+   *
+   * Guardar «Contacto» re-siembra «Contacto» y nada más: lo que la persona dejó
+   * a medio escribir en «Datos personales» sigue ahí (CORR-08, MT-38-02).
+   */
+  private sembrarPestana(perfil: OwnPractitionerProfile, pestana: number): void {
+    if (pestana === TAB_EDITOR.personales) {
+      this.titulo.set(perfil.professionalTitle ?? '');
+      this.bio.set(perfil.professionalBio ?? '');
+      this.telemedicina.set(perfil.telehealthAvailable);
+      this.nombre.set(perfil.name ?? '');
+      // `middleName` trae TODOS los nombres que no son el primero, separados por
+      // espacio: se reparten en las mismas casillas que el alta ofrece.
+      const adicionales = splitNames(perfil.middleName);
+      this.segundoNombre.set(adicionales.segundo);
+      this.tercerNombre.set(adicionales.tercero);
+      this.nombresExtra.set(adicionales.extra);
+      this.apellidoPaterno.set(perfil.lastName ?? '');
+      this.apellidoMaterno.set(perfil.motherLastName ?? '');
+      // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
+      // ofrecía. Se siembran desde el perfil, igual que el resto.
+      this.fechaNacimiento.set(perfil.birthDate ?? null);
+      this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
+      this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
+      const nacimiento = this.fechaNacimiento();
+      this.textoNacimientoGuardado =
+        nacimiento === null
+          ? ''
+          : [
+              String(nacimiento.getDate()).padStart(2, '0'),
+              String(nacimiento.getMonth() + 1).padStart(2, '0'),
+              nacimiento.getFullYear(),
+            ].join('/');
+      this.textoNacimientoEditado = null;
+      return;
+    }
+
+    if (pestana === TAB_EDITOR.contacto) {
+      this.celularPersonal.reset(perfil.mobilePhone ?? '');
+      this.correoPersonal.set(perfil.personalEmail ?? '');
+      this.personalEmailError.set('');
+      this.correoTrabajo.set(correoDeTrabajoDe(perfil));
+      this.errorCorreoTrabajo.set('');
+      this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
+      // ALV-009: la calle, si la declaró.
+      this.direccion.set(perfil.homeAddress?.lines ?? '');
+      // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
+      // longitud pondría el pin en el meridiano cero.
+      const lat = perfil.homeAddress?.latitude;
+      const lng = perfil.homeAddress?.longitude;
+      this.gpsDomicilioGuardado.set(lat === undefined || lng === undefined ? null : { lat, lng });
+      this.gpsDomicilio.set(undefined);
+      this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+      const latTrabajo = perfil.workAddress?.latitude;
+      const lngTrabajo = perfil.workAddress?.longitude;
+      this.gpsTrabajoGuardado.set(
+        latTrabajo === undefined || lngTrabajo === undefined
+          ? null
+          : { lat: latTrabajo, lng: lngTrabajo },
+      );
+      this.gpsTrabajo.set(undefined);
+      if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
+        this.cargarMunicipios();
+      }
+      return;
+    }
+
+    if (pestana === TAB_EDITOR.facturacion) {
+      this.nit.set(perfil.taxId ?? '');
+      this.razonSocial.set(perfil.taxHolderName ?? '');
+      this.frecuenciaFacturacionSeguro.set(perfil.insuranceBillingFrequency ?? null);
+    }
   }
 
   /**
@@ -1973,14 +2104,110 @@ export class PractitionerProfileEdit {
       this.errorDelLogo.set('');
       this.firma.discard();
       this.sello.discard();
-      if (!(await this.router.navigate(['/account/profile']))) {
-        this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
-      }
+      await this.volverALaFicha(this.pestana());
     } catch {
       this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
     } finally {
       this.cancelandoEdicion.set(false);
     }
+  }
+
+  /**
+   * Vuelve a la ficha, abierta en la pestaña que se estaba editando.
+   *
+   * La ficha recibe el índice de la lista completa (`?pestana=`) y lo traduce
+   * por etiqueta: es el mismo camino del lápiz, de vuelta.
+   */
+  private async volverALaFicha(pestana: number): Promise<void> {
+    const indiceDeLaFicha = DOCTOR_PROFILE_TABS.indexOf(EDITOR_DOCTOR_TABS[pestana]);
+    try {
+      // La primera pestaña es la que abre la ficha sin pedir nada.
+      const navego =
+        indiceDeLaFicha > 0
+          ? await this.router.navigate([MI_PERFIL_MEDICO], {
+              queryParams: { pestana: indiceDeLaFicha },
+            })
+          : await this.router.navigate([MI_PERFIL_MEDICO]);
+      if (!navego) {
+        this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
+      }
+    } catch {
+      this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
+    }
+  }
+
+  /**
+   * Las pestañas del editor donde queda algo escrito y sin guardar después de
+   * un guardado: los campos de otra pestaña que no viajaron, los idiomas, y el
+   * logo, la firma o el sello si el guardado no fue desde «Datos personales».
+   *
+   * «Acepto pacientes nuevos» no cuenta: no lo escribe la persona, el editor lo
+   * corrige solo en el próximo guardado de «Datos personales».
+   */
+  private pestanasConCambiosSinGuardar(camposQueNoViajaron: readonly string[]): number[] {
+    const pestanas = new Set<number>();
+    for (const campo of camposQueNoViajaron) {
+      if (campo === 'acceptsNewPatients') continue;
+      const indice = Object.entries(CAMPOS_POR_PESTANA).find(([, campos]) =>
+        campos.includes(campo),
+      )?.[0];
+      if (indice !== undefined) pestanas.add(Number(indice));
+    }
+    if (
+      this.idiomasCambiaron() ||
+      this.logoPendiente() !== null ||
+      this.firma.change !== undefined ||
+      this.sello.change !== undefined
+    ) {
+      pestanas.add(TAB_EDITOR.personales);
+    }
+    return [...pestanas].sort((a, b) => a - b);
+  }
+
+  /**
+   * Las reglas del alta para «Contacto»: celular y correo personal obligatorios
+   * y bien formados, y el correo de trabajo con forma de correo si cambió.
+   *
+   * @returns `false` si algo no viaja; ya marcó el campo y avisó por qué.
+   */
+  private contactoValido(correoTrabajo: string, correoTrabajoCambio: boolean): boolean {
+    if (this.celularPersonal.invalid) {
+      this.celularPersonal.markAsTouched();
+      this.toasts.error(
+        this.celularPersonal.hasError('required')
+          ? 'Ingrese su celular personal.'
+          : 'Hay un teléfono incompleto. Revíselo en «Contacto».',
+        'Perfil',
+      );
+      return false;
+    }
+
+    const correoPersonal = new FormControl(this.correoPersonal().trim());
+    this.personalEmailError.set(
+      validatePractitionerPersonalEmail(correoPersonal) === null
+        ? ''
+        : (this.practitionerFieldRule('personalEmail')?.mensajeDeError ??
+            'Ingrese un correo válido.'),
+    );
+    if (this.personalEmailError()) {
+      this.toasts.error('El correo personal no es válido. Revíselo en «Contacto».', 'Perfil');
+      return false;
+    }
+
+    this.errorCorreoTrabajo.set(
+      !correoTrabajoCambio
+        ? ''
+        : correoTrabajo === ''
+          ? 'Escriba su correo de trabajo.'
+          : PATRON_CORREO.test(correoTrabajo)
+            ? ''
+            : 'Revise el correo: le falta algo, como la @ o el dominio.',
+    );
+    if (this.errorCorreoTrabajo()) {
+      this.toasts.error('El correo de trabajo no es válido. Revíselo en «Contacto».', 'Perfil');
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -1997,6 +2224,8 @@ export class PractitionerProfileEdit {
     if (original === null || this.guardandoPresentacion()) {
       return;
     }
+    // La pestaña abierta es la que se guarda (CORR-08, MT-38-02).
+    const pestana = this.pestana();
 
     // Cada intento de guardar empieza limpio. Los rechazos del anterior hablan
     // de valores que la persona pudo cambiar —o devolver a lo guardado—: si
@@ -2005,31 +2234,11 @@ export class PractitionerProfileEdit {
     // valiendo, el próximo envío los trae de vuelta.
     this.erroresDelServidor.set(new Map());
 
-    // Un teléfono a medias no viaja: se marca, se lleva a la persona a
-    // «Contacto» —puede estar mirando «Datos personales»— y se dice por qué.
-    const telefonos = [this.celularPersonal];
-    if (telefonos.some((telefono) => telefono.invalid)) {
-      telefonos.forEach((telefono) => telefono.markAsTouched());
-      this.pestana.set(TAB_EDITOR.contacto);
-      this.toasts.error('Hay un teléfono incompleto. Revíselo en «Contacto».', 'Perfil');
-      return;
-    }
-
-    // El correo de trabajo, igual: uno vacío o mal escrito no viaja.
+    // Las reglas de «Contacto» se aplican cuando se guarda «Contacto»: guardar
+    // otra pestaña no manda estos campos, así que tampoco los frena.
     const correoTrabajo = this.correoTrabajo().trim();
     const correoTrabajoCambio = correoTrabajo !== correoDeTrabajoDe(original);
-    this.errorCorreoTrabajo.set(
-      !correoTrabajoCambio
-        ? ''
-        : correoTrabajo === ''
-          ? 'Escriba su correo de trabajo.'
-          : PATRON_CORREO.test(correoTrabajo)
-            ? ''
-            : 'Revise el correo: le falta algo, como la @ o el dominio.',
-    );
-    if (this.errorCorreoTrabajo()) {
-      this.pestana.set(TAB_EDITOR.contacto);
-      this.toasts.error('El correo de trabajo no es válido. Revíselo en «Contacto».', 'Perfil');
+    if (pestana === TAB_EDITOR.contacto && !this.contactoValido(correoTrabajo, correoTrabajoCambio)) {
       return;
     }
 
@@ -2164,18 +2373,42 @@ export class PractitionerProfileEdit {
       cambios.insuranceBillingFrequency = frecuencia;
     }
 
-    const logoPendiente = this.logoPendiente();
-    // La firma y el sello tampoco viajan en el PATCH del perfil: otra escritura.
+    // Cada pestaña guarda sólo sus campos. Lo que cambió en otra queda
+    // pendiente, a la vista, hasta que se guarde desde allí.
+    const permitidos = new Set(CAMPOS_POR_PESTANA[pestana] ?? []);
+    const pendientesEnOtrasPestanas = Object.keys(cambios).filter(
+      (clave) => !permitidos.has(clave),
+    );
+    for (const clave of pendientesEnOtrasPestanas) {
+      delete cambios[clave as keyof typeof cambios];
+    }
+
+    // Lo que el alta exige no se puede dejar vacío al corregirlo: se mira el
+    // valor actual, haya cambiado o no.
+    const faltante = this.firstMissingRequiredField(pestana);
+    if (faltante !== undefined) {
+      this.toasts.error(faltante.mensajeDeError || 'Complete el campo obligatorio.', 'Perfil');
+      return;
+    }
+
+    // El logo, la firma y el sello viven en «Datos personales» y viajan por su
+    // cuenta, en otra escritura: sólo se guardan desde esa pestaña.
+    const enPersonales = pestana === TAB_EDITOR.personales;
+    const logoPendiente = enPersonales ? this.logoPendiente() : null;
     const cambiosDeFirma = {
-      ...(this.firma.change === undefined ? {} : { firmaFileId: this.firma.change }),
-      ...(this.sello.change === undefined ? {} : { selloFileId: this.sello.change }),
+      ...(!enPersonales || this.firma.change === undefined
+        ? {}
+        : { firmaFileId: this.firma.change }),
+      ...(!enPersonales || this.sello.change === undefined
+        ? {}
+        : { selloFileId: this.sello.change }),
     };
     const hayCambiosDeFirma = Object.keys(cambiosDeFirma).length > 0;
     if (Object.keys(cambios).length === 0 && logoPendiente === null && !hayCambiosDeFirma) {
       this.toasts.success('No había ningún cambio para guardar.', 'Perfil');
       return;
     }
-    if (this.subiendoLogo() || this.firma.uploading() || this.sello.uploading()) {
+    if (enPersonales && (this.subiendoLogo() || this.firma.uploading() || this.sello.uploading())) {
       this.toasts.error('Espere a que termine de subir la imagen.', 'Perfil');
       return;
     }
@@ -2210,10 +2443,26 @@ export class PractitionerProfileEdit {
             // Los PDF que se emitan desde ahora llevan lo nuevo.
             this.membretePdf.recargar();
           }
-          this.sembrarFormulario(perfil);
+          this.sembrarPestana(perfil, pestana);
+          // Si no quedó nada pendiente en otra pestaña, lo que se ve es lo
+          // guardado; si quedó, «Cancelar edición» tiene que seguir avisando.
+          if (pendientesEnOtrasPestanas.length === 0) {
+            this.presentacionGuardada = this.instantaneaPresentacion();
+          }
           this.perfil.set(ready(perfil));
           this.toasts.success('Su perfil quedó actualizado.', 'Perfil');
           avisarExtensionesSinGuardar(this.toasts, cambios);
+          // Guardar vuelve a lectura en la misma pestaña (CORR-08, §6), salvo
+          // que quede algo escrito en otra: salir ahí lo perdería sin avisar.
+          const sinGuardar = this.pestanasConCambiosSinGuardar(pendientesEnOtrasPestanas);
+          if (sinGuardar.length === 0) {
+            void this.volverALaFicha(pestana);
+            return;
+          }
+          this.toasts.info(
+            `Quedan cambios sin guardar en ${enumerar(sinGuardar.map((indice) => `«${EDITOR_DOCTOR_TABS[indice]}»`))}.`,
+            'Perfil',
+          );
         },
         error: (error: unknown) => {
           this.guardandoPresentacion.set(false);

@@ -16,8 +16,8 @@
     limitan el turno del paciente.
     ========================================================================== */
 
-export const CODIGOS_DE_MODALIDAD = ['ECO', 'RX', 'RM', 'TC', 'MG', 'DXA', 'ECG', 'LAB'] as const;
-export type ModalityCode = (typeof CODIGOS_DE_MODALIDAD)[number];
+export const MODALITY_CODES = ['ECO', 'RX', 'RM', 'TC', 'MG', 'DXA', 'ECG', 'LAB'] as const;
+export type ModalityCode = (typeof MODALITY_CODES)[number];
 
 export interface ModalityDefinition {
   readonly code: ModalityCode;
@@ -90,14 +90,14 @@ export const MODALIDADES: readonly ModalityDefinition[] = [
   },
 ];
 
-const POR_CODIGO = new Map(MODALIDADES.map((m) => [m.code, m]));
+const BY_CODE = new Map(MODALIDADES.map((m) => [m.code, m]));
 
 export function modalidad(code: ModalityCode): ModalityDefinition {
-  return POR_CODIGO.get(code)!;
+  return BY_CODE.get(code)!;
 }
 
-export function esCodigoDeModalidad(code: string): code is ModalityCode {
-  return POR_CODIGO.has(code as ModalityCode);
+export function isModalityCode(code: string): code is ModalityCode {
+  return BY_CODE.has(code as ModalityCode);
 }
 
 /**
@@ -105,7 +105,7 @@ export function esCodigoDeModalidad(code: string): code is ModalityCode {
  * clasificación que `MODALIDAD_DE_ESTUDIO` del simulador (CR → RX, US → ECO,
  * MR → RM, CT → TC, BMD → DXA), con los análisis en `LAB`.
  */
-const MODALIDAD_DE_ESTUDIO: Readonly<Record<string, ModalityCode>> = {
+const MODALITY_BY_STUDY: Readonly<Record<string, ModalityCode>> = {
   'STUDY-RX-TORAX': 'RX',
   'STUDY-RX-COLUMNA': 'RX',
   'STUDY-ECO-ABD': 'ECO',
@@ -139,11 +139,11 @@ const MODALIDAD_DE_ESTUDIO: Readonly<Record<string, ModalityCode>> = {
 };
 
 /** La modalidad de un estudio, o `null` si el código no es del catálogo. */
-export function modalidadDeEstudio(studyCode: string): ModalityCode | null {
-  return MODALIDAD_DE_ESTUDIO[studyCode] ?? null;
+export function modalityOfStudy(studyCode: string): ModalityCode | null {
+  return MODALITY_BY_STUDY[studyCode] ?? null;
 }
 
 /** La modalidad que atiende un tipo de equipo, o `null` si no limita turnos. */
-export function modalidadDeEquipo(equipmentTypeCode: string): ModalityCode | null {
+export function modalityOfEquipment(equipmentTypeCode: string): ModalityCode | null {
   return MODALIDADES.find((m) => m.equipmentCodes.includes(equipmentTypeCode))?.code ?? null;
 }
