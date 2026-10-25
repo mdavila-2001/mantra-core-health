@@ -26,6 +26,11 @@
   padding-block-start: var(--sp-4);
 }
 
+/* Los botones del panel no se estiran al ancho de la rejilla. */
+.alta__panel > button {
+  justify-self: start;
+}
+
 .alta__grilla {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

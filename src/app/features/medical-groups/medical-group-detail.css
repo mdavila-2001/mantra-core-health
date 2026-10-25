@@ -33,7 +33,11 @@
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
-  text-transform: capitalize;
+}
+
+/* «viernes 30 de octubre»: sólo la primera letra en mayúscula, no «De». */
+.grupo__titulo::first-letter {
+  text-transform: uppercase;
 }
 
 .grupo__panel {
