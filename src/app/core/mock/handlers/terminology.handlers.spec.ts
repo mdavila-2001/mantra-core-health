@@ -650,9 +650,12 @@ describe('vecindario del glosario (mapa de relaciones)', () => {
     [{ type: 'SYMPTOM', direction: 'sideways' }],
     [{ type: 'SYMPTOM', direction: 'incoming', limit: '201' }],
     [{ type: 'SYMPTOM', direction: 'incoming', offset: '-1' }],
-  ])('rechaza con 422 una consulta inválida (%o)', async (query) => {
-    const respuesta = await get<{ status: number }>(ruta(TOS), query);
-    expect(respuesta.status).toBe(422);
+    [{ type: 'SYMPTOM' }],
+    [{ direction: 'incoming' }],
+  ])('rechaza con 400 una consulta inválida, como el `ValidationPipe` de la API (%o)', async (query) => {
+    const respuesta = await get<{ status: number; body: { code: string } }>(ruta(TOS), query);
+    expect(respuesta.status).toBe(400);
+    expect(respuesta.body.code).toBe('VALIDATION_FAILED');
   });
 
   it('responde 404 a un id que no es del glosario', async () => {
