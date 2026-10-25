@@ -327,7 +327,7 @@ Procedimientos que una sede publica, con su precio propio (carril CM-06).
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/practices/:practiceId/sites` | `ProcedureOffers` (elegir la sede) |
-| `GET` | `/practices/:practiceId/healthcare-services?practiceSiteId=` | `ProcedureOffers` |
+| `GET` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (con `practiceSiteId` en la consulta) |
 | `POST` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (publicar un procedimiento) |
 | `PATCH` | `/practices/:practiceId/healthcare-services/:id` | `ProcedureOffers` (activar, desactivar, fijar el precio) |
 
