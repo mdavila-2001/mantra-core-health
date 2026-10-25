@@ -1,44 +1,62 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
-import { doctora } from './support/actores';
+import { apiViva, contextoDeApi, urlDeApi } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
 
 /**
- * Carril 12 — «agenda de hoy» (`src/app/features/agenda/my-agenda/`).
+ * Carril 12 — «agenda de hoy»: el calendario de `/schedule`.
  *
  * ## Qué cubre esta suite
  *
  * Es un barrido de **evidencia visual y de acabado**, no la suite de negocio
- * de la ficha completa (mover N minutos, cancelar-bloquea, etc. — esos tienen
- * su propia prueba de contrato por API, y no son responsabilidad de esta
- * pantalla). Lo que se verifica acá:
+ * de la ficha completa (mover N minutos, cancelar-bloquea, etc. tienen su
+ * propia prueba). Lo que se verifica acá:
  *
- * 1. Las tres vistas (mes, semana, día) cargan sobre datos reales de la API
+ * 1. Las tres vistas (día, semana, mes) cargan sobre datos reales de la API
  *    viva, sin simular ninguna respuesta.
  * 2. Ninguna de las tres produce scroll horizontal en 390, 768 ni 1440 px
  *    (AC-12-14).
- * 3. La paginación de la semana y la del día («Ayer» / «Mañana») cambian el
+ * 3. La paginación del día («Ayer» / «Mañana») y la de la semana cambian el
  *    encabezado sin recargar la página.
- * 4. Si el día de hoy trae al menos una actividad, el detalle es alcanzable
- *    y abre un diálogo con `role="dialog"` que cierra con Escape.
+ * 4. La cita sembrada se ve en la semana y su detalle abre un diálogo con
+ *    `role="dialog"` que cierra con Escape.
  *
- * ## Por qué cada ancho es su propia sesión, en vez de redimensionar una sola
+ * ## Por qué se reescribió (2026-10-25)
  *
- * `page.setViewportSize()` a mitad de sesión **no** es lo mismo que abrir la
- * pantalla en ese ancho: el `shell` de la aplicación
- * (`shared/components/organisms/shell/shell.ts`) decide una sola vez, al
- * construirse, si el panel de navegación va abierto o en cajón — no escucha
- * `resize`. Redimensionar en caliente de 1440 a 390 deja el panel ABIERTO
- * tapando media pantalla, algo que **nadie ve en un uso real** (se entra ya
- * con el ancho del dispositivo) y que además no es del carril 12: el `shell`
- * es de otro carril. Por eso cada ancho entra con su propia sesión — más
- * lento, pero es lo que un dispositivo real hace.
+ * La versión anterior entraba por `/schedule/mine`, que ya no existe: desde
+ * C-08 (20/09) el calendario ES la solapa «Consultas» de `/schedule`
+ * (`agenda.html`, `app-my-agenda mode="calendar"`), que abre en el día y ofrece
+ * Semana y Mes a un toque. Además dependía de la médica demo, que nace sin
+ * agenda: sin recurso propio `/schedule` no dibuja el calendario
+ * (`agenda.ts`, `tieneCalendario`). Ahora la prueba crea sus datos por el
+ * camino real, igual que los carriles 11, 14 y 15.
+ *
+ * ## Por qué cada ancho es su propia sesión
+ *
+ * El `shell` decide una sola vez, al construirse, si el panel de navegación va
+ * abierto o en cajón — no escucha `resize`. Redimensionar en caliente deja el
+ * panel abierto tapando media pantalla, algo que nadie ve en un uso real.
+ *
+ * Exige el front en `start:real-api` y la API levantada:
+ *   E2E_API_REAL=1 E2E_API_URL=http://localhost:3000 E2E_BASE_URL=http://localhost:4200
  */
 
+const API_REAL = process.env['E2E_API_REAL'] === '1';
+/** `VS_BO_DEPARTMENT · Santa Cruz`, sembrado por el stack de desarrollo. */
+const DEPARTAMENTO_SC = '16fe92e8-bec7-577d-9e63-4a0d8ff3b0e4';
+/** Municipio sembrado (Sucre), el mismo que usan los carriles 11 y 13. */
+const MUNICIPIO = '5132db42-8cb1-52d6-88f5-0e9a04bdc94c';
+
 const CAPTURAS = join(__dirname, '..', 'artifacts', 'playwright', 'tarea-12');
+
+test.describe.configure({ mode: 'serial' });
+test.skip(
+  !API_REAL,
+  'Omitido: hace falta E2E_API_REAL=1 con la API y el front en modo real-api. No es un verde.',
+);
 
 interface Ancho {
   readonly nombre: string;
@@ -52,142 +70,257 @@ const ANCHOS: readonly Ancho[] = [
   { nombre: '1440x900', width: 1440, height: 900 },
 ];
 
+interface Medica {
+  readonly identificador: string;
+  readonly clave: string;
+}
+
+function claims(token: string): Record<string, unknown> {
+  const cuerpo = token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(
+    Buffer.from(cuerpo + '='.repeat((4 - (cuerpo.length % 4)) % 4), 'base64').toString('utf8'),
+  ) as Record<string, unknown>;
+}
+
+async function json<T>(
+  paso: string,
+  respuesta: Awaited<ReturnType<APIRequestContext['post']>>,
+): Promise<T> {
+  expect(respuesta.ok(), `${paso}: ${respuesta.status()} ${await respuesta.text()}`).toBe(true);
+  return (await respuesta.json()) as T;
+}
+
+/** Médica con agenda y horario publicados, y una cita confirmada para mañana a las 10:00. */
+async function prepararMedica(api: APIRequestContext): Promise<Medica> {
+  const corrida = Date.now().toString(36);
+  const clave = `Agenda-${corrida}-2026!`;
+  const medica = { identificador: `medica.agenda.${corrida}@alovida.test`, clave };
+  const nationalIdPaciente = `PAGH${corrida}`;
+
+  await json(
+    'alta de la médica',
+    await api.post('/iam/auth/register-practitioner', {
+      data: {
+        email: medica.identificador,
+        password: clave,
+        name: 'Lucía',
+        lastName: 'Méndez',
+        licenseNumber: `MP-AGH-${corrida}`,
+        sedesLicenseNumber: `SEDES-${corrida}`,
+        professionalTitle: 'Médico',
+        nationalId: `AGH${corrida}`,
+        issuerAdministrativeAreaConceptId: DEPARTAMENTO_SC,
+        residenceMunicipalityConceptId: MUNICIPIO,
+      },
+    }),
+  );
+  await json(
+    'alta de la paciente',
+    await api.post('/iam/auth/register-patient', {
+      data: {
+        nationalId: nationalIdPaciente,
+        issuerAdministrativeAreaConceptId: DEPARTAMENTO_SC,
+        residenceMunicipalityConceptId: MUNICIPIO,
+        password: clave,
+        email: `paciente.agenda.${corrida}@alovida.test`,
+        name: 'Carmen',
+        lastName: 'Vaca',
+        birthDate: '1985-07-02',
+        phone: '70054321',
+        sexAtBirth: 'FEMALE',
+      },
+    }),
+  );
+
+  const { accessToken: tokenMedica } = await json<{ accessToken: string }>(
+    'login de la médica',
+    await api.post('/iam/auth/login', { data: { email: medica.identificador, password: clave } }),
+  );
+  const { accessToken: tokenPaciente } = await json<{ accessToken: string }>(
+    'login de la paciente',
+    await api.post('/iam/auth/login', {
+      data: { nationalId: nationalIdPaciente, password: clave },
+    }),
+  );
+  const auth = { Authorization: `Bearer ${tokenMedica}` };
+  const { tenants, hpid } = claims(tokenMedica) as { tenants?: string[]; hpid?: string };
+  const { pid } = claims(tokenPaciente) as { pid?: string };
+  expect(
+    tenants?.[0] && hpid && pid,
+    'los tokens no traen tenant, perfil profesional y perfil de paciente',
+  ).toBeTruthy();
+
+  const agenda = await json<{ id: string }>(
+    'agenda de la médica',
+    await api.post('/scheduling/resources', {
+      headers: auth,
+      data: {
+        tenantId: tenants![0],
+        resourceType: 'PRACTITIONER',
+        resourceRefType: 'health_practitioner_profiles',
+        resourceRefId: hpid,
+        name: 'Consultorio Lucía Méndez',
+      },
+    }),
+  );
+
+  // Sin horario publicado `/schedule` muestra «Todavía no publicó su horario»
+  // en vez del calendario. Se publica uno de lunes a domingo para que el día,
+  // la semana y el mes tengan cupos que dibujar sea cual sea el día de la corrida.
+  const plantilla = await json<{ id: string }>(
+    'horario de la médica',
+    await api.post(`/scheduling/resources/${agenda.id}/templates`, {
+      headers: auth,
+      data: {
+        name: 'Horario de Lucía Méndez',
+        slotMinutes: 30,
+        rules: [0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
+          dayOfWeek,
+          startTime: '08:00',
+          endTime: '12:00',
+          slotMinutes: 30,
+        })),
+      },
+    }),
+  );
+  const desde = new Date();
+  const hasta = new Date();
+  hasta.setUTCDate(hasta.getUTCDate() + 9);
+  await json(
+    'cupos del horario',
+    await api.post(`/scheduling/templates/${plantilla.id}/generate-slots`, {
+      headers: auth,
+      data: { from: desde.toISOString(), to: hasta.toISOString() },
+    }),
+  );
+
+  const inicio = new Date();
+  inicio.setDate(inicio.getDate() + 1);
+  inicio.setHours(10, 0, 0, 0);
+  await json(
+    'cita confirmada de mañana',
+    await api.post('/scheduling/appointments/direct', {
+      headers: auth,
+      data: {
+        patientProfileId: pid,
+        resourceId: agenda.id,
+        startAt: inicio.toISOString(),
+        durationMinutes: 30,
+        reasonText: 'Control general',
+      },
+    }),
+  );
+
+  return medica;
+}
+
 async function capturar(page: Page, nombre: string): Promise<void> {
   mkdirSync(CAPTURAS, { recursive: true });
   await page.screenshot({ path: join(CAPTURAS, `${nombre}.png`), fullPage: true });
 }
 
 /** `scrollWidth <= clientWidth`, tal como pide AC-12-14. */
-async function medirAncho(page: Page): Promise<{ scrollWidth: number; clientWidth: number }> {
-  return page.evaluate(() => ({
+async function comprobarSinScrollHorizontal(page: Page, etiqueta: string): Promise<void> {
+  const medidas = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
   }));
-}
-
-async function comprobarSinScrollHorizontal(page: Page, etiqueta: string): Promise<void> {
-  const medidas = await medirAncho(page);
   expect(
     medidas.scrollWidth,
     `${etiqueta}: scrollWidth (${medidas.scrollWidth}) > clientWidth (${medidas.clientWidth}) — hay scroll horizontal`,
   ).toBeLessThanOrEqual(medidas.clientWidth);
 }
 
-/** Entra como la doctora sembrada y abre «Mi agenda» en la solapa del mes. */
-async function entrarAMiAgenda(page: Page): Promise<void> {
-  await entrar(page, doctora());
-  await irA(page, '/schedule/mine');
-  await estable(page);
-  await page.getByRole('tab', { name: 'Cómo viene el mes' }).click();
-  await estable(page);
+async function texto(page: Page, selector: string): Promise<string> {
+  return ((await page.locator(selector).first().textContent()) ?? '').trim();
 }
+
+let api: APIRequestContext;
+let medica: Medica;
+
+test.beforeAll(async () => {
+  test.setTimeout(120_000);
+  api = await contextoDeApi();
+  expect(await apiViva(api), `La API no responde en ${urlDeApi()}.`).toBe(true);
+  medica = await prepararMedica(api);
+});
+
+test.afterAll(async () => {
+  await api?.dispose();
+});
 
 for (const ancho of ANCHOS) {
   test.describe(`Carril 12 · agenda de hoy · ${ancho.nombre}`, () => {
     test.use({ viewport: { width: ancho.width, height: ancho.height } });
 
-    test(`mes, semana y día en ${ancho.nombre}`, async ({ page }) => {
-      test.setTimeout(120_000);
-      await entrarAMiAgenda(page);
+    test(`día, semana y mes en ${ancho.nombre}`, async ({ page }) => {
+      test.setTimeout(150_000);
+      await entrar(page, {
+        rol: 'doctora',
+        identificador: medica.identificador,
+        clave: medica.clave,
+        nombre: 'médica de la agenda',
+      });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await irA(page, '/schedule');
+      await estable(page);
 
-      await test.step('la vista del mes: ocupación por día, sin scroll horizontal', async () => {
-        // Por defecto la solapa del mes abre en «mes» (no en «semana»), y sin
-        // día abierto: es la grilla de ocupación, nunca los nombres.
-        await expect(page.locator('.mes__grilla')).toBeVisible();
-        await capturar(page, `mes-${ancho.nombre}`);
-        await comprobarSinScrollHorizontal(page, `mes en ${ancho.nombre}`);
+      // «Consultas» es el calendario y abre por defecto en el día de hoy.
+      await expect(page.getByTestId('agenda-calendario')).toBeVisible();
+
+      await test.step('la vista del día: paginación y sin scroll horizontal', async () => {
+        await expect(page.locator('.dia')).toBeVisible();
+        const hoy = await texto(page, '.dia__titulo');
+
+        // «Un botón de ver mañana, y así sucesivamente» (punto 5, AC-12-5).
+        await page.getByTestId('dia-siguiente').click();
+        await expect.poll(() => texto(page, '.dia__titulo')).not.toBe(hoy);
+        await page.getByTestId('dia-anterior').click();
+        await expect.poll(() => texto(page, '.dia__titulo')).toBe(hoy);
+
+        await capturar(page, `dia-${ancho.nombre}`);
+        await comprobarSinScrollHorizontal(page, `día en ${ancho.nombre}`);
       });
 
-      await test.step('la vista de semana: paginación y sin scroll horizontal', async () => {
+      await test.step('la vista de semana: paginación, la cita y su detalle', async () => {
         await page.getByTestId('ver-semana').click();
-        await estable(page);
         await expect(page.locator('.semana__dias')).toBeVisible();
-
-        const tituloInicial =
-          (await page.locator('.semana__titulo').textContent())?.trim() ?? '';
+        const inicial = await texto(page, '.semana__titulo');
 
         // «Cada uno con su respectiva paginación de adelante y atrás» (punto 8).
         await page.getByTestId('semana-siguiente').click();
-        await estable(page);
-        const tituloSiguiente =
-          (await page.locator('.semana__titulo').textContent())?.trim() ?? '';
-        expect(tituloSiguiente, 'la semana siguiente no cambió el encabezado').not.toBe(
-          tituloInicial,
-        );
-
+        await expect.poll(() => texto(page, '.semana__titulo')).not.toBe(inicial);
         await page.getByTestId('semana-anterior').click();
-        await page.getByTestId('semana-anterior').click();
-        await estable(page);
-        const tituloAnterior =
-          (await page.locator('.semana__titulo').textContent())?.trim() ?? '';
-        expect(tituloAnterior, 'la semana anterior no cambió el encabezado').not.toBe(
-          tituloSiguiente,
-        );
+        await expect.poll(() => texto(page, '.semana__titulo')).toBe(inicial);
 
-        // Se vuelve a la semana de hoy antes de capturar, para que la
-        // evidencia muestre la semana real de la corrida y no una arbitraria.
-        await page.getByTestId('semana-siguiente').click();
-        await estable(page);
+        // La cita es de mañana y la semana empieza el lunes: si hoy es
+        // domingo, cae en la siguiente. Se decide por la fecha, no por si la
+        // cita ya se ve, que depende de cuándo termina de cargar.
+        if (new Date().getDay() === 0) {
+          await page.getByTestId('semana-siguiente').click();
+          await expect.poll(() => texto(page, '.semana__titulo')).not.toBe(inicial);
+        }
+        const cita = page.getByTestId('semana-cita');
+        await expect(cita.first(), 'la cita sembrada no aparece en la semana').toBeVisible();
+
+        if (ancho.nombre === '1440x900') {
+          await cita.first().click();
+          const dialogo = page.getByRole('dialog', { name: 'Detalle de la cita' });
+          await expect(dialogo).toBeVisible();
+          await capturar(page, 'semana-modal-detalle-1440x900');
+          await page.keyboard.press('Escape');
+          await expect(dialogo).toBeHidden();
+        }
 
         await capturar(page, `semana-${ancho.nombre}`);
         await comprobarSinScrollHorizontal(page, `semana en ${ancho.nombre}`);
       });
 
-      await test.step('la vista del día de hoy: línea de horas, paginación, sin scroll horizontal', async () => {
-        // No se reusa el estado de la solapa de semana: pasear la semana
-        // cerca de un cambio de mes (hoy es 3 de septiembre, cuyo lunes cae
-        // en agosto) puede dejar `mesVisible` en el mes anterior — el mismo
-        // cruce que `cambiarSemana()` hace a propósito para que la semana
-        // nunca muestre datos sin cargar. Se recarga para un mes limpio, que
-        // es además lo que hace cualquiera que entra directo a mirar hoy.
-        await page.reload();
-        await estable(page);
-        await page.getByRole('tab', { name: 'Cómo viene el mes' }).click();
-        await estable(page);
-
-        const celdaDeHoy = page.locator('.mes__celda--hoy .mes__dia');
-        const hayCeldaDeHoy = (await celdaDeHoy.count()) > 0;
-        if (!hayCeldaDeHoy) {
-          test.info().annotations.push({
-            type: 'nota',
-            description: 'El mes visible no incluye el día de hoy: no hay celda que tocar.',
-          });
-          return;
-        }
-
-        await celdaDeHoy.click();
-        await estable(page);
-        await expect(page.locator('.dia')).toBeVisible();
-
-        const tituloInicial = (await page.locator('.dia__titulo').textContent())?.trim() ?? '';
-
-        // «Un botón de ver mañana, y así sucesivamente» (punto 5, AC-12-5).
-        await page.getByTestId('dia-siguiente').click();
-        await estable(page);
-        const tituloManana = (await page.locator('.dia__titulo').textContent())?.trim() ?? '';
-        expect(tituloManana, 'Mañana no cambió la fecha del encabezado').not.toBe(tituloInicial);
-
-        await page.getByTestId('dia-anterior').click();
-        await estable(page);
-        const tituloVuelta = (await page.locator('.dia__titulo').textContent())?.trim() ?? '';
-        expect(tituloVuelta, 'Ayer no volvió al día original').toBe(tituloInicial);
-
-        // Si hoy tiene al menos una actividad (cita u ocupado), su detalle
-        // abre un diálogo real y cierra con Escape devolviendo el foco al
-        // bloque. Se captura una sola vez, en el ancho de escritorio.
-        const detalle = page.getByTestId('dia-detalle').first();
-        if (ancho.nombre === '1440x900' && (await detalle.count()) > 0) {
-          await detalle.click();
-          const dialogo = page.getByTestId('dialogo');
-          await expect(dialogo).toBeVisible();
-          await capturar(page, 'dia-modal-detalle-1440x900');
-
-          await page.keyboard.press('Escape');
-          await expect(dialogo).toBeHidden();
-        }
-
-        await capturar(page, `dia-${ancho.nombre}`);
-        await comprobarSinScrollHorizontal(page, `día en ${ancho.nombre}`);
+      await test.step('la vista del mes: grilla de ocupación, sin scroll horizontal', async () => {
+        await page.getByTestId('ver-mes').click();
+        await expect(page.locator('.mes__grilla')).toBeVisible();
+        await capturar(page, `mes-${ancho.nombre}`);
+        await comprobarSinScrollHorizontal(page, `mes en ${ancho.nombre}`);
       });
     });
   });
