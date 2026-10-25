@@ -419,8 +419,8 @@ describe('rutas del armazón', () => {
 /**
  * Lo que esta prueba fija.
  *
- * La superficie pública del buscador declara `buscar` en `app.routes.ts` y el
- * archivo **generado** `alovida.routes.ts` declara otro `buscar` con los
+ * La superficie pública del buscador declara `search` en `app.routes.ts` y el
+ * archivo **generado** `alovida.routes.ts` declara otro `search` con los
  * segmentos derivados del nombre de archivo de cada maqueta. Los dos conviven
  * porque el router prueba el primero y **retrocede** al siguiente cuando ningún
  * hijo coincide.
@@ -428,7 +428,7 @@ describe('rutas del armazón', () => {
  * Eso es un comportamiento del router, no una garantía que este repositorio
  * controle, y de él dependen dos cosas a la vez: que las URL limpias sean las
  * que se indexan, y que los enlaces de la bóveda que todavía apuntan a
- * `/buscar/buscador-listado` no se rompan. Si el retroceso dejara de ocurrir,
+ * `/search/finder-list` no se rompan. Si el retroceso dejara de ocurrir,
  * media superficie pública devolvería la pantalla equivocada **sin ningún
  * error**: el router simplemente no navegaría.
  */
@@ -478,12 +478,12 @@ describe('rutas públicas del buscador', () => {
 
   /**
    * El segmento no existe en el bloque de URL limpias, así que el router tiene
-   * que retroceder al `buscar` generado para encontrarlo. Es el supuesto del
+   * que retroceder al `search` generado para encontrarlo. Es el supuesto del
    * que depende que las dos formas convivan.
    */
   it('las URL de la bóveda siguen abriendo, por retroceso al bloque generado', async () => {
-    expect(await resuelve('/buscar/buscador-listado')).toBe(true);
-    expect(await resuelve('/buscar/perfil-profesional-detalle')).toBe(true);
+    expect(await resuelve('/search/finder-list')).toBe(true);
+    expect(await resuelve('/search/practitioner-profile-detail')).toBe(true);
   });
 
   // ─── TAREA-29: las direcciones viejas siguen abriendo ──────────────────────
@@ -502,6 +502,11 @@ describe('rutas públicas del buscador', () => {
     ['/buscar/aseguradoras', '/search/insurers'],
     ['/buscar/sintomas', '/search/symptoms'],
     ['/buscar/mapa', '/search/map'],
+    // Las direcciones en castellano de las maquetas, a su dirección nueva.
+    ['/buscar/buscador-listado', '/search/finder-list'],
+    ['/buscar/perfil-profesional-detalle', '/search/practitioner-profile-detail'],
+    ['/buscar/perfil-farmacia-detalle/una', '/f/una'],
+    ['/search/pharmacy-profile-detail/una', '/f/una'],
   ])('%s redirige a %s', async (vieja, nueva) => {
     await router.navigateByUrl(vieja);
 
@@ -517,9 +522,9 @@ describe('rutas públicas del buscador', () => {
    * de acá arriba, y por eso las dos tienen que estar verdes a la vez.
    */
   it('el redirect de `buscar` no se traga a las pantallas portadas', async () => {
-    await router.navigateByUrl('/buscar/seguidos-y-guardados-listado');
+    await router.navigateByUrl('/search/followed-and-saved-list');
 
-    expect(location.path()).toBe('/buscar/seguidos-y-guardados-listado');
+    expect(location.path()).toBe('/search/followed-and-saved-list');
   });
 
   // ─── El texto buscado viaja en la URL ──────────────────────────────────────
@@ -669,8 +674,8 @@ describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
   });
 
   it('Cotizaciones sigue resolviendo en su propia ruta', async () => {
-    expect(await terminaEn('/my-account/cotizaciones')).toEqual({
-      ruta: '/my-account/cotizaciones',
+    expect(await terminaEn('/my-account/quotations')).toEqual({
+      ruta: '/my-account/quotations',
       query: {},
     });
   });
