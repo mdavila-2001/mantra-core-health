@@ -84,6 +84,7 @@ describe('PerformerSiteOptions', () => {
     http.expectOne('/practitioners/me/role-assignments').flush(VINCULACIONES);
     const busqueda = http.expectOne((r) => r.url === '/medical-centers/search');
     expect(busqueda.request.params.get('procedureConceptIds')).toBe('p-1');
+    expect(busqueda.request.params.get('includePartial')).toBe('false');
     busqueda.flush(BUSQUEDA);
 
     expect(estados.map((e) => e.status)).toEqual(['loading', 'ready']);
