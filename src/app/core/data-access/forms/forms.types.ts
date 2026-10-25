@@ -147,11 +147,12 @@ export const FIELD_DEFINITION_SIMULATOR_EXTENSIONS: readonly string[] = [
   'oneResponsePerColumn',
 ];
 
-/** Ídem para el `PATCH`, que además no declara la cardinalidad. */
+/**
+ * Ídem para el `PATCH`. La cardinalidad ya viaja: la API la declara desde el
+ * carril 27 (REQ-27-007), con `null` para quitar el tope.
+ */
 export const FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS: readonly string[] = [
   ...FIELD_DEFINITION_SIMULATOR_EXTENSIONS,
-  'cardinalityMin',
-  'cardinalityMax',
 ];
 
 const FIELD_DEFINITION_EXTENSION_LABELS: Readonly<Record<string, string>> = {
