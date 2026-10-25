@@ -34,8 +34,8 @@ describe('AlovidaShell', () => {
       // primer segmento de la URL, no qué componente hay del otro lado.
       providers: [
         provideRouter([
-          { path: 'directorio/:pantalla', children: [] },
-          { path: 'personas/:pantalla', children: [] },
+          { path: 'provider-directory/:pantalla', children: [] },
+          { path: 'people/:pantalla', children: [] },
           { path: 'nada', children: [] },
         ]),
       ],
@@ -85,19 +85,19 @@ describe('AlovidaShell', () => {
   });
 
   it('sólo el módulo de la URL despliega sus secciones', async () => {
-    await ir('/directorio/organizaciones-listado');
+    await ir('/provider-directory/organizations-list');
 
     const desplegados = raiz().querySelectorAll('.app-side-nav__sub');
     expect(desplegados).toHaveLength(1);
 
-    const modulo = MODULOS_ALOVIDA.find((m) => m.segmento === 'directorio');
+    const modulo = MODULOS_ALOVIDA.find((m) => m.segmento === 'provider-directory');
     const etiquetas = [...desplegados[0].querySelectorAll('a')].map((a) => a.textContent?.trim());
     expect(etiquetas).toEqual(modulo?.secciones.map((s) => s.etiqueta));
   });
 
   it('cambiar de módulo cambia lo desplegado', async () => {
-    await ir('/directorio/organizaciones-listado');
-    await ir('/personas/profesionales-listado');
+    await ir('/provider-directory/organizations-list');
+    await ir('/people/practitioners-list');
 
     const activo = raiz().querySelector('.app-side-nav__item[aria-current="true"]');
     expect(activo?.textContent?.trim()).toBe('Personas');
@@ -144,7 +144,7 @@ describe('AlovidaShell', () => {
   });
 
   it('cuando el módulo tiene pantalla real construida, el aviso lleva a ella', async () => {
-    await ir('/personas/profesionales-listado');
+    await ir('/people/practitioners-list');
 
     const salida = raiz().querySelector('app-alovida-design-notice a');
     expect(salida?.getAttribute('href')).toBe('/administration/patients');

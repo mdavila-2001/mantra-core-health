@@ -236,7 +236,7 @@ test.describe('Carril 19 · salud de todas las rutas', () => {
       nombre: 'sin sesión',
     };
 
-    await page.goto('/inicio');
+    await page.goto('/home');
     await estable(page);
 
     for (const entrada of portadas) {
