@@ -160,8 +160,17 @@ export interface MyRoleAssignment {
   readonly practiceSiteId?: string;
   readonly roleConceptId: string;
   readonly specialtyConceptId?: string;
+  /** Procedimiento de la sede por el que se afilió (una fila por procedimiento). */
+  readonly healthcareServiceId?: string;
+  readonly serviceConceptId?: string;
+  readonly serviceDisplay?: string;
   /** Concepto de estado: pendiente / activa / suspendida / rechazada / finalizada. */
   readonly status: string;
+  /** El estado como concepto (v2 del contrato); se decide por `statusCode`, nunca por el uuid. */
+  readonly statusConceptId?: string;
+  readonly statusCode?: string;
+  /** Quién inició la afiliación: el centro (invitación) o el médico (solicitud). */
+  readonly initiatedBy?: 'PRACTICE' | 'PRACTITIONER';
   readonly isPrimary: boolean;
   readonly validFrom?: Date;
   readonly validTo?: Date;
@@ -175,6 +184,8 @@ export interface SelfRequestAffiliationInput {
   readonly practiceSiteId?: string;
   readonly roleConceptId?: string;
   readonly specialtyConceptId?: string;
+  /** Un procedimiento de la sede por llamada; para varios, una llamada por cada uno. */
+  readonly healthcareServiceId?: string;
   /** `YYYY-MM-DD`. */
   readonly validFrom?: string;
   readonly note?: string;
