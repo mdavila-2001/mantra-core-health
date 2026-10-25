@@ -5,6 +5,10 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
+import {
+  PANTALLAS_DE_CENTRO_MEDICO,
+  RUTA_DE_ALTA_DE_CENTRO_MEDICO,
+} from './features/auth/register-medical-center/medical-center.routes';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
@@ -63,6 +67,7 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
+  ...PANTALLAS_DE_CENTRO_MEDICO,
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
   //
@@ -314,11 +319,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
   'administration/laboratory-prices': () =>
     import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
-  // CM-11 · la organización verificada abre su práctica y su primera sede.
-  'administration/medical-center-setup': () =>
-    import('./features/organization/medical-center-setup/medical-center-setup').then(
-      (m) => m.MedicalCenterSetup,
-    ),
   'administration/laboratory-branches': () =>
     import('./features/organization/organization-branches/organization-branches').then(
       (m) => m.OrganizationBranches,
@@ -2251,18 +2251,7 @@ export const routes: Routes = [
       import('./features/auth/register-pharmacy/register-pharmacy').then((m) => m.RegisterPharmacy),
     title: 'AloVida - Registrar farmacia',
   },
-  {
-    // El alta pública de un centro médico (CM-11): `register-organization` con
-    // `tenantType: 'HOSPITAL'`, un tipo de salud que ya existe. Queda pendiente
-    // de verificación; su práctica y su sede se abren después en
-    // `administration/medical-center-setup`.
-    path: 'auth/register/medical-center',
-    loadComponent: () =>
-      import('./features/auth/register-medical-center/register-medical-center').then(
-        (m) => m.RegisterMedicalCenter,
-      ),
-    title: 'AloVida - Registrar centro médico',
-  },
+  RUTA_DE_ALTA_DE_CENTRO_MEDICO,
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
     path: 'auth/verify-email',
