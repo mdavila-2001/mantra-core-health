@@ -262,12 +262,23 @@ export class GlossaryAnatomyAtlas {
     // la barra fija, y no le da el foco: se centra y se enfoca acá, después
     // de que el router termine. El evento `Scroll` sale en cada toque, aunque
     // el ancla ya estuviera en la URL (tocar dos veces la misma fuente)...
+    // Al volver con «Atrás» a la URL sin ancla, el foco regresa a la cita
+    // desde la que se saltó (si no, quedaba en una entrada fuera de la vista).
     this.router.events
       .pipe(
-        filter((e): e is Scroll => e instanceof Scroll && (e.anchor ?? '').startsWith('atlas3d-fuente-')),
+        filter((e): e is Scroll => e instanceof Scroll),
         takeUntilDestroyed(),
       )
-      .subscribe((e) => setTimeout(() => this.revealSource(e.anchor ?? ''), 0));
+      .subscribe((e) => {
+        const ancla = e.anchor ?? '';
+        if (ancla.startsWith('atlas3d-fuente-')) {
+          setTimeout(() => this.revealSource(ancla), 0);
+        } else if (this.citationOrigin !== null) {
+          const origen = this.citationOrigin;
+          this.citationOrigin = null;
+          setTimeout(() => origen.isConnected && origen.focus({ preventScroll: true }), 0);
+        }
+      });
     // ...y esto cubre el enlace abierto con el ancla, que llega antes que la ficha.
     effect(() => {
       const ancla = this.fragment();
@@ -344,6 +355,13 @@ export class GlossaryAnatomyAtlas {
     if (panel !== undefined && panel.getBoundingClientRect().top < 0) {
       panel.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
+  }
+
+  /** La cita [n] desde la que se saltó a la bibliografía, para devolverle el foco al volver. */
+  private citationOrigin: HTMLElement | null = null;
+
+  protected rememberCitation(event: Event): void {
+    this.citationOrigin = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
   }
 
   private revealSource(id: string): void {

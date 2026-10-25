@@ -379,10 +379,15 @@
 }
 
 /* La activa se marca con fondo; el anillo queda para el foco (no dos anillos). */
+.atlas3d__bibliografia li {
+  padding: 0.15em 0.4em;
+  border-inline-start: 3px solid transparent;
+}
+
 .atlas3d__bibliografia .atlas3d__fuente--activa {
+  border-inline-start-color: var(--focus-ring);
   background: var(--bg-hover);
   color: var(--text-primary);
-  border-radius: var(--r-sm);
 }
 
 .atlas3d__aviso-ia {
@@ -445,5 +450,5 @@
 .atlas3d__bibliografia li:focus-visible,
 .atlas3d__bibliografia .atlas3d__fuente--activa:focus {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 0;
+  outline-offset: 1px;
 }

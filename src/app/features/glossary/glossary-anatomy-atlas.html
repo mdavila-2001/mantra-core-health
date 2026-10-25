@@ -216,6 +216,7 @@
                                   queryParamsHandling="preserve"
                                   [fragment]="'atlas3d-fuente-' + n"
                                   [attr.aria-label]="'Fuente ' + n"
+                                  (click)="rememberCitation($event)"
                                   >[{{ n }}]</a
                                 >}</span>
                             }

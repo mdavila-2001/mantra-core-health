@@ -114,12 +114,20 @@ for (const caso of CASOS) {
 
     await expect(page.getByTestId('atlas3d-ta2')).toContainText(/TA2 \d+/);
 
+    // «Atrás» desde la entrada devuelve el foco a la cita de origen.
+    await page.goBack();
+    await expect(page).not.toHaveURL(/#atlas3d-fuente-/);
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.classList.contains('atlas3d__cita') ?? false))
+      .toBe(true);
+
     const figura = page.getByTestId('atlas3d-imagenes').locator('figure').first();
     await figura.scrollIntoViewIfNeeded();
     const imagen = figura.locator('img');
     await expect(imagen).toHaveAttribute('alt', /\S/);
     await expect
-      .poll(() => imagen.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth), { timeout: 60_000 })
+      // Commons limita por IP: la miniatura puede tardar más que la página.
+      .poll(() => imagen.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth), { timeout: 120_000 })
       .toBeGreaterThan(0);
     await expect(figura.locator('figcaption')).toContainText('Wikimedia Commons');
     if (caso.tema === 'dark') {
