@@ -28,7 +28,8 @@ const VIEWPORTS = [
 /** Abre el generador con un formulario ya abierto y una pregunta propia. */
 async function abrirUnaPregunta(page: Page): Promise<void> {
   await entrarAlSimulador(page, 'medica', BASE);
-  await page.goto(`${BASE}/form-builder`, { waitUntil: 'domcontentloaded' });
+  // El catálogo es el paso de «Cargar formulario» (carril 27).
+  await page.goto(`${BASE}/form-builder?view=catalog`, { waitUntil: 'domcontentloaded' });
   await esperarAQueSeAsiente(page);
 
   await page.getByTestId('plantilla').first().click();
