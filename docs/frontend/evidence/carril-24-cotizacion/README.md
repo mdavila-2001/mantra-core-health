@@ -12,7 +12,7 @@ Unitarias de cotizaciones y del PDF: 29/29.
 | 4 | Servicio médico adicional, sin tomar la cita como servicio | PASS | El servicio sale del catálogo (`billing/service-catalog`), no de la cita |
 | 5 | Precio ofrecido | PASS | Prellenado con el de referencia y guardado igual (`offeredPrice`) |
 | 6 | Plan de pagos | PASS | El plan se arma y no deja guardar si no cierra; guardado con la misma cantidad de cuotas |
-| 7 | Simulador con tasa de interés | **RETIRADO** | Quitado a propósito el 18/09 (`303f13e42`): un consultorio reparte un precio, no presta dinero. El spec fija que no reaparezca. **A confirmar por el propietario**: la ficha todavía lo pide |
+| 7 | Simulador con tasa de interés | **DESCARTADO** | Quitado el 18/09 (`303f13e42`): un consultorio reparte un precio, no presta dinero. **El propietario confirmó el 25/10/2026 que no vuelve.** El spec fija que no reaparezca |
 | 8 | Plazo | **RETIRADO** (ver 7) | Reemplazado por cantidad de cuotas y frecuencia |
 | 9 | Método de cálculo de intereses | **RETIRADO** (ver 7) | — |
 | 10 | Exportar la cotización | PASS | «Exportar» descarga un `.pdf` |
