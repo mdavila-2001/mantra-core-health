@@ -12,7 +12,7 @@ import type { Route } from '@angular/router';
  * verificación; su práctica y su sede se abren después en
  * `administration/medical-center-setup`.
  */
-export const RUTA_DE_ALTA_DE_CENTRO_MEDICO: Route = {
+export const MEDICAL_CENTER_SIGNUP_ROUTE: Route = {
   path: 'auth/register/medical-center',
   loadComponent: () => import('./register-medical-center').then((m) => m.RegisterMedicalCenter),
   title: 'AloVida - Registrar centro médico',
@@ -23,7 +23,7 @@ export const RUTA_DE_ALTA_DE_CENTRO_MEDICO: Route = {
  * sede. Se registra en el mapa de navegación como
  * `administration/medical-center-setup` y se descarga al entrar.
  */
-export const PANTALLAS_DE_CENTRO_MEDICO: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
+export const MEDICAL_CENTER_SCREENS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   'administration/medical-center-setup': () =>
     import('../../organization/medical-center-setup/medical-center-setup').then(
       (m) => m.MedicalCenterSetup,

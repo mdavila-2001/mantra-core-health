@@ -3,14 +3,14 @@
     @if (registered()) {
       <div class="registro__header">
         <app-registration-badge type="clinic" celebrate />
-        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-centro-medico-exito">
+        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
           ¡Bienvenido a AloVida! Su centro médico ya tiene cuenta
         </h1>
         <p class="registro__subtitle">Concluyó el registro. Ya puede conectarse con su correo y la contraseña que eligió.</p>
         @if (verificationSent()) {
           <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar.</p>
         }
-        <p class="registro__subtitle" data-testid="registro-centro-medico-pendiente">
+        <p class="registro__subtitle" data-testid="medical-center-signup-pending">
           Su centro está pendiente de verificación. En cuanto la plataforma lo verifique, podrá abrir su
           práctica y su primera sede desde «Configurar centro médico».
         </p>
@@ -20,7 +20,7 @@
         variant="primary"
         size="lg"
         class="registro__submit"
-        data-testid="registro-centro-medico-ir-login"
+        data-testid="medical-center-signup-go-to-login"
         (clicked)="goToLogin()"
       >
         Ir a iniciar sesión
@@ -36,7 +36,7 @@
       </div>
 
       @if (errorMessage(); as mensaje) {
-        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-centro-medico-error">{{
+        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="medical-center-signup-error">{{
           mensaje
         }}</app-alert>
       }
@@ -49,7 +49,7 @@
           submitLabel="Crear cuenta del centro médico"
           [pending]="isSubmitting()"
           (enviado)="submit()"
-          data-testid="registro-centro-medico-form"
+          data-testid="medical-center-signup-form"
         />
       </div>
 

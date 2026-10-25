@@ -17,8 +17,8 @@ import {
   type IdsDePrueba,
 } from '../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
 
-const MAX_NOMBRE = 200;
-const MAX_DIRECCION = 500;
+const MAX_NAME = 200;
+const MAX_ADDRESS = 500;
 const MAX_CIUDAD = 255;
 
 /**
@@ -27,7 +27,7 @@ const MAX_CIUDAD = 255;
  * Cada código tiene su causa y su salida: 403 no es 422, y el paciente de la
  * pantalla —un administrador— tiene que saber cuál es para saber qué hacer.
  */
-export function mensajeDeLaConfiguracion(error: unknown): string {
+export function setupErrorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     switch (error.status) {
       case 0:
@@ -71,15 +71,15 @@ export class MedicalCenterSetup {
   readonly form = new FormGroup({
     practiceName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_NOMBRE)],
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_NAME)],
     }),
     siteName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_NOMBRE)],
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_NAME)],
     }),
     addressText: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_DIRECCION)],
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_ADDRESS)],
     }),
     cityText: new FormControl('', {
       nonNullable: true,
@@ -95,13 +95,13 @@ export class MedicalCenterSetup {
   protected readonly created = signal<CreatedOrganizationPractice | null>(null);
 
   protected readonly pointIds: IdsDePrueba = {
-    mapa: 'centro-medico-sede-map',
-    confirmada: 'centro-medico-sede-location-confirmed',
-    avisoGeocodificacion: 'centro-medico-sede-geocoding-notice',
-    quitar: 'centro-medico-sede-location-remove',
-    confirmar: 'centro-medico-sede-location-confirm',
-    usarUbicacion: 'centro-medico-sede-location-use',
-    marcarEnMapa: 'centro-medico-sede-location-pick',
+    mapa: 'medical-center-site-map',
+    confirmada: 'medical-center-site-location-confirmed',
+    avisoGeocodificacion: 'medical-center-site-geocoding-notice',
+    quitar: 'medical-center-site-location-remove',
+    confirmar: 'medical-center-site-location-confirm',
+    usarUbicacion: 'medical-center-site-location-use',
+    marcarEnMapa: 'medical-center-site-location-pick',
   };
 
   /** Dos páginas, de a cuatro campos como tope: el centro y su primera sede. */
@@ -115,7 +115,7 @@ export class MedicalCenterSetup {
           label: 'Nombre del centro médico',
           control: 'text' as const,
           required: true,
-          testId: 'centro-medico-setup-practice-name',
+          testId: 'medical-center-setup-practice-name',
           mensajeDeError: 'Escriba el nombre del centro médico.',
         },
         {
@@ -124,7 +124,7 @@ export class MedicalCenterSetup {
           hint: 'Como la va a ver el paciente: «Sede Norte», «Casa matriz».',
           control: 'text' as const,
           required: true,
-          testId: 'centro-medico-setup-site-name',
+          testId: 'medical-center-setup-site-name',
           mensajeDeError: 'Escriba el nombre de la sede.',
         },
       ],
@@ -139,7 +139,7 @@ export class MedicalCenterSetup {
           control: 'text' as const,
           required: true,
           autocomplete: 'street-address',
-          testId: 'centro-medico-setup-address',
+          testId: 'medical-center-setup-address',
           mensajeDeError: 'Escriba la dirección de la sede.',
         },
         {
@@ -147,7 +147,7 @@ export class MedicalCenterSetup {
           label: 'Ciudad',
           control: 'text' as const,
           autocomplete: 'address-level2',
-          testId: 'centro-medico-setup-city',
+          testId: 'medical-center-setup-city',
         },
         {
           key: 'point',
@@ -202,7 +202,7 @@ export class MedicalCenterSetup {
         },
         error: (error: unknown) => {
           this.saving.set(false);
-          this.errorMessage.set(mensajeDeLaConfiguracion(error));
+          this.errorMessage.set(setupErrorMessage(error));
         },
       });
   }

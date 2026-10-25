@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
-import { mensajeDelAlta, RegisterMedicalCenter } from './register-medical-center';
+import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
 const RUTA_ALTA = '/iam/auth/register-organization';
 
@@ -133,7 +133,7 @@ describe('RegisterMedicalCenter', () => {
 
     expect(interno().registered()).toBe(true);
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('[data-testid="registro-centro-medico-pendiente"]')?.textContent).toContain(
+    expect(el.querySelector('[data-testid="medical-center-signup-pending"]')?.textContent).toContain(
       'pendiente de verificación',
     );
   });
@@ -163,12 +163,12 @@ describe('RegisterMedicalCenter', () => {
   });
 });
 
-describe('mensajeDelAlta', () => {
+describe('signupErrorMessage', () => {
   it.each([
     [0, 'No pudimos conectarnos'],
     [409, 'Ya existe una cuenta con ese correo'],
     [500, 'No pudimos completar el registro'],
   ])('el estado %s dice «%s»', (status, fragmento) => {
-    expect(mensajeDelAlta(new HttpErrorResponse({ status }))).toContain(fragmento);
+    expect(signupErrorMessage(new HttpErrorResponse({ status }))).toContain(fragmento);
   });
 });

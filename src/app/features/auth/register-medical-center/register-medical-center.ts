@@ -24,25 +24,25 @@ import {
   validadoresDeContrasena,
 } from '../registro-compartido/politica-de-contrasena';
 import { RegistrationBadge } from '../registro-compartido/registration-badge';
-import { codigoDelCentroMedico } from './medical-center-code';
+import { medicalCenterCodeFromName } from './medical-center-code';
 
 /** Dónde se leen el país y la jurisdicción: los mismos catálogos públicos del alta de laboratorio. */
 const DESTINO_PAIS = 'directory.tenants.country_concept_id';
 const DESTINO_JURISDICCION = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
 
 /** Los códigos estables de esos conceptos. */
-const CODIGO_PAIS = 'BO';
-const CODIGO_JURISDICCION = 'JURISDICTION_NATIONAL';
+const COUNTRY_CODE = 'BO';
+const JURISDICTION_CODE = 'JURISDICTION_NATIONAL';
 
 /** Lo que dice la pantalla cuando un catálogo no sirve. */
 const AVISO_CATALOGO = 'No pudimos cargar los catálogos del alta. Revise su conexión y vuelva a enviar.';
 
-const MAX_RAZON_SOCIAL = 300;
-const MAX_CORREO = 320;
-const MAX_NOMBRE = 200;
+const MAX_LEGAL_NAME = 300;
+const MAX_EMAIL = 320;
+const MAX_NAME = 200;
 
 /** Un error de la API, en castellano y sin tecnicismos. */
-export function mensajeDelAlta(error: unknown): string {
+export function signupErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message === AVISO_CATALOGO) {
     return AVISO_CATALOGO;
   }
@@ -98,16 +98,16 @@ export class RegisterMedicalCenter {
   readonly form = new FormGroup({
     legalName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_RAZON_SOCIAL)],
+      validators: [Validators.required, Validators.maxLength(MAX_LEGAL_NAME)],
     }),
     legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     ownerName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
+      validators: [Validators.required, Validators.maxLength(MAX_NAME)],
     }),
     email: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
+      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_EMAIL)],
     }),
     password: new FormControl('', { nonNullable: true, validators: [...validadoresDeContrasena] }),
   });
@@ -136,7 +136,7 @@ export class RegisterMedicalCenter {
             label: 'Razón social',
             control: 'text' as const,
             required: true,
-            testId: 'registro-centro-medico-razon-social',
+            testId: 'medical-center-signup-legal-name',
             mensajeDeError: 'Escriba la razón social del centro.',
           },
           {
@@ -146,7 +146,7 @@ export class RegisterMedicalCenter {
             control: 'select' as const,
             options: this.tiposSocietarios(),
             required: true,
-            testId: 'registro-centro-medico-tipo-societario',
+            testId: 'medical-center-signup-legal-entity-type',
             mensajeDeError: 'Elija el tipo societario.',
           },
         ],
@@ -161,7 +161,7 @@ export class RegisterMedicalCenter {
             control: 'text' as const,
             required: true,
             autocomplete: 'name',
-            testId: 'registro-centro-medico-nombre',
+            testId: 'medical-center-signup-owner-name',
             mensajeDeError: 'Escriba su nombre.',
           },
           {
@@ -170,7 +170,7 @@ export class RegisterMedicalCenter {
             control: 'email' as const,
             required: true,
             autocomplete: 'email',
-            testId: 'registro-centro-medico-correo',
+            testId: 'medical-center-signup-email',
             mensajeDeError: 'Escriba un correo válido.',
           },
           {
@@ -179,7 +179,7 @@ export class RegisterMedicalCenter {
             control: 'password' as const,
             required: true,
             autocomplete: 'new-password',
-            testId: 'registro-centro-medico-clave',
+            testId: 'medical-center-signup-password',
             mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
@@ -214,7 +214,7 @@ export class RegisterMedicalCenter {
         },
         error: (error: unknown) => {
           this.isSubmitting.set(false);
-          this.errorMessage.set(mensajeDelAlta(error));
+          this.errorMessage.set(signupErrorMessage(error));
         },
       });
   }
@@ -225,7 +225,7 @@ export class RegisterMedicalCenter {
 
   /** Lee los dos catálogos y resuelve los ids por código. Un fallo corta con el aviso. */
   private catalogos(): Observable<{ pais: string; jurisdiccion: string }> {
-    const porCodigo = (destino: string, codigo: string) =>
+    const byCode = (destino: string, codigo: string) =>
       this.context.dynamicEnum(destino).pipe(
         map((enumeracion) => {
           const id = enumeracion.options.find((opcion) => opcion.code === codigo)?.conceptId;
@@ -234,15 +234,15 @@ export class RegisterMedicalCenter {
         }),
       );
     return forkJoin({
-      pais: porCodigo(DESTINO_PAIS, CODIGO_PAIS),
-      jurisdiccion: porCodigo(DESTINO_JURISDICCION, CODIGO_JURISDICCION),
+      pais: byCode(DESTINO_PAIS, COUNTRY_CODE),
+      jurisdiccion: byCode(DESTINO_JURISDICCION, JURISDICTION_CODE),
     });
   }
 
   private datos(ids: { pais: string; jurisdiccion: string }): MedicalCenterRegistration {
     const f = this.form.getRawValue();
     return {
-      code: codigoDelCentroMedico(f.legalName),
+      code: medicalCenterCodeFromName(f.legalName),
       legalName: f.legalName.trim(),
       legalEntityType: f.legalEntityType,
       countryConceptId: ids.pais,
