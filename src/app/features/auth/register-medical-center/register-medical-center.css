@@ -2,9 +2,3 @@
    `../registro-compartido/registro.css`, que esta pantalla declara junto a esta
    hoja en sus `styleUrls`. */
 
-.centro-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  width: 100%;
-}

@@ -41,85 +41,23 @@
         }}</app-alert>
       }
 
-      <form class="centro-form" novalidate (submit)="$event.preventDefault(); submit()" data-testid="registro-centro-medico-form">
-        <app-form-field icon="hospital" label="Razón social" [required]="true" [errorMessage]="mostrar('legalName')">
-          <app-input
-            [value]="form().legalName"
-            (valueChange)="set('legalName', $event)"
-            [hasError]="mostrar('legalName') !== ''"
-            autocomplete="organization"
-            testId="registro-centro-medico-razon-social"
-          />
-        </app-form-field>
+      <div class="registro__body">
+        <app-paginated-form
+          [paginas]="paginas()"
+          [form]="form"
+          label="Crear cuenta del centro médico"
+          submitLabel="Crear cuenta del centro médico"
+          [pending]="isSubmitting()"
+          (enviado)="submit()"
+          data-testid="registro-centro-medico-form"
+        />
+      </div>
 
-        <app-form-field
-          icon="hospital"
-          label="Tipo societario"
-          [required]="true"
-          [errorMessage]="mostrar('legalEntityType')"
-        >
-          <app-select
-            [options]="opcionesTipoSocietario()"
-            [value]="form().legalEntityType"
-            (valueChange)="set('legalEntityType', $event)"
-            [hasError]="mostrar('legalEntityType') !== ''"
-            placeholder="Elija el tipo societario"
-            data-testid="registro-centro-medico-tipo-societario"
-          />
-        </app-form-field>
-
-        <app-form-field icon="patients" label="Su nombre" [required]="true" [errorMessage]="mostrar('ownerName')"
-          hint="Quien administra la cuenta del centro.">
-          <app-input
-            [value]="form().ownerName"
-            (valueChange)="set('ownerName', $event)"
-            [hasError]="mostrar('ownerName') !== ''"
-            autocomplete="name"
-            testId="registro-centro-medico-nombre"
-          />
-        </app-form-field>
-
-        <app-form-field icon="mail" label="Correo" [required]="true" [errorMessage]="mostrar('email')">
-          <app-input
-            type="email"
-            inputMode="email"
-            [value]="form().email"
-            (valueChange)="set('email', $event)"
-            [hasError]="mostrar('email') !== ''"
-            autocomplete="email"
-            testId="registro-centro-medico-correo"
-          />
-        </app-form-field>
-
-        <app-form-field
-          icon="lock"
-          label="Contraseña"
-          [required]="true"
-          [errorMessage]="mostrar('password')"
-          [hint]="'Al menos ' + claveMin + ' caracteres.'"
-        >
-          <app-input
-            type="password"
-            [value]="form().password"
-            (valueChange)="set('password', $event)"
-            [hasError]="mostrar('password') !== ''"
-            autocomplete="new-password"
-            testId="registro-centro-medico-clave"
-          />
-        </app-form-field>
-
-        <button
-          app-button
-          type="submit"
-          variant="primary"
-          size="lg"
-          class="registro__submit"
-          [disabled]="isSubmitting()"
-          data-testid="registro-centro-medico-enviar"
-        >
-          {{ isSubmitting() ? 'Creando la cuenta…' : 'Crear cuenta del centro médico' }}
-        </button>
-      </form>
+      <div class="registro__footer">
+        <p class="registro__pie">
+          ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
+        </p>
+      </div>
     }
   </div>
 </app-auth-split>
