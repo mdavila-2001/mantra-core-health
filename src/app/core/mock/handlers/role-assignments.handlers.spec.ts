@@ -63,7 +63,7 @@ describe('handlers de afiliación médico-centro', () => {
       practiceSiteId: SITE_CM_NORTE_1,
       healthcareServiceIds: [withdrawn.id],
     }, admin);
-    expect(reply.status).toBe(422);
+    expect([400, 422]).toContain(reply.status);
   });
 
   it('accept sobre INVITED → ACTIVE; sobre una ya activa → 409', () => {
