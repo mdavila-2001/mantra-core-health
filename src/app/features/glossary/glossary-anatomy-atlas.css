@@ -349,13 +349,17 @@
 }
 
 .atlas3d__cita {
-  display: inline-block;
-  min-inline-size: 1.5em;
-  text-align: center;
-  margin-inline-start: 0.15em;
+  /* En línea y con relleno: un área de toque real sin romper el renglón. */
+  padding: 0.1em 0.2em;
+  margin-inline-start: 0.1em;
   font-size: var(--fs-caption);
   vertical-align: super;
-  line-height: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.atlas3d__frase + .atlas3d__frase::before {
+  content: ' ';
 }
 
 .atlas3d__bibliografia {
@@ -374,7 +378,7 @@
   scroll-margin-block: var(--sp-16);
 }
 
-.atlas3d__bibliografia li:target {
+.atlas3d__bibliografia .atlas3d__fuente--activa {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   color: var(--text-primary);
@@ -418,4 +422,10 @@
   margin-block-start: var(--sp-4);
   padding-block-start: var(--sp-3);
   border-block-start: 1px solid var(--border-subtle);
+}
+
+/* Dentro de la lista con scroll el anillo exterior se recorta: va por dentro. */
+.atlas3d__resultados .atlas3d__opcion:focus-visible,
+.atlas3d__lista--larga .atlas3d__opcion:focus-visible {
+  outline-offset: -3px;
 }

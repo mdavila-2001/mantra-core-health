@@ -206,9 +206,18 @@
                         @for (grupo of sentenceGroups(); track grupo.aspect) {
                           <h4 class="atlas3d__aspecto">{{ grupo.label }}</h4>
                           <p>
+                            <!-- Sin espacio entre la frase y su cita: la cita no queda sola
+                                 al comienzo de una línea. Con <base href="/">, un href="#…"
+                                 llevaba a /#…, fuera del atlas: el ancla va por el router. -->
                             @for (frase of grupo.sentences; track $index) {
-                              {{ frase.es }}
-                              @for (n of frase.refs; track n) {<a class="atlas3d__cita" [href]="'#atlas3d-fuente-' + n" [attr.aria-label]="'Fuente ' + n">[{{ n }}]</a>}
+                              <span class="atlas3d__frase">{{ frase.es }}@for (n of frase.refs; track n) {&#8288;<a
+                                  class="atlas3d__cita"
+                                  [routerLink]="[]"
+                                  queryParamsHandling="preserve"
+                                  [fragment]="'atlas3d-fuente-' + n"
+                                  [attr.aria-label]="'Fuente ' + n"
+                                  >[{{ n }}]</a
+                                >}</span>
                             }
                           </p>
                         }
@@ -221,7 +230,7 @@
                       <h4 class="atlas3d__aspecto atlas3d__aspecto--fuentes">Artículos citados</h4>
                       <ol class="atlas3d__bibliografia" data-testid="atlas3d-bibliografia">
                         @for (fuente of ext.sources; track fuente.id; let i = $index) {
-                          <li [id]="'atlas3d-fuente-' + (i + 1)">
+                          <li [id]="'atlas3d-fuente-' + (i + 1)" [class.atlas3d__fuente--activa]="fragment() === 'atlas3d-fuente-' + (i + 1)">
                             <span lang="en">{{ fuente.title }}</span>
                             {{ fuente.journal }}{{ fuente.year ? '. ' + fuente.year : '' }}.
                             <a [href]="'https://pubmed.ncbi.nlm.nih.gov/' + fuente.pmid + '/'" target="_blank" rel="noopener noreferrer">PMID {{ fuente.pmid }}</a>

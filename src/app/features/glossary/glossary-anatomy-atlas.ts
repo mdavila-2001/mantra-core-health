@@ -137,6 +137,8 @@ export class GlossaryAnatomyAtlas {
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
   protected readonly sex = computed<AnatomySex>(() => (this.query().get('sex') === 'female' ? 'female' : 'male'));
   protected readonly structureId = computed(() => this.query().get('structure'));
+  /** La entrada de la bibliografía a la que llevó una cita [n]; se resalta (`:target` no se entera de la navegación del router). */
+  protected readonly fragment = toSignal(this.route.fragment, { initialValue: this.route.snapshot.fragment });
   /** La malla tocada, para decir de qué lado es. */
   protected readonly meshId = computed(() => this.query().get('mesh'));
 

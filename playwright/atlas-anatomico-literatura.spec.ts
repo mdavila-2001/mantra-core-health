@@ -71,10 +71,16 @@ for (const caso of CASOS) {
     expect(await citas.count(), 'cada frase lleva al menos una cita').toBeGreaterThan(0);
     // La cita lleva a su entrada de la bibliografía, y esa entrada a PubMed.
     const destino = await citas.first().getAttribute('href');
-    expect(destino).toMatch(/^#atlas3d-fuente-\d+$/);
-    const entrada = page.locator(destino ?? '');
+    expect(destino).toMatch(/[?&]structure=.*#atlas3d-fuente-\d+$/);
+    const entrada = page.locator(`#${destino?.split('#')[1] ?? ''}`);
     await expect(entrada).toBeAttached();
     await expect(entrada.locator('a[href^="https://pubmed.ncbi.nlm.nih.gov/"]')).toHaveCount(1);
+    // Tocar la cita lleva a su entrada sin salir de la ficha (con <base href="/">
+    // un href="#…" llevaba a otra página).
+    await citas.first().click();
+    await expect(page).toHaveURL(/structure=UBERON(%3A|:)0000981.*#atlas3d-fuente-\d+$/);
+    await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeVisible();
+    await expect(entrada).toBeInViewport();
     await expect(page.getByText('sin revisión humana').first()).toBeVisible();
 
     await expect(page.getByTestId('atlas3d-ta2')).toContainText(/TA2 \d+/);

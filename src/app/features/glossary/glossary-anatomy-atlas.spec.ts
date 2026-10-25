@@ -220,6 +220,10 @@ describe('GlossaryAnatomyAtlas', () => {
     const descripcion = html().querySelector('[data-testid="atlas3d-descripcion"]');
     expect(descripcion?.textContent).toContain('Frase de situación.');
     expect([...(descripcion?.querySelectorAll('a.atlas3d__cita') ?? [])].map((a) => a.textContent?.trim())).toEqual(['[2]', '[1]', '[2]']);
+    // La cita se queda en la ficha: misma ruta y misma estructura, sólo cambia el ancla.
+    const href = descripcion?.querySelector('a.atlas3d__cita')?.getAttribute('href') ?? '';
+    expect(href).toContain('/glossary/anatomy-atlas?structure=');
+    expect(href).toMatch(/#atlas3d-fuente-2$/);
     const bibliografia = html().querySelector('[data-testid="atlas3d-bibliografia"]');
     expect(bibliografia?.querySelector('a[href="https://pubmed.ncbi.nlm.nih.gov/1/"]')).not.toBeNull();
     expect(bibliografia?.querySelector('a[href="https://doi.org/10.1/a"]')).not.toBeNull();
