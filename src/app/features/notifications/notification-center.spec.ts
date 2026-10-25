@@ -298,4 +298,25 @@ describe('NotificationCenter', () => {
     expect(texto()).toContain('Código de soporte');
     expect(texto()).toContain('req-35-1');
   });
+
+  it('el vacío conserva el título de siempre en «Todas» y «Sin leer» y ofrece Preferencias', () => {
+    http.expectOne((r) => r.url === '/notifications/me').flush(pagina([], null, 0));
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Todavía no tiene notificaciones');
+    expect(texto()).toContain('Ir a preferencias');
+
+    const pestañas = fixture.nativeElement.querySelectorAll(
+      '[data-testid="avisos-pestanas"] [role="tab"]',
+    ) as NodeListOf<HTMLElement>;
+    pestañas[1]!.click();
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/notifications/me').flush(pagina([], null, 0));
+    fixture.detectChanges();
+    expect(texto()).toContain('No tiene notificaciones sin leer');
+
+    pestañas[2]!.click();
+    fixture.detectChanges();
+    expect(texto()).toContain('No tiene avisos en esta categoría');
+  });
 });
