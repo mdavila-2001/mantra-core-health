@@ -24,16 +24,23 @@
     ========================================================================== */
 
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, basename, dirname } from 'node:path';
+import { join, relative as relativeNativo, basename, dirname } from 'node:path';
 import { JSDOM } from 'jsdom';
 
+import { SEGMENTO_DE_MODULO, SEGMENTO_DE_SLUG, traducir } from './port-vistas-alovida.rutas.mjs';
+
+/* Las dos raíces se pueden mover por entorno: la bóveda no vive en el mismo
+   lugar en todas las máquinas, y regenerar hacia una carpeta aparte es la
+   forma de comparar la salida sin pisar lo que se editó a mano. */
 const VAULT =
+  process.env.ALOVIDA_VAULT ??
   '/Users/pablo/Documents/GitHub/mantra_core_technologies_health_docs/SALUD/Vistas/HTML';
-const FRONT = '/Users/pablo/Documents/GitHub/mantra-core-health';
+const FRONT = process.env.ALOVIDA_FRONT ?? '/Users/pablo/Documents/GitHub/mantra-core-health';
 const SALIDA = join(FRONT, 'src/app/features/alovida');
 
-/* Los directorios de módulo se nombran «VNN-slug»; la ruta pública se queda
-   con el slug, que es lo que un humano lee en la barra de direcciones. */
+/* Los directorios de módulo se nombran «VNN-slug». `segmento` nombra la carpeta
+   del front; la URL sale de su traducción en port-vistas-alovida.rutas.mjs
+   (TAREA-29: rutas en inglés, prosa en castellano). */
 const MODULOS = {
   'V02-common': { segmento: 'datos-compartidos', titulo: 'Datos compartidos' },
   'V03-terminology': { segmento: 'terminologia', titulo: 'Terminología' },
@@ -49,6 +56,9 @@ const MODULOS = {
 };
 
 // --------------------------------------------------------------- utilidades
+
+/** `relative` con barras normales: en Windows devuelve `\` y rompe el reparto por carpeta. */
+const relative = (desde, hasta) => relativeNativo(desde, hasta).split(/[\\/]/).join('/');
 
 function listarHtml(raiz) {
   const salida = [];
@@ -104,7 +114,13 @@ for (const archivo of archivos) {
   const { codigo, slug } = partirNombre(archivo);
   const esLanding = carpeta === 'landing';
   const slugFinal = esLanding ? 'portada' : sinTildes(slug);
-  const ruta = esLanding ? '/inicio' : `/${modulo.segmento}/${slugFinal}`;
+  /* La carpeta y la clase siguen el nombre de la maqueta; la URL, su traducción.
+     `rutaHeredada` es la dirección en castellano que tuvo hasta TAREA-29: se
+     conserva para redirigirla. */
+  const raiz = traducir(SEGMENTO_DE_MODULO, modulo.segmento, 'Módulo');
+  const hoja = esLanding ? null : traducir(SEGMENTO_DE_SLUG, slugFinal, 'Pantalla');
+  const ruta = esLanding ? `/${raiz}` : `/${raiz}/${hoja}`;
+  const rutaHeredada = esLanding ? `/${modulo.segmento}` : `/${modulo.segmento}/${slugFinal}`;
 
   rutaPorArchivo.set(archivo, ruta);
   vistas.push({
@@ -113,7 +129,10 @@ for (const archivo of archivos) {
     modulo,
     codigo,
     slug: slugFinal,
+    raiz,
+    hoja,
     ruta,
+    rutaHeredada,
     /* La subcarpeta nombra al actor: security-admin, clinician, publico… Es
        dato de la ficha, y se conserva para el cableado de permisos. */
     actor: partes.length > 2 ? partes[1] : null,
@@ -130,7 +149,9 @@ for (const v of vistas) {
       if (!c.codigo) continue;
       rutaPorArchivo.delete(c.archivo);
       c.slug = `${c.codigo.toLowerCase()}-${c.slug}`;
-      c.ruta = `/${c.modulo.segmento}/${c.slug}`;
+      c.hoja = `${c.codigo.toLowerCase()}-${c.hoja}`;
+      c.ruta = `/${c.raiz}/${c.hoja}`;
+      c.rutaHeredada = `/${c.modulo.segmento}/${c.slug}`;
       rutaPorArchivo.set(c.archivo, c.ruta);
       porRuta.set(c.ruta, c);
     }
@@ -164,8 +185,9 @@ function escaparParaAngular(html) {
 function portadaDeModulo(destino) {
   if (basename(destino) !== 'index.html') return null;
   const carpeta = basename(dirname(destino));
-  if (!MODULOS[carpeta]) return '/inicio';
-  return vistas.find((v) => v.carpeta === carpeta)?.ruta ?? '/inicio';
+  const portada = `/${SEGMENTO_DE_MODULO.inicio}`;
+  if (!MODULOS[carpeta]) return portada;
+  return vistas.find((v) => v.carpeta === carpeta)?.ruta ?? portada;
 }
 
 /** Reescribe enlaces e imágenes de la maqueta a lo que entiende el front. */
@@ -278,7 +300,13 @@ function titulo(documento) {
 for (const modulo of Object.values(MODULOS)) {
   rmSync(join(SALIDA, modulo.segmento), { recursive: true, force: true });
 }
-for (const archivo of ['vistas.manifest.json', 'marcos.crudos.json', 'alovida.routes.ts', 'alovida-nav.data.ts']) {
+for (const archivo of [
+  'vistas.manifest.json',
+  'marcos.crudos.json',
+  'alovida.routes.ts',
+  'alovida-nav.data.ts',
+  'alovida-legacy-paths.ts',
+]) {
   rmSync(join(SALIDA, archivo), { force: true });
 }
 mkdirSync(SALIDA, { recursive: true });
@@ -321,7 +349,7 @@ for (const vista of vistas) {
     }));
     if (sub.length) {
       navPorModulo.set(vista.carpeta, {
-        segmento: vista.modulo.segmento,
+        segmento: vista.raiz,
         rotulo: (activo?.textContent ?? vista.modulo.titulo).trim(),
         secciones: sub.filter((s) => s.ruta),
       });
@@ -417,6 +445,7 @@ writeFileSync(
         codigo: g.codigo,
         titulo: g.titulo,
         ruta: g.ruta,
+        rutaHeredada: g.rutaHeredada,
         marco: g.marco,
         arquetipo: g.arquetipo,
         actor: g.actor,
@@ -473,7 +502,7 @@ writeFileSync(join(SALIDA, 'alovida-nav.data.ts'), navGenerado, 'utf8');
 
 const porModuloRutas = new Map();
 for (const g of generadas) {
-  const clave = g.marco === 'lienzo' ? '__lienzo' : g.marco === 'publico' ? '__publico' : g.modulo.segmento;
+  const clave = g.marco === 'lienzo' ? '__lienzo' : g.marco === 'publico' ? '__publico' : g.raiz;
   if (!porModuloRutas.has(clave)) porModuloRutas.set(clave, []);
   porModuloRutas.get(clave).push(g);
 }
@@ -486,7 +515,7 @@ const datosDeRuta = (g) => (g.arquetipo ? `\n        data: { arquetipo: '${g.arq
 
 const rutaHija = (g) =>
   `      {
-        path: '${g.slug}',
+        path: '${g.hoja}',
         title: ${JSON.stringify(g.titulo)},${datosDeRuta(g)}
         loadComponent: () =>
           import('${g.importacion}').then((m) => m.${g.nombre}),
@@ -505,7 +534,7 @@ const grupoConMarco = (segmento, lista, marco) => `  {
     loadComponent: () =>
       import('@features/alovida/shell/${marco.archivo}').then((m) => m.${marco.clase}),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '${lista[0].slug}' },
+      { path: '', pathMatch: 'full', redirectTo: '${lista[0].hoja}' },
 ${lista.map(rutaHija).join('\n')}
     ],
   },`;
@@ -518,7 +547,7 @@ const bloquesPrivados = [...porModuloRutas.entries()]
   .join('\n');
 
 const bloquePublico = publicas.length
-  ? grupoConMarco(publicas[0].modulo.segmento, publicas, {
+  ? grupoConMarco(publicas[0].raiz, publicas, {
       archivo: 'alovida-public-shell',
       clase: 'AlovidaPublicShell',
     })
@@ -552,6 +581,31 @@ ${bloquesPrivados}
 ];
 `;
 writeFileSync(join(SALIDA, 'alovida.routes.ts'), rutasGeneradas, 'utf8');
+
+// ------------------------------------------------- direcciones heredadas
+
+/* Dirección en castellano → dirección en inglés, sin barra inicial: la raíz de
+   cada módulo y cada pantalla. `app.routes.ts` monta una redirección por
+   entrada para que los enlaces guardados de antes de TAREA-29 sigan abriendo. */
+const heredadas = new Map();
+for (const g of generadas) {
+  if (g.marco !== 'lienzo') heredadas.set(g.modulo.segmento, g.raiz);
+  heredadas.set(g.rutaHeredada.replace(/^\//, ''), g.ruta.replace(/^\//, ''));
+}
+const heredadasGeneradas = `/* ============================================================================
+    Las direcciones en castellano que tuvieron las pantallas portadas.
+
+    ARCHIVO GENERADO por scripts/port-vistas-alovida.mjs. Hasta TAREA-29 la URL
+    repetía el nombre de la maqueta de la bóveda; ahora sale de la tabla de
+    port-vistas-alovida.rutas.mjs. Cada una redirige a la nueva.
+    ========================================================================== */
+
+/** Dirección vieja → dirección nueva, las dos sin barra inicial. */
+export const ALOVIDA_LEGACY_PATHS: Readonly<Record<string, string>> = {
+${[...heredadas].map(([vieja, nueva]) => `  '${vieja}': '${nueva}',`).join('\n')}
+};
+`;
+writeFileSync(join(SALIDA, 'alovida-legacy-paths.ts'), heredadasGeneradas, 'utf8');
 
 writeFileSync(
   join(SALIDA, 'marcos.crudos.json'),
