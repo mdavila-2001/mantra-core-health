@@ -1,0 +1,58 @@
+<section class="invite" aria-labelledby="invite-title" data-testid="invite-form">
+  <h3 id="invite-title" class="invite__title">Invitar a un médico</h3>
+  <p class="invite__note">
+    El médico tiene que aceptar la invitación. Hasta entonces no figura como activo en su centro.
+  </p>
+
+  @if (error(); as message) {
+    <app-alert tone="error" data-testid="invite-error">{{ message }}</app-alert>
+  }
+
+  <app-form-field label="Médico" [required]="true">
+    <app-select
+      [options]="practitionerOptions()"
+      [value]="practitionerId()"
+      (valueChange)="practitionerId.set($event)"
+      placeholder="Elija al médico"
+      searchPlaceholder="Buscar por nombre"
+      ariaLabel="Médico a invitar"
+      data-testid="invite-practitioner"
+    />
+  </app-form-field>
+
+  <fieldset class="invite__procedures" data-testid="invite-procedures">
+    <legend class="invite__legend">Procedimientos que haría en esta sede</legend>
+    @if (proceduresLoading()) {
+      <p class="invite__note">Cargando los procedimientos de la sede…</p>
+    } @else {
+      @for (procedure of procedures(); track procedure.id) {
+        <app-checkbox
+          [label]="procedure.serviceDisplay"
+          [checked]="isChecked(procedure.id)"
+          (checkedChange)="toggle(procedure.id, $event)"
+          [attr.data-testid]="'invite-procedure-' + procedure.id"
+        />
+      } @empty {
+        <p class="invite__note" data-testid="invite-no-procedures">
+          Esta sede todavía no publica procedimientos. Publíquelos en el catálogo del centro para poder invitar.
+        </p>
+      }
+    }
+  </fieldset>
+
+  <div class="invite__actions">
+    <button app-button type="button" variant="ghost" data-testid="invite-cancel" (clicked)="cancelled.emit()">
+      Cancelar
+    </button>
+    <button
+      app-button
+      type="button"
+      [disabled]="!canSubmit()"
+      [isLoading]="saving()"
+      data-testid="invite-submit"
+      (clicked)="submit()"
+    >
+      Enviar invitación
+    </button>
+  </div>
+</section>
