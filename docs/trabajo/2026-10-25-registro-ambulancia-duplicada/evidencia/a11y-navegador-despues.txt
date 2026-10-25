@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+TEXTO {"titulo":1,"ayuda":1}
+
+A11Y {
+ "host": {},
+ "control": {
+  "role": "combobox",
+  "aria-haspopup": "dialog",
+  "id": "mch-field-52-control",
+  "aria-controls": "mch-field-52-control-lista",
+  "aria-expanded": "false",
+  "aria-invalid": "false",
+  "aria-describedby": "mch-field-52-hint mch-field-52-description"
+ },
+ "tag": "BUTTON",
+ "etiquetas_por_labelledby": null,
+ "descripciones_por_describedby": [
+  "Al elegir uno, se completan nombre y teléfono. Puede editarl",
+  "El directorio muestra el alcance y la fuente de cada línea p"
+ ],
+ "label_for": [
+  {
+   "for": "mch-field-52-control",
+   "id": "mch-field-52-label",
+   "texto": "Servicio de ambulancia"
+  },
+  {
+   "for": "mch-field-54-control",
+   "id": "mch-field-54-label",
+   "texto": "Nombre de la ambulancia (opcional)"
+  },
+  {
+   "for": "mch-field-56-control",
+   "id": "mch-field-56-label",
+   "texto": "Teléfono de la ambulancia (opcional)"
+  }
+ ],
+ "combobox_con_nombre_Servicio_de_ambulancia": 1
+}
+
+  1 passed (11.4s)
