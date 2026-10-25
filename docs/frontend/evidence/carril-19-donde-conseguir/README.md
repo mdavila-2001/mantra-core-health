@@ -30,3 +30,14 @@ paciente declaró su casa, así que las distancias se miden desde ahí sin pedir
 El recorrido de varias paradas no aparece con estos datos, porque la sucursal más cercana tiene todo.
 Lo cubren `where-to-buy.route.spec.ts` (criterio exacto, contraejemplo del método voraz, desempates y
 faltantes) y `where-to-buy.spec.ts` (dos sucursales incompletas que juntas cubren la receta).
+
+## Centros médicos (25/10/2026)
+
+`375-centros-medicos.png`: `?tab=medical-centers` a 375 px. La pestaña sigue en estado vacío a
+propósito —no hay contrato que diga qué procedimientos le indicaron al paciente ni qué centro los
+hace (`diagnostics/me/orders` sólo trae LAB e IMAGING, `procedure-cases` es del equipo quirúrgico,
+la búsqueda por cobertura sólo acepta LABORATORY e IMAGING)—, pero ahora muestra la salida
+«Ver clínicas y hospitales»: antes el enlace no llevaba `empty-actions` y la molécula no lo
+proyectaba. Lo cubren `playwright/carril-19-where-to-buy-tabs.spec.ts` (tres pestañas, `?tab=`,
+sólo sucursales completas por defecto, «Cómo llegar» por OpenStreetMap, centros médicos sin
+lista inventada) y una prueba nueva en `where-to-buy.spec.ts`.

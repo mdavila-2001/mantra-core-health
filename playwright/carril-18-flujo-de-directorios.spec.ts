@@ -70,7 +70,12 @@ test.beforeEach(() => {
  */
 const KNOWN_API_GAPS: readonly RegExp[] = REAL_API
   ? [/^404 .*\/practitioners\/[^/]+\/insurance-carriers$/u]
-  : [];
+  : [
+      // El simulador sondea primero el glosario completo (`public/glossary-data/`,
+      // en `.gitignore`) y, si no está, cae a la semilla (`glossary-shards.ts`).
+      // Ese 404 es el sondeo previsto en un checkout sin el glosario pesado.
+      /^404 .*\/glossary-data\/manifest\.json$/u,
+    ];
 
 /** Errores de la página y respuestas 4xx/5xx que provoca el flujo. */
 function watchFailures(page: Page): { errors: string[]; failedResponses: string[] } {
@@ -170,6 +175,18 @@ async function totalIn(page: Page, pattern: RegExp): Promise<number> {
 }
 
 /**
+ * Espera a que el panel diga exactamente `total` clínicas encontradas.
+ *
+ * Es una aserción web-first a propósito: `irA` cambia la URL sin recargar, y
+ * leer el número una sola vez tomaba el total del corte anterior antes de que
+ * el listado se volviera a pintar con el filtro de la URL.
+ */
+async function expectClinicsTotal(page: Page, total: number): Promise<void> {
+  const pattern = new RegExp(`(^|\\D)${total} clínicas? encontradas?`, 'u');
+  await expect(page.getByText(pattern).first()).toBeVisible({ timeout: 30_000 });
+}
+
+/**
  * REQ-18-003/004 · el directorio de clínicas con sesión usa la misma lógica que
  * la red social: con el mismo corte de categoría encuentra exactamente los
  * mismos centros que `/search/hospitals`, y su ficha no sale del panel.
@@ -201,10 +218,10 @@ test('REQ-18-003/004 clínicas con sesión = hospitales de la red social, ficha 
   await entrar(page, await patient());
   await irA(page, '/clinics-directory');
   // «1–24 de 500 clínicas encontradas», o «19 clínicas encontradas» si caben.
-  expect(await totalIn(page, /(\d+) clínicas? encontradas?/u)).toBe(publicTotal);
+  await expectClinicsTotal(page, publicTotal);
   if (categoryCode !== null) {
     await irA(page, `/clinics-directory?categoria=${categoryCode}`);
-    expect(await totalIn(page, /(\d+) clínicas? encontradas?/u)).toBe(publicInCategory);
+    await expectClinicsTotal(page, publicInCategory);
   }
   await page.screenshot({ path: join(OUTPUT_DIR, '1440-6-clinicas-con-sesion.png') });
 
