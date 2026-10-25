@@ -429,3 +429,19 @@
 .atlas3d__lista--larga .atlas3d__opcion:focus-visible {
   outline-offset: -3px;
 }
+
+/* El anillo global de 4 px tapaba el punto de la frase. */
+.atlas3d__cita:focus-visible {
+  outline-width: 2px;
+  outline-offset: 1px;
+}
+
+.atlas3d__bibliografia li:focus {
+  outline: none;
+}
+
+.atlas3d__bibliografia li:focus-visible,
+.atlas3d__bibliografia .atlas3d__fuente--activa:focus {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

@@ -230,7 +230,10 @@
                       <h4 class="atlas3d__aspecto atlas3d__aspecto--fuentes">Artículos citados</h4>
                       <ol class="atlas3d__bibliografia" data-testid="atlas3d-bibliografia">
                         @for (fuente of ext.sources; track fuente.id; let i = $index) {
-                          <li [id]="'atlas3d-fuente-' + (i + 1)" [class.atlas3d__fuente--activa]="fragment() === 'atlas3d-fuente-' + (i + 1)">
+                          <li
+                            [id]="'atlas3d-fuente-' + (i + 1)"
+                            tabindex="-1"
+                            [class.atlas3d__fuente--activa]="fragment() === 'atlas3d-fuente-' + (i + 1)">
                             <span lang="en">{{ fuente.title }}</span>
                             {{ fuente.journal }}{{ fuente.year ? '. ' + fuente.year : '' }}.
                             <a [href]="'https://pubmed.ncbi.nlm.nih.gov/' + fuente.pmid + '/'" target="_blank" rel="noopener noreferrer">PMID {{ fuente.pmid }}</a>

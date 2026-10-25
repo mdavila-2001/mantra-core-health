@@ -81,6 +81,17 @@ for (const caso of CASOS) {
     await expect(page).toHaveURL(/structure=UBERON(%3A|:)0000981.*#atlas3d-fuente-\d+$/);
     await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeVisible();
     await expect(entrada).toBeInViewport();
+    // Y se ve de verdad: ninguna barra fija la tapa, y tiene el foco.
+    await expect
+      .poll(() =>
+        entrada.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const encima = document.elementFromPoint(r.left + Math.min(40, r.width / 2), r.top + r.height / 2);
+          return encima !== null && el.contains(encima);
+        }),
+      )
+      .toBe(true);
+    await expect(entrada).toBeFocused();
     await expect(page.getByText('sin revisión humana').first()).toBeVisible();
 
     await expect(page.getByTestId('atlas3d-ta2')).toContainText(/TA2 \d+/);

@@ -257,6 +257,17 @@ export class GlossaryAnatomyAtlas {
       untracked(() => this.loadStructure(id));
     });
 
+    // Una cita [n] lleva a su entrada de la bibliografía. El desplazamiento
+    // del router (`anchorScrolling`) la deja en el borde superior, debajo de
+    // la barra fija, y no le da el foco: se centra y se enfoca acá, después
+    // de que el router termine. También al abrir un enlace con el ancla.
+    effect(() => {
+      const ancla = this.fragment();
+      const ficha = this.structure();
+      if (ancla === null || ficha === null || !ancla.startsWith('atlas3d-fuente-')) return;
+      untracked(() => setTimeout(() => this.revealSource(ancla), 0));
+    });
+
     // La definición del glosario sigue a la ficha abierta.
     effect(() => {
       const ficha = this.structure();
@@ -325,6 +336,13 @@ export class GlossaryAnatomyAtlas {
     if (panel !== undefined && panel.getBoundingClientRect().top < 0) {
       panel.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
+  }
+
+  private revealSource(id: string): void {
+    const entrada = this.panel()?.nativeElement.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+    if (entrada === null || entrada === undefined) return;
+    entrada.scrollIntoView({ block: 'center' });
+    entrada.focus({ preventScroll: true });
   }
 
   private setQuery(params: Record<string, string | null>): void {
