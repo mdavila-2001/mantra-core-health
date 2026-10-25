@@ -32,8 +32,13 @@ async function sinDesborde(page: Page): Promise<void> {
   expect(documento, 'el documento no debe desbordar horizontalmente').toBeLessThanOrEqual(ventana);
 }
 
-async function foto(page: Page, nombre: string): Promise<void> {
-  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: true });
+/**
+ * Captura la pantalla. Las del portal (con barra lateral y encabezado fijos) se
+ * toman de la ventana visible: en página completa el encabezado fijo se
+ * superpone al contenido y la imagen no muestra lo que ve la persona.
+ */
+async function foto(page: Page, nombre: string, completa = true): Promise<void> {
+  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: completa });
 }
 
 async function escribir(page: Page, testId: string, texto: string): Promise<void> {
@@ -43,7 +48,7 @@ async function escribir(page: Page, testId: string, texto: string): Promise<void
 }
 
 /**
- * Entra como administración del Hospital San Lucas, la organización de tipo
+ * Entra como administración de la plataforma y elige el Hospital San Lucas, la organización de tipo
  * `HOSPITAL` verificada de la maqueta.
  *
  * No usa `entrar` de `support/sesion`: ese helper espera aterrizar en
@@ -53,14 +58,17 @@ async function escribir(page: Page, testId: string, texto: string): Promise<void
 async function ingresar(page: Page): Promise<void> {
   await page.goto('/auth', { waitUntil: 'domcontentloaded' });
   await esperarAplicacionLista(page);
-  await escribir(page, 'login-identifier', 'admin@alovida.mock');
+  await escribir(page, 'login-identifier', 'superadmin@alovida.mock');
   await escribir(page, 'login-password', CLAVE);
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
-  if (page.url().includes('/auth/organization')) {
-    await page.getByText('Hospital San Lucas').first().click();
-    await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
-  }
+  await page.waitForURL((url) => !url.pathname.startsWith('/auth') || url.pathname === '/auth/organization', {
+    timeout: 60_000,
+  });
+  // La sesión puede entrar con otra organización activa: se elige el hospital.
+  await page.goto('/auth/organization', { waitUntil: 'domcontentloaded' });
+  await esperarAplicacionLista(page);
+  await page.getByTestId('tenant-opcion').filter({ hasText: 'Hospital San Lucas' }).click();
+  await page.waitForURL((url) => !url.pathname.startsWith('/auth'), { timeout: 60_000 });
   await esperarAplicacionLista(page);
 }
 
@@ -134,7 +142,7 @@ for (const vista of VIEWPORTS) {
         page.getByRole('heading', { level: 1, name: 'Configurar centro médico' }),
       ).toBeVisible();
       await sinDesborde(page);
-      await foto(page, `${vista.nombre}-07-configuracion-pagina-1`);
+      await foto(page, `${vista.nombre}-07-configuracion-pagina-1`, false);
 
       const nombre = `Centro Médico ${vista.nombre} ${Date.now()}`;
       await escribir(page, 'centro-medico-setup-practice-name', nombre);
@@ -148,7 +156,7 @@ for (const vista of VIEWPORTS) {
       await page.getByTestId('paginated-form-continuar').click();
       await expect(page.getByTestId('centro-medico-sede-location-pick')).toBeVisible();
       await sinDesborde(page);
-      await foto(page, `${vista.nombre}-08-configuracion-sin-punto`);
+      await foto(page, `${vista.nombre}-08-configuracion-sin-punto`, false);
 
       await page.getByTestId('centro-medico-sede-location-pick').click();
       const mapa = page.getByTestId('centro-medico-sede-map');
@@ -157,13 +165,13 @@ for (const vista of VIEWPORTS) {
       await page.getByTestId('centro-medico-sede-location-confirm').click();
       await expect(page.getByTestId('centro-medico-sede-location-confirmed')).toBeVisible();
       await sinDesborde(page);
-      await foto(page, `${vista.nombre}-09-configuracion-con-punto`);
+      await foto(page, `${vista.nombre}-09-configuracion-con-punto`, false);
 
       await page.getByTestId('paginated-form-continuar').click();
       await expect(page.getByTestId('centro-medico-setup-exito')).toBeVisible();
       await expect(page.getByTestId('centro-medico-setup-site-id')).not.toBeEmpty();
       await sinDesborde(page);
-      await foto(page, `${vista.nombre}-10-configuracion-guardada`);
+      await foto(page, `${vista.nombre}-10-configuracion-guardada`, false);
     });
   });
 }
