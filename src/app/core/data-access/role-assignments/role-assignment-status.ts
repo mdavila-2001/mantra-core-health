@@ -37,3 +37,24 @@ export function roleAssignmentStatusText(statusCode: string): string {
   const state = roleAssignmentState(statusCode);
   return state === null ? 'Estado desconocido' : LABELS[state];
 }
+
+/** El tono de la etiqueta de un estado; lo desconocido nunca se pinta como éxito. */
+export function roleAssignmentStatusTone(statusCode: string): 'success' | 'warning' | 'error' | 'info' {
+  switch (roleAssignmentState(statusCode)) {
+    case 'ACTIVE':
+      return 'success';
+    case 'INVITED':
+    case 'PENDING':
+      return 'warning';
+    case 'REJECTED':
+    case 'SUSPENDED':
+      return 'error';
+    default:
+      return 'info';
+  }
+}
+
+/** El texto de quién inició la afiliación. */
+export function roleAssignmentInitiatorText(initiatedBy: 'PRACTICE' | 'PRACTITIONER'): string {
+  return initiatedBy === 'PRACTICE' ? 'Invitado por el centro' : 'Pedido por el médico';
+}

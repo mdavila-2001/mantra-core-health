@@ -1,4 +1,9 @@
-import { roleAssignmentState, roleAssignmentStatusText } from './role-assignment-status';
+import {
+  roleAssignmentInitiatorText,
+  roleAssignmentState,
+  roleAssignmentStatusText,
+  roleAssignmentStatusTone,
+} from './role-assignment-status';
 
 describe('roleAssignmentStatusText', () => {
   it('traduce INVITED y PENDING a lo que espera la otra parte', () => {
@@ -20,5 +25,22 @@ describe('roleAssignmentStatusText', () => {
     expect(roleAssignmentStatusText('')).toBe('Estado desconocido');
     expect(roleAssignmentStatusText('15fb063e-479c-56e6-b5d1-ebd5a36b62db')).toBe('Estado desconocido');
     expect(roleAssignmentStatusText('ACTIVE')).toBe('Estado desconocido');
+  });
+});
+
+describe('roleAssignmentStatusTone', () => {
+  it('solo ACTIVE es éxito; lo pendiente avisa y lo desconocido es neutro', () => {
+    expect(roleAssignmentStatusTone('ROLE_ASG_ACTIVE')).toBe('success');
+    expect(roleAssignmentStatusTone('ROLE_ASG_INVITED')).toBe('warning');
+    expect(roleAssignmentStatusTone('ROLE_ASG_PENDING')).toBe('warning');
+    expect(roleAssignmentStatusTone('ROLE_ASG_REJECTED')).toBe('error');
+    expect(roleAssignmentStatusTone('???')).toBe('info');
+  });
+});
+
+describe('roleAssignmentInitiatorText', () => {
+  it('dice quién inició la afiliación', () => {
+    expect(roleAssignmentInitiatorText('PRACTICE')).toBe('Invitado por el centro');
+    expect(roleAssignmentInitiatorText('PRACTITIONER')).toBe('Pedido por el médico');
   });
 });

@@ -142,6 +142,11 @@ describe('handlers de afiliación médico-centro', () => {
     expect(body.items.every((p) => p.practiceSiteId === SITE_CM_SUR_1)).toBe(true);
   });
 
+  it('las sedes de un centro salen de GET /practices/:practiceId/sites', () => {
+    const { body } = call<{ items: { id: string }[] }>('GET', `/practices/${PRACTICE_CM_SUR}/sites`);
+    expect(body.items.map((s) => s.id)).toEqual([SITE_CM_SUR_1]);
+  });
+
   it('GET /practices incluye practice-cm-norte y practice-cm-sur', () => {
     const { body } = call<{ id: string }[]>('GET', '/practices');
     expect(body.map((p) => p.id)).toEqual(expect.arrayContaining([PRACTICE_CM_NORTE, PRACTICE_CM_SUR]));

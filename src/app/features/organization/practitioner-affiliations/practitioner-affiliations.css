@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.affiliations__panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.affiliations__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: end;
+  gap: var(--sp-3);
+}
+
+.affiliations__invite {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.affiliations__main {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.affiliations__muted {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.affiliations__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

@@ -4,6 +4,7 @@ import {
   crearAfiliacion,
   filaDeAfiliacion,
   PROCEDIMIENTOS_PUBLICADOS,
+  SEDES_CM,
   type CodigoDeEstado,
 } from '../fixtures/role-assignments';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
@@ -60,6 +61,11 @@ export function registerRoleAssignments(router: MockRouter): void {
   );
   router.post('/role-assignments/:roleId/approve', ({ params }) => transicion(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'));
   router.post('/role-assignments/:roleId/reject', ({ params }) => transicion(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_REJECTED'));
+
+  router.get('/practices/:practiceId/sites', ({ params }) => {
+    const items = SEDES_CM.filter((sede) => sede.practiceId === params['practiceId']);
+    return { items, count: items.length };
+  });
 
   // Mismo contrato que publica CM-06; acá solo lo que las casillas necesitan leer.
   router.get('/practices/:practiceId/healthcare-services', ({ params, query }) => {

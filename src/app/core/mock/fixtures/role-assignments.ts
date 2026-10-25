@@ -28,6 +28,12 @@ export const PRACTICAS_CM = [
   { id: PRACTICE_CM_SUR, code: 'CMSUR', name: 'Centro Médico Sur', status: 'ACTIVE', typeConceptId: TIPO_CLINICA, statusConceptId: ESTADO_ACTIVO, currencyConceptId: MONEDA_BOB, timeZone: 'America/La_Paz' },
 ];
 
+/** Las sedes de ejemplo de los dos centros, para `GET /practices/:practiceId/sites`. */
+export const SEDES_CM = [
+  { id: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, code: 'NORTE-1', name: 'Sede Norte 1', addressText: 'Av. Banzer km 5, Santa Cruz de la Sierra' },
+  { id: SITE_CM_SUR_1, practiceId: PRACTICE_CM_SUR, code: 'SUR-1', name: 'Sede Sur 1', addressText: 'Av. Santos Dumont 410, Santa Cruz de la Sierra' },
+].map((sede) => ({ ...sede, timeZone: 'America/La_Paz', latitude: null, longitude: null, status: 'ACTIVE' }));
+
 /** Lo que publica cada sede, mientras el catálogo del centro (CM-06) no esté en la base. */
 export const PROCEDIMIENTOS_PUBLICADOS = [
   { site: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, concept: PROC_ENDOSCOPIA_ALTA, display: 'Endoscopia digestiva alta', active: true },
