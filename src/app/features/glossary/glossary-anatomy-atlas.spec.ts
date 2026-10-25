@@ -32,6 +32,10 @@ const FICHA_SIN_DEFINICION: AnatomyStructure = {
   images: [],
 };
 
+/** Las mallas que la página resalta: es estado interno, se lee para no depender del WebGL. */
+const seleccion = (pagina: GlossaryAnatomyAtlas): string[] =>
+  (pagina as unknown as { selectedMeshes: () => string[] }).selectedMeshes();
+
 describe('GlossaryAnatomyAtlas', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
@@ -52,8 +56,9 @@ describe('GlossaryAnatomyAtlas', () => {
     return harness.fixture.nativeElement as HTMLElement;
   }
 
-  function responderCatalogo(): void {
-    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
+  function responderCatalogo(partes: readonly AnatomyPart[] = PARTES, compuestas: object = {}): void {
+    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(partes);
+    http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush(compuestas);
     http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [[UTERO, 'útero', 'uterus', 0]] });
   }
 
@@ -120,5 +125,50 @@ describe('GlossaryAnatomyAtlas', () => {
     });
     harness.detectChanges();
     expect(html().querySelector('[data-testid="atlas3d-netter"]')?.textContent).toContain('Láminas 368, 372.');
+  });
+
+  it('el pulmón no tiene malla propia, pero abrirlo resalta los lóbulos que sí', async () => {
+    const PULMON_DERECHO = 'UBERON:0002167';
+    const lobulo = (meshId: string, structureId: string): AnatomyPart => ({
+      meshId, layer: 'organs', sex: 'shared', structureId, shard: 0, side: 'right', labelEn: meshId, match: 'fma_exact',
+    });
+    const pagina = await harness.navigateByUrl(
+      `/glossary/anatomy-atlas?structure=${encodeURIComponent(PULMON_DERECHO)}`,
+      GlossaryAnatomyAtlas,
+    );
+    responderCatalogo(
+      [lobulo('FMA7316', 'UBERON:0002170'), lobulo('FMA7317', 'UBERON:0002171'), lobulo('FMA9', 'UBERON:0000981')],
+      { [PULMON_DERECHO]: ['UBERON:0002170', 'UBERON:0002171'] },
+    );
+    harness.detectChanges();
+    expect(seleccion(pagina)).toEqual(['FMA7316', 'FMA7317']);
+  });
+
+  it('la ficha de una compuesta no dice «sin pieza 3D»: dice que se resaltan sus partes', async () => {
+    const PULMON_DERECHO = 'UBERON:0002167';
+    const lobulo: AnatomyPart = {
+      meshId: 'FMA7316', layer: 'organs', sex: 'shared', structureId: 'UBERON:0002170', shard: 0, side: 'right', labelEn: 'x', match: 'fma_exact',
+    };
+    await harness.navigateByUrl(`/glossary/anatomy-atlas?structure=${encodeURIComponent(PULMON_DERECHO)}`);
+    responderCatalogo([lobulo], { [PULMON_DERECHO]: ['UBERON:0002170'] });
+    const shard = String(anatomyShardOf(PULMON_DERECHO, 32)).padStart(2, '0');
+    http
+      .expectOne(`/anatomy-atlas-3d/catalog/structures-${shard}.json`)
+      .flush({ [PULMON_DERECHO]: { ...FICHA_SIN_DEFINICION, id: PULMON_DERECHO, labelEs: 'pulmón derecho' } });
+    harness.detectChanges();
+    expect(html().querySelector('[data-testid="atlas3d-sin-pieza"]')).toBeNull();
+    expect(html().querySelector('[data-testid="atlas3d-compuesta"]')?.textContent).toContain('se resaltan las piezas de sus partes (1)');
+  });
+
+  it('si composites.json falla, el atlas sigue andando: la compuesta queda sin pieza, como antes', async () => {
+    const pagina = await harness.navigateByUrl(
+      `/glossary/anatomy-atlas?structure=${encodeURIComponent('UBERON:0002167')}`,
+      GlossaryAnatomyAtlas,
+    );
+    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
+    http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush('no', { status: 404, statusText: 'Not Found' });
+    http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [] });
+    harness.detectChanges();
+    expect(seleccion(pagina)).toEqual([]);
   });
 });

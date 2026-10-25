@@ -4,6 +4,8 @@
    kilométricas no es acotar la tarjeta sino la medida de lectura de cada
    párrafo. Sólo distribución. */
 
+@import '../../shared/styles/enlace-chip.css';
+
 :host {
   display: block;
 }
@@ -266,29 +268,30 @@
   font-size: var(--fs-caption);
 }
 
-/* El ícono de categoría hace de marcador permanente cuando el término no tiene
-   imagen — que hoy es siempre. No es un relleno temporal: reemplaza a
-   cualquier foto de stock que este glosario no va a usar. */
-.termino__imagen-marcador {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  block-size: 8rem;
-  margin: 0;
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-inset);
-  color: var(--text-muted);
-}
-
-.termino__imagen-marcador app-glossary-category-icon {
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-}
-
-.termino__imagen-marcador app-glossary-category-icon svg {
+/* Sin foto, la portada ocupa el lugar de la imagen: la columna nunca queda
+   vacía y el dibujo no se estira más allá de la medida de una foto. */
+.termino__portada {
   inline-size: 100%;
-  block-size: 100%;
+  max-inline-size: 26rem;
+}
+
+/* Enlaces sueltos de la ficha: el color y el subrayado del sistema, no el azul
+   y el violeta de «visitado» del navegador. */
+.termino__enlace,
+.termino__enlace:visited {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.termino__enlace:hover {
+  color: var(--brand-primary-hover);
+}
+
+.termino__enlace:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .termino__sin-traducir-parcial {
@@ -298,10 +301,47 @@
   font-style: italic;
 }
 
-.termino__relaciones {
+/* «Relacionados»: un bloque por tipo de relación —título con su cantidad y los
+   términos como chips—, en columnas según el ancho, en vez de una lista de
+   enlaces azules uno bajo otro. */
+.termino__grupos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: var(--sp-4);
+}
+
+.termino__grupo {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-inset);
+}
+
+.termino__grupo-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
   margin: 0;
-  padding-inline-start: var(--sp-5);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.termino__grupo-cuenta {
+  min-inline-size: 1.5rem;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-align: center;
 }
 
 .termino__subtitulo {

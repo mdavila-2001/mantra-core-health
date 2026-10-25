@@ -104,9 +104,17 @@
                     <span class="atlas3d__marca">nombre traducido automáticamente</span>
                   }
                   @if (ficha.meshes.length === 0) {
-                    <span class="atlas3d__marca" data-testid="atlas3d-sin-pieza">
-                      Sin pieza 3D en este modelo: por eso no se resalta nada en el cuerpo.
-                    </span>
+                    @if (esCompuesta()) {
+                      <span class="atlas3d__marca" data-testid="atlas3d-compuesta">
+                        Sin pieza propia: se resaltan las piezas de sus partes ({{
+                          selectedMeshes().length
+                        }}).
+                      </span>
+                    } @else {
+                      <span class="atlas3d__marca" data-testid="atlas3d-sin-pieza">
+                        Sin pieza 3D en este modelo: por eso no se resalta nada en el cuerpo.
+                      </span>
+                    }
                   }
                 </div>
                 @if (pickedSide(); as lado) {
