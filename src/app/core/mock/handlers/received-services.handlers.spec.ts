@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import type { ReceivedServicesPage } from '../../data-access/received-services/received-services.types';
-import { PATIENTS, PACIENTE } from '../fixtures/people';
+import { PACIENTES as PATIENTS, PACIENTE } from '../fixtures/personas';
 import { RECEIVED_SERVICES } from '../fixtures/received-services';
 import { isMockReply, type MockReply, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';

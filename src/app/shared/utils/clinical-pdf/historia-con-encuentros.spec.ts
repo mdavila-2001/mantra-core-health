@@ -210,25 +210,25 @@ describe('bloquesDeHistoriaConEncuentros', () => {
     ];
 
     it('sin servicios en los datos no imprime la sección: no afirma que no hubo', () => {
-      const textos = historyWithEncountersBlocks(HISTORIA_VACIA, TRES_DIAGNOSTICOS).map((bloque) => bloque.text);
+      const textos = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, TRES_DIAGNOSTICOS).map((bloque) => bloque.text);
       expect(textos).not.toContain('Servicios recibidos');
     });
 
     it('con servicios los imprime al final, después de lo que se habló y se pidió', () => {
-      const bloques = historyWithEncountersBlocks(HISTORIA_VACIA, { ...TRES_DIAGNOSTICOS, servicios: SERVICIOS });
+      const bloques = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, { ...TRES_DIAGNOSTICOS, servicios: SERVICIOS });
       const textos = bloques.map((bloque) => bloque.text);
       expect(textos.indexOf('Servicios recibidos')).toBeGreaterThan(textos.indexOf('Recetas'));
       expect(bloques.at(-1)).toMatchObject({ kind: 'row' });
     });
 
     it('con una lista vacía imprime la sección y dice que no hubo', () => {
-      const textos = historyWithEncountersBlocks(HISTORIA_VACIA, { ...TRES_DIAGNOSTICOS, servicios: [] }).map((bloque) => bloque.text);
+      const textos = bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, { ...TRES_DIAGNOSTICOS, servicios: [] }).map((bloque) => bloque.text);
       expect(textos).toContain('Servicios recibidos');
       expect(textos).toContain('Sin servicios recibidos.');
     });
 
     it('ningún identificador llega al papel con servicios', () => {
-      const texto = textoDe(historyWithEncountersBlocks(HISTORIA_VACIA, { ...TRES_DIAGNOSTICOS, servicios: SERVICIOS }));
+      const texto = textoDe(bloquesDeHistoriaConEncuentros(HISTORIA_VACIA, { ...TRES_DIAGNOSTICOS, servicios: SERVICIOS }));
       expect(texto).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
     });
   });
