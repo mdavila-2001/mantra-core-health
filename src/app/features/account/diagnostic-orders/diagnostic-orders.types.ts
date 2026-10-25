@@ -1,21 +1,35 @@
 import type { OrderAppointment } from '../../../core/data-access/diagnostic-units/center-schedule.types';
+import type { PerformerSelectionCode } from '../../../core/data-access/diagnostics/service-request-performer.types';
 import type { PatientSettlementFields } from '../../../core/data-access/insurance/patient-insurance-settlement.types';
 
 /**
- * El tipo de estudio, para las cuatro pestañas de «Mis órdenes» (C9).
+ * El tipo de estudio, para las pestañas de «Mis órdenes» (C9).
  *
- * Cerrado a tres valores porque son los que el value set `VS_SERVICE_REQUEST_CATEGORY`
- * distingue hoy (`SRQ-LAB`, `SRQ-IMAGING`); todo lo demás —incluido «sin categoría»,
- * que hoy es el caso normal porque C2 (quien llena `category` en el contrato) no
- * corrió esta noche— cae en `OTHER` y se ve en la pestaña «Otros».
+ * Cerrado a cuatro valores porque son los que el value set `VS_SERVICE_REQUEST_CATEGORY`
+ * distingue hoy (`SRQ-LAB`, `SRQ-IMAGING`, y la categoría procedimiento de los centros
+ * médicos); todo lo demás —incluido «sin categoría», que hoy es el caso normal porque C2
+ * (quien llena `category` en el contrato) no corrió— cae en `OTHER` y se ve en
+ * la pestaña «Otros».
  */
-export const ANALYSIS_CATEGORIES = ['LAB', 'IMAGING', 'OTHER'] as const;
+export const ANALYSIS_CATEGORIES = ['LAB', 'IMAGING', 'PROCEDURE', 'OTHER'] as const;
 export type AnalysisCategory = (typeof ANALYSIS_CATEGORIES)[number];
 
 /** El código del `categoryConceptId` que corresponde a laboratorio, en el catálogo. */
 const CODIGO_LABORATORIO = 'SRQ-LAB';
 /** El código que corresponde a imagenología. */
 const CODIGO_IMAGENOLOGIA = 'SRQ-IMAGING';
+
+/**
+ * Los códigos con que puede llegar la categoría procedimiento (CONTRATO A-8).
+ *
+ * Terminología devuelve el código simple o con el prefijo del módulo, y hasta que
+ * la API confirme cuál usa se reconocen los tres. Lo leen CM-08 y CM-09.
+ */
+export const PROCEDURE_CATEGORY_CODES: readonly string[] = [
+  'SRQ-PROCEDURE',
+  'SR_PROCEDURE',
+  'clinical:SERVICE_REQUEST_CATEGORY_PROCEDURE',
+];
 
 /**
  * Deriva el tipo desde el **código** del concepto de categoría, no desde su
@@ -31,6 +45,9 @@ export function categoriaDeAnalisis(codigoDeCategoria: string | undefined): Anal
   if (codigoDeCategoria === CODIGO_IMAGENOLOGIA) {
     return 'IMAGING';
   }
+  if (codigoDeCategoria !== undefined && PROCEDURE_CATEGORY_CODES.includes(codigoDeCategoria)) {
+    return 'PROCEDURE';
+  }
   return 'OTHER';
 }
 
@@ -41,6 +58,8 @@ export function etiquetaDeCategoria(categoria: AnalysisCategory): string {
       return 'Laboratorio';
     case 'IMAGING':
       return 'Imagenología';
+    case 'PROCEDURE':
+      return 'Procedimientos';
     case 'OTHER':
       return 'Otros';
   }
@@ -70,4 +89,11 @@ export interface PatientOrderRow extends PatientSettlementFields {
   readonly appointment: OrderAppointment | null;
   /** Se puede reservar: estudio de laboratorio o imagen, sin resultado y sin turno. */
   readonly bookable: boolean;
+  /**
+   * El modo de ejecutor que eligió el médico, ya resuelto desde el código del concepto,
+   * o `null` si la orden no lo trae (orden vieja o API sin extender): no se inventa nada.
+   */
+  readonly performerMode: PerformerSelectionCode | null;
+  /** El nombre de la sede que sugirió el médico; nunca su uuid. `null` = sin sede. */
+  readonly suggestedSiteName: string | null;
 }

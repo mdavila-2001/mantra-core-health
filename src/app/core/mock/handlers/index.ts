@@ -41,6 +41,7 @@ import { registrarFlujos } from './flows.handlers';
 import { registrarTrafico } from './ops-traffic.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
+import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerReceivedServices } from './received-services.handlers';
 
 /**
@@ -100,5 +101,6 @@ export function crearRouterSimulado(): MockRouter {
   registrarAltaDeMedicoAsistida(router);
   registerPromotions(router);
   registerPatientSpending(router);
+  registerOrganizationPracticeHandlers(router);
   return router;
 }

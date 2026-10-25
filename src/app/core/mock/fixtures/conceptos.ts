@@ -877,6 +877,8 @@ export const MODO_EJECUTOR = definir('service-request-performer-selection', [
   ['SR_PERF_ORGANIZATION', 'Se recomienda un centro'],
   ['SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente'],
 ]);
+/** El mismo conjunto, con el nombre que usan las órdenes de procedimiento de «Mis órdenes». */
+export const PERFORMER_MODE = MODO_EJECUTOR;
 
 conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');
 export const PRIORIDAD = definir('VS_PRIORITY', [
@@ -944,6 +946,30 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
   ['PROC-ENDOSCOPIA', 'Endoscopia digestiva alta'],
   ['PROC-SUTURA', 'Sutura de herida'],
   ['PROC-INFILTRACION', 'Infiltración articular'],
+]);
+
+/*
+ * Procedimientos de ejemplo de «Centros médicos» (CONTRATO, «Datos de la maqueta»). Llevan el id
+ * que todos los módulos derivan con `uuid('<semilla>')`, no el de `definir`, para que la orden, el
+ * centro y la búsqueda hablen del mismo concepto.
+ */
+function defineWithId(valueSet: string, entradas: readonly (readonly [seed: string, display: string])[]): void {
+  entradas.forEach(([code, display], indice) => {
+    registro.set(code, {
+      id: uuid(code),
+      code,
+      display,
+      valueSets: [valueSet],
+      selectable: true,
+      ordinal: indice + 1,
+    });
+  });
+}
+
+conjunto('VS_BO_MEDICAL_PROCEDURE', 'Nomenclador de procedimientos médicos', 'Procedimientos del nomenclador boliviano.');
+defineWithId('VS_BO_MEDICAL_PROCEDURE', [
+  ['proc-endoscopia-alta', 'Endoscopia digestiva alta'],
+  ['proc-colonoscopia', 'Colonoscopia'],
 ]);
 
 /* ---- diagnósticos (CIE-10 abreviado, también en el glosario) ------------- */
