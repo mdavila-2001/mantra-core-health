@@ -4,74 +4,84 @@ slug: accidente-cerebrovascular-isquemico
 
 ## [definition] Introducción
 
-El accidente cerebrovascular (ACV) isquémico, llamado también infarto cerebral o ictus isquémico, se produce cuando el flujo de sangre hacia una parte del cerebro se interrumpe por una obstrucción, habitualmente un coágulo. Sin oxígeno ni nutrientes, las células cerebrales empiezan a morir en pocos minutos, por lo que se trata de una urgencia médica.
+El accidente cerebrovascular (ACV) isquémico, también llamado infarto cerebral o ictus isquémico, es la muerte de tejido cerebral causada por la interrupción del flujo de sangre. Casi siempre la origina la obstrucción de una arteria por un coágulo, formado en el propio vaso cerebral o llegado desde el corazón u otra arteria. Es una urgencia: sin oxígeno, las neuronas se dañan en minutos.
 
-Es el tipo más frecuente de ACV. El otro tipo grande es el hemorrágico, en el que un vaso se rompe y sangra dentro del cerebro. La distinción importa porque los tratamientos son distintos; por eso la imagen cerebral urgente es parte esencial de la evaluación.
+Es el tipo más frecuente de ACV. El hemorrágico, en el que un vaso se rompe y sangra dentro del cerebro, se trata de otra forma; por eso la imagen cerebral urgente es esencial. El accidente isquémico transitorio es una obstrucción breve sin daño permanente que avisa de mayor riesgo de ictus.
 
-Un tercer concepto cercano es el accidente isquémico transitorio, una obstrucción breve que no deja daño permanente pero que advierte de un riesgo mayor de ACV. Los términos «ictus», «ACV», «derrame» o «ataque cerebral» se usan a menudo de forma amplia y pueden incluir también el tipo hemorrágico.
+La definición actual, basada en el tejido y no solo en la duración de los síntomas, reserva el nombre de ACV isquémico para el infarto que produce síntomas y distingue el infarto silente, que no los causa. «Ictus», «ACV» o «derrame» suelen usarse en sentido amplio, e incluyen el tipo hemorrágico.
 
 ## [classification] Mecanismos
 
-El coágulo puede formarse en una arteria del propio cerebro o viajar desde otra parte del cuerpo. Las fuentes consultadas mencionan como orígenes frecuentes la acumulación de placa en las arterias (ateroesclerosis), incluidas las carótidas del cuello, los ritmos irregulares del corazón como la fibrilación auricular, las enfermedades de las válvulas cardíacas y la anemia de células falciformes.
+Las fuentes citan la ateroesclerosis (placa en las arterias, incluidas las carótidas), los ritmos cardíacos irregulares como la fibrilación auricular, las enfermedades de las válvulas y la anemia de células falciformes. En parte de los casos no se halla causa tras el estudio completo (ictus embólico de origen indeterminado). El código de esta ficha (infarto cerebral sin especificar) no distingue entre ellos.
 
-El código de esta ficha corresponde a infarto cerebral sin especificar la causa, de modo que no distingue entre estos mecanismos.
+## [epidemiology] Magnitud del problema
+
+Según el análisis mundial de carga de enfermedad de 2021, el ictus figura entre las primeras causas de muerte y discapacidad, y la incidencia dejó de reducirse desde 2015.
 
 ## [risk_factors] Factores de riesgo
 
-Los principales son la presión arterial alta, la diabetes, las enfermedades del corazón, el tabaquismo, los antecedentes personales o familiares de ACV o de accidente isquémico transitorio y la edad avanzada. Otros factores modificables son el colesterol elevado, la obesidad, la inactividad física, una dieta poco saludable y el consumo excesivo de alcohol o de drogas ilegales. La OMS destaca la hipertensión como el factor que más contribuye al riesgo y añade la contaminación del aire y la disfunción renal.
+Los principales son la presión arterial alta, la diabetes, las enfermedades del corazón, el tabaquismo, los antecedentes de ACV o de accidente isquémico transitorio y la edad avanzada. También influyen el colesterol elevado, la obesidad, el sedentarismo, la dieta poco saludable y el exceso de alcohol o drogas. La OMS destaca la hipertensión y la contaminación del aire.
 
 ## [symptoms] Síntomas
 
-Aparecen de forma brusca y casi siempre afectan a un solo lado del cuerpo o a una función concreta:
+Aparecen de forma brusca, casi siempre en un lado del cuerpo o en una función concreta:
 
-• Debilidad o adormecimiento repentino de la cara, el brazo o la pierna.
+• Debilidad o adormecimiento de la cara, el brazo o la pierna.
 • Desviación de la boca.
-• Confusión, dificultad para hablar o para entender lo que se dice.
+• Confusión o dificultad para hablar o entender.
 • Pérdida de visión en uno o ambos ojos.
 • Mareo, pérdida del equilibrio o dificultad para caminar.
 • Dolor de cabeza intenso y repentino sin causa conocida.
 
-Una regla mnemotécnica muy difundida es F.A.S.T. (cara, brazos, habla, tiempo), que recuerda que ante estos signos hay que llamar de inmediato a emergencias.
+La regla F.A.S.T. (cara, brazos, habla, tiempo) recuerda llamar de inmediato a emergencias.
 
 ## [diagnosis] Diagnóstico
 
-Se basa en la historia clínica, la exploración neurológica (estado mental, fuerza, coordinación, habla y visión) y estudios de imagen del cerebro, como la tomografía computarizada o la resonancia magnética. La imagen permite, entre otras cosas, descartar una hemorragia. Después se buscan las causas con pruebas cardíacas, como el electrocardiograma y el ecocardiograma, y con estudios de los vasos del cuello, por ejemplo la ecografía de carótidas.
+Se basa en la historia clínica, la exploración neurológica y la imagen cerebral (tomografía o resonancia), que descarta una hemorragia y, en situaciones concretas, muestra el tejido aún recuperable, útil si se desconoce la hora de inicio. Después se buscan causas con electrocardiograma, ecocardiograma y ecografía de carótidas.
 
 ## [treatment_overview] Tratamiento
 
-La atención inicial busca restablecer el flujo sanguíneo lo antes posible, y la rapidez es decisiva. Según el caso, puede emplearse un medicamento que disuelve el coágulo, que solo es útil dentro de una ventana de tiempo limitada, o un procedimiento para extraer o desbloquear la obstrucción. Cuando esas opciones no son posibles, se recurre a antiagregantes plaquetarios o anticoagulantes. A veces se interviene la arteria carótida.
+La atención inicial busca restablecer el flujo cuanto antes: un medicamento que disuelve el coágulo, útil solo dentro de una ventana de tiempo, o la trombectomía, que extrae la obstrucción de una arteria grande. La elección depende de la hora de inicio, la arteria afectada, las imágenes y la persona.
 
-El tratamiento continúa con el control de la presión arterial, el colesterol y la glucosa, y con rehabilitación para recuperar habilidades perdidas y lograr la mayor autonomía posible. La atención en una unidad especializada en ictus mejora los resultados, según la OMS.
+Los antiagregantes y el control de la presión, los lípidos y la glucosa previenen nuevos episodios; la anticoagulación en ictus de origen cardíaco sigue guías específicas. La rehabilitación busca la mayor autonomía posible; la atención en unidad de ictus mejora los resultados.
 
 ## [complications] Complicaciones
 
-El ACV puede dejar daño cerebral duradero, discapacidad o causar la muerte. Entre las secuelas están la debilidad de un lado del cuerpo, los trastornos del habla y del lenguaje (afasia), los problemas cognitivos y los cambios emocionales. La rehabilitación suele incluir fisioterapia, terapia ocupacional, logopedia y apoyo psicológico.
+Puede dejar discapacidad duradera o causar la muerte: debilidad de un lado, afasia (trastorno del lenguaje), problemas visuales y cognitivos, cambios emocionales.
 
 ## [prevention] Prevención
 
-Se basa en controlar la presión arterial, no fumar, mantener una alimentación saludable para el corazón, un peso adecuado, actividad física regular y un consumo moderado de alcohol. En personas de alto riesgo se añaden medicamentos para la presión, los lípidos o la coagulación, y el tratamiento de enfermedades como la fibrilación auricular o la diabetes.
+Se basa en controlar la presión arterial, no fumar, comer de forma saludable, mantener un peso adecuado, hacer actividad física y moderar el alcohol; en personas de alto riesgo se añaden medicamentos y el tratamiento de la fibrilación auricular o la diabetes.
 
 ## [prognosis] Pronóstico
 
-Varía mucho según la zona afectada, la extensión del daño y la rapidez de la atención. Algunas personas se recuperan casi por completo y otras necesitan apoyo prolongado. Haber sufrido un ACV o un accidente isquémico transitorio aumenta la probabilidad de un nuevo episodio, de ahí la importancia de la prevención secundaria.
+Varía según la zona afectada, el daño y la rapidez de la atención. Un ACV o un accidente isquémico transitorio previos aumentan la probabilidad de recaída, frecuente durante el primer año, de ahí la prevención secundaria.
 
 ## [when_to_seek_care] Cuándo consultar
 
-Ante cualquiera de los síntomas descritos hay que llamar a emergencias de inmediato, incluso si mejoran, y conviene saber a qué hora comenzaron, porque las opciones de tratamiento dependen del tiempo transcurrido. No se debe esperar a ver si pasa.
+Ante cualquiera de estos síntomas hay que llamar a emergencias de inmediato, aunque mejoren, y anotar a qué hora comenzaron.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Accidente isquémico transitorio: episodio breve con los mismos síntomas, señal de alarma de un ACV posterior.
+• Accidente isquémico transitorio: episodio breve con los mismos síntomas.
 • Accidente cerebrovascular hemorrágico: el otro gran tipo, con tratamiento diferente.
-• Fibrilación auricular: arritmia que favorece la formación de coágulos que viajan al cerebro.
-• Hipertensión arterial: principal factor de riesgo modificable.
-• Ateroesclerosis y estenosis carotídea: acumulación de placa que puede originar el coágulo.
-• Afasia y rehabilitación: secuelas frecuentes y su abordaje.
-• Tomografía de cráneo y resonancia cerebral: estudios que guían la decisión terapéutica.
+• Fibrilación auricular: arritmia que favorece coágulos que viajan al cerebro.
+
+## [considerations] Qué dice la evidencia
+
+Lo expuesto se apoya en una guía estadounidense de 2026 sobre el manejo inicial, que sustituye a la de 2018, en una guía europea de prevención a largo plazo con metodología GRADE y en metaanálisis de ensayos aleatorizados: trombectomía en oclusiones de arterias grandes, trombólisis guiada por imagen con hora de inicio desconocida y unidades de ictus (Cochrane). La definición procede de un consenso de la AHA/ASA, y la magnitud del problema, de un análisis mundial de carga de enfermedad. Síntomas y factores de riesgo descansan en fuentes divulgativas (MedlinePlus, CDC, OMS).
+
+Hay consenso en que es una urgencia, en que la imagen debe distinguirlo del hemorrágico, en que la reperfusión temprana mejora los resultados cuando es posible y en que las unidades especializadas y el control vascular reducen discapacidad y recaídas. Está más discutido quién se beneficia de cada reperfusión y con qué criterios: la guía de 2026 modificó la elección del trombolítico, la selección para trombectomía y las contraindicaciones de la trombólisis, y ya tiene una corrección oficial y propuestas de otros especialistas. El metaanálisis de inicio desconocido describe más hemorragias intracraneales sintomáticas, y el balance se decide caso a caso.
 
 ## [references]
 
-- Accidente cerebrovascular | https://medlineplus.gov/spanish/stroke.html | MedlinePlus
+- Sacco et al., 2013. An updated definition of stroke for the 21st century (AHA/ASA). PMID 23652265 | https://europepmc.org/article/MED/23652265 | Stroke
+- Prabhakaran et al., 2026. 2026 Guideline for the Early Management of Patients With Acute Ischemic Stroke (AHA/ASA). PMID 41582814 | https://europepmc.org/article/MED/41582814 | Stroke
+- Goyal et al., 2016. Endovascular thrombectomy after large-vessel ischaemic stroke: meta-analysis of individual patient data from five randomised trials. PMID 26898852 | https://europepmc.org/article/MED/26898852 | The Lancet
+- Thomalla et al., 2020. Intravenous alteplase for stroke with unknown time of onset guided by advanced imaging: meta-analysis of individual patient data. PMID 33176180 | https://europepmc.org/article/MED/33176180 | The Lancet
+- Dawson et al., 2022. European Stroke Organisation guideline on pharmacological interventions for long-term secondary prevention after ischaemic stroke or TIA. PMID 36082250 | https://europepmc.org/article/MED/36082250 | European Stroke Journal
+- Langhorne y Ramachandra, 2020. Organised inpatient (stroke unit) care for stroke: network meta-analysis. PMID 32324916 | https://europepmc.org/article/MED/32324916 | Cochrane Database of Systematic Reviews
+- GBD 2021 Stroke Risk Factor Collaborators, 2024. Global, regional, and national burden of stroke and its risk factors, 1990-2021. PMID 39304265 | https://europepmc.org/article/MED/39304265 | The Lancet Neurology
 - Accidente cerebrovascular isquémico | https://medlineplus.gov/spanish/ischemicstroke.html | MedlinePlus
 - About Stroke | https://www.cdc.gov/stroke/about/index.html | CDC
 - Stroke (hoja informativa) | https://www.who.int/news-room/fact-sheets/detail/stroke | OMS

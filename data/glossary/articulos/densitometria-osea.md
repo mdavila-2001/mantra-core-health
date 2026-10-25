@@ -4,58 +4,70 @@ slug: densitometria-osea
 
 ## [definition] Introducción
 
-La densitometría ósea es un estudio de imagen que mide la cantidad de minerales, sobre todo calcio, presentes en una zona del hueso. La técnica más utilizada es la absorciometría de rayos X de doble energía, conocida como DXA o DEXA, que emplea una dosis muy baja de radiación. Sirve para detectar la pérdida de masa ósea y la osteoporosis, estimar el riesgo de fractura futura y comprobar si un tratamiento está funcionando.
+La densitometría ósea es un estudio de imagen que mide la cantidad de mineral, sobre todo calcio, en zonas concretas del esqueleto. La técnica de referencia es la absorciometría de rayos X de doble energía, conocida como DXA o DEXA, con una dosis muy baja de radiación. Sirve para diagnosticar masa ósea baja y osteoporosis, estimar el riesgo de fractura y seguir un tratamiento.
 
-El código LOINC 24966-4 corresponde a la DXA de la columna lumbar, una región concreta. El nombre «densitometría ósea» es más amplio, porque el estudio habitual de diagnóstico explora la columna y la cadera, y a veces el antebrazo. Esta entrada describe la prueba en general, con la columna lumbar como uno de sus sitios.
+El código LOINC 24966-4 corresponde a la DXA de la columna lumbar, una región concreta. El nombre «densitometría ósea» es más amplio: el estudio diagnóstico habitual explora la columna lumbar y la cadera, y en ciertos casos el antebrazo. La densidad es solo un componente del riesgo de fractura, que depende también de la edad y otros factores clínicos.
 
 ## [purpose] Para qué se utiliza
 
-• Diagnosticar la masa ósea baja y la osteoporosis antes de que se produzca una fractura.
-• Estimar el riesgo de fracturas en el futuro, junto con otros factores clínicos.
-• Valorar si un tratamiento para la osteoporosis es eficaz.
+• Diagnosticar la masa ósea baja y la osteoporosis antes de una fractura.
+• Estimar el riesgo de fracturas futuras junto con otros factores clínicos, a veces con FRAX.
+• Vigilar la densidad durante un tratamiento.
 
-La prueba no diagnostica fracturas ya ocurridas. Un resultado aislado predice el riesgo solo cuando se combina con otros datos de la persona, y por eso lo interpreta el profesional de salud.
+La prueba no diagnostica fracturas ya ocurridas y un resultado aislado no basta para decidir un tratamiento.
 
 ## [indications] Quién debería hacérsela
 
-Las sociedades científicas la recomiendan en mujeres mayores y en hombres de edad avanzada, en quienes han sufrido una fractura tras la mitad de la vida y en adultos más jóvenes con factores de riesgo. Entre estos se citan los antecedentes familiares de osteoporosis, el bajo peso corporal, la pérdida de estatura, el tabaquismo prolongado, el consumo elevado de alcohol, la inactividad, las enfermedades que dificultan la absorción de nutrientes, el déficit de vitamina D, enfermedades como la diabetes o la artritis reumatoide y el uso prolongado de medicamentos como los corticoides. Los expertos discrepan sobre el cribado sistemático en hombres.
+El cribado sin síntomas se recomienda con más firmeza en mujeres mayores y en posmenopáusicas más jóvenes con factores de riesgo. En los hombres, el grupo estadounidense de servicios preventivos (USPSTF, 2025) considera insuficiente la evidencia, y MedlinePlus recoge que los expertos discrepan.
+
+Fuera del cribado, se contempla en adultos más jóvenes con una fractura previa, con enfermedades o fármacos que debilitan el hueso (como los corticoides) o con otros factores de riesgo, como bajo peso, tabaquismo o exceso de alcohol.
 
 ## [how_it_works] Cómo funciona
 
-El aparato utiliza rayos X de baja dosis para estimar el contenido mineral del hueso en las zonas exploradas. En la DXA central, la persona se tumba sobre una mesa acolchada, normalmente vestida, mientras un brazo del aparato pasa por encima. Debe permanecer quieta y, en ocasiones, contener la respiración. El estudio es indoloro y breve, y los resultados suelen entregarse en pocos días.
+El aparato usa rayos X de dos energías para estimar el contenido mineral del hueso. En la DXA central, la persona se tumba vestida sobre una mesa mientras un brazo del aparato pasa por encima. Es indoloro y breve.
 
-Existe también la DXA periférica, con un dispositivo portátil que explora la muñeca, la mano, el pie o el talón. Aporta menos información: puede estimar el riesgo de fractura, pero no es comparable con la DXA central ni sirve para vigilar el tratamiento, y a veces lleva a pedir un estudio central.
+Los sitios habituales son la columna lumbar, la cadera y, si hace falta, el antebrazo. Algunos equipos añaden una imagen lateral de la columna para detectar fracturas vertebrales y un programa que analiza la textura lumbar (índice trabecular óseo), siempre junto con la densidad.
+
+La DXA periférica explora muñeca, mano, pie o talón con un dispositivo portátil. No es comparable con la DXA central ni sirve para vigilar el tratamiento.
 
 ## [preparation] Preparación
 
-Hay que informar al equipo si existe o puede existir un embarazo, porque el estudio no se recomienda en esa situación. Algunos centros piden suspender los suplementos de calcio durante uno o dos días antes. Conviene retirar objetos metálicos, como joyas o hebillas, y evitar ropa con botones o cremalleras sobre la columna y la cadera.
+Hay que avisar si existe o puede existir un embarazo, pues el estudio no se recomienda entonces. Conviene seguir las instrucciones del centro sobre los suplementos de calcio y retirar objetos metálicos o prendas con cremalleras.
 
 ## [interpretation] Qué busca la interpretación
 
-El informe suele incluir dos índices. El índice T compara la densidad con la de un adulto joven sano del mismo sexo y se usa en mujeres posmenopáusicas y en hombres de edad avanzada. El índice Z compara con personas de la misma edad, sexo y características, y se prefiere en mujeres premenopáusicas, hombres jóvenes y niños. En ambos, los valores más bajos indican hueso menos denso y mayor riesgo de fractura.  La sociedad internacional de densitometría prefiere la expresión «masa ósea baja» a «osteopenia», y recuerda que una masa baja no equivale por sí sola a un riesgo alto de fractura.
+El informe suele incluir dos índices. El índice T compara la densidad con la de un adulto joven sano del mismo sexo y se usa en mujeres posmenopáusicas y hombres de edad avanzada; se clasifica con el valor más bajo de los sitios recomendados. El índice Z compara con personas de la misma edad y sexo, y se prefiere en niños, mujeres premenopáusicas y hombres jóvenes. La sociedad internacional de densitometría prefiere «masa ósea baja» a «osteopenia», pues una masa baja no equivale por sí sola a riesgo alto.
 
-El diagnóstico de osteoporosis en los hombres jóvenes no puede basarse solo en la densidad ósea. Por otro lado, una fractura puede bastar para establecer el diagnóstico aunque el índice T sea mejor de lo esperado, y un valor bajo no siempre significa osteoporosis, porque otras enfermedades, como la osteomalacia o el mieloma múltiple, pueden producir resultados parecidos.
+En niños y hombres jóvenes el diagnóstico no se basa solo en la densidad. Una fractura por fragilidad puede bastar para diagnosticar osteoporosis aunque el índice T sea mejor de lo esperado, y un valor bajo no siempre es osteoporosis: la osteomalacia o el mieloma múltiple pueden dar resultados parecidos. En el seguimiento se comparan las densidades absolutas, no los índices T, con el mismo aparato.
 
 ## [additional_information] Limitaciones
 
-• Los cambios degenerativos de la columna, las fracturas, las deformidades o una cirugía vertebral previa pueden alterar la medición lumbar, y entonces se excluyen vértebras o se recurre a otro sitio.
-• Los resultados de aparatos distintos o de sitios periféricos no se pueden comparar directamente.
+• Los cambios degenerativos de la columna, las calcificaciones de la aorta, las fracturas y los implantes pueden aumentar falsamente la densidad lumbar; entonces se excluyen vértebras o se usa otro sitio.
+• La DXA es bidimensional y no separa la densidad real del tamaño del hueso.
+• Los resultados de aparatos distintos o de sitios periféricos no son comparables.
 
 ## [associated_conditions] Conceptos relacionados
 
 • Osteoporosis: enfermedad cuyo diagnóstico y control se apoyan en esta prueba.
-• Masa ósea baja: antes llamada osteopenia, es un resultado intermedio que no implica por sí mismo riesgo alto.
-• Déficit de vitamina D: factor que predispone a la pérdida ósea y motivo de estudio.
+• Masa ósea baja: antes llamada osteopenia; no implica por sí misma riesgo alto.
+• FRAX: herramienta que combina factores clínicos, con o sin densidad, para estimar el riesgo.
+• Déficit de vitamina D: factor que predispone a la pérdida ósea.
 
 ## [considerations] Qué dice la evidencia
 
-Las posiciones de la Sociedad Internacional de Densitometría Clínica de 2023 (Shuhart y cols., J Clin Densitom; DOI 10.1016/j.jocd.2023.101435) recogen el consenso de expertos sobre dónde medir, cómo informar y cuándo repetir el estudio. Son posiciones de una sociedad científica y no ensayos clínicos. Hay acuerdo en que la DXA central de columna y cadera es la referencia diagnóstica, en el uso del índice T y del índice Z según la población y en que las mediciones periféricas no son equivalentes.
+Las posiciones de la Sociedad Internacional de Densitometría Clínica (Shuhart y cols., 2024) y la guía de Slart y cols. (2025) proceden de paneles de expertos con revisión de la literatura, no de ensayos. Respaldan la DXA central de columna y cadera como referencia y los índices T y Z según la población. El cribado en mujeres mayores se apoya en la revisión sistemática y los ensayos que valoró el USPSTF (2025), que reconoce que no hay estudios en hombres. Fuggle y cols. (2019) sitúan la DXA junto a FRAX como base de la predicción de fracturas, solo moderada con la densidad sola. Una metarregresión de 23 ensayos (Black y cols., 2020) asoció los cambios de densidad con el tratamiento a la reducción de fracturas, aunque explican solo parte del efecto.
 
-Se discute el cribado en hombres, el intervalo ideal entre estudios y el papel de herramientas complementarias como el índice trabecular óseo. Lo relativo a preparación, desarrollo y quién debe hacérsela se apoya en MedlinePlus y en la Bone Health and Osteoporosis Foundation, de carácter divulgativo. No se abrió una revisión sistemática con DOI o PMID.
+Hay acuerdo en qué sitios medir y en que la densidad sola no basta. Se discuten el cribado en hombres, el intervalo de repetición (evidencia limitada según el USPSTF) y el papel del índice trabecular óseo. Preparación y desarrollo se apoyan en MedlinePlus y la Bone Health and Osteoporosis Foundation, fuentes divulgativas.
 
 ## [references]
 
-- Shuhart et al., 2023. Executive Summary of the 2023 Adult Position Development Conference of the ISCD (DOI 10.1016/j.jocd.2023.101435); posiciones oficiales 2023 | https://iscd.org/official-positions-2023/ | Journal of Clinical Densitometry / ISCD
+
+
+- Shuhart et al., 2024. Executive Summary of the 2023 Adult Position Development Conference of the ISCD. PMID 38007332 / DOI 10.1016/j.jocd.2023.101435 | https://europepmc.org/article/MED/38007332 | Journal of Clinical Densitometry
+- Slart et al., 2025. Updated practice guideline for dual-energy X-ray absorptiometry (DXA). PMID 39316095 / DOI 10.1007/s00259-024-06912-6 | https://europepmc.org/article/MED/39316095 | European Journal of Nuclear Medicine and Molecular Imaging
+- USPSTF, Nicholson et al., 2025. Screening for Osteoporosis to Prevent Fractures: Recommendation Statement. PMID 39808425 / DOI 10.1001/jama.2024.27154 | https://europepmc.org/article/MED/39808425 | JAMA
+- Fuggle et al., 2019. Fracture prediction, imaging and screening in osteoporosis. PMID 31189982 / DOI 10.1038/s41574-019-0220-8 | https://europepmc.org/article/MED/31189982 | Nature Reviews Endocrinology
+- Black et al., 2020. Treatment-related changes in bone mineral density as a surrogate biomarker for fracture risk reduction: meta-regression analyses of individual patient data. PMID 32707115 / DOI 10.1016/S2213-8587(20)30159-5 | https://europepmc.org/article/MED/32707115 | Lancet Diabetes & Endocrinology
 - Bone Density Scan | https://medlineplus.gov/lab-tests/bone-density-scan/ | MedlinePlus
 - Bone mineral density test | https://medlineplus.gov/ency/article/007197.htm | MedlinePlus
 - Bone Density Testing | https://www.bonehealthandosteoporosis.org/patients/diagnosis-information/bone-density-examtesting/ | Bone Health and Osteoporosis Foundation

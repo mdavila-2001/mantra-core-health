@@ -4,56 +4,59 @@ slug: acido-folico
 
 ## [definition] Introducción
 
-La prueba de folato mide la cantidad de folato (vitamina B9, a la que se suele llamar también ácido fólico) en el suero o el plasma, la parte líquida de la sangre. Se solicita con frecuencia junto con la prueba de vitamina B12. El folato interviene en la formación de los glóbulos rojos y en la síntesis del ADN, y es especialmente importante en el desarrollo del sistema nervioso del feto.
+Esta prueba mide el folato (vitamina B9) total en el suero o el plasma, la parte líquida de la sangre. Se pide sobre todo para estudiar una anemia con glóbulos rojos grandes, para buscar problemas de alimentación o de absorción de nutrientes y para valorar el aporte de folato antes y durante el embarazo. Suele solicitarse junto con la vitamina B12.
 
-Conviene precisar el nombre. Lo que se mide es el folato circulante, y el rótulo «ácido fólico» es el habitual en la práctica. Además, existe otra manera de medirlo, dentro de los glóbulos rojos, que no es lo mismo que la medición en suero o plasma: la primera refleja la reserva de los tejidos durante un período más largo y la segunda, la ingesta reciente. El código de esta ficha corresponde a la medición en suero o plasma.
+El nombre de la ficha merece una precisión. En sentido estricto, «ácido fólico» designa la forma sintética que se usa en suplementos y alimentos enriquecidos; en la sangre circula sobre todo otra forma, el 5-metiltetrahidrofolato. La prueba cuantifica el folato total sin distinguir su origen; «prueba de folato» es, pues, el rótulo más exacto. El código de la ficha corresponde a la medición en suero o plasma.
 
 ## [purpose] Para qué se pide
 
-Las razones más habituales son estudiar la causa de una anemia, sobre todo cuando los glóbulos rojos son grandes (anemia megaloblástica), detectar problemas de alimentación o de absorción de nutrientes, vigilar si un tratamiento por falta de folato o de vitamina B12 está funcionando y valorar si el aporte es suficiente en etapas en que la necesidad aumenta, como antes y durante el embarazo, cuando el folato ayuda a prevenir defectos del tubo neural, como la espina bífida.
+La indicación más frecuente es el estudio de una anemia con glóbulos rojos más grandes de lo normal (anemia megaloblástica). También se usa ante sospecha de malnutrición o malabsorción, para comprobar la respuesta a un tratamiento por falta de folato o de B12 y para valorar el estado de folato en la etapa previa al embarazo y durante él, cuando el folato contribuye a prevenir los defectos del tubo neural, como la espina bífida.
 
 ## [how_it_works] Cómo funciona
 
-El folato es una vitamina que el cuerpo no almacena en grandes cantidades; las reservas del hígado alcanzan para unos pocos meses. Si la ingesta es baja, si aumenta la demanda o si se absorbe o se utiliza mal, la reserva se agota y la formación de glóbulos rojos se altera: las células son grandes e inmaduras y la médula ósea produce menos células sanas. La prueba cuantifica el folato en una muestra de sangre y permite saber si hay suficiente disponible.
+El folato participa en la síntesis de los ácidos nucleicos y en el metabolismo de los grupos metilo y de algunos aminoácidos. Cuando falta, las células que se dividen con rapidez, como las precursoras de los glóbulos rojos, no copian bien su ADN: maduran mal, crecen en exceso y se producen menos células sanas. El cuerpo almacena poco folato, por lo que la carencia puede instalarse en pocos meses si la ingesta baja, la demanda sube o la absorción falla.
+
+La prueba cuantifica el folato presente en una muestra de sangre. Los métodos de laboratorio no siempre son intercambiables: una revisión sistemática en mujeres en edad fértil advirtió que los estudios se comparan mal cuando el método y el umbral no coinciden.
 
 ## [preparation] Preparación
 
-En general se solicita ayuno antes de la extracción, aunque las indicaciones varían según el laboratorio; la persona debe seguir las que reciba. Puede ser necesario informar sobre el consumo de suplementos de folato y de otros medicamentos, ya que algunos pueden modificar el resultado. No se deben suspender medicamentos por cuenta propia.
+Las indicaciones previas, entre ellas el ayuno, varían según el laboratorio, y la persona debe seguir las que reciba. Conviene informar sobre suplementos de folato y otros medicamentos, porque pueden influir en el resultado. No se debe suspender ningún medicamento por cuenta propia.
 
 ## [procedure_description] Procedimiento
 
-Un profesional de salud toma una muestra de sangre, normalmente de una vena del brazo. Puede sentirse un pinchazo breve y una molestia posterior en la zona.
+Un profesional de salud extrae sangre, normalmente de una vena del brazo. Puede sentirse un pinchazo breve y una molestia leve después.
 
 ## [interpretation] Qué busca la interpretación
 
-El laboratorio informa los valores de referencia que usa, y estos varían entre laboratorios; por eso no se interpretan fuera de contexto. El médico los valora junto con la edad, la salud, los síntomas y otros análisis.
+Cada laboratorio informa sus propios valores de referencia, que dependen del método, y por eso un resultado no se interpreta aislado. El médico lo relaciona con la edad, el embarazo, los síntomas, el hemograma y otras pruebas.
 
-Un resultado bajo puede relacionarse con una alimentación insuficiente, con problemas de absorción (como la enfermedad celíaca), con un consumo elevado de alcohol, con ciertos medicamentos o con un aumento de las necesidades, por ejemplo en el embarazo o en algunas anemias. Un resultado alto suele deberse a un consumo elevado de folato o de suplementos, y también puede aparecer cuando falta vitamina B12, por lo que la prueba no basta para descartar esa carencia.
+Un resultado bajo sugiere ingesta insuficiente, malabsorción (por ejemplo, enfermedad celíaca), consumo elevado de alcohol, ciertos medicamentos o un aumento de las necesidades. Un resultado alto suele reflejar suplementos o alimentos enriquecidos; una revisión de laboratorio recomienda, ante un folato alto, valorar la vitamina B12 y revisar los suplementos. A veces se añaden la homocisteína y el ácido metilmalónico, que reflejan cómo usan las células estas vitaminas y ayudan a distinguir cuál falta.
 
-Las dos carencias, de folato y de B12, producen una anemia que se ve igual en el hemograma, de modo que se estudian juntas. Pruebas adicionales, como la homocisteína y el ácido metilmalónico, ayudan a distinguirlas; no se detallan valores aquí.
+## [considerations] Qué dice la evidencia
 
-## [considerations] Limitaciones y precauciones
+Lo expuesto se apoya en revisiones narrativas y sistemáticas, y en una recomendación de un grupo de expertos que revisa la evidencia (el Grupo de Trabajo de Servicios Preventivos de EE. UU., USPSTF) sobre el ácido fólico y los defectos del tubo neural; las fuentes no son ensayos sobre la prueba en sí. Hay consenso en que la carencia de folato y de B12 son las causas más frecuentes de anemia megaloblástica, en que ambas deben investigarse a la vez y en que la medición sérica refleja el estado reciente, mientras que el folato intraeritrocitario (dentro de los glóbulos rojos) integra los cuatro meses previos aproximadamente. También hay acuerdo en que el análisis del folato es técnicamente difícil.
 
-El folato en suero cambia con la ingesta reciente, de modo que una comida reciente o un suplemento pueden modificar el resultado. Es importante descartar la falta de vitamina B12 antes de iniciar un tratamiento con folato, porque este puede mejorar la anemia pero no corrige las alteraciones neurológicas de la falta de B12, que podrían quedar enmascaradas. Esta decisión corresponde al médico.
-
-## [risks] Riesgos
-
-Son muy bajos y los mismos de cualquier extracción de sangre: un pequeño moretón o, con menos frecuencia, sangrado prolongado, mareo o infección en el sitio de punción.
+Es discutido o poco estudiado cómo traducir un resultado a una conclusión clínica. Un estudio poblacional en el sur de la India encontró que el nivel de folato sérico asociado al nivel de folato eritrocitario óptimo para prevenir defectos del tubo neural era mucho más alto cuando la vitamina B12 era insuficiente, lo que cuestiona el uso de un único umbral de folato sérico en poblaciones con falta de B12. Además, una revisión de hematología describe que la anemia megaloblástica puede cursar con glóbulos rojos de tamaño normal o con descenso de varias líneas celulares, y que un tratamiento parcial dificulta el diagnóstico. Las explicaciones divulgativas (MedlinePlus, MSD, CUN) respaldan el resto del texto, pero no sustituyen a la valoración médica.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Vitamina B12: se mide junto con el folato porque su falta produce una anemia indistinguible en el hemograma.
-• Anemia megaloblástica: anemia con glóbulos rojos grandes, causada por falta de folato o de B12.
-• Hemograma completo: muestra el tamaño y la cantidad de glóbulos rojos y suele ser el primer estudio.
-• Homocisteína y ácido metilmalónico: pruebas complementarias que ayudan a distinguir las dos carencias.
-• Defectos del tubo neural: malformaciones del cerebro y la médula espinal que se asocian a la falta de folato durante el embarazo.
+• Vitamina B12: se mide junto con el folato porque su falta produce una anemia indistinguible en el hemograma y su diagnóstico tardío puede dejar secuelas neurológicas.
+• Anemia megaloblástica: anemia con glóbulos rojos grandes y células inmaduras en la médula ósea, causada con más frecuencia por falta de folato o de B12.
+• Folato eritrocitario: medición dentro de los glóbulos rojos, que refleja un período más largo que la medición sérica.
+• Homocisteína y ácido metilmalónico: pruebas complementarias que reflejan el uso celular de folato y B12.
+• Defectos del tubo neural: malformaciones del cerebro y la médula espinal que se asocian a una falta de folato en las primeras semanas del embarazo.
+• Hemograma completo: muestra tamaño y número de glóbulos rojos; suele ser el primer estudio.
 • Malabsorción y enfermedad celíaca: causas de carencia aunque la alimentación sea adecuada.
-• Alcohol y algunos medicamentos: pueden disminuir el folato disponible.
 
 ## [references]
 
+- Sobczyńska-Malefora y Harrington, 2018. Laboratory assessment of folate (vitamin B9) status. PMID 30228213 | https://europepmc.org/article/MED/30228213 | J Clin Pathol
+- Torrez et al., 2022. How I investigate acquired megaloblastic anemia. PMID 34981651 | https://europepmc.org/article/MED/34981651 | Int J Lab Hematol
+- Socha et al., 2020. Severe megaloblastic anemia: vitamin deficiency and other causes. PMID 32127439 | https://europepmc.org/article/MED/32127439 | Cleve Clin J Med
+- Rogers et al., 2018. Global folate status in women of reproductive age: a systematic review. PMID 30239016 | https://europepmc.org/article/MED/30239016 | Ann N Y Acad Sci
+- Fothergill et al., 2023. Serum folate concentration corresponding to the RBC folate threshold for NTD prevention, Southern India. PMID 37137617 | https://europepmc.org/article/MED/37137617 | Am J Clin Nutr
+- USPSTF, 2023. Folic acid supplementation to prevent neural tube defects: reaffirmation recommendation statement. PMID 37526713 | https://europepmc.org/article/MED/37526713 | JAMA
 - Prueba de folato (Folic acid test) | https://medlineplus.gov/ency/article/003686.htm | MedlinePlus
 - Anemia por deficiencia de folato (Folate-deficiency anemia) | https://medlineplus.gov/ency/article/000551.htm | MedlinePlus
-- Prueba de folato | https://www.cigna.com/es-us/knowledge-center/hw/pruebas-mdicas/prueba-de-folato-hw6522 | Cigna
 - Deficiência de folato | https://www.msdmanuals.com/pt/profissional/dist%C3%BArbios-nutricionais/defici%C3%AAncia-depend%C3%AAncia-e-toxicidade-das-vitaminas/defici%C3%AAncia-de-folato | Manual MSD
 - Anemia por déficit de ácido fólico | https://www.cun.es/diccionario-medico/terminos/anemia-deficit-acido-folico | Clínica Universidad de Navarra

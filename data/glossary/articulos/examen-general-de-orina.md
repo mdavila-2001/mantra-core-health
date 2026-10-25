@@ -4,65 +4,63 @@ slug: examen-general-de-orina
 
 ## [definition] Introducción
 
-El examen general de orina, también llamado análisis de orina o uroanálisis, es un conjunto de estudios que se practican sobre una muestra de orina recogida en un momento puntual. Reúne tres partes: la observación del aspecto, la lectura de una tira reactiva con pruebas químicas y el examen al microscopio del sedimento. En la clasificación LOINC corresponde a un panel completo que agrupa el panel macroscópico (tira reactiva) y el panel microscópico.
+El examen general de orina, también llamado análisis de orina o uroanálisis, es un conjunto de estudios que se practican sobre una muestra de orina recogida en un momento puntual. Reúne tres partes: la observación del aspecto, la lectura de una tira reactiva con pruebas químicas y el examen al microscopio del sedimento, que es lo que queda al centrifugar la muestra. En LOINC corresponde a un panel completo que agrupa el panel macroscópico (tira reactiva) y el microscópico.
 
-Conviene distinguirlo de pruebas vecinas. El urocultivo hace crecer los microorganismos en el laboratorio para identificarlos y orientar el tratamiento; el examen general de orina, en cambio, ofrece señales indirectas y rápidas. Tampoco equivale a la medición de proteína en una orina de 24 horas ni a la relación albúmina/creatinina, que cuantifican con más precisión un solo aspecto.
+No equivale al urocultivo, que hace crecer los microorganismos para identificarlos, ni a la medición de albúmina en orina, que cuantifica un solo aspecto con más sensibilidad para el daño renal.
 
 ## [purpose] Para qué se solicita
 
-Se usa sobre todo como estudio de primera línea ante la sospecha de infección de las vías urinarias o de enfermedad renal. También ayuda a detectar sangre en la orina, a vigilar la diabetes y las enfermedades del riñón ya conocidas, y puede aportar pistas sobre trastornos del hígado u otros problemas metabólicos.
+Es un estudio de primera línea ante sospecha de infección urinaria, sangre en la orina o enfermedad renal. También sirve para vigilar la diabetes y las enfermedades renales conocidas, y aporta pistas sobre trastornos hepáticos o biliares y sobre los cálculos.
 
-Una precisión importante: una revisión de la Academia Americana de Médicos de Familia señala que no se recomienda como cribado sistemático en personas sin síntomas, con la excepción de las mujeres que pudieran estar embarazadas. Que el estudio sea barato y sencillo no justifica pedirlo sin una pregunta clínica.
+La guía europea de uroanálisis de 2023 vincula la solicitud a la pregunta clínica: distingue entre infección urinaria complicada y no complicada, y entre riesgo alto y bajo de enfermedad renal. Una revisión de 2005 de la Academia Americana de Médicos de Familia desaconsejaba el cribado sistemático sin síntomas, salvo ante un posible embarazo. Las posteriores son específicas: el Grupo de Trabajo de Servicios Preventivos de Estados Unidos aconseja buscar bacteriuria asintomática (bacterias en la orina sin molestias) en el embarazo y no en adultos no gestantes, porque tratarla no aporta beneficio neto.
 
 ## [how_it_works] Cómo funciona
 
-• Examen físico: se observan el color, la transparencia y, a veces, el olor. Los alimentos, los medicamentos y la concentración de la orina pueden modificar estos rasgos sin que exista enfermedad.
-• Tira reactiva: una varilla con zonas sensibles cambia de color al contacto con la orina. Explora la acidez, la concentración (densidad), las proteínas, la glucosa, las cetonas, la sangre, los nitritos, la esterasa leucocitaria, la bilirrubina y el urobilinógeno.
-• Examen microscópico: se centrifuga la muestra y se observa el sedimento para identificar glóbulos rojos y blancos, cilindros, cristales, células de las vías urinarias y bacterias.
+• Examen físico: color, transparencia y olor, que alimentos, fármacos y concentración pueden modificar sin enfermedad.
+• Tira reactiva: una varilla cambia de color al contacto con la orina y explora acidez, densidad, proteínas, glucosa, cetonas, sangre, nitritos, esterasa leucocitaria, bilirrubina y urobilinógeno.
+• Examen microscópico: identifica glóbulos rojos y blancos, cilindros, cristales, células de las vías urinarias y bacterias. Hoy suele hacerlo un analizador automático, aunque la lectura directa por un experto sigue aportando información valiosa (revisión de nefrología de 2019).
 
 ## [preparation] Preparación y toma de la muestra
 
-Por lo general no hace falta una preparación especial. El profesional puede pedir que se eviten ciertos alimentos o medicamentos que alteran el color o los resultados, por lo que es útil informar de todo lo que se toma, incluidos los productos sin receta y los suplementos.
-
-La muestra suele recogerse a mitad del chorro, en un recipiente limpio. Una toma mal hecha contamina la orina con células de la piel o de los genitales y complica la lectura. La orina debe llegar al laboratorio sin demora o conservarse refrigerada, porque el paso del tiempo altera las células y las reacciones químicas.
+Por lo general no hace falta preparación, pero conviene informar de medicamentos y suplementos, que alteran los resultados. La muestra suele recogerse a mitad del chorro, en un recipiente limpio. La guía europea propone medir la calidad de la recogida con dos indicadores: la tasa de contaminación de los cultivos y la concentración de la orina. Una toma mal hecha arrastra células de la piel o de los genitales. La orina debe llegar pronto al laboratorio o conservarse refrigerada, porque el tiempo altera células y reacciones químicas.
 
 ## [interpretation] Qué busca la interpretación
 
-El análisis no da un diagnóstico por sí solo; se lee en conjunto y junto con los síntomas.
+El análisis no da un diagnóstico por sí solo; se lee junto con los síntomas.
 
-• Leucocitos y nitritos: la presencia de glóbulos blancos y de nitritos sugiere infección urinaria. Un resultado negativo de nitritos no la descarta, porque no todas las bacterias producen esta señal.
-• Sangre: puede deberse a infección, cálculos, lesiones del riñón o de las vías urinarias, ejercicio intenso, menstruación o ciertos fármacos. El microscopio ayuda a confirmar si hay glóbulos rojos íntegros, y la forma de estos y la presencia de cilindros orientan sobre si el origen es el filtro renal o las vías urinarias.
-• Proteínas: pueden aparecer de forma pasajera con fiebre, ejercicio o deshidratación. Si persisten en controles repetidos, sugieren daño del riñón y exigen pruebas más específicas.
-• Glucosa y cetonas: se asocian con frecuencia a la diabetes, aunque las cetonas también aparecen con el ayuno o ciertas dietas.
-• Bilirrubina y urobilinógeno: pueden orientar hacia una enfermedad hepática o de las vías biliares.
-• Cilindros, cristales y células: indican en qué parte del riñón puede estar el problema o si hay tendencia a formar cálculos; abundantes células escamosas suelen reflejar contaminación de la muestra.
+• Leucocitos y nitritos: sugieren infección urinaria. Un metaanálisis pediátrico mostró que una tira de nitritos positiva indica infección con probabilidad muy alta a cualquier edad, pero que una negativa no la descarta, sobre todo en lactantes y niños pequeños.
+• Sangre: puede deberse a infección, cálculos, lesiones renales o urinarias, ejercicio intenso, menstruación o fármacos. La guía urológica estadounidense define la hematuria microscópica por el recuento de glóbulos rojos al microscopio y pide repetir el análisis cuando se resuelve una causa ginecológica o benigna; la actualización de 2025 revisó la estratificación del riesgo de cáncer urinario.
+• Proteínas: pueden ser pasajeras con fiebre, ejercicio o deshidratación. Si persisten, sugieren daño renal; para detectarlo en personas de riesgo, la guía europea recomienda medir la albúmina.
+• Glucosa y cetonas: se asocian con la diabetes; las cetonas también aparecen con el ayuno. La bilirrubina y el urobilinógeno orientan hacia enfermedad hepática o biliar.
+• Cilindros, cristales y células: según la revisión de 2019, el sedimento ayuda a identificar el compartimento renal afectado y a orientar tratamiento y pronóstico.
 
-## [considerations] Limitaciones
+## [considerations] Qué dice la evidencia
 
-La tira reactiva puede dar falsos positivos y falsos negativos por contaminación, demora en el análisis, medicamentos, vitamina C o variaciones de la concentración y de la acidez de la orina. Una orina normal no descarta toda enfermedad, y un hallazgo anormal suele requerir una repetición o estudios complementarios, como el urocultivo o la medición de la creatinina en sangre.
+Lo expuesto se apoya sobre todo en guías de práctica clínica (uroanálisis europea de 2023, microhematuria urológica de 2020 y 2025, bacteriuria asintomática de 2019), en una revisión docente de nefrología sobre el sedimento y en un metaanálisis sobre la tira de nitritos en la infancia. No se identificaron ensayos que comparen el examen completo con no hacerlo: se evalúa por componentes.
 
-Los intervalos de referencia varían entre laboratorios, por lo que cada informe debe leerse con los límites que él mismo indica. El resultado lo interpreta el profesional que atiende a la persona.
+Hay consenso en que el estudio orienta pero no diagnostica, y en que el cribado indiscriminado carece de respaldo. Se discute el rendimiento de cada componente según la población (niños pequeños, embarazo, personas mayores), cuándo sustituir la proteína de la tira por la albúmina cuantificada y cuánto peso dar a la microscopía manual frente a la automática. La preparación y la conservación descansan en fuentes divulgativas.
 
-## [risks] Riesgos
+## [additional_information] Limitaciones
 
-Es una prueba sin riesgos conocidos: solo requiere orinar en un recipiente y no produce molestias.
+La tira puede dar falsos positivos y negativos por contaminación, demora, fármacos, vitamina C o cambios en la concentración y la acidez. Un resultado normal no descarta enfermedad y uno anormal suele requerir repetición o estudios complementarios. Los intervalos de referencia varían entre laboratorios. Es una prueba sin riesgos conocidos; el riesgo indirecto es pedirla sin necesidad y tratar hallazgos sin importancia.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Urocultivo: confirma y caracteriza la infección cuando el examen general la sugiere.
-• Infección urinaria, cistitis y pielonefritis: motivos frecuentes de solicitud del estudio.
-• Enfermedad renal crónica y lesión renal aguda: pueden manifestarse con proteínas, sangre o cilindros.
-• Microalbuminuria y relación albúmina/creatinina: pruebas específicas para detectar daño renal temprano, sobre todo en la diabetes.
-• Litiasis renal: la sangre y los cristales en la orina pueden ser pistas.
-• Perfil renal y creatinina sérica: miden la función del riñón desde la sangre y completan la información de la orina.
+• Urocultivo: confirma la infección sugerida; la guía europea propone usar los leucocitos para decidir en qué cultivos estudiar la sensibilidad a antibióticos.
+• Infección urinaria: motivo frecuente de solicitud; la bacteriuria asintomática no siempre debe tratarse.
+• Enfermedad renal crónica y lesión renal aguda: pueden cursar con proteínas, sangre o cilindros; la guía KDIGO 2024 es el marco de evaluación de la primera.
+• Relación albúmina/creatinina: detecta daño renal temprano, sobre todo en la diabetes.
+• Litiasis renal y perfil renal: la sangre y los cristales son pistas; la creatinina sérica mide la función renal desde la sangre.
 
 ## [references]
 
+- Kouri et al., 2024. The EFLM European Urinalysis Guideline 2023. PMID 38534005, DOI 10.1515/cclm-2024-0070 | https://europepmc.org/article/MED/38534005 | Clin Chem Lab Med
+- Cavanaugh y Perazella, 2019. Urine Sediment Examination in the Diagnosis and Management of Kidney Disease: Core Curriculum 2019. PMID 30249419, DOI 10.1053/j.ajkd.2018.07.012 | https://europepmc.org/article/MED/30249419 | Am J Kidney Dis
+- Coulthard, 2019. Using urine nitrite sticks to test for urinary tract infection in children aged < 2 years: a meta-analysis. PMID 30895368, DOI 10.1007/s00467-019-04226-6 | https://europepmc.org/article/MED/30895368 | Pediatr Nephrol
+- Barocas et al., 2020. Microhematuria: AUA/SUFU Guideline. PMID 32698717, DOI 10.1097/ju.0000000000001297 | https://europepmc.org/article/MED/32698717 | J Urol
+- Barocas et al., 2025. Updates to Microhematuria: AUA/SUFU Guideline (2025). PMID 40013563, DOI 10.1097/ju.0000000000004490 | https://europepmc.org/article/MED/40013563 | J Urol
+- US Preventive Services Task Force, 2019. Screening for Asymptomatic Bacteriuria in Adults: Recommendation Statement. PMID 31550038, DOI 10.1001/jama.2019.13069 | https://europepmc.org/article/MED/31550038 | JAMA
+- KDIGO CKD Work Group, 2024. KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. PMID 38490803, DOI 10.1016/j.kint.2023.10.018 | https://europepmc.org/article/MED/38490803 | Kidney Int
 - Urinalysis (MedlinePlus Medical Encyclopedia) | https://medlineplus.gov/ency/article/003579.htm | MedlinePlus
-- Urinalysis: A Comprehensive Review | https://www.aafp.org/afp/2005/0315/p1153 | AAFP
-- Análisis de orina (prueba de orina) | https://www.kidney.org/es/temas-del-rinon/analisis-de-orina-prueba-de-orina | National Kidney Foundation
-- Protein in Urine: MedlinePlus Medical Test | https://medlineplus.gov/lab-tests/protein-in-urine/ | MedlinePlus
-- Nitrites in Urine: MedlinePlus Medical Test | https://medlineplus.gov/lab-tests/nitrites-in-urine/ | MedlinePlus
-- Blood in Urine: MedlinePlus Medical Test | https://medlineplus.gov/lab-tests/blood-in-urine/ | MedlinePlus
+- Urinalysis: A Comprehensive Review (2005) | https://www.aafp.org/afp/2005/0315/p1153 | AAFP
 - Urinalysis complete panel - Urine 24356-8 | https://www.findacode.com/loinc/24356-8--urinalysis-complete-pnl-ur.html | LOINC (Find-A-Code)
-- Urinalysis (Provincial Laboratory Formulary) | https://www.gov.nl.ca/labformulary/formulary/urinalysis/ | Newfoundland and Labrador Laboratory Formulary
