@@ -69,6 +69,7 @@
       "/diagnostics/containers",
       "/diagnostics/reports",
       "/quotations",
+      "/medical-groups",
       "/prescription-favorites",
       "/referrals",
       "/insurance-carrier-catalog",

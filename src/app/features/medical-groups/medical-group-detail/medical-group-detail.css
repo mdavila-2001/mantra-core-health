@@ -1,0 +1,95 @@
+/* ============================================================================
+    Consulta de un grupo médico. Mobile-first: una columna; desde 1024 px el
+    estado y las notas del ejercicio quedan arriba a la izquierda, como pide
+    la ficha, y el formulario a la derecha.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.consulta {
+  display: grid;
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-6);
+}
+
+.consulta__lateral,
+.consulta__cuerpo,
+.consulta__bloque,
+.consulta__estado,
+.consulta__notas {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-3);
+}
+
+.consulta__lateral {
+  gap: var(--sp-6);
+}
+
+.consulta__cuerpo {
+  gap: var(--sp-6);
+}
+
+.consulta__rotulo {
+  margin: 0;
+  font-size: var(--fs-overline);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.consulta__estado app-badge {
+  justify-self: start;
+}
+
+.consulta__nota {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.consulta__texto {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.consulta__encabezado,
+.consulta__acciones,
+.consulta__integrante-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.consulta__acciones {
+  justify-content: flex-start;
+}
+
+.consulta__equipo {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.consulta__integrante {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1024px) {
+  .consulta {
+    grid-template-columns: minmax(16rem, 22rem) 1fr;
+    align-items: start;
+  }
+}

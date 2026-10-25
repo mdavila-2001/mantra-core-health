@@ -285,6 +285,7 @@
   "GET /loyalty/me/points",
   "GET /loyalty/programs",
   "GET /medical-groups",
+  "GET /medical-groups/eligible-members",
   "GET /medical-groups/patients/{patientProfileId}/conditions",
   "GET /medical-groups/{id}",
   "GET /notifications/me",

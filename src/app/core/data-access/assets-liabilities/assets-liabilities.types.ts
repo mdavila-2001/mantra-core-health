@@ -37,6 +37,38 @@ export interface LiabilitySchedule {
   readonly statusConceptId: string;
 }
 
+/** Respuesta de `GET /accounting/practitioner/liabilities/:id/schedule`. */
+export interface LiabilityScheduleView {
+  readonly liabilityId: string;
+  readonly code: string;
+  readonly principalAmount: string | null;
+  readonly outstandingAmount: string | null;
+  readonly schedule: readonly LiabilitySchedule[];
+}
+
+/** Una depreciación registrada de un activo, con su período fiscal. */
+export interface AssetDepreciation {
+  readonly id: string;
+  readonly fiscalPeriodId: string;
+  readonly fiscalPeriodCode: string | null;
+  readonly periodStartDate: string | null;
+  readonly periodEndDate: string | null;
+  readonly amount: string;
+  readonly bookValueAfter: string | null;
+  readonly transactionId: string | null;
+  readonly registeredAt: string;
+}
+
+/** Respuesta de `GET /accounting/practitioner/assets/:id/depreciations`. */
+export interface AssetDepreciationHistory {
+  readonly assetId: string;
+  readonly code: string;
+  readonly acquisitionCost: string | null;
+  readonly accumulatedDepreciation: string | null;
+  readonly bookValue: string | null;
+  readonly depreciations: readonly AssetDepreciation[];
+}
+
 export interface LiabilityCreated {
   readonly id: string;
   readonly code: string;

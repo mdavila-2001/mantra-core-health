@@ -109,6 +109,10 @@ export interface AccessArea {
  * mes, y competían de igual a igual con las que se usan todos los días.
  * Pedido del propietario del producto mirando la zona del médico.
  *
+ * `my-medical-groups` (carril 21, 25/10/2026) sigue el mismo criterio que
+ * «Cotizaciones»: se arma sobre el catálogo de servicios y conserva su renglón
+ * en el menú lateral.
+ *
  * Ninguna se vuelve inalcanzable, y por eso salen del árbol y no del registro:
  * «Formularios», «Glosario», «Mis servicios» y «Cotizaciones» conservan su
  * renglón en el menú lateral —es la lista cerrada que fija
@@ -137,6 +141,7 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'glossary',
   'my-services',
   'my-quotations',
+  'my-medical-groups',
   'administration/pharmacy-orders',
   'administration/pharmacy-campaigns',
   'administration/pharmacy-catalog',

@@ -322,6 +322,22 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
+### `HealthcareServicesClient` — 4 operaciones
+
+Procedimientos que una sede publica, con su precio propio (carril CM-06).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices/:practiceId/sites` | `ProcedureOffers` (elegir la sede) |
+| `GET` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (con `practiceSiteId` en la consulta) |
+| `POST` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (publicar un procedimiento) |
+| `PATCH` | `/practices/:practiceId/healthcare-services/:id` | `ProcedureOffers` (activar, desactivar, fijar el precio) |
+
+El precio propio se crea antes con `ServicesCatalogClient.create` —un ítem de
+catálogo por sede— y su `id` viaja como `serviceCatalogId`. `serviceCatalogId`
+es opcional al publicar: sin precio el procedimiento queda publicado pero no
+aparece en las búsquedas del paciente.
+
 ### `SchedulingClient` — 33 operaciones
 
 | Método | Ruta | Consumidor |
@@ -1430,6 +1446,24 @@ alcanzable desde este repositorio.
 | `POST` | `/quotations` | `QuotationForm` + `QuotationList` | No |
 | `GET` | `/quotations/:id` | `QuotationForm` + `QuotationList` | No |
 
+### `MedicalGroupsClient` — 9 operaciones · carril 21
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/medical-groups` | `MedicalGroupList` | No |
+| `GET` | `/medical-groups/eligible-members` | `MedicalGroupForm` | No |
+| `GET` | `/medical-groups/patients/:patientProfileId/conditions` | `MedicalGroupForm` | No |
+| `GET` | `/medical-groups/:id` | `MedicalGroupDetail` | No |
+| `POST` | `/medical-groups` | `MedicalGroupForm` | No |
+| `POST` | `/medical-groups/:groupId/members/:memberId/respond` | `MedicalGroupDetail` | No |
+| `POST` | `/medical-groups/:groupId/reschedule-requests` | `MedicalGroupDetail` | No |
+| `POST` | `/medical-groups/:groupId/reschedule-requests/respond` | `MedicalGroupDetail` | No |
+| `PATCH` | `/medical-groups/:groupId/exercise-notes` | `MedicalGroupDetail` | No |
+
+Todas exigen `PRACTITIONER` o `CLINICIAN`. Sólo se puede invitar a colegas de la misma
+organización que la práctica del servicio (`eligible-members` aplica la misma regla que el
+alta), y el nombre del paciente viaja sólo al creador y a los miembros que aceptaron.
+
 ### `SurveysClient` — 17 operaciones
 
 | Método | Ruta | Consumidor | Pública |
@@ -1617,7 +1651,6 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/pharmacy/pharmacies/:pharmacyId/summary` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacy/sites` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacy/sites/:siteId/prices` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
-| `GET` | `/practitioners/:practitionerProfileId/insurance-carriers` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/practitioners/:practitionerProfileId/insurance-networks` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `PATCH` | `/practitioners/me/sites/:siteId` | [`PracticeSitesClient`](../../src/app/core/data-access/practice-sites/practice-sites.client.ts) | Fuente frontend; no certifica API real |
 | `PUT` | `/practitioners/me/sites/:siteId/bank-qr` | [`PracticeSitesClient`](../../src/app/core/data-access/practice-sites/practice-sites.client.ts) | Fuente frontend; no certifica API real |
