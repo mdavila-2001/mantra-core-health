@@ -1,15 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { PracticeOnboardingClient } from '../../../core/data-access/practice-onboarding/practice-onboarding.client';
 import type { CreatedOrganizationPractice } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
-import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   UbicacionPicker,
   type Coordenadas,
@@ -19,16 +20,6 @@ import {
 const MAX_NOMBRE = 200;
 const MAX_DIRECCION = 500;
 const MAX_CIUDAD = 255;
-
-/** Lo que se escribe, todavía como texto. */
-interface FormularioDelCentro {
-  readonly practiceName: string;
-  readonly siteName: string;
-  readonly addressText: string;
-  readonly cityText: string;
-}
-
-const VACIO: FormularioDelCentro = { practiceName: '', siteName: '', addressText: '', cityText: '' };
 
 /**
  * Lo que la API respondió, dicho en castellano.
@@ -68,7 +59,7 @@ export function mensajeDeLaConfiguracion(error: unknown): string {
  */
 @Component({
   selector: 'app-medical-center-setup',
-  imports: [Alert, AppButton, Card, FormField, Input, PageHeader, UbicacionPicker],
+  imports: [Alert, Card, CampoPersonalizado, PageHeader, PaginatedForm, UbicacionPicker],
   templateUrl: './medical-center-setup.html',
   styleUrl: './medical-center-setup.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,13 +68,28 @@ export class MedicalCenterSetup {
   private readonly session = inject(SessionStore);
   private readonly client = inject(PracticeOnboardingClient);
 
-  protected readonly nameMax = MAX_NOMBRE;
-  protected readonly addressMax = MAX_DIRECCION;
-  protected readonly cityMax = MAX_CIUDAD;
+  readonly form = new FormGroup({
+    practiceName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_NOMBRE)],
+    }),
+    siteName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_NOMBRE)],
+    }),
+    addressText: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_DIRECCION)],
+    }),
+    cityText: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAX_CIUDAD)],
+    }),
+    // El punto en el mapa es obligatorio: sin él la sede no se puede ordenar
+    // por cercanía. Lo escribe el selector de ubicación, no una persona.
+    point: new FormControl<Coordenadas | null>(null, { validators: [Validators.required] }),
+  });
 
-  protected readonly form = signal<FormularioDelCentro>(VACIO);
-  protected readonly point = signal<Coordenadas | null>(null);
-  protected readonly submitted = signal(false);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly created = signal<CreatedOrganizationPractice | null>(null);
@@ -98,38 +104,83 @@ export class MedicalCenterSetup {
     marcarEnMapa: 'centro-medico-sede-location-pick',
   };
 
-  protected readonly errors = computed(() => {
-    const f = this.form();
-    return {
-      practiceName: f.practiceName.trim().length < 2 ? 'Escriba el nombre del centro médico.' : '',
-      siteName: f.siteName.trim().length < 2 ? 'Escriba el nombre de la sede.' : '',
-      addressText: f.addressText.trim().length < 2 ? 'Escriba la dirección de la sede.' : '',
-      point: this.point() === null ? 'Marque la sede en el mapa.' : '',
-    };
-  });
+  /** Dos páginas, de a cuatro campos como tope: el centro y su primera sede. */
+  protected readonly pages = paginarCampos([
+    {
+      titulo: 'El centro',
+      hint: 'Cómo se llama el centro y su primera sede.',
+      campos: [
+        {
+          key: 'practiceName',
+          label: 'Nombre del centro médico',
+          control: 'text' as const,
+          required: true,
+          testId: 'centro-medico-setup-practice-name',
+          mensajeDeError: 'Escriba el nombre del centro médico.',
+        },
+        {
+          key: 'siteName',
+          label: 'Nombre de la sede',
+          hint: 'Como la va a ver el paciente: «Sede Norte», «Casa matriz».',
+          control: 'text' as const,
+          required: true,
+          testId: 'centro-medico-setup-site-name',
+          mensajeDeError: 'Escriba el nombre de la sede.',
+        },
+      ],
+    },
+    {
+      titulo: 'La sede',
+      hint: 'Dónde queda: la dirección y el punto exacto en el mapa.',
+      campos: [
+        {
+          key: 'addressText',
+          label: 'Dirección',
+          control: 'text' as const,
+          required: true,
+          autocomplete: 'street-address',
+          testId: 'centro-medico-setup-address',
+          mensajeDeError: 'Escriba la dirección de la sede.',
+        },
+        {
+          key: 'cityText',
+          label: 'Ciudad',
+          control: 'text' as const,
+          autocomplete: 'address-level2',
+          testId: 'centro-medico-setup-city',
+        },
+        {
+          key: 'point',
+          label: 'Ubicación de la sede en el mapa',
+          hint: 'Use su GPS o toque el plano. Sin el punto, el centro no aparece cuando alguien busca el más cercano.',
+          control: 'custom' as const,
+          ancho: 'completo' as const,
+          required: true,
+          mensajeDeError: 'Marque la sede en el mapa.',
+        },
+      ],
+    },
+  ]);
 
-  protected readonly valid = computed(() => Object.values(this.errors()).every((e) => e === ''));
-
-  protected set<K extends keyof FormularioDelCentro>(field: K, value: string | number | null): void {
-    this.form.update((f) => ({ ...f, [field]: String(value ?? '') }));
-  }
-
-  protected shown(field: 'practiceName' | 'siteName' | 'addressText' | 'point'): string {
-    return this.submitted() ? this.errors()[field] : '';
+  protected setPoint(point: Coordenadas | null): void {
+    this.form.controls.point.setValue(point);
+    this.form.controls.point.markAsTouched();
   }
 
   save(): void {
     if (this.saving()) return;
-    this.submitted.set(true);
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const tenantId = this.session.activeTenantId();
-    const point = this.point();
-    if (!this.valid() || point === null) return;
     if (tenantId === null) {
       this.errorMessage.set('No encontramos la organización activa. Vuelva a iniciar sesión.');
       return;
     }
 
-    const f = this.form();
+    const f = this.form.getRawValue();
+    const point = f.point!;
     const city = f.cityText.trim();
     this.saving.set(true);
     this.errorMessage.set(null);

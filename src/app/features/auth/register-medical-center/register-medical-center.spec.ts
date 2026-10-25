@@ -23,13 +23,12 @@ describe('RegisterMedicalCenter', () => {
   let navegaciones: string[];
   let catalogoCaido: boolean;
 
-  /** Acceso al estado protegido, que la plantilla usa y el spec necesita escribir. */
-  type Interno = {
-    set(campo: string, valor: string): void;
+  /** Acceso al estado protegido, que la plantilla usa y el spec necesita leer. */
+  interface Interno {
     registered: () => boolean;
     errorMessage: () => string | null;
-    submitted: () => boolean;
-  };
+    paginas: () => readonly { campos: readonly unknown[] }[];
+  }
   const interno = (): Interno => fixture.componentInstance as unknown as Interno;
 
   beforeEach(async () => {
@@ -72,11 +71,13 @@ describe('RegisterMedicalCenter', () => {
   afterEach(() => http.verify());
 
   function completar(): void {
-    interno().set('legalName', 'Centro Médico Norte S.R.L.');
-    interno().set('legalEntityType', 'SRL');
-    interno().set('ownerName', 'Marta Rojas');
-    interno().set('email', 'marta@centro.test');
-    interno().set('password', 'secreto12');
+    fixture.componentInstance.form.setValue({
+      legalName: 'Centro Médico Norte S.R.L.',
+      legalEntityType: 'SRL',
+      ownerName: 'Marta Rojas',
+      email: 'marta@centro.test',
+      password: 'secreto12',
+    });
   }
 
   it('envía el tipo de salud existente con país y jurisdicción resueltos por código', () => {
@@ -98,20 +99,25 @@ describe('RegisterMedicalCenter', () => {
     req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: true });
   });
 
-  it('con campos obligatorios vacíos no sale a la red y muestra los errores', async () => {
+  it('con campos obligatorios vacíos no sale a la red y los marca', () => {
     fixture.componentInstance.submit();
-    fixture.detectChanges();
 
     http.expectNone(RUTA_ALTA);
-    expect(interno().submitted()).toBe(true);
-    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Escriba la razón social del centro.');
-    expect(texto).toContain('La contraseña necesita al menos 8 caracteres.');
+    expect(fixture.componentInstance.form.controls.legalName.touched).toBe(true);
+    expect(fixture.componentInstance.form.controls.password.touched).toBe(true);
+  });
+
+  it('se sirve de a cuatro campos como tope: el centro y la cuenta', () => {
+    const paginas = interno().paginas();
+
+    expect(paginas).toHaveLength(2);
+    expect(paginas.map((p) => p.campos.length)).toEqual([2, 3]);
+    expect(Math.max(...paginas.map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
   it('una contraseña corta no se envía', () => {
     completar();
-    interno().set('password', 'corta');
+    fixture.componentInstance.form.controls.password.setValue('corta');
     fixture.componentInstance.submit();
 
     http.expectNone(RUTA_ALTA);
