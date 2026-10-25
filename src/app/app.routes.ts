@@ -1752,6 +1752,17 @@ export const routes: Routes = [
             './features/admin/services-catalog/procedure-import/procedure-import'
           ).then((m) => m.ProcedureImport),
       ),
+      // Centros médicos · qué procedimientos ofrece cada sede del centro y a
+      // qué precio. Cuelga del catálogo de servicios, como el importador.
+      pantallaDeOperacion(
+        'administration/services-catalog',
+        'procedure-offers',
+        'Procedimientos por sede',
+        () =>
+          import('./features/admin/services-catalog/procedure-offers/procedure-offers').then(
+            (m) => m.ProcedureOffers,
+          ),
+      ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then(
           (m) => m.AppointmentNew,
