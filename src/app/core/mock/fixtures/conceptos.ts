@@ -870,7 +870,7 @@ conjunto(
   'Modo del ejecutor de la orden',
   'Quién hace el procedimiento que pidió el médico: él mismo, un centro o lo que elija el paciente.',
 );
-export const MODO_DEL_EJECUTOR = definir('service-request-performer-selection', [
+export const PERFORMER_MODE = definir('service-request-performer-selection', [
   ['SR_PERF_SELF', 'El médico lo hace él mismo'],
   ['SR_PERF_ORGANIZATION', 'En un centro que sugiere el médico'],
   ['SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente'],
@@ -949,7 +949,7 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
  * que todos los módulos derivan con `uuid('<semilla>')`, no el de `definir`, para que la orden, el
  * centro y la búsqueda hablen del mismo concepto.
  */
-function definirConId(valueSet: string, entradas: readonly (readonly [seed: string, display: string])[]): void {
+function defineWithId(valueSet: string, entradas: readonly (readonly [seed: string, display: string])[]): void {
   entradas.forEach(([code, display], indice) => {
     registro.set(code, {
       id: uuid(code),
@@ -963,7 +963,7 @@ function definirConId(valueSet: string, entradas: readonly (readonly [seed: stri
 }
 
 conjunto('VS_BO_MEDICAL_PROCEDURE', 'Nomenclador de procedimientos médicos', 'Procedimientos del nomenclador boliviano.');
-definirConId('VS_BO_MEDICAL_PROCEDURE', [
+defineWithId('VS_BO_MEDICAL_PROCEDURE', [
   ['proc-endoscopia-alta', 'Endoscopia digestiva alta'],
   ['proc-colonoscopia', 'Colonoscopia'],
 ]);

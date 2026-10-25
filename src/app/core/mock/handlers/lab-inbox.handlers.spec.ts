@@ -2,7 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 
 import {
   CATEGORIA_ORDEN,
-  MODO_DEL_EJECUTOR,
+  PERFORMER_MODE,
   SPECIMEN_CONTAINER_TYPE,
   SPECIMEN_STATUS,
   SPECIMEN_TYPE,
@@ -231,7 +231,7 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
         patientProfileId: PACIENTE.id,
         codeConceptId: uuid('proc-colonoscopia'),
         categoryConceptId: CATEGORIA_ORDEN['SRQ-PROCEDURE'],
-        performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_ORGANIZATION'],
+        performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
         suggestedPracticeSiteId: uuid('site-cm-sur-1'),
       },
       medica,

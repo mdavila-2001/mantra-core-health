@@ -3,7 +3,7 @@ import type {
   ServiceRequestPerformerInput,
 } from '../../data-access/diagnostics/service-request-performer.types';
 import type { OrdenSimulada } from '../fixtures/clinica';
-import { nombreDeSedeDeEjemplo } from '../fixtures/procedure-orders';
+import { sampleSiteName } from '../fixtures/procedure-orders';
 
 /* ============================================================================
     El ejecutor de la orden en el doble (CONTRATO §3): lo que `POST
@@ -46,7 +46,7 @@ export function performerFieldsOfOrder(order: OrdenSimulada): ServiceRequestPerf
       ? {}
       : {
           suggestedPracticeSiteId: order.suggestedPracticeSiteId,
-          suggestedPracticeSiteName: nombreDeSedeDeEjemplo(order.suggestedPracticeSiteId),
+          suggestedPracticeSiteName: sampleSiteName(order.suggestedPracticeSiteId),
         }),
   };
 }

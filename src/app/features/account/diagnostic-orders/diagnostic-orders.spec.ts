@@ -536,13 +536,13 @@ describe('DiagnosticOrders', () => {
     configurar(PROFILE_ID);
     await mount(`${RUTA}?tab=PROCEDURE`);
     const sede = id('site');
-    const medico = id('practitioner');
+    const practitioner = id('practitioner');
     responder(
       [
         orden({
           categoryConceptId: 'cat-proc',
           performerSelectionConceptId: 'perf-self',
-          performerPractitionerProfileId: medico,
+          performerPractitionerProfileId: practitioner,
           suggestedPracticeSiteId: sede,
           suggestedPracticeSiteName: null,
         }),
@@ -553,7 +553,7 @@ describe('DiagnosticOrders', () => {
     expect(texto()).toContain('Su médico se ofreció a hacerlo');
     expect(texto()).not.toContain('Sede sugerida');
     expect(texto()).not.toContain(sede);
-    expect(texto()).not.toContain(medico);
+    expect(texto()).not.toContain(practitioner);
   });
 
   /* ---- Sin uuids en pantalla -------------------------------------------------- */

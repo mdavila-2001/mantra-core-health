@@ -1,4 +1,4 @@
-import { CATEGORIA_ORDEN, ESTADO, MODO_DEL_EJECUTOR, PRIORIDAD } from './conceptos';
+import { CATEGORIA_ORDEN, ESTADO, PERFORMER_MODE, PRIORIDAD } from './conceptos';
 import type { OrdenSimulada } from './clinica';
 import { MEDICA, PACIENTE } from './personas';
 import { iso, uuid } from '../mock-store';
@@ -17,17 +17,17 @@ import { iso, uuid } from '../mock-store';
     ========================================================================== */
 
 /** Los nombres de las sedes de ejemplo, que la API resolvería desde `practice`. */
-const NOMBRE_DE_SEDE: ReadonlyMap<string, string> = new Map([
+const SITE_NAME: ReadonlyMap<string, string> = new Map([
   [uuid('site-cm-norte-1'), 'Centro Médico Norte — Sede Central'],
   [uuid('site-cm-sur-1'), 'Centro Médico Sur — Sede Central'],
 ]);
 
 /** El nombre de una sede de ejemplo, o `null` si no se conoce (nunca el uuid). */
-export function nombreDeSedeDeEjemplo(siteId: string): string | null {
-  return NOMBRE_DE_SEDE.get(siteId) ?? null;
+export function sampleSiteName(siteId: string): string | null {
+  return SITE_NAME.get(siteId) ?? null;
 }
 
-const PROCEDIMIENTOS_DE_EJEMPLO: readonly OrdenSimulada[] = [
+const SAMPLE_PROCEDURE_ORDERS: readonly OrdenSimulada[] = [
   {
     id: uuid('order-proc-endoscopia-alta'),
     patientProfileId: PACIENTE.id,
@@ -39,7 +39,7 @@ const PROCEDIMIENTOS_DE_EJEMPLO: readonly OrdenSimulada[] = [
     reasonText: 'Dolor epigástrico persistente',
     createdAt: iso(-4),
     // El médico sugiere un centro: es una recomendación, no un candado.
-    performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_ORGANIZATION']!,
+    performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION']!,
     suggestedPracticeSiteId: uuid('site-cm-sur-1'),
   },
   {
@@ -53,11 +53,11 @@ const PROCEDIMIENTOS_DE_EJEMPLO: readonly OrdenSimulada[] = [
     reasonText: 'Control por antecedente familiar',
     createdAt: iso(-9),
     // Sin recomendación: elige la paciente.
-    performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_PATIENT_CHOICE']!,
+    performerSelectionConceptId: PERFORMER_MODE['SR_PERF_PATIENT_CHOICE']!,
   },
 ];
 
 /** Las órdenes de procedimiento sembradas de una persona, de la más nueva a la más vieja. */
-export function ordenesDeProcedimientoDe(patientProfileId: string): readonly OrdenSimulada[] {
-  return PROCEDIMIENTOS_DE_EJEMPLO.filter((o) => o.patientProfileId === patientProfileId);
+export function seededProcedureOrdersOf(patientProfileId: string): readonly OrdenSimulada[] {
+  return SAMPLE_PROCEDURE_ORDERS.filter((o) => o.patientProfileId === patientProfileId);
 }

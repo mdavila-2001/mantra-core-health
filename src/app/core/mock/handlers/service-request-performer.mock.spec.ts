@@ -1,6 +1,6 @@
-import { MODO_DEL_EJECUTOR } from '../fixtures/conceptos';
+import { PERFORMER_MODE } from '../fixtures/conceptos';
 import type { OrdenSimulada } from '../fixtures/clinica';
-import { ordenesDeProcedimientoDe } from '../fixtures/procedure-orders';
+import { seededProcedureOrdersOf } from '../fixtures/procedure-orders';
 import { PACIENTE } from '../fixtures/personas';
 import { uuid } from '../mock-store';
 import { performerFieldsOfOrder, pickPerformerFields } from './service-request-performer.mock';
@@ -58,11 +58,11 @@ describe('performerFieldsOfOrder', () => {
     expect(
       performerFieldsOfOrder({
         ...BASE,
-        performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_ORGANIZATION'],
+        performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
         suggestedPracticeSiteId: uuid('site-cm-sur-1'),
       }),
     ).toEqual({
-      performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_ORGANIZATION'],
+      performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
       suggestedPracticeSiteId: uuid('site-cm-sur-1'),
       suggestedPracticeSiteName: 'Centro Médico Sur — Sede Central',
     });
@@ -71,16 +71,16 @@ describe('performerFieldsOfOrder', () => {
   it('con el modo del paciente no hay sede ni nombre', () => {
     const campos = performerFieldsOfOrder({
       ...BASE,
-      performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_PATIENT_CHOICE'],
+      performerSelectionConceptId: PERFORMER_MODE['SR_PERF_PATIENT_CHOICE'],
     });
 
-    expect(campos).toEqual({ performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_PATIENT_CHOICE'] });
+    expect(campos).toEqual({ performerSelectionConceptId: PERFORMER_MODE['SR_PERF_PATIENT_CHOICE'] });
   });
 
   it('una sede desconocida da nombre null, nunca el uuid', () => {
     const campos = performerFieldsOfOrder({
       ...BASE,
-      performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_SELF'],
+      performerSelectionConceptId: PERFORMER_MODE['SR_PERF_SELF'],
       performerPractitionerProfileId: 'pr-1',
       suggestedPracticeSiteId: 'site-desconocida',
     });
@@ -91,7 +91,7 @@ describe('performerFieldsOfOrder', () => {
 
 describe('órdenes de procedimiento sembradas', () => {
   it('son dos, de la paciente de ejemplo, con los ids de procedimiento del contrato', () => {
-    const sembradas = ordenesDeProcedimientoDe(PACIENTE.id);
+    const sembradas = seededProcedureOrdersOf(PACIENTE.id);
 
     expect(sembradas.map((o) => o.codeConceptId).sort()).toEqual(
       [uuid('proc-endoscopia-alta'), uuid('proc-colonoscopia')].sort(),
@@ -99,6 +99,6 @@ describe('órdenes de procedimiento sembradas', () => {
   });
 
   it('una persona sin órdenes sembradas no recibe ninguna', () => {
-    expect(ordenesDeProcedimientoDe('otra-persona')).toEqual([]);
+    expect(seededProcedureOrdersOf('otra-persona')).toEqual([]);
   });
 });

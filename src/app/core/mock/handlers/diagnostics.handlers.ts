@@ -32,7 +32,7 @@ import { forbidden, notFound, preconditionFailed, reply, validation, type MockRe
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { citaDeLaOrden } from '../fixtures/centros';
-import { ordenesDeProcedimientoDe } from '../fixtures/procedure-orders';
+import { seededProcedureOrdersOf } from '../fixtures/procedure-orders';
 import { performerFieldsOfOrder, pickPerformerFields } from './service-request-performer.mock';
 
 /* ============================================================================
@@ -1476,7 +1476,7 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-results/me/orders', (request) => {
     const id = pacienteDeSesion(request);
-    const sembradas = ordenesDeProcedimientoDe(id);
+    const sembradas = seededProcedureOrdersOf(id);
     const items = [...ordenes.filtrar((o) => o.patientProfileId === id), ...sembradas].map((o, index) => {
       const informe = informes.filtrar((r) => r.serviceRequestId === o.id)[0];
       return {

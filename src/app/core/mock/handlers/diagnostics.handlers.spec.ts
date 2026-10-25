@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { CATEGORIA_ORDEN, ESTUDIO, MODO_DEL_EJECUTOR } from '../fixtures/conceptos';
+import { CATEGORIA_ORDEN, ESTUDIO, PERFORMER_MODE } from '../fixtures/conceptos';
 import { PACIENTE } from '../fixtures/personas';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
@@ -147,7 +147,7 @@ describe('POST /clinical/service-requests/duplicate-check', () => {
 describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
   const router = new MockRouter();
   const medica = buscarUsuario('medica')!;
-  const paciente = buscarUsuario('paciente')!;
+  const patient = buscarUsuario('paciente')!;
 
   registrarDiagnostico(router);
 
@@ -176,7 +176,7 @@ describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
   }
 
   const propias = () =>
-    call<{ items: readonly OrdenPropia[] }>('GET', '/diagnostic-results/me/orders', undefined, paciente).items;
+    call<{ items: readonly OrdenPropia[] }>('GET', '/diagnostic-results/me/orders', undefined, patient).items;
 
   it('devuelve las dos órdenes de procedimiento de la paciente con sus campos', () => {
     const endoscopia = propias().find((o) => o.id === uuid('order-proc-endoscopia-alta'));
@@ -184,11 +184,11 @@ describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
 
     expect(endoscopia).toMatchObject({
       categoryConceptId: CATEGORIA_ORDEN['SRQ-PROCEDURE'],
-      performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_ORGANIZATION'],
+      performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
       suggestedPracticeSiteId: uuid('site-cm-sur-1'),
       suggestedPracticeSiteName: 'Centro Médico Sur — Sede Central',
     });
-    expect(colonoscopia?.performerSelectionConceptId).toBe(MODO_DEL_EJECUTOR['SR_PERF_PATIENT_CHOICE']);
+    expect(colonoscopia?.performerSelectionConceptId).toBe(PERFORMER_MODE['SR_PERF_PATIENT_CHOICE']);
     expect('suggestedPracticeSiteId' in (colonoscopia ?? {})).toBe(false);
   });
 
@@ -210,7 +210,7 @@ describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
         patientProfileId: PACIENTE.id,
         codeConceptId: uuid('proc-colonoscopia'),
         categoryConceptId: CATEGORIA_ORDEN['SRQ-PROCEDURE'],
-        performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_SELF'],
+        performerSelectionConceptId: PERFORMER_MODE['SR_PERF_SELF'],
         performerPractitionerProfileId: medica.practitionerProfileId,
         suggestedPracticeSiteId: uuid('site-cm-norte-1'),
       },
@@ -220,7 +220,7 @@ describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
 
     const guardada = propias().find((o) => o.id === creada.body.id);
     expect(guardada).toMatchObject({
-      performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_SELF'],
+      performerSelectionConceptId: PERFORMER_MODE['SR_PERF_SELF'],
       performerPractitionerProfileId: medica.practitionerProfileId,
       suggestedPracticeSiteId: uuid('site-cm-norte-1'),
       suggestedPracticeSiteName: 'Centro Médico Norte — Sede Central',
@@ -235,7 +235,7 @@ describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
         patientProfileId: PACIENTE.id,
         codeConceptId: uuid('proc-endoscopia-alta'),
         categoryConceptId: CATEGORIA_ORDEN['SRQ-PROCEDURE'],
-        performerSelectionConceptId: MODO_DEL_EJECUTOR['SR_PERF_ORGANIZATION'],
+        performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
         suggestedPracticeSiteId: uuid('site-desconocida'),
       },
       medica,
