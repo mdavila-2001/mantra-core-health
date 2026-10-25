@@ -104,7 +104,11 @@ test.describe('carril 03 — alta de paciente', () => {
     page.on('console', (msg) => {
       // El dev server inyecta scripts en línea que su propia CSP bloquea (ver
       // `carga-masiva-baseline.spec.ts`). No es de esta pantalla.
-      if (msg.type() === 'error' && !/Content Security Policy/.test(msg.text())) {
+      // El simulador busca primero el glosario completo (`public/glossary-data/`,
+      // en `.gitignore`) y, si no está, cae a la semilla (`glossary-shards.ts`):
+      // ese 404 es el sondeo previsto de un checkout sin el glosario pesado.
+      const glossaryProbe = msg.location().url.includes('/glossary-data/');
+      if (msg.type() === 'error' && !/Content Security Policy/.test(msg.text()) && !glossaryProbe) {
         errores.push(msg.text());
       }
     });
