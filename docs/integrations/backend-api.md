@@ -402,6 +402,7 @@ paso previo.
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/clinical/patients/:patientProfileId/summary` | `PatientChart` (UC-39-20) |
+| `GET` | `/clinical/patients/:patientProfileId/received-services` | `ReceivedServicesClient` — pestaña «Servicios recibidos» de `MedicalRecord` y de `PatientChart` (ver `contracts/received-services.md`) |
 | `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
 | `POST` | `/clinical/encounters/check-in` | `PatientChart` (UC-08-02) |
 | `POST` | `/clinical/encounters/:encounterId/close` | `PatientChart` (UC-08-14) |

@@ -33,7 +33,7 @@ import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handle
     escrituras que la pantalla del médico usa.
     ========================================================================== */
 
-function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
+export function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
   const user = request.user;
   if (user === null) return false;
   if (user.roles.includes('SUPERADMIN')) return true;
