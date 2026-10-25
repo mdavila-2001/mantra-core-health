@@ -40,7 +40,7 @@ export interface SimulatedSet {
   readonly defaultVersionId: string;
 }
 
-const record = new Map<string, SimulatedConcept>();
+export const record = new Map<string, SimulatedConcept>();
 const sets = new Map<string, SimulatedSet>();
 
 export const CODE_SYSTEM_VERSION_ID = uuid('code-system-version-alovida-1');
