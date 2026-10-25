@@ -1,0 +1,70 @@
+:host {
+  display: block;
+  min-block-size: 0;
+}
+
+.anatomy-viewer {
+  position: relative;
+  block-size: 100%;
+  min-block-size: 22rem;
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.anatomy-viewer__canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: inherit;
+  touch-action: none;
+  cursor: grab;
+}
+
+.anatomy-viewer__canvas:active {
+  cursor: grabbing;
+}
+
+.anatomy-viewer__canvas:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.anatomy-viewer__aviso {
+  position: absolute;
+  inset-inline: var(--sp-4);
+  inset-block-start: var(--sp-4);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* Fuera de la vista pero en el árbol de accesibilidad: el anuncio llega. */
+.anatomy-viewer__aviso--oculto {
+  clip-path: inset(50%);
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.anatomy-viewer__aviso--error {
+  color: var(--text-danger);
+}
+
+.anatomy-viewer__rotulo {
+  position: absolute;
+  inset-inline-start: var(--sp-3);
+  inset-block-end: var(--sp-3);
+  margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  pointer-events: none;
+}

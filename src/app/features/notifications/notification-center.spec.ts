@@ -128,6 +128,33 @@ describe('NotificationCenter', () => {
     expect(filas().length).toBe(1);
   });
 
+  it('salir de «Sin leer» vuelve a pedir la bandeja entera: las leídas no desaparecen', () => {
+    http
+      .expectOne((r) => r.url === '/notifications/me')
+      .flush(pagina([aviso('n-1'), { ...aviso('n-2'), unread: false }], null));
+    fixture.detectChanges();
+
+    const pestanas = (): NodeListOf<HTMLElement> =>
+      fixture.nativeElement.querySelectorAll('[data-testid="avisos-pestanas"] [role="tab"]');
+    pestanas()[1]!.click();
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/notifications/me' && r.params.get('unread') === 'true')
+      .flush(pagina([aviso('n-1')], null));
+    fixture.detectChanges();
+    expect(filas().length).toBe(1);
+
+    pestanas()[0]!.click();
+    fixture.detectChanges();
+    const todas = http.expectOne((r) => r.url === '/notifications/me');
+    expect(todas.request.params.has('unread')).toBe(false);
+    expect(todas.request.params.has('cursor')).toBe(false);
+    todas.flush(pagina([aviso('n-1'), { ...aviso('n-2'), unread: false }], null));
+    fixture.detectChanges();
+
+    expect(filas().length).toBe(2);
+  });
+
   it('una notificación sin destino se pinta como texto y no como control', () => {
     http
       .expectOne((r) => r.url === '/notifications/me')
@@ -297,5 +324,31 @@ describe('NotificationCenter', () => {
 
     expect(texto()).toContain('Código de soporte');
     expect(texto()).toContain('req-35-1');
+  });
+
+  it('el vacío conserva el título de siempre en «Todas» y «Sin leer» y ofrece Preferencias', () => {
+    http.expectOne((r) => r.url === '/notifications/me').flush(pagina([], null, 0));
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Todavía no tiene notificaciones');
+    expect(texto()).toContain('Ir a preferencias');
+
+    const pestañas = fixture.nativeElement.querySelectorAll(
+      '[data-testid="avisos-pestanas"] [role="tab"]',
+    ) as NodeListOf<HTMLElement>;
+    pestañas[1]!.click();
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/notifications/me').flush(pagina([], null, 0));
+    fixture.detectChanges();
+    expect(texto()).toContain('No tiene notificaciones sin leer');
+
+    pestañas[2]!.click();
+    fixture.detectChanges();
+    // Salir de «Sin leer» vuelve a pedir la bandeja entera (sin `unread`).
+    const todas = http.expectOne((r) => r.url === '/notifications/me');
+    expect(todas.request.params.has('unread')).toBe(false);
+    todas.flush(pagina([], null, 0));
+    fixture.detectChanges();
+    expect(texto()).toContain('No tiene avisos en esta categoría');
   });
 });

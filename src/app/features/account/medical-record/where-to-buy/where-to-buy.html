@@ -197,13 +197,13 @@
                 @if (coverage(); as recorrido) {
                   <section
                     class="compra__recorrido"
-                    aria-labelledby="compra-recorrido"
-                    data-testid="compra-recorrido"
+                    aria-labelledby="where-to-buy-route"
+                    data-testid="where-to-buy-route"
                   >
-                    <h3 id="compra-recorrido" class="compra__subtitulo">Recorrido sugerido</h3>
+                    <h3 id="where-to-buy-route" class="compra__subtitulo">Recorrido sugerido</h3>
                     @switch (recorrido.kind) {
                       @case ('single') {
-                        <p class="compra__nota" data-testid="compra-recorrido-una">
+                        <p class="compra__nota" data-testid="where-to-buy-route-single">
                           {{ recorrido.stops[0].farmacia }} · {{ recorrido.stops[0].sede }} tiene todo lo
                           que eligió: no hace falta pasar por otra sucursal.
                         </p>
@@ -223,10 +223,10 @@
                         @if (recorrido.kind === 'partial') {
                           <p class="compra__faltantes">
                             Ninguna sucursal tiene:
-                            {{ nombresDe(recorrido.uncovered) }}
+                            {{ namesOf(recorrido.uncovered) }}
                           </p>
                         }
-                        <ol class="compra__paradas" data-testid="compra-paradas">
+                        <ol class="compra__paradas" data-testid="where-to-buy-stops">
                           @for (parada of recorrido.stops; track parada.codigo) {
                             <li class="compra__parada">
                               <span class="compra__codigo" aria-hidden="true">{{ parada.codigo }}</span>
@@ -412,7 +412,7 @@
                             app-link
                             [href]="enlace"
                             [external]="true"
-                            data-testid="compra-como-llegar"
+                            data-testid="where-to-buy-directions"
                             [attr.aria-label]="'Cómo llegar a ' + sede.farmacia + ' · ' + sede.sede + ' (abre en una pestaña nueva)'"
                           >
                             Cómo llegar
@@ -424,9 +424,9 @@
                 </ul>
 
                 <!-- P-19-4: por defecto, solo las que tienen todo; las demás, a pedido. -->
-                @if (cantidadIncompletas() > 0) {
-                  @if (!verIncompletas() && sedesOrdenadas().length === 0) {
-                    <p class="compra__nota" data-testid="compra-ninguna-completa">
+                @if (partialPharmacyCount() > 0) {
+                  @if (!showPartialPharmacies() && sedesOrdenadas().length === 0) {
+                    <p class="compra__nota" data-testid="where-to-buy-none-complete">
                       Ninguna sucursal tiene hoy todo lo que eligió.
                     </p>
                   }
@@ -435,11 +435,11 @@
                     variant="secondary"
                     size="sm"
                     type="button"
-                    data-testid="compra-ver-incompletas"
-                    [attr.aria-pressed]="verIncompletas()"
-                    (clicked)="verIncompletas.set(!verIncompletas())"
+                    data-testid="where-to-buy-show-partial"
+                    [attr.aria-pressed]="showPartialPharmacies()"
+                    (clicked)="showPartialPharmacies.set(!showPartialPharmacies())"
                   >
-                    {{ etiquetaDeIncompletas() }}
+                    {{ partialPharmaciesLabel() }}
                   </button>
                 }
               }
@@ -462,7 +462,7 @@
       <div class="compra">
         <section class="compra__bloque" aria-labelledby="imagen-centros">
           <h2 id="imagen-centros" class="compra__titulo">Dónde hacerse sus estudios</h2>
-          <p class="compra__nota" data-testid="imagen-origen">
+          <p class="compra__nota" data-testid="where-to-buy-imaging-origin">
             @if (origen(); as punto) {
               Distancias en línea recta, medidas desde {{ punto.etiqueta }}. Puede cambiar el punto
               en la pestaña Farmacias.
@@ -473,10 +473,10 @@
           </p>
           <app-view-state-host [state]="imaging()" (retry)="loadImaging()">
             @if (imagingData(); as datos) {
-              <p class="compra__secundario" data-testid="imagen-estudios">
+              <p class="compra__secundario" data-testid="where-to-buy-imaging-studies">
                 Estudios pendientes: {{ studyNames(datos.studies) }}
               </p>
-              <ul class="compra__sedes" data-testid="imagen-lista">
+              <ul class="compra__sedes" data-testid="where-to-buy-imaging-list">
                 @for (centro of visibleCenters(); track centro.id) {
                   <li class="compra__sede">
                     <div class="compra__sede-datos">
@@ -488,7 +488,7 @@
                         <span class="compra__secundario">{{ centro.distance }} en línea recta</span>
                       }
                       @if (!centro.complete) {
-                        <p class="compra__faltantes" data-testid="imagen-faltantes">
+                        <p class="compra__faltantes" data-testid="where-to-buy-imaging-missing">
                           Le falta: {{ centro.missing.join(', ') }}
                         </p>
                       }
@@ -513,7 +513,7 @@
               </ul>
               @if (partialCenterCount() > 0) {
                 @if (!showPartialCenters() && visibleCenters().length === 0) {
-                  <p class="compra__nota" data-testid="imagen-ninguno-completo">
+                  <p class="compra__nota" data-testid="where-to-buy-imaging-none-complete">
                     Ningún centro tiene hoy todos los estudios que le pidieron.
                   </p>
                 }
@@ -522,7 +522,7 @@
                   variant="secondary"
                   size="sm"
                   type="button"
-                  data-testid="imagen-ver-parciales"
+                  data-testid="where-to-buy-imaging-show-partial"
                   [attr.aria-pressed]="showPartialCenters()"
                   (clicked)="showPartialCenters.set(!showPartialCenters())"
                 >
@@ -537,24 +537,13 @@
     </app-tab>
 
     <!-- ─── Centros médicos ─────────────────────────────────────────────────
-         La pestaña más lejana de las tres, y no por trabajo de front: no hay de
-         dónde sacar «qué operaciones necesita esta persona» —la receta no las
-         declara— ni endpoint que busque organizaciones por prestación. El
-         modelo declara el gancho (`practice.healthcare_services`) pero los
-         seeds no lo pueblan. Hasta que eso se defina, lo honesto es decirlo.
-         Revisado contra la API de `dev` el 25/10/2026: `GET diagnostics/me/orders`
-         sólo devuelve las categorías LAB e IMAGING (`DIAGNOSTIC_CATEGORIES`),
-         `GET procedure-cases` es sólo para el equipo quirúrgico, la búsqueda por
-         cobertura acepta `kind` LABORATORY | IMAGING y `healthcare-services` no
-         tiene lectura. El enlace va en `empty-actions`: sin ese atributo la
-         molécula no lo proyecta y la salida al directorio no se veía. -->
+         Carril 19. Los procedimientos salen de las órdenes propias y los
+         centros de lo que cada sede declara ofrecer; los lee el servidor
+         (`GET /clinical/me/procedure-centers`) para que lo pedido no viaje en
+         la URL. Consulta al abrir la pestaña y vuelve a medir cuando cambia el
+         punto de partida elegido en Farmacias. -->
     <app-tab label="Centros médicos">
-      <app-empty-state
-        title="Esta parte todavía no está"
-        description="Acá van a aparecer los centros donde le pueden hacer los procedimientos que le indicaron. Todavía no está definido de dónde salen esos procedimientos ni qué centros los declaran, así que preferimos no mostrarle una lista que no sea la suya."
-      >
-        <a app-button empty-actions variant="ghost" [routerLink]="clinicsDirectoryRoute">Ver clínicas y hospitales</a>
-      </app-empty-state>
+      <app-medical-centers-tab [active]="medicalCentersActive()" [origin]="origen()" />
     </app-tab>
   </app-tabs>
 }

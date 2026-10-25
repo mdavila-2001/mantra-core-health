@@ -9,7 +9,9 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 import type { ChartOfAccounts, LedgerAccount, Practice } from '../../core/data-access/accounting/accounting.types';
 import { AssetsLiabilitiesClient } from '../../core/data-access/assets-liabilities/assets-liabilities.client';
 import type {
+  AssetDepreciationHistory,
   AssetSummary,
+  LiabilityScheduleView,
   LiabilitySummary,
 } from '../../core/data-access/assets-liabilities/assets-liabilities.types';
 import { describeApiFailure } from '../../core/http/api-failure';
@@ -30,6 +32,7 @@ import { PaginatedForm } from '../../shared/components/organisms/paginated-form/
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf } from '../../shared/forms/form-support';
+import { ExpandableDetail } from './expandable-detail';
 
 /**
  * FT-26 — módulo de activos y pasivos del doctor.
@@ -332,6 +335,7 @@ export class AssetsLiabilities {
         next: () => {
           this.avanceDeActivoEnCurso.set(null);
           this.reintentar();
+          this.assetHistory.reloadIfOpen(asset.id);
         },
         error: (error: unknown) => {
           this.avanceDeActivoEnCurso.set(null);
@@ -532,6 +536,7 @@ export class AssetsLiabilities {
         next: () => {
           this.avanceDePasivoEnCurso.set(null);
           this.reintentar();
+          this.liabilitySchedule.reloadIfOpen(liability.id);
         },
         error: (error: unknown) => {
           this.avanceDePasivoEnCurso.set(null);
@@ -540,5 +545,25 @@ export class AssetsLiabilities {
           );
         },
       });
+  }
+
+  /* Histórico (T26 · criterios 6 y 11): uno abierto por pestaña, ver `ExpandableDetail`. */
+  protected readonly assetHistory = new ExpandableDetail<AssetDepreciationHistory>(
+    (id) => this.client.readAssetDepreciations(id),
+    (history) =>
+      history.depreciations.length === 0
+        ? empty({ label: 'Registrar avance' }, 'Este activo todavía no tiene depreciaciones registradas.')
+        : ready(history),
+  );
+
+  protected readonly liabilitySchedule = new ExpandableDetail<LiabilityScheduleView>(
+    (id) => this.client.readLiabilitySchedule(id),
+    (view) =>
+      view.schedule.length === 0 ? empty({ label: 'Dar de alta un pasivo' }, 'Este pasivo no tiene cuotas.') : ready(view),
+  );
+
+  /** Una cuota está pagada cuando su importe pagado es mayor que cero. */
+  protected isInstallmentPaid(paidAmount: string | undefined): boolean {
+    return Number(paidAmount ?? '0') > 0;
   }
 }

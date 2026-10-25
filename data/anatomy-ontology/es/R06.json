@@ -1,0 +1,1098 @@
+{
+ "UBERON:0000144": {
+  "labelEs": "tróclea del húmero",
+  "definitionEs": "La porción medial de la superficie articular del húmero se denomina tróclea y presenta una depresión profunda entre dos bordes bien marcados; es convexa de delante atrás, cóncava de lado a lado, y ocupa las partes anterior, inferior y posterior de la extremidad. Se sitúa directamente por debajo de la fosa humeral anterior más prominente, la fosa coronoidea. Se articula con el cúbito."
+ },
+ "UBERON:0000199": {
+  "labelEs": "cuello del radio",
+  "definitionEs": "Parte estrecha de la diáfisis del radio situada inmediatamente por debajo de la cabeza."
+ },
+ "UBERON:0000976": {
+  "labelEs": "húmero",
+  "definitionEs": "Hueso largo endocondral par que se extiende entre la cintura pectoral y las partes esqueléticas del miembro anterior. [PHENOSCAPE:mah]."
+ },
+ "UBERON:0001010": {
+  "labelEs": "diáfisis del cúbito",
+  "definitionEs": "El cuerpo del cúbito es prismático en su parte superior y está curvado de modo que es convexo hacia atrás y lateralmente; su parte central es recta; su parte inferior es redondeada, lisa y ligeramente inclinada lateralmente. Se adelgaza gradualmente de arriba abajo y tiene tres bordes y tres caras."
+ },
+ "UBERON:0001012": {
+  "labelEs": "cabeza del radio",
+  "definitionEs": "La cabeza del radio tiene forma cilíndrica, y en su cara superior presenta una cúpula o fóvea poco profunda para articularse con el capítulo (o capitellum) del húmero. La circunferencia de la cabeza es lisa; es ancha medialmente, donde se articula con la escotadura radial del cúbito, y estrecha en el resto de su extensión, que está rodeada por el ligamento anular. El punto más profundo de la fóvea no es axialmente simétrico respecto al eje longitudinal del radio, lo que crea un efecto de leva durante la pronación y la supinación[WP]."
+ },
+ "UBERON:0001028": {
+  "labelEs": "diáfisis del radio",
+  "definitionEs": "Diáfisis que forma parte de un radio[Definición generada automáticamente]."
+ },
+ "UBERON:0001106": {
+  "labelEs": "vena cefálica",
+  "definitionEs": "Vena superficial del miembro superior que se comunica con la vena basílica a través de la vena mediana del codo a la altura del codo y que se localiza en la fascia superficial a lo largo de la cara anterolateral del músculo bíceps braquial. En su parte superior, la vena cefálica pasa entre los músculos deltoides y pectoral mayor y a través del triángulo deltopectoral, donde desemboca en la vena axilar. A menudo es visible a través de la piel, y su localización en el surco deltopectoral es bastante constante, lo que hace de este lugar un buen candidato para la canulación. Por este motivo se la suele denominar el «amigo del médico residente» ('House-man's Friend'), y en general es un buen lugar para la canulación cuando debe colocarse una cánula de gran calibre. [WP,modified]."
+ },
+ "UBERON:0001148": {
+  "labelEs": "nervio mediano",
+  "definitionEs": "Nervio del brazo que se origina en el plexo braquial, formado a partir de partes de los fascículos medial y lateral del plexo braquial, y que continúa a lo largo del brazo para entrar en el antebrazo con la arteria braquial. Se origina en el plexo braquial con raíces de C5, C6, C7, C8 y T1."
+ },
+ "UBERON:0001399": {
+  "labelEs": "arteria braquial profunda",
+  "definitionEs": "La arteria profunda del brazo (también conocida como arteria profunda del brazo y arteria braquial profunda) es un vaso grande que nace de la parte medial y posterior de la arteria braquial, inmediatamente por debajo del borde inferior del redondo mayor. [WP,unvetted]."
+ },
+ "UBERON:0001410": {
+  "labelEs": "arteria digital palmar común",
+  "definitionEs": "Tres arterias digitales palmares comunes nacen de la convexidad del arco palmar superficial y avanzan distalmente sobre los músculos lumbricales segundo, tercero y cuarto."
+ },
+ "UBERON:0001411": {
+  "labelEs": "vena basílica",
+  "definitionEs": "Vena superficial del miembro superior que drena partes de la mano y del antebrazo."
+ },
+ "UBERON:0001412": {
+  "labelEs": "vena digital palmar común",
+  "definitionEs": null
+ },
+ "UBERON:0001413": {
+  "labelEs": "vena braquial",
+  "definitionEs": "Vena que acompaña a la arteria braquial entre el hombro y el codo."
+ },
+ "UBERON:0001414": {
+  "labelEs": "vena mediana basílica",
+  "definitionEs": "Vena situada entre los músculos bíceps y pronador redondo que se une con la vena cubital común para formar la vena basílica dentro del antebrazo."
+ },
+ "UBERON:0001423": {
+  "labelEs": "radio",
+  "definitionEs": "Principal hueso endocondral preaxial del zeugopodio anterior[Phenoscape]."
+ },
+ "UBERON:0001424": {
+  "labelEs": "cúbito",
+  "definitionEs": "Principal hueso endocondral postaxial del zeugopodio anterior[Phenoscape]."
+ },
+ "UBERON:0001427": {
+  "labelEs": "escafoides",
+  "definitionEs": "Hueso carpiano proximal endocondral que se articula con el radio."
+ },
+ "UBERON:0001428": {
+  "labelEs": "semilunar",
+  "definitionEs": "Hueso carpiano endocondral que se articula con el ulnar y el radial."
+ },
+ "UBERON:0001429": {
+  "labelEs": "pisiforme",
+  "definitionEs": "Hueso sesamoideo de posición lateral que se encuentra muy próximo al ulnar y que en ocasiones está fusionado con él."
+ },
+ "UBERON:0001430": {
+  "labelEs": "trapecio",
+  "definitionEs": null
+ },
+ "UBERON:0001431": {
+  "labelEs": "trapezoide",
+  "definitionEs": null
+ },
+ "UBERON:0001432": {
+  "labelEs": "grande",
+  "definitionEs": null
+ },
+ "UBERON:0001433": {
+  "labelEs": "ganchoso",
+  "definitionEs": null
+ },
+ "UBERON:0001435": {
+  "labelEs": "hueso carpiano",
+  "definitionEs": "Hueso que forma parte del esqueleto del carpo. Ejemplos: escafoides, semilunar, grande[cjm]."
+ },
+ "UBERON:0001436": {
+  "labelEs": "falange de la mano",
+  "definitionEs": "Falange que forma parte de un autopodio del miembro anterior[Definición generada automáticamente]."
+ },
+ "UBERON:0001440": {
+  "labelEs": "esqueleto del miembro superior libre",
+  "definitionEs": "Conjunto de todos los elementos esqueléticos de una región libre del miembro anterior. Excluye la cintura pectoral."
+ },
+ "UBERON:0001442": {
+  "labelEs": "esqueleto de la mano",
+  "definitionEs": "Subdivisión del esqueleto que constituye el conjunto de todos los elementos esqueléticos de una mano, que es la sección distal del esqueleto del miembro anterior y consta del mesopodio, el metapodio y el acropodio (por ejemplo, incluye la muñeca, la palma y los dedos)[Phenoscape]."
+ },
+ "UBERON:0001461": {
+  "labelEs": "codo",
+  "definitionEs": "El codo es la región que rodea la articulación del codo, el gínglimo o articulación en bisagra situada en la mitad del brazo. Tres huesos forman la articulación del codo: el húmero del brazo y el radio y el cúbito, pares, del antebrazo. La prominencia ósea situada en la punta del codo es el olécranon del cúbito, y la cara interna del codo se denomina fosa antecubital. [WP,unvetted,human-specific]."
+ },
+ "UBERON:0001463": {
+  "labelEs": "pulgar",
+  "definitionEs": "Primer dedo (preaxial) de la mano[Wikipedia]."
+ },
+ "UBERON:0001480": {
+  "labelEs": "hueso carpiano proximal",
+  "definitionEs": "Hueso carpiano que está conectado proximalmente (proximally_connected_to) a un esqueleto del zeugopodio del miembro anterior."
+ },
+ "UBERON:0001481": {
+  "labelEs": "hueso carpiano distal",
+  "definitionEs": "Elemento endocondral carpiano distal compuesto principalmente por tejido óseo."
+ },
+ "UBERON:0001490": {
+  "labelEs": "articulación del codo",
+  "definitionEs": "Articulación que conecta los esqueletos del zeugopodio y del estilopodio del miembro anterior[Obol]."
+ },
+ "UBERON:0001491": {
+  "labelEs": "articulación de la muñeca",
+  "definitionEs": "Articulación que conecta el esqueleto del zeugopodio del miembro anterior con el esqueleto del carpo."
+ },
+ "UBERON:0001492": {
+  "labelEs": "nervio radial",
+  "definitionEs": "Nervio que inerva el miembro superior, incluidos el músculo tríceps braquial del brazo, así como los 12 músculos del compartimento osteofascial posterior del antebrazo, así como las articulaciones asociadas y la piel que los recubre."
+ },
+ "UBERON:0001493": {
+  "labelEs": "nervio axilar",
+  "definitionEs": "El nervio axilar es un nervio del cuerpo humano que se desprende del fascículo posterior del plexo braquial a la altura de la axila y transporta fibras nerviosas de C5 y C6. El nervio axilar discurre por el espacio cuadrangular junto con la arteria y la vena circunflejas humerales posteriores. [WP,unvetted]."
+ },
+ "UBERON:0001494": {
+  "labelEs": "nervio cubital",
+  "definitionEs": "Nervio que discurre cerca del cúbito."
+ },
+ "UBERON:0001500": {
+  "labelEs": "músculo de la mano",
+  "definitionEs": "Cualquier órgano muscular que forma parte de una mano [Definición generada automáticamente]."
+ },
+ "UBERON:0001501": {
+  "labelEs": "músculo lumbrical de la mano",
+  "definitionEs": "Los lumbricales son músculos intrínsecos de la mano que flexionan las articulaciones metacarpofalángicas y extienden las articulaciones interfalángicas."
+ },
+ "UBERON:0001502": {
+  "labelEs": "músculo interóseo de la mano",
+  "definitionEs": "Cualquiera de los músculos interóseos de la mano. Incluye los interóseos dorsales y plantares."
+ },
+ "UBERON:0001503": {
+  "labelEs": "músculo interóseo dorsal de la mano",
+  "definitionEs": "Los interóseos dorsales de la mano son músculos que ocupan el espacio entre los metacarpianos. Hay cuatro interóseos dorsales en cada mano. Se especifican como «dorsales» para contrastarlos con los interóseos palmares, que se sitúan en la cara anterior de los metacarpianos. Los músculos interóseos dorsales son bipenniformes; cada músculo se origina mediante dos cabezas en las caras adyacentes de los huesos metacarpianos, pero de forma más extensa en el hueso metacarpiano del dedo en el que se inserta el músculo. Se insertan en las bases de las falanges proximales y en la expansión extensora del tendón correspondiente del extensor de los dedos. En el dedo medio se insertan dos interóseos dorsales, mientras que el primer dedo (pulgar) y el quinto dedo (meñique) no tienen ninguno[WP]."
+ },
+ "UBERON:0001505": {
+  "labelEs": "músculo coracobraquial",
+  "definitionEs": "El coracobraquial es el más pequeño de los tres músculos que se insertan en la apófisis coracoides de la escápula. (Los otros dos músculos son el pectoral menor y el bíceps braquial). Se sitúa en la parte superior y medial del brazo. Está perforado e inervado por el nervio musculocutáneo. [WP,unvetted]."
+ },
+ "UBERON:0001506": {
+  "labelEs": "músculo braquial",
+  "definitionEs": "El braquial (braquial anterior) es un músculo del brazo que flexiona la articulación del codo. Se sitúa inmediatamente profundo al bíceps braquial y es un sinergista que ayuda al bíceps braquial en la flexión del codo. Forma parte del suelo de la región conocida como fosa cubital. [WP,unvetted]."
+ },
+ "UBERON:0001507": {
+  "labelEs": "músculo bíceps braquial",
+  "definitionEs": "Músculo del estilopodio del miembro anterior que en los seres humanos tiene varias funciones, las más importantes de las cuales son rotar el antebrazo y flexionar el codo. [WP,unvetted]."
+ },
+ "UBERON:0001509": {
+  "labelEs": "músculo tríceps braquial",
+  "definitionEs": "El músculo tríceps braquial (en latín, músculo «de tres cabezas» del brazo; se denomina músculo de tres cabezas porque tiene tres haces musculares, cada uno de origen distinto, que se unen a la altura del codo) es el músculo grande de la parte posterior del miembro superior humano. Es el principal músculo responsable de la extensión de la articulación del codo (es decir, de enderezar el brazo). Aunque existe un músculo de nombre similar, el tríceps sural, en la pierna, el tríceps braquial suele denominarse simplemente «tríceps». [WP,unvetted]."
+ },
+ "UBERON:0001517": {
+  "labelEs": "piel del codo",
+  "definitionEs": "Zona de piel que forma parte de un codo [Definición generada automáticamente]."
+ },
+ "UBERON:0001518": {
+  "labelEs": "piel de la muñeca",
+  "definitionEs": "Zona de piel que forma parte de una muñeca [Definición generada automáticamente]."
+ },
+ "UBERON:0001519": {
+  "labelEs": "piel de la mano",
+  "definitionEs": "Zona de piel que forma parte de una mano [Definición generada automáticamente]."
+ },
+ "UBERON:0001520": {
+  "labelEs": "músculo pronador redondo",
+  "definitionEs": "El pronador redondo es un músculo del cuerpo humano (situado principalmente en el antebrazo) que, junto con el pronador cuadrado, sirve para pronar el antebrazo (girarlo de modo que la palma mire hacia atrás). [WP,unvetted]."
+ },
+ "UBERON:0001521": {
+  "labelEs": "músculo flexor radial del carpo",
+  "definitionEs": "Músculo del antebrazo que actúa flexionando y abduciendo la mano. [WP,unvetted]."
+ },
+ "UBERON:0001522": {
+  "labelEs": "músculo flexor cubital del carpo",
+  "definitionEs": "El músculo flexor cubital del carpo (FCU) es un músculo del antebrazo humano que actúa flexionando y aduciendo la mano. [WP,unvetted]."
+ },
+ "UBERON:0001523": {
+  "labelEs": "músculo flexor profundo de los dedos",
+  "definitionEs": "Músculo del antebrazo que flexiona los dedos de la mano[WP,modified]."
+ },
+ "UBERON:0001524": {
+  "labelEs": "músculo extensor radial largo del carpo",
+  "definitionEs": "El extensor radial largo del carpo es uno de los cinco músculos principales que controlan los movimientos de la muñeca. Este músculo es bastante largo; comienza en la cara lateral del húmero y se inserta en la base del segundo hueso metacarpiano (metacarpiano del dedo índice). [WP,unvetted]."
+ },
+ "UBERON:0001525": {
+  "labelEs": "músculo extensor radial corto del carpo",
+  "definitionEs": "El extensor radial corto del carpo es más corto y más grueso que el extensor radial largo del carpo. El músculo largo se encuentra por encima del extremo distal del extensor radial corto del carpo. [WP,unvetted]."
+ },
+ "UBERON:0001526": {
+  "labelEs": "músculo extensor cubital del carpo",
+  "definitionEs": "El extensor cubital del carpo es un músculo situado en el antebrazo que actúa extendiendo y aduciendo la muñeca. Al ser un músculo extensor, el extensor cubital del carpo se encuentra en la cara posterior del antebrazo. [WP]."
+ },
+ "UBERON:0001527": {
+  "labelEs": "músculo abductor largo del pulgar",
+  "definitionEs": "El abductor largo del pulgar se sitúa inmediatamente por debajo del supinador y a veces está unido a él. [WP,unvetted]."
+ },
+ "UBERON:0001528": {
+  "labelEs": "articulación radiocubital",
+  "definitionEs": "Articulación que conecta el radio y el cúbito. Ejemplos: articulaciones radiocubitales proximal y distal."
+ },
+ "UBERON:0002102": {
+  "labelEs": "miembro superior",
+  "definitionEs": "Miembro (libre) conectado a una cintura pectoral. La extensión de esta estructura incluye las regiones del autopodio, el estilopodio y el zeugopodio cuando están presentes, pero excluye la cintura pectoral y sus partes."
+ },
+ "UBERON:0002234": {
+  "labelEs": "falange proximal de la mano",
+  "definitionEs": "Falange proximal que forma parte de un dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0002249": {
+  "labelEs": "arteria mediana",
+  "definitionEs": "Arteria que se encuentra en el antebrazo, entre la arteria radial y la arteria cubital. Discurre junto con el nervio mediano e irriga las mismas estructuras que dicho nervio. Puede ser unilateral o bilateral."
+ },
+ "UBERON:0002374": {
+  "labelEs": "hueso metacarpiano",
+  "definitionEs": "Hueso que forma parte del esqueleto metacarpiano."
+ },
+ "UBERON:0002386": {
+  "labelEs": "antebrazo",
+  "definitionEs": "Segmento intermedio del miembro libre pectoral, entre los segmentos del autopodio y del estilopodio. Incluye como partes el esqueleto zeugopodial del miembro anterior, que comprende el radio y el cúbito, o sus precursores cartilaginosos, o variantes evolutivas."
+ },
+ "UBERON:0002389": {
+  "labelEs": "dedo de la mano",
+  "definitionEs": "Dedo que forma parte de una mano."
+ },
+ "UBERON:0002398": {
+  "labelEs": "mano",
+  "definitionEs": "Segmento distal del miembro anterior, que incluye la región carpiana, la región metacarpiana y los dedos."
+ },
+ "UBERON:0002442": {
+  "labelEs": "tronco del nervio axilar",
+  "definitionEs": null
+ },
+ "UBERON:0002445": {
+  "labelEs": "piramidal",
+  "definitionEs": "Hueso postaxial de la región carpiana proximal. Se encuentra muy próximo al cúbito, a menudo articulado con él[PHENOSCAPE:ad]."
+ },
+ "UBERON:0002498": {
+  "labelEs": "tuberosidad deltoidea",
+  "definitionEs": "Elevación rugosa situada en la mitad de la cara lateral de la diáfisis del húmero, en la que se inserta el músculo deltoides."
+ },
+ "UBERON:0002962": {
+  "labelEs": "músculo aductor del pulgar",
+  "definitionEs": "Músculo de la mano cuya función es aducir el pulgar. Tiene dos cabezas: transversa y oblicua. Es un músculo carnoso, plano, triangular y en forma de abanico, situado en la profundidad del compartimento tenar, por debajo de los tendones flexores largos y de los músculos lumbricales, en el centro de la palma. Recubre los huesos metacarpianos y los músculos interóseos[WP]."
+ },
+ "UBERON:0002988": {
+  "labelEs": "primer músculo interóseo dorsal de la mano",
+  "definitionEs": null
+ },
+ "UBERON:0002989": {
+  "labelEs": "músculo ancóneo",
+  "definitionEs": "Músculo pequeño situado en la cara posterior de la articulación del codo."
+ },
+ "UBERON:0003222": {
+  "labelEs": "músculo flexor superficial de los dedos",
+  "definitionEs": "Músculo flexor extrínseco de los dedos de la mano a la altura de las articulaciones interfalángicas proximales.[WP]."
+ },
+ "UBERON:0003228": {
+  "labelEs": "músculo supinador",
+  "definitionEs": "Músculo que se origina en el húmero distal, se inserta en el radio y realiza la supinación (rotación de la muñeca)."
+ },
+ "UBERON:0003234": {
+  "labelEs": "músculo extensor largo del pulgar",
+  "definitionEs": "El extensor largo del pulgar es mucho más grande que el músculo extensor corto del pulgar, cuyo origen cubre en parte."
+ },
+ "UBERON:0003403": {
+  "labelEs": "piel del antebrazo",
+  "definitionEs": "Zona de piel que forma parte de un antebrazo [Definición generada automáticamente]."
+ },
+ "UBERON:0003531": {
+  "labelEs": "piel del miembro superior",
+  "definitionEs": "Zona de piel que forma parte de un miembro anterior [Definición generada automáticamente]."
+ },
+ "UBERON:0003533": {
+  "labelEs": "piel del dedo de la mano",
+  "definitionEs": "Zona de piel que forma parte de un dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0003620": {
+  "labelEs": "falange del pulgar",
+  "definitionEs": "Falange que forma parte del primer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0003622": {
+  "labelEs": "dedo índice",
+  "definitionEs": "Segundo dedo de la mano."
+ },
+ "UBERON:0003623": {
+  "labelEs": "dedo medio",
+  "definitionEs": "Tercer dedo de la mano."
+ },
+ "UBERON:0003624": {
+  "labelEs": "dedo anular",
+  "definitionEs": "Cuarto dedo de la mano."
+ },
+ "UBERON:0003625": {
+  "labelEs": "dedo meñique",
+  "definitionEs": "Quinto dedo de la mano."
+ },
+ "UBERON:0003636": {
+  "labelEs": "falange del dedo índice",
+  "definitionEs": "Falange que forma parte del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0003637": {
+  "labelEs": "falange del dedo medio",
+  "definitionEs": "Falange que forma parte del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0003638": {
+  "labelEs": "falange del dedo anular",
+  "definitionEs": "Falange que forma parte del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0003639": {
+  "labelEs": "falange del dedo meñique",
+  "definitionEs": "Falange que forma parte del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0003645": {
+  "labelEs": "primer hueso metacarpiano",
+  "definitionEs": "Hueso metacarpiano que está conectado distalmente (distally_connected_to) a una falange proximal del primer dedo de la mano."
+ },
+ "UBERON:0003646": {
+  "labelEs": "segundo hueso metacarpiano",
+  "definitionEs": "Hueso metacarpiano que está conectado distalmente (distally_connected_to) a una falange proximal del segundo dedo de la mano."
+ },
+ "UBERON:0003647": {
+  "labelEs": "tercer hueso metacarpiano",
+  "definitionEs": "Hueso metacarpiano que está conectado distalmente (distally_connected_to) a una falange proximal del tercer dedo de la mano[Definición generada automáticamente]."
+ },
+ "UBERON:0003648": {
+  "labelEs": "cuarto hueso metacarpiano",
+  "definitionEs": "Hueso metacarpiano que está conectado distalmente (distally_connected_to) a una falange proximal del cuarto dedo de la mano."
+ },
+ "UBERON:0003649": {
+  "labelEs": "quinto hueso metacarpiano",
+  "definitionEs": "Hueso metacarpiano que está conectado distalmente (distally_connected_to) a una falange proximal del quinto dedo de la mano."
+ },
+ "UBERON:0003662": {
+  "labelEs": "músculo del miembro superior",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un miembro anterior."
+ },
+ "UBERON:0003695": {
+  "labelEs": "articulación metacarpofalángica",
+  "definitionEs": "Las articulaciones metacarpofalángicas (MCF) son de tipo condíleo y están formadas por la recepción de las cabezas redondeadas de los huesos metacarpianos en cavidades poco profundas de los extremos proximales de las primeras falanges, con la excepción de la del pulgar, que presenta más bien las características de una articulación gínglimo. La artritis de las MCF es un rasgo distintivo de la artritis reumatoide, a diferencia de la articulación interfalángica distal en la artrosis. [WP,unvetted]."
+ },
+ "UBERON:0003822": {
+  "labelEs": "brazo",
+  "definitionEs": "Parte del miembro anterior situada entre la región pectoral y el codo, correspondiente al húmero."
+ },
+ "UBERON:0003864": {
+  "labelEs": "falange media de la mano",
+  "definitionEs": "Falange media que forma parte de un dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0003865": {
+  "labelEs": "falange distal de la mano",
+  "definitionEs": "Falange distal que forma parte de un dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004099": {
+  "labelEs": "cavidad articular del codo",
+  "definitionEs": "Cavidad articular compartida por todas las articulaciones del codo. La articulación del codo es una articulación compuesta que en realidad comprende tres articulaciones independientes: las articulaciones que conectan el brazo y el antebrazo: 1) articulatio humero-ulnaris y 2) articulatio humero-radialis, así como la articulación proximal que conecta los huesos del antebrazo: 3) articulatio radio-ulnaris proximalis. Las tres comparten una cavidad articular muy sinuosa/festoneada/abovedada. Las cavidades articulares del codo engloban la cavidad articular compartida por las tres articulaciones contiguas de la articulación del codo."
+ },
+ "UBERON:0004109": {
+  "labelEs": "cortical del húmero",
+  "definitionEs": "Parte externa o superficial del húmero."
+ },
+ "UBERON:0004254": {
+  "labelEs": "músculo del antebrazo",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un zeugopodio del miembro anterior (antebrazo)[Definición generada automáticamente]."
+ },
+ "UBERON:0004255": {
+  "labelEs": "músculo del brazo",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un estilopodio del miembro anterior (brazo)[Definición generada automáticamente]."
+ },
+ "UBERON:0004263": {
+  "labelEs": "piel del brazo",
+  "definitionEs": "Zona de piel que forma parte de un estilopodio del miembro anterior [Definición generada automáticamente]."
+ },
+ "UBERON:0004311": {
+  "labelEs": "falange distal del dedo índice",
+  "definitionEs": "Falange distal que forma parte del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004312": {
+  "labelEs": "falange distal del dedo medio",
+  "definitionEs": "Falange distal que forma parte del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004313": {
+  "labelEs": "falange distal del dedo anular",
+  "definitionEs": "Falange distal que forma parte del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004314": {
+  "labelEs": "falange distal del dedo meñique",
+  "definitionEs": "Falange distal que forma parte del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004320": {
+  "labelEs": "falange media del dedo índice",
+  "definitionEs": "Falange media que forma parte del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004321": {
+  "labelEs": "falange media del dedo medio",
+  "definitionEs": "Falange media que forma parte del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004322": {
+  "labelEs": "falange media del dedo anular",
+  "definitionEs": "Falange media que forma parte del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004323": {
+  "labelEs": "falange media del dedo meñique",
+  "definitionEs": "Falange media que forma parte del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004328": {
+  "labelEs": "falange proximal del dedo índice",
+  "definitionEs": "Falange proximal que forma parte del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004329": {
+  "labelEs": "falange proximal del dedo medio",
+  "definitionEs": "Falange proximal que forma parte del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004330": {
+  "labelEs": "falange proximal del dedo anular",
+  "definitionEs": "Falange proximal que forma parte del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004331": {
+  "labelEs": "falange proximal del dedo meñique",
+  "definitionEs": "Falange proximal que forma parte del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004337": {
+  "labelEs": "falange distal del pulgar",
+  "definitionEs": "Falange distal que forma parte del primer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004338": {
+  "labelEs": "falange proximal del pulgar",
+  "definitionEs": "Falange proximal que forma parte del primer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004382": {
+  "labelEs": "epífisis del húmero",
+  "definitionEs": "Epífisis que forma parte de un húmero [Definición generada automáticamente]."
+ },
+ "UBERON:0004385": {
+  "labelEs": "epífisis del radio",
+  "definitionEs": "Epífisis que forma parte de un radio [Definición generada automáticamente]."
+ },
+ "UBERON:0004386": {
+  "labelEs": "epífisis del cúbito",
+  "definitionEs": "Epífisis que forma parte de un cúbito [Definición generada automáticamente]."
+ },
+ "UBERON:0004387": {
+  "labelEs": "epífisis de falange de la mano",
+  "definitionEs": "Epífisis que forma parte de una falange de una mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004390": {
+  "labelEs": "epífisis de hueso metacarpiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metacarpiano [Definición generada automáticamente]."
+ },
+ "UBERON:0004391": {
+  "labelEs": "epífisis del primer hueso metacarpiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metacarpiano del primer dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004392": {
+  "labelEs": "epífisis del segundo hueso metacarpiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metacarpiano del segundo dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004393": {
+  "labelEs": "epífisis del tercer hueso metacarpiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metacarpiano del tercer dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004394": {
+  "labelEs": "epífisis del cuarto hueso metacarpiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metacarpiano del cuarto dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004404": {
+  "labelEs": "epífisis distal del húmero",
+  "definitionEs": "Epífisis distal que forma parte de un húmero [Definición generada automáticamente]."
+ },
+ "UBERON:0004407": {
+  "labelEs": "epífisis distal del radio",
+  "definitionEs": "Epífisis distal que forma parte de un radio [Definición generada automáticamente]."
+ },
+ "UBERON:0004408": {
+  "labelEs": "epífisis distal del cúbito",
+  "definitionEs": "Epífisis distal que forma parte de un cúbito [Definición generada automáticamente]."
+ },
+ "UBERON:0004409": {
+  "labelEs": "epífisis distal de falange de la mano",
+  "definitionEs": "Epífisis distal que forma parte de una falange de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004411": {
+  "labelEs": "epífisis proximal del húmero",
+  "definitionEs": "La extremidad superior del húmero (húmero proximal) consta de una gran cabeza redondeada unida al cuerpo por una porción estrechada llamada cuello, y de dos eminencias, los tubérculos mayor y menor."
+ },
+ "UBERON:0004413": {
+  "labelEs": "epífisis proximal del radio",
+  "definitionEs": "Epífisis proximal que forma parte de un radio [Definición generada automáticamente]."
+ },
+ "UBERON:0004414": {
+  "labelEs": "epífisis proximal de falange de la mano",
+  "definitionEs": "Epífisis proximal que forma parte de una falange de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004416": {
+  "labelEs": "epífisis proximal de hueso metacarpiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metacarpiano [Definición generada automáticamente]."
+ },
+ "UBERON:0004417": {
+  "labelEs": "epífisis proximal de falange del pulgar",
+  "definitionEs": "Epífisis proximal que forma parte de una falange del primer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004418": {
+  "labelEs": "epífisis proximal de falange del dedo índice",
+  "definitionEs": "Epífisis proximal que forma parte de una falange del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004419": {
+  "labelEs": "epífisis proximal de falange del dedo medio",
+  "definitionEs": "Epífisis proximal que forma parte de una falange del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004420": {
+  "labelEs": "epífisis proximal de falange del dedo anular",
+  "definitionEs": "Epífisis proximal que forma parte de una falange del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004421": {
+  "labelEs": "epífisis proximal de falange del dedo meñique",
+  "definitionEs": "Epífisis proximal que forma parte de una falange del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004422": {
+  "labelEs": "epífisis proximal del primer hueso metacarpiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metacarpiano del primer dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004423": {
+  "labelEs": "epífisis proximal del segundo hueso metacarpiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metacarpiano del segundo dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004424": {
+  "labelEs": "epífisis proximal del tercer hueso metacarpiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metacarpiano del tercer dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004425": {
+  "labelEs": "epífisis proximal del cuarto hueso metacarpiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metacarpiano del cuarto dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004426": {
+  "labelEs": "epífisis proximal del quinto hueso metacarpiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metacarpiano del quinto dedo [Definición generada automáticamente]."
+ },
+ "UBERON:0004432": {
+  "labelEs": "epífisis proximal de la falange distal del dedo índice",
+  "definitionEs": "Epífisis proximal que forma parte de una falange distal del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004433": {
+  "labelEs": "epífisis proximal de la falange distal del dedo medio",
+  "definitionEs": "Epífisis proximal que forma parte de una falange distal del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004434": {
+  "labelEs": "epífisis proximal de la falange distal del dedo anular",
+  "definitionEs": "Epífisis proximal que forma parte de una falange distal del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004435": {
+  "labelEs": "epífisis proximal de la falange distal del dedo meñique",
+  "definitionEs": "Epífisis proximal que forma parte de una falange distal del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004436": {
+  "labelEs": "epífisis proximal de la falange media del dedo índice",
+  "definitionEs": "Epífisis proximal que forma parte de una falange media del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004437": {
+  "labelEs": "epífisis proximal de la falange media del dedo medio",
+  "definitionEs": "Epífisis proximal que forma parte de una falange media del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004438": {
+  "labelEs": "epífisis proximal de la falange media del dedo anular",
+  "definitionEs": "Epífisis proximal que forma parte de una falange media del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004439": {
+  "labelEs": "epífisis proximal de la falange media del dedo meñique",
+  "definitionEs": "Epífisis proximal que forma parte de una falange media del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004440": {
+  "labelEs": "epífisis proximal de la falange proximal del dedo índice",
+  "definitionEs": "Epífisis proximal que forma parte de una falange proximal del segundo dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004441": {
+  "labelEs": "epífisis proximal de la falange proximal del dedo medio",
+  "definitionEs": "Epífisis proximal que forma parte de una falange proximal del tercer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004442": {
+  "labelEs": "epífisis proximal de la falange proximal del dedo anular",
+  "definitionEs": "Epífisis proximal que forma parte de una falange proximal del cuarto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004443": {
+  "labelEs": "epífisis proximal de la falange proximal del dedo meñique",
+  "definitionEs": "Epífisis proximal que forma parte de una falange proximal del quinto dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004444": {
+  "labelEs": "epífisis proximal de la falange distal del pulgar",
+  "definitionEs": "Epífisis proximal que forma parte de una falange distal del primer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004445": {
+  "labelEs": "epífisis proximal de la falange proximal del pulgar",
+  "definitionEs": "Epífisis proximal que forma parte de una falange proximal del primer dedo de la mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004452": {
+  "labelEs": "región carpiana",
+  "definitionEs": "Mesopodio que forma parte de una mano. Incluye como partes el esqueleto del carpo y los tejidos asociados[cjm]. Región anatómica que rodea el carpo e incluye las partes distales de los huesos del antebrazo y las partes proximales del metacarpo o de los cinco huesos metacarpianos, así como la serie de articulaciones entre estos huesos, denominadas por ello articulaciones de la muñeca. Esta región incluye también el túnel carpiano, la tabaquera anatómica, el retináculo flexor y el retináculo extensor[WP,unvetted]."
+ },
+ "UBERON:0004453": {
+  "labelEs": "región metacarpiana",
+  "definitionEs": "Región del metapodio que forma parte de una mano."
+ },
+ "UBERON:0004481": {
+  "labelEs": "musculatura del miembro superior",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un miembro anterior [Definición generada automáticamente]."
+ },
+ "UBERON:0004487": {
+  "labelEs": "musculatura del antebrazo",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un antebrazo [Definición generada automáticamente]."
+ },
+ "UBERON:0004489": {
+  "labelEs": "musculatura de la mano",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de una mano [Definición generada automáticamente]."
+ },
+ "UBERON:0004502": {
+  "labelEs": "tejido muscular esquelético del bíceps braquial",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un bíceps braquial [Definición generada automáticamente]."
+ },
+ "UBERON:0004561": {
+  "labelEs": "vena digital palmar propia",
+  "definitionEs": null
+ },
+ "UBERON:0004652": {
+  "labelEs": "diáfisis del húmero",
+  "definitionEs": "El cuerpo o diáfisis del húmero es casi cilíndrico en la mitad superior de su extensión, prismático y aplanado por debajo, y tiene tres bordes y tres caras."
+ },
+ "UBERON:0005276": {
+  "labelEs": "piel dorsal del dedo de la mano",
+  "definitionEs": "Piel dorsal de dedo que forma parte de un dedo de la mano."
+ },
+ "UBERON:0005278": {
+  "labelEs": "lecho ungueal del dedo de la mano",
+  "definitionEs": "Lecho ungueal que forma parte de un dedo de la mano."
+ },
+ "UBERON:0005451": {
+  "labelEs": "segmento de la mano",
+  "definitionEs": "Segmento del autopodio que forma parte de una mano."
+ },
+ "UBERON:0006137": {
+  "labelEs": "arteria digital palmar propia",
+  "definitionEs": "Las arterias digitales palmares propias discurren a lo largo de los lados de las falanges (a lo largo de los lados contiguos de los dedos índice, medio, anular y meñique), y cada arteria se sitúa inmediatamente por debajo de su nervio digital correspondiente. Otros nombres de estas arterias son: arterias digitales volares propias, arterias digitales colaterales, arteriae digitales palmares propriae o aa. digitales volares propriae. Se anastomosan libremente en el tejido subcutáneo de las yemas de los dedos y mediante ramas más pequeñas cerca de las articulaciones interfalángicas. Cada una emite además un par de ramas dorsales que se anastomosan con las arterias digitales dorsales e irrigan las partes blandas del dorso de las falanges segunda y tercera, incluida la matriz de la uña. La arteria digital palmar propia del lado medial del dedo meñique nace directamente de la arteria cubital, en profundidad respecto al músculo palmar corto, pero las restantes nacen de las arterias digitales palmares comunes."
+ },
+ "UBERON:0006140": {
+  "labelEs": "vena digital palmar",
+  "definitionEs": "Las venas digitales palmares (o venas digitales volares) de cada dedo están conectadas con las venas digitales dorsales mediante venas intercapitulares oblicuas. Algunas fuentes distinguen entre las «venas digitales palmares propias», más distales, y las «venas digitales palmares comunes», más proximales."
+ },
+ "UBERON:0006505": {
+  "labelEs": "músculo interóseo palmar de la mano",
+  "definitionEs": "Cualquiera de tres músculos, el primero con origen en el segundo metacarpiano, y el segundo y el tercero con origen en los metacarpianos cuarto y quinto; el primero con inserción en el dedo índice, y el segundo y el tercero con inserción en los dedos anular y meñique; con inervación procedente del nervio cubital, y cuya acción aduce los dedos hacia el eje del dedo medio."
+ },
+ "UBERON:0006564": {
+  "labelEs": "arco palmar superficial",
+  "definitionEs": "El arco palmar superficial está formado predominantemente por la arteria cubital, con una contribución de la rama palmar superficial de la arteria radial. Sin embargo, en algunos individuos puede faltar la contribución de la arteria radial y, en su lugar, el arco se anastomosa con la arteria principal del pulgar, la arteria radial del índice o la arteria mediana, las dos primeras de las cuales son ramas de la arteria radial. Otros nombres de este arco arterial son: arco volar superficial, arco cubital superficial, arcus palmaris superficialis o arcus volaris superficialis. El arco atraviesa la palma describiendo una curva de convexidad inferior. Si se extendiera por completo el pulgar, el arco palmar superficial se situaría aproximadamente a la altura de una línea trazada desde el borde distal del pulgar a través de la palma. El arco palmar superficial es más distal que el arco palmar profundo. Del arco nacen tres arterias digitales palmares comunes, que descienden sobre los músculos lumbricales segundo, tercero y cuarto, respectivamente. Cada una recibe una contribución de una arteria metacarpiana palmar. Cerca de la altura de las articulaciones metacarpofalángicas, cada arteria digital palmar común se divide en dos arterias digitales palmares propias."
+ },
+ "UBERON:0006801": {
+  "labelEs": "cabeza del húmero",
+  "definitionEs": "Estructura hemisférica de la epífisis proximal del húmero que se articula con la cavidad glenoidea[WP,modified]."
+ },
+ "UBERON:0006806": {
+  "labelEs": "epicóndilo medial del húmero",
+  "definitionEs": "Proyección ósea de la epífisis distal del húmero que constituye el lugar de fijación de los músculos flexores de la mano. Este cóndilo se orienta posteriormente (en los tetrápodos de postura extendida lateralmente) o medialmente (en los tetrápodos de postura erguida)."
+ },
+ "UBERON:0006807": {
+  "labelEs": "epicóndilo lateral del húmero",
+  "definitionEs": "Proyección ósea de la epífisis distal del húmero que constituye el lugar de inserción de los músculos extensores de las partes distales del miembro anterior. En los seres humanos se conoce como epicóndilo lateral, pero su posición varía entre los tetrápodos."
+ },
+ "UBERON:0006810": {
+  "labelEs": "olécranon",
+  "definitionEs": "El olécranon es una eminencia ósea grande, gruesa y curvada del antebrazo que se proyecta por detrás del codo. Se sitúa en el extremo superior (proximal) del cúbito, uno de los dos huesos del antebrazo. Cuando la mano mira hacia delante, el olécranon mira hacia atrás (posteriormente). Está doblado hacia delante en su vértice, de modo que presenta un labio prominente que se aloja en la fosa olecraniana del húmero durante la extensión del antebrazo. Su base está estrechada donde se une al cuerpo y constituye la parte más estrecha del extremo superior del cúbito. Su cara posterior, dirigida hacia atrás, es triangular, lisa, subcutánea y está cubierta por una bolsa. Su cara superior tiene forma cuadrilátera y presenta por detrás una impresión rugosa para la inserción del tríceps braquial y, por delante, cerca del margen, un ligero surco transversal para la inserción de parte del ligamento posterior de la articulación del codo. Su cara anterior es lisa, cóncava y forma la parte superior de la escotadura semilunar. Sus bordes presentan continuaciones del surco del margen de la cara superior; sirven para la inserción de ligamentos, a saber, la parte posterior del ligamento colateral cubital medialmente y el ligamento posterior lateralmente. Del borde medial se origina una parte del flexor cubital del carpo, mientras que en el borde lateral se inserta el músculo ancóneo."
+ },
+ "UBERON:0006822": {
+  "labelEs": "epífisis proximal del cúbito",
+  "definitionEs": "La cabeza del cúbito presenta una superficie articular, una parte de la cual, de forma oval o semilunar, se dirige hacia abajo y se articula con la cara superior del disco articular triangular que la separa de la articulación de la muñeca; la porción restante, dirigida lateralmente, es estrecha, convexa y se aloja en la escotadura cubital del radio."
+ },
+ "UBERON:0007164": {
+  "labelEs": "articulación radiocubital distal",
+  "definitionEs": "La articulación radiocubital distal (articulación radiocubital inferior) es una articulación trocoide formada entre la cabeza del cúbito y la escotadura cubital del radio distal."
+ },
+ "UBERON:0007165": {
+  "labelEs": "articulación radiocubital proximal",
+  "definitionEs": "La articulación radiocubital proximal (articulación radiocubital superior) es una articulación trocoide o en pivote entre la circunferencia de la cabeza del radio y el anillo formado por la escotadura radial del cúbito y el ligamento anular."
+ },
+ "UBERON:0007168": {
+  "labelEs": "cabeza larga del bíceps braquial",
+  "definitionEs": "La cabeza larga se origina en el tubérculo supraglenoideo, justo por encima de la articulación del hombro, desde donde su tendón desciende a lo largo del surco intertubercular del húmero hacia el interior de la cápsula articular de la articulación del hombro. [1] Cuando el húmero está en movimiento, el tendón de la cabeza larga se mantiene firmemente en su lugar en el surco intertubercular gracias a los tubérculos mayor y menor y al ligamento humeral transverso que lo recubre. Durante el movimiento de rotación externa a rotación interna, el tendón es empujado medialmente contra el tubérculo menor y superiormente contra el ligamento transverso."
+ },
+ "UBERON:0007169": {
+  "labelEs": "cabeza corta del bíceps braquial",
+  "definitionEs": "Proximalmente (hacia el cuerpo), la cabeza corta del bíceps se inserta en (se origina de) la apófisis coracoides, en la parte superior de la escápula."
+ },
+ "UBERON:0007612": {
+  "labelEs": "músculo extensor de los dedos",
+  "definitionEs": "Músculo de la parte posterior del antebrazo que extiende los dedos y la muñeca."
+ },
+ "UBERON:0007614": {
+  "labelEs": "músculo extensor del meñique",
+  "definitionEs": "El extensor del meñique (extensor digiti quinti proprius) es un músculo delgado del antebrazo, situado en el lado cubital del extensor común de los dedos, con el que generalmente está conectado. Se origina del tendón extensor común mediante una delgada lengüeta tendinosa y de los tabiques intermusculares situados entre él y los músculos adyacentes. Su tendón discurre por un compartimento del ligamento carpiano dorsal por detrás de la articulación radiocubital distal, luego se divide en dos al cruzar la mano y finalmente se une a la expansión del tendón del extensor común de los dedos en el dorso de la primera falange del dedo meñique[WP]."
+ },
+ "UBERON:0007657": {
+  "labelEs": "ligamento anular del radio",
+  "definitionEs": "El ligamento anular (ligamento orbicular) es una banda fuerte de fibras que rodea la cabeza del radio (hueso) y la mantiene en contacto con la escotadura radial del cúbito."
+ },
+ "UBERON:0007722": {
+  "labelEs": "articulación interfalángica de la mano",
+  "definitionEs": "Las articulaciones interfalángicas de la mano son articulaciones en bisagra de las falanges de la mano. Hay dos grupos (excepto en el pulgar): las «articulaciones interfalángicas proximales» (IFP), las situadas entre la primera (también llamada proximal) y la segunda (intermedia) falanges, y las «articulaciones interfalángicas distales» (IFD), las situadas entre la segunda y la tercera (distal) falanges. Un grupo similar de articulaciones funciona también en los dedos del pie."
+ },
+ "UBERON:0007723": {
+  "labelEs": "articulación interfalángica del pulgar",
+  "definitionEs": "Articulación interfalángica de la mano que forma parte del primer dedo de la mano."
+ },
+ "UBERON:0007729": {
+  "labelEs": "articulación interfalángica del dedo índice",
+  "definitionEs": "Articulación interfalángica de la mano que forma parte del segundo dedo de la mano."
+ },
+ "UBERON:0007730": {
+  "labelEs": "articulación interfalángica del dedo medio",
+  "definitionEs": "Articulación interfalángica de la mano que forma parte del tercer dedo de la mano."
+ },
+ "UBERON:0007731": {
+  "labelEs": "articulación interfalángica del dedo anular",
+  "definitionEs": "Articulación interfalángica de la mano que forma parte del cuarto dedo de la mano."
+ },
+ "UBERON:0007732": {
+  "labelEs": "articulación interfalángica del dedo meñique",
+  "definitionEs": "Articulación interfalángica de la mano que forma parte del quinto dedo de la mano."
+ },
+ "UBERON:0007735": {
+  "labelEs": "articulación metacarpofalángica del pulgar",
+  "definitionEs": "Articulación esquelética que conecta un hueso metacarpiano y conecta una falange proximal del primer dedo de la mano."
+ },
+ "UBERON:0007738": {
+  "labelEs": "articulación metacarpofalángica del dedo índice",
+  "definitionEs": "Articulación esquelética que conecta un hueso metacarpiano y conecta una falange proximal del segundo dedo de la mano."
+ },
+ "UBERON:0007741": {
+  "labelEs": "articulación metacarpofalángica del dedo medio",
+  "definitionEs": "Articulación esquelética que conecta un hueso metacarpiano y conecta una falange proximal del tercer dedo de la mano."
+ },
+ "UBERON:0007744": {
+  "labelEs": "articulación metacarpofalángica del dedo anular",
+  "definitionEs": "Articulación esquelética que conecta un hueso metacarpiano y conecta una falange proximal del cuarto dedo de la mano."
+ },
+ "UBERON:0007747": {
+  "labelEs": "articulación metacarpofalángica del dedo meñique",
+  "definitionEs": "Articulación esquelética que conecta un hueso metacarpiano y conecta una falange proximal del quinto dedo de la mano."
+ },
+ "UBERON:0007958": {
+  "labelEs": "hueso central del carpo",
+  "definitionEs": "Hueso pequeño que se encuentra ocasionalmente en la cara dorsal de la muñeca, entre el escafoides, el grande y el trapezoide; se desarrolla como un cartílago independiente al principio de la vida fetal, pero por lo general se fusiona con el escafoides; aparece normalmente en la mayoría de los monos."
+ },
+ "UBERON:0007997": {
+  "labelEs": "hueso sesamoideo de la mano",
+  "definitionEs": "Hueso sesamoideo que forma parte de una mano."
+ },
+ "UBERON:0008446": {
+  "labelEs": "músculo flexor largo del pulgar",
+  "definitionEs": "Músculo del antebrazo y de la mano que flexiona el pulgar. Se sitúa en el mismo plano que el flexor profundo de los dedos."
+ },
+ "UBERON:0008449": {
+  "labelEs": "escotadura troclear",
+  "definitionEs": "La escotadura semilunar del cúbito (escotadura troclear del cúbito, cavidad sigmoidea mayor) es una gran depresión formada por el olécranon y la apófisis coronoides, que sirve para la articulación con la tróclea del húmero. Hacia la mitad de cada lado de esta escotadura hay una indentación que la estrecha algo e indica la unión del olécranon y la apófisis coronoides. La escotadura es cóncava de arriba abajo y está dividida en una porción medial y otra lateral por una cresta lisa que va desde el vértice del olécranon hasta la punta de la apófisis coronoides. La porción medial es la mayor y es ligeramente cóncava transversalmente; la lateral es convexa por arriba y ligeramente cóncava por abajo."
+ },
+ "UBERON:0008465": {
+  "labelEs": "músculo abductor corto del pulgar",
+  "definitionEs": "El abductor corto del pulgar es un músculo de la mano que actúa como abductor del pulgar."
+ },
+ "UBERON:0008785": {
+  "labelEs": "segmento del miembro superior",
+  "definitionEs": "Segmento de miembro que forma parte de un miembro anterior."
+ },
+ "UBERON:0008878": {
+  "labelEs": "palma de la mano",
+  "definitionEs": null
+ },
+ "UBERON:0009565": {
+  "labelEs": "uña de dedo de la mano",
+  "definitionEs": "Uña que forma parte de un dedo de la mano."
+ },
+ "UBERON:0009880": {
+  "labelEs": "esqueleto del carpo",
+  "definitionEs": "Subdivisión del esqueleto que consta de los elementos endocondrales distales a los elementos esqueléticos zeugopodiales del miembro/aleta anterior, que constituyen la región proximal del esqueleto del autopodio anterior[PHENOSCAPE:ad]."
+ },
+ "UBERON:0009988": {
+  "labelEs": "cóndilo del húmero",
+  "definitionEs": "Extremo distal del húmero, que incluye la tróclea, el capítulo y las fosas olecraniana, coronoidea y radial."
+ },
+ "UBERON:0010544": {
+  "labelEs": "esqueleto del metacarpo",
+  "definitionEs": "El metacarpo es la parte intermedia del esqueleto de la mano, situada entre las falanges (huesos de los dedos) distalmente y el carpo, que forma la conexión con el antebrazo. El metacarpo consta de huesos metacarpianos. Los metacarpianos forman un arco transversal al que se fija la hilera rígida de huesos carpianos distales. Los metacarpianos periféricos (los del pulgar y del meñique) forman los lados de la concavidad del canal palmar y, al aproximarse entre sí, profundizan esta concavidad. El metacarpiano del índice es el que está fijado con más firmeza, mientras que el metacarpiano del pulgar se articula con el trapecio y actúa de forma independiente de los demás. Los metacarpianos medios están firmemente unidos al carpo mediante elementos óseos intrínsecos entrelazados en sus bases. El metacarpiano del anular constituye un elemento de transición hacia el último metacarpiano, semiindependiente. [WP,unvetted]."
+ },
+ "UBERON:0010688": {
+  "labelEs": "esqueleto de los dedos de la mano",
+  "definitionEs": "Subdivisión del esqueleto que consta de todos los elementos esqueléticos del extremo más distal del autopodio de la mano, es decir, los huesos de las manos o sus precursores cartilaginosos[VSAO,modified]."
+ },
+ "UBERON:0010703": {
+  "labelEs": "esqueleto del antebrazo",
+  "definitionEs": "Conjunto de todos los elementos esqueléticos de una región del zeugopodio del miembro anterior."
+ },
+ "UBERON:0010853": {
+  "labelEs": "capítulo del húmero",
+  "definitionEs": "Eminencia lisa y redondeada situada en la porción lateral de la superficie articular del húmero. Se articula con la depresión en forma de copa de la cabeza del radio y se limita a la parte anterior e inferior del hueso."
+ },
+ "UBERON:0010994": {
+  "labelEs": "apófisis coronoides del cúbito",
+  "definitionEs": "Eminencia triangular que se proyecta hacia delante desde la epífisis proximal del cúbito[WP,modified]."
+ },
+ "UBERON:0011011": {
+  "labelEs": "músculo braquiorradial",
+  "definitionEs": "El braquiorradial es un músculo del antebrazo que actúa flexionando el antebrazo a la altura del codo. También es capaz tanto de pronación como de supinación, según la posición del antebrazo. Se inserta en la apófisis estiloides distal del radio por medio del tendón del braquiorradial, y en la cresta supracondílea lateral del húmero."
+ },
+ "UBERON:0011012": {
+  "labelEs": "músculo flexor corto del pulgar",
+  "definitionEs": "El flexor corto del pulgar es un músculo de la mano que flexiona el pulgar. Es uno de los tres músculos tenares. Tiene una parte superficial y una parte profunda."
+ },
+ "UBERON:0011104": {
+  "labelEs": "epífisis del quinto hueso metacarpiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metacarpiano del quinto dedo."
+ },
+ "UBERON:0011110": {
+  "labelEs": "articulación humerocubital",
+  "definitionEs": "La articulación humerocubital, que forma parte de la articulación del codo o articulación del olécranon, entre los huesos cúbito y húmero, es la articulación en bisagra simple que permite movimientos de flexión, extensión y circunducción. La articulación humerocubital es la unión de la escotadura troclear del cúbito y la tróclea del húmero. Debido a la oblicuidad de la tróclea del húmero, este movimiento no se produce en el plano anteroposterior del cuerpo del húmero. Cuando el antebrazo está extendido y en supinación, los ejes del brazo y del antebrazo no se encuentran en la misma línea; el brazo forma un ángulo obtuso con el antebrazo. Sin embargo, durante la flexión, el antebrazo y la mano tienden a aproximarse a la línea media del cuerpo, lo que permite llevar fácilmente la mano a la cara. La adaptación precisa de la tróclea del húmero, con sus prominencias y depresiones, a la escotadura semilunar del cúbito impide cualquier movimiento lateral. La flexión se produce por la acción del bíceps braquial y del braquial, ayudados por el braquiorradial, con una mínima contribución de los músculos que se originan en el epicóndilo medial del húmero. La extensión se produce por el tríceps braquial y el ancóneo, con una mínima contribución de los músculos que se originan en el epicóndilo lateral del húmero, como el extensor común de los dedos."
+ },
+ "UBERON:0011111": {
+  "labelEs": "articulación humerorradial",
+  "definitionEs": "Articulación en bisagra entre la cabeza del radio y el capítulo del húmero."
+ },
+ "UBERON:0011119": {
+  "labelEs": "articulación carpometacarpiana",
+  "definitionEs": "Las articulaciones carpometacarpianas (CMC) son articulaciones de la muñeca que articulan la hilera distal de huesos carpianos y las bases proximales de los huesos metacarpianos."
+ },
+ "UBERON:0011131": {
+  "labelEs": "articulación intermetacarpiana",
+  "definitionEs": "Articulación esquelética que conecta dos metacarpianos adyacentes[FMA,modified]."
+ },
+ "UBERON:0011132": {
+  "labelEs": "articulación intercarpiana",
+  "definitionEs": "Articulación esquelética que conecta dos huesos carpianos."
+ },
+ "UBERON:0011187": {
+  "labelEs": "tubérculo mayor del húmero",
+  "definitionEs": "El tubérculo mayor del húmero se sitúa lateral a la cabeza del húmero y posterolateral al tubérculo menor. Su cara superior es redondeada y está marcada por tres impresiones planas: la más alta («carilla superior») da inserción al supraespinoso; la media («carilla media»), al infraespinoso; la más baja («carilla inferior»), y el cuerpo del hueso en unos 2,5 cm por debajo de ella, al redondo menor. La cara lateral del tubérculo mayor es convexa, rugosa y continua con la cara lateral del cuerpo. Entre el tubérculo mayor y el tubérculo menor se encuentra el surco intertubercular (corredera bicipital)."
+ },
+ "UBERON:0011188": {
+  "labelEs": "tubérculo menor del húmero",
+  "definitionEs": "El tubérculo menor del húmero, aunque más pequeño, es más prominente que el tubérculo mayor: se sitúa por delante y se dirige medial y anteriormente. Por arriba y por delante presenta una impresión para la inserción del tendón del subescapular."
+ },
+ "UBERON:0011265": {
+  "labelEs": "articulación carpometacarpiana del pulgar",
+  "definitionEs": "Articulación carpometacarpiana que conecta con el metacarpiano 1."
+ },
+ "UBERON:0011273": {
+  "labelEs": "uña del pulgar",
+  "definitionEs": "Uña que forma parte del primer dedo de la mano."
+ },
+ "UBERON:0011274": {
+  "labelEs": "uña del dedo índice",
+  "definitionEs": "Uña que forma parte del segundo dedo de la mano."
+ },
+ "UBERON:0011275": {
+  "labelEs": "uña del dedo medio",
+  "definitionEs": "Uña que forma parte del tercer dedo de la mano."
+ },
+ "UBERON:0011276": {
+  "labelEs": "uña del dedo anular",
+  "definitionEs": "Uña que forma parte del cuarto dedo de la mano."
+ },
+ "UBERON:0011277": {
+  "labelEs": "uña del dedo meñique",
+  "definitionEs": "Uña que forma parte del quinto dedo de la mano."
+ },
+ "UBERON:0011575": {
+  "labelEs": "apófisis estiloides del cúbito",
+  "definitionEs": "La apófisis estiloides del cúbito se proyecta desde la parte medial y posterior del hueso; desciende un poco más abajo que la cabeza, y su extremo redondeado da inserción al ligamento colateral cubital de la muñeca[WP,unvetted]."
+ },
+ "UBERON:0011868": {
+  "labelEs": "articulación mediocarpiana",
+  "definitionEs": "Articulación intercarpiana que conecta un hueso carpiano proximal y uno distal."
+ },
+ "UBERON:0011869": {
+  "labelEs": "articulación del pisiforme",
+  "definitionEs": "Es una articulación entre el pisiforme y el piramidal."
+ },
+ "UBERON:0011870": {
+  "labelEs": "articulación pisopiramidal",
+  "definitionEs": null
+ },
+ "UBERON:0011968": {
+  "labelEs": "articulación radiocarpiana",
+  "definitionEs": "Articulación esquelética que conecta un radio y conecta un esqueleto del carpo."
+ },
+ "UBERON:0011979": {
+  "labelEs": "epífisis de la falange distal de la mano",
+  "definitionEs": "Epífisis que forma parte de una falange distal de la mano."
+ },
+ "UBERON:0012130": {
+  "labelEs": "fosa olecraniana",
+  "definitionEs": "Excavación profunda del hueso en la que penetra la apófisis ancónea del cúbito cuando se extiende la articulación del codo."
+ },
+ "UBERON:0012355": {
+  "labelEs": "región de los dedos de la mano",
+  "definitionEs": "Segmento de la mano distal a la región metacarpiana, que consta de los dedos de la mano."
+ },
+ "UBERON:0013748": {
+  "labelEs": "metáfisis del cúbito",
+  "definitionEs": "Metáfisis que forma parte de un cúbito."
+ },
+ "UBERON:0013749": {
+  "labelEs": "metáfisis del húmero",
+  "definitionEs": "Metáfisis que forma parte de una metáfisis."
+ },
+ "UBERON:0013751": {
+  "labelEs": "metáfisis del radio",
+  "definitionEs": "Metáfisis que forma parte de un radio."
+ },
+ "UBERON:0013752": {
+  "labelEs": "diáfisis de hueso metacarpiano",
+  "definitionEs": "Diáfisis que forma parte de un hueso metacarpiano."
+ },
+ "UBERON:0013753": {
+  "labelEs": "epífisis distal de hueso metacarpiano",
+  "definitionEs": "Epífisis distal que forma parte de un hueso metacarpiano."
+ },
+ "UBERON:0013777": {
+  "labelEs": "piel de la palma de la mano",
+  "definitionEs": "Zona de piel que forma parte de la parte palmar de la mano."
+ },
+ "UBERON:0014375": {
+  "labelEs": "músculo intrínseco de la mano",
+  "definitionEs": "Cualquiera de los músculos intrínsecos de la mano."
+ },
+ "UBERON:0014376": {
+  "labelEs": "músculo tenar",
+  "definitionEs": "Cualquiera de los músculos de la eminencia tenar, zona carnosa elevada de la palma de la mano cerca de la base del pulgar."
+ },
+ "UBERON:0014377": {
+  "labelEs": "músculo hipotenar",
+  "definitionEs": "Cualquiera de los tres músculos de la palma que controlan el movimiento del dedo meñique."
+ },
+ "UBERON:0014508": {
+  "labelEs": "articulación interfalángica distal del dedo medio",
+  "definitionEs": "Articulación interfalángica distal que forma parte del tercer dedo de la mano."
+ },
+ "UBERON:0014668": {
+  "labelEs": "articulación interfalángica distal del dedo índice",
+  "definitionEs": null
+ },
+ "UBERON:0014670": {
+  "labelEs": "articulación interfalángica distal del dedo anular",
+  "definitionEs": null
+ },
+ "UBERON:0014671": {
+  "labelEs": "articulación interfalángica distal del dedo meñique",
+  "definitionEs": null
+ },
+ "UBERON:0014791": {
+  "labelEs": "musculatura del brazo",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de la región del estilopodio del miembro anterior [Definición generada automáticamente]."
+ },
+ "UBERON:0014881": {
+  "labelEs": "epífisis distal de la falange distal del pulgar",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del primer dedo de la mano."
+ },
+ "UBERON:0014882": {
+  "labelEs": "epífisis distal de la falange distal del dedo índice",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del segundo dedo de la mano."
+ },
+ "UBERON:0014883": {
+  "labelEs": "epífisis distal de la falange distal del dedo medio",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del tercer dedo de la mano."
+ },
+ "UBERON:0014884": {
+  "labelEs": "epífisis distal de la falange distal del dedo anular",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del cuarto dedo de la mano."
+ },
+ "UBERON:0014885": {
+  "labelEs": "epífisis distal de la falange distal del dedo meñique",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del quinto dedo de la mano."
+ },
+ "UBERON:0016399": {
+  "labelEs": "nódulo linfático del miembro superior",
+  "definitionEs": "Nódulo linfático que forma parte de un miembro anterior."
+ },
+ "UBERON:0016425": {
+  "labelEs": "cartílago epifisario del radio",
+  "definitionEs": "Cartílago epifisario que forma parte de un radio."
+ },
+ "UBERON:0016426": {
+  "labelEs": "articulación interfalángica proximal del dedo meñique",
+  "definitionEs": null
+ },
+ "UBERON:0016430": {
+  "labelEs": "ramo palmar del nervio mediano",
+  "definitionEs": "El ramo palmar del nervio mediano es un ramo del nervio mediano que se origina en la parte inferior del antebrazo e inerva la piel de la parte central proximal de la palma y de la eminencia tenar."
+ },
+ "UBERON:0016493": {
+  "labelEs": "músculo palmar largo",
+  "definitionEs": "El palmar largo se observa como un pequeño tendón entre el flexor radial del carpo y el flexor cubital del carpo, aunque no siempre está presente. El músculo falta en aproximadamente el 14 por ciento de la población, aunque esto varía mucho según la etnia. La ausencia del palmar no tiene ningún efecto conocido sobre la fuerza de prensión. El palmar largo puede palparse tocando las yemas del quinto y del primer dedo y flexionando la muñeca. El tendón, si está presente, será muy visible."
+ },
+ "UBERON:0016496": {
+  "labelEs": "tendón del palmar largo",
+  "definitionEs": null
+ },
+ "UBERON:0016497": {
+  "labelEs": "epicóndilo del húmero",
+  "definitionEs": "Epicóndilo que forma parte de un húmero."
+ },
+ "UBERON:0017618": {
+  "labelEs": "músculo extensor corto del pulgar",
+  "definitionEs": "El extensor corto del pulgar se sitúa en el lado medial del abductor largo del pulgar y está estrechamente conectado con él."
+ },
+ "UBERON:0017716": {
+  "labelEs": "eminencia tenar",
+  "definitionEs": "Zona carnosa elevada de la palma de la mano cerca de la base del pulgar."
+ },
+ "UBERON:0017717": {
+  "labelEs": "eminencia hipotenar",
+  "definitionEs": "Hipotenar designa un grupo de tres músculos de la palma que controlan el movimiento del dedo meñique. Los tres músculos son: abductor del meñique, flexor del meñique y oponente del meñique."
+ },
+ "UBERON:0035038": {
+  "labelEs": "túnel carpiano",
+  "definitionEs": "Paso osteofibroso situado en la cara palmar de la muñeca que conecta el antebrazo distal con el compartimento medio del plano profundo de la palma."
+ },
+ "UBERON:0036172": {
+  "labelEs": "músculo palmar corto",
+  "definitionEs": "El palmar corto es un músculo delgado y cuadrilátero situado bajo el tegumento del lado cubital de la mano. Se origina mediante fascículos tendinosos del ligamento carpiano transverso y de la aponeurosis palmar; las fibras carnosas se insertan en la piel del borde cubital de la palma de la mano. El músculo está inervado por el ramo superficial del nervio cubital, que contiene fibras de los nervios octavo cervical y primero torácico."
+ },
+ "UBERON:0036173": {
+  "labelEs": "músculo abductor del meñique de la mano",
+  "definitionEs": "El abductor del meñique (abductor digiti quinti) se sitúa en el borde cubital de la palma de la mano. Se origina en el hueso pisiforme y en el tendón del flexor cubital del carpo, y termina en un tendón plano que se divide en dos lengüetas; una se inserta en el lado cubital de la base de la primera falange del dedo meñique; la otra, en el borde cubital de la aponeurosis del extensor propio del quinto dedo. En caso de polidactilia, puede insertarse en el sexto dedo, si lo hay."
+ },
+ "UBERON:0036174": {
+  "labelEs": "músculo flexor corto del meñique de la mano",
+  "definitionEs": "El flexor corto del meñique es un músculo de la mano que flexiona el dedo meñique. Se sitúa en el mismo plano que el abductor del meñique, en su lado radial."
+ },
+ "UBERON:0036176": {
+  "labelEs": "músculo oponente del meñique de la mano",
+  "definitionEs": "El oponente del meñique (opponens digiti quinti en textos más antiguos) es un músculo de la mano. Tiene forma triangular y se sitúa inmediatamente por debajo del palmar corto, el abductor del meñique y el flexor corto del meñique. Se origina en la convexidad del gancho del hueso ganchoso y en la porción contigua del ligamento carpiano transverso; se inserta en toda la longitud del hueso metacarpiano del dedo meñique, a lo largo de su borde cubital."
+ },
+ "UBERON:0038048": {
+  "labelEs": "nódulo linfático antebraquial",
+  "definitionEs": null
+ },
+ "UBERON:0038867": {
+  "labelEs": "nódulo linfático interpectoral",
+  "definitionEs": null
+ },
+ "UBERON:0038870": {
+  "labelEs": "nódulo linfático cubital",
+  "definitionEs": null
+ },
+ "UBERON:0038871": {
+  "labelEs": "nódulo linfático supratroclear",
+  "definitionEs": null
+ },
+ "UBERON:4200172": {
+  "labelEs": "cuello del húmero",
+  "definitionEs": null
+ },
+ "UBERON:8300001": {
+  "labelEs": "miembro superior derecho",
+  "definitionEs": "Miembro anterior que se encuentra en el lado derecho de un complejo pectoral."
+ },
+ "UBERON:8300002": {
+  "labelEs": "miembro superior izquierdo",
+  "definitionEs": "Miembro anterior que se encuentra en el lado izquierdo de un complejo pectoral."
+ },
+ "UBERON:8600092": {
+  "labelEs": "vena radial",
+  "definitionEs": "Vena tributaria de la vena braquial que drena la sangre de las estructuras laterales del antebrazo, los huesos carpianos y metacarpianos, las articulaciones de la mano y los músculos laterales del antebrazo."
+ },
+ "UBERON:8600093": {
+  "labelEs": "vena cubital",
+  "definitionEs": "Vena tributaria de la vena braquial que drena la sangre de la mano y de las caras medial y posterior del antebrazo."
+ }
+}

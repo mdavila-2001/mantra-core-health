@@ -1,0 +1,181 @@
+[
+ {
+  "chunk": 1,
+  "fichasReviewed": 53,
+  "sentencesReviewed": 72,
+  "sentencesFaithful": 70,
+  "labelsOk": 41,
+  "relationsMatchSource": 41,
+  "defects": [
+   {
+    "id": "UBERON:0001275",
+    "field": "definitionEs",
+    "severity": "minor",
+    "note": "The source attribution tag [PHENOSCAPE:ad] is dropped from the end of the Spanish text. The task allows tags to be kept or translated, not removed. The anatomical content is otherwise faithful.",
+    "source": "... The origin site of many proximal hindlimb muscles. [PHENOSCAPE:ad].",
+    "published": "... Lugar de origen de muchos músculos proximales del miembro posterior."
+   },
+   {
+    "id": "UBERON:0001132",
+    "field": "definitionEs",
+    "severity": "minor",
+    "note": "'usually found as a pair' is rendered as 'en número par', which means 'in an even number' rather than 'as a pair'. A closer rendering is 'por lo general se presenta como un par'.",
+    "source": "... usually found as a pair, embedded in the connective tissue capsule on the posterior surface of the thyroid gland.",
+    "published": "... por lo general se presenta en número par, incluida en la cápsula de tejido conjuntivo de la cara posterior de la glándula tiroides."
+   },
+   {
+    "id": "UBERON:0001132",
+    "field": "netter",
+    "severity": "minor",
+    "note": "The Netter entry name is garbled ('Ebner) — paratiroides'), apparently a broken parse of the index heading. It most likely points to the parathyroid entry (plate 76), but the name as displayed does not clearly denote the parathyroid gland and starts with a stray fragment.",
+    "published": "{netterId: ENT_c2ce020dad20e1, name: 'Ebner) — paratiroides', plates: [76], matchKind: exact}"
+   }
+  ]
+ },
+ "Wrote /home/user/mantra-core-health/data/anatomy-ontology/es/FMA-ONLY.json with 248 entries. Each id from the source appears exactly once, every labelEs is filled in, every definitionEs is null, and the JSON parses. Three wording choices to check: \"flexor accessorius\" is given its Spanish name, \"cuadrado plantar\"; \"tooth\" is left out of the tooth names (for example \"segundo premolar inferior izquierdo\"); and I added \"de/del\" to two odd BodyParts3D labels, giving \"giro recto de los giros orbitarios\" and \"precúneo del lobulillo parietal superior derecho/izquierdo\".",
+ {
+  "chunk": 2,
+  "fichasReviewed": 53,
+  "sentencesReviewed": 63,
+  "sentencesFaithful": 61,
+  "labelsOk": 52,
+  "relationsMatchSource": 53,
+  "defects": [
+   {
+    "id": "UBERON:0001684",
+    "field": "definitionEs",
+    "severity": "minor",
+    "source": "A dentary bone that is the only bone in one of the lateral halves of the lower jaw skeleton.",
+    "published": "Hueso dentario que es el único hueso de cada una de las mitades laterales del esqueleto de la mandíbula inferior.",
+    "note": "'lower jaw skeleton' is rendered as the redundant and odd 'esqueleto de la mandíbula inferior' (should be 'esqueleto del maxilar inferior' or 'esqueleto de la mandíbula'). 'one of the lateral halves' becomes 'cada una de' (each of), a small change of quantifier."
+   },
+   {
+    "id": "UBERON:0002382",
+    "field": "definitionEs",
+    "severity": "minor",
+    "source": "The rectus is usually crossed by three fibrous bands licked by the tendinous inscriptions.",
+    "published": "El recto suele estar cruzado por tres bandas fibrosas denominadas intersecciones tendinosas.",
+    "note": "The source says the bands are 'licked by' (most likely a typo for 'linked by') the tendinous inscriptions. The translation says 'denominadas' (called), which restates the claim instead of translating it. It matches the Wikipedia original but not this source text."
+   },
+   {
+    "id": "UBERON:0002153",
+    "field": "labelEs",
+    "severity": "minor",
+    "source": "fastigial nucleus",
+    "published": "núcleo fastigio",
+    "note": "'fastigio' is a noun, so 'núcleo fastigio' is not a standard term. The usual Spanish names are 'núcleo fastigial' or 'núcleo del techo'."
+   },
+   {
+    "id": "UBERON:0001609",
+    "field": "definitionEs",
+    "severity": "minor",
+    "source": "A narrow median bridge that joins together the lower thirds...",
+    "published": "Puente medio y estrecho que une los tercios inferiores...",
+    "note": "'median' (on the midline) is rendered as 'medio', which is ambiguous; 'mediano' would be exact. Counted as faithful."
+   },
+   {
+    "id": "UBERON:0001840",
+    "field": "labelEs",
+    "severity": "minor",
+    "source": "semicircular canal",
+    "published": "conducto semicircular óseo",
+    "note": "Acceptable, but in TA usage 'conducto semicircular' is the membranous duct and 'canal semicircular' is the bony canal. 'canal semicircular' would avoid the ambiguity. Counted as OK."
+   },
+   {
+    "id": "UBERON:0001510",
+    "field": "definitionEs",
+    "severity": "minor",
+    "source": "[Automatically generated definition]",
+    "published": "[Automatically generated definition]",
+    "note": "The tag is left in English here and in UBERON:0001955. That is allowed, but sibling fichas translate it as '[definición generada automáticamente]' and the WP tags are translated inconsistently ('[WP, no verificado]' vs '[WP,unvetted]'). This is only a consistency issue and does not affect fidelity."
+   }
+  ]
+ },
+ {
+  "chunk": 3,
+  "fichasReviewed": 53,
+  "sentencesReviewed": 53,
+  "sentencesFaithful": 52,
+  "labelsOk": 53,
+  "relationsMatchSource": 53,
+  "defects": [
+   {
+    "id": "UBERON:0004475",
+    "field": "definitionEs",
+    "severity": "minor",
+    "source": "The collection of muscles that form attachments to the hip skeleton.",
+    "published": "Conjunto de músculos que se insertan en el esqueleto de la cadera.",
+    "note": "'form attachments to' covers both origin and insertion. 'se insertan en' can be read in the technical sense of insertion only, which narrows the meaning. Suggested: 'Conjunto de músculos que se fijan al esqueleto de la cadera.'"
+   }
+  ]
+ },
+ {
+  "chunk": 4,
+  "fichasReviewed": 53,
+  "sentencesReviewed": 64,
+  "sentencesFaithful": 62,
+  "labelsOk": 53,
+  "relationsMatchSource": 53,
+  "defects": [
+   {
+    "id": "UBERON:0009041",
+    "field": "definitionEs",
+    "severity": "minor",
+    "note": "Sentence 1 drops the alternative-name parenthetical '(or superficial circumflex iliac)'. In Spanish both English names translate to the same term, but the omission still means the Spanish sentence says less than the English one.",
+    "source": "The superficial iliac circumflex artery (or superficial circumflex iliac), the smallest of the cutaneous branches of the femoral artery, arises close to the superficial epigastric artery, ...",
+    "published": "La arteria circunfleja ilíaca superficial, la más pequeña de las ramas cutáneas de la arteria femoral, se origina cerca de la arteria epigástrica superficial y, ..."
+   },
+   {
+    "id": "UBERON:0006806",
+    "field": "definitionEs",
+    "severity": "minor",
+    "note": "'attachment site' is translated as 'lugar de inserción'. In Spanish anatomy 'inserción' specifically means the insertion, as opposed to the origin. The flexors actually originate at this epicondyle, so the narrower term changes the claim slightly. A neutral term would be 'lugar de fijación' or 'lugar de anclaje'.",
+    "source": "A bony projection on the distal epiphysis of the humerus that is the attachment site for the flexor muscles of the manus.",
+    "published": "Proyección ósea de la epífisis distal del húmero que constituye el lugar de inserción de los músculos flexores de la mano."
+   }
+  ]
+ },
+ {
+  "chunk": 5,
+  "fichasReviewed": 53,
+  "sentencesReviewed": 88,
+  "sentencesFaithful": 86,
+  "labelsOk": 52,
+  "relationsMatchSource": 53,
+  "defects": [
+   {
+    "id": "UBERON:0009857",
+    "field": "definitionEs",
+    "severity": "major",
+    "note": "'rostrum of the corpus callosum' is rendered as 'tribuna' (a speaker's platform), which is not an anatomical term. The correct term is 'pico (rostro) del cuerpo calloso'. Sentence 3 of 3.",
+    "source": "inferiorly by the anterior commissure and the rostrum of the corpus callosum",
+    "published": "por abajo por la comisura anterior y la tribuna del cuerpo calloso"
+   },
+   {
+    "id": "UBERON:0010369",
+    "field": "definitionEs",
+    "severity": "major",
+    "note": "'supplied by ... terminal bronchioles' means the airway supply. 'irrigada' means blood supply, so the meaning changes. Should read 'abastecida/ventilada por' or 'que depende de'.",
+    "source": "A unit of lung supplied by three to five terminal bronchioles and contained by fibrous septa.",
+    "published": "Unidad del pulmón irrigada por tres a cinco bronquiolos terminales y contenida por tabiques fibrosos."
+   },
+   {
+    "id": "UBERON:0014802",
+    "field": "labelEs",
+    "severity": "minor",
+    "note": "The label drops 'attachment site'. UBERON keeps the attachment-site class separate from the line itself, so the Spanish label names a different (broader) structure. Suggested: 'sitio de inserción de la línea nucal suprema'.",
+    "source": "highest nuchal line attachment site",
+    "published": "línea nucal suprema"
+   }
+  ]
+ },
+ {
+  "chunk": 6,
+  "fichasReviewed": 52,
+  "sentencesReviewed": 50,
+  "sentencesFaithful": 50,
+  "labelsOk": 52,
+  "relationsMatchSource": 52,
+  "defects": []
+ }
+]
