@@ -3,6 +3,32 @@ import type {
   PatientDiagnostics,
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
 
+/**
+ * Las categorías en castellano, por código estable.
+ *
+ * El catálogo trae su `display` en inglés técnico porque es terminología, no
+ * copy de producto, y mapear por **código** —no por uuid— es lo que permite
+ * traducir sin atarse a un identificador que un re-seed puede mover.
+ */
+export const CATEGORY_LABELS: Readonly<Record<string, string>> = {
+  SR_LAB: 'Laboratorio',
+  SR_IMAGING: 'Imagenología',
+  SR_PROCEDURE: 'Procedimiento',
+};
+
+/** Las prioridades en castellano. Mismo criterio que {@link CATEGORY_LABELS}. */
+export const PRIORITY_LABELS: Readonly<Record<string, string>> = {
+  SR_ROUTINE: 'De rutina',
+};
+
+/**
+ * Antiduplicación de estudios (v4.2.17, T-26): la ventana que aplicó el
+ * detector cuando el 422 de la carrera check→alta no la informa de vuelta.
+ * Es el mismo default que fija `DuplicateStudyDetector` del lado del
+ * servidor — sólo se usa acá para reconstruir el diálogo, nunca para decidir.
+ */
+export const DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS = 30;
+
 /** Una orden del histórico, ya sin uuid y con su estado resuelto. */
 export interface EstudioEnFicha {
   readonly id: string;
