@@ -1,0 +1,11 @@
+@if (text(); as t) {
+  <div class="performer" data-testid="order-performer-summary">
+    <p class="performer__mode" data-testid="order-performer-mode">{{ t.mode }}</p>
+    @if (t.site) {
+      <p class="performer__line" data-testid="order-performer-site">{{ t.site }}</p>
+    }
+    @if (t.recommendation) {
+      <p class="performer__line" data-testid="order-performer-recommendation">{{ t.recommendation }}</p>
+    }
+  </div>
+}
