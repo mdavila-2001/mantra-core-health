@@ -27,6 +27,7 @@ import type { BreadcrumbItem } from '../../../shared/components/molecules/breadc
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { WebPushService } from '../../../core/notifications/web-push.service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
@@ -127,6 +128,7 @@ export class BookingNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly webPush = inject(WebPushService);
   private readonly observaciones = inject(SymptomObservationsStore);
 
   /* ---- por dónde entró quien reserva ------------------------------------- */
@@ -660,6 +662,9 @@ export class BookingNew {
           if (precargada !== null && motivo !== '') {
             this.observaciones.marcarUsada(precargada.id);
           }
+          // Su primera cita es el momento en que los avisos dejan de ser abstractos:
+          // se le ofrece el permiso una sola vez, sin bloquear la navegación.
+          void this.webPush.offerAfterFirstBooking();
           void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
           return;
         }

@@ -11,7 +11,7 @@ import { VerificationCases } from './verification-cases';
 /** UUID real del catálogo: determinista, no inventado. */
 const CASE_VERIFIED = ESTADOS_DE_CASO.CASE_VERIFIED;
 const CASE_OPEN = ESTADOS_DE_CASO.CASE_OPEN;
-const CASE_IN_VERIFICATION = ESTADOS_DE_CASO.CASE_IN_VERIFICATION;
+const CASE_REJECTED = ESTADOS_DE_CASO.CASE_REJECTED;
 
 interface FilaVisible {
   readonly id: string;
@@ -126,47 +126,46 @@ describe('VerificationCases', () => {
     http.expectOne('/identity/me/verification-cases').flush([]);
     expect(estado().status).toBe('empty');
   });
-  it('FT-32-R06/R07: sin veredicto la fila no enlaza al detalle', () => {
+  it('presenta estados abiertos, aprobados y rechazados en la tabla', () => {
     http.expectOne('/identity/me/verification-cases').flush([
       { id: 'abierto', status: CASE_OPEN },
-      { id: 'revisando', status: CASE_IN_VERIFICATION },
-      { id: 'listo', status: CASE_VERIFIED },
+      { id: 'aprobado', status: CASE_VERIFIED },
+      { id: 'rechazado', status: CASE_REJECTED },
     ]);
     fixture.detectChanges();
 
     const listo = estado();
     expect(listo.status).toBe('ready');
     if (listo.status !== 'ready') return;
-    expect(listo.data.map((f) => f.sinVeredicto)).toEqual([true, true, false]);
+    expect(listo.data.map((f) => f.statusLabel)).toEqual(['Pendiente', 'Aprobado', 'Rechazado']);
+    expect(listo.data.map((f) => f.statusVariant)).toEqual(['warning', 'success', 'error']);
 
     const html: string = fixture.nativeElement.innerHTML;
-    // Los dos sin veredicto son botones; el resuelto sí enlaza.
-    expect(html).toContain('case-pending-abierto');
-    expect(html).toContain('case-pending-revisando');
-    expect(html).not.toContain('case-pending-listo');
-    expect(html).toContain('/my-account/identity/cases/listo');
+    expect(html).toContain('case-detail-abierto');
+    expect(html).toContain('case-detail-aprobado');
+    expect(html).toContain('case-detail-rechazado');
   });
 
-  it('FT-32-R06/R07: el botón abre el aviso en vez del detalle', () => {
+  it('abre el detalle en un diálogo para un trámite pendiente', () => {
     http
       .expectOne('/identity/me/verification-cases')
       .flush([{ id: 'abierto', status: CASE_OPEN }]);
     fixture.detectChanges();
 
     const componente = component as unknown as {
-      avisoDe: () => { id: string } | null;
-      abrirAviso: (fila: unknown) => void;
-      cerrarAviso: () => void;
+      detalleDe: () => { id: string } | null;
+      abrirDetalle: (fila: unknown) => void;
+      cerrarDetalle: () => void;
     };
-    expect(componente.avisoDe()).toBeNull();
+    expect(componente.detalleDe()).toBeNull();
 
     const listo = estado();
     if (listo.status !== 'ready') return;
-    componente.abrirAviso(listo.data[0]);
-    expect(componente.avisoDe()?.id).toBe('abierto');
+    componente.abrirDetalle(listo.data[0]);
+    expect(componente.detalleDe()?.id).toBe('abierto');
 
-    componente.cerrarAviso();
-    expect(componente.avisoDe()).toBeNull();
+    componente.cerrarDetalle();
+    expect(componente.detalleDe()).toBeNull();
   });
 
   it('FT-32-R02: la evidencia se pide por su contenido y se ofrece para guardar', () => {
