@@ -178,11 +178,11 @@ describe('AuthSplit', () => {
       expect(css).toMatch(/^\.auth-split__wordmark-ink \{\s*display: none;/m);
       expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
       // Todo lo demás es override de claro: el oscuro no cambia.
-      const reglas = css.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+\{/g) ?? [];
-      const sueltas = reglas
+      const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+\{/g) ?? [];
+      const unscoped = rules
         .map((r) => r.replace('{', '').trim())
         .filter((r) => !r.startsWith('@media') && !r.startsWith(":host-context(:root[data-tema='claro'])"));
-      expect(sueltas).toEqual(['.auth-split__wordmark-ink']);
+      expect(unscoped).toEqual(['.auth-split__wordmark-ink']);
     });
   });
 });

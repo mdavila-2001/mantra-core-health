@@ -102,10 +102,10 @@ describe('PointerScene', () => {
       reducido: boolean;
       punteroFino: boolean;
     },
-    anfitrion: typeof Anfitrion | typeof TouchHost = Anfitrion,
+    hostComponent: typeof Anfitrion | typeof TouchHost = Anfitrion,
   ): Promise<void> => {
     fijarEntorno(opciones);
-    fixture = TestBed.createComponent(anfitrion);
+    fixture = TestBed.createComponent(hostComponent);
     escena = fixture.nativeElement.querySelector('.escena') as HTMLElement;
     fijarCaja(escena, 200, 100);
     await fixture.whenStable();
@@ -218,10 +218,10 @@ describe('PointerScene', () => {
   });
 
   describe('en una pantalla táctil que pide la vía táctil', () => {
-    const tocar = (x: number, y: number, pointerType = 'touch'): void => {
-      const evento = new MouseEvent('pointerdown', { clientX: x, clientY: y });
-      Object.defineProperty(evento, 'pointerType', { value: pointerType });
-      escena.dispatchEvent(evento);
+    const tap = (x: number, y: number, pointerType = 'touch'): void => {
+      const event = new MouseEvent('pointerdown', { clientX: x, clientY: y });
+      Object.defineProperty(event, 'pointerType', { value: pointerType });
+      escena.dispatchEvent(event);
     };
 
     beforeEach(async () => {
@@ -230,7 +230,7 @@ describe('PointerScene', () => {
     });
 
     it('el toque publica el punto tocado y enciende el efecto', () => {
-      tocar(150, 25);
+      tap(150, 25);
       dejarQueLaEscenaAlcance();
 
       expect(Number(variable('--pointer-x'))).toBeCloseTo(0.75, 3);
@@ -239,14 +239,14 @@ describe('PointerScene', () => {
     });
 
     it('salta al punto: el primer cuadro ya está donde se tocó, sin deslizarse desde el centro', () => {
-      tocar(150, 25);
+      tap(150, 25);
       cuadros.shift()?.(0);
 
       expect(Number(variable('--pointer-x'))).toBeCloseTo(0.75, 3);
     });
 
     it('se retira solo al vencer la espera, en el lugar del toque', () => {
-      tocar(150, 25);
+      tap(150, 25);
       dejarQueLaEscenaAlcance();
 
       vi.advanceTimersByTime(899);
@@ -259,9 +259,9 @@ describe('PointerScene', () => {
     });
 
     it('un toque nuevo reprograma la espera: queda un solo temporizador', () => {
-      tocar(150, 25);
+      tap(150, 25);
       vi.advanceTimersByTime(600);
-      tocar(50, 75);
+      tap(50, 75);
       dejarQueLaEscenaAlcance();
 
       expect(vi.getTimerCount()).toBe(1);
@@ -270,19 +270,19 @@ describe('PointerScene', () => {
     });
 
     it('ignora el ratón: esa vía es la del pointermove', () => {
-      tocar(150, 25, 'mouse');
+      tap(150, 25, 'mouse');
       dejarQueLaEscenaAlcance();
 
       expect(escena.getAttribute('style')).toBeNull();
     });
 
     it('deja de escuchar y suelta el temporizador al destruirse', () => {
-      tocar(150, 25);
+      tap(150, 25);
       fixture.destroy();
       cuadros = [];
 
       expect(vi.getTimerCount()).toBe(0);
-      tocar(50, 75);
+      tap(50, 75);
       expect(cuadros.length).toBe(0);
     });
   });
@@ -293,9 +293,9 @@ describe('PointerScene', () => {
     });
 
     it('no publica nada aunque se toque', () => {
-      const evento = new MouseEvent('pointerdown', { clientX: 150, clientY: 25 });
-      Object.defineProperty(evento, 'pointerType', { value: 'touch' });
-      escena.dispatchEvent(evento);
+      const event = new MouseEvent('pointerdown', { clientX: 150, clientY: 25 });
+      Object.defineProperty(event, 'pointerType', { value: 'touch' });
+      escena.dispatchEvent(event);
       dejarQueLaEscenaAlcance();
 
       expect(escena.getAttribute('style')).toBeNull();
