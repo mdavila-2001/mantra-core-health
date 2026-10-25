@@ -23,9 +23,14 @@ import {
  * `styles.css` con `node:fs` para detectar deriva en las dos direcciones.
  */
 const ALTA = 'src/app/features/auth/register-practitioner/register-practitioner.ts';
+/** Las páginas del alta viven aparte desde CORR-08 (MT-38-01); el alta las monta. */
+const PAGINAS_DEL_ALTA = 'src/app/features/auth/shared-registration/practitioner-fields.ts';
 
 function camposDelAlta(): readonly string[] {
-  const fuente = readFileSync(ALTA, 'utf8');
+  // Los dos archivos, como un solo texto: las páginas traen casi todas las
+  // claves, y el alta las que arma ella (el departamento de emisión, que
+  // depende de su catálogo, y la unión de los campos de estudio).
+  const fuente = [ALTA, PAGINAS_DEL_ALTA].map((ruta) => readFileSync(ruta, 'utf8')).join('\n');
   const claves = new Set<string>();
   for (const linea of fuente.split(/\r?\n/)) {
     const encontrado = /^\s*key: '([A-Za-z0-9_]+)',?\s*$/.exec(linea);

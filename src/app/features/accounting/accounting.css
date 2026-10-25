@@ -259,3 +259,55 @@
   line-height: var(--lh-caption);
   flex: 1 1 18rem;
 }
+
+/* TAREA-20 — período de los informes y entidades relacionadas por fila. */
+.periodo-de-informes__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: end;
+}
+
+/* Ocupa su propio renglón, debajo de cuenta/importe/acciones: como quinta
+   celda de la grilla de cuatro columnas empujaba las acciones a otra línea. */
+.fila-del-asiento__relacionadas {
+  grid-column: 1 / -1;
+  order: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.relacionadas-de-la-fila {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.relacionadas-de-la-fila legend {
+  padding: 0 var(--sp-1);
+  font-weight: 600;
+}
+
+.relacionadas-de-la-fila__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+.relacionadas-de-la-fila__lista li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+  overflow-wrap: anywhere;
+}

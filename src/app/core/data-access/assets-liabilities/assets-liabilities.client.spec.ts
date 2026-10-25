@@ -48,6 +48,27 @@ describe('AssetsLiabilitiesClient — FT-26 (auto-servicio de activos y pasivos)
     req.flush({ id: 'as1' });
   });
 
+  it('lee el histórico de depreciación de un activo', () => {
+    client.readAssetDepreciations('as1').subscribe();
+    const req = http.expectOne('/accounting/practitioner/assets/as1/depreciations');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      assetId: 'as1',
+      code: 'AST-1',
+      acquisitionCost: null,
+      accumulatedDepreciation: null,
+      bookValue: null,
+      depreciations: [],
+    });
+  });
+
+  it('lee el cronograma de cuotas de un pasivo', () => {
+    client.readLiabilitySchedule('li1').subscribe();
+    const req = http.expectOne('/accounting/practitioner/liabilities/li1/schedule');
+    expect(req.request.method).toBe('GET');
+    req.flush({ liabilityId: 'li1', code: 'PR-1', principalAmount: null, outstandingAmount: null, schedule: [] });
+  });
+
   it('prende o apaga la automatización de un activo', () => {
     client.setAssetAutomation('as1', false).subscribe();
     const req = http.expectOne((r) => r.url === '/accounting/practitioner/assets/as1/automation');

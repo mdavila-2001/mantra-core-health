@@ -48,10 +48,9 @@ import {
   type CambiosDelCampo,
   type TipoDeCampo,
 } from './field-editor/field-editor';
-import {
-  FilterBar,
-  type FilterDef,
-} from '../../shared/components/organisms/filter-bar/filter-bar';
+import { type FilterDef } from '../../shared/components/organisms/filter-bar/filter-bar';
+import { SpecialtyBrowser } from '../../shared/components/organisms/specialty-browser/specialty-browser';
+import type { SpecialtyGroup } from '../../shared/components/organisms/specialty-browser/specialty-browser.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
@@ -158,11 +157,11 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
     Card,
     EmptyState,
     FieldEditor,
-    FilterBar,
     NavIcon,
     PageHeader,
     PaginatedForm,
     Progress,
+    SpecialtyBrowser,
     SpecialtyIcon,
   ],
   templateUrl: './form-builder.html',
@@ -210,6 +209,7 @@ export class FormBuilder {
     effect(() => {
       const propia = this.especialidadPropia();
       const lista = this.listado();
+      if (this.vista() !== 'catalog') return;
       if (!this.preseleccionPendiente || propia === null || lista === null) return;
       this.preseleccionPendiente = false;
       if ((this.criterios()['especialidad'] ?? '') !== '') return;
@@ -265,6 +265,90 @@ export class FormBuilder {
       queryParamsHandling: 'merge',
     });
   }
+
+  /* -- Mis formularios y el catálogo para cargar uno (carril 27) -----------
+
+     Se entra a **los formularios propios** (REQ-27-001): los que su
+     organización ya extendió con campos suyos. El catálogo estándar entero es
+     el paso de «Cargar formulario» (REQ-27-008), agrupado por especialidad con
+     el mismo organismo que el catálogo de procedimientos (REQ-27-009). La
+     vista vive en la URL (`?view=catalog`), como el resto de los filtros:
+     recargar o compartir el enlace deja a la persona donde estaba. */
+
+  /** Qué se ve con ningún formulario abierto. */
+  protected readonly vista = computed<'mine' | 'catalog'>(() =>
+    this.criterios()['view'] === 'catalog' ? 'catalog' : 'mine',
+  );
+
+  /**
+   * Los formularios que su organización ya extendió, por nombre.
+   *
+   * «Mío» es lo único que la pantalla puede afirmar sin inventar una
+   * asignación nueva: que la organización le agregó al menos un campo propio.
+   * Cargar un formulario y no agregarle nada no lo vuelve suyo.
+   */
+  protected readonly misFormularios = computed<readonly ChartTemplate[] | null>(() => {
+    const lista = this.listado();
+    if (lista === null) return null;
+    return lista
+      .filter((plantilla) => this.cuantosPropios(plantilla) > 0)
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  });
+
+  /** «Cargar formulario»: abre el catálogo, ya puesto en la especialidad propia. */
+  protected cargarFormulario(): void {
+    this.preseleccionPendiente = true;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: 'catalog' },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** De vuelta a la lista propia, sin arrastrar los filtros del catálogo. */
+  protected volverAMisFormularios(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: null, q: null, especialidad: null, clase: null, extension: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * Lo filtrado, agrupado por especialidad para `app-specialty-browser`.
+   *
+   * La especialidad de quien entra va primero y las fichas transversales al
+   * final: son de toda consulta y no compiten con la propia. El resto, por
+   * nombre. Dentro de cada grupo, la ficha base antes que las específicas.
+   */
+  protected readonly gruposPorEspecialidad = computed<readonly SpecialtyGroup<ChartTemplate>[]>(
+    () => {
+      const rotulos = this.especialidades();
+      const propia = this.especialidadPropia();
+      const transversal = this.conceptoTransversal();
+      const porEspecialidad = new Map<string, ChartTemplate[]>();
+      for (const plantilla of this.filtrados() ?? []) {
+        const grupo = porEspecialidad.get(plantilla.specialtyConceptId) ?? [];
+        grupo.push(plantilla);
+        porEspecialidad.set(plantilla.specialtyConceptId, grupo);
+      }
+      const peso = (id: string) => (id === propia ? 0 : id === transversal ? 2 : 1);
+      return [...porEspecialidad]
+        .map(([conceptId, plantillas]) => ({
+          conceptId,
+          label: rotulos.get(conceptId) ?? SIN_NOMBRE_DE_ESPECIALIDAD,
+          items: [...plantillas].sort(
+            (a, b) =>
+              ORDEN_DE_CLASE[claseDe(a)] - ORDEN_DE_CLASE[claseDe(b)] ||
+              a.name.localeCompare(b.name, 'es'),
+          ),
+        }))
+        .sort(
+          (a, b) =>
+            peso(a.conceptId) - peso(b.conceptId) || a.label.localeCompare(b.label, 'es'),
+        );
+    },
+  );
 
   /**
    * Las plantillas ya leídas, o `null` mientras no haya lista.
@@ -397,27 +481,24 @@ export class FormBuilder {
     });
   });
 
-  /**
-   * Lo filtrado, en los tres bloques en que trabaja un médico: la consulta
-   * inicial de la especialidad (la ficha base), las fichas estándar de cada
-   * condición para los controles, y las generales de toda consulta. Dentro de
-   * cada bloque, por especialidad y por nombre.
-   */
-  protected readonly grupos = computed<readonly GrupoDeFichas[]>(() => {
-    const lista = this.filtrados() ?? [];
-    const rotulos = this.especialidades();
-    const orden = (a: ChartTemplate, b: ChartTemplate) =>
-      (rotulos.get(a.specialtyConceptId) ?? '').localeCompare(rotulos.get(b.specialtyConceptId) ?? '', 'es') ||
-      a.name.localeCompare(b.name, 'es');
-    return GRUPOS_DE_FICHAS.map((grupo) => ({
-      ...grupo,
-      plantillas: lista.filter((plantilla) => claseDe(plantilla) === grupo.clase).sort(orden),
-    })).filter((grupo) => grupo.plantillas.length > 0);
-  });
-
   /** El rótulo corto de la clase de una ficha, para su tarjeta. */
   protected rotuloDeClase(plantilla: ChartTemplate): string {
     return ROTULO_DE_CLASE[claseDe(plantilla)];
+  }
+
+  /**
+   * Deja en el listado la plantilla tal como quedó al editarla.
+   *
+   * Los cambios se aplican en pantalla antes de mandarse (ver la cabecera), así
+   * que la abierta es la versión vigente: con ella «Mis formularios» muestra el
+   * formulario recién extendido sin volver a pedir el catálogo entero.
+   */
+  private actualizarEnElListado(plantilla: ChartTemplate | null): void {
+    const lista = this.listado();
+    if (plantilla === null || lista === null) return;
+    this.plantillas.set(
+      ready(lista.map((actual) => (actual.id === plantilla.id ? plantilla : actual))),
+    );
   }
 
   /** Si hay algún criterio puesto: lo vacío del filtro no es lo vacío del catálogo. */
@@ -523,6 +604,7 @@ export class FormBuilder {
   }
 
   protected cerrar(): void {
+    this.actualizarEnElListado(this.abierta());
     this.abierta.set(null);
     this.presupuesto.set(null);
     this.enviados.clear();
@@ -1459,32 +1541,15 @@ function normalizar(texto: string): string {
     .trim();
 }
 
-/** Un bloque del listado de fichas. */
-interface GrupoDeFichas {
-  readonly clase: ChartTemplateKind;
-  readonly titulo: string;
-  readonly descripcion: string;
-  readonly plantillas: readonly ChartTemplate[];
-}
+/** El título de un grupo cuya especialidad no tiene nombre en terminología. */
+const SIN_NOMBRE_DE_ESPECIALIDAD = 'Especialidad sin nombre en el catálogo';
 
-const GRUPOS_DE_FICHAS: readonly Omit<GrupoDeFichas, 'plantillas'>[] = [
-  {
-    clase: 'BASE',
-    titulo: 'Consulta inicial (ficha base)',
-    descripcion: 'La primera consulta de la especialidad: antecedentes, examen y lo que se sospecha.',
-  },
-  {
-    clase: 'SPECIFIC',
-    titulo: 'Fichas específicas por condición',
-    descripcion:
-      'El control estándar de cada enfermedad o situación, con lo que su guía pide registrar en cada visita.',
-  },
-  {
-    clase: 'GENERAL',
-    titulo: 'Generales de toda consulta',
-    descripcion: 'Anamnesis, examen físico, consentimiento y epicrisis.',
-  },
-];
+/** Dentro de una especialidad: la consulta inicial, las de condición y las generales. */
+const ORDEN_DE_CLASE: Readonly<Record<ChartTemplateKind, number>> = {
+  BASE: 0,
+  SPECIFIC: 1,
+  GENERAL: 2,
+};
 
 const ROTULO_DE_CLASE: Readonly<Record<ChartTemplateKind, string>> = {
   BASE: 'Ficha base',
