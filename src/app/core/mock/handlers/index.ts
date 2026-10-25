@@ -45,6 +45,7 @@ import { registerPatientSpending } from './patient-spending.handlers';
 import { registerPortalInventory } from './portal-inventory.handlers';
 import { registerReceivedServices } from './received-services.handlers';
 import { registerMedicalGroups } from './medical-groups.handlers';
+import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 
 /**
@@ -104,6 +105,7 @@ export function crearRouterSimulado(): MockRouter {
   registerPatientSpending(router);
   registerPortalInventory(router);
   registerMedicalGroups(router);
+  registerMedicalCenters(router);
   registerOrganizationPracticeHandlers(router);
   return router;
 }
