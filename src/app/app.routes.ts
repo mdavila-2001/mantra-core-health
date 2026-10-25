@@ -318,7 +318,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/center-schedule': () =>
     import('./features/laboratory/center-schedule/center-schedule').then((m) => m.CenterSchedulePage),
   // CM-11 · la organización verificada abre su práctica y su primera sede.
-  'organization/medical-center-setup': () =>
+  'administration/medical-center-setup': () =>
     import('./features/organization/medical-center-setup/medical-center-setup').then(
       (m) => m.MedicalCenterSetup,
     ),
@@ -2254,7 +2254,7 @@ export const routes: Routes = [
     // El alta pública de un centro médico (CM-11): `register-organization` con
     // `tenantType: 'HOSPITAL'`, un tipo de salud que ya existe. Queda pendiente
     // de verificación; su práctica y su sede se abren después en
-    // `organization/medical-center-setup`.
+    // `administration/medical-center-setup`.
     path: 'auth/register/medical-center',
     loadComponent: () =>
       import('./features/auth/register-medical-center/register-medical-center').then(
