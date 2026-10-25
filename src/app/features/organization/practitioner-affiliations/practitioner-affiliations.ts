@@ -92,15 +92,11 @@ export class PractitionerAffiliations implements OnInit {
   });
 
   private readonly practitionerCell = viewChild.required<TemplateRef<{ $implicit: RoleAssignmentRow }>>('practitionerCell');
-  private readonly statusCell = viewChild.required<TemplateRef<{ $implicit: RoleAssignmentRow }>>('statusCell');
   private readonly initiatorCell = viewChild.required<TemplateRef<{ $implicit: RoleAssignmentRow }>>('initiatorCell');
-  private readonly actionsCell = viewChild.required<TemplateRef<{ $implicit: RoleAssignmentRow }>>('actionsCell');
 
   protected readonly columns = computed<readonly ColumnDef<RoleAssignmentRow>[]>(() => [
-    { key: 'practitioner', header: 'Médico y procedimiento', priority: 1, cell: this.practitionerCell() },
-    { key: 'status', header: 'Estado', priority: 1, cell: this.statusCell() },
+    { key: 'practitioner', header: 'Médico, procedimiento y estado', priority: 1, cell: this.practitionerCell() },
     { key: 'initiator', header: 'Iniciada por', priority: 3, cell: this.initiatorCell() },
-    { key: 'actions', header: 'Acciones', priority: 1, align: 'end', cell: this.actionsCell() },
   ]);
 
   protected readonly rowId = (row: RoleAssignmentRow): string => row.id;

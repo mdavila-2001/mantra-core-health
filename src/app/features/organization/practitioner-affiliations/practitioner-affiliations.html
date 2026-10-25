@@ -71,17 +71,9 @@
 <ng-template #practitionerCell let-row>
   <span class="affiliations__main" [attr.data-testid]="'affiliation-name-' + row.id">{{ row.practitionerName }}</span>
   <span class="affiliations__service" [attr.data-testid]="'affiliation-service-' + row.id">{{ row.serviceDisplay }}</span>
-</ng-template>
-
-<ng-template #statusCell let-row>
-  <app-badge [variant]="statusTone(row)" [attr.data-testid]="'affiliation-status-' + row.id">{{ statusText(row) }}</app-badge>
-</ng-template>
-
-<ng-template #initiatorCell let-row>
-  <span class="affiliations__muted" [attr.data-testid]="'affiliation-initiator-' + row.id">{{ initiatorText(row) }}</span>
-</ng-template>
-
-<ng-template #actionsCell let-row>
+  <span class="affiliations__state">
+    <app-badge [variant]="statusTone(row)" [attr.data-testid]="'affiliation-status-' + row.id">{{ statusText(row) }}</app-badge>
+  </span>
   @if (awaitsPractice(row)) {
     <span class="affiliations__actions">
       <button
@@ -108,7 +100,9 @@
         Rechazar
       </button>
     </span>
-  } @else {
-    <span class="affiliations__muted">—</span>
   }
+</ng-template>
+
+<ng-template #initiatorCell let-row>
+  <span class="affiliations__muted" [attr.data-testid]="'affiliation-initiator-' + row.id">{{ initiatorText(row) }}</span>
 </ng-template>
