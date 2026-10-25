@@ -171,4 +171,44 @@ describe('GlossaryAnatomyAtlas', () => {
     harness.detectChanges();
     expect(seleccion(pagina)).toEqual([]);
   });
+
+  describe('búsqueda mientras el catálogo carga', () => {
+    async function abrirYEscribir(texto: string): Promise<void> {
+      await harness.navigateByUrl('/glossary/anatomy-atlas');
+      http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
+      http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush({});
+      harness.detectChanges();
+      const campo = html().querySelector<HTMLInputElement>('[data-testid="atlas3d-buscar"] input');
+      campo!.value = texto;
+      campo!.dispatchEvent(new Event('input'));
+      await new Promise((resolver) => setTimeout(resolver, 300));
+      harness.detectChanges();
+    }
+
+    it('con el índice sin llegar, dice que carga y no «no encontramos» (el falso negativo que estresaba)', async () => {
+      await abrirYEscribir('pulm');
+      expect(html().querySelector('[data-testid="atlas3d-cargando"]')?.textContent).toContain('Cargando el catálogo');
+      expect(html().textContent).not.toContain('No encontramos estructuras');
+    });
+
+    it('cuando el índice llega, los resultados reemplazan el aviso', async () => {
+      await abrirYEscribir('útero');
+      http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [[UTERO, 'útero', 'uterus', 0]] });
+      harness.detectChanges();
+      expect(html().querySelector('[data-testid="atlas3d-cargando"]')).toBeNull();
+      expect(html().querySelector('.atlas3d__resultados')?.textContent).toContain('útero');
+    });
+
+    it('si el índice falla, lo dice y deja reintentar', async () => {
+      await abrirYEscribir('pulm');
+      http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush('no', { status: 500, statusText: 'Error' });
+      harness.detectChanges();
+      expect(html().querySelector('[data-testid="atlas3d-catalogo-fallo"]')).not.toBeNull();
+      html().querySelector<HTMLButtonElement>('.atlas3d__reintentar')!.click();
+      harness.detectChanges();
+      http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [] });
+      harness.detectChanges();
+      expect(html().querySelector('[data-testid="atlas3d-catalogo-fallo"]')).toBeNull();
+    });
+  });
 });

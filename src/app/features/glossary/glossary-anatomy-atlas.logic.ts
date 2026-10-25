@@ -164,12 +164,25 @@ export function normalizeSearch(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase().trim();
 }
 
+/** Los nombres ya normalizados de cada entrada, calculados una vez por índice y no en cada tecla. */
+const NORMALIZED_NAMES = new WeakMap<readonly AnatomyIndexEntry[], readonly (readonly [string, string])[]>();
+
+function normalizedNames(entries: readonly AnatomyIndexEntry[]): readonly (readonly [string, string])[] {
+  let nombres = NORMALIZED_NAMES.get(entries);
+  if (nombres === undefined) {
+    nombres = entries.map(([, es, en]) => [normalizeSearch(es ?? ''), normalizeSearch(en)] as const);
+    NORMALIZED_NAMES.set(entries, nombres);
+  }
+  return nombres;
+}
+
 /** Las entradas del índice cuyo nombre (castellano o inglés) contiene el texto; primero las que tienen pieza. */
 export function searchIndex(entries: readonly AnatomyIndexEntry[], query: string, limit: number): AnatomyIndexEntry[] {
   const q = normalizeSearch(query);
   if (q.length < 2) return [];
+  const nombres = normalizedNames(entries);
   const aciertos = entries.filter(
-    ([id, es, en]) => normalizeSearch(es ?? '').includes(q) || normalizeSearch(en).includes(q) || id.toLowerCase() === q,
+    ([id], i) => nombres[i][0].includes(q) || nombres[i][1].includes(q) || id.toLowerCase() === q,
   );
   aciertos.sort((a, b) => b[3] - a[3]);
   return aciertos.slice(0, limit);

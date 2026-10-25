@@ -194,6 +194,11 @@ export class GlossaryAnatomyAtlas {
     return parte === undefined ? null : sideLabel(parte.side);
   });
 
+  /** El catálogo de búsqueda todavía está bajando. */
+  protected readonly indexLoading = computed(() => this.indexState().status === 'loading');
+  /** El catálogo de búsqueda no se pudo bajar. */
+  protected readonly indexFailed = computed(() => this.indexState().status === 'error');
+
   protected readonly results = computed<AnatomyIndexEntry[]>(() => searchIndex(this.index()?.entries ?? [], this.search(), SEARCH_LIMIT));
 
   protected readonly femaleOnly = computed(() =>
@@ -232,10 +237,7 @@ export class GlossaryAnatomyAtlas {
       // Sin el archivo el atlas funciona como antes: las compuestas quedan sin pieza.
       error: () => this.composites.set({}),
     });
-    this.atlas.index().subscribe({
-      next: (indice) => this.indexState.set(ready(indice)),
-      error: (error: unknown) => this.indexState.set(errorToViewState(error)),
-    });
+    this.loadIndex();
 
     // La ficha sigue a la URL: abrir un enlace compartido abre la misma ficha.
     effect(() => {
@@ -253,6 +255,22 @@ export class GlossaryAnatomyAtlas {
         if (id !== null) this.showLayersOf(id);
       });
     });
+  }
+
+  /**
+   * Pide el índice de búsqueda. Pesa unos 480 KB: hasta que llega, la búsqueda
+   * no puede responder, y la pantalla lo dice en vez de mostrar «no encontramos».
+   */
+  private loadIndex(): void {
+    this.indexState.set(loading());
+    this.atlas.index().subscribe({
+      next: (indice) => this.indexState.set(ready(indice)),
+      error: (error: unknown) => this.indexState.set(errorToViewState(error)),
+    });
+  }
+
+  protected retryIndex(): void {
+    this.loadIndex();
   }
 
   private loadStructure(id: string | null): void {
