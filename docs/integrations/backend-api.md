@@ -322,6 +322,22 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
+### `HealthcareServicesClient` — 4 operaciones
+
+Procedimientos que una sede publica, con su precio propio (carril CM-06).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices/:practiceId/sites` | `ProcedureOffers` (elegir la sede) |
+| `GET` | `/practices/:practiceId/healthcare-services?practiceSiteId=` | `ProcedureOffers` |
+| `POST` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (publicar un procedimiento) |
+| `PATCH` | `/practices/:practiceId/healthcare-services/:id` | `ProcedureOffers` (activar, desactivar, fijar el precio) |
+
+El precio propio se crea antes con `ServicesCatalogClient.create` —un ítem de
+catálogo por sede— y su `id` viaja como `serviceCatalogId`. `serviceCatalogId`
+es opcional al publicar: sin precio el procedimiento queda publicado pero no
+aparece en las búsquedas del paciente.
+
 ### `SchedulingClient` — 33 operaciones
 
 | Método | Ruta | Consumidor |
