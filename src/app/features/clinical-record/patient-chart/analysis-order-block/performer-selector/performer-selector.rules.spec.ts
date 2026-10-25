@@ -147,11 +147,24 @@ describe('performer-selector.rules', () => {
   describe('conceptos del conjunto expandido', () => {
     it.each([
       ['SR_PERF_SELF', 'SELF'],
+      ['clinical:SERVICE_REQUEST_PERFORMER_SELF', 'SELF'],
+      ['clinical:SERVICE_REQUEST_PERFORMER_ORGANIZATION', 'ORGANIZATION'],
+      ['clinical:SERVICE_REQUEST_PERFORMER_PATIENT_CHOICE', 'PATIENT_CHOICE'],
       ['clinical:SR_PERF_ORGANIZATION', 'ORGANIZATION'],
       ['SR_PERF_PATIENT_CHOICE', 'PATIENT_CHOICE'],
       ['PATIENT_CHOICE', 'PATIENT_CHOICE'],
       ['SR_PERF_OTHER', null],
     ])('%s → %s', (codigo, modo) => expect(performerModeOfCode(codigo)).toBe(modo));
+
+    it('arma los tres uuids con los códigos literales que devuelve la API', () => {
+      expect(
+        performerSelectionConceptsOf([
+          { conceptId: 'u-3', code: 'clinical:SERVICE_REQUEST_PERFORMER_PATIENT_CHOICE' },
+          { conceptId: 'u-1', code: 'clinical:SERVICE_REQUEST_PERFORMER_SELF' },
+          { conceptId: 'u-2', code: 'clinical:SERVICE_REQUEST_PERFORMER_ORGANIZATION' },
+        ]),
+      ).toEqual({ SELF: 'u-1', ORGANIZATION: 'u-2', PATIENT_CHOICE: 'u-3' });
+    });
 
     it('arma los tres uuids o devuelve null si falta alguno', () => {
       const opciones = [
