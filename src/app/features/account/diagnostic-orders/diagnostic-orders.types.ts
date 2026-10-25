@@ -1,14 +1,15 @@
 import type { PatientSettlementFields } from '../../../core/data-access/insurance/patient-insurance-settlement.types';
 
 /**
- * El tipo de estudio, para las cuatro pestañas de «Mis órdenes» (C9).
+ * El tipo de estudio, para las pestañas de «Mis órdenes» (C9).
  *
- * Cerrado a tres valores porque son los que el value set `VS_SERVICE_REQUEST_CATEGORY`
- * distingue hoy (`SRQ-LAB`, `SRQ-IMAGING`); todo lo demás —incluido «sin categoría»,
- * que hoy es el caso normal porque C2 (quien llena `category` en el contrato) no
- * corrió esta noche— cae en `OTHER` y se ve en la pestaña «Otros».
+ * Cerrado a cuatro valores porque son los que el value set `VS_SERVICE_REQUEST_CATEGORY`
+ * distingue hoy (`SRQ-LAB`, `SRQ-IMAGING`, y la categoría procedimiento de los centros
+ * médicos); todo lo demás —incluido «sin categoría», que hoy es el caso normal porque C2
+ * (quien llena `category` en el contrato) no corrió esta noche— cae en `OTHER` y se ve en
+ * la pestaña «Otros».
  */
-export const ANALYSIS_CATEGORIES = ['LAB', 'IMAGING', 'OTHER'] as const;
+export const ANALYSIS_CATEGORIES = ['LAB', 'IMAGING', 'PROCEDURE', 'OTHER'] as const;
 export type AnalysisCategory = (typeof ANALYSIS_CATEGORIES)[number];
 
 /** El código del `categoryConceptId` que corresponde a laboratorio, en el catálogo. */
@@ -25,6 +26,18 @@ const CODIGOS_IMAGENOLOGIA: readonly string[] = [
 ];
 
 /**
+ * Los códigos con que puede llegar la categoría procedimiento (CONTRATO A-8).
+ *
+ * Terminología devuelve el código simple o con el prefijo del módulo, y hasta que
+ * la API confirme cuál usa se reconocen los tres. Lo leen CM-08 y CM-09.
+ */
+export const PROCEDURE_CATEGORY_CODES: readonly string[] = [
+  'SRQ-PROCEDURE',
+  'SR_PROCEDURE',
+  'clinical:SERVICE_REQUEST_CATEGORY_PROCEDURE',
+];
+
+/**
  * Deriva el tipo desde el **código** del concepto de categoría, no desde su
  * texto: el texto cambia de idioma, el código no. Sin `categoryConceptId`
  * (todavía no lo llena C2) o con un código que no es de los dos conocidos,
@@ -38,6 +51,9 @@ export function categoriaDeAnalisis(codigoDeCategoria: string | undefined): Anal
   if (codigoDeCategoria !== undefined && CODIGOS_IMAGENOLOGIA.includes(codigoDeCategoria)) {
     return 'IMAGING';
   }
+  if (codigoDeCategoria !== undefined && PROCEDURE_CATEGORY_CODES.includes(codigoDeCategoria)) {
+    return 'PROCEDURE';
+  }
   return 'OTHER';
 }
 
@@ -48,6 +64,8 @@ export function etiquetaDeCategoria(categoria: AnalysisCategory): string {
       return 'Laboratorio';
     case 'IMAGING':
       return 'Imagenología';
+    case 'PROCEDURE':
+      return 'Procedimientos';
     case 'OTHER':
       return 'Otros';
   }

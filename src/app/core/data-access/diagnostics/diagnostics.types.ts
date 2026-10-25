@@ -1,4 +1,8 @@
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
+import type {
+  ServiceRequestPerformerFields,
+  ServiceRequestPerformerInput,
+} from './service-request-performer.types';
 
 /** Clasificación de C2; sólo la resuelve el simulador: la API no la declara (P40). */
 export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
@@ -107,7 +111,7 @@ export interface PatientDiagnostics {
  * encuentro abierto, por la misma razón que la receta: un pedido suelto, sin la
  * consulta que lo motivó, es un dato que después nadie sabe explicar.
  */
-export interface NewDiagnosticOrder {
+export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;
@@ -302,7 +306,7 @@ export interface PatientDiagnosticResults {
  * `hasReleasedResult` lo decide el servidor y no se recalcula acá: que exista un
  * informe no quiere decir que haya un resultado que esta persona pueda leer.
  */
-export interface PatientOrder extends PatientSettlementFields {
+export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields {
   readonly id: string;
   readonly encounterId?: string;
   readonly codeConceptId: string;
