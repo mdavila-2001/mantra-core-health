@@ -1,0 +1,99 @@
+/* ============================================================================
+    Grupos médicos · alta. UNA tarjeta centrada y a lo ancho del área de
+    contenido, sin medida de formulario (composition-rules.md §5): los campos se
+    reparten en columnas por ancho (1 / 2 desde 780 px / 3 desde 1120 px).
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.alta {
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-6);
+}
+
+.alta__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.alta__panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+.alta__grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+@media (min-width: 780px) {
+  .alta__grilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .alta__grilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.alta__ayuda {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.alta__equipo {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alta__cargo {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.alta__cargo > .alta__grilla {
+  inline-size: 100%;
+}
+
+.alta__cargo-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.alta__pie {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-6);
+}
+
+.alta__pendientes {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.alta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}

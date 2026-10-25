@@ -1,0 +1,87 @@
+<app-page-header
+  title="Grupos médicos"
+  subtitle="Los equipos que armó para un servicio y las invitaciones que recibió de colegas."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="medical-groups-new"
+    [routerLink]="newRoute"
+  >
+    Nuevo grupo médico
+  </a>
+</app-page-header>
+
+<div class="grupos">
+  <!-- Las tres pestañas son el mismo listado con otro `tab`: la tabla se dibuja
+       una sola vez, en la pestaña abierta, desde la plantilla de abajo. -->
+  <app-tabs [selectedIndex]="selectedIndex()" (selectedIndexChange)="changeTab($event)">
+    @for (tab of tabs; track tab.id) {
+      <app-tab [label]="tab.label">
+        <ng-container *ngTemplateOutlet="tabla" />
+      </app-tab>
+    }
+  </app-tabs>
+</div>
+
+<ng-template #tabla>
+  <div class="grupos__tabla" [attr.data-testid]="'medical-groups-' + activeTab()">
+    <app-data-table
+      [state]="rows()"
+      [columns]="columns()"
+      [trackBy]="trackBy"
+      [rowLabel]="rowLabel"
+      rowNavigable
+      caption="Grupos médicos"
+      (rowActivated)="open($event)"
+      (retry)="reload()"
+      (refresh)="reload()"
+    />
+
+    @if (hasMore()) {
+      <button
+        app-button
+        type="button"
+        variant="secondary"
+        data-testid="medical-groups-more"
+        [isLoading]="loadingMore()"
+        (clicked)="loadMore()"
+      >
+        Ver más grupos
+      </button>
+    }
+  </div>
+</ng-template>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #dateCell let-row>
+  {{ row.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}
+</ng-template>
+
+<ng-template #serviceCell let-row>
+  {{ serviceName(row) }}
+</ng-template>
+
+<ng-template #statusCell let-row>
+  <app-badge [variant]="statusTone(row.status)" [value]="statusLabel(row.status)" />
+</ng-template>
+
+<ng-template #roleCell let-row>
+  {{ row.isCreator ? 'Organiza usted' : 'Invitado' }}
+</ng-template>
+
+<!-- El camino accesible: `rowNavigable` es sólo comodidad de puntero, y este
+     enlace es el que también funciona con teclado y lector de pantalla. -->
+<ng-template #actionCell let-row>
+  <a
+    app-button
+    variant="secondary"
+    [routerLink]="route(row)"
+    [queryParams]="actionQuery(row)"
+    [attr.data-testid]="'medical-group-open-' + row.id"
+  >
+    {{ actionLabel(row) }}
+  </a>
+</ng-template>

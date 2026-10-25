@@ -1,0 +1,25 @@
+/* ============================================================================
+    Grupos médicos · listado. Sólo distribución: la tabla, las pestañas y las
+    insignias ya traen su pinta del sistema.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.grupos {
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-6);
+}
+
+.grupos__tabla {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+  justify-items: start;
+}
+
+.grupos__tabla app-data-table {
+  inline-size: 100%;
+}

@@ -1,0 +1,290 @@
+<app-page-header
+  title="Grupo médico"
+  [subtitle]="group() ? 'Equipo, horario y notas del procedimiento.' : ''"
+  [breadcrumbs]="breadcrumbs()"
+>
+  <a app-button page-actions variant="secondary" [routerLink]="listRoute">Volver a los grupos</a>
+</app-page-header>
+
+<div class="grupo">
+  <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+    @if (group(); as g) {
+      <!-- UNA tarjeta con pestañas, centrada y a lo ancho del área de contenido
+           (composition-rules.md §5). -->
+      <app-card class="grupo__tarjeta" variant="elevated" padding="lg">
+        <div class="grupo__cabecera">
+          <h2 class="grupo__titulo">{{ g.scheduledAt | date: "EEEE d 'de' MMMM, HH:mm" }}</h2>
+          <app-badge
+            data-testid="medical-group-status"
+            [variant]="statusTone(g.status)"
+            [value]="statusLabel(g.status)"
+          />
+        </div>
+
+        @if (notice(); as aviso) {
+          <app-alert tone="success" data-testid="medical-group-notice">{{ aviso }}</app-alert>
+        }
+        <app-medical-group-write-error [state]="writeError()" />
+
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="changeTab($event)">
+          <!-- ─── Resumen ─────────────────────────────────────────────────── -->
+          <app-tab label="Resumen">
+            <div class="grupo__panel" data-testid="medical-group-tab-resumen">
+              <app-fact-list [hechos]="facts()" disposicion="columnas" />
+
+              @if (g.notesText; as notas) {
+                <section class="grupo__bloque" aria-labelledby="grupo-notas-titulo">
+                  <h3 id="grupo-notas-titulo" class="grupo__subtitulo">Notas del pedido</h3>
+                  <p class="grupo__texto">{{ notas }}</p>
+                </section>
+              }
+
+              <section class="grupo__bloque" aria-labelledby="grupo-terminos-titulo">
+                <h3 id="grupo-terminos-titulo" class="grupo__subtitulo">Términos y condiciones</h3>
+                <p class="grupo__texto">{{ g.termsText }}</p>
+              </section>
+            </div>
+          </app-tab>
+
+          <!-- ─── Equipo ──────────────────────────────────────────────────── -->
+          <app-tab [label]="'Equipo (' + g.members.length + ')'">
+            <div class="grupo__panel" data-testid="medical-group-tab-equipo">
+              <ul class="grupo__equipo">
+                @for (member of g.members; track member.id) {
+                  <li class="grupo__miembro" [attr.data-testid]="'medical-group-member-' + member.id">
+                    <div class="grupo__miembro-datos">
+                      <span class="grupo__miembro-nombre">{{ memberName(member) }}</span>
+                      <span class="grupo__miembro-cargo">{{ member.roleTitle }}</span>
+                    </div>
+                    <span class="grupo__miembro-pago">Pago acordado: {{ member.agreedPaymentAmount }}</span>
+                    @if (member.isCreator) {
+                      <app-badge variant="primary" value="Organiza" size="sm" />
+                    }
+                    <app-badge
+                      [variant]="invitationTone[member.invitationStatus]"
+                      [value]="invitationLabel[member.invitationStatus]"
+                      size="sm"
+                    />
+                    @if (member.respondedAt; as respuesta) {
+                      <span class="grupo__miembro-fecha">{{ respuesta | date: 'dd/MM/yyyy HH:mm' }}</span>
+                    }
+                    @if (member.additionalTermsText; as extra) {
+                      <p class="grupo__miembro-extra">{{ extra }}</p>
+                    }
+                  </li>
+                }
+              </ul>
+
+              @if (canRespond()) {
+                <section
+                  class="grupo__responder"
+                  aria-labelledby="grupo-responder-titulo"
+                  data-testid="medical-group-respond"
+                >
+                  <h3 id="grupo-responder-titulo" class="grupo__subtitulo">Su invitación</h3>
+                  <p class="grupo__texto">
+                    Lo invitaron como {{ myMember()?.roleTitle }} con un pago acordado de
+                    {{ myMember()?.agreedPaymentAmount }}. Su respuesta no se puede cambiar después.
+                  </p>
+                  @if (confirmingReject()) {
+                    <app-alert tone="warning" title="¿Rechazar el cargo?">
+                      Al rechazarlo, el creador del grupo lo verá como rechazado y usted no podrá
+                      cambiar esa respuesta.
+                    </app-alert>
+                    <div class="grupo__acciones">
+                      <button
+                        app-button
+                        type="button"
+                        variant="danger"
+                        data-testid="medical-group-reject-confirm"
+                        [isLoading]="saving()"
+                        [disabled]="saving()"
+                        (clicked)="respond('REJECTED')"
+                      >
+                        Sí, rechazar
+                      </button>
+                      <button
+                        app-button
+                        type="button"
+                        variant="secondary"
+                        [disabled]="saving()"
+                        (clicked)="confirmingReject.set(false)"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="grupo__acciones">
+                      <button
+                        app-button
+                        type="button"
+                        variant="primary"
+                        data-testid="medical-group-accept"
+                        [isLoading]="saving()"
+                        [disabled]="saving()"
+                        (clicked)="respond('ACCEPTED')"
+                      >
+                        Aceptar invitación
+                      </button>
+                      <button
+                        app-button
+                        type="button"
+                        variant="secondary"
+                        data-testid="medical-group-reject"
+                        [disabled]="saving()"
+                        (clicked)="confirmingReject.set(true)"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  }
+                </section>
+              }
+            </div>
+          </app-tab>
+
+          <!-- ─── Horario ─────────────────────────────────────────────────── -->
+          <app-tab label="Horario">
+            <div class="grupo__panel" data-testid="medical-group-tab-horario">
+              <p class="grupo__texto">
+                Programado para el <strong>{{ g.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}</strong>
+                en {{ g.locationText }}.
+              </p>
+
+              @if (g.proposedRescheduleAt; as propuesta) {
+                <app-alert tone="info" title="Hay un cambio de horario propuesto">
+                  Se propone pasarlo al <strong>{{ propuesta | date: 'dd/MM/yyyy HH:mm' }}</strong>.
+                  @if (!canResolveProposal()) {
+                    Lo resuelve quien creó el grupo.
+                  }
+                </app-alert>
+              }
+
+              @if (canResolveProposal()) {
+                <div class="grupo__acciones" data-testid="medical-group-resolve">
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    data-testid="medical-group-reschedule-accept"
+                    [isLoading]="saving()"
+                    [disabled]="saving()"
+                    (clicked)="resolveProposal('ACCEPTED')"
+                  >
+                    Aceptar el nuevo horario
+                  </button>
+                  <button
+                    app-button
+                    type="button"
+                    variant="secondary"
+                    data-testid="medical-group-reschedule-reject"
+                    [disabled]="saving()"
+                    (clicked)="resolveProposal('REJECTED')"
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              }
+
+              @if (canPropose()) {
+                <form
+                  class="grupo__formulario"
+                  data-testid="medical-group-propose"
+                  (submit)="$event.preventDefault()"
+                >
+                  <app-form-field
+                    label="Nueva fecha y hora"
+                    [hint]="
+                      isCreator()
+                        ? 'Como creador, el cambio se aplica directo.'
+                        : 'El creador del grupo tiene que aceptarla.'
+                    "
+                  >
+                    <app-date-picker
+                      mode="date-time"
+                      [value]="proposedDate()"
+                      [minDate]="minProposal"
+                      (valueChange)="proposedDate.set($event)"
+                    />
+                  </app-form-field>
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    data-testid="medical-group-propose-submit"
+                    [isLoading]="saving()"
+                    [disabled]="saving() || proposedDate() === null"
+                    (clicked)="propose()"
+                  >
+                    {{ isCreator() ? 'Cambiar el horario' : 'Proponer el cambio' }}
+                  </button>
+                </form>
+              } @else if (!g.proposedRescheduleAt) {
+                <p class="grupo__ayuda">
+                  El horario sólo se puede cambiar en un grupo programado y todavía no realizado.
+                </p>
+              }
+            </div>
+          </app-tab>
+
+          <!-- ─── Notas del ejercicio ─────────────────────────────────────── -->
+          <app-tab label="Notas del ejercicio">
+            <div class="grupo__panel" data-testid="medical-group-tab-notas">
+              @if (canEditNotes()) {
+                <form class="grupo__formulario" (submit)="$event.preventDefault()">
+                  <app-form-field
+                    label="Notas del procedimiento"
+                    hint="Se pueden cargar y corregir hasta una semana después de la cita."
+                  >
+                    <app-textarea
+                      data-testid="medical-group-notes"
+                      [rows]="8"
+                      [maxLength]="notesLimit"
+                      [value]="notesValue(g)"
+                      (valueChange)="editNotes($event)"
+                    />
+                  </app-form-field>
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    data-testid="medical-group-notes-save"
+                    [isLoading]="saving()"
+                    [disabled]="saving()"
+                    (clicked)="saveNotes(g)"
+                  >
+                    Guardar las notas
+                  </button>
+                </form>
+              } @else {
+                @if (g.exerciseNotesText; as notas) {
+                  <p class="grupo__texto grupo__texto--notas" data-testid="medical-group-notes-readonly">
+                    {{ notas }}
+                  </p>
+                  @if (g.exerciseNotesUpdatedAt; as cuando) {
+                    <p class="grupo__ayuda">Última actualización: {{ cuando | date: 'dd/MM/yyyy HH:mm' }}.</p>
+                  }
+                } @else {
+                  <p class="grupo__ayuda" data-testid="medical-group-notes-empty">
+                    @if (g.isClosed) {
+                      El expediente está cerrado y no tiene notas del procedimiento.
+                    } @else if (!g.isRealized) {
+                      Las notas se cargan después de la cita.
+                    } @else {
+                      Sólo quien creó el grupo o aceptó su cargo puede cargar las notas.
+                    }
+                  </p>
+                }
+                @if (g.isClosed) {
+                  <app-alert tone="info">
+                    Pasó la semana de plazo: el expediente quedó cerrado y ya no admite cambios.
+                  </app-alert>
+                }
+              }
+            </div>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  </app-view-state-host>
+</div>

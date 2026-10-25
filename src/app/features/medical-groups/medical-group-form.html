@@ -1,0 +1,274 @@
+<app-page-header
+  title="Nuevo grupo médico"
+  subtitle="Arme el equipo de un servicio: quién, en qué función y con qué pago acordado."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <a app-button page-actions variant="secondary" [routerLink]="listRoute">Volver a los grupos</a>
+</app-page-header>
+
+<div class="alta">
+  <!-- UNA tarjeta con pestañas, centrada y a lo ancho del área de contenido
+       (composition-rules.md §5). El botón de crear vive en la misma tarjeta,
+       fuera de las pestañas, para que se vea desde cualquiera de ellas. -->
+  <app-card class="alta__tarjeta" variant="elevated" padding="lg">
+    <app-medical-group-write-error [state]="writeError()" />
+
+    <form (submit)="$event.preventDefault()" data-testid="medical-group-form">
+      <app-tabs [(selectedIndex)]="tabIndex">
+        <!-- ─── Servicio y paciente ────────────────────────────────────────── -->
+        <app-tab label="Servicio y paciente">
+          <div class="alta__panel alta__grilla">
+            @if (practices().length !== 1) {
+              <app-form-field
+                label="Práctica"
+                hint="El servicio tiene que ser de una práctica suya."
+                [required]="true"
+              >
+                <app-select
+                  ariaLabel="Práctica"
+                  placeholder="Elija una práctica"
+                  [value]="practiceId()"
+                  [options]="practiceOptions()"
+                  (valueChange)="choosePractice($event)"
+                />
+              </app-form-field>
+            }
+
+            <app-form-field
+              label="Servicio"
+              hint="Busque por nombre o código en el catálogo de la práctica."
+              [required]="true"
+            >
+              <app-reference-combobox
+                data-testid="medical-group-service"
+                label="Servicio"
+                placeholder="Ej. Artroscopia de rodilla"
+                emptyMessage="No hay servicios activos con ese nombre"
+                [minQueryLength]="0"
+                [disabled]="practiceId() === null"
+                [loading]="searchingService()"
+                [value]="serviceId()"
+                [selected]="serviceSelected()"
+                [options]="serviceOptions()"
+                (searched)="searchService($event)"
+                (selectionChange)="chooseService($event)"
+              />
+            </app-form-field>
+
+            <app-form-field
+              label="Paciente"
+              hint="Opcional. Búsquelo por nombre o código."
+            >
+              <app-reference-combobox
+                data-testid="medical-group-patient"
+                label="Paciente"
+                placeholder="Nombre o código del paciente"
+                emptyMessage="No encontramos pacientes con ese dato"
+                [loading]="searchingPatient()"
+                [value]="patientId()"
+                [selected]="patientSelected()"
+                [options]="patientOptions()"
+                (searched)="searchPatient($event)"
+                (selectionChange)="choosePatient($event)"
+              />
+            </app-form-field>
+
+            @if (patientId() !== null) {
+              <app-form-field
+                label="Diagnóstico"
+                hint="Opcional. Viene elegido el más reciente."
+              >
+                @if (conditions(); as estado) {
+                  @switch (estado.status) {
+                    @case ('loading') {
+                      <p class="alta__ayuda">Buscando los diagnósticos del paciente…</p>
+                    }
+                    @case ('empty') {
+                      <p class="alta__ayuda">Este paciente no tiene diagnósticos registrados.</p>
+                    }
+                    @case ('ready') {
+                      <app-select
+                        ariaLabel="Diagnóstico"
+                        placeholder="Sin diagnóstico"
+                        [value]="conditionId()"
+                        [options]="conditionOptions()"
+                        (valueChange)="conditionId.set($event)"
+                      />
+                    }
+                    @default {
+                      <p class="alta__ayuda" data-testid="medical-group-conditions-error">
+                        No pudimos leer los diagnósticos de este paciente. Puede crear el grupo sin
+                        diagnóstico.
+                      </p>
+                    }
+                  }
+                }
+              </app-form-field>
+            }
+          </div>
+        </app-tab>
+
+        <!-- ─── Fecha y lugar ──────────────────────────────────────────────── -->
+        <app-tab label="Fecha y lugar">
+          <div class="alta__panel alta__grilla">
+            <app-form-field label="Fecha y hora de realización" [required]="true">
+              <app-date-picker
+                mode="date-time"
+                [value]="scheduledAt()"
+                [minDate]="minDate"
+                (valueChange)="scheduledAt.set($event)"
+              />
+            </app-form-field>
+
+            <app-form-field label="Lugar de realización" [required]="true">
+              <app-input
+                testId="medical-group-location"
+                [value]="location()"
+                (valueChange)="location.set('' + ($event ?? ''))"
+              />
+            </app-form-field>
+
+            <app-form-field label="Notas" hint="Opcional. Lo que el equipo tiene que saber.">
+              <app-textarea
+                data-testid="medical-group-notes"
+                [rows]="4"
+                [maxLength]="limits.notesText"
+                [value]="notes()"
+                (valueChange)="notes.set($event)"
+              />
+            </app-form-field>
+
+            <app-form-field
+              label="Adicionales a los términos y condiciones"
+              hint="Opcional. Se suman a los términos propios del servicio."
+            >
+              <app-textarea
+                data-testid="medical-group-terms"
+                [rows]="4"
+                [maxLength]="limits.additionalTermsText"
+                [value]="terms()"
+                (valueChange)="terms.set($event)"
+              />
+            </app-form-field>
+          </div>
+        </app-tab>
+
+        <!-- ─── Equipo ─────────────────────────────────────────────────────── -->
+        <app-tab [label]="'Equipo (' + members().length + ')'">
+          <div class="alta__panel">
+            <p class="alta__ayuda">
+              Usted entra al grupo automáticamente. Agregue acá al resto del equipo, un renglón por
+              cargo.
+            </p>
+
+            @if (directory().status === 'error' || directory().status === 'offline') {
+              <app-alert tone="warning" title="No pudimos cargar a los profesionales">
+                Sin esa lista no se puede elegir a quién invitar.
+                <button app-button type="button" variant="secondary" size="sm" (clicked)="reloadDirectory()">
+                  Reintentar
+                </button>
+              </app-alert>
+            }
+
+            <ul class="alta__equipo">
+              @for (member of members(); track member.key; let i = $index) {
+                <li class="alta__cargo" [attr.data-testid]="'medical-group-member-' + i">
+                  <h3 class="alta__cargo-titulo">Cargo {{ i + 1 }}</h3>
+                  <div class="alta__grilla">
+                    <app-form-field label="Profesional" [required]="true">
+                      <app-reference-combobox
+                        label="Profesional del cargo {{ i + 1 }}"
+                        placeholder="Nombre o título"
+                        emptyMessage="No encontramos a nadie con ese nombre en el directorio"
+                        [minQueryLength]="0"
+                        [value]="member.practitionerProfileId"
+                        [selected]="memberSelected(member)"
+                        [options]="directoryOptions()"
+                        (searched)="searchPractitioner($event)"
+                        (selectionChange)="patchMember(member.key, { practitionerProfileId: $event?.value ?? null })"
+                      />
+                    </app-form-field>
+
+                    <app-form-field label="Función" hint="Por ejemplo, anestesiólogo." [required]="true">
+                      <app-input
+                        [testId]="'medical-group-role-' + i"
+                        [value]="member.roleTitle"
+                        (valueChange)="patchMember(member.key, { roleTitle: '' + ($event ?? '') })"
+                      />
+                    </app-form-field>
+
+                    <app-form-field
+                      label="Pago acordado"
+                      hint="Sin signo y hasta dos decimales, por ejemplo 500 o 500.50."
+                      [required]="true"
+                    >
+                      <app-input
+                        inputMode="decimal"
+                        [testId]="'medical-group-amount-' + i"
+                        [value]="member.amount"
+                        (valueChange)="patchMember(member.key, { amount: '' + ($event ?? '') })"
+                      />
+                    </app-form-field>
+
+                    <app-form-field label="Adicionales para este cargo" hint="Opcional.">
+                      <app-textarea
+                        [rows]="2"
+                        [maxLength]="limits.additionalTermsText"
+                        [value]="member.terms"
+                        (valueChange)="patchMember(member.key, { terms: $event })"
+                      />
+                    </app-form-field>
+                  </div>
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    [attr.data-testid]="'medical-group-remove-member-' + i"
+                    (clicked)="removeMember(member.key)"
+                  >
+                    Quitar este cargo
+                  </button>
+                </li>
+              }
+            </ul>
+
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              data-testid="medical-group-add-member"
+              (clicked)="addMember()"
+            >
+              Agregar un cargo
+            </button>
+          </div>
+        </app-tab>
+      </app-tabs>
+
+      <div class="alta__pie">
+        @if (problems().length > 0) {
+          <ul class="alta__pendientes" data-testid="medical-group-problems" aria-label="Lo que falta">
+            @for (problema of problems(); track problema) {
+              <li>{{ problema }}</li>
+            }
+          </ul>
+        }
+        <div class="alta__acciones">
+          <button
+            app-button
+            type="submit"
+            variant="primary"
+            data-testid="medical-group-submit"
+            [isLoading]="saving()"
+            [disabled]="!canSubmit()"
+            (clicked)="submit()"
+          >
+            Crear grupo médico
+          </button>
+          <a app-button variant="secondary" [routerLink]="listRoute">Cancelar</a>
+        </div>
+      </div>
+    </form>
+  </app-card>
+</div>
