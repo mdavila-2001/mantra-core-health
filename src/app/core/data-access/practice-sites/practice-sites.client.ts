@@ -208,7 +208,13 @@ interface WireRoleAssignment {
   readonly practiceSiteId: string | null;
   readonly roleConceptId: string;
   readonly specialtyConceptId: string | null;
+  readonly healthcareServiceId: string | null;
+  readonly serviceConceptId: string | null;
+  readonly serviceDisplay: string | null;
   readonly status: string;
+  readonly statusConceptId: string | null;
+  readonly statusCode: string | null;
+  readonly initiatedBy: 'PRACTICE' | 'PRACTITIONER' | null;
   readonly isPrimary: boolean;
   readonly validFrom: string | null;
   readonly validTo: string | null;
