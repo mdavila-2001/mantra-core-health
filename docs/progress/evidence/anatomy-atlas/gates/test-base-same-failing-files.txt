@@ -1,0 +1,614 @@
+$ (worktree origin/mockup 355e01e9) yarn ng test --watch=false --include=src/app/app.routes.spec.ts --include=src/app/core/mock/faker/faker.spec.ts --include=src/app/core/mock/fixtures/fichas-estandar.spec.ts --include=src/app/core/mock/handlers/clinical.handlers.spec.ts --include=src/app/core/mock/handlers/lab-orden-entrante.spec.ts --include=src/app/core/mock/handlers/pharmacy.handlers.spec.ts --include=src/app/core/navigation/access-tree.spec.ts --include=src/app/core/tokens/design-tokens.types.spec.ts --include=src/app/features/billing/representacion-grafica.spec.ts --include=src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts --include=src/app/features/design-system-sample/design-system-sample.spec.ts --include=src/app/features/messaging/messaging.spec.ts 
+Using Vitest configuration file: /tmp/claude-0/-home-user-mantra-core-health/0936bc81-5207-5906-b755-dffb86a17712/scratchpad/base2/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                                  | Names                                                                             |  Raw size
+chunk-ZMMOA522.js                                                                    | -                                                                                 |   1.64 MB | 
+chunk-SE4TV6OU.js                                                                    | -                                                                                 | 842.70 kB | 
+chunk-XYCPYHLS.js                                                                    | -                                                                                 | 665.86 kB | 
+chunk-FPPOP23L.js                                                                    | -                                                                                 | 637.47 kB | 
+spec-app-core-mock-handlers-pharmacy.handlers.js                                     | spec-app-core-mock-handlers-pharmacy.handlers                                     | 622.54 kB | 
+chunk-LLAHJ3ZH.js                                                                    | -                                                                                 | 223.83 kB | 
+styles.css                                                                           | styles                                                                            | 179.32 kB | 
+chunk-U6E4V45J.js                                                                    | -                                                                                 | 170.33 kB | 
+spec-app-app.routes.js                                                               | spec-app-app.routes                                                               | 148.38 kB | 
+chunk-2CQLRCKB.js                                                                    | -                                                                                 | 110.48 kB | 
+chunk-KFHDBIMN.js                                                                    | -                                                                                 | 109.14 kB | 
+chunk-E3SNCE4E.js                                                                    | -                                                                                 | 105.02 kB | 
+chunk-LBETN46F.js                                                                    | -                                                                                 | 101.96 kB | 
+chunk-3B5NW5YB.js                                                                    | -                                                                                 |  86.09 kB | 
+chunk-LFQOSAU4.js                                                                    | -                                                                                 |  76.87 kB | 
+chunk-VHDWEGL3.js                                                                    | -                                                                                 |  67.66 kB | 
+chunk-YMNYZ3S5.js                                                                    | -                                                                                 |  67.50 kB | 
+chunk-KJO7GGVZ.js                                                                    | -                                                                                 |  66.76 kB | 
+chunk-SRV7XGS4.js                                                                    | -                                                                                 |  66.06 kB | 
+chunk-DCATVIJY.js                                                                    | -                                                                                 |  56.74 kB | 
+chunk-SDNXWV2X.js                                                                    | -                                                                                 |  56.40 kB | 
+chunk-WAPM5MGH.js                                                                    | -                                                                                 |  53.35 kB | 
+chunk-UG545FRV.js                                                                    | -                                                                                 |  53.10 kB | 
+chunk-T2775NRR.js                                                                    | -                                                                                 |  52.97 kB | 
+chunk-4DL5LJ5Z.js                                                                    | -                                                                                 |  45.56 kB | 
+chunk-P7T4VT22.js                                                                    | -                                                                                 |  42.75 kB | 
+chunk-FT5SBPTW.js                                                                    | -                                                                                 |  39.77 kB | 
+spec-app-features-clinical-record-patient-chart-medication-block-medication-block.js | spec-app-features-clinical-record-patient-chart-medication-block-medication-block |  38.94 kB | 
+chunk-UFFTRNTM.js                                                                    | -                                                                                 |  38.82 kB | 
+chunk-M7IPBJ2N.js                                                                    | -                                                                                 |  37.98 kB | 
+chunk-FVMAILB5.js                                                                    | -                                                                                 |  37.87 kB | 
+chunk-XDXJXH4W.js                                                                    | -                                                                                 |  37.28 kB | 
+chunk-7BKSLAGV.js                                                                    | -                                                                                 |  36.90 kB | 
+chunk-S2ETD554.js                                                                    | -                                                                                 |  36.63 kB | 
+chunk-AIF2BFM6.js                                                                    | -                                                                                 |  36.62 kB | 
+chunk-XEESZELL.js                                                                    | -                                                                                 |  36.49 kB | 
+chunk-7RVSMW44.js                                                                    | -                                                                                 |  35.57 kB | 
+chunk-XIAX2BHC.js                                                                    | -                                                                                 |  34.87 kB | 
+chunk-MQYLZLGG.js                                                                    | -                                                                                 |  33.64 kB | 
+chunk-GIFZLBWX.js                                                                    | -                                                                                 |  33.63 kB | 
+chunk-TTPIOQV6.js                                                                    | -                                                                                 |  32.07 kB | 
+chunk-L6IYUIG3.js                                                                    | -                                                                                 |  30.45 kB | 
+chunk-FEMEC6MH.js                                                                    | -                                                                                 |  28.12 kB | 
+chunk-AUJDNYBG.js                                                                    | -                                                                                 |  27.72 kB | 
+chunk-L6QZGP2H.js                                                                    | -                                                                                 |  27.48 kB | 
+chunk-LMUT3THW.js                                                                    | -                                                                                 |  26.89 kB | 
+chunk-7HC6NPA5.js                                                                    | -                                                                                 |  26.72 kB | 
+chunk-J22HFKT7.js                                                                    | -                                                                                 |  26.67 kB | 
+chunk-6ZL4COUZ.js                                                                    | -                                                                                 |  26.27 kB | 
+chunk-WYHGTUQ7.js                                                                    | -                                                                                 |  25.79 kB | 
+chunk-47HNGVLX.js                                                                    | -                                                                                 |  25.78 kB | 
+chunk-EB55IVSK.js                                                                    | -                                                                                 |  24.85 kB | 
+chunk-A5PUH24R.js                                                                    | -                                                                                 |  24.55 kB | 
+chunk-2ITWT57O.js                                                                    | -                                                                                 |  24.40 kB | 
+chunk-Y5C2SU7I.js                                                                    | -                                                                                 |  24.10 kB | 
+chunk-BY7IAMQ4.js                                                                    | -                                                                                 |  22.81 kB | 
+chunk-HBJMXFHU.js                                                                    | -                                                                                 |  22.78 kB | 
+chunk-SU2S7MQB.js                                                                    | -                                                                                 |  22.47 kB | 
+chunk-G7JTRYF7.js                                                                    | -                                                                                 |  22.24 kB | 
+chunk-7RABBDIF.js                                                                    | -                                                                                 |  20.76 kB | 
+chunk-ATQH644S.js                                                                    | -                                                                                 |  20.60 kB | 
+chunk-AVPZPEPM.js                                                                    | -                                                                                 |  20.06 kB | 
+chunk-UJLV6Z7F.js                                                                    | -                                                                                 |  20.03 kB | 
+chunk-PRIOGJEC.js                                                                    | -                                                                                 |  18.67 kB | 
+chunk-OODMU7SA.js                                                                    | -                                                                                 |  18.60 kB | 
+chunk-C7HJJ2MD.js                                                                    | -                                                                                 |  18.51 kB | 
+chunk-CTNYKJRN.js                                                                    | -                                                                                 |  18.42 kB | 
+spec-app-core-mock-handlers-clinical.handlers.js                                     | spec-app-core-mock-handlers-clinical.handlers                                     |  17.85 kB | 
+chunk-QEX6UVPD.js                                                                    | -                                                                                 |  17.34 kB | 
+chunk-4NGTYPOQ.js                                                                    | -                                                                                 |  16.70 kB | 
+chunk-KRB6XNAB.js                                                                    | -                                                                                 |  16.50 kB | 
+chunk-NZSX5LDF.js                                                                    | -                                                                                 |  16.38 kB | 
+chunk-WEV5HTYJ.js                                                                    | -                                                                                 |  16.10 kB | 
+chunk-3ANGTLYS.js                                                                    | -                                                                                 |  15.65 kB | 
+chunk-XGR67RWE.js                                                                    | -                                                                                 |  15.39 kB | 
+chunk-YYPLY2DZ.js                                                                    | -                                                                                 |  15.26 kB | 
+chunk-5S246VAT.js                                                                    | -                                                                                 |  15.12 kB | 
+chunk-D5GJKCZO.js                                                                    | -                                                                                 |  14.99 kB | 
+chunk-ZB3WKGFC.js                                                                    | -                                                                                 |  14.84 kB | 
+chunk-ALPUX7YJ.js                                                                    | -                                                                                 |  14.73 kB | 
+chunk-JVN5S4G7.js                                                                    | -                                                                                 |  14.68 kB | 
+chunk-JT2CAVB6.js                                                                    | -                                                                                 |  14.62 kB | 
+chunk-THSH2ZKG.js                                                                    | -                                                                                 |  14.42 kB | 
+chunk-VZBNE2JI.js                                                                    | -                                                                                 |  14.36 kB | 
+chunk-57CNNFTL.js                                                                    | -                                                                                 |  14.25 kB | 
+chunk-6O3YFUX2.js                                                                    | -                                                                                 |  14.24 kB | 
+chunk-UJ2OQQH7.js                                                                    | -                                                                                 |  14.05 kB | 
+chunk-ENG3J4VV.js                                                                    | -                                                                                 |  13.75 kB | 
+chunk-ZGASLIX4.js                                                                    | -                                                                                 |  13.63 kB | 
+chunk-5NXWJNUG.js                                                                    | -                                                                                 |  13.53 kB | 
+chunk-RA4X4B7Z.js                                                                    | -                                                                                 |  13.51 kB | 
+chunk-DWOWFXGU.js                                                                    | -                                                                                 |  13.43 kB | 
+chunk-ZUE3T5JP.js                                                                    | -                                                                                 |  13.28 kB | 
+chunk-PJPAA2CJ.js                                                                    | -                                                                                 |  13.05 kB | 
+chunk-MP6Q34ZH.js                                                                    | -                                                                                 |  12.68 kB | 
+chunk-CG7XLEX4.js                                                                    | -                                                                                 |  12.59 kB | 
+chunk-2CUDES43.js                                                                    | -                                                                                 |  12.48 kB | 
+chunk-ELAU733B.js                                                                    | -                                                                                 |  12.28 kB | 
+chunk-XCZ7UJQO.js                                                                    | -                                                                                 |  12.17 kB | 
+chunk-DNGTU4VQ.js                                                                    | -                                                                                 |  11.89 kB | 
+chunk-3NBWQITQ.js                                                                    | -                                                                                 |  11.83 kB | 
+chunk-OR7WMDAZ.js                                                                    | -                                                                                 |  11.30 kB | 
+chunk-A76EEPER.js                                                                    | -                                                                                 |  11.14 kB | 
+chunk-AWLXPS7M.js                                                                    | -                                                                                 |  11.09 kB | 
+chunk-VCZDDXUW.js                                                                    | -                                                                                 |  11.06 kB | 
+chunk-V2BPNPKB.js                                                                    | -                                                                                 |  10.85 kB | 
+chunk-37KVBOZS.js                                                                    | -                                                                                 |  10.59 kB | 
+chunk-S7Z6ABIB.js                                                                    | -                                                                                 |  10.49 kB | 
+chunk-X2SBDQAB.js                                                                    | -                                                                                 |  10.14 kB | 
+chunk-LJV36EQW.js                                                                    | -                                                                                 |   9.91 kB | 
+spec-app-core-navigation-access-tree.js                                              | spec-app-core-navigation-access-tree                                              |   9.80 kB | 
+chunk-QPAERXSP.js                                                                    | -                                                                                 |   9.76 kB | 
+chunk-QPMPOXOA.js                                                                    | -                                                                                 |   9.62 kB | 
+chunk-AU53KL47.js                                                                    | -                                                                                 |   9.48 kB | 
+chunk-R4ROXI2D.js                                                                    | -                                                                                 |   9.37 kB | 
+spec-app-features-messaging-messaging.js                                             | spec-app-features-messaging-messaging                                             |   9.20 kB | 
+chunk-35EGN5H3.js                                                                    | -                                                                                 |   9.16 kB | 
+chunk-GZSPAS6O.js                                                                    | -                                                                                 |   8.83 kB | 
+chunk-ZAGKZEAE.js                                                                    | -                                                                                 |   8.77 kB | 
+chunk-XKTCPSCE.js                                                                    | -                                                                                 |   8.67 kB | 
+chunk-EPPMZUI2.js                                                                    | -                                                                                 |   8.61 kB | 
+chunk-OLNLB5GZ.js                                                                    | -                                                                                 |   8.12 kB | 
+chunk-WTNUMDB3.js                                                                    | -                                                                                 |   7.93 kB | 
+chunk-AGU5LTMZ.js                                                                    | -                                                                                 |   7.89 kB | 
+chunk-5LI7JSP2.js                                                                    | -                                                                                 |   7.68 kB | 
+chunk-F5YBTEVP.js                                                                    | -                                                                                 |   7.44 kB | 
+chunk-NFQXYM2J.js                                                                    | -                                                                                 |   7.39 kB | 
+chunk-6HLS6C23.js                                                                    | -                                                                                 |   7.06 kB | 
+chunk-6LVNHXLN.js                                                                    | -                                                                                 |   7.01 kB | 
+chunk-QSNQK25K.js                                                                    | -                                                                                 |   6.95 kB | 
+chunk-37H233J4.js                                                                    | -                                                                                 |   6.69 kB | 
+chunk-LE5XIVVF.js                                                                    | -                                                                                 |   6.46 kB | 
+chunk-GVWSPT4R.js                                                                    | -                                                                                 |   6.28 kB | 
+spec-app-core-mock-faker-faker.js                                                    | spec-app-core-mock-faker-faker                                                    |   6.28 kB | 
+chunk-ZUG3F62E.js                                                                    | -                                                                                 |   6.10 kB | 
+chunk-2RUUTIQO.js                                                                    | -                                                                                 |   6.08 kB | 
+chunk-Z5QNE4E5.js                                                                    | -                                                                                 |   5.98 kB | 
+chunk-FCS73OOL.js                                                                    | -                                                                                 |   5.76 kB | 
+chunk-FUXMB2NT.js                                                                    | -                                                                                 |   5.65 kB | 
+chunk-AT373JF6.js                                                                    | -                                                                                 |   5.55 kB | 
+spec-app-features-design-system-sample-design-system-sample.js                       | spec-app-features-design-system-sample-design-system-sample                       |   5.51 kB | 
+chunk-VHDPEMLD.js                                                                    | -                                                                                 |   5.45 kB | 
+chunk-HZXEPMDQ.js                                                                    | -                                                                                 |   5.27 kB | 
+chunk-5QVVZNCL.js                                                                    | -                                                                                 |   5.27 kB | 
+chunk-AMEIQOHB.js                                                                    | -                                                                                 |   5.01 kB | 
+chunk-MJGMSDPM.js                                                                    | -                                                                                 |   4.99 kB | 
+chunk-RZH7KJ5A.js                                                                    | -                                                                                 |   4.75 kB | 
+spec-app-features-billing-representacion-grafica.js                                  | spec-app-features-billing-representacion-grafica                                  |   4.71 kB | 
+chunk-7Y534UOS.js                                                                    | -                                                                                 |   4.66 kB | 
+spec-app-core-mock-fixtures-fichas-estandar.js                                       | spec-app-core-mock-fixtures-fichas-estandar                                       |   4.62 kB | 
+chunk-BYA4ZOPL.js                                                                    | -                                                                                 |   4.24 kB | 
+chunk-LBHF4O6E.js                                                                    | -                                                                                 |   4.10 kB | 
+chunk-KW3SJ772.js                                                                    | -                                                                                 |   4.03 kB | 
+chunk-FQARCSNN.js                                                                    | -                                                                                 |   3.89 kB | 
+spec-app-core-mock-handlers-lab-orden-entrante.js                                    | spec-app-core-mock-handlers-lab-orden-entrante                                    |   3.83 kB | 
+chunk-6RWZQ7PD.js                                                                    | -                                                                                 |   3.79 kB | 
+chunk-MH65JHPL.js                                                                    | -                                                                                 |   3.77 kB | 
+chunk-4EXGYCWQ.js                                                                    | -                                                                                 |   3.75 kB | 
+chunk-BTCXDCZC.js                                                                    | -                                                                                 |   3.60 kB | 
+chunk-J6L7LKSX.js                                                                    | -                                                                                 |   3.46 kB | 
+chunk-4SYVRTET.js                                                                    | -                                                                                 |   3.44 kB | 
+chunk-RTT5VQ2M.js                                                                    | -                                                                                 |   3.27 kB | 
+chunk-6N7BF2MR.js                                                                    | -                                                                                 |   3.26 kB | 
+chunk-DM464ZDJ.js                                                                    | -                                                                                 |   3.24 kB | 
+chunk-ME7JOAMQ.js                                                                    | -                                                                                 |   2.93 kB | 
+chunk-QYNBLSJC.js                                                                    | -                                                                                 |   2.85 kB | 
+chunk-ON2MBOOZ.js                                                                    | -                                                                                 |   2.81 kB | 
+chunk-JGO6EDGH.js                                                                    | -                                                                                 |   2.80 kB | 
+chunk-TALFS2Y6.js                                                                    | -                                                                                 |   2.66 kB | 
+spec-app-core-tokens-design-tokens.types.js                                          | spec-app-core-tokens-design-tokens.types                                          |   2.62 kB | 
+chunk-4LU326QX.js                                                                    | -                                                                                 |   2.61 kB | 
+chunk-TLZIG6VA.js                                                                    | -                                                                                 |   2.43 kB | 
+chunk-O6GD2L2W.js                                                                    | -                                                                                 |   2.28 kB | 
+chunk-SQOEIKWV.js                                                                    | -                                                                                 |   2.27 kB | 
+chunk-B5YCLXME.js                                                                    | -                                                                                 |   2.26 kB | 
+chunk-SXO3NU37.js                                                                    | -                                                                                 |   2.25 kB | 
+chunk-GDH4RNSR.js                                                                    | -                                                                                 |   2.21 kB | 
+chunk-J43NAPGU.js                                                                    | -                                                                                 |   2.11 kB | 
+chunk-PLEDCAHZ.js                                                                    | -                                                                                 |   2.11 kB | 
+chunk-BYYQ3LT4.js                                                                    | -                                                                                 |   2.10 kB | 
+chunk-W2GSFEVF.js                                                                    | -                                                                                 |   1.99 kB | 
+chunk-3MSOSGHT.js                                                                    | -                                                                                 |   1.86 kB | 
+chunk-BOANTZW6.js                                                                    | -                                                                                 |   1.80 kB | 
+chunk-4QYIHMEK.js                                                                    | -                                                                                 |   1.74 kB | 
+chunk-DDIM2HCA.js                                                                    | -                                                                                 |   1.71 kB | 
+chunk-F3324W32.js                                                                    | -                                                                                 |   1.69 kB | 
+chunk-LYMOWT5U.js                                                                    | -                                                                                 |   1.51 kB | 
+chunk-UN6HXO4G.js                                                                    | -                                                                                 |   1.29 kB | 
+init-testbed.js                                                                      | init-testbed                                                                      |   1.21 kB | 
+chunk-3BW3LGGC.js                                                                    | -                                                                                 |   1.18 kB | 
+chunk-AMQ6ERPS.js                                                                    | -                                                                                 |   1.07 kB | 
+chunk-OVC5PIJV.js                                                                    | -                                                                                 | 995 bytes | 
+setup-test-setup.js                                                                  | setup-test-setup                                                                  | 984 bytes | 
+chunk-FIKS5ITZ.js                                                                    | -                                                                                 | 977 bytes | 
+vitest-mock-patch.js                                                                 | vitest-mock-patch                                                                 | 974 bytes | 
+chunk-ARUMRF7X.js                                                                    | -                                                                                 | 966 bytes | 
+chunk-LMCCOVH3.js                                                                    | -                                                                                 | 957 bytes | 
+chunk-YEVPGV7E.js                                                                    | -                                                                                 | 956 bytes | 
+chunk-YWXUXEBI.js                                                                    | -                                                                                 | 879 bytes | 
+chunk-YDSSWSDS.js                                                                    | -                                                                                 | 780 bytes | 
+chunk-6RTKCTCP.js                                                                    | -                                                                                 | 742 bytes | 
+chunk-JZKWLLDS.js                                                                    | -                                                                                 | 668 bytes | 
+chunk-NSSEGL6I.js                                                                    | -                                                                                 | 658 bytes | 
+chunk-43NKZE4U.js                                                                    | -                                                                                 | 639 bytes | 
+chunk-QGSCJ2MW.js                                                                    | -                                                                                 | 633 bytes | 
+chunk-5VQFNVAH.js                                                                    | -                                                                                 | 552 bytes | 
+chunk-25GSZGMJ.js                                                                    | -                                                                                 | 546 bytes | 
+chunk-H6KZE6RA.js                                                                    | -                                                                                 | 543 bytes | 
+chunk-OKM5DH2B.js                                                                    | -                                                                                 | 535 bytes | 
+chunk-RTBZPI2L.js                                                                    | -                                                                                 | 488 bytes | 
+chunk-BNXN2J6M.js                                                                    | -                                                                                 | 480 bytes | 
+chunk-LGVMVNUS.js                                                                    | -                                                                                 | 377 bytes | 
+chunk-DLPBMKRA.js                                                                    | -                                                                                 | 369 bytes | 
+chunk-WODMWDAM.js                                                                    | -                                                                                 | 272 bytes | 
+chunk-YO75RD55.js                                                                    | -                                                                                 | 249 bytes | 
+chunk-UXAZ27N5.js                                                                    | -                                                                                 | 235 bytes | 
+chunk-NLXS4FJ2.js                                                                    | -                                                                                 | 211 bytes | 
+chunk-4O34EBAV.js                                                                    | -                                                                                 | 201 bytes | 
+chunk-MYSBD2DV.js                                                                    | -                                                                                 | 198 bytes | 
+chunk-LBDVUBX3.js                                                                    | -                                                                                 | 198 bytes | 
+chunk-25IHEYAH.js                                                                    | -                                                                                 | 193 bytes | 
+
+                                                                                     | Initial total                                                                     |   8.50 MB
+
+Lazy chunk files                                                                     | Names                                                                             |  Raw size
+chunk-DZGEYQDZ.js                                                                    | component-stock                                                                   |   1.38 MB | 
+chunk-Z2LJ4D5J.js                                                                    | universidades-por-pais-generated                                                  | 737.04 kB | 
+chunk-7XFUCPNB.js                                                                    | practitioner-profile-edit                                                         | 355.01 kB | 
+chunk-PM3XRX2H.js                                                                    | -                                                                                 | 346.53 kB | 
+chunk-CEJUBBUE.js                                                                    | -                                                                                 | 237.31 kB | 
+chunk-PG3IKN22.js                                                                    | register-practitioner                                                             | 221.82 kB | 
+chunk-D36NFYQ5.js                                                                    | register-patient                                                                  | 221.22 kB | 
+chunk-VSLNHVG7.js                                                                    | agenda                                                                            | 208.27 kB | 
+chunk-AA7WZMMN.js                                                                    | appointments                                                                      | 184.57 kB | 
+chunk-A5IGKDI3.js                                                                    | -                                                                                 | 184.50 kB | 
+chunk-MNZMG7WV.js                                                                    | portada                                                                           | 182.25 kB | 
+chunk-54CFE5PK.js                                                                    | thread                                                                            | 175.39 kB | 
+chunk-WUZ7PGL7.js                                                                    | -                                                                                 | 173.44 kB | 
+chunk-JVF73HOI.js                                                                    | cockpit                                                                           | 172.66 kB | 
+chunk-HJOZU5SO.js                                                                    | medical-laboratory                                                                | 166.59 kB | 
+...and 922 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [99.550 seconds] - 2026-10-24T02:48:23.355Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+      135 │ ..., AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormF...
+          ╵                                 ~~~~
+
+
+
+ RUN  v4.1.10 /tmp/claude-0/-home-user-mantra-core-health/0936bc81-5207-5906-b755-dffb86a17712/scratchpad/base2
+
+ ❯  mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts (67 tests | 66 failed) 2580ms
+     × sin binding declarado no ofrece el formulario y explica por qué 275ms
+     × con binding declarado ofrece el formulario 106ms
+     × no ofrece descarga, demostración ni favoritos y tampoco los consulta 58ms
+     × no envía sin medicamento elegido: es obligatorio en el DTO 38ms
+     × manda los tres obligatorios y el encuentro, y omite lo vacío 52ms
+     × manda el diagnóstico elegido como indicación de la receta 35ms
+     × ancla el 422 estructurado de la API al campo Medicamento 32ms
+     × sin diagnóstico elegido la clave no viaja: la receta sintomática es legítima 37ms
+     × C5: ofrece sólo los diagnósticos confirmados, con la fecha, y «Otro motivo» al final — sin opción vacía 39ms
+     × manda dosis, frecuencia y cantidad cuando se cargaron 32ms
+     × manda la vía como concepto cuando se eligió 34ms
+     × sin elegir vía, su clave no viaja 28ms
+     × una cantidad en blanco no viaja como cero 30ms
+     × tras prescribir avisa para releer y limpia el formulario 31ms
+     × manda inicio y fin de vigencia como fechas ISO cuando están configurados 28ms
+     × las indicaciones al paciente viajan separadas de la dosis (v4.1.3) 33ms
+     × la pauta sugiere la cantidad sin pisar lo tecleado a mano 27ms
+     × «Crónico» no aparece elegido al abrir, y al elegirlo borra el fin de vigencia 34ms
+     × usa selects para las pautas y conserva la frecuencia como texto editable 33ms
+     × sin medicación activa, prescribe sin pedir el chequeo de interacciones 25ms
+     × con medicación activa y sin interacciones, prescribe sin confirmar nada 30ms
+     × con interacciones encontradas, pide confirmar antes de prescribir 32ms
+     × si se rechaza la confirmación de interacciones, no prescribe 26ms
+     × si el chequeo de interacciones falla, prescribe igual 30ms
+     × si el chequeo falla, avisa que no se revisaron las interacciones, con código de soporte 25ms
+     × el aviso de interacciones sin revisar se va cuando el próximo chequeo responde 29ms
+     × con interacciones revisadas sin hallazgos, no aparece el aviso de revisión pendiente 33ms
+     × firmar pega contra `sign` sin cuerpo y pide releer 44ms
+     × emitir sin confirmar no manda nada 42ms
+     × emitir confirmado pega contra `issue` y pide releer 43ms
+     × emitir sin firmar muestra el 422 como aviso de precondición, no como error 39ms
+     × la precondición sobre una receta firmada se cuenta como estado viejo 42ms
+     × una receta emitida no ofrece firmar ni emitir: es inmutable 31ms
+     × agrupa las acciones editables en el menú estándar 42ms
+     × el sello distingue las tres etapas del ciclo 32ms
+     × busca dentro del vademécum, sin pedirle nada a la terminología 27ms
+     × encuentra sin tilde lo que el catálogo escribe con tilde 34ms
+     × también busca por código ATC 30ms
+     × sin texto ofrece el catálogo entero, no una lista vacía 31ms
+     × al elegir, lee la ficha y ofrece presentaciones y concentraciones 30ms
+     × completa la frecuencia manual con el valor publicado por el medicamento 26ms
+     × conserva la frecuencia escrita al elegir un medicamento con valor por defecto 36ms
+     × deja la frecuencia manual vacía si el medicamento no publica una por defecto 29ms
+     × ignora una frecuencia por defecto malformada 30ms
+     × reemplaza una sugerencia anterior al elegir otro medicamento 30ms
+     × ignora la ficha que llega tarde para una selección anterior 26ms
+     × conserva una edición manual posterior a una sugerencia al cambiar de medicamento 34ms
+     × los valores del catálogo completan la dosis, pero el texto libre manda 30ms
+     × un medicamento sin propiedades declaradas cae al texto libre de siempre 37ms
+     × si la ficha falla, el medicamento sigue siendo prescribible (con la indicación resuelta) 32ms
+     × cambiar de medicamento descarta la posología del anterior 25ms
+       × C5: sin diagnóstico ni motivo NO se puede prescribir — la receta siempre se liga a uno de los dos 31ms
+       × un diagnóstico confirmado de la historia alcanza 26ms
+       × «Otro motivo» habilita el campo, y exige texto para poder prescribir 39ms
+       × sin diagnóstico, un motivo libre viaja como texto 34ms
+       × con «Otro motivo» viaja el texto y NO la condición 28ms
+       × con un diagnóstico elegido viaja la condición y no el texto 38ms
+       × salir de «Otro motivo» borra el texto 31ms
+       × recién montado no tiene cambios pendientes 37ms
+       × con la dosis escrita tiene cambios pendientes 50ms
+       × la vigencia que el bloque completa solo no cuenta como pendiente 30ms
+       × elegir una duración rápida sí cuenta, aunque también fije validFrom 48ms
+       × abrir el diálogo limpia la selección anterior 41ms
+       × vincular a un diagnóstico confirmado manda indicationConditionId y cierra el diálogo 35ms
+       × vincular con «Otro motivo» exige texto y manda indicationText 38ms
+       × un 422 del servidor se muestra dentro del diálogo, que sigue abierto 36ms
+ ❯  mantra-core-health  src/app/app.routes.spec.ts (62 tests | 1 failed) 6827ms
+     × cada dirección vieja redirige a una ruta que existe 11ms
+ ❯  mantra-core-health  src/app/core/mock/handlers/pharmacy.handlers.spec.ts (52 tests | 1 failed) 175ms
+       × límite — el resto de los pedidos sigue siendo retiro en la farmacia 49ms
+ ❯  mantra-core-health  src/app/core/navigation/access-tree.spec.ts (37 tests | 1 failed) 21ms
+     × la portada sigue en el registro, para el menú lateral 2ms
+ ❯  mantra-core-health  src/app/features/messaging/messaging.spec.ts (10 tests | 1 failed) 341ms
+     × no borra la bandeja cuando un tic falla 37ms
+ ❯  mantra-core-health  src/app/core/mock/faker/faker.spec.ts (14 tests | 1 failed) 23ms
+       × cada ocupación y cada municipio de cada paciente existen 3ms
+ ❯  mantra-core-health  src/app/core/mock/fixtures/fichas-estandar.spec.ts (9 tests | 1 failed) 22ms
+     × son tantas como los JSON que siembra el backend 1ms
+ ❯  mantra-core-health  src/app/features/design-system-sample/design-system-sample.spec.ts (6 tests | 1 failed) 3088ms
+     × el selector de tema sigue expuesto: es la única UI del ThemeService 416ms
+ ❯  mantra-core-health  src/app/core/tokens/design-tokens.types.spec.ts (11 tests | 1 failed) 5ms
+       × todo token declarado en styles.css está en el catálogo 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 74 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   mantra-core-health  src/app/app.routes.spec.ts > rutas del armazón > cada dirección vieja redirige a una ruta que existe
+AssertionError: my-account/identity/cases: expected [ '/dashboard', '/tutorials', …(683) ] to include '/my-account/identity?tab=cases'
+ ❯ src/app/app.routes.spec.ts:253:42
+    251|     for (const redireccion of redirecciones) {
+    252|       expect(redireccion.pathMatch, redireccion.path).toBe('full');
+    253|       expect(destinos, redireccion.path).toContain(redireccion.redirec…
+       |                                          ^
+    254|     }
+    255|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/74]⎯
+
+ FAIL   mantra-core-health  src/app/core/navigation/access-tree.spec.ts > buildAccessTree > la portada sigue en el registro, para el menú lateral
+AssertionError: expected [ 'SUPERADMIN' ] to be undefined
+
+- Expected:
+undefined
+
++ Received:
+[
+  "SUPERADMIN",
+]
+
+ ❯ src/app/core/navigation/access-tree.spec.ts:209:39
+    207|     expect(portada?.label).toBe('Directorios');
+    208|     // Fuera del menú NO está: es la sección que ocupa el renglón desd…
+    209|     expect(portada?.fueraDelMenuPara).toBeUndefined();
+       |                                       ^
+    210|   });
+    211|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/74]⎯
+
+ FAIL   mantra-core-health  src/app/core/tokens/design-tokens.types.spec.ts > design tokens > fidelidad TS ↔ src/styles.css > todo token declarado en styles.css está en el catálogo
+AssertionError: expected [ '--surface-white' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "--surface-white",
++ ]
+
+ ❯ src/app/core/tokens/design-tokens.types.spec.ts:83:25
+     81|       const catalogo = new Set<string>(DESIGN_TOKENS);
+     82|       const huerfanos = [...declaradosEnCss].filter((token) => !catalo…
+     83|       expect(huerfanos).toEqual([]);
+       |                         ^
+     84|     });
+     85|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/74]⎯
+
+ FAIL   mantra-core-health  src/app/features/design-system-sample/design-system-sample.spec.ts > DesignSystemSample > el selector de tema sigue expuesto: es la única UI del ThemeService
+AssertionError: expected <button …(8)></button>
+…(1) to have a length of 3 but got 2
+
+- Expected
++ Received
+
+- 3
++ 2
+
+ ❯ src/app/features/design-system-sample/design-system-sample.spec.ts:112:47
+    110|     const grupo = root().querySelector('[role="group"][aria-label="Tem…
+    111|
+    112|     expect(grupo?.querySelectorAll('button')).toHaveLength(3);
+       |                                               ^
+    113|   });
+    114| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/74]⎯
+
+ FAIL   mantra-core-health  src/app/features/messaging/messaging.spec.ts > Messaging > no borra la bandeja cuando un tic falla
+AssertionError: expected 'Error:No hay conexión con el servidor…' to contain 'No pudimos cargar sus conversaciones.'
+
+Expected: "No pudimos cargar sus conversaciones."
+Received: "Error:No hay conexión con el servidor. Revise su conexión e intente de nuevo.ChatsBuscar un chat o iniciar uno nuevo Todos  No leídos  Favoritos  Grupos  Archivados 0 Bloqueados 0DQ Dra. Quispe 18/08/2026Hola, ¿cómo sigue?AloVida · Chats Elija una conversación de la izquierda para leerla aquí, o busque a un profesional para empezar una nueva. "
+
+ ❯ src/app/features/messaging/messaging.spec.ts:306:21
+    304|
+    305|     expect(texto()).toContain('Dra. Quispe');
+    306|     expect(texto()).toContain('No pudimos cargar sus conversaciones.');
+       |                     ^
+    307|   });
+    308|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/74]⎯
+
+ FAIL   mantra-core-health  src/app/core/mock/faker/faker.spec.ts > faker del backend simulado > los códigos salen del catálogo, nunca inventados > cada ocupación y cada municipio de cada paciente existen
+AssertionError: expected [ 'Fermin Luis Saldias Arandia', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Fermin Luis Saldias Arandia",
++   "Yahely Nuñez Rojas",
++   "Denisse Kenapp Arriaza",
++ ]
+
+ ❯ src/app/core/mock/faker/faker.spec.ts:70:21
+     68|           (p.municipioId !== '' && !municipios.has(p.municipioId)),
+     69|       ).map((p) => p.displayName);
+     70|       expect(malos).toEqual([]);
+       |                     ^
+     71|     });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/74]⎯
+
+ FAIL   mantra-core-health  src/app/core/mock/fixtures/fichas-estandar.spec.ts > las fichas clínicas estándar del simulador > son tantas como los JSON que siembra el backend
+Error: ENOENT: no such file or directory, scandir '/tmp/claude-0/-home-user-mantra-core-health/0936bc81-5207-5906-b755-dffb86a17712/scratchpad/mantra-core-health-api/src/common/seed/data/clinical-forms'
+ ❯ fichasDelBackend src/app/core/mock/fixtures/fichas-estandar.spec.ts:35:12
+     33|       'clinical-forms',
+     34|     );
+     35|     return readdirSync(raiz, { withFileTypes: true })
+       |            ^
+     36|       .filter((entrada) => entrada.isDirectory())
+     37|       .flatMap((carpeta) =>
+ ❯ src/app/core/mock/fixtures/fichas-estandar.spec.ts:45:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/74]⎯
+
+ FAIL   mantra-core-health  src/app/core/mock/handlers/pharmacy.handlers.spec.ts > handlers de farmacia: coherencia de precio y disponibilidad > la modalidad de entrega viaja en el contrato > límite — el resto de los pedidos sigue siendo retiro en la farmacia
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "19bebc40-bc5a-456c-aa72-d12c9bb9186c",
+- ]
++ []
+
+ ❯ src/app/core/mock/handlers/pharmacy.handlers.spec.ts:206:49
+    204|         (item) => item.deliveryMode?.code !== 'PINV_DELIVERY_RETIRO',
+    205|       );
+    206|       expect(aDomicilio.map((item) => item.id)).toEqual([ID_PEDIDO_CON…
+       |                                                 ^
+    207|     });
+    208|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/74]⎯
+
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > sin binding declarado no ofrece el formulario y explica por qué
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > con binding declarado ofrece el formulario
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > no ofrece descarga, demostración ni favoritos y tampoco los consulta
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > no envía sin medicamento elegido: es obligatorio en el DTO
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > manda los tres obligatorios y el encuentro, y omite lo vacío
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > manda el diagnóstico elegido como indicación de la receta
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > ancla el 422 estructurado de la API al campo Medicamento
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > sin diagnóstico elegido la clave no viaja: la receta sintomática es legítima
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > C5: ofrece sólo los diagnósticos confirmados, con la fecha, y «Otro motivo» al final — sin opción vacía
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > manda dosis, frecuencia y cantidad cuando se cargaron
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > manda la vía como concepto cuando se eligió
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > sin elegir vía, su clave no viaja
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > una cantidad en blanco no viaja como cero
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > tras prescribir avisa para releer y limpia el formulario
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > manda inicio y fin de vigencia como fechas ISO cuando están configurados
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > las indicaciones al paciente viajan separadas de la dosis (v4.1.3)
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > la pauta sugiere la cantidad sin pisar lo tecleado a mano
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > «Crónico» no aparece elegido al abrir, y al elegirlo borra el fin de vigencia
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > usa selects para las pautas y conserva la frecuencia como texto editable
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > sin medicación activa, prescribe sin pedir el chequeo de interacciones
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > con medicación activa y sin interacciones, prescribe sin confirmar nada
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > con interacciones encontradas, pide confirmar antes de prescribir
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > si se rechaza la confirmación de interacciones, no prescribe
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > si el chequeo de interacciones falla, prescribe igual
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > si el chequeo falla, avisa que no se revisaron las interacciones, con código de soporte
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el aviso de interacciones sin revisar se va cuando el próximo chequeo responde
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > con interacciones revisadas sin hallazgos, no aparece el aviso de revisión pendiente
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > firmar pega contra `sign` sin cuerpo y pide releer
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > emitir sin confirmar no manda nada
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > emitir confirmado pega contra `issue` y pide releer
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > emitir sin firmar muestra el 422 como aviso de precondición, no como error
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > la precondición sobre una receta firmada se cuenta como estado viejo
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > una receta emitida no ofrece firmar ni emitir: es inmutable
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > agrupa las acciones editables en el menú estándar
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el sello distingue las tres etapas del ciclo
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > busca dentro del vademécum, sin pedirle nada a la terminología
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > encuentra sin tilde lo que el catálogo escribe con tilde
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > también busca por código ATC
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > sin texto ofrece el catálogo entero, no una lista vacía
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > al elegir, lee la ficha y ofrece presentaciones y concentraciones
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > completa la frecuencia manual con el valor publicado por el medicamento
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > conserva la frecuencia escrita al elegir un medicamento con valor por defecto
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > deja la frecuencia manual vacía si el medicamento no publica una por defecto
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > ignora una frecuencia por defecto malformada
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > reemplaza una sugerencia anterior al elegir otro medicamento
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > ignora la ficha que llega tarde para una selección anterior
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > conserva una edición manual posterior a una sugerencia al cambiar de medicamento
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > los valores del catálogo completan la dosis, pero el texto libre manda
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > un medicamento sin propiedades declaradas cae al texto libre de siempre
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > si la ficha falla, el medicamento sigue siendo prescribible (con la indicación resuelta)
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > cambiar de medicamento descarta la posología del anterior
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el porqué de la receta > C5: sin diagnóstico ni motivo NO se puede prescribir — la receta siempre se liga a uno de los dos
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el porqué de la receta > un diagnóstico confirmado de la historia alcanza
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el porqué de la receta > «Otro motivo» habilita el campo, y exige texto para poder prescribir
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el porqué de la receta > sin diagnóstico, un motivo libre viaja como texto
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el porqué de la receta > con «Otro motivo» viaja el texto y NO la condición
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el porqué de la receta > con un diagnóstico elegido viaja la condición y no el texto
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > el porqué de la receta > salir de «Otro motivo» borra el texto
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > tieneCambiosPendientes — contrato de DraftBlock > recién montado no tiene cambios pendientes
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > tieneCambiosPendientes — contrato de DraftBlock > con la dosis escrita tiene cambios pendientes
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > tieneCambiosPendientes — contrato de DraftBlock > la vigencia que el bloque completa solo no cuenta como pendiente
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > tieneCambiosPendientes — contrato de DraftBlock > elegir una duración rápida sí cuenta, aunque también fije validFrom
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > vincular a un diagnóstico (C5) > abrir el diálogo limpia la selección anterior
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > vincular a un diagnóstico (C5) > vincular a un diagnóstico confirmado manda indicationConditionId y cierra el diálogo
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > vincular a un diagnóstico (C5) > vincular con «Otro motivo» exige texto y manda indicationText
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts > MedicationBlock > vincular a un diagnóstico (C5) > un 422 del servidor se muestra dentro del diálogo, que sigue abierto
+TypeError: Cannot read properties of undefined (reading 'length')
+ ❯ Object.FormField.invalid.ngDevMode.debugName [as computation] src/app/shared/components/molecules/form-field/form-field.ts:116:54
+ ❯ computation ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:147:24
+ ❯ producerRecomputeValue ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/graph.ts:318:7
+ ❯ producerUpdateValueVersion ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:72:4
+ ❯ Object.ReferenceCombobox.invalid.ngDevMode.debugName [as computation] src/app/shared/components/molecules/reference-combobox/reference-combobox.ts:163:54
+ ❯ computation ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:147:24
+ ❯ producerRecomputeValue ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/graph.ts:318:7
+ ❯ producerUpdateValueVersion ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:72:4
+ ❯ Object.Input2.invalid.ngDevMode.debugName [as computation] src/app/shared/components/atoms/input/input.ts:141:42
+ ❯ computation ../../../../../../home/user/darwin_arm64-fastbuild-ST-fdfa778d11ba/bin/packages/core/primitives/signals/src/computed.ts:147:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/74]⎯
+
+
+ Test Files  9 failed | 3 passed (12)
+      Tests  74 failed | 227 passed (301)
+   Start at  02:48:23
+   Duration  25.11s (transform 231.75s, setup 491ms, import 10.21s, tests 13.26s, environment 852ms)
+
+EXIT=1

@@ -1,0 +1,17 @@
+$ PW_CHROMIUM_PATH=… corepack yarn pw --workers=1 atlas-anatomico-3d   # 2026-10-24T03:58:29Z · 9b3bc933 · contra ng serve recién arrancado
+
+Running 10 tests using 1 worker
+
+  ✓   1 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 375-claro (16.2s)
+  ✓   2 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 375-claro (9.7s)
+  ✓   3 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 768-claro (10.1s)
+  ✓   4 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 768-claro (10.2s)
+  ✓   5 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-claro (13.4s)
+  ✓   6 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-claro (13.6s)
+  ✓   7 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-oscuro (19.6s)
+  ✓   8 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-oscuro (20.3s)
+  ✓   9 [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y abre la del útero (10.2s)
+  ✓  10 [chromium] › playwright/atlas-anatomico-3d.spec.ts:177:5 › se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas (12.2s)
+
+  10 passed (2.3m)
+EXIT=0
