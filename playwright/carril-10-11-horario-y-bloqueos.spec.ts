@@ -60,28 +60,23 @@ async function irComoDoctora(page: Page, ruta: string): Promise<void> {
   await estable(page);
 }
 
-test('aviso legal «consulta y cita, no cirugías» — visible en las tres rutas sin abrir nada', async ({
+test('el aviso «consulta y cita, no cirugías» ya no se muestra (decisión del propietario, 19/09/2026)', async ({
   page,
 }) => {
   await entrar(page, doctora());
 
   for (const { nombre, ruta, titulo } of RUTAS) {
     await irComoDoctora(page, ruta);
-    // El aviso está fuera del `@if` de carga, pero el `<h1>` es la señal más
-    // barata de que la ruta terminó de asentar tras la navegación por router.
     await expect(page.locator('h1')).toHaveText(titulo);
     const texto = (await page.locator('body').innerText()).toLowerCase();
     const dice =
       /consulta y cita/.test(texto) &&
       /(cirug|intervenci[oó]n quir|procedimientos prolongados)/.test(texto);
 
-    test.info().annotations.push({
-      type: 'AC-10-2',
-      description: dice ? `presente en ${ruta}` : `AUSENTE en ${ruta}`,
-    });
-    expect(dice, `El aviso de «consulta y cita, no cirugías» falta en ${ruta} (${nombre})`).toBe(
-      true,
-    );
+    // AC-10-2 pedía el aviso en las tres rutas; el propietario lo retiró el
+    // 19/09/2026 (ver el comentario de agenda-create.html). La prueba fija la
+    // decisión vigente para que un aviso que reaparezca se note.
+    expect(dice, `El aviso retirado volvió a aparecer en ${ruta} (${nombre})`).toBe(false);
   }
 });
 
@@ -257,7 +252,6 @@ test('sin scroll horizontal en 390/768/1440 px, en las tres rutas — con captur
     }
   }
 });
-
 
 /**
  * NOTA — no incluido en la corrida final: un intento de crear un bloqueo real
