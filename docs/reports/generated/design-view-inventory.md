@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 85 secciones del registro, 118 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -61,7 +61,7 @@ Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context` | `HealthContextHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/geolocation` | `GeoHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/services-catalog` | `ServicesCatalog` | ServicesCatalogClient | conectada | ninguna |
-| SECURITY_ADMIN · PERIOP_ADMIN · PRACTITIONER | `/administration/medical-organization` | `MedicalOrganization` | MedicalOrganizationClient | conectada | ninguna |
+| SECURITY_ADMIN · PERIOP_ADMIN · PRACTITIONER | `/administration/medical-organization` | `MedicalOrganization` | AccountingClient, MedicalOrganizationClient, PracticeSitesClient, TerminologyClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/medical-laboratory` | `MedicalLaboratory` | DiagnosticUnitsAdminClient, SystemContextClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/clinical-forms` | `ClinicalForms` | ChartTemplatesClient, TerminologyClient | conectada | ninguna |
 | BILLING · FINANCE · CASHIER · PAYMENTS_ADMIN | `/billing` | `Billing` | BillingSimulatedClient | conectada | ninguna |
@@ -192,7 +192,6 @@ Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/services-catalog/import` | `ProcedureImport` | ServicesCatalogClient | conectada |
 | SECURITY_ADMIN | `/administration/terminology/import` | `VersionImport` | TerminologyClient | conectada con deuda |
 | cualquier sesión | `/clinics-directory/:slug` | `ClinicDetail` | PublicCatalogClient | conectada |
-| PATIENT · PRACTITIONER | `/directory/:profileId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/:conceptId` | `GlossaryTerm` | AnatomyAtlasClient, TerminologyClient | conectada |
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/anatomy-atlas` | `GlossaryAnatomyAtlas` | AnatomyAtlasClient, TerminologyClient | conectada |
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/network` | `GlossaryNetwork` | AnatomyAtlasClient, TerminologyClient | conectada |
@@ -206,7 +205,7 @@ Carril 01. 85 secciones del registro, 119 pantallas hijas o de operación y 126 
 | cualquier sesión | `/my-account/appointments/book/:slotId` | `BookingNew` | ProfilesClient, SchedulingClient | conectada |
 | cualquier sesión | `/my-account/articles` | `MedicalArticles` | CommunityClient, FilesClient | conectada |
 | cualquier sesión | `/my-account/edit` | `PractitionerProfileEdit` | FilesClient, PracticeLogoClient, ProfilesClient, SignatureAndSealClient, TerminologyClient | conectada |
-| cualquier sesión | `/my-account/identity/cases/:caseId` | `VerificationCaseDetail` | IdentityClient | conectada |
+| cualquier sesión | `/my-account/identity/cases/:caseId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
 | cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, DiagnosticUnitsClient, DiagnosticsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, TerminologyClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId` | `OrderDetail` | NotificationsClient, PharmacyOrdersClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId/invoice` | `OrderInvoice` | PharmacyOrdersClient | conectada |
@@ -367,7 +366,7 @@ Las 126 pantallas de `features/alovida/`, generadas por `scripts/port-vistas-alo
 
 | Estado | Pantallas |
 |---|---|
-| conectada | 192 |
+| conectada | 191 |
 | maqueta portada | 119 |
 | presentacional | 11 |
 | conectada con deuda | 6 |
