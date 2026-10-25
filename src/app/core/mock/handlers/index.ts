@@ -4,6 +4,7 @@ import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
@@ -38,6 +39,7 @@ import { registrarPortalAdministrativo } from './admin-portal.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 import { registerMedicalGroups } from './medical-groups.handlers';
+import { registerReceivedServices } from './received-services.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -57,6 +59,8 @@ export function crearRouterSimulado(): MockRouter {
   registerHealthcareServices(router);
   registrarPracticas(router);
   registrarClinica(router);
+  registerReceivedServices(router);
+  registerProcedureCenters(router);
   registerMedicalNotes(router);
   registerDiagnosisVerification(router);
   registrarComunidad(router);

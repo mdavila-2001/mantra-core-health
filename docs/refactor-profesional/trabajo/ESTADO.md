@@ -1,5 +1,25 @@
 # Estado
 
+## «Servicios recibidos» en la historia — 2026-10-25
+
+La historia del paciente (`/my-account/medical-record`, 6.ª pestaña), la ficha del médico (última pestaña) y el
+PDF de «Descargar historia completa» muestran las intervenciones médicas realizadas y las vacunas. Contrato:
+[`contracts/received-services.md`](../../contracts/received-services.md).
+
+**Verificado en navegador** (Chromium contra `yarn start:demo`, 22 verificaciones con
+[`playwright/servicios-recibidos.mjs`](../../../playwright/servicios-recibidos.mjs); capturas en
+`evidencias/servicios-recibidos-2026-10-25/`): una sola tarjeta centrada (holgura 40/40 px) a todo el ancho del
+área; las dos intervenciones y las dos vacunas con su costo y «Sin cobro registrado» para el titular; la médica
+lee lo mismo **sin importes**; la ficha monta el panel solo al abrir su pestaña; sin desborde horizontal a 390 px;
+`?seccion=recetas` sigue abriendo Recetas. **No se verificó** contra la API real (solo el simulador), ni con otros
+roles, ni en otros navegadores, ni el PDF descargado visto abierto (sus bloques se prueban por unidad).
+
+**Gates** (2026-10-25, sobre `test`): `tsc -p tsconfig.app.json` sin errores nuevos (44, todos en
+`component-index.generated.ts` y ya presentes en la base: 45) · `eslint --max-warnings=0` sobre lo tocado 0 · 198
+pruebas dirigidas de las 8 specs tocadas pasan. No se corrió la suite entera ni los `check-*.mjs`.
+
+---
+
 ## Rescate de `wt-e2e` — 2026-10-14
 
 - Se rescató de `wt-e2e` (sucio y 68 commits atrás) solo lo que sigue siendo válido sobre `origin/dev`: jerarquía de encabezados de la agenda (h3→h2, h4→h3), `<main>` anidado de la tienda de farmacia, nombre accesible de la marca en la cabecera pública, contraste de textos de estado (`--text-secondary`), `playwright/mac-motion-a11y.spec.ts`, la ampliación de `consulta-rejilla.spec.ts` y el cierre de verificación del 12/10.

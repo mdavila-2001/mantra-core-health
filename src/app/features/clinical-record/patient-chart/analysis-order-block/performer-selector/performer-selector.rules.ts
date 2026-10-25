@@ -79,9 +79,13 @@ export function isProcedureCategoryCode(code: string | null | undefined): boolea
   return PROCEDURE_CATEGORY_CODES.includes(code) || PROCEDURE_CATEGORY_WITHOUT_PREFIX.has(withoutPrefix(code));
 }
 
-/** El modo que nombra un código de concepto (`SR_PERF_SELF`, `clinical:SR_PERF_SELF`, `SELF`). */
+/**
+ * El modo que nombra un código de concepto. Terminología lo devuelve como
+ * `clinical:SERVICE_REQUEST_PERFORMER_SELF`; también se aceptan `SR_PERF_SELF`,
+ * `clinical:SR_PERF_SELF` y el simple `SELF`.
+ */
 export function performerModeOfCode(code: string): PerformerMode | null {
-  const simple = withoutPrefix(code).replace(/^SR_PERF_/, '');
+  const simple = withoutPrefix(code).replace(/^(?:SR_PERF_|SERVICE_REQUEST_PERFORMER_)/, '');
   return simple === 'SELF' || simple === 'ORGANIZATION' || simple === 'PATIENT_CHOICE'
     ? simple
     : null;
