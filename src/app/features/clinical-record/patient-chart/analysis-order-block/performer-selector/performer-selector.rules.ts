@@ -6,6 +6,8 @@
  * ninguna de las lecturas de las que dependen.
  */
 
+import { roleAssignmentState } from '../../../../../core/data-access/role-assignments/role-assignment-status';
+
 /** Los tres modos del conjunto `service-request-performer-selection`. */
 export type PerformerMode = 'SELF' | 'ORGANIZATION' | 'PATIENT_CHOICE';
 
@@ -158,11 +160,6 @@ export function performerFieldsOf(
   };
 }
 
-/** Si la vinculación está activa (`ROLE_ASG_ACTIVE`, con o sin prefijo, o `ACTIVE`). */
-function isActiveStatus(statusCode: string): boolean {
-  return withoutPrefix(statusCode).replace(/^ROLE_ASG_/, '') === 'ACTIVE';
-}
-
 /**
  * Las sedes de «Lo hago yo»: vinculaciones ACTIVE **de este procedimiento**
  * (una fila ACTIVE de otro procedimiento no cuenta) intersecadas con las sedes
@@ -178,7 +175,7 @@ export function ownSiteOptions(
     assignments
       .filter(
         (row) =>
-          isActiveStatus(row.statusCode) &&
+          roleAssignmentState(row.statusCode) === 'ACTIVE' &&
           row.serviceConceptId === procedureConceptId &&
           row.practiceSiteId !== null,
       )
