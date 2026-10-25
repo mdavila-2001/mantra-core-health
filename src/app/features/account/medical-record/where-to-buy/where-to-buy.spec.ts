@@ -29,7 +29,7 @@ import {
   borradorDePedido,
   cartLinesFromDraft,
   coberturaConSeguro,
-  etiquetaDeParciales,
+  partialCountLabel,
   ordenarSedes,
   pendingImagingStudies,
   WhereToBuy,
@@ -263,14 +263,14 @@ describe('WhereToBuy', () => {
   /** P-19-4: la lista abre solo con las completas; esto suma las que tienen una parte. */
   function verTodas(): void {
     harness.routeNativeElement
-      ?.querySelector<HTMLButtonElement>(byTestId('compra-ver-incompletas'))
+      ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-show-partial'))
       ?.click();
     harness.detectChanges();
   }
 
   function verParciales(): void {
     harness.routeNativeElement
-      ?.querySelector<HTMLButtonElement>(byTestId('imagen-ver-parciales'))
+      ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-imaging-show-partial'))
       ?.click();
     harness.detectChanges();
   }
@@ -390,7 +390,7 @@ describe('WhereToBuy', () => {
     ],
   };
 
-  const CONCEPTOS_DE_ORDENES = {
+  const ORDER_CONCEPTS = {
     items: [
       { conceptId: 'c-rx', code: 'STUDY-RX-TORAX', display: 'Radiografía de tórax', codeSystemVersionId: 'v1' },
       { conceptId: 'c-eco', code: 'STUDY-ECO-ABD', display: 'Ecografía abdominal', codeSystemVersionId: 'v1' },
@@ -428,7 +428,7 @@ describe('WhereToBuy', () => {
     responderHastaProductos();
     http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
     http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES_PROPIAS);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(ORDER_CONCEPTS);
     const busqueda = http.expectOne((r) => r.url === '/diagnostic-units/search');
     // El laboratorio no entra: la búsqueda es de imagenología.
     expect(busqueda.request.params.get('studyConceptIds')).toBe('c-rx,c-eco');
@@ -450,11 +450,11 @@ describe('WhereToBuy', () => {
     expect(texto()).toContain('Estudios pendientes: Radiografía de tórax, Ecografía abdominal');
     expect(texto()).toContain('Centro de Imagen Sur');
     expect(texto()).toContain('Le falta: Ecografía abdominal');
-    const comoLlegar = harness.routeNativeElement?.querySelector<HTMLAnchorElement>(
-      '[data-testid="imagen-lista"] a[href*="openstreetmap.org/directions"]',
+    const directionsLink = harness.routeNativeElement?.querySelector<HTMLAnchorElement>(
+      '[data-testid="where-to-buy-imaging-list"] a[href*="openstreetmap.org/directions"]',
     );
-    expect(comoLlegar?.getAttribute('target')).toBe('_blank');
-    expect(comoLlegar?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(directionsLink?.getAttribute('target')).toBe('_blank');
+    expect(directionsLink?.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
   it('P-19-4: imagenología abre solo con los centros que tienen todos los estudios', async () => {
@@ -462,7 +462,7 @@ describe('WhereToBuy', () => {
     responderHastaProductos();
     http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
     http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES_PROPIAS);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(ORDER_CONCEPTS);
     http.expectOne((r) => r.url === '/diagnostic-units/search').flush({
       items: [centro('u-2', 'Imagen Norte', false, ['c-eco'])],
       total: 1,
@@ -502,7 +502,7 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     expect(
-      harness.routeNativeElement?.querySelector('[data-testid="compra-recorrido-una"]')?.textContent,
+      harness.routeNativeElement?.querySelector('[data-testid="where-to-buy-route-single"]')?.textContent,
     ).toContain('Farmacia Andina · Sucursal Centro tiene todo lo que eligió');
   });
 
@@ -520,7 +520,7 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     const paradas = Array.from(
-      harness.routeNativeElement?.querySelectorAll('[data-testid="compra-paradas"] > li') ?? [],
+      harness.routeNativeElement?.querySelectorAll('[data-testid="where-to-buy-stops"] > li') ?? [],
     ).map((li) => li.textContent ?? '');
     expect(paradas).toHaveLength(2);
     // La más cercana primero; la que no publica distancia, al final.
@@ -558,7 +558,7 @@ describe('WhereToBuy', () => {
 
     const lista = () => harness.routeNativeElement?.querySelectorAll('[data-testid="compra-sedes"] > li') ?? [];
     const boton = () =>
-      harness.routeNativeElement?.querySelector<HTMLButtonElement>(byTestId('compra-ver-incompletas'));
+      harness.routeNativeElement?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-show-partial'));
     expect(lista().length).toBe(1);
     expect(lista()[0]?.textContent).toContain('Tiene todo');
     expect(boton()?.textContent?.trim()).toBe('Ver la que tiene una parte');
@@ -1773,9 +1773,9 @@ describe('pendingImagingStudies', () => {
   });
 });
 
-describe('etiquetaDeParciales', () => {
+describe('partialCountLabel', () => {
   it('concuerda en singular y en plural', () => {
-    expect(etiquetaDeParciales(1, 'la', 'las')).toBe('Ver la que tiene una parte');
-    expect(etiquetaDeParciales(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
+    expect(partialCountLabel(1, 'la', 'las')).toBe('Ver la que tiene una parte');
+    expect(partialCountLabel(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
   });
 });
