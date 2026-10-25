@@ -1,0 +1,125 @@
+<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" scene="calm">
+  <div class="registro">
+    @if (registered()) {
+      <div class="registro__header">
+        <app-registration-badge type="clinic" celebrate />
+        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-centro-medico-exito">
+          ¡Bienvenido a AloVida! Su centro médico ya tiene cuenta
+        </h1>
+        <p class="registro__subtitle">Concluyó el registro. Ya puede conectarse con su correo y la contraseña que eligió.</p>
+        @if (verificationSent()) {
+          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar.</p>
+        }
+        <p class="registro__subtitle" data-testid="registro-centro-medico-pendiente">
+          Su centro está pendiente de verificación. En cuanto la plataforma lo verifique, podrá abrir su
+          práctica y su primera sede desde «Configurar centro médico».
+        </p>
+      </div>
+      <button
+        app-button
+        variant="primary"
+        size="lg"
+        class="registro__submit"
+        data-testid="registro-centro-medico-ir-login"
+        (clicked)="goToLogin()"
+      >
+        Ir a iniciar sesión
+      </button>
+    } @else {
+      <div class="registro__header">
+        <app-registration-badge type="clinic" />
+        <h1 class="registro__title">Registre su centro médico</h1>
+        <p class="registro__subtitle">
+          Cree la cuenta de su clínica u hospital. Después de que la plataforma la verifique, podrá abrir
+          su práctica y publicar los procedimientos que ofrece.
+        </p>
+      </div>
+
+      @if (errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-centro-medico-error">{{
+          mensaje
+        }}</app-alert>
+      }
+
+      <form class="centro-form" novalidate (submit)="$event.preventDefault(); submit()" data-testid="registro-centro-medico-form">
+        <app-form-field icon="hospital" label="Razón social" [required]="true" [errorMessage]="mostrar('legalName')">
+          <app-input
+            [value]="form().legalName"
+            (valueChange)="set('legalName', $event)"
+            [hasError]="mostrar('legalName') !== ''"
+            autocomplete="organization"
+            testId="registro-centro-medico-razon-social"
+          />
+        </app-form-field>
+
+        <app-form-field
+          icon="hospital"
+          label="Tipo societario"
+          [required]="true"
+          [errorMessage]="mostrar('legalEntityType')"
+        >
+          <app-select
+            [options]="opcionesTipoSocietario()"
+            [value]="form().legalEntityType"
+            (valueChange)="set('legalEntityType', $event)"
+            [hasError]="mostrar('legalEntityType') !== ''"
+            placeholder="Elija el tipo societario"
+            data-testid="registro-centro-medico-tipo-societario"
+          />
+        </app-form-field>
+
+        <app-form-field icon="patients" label="Su nombre" [required]="true" [errorMessage]="mostrar('ownerName')"
+          hint="Quien administra la cuenta del centro.">
+          <app-input
+            [value]="form().ownerName"
+            (valueChange)="set('ownerName', $event)"
+            [hasError]="mostrar('ownerName') !== ''"
+            autocomplete="name"
+            testId="registro-centro-medico-nombre"
+          />
+        </app-form-field>
+
+        <app-form-field icon="mail" label="Correo" [required]="true" [errorMessage]="mostrar('email')">
+          <app-input
+            type="email"
+            inputMode="email"
+            [value]="form().email"
+            (valueChange)="set('email', $event)"
+            [hasError]="mostrar('email') !== ''"
+            autocomplete="email"
+            testId="registro-centro-medico-correo"
+          />
+        </app-form-field>
+
+        <app-form-field
+          icon="lock"
+          label="Contraseña"
+          [required]="true"
+          [errorMessage]="mostrar('password')"
+          [hint]="'Al menos ' + claveMin + ' caracteres.'"
+        >
+          <app-input
+            type="password"
+            [value]="form().password"
+            (valueChange)="set('password', $event)"
+            [hasError]="mostrar('password') !== ''"
+            autocomplete="new-password"
+            testId="registro-centro-medico-clave"
+          />
+        </app-form-field>
+
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          [disabled]="isSubmitting()"
+          data-testid="registro-centro-medico-enviar"
+        >
+          {{ isSubmitting() ? 'Creando la cuenta…' : 'Crear cuenta del centro médico' }}
+        </button>
+      </form>
+    }
+  </div>
+</app-auth-split>
