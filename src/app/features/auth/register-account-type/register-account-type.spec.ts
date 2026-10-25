@@ -78,7 +78,7 @@ describe('RegisterAccountType', () => {
   it('la rejilla es una lista: el lector anuncia cuántas opciones hay antes de leerlas', () => {
     const items = fixture.debugElement.queryAll(By.css('.tipos__grid > li'));
 
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
   });
 
   it('dice «Aseguradora», que es lo que el alta crea de verdad', () => {

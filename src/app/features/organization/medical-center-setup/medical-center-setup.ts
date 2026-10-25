@@ -7,14 +7,14 @@ import { PracticeOnboardingClient } from '../../../core/data-access/practice-onb
 import type { CreatedOrganizationPractice } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
-  UbicacionPicker,
-  type Coordenadas,
-} from '../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+  MapLocationPicker,
+  type Coordinates,
+} from '../../auth/shared-registration/map-location-picker/map-location-picker';
 
 const MAX_NAME = 200;
 const MAX_ADDRESS = 500;
@@ -58,7 +58,7 @@ export function setupErrorMessage(error: unknown): string {
  */
 @Component({
   selector: 'app-medical-center-setup',
-  imports: [Alert, Card, CampoPersonalizado, PageHeader, PaginatedForm, UbicacionPicker],
+  imports: [Alert, Card, CustomField, PageHeader, PaginatedForm, MapLocationPicker],
   templateUrl: './medical-center-setup.html',
   styleUrl: './medical-center-setup.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,7 +86,7 @@ export class MedicalCenterSetup {
     }),
     // El punto en el mapa es obligatorio: sin él la sede no se puede ordenar
     // por cercanía. Lo escribe el selector de ubicación, no una persona.
-    point: new FormControl<Coordenadas | null>(null, { validators: [Validators.required] }),
+    point: new FormControl<Coordinates | null>(null, { validators: [Validators.required] }),
   });
 
   protected readonly saving = signal(false);
@@ -104,7 +104,7 @@ export class MedicalCenterSetup {
   };
 
   /** Dos páginas, de a cuatro campos como tope: el centro y su primera sede. */
-  protected readonly pages = paginarCampos([
+  protected readonly pages = paginateFields([
     {
       titulo: 'El centro',
       hint: 'Cómo se llama el centro y su primera sede.',
@@ -161,7 +161,7 @@ export class MedicalCenterSetup {
     },
   ]);
 
-  protected setPoint(point: Coordenadas | null): void {
+  protected setPoint(point: Coordinates | null): void {
     this.form.controls.point.setValue(point);
     this.form.controls.point.markAsTouched();
   }
