@@ -1,0 +1,83 @@
+<app-content-dialog
+  heading="Términos y condiciones"
+  [description]="service().name"
+  size="lg"
+  (closed)="closed.emit()"
+>
+  <!-- Arriba, lo principal del servicio (criterio 2). -->
+  <section class="terminos__tarjeta" data-testid="service-terms-card" aria-label="Servicio">
+    <p class="terminos__nombre">{{ service().name }}</p>
+    <p class="terminos__codigo">{{ service().code }}</p>
+    <p class="terminos__precio">
+      <span class="terminos__rotulo">Precio de referencia</span>
+      <strong>{{ priceLabel() }}</strong>
+    </p>
+  </section>
+
+  <!-- Abajo, los términos (criterio 3). -->
+  <section class="terminos__cuerpo" aria-labelledby="terminos-titulo">
+    <h3 id="terminos-titulo" class="terminos__titulo">
+      {{ hasOwnTerms() ? 'Términos propios de este servicio' : 'Términos por defecto' }}
+    </h3>
+
+    @if (editing()) {
+      <app-form-field label="Términos y condiciones" [errorMessage]="error() ?? ''">
+        <app-textarea
+          data-testid="service-terms-input"
+          [rows]="8"
+          [value]="draft()"
+          (valueChange)="draft.set($event)"
+        />
+      </app-form-field>
+    } @else if (hasOwnTerms()) {
+      <p class="terminos__texto" data-testid="service-terms-text">{{ service().termsText }}</p>
+    } @else {
+      <p class="terminos__texto terminos__texto--vacio" data-testid="service-terms-default">
+        Este servicio usa los términos por defecto del contrato general. Todavía no hay un contrato
+        general cargado.
+      </p>
+    }
+
+    @if (error() && !editing()) {
+      <app-alert tone="error">{{ error() }}</app-alert>
+    }
+  </section>
+
+  <div dialog-actions class="terminos__acciones">
+    @if (editing()) {
+      <button app-button type="button" variant="secondary" (clicked)="cancel()">Cancelar</button>
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="service-terms-save"
+        [isLoading]="saving()"
+        (clicked)="save()"
+      >
+        Guardar términos
+      </button>
+    } @else {
+      @if (hasOwnTerms()) {
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          data-testid="service-terms-restore"
+          [disabled]="saving()"
+          (clicked)="restoreDefault()"
+        >
+          Volver a los de por defecto
+        </button>
+      }
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="service-terms-edit"
+        (clicked)="startEditing()"
+      >
+        Editar términos
+      </button>
+    }
+  </div>
+</app-content-dialog>

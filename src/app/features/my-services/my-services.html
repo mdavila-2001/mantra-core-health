@@ -2,7 +2,17 @@
   title="Mis servicios"
   subtitle="Lo que ofrece su práctica y su precio de referencia. Al armar el presupuesto puede cotizar otro."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="my-services-import"
+    routerLink="/my-services/import"
+  >
+    Importar producto
+  </a>
+</app-page-header>
 
 <div class="mis-servicios">
   @if (hayQueElegirPractica()) {
@@ -157,6 +167,17 @@
                   (clicked)="editar(servicio)"
                 >
                   Editar precio
+                </button>
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="my-services-terms"
+                  [attr.aria-label]="'Términos y condiciones: ' + servicio.name"
+                  (clicked)="terminosDe.set(servicio)"
+                >
+                  Términos
                 </button>
                 <!-- Reemplaza al «Programar horario» (C-12), que sólo bloqueaba la
                      agenda: acá se declara cuánto dura el servicio y el paciente
@@ -319,4 +340,13 @@
       Guardar
     </button>
   </app-content-dialog>
+}
+
+@if (terminosDe(); as servicio) {
+  <app-service-terms
+    [service]="servicio"
+    [priceLabel]="precio(servicio)"
+    (updated)="terminosGuardados($event)"
+    (closed)="terminosDe.set(null)"
+  />
 }
