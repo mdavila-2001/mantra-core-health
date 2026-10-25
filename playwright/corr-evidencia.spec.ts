@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
@@ -26,6 +26,7 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  *   CORR_RUTA=/notifications  una sola ruta (opcional)
  *   CORR_USUARIO=paciente     cuenta del simulador (default `medica`)
  *   E2E_BASE_URL              default http://localhost:4200
+ *   CORR_EVIDENCE_DESTINATION carpeta de la matriz y las fotos (opcional)
  */
 
 const LANE = process.env['CORR_LANE'] ?? '';
@@ -36,7 +37,9 @@ const USUARIO = process.env['CORR_USUARIO'] ?? 'medica';
 const ROUTE_KEY =
   LANE === '34' && USUARIO !== 'medica' ? `${LANE}-${USUARIO}` : LANE;
 
-const BASE_DESTINATION = join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+const BASE_DESTINATION = process.env['CORR_EVIDENCE_DESTINATION']
+  ? resolve(process.env['CORR_EVIDENCE_DESTINATION'])
+  : join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
 // Las dos pasadas de usuario deben conservar matrices y fotos independientes.
 const DESTINO = USUARIO === 'medica' ? BASE_DESTINATION : join(BASE_DESTINATION, USUARIO);
 const FOTOS = join(DESTINO, 'fotos', FASE);
