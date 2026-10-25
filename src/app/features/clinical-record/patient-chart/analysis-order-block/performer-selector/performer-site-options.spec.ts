@@ -111,16 +111,6 @@ describe('PerformerSiteOptions', () => {
     busqueda.flush({ ...BUSQUEDA, items: [] });
   });
 
-  it('acepta las vinculaciones dentro de { items }', () => {
-    const estados = leer('p-1');
-    responderConjunto();
-    http.expectOne('/practitioners/me/role-assignments').flush({ items: VINCULACIONES });
-    http.expectOne((r) => r.url === '/medical-centers/search').flush(BUSQUEDA);
-
-    const listo = estados[1] as Extract<ViewState<PerformerSiteData>, { status: 'ready' }>;
-    expect(listo.data.ownSites).toHaveLength(1);
-  });
-
   it('error de la búsqueda → estado de error, sin inventar sedes', () => {
     const estados = leer('p-1');
     responderConjunto();

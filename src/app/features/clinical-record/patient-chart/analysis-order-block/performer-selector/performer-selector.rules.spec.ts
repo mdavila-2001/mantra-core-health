@@ -107,13 +107,17 @@ describe('performer-selector.rules', () => {
       expect(ownSiteOptions(filas, busqueda, 'p-1')).toEqual([]);
     });
 
-    it('acepta el estado con o sin prefijo y descarta filas sin sede', () => {
+    it('acepta el estado con o sin prefijo de módulo y descarta filas sin sede', () => {
       const filas = [
-        vinculacion('s-1', 'p-1', 'ACTIVE'),
+        vinculacion('s-1', 'p-1', 'ROLE_ASG_ACTIVE'),
         vinculacion('s-2', 'p-1', 'practice:ROLE_ASG_ACTIVE'),
         vinculacion(null, 'p-1'),
       ];
       expect(ownSiteOptions(filas, busqueda, 'p-1').map((s) => s.practiceSiteId)).toEqual(['s-1', 's-2']);
+    });
+
+    it('una afiliación antigua, sin estado ni procedimiento, no cuenta', () => {
+      expect(ownSiteOptions([vinculacion('s-1', null, '')], busqueda, 'p-1')).toEqual([]);
     });
 
     it('sin intersección devuelve vacío, para deshabilitar la opción', () => {
