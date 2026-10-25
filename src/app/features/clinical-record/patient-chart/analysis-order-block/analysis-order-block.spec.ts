@@ -4,7 +4,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
-import { AnalysisOrderBlock, TARGET_ESTUDIO } from './analysis-order-block';
+import { AnalysisOrderBlock, TARGET_CATEGORIA, TARGET_ESTUDIO } from './analysis-order-block';
 
 /**
  * Pedir un laboratorio o una imagen desde la ficha, y ver qué volvió — punto 10
@@ -113,7 +113,7 @@ describe('AnalysisOrderBlock', () => {
 
     http = TestBed.inject(HttpTestingController);
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] }),
+      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'doc-1' }),
       refreshToken: 'r-1',
     });
 
@@ -486,5 +486,227 @@ describe('AnalysisOrderBlock', () => {
     componente['estudio'].set('code-hemograma');
     componente['categoria'].set('cat-lab');
     expect(componente['puedePedir']()).toBe(true);
+  });
+  /**
+   * Quién realiza el procedimiento. El selector sólo existe en una orden
+   * de procedimiento, y lo que viaja del ejecutor depende del modo elegido: con
+   * «Que elija el paciente» no viaja ningún médico ni sede, y en ningún modo
+   * viaja `performerTenantId` (la recomendación no le da al centro la orden).
+   */
+  describe('selector de ejecutor', () => {
+    const PROCEDIMIENTO = 'proc-colonoscopia';
+    const SEDE_PROPIA = { practiceSiteId: 's-1', name: 'Centro Norte', addressText: 'Av. 1' };
+    const SEDE_AJENA = { practiceSiteId: 's-2', name: 'Centro Sur', addressText: null };
+    const selector = (): Element | null =>
+      fixture.nativeElement.querySelector('[data-testid="performer-selector"]');
+
+    /** Responde las categorías (con la de procedimiento bajo `codigo`) y el resto de los catálogos. */
+    function responderCategorias(codigo: string): void {
+      for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+        req.flush(
+          req.request.params.get('target') === TARGET_CATEGORIA
+            ? {
+                ...CATALOGO,
+                code: 'service-request-category',
+                options: [
+                  { conceptId: 'cat-lab', code: 'SR_LAB', display: 'Lab', ordinal: 1 },
+                  { conceptId: 'cat-proc', code: codigo, display: 'Procedure', ordinal: 2 },
+                ],
+              }
+            : CATALOGO,
+        );
+      }
+    }
+
+    /** Responde la expansión del conjunto de modos, las vinculaciones y la búsqueda. */
+    function responderSedes(): void {
+      http
+        .expectOne((r) => r.url === '/terminology/value-sets')
+        .flush({
+          items: [{ id: 'vs-perf', internalCode: 'service-request-performer-selection', name: 'x', description: '', defaultVersionId: 'v', memberCount: 3 }],
+          count: 1,
+          limit: 50,
+          nextCursor: null,
+        });
+      http.expectOne((r) => r.url === '/terminology/value-sets/vs-perf/$expand').flush({
+        valueSetId: 'vs-perf',
+        valueSetVersionId: 'v',
+        version: '1',
+        count: 3,
+        limit: 200,
+        nextCursor: null,
+        items: [
+          { conceptId: 'c-self', code: 'SR_PERF_SELF', display: 'a', codeSystemVersionId: 'x' },
+          { conceptId: 'c-org', code: 'SR_PERF_ORGANIZATION', display: 'b', codeSystemVersionId: 'x' },
+          { conceptId: 'c-pat', code: 'SR_PERF_PATIENT_CHOICE', display: 'c', codeSystemVersionId: 'x' },
+        ],
+      });
+      http.expectOne('/practitioners/me/role-assignments').flush([
+        { id: 'r-1', practiceSiteId: 's-1', serviceConceptId: PROCEDIMIENTO, statusCode: 'ROLE_ASG_ACTIVE' },
+      ]);
+      const busqueda = http.expectOne((r) => r.url === '/medical-centers/search');
+      expect(busqueda.request.params.get('procedureConceptIds')).toBe(PROCEDIMIENTO);
+      busqueda.flush({ items: [SEDE_AJENA, SEDE_PROPIA], total: 2, limit: 20, offset: 0 });
+    }
+
+    /** Abre el formulario con una categoría y un estudio elegidos. */
+    function abrir(categoria: 'cat-lab' | 'cat-proc', codigoProcedimiento = 'SR_PROCEDURE'): void {
+      fixture.detectChanges();
+      responderCategorias(codigoProcedimiento);
+      responderCircuito();
+      fixture.detectChanges();
+      componente['estudio'].set(PROCEDIMIENTO);
+      componente['categoria'].set(categoria);
+      fixture.detectChanges();
+    }
+
+    /** Pide, deja pasar el chequeo y devuelve el cuerpo del alta. */
+    function pedirYLeerCuerpo(): { body: Record<string, unknown>; alta: ReturnType<HttpTestingController['expectOne']> } {
+      componente['pedir']();
+      responderChequeo(false);
+      const alta = http.expectOne((r) => r.url === '/clinical/service-requests');
+      return { body: alta.request.body as Record<string, unknown>, alta };
+    }
+
+    it.each(['SRQ-PROCEDURE', 'SR_PROCEDURE', 'clinical:SERVICE_REQUEST_CATEGORY_PROCEDURE'])(
+      'con la categoría de código %s se monta el selector y se leen las sedes',
+      (codigo) => {
+        abrir('cat-proc', codigo);
+        expect(selector()).not.toBeNull();
+        responderSedes();
+      },
+    );
+
+    it('con laboratorio no se monta el selector ni se lee nada de sedes', () => {
+      abrir('cat-lab');
+
+      expect(selector()).toBeNull();
+      http.expectNone((r) => r.url === '/medical-centers/search');
+      http.expectNone('/practitioners/me/role-assignments');
+    });
+
+    it('«Que elija el paciente» viene marcada y no manda médico ni sede', () => {
+      abrir('cat-proc');
+      responderSedes();
+      fixture.detectChanges();
+
+      expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });
+      expect(componente['puedePedir']()).toBe(true);
+      const { body } = pedirYLeerCuerpo();
+      expect(body['performerSelectionConceptId']).toBe('c-pat');
+      expect('performerPractitionerProfileId' in body).toBe(false);
+      expect('suggestedPracticeSiteId' in body).toBe(false);
+      expect('performerTenantId' in body).toBe(false);
+    });
+
+    it('«Lo hago yo» manda el concepto SELF, el médico que pide y la sede', () => {
+      abrir('cat-proc');
+      responderSedes();
+      componente['performer'].choice.set({ mode: 'SELF', siteId: 's-1' });
+      fixture.detectChanges();
+
+      const { body } = pedirYLeerCuerpo();
+      expect(body['performerSelectionConceptId']).toBe('c-self');
+      expect(body['performerPractitionerProfileId']).toBe('doc-1');
+      expect(body['suggestedPracticeSiteId']).toBe('s-1');
+      expect('performerTenantId' in body).toBe(false);
+    });
+
+    it('«En este centro» manda el concepto ORGANIZATION y la sede, sin médico', () => {
+      abrir('cat-proc');
+      responderSedes();
+      componente['performer'].choice.set({ mode: 'ORGANIZATION', siteId: 's-2' });
+      fixture.detectChanges();
+
+      const { body } = pedirYLeerCuerpo();
+      expect(body['performerSelectionConceptId']).toBe('c-org');
+      expect(body['suggestedPracticeSiteId']).toBe('s-2');
+      expect('performerPractitionerProfileId' in body).toBe(false);
+      expect('performerTenantId' in body).toBe(false);
+    });
+
+    it('una orden de laboratorio no lleva ninguna clave de ejecutor', () => {
+      abrir('cat-lab');
+
+      const { body } = pedirYLeerCuerpo();
+      for (const clave of ['performerSelectionConceptId', 'performerPractitionerProfileId', 'suggestedPracticeSiteId', 'performerTenantId']) {
+        expect(clave in body, clave).toBe(false);
+      }
+    });
+
+    it('no deja pedir con un modo de sede sin sede elegida, y nada se manda', () => {
+      abrir('cat-proc');
+      responderSedes();
+      componente['performer'].choice.set({ mode: 'ORGANIZATION', siteId: null });
+      fixture.detectChanges();
+
+      expect(componente['puedePedir']()).toBe(false);
+      componente['pedir']();
+      http.expectNone((r) => r.url === '/clinical/service-requests/duplicate-check');
+    });
+
+    it('si las sedes no se pueden leer lo dice y no inventa sedes; sigue pudiendo pedir sin recomendar', () => {
+      abrir('cat-proc');
+      http.expectOne((r) => r.url === '/terminology/value-sets').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      http.match(() => true);
+      fixture.detectChanges();
+
+      expect(componente['performer'].sites().error).not.toBeNull();
+      expect(componente['performer'].sites().own).toEqual([]);
+      expect(componente['performer'].sites().center).toEqual([]);
+      const { body } = pedirYLeerCuerpo();
+      expect('suggestedPracticeSiteId' in body).toBe(false);
+    });
+
+    it('un 422 de la API se muestra y el formulario conserva lo elegido', () => {
+      abrir('cat-proc');
+      responderSedes();
+      componente['performer'].choice.set({ mode: 'SELF', siteId: 's-1' });
+      fixture.detectChanges();
+
+      const { alta } = pedirYLeerCuerpo();
+      alta.flush(
+        {
+          code: 'PRECONDITION_FAILED',
+          message: 'La sede no ofrece el procedimiento con precio.',
+          timestamp: '2026-08-14T10:00:00.000Z',
+          path: '/clinical/service-requests',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      fixture.detectChanges();
+
+      expect(componente['errorDelPedido']()).toBe('La sede no ofrece el procedimiento con precio.');
+      expect(componente['performer'].choice()).toEqual({ mode: 'SELF', siteId: 's-1' });
+      expect(componente['estudio']()).toBe(PROCEDIMIENTO);
+      expect(selector()).not.toBeNull();
+    });
+
+    it('cambiar de procedimiento descarta la recomendación anterior y relee las sedes', () => {
+      abrir('cat-proc');
+      responderSedes();
+      componente['performer'].choice.set({ mode: 'ORGANIZATION', siteId: 's-2' });
+      fixture.detectChanges();
+
+      componente['estudio'].set('proc-endoscopia');
+      fixture.detectChanges();
+
+      expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });
+      const busqueda = http.expectOne((r) => r.url === '/medical-centers/search');
+      expect(busqueda.request.params.get('procedureConceptIds')).toBe('proc-endoscopia');
+      http.expectOne('/practitioners/me/role-assignments');
+    });
+
+    it('tras pedir, el siguiente pedido arranca otra vez en «Que elija el paciente»', () => {
+      abrir('cat-proc');
+      responderSedes();
+      componente['performer'].choice.set({ mode: 'SELF', siteId: 's-1' });
+
+      const { alta } = pedirYLeerCuerpo();
+      alta.flush({ id: 'sr-1', patientProfileId: 'p-1', status: 's', intent: 'i', createdAt: '2026-08-14T10:00:00.000Z' });
+      responderCircuito();
+
+      expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });
+    });
   });
 });

@@ -42,6 +42,8 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
+import { createPerformerOrderState } from './performer-selector/performer-order-state';
+import { PerformerSelector } from './performer-selector/performer-selector';
 
 /**
  * La columna que gobierna qué se pide.
@@ -77,6 +79,7 @@ export const TARGET_PRIORIDAD = 'clinical.service_requests.priority_concept_id';
 const ETIQUETAS_DE_CATEGORIA: Readonly<Record<string, string>> = {
   SR_LAB: 'Laboratorio',
   SR_IMAGING: 'Imagenología',
+  SR_PROCEDURE: 'Procedimiento',
 };
 
 /** Las prioridades en castellano. Mismo criterio que {@link ETIQUETAS_DE_CATEGORIA}. */
@@ -176,6 +179,7 @@ export interface EstudioEnFicha {
     DuplicateStudyWarningDialog,
     FormActions,
     FormField,
+    PerformerSelector,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -245,6 +249,13 @@ export class AnalysisOrderBlock {
   protected readonly catalogoListo = signal<boolean | null>(null);
 
   protected readonly pidiendo = signal(false);
+
+  /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
+  protected readonly performer = createPerformerOrderState({
+    category: this.categoria,
+    study: this.estudio,
+    categoryTarget: TARGET_CATEGORIA,
+  });
 
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
@@ -354,7 +365,8 @@ export class AnalysisOrderBlock {
       this.estudio() !== null &&
       this.categoria() !== null &&
       !this.pidiendo() &&
-      !this.checkingDuplicate(),
+      !this.checkingDuplicate() &&
+      this.performer.canSubmit(),
   );
 
   /** El fallo de la escritura, en palabras. */
@@ -489,6 +501,11 @@ export class AnalysisOrderBlock {
     }
 
     const prioridad = this.prioridad();
+    // Una recomendación a medias (sin sede) no se manda: la API la rechazaría con 422.
+    const performerFields = this.performer.fields();
+    if (performerFields === null) {
+      return;
+    }
 
     this.pidiendo.set(true);
     this.registro.set(loading());
@@ -505,6 +522,7 @@ export class AnalysisOrderBlock {
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
+      ...performerFields,
       ...decision,
     };
 
@@ -590,6 +608,7 @@ export class AnalysisOrderBlock {
     this.estudio.set(null);
     this.categoria.set(null);
     this.prioridad.set(null);
+    this.performer.reset();
   }
 
   /**
