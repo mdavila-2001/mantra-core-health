@@ -18,6 +18,7 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type { PatientOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
+import { performerSelectionCodeOf } from '../../../core/data-access/diagnostics/service-request-performer.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels, ValueSetOption } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -41,6 +42,7 @@ import { Pagination } from '../../../shared/components/molecules/pagination/pagi
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
+import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
 import {
   ANALYSIS_CATEGORIES,
   categoriaDeAnalisis,
@@ -52,8 +54,8 @@ import {
 /** Tope de órdenes que se traen. Nadie arrastra cien pedidos abiertos. */
 const TOPE_DE_ORDENES = 50;
 
-/** Las cuatro pestañas, en el orden fijo del diseño (C9 §4). `null` es «Todas». */
-const PESTANAS: readonly (AnalysisCategory | null)[] = [null, 'LAB', 'IMAGING', 'OTHER'];
+/** Las pestañas, en el orden fijo del diseño (C9 §4). `null` es «Todas». */
+const PESTANAS: readonly (AnalysisCategory | null)[] = [null, 'LAB', 'IMAGING', 'PROCEDURE', 'OTHER'];
 
 const TAMANOS_DE_PAGINA = [10, 25, 50] as const;
 
@@ -88,6 +90,7 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
     DataTable,
     DatePipe,
     FilterBar,
+    OrderPerformerSummary,
     PageHeader,
     Pagination,
     PatientInsuranceSettlement,
@@ -196,7 +199,7 @@ export class DiagnosticOrders {
           this.estado.set(
             empty(
               { label: 'Ver mis citas', route: '/my-account/appointments' },
-              'No tiene órdenes de laboratorio ni de imagen. Cuando un médico le pida un estudio en una consulta, aparece acá con las indicaciones para hacérselo.',
+              'No tiene órdenes de laboratorio, de imagen ni de procedimientos. Cuando un médico le pida un estudio en una consulta, aparece acá con las indicaciones para hacérselo.',
             ),
           );
           return;
@@ -211,7 +214,12 @@ export class DiagnosticOrders {
     const ids = [
       ...new Set(
         items.flatMap((item) =>
-          [item.codeConceptId, item.categoryConceptId, item.statusConceptId].filter(
+          [
+            item.codeConceptId,
+            item.categoryConceptId,
+            item.statusConceptId,
+            item.performerSelectionConceptId,
+          ].filter(
             (id): id is string => id !== undefined,
           ),
         ),
@@ -251,6 +259,12 @@ export class DiagnosticOrders {
           : `Consulta del ${this.fechaCorta(item.createdAt)}`,
       requestedAt: item.createdAt,
       preparation: item.preparationInstructions ?? null,
+      // El modo sale del código del concepto, no de su texto ni de su uuid; sin campo no se inventa nada.
+      performerMode:
+        item.performerSelectionConceptId === undefined
+          ? null
+          : performerSelectionCodeOf(etiquetas.get(item.performerSelectionConceptId)?.code),
+      suggestedSiteName: item.suggestedPracticeSiteName ?? null,
     };
   }
 
@@ -265,7 +279,7 @@ export class DiagnosticOrders {
     return estado.status === 'ready' ? estado.data : [];
   });
 
-  /** Conteo por pestaña, sobre el total sin filtrar (Todas = suma de las tres). */
+  /** Conteo por pestaña, sobre el total sin filtrar (Todas = suma de las demás). */
   protected readonly conteos = computed(() => {
     const filas = this.filasListas();
     const porTipo = (tipo: AnalysisCategory) => filas.filter((f) => f.type === tipo).length;
@@ -273,6 +287,7 @@ export class DiagnosticOrders {
       TODAS: filas.length,
       LAB: porTipo('LAB'),
       IMAGING: porTipo('IMAGING'),
+      PROCEDURE: porTipo('PROCEDURE'),
       OTHER: porTipo('OTHER'),
     };
   });
@@ -445,6 +460,8 @@ export class DiagnosticOrders {
     if (fila.insuranceSettlement) {
       acciones.push({ code: 'ver-liquidacion', label: 'Ver liquidación', icon: 'billing' });
     }
+    // Cotizar y reservar llevan al circuito de laboratorio e imagen: un procedimiento no entra ahí.
+    if (fila.type === 'PROCEDURE') return acciones;
     // Conservada del refactor UX previo (2026-09-13): no la retira el pedido
     // de esta noche, y quitarla sería perder una capacidad ya entregada sin
     // que nadie lo haya pedido (ver ambigüedad registrada en PLAN.md).
