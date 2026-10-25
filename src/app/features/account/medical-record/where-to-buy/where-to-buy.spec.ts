@@ -842,6 +842,91 @@ describe('WhereToBuy', () => {
     expect(texto()).toContain('Distancias medidas desde su ubicación actual');
   });
 
+  describe('location that cannot be read', () => {
+    function buttonByLabel(label: string): HTMLButtonElement | undefined {
+      return Array.from(
+        harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('button') ?? [],
+      ).find((button) => button.textContent?.trim() === label);
+    }
+
+    function shareLocation(): void {
+      harness.routeNativeElement
+        ?.querySelector<HTMLButtonElement>(byTestId('compra-compartir-ubicacion'))
+        ?.click();
+      harness.detectChanges();
+    }
+
+    async function mountWithAvailability(): Promise<void> {
+      await montar();
+      responderHastaProductos();
+      http
+        .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+        .flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+    }
+
+    /** Whatever the reason the location is missing, measuring from a city must still work. */
+    function expectCitiesStillUsable(): void {
+      const city = buttonByLabel('La Paz');
+      expect(city).toBeDefined();
+      expect(city?.disabled).toBe(false);
+
+      city?.click();
+      harness.detectChanges();
+
+      const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      expect(query.request.params.get('lat')).toBe('-16.4957');
+      expect(query.request.params.get('lng')).toBe('-68.1335');
+      query.flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+
+      expect(texto()).toContain('Distancias medidas desde La Paz');
+      expect(texto()).not.toContain('No pudimos leer su ubicación');
+    }
+
+    it('shows the notice and keeps the cities usable when the permission is denied', async () => {
+      await mountWithAvailability();
+      expect(texto()).not.toContain('No pudimos leer su ubicación');
+
+      getCurrentPosition.mockImplementation(
+        (_success: unknown, failure: (error: { code: number }) => void) =>
+          failure({ code: 1 }),
+      );
+      shareLocation();
+
+      expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+      expect(texto()).toContain('No pudimos leer su ubicación');
+      expect(
+        harness.routeNativeElement?.querySelector('[role="status"]')?.textContent,
+      ).toContain('No pudimos leer su ubicación');
+      // No position was obtained, so nothing re-queries availability.
+      http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+      expect(
+        harness.routeNativeElement
+          ?.querySelector<HTMLButtonElement>(byTestId('compra-compartir-ubicacion'))
+          ?.disabled,
+      ).toBe(false);
+
+      expectCitiesStillUsable();
+    });
+
+    it('shows the notice without throwing when the browser has no geolocation', async () => {
+      Object.defineProperty(window.navigator, 'geolocation', {
+        configurable: true,
+        value: undefined,
+      });
+      await mountWithAvailability();
+
+      expect(() => shareLocation()).not.toThrow();
+
+      expect(getCurrentPosition).not.toHaveBeenCalled();
+      expect(texto()).toContain('No pudimos leer su ubicación');
+      http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+
+      expectCitiesStillUsable();
+    });
+  });
+
   it('destildar un renglón lo saca de la consulta', async () => {
     await montar();
     responderHastaProductos();
