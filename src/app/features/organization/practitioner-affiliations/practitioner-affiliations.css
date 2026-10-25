@@ -20,8 +20,14 @@
 }
 
 .affiliations__main {
+  display: block;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.affiliations__service {
+  display: block;
+  color: var(--text-secondary);
 }
 
 .affiliations__muted {

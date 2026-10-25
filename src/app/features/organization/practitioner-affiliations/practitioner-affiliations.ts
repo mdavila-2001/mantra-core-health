@@ -97,8 +97,7 @@ export class PractitionerAffiliations implements OnInit {
   private readonly actionsCell = viewChild.required<TemplateRef<{ $implicit: RoleAssignmentRow }>>('actionsCell');
 
   protected readonly columns = computed<readonly ColumnDef<RoleAssignmentRow>[]>(() => [
-    { key: 'practitioner', header: 'Médico', priority: 1, cell: this.practitionerCell() },
-    { key: 'serviceDisplay', header: 'Procedimiento', priority: 1 },
+    { key: 'practitioner', header: 'Médico y procedimiento', priority: 1, cell: this.practitionerCell() },
     { key: 'status', header: 'Estado', priority: 1, cell: this.statusCell() },
     { key: 'initiator', header: 'Iniciada por', priority: 3, cell: this.initiatorCell() },
     { key: 'actions', header: 'Acciones', priority: 1, align: 'end', cell: this.actionsCell() },

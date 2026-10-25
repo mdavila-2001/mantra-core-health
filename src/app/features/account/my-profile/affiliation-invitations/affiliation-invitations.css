@@ -15,6 +15,7 @@
 .invitations__section {
   display: grid;
   gap: var(--sp-3);
+  margin-block-end: var(--sp-5);
 }
 
 .invitations__heading {

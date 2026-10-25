@@ -70,6 +70,7 @@
 
 <ng-template #practitionerCell let-row>
   <span class="affiliations__main" [attr.data-testid]="'affiliation-name-' + row.id">{{ row.practitionerName }}</span>
+  <span class="affiliations__service" [attr.data-testid]="'affiliation-service-' + row.id">{{ row.serviceDisplay }}</span>
 </ng-template>
 
 <ng-template #statusCell let-row>
