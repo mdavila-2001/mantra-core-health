@@ -380,7 +380,7 @@
 
 /* La activa se marca con fondo; el anillo queda para el foco (no dos anillos). */
 .atlas3d__bibliografia li {
-  padding: 0.15em 0.4em;
+  padding: var(--sp-1) var(--sp-2);
   border-inline-start: 3px solid transparent;
 }
 
@@ -447,8 +447,10 @@
   outline: none;
 }
 
+/* Con foco, el anillo reemplaza al filete: no se ven dos bordes. */
 .atlas3d__bibliografia li:focus-visible,
 .atlas3d__bibliografia .atlas3d__fuente--activa:focus {
+  border-inline-start-color: transparent;
   outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }

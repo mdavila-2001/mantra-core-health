@@ -139,6 +139,10 @@
                         @for (fma of ficha.fma; track fma) {
                           · <a [href]="ontologyUrl('FMA:' + fma)" target="_blank" rel="noopener noreferrer">FMA:{{ fma }}</a>
                         }
+                        @for (fma of ficha.fmaNotFound; track fma) {
+                          · FMA:{{ fma }}
+                          <span class="atlas3d__marca">(UBERON lo declara, pero no existe en la FMA 5.1 publicada)</span>
+                        }
                       </dd>
                     </div>
                     <div>
@@ -216,7 +220,7 @@
                                   queryParamsHandling="preserve"
                                   [fragment]="'atlas3d-fuente-' + n"
                                   [attr.aria-label]="'Fuente ' + n"
-                                  (click)="rememberCitation($event)"
+                                  (click)="rememberCitation($event, n)"
                                   >[{{ n }}]</a
                                 >}</span>
                             }

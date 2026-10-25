@@ -1,0 +1,37 @@
+{
+ "reason": "DOI tomado de los metadatos de Europe PMC/PubMed que no resuelve ni en Crossref ni en doi.org (HTTP 404, 2026-10-25); se quita el DOI y la cita queda por su PMID, que sí resuelve",
+ "removed": [
+  {
+   "id": "PMID:18728594",
+   "doi": "10.1227/01.neu.0000335030.85402.5f"
+  },
+  {
+   "id": "PMID:22033003",
+   "doi": "10.3944/AOTT.2011.2369"
+  },
+  {
+   "id": "PMID:26969959",
+   "doi": "10.3944/AOTT.2015.15.0204"
+  },
+  {
+   "id": "PMID:27845481",
+   "doi": "10.7417/CT.2016.1946"
+  },
+  {
+   "id": "PMID:28451005",
+   "doi": "10.11604/pamj.2017.26.26.11189"
+  },
+  {
+   "id": "PMID:36032599",
+   "doi": "10.26574/maedica.2022.17.2.357"
+  },
+  {
+   "id": "PMID:17961059",
+   "doi": "10.3171/foc.2007.23.1.4"
+  },
+  {
+   "id": "PMID:25006853",
+   "doi": "10.1111/dsu.0000000000000063"
+  }
+ ]
+}

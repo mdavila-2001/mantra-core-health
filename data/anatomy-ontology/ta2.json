@@ -8,7 +8,7 @@
   "crosswalkQuery": "SELECT ?item ?ta2 ?fma WHERE { ?item wdt:P7173 ?ta2 . ?item wdt:P1402 ?fma . }",
   "crosswalkFmaIds": 4949,
   "crosswalkRetrievedAt": "2026-10-24T22:26:45+00:00",
-  "vocabularyRetrievedAt": "2026-10-24T22:44:02+00:00",
+  "vocabularyRetrievedAt": "2026-10-25T02:26:43+00:00",
   "criterion": "un FMA de la ficha con exactamente un TA2 ID en Wikidata, presente en el vocabulario del visor"
  },
  "mapped": {
@@ -375,13 +375,6 @@
    "en": "adductor longus",
    "fma": "22441",
    "wikidata": "Q1428231"
-  },
-  "UBERON:0000304": {
-   "code": "2035",
-   "la": "vaginae tendinum",
-   "en": "tendon sheaths",
-   "fma": "76715",
-   "wikidata": "Q447782"
   },
   "UBERON:0000315": {
    "code": "5387",
@@ -1257,13 +1250,6 @@
    "en": "right lobe of liver",
    "fma": "13362",
    "wikidata": "Q6493472"
-  },
-  "UBERON:0001115": {
-   "code": "3050",
-   "la": "lobus sinister hepatis",
-   "en": "left lobe of liver",
-   "fma": "13363",
-   "wikidata": "Q6493480"
   },
   "UBERON:0001116": {
    "code": "3052",
@@ -3932,13 +3918,6 @@
    "fma": "52883",
    "wikidata": "Q4175787"
   },
-  "UBERON:0001697": {
-   "code": "469",
-   "la": "orbita",
-   "en": "orbit",
-   "fma": "53074",
-   "wikidata": "Q156075"
-  },
   "UBERON:0001698": {
    "code": "622",
    "la": "foramen ovale",
@@ -4519,13 +4498,6 @@
    "en": "lower lip",
    "fma": "59818",
    "wikidata": "Q6693954"
-  },
-  "UBERON:0001839": {
-   "code": "692",
-   "la": "labyrinthus osseus",
-   "en": "bony labyrinth",
-   "fma": "60179",
-   "wikidata": "Q262489"
   },
   "UBERON:0001840": {
    "code": "6954",
@@ -6661,13 +6633,6 @@
    "en": "lumbar vertebra",
    "fma": "9921",
    "wikidata": "Q405478"
-  },
-  "UBERON:0002416": {
-   "code": "7040",
-   "la": "integumentum commune",
-   "en": "integument",
-   "fma": "72979",
-   "wikidata": "Q483213"
   },
   "UBERON:0002419": {
    "code": "7078",
@@ -11897,13 +11862,6 @@
    "en": "gastroduodenal artery",
    "fma": "14775",
    "wikidata": "Q707194"
-  },
-  "UBERON:0010145": {
-   "code": "3564",
-   "la": "glandulae vestibulares minores",
-   "en": "lesser vestibular glands",
-   "fma": "20083",
-   "wikidata": "Q1762220"
   },
   "UBERON:0010155": {
    "code": "1586",
@@ -17451,7 +17409,7 @@
   },
   {
    "id": "UBERON:0000016",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0000017",
@@ -17687,6 +17645,10 @@
   },
   {
    "id": "UBERON:0000301",
+   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+  },
+  {
+   "id": "UBERON:0000304",
    "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
   },
   {
@@ -18262,6 +18224,10 @@
    "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
   },
   {
+   "id": "UBERON:0001115",
+   "reason": "la ficha no tiene FMA"
+  },
+  {
    "id": "UBERON:0001118",
    "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
   },
@@ -18795,7 +18761,7 @@
   },
   {
    "id": "UBERON:0001487",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0001489",
@@ -19000,6 +18966,10 @@
   {
    "id": "UBERON:0001674",
    "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+  },
+  {
+   "id": "UBERON:0001697",
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0001701",
@@ -19212,6 +19182,10 @@
   {
    "id": "UBERON:0001838",
    "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+  },
+  {
+   "id": "UBERON:0001839",
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0001850",
@@ -19483,7 +19457,7 @@
   },
   {
    "id": "UBERON:0001985",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0001986",
@@ -20212,6 +20186,10 @@
   {
    "id": "UBERON:0002410",
    "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+  },
+  {
+   "id": "UBERON:0002416",
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0002417",
@@ -23079,7 +23057,7 @@
   },
   {
    "id": "UBERON:0004467",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0004468",
@@ -23279,7 +23257,7 @@
   },
   {
    "id": "UBERON:0004530",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0004533",
@@ -23603,7 +23581,7 @@
   },
   {
    "id": "UBERON:0004770",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0004771",
@@ -25043,7 +25021,7 @@
   },
   {
    "id": "UBERON:0006211",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0006217",
@@ -26587,7 +26565,7 @@
   },
   {
    "id": "UBERON:0008776",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0008784",
@@ -27187,7 +27165,7 @@
   },
   {
    "id": "UBERON:0010032",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0010033",
@@ -27232,6 +27210,10 @@
   {
    "id": "UBERON:0010143",
    "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+  },
+  {
+   "id": "UBERON:0010145",
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0010146",
@@ -27359,7 +27341,7 @@
   },
   {
    "id": "UBERON:0010365",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0010366",
@@ -27915,7 +27897,7 @@
   },
   {
    "id": "UBERON:0011876",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0011877",
@@ -29415,7 +29397,7 @@
   },
   {
    "id": "UBERON:0015876",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0015877",
@@ -30915,7 +30897,7 @@
   },
   {
    "id": "UBERON:0035371",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0035377",
@@ -31027,7 +31009,7 @@
   },
   {
    "id": "UBERON:0035520",
-   "reason": "ningún FMA de la ficha figura en Wikidata con TA2 ID"
+   "reason": "la ficha no tiene FMA"
   },
   {
    "id": "UBERON:0035523",

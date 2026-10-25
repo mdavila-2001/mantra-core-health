@@ -120,6 +120,21 @@ for (const caso of CASOS) {
     await expect
       .poll(() => page.evaluate(() => document.activeElement?.classList.contains('atlas3d__cita') ?? false))
       .toBe(true);
+    // Adelante y otra vez Atrás: el foco vuelve a la cita, no a la entrada.
+    await page.goForward();
+    await expect(page).toHaveURL(/#atlas3d-fuente-/);
+    await page.goBack();
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.classList.contains('atlas3d__cita') ?? false))
+      .toBe(true);
+    // Otra navegación (cambiar el sexo) NO le roba el foco a quien la hizo.
+    await page.getByRole('radio', { name: 'Mujer' }).click();
+    await expect(page).toHaveURL(/sex=female/);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => document.activeElement?.classList.contains('atlas3d__cita') ?? false)).toBe(false);
+    // El sexo se cambia con replaceUrl: se vuelve a «Hombre» con el control, no con Atrás.
+    await page.getByRole('radio', { name: 'Hombre' }).click();
+    await expect(page).not.toHaveURL(/sex=female/);
 
     const figura = page.getByTestId('atlas3d-imagenes').locator('figure').first();
     await figura.scrollIntoViewIfNeeded();

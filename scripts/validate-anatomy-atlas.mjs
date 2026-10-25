@@ -14,7 +14,7 @@
  * | ID UBERON | OLS4 de EBI (`/api/ontologies/uberon/terms?obo_id=`) |
  * | ID FMA | OLS4 de EBI (`/api/ontologies/fma/terms?iri=http://purl.org/sig/ont/fma/fmaN`) |
  * | Licencia de cada imagen | API de Wikimedia Commons (`extmetadata`, de a 50); y que su miniatura responda 200 en upload.wikimedia.org |
- * | PMID y DOI de la descripción extendida | PubMed y Crossref, como los demás; además, que el DOI que dice la ficha sea el que PubMed asocia a ese PMID |
+ * | PMID y DOI de la descripción extendida | PubMed y Crossref, como los demás; además, que el DOI que dice la ficha sea el que PubMed asocia a ese PMID (o, si PubMed no lista DOI, que Europe PMC devuelva ese PMID para ese DOI) |
  * | Código TA2 | el vocabulario que publica el visor de FIPAT (ta2viewer.openanatomy.org): el código existe y su término latino es el de la ficha; y Wikidata (SPARQL) declara el par TA2 ↔ FMA por el que se cruzó |
  *
  * **Falla con una sola cita irresoluble** (sale con código 1). Un host que no
@@ -336,13 +336,31 @@ async function validarTa2(lista) {
   });
 }
 
-/** El DOI que la ficha atribuye a un PMID es el que PubMed le asocia. */
-function validarParesPmidDoi(pmidDoi, pmids) {
+/** `&#x0003c;` → `<`: PubMed devuelve algunos DOI con entidades HTML. */
+const sinEntidades = (texto) => texto.replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)));
+
+/**
+ * El DOI que la ficha atribuye a un PMID es el de ese artículo: lo dice
+ * PubMed, o, si PubMed no lista DOI (artículos viejos), Europe PMC, que busca
+ * el DOI y tiene que devolver ese mismo PMID.
+ */
+async function validarParesPmidDoi(pmidDoi, pmids) {
   const segunPubmed = new Map(pmids.map((r) => [r.id, r.doi]));
-  return [...pmidDoi].sort().slice(0, LIMITE).map(([pmid, doi]) => {
+  return enParalelo([...pmidDoi].sort().slice(0, LIMITE), async ([pmid, doi]) => {
+    const id = `PMID:${pmid} ↔ ${doi}`;
     const real = segunPubmed.get(pmid);
-    const ok = real !== undefined && real !== null && real.toLowerCase() === doi.toLowerCase();
-    return { id: `PMID:${pmid} ↔ ${doi}`, ok, via: ok ? 'pubmed' : null, detail: ok ? null : `PubMed asocia ${real ?? 'ningún DOI'}` };
+    if (real && sinEntidades(real).toLowerCase() === doi.toLowerCase()) return { id, ok: true, via: 'pubmed', detail: null };
+    const r = await pedir(
+      `https://www.ebi.ac.uk/europepmc/webservices/rest/search?format=json&resultType=lite&query=${encodeURIComponent(`DOI:"${doi}"`)}`,
+    );
+    const pmidsDelDoi = (r.json?.resultList?.result ?? []).map((x) => x.pmid).filter(Boolean);
+    const ok = r.status === 200 && pmidsDelDoi.includes(pmid);
+    return {
+      id,
+      ok,
+      via: ok ? 'europepmc' : null,
+      detail: ok ? null : `PubMed asocia ${real ?? 'ningún DOI'}; Europe PMC da ${pmidsDelDoi.join(', ') || (r.status === 200 ? 'ningún PMID' : motivo(r))}`,
+    };
   });
 }
 
@@ -377,7 +395,7 @@ async function main() {
   if (corre('imagenes')) grupos.imagenes = await validarImagenes(imagenes.slice(0, LIMITE));
   if (corre('miniaturas')) grupos.miniaturas = await validarMiniaturas(imagenes.slice(0, LIMITE));
   if (corre('ta2')) grupos.ta2 = await validarTa2(ta2.slice(0, LIMITE));
-  if (corre('pmid') || corre('pmidDoi')) grupos.pmidDoi = validarParesPmidDoi(literatura.pmidDoi, grupos.pmid);
+  if (corre('pmid') || corre('pmidDoi')) grupos.pmidDoi = await validarParesPmidDoi(literatura.pmidDoi, grupos.pmid);
 
   const resumen = Object.fromEntries(
     Object.entries(grupos).map(([k, v]) => [k, { total: v.length, ok: v.filter((r) => r.ok).length, fallidas: v.filter((r) => !r.ok).length }]),

@@ -1,0 +1,226 @@
+{
+ "startedAt": "2026-10-25T02:06:44.681Z",
+ "finishedAt": "2026-10-25T02:07:53.283Z",
+ "limit": null,
+ "strict": false,
+ "groups": [
+  "fma"
+ ],
+ "blockingGroups": [
+  "fma"
+ ],
+ "blockingFailures": 26,
+ "totalsInCatalog": {
+  "doi": 2731,
+  "pmid": 3120,
+  "wikipedia": 2032,
+  "isbn": 30,
+  "url": 489,
+  "uberon": 6085,
+  "fma": 6384,
+  "images": 1066,
+  "ta2": 2357,
+  "literatureStructures": 884,
+  "literatureSentences": 4220,
+  "literaturePmidDoiPairs": 2697
+ },
+ "summary": {
+  "fma": {
+   "total": 6384,
+   "ok": 6358,
+   "fallidas": 26
+  }
+ },
+ "passed": false,
+ "localChecks": [
+  {
+   "check": "cada id UBERON del catálogo está en el extracto de la release",
+   "ok": true,
+   "detail": "6085/6085"
+  }
+ ],
+ "failures": [
+  {
+   "tipo": "fma",
+   "id": "FMA:12775",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:12800",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:13363",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:16018",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:16694",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:20083",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:21445",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:229084",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:236871",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:23878",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:264609",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:264611",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:313607",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:35194",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:53074",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:54641",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:60179",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:63001",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:63882",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:71029",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:71294",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:72979",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:75433",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:76715",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:83869",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  },
+  {
+   "tipo": "fma",
+   "id": "FMA:85520",
+   "ok": false,
+   "via": null,
+   "detail": "HTTP 404"
+  }
+ ]
+}

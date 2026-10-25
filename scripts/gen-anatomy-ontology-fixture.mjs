@@ -175,6 +175,11 @@ function main() {
   const mapeo = leerCarpeta('netter-mapping', []);
   const castellano = leerCarpeta('es', {});
   const netter = new Map(leerJson(join(RAIZ, 'data', 'netter-anatomia', 'entities.json')).map((e) => [e.id, e]));
+  // xrefs FMA que UBERON declara y que la FMA servida por OLS4 no tiene: se
+  // publican aparte, sin enlace, y no cuentan como FMA de la ficha.
+  const fmaInexistentes = new Set(
+    existsSync(join(DATOS, 'fma-not-found.json')) ? leerJson(join(DATOS, 'fma-not-found.json')).ids : [],
+  );
   const ta2 = existsSync(join(DATOS, 'ta2.json')) ? leerJson(join(DATOS, 'ta2.json')) : { mapped: {}, unmapped: [], source: null };
   const literatura = leerLiteratura();
   const imagenes = leerCarpeta('images', {});
@@ -256,7 +261,8 @@ function main() {
       labelEn: t.label,
       labelEs: es?.labelEs ?? null,
       synonymsEn: t.exactSynonyms,
-      fma: t.fma,
+      fma: t.fma.filter((f) => !fmaInexistentes.has(f)),
+      fmaNotFound: t.fma.filter((f) => fmaInexistentes.has(f)),
       regions: t.regions,
       definition: t.definition
         ? {
@@ -300,6 +306,7 @@ function main() {
       labelEs: castellano[p.structureId]?.labelEs ?? null,
       synonymsEn: [],
       fma: pieza.fma ? [pieza.fma] : [],
+      fmaNotFound: [],
       regions: [],
       definition: null,
       isA: [],

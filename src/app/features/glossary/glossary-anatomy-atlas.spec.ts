@@ -28,6 +28,7 @@ const FICHA_SIN_DEFINICION: AnatomyStructure = {
   incoming: [],
   netter: [],
   meshes: [],
+  fmaNotFound: [],
   ta2: null,
   extendedDescription: null,
   images: [],

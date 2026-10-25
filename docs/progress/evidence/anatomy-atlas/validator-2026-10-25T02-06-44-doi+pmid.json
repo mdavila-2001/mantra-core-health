@@ -1,0 +1,246 @@
+{
+ "startedAt": "2026-10-25T02:06:44.681Z",
+ "finishedAt": "2026-10-25T02:07:27.314Z",
+ "limit": null,
+ "strict": false,
+ "groups": [
+  "doi",
+  "pmid"
+ ],
+ "blockingGroups": [
+  "doi",
+  "pmid",
+  "pmidDoi"
+ ],
+ "blockingFailures": 27,
+ "totalsInCatalog": {
+  "doi": 2731,
+  "pmid": 3120,
+  "wikipedia": 2032,
+  "isbn": 30,
+  "url": 489,
+  "uberon": 6085,
+  "fma": 6384,
+  "images": 1066,
+  "ta2": 2357,
+  "literatureStructures": 884,
+  "literatureSentences": 4220,
+  "literaturePmidDoiPairs": 2697
+ },
+ "summary": {
+  "doi": {
+   "total": 2731,
+   "ok": 2723,
+   "fallidas": 8
+  },
+  "pmid": {
+   "total": 3120,
+   "ok": 3120,
+   "fallidas": 0
+  },
+  "pmidDoi": {
+   "total": 2697,
+   "ok": 2678,
+   "fallidas": 19
+  }
+ },
+ "passed": false,
+ "localChecks": [
+  {
+   "check": "cada id UBERON del catálogo está en el extracto de la release",
+   "ok": true,
+   "detail": "6085/6085"
+  }
+ ],
+ "failures": [
+  {
+   "tipo": "doi",
+   "id": "10.1111/dsu.0000000000000063",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 429, doi.org HTTP 404"
+  },
+  {
+   "tipo": "doi",
+   "id": "10.11604/pamj.2017.26.26.11189",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 404, doi.org HTTP 404"
+  },
+  {
+   "tipo": "doi",
+   "id": "10.1227/01.neu.0000335030.85402.5f",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 404, doi.org HTTP 404"
+  },
+  {
+   "tipo": "doi",
+   "id": "10.26574/maedica.2022.17.2.357",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 404, doi.org HTTP 404"
+  },
+  {
+   "tipo": "doi",
+   "id": "10.3171/foc.2007.23.1.4",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 429, doi.org HTTP 404"
+  },
+  {
+   "tipo": "doi",
+   "id": "10.3944/AOTT.2011.2369",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 404, doi.org HTTP 404"
+  },
+  {
+   "tipo": "doi",
+   "id": "10.3944/AOTT.2015.15.0204",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 404, doi.org HTTP 404"
+  },
+  {
+   "tipo": "doi",
+   "id": "10.7417/CT.2016.1946",
+   "ok": false,
+   "via": null,
+   "detail": "crossref HTTP 404, doi.org HTTP 404"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:10570419 ↔ 10.1002/(sici)1097-0142(19991115)86:10<1959::aid-cncr12>3.0.co;2-h",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:10597681 ↔ 10.1097/00006534-199907000-00014",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:17235367 ↔ 10.1016/j.jacc.2006.02.050",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:18269111 ↔ 10.5040/9798216000143.ch-022",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:19258969 ↔ 10.1016/j.rapm.2008.04.004",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:2743658 ↔ 10.1097/00003086-198907000-00014",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:2872644 ↔ 10.1111/j.1475-1313.1986.tb00697.x",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:3273882 ↔ 10.2106/00004623-198870020-00003",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:3417708 ↔ 10.2106/00004623-198870080-00015",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:417084 ↔ 10.2106/00004623-197860020-00001",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:6226668 ↔ 10.2106/00004623-198365080-00011",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:7287791 ↔ 10.2106/00004623-198163080-00002",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:7604088 ↔ 10.1097/00006534-199507000-00016",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:7706335 ↔ 10.1302/0301-620x.77b2.7706335",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:7983126 ↔ 10.1302/0301-620x.76b6.7983126",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:8377233 ↔ 10.1016/0741-5214(93)90256-l",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:9171748 ↔ 10.1002/bjs.1800840513",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:9520882 ↔ 10.1097/00003086-199802000-00015",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia ningún DOI"
+  },
+  {
+   "tipo": "pmidDoi",
+   "id": "PMID:9704268 ↔ 10.1002/(sici)1097-0193(1998)6:4<316::aid-hbm9>3.0.co;2-6",
+   "ok": false,
+   "via": null,
+   "detail": "PubMed asocia 10.1002/(SICI)1097-0193(1998)6:4&#x0003c;316::AID-HBM9&#x0003e;3.0.CO;2-6"
+  }
+ ]
+}

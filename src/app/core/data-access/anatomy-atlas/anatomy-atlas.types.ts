@@ -79,6 +79,8 @@ export interface AnatomyStructure {
   readonly labelEs: string | null;
   readonly synonymsEn: readonly string[];
   readonly fma: readonly string[];
+  /** xrefs FMA que UBERON declara y que no existen en la FMA 5.1 servida por OLS4: sin enlace. */
+  readonly fmaNotFound: readonly string[];
   readonly regions: readonly string[];
   readonly definition: AnatomyDefinition | null;
   readonly isA: readonly { target: string; labelEn: string | null; labelEs: string | null; inCatalog: boolean }[];

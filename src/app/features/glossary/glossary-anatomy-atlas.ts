@@ -14,7 +14,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink, Scroll } from '@angular/router';
+import { ActivatedRoute, NavigationStart, Router, RouterLink, Scroll } from '@angular/router';
 import { filter, map, type Subscription } from 'rxjs';
 
 import { AnatomyAtlasClient } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
@@ -262,23 +262,28 @@ export class GlossaryAnatomyAtlas {
     // la barra fija, y no le da el foco: se centra y se enfoca acá, después
     // de que el router termine. El evento `Scroll` sale en cada toque, aunque
     // el ancla ya estuviera en la URL (tocar dos veces la misma fuente)...
-    // Al volver con «Atrás» a la URL sin ancla, el foco regresa a la cita
-    // desde la que se saltó (si no, quedaba en una entrada fuera de la vista).
-    this.router.events
-      .pipe(
-        filter((e): e is Scroll => e instanceof Scroll),
-        takeUntilDestroyed(),
-      )
-      .subscribe((e) => {
-        const ancla = e.anchor ?? '';
-        if (ancla.startsWith('atlas3d-fuente-')) {
-          setTimeout(() => this.revealSource(ancla), 0);
-        } else if (this.citationOrigin !== null) {
-          const origen = this.citationOrigin;
-          this.citationOrigin = null;
-          setTimeout(() => origen.isConnected && origen.focus({ preventScroll: true }), 0);
-        }
-      });
+    // Al volver con Atrás/Adelante (`popstate`) desde una entrada a la URL
+    // sin ancla, el foco regresa a la cita desde la que se saltó a ESA entrada.
+    // Cualquier otra navegación (cambiar el sexo, tocar una pieza) no mueve el
+    // foco: lo deja donde la persona lo puso.
+    let disparador: NavigationStart['navigationTrigger'] = 'imperative';
+    let anclaAnterior = this.route.snapshot.fragment ?? '';
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((e) => {
+      if (e instanceof NavigationStart) {
+        disparador = e.navigationTrigger;
+        return;
+      }
+      if (!(e instanceof Scroll)) return;
+      const ancla = e.anchor ?? '';
+      const venia = anclaAnterior;
+      anclaAnterior = ancla;
+      if (ancla.startsWith('atlas3d-fuente-')) {
+        setTimeout(() => this.revealSource(ancla), 0);
+      } else if (disparador === 'popstate' && venia.startsWith('atlas3d-fuente-')) {
+        const origen = this.citationOrigins.get(venia);
+        if (origen !== undefined) setTimeout(() => origen.isConnected && origen.focus({ preventScroll: true }), 0);
+      }
+    });
     // ...y esto cubre el enlace abierto con el ancla, que llega antes que la ficha.
     effect(() => {
       const ancla = this.fragment();
@@ -306,6 +311,8 @@ export class GlossaryAnatomyAtlas {
 
   private loadStructure(id: string | null): void {
     this.structureRequest?.unsubscribe();
+    // Las citas de otra ficha ya no están en la pantalla.
+    this.citationOrigins.clear();
     if (id === null) {
       this.structureState.set(null);
       return;
@@ -357,11 +364,11 @@ export class GlossaryAnatomyAtlas {
     }
   }
 
-  /** La cita [n] desde la que se saltó a la bibliografía, para devolverle el foco al volver. */
-  private citationOrigin: HTMLElement | null = null;
+  /** Por cada entrada de la bibliografía, la cita [n] desde la que se saltó por última vez: Atrás le devuelve el foco. */
+  private readonly citationOrigins = new Map<string, HTMLElement>();
 
-  protected rememberCitation(event: Event): void {
-    this.citationOrigin = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+  protected rememberCitation(event: Event, n: number): void {
+    if (event.currentTarget instanceof HTMLElement) this.citationOrigins.set(`atlas3d-fuente-${n}`, event.currentTarget);
   }
 
   private revealSource(id: string): void {

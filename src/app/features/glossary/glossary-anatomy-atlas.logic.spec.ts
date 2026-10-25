@@ -36,6 +36,7 @@ const FEMUR: AnatomyStructure = {
   ],
   netter: [],
   meshes: ['FMA24474', 'FMA24475'],
+  fmaNotFound: [],
   ta2: null,
   extendedDescription: null,
   images: [],
