@@ -38,6 +38,7 @@ import { registrarPortalAdministrativo } from './admin-portal.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 import { registerMedicalGroups } from './medical-groups.handlers';
+import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerReceivedServices } from './received-services.handlers';
 
 /**
@@ -89,5 +90,6 @@ export function crearRouterSimulado(): MockRouter {
   registerPromotions(router);
   registerPatientSpending(router);
   registerMedicalGroups(router);
+  registerOrganizationPracticeHandlers(router);
   return router;
 }
