@@ -4,8 +4,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { afterAll, beforeAll } from 'vitest';
 
 import { SearchMemoryService } from '../../../../core/navigation/search-memory.service';
+import { environment } from '../../../../../environments/environment';
 import { PatientList } from './patient-list';
 
 /**
@@ -36,6 +38,15 @@ const FILA = {
 function pagina(items: unknown[], nextCursor: string | null) {
   return { items, count: items.length, limit: 25, nextCursor };
 }
+
+// Los filtros de grupo sanguíneo, Rh e idioma clínico son extensión de la maqueta
+// (informe B de deriva de contratos): contra la API real `searchPatients()` no
+// manda la petición y avisa que la función no está disponible, y eso lo cubren
+// simulator-only.spec y contract-drift.spec. En esta rama la maqueta viene
+// apagada: se enciende acá, sólo para este archivo.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('PatientList', () => {
   let harness: RouterTestingHarness;
