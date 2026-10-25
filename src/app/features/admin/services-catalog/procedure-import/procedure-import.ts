@@ -95,6 +95,15 @@ export class ProcedureImport {
   private readonly catalog = inject(ServicesCatalogClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /**
+   * A dónde vuelve: se llega desde el catálogo administrado o, desde el
+   * carril 22, desde «Mis servicios» del médico — la misma pantalla con dos
+   * puertas.
+   */
+  protected readonly backRoute = this.router.url.startsWith('/my-services')
+    ? '/my-services'
+    : '/administration/services-catalog';
   private readonly toasts = inject(ToastService);
 
   /* ---- la práctica a la que se importa ----------------------------------- */
