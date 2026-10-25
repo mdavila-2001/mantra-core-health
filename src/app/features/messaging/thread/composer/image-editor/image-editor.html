@@ -1,0 +1,258 @@
+<!-- La barra del editor: salir sin cambios a la izquierda, las herramientas al
+     centro y «Listo» a la derecha, como la de WhatsApp. -->
+<div class="editor__barra" role="toolbar" aria-label="Herramientas de edición">
+  <button
+    app-button
+    variant="ghost"
+    iconOnly
+    type="button"
+    class="editor__icono"
+    data-testid="editor-cancelar"
+    aria-label="Cancelar la edición"
+    appTooltip="Cancelar la edición"
+    appTooltipPosition="bottom"
+    (clicked)="cancelled.emit()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+  </button>
+
+  <div class="editor__herramientas">
+    <button
+      app-button
+      variant="ghost"
+      iconOnly
+      type="button"
+      class="editor__icono"
+      data-testid="editor-recortar"
+      aria-label="Recortar y girar"
+      appTooltip="Recortar y girar"
+      appTooltipPosition="bottom"
+      [class.is-activa]="tool() === 'crop'"
+      [attr.aria-pressed]="tool() === 'crop'"
+      (clicked)="selectTool('crop')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 2v14a2 2 0 0 0 2 2h14" /><path d="M18 22V8a2 2 0 0 0-2-2H2" /></svg>
+    </button>
+    <button
+      app-button
+      variant="ghost"
+      iconOnly
+      type="button"
+      class="editor__icono"
+      data-testid="editor-dibujar"
+      aria-label="Dibujar"
+      appTooltip="Dibujar"
+      appTooltipPosition="bottom"
+      [class.is-activa]="tool() === 'draw'"
+      [attr.aria-pressed]="tool() === 'draw'"
+      (clicked)="selectTool('draw')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+    </button>
+    <button
+      app-button
+      variant="ghost"
+      iconOnly
+      type="button"
+      class="editor__icono"
+      data-testid="editor-texto"
+      aria-label="Agregar texto"
+      appTooltip="Agregar texto"
+      appTooltipPosition="bottom"
+      [class.is-activa]="tool() === 'text'"
+      [attr.aria-pressed]="tool() === 'text'"
+      (clicked)="selectTool('text')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7V4h16v3M9 20h6M12 4v16" /></svg>
+    </button>
+    <span class="editor__separador" aria-hidden="true"></span>
+    <button
+      app-button
+      variant="ghost"
+      iconOnly
+      type="button"
+      class="editor__icono"
+      data-testid="editor-deshacer"
+      aria-label="Deshacer"
+      appTooltip="Deshacer (Ctrl+Z)"
+      appTooltipPosition="bottom"
+      [disabled]="!canUndo()"
+      (clicked)="undo()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+    </button>
+  </div>
+
+  <button
+    app-button
+    variant="primary"
+    iconOnly
+    type="button"
+    class="editor__listo"
+    data-testid="editor-listo"
+    aria-label="Aplicar la edición"
+    appTooltip="Listo"
+    appTooltipPosition="bottom"
+    [isLoading]="status() === 'saving'"
+    [disabled]="status() !== 'ready'"
+    (clicked)="apply()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 12.5 5 5L20 6.5" /></svg>
+  </button>
+</div>
+
+<div class="editor__escenario">
+  @switch (status()) {
+    @case ('loading') {
+      <p class="editor__estado" role="status">Preparando la imagen…</p>
+    }
+    @case ('failed') {
+      <p class="editor__estado" role="alert">No pudimos abrir la imagen para editarla. Puede enviarla tal como está.</p>
+    }
+  }
+
+  <!-- El lienzo y el recuadro de recorte comparten caja: el recuadro se
+       posiciona en porcentajes del lienzo, que es lo que se ve. -->
+  <div
+    class="editor__lienzo"
+    [class.is-oculto]="status() === 'loading' || status() === 'failed'"
+    [class.is-dibujo]="tool() === 'draw'"
+    [class.is-texto]="tool() === 'text'"
+    (pointermove)="move($event)"
+    (pointerup)="end()"
+    (pointercancel)="end()"
+  >
+    <canvas
+      #stage
+      data-testid="editor-lienzo"
+      role="img"
+      [attr.aria-label]="'Imagen en edición. ' + operations().length + (operations().length === 1 ? ' cambio aplicado.' : ' cambios aplicados.')"
+      (pointerdown)="startOnCanvas($event)"
+    ></canvas>
+
+    @if (tool() === 'crop' && status() === 'ready') {
+      @if (cropBox(); as box) {
+        <div
+          class="editor__recorte"
+          data-testid="editor-recorte"
+          tabindex="0"
+          role="group"
+          aria-label="Área de recorte"
+          aria-describedby="editor-ayuda-recorte"
+          [style.left.%]="box.left"
+          [style.top.%]="box.top"
+          [style.width.%]="box.width"
+          [style.height.%]="box.height"
+          (pointerdown)="startCrop($event, 'move')"
+          (keydown)="cropKey($event)"
+        >
+          @for (corner of corners; track corner) {
+            <span
+              class="editor__asa"
+              [class]="'editor__asa editor__asa--' + corner"
+              aria-hidden="true"
+              (pointerdown)="startCrop($event, corner)"
+            ></span>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>
+
+@if (error(); as mensaje) {
+  <p class="editor__error" role="alert">{{ mensaje }}</p>
+}
+
+<!-- Las opciones de la herramienta elegida, abajo: donde quedaba el pie de
+     foto, que mientras se edita no hace falta. -->
+<div class="editor__opciones" data-testid="editor-opciones">
+  @switch (tool()) {
+    @case ('crop') {
+      <button app-button variant="neutral" size="sm" type="button" data-testid="editor-girar" [disabled]="status() !== 'ready'" (clicked)="rotate()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" /></svg>
+        Girar 90°
+      </button>
+      <button app-button variant="ghost" size="sm" type="button" data-testid="editor-restablecer" [disabled]="!cropPending()" (clicked)="resetCrop()">
+        Restablecer
+      </button>
+      <p id="editor-ayuda-recorte" class="editor__ayuda">
+        Arrastre las esquinas para recortar. Con el teclado: flechas para mover, Mayús + flechas para cambiar el tamaño.
+      </p>
+    }
+    @case ('draw') {
+      <ng-container [ngTemplateOutlet]="paleta" />
+      <label class="editor__rango">
+        <span>Grosor</span>
+        <input
+          type="range"
+          min="2"
+          max="24"
+          step="1"
+          data-testid="editor-grosor"
+          [value]="strokeWidth()"
+          (input)="strokeWidth.set(+$any($event.target).value)"
+        />
+      </label>
+    }
+    @case ('text') {
+      <label class="editor__texto">
+        <span class="solo-lectores">Texto para agregar</span>
+        <input
+          type="text"
+          data-testid="editor-texto-campo"
+          placeholder="Escriba un texto"
+          maxlength="120"
+          [value]="draftText()"
+          (input)="draftText.set($any($event.target).value)"
+          (keydown)="textKey($event)"
+        />
+      </label>
+      <ng-container [ngTemplateOutlet]="paleta" />
+      <label class="editor__rango">
+        <span>Tamaño</span>
+        <input
+          type="range"
+          min="14"
+          max="96"
+          step="2"
+          data-testid="editor-tamano"
+          [value]="textSize()"
+          (input)="textSize.set(+$any($event.target).value)"
+        />
+      </label>
+      <button
+        app-button
+        variant="neutral"
+        size="sm"
+        type="button"
+        data-testid="editor-texto-agregar"
+        [disabled]="draftText().trim() === '' || status() !== 'ready'"
+        (clicked)="placeTextAtCenter()"
+      >
+        Agregar
+      </button>
+      <p class="editor__ayuda">También puede tocar la imagen donde quiera ponerlo.</p>
+    }
+  }
+</div>
+
+<ng-template #paleta>
+  <div class="editor__paleta" role="radiogroup" aria-label="Color">
+    @for (muestra of swatches; track muestra.token) {
+      <label class="editor__color" [attr.title]="muestra.label">
+        <input
+          type="radio"
+          name="editor-color"
+          class="solo-lectores"
+          data-testid="editor-color"
+          [value]="muestra.token"
+          [checked]="color() === muestra.token"
+          [attr.aria-label]="muestra.label"
+          (change)="color.set(muestra.token)"
+        />
+        <span class="editor__muestra" aria-hidden="true" [style.background]="'var(' + muestra.token + ')'"></span>
+      </label>
+    }
+  </div>
+</ng-template>
