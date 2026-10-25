@@ -121,12 +121,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   // La recepción de muestras del laboratorio. Diferida: sólo la alcanza el
   // personal de un centro de diagnóstico.
-  'laboratorio/recepcion': () =>
+  'laboratory/reception': () =>
     import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
   // La cola de trabajo del laboratorio para su propio personal: la misma
   // pantalla que «Laboratorio e imagen», bajo la sección que ve un centro de
   // diagnóstico (ver `navigation.map.ts`).
-  'laboratorio/cola': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
+  'laboratory/queue': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
@@ -185,7 +185,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // cockpit, que es la vista del contador.
   //
   // Nada se borró, sólo cambió el orden: el cockpit está en
-  // `administration/accounting/cockpit` y los libros en `.../libros`, los dos
+  // `administration/accounting/cockpit` y los libros en `.../books`, los dos
   // enlazados al pie del resumen.
   'administration/accounting': () =>
     import('./features/accounting/summary/summary').then((m) => m.Summary),
@@ -226,7 +226,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/diagnostic-orders/diagnostic-orders').then(
       (m) => m.DiagnosticOrders,
     ),
-  'my-account/cotizaciones': () =>
+  'my-account/quotations': () =>
     import('./features/account/quotations/quotations').then((m) => m.Quotations),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
@@ -442,7 +442,7 @@ const PANTALLAS_HIJAS: Routes = [
     // dirección abre el cockpit y esto queda un clic más adentro. **No** entra
     // al menú: la lista de secciones del médico es cerrada y hay un spec que
     // falla si alguien le agrega una (carril 9).
-    path: 'administration/accounting/libros',
+    path: 'administration/accounting/books',
     title: `${APP_TITLE} - Libros contables`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -1324,6 +1324,14 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // colgar de Contabilidad. La dirección vieja está en historiales y en
   // favoritos, así que redirige en vez de dar 404.
   'assets-liabilities': '/administration/accounting/assets-liabilities',
+  // TAREA-29: los libros contables pasaron de `.../libros` a `.../books`. Se
+  // enlazaban desde el resumen y el cockpit, así que están en historiales.
+  'administration/accounting/libros': '/administration/accounting/books',
+  // TAREA-29: las dos pantallas del personal de laboratorio y las cotizaciones
+  // del paciente, que salían en el menú, así que están en favoritos.
+  'laboratorio/recepcion': '/laboratory/reception',
+  'laboratorio/cola': '/laboratory/queue',
+  'my-account/cotizaciones': '/my-account/quotations',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
   'identidad/verificar': '/my-account/identity',

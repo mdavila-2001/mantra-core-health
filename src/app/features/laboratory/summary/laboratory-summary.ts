@@ -31,12 +31,12 @@ const SHORTCUTS: readonly Shortcut[] = [
   {
     label: 'Recibir muestras',
     hint: 'Las órdenes que le derivaron y todavía esperan su muestra.',
-    route: '/laboratorio/recepcion',
+    route: '/laboratory/reception',
   },
   {
     label: 'Seguir la cola de trabajo',
     hint: 'Las muestras acesionadas y en qué paso está cada una.',
-    route: '/laboratorio/cola',
+    route: '/laboratory/queue',
   },
 ];
 

@@ -240,7 +240,7 @@ describe('ShellLayout', () => {
       '/my-account/diagnostic-orders',
       // Cotizaciones comparte el bloque de datos clínicos del paciente: se
       // consulta después de ver las órdenes y antes de los cuestionarios.
-      '/my-account/cotizaciones',
+      '/my-account/quotations',
       // «Mis cuestionarios» YA NO está (2026-09-25, dc790b01): el propietario
       // la sacó del menú mientras decide qué hacer con la sección
       // (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la pantalla siguen vivas
@@ -529,7 +529,7 @@ describe('ShellLayout', () => {
             '/my-account/medical-record',
             '/my-account/diagnostic-results',
             '/my-account/diagnostic-orders',
-            '/my-account/cotizaciones',
+            '/my-account/quotations',
             // «Mis cuestionarios» cerraba el bloque hasta el 25/09/2026: salió
             // del menú (dc790b01) y el bloque termina en cotizaciones.
           ]),
