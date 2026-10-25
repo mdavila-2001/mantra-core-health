@@ -112,6 +112,7 @@ acuse**. → [reglas de negocio](business/business-rules.md#reglas-de-privacidad
 | [Estado de servidor](data-and-state/server-state.md) · [Estado de cliente](data-and-state/client-state.md) | |
 | [Caché](data-and-state/caching.md) · [Persistencia](data-and-state/persistence.md) · [Invalidación](data-and-state/invalidation.md) | |
 | [API de backend](integrations/backend-api.md) | El contrato declarado |
+| [Servicios recibidos](contracts/received-services.md) | Intervenciones realizadas y vacunas en la historia |
 | [Autenticación](integrations/authentication.md) · [Archivos](integrations/file-storage.md) | |
 
 ## Calidad
