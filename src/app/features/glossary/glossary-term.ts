@@ -37,7 +37,10 @@ import {
 } from './glossary-drug-facts';
 import { GlossaryCategoryIcon } from './glossary-category-icon';
 import { GlossaryArticleView } from './glossary-article';
+import { enlaceSeguro, esImagenPropia, imagenesVisibles } from './glossary-article.logic';
+import { GlossaryTermCover, pictogramOfTags } from './glossary-term-cover';
 import type { GlossaryArticle } from '../../core/data-access/terminology/glossary-article.types';
+import type { GlossaryImage } from '../../core/data-access/terminology/terminology.types';
 
 /**
  * Rótulo en castellano de cada tipo de relación clínica, en el orden en que se
@@ -157,6 +160,7 @@ export interface GrupoDeRelaciones {
     ContentDialog,
     GlossaryArticleView,
     GlossaryCategoryIcon,
+    GlossaryTermCover,
     PageHeader,
     RouterLink,
     Tab,
@@ -302,6 +306,31 @@ export class GlossaryTerm {
 
   /** La foto ampliada está abierta. */
   protected readonly ampliada = signal(false);
+
+  /**
+   * La foto de la cabecera: la del término y, si no tiene, la primera imagen
+   * visible de su artículo —con el mismo autor y licencia que ya exige—.
+   * `null` si ninguna se puede mostrar: entonces va la portada ilustrada.
+   */
+  protected readonly imagen = computed<GlossaryImage | null>(() => {
+    const propia = this.ficha()?.image;
+    if (propia) return propia;
+    const deArticulo = imagenesVisibles(this.articulo()?.images ?? [])[0];
+    if (deArticulo === undefined) return null;
+    const pagina = esImagenPropia(deArticulo) ? undefined : (enlaceSeguro(deArticulo.sourcePage) ?? undefined);
+    return {
+      source: deArticulo.url,
+      thumbnailSource: deArticulo.thumbUrl,
+      alt: deArticulo.altText,
+      attribution: deArticulo.author,
+      license: deArticulo.license,
+      status: 'article',
+      ...(pagina === undefined ? {} : { sourcePage: pagina }),
+    };
+  });
+
+  /** El pictograma del sistema del cuerpo del término (pulmones, corazón…), si tiene uno. */
+  protected readonly pictograma = computed(() => pictogramOfTags(this.ficha()?.tags ?? []));
 
   /**
    * De dónde sale el término, dicho con los datos que el propio término trae

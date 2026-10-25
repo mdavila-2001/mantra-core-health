@@ -247,6 +247,37 @@
   font-size: var(--fs-caption);
 }
 
+.atlas3d__estado {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__estado--error {
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+}
+
+.atlas3d__reintentar {
+  margin-inline-start: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid currentColor;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.atlas3d__reintentar:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
 .atlas3d__inicio {
   padding: var(--sp-4);
   border-radius: var(--r-md);

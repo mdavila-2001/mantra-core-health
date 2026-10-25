@@ -35,6 +35,13 @@ describe('AnatomyAtlasClient', () => {
     expect(recibidos).toEqual([0, 0]);
   });
 
+  it('lee qué partes con malla tiene cada estructura compuesta', () => {
+    let compuestas: unknown = null;
+    client.composites().subscribe((c) => (compuestas = c));
+    http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush({ 'UBERON:0002167': ['UBERON:0002170'] });
+    expect(compuestas).toEqual({ 'UBERON:0002167': ['UBERON:0002170'] });
+  });
+
   it('lee la ficha del shard que le toca y devuelve null si no está', () => {
     const id = 'UBERON:0000981';
     const shard = String(anatomyShardOf(id, 32)).padStart(2, '0');
