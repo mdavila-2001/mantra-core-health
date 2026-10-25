@@ -12,7 +12,7 @@ import type {
   NewOrganizationPractice,
 } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { mensajeDeLaConfiguracion, MedicalCenterSetup } from './medical-center-setup';
+import { setupErrorMessage, MedicalCenterSetup } from './medical-center-setup';
 
 const TENANT = 'tenant-centro';
 
@@ -115,7 +115,7 @@ describe('MedicalCenterSetup', () => {
 
     expect(interno().created()).toEqual({ practiceId: 'pr-1', practiceSiteId: 'site-1' });
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('[data-testid="centro-medico-setup-site-id"]')?.textContent).toContain('site-1');
+    expect(el.querySelector('[data-testid="medical-center-setup-site-id"]')?.textContent).toContain('site-1');
   });
 
   it.each([
@@ -133,9 +133,9 @@ describe('MedicalCenterSetup', () => {
   });
 });
 
-describe('mensajeDeLaConfiguracion', () => {
+describe('setupErrorMessage', () => {
   it('un fallo inesperado no filtra el detalle', () => {
-    expect(mensajeDeLaConfiguracion(new HttpErrorResponse({ status: 500 }))).toBe(
+    expect(setupErrorMessage(new HttpErrorResponse({ status: 500 }))).toBe(
       'No pudimos guardar el centro. Intente de nuevo en unos segundos.',
     );
   });

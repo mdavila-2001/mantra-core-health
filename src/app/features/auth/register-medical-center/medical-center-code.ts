@@ -1,6 +1,6 @@
 /** Lo que la API acepta en `code`: de 3 a 100 caracteres de `[A-Za-z0-9._-]`. */
-const MAX_CODIGO = 100;
-const PREFIJO = 'CM-';
+const MAX_CODE_LENGTH = 100;
+const CODE_PREFIX = 'CM-';
 
 /**
  * El código de la organización, derivado de la razón social.
@@ -12,12 +12,12 @@ const PREFIJO = 'CM-';
  * @param razonSocial - La razón social tal como se escribió.
  * @returns Un código válido para `register-organization`.
  */
-export function codigoDelCentroMedico(razonSocial: string): string {
+export function medicalCenterCodeFromName(razonSocial: string): string {
   const base = razonSocial
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `${PREFIJO}${base === '' ? 'CENTRO' : base}`.slice(0, MAX_CODIGO).replace(/-+$/g, '');
+  return `${CODE_PREFIX}${base === '' ? 'CENTRO' : base}`.slice(0, MAX_CODE_LENGTH).replace(/-+$/g, '');
 }

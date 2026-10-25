@@ -94,7 +94,7 @@ const TIPOS: readonly TipoDeCuenta[] = [
     titulo: 'Centro médico',
     detalle: 'Clínicas y hospitales: publique sus procedimientos y afilie a sus médicos.',
     ruta: '/auth/register/medical-center',
-    testId: 'tipo-centro-medico',
+    testId: 'account-type-medical-center',
   },
 ];
 

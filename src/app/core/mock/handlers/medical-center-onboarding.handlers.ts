@@ -13,18 +13,18 @@ import { Coleccion, cuerpo, uuid } from '../mock-store';
     ========================================================================== */
 
 /** La clínica del fixture del directorio que sigue pendiente de verificación. */
-export const TENANT_PENDIENTE_DE_VERIFICACION = uuid('tenant-clinica-nueva');
+export const UNVERIFIED_TENANT_ID = uuid('tenant-clinica-nueva');
 
-interface PracticaDeLaMaqueta {
+interface MockPractice {
   readonly id: string;
   readonly tenantId: string;
   readonly codigo: string;
 }
 
-const practicas = new Coleccion<PracticaDeLaMaqueta>([]);
+const practicas = new Coleccion<MockPractice>([]);
 
 /** Mismo criterio que la API para derivar el código de la práctica del nombre. */
-function codigoDeLaPractica(nombre: string): string {
+function practiceCodeFromName(nombre: string): string {
   const base = nombre
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -46,7 +46,7 @@ function invalido(mensajes: readonly string[]) {
 }
 
 /** Registra la ruta nueva en el router del simulador. */
-export function registrarAltaDePracticaDeOrganizacion(router: MockRouter): void {
+export function registerOrganizationPracticeHandlers(router: MockRouter): void {
   router.post('/tenants/:tenantId/practices', (request) => {
     const tenantId = request.params['tenantId']!;
     const user = request.user;
@@ -57,7 +57,7 @@ export function registrarAltaDePracticaDeOrganizacion(router: MockRouter): void 
       return forbidden('Se requiere ser OWNER o ADMIN de la organización, o administrador de la plataforma');
     }
 
-    const conocida = tenantId in TENANT_NAMES || tenantId === TENANT_PENDIENTE_DE_VERIFICACION;
+    const conocida = tenantId in TENANT_NAMES || tenantId === UNVERIFIED_TENANT_ID;
     if (!conocida) return notFound('Organización no encontrada');
 
     const datos = cuerpo<{
@@ -94,7 +94,7 @@ export function registrarAltaDePracticaDeOrganizacion(router: MockRouter): void 
     }
     if (mensajes.length > 0) return invalido(mensajes);
 
-    if (tenantId === TENANT_PENDIENTE_DE_VERIFICACION) {
+    if (tenantId === UNVERIFIED_TENANT_ID) {
       return reply(422, {
         statusCode: 422,
         code: 'PRECONDITION_FAILED',
@@ -104,7 +104,7 @@ export function registrarAltaDePracticaDeOrganizacion(router: MockRouter): void 
       });
     }
 
-    const codigo = codigoDeLaPractica(datos.name!);
+    const codigo = practiceCodeFromName(datos.name!);
     if (practicas.filtrar((p) => p.tenantId === tenantId && p.codigo === codigo).length > 0) {
       return conflict('La organización ya tiene una práctica con ese nombre', { tenantId });
     }
@@ -113,7 +113,7 @@ export function registrarAltaDePracticaDeOrganizacion(router: MockRouter): void 
     practicas.agregar({ id: practiceId, tenantId, codigo });
     return reply(201, {
       practiceId,
-      practiceSiteId: uuid(`sede-${tenantId}-${codigo}-${codigoDeLaPractica(site!.name!)}`),
+      practiceSiteId: uuid(`sede-${tenantId}-${codigo}-${practiceCodeFromName(site!.name!)}`),
     });
   });
 }
