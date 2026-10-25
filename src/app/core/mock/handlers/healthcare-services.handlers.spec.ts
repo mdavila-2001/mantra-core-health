@@ -87,6 +87,11 @@ describe('handlers de procedimientos por sede (CM-06)', () => {
     expect(concepts).toContain(PROCEDURE_UPPER_ENDOSCOPY);
     expect(concepts).toContain(PROCEDURE_COLONOSCOPY);
     expect(north.every((o) => o.overMargin === null)).toBe(true);
+    expect(north.find((o) => o.serviceConceptId === PROCEDURE_UPPER_ENDOSCOPY)).toMatchObject({
+      price: 350,
+      referencePrice: 20,
+      referenceUnit: 'UMA',
+    });
     expect(north.find((o) => o.serviceConceptId === PROCEDURE_COLONOSCOPY)?.visibleInSearch).toBe(false);
   });
 

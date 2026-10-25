@@ -22,6 +22,9 @@ import { procedimientoPorConceptId, servicios } from './practice.handlers';
    ========================================================================== */
 
 const offers = new Coleccion<HealthcareServiceOffer>(initialHealthcareServiceOffers());
+// Sobrevive a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. Sin esto, lo
+// publicado en pantalla desaparece al recargar y se ve igual que un guardado fallido.
+offers.persistirEn('mock.practice.healthcare-services');
 
 // Los ítems de catálogo de los precios de ejemplo: así el precio sale de
 // `billing.service_catalog` como en la API, y corregirlo allí se refleja acá.
@@ -47,7 +50,10 @@ function unitOf(raw: string | null | undefined): ReferenceUnit | null {
 
 /** Recalcula lo derivado: precio, moneda, referencia y visibilidad. */
 function withDerived(
-  base: Pick<HealthcareServiceOffer, 'id' | 'practiceSiteId' | 'serviceConceptId' | 'serviceDisplay' | 'active'>,
+  base: Pick<
+    HealthcareServiceOffer,
+    'id' | 'practiceSiteId' | 'serviceConceptId' | 'serviceDisplay' | 'active' | 'referencePrice' | 'referenceUnit'
+  >,
   serviceCatalogId: string | null,
 ): HealthcareServiceOffer {
   const priced = serviceCatalogId === null ? undefined : servicios.get(serviceCatalogId);
@@ -58,8 +64,10 @@ function withDerived(
     serviceCatalogId,
     price,
     currencyConceptId: priced?.currencyConceptId ?? null,
-    referencePrice: reference?.referencePrice == null ? null : Number(reference.referencePrice),
-    referenceUnit: unitOf(reference?.priceUnit),
+    // Los procedimientos de ejemplo del contrato no están en el nomenclador de la
+    // maqueta: conservan la referencia con la que nacieron.
+    referencePrice: reference?.referencePrice == null ? base.referencePrice : Number(reference.referencePrice),
+    referenceUnit: reference === undefined ? base.referenceUnit : unitOf(reference.priceUnit),
     overMargin: null,
     visibleInSearch: base.active && serviceCatalogId !== null,
   };
@@ -117,6 +125,8 @@ export function registerHealthcareServices(router: MockRouter): void {
         serviceConceptId: body.serviceConceptId,
         serviceDisplay: display,
         active: true,
+        referencePrice: null,
+        referenceUnit: null,
       },
       body.serviceCatalogId ?? null,
     );
