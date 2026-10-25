@@ -2,6 +2,8 @@ import type { AnatomyIndexEntry, AnatomyPart, AnatomyStructure } from '../../cor
 import {
   displayName,
   groupRelations,
+  groupSentences,
+  missingAspectsLabel,
   meshesOf,
   ontologyUrl,
   partVisibleFor,
@@ -34,6 +36,7 @@ const FEMUR: AnatomyStructure = {
   ],
   netter: [],
   meshes: ['FMA24474', 'FMA24475'],
+  ta2: null,
   extendedDescription: null,
   images: [],
 };
@@ -125,5 +128,27 @@ describe('glossary-anatomy-atlas.logic', () => {
     expect(sideLabel('right')).toBe('lado derecho');
     expect(sideLabel('left')).toBe('lado izquierdo');
     expect(sideLabel(null)).toBeNull();
+  });
+
+  it('agrupa las frases por aspecto y numera las citas según la lista de fuentes', () => {
+    const grupos = groupSentences({
+      status: 'described',
+      searchedQuery: 'femur',
+      sentences: [
+        { aspect: 'situation', es: 'A.', cites: ['PMID:9'] },
+        { aspect: 'situation', es: 'B.', cites: ['PMID:7', 'PMID:9'] },
+        { aspect: 'clinical', es: 'C.', cites: ['PMID:7', 'PMID:404'] },
+      ],
+      missingAspects: [],
+      sources: [
+        { id: 'PMID:9', pmid: '9', doi: null, title: 't', journal: null, year: null },
+        { id: 'PMID:7', pmid: '7', doi: null, title: 't', journal: null, year: null },
+      ],
+    });
+    expect(grupos.map((g) => g.label)).toEqual(['Situación', 'Relevancia clínica']);
+    expect(grupos[0].sentences.map((s) => s.refs)).toEqual([[1], [2, 1]]);
+    // Una cita fuera de la lista no se numera: no se inventa una fuente.
+    expect(grupos[1].sentences[0].refs).toEqual([2]);
+    expect(missingAspectsLabel(['irrigation', 'innervation'])).toBe('irrigación, inervación');
   });
 });

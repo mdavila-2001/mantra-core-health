@@ -1,0 +1,1294 @@
+{
+  "UBERON:0000056": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 21 pacientes (17 mujeres y 4 varones) con uréter ectópico único se destacó su asociación con displasia renal; en 9 de ellos la desembocadura era vaginal.",
+        "cites": [
+          "PMID:6834486"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Estenosis, radioterapia, tuberculosis, tumores, traumatismos y lesiones iatrogénicas figuran entre las causas de defectos de continuidad o de función del uréter.",
+        "cites": [
+          "PMID:31098652"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según dónde asiente el defecto, la reparación va de la ureteroneocistostomía —sola o con fijación al psoas o colgajo de Boari— a la sustitución ileal.",
+        "cites": [
+          "PMID:31098652"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Preservar la función renal mediante un flujo de orina que no refluya ni se obstruya es la meta de la reconstrucción de una estenosis ureteral.",
+        "cites": [
+          "PMID:31098652"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La imagen en «anzuelo» de la pielografía intravenosa permitió reconocer antes de la cirugía un uréter circuncava en un caso publicado.",
+        "cites": [
+          "PMID:10703562"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito como hallazgo excepcional un quiste epidermoide benigno en el uréter de una mujer de 48 años.",
+        "cites": [
+          "PMID:36123920"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001222": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Un caso publicado describe un quiste epidermoide benigno estudiado mediante ureteroscopia derecha en una mujer de 48 años con dolor de 8 años de evolución en el hipocondrio derecho.",
+        "cites": [
+          "PMID:36123920"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001223": {
+    "sentences": []
+  },
+  "UBERON:0001272": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "La osteotomía triple del hueso coxal corta el ilion, el isquion y el pubis alrededor del acetábulo para reorientarlo y cubrir una cabeza femoral luxada o subluxada.",
+        "cites": [
+          "PMID:837597"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 175 caderas tratadas con esa osteotomía, el 86 % obtuvo un resultado satisfactorio.",
+        "cites": [
+          "PMID:837597"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Al aplicar un momento asimétrico a la pelvis de 15 especímenes embalsamados, el hueso coxal fijado se deformó en promedio tanto como se desplazó la sínfisis del pubis (3,39 ± 2,92 frente a 3,20 ± 2,58 mm).",
+        "cites": [
+          "PMID:22018438"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Fue en el plano transversal donde el hueso se deformó más.",
+        "cites": [
+          "PMID:22018438"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Medido con un rastreador magnético en sujetos sanos durante la abducción y la rotación externa pasivas de la cadera, el hueso coxal se movió de media entre 3 y 4 grados por lado en el plano transversal, con amplia variación entre individuos.",
+        "cites": [
+          "PMID:14659935"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aplicada retrospectivamente a 59 de 60 huesos coxales de edad y sexo conocidos, una función discriminante construida con 17 medidas acertó el sexo en 58, aunque los autores dudan de que esa precisión se mantenga en material nuevo.",
+        "cites": [
+          "PMID:1052746"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001327": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Durante la colpopexia sacroespinosa, la fascia densa que recubre el músculo coccígeo puede confundirse con el ligamento sacroespinoso.",
+        "cites": [
+          "PMID:2928906"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la colpopexia sacroespinosa, la suspensión debe terminar con el vértice vaginal bien adosado al complejo formado por el músculo coccígeo y el ligamento sacroespinoso.",
+        "cites": [
+          "PMID:2928906"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Un ramo que comunicaba los nervios pudendo y del elevador del ano, cruzando el suelo pélvico entre el elevador y el coccígeo, apareció en 10 hemipelvis de una serie de nueve fetos humanos.",
+        "cites": [
+          "PMID:18036724"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001339": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En muestras de 31 cadáveres humanos, el isquiocavernoso contenía un número bajo pero constante de husos neuromusculares, con pocas fibras intrafusales.",
+        "cites": [
+          "PMID:25363905"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Sus fibras extrafusales eran de diámetro pequeño.",
+        "cites": [
+          "PMID:25363905"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Al disecar el periné de 9 cadáveres masculinos, el isquiocavernoso y la inserción ventral del bulboesponjoso aparecieron como una sola unidad morfológica.",
+        "cites": [
+          "PMID:25444962"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 11 pacientes con extrofia o epispadias estudiados por imagen, la arteria perineal ocupaba el triángulo delimitado por los músculos isquiocavernoso, bulboesponjoso y transverso superficial del periné.",
+        "cites": [
+          "PMID:21256552"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la TC, el hematoma del isquiocavernoso fue más frecuente en las fracturas pélvicas con lesión uretral asociada que en las fracturas no complicadas.",
+        "cites": [
+          "PMID:12853670"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una revisión bibliográfica propone que la disfunción de los músculos bulbocavernoso e isquiocavernoso podría intervenir en la disfunción eréctil y eyaculatoria y en el goteo posmiccional.",
+        "cites": [
+          "PMID:12677719"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001357": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La arteria rectal inferior nace de la porción isquiorrectal de la arteria pudenda interna, en la fosa isquioanal.",
+        "cites": [
+          "PMID:8638766"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La disección de 164 hemipelvis embalsamadas mostró que lo más común era una sola arteria por lado (43 %), seguida de dos en un lado (31 %), dos o más en ambos (22 %) y tres en un lado (4 %).",
+        "cites": [
+          "PMID:8638766"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "La inserción del elevador del ano actúa como divisoria vascular: en 40 piezas de recto estudiadas por angiografía, disección y tinción, el territorio caudal dependía sobre todo de la rectal inferior y el craneal, de la rectal superior.",
+        "cites": [
+          "PMID:3268710"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En ese trabajo, la arteria rectal inferior aporta un riego abundante al conducto anal.",
+        "cites": [
+          "PMID:3268710"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En angiografías post mortem se distinguieron dos variantes (tipo 1, 85,4 %; tipo 2, 14,6 %); en el tipo 1 la comisura posterior del conducto anal recibe menos perfusión, hecho propuesto en la génesis de la fisura anal primaria.",
+        "cites": [
+          "PMID:2910660"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha comunicado un caso de herida penetrante glútea con lesión de esta arteria comunicada con el recto extraperitoneal.",
+        "cites": [
+          "PMID:33622189"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001367": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Un estudio de 18 cadáveres describió el esfínter anal externo como un conjunto de asas en U agrupadas en tres principales: superior, intermedia y basal.",
+        "cites": [
+          "PMID:1112669"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En ese trabajo, el puborrectal y la porción profunda del esfínter externo se interpretaron como un único músculo.",
+        "cites": [
+          "PMID:1112669"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 16 fetos de 15 a 30 semanas, el esfínter masculino mostraba una prolongación anterior de su parte subcutánea a lo largo del rafe perineal, mientras que el femenino era casi circular.",
+        "cites": [
+          "PMID:20882767"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Los resultados obtenidos en voluntarios sugieren un centro supraespinal que facilita la actividad tónica del esfínter mediante neuronas noradrenérgicas.",
+        "cites": [
+          "PMID:17040414"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 13 mujeres sanas estudiadas con electromiografía de superficie intrarrectal, la asimetría de la inervación funcional fue mayor en las mayores (55,6 ± 18,8 %) que en las jóvenes (28,7 ± 17,0 %).",
+        "cites": [
+          "PMID:30152548"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 486 mujeres estudiadas con ecografía transperineal, el 15,2 % tenía defectos significativos del esfínter, más frecuentes en quienes referían incontinencia anal (23 % frente a 14 %).",
+        "cites": [
+          "PMID:27782978"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001368": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Su descripción clásica es la de un músculo con origen en el reborde óseo externo del agujero obturado, cuyo tendón cilíndrico rodea en cabestrillo la cara inferior del cuello femoral para terminar en la fosa trocantérea.",
+        "cites": [
+          "PMID:25952918"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En un modelo de hilos sobre pelvis y fémur de plástico, su acción principal fue rotar el fémur hacia afuera, tanto en posición neutra como con la cadera flexionada a 90°, y en flexión actuó además como aductor.",
+        "cites": [
+          "PMID:25952918"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Ese mismo trabajo concluye que contribuye a estabilizar la cabeza femoral en el acetábulo.",
+        "cites": [
+          "PMID:25952918"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 73 muslos de 45 cadáveres japoneses, la división posterior del nervio obturador perforaba el músculo en el 68,5 % de los casos.",
+        "cites": [
+          "PMID:15134328"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 10 pacientes con resonancia, una bolsa serosa originada en la cara posteroinferior de la cadera se extendía a lo largo del obturador externo y lo desplazaba hacia abajo.",
+        "cites": [
+          "PMID:12775849"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 20 caderas de cadáver, la posición del muslo para preparar el fémur por vía posterior alargó el obturador externo hasta el 220 % de su longitud de reposo, el valor más alto de los rotadores estudiados.",
+        "cites": [
+          "PMID:20798456"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001369": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Desde la cara interna de la cresta ilíaca, el ilíaco desciende hasta fusionarse con el psoas al nivel del ligamento inguinal.",
+        "cites": [
+          "PMID:21460664"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Una rama gruesa de la circunfleja ilíaca profunda constituye su principal fuente arterial.",
+        "cites": [
+          "PMID:21460664"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aislado como colgajo, el músculo dio una lámina aplanada de cerca de 8 × 8 cm, con un pedículo de 6 a 8 cm dependiente de la circunfleja ilíaca profunda.",
+        "cites": [
+          "PMID:21460664"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 67 fetos humanos de 16 a 28 semanas, las dimensiones lineales del ilíaco crecieron de forma logarítmica y su superficie proyectada y su volumen, de forma lineal, sin diferencias por sexo ni por lado.",
+        "cites": [
+          "PMID:40400423"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 25 voluntarios sanos, la distancia ecográfica de la espina ilíaca anteroinferior al polo posterior del nervio femoral fue mayor en decúbito lateral (media 35,7 mm) que en decúbito supino (32,1 mm).",
+        "cites": [
+          "PMID:30935326"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un hematoma limitado al ilíaco durante un tratamiento anticoagulante que comprimió el nervio femoral contra el ligamento inguinal y causó su parálisis.",
+        "cites": [
+          "PMID:1150382"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001370": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La disección de 11 miembros embalsamados halló en todos fascículos proximales del glúteo mayor procedentes de hueso (ilion, sacro, cóccix), de fascias y aponeurosis (del glúteo medio, toracolumbar y de los erectores) y de los ligamentos sacroilíaco dorsal y sacrotuberoso.",
+        "cites": [
+          "PMID:23959791"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 25 cadáveres japoneses, los tres cuartos superiores del músculo formaban un tendón distal laminar insertado sobre todo en la tuberosidad glútea del fémur, con adherencias parciales a la cintilla iliotibial.",
+        "cites": [
+          "PMID:40593049"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Tras disecar 6 cadáveres, los autores proponen ver la cintilla iliotibial como un tendón de inserción del glúteo mayor, dada la magnitud de su anclaje en la fascia lata, presente en todos los casos.",
+        "cites": [
+          "PMID:24139012"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Es uno de los extensores principales de la cadera.",
+        "cites": [
+          "PMID:32132843",
+          "PMID:40593049"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En estudios electromiográficos, su actividad fue escasa al caminar y aumentó mucho al correr, cuando controla la flexión del tronco del lado de apoyo y frena la pierna oscilante.",
+        "cites": [
+          "PMID:16709916"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Según estimaciones en cadáver, sus inserciones que cruzan cada articulación sacroilíaca podrían generar una fuerza máxima media de 891 N (rango 572-1215).",
+        "cites": [
+          "PMID:23959791"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001371": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "La patología de su tendón puede comprometer la banda anterior, la posterior o ambas a la vez.",
+        "cites": [
+          "PMID:28039889"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En la fase inicial del ciclo de la marcha, la estabilización de la cadera correría a cargo del glúteo medio, cuyas tres partes actúan de forma fásica, según un análisis funcional.",
+        "cites": [
+          "PMID:2621137"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Ese trabajo le atribuye también un papel en el inicio de la rotación pélvica durante la marcha.",
+        "cites": [
+          "PMID:2621137"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los trastornos de su tendón son la causa más habitual del síndrome doloroso del trocánter mayor.",
+        "cites": [
+          "PMID:28039889"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 250 resonancias de cadera solicitadas por dolor glúteo, lateral o inguinal, 35 mostraron como hallazgo principal tendinosis o roturas de los glúteos medio y menor.",
+        "cites": [
+          "PMID:10511191"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio en cadáveres (9 caderas por grupo), el fresado abierto para un clavo cefalomedular de fractura de cadera dañó de media el 15 % de la inserción tendinosa, frente al 3 % con un clavo de reconstrucción.",
+        "cites": [
+          "PMID:32584219"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001376": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "En 16 muslos de cadáver, el aporte arterial principal procedía siempre de la rama ascendente de la arteria circunfleja femoral lateral, de 2,7 ± 0,4 mm de diámetro externo medio.",
+        "cites": [
+          "PMID:30616242"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En esa serie, el pedículo llegaba al músculo a una distancia de 6,7 a 10,2 cm de la espina ilíaca anterosuperior.",
+        "cites": [
+          "PMID:30616242"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 100 especímenes inyectados, 67 músculos recibían un único vaso de la rama ascendente de la circunfleja femoral lateral y 20 recibían además otro menor de la rama descendente.",
+        "cites": [
+          "PMID:9652537"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Se ha descrito además una red anastomótica accesoria con las arterias circunfleja ilíaca superficial y glútea inferior.",
+        "cites": [
+          "PMID:38530383"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un caso describe una hipertrofia del tensor de la fascia lata, manifestada como tumefacción del muslo, secundaria a una rotura del tendón del glúteo menor.",
+        "cites": [
+          "PMID:28442457"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002356": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Delimitado por la sínfisis del pubis por delante y el cóccix por detrás, el periné femenino ocupa un espacio romboidal bajo el diafragma pélvico.",
+        "cites": [
+          "PMID:22787005"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Comprende dos triángulos: el urogenital, por delante, y el anal, por detrás.",
+        "cites": [
+          "PMID:22787005"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Para conocer la extensión locorregional de un cáncer vulvar, igual que para explorar la uretra distal, la resonancia es la técnica de elección.",
+        "cites": [
+          "PMID:22787005"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 300 adultos atendidos por estreñimiento en una consulta de referencia, 23 (7,7 %, todas mujeres) presentaban síndrome del periné descendente, asociado al parto vaginal.",
+        "cites": [
+          "PMID:32666237"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 19 tumores primarios de partes blandas del periné en adultos, 12 eran malignos y la mayoría se situaba en profundidad respecto de la fascia profunda.",
+        "cites": [
+          "PMID:12099656"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los defectos perineales tras la cirugía oncológica se cierran con injertos, colgajos locales, colgajos miocutáneos o fasciocutáneos y, en raras ocasiones, transferencias libres.",
+        "cites": [
+          "PMID:11135485"
+        ]
+      }
+    ]
+  },
+  "UBERON:0003699": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Entre las superficies articulares de los dos pubis se interpone un disco fibrocartilaginoso, rasgo que define a esta articulación.",
+        "cites": [
+          "PMID:20840351"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Soporta compresión, tracción y cizallamiento; en condiciones fisiológicas, la mayoría de los adultos conserva en ella una movilidad escasa, de hasta 2 mm de desplazamiento y 1° de rotación.",
+        "cites": [
+          "PMID:20840351"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La gestación la ensancha y la vuelve más móvil: hormonas circulantes como la relaxina reabsorben los bordes sinfisarios y modifican la estructura del disco.",
+        "cites": [
+          "PMID:20840351"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Según mediciones de Walheim recogidas en un estudio biomecánico, durante el apoyo monopodal la movilidad vertical alcanzó 2,6 mm (media 1,2 mm).",
+        "cites": [
+          "PMID:8767137"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En la rotura sinfisaria del embarazo, una revisión considera patológica una separación de más de 10 mm y señala que la resonancia parece superar a la radiografía y a la TC para mostrarla.",
+        "cites": [
+          "PMID:26584720"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 36 pacientes operados de fístula urinaria hacia la sínfisis tras un cáncer de próstata, la histología del pubis resecado confirmó osteomielitis en el 88,9 %.",
+        "cites": [
+          "PMID:32763316"
+        ]
+      }
+    ]
+  },
+  "UBERON:0007315": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Su tramo isquiorrectal, dentro de la fosa isquioanal, emite la arteria rectal inferior y pequeñas ramas destinadas al obturador interno.",
+        "cites": [
+          "PMID:8638766"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 164 hemipelvis, la rama para el obturador interno era única en el 31 %, doble en el 43 % y triple en el 11 %, y faltaba en el 15 %.",
+        "cites": [
+          "PMID:8638766"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "En la angiotomografía de 145 varones con disfunción eréctil, el 53 % de las 290 arterias ilíacas internas mostró el tipo considerado básico, en el que la pudenda interna nace del tronco anterior entre la línea terminal y la escotadura ciática mayor.",
+        "cites": [
+          "PMID:18005213"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 35 cadáveres, su primera rama cutánea, de 1,5 mm de diámetro medio en el origen, irrigaba la piel del surco interglúteo y solía nacer cerca del ligamento sacrotuberoso.",
+        "cites": [
+          "PMID:11552287"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su tramo pélvico más expuesto sería el cruce del diafragma urogenital camino del pene, de modo que las roturas de la uretra prostatomembranosa lesionan a menudo estos vasos y nervios y causan disfunción eréctil.",
+        "cites": [
+          "PMID:2996074"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La embolización superselectiva de esta arteria permitió controlar una hemorragia perineal masiva traumática conservando las ramas sanas de la ilíaca interna.",
+        "cites": [
+          "PMID:7407817"
+        ]
+      }
+    ]
+  },
+  "UBERON:0008521": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En 16 caderas de cadáver, el glúteo menor se originaba en la cara externa del ilion, entre las líneas glúteas anterior e inferior, y también en la escotadura ciática.",
+        "cites": [
+          "PMID:10813169"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa escotadura protege el nervio y la arteria glúteos superiores.",
+        "cites": [
+          "PMID:10813169"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Su inserción principal está en el trocánter mayor, pero antes se fija a la porción anterosuperior de la cápsula de la cadera.",
+        "cites": [
+          "PMID:10813169"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 17 adultos y 3 fetos a término, la cara profunda del tendón se anclaba a la cápsula articular en todos los casos mediante tendones intramusculares cortos.",
+        "cites": [
+          "PMID:11273048"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Según un modelo mecánico, actúa como flexor, abductor y rotador interno o externo en función de la posición del fémur y de la parte del músculo que se active, y estabiliza la cabeza femoral en el acetábulo.",
+        "cites": [
+          "PMID:10813169"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 38 caderas de 20 cadáveres de edad avanzada, la infiltración grasa se limitaba a la profundidad de la parte anterior del músculo.",
+        "cites": [
+          "PMID:29872279"
+        ]
+      }
+    ]
+  },
+  "UBERON:0008529": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 294 miembros de 147 cadáveres, la relación entre el nervio ciático y el piriforme siguió el patrón típico en el 93,6 % de los casos.",
+        "cites": [
+          "PMID:23900507"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 91 cadáveres, el nervio ciático salía por debajo del piriforme en el 79,1 %, y en el 14,3 % se dividía por encima, con una rama que lo atravesaba y otra que pasaba por debajo.",
+        "cites": [
+          "PMID:16311716"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 20 miembros de 10 cadáveres adultos, el borde inferior del piriforme medía 95,49 ± 6,21 mm.",
+        "cites": [
+          "PMID:18458807"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa misma serie, el nervio ciático cruzaba el músculo con más frecuencia en su segundo cuarto medial.",
+        "cites": [
+          "PMID:18458807"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El síndrome del piriforme es una causa no discógena de ciática atribuida a la compresión del nervio ciático por este músculo.",
+        "cites": [
+          "PMID:18458807"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Si para descomprimir bien el nervio ciático hay que disecar el piriforme entero, conviene buscar un posible segundo tendón, situado por debajo o en profundidad respecto del primero.",
+        "cites": [
+          "PMID:23900507"
+        ]
+      }
+    ]
+  },
+  "UBERON:0008537": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 92 miembros de 46 cadáveres el músculo estuvo siempre presente y tenía un vientre en el 78,3 %, dos en el 17,4 % y tres en el 4,3 %.",
+        "cites": [
+          "PMID:38830558"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 101 hemipelvis humanas, su nervio nacía de segmentos más craneales que el del obturador interno, y ambos se comunicaban según patrones variables.",
+        "cites": [
+          "PMID:11331970"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se describe como un rotador externo de la cadera.",
+        "cites": [
+          "PMID:20158622"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 29 caderas de 16 cadáveres, el espacio isquiofemoral medio fue de 23,5 ± 4,7 mm y el espacio del cuadrado femoral, de 20,4 ± 5,6 mm.",
+        "cites": [
+          "PMID:23076730"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esa serie, el 51,7 % de las caderas mostraba alteraciones degenerativas del músculo.",
+        "cites": [
+          "PMID:23076730"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su rotura es una lesión poco frecuente que causa dolor de cadera, rara vez se sospecha clínicamente y puede reconocerse en la resonancia.",
+        "cites": [
+          "PMID:17954659"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011015": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En cinco casos de absceso piógeno retroperitoneal de la fosa ilíaca, la urografía excretora mostró en todos un desplazamiento medial del uréter distal.",
+        "cites": [
+          "PMID:628733"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los autores prefieren el abordaje retroperitoneal con separación muscular y consideran curativos el drenaje de la cavidad y la cobertura antibiótica sistémica.",
+        "cites": [
+          "PMID:628733"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011048": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 20 caderas de cadáver, el piriforme se insertaba en los bordes superior y anterior del trocánter mayor mediante un tendón conjunto con el obturador interno.",
+        "cites": [
+          "PMID:20798456"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 16 especímenes teñidos con el método de Sihler modificado, la mayor densidad de ramificación nerviosa intramuscular se situaba entre 2/10 y 4/10 del trayecto que va del borde medial del agujero obturado al trocánter mayor.",
+        "cites": [
+          "PMID:37566257"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Su porción extrapélvica es en su mayor parte tendinosa.",
+        "cites": [
+          "PMID:37566257"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su tendón rodea el isquion por la escotadura ciática menor, y el surco que deja en el hueso varía en posición craneocaudal respecto de la tuberosidad isquiática.",
+        "cites": [
+          "PMID:9016364"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 26 embriones y fetos de 6 a 15 semanas, el tendón proximal maduraba pronto, mientras que el distal quedaba definido hacia la semana 15 junto con los gemelos.",
+        "cites": [
+          "PMID:25683268"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El absceso del obturador interno es infrecuente y suele confundirse con una artritis séptica de cadera; en 14 niños revisados, la resonancia y la TC fueron diagnósticas.",
+        "cites": [
+          "PMID:10028081"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011389": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Forma parte del plano muscular superficial del periné.",
+        "cites": [
+          "PMID:41032754",
+          "PMID:25444962"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Una revisión narrativa lo describe en el varón como un músculo estriado esquelético par que, desde el cuerpo perineal, rodea la uretra bulbar.",
+        "cites": [
+          "PMID:41032754"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Lo irrigan las arterias perineales.",
+        "cites": [
+          "PMID:41032754"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Lo inerva la rama profunda del nervio pudendo, de función principalmente motora.",
+        "cites": [
+          "PMID:41032754"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 9 cadáveres masculinos, el músculo se dividía en una porción ventral y otra dorsal, con cuatro variantes, y su origen dorsal tenía una relación variable con el esfínter anal externo.",
+        "cites": [
+          "PMID:25444962"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Su contracción en respuesta a la estimulación del nervio dorsal del pene sirve como indicador de que la vía nerviosa sacra está anatómicamente íntegra.",
+        "cites": [
+          "PMID:41032754"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011390": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "A partir de disecciones en cadáver se describen tres sitios donde el nervio puede entrar en conflicto: el paso entre los ligamentos sacrotuberoso y sacroespinoso, el conducto de Alcock y el cruce sobre la apófisis falciforme del ligamento sacrotuberoso.",
+        "cites": [
+          "PMID:9658526"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 5 de 28 cadáveres había en la fosa isquiorrectal un plexo formado por ramos comunicantes de los nervios rectal inferior y perineal, destinado al esfínter anal externo.",
+        "cites": [
+          "PMID:14725700"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 11 de esos 28 cadáveres, un nervio adicional salía de su cara medial a la altura de los ligamentos sacrotuberoso y sacroespinoso y daba ramos al periné y al elevador del ano.",
+        "cites": [
+          "PMID:14725700"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En la disección de tres cadáveres masculinos, el esfínter uretral extrínseco y el suelo pélvico recibían fibras somáticas procedentes sobre todo de las raíces S2 y S3.",
+        "cites": [
+          "PMID:3275803"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los criterios de Nantes de la neuralgia pudenda por atrapamiento exigen dolor en su territorio, que empeora sentado, no despierta por la noche, sin déficit sensitivo objetivo y que cede con un bloqueo anestésico del nervio.",
+        "cites": [
+          "PMID:17828787"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 16 hemipelvis de cadáver, el bloqueo ecoguiado alcanzó el nervio en el 76 % de las inyecciones a la altura de la espina isquiática y en el 81 % en el conducto de Alcock.",
+        "cites": [
+          "PMID:32451530"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011511": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En reposo, la resonancia sagital muestra el iliococcígeo abovedado, según un estudio en 16 mujeres.",
+        "cites": [
+          "PMID:14687746"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En seis cadáveres, el trocar de la sacropexia infracoccígea atravesaba la fosa isquiorrectal y el iliococcígeo antes de llegar al espacio pararrectal.",
+        "cites": [
+          "PMID:16325623"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cuatro pelvis de cadáver, la banda anal posterior transobturatriz discurría 2-3 cm sobre el iliococcígeo y perforaba sus fibras a 0-2 cm medial al arco tendinoso del elevador del ano.",
+        "cites": [
+          "PMID:31377961"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 63 mujeres estudiadas con resonancia en bipedestación y en decúbito, los defectos mayores del iliococcígeo (43,8 %) sólo aparecieron en el grupo con prolapso.",
+        "cites": [
+          "PMID:41547955"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En ese estudio, el ángulo iliococcígeo era significativamente más agudo en las pacientes con prolapso.",
+        "cites": [
+          "PMID:41547955"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011512": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En 17 nulíparas asintomáticas estudiadas con ecografía tridimensional, el puborrectal ocupaba el tramo proximal del conducto anal (18 ± 1 mm) y el esfínter externo, el distal.",
+        "cites": [
+          "PMID:16606349"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "La manometría atribuyó al puborrectal parte de la presión de contracción voluntaria del tramo proximal del conducto anal, aporte que podría importar para la continencia.",
+        "cites": [
+          "PMID:16606349"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "En radiografías laterales de siete recién nacidos disecados, el músculo seguía una línea trazada desde el pubis hasta el punto más bajo del isquion.",
+        "cites": [
+          "PMID:6854498"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se le atribuye un papel en la continencia que en el pasado se infravaloró por la dificultad técnica de estudiar su función.",
+        "cites": [
+          "PMID:15836457"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 254 gestantes nulíparas seguidas con ecografía transperineal, la deformación global del puborrectal no varió en el embarazo, pero disminuyó tras el parto vaginal espontáneo o con ventosa y no tras la cesárea.",
+        "cites": [
+          "PMID:28397366"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 156 mujeres revisadas dos años después de una colporrafia anterior, la avulsión completa del puborrectal se asoció a recidiva anatómica del cistocele (OR 2,4).",
+        "cites": [
+          "PMID:21822712"
+        ]
+      }
+    ]
+  },
+  "UBERON:0011528": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Según una revisión de la anatomía pélvica femenina, fibras del pubococcígeo se insertan en la pared vaginal y en el hiato genital y contribuyen a sostener la pared vaginal anterior.",
+        "cites": [
+          "PMID:2017803"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 24 cadáveres femeninos, la cinta vaginal sin tensión perforó el pubococcígeo en 6 casos (25 %).",
+        "cites": [
+          "PMID:17132484"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En mujeres sin síntomas, la morfología de las biopsias —sobre todo las de la parte posterior del músculo— parecía guardar relación con la edad y la paridad.",
+        "cites": [
+          "PMID:2923839"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las mujeres con incontinencia de esfuerzo, con o sin prolapso, tenían en las muestras de la parte posterior del suelo pélvico significativamente más fibras con daño patológico que las asintomáticas.",
+        "cites": [
+          "PMID:2923839"
+        ]
+      }
+    ]
+  },
+  "UBERON:0014445": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según una revisión, la fosa acetabular ocupa más de la mitad de la superficie del acetábulo y está casi madura a las 16 semanas de vida intrauterina.",
+        "cites": [
+          "PMID:33275027"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En ella se aloja el pulvinar, tejido fibroadiposo biológicamente activo que comparte origen embrionario con la sinovial y el cartílago articular.",
+        "cites": [
+          "PMID:33275027"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Esa revisión atribuye al pulvinar un reparto homogéneo de las cargas axiales dentro de la articulación.",
+        "cites": [
+          "PMID:33275027"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 682 huesos coxales de colecciones ibéricas, la fosa tenía forma de trébol en ambos sexos y era relativamente más pequeña en los varones menores de 65 años.",
+        "cites": [
+          "PMID:28113134"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 11 caderas de cadáveres de edad avanzada, el estadio avanzado de cambios de la fosa se correlacionó con la degeneración avanzada del cartílago acetabular.",
+        "cites": [
+          "PMID:19620414"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se han comunicado dos defectos óseos del acetábulo: uno, no visible en las radiografías previas, se asoció a la lesión de una arteria intrapélvica durante una artroplastia total de cadera; el otro, central y en el acetábulo derecho, apareció en una serie de 30 pelvis disecadas.",
+        "cites": [
+          "PMID:14716661"
+        ]
+      }
+    ]
+  },
+  "UBERON:0018252": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "La disección de 11 cadáveres confirmó que el tramo ascendente de la vena atraviesa el conducto de Alcock acompañado por la arteria pudenda interna y el nervio pudendo.",
+        "cites": [
+          "PMID:8969542"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Bajo el glúteo mayor, la vena abandona la pelvis por la región glútea, pasando sobre la espina isquiática y el ligamento sacroespinoso desde el agujero ciático menor hasta el mayor.",
+        "cites": [
+          "PMID:38424355"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 27 varones con síndrome de congestión venosa intrapélvica, la venografía por resonancia mostró en todos una interrupción de su porción ascendente.",
+        "cites": [
+          "PMID:8969542"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En cinco cadáveres, la ligadura de la vena por vía glútea, localizándola sobre la espina isquiática, pareció quirúrgicamente factible como tratamiento de la disfunción eréctil venooclusiva.",
+        "cites": [
+          "PMID:38424355"
+        ]
+      }
+    ]
+  },
+  "UBERON:0019197": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 23 glandes de cadáver, el nervio dorsal del pene llegaba como una media de 6,7 haces que convergían linealmente hacia el extremo distal.",
+        "cites": [
+          "PMID:32683709"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Sus ramas dorsomediales inervaban el dorso del glande medio y la corona, y las ramificaciones intraestromales eran más abundantes en la mitad distal del glande.",
+        "cites": [
+          "PMID:32683709"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En varones sanos con el pene estirado por un peso de 1 libra, la velocidad de conducción calculada con el método clásico fue de 33 ± 3,8 m/s.",
+        "cites": [
+          "PMID:1746083"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En sujetos sanos, la conducción aferente desde el pene hasta el nivel intervertebral T12-L1 tuvo una velocidad media de unos 40 m/s.",
+        "cites": [
+          "PMID:8481731"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su bloqueo se emplea cada vez más para la circuncisión de lactantes y niños.",
+        "cites": [
+          "PMID:2712273"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito en un cadáver masculino de 45 años un origen inusual de este nervio junto con una formación anómala del nervio pudendo.",
+        "cites": [
+          "PMID:17140150"
+        ]
+      }
+    ]
+  },
+  "UBERON:0019198": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En cortes seriados de un cadáver femenino, el nervio pudendo se dividía, distalmente al conducto pudendo, en el nervio labial posterior y el nervio dorsal del clítoris.",
+        "cites": [
+          "PMID:32439550"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 22 cadáveres disecados, la anchura mediana del nervio dorsal fue de 3 mm junto a los pilares y de 1 mm en la parte distal del cuerpo del clítoris.",
+        "cites": [
+          "PMID:31254525"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En esa serie, su punto de salida de la membrana perineal distaba una mediana de 34 mm de la parte media del arco del pubis.",
+        "cites": [
+          "PMID:31254525"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En clítoris de donantes, la rama clitorídea del nervio pudendo no era un tronco único sino un conjunto de haces laxos: unos 12 en el pilar y unos 32 en el hemicuerpo.",
+        "cites": [
+          "PMID:39367034"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "El recuento axonal medio fue de 2917 en el pilar y 3137 en el hemicuerpo, con un 76 % y un 71 % de fibras mielínicas, respectivamente.",
+        "cites": [
+          "PMID:39367034"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Con solo un tercio de los axones que recibe el pene, el clítoris tendría una inervación por unidad de superficie unas 6 veces más densa.",
+        "cites": [
+          "PMID:39367034"
+        ]
+      }
+    ]
+  },
+  "UBERON:0035171": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En su extirpación laparoscópica, el nervio obturador y los vasos ilíacos son referencias cuya proximidad implica riesgo de lesión vascular y de parálisis nerviosa.",
+        "cites": [
+          "PMID:42212283"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 62 pacientes con cáncer ginecológico, extirpar los ganglios obturadores por encima y por debajo del nervio obturador permitió obtener más ganglios que limitarse al plano superior, sin más complicaciones.",
+        "cites": [
+          "PMID:27159250"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 33 linfadenectomías obturadoras laparoscópicas por cáncer de próstata localizado, se hallaron metástasis en el 15 % de los pacientes.",
+        "cites": [
+          "PMID:7618051"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito una inclusión glandular benigna en un ganglio obturador extirpado en una prostatectomía radical, que debe distinguirse de una metástasis.",
+        "cites": [
+          "PMID:17587246"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 134 pacientes con melanoma, añadir la disección ilíaca y obturadora a la inguinal no redujo la recidiva ganglionar pélvica ni modificó la supervivencia.",
+        "cites": [
+          "PMID:24726566"
+        ]
+      }
+    ]
+  },
+  "UBERON:0037536": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Se ha comunicado una leiomiomatosis de aspecto histológico benigno en un ganglio linfático del promontorio pélvico de una mujer de 50 años.",
+        "cites": [
+          "PMID:6485798"
+        ]
+      }
+    ]
+  },
+  "UBERON:0039163": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En la disección linfática lateral del cáncer de recto bajo, el ganglio sacro lateral (n.º 260) se extirpa en la fase de disección de los espacios pararrectal y paravesical, junto con los ilíacos internos, los obturadores y los sacros medios.",
+        "cites": [
+          "PMID:35461199"
+        ]
+      }
+    ]
+  },
+  "UBERON:8920051": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 22 lados de 11 cadáveres adultos, las arterias labiales o escrotales posteriores medían en su origen 1,13 ± 0,24 mm de diámetro, y su rama lateral, 0,67 ± 0,33 mm.",
+        "cites": [
+          "PMID:17546869"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La posición de la rama lateral de la arteria escrotal posterior se describió como relativamente constante.",
+        "cites": [
+          "PMID:17546869"
+        ]
+      }
+    ]
+  }
+}

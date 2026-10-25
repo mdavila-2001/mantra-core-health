@@ -1,4 +1,6 @@
 import type {
+  AnatomyAspect,
+  AnatomyExtendedDescription,
   AnatomyIndexEntry,
   AnatomyLayer,
   AnatomyPart,
@@ -181,4 +183,47 @@ export function searchIndex(entries: readonly AnatomyIndexEntry[], query: string
 /** El lado de una pieza par, dicho en castellano. */
 export function sideLabel(side: AnatomyPart['side']): string | null {
   return side === 'right' ? 'lado derecho' : side === 'left' ? 'lado izquierdo' : null;
+}
+
+export const ASPECT_LABELS: Readonly<Record<AnatomyAspect, string>> = {
+  situation: 'Situación',
+  parts: 'Partes y morfología',
+  relations: 'Relaciones',
+  irrigation: 'Irrigación',
+  innervation: 'Inervación',
+  function: 'Función',
+  clinical: 'Relevancia clínica',
+};
+
+/** Una frase con sus citas como números de la lista de fuentes (1, 2, …). */
+export interface NumberedSentence {
+  readonly es: string;
+  readonly refs: readonly number[];
+}
+
+export interface SentenceGroup {
+  readonly aspect: AnatomyAspect;
+  readonly label: string;
+  readonly sentences: readonly NumberedSentence[];
+}
+
+/**
+ * Las frases de la descripción extendida agrupadas por aspecto, con cada cita
+ * convertida en su número dentro de `sources`. Una cita que no está en
+ * `sources` no se numera (el generador ya lo impide; acá no se inventa).
+ */
+export function groupSentences(description: AnatomyExtendedDescription): SentenceGroup[] {
+  const numero = new Map(description.sources.map((s, i) => [s.id, i + 1]));
+  const grupos = new Map<AnatomyAspect, NumberedSentence[]>();
+  for (const frase of description.sentences) {
+    const lista = grupos.get(frase.aspect) ?? [];
+    lista.push({ es: frase.es, refs: frase.cites.map((c) => numero.get(c)).filter((n): n is number => n !== undefined) });
+    grupos.set(frase.aspect, lista);
+  }
+  return [...grupos].map(([aspect, sentences]) => ({ aspect, label: ASPECT_LABELS[aspect], sentences }));
+}
+
+/** Los aspectos sin fuente, dichos en castellano y en minúscula: «irrigación, inervación». */
+export function missingAspectsLabel(aspects: readonly AnatomyAspect[]): string {
+  return aspects.map((a) => ASPECT_LABELS[a].toLowerCase()).join(', ');
 }

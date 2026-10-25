@@ -1,0 +1,696 @@
+commit 892b9500e — 2026-10-24T23:45:58Z
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+✓ src/app/features/component-stock/component-index.generated.ts
+  636 componentes · 3 otros · 383 pantallas · 138 maquetas · 24 atomos · 49 moleculas · 39 organismos
+  207 con algo que mirar
+  relaciones: 2850 template-instantiates · 5 imports-available sin instanciar · 72 type-only · 237 dynamic-loads
+  nivel: 0 declarado · 636 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 636/636 · con escenario 3/636 · verificados visualmente 3/636 · bloqueados 88/636 · montó e interactuó: se miden en el banco (runtime)
+The "prerender" option is not considered when "outputMode" is specified.
+❯ Building...
+✔ Building...
+Browser bundles     
+Initial chunk files  | Names                            |  Raw size | Estimated transfer size
+chunk-XEEQXQEU.js    | -                                | 198.47 kB |                58.96 kB
+styles-DB45VZJ5.css  | styles                           | 148.69 kB |                21.71 kB
+main-IB6R3QJP.js     | main                             |  98.55 kB |                22.54 kB
+chunk-56IEKQHA.js    | -                                |  78.96 kB |                19.61 kB
+chunk-QVXKJZU3.js    | -                                |  67.73 kB |                18.51 kB
+chunk-RKHCFYQA.js    | -                                |  42.56 kB |                 8.65 kB
+chunk-YBLU3R6B.js    | -                                |  31.58 kB |                 6.28 kB
+chunk-Q5EJBPXQ.js    | -                                |  29.35 kB |                 5.39 kB
+chunk-SHGHCV3M.js    | -                                |  29.03 kB |                 7.88 kB
+chunk-Y32QYR3X.js    | -                                |  28.32 kB |                 8.62 kB
+chunk-BIGLHBH6.js    | -                                |  25.45 kB |                 7.88 kB
+chunk-A3KMQAVH.js    | -                                |  21.41 kB |                 4.80 kB
+chunk-KU5SCEJA.js    | -                                |  19.54 kB |                 5.90 kB
+chunk-RG67HZWS.js    | -                                |  19.23 kB |                 5.29 kB
+chunk-P5BUBJWS.js    | -                                |  16.61 kB |                 4.46 kB
+chunk-MDPYHFJG.js    | -                                |  15.24 kB |                 4.71 kB
+chunk-IPEA52A6.js    | -                                |  13.98 kB |                 2.84 kB
+chunk-2HKSTQLL.js    | -                                |  13.33 kB |                 2.75 kB
+chunk-CJ2ZOXUC.js    | -                                |  13.30 kB |                 4.32 kB
+chunk-LCOOR354.js    | -                                |  13.22 kB |                 3.65 kB
+chunk-PB6B2VLM.js    | -                                |  13.03 kB |                 4.05 kB
+chunk-N5PGDXKH.js    | -                                |  12.50 kB |                 3.41 kB
+chunk-B6SR46VG.js    | -                                |  11.86 kB |                 3.65 kB
+chunk-X3QAA53M.js    | -                                |  11.63 kB |                 2.49 kB
+chunk-R6FRMJC4.js    | -                                |  11.45 kB |                 3.63 kB
+chunk-CMZIWGZ3.js    | -                                |  10.47 kB |                 3.20 kB
+chunk-QX6AJNEQ.js    | -                                |   9.93 kB |                 2.90 kB
+chunk-UQGKOTPX.js    | -                                |   9.72 kB |                 2.56 kB
+chunk-E5ES4EHC.js    | -                                |   9.67 kB |                 3.31 kB
+chunk-T7SKOEXE.js    | -                                |   9.56 kB |                 2.21 kB
+chunk-D3O7KHBQ.js    | -                                |   9.53 kB |                 2.68 kB
+chunk-33FTN527.js    | -                                |   9.40 kB |                 2.62 kB
+chunk-HBOLPAOM.js    | -                                |   9.30 kB |                 1.93 kB
+chunk-IA2PFLRQ.js    | -                                |   9.14 kB |                 2.67 kB
+chunk-MBA644RP.js    | -                                |   9.01 kB |                 3.06 kB
+chunk-HTGAKYSF.js    | -                                |   8.59 kB |                 2.81 kB
+chunk-3NAAR5CP.js    | -                                |   7.88 kB |                 2.76 kB
+chunk-Z22I3OPL.js    | -                                |   7.72 kB |                 2.50 kB
+chunk-OOV4VCHE.js    | -                                |   7.33 kB |                 1.67 kB
+chunk-EM4KFVPN.js    | -                                |   7.24 kB |                 2.63 kB
+chunk-Y2OAJWH4.js    | -                                |   7.17 kB |                 2.43 kB
+chunk-5EPOOROM.js    | -                                |   6.29 kB |                 1.88 kB
+chunk-YKDRXT7I.js    | -                                |   6.20 kB |                 2.17 kB
+chunk-HMHJSGDY.js    | -                                |   6.11 kB |                 1.95 kB
+chunk-ILQTJWHR.js    | -                                |   6.05 kB |                 2.21 kB
+chunk-C7XLWMVJ.js    | -                                |   5.92 kB |                 2.17 kB
+chunk-PBXFABNK.js    | -                                |   5.87 kB |                 1.72 kB
+chunk-4T2N5OYS.js    | -                                |   5.79 kB |                 1.88 kB
+chunk-RFHOVKMK.js    | -                                |   5.57 kB |                 1.81 kB
+chunk-5AZVACME.js    | -                                |   5.23 kB |                 1.68 kB
+chunk-GD6TNKGQ.js    | -                                |   5.16 kB |                 1.80 kB
+chunk-O2SWZXCR.js    | -                                |   5.00 kB |                 1.88 kB
+chunk-OBZSI5JH.js    | -                                |   4.92 kB |                 1.35 kB
+chunk-GQVZZRJ6.js    | -                                |   4.82 kB |                 1.27 kB
+chunk-77VDMB43.js    | -                                |   4.79 kB |                 1.97 kB
+chunk-4MWMCGGX.js    | -                                |   4.75 kB |                 1.81 kB
+chunk-VUJQYBKK.js    | -                                |   4.63 kB |                 1.64 kB
+chunk-HZAOMZUT.js    | -                                |   4.54 kB |                 1.49 kB
+chunk-TF77MJJC.js    | -                                |   4.42 kB |                 1.46 kB
+chunk-AJYCSH2Y.js    | -                                |   4.24 kB |                 1.56 kB
+chunk-CCXUC5PU.js    | -                                |   4.22 kB |                 1.68 kB
+chunk-DLX2WH7Y.js    | -                                |   4.16 kB |                 1.15 kB
+chunk-Q2YGOSGL.js    | -                                |   3.94 kB |                 1.31 kB
+chunk-4IPT6X5M.js    | -                                |   3.91 kB |                 1.35 kB
+chunk-CMAHYPTT.js    | -                                |   3.90 kB |                 1.44 kB
+chunk-IKYK27YI.js    | -                                |   3.86 kB |                 1.37 kB
+chunk-AFFIAHAV.js    | -                                |   3.64 kB |                 1.52 kB
+chunk-Y32ZKJXG.js    | -                                |   3.60 kB |                 1.32 kB
+chunk-YBRZAHRM.js    | -                                |   3.56 kB |                 1.29 kB
+chunk-4BAKD7MV.js    | -                                |   3.54 kB |               813 bytes
+chunk-D76VAWLQ.js    | -                                |   3.53 kB |                 1.20 kB
+chunk-F6SWF73G.js    | -                                |   3.49 kB |                 1.29 kB
+chunk-472M2BUW.js    | -                                |   3.30 kB |                 1.36 kB
+chunk-4KXUYZ2E.js    | -                                |   3.19 kB |                 1.15 kB
+chunk-PDY3JDS4.js    | -                                |   2.98 kB |                 1.22 kB
+chunk-JBF63FZZ.js    | -                                |   2.92 kB |                 1.28 kB
+chunk-YWDZF44K.js    | -                                |   2.86 kB |                 1.15 kB
+chunk-YY2VBIRO.js    | -                                |   2.59 kB |                 1.14 kB
+chunk-I3LXOQMX.js    | -                                |   2.52 kB |                 1.10 kB
+chunk-EIOUEAJK.js    | -                                |   2.50 kB |               890 bytes
+chunk-WH67UJGE.js    | -                                |   2.41 kB |               976 bytes
+chunk-ABEPUMEJ.js    | -                                |   2.36 kB |               958 bytes
+chunk-VFEMGAG7.js    | -                                |   2.35 kB |               904 bytes
+chunk-6K5U7L7Z.js    | -                                |   2.24 kB |               997 bytes
+chunk-PSU2GUFO.js    | -                                |   2.19 kB |               880 bytes
+chunk-37QUZGFF.js    | -                                |   2.11 kB |               758 bytes
+chunk-2R53I64Y.js    | -                                |   2.04 kB |               840 bytes
+chunk-BJIXWGXL.js    | -                                |   2.01 kB |               842 bytes
+chunk-YHSN7OSW.js    | -                                |   1.85 kB |               658 bytes
+chunk-IPM6JIOJ.js    | -                                |   1.81 kB |               785 bytes
+chunk-KCMAYANB.js    | -                                |   1.76 kB |               605 bytes
+chunk-ZI62XL3W.js    | -                                |   1.67 kB |               748 bytes
+chunk-TOTVL72L.js    | -                                |   1.67 kB |               638 bytes
+chunk-RAD2JUWE.js    | -                                |   1.66 kB |               713 bytes
+chunk-QCZTFAVX.js    | -                                |   1.64 kB |               641 bytes
+chunk-YAULYCUA.js    | -                                |   1.58 kB |               613 bytes
+chunk-USIYCLUU.js    | -                                |   1.52 kB |               649 bytes
+chunk-WROSIJUS.js    | -                                |   1.47 kB |               681 bytes
+chunk-4NUZ3MAB.js    | -                                |   1.44 kB |               645 bytes
+chunk-5CERG7N4.js    | -                                |   1.41 kB |               658 bytes
+chunk-AD6XZBSJ.js    | -                                |   1.38 kB |               575 bytes
+chunk-TTDCYISB.js    | -                                |   1.33 kB |               524 bytes
+chunk-RCBXWL36.js    | -                                |   1.29 kB |               443 bytes
+chunk-ZW5NV4UO.js    | -                                |   1.20 kB |               518 bytes
+chunk-6CLX6NMJ.js    | -                                |   1.18 kB |               613 bytes
+chunk-QGIWH2UB.js    | -                                |   1.18 kB |               456 bytes
+chunk-2ZOQIWCI.js    | -                                |   1.14 kB |               561 bytes
+chunk-5EARK32S.js    | -                                |   1.12 kB |               558 bytes
+chunk-MJLKDY5V.js    | -                                |   1.10 kB |               546 bytes
+chunk-U6LPMAWL.js    | -                                |   1.07 kB |               479 bytes
+chunk-F4LIKPVW.js    | -                                |   1.06 kB |               496 bytes
+chunk-5X2CEC3P.js    | -                                |   1.02 kB |                 1.02 kB
+chunk-T27NO5WN.js    | -                                | 947 bytes |               947 bytes
+chunk-NOLPCLUA.js    | -                                | 937 bytes |               937 bytes
+chunk-UMZLRL4A.js    | -                                | 928 bytes |               928 bytes
+chunk-EHB63CM3.js    | -                                | 870 bytes |               870 bytes
+chunk-HT27H3PJ.js    | -                                | 795 bytes |               795 bytes
+chunk-HZ23ZCGJ.js    | -                                | 786 bytes |               786 bytes
+chunk-LEDBXQRB.js    | -                                | 769 bytes |               769 bytes
+chunk-24CQ7JIR.js    | -                                | 735 bytes |               735 bytes
+chunk-QLP2VSH7.js    | -                                | 708 bytes |               708 bytes
+chunk-OFFKMDQ2.js    | -                                | 684 bytes |               684 bytes
+chunk-3YP2YVSU.js    | -                                | 666 bytes |               666 bytes
+chunk-GMDRJ366.js    | -                                | 566 bytes |               566 bytes
+chunk-HAIPDJCA.js    | -                                | 565 bytes |               565 bytes
+chunk-FZTJLNNI.js    | -                                | 450 bytes |               450 bytes
+chunk-IUBFAPEG.js    | -                                | 440 bytes |               440 bytes
+chunk-SS4U537X.js    | -                                | 382 bytes |               382 bytes
+chunk-6JMBBSDC.js    | -                                | 359 bytes |               359 bytes
+chunk-VVO3JQC3.js    | -                                | 358 bytes |               358 bytes
+chunk-M33TTEXN.js    | -                                | 344 bytes |               344 bytes
+chunk-5ACSTES2.js    | -                                | 318 bytes |               318 bytes
+chunk-7D6M4IH7.js    | -                                | 314 bytes |               314 bytes
+chunk-YCGSDEEA.js    | -                                | 271 bytes |               271 bytes
+chunk-6GZEFF6J.js    | -                                | 259 bytes |               259 bytes
+chunk-OE52LWJ7.js    | -                                | 176 bytes |               176 bytes
+chunk-TBGLYOJU.js    | -                                | 153 bytes |               153 bytes
+chunk-B7IEGISF.js    | -                                | 143 bytes |               143 bytes
+chunk-7HHQWJ5Z.js    | -                                | 131 bytes |               131 bytes
+chunk-O2JXN77B.js    | -                                | 106 bytes |               106 bytes
+chunk-UL2XOWBB.js    | -                                |  69 bytes |                69 bytes
+chunk-VHUO5GYZ.js    | -                                |  56 bytes |                56 bytes
+chunk-PI4FSWS4.js    | -                                |  51 bytes |                51 bytes
+chunk-BYXBJQAS.js    | -                                |   0 bytes |                 0 bytes
+
+                     | Initial total                    |   1.36 MB |               378.96 kB
+
+Lazy chunk files     | Names                            |  Raw size | Estimated transfer size
+chunk-5LJVNZP5.js    | index                            |   4.17 MB |               471.71 kB
+chunk-TA26WP7X.js    | -                                | 938.64 kB |               211.12 kB
+chunk-IMBM3BT2.js    | component-stock                  | 844.88 kB |                83.57 kB
+chunk-RWJUTGP4.js    | -                                | 694.89 kB |               144.61 kB
+chunk-MG67ICXM.js    | universidades-por-pais-generated | 613.67 kB |               110.38 kB
+chunk-VMQYV22Y.js    | axe                              | 594.55 kB |               136.31 kB
+chunk-XFP7POE6.js    | -                                | 449.66 kB |               125.19 kB
+chunk-FWMMDP6O.js    | pdf                              | 432.96 kB |               108.13 kB
+chunk-K2RAME5W.js    | contract-validator               | 254.07 kB |                44.70 kB
+chunk-6JPQBS4E.js    | html2canvas                      | 202.84 kB |                38.57 kB
+chunk-QZ6254RN.js    | index-es                         | 159.05 kB |                46.94 kB
+chunk-7ZUOHGQU.js    | -                                | 155.41 kB |                37.30 kB
+chunk-JJTE2L3G.js    | leaflet-src                      | 149.55 kB |                37.66 kB
+chunk-YBVVYSXM.js    | -                                | 130.72 kB |                28.68 kB
+chunk-SYLJ3KKJ.js    | practitioner-profile-edit        | 111.76 kB |                22.50 kB
+...and 1027 more lazy chunks files. Use "--verbose" to show all the files.
+
+
+Server bundles      
+Initial chunk files  | Names                            |  Raw size
+server.mjs           | server                           | 891.89 kB |                        
+main.server.mjs      | main.server                      | 540.72 kB |                        
+polyfills.server.mjs | polyfills.server                 | 233.65 kB |                        
+chunk-3MQDRRRA.mjs   | -                                | 201.92 kB |                        
+chunk-OA5SF3WZ.mjs   | -                                | 137.71 kB |                        
+chunk-ZO2O75RF.mjs   | -                                |  79.00 kB |                        
+chunk-VTUM5NKF.mjs   | -                                |  42.60 kB |                        
+chunk-BFVW57RT.mjs   | -                                |  31.62 kB |                        
+chunk-VLZG4CKH.mjs   | -                                |  29.38 kB |                        
+chunk-EE5G23HD.mjs   | -                                |  29.09 kB |                        
+chunk-U5VOI7HF.mjs   | -                                |  27.37 kB |                        
+chunk-DJLTGAUQ.mjs   | -                                |  26.16 kB |                        
+chunk-YSTQ337V.mjs   | -                                |  21.46 kB |                        
+chunk-QT6QFFIL.mjs   | -                                |  19.58 kB |                        
+chunk-5RY22YD3.mjs   | -                                |  19.29 kB |                        
+chunk-24JCM64E.mjs   | -                                |  16.64 kB |                        
+chunk-ESJYATS4.mjs   | -                                |  15.51 kB |                        
+chunk-5EI2TWMX.mjs   | -                                |  15.49 kB |                        
+chunk-4ASBAI7I.mjs   | -                                |  15.17 kB |                        
+chunk-JFE4EO4K.mjs   | -                                |  14.02 kB |                        
+chunk-3WAB3YS3.mjs   | -                                |  13.37 kB |                        
+chunk-2QK7K3EW.mjs   | -                                |  13.32 kB |                        
+chunk-LYUIYUYP.mjs   | -                                |  13.27 kB |                        
+chunk-DZR2YG6S.mjs   | -                                |  12.54 kB |                        
+chunk-X7A4MY2I.mjs   | -                                |  11.90 kB |                        
+chunk-CHMISYUX.mjs   | -                                |  11.67 kB |                        
+chunk-DQYRSZ4H.mjs   | -                                |  11.48 kB |                        
+chunk-AQRGZYUI.mjs   | -                                |  10.52 kB |                        
+chunk-2ZUFN7RJ.mjs   | -                                |   9.97 kB |                        
+chunk-4B53OOWW.mjs   | -                                |   9.75 kB |                        
+chunk-2F57AYHI.mjs   | -                                |   9.71 kB |                        
+chunk-24U5CAYG.mjs   | -                                |   9.60 kB |                        
+chunk-TSSFV2KK.mjs   | -                                |   9.56 kB |                        
+chunk-LXYMTTRL.mjs   | -                                |   9.44 kB |                        
+chunk-7XHMVHIX.mjs   | -                                |   9.34 kB |                        
+chunk-2IIZQNHK.mjs   | -                                |   9.18 kB |                        
+chunk-2RHGLHMK.mjs   | -                                |   9.04 kB |                        
+chunk-OZRUJ2Z7.mjs   | -                                |   8.63 kB |                        
+chunk-DOOQC4X2.mjs   | -                                |   7.93 kB |                        
+chunk-7HMJ3TOA.mjs   | -                                |   7.76 kB |                        
+chunk-U4XMUV2Y.mjs   | -                                |   7.36 kB |                        
+chunk-JZKZAF7Z.mjs   | -                                |   7.29 kB |                        
+chunk-P2RIMBJ7.mjs   | -                                |   7.21 kB |                        
+chunk-P6BVUWPA.mjs   | -                                |   6.33 kB |                        
+chunk-V4PYHSTM.mjs   | -                                |   6.24 kB |                        
+chunk-7V4FUFSG.mjs   | -                                |   6.14 kB |                        
+chunk-V2JNERKO.mjs   | -                                |   6.10 kB |                        
+chunk-5GXSXLOG.mjs   | -                                |   5.97 kB |                        
+chunk-2727G36P.mjs   | -                                |   5.91 kB |                        
+chunk-Q5GQ2W3F.mjs   | -                                |   5.83 kB |                        
+chunk-MWKVHGCA.mjs   | -                                |   5.61 kB |                        
+chunk-LGCKW3OL.mjs   | -                                |   5.27 kB |                        
+chunk-X36DTFMH.mjs   | -                                |   5.21 kB |                        
+chunk-W7PX24OM.mjs   | -                                |   5.04 kB |                        
+chunk-BSQGHRGJ.mjs   | -                                |   4.96 kB |                        
+chunk-6OCULWJN.mjs   | -                                |   4.85 kB |                        
+chunk-FG4HAR73.mjs   | -                                |   4.80 kB |                        
+chunk-PCCIJ6OR.mjs   | -                                |   4.79 kB |                        
+chunk-64JCNFJJ.mjs   | -                                |   4.67 kB |                        
+chunk-YOIMUTAA.mjs   | -                                |   4.58 kB |                        
+chunk-OQCFYUXD.mjs   | -                                |   4.46 kB |                        
+chunk-BIU6ALTA.mjs   | -                                |   4.27 kB |                        
+chunk-GUMFYTJC.mjs   | -                                |   4.26 kB |                        
+chunk-S6ENZVPH.mjs   | -                                |   4.20 kB |                        
+chunk-FJHJNKMV.mjs   | -                                |   3.97 kB |                        
+chunk-LZB6VL62.mjs   | -                                |   3.94 kB |                        
+chunk-FDRH37EO.mjs   | -                                |   3.94 kB |                        
+chunk-QLJURKOZ.mjs   | -                                |   3.90 kB |                        
+chunk-JHN3C7KJ.mjs   | -                                |   3.64 kB |                        
+chunk-LKXDKKCK.mjs   | -                                |   3.60 kB |                        
+chunk-XJY2S3BN.mjs   | -                                |   3.58 kB |                        
+chunk-ZUQJNNVL.mjs   | -                                |   3.56 kB |                        
+chunk-ANGHAQTW.mjs   | -                                |   3.52 kB |                        
+chunk-ILY5UNGQ.mjs   | -                                |   3.34 kB |                        
+chunk-2FKTXW34.mjs   | -                                |   3.22 kB |                        
+chunk-Y7SNXDAS.mjs   | -                                |   3.02 kB |                        
+chunk-7WEY2N2F.mjs   | -                                |   2.96 kB |                        
+chunk-X5SZ3OVJ.mjs   | -                                |   2.87 kB |                        
+chunk-3EFVDCTA.mjs   | -                                |   2.62 kB |                        
+chunk-UYMFLQFG.mjs   | -                                |   2.55 kB |                        
+chunk-HIBCEWSD.mjs   | -                                |   2.54 kB |                        
+chunk-HDD76RNX.mjs   | -                                |   2.45 kB |                        
+chunk-DIIRPEE5.mjs   | -                                |   2.39 kB |                        
+chunk-HYUA6VMB.mjs   | -                                |   2.39 kB |                        
+chunk-YO25YYS3.mjs   | -                                |   2.27 kB |                        
+chunk-FVCKYKIM.mjs   | -                                |   2.23 kB |                        
+chunk-MNU6H7FX.mjs   | -                                |   2.14 kB |                        
+chunk-DTU6F3U3.mjs   | -                                |   2.07 kB |                        
+chunk-WIJO2SYB.mjs   | -                                |   2.05 kB |                        
+chunk-7BBHWF27.mjs   | -                                |   1.89 kB |                        
+chunk-YQ3CEQTM.mjs   | -                                |   1.84 kB |                        
+chunk-5UFK2UEX.mjs   | -                                |   1.79 kB |                        
+chunk-AHQC7GJE.mjs   | -                                |   1.71 kB |                        
+chunk-3RYDGAME.mjs   | -                                |   1.71 kB |                        
+chunk-KWNFZG5Q.mjs   | -                                |   1.69 kB |                        
+chunk-CL5RUF5P.mjs   | -                                |   1.69 kB |                        
+chunk-VPWDG7V7.mjs   | -                                |   1.68 kB |                        
+chunk-HX74WH6K.mjs   | -                                |   1.63 kB |                        
+chunk-RQKVYDFG.mjs   | -                                |   1.61 kB |                        
+chunk-HDN3TQ4W.mjs   | -                                |   1.55 kB |                        
+chunk-OJXDTXDH.mjs   | -                                |   1.50 kB |                        
+chunk-YMYDFYKV.mjs   | -                                |   1.48 kB |                        
+chunk-HBOD2NV4.mjs   | -                                |   1.45 kB |                        
+chunk-OAPXEQJI.mjs   | -                                |   1.41 kB |                        
+chunk-K3D75FHL.mjs   | -                                |   1.36 kB |                        
+chunk-CYBTTRH5.mjs   | -                                |   1.32 kB |                        
+chunk-WXIIFM4C.mjs   | -                                |   1.22 kB |                        
+chunk-RRYZOBQ5.mjs   | -                                |   1.21 kB |                        
+chunk-EISQ2FRJ.mjs   | -                                |   1.17 kB |                        
+chunk-YXL5WSDS.mjs   | -                                |   1.16 kB |                        
+chunk-QD6REZ2G.mjs   | -                                |   1.14 kB |                        
+chunk-DZW5SRTX.mjs   | -                                |   1.10 kB |                        
+chunk-2NLJD73S.mjs   | -                                |   1.10 kB |                        
+chunk-AYSNJ3MS.mjs   | -                                |   1.05 kB |                        
+chunk-B3AGWPPZ.mjs   | -                                | 980 bytes |                        
+chunk-ZMQXRJII.mjs   | -                                | 970 bytes |                        
+chunk-GNBRHCWW.mjs   | -                                | 965 bytes |                        
+chunk-JTZ7PRCT.mjs   | -                                | 903 bytes |                        
+chunk-MH4SLUC2.mjs   | -                                | 830 bytes |                        
+chunk-QFPUF6QN.mjs   | -                                | 820 bytes |                        
+chunk-NJKETCRM.mjs   | -                                | 805 bytes |                        
+chunk-THVJ5OMZ.mjs   | -                                | 770 bytes |                        
+chunk-MFJWIHZS.mjs   | -                                | 743 bytes |                        
+chunk-WY5HKZ7E.mjs   | -                                | 717 bytes |                        
+chunk-W567P637.mjs   | -                                | 600 bytes |                        
+chunk-HGVLWT2S.mjs   | -                                | 599 bytes |                        
+chunk-MUJBZQUE.mjs   | -                                | 484 bytes |                        
+chunk-RRFX6FHH.mjs   | -                                | 473 bytes |                        
+chunk-PTFK3ORP.mjs   | -                                | 415 bytes |                        
+chunk-ETR6BLUX.mjs   | -                                | 392 bytes |                        
+chunk-VJUFIHMH.mjs   | -                                | 392 bytes |                        
+chunk-6U4I7CAD.mjs   | -                                | 378 bytes |                        
+chunk-SMYH5AEW.mjs   | -                                | 351 bytes |                        
+chunk-D7ZEZP4Y.mjs   | -                                | 348 bytes |                        
+chunk-ELDIA47U.mjs   | -                                | 306 bytes |                        
+chunk-BFMTFIAC.mjs   | -                                | 293 bytes |                        
+chunk-WGSL2WCM.mjs   | -                                | 209 bytes |                        
+chunk-FBY3CE6O.mjs   | -                                | 186 bytes |                        
+chunk-JYMEZJVW.mjs   | -                                | 177 bytes |                        
+chunk-7G6DEEJY.mjs   | -                                | 165 bytes |                        
+chunk-FYEQP6MV.mjs   | -                                | 139 bytes |                        
+chunk-DAMKP3TY.mjs   | -                                | 103 bytes |                        
+chunk-7ADBLUVH.mjs   | -                                |  89 bytes |                        
+chunk-MVGDOHOA.mjs   | -                                |  84 bytes |                        
+chunk-DPLNUI4A.mjs   | -                                |  33 bytes |                        
+
+Lazy chunk files     | Names                            |  Raw size
+chunk-56OC2FWD.mjs   | index                            |   4.17 MB |                        
+chunk-43ZAMAFI.mjs   | -                                | 945.68 kB |                        
+chunk-ZXA3I5D2.mjs   | -                                | 938.68 kB |                        
+chunk-7A3EZZFY.mjs   | component-stock                  | 845.59 kB |                        
+chunk-OTQE6BJD.mjs   | -                                | 694.93 kB |                        
+chunk-2F73A35I.mjs   | universidades-por-pais-generated | 613.70 kB |                        
+chunk-DI2ZTFW3.mjs   | axe                              | 594.58 kB |                        
+chunk-C3G3MCSY.mjs   | pdf                              | 432.99 kB |                        
+chunk-4UXVMI4Z.mjs   | contract-validator               | 254.11 kB |                        
+chunk-AOASIS4M.mjs   | -                                | 155.46 kB |                        
+chunk-KA6ZR6XP.mjs   | leaflet-src                      | 149.58 kB |                        
+chunk-T34BVHK3.mjs   | -                                | 130.76 kB |                        
+chunk-RKQCUXXQ.mjs   | practitioner-profile-edit        | 111.88 kB |                        
+chunk-LRPDNMCF.mjs   | bolivia-municipalities-geometry  | 102.24 kB |                        
+chunk-VRCWXN36.mjs   | register-practitioner            |  78.90 kB |                        
+...and 1029 more lazy chunks files. Use "--verbose" to show all the files.
+
+Prerendered 9 static routes.
+Application bundle generation complete. [106.610 seconds] - 2026-10-24T23:47:49.695Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mbundle initial exceeded maximum budget. Budget 620.00 kB was not met by 740.77 kB with a total of 1.36 MB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/appointments/appointment-calendar/appointment-calendar.css exceeded maximum budget. Budget 4.00 kB was not met by 897 bytes with a total of 4.90 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/tree-select/tree-select.css exceeded maximum budget. Budget 4.00 kB was not met by 1.12 kB with a total of 5.12 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/glossary/glossary-anatomy-atlas.css exceeded maximum budget. Budget 4.00 kB was not met by 1.86 kB with a total of 5.87 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/agenda/my-agenda/week-view/week-view.css exceeded maximum budget. Budget 4.00 kB was not met by 1.53 kB with a total of 5.54 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/agenda/my-agenda/month-view/month-view.css exceeded maximum budget. Budget 4.00 kB was not met by 706 bytes with a total of 4.71 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/atoms/select/select.css exceeded maximum budget. Budget 4.00 kB was not met by 487 bytes with a total of 4.49 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/auth-split/auth-split.css exceeded maximum budget. Budget 4.00 kB was not met by 11.21 kB with a total of 15.21 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/auth/register-account-type/register-account-type.css exceeded maximum budget. Budget 4.00 kB was not met by 559 bytes with a total of 4.56 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/map/map.css exceeded maximum budget. Budget 4.00 kB was not met by 947 bytes with a total of 4.95 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/content-dialog/content-dialog.css exceeded maximum budget. Budget 4.00 kB was not met by 41 bytes with a total of 4.04 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/laboratory/results/laboratory-results.css exceeded maximum budget. Budget 4.00 kB was not met by 2.99 kB with a total of 6.99 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/dashboard/agenda-de-hoy/agenda-de-hoy.css exceeded maximum budget. Budget 4.00 kB was not met by 5.72 kB with a total of 9.72 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/glossary/glossary-term.css exceeded maximum budget. Budget 4.00 kB was not met by 1.67 kB with a total of 5.67 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/appointments/appointments.css exceeded maximum budget. Budget 4.00 kB was not met by 75 bytes with a total of 4.08 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/component-stock/component-stock.css exceeded maximum budget. Budget 4.00 kB was not met by 5.45 kB with a total of 9.45 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/messaging/thread/composer/image-editor/image-editor.css exceeded maximum budget. Budget 4.00 kB was not met by 135 bytes with a total of 4.13 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/medical-record/medical-record.css exceeded maximum budget. Budget 4.00 kB was not met by 1.49 kB with a total of 5.49 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/agenda/agenda.css exceeded maximum budget. Budget 4.00 kB was not met by 277 bytes with a total of 4.28 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/accounting/resumen/resumen.css exceeded maximum budget. Budget 4.00 kB was not met by 4.19 kB with a total of 8.19 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/agenda/my-agenda/schedule-grid/schedule-grid.css exceeded maximum budget. Budget 4.00 kB was not met by 2.54 kB with a total of 6.54 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/filter-bar/filter-bar.css exceeded maximum budget. Budget 4.00 kB was not met by 2.22 kB with a total of 6.22 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/agenda/my-agenda/day-view/day-view.css exceeded maximum budget. Budget 4.00 kB was not met by 4.84 kB with a total of 8.84 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/date-picker/date-picker.css exceeded maximum budget. Budget 4.00 kB was not met by 3.31 kB with a total of 7.31 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.css exceeded maximum budget. Budget 4.00 kB was not met by 538 bytes with a total of 4.54 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/data-table/data-table.css exceeded maximum budget. Budget 4.00 kB was not met by 609 bytes with a total of 4.61 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/clinical-record/patient-chart/follow-up-block/follow-up-block.css exceeded maximum budget. Budget 4.00 kB was not met by 1.31 kB with a total of 5.31 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/auth-stage/auth-stage.css exceeded maximum budget. Budget 4.00 kB was not met by 1.72 kB with a total of 5.72 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/messaging/conversation-list/conversation-list.css exceeded maximum budget. Budget 4.00 kB was not met by 165 bytes with a total of 4.17 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/directory-page/directory-page.css exceeded maximum budget. Budget 4.00 kB was not met by 3.50 kB with a total of 7.50 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/messaging/messaging.css exceeded maximum budget. Budget 4.00 kB was not met by 3.39 kB with a total of 7.39 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/organisms/body-map/body-map.css exceeded maximum budget. Budget 4.00 kB was not met by 164 bytes with a total of 4.16 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/agenda/my-agenda/my-agenda.css exceeded maximum budget. Budget 4.00 kB was not met by 1.26 kB with a total of 5.26 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/accounting/cockpit/cockpit.css exceeded maximum budget. Budget 4.00 kB was not met by 7.96 kB with a total of 11.96 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/dashboard/access-tree/access-tree.css exceeded maximum budget. Budget 4.00 kB was not met by 3.31 kB with a total of 7.31 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/dashboard/patient-home/first-steps/first-steps-card.css exceeded maximum budget. Budget 4.00 kB was not met by 1.84 kB with a total of 5.84 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/shared/components/molecules/result-card/result-card.css exceeded maximum budget. Budget 4.00 kB was not met by 7.71 kB with a total of 11.71 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/symptom-check/symptom-check.css exceeded maximum budget. Budget 4.00 kB was not met by 15.64 kB with a total of 19.64 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/public-profile/public-profile-card/public-profile-card.css exceeded maximum budget. Budget 4.00 kB was not met by 4.75 kB with a total of 8.75 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/messaging/thread/composer/composer.css exceeded maximum budget. Budget 4.00 kB was not met by 1.79 kB with a total of 5.79 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/messaging/thread/thread.css exceeded maximum budget. Budget 4.00 kB was not met by 4.87 kB with a total of 8.87 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/my-profile/ficha-de-perfil.css exceeded maximum budget. Budget 4.00 kB was not met by 937 bytes with a total of 4.94 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/messaging/thread/thread-capas.css exceeded maximum budget. Budget 4.00 kB was not met by 1.42 kB with a total of 5.42 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/my-profile/ficha-de-perfil.css exceeded maximum budget. Budget 4.00 kB was not met by 7.98 kB with a total of 11.98 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/my-profile/medical-articles/article-composer/article-composer.css exceeded maximum budget. Budget 4.00 kB was not met by 356 bytes with a total of 4.36 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/form-builder/form-builder.css exceeded maximum budget. Budget 4.00 kB was not met by 249 bytes with a total of 4.25 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/agenda/agenda-create/agenda-create.css exceeded maximum budget. Budget 4.00 kB was not met by 3.54 kB with a total of 7.54 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/form-builder/field-editor/field-editor.css exceeded maximum budget. Budget 4.00 kB was not met by 2.09 kB with a total of 6.09 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/public-profile/public-post-card/public-post-card.css exceeded maximum budget. Budget 4.00 kB was not met by 551 bytes with a total of 4.55 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/messaging/thread/composer/attachment-preview/attachment-preview.css exceeded maximum budget. Budget 4.00 kB was not met by 2.47 kB with a total of 6.47 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/glossary/glossary.css exceeded maximum budget. Budget 4.00 kB was not met by 4.75 kB with a total of 8.75 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/account/spending/spending.css exceeded maximum budget. Budget 4.00 kB was not met by 3.56 kB with a total of 7.56 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/auth/register-practitioner/register-practitioner.css exceeded maximum budget. Budget 4.00 kB was not met by 1.09 kB with a total of 5.09 kB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'axe-core' used by 'src/app/features/component-stock/component-stock.ts' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'leaflet' used by 'src/app/shared/components/organisms/map/map.ts' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.promise.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.string.match.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.string.replace.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.string.starts-with.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.array.iterator.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/web.dom-collections.iterator.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.array.reduce.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.string.ends-with.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.string.split.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'raf' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.string.trim.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'rgbcolor' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.array.index-of.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.string.includes.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.array.reverse.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'core-js/modules/es.regexp.to-string.js' used by 'node_modules/canvg/lib/index.es.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'jspdf' used by 'src/app/shared/utils/pdf-export/pdf-export.ts' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'qrcode' used by 'src/app/shared/utils/qr/dibujar-qr.ts' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'dijkstrajs' used by 'node_modules/qrcode/lib/core/segments.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'pngjs' used by 'node_modules/qrcode/lib/renderer/png.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'debug' used by 'node_modules/socket.io-client/build/esm-debug/index.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'xmlhttprequest-ssl' used by 'node_modules/engine.io-client/build/esm-debug/transports/polling-xhr.node.js' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+Output location: /home/user/mantra-core-health/dist/mantra-core-health
+
+EXIT=0

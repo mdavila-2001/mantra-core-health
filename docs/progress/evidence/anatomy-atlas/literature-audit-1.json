@@ -1,0 +1,794 @@
+{
+ "auditor": "literature-audit-1",
+ "items": [
+  {
+   "id": "FMA:32536",
+   "sentence": 1,
+   "es": "En 20 cabezas de cadáver, el músculo midió 5,60 ± 0,46 cm de longitud.",
+   "cites": [
+    "PMID:31461039"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:31461039: 'Twenty fresh cadaveric heads... The obliquus capitis inferior length was 5.60 ± 0.46 cm'. Traducción literal con el tamaño muestral antepuesto. El estudio no distingue lado (la estructura es la derecha)."
+  },
+  {
+   "id": "FMA:32536",
+   "sentence": 2,
+   "es": "En esa serie, el nervio occipital mayor lo cruzaba a 6,80 ± 0,68 cm por debajo del occipital y a 3,56 ± 0,36 cm de la línea media, donde el músculo tenía 1,20 ± 0,25 cm de grosor.",
+   "cites": [
+    "PMID:31461039"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "'intersection point... 6.80 ± 0.68 cm caudal to the occiput and 3.56 ± 0.36 cm lateral to the midline'; 'thickness... at its intersection... 1.20 ± 0.25 cm'. Cifras exactas."
+  },
+  {
+   "id": "FMA:32536",
+   "sentence": 3,
+   "es": "En 14 músculos disecados de nueve cadáveres, todos enviaban bandas fibrosas que, a través del espacio atlantoaxial, se fijaban a la duramadre cervical posterolateral.",
+   "cites": [
+    "PMID:22836789"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:22836789: 'nine embalmed cadavers... 14 OCI muscles... all emitted fibrous tissue bands... attached to the posterolateral cervical dura mater by route of the atlantoaxial interspace'."
+  },
+  {
+   "id": "FMA:32536",
+   "sentence": 4,
+   "es": "El examen histológico confirmó ese puente de tejido conectivo hacia la duramadre en el 75 % de 12 muestras, y en una de ellas se detectaron fascículos nerviosos en su interior.",
+   "cites": [
+    "PMID:23867598"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:23867598: 'confirmed a connective tissue bridge... in 75% of the specimens'; pero el 25 % restante no fue analizable ('unable to be properly analyzed'), no negativo: la frase lo deja leer como ausencia. Fascículos 'in the sample sent for neuro-analysis' (una): correcto."
+  },
+  {
+   "id": "FMA:32536",
+   "sentence": 5,
+   "es": "En 30 adultos asintomáticos, su área de sección ecográfica fue de 1,86 ± 0,51 cm².",
+   "cites": [
+    "PMID:20544865"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:20544865: '30 asymptomatic subjects... CSA of... OCI were... 1.86 cm2 +/- 0.51 cm2'."
+  },
+  {
+   "id": "FMA:32536",
+   "sentence": 6,
+   "es": "En 5 cadáveres y 10 voluntarios, una aguja introducida entre la apófisis espinosa de C2 y la transversa de C1 penetró el músculo hasta apoyarse en la lámina de C2.",
+   "cites": [
+    "PMID:31662275"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:31662275: '10 pain-free healthy subjects and 5 fresh cadavers... inserted midway between the spinous process of C2 and transverse process of C1... tip of the needle rested against C2 laminae'."
+  },
+  {
+   "id": "FMA:51145",
+   "sentence": 1,
+   "es": "En un caso de variantes bilaterales, tendones accesorios del extensor largo y del extensor corto del dedo gordo se unían en ambos lados para formar un tendón común.",
+   "cites": [
+    "PMID:36198656"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:36198656: caso bilateral; 'Accessory tendons of the extensor hallucis longus and extensor hallucis brevis joined to form a common tendon on both sides'."
+  },
+  {
+   "id": "FMA:51145",
+   "sentence": 2,
+   "es": "En otro caso, el tendón del músculo extensor primi internodii hallucis de Wood se unía al del extensor corto del dedo gordo por encima de la articulación tarsometatarsiana de Lisfranc.",
+   "cites": [
+    "PMID:30146339"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:30146339: 'merged together proximal to the tarsometatarsal (Lisfranc) joint'. 'por encima de' es impreciso en el pie (proximal = posterior, no superior); debería decir 'proximal a'."
+  },
+  {
+   "id": "FMA:51145",
+   "sentence": 3,
+   "es": "La tenodesis con el extensor corto del dedo gordo se ha usado para corregir el hallux varus sintomático en una serie de seis pacientes, con corrección mantenida a una media de 28 meses.",
+   "cites": [
+    "PMID:8821282"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:8821282: 'six patients... Excellent correction was noted and maintained in all patients at a mean interval of 28 months'."
+  },
+  {
+   "id": "FMA:51145",
+   "sentence": 4,
+   "es": "Un colgajo libre dorsal del pie que incluía el tendón del extensor corto del dedo gordo permitió restaurar la abducción del pulgar tras una quemadura eléctrica.",
+   "cites": [
+    "PMID:16425119"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:16425119: 'defects of the skin and abductor pollicis brevis tendon caused by an electrical injury were reconstructed using a free dorsalis pedis flap including the extensor hallucis brevis tendon'."
+  },
+  {
+   "id": "FMA:51145",
+   "sentence": 5,
+   "es": "En un estudio transversal de 90 participantes con elastografía de onda de corte, la rigidez media del músculo fue de 11.88 kPa en controles, 15.78 kPa en diabetes tipo 2 sin complicaciones y 18.57 kPa con complicaciones microvasculares.",
+   "cites": [
+    "PMID:40771279"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:40771279: '90 participants... Emean... control: 11.88 kPa; T2DM: 15.78 kPa; T2DM+MC: 18.57 kPa'. Cifras correctas; estilo: usa punto decimal en vez de coma, a diferencia del resto."
+  },
+  {
+   "id": "FMA:8248",
+   "sentence": 1,
+   "es": "El nervio torácico interno desciende junto a la arteria torácica interna hasta el nivel del séptimo cartílago costal, donde deja de identificarse.",
+   "cites": [
+    "PMID:5089505"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:5089505: 'It descends along the internal thoracic artery to the level of the seventh costal cartilage where it is lost'. Traducción literal."
+  },
+  {
+   "id": "FMA:8248",
+   "sentence": 2,
+   "es": "En 50 hemitórax de 25 cadáveres se halló un único músculo esternal anómalo, que nacía cerca del séptimo cartílago costal, a 3.5 cm de la línea medioesternal.",
+   "cites": [
+    "PMID:19452102"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:19452102: '25 cadavers (n = 50)... a single case of sternalis on the right side... originated near the seventh costal cartilage... 3.5 cm lateral to the mid-sternal plane'. Coincide con el lado derecho. Punto decimal en vez de coma."
+  },
+  {
+   "id": "FMA:8248",
+   "sentence": 3,
+   "es": "En 103 adultos con microtia congénita, el séptimo cartílago costal se extrajo para fabricar el armazón auricular en 74 de ellos, sin deformidades torácicas posoperatorias.",
+   "cites": [
+    "PMID:22948643"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:22948643: el séptimo se extrajo en los 103 (en 74 sólo el séptimo; en 29 'both the seventh and eighth'); la frase sugiere que sólo en 74 se usó el séptimo. 'no postoperative complications related to chest wall deformity' está bien, aunque 10 tuvieron cicatriz aumentada. Se pierde 'unilateral'."
+  },
+  {
+   "id": "FMA:8248",
+   "sentence": 4,
+   "es": "En 12 pacientes con enoftalmos postraumático se obtuvieron, por una incisión sobre el séptimo cartílago costal, láminas de hueso y cartílago de 2 mm para la corrección orbitaria.",
+   "cites": [
+    "PMID:28027179"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:28027179: '12 patients... skin incision was made directly above the seventh costal cartilage... rib bone and costal cartilage... cut into 2-mm-thick slices'."
+  },
+  {
+   "id": "FMA:8248",
+   "sentence": 5,
+   "es": "En 658 niños con microtia de tipo lobulillar, el resto del séptimo cartílago costal se reorientó 90° para construir el trago.",
+   "cites": [
+    "PMID:39527044"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:39527044: '658 patients with lobule-type microtia', edad media 6,5 ± 0,7 años (llamarlos 'niños' es razonable); 'residual part of the seventh costal cartilage was reoriented by 90°... tragus'. 'lobulillar' es aceptable; lo habitual es 'de tipo lobular'."
+  },
+  {
+   "id": "UBERON:0001154",
+   "sentence": 1,
+   "es": "El apéndice vermiforme es un tubo ciego situado cerca de la válvula ileocecal, en la unión entre el intestino delgado y el grueso.",
+   "cites": [
+    "PMID:30420527"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:30420527: 'Near the ileocecal valve, at the junction of the small intestine and large intestine, lies a blind-ended tube... called the vermiform appendix'. Traducción casi literal reordenada."
+  },
+  {
+   "id": "UBERON:0001154",
+   "sentence": 2,
+   "es": "El apéndice humano es un divertículo de 5 a 10 cm de largo y de 0.5 a 1 cm de ancho que nace del ciego.",
+   "cites": [
+    "PMID:17936308"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:17936308: 'a 5-10cm long and 0.5-1cm wide pouch that extends from the cecum'. Literal. Punto decimal en vez de coma."
+  },
+  {
+   "id": "UBERON:0001154",
+   "sentence": 3,
+   "es": "Por su asociación con abundante tejido linfático se le atribuye una función inmunitaria, y se ha propuesto que sirve de reservorio de bacterias comensales capaz de repoblar el colon.",
+   "cites": [
+    "PMID:17936308"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:17936308: 'thought to have some immune function... although the specific nature... is unknown'; reservorio: 'potentially facilitating re-inoculation of the colon in the event that the contents... are purged'. 'capaz de repoblar' refuerza una posibilidad y omite la condición (tras una purga intestinal)."
+  },
+  {
+   "id": "UBERON:0001154",
+   "sentence": 4,
+   "es": "Según una revisión sistemática de 40 artículos, la posición del apéndice varía entre individuos; las más comunes son la retrocecal y la pélvica, y también se describen las retroileal, preileal, prececal y paracecal.",
+   "cites": [
+    "PMID:39720866"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:39720866: '40 articles... retrocecal, pelvic, retro-ileal, pre-ileal, prececal and paracecal... The first two variants are the most common'."
+  },
+  {
+   "id": "UBERON:0001154",
+   "sentence": 5,
+   "es": "Rara vez el apéndice es intracecal, intramural, subhepático o se encuentra en el lado izquierdo del abdomen, y su base no siempre coincide con el punto de McBurney.",
+   "cites": [
+    "PMID:39720866"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:39720866: 'Rarely, the appendix may be intracecal, intramural, subhepatic or located in the left abdomen; mismatches of the McBurney guide point with the base'. Casi literal. Aspecto 'clinical' aceptable (punto de McBurney), aunque es sobre todo una variación de situación."
+  },
+  {
+   "id": "UBERON:0001154",
+   "sentence": 6,
+   "es": "La apendicectomía es la intervención quirúrgica de urgencia más frecuente, y la posición tan variable del apéndice puede confundir el diagnóstico.",
+   "cites": [
+    "PMID:23716128"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:23716128: 'The most common emergency surgical procedure performed is an appendectomy. Its highly variable position... can cause confusion for clinicians'. Casi literal; 'confundir el diagnóstico' es una paráfrasis aceptable."
+  },
+  {
+   "id": "UBERON:0001400",
+   "sentence": 1,
+   "es": "En 80 pacientes asintomáticos con hiperostosis localizada de las costillas posteriores y de las apófisis transversas, los autores plantearon como hipótesis que se debía a la tracción del músculo iliocostal torácico y la consideraron sin importancia clínica.",
+   "cites": [
+    "PMID:2783263"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:2783263: '80 asymptomatic patients... localized hyperostosis of the posterior ribs and articulating transverse processes... hypothesize... due to the pull of the iliocostalis thoracis muscle and is of no clinical significance'. Lo presenta correctamente como hipótesis."
+  },
+  {
+   "id": "UBERON:0001598",
+   "sentence": 1,
+   "es": "El sistema arterial temporal aporta al músculo temporal una vascularización fiable que permite emplearlo como colgajo.",
+   "cites": [
+    "PMID:25086696"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:25086696: 'The temporal arterial system provides reliable vascular anatomy for the temporalis muscle flap'."
+  },
+  {
+   "id": "UBERON:0001598",
+   "sentence": 2,
+   "es": "En 14 disecciones de cadáveres frescos, la arteria temporal media fue suficiente para mantener la irrigación de un colgajo de temporal dividido y pediculado en los vasos temporales superficiales.",
+   "cites": [
+    "PMID:23508929"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:23508929: las 14 disecciones frescas estudiaron las técnicas de división; la conclusión sobre la arteria temporal media ('capable of ensuring the vascularization') viene de otras disecciones con cateterismo e inyección de contraste, sin número. La frase atribuye el hallazgo vascular a las 14."
+  },
+  {
+   "id": "UBERON:0001598",
+   "sentence": 3,
+   "es": "En una serie de 21 colgajos de temporal se repararon defectos de la lengua, la mucosa yugal, el maxilar, el paladar blando, el trígono retromolar y la región amigdalina.",
+   "cites": [
+    "PMID:9451347"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:9451347: '21 temporalis muscle flaps in intraoral reconstruction... oral tongue, tongue base, buccal mucosa, maxilla, soft palate, retromolar trigone and tonsillar region'."
+  },
+  {
+   "id": "UBERON:0001598",
+   "sentence": 4,
+   "es": "Este colgajo también se ha aplicado a defectos extensos de la frente, la duramadre y la base anterior del cráneo, y al cierre de defectos orbitarios.",
+   "cites": [
+    "PMID:3940514"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:3940514: 'reconstruction of large defects of the forehead, dura, and anterior skull base, closure of orbital defects'. Traducción literal."
+  },
+  {
+   "id": "UBERON:0001598",
+   "sentence": 5,
+   "es": "En dos cohortes sin demencia, de 750 y 532 participantes, ciertos patrones de textura del temporal en resonancias cerebrales de rutina se asociaron con más riesgo de demencia.",
+   "cites": [
+    "PMID:42559821"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:42559821: 'dementia-free participants... ADNI (n = 750) and ARIC (n = 532)... Higher TM radiomic scores were associated with increased dementia risk'."
+  },
+  {
+   "id": "UBERON:0001728",
+   "sentence": 1,
+   "es": "El carcinoma nasofaríngeo es el tumor epitelial más frecuente de la nasofaringe y su tratamiento principal es la radioterapia.",
+   "cites": [
+    "PMID:12413677"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:12413677: 'NPC is the most common epithelial tumor of the nasopharynx. Radiation therapy is the mainstay of treatment'. Dos oraciones traducidas literalmente."
+  },
+  {
+   "id": "UBERON:0001728",
+   "sentence": 2,
+   "es": "Tras la radioterapia puede persistir una masa residual en la nasofaringe que no implica necesariamente tumor viable, y la resonancia distingue mejor que la tomografía la cicatriz madura y la recidiva.",
+   "cites": [
+    "PMID:12413677"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:12413677: 'residual mass... does not necessarily indicate viable tumor'; 'MR imaging is more capable than CT for identifying mature scarring, tumor recurrence'. Pero el resumen añade 'cannot reliably... differentiate tumor recurrence from postradiation tissue changes': 'distingue... la cicatriz madura y la recidiva' puede leerse como diferenciación entre ambas, que es justo lo que el resumen dice que no hace con fiabilidad. Falta esa limitación."
+  },
+  {
+   "id": "UBERON:0001728",
+   "sentence": 3,
+   "es": "El virus de Epstein-Barr se detectó en la mayoría de las células tumorales de los tres tipos histológicos de la OMS del carcinoma nasofaríngeo analizados.",
+   "cites": [
+    "PMID:7778675"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:7778675: 'EBER were detected in situ in most tumor cells of all three WHO types'. Matiz: lo que se detectó fue el ARN EBER (menos abundante en los focos escamosos)."
+  },
+  {
+   "id": "UBERON:0001728",
+   "sentence": 4,
+   "es": "En una cohorte de 53 linfomas B agresivos primarios de la región nasofaríngea, el 23 % fueron positivos para el virus de Epstein-Barr.",
+   "cites": [
+    "PMID:31247533"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:31247533: '53 cases of aggressive B-NHL... primary to the nasopharyngeal area... 13 out of 53 cases (23%) were EBV positive'. Fiel al resumen (aunque 13/53 da 24,5 %: el error es del propio resumen)."
+  },
+  {
+   "id": "UBERON:0002132",
+   "sentence": 1,
+   "es": "Los núcleos dentados ocupan una posición profunda dentro del cerebelo.",
+   "cites": [
+    "PMID:20107778"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:20107778: 'The dentate nuclei lie deep within the cerebellum'. Literal."
+  },
+  {
+   "id": "UBERON:0002132",
+   "sentence": 2,
+   "es": "El núcleo dentado es uno de los núcleos cerebelosos profundos y tiene un alto contenido de hierro.",
+   "cites": [
+    "PMID:27192177"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": false,
+   "note": "PMID:27192177: 'The dentate nucleus (DN) is a deep iron-rich nucleus in the cerebellum'. El contenido de hierro es composición, no 'parts'; el aspecto no encaja bien."
+  },
+  {
+   "id": "UBERON:0002132",
+   "sentence": 3,
+   "es": "Participa en las vías que regulan la coordinación y el control motor fino.",
+   "cites": [
+    "PMID:20107778"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:20107778: 'play a vital role in the pathways involved in fine motor control and coordination'. Literal (se omite 'vital')."
+  },
+  {
+   "id": "UBERON:0002132",
+   "sentence": 4,
+   "es": "Según la conectividad funcional en reposo, su parte dorsal se integra en una red motora con regiones cerebelosas anteriores y el giro precentral, y su parte ventral en una red cognitiva con el Crus I y la corteza prefrontal.",
+   "cites": [
+    "PMID:23513045"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:23513045: 'a motor network involving the dorsal dentate, anterior regions of the cerebellum, and the precentral gyrus, and a cognitive network involving the ventral dentate, Crus I, and prefrontal cortex'. Casi literal."
+  },
+  {
+   "id": "UBERON:0002132",
+   "sentence": 5,
+   "es": "En 13 participantes jóvenes estudiados con resonancia funcional, las tareas motoras activaron la región dorsorrostral del núcleo y las cognitivas, sobre todo su región caudal.",
+   "cites": [
+    "PMID:21081171"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:21081171: '13 participants... Dorso-rostral dentate nucleus activation was associated with motor function, whereas cognitive tasks led to prominent activation of the caudal nucleus'. Omite el experimento complementario a 7 T (23 participantes), sin que eso afecte a lo que afirma."
+  },
+  {
+   "id": "UBERON:0002132",
+   "sentence": 6,
+   "es": "En un estudio de 43 pacientes con enfermedad de Parkinson, el subgrupo con predominio de temblor presentó mayor susceptibilidad magnética en ambos núcleos dentados que los controles sanos, lo que sugiere más carga de hierro.",
+   "cites": [
+    "PMID:27192177"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:27192177: '43 patients... TD group was found to have increased susceptibility in the bilateral DN when compared with healthy controls'; 'iron load within the DN'."
+  },
+  {
+   "id": "UBERON:0002525",
+   "sentence": 1,
+   "es": "Se ha descrito una paciente con dos recidivas sucesivas en ganglios linfáticos braquiales tras mastectomía y vaciamiento axilar por un cáncer de mama localmente avanzado.",
+   "cites": [
+    "PMID:36157692"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:36157692: 'two recurrences in the brachial lymph nodes'; 'left mastectomy and axillary dissection'; T4bN3cM0, estadio IIIC (localmente avanzado)."
+  },
+  {
+   "id": "UBERON:0002525",
+   "sentence": 2,
+   "es": "Los autores de ese caso plantean que la sustitución de los ganglios regionales por tumor podría redirigir el flujo linfático hacia el brazo y favorecer metástasis braquiales.",
+   "cites": [
+    "PMID:36157692"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:36157692: 'replacement of regional lymph nodes with tumor cells may result in the reconstruction of lymph flow to the upper arm and the development of brachial lymph node metastasis'."
+  },
+  {
+   "id": "UBERON:0002525",
+   "sentence": 3,
+   "es": "En una mujer con artritis reumatoide, la biopsia de un ganglio braquial derecho aumentado mostró hiperplasia folicular con abundantes células plasmáticas IgG4 positivas, lo que simulaba una enfermedad relacionada con IgG4.",
+   "cites": [
+    "PMID:22706532"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:22706532: 'woman... rheumatoid arthritis... enlarged right brachial lymph node biopsy... marked follicular hyperplasia and interfollicular plasmacytosis... numerous plasma cells were IgG4(+)... mimicking IgG4-related disease'."
+  },
+  {
+   "id": "UBERON:0003234",
+   "sentence": 1,
+   "es": "El extensor largo del pulgar es un músculo extrínseco que extiende y aduce las articulaciones metacarpofalángica e interfalángica del pulgar.",
+   "cites": [
+    "PMID:31335014"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:31335014: 'an extrinsic thumb muscle that extends and adducts the thumb MCP and interphalangeal joints'. Literal; 'aduce las articulaciones' es castellano anatómico forzado (lo que se aduce es el pulgar), pero calca el resumen."
+  },
+  {
+   "id": "UBERON:0003234",
+   "sentence": 2,
+   "es": "Lo inerva el nervio interóseo posterior.",
+   "cites": [
+    "PMID:31335014",
+    "PMID:11062588"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:31335014: 'innervated by the posterior interosseous nerve'; PMID:11062588: 'the posterior interosseous nerve supplies this'."
+  },
+  {
+   "id": "UBERON:0003234",
+   "sentence": 3,
+   "es": "Su irrigación arterial procede de las arterias interóseas anterior y posterior, de la arteria radial y de la arteria cubital.",
+   "cites": [
+    "PMID:31335014"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:31335014: 'arterial supply from the AIA, PIA, radial artery, and ulnar artery'. Literal."
+  },
+  {
+   "id": "UBERON:0003234",
+   "sentence": 4,
+   "es": "En cuatro cadáveres, su tendón se apoyaba sobre el tubérculo de Lister o a su lado, cruzaba por encima de los tendones extensores radiales del carpo y llegaba a la base del pulgar.",
+   "cites": [
+    "PMID:15615970"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:15615970: 'four embalmed specimens... located on or adjacent to Lister's tubercle and extended to the base of the thumb... crossed over the extensor carpi radialis tendons'."
+  },
+  {
+   "id": "UBERON:0003234",
+   "sentence": 5,
+   "es": "Tras una fractura no desplazada del radio distal, su tendón puede romperse espontáneamente en hasta un 5 % de los adultos.",
+   "cites": [
+    "PMID:31335014"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:31335014: 'spontaneous rupture of the EPL may occur in up to 5% of adults following a nondisplaced distal radius fracture'. Casi literal."
+  },
+  {
+   "id": "UBERON:0003234",
+   "sentence": 6,
+   "es": "En 13 pacientes con rotura tras fractura del radio distal, el músculo mostraba cambios inflamatorios extensos y necrosis de fibras, y el tendón degeneración sobre todo en su parte central.",
+   "cites": [
+    "PMID:39754134"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:39754134: 'Thirteen patients... muscle... extensive inflammatory changes, muscle fiber necrosis... tendon showed profound degenerative changes mainly in the central part'."
+  },
+  {
+   "id": "UBERON:0005479",
+   "sentence": 1,
+   "es": "En la disección de nueve individuos, el ganglio mesentérico superior sólo se identificó con certeza en uno, situado en la cara lateral izquierda de la arteria mesentérica superior.",
+   "cites": [
+    "PMID:35484764"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:35484764: 'nine individuals were dissected'; 'only positively identified in one individual and was located on the left lateral aspect of the superior mesenteric artery'. Literal."
+  },
+  {
+   "id": "UBERON:0005479",
+   "sentence": 2,
+   "es": "En ganglios mesentéricos superiores de seis fetos humanos de 35 a 40 semanas se describieron, además de células SIF aisladas y en grupos, nódulos de células SIF encapsulados por tejido conectivo denso.",
+   "cites": [
+    "PMID:7712841"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:7712841: 'six fetuses (35-40 weeks old)... In addition to solitary SIF cells and clusters... SIF-cell nodule... encapsulated by dense connective tissue'."
+  },
+  {
+   "id": "UBERON:0005479",
+   "sentence": 3,
+   "es": "En las neuronas simpáticas del ganglio mesentérico superior humano, la autofluorescencia del lipopigmento aumenta de forma lineal con la edad.",
+   "cites": [
+    "PMID:3821191"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:3821191: 'similar linear increases were found also in superior mesenteric ganglion' (neuronas simpáticas humanas)."
+  },
+  {
+   "id": "UBERON:0008455",
+   "sentence": 1,
+   "es": "En 11 especímenes se observó siempre un puente de tejido conectivo entre este músculo y la duramadre espinal dorsal, a la altura de la unión atlantooccipital.",
+   "cites": [
+    "PMID:8610241"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:8610241: '10 embalmed and one fresh... specimens. A connective tissue bridge... dorsal spinal dura at the atlanto-occipital junction was observed in every specimen'."
+  },
+  {
+   "id": "UBERON:0008455",
+   "sentence": 2,
+   "es": "Las fibras de ese puente se orientaban sobre todo en perpendicular a la duramadre, disposición que parece oponerse a su desplazamiento hacia la médula.",
+   "cites": [
+    "PMID:8610241"
+   ],
+   "verdict": "fiel",
+   "copied": true,
+   "aspectOk": true,
+   "note": "PMID:8610241: 'fibers... oriented primarily perpendicular to the dura. This arrangement of fibers appears to resist movement of the dura toward the spinal cord'. Literal."
+  },
+  {
+   "id": "UBERON:0008455",
+   "sentence": 3,
+   "es": "Con plastinación y disección se describieron cuatro tipos de terminación del músculo, que incluyen el espacio atlantooccipital posterior, el arco posterior del atlas y el espacio atlantoaxial posterior.",
+   "cites": [
+    "PMID:25859757"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:25859757: 'P45 plastination... four different terminal region types... including the posterior atlanto-occipital interspace, posterior arch of the atlas and posterior atlanto-axial interspace'. Con 'que incluyen' resuelve bien que el resumen nombre sólo tres. Lo que se describe es la terminación (inserción); 'parts' es aceptable."
+  },
+  {
+   "id": "UBERON:0008455",
+   "sentence": 4,
+   "es": "En un estudio de resonancia con 40 pacientes con migraña episódica y 40 controles, su volumen medio fue de 1,22 cm³ y 1,17 cm³, sin diferencias significativas.",
+   "cites": [
+    "PMID:32460751"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:32460751: '40 episodic migraine patients and 40 controls... 1.22cm3... 1.17cm3 (p = 0.549)'."
+  },
+  {
+   "id": "UBERON:0008455",
+   "sentence": 5,
+   "es": "En 11 mujeres con cefalea tensional crónica, su área transversal fue menor en las que tenían puntos gatillo activos que en las que los tenían latentes.",
+   "cites": [
+    "PMID:18174844"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:18174844: '11 females with CTTH... CSA of the RCPmin was significantly smaller... in the patients with active TrPs... than in patients with latent TrPs'."
+  },
+  {
+   "id": "UBERON:0008455",
+   "sentence": 6,
+   "es": "En cambio, un análisis de 235 resonancias halló mayor hipertrofia del músculo en pacientes con cefalea crónica que en controles.",
+   "cites": [
+    "PMID:27534669"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:27534669: '235 MRI images... headache group showed greater hypertrophy than the control group'."
+  },
+  {
+   "id": "UBERON:0011908",
+   "sentence": 1,
+   "es": "En 87 voluntarios jóvenes estudiados con ecografía, el gastrocnemio lateral mostró medianas de longitud fascicular de 65,8-69,3 mm, ángulo de peneación de 11,9-12,5° y grosor de 15,9-16,9 mm.",
+   "cites": [
+    "PMID:34587209"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:34587209: '87 volunteers... 22±9 years'; GL: 'FL 65.8-69.3 mm, θ 11.9-12.5°, thickness 15.9-16.9 mm'. Cifras de GL bien asignadas."
+  },
+  {
+   "id": "UBERON:0011908",
+   "sentence": 2,
+   "es": "Durante la marcha normal, la estimulación del nervio tibial de un lado facilitó de forma precoz el gastrocnemio lateral del lado opuesto, y esa respuesta se invirtió al caminar con las piernas en direcciones contrarias.",
+   "cites": [
+    "PMID:23427302"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:23427302: 'Early crossed facilitations were observed in the contralateral GL after TN stimulation during NW, and a reversal... during HW (legs walking in opposite directions)'."
+  },
+  {
+   "id": "UBERON:0011908",
+   "sentence": 3,
+   "es": "Ante inversiones bruscas del tobillo repetidas al caminar, la respuesta tardía terminó reclutando sobre todo a los peroneos y, en menor grado, al gastrocnemio lateral.",
+   "cites": [
+    "PMID:17715190"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:17715190: 'The last trials showed only a recruitment of the peroneal muscles and, to a lesser extent, the gastrocnemius lateralis' (LLR)."
+  },
+  {
+   "id": "UBERON:0011908",
+   "sentence": 4,
+   "es": "Las mediciones ecográficas de su arquitectura resultaron fiables, pero su cambio mínimo detectable es amplio, por lo que sirven más para comparar poblaciones que para seguir cambios tras una intervención.",
+   "cites": [
+    "PMID:34587209"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:34587209: 'Although reliable, the relatively large MDC suggest... more likely to be useful to detect differences between populations than to detect changes... following interventions'."
+  },
+  {
+   "id": "UBERON:0011908",
+   "sentence": 5,
+   "es": "En la resonancia de 37 pacientes con miopatía dominante por ACTN2, la conservación del gastrocnemio lateral figuró entre los rasgos que distinguían esa enfermedad.",
+   "cites": [
+    "PMID:39812845"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:39812845: '37 patients... most differentiating features... preservation of the quadratus femoris, gastrocnemius lateralis, and tensor fasciae latae'."
+  },
+  {
+   "id": "UBERON:0015350",
+   "sentence": 1,
+   "es": "En 200 extremidades de 100 fetos humanos de 18 a 34 semanas se observó una arteria safena entre el 4,5.º y el 7.º mes de vida fetal, con tres variantes, que comenzaba a atrofiarse en el séptimo mes.",
+   "cites": [
+    "PMID:3454959"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:3454959: 'Two hundred extremities of one hundred human fetuses aged from 18 to 34 weeks... saphenous artery between the 4.5 and 7 month... three variations... began to atrophy in the 7 month'. Cifras correctas; la notación '4,5.º' es tipográficamente torpe ('entre los meses 4,5 y 7')."
+  },
+  {
+   "id": "UBERON:0015350",
+   "sentence": 2,
+   "es": "En seis pacientes con defectos de partes blandas de la región tibial, los modelos tridimensionales obtenidos de la angiotomografía mostraron el tronco y las ramas de la arteria safena en concordancia con los hallazgos quirúrgicos.",
+   "cites": [
+    "PMID:27973959"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:27973959: 'six cases of soft-tissue defects of the tibia region... CT angiography... main trunk and branched of the blood vessels in the designed flap were consistent with the surgical findings'."
+  },
+  {
+   "id": "UBERON:0015350",
+   "sentence": 3,
+   "es": "En 56 pacientes ancianos con quemaduras profundas de rodilla reparadas con colgajos perforantes de la arteria genicular descendente y la arteria safena, sobrevivieron todos los colgajos.",
+   "cites": [
+    "PMID:30170449"
+   ],
+   "verdict": "fiel",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:30170449: '56 elderly patients... knee third-degree burn wounds... descending genicular artery-saphenous artery perforator flaps... All flaps survived'. Matiz: es un colgajo perforante del eje genicular descendente-safena, no de dos arterias distintas, como sugiere la 'y'."
+  },
+  {
+   "id": "UBERON:0038953",
+   "sentence": 1,
+   "es": "Se ha descrito un ganglio retropilórico con una inclusión de epitelio escamoso, hallazgo invocado para explicar el origen de los quistes linfoepiteliales del páncreas.",
+   "cites": [
+    "PMID:1717361"
+   ],
+   "verdict": "parcial",
+   "copied": false,
+   "aspectOk": true,
+   "note": "PMID:1717361: 'We recently found a retropyloric lymph node with a squamous epithelial inclusion, which might support this hypothesis regarding the histogenesis of the cyst'. 'invocado para explicar' sobrestima: el resumen dice que podría apoyar una hipótesis (inclusión epitelial en ganglio peripancreático más metaplasia escamosa), no que explique el origen."
+  }
+ ],
+ "summary": {
+  "sentences": 65,
+  "fiel": 58,
+  "parcial": 7,
+  "infiel": 0,
+  "copied": 17,
+  "aspectWrong": 1
+ }
+}

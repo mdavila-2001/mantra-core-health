@@ -1,0 +1,111 @@
+{
+  "UBERON:0001350": {
+    "sentences": [
+      { "aspect": "parts", "es": "Tres de cada cuatro cóccix adultos (76 %) tenían cuatro segmentos en una revisión retrospectiva de 112 tomografías.", "cites": ["PMID:23192732"] },
+      { "aspect": "parts", "es": "En esa serie tomográfica la longitud curva rondó los 4 cm: 4,4 ± 0,8 cm de media en los hombres y 4,0 ± 0,8 cm en las mujeres.", "cites": ["PMID:23192732"] },
+      { "aspect": "parts", "es": "La configuración predominante (68 %) en las radiografías laterales de 120 personas sin síntomas fue la de tipo I, con una curva anterior leve.", "cites": ["PMID:6226668"] },
+      { "aspect": "function", "es": "Músculos, ligamentos y tendones de distinto tipo toman inserción en el cóccix.", "cites": ["PMID:24688338"] },
+      { "aspect": "function", "es": "Al estar sentado, el peso del cuerpo descansa sobre un trípode que forman el cóccix y las dos tuberosidades isquiáticas.", "cites": ["PMID:24688338"] },
+      { "aspect": "clinical", "es": "La pelvimetría de 132 mujeres de una colección esquelética mostró que, cuando el cóccix estaba fusionado al sacro, el diámetro sagital posterior del estrecho inferior era más corto que sin esa fusión.", "cites": ["PMID:21541925"] }
+    ]
+  },
+  "UBERON:0001468": {
+    "sentences": [
+      { "aspect": "parts", "es": "De todas las uniones de la columna, solo la cigapofisaria (facetaria) es una articulación sinovial.", "cites": ["PMID:21360583"] },
+      { "aspect": "function", "es": "Con radiografía estereoscópica dinámica durante el levantamiento de una carga, ocho varones sin síntomas movieron a la vez todos los segmentos entre L2 y S1, y el que menos contribuyó fue L5-S1.", "cites": ["PMID:24149991"] },
+      { "aspect": "function", "es": "Todos los segmentos mostraron además traslaciones anteroposteriores considerables en ese grupo, de 5,0 ± 0,3 mm.", "cites": ["PMID:24149991"] },
+      { "aspect": "clinical", "es": "Según ensayos mecánicos en 30 columnas de cadáver (mediana de edad, 68 años), los desgarros del disco se reflejaron en cambios de la rigidez intervertebral en flexión, extensión y torsión; la rigidez en extensión tendió a crecer con su gravedad.", "cites": ["PMID:11145814"] },
+      { "aspect": "clinical", "es": "El nivel L4/5 concentró la degeneración facetaria más intensa en una muestra de donantes de órganos, en la que ese deterioro era habitual y aparecía ya a los 15 años, incluso con el disco todavía íntegro.", "cites": ["PMID:21360583"] },
+      { "aspect": "clinical", "es": "Con especificidad del 100 % pero baja sensibilidad (del 8 % al 15 %), la hiperseñal intradiscal en T1, el puenteo de las esquinas vertebrales y la anquilosis transdiscal apuntaron a espondiloartritis axial en una comparación retrospectiva de resonancias de 100 pacientes y 100 controles.", "cites": ["PMID:30527307"] }
+    ]
+  },
+  "UBERON:0002240": {
+    "sentences": [
+      { "aspect": "situation", "es": "Por arriba continúa al bulbo raquídeo y por abajo llega hasta el borde inferior de L1.", "cites": ["PMID:23186894"] },
+      { "aspect": "parts", "es": "Sus tractos ascendentes y descendentes, dispuestos con gran orden, transportan señales motoras, sensitivas y autonómicas.", "cites": ["PMID:33522735"] },
+      { "aspect": "function", "es": "Recibe la sensibilidad del tronco y de los miembros y controla sus músculos voluntarios.", "cites": ["PMID:23186894"] },
+      { "aspect": "clinical", "es": "El síndrome de la arteria espinal anterior es el tipo de infarto medular más habitual: debilita ambos lados, por lo general como paraparesia, y altera la sensibilidad espinotalámica mientras respeta la profunda.", "cites": ["PMID:22377894"] },
+      { "aspect": "clinical", "es": "Entre los tumores intramedulares del adulto, ninguno es más frecuente que el ependimoma.", "cites": ["PMID:42264664"] },
+      { "aspect": "clinical", "es": "El estudio Global Burden of Disease estimó unas 0,93 millones de lesiones medulares traumáticas nuevas en el mundo en 2016; en la mayoría de las regiones, las caídas y los siniestros viales fueron las causas principales.", "cites": ["PMID:30497965"] }
+    ]
+  },
+  "UBERON:0002252": {
+    "sentences": [
+      { "aspect": "parts", "es": "Frente al vasto lateral (39,7 %), el esplenio de la cabeza tuvo una mayor proporción de fibras de tipo 1 (51,2 %) en autopsias de 13 varones jóvenes.", "cites": ["PMID:39340391"] },
+      { "aspect": "parts", "es": "Sus fibras también eran más finas en esas muestras: 35,5-40,9 μm de diámetro, contra 47-56,1 μm en el vasto lateral.", "cites": ["PMID:39340391"] },
+      { "aspect": "parts", "es": "La ecografía de diez mujeres diestras de 19 a 29 años mostró un área de sección transversal del esplenio de la cabeza mayor en el lado dominante.", "cites": ["PMID:8915268"] },
+      { "aspect": "innervation", "es": "Con tinción de Sihler en diez piezas, la arborización nerviosa del esplenio de la cabeza nacía en su punto medio y se distribuía de forma pareja tanto hacia el origen como hacia la inserción.", "cites": ["PMID:31894602"] },
+      { "aspect": "innervation", "es": "En el esplenio del cuello, en cambio, los nervios seguían un trayecto vertical y la inervación motora ocupaba aproximadamente el tramo entre el 30 % y el 70 % de la longitud origen-inserción.", "cites": ["PMID:31894602"] },
+      { "aspect": "clinical", "es": "Para extraer la arteria occipital con vistas a un puente quirúrgico, el cruce entre el esternocleidomastoideo y el esplenio de la cabeza sirve de referencia para reconocer su segmento con mayor riesgo de lesión.", "cites": ["PMID:34673238"] }
+    ]
+  },
+  "UBERON:0002291": {
+    "sentences": [
+      { "aspect": "parts", "es": "Las células ependimarias que tapizan los ventrículos cerebrales recubren también este conducto.", "cites": ["PMID:11785014"] },
+      { "aspect": "parts", "es": "Se lo tiene habitualmente por un vestigio que, tras el nacimiento, se cierra en el 70-80 % de las personas.", "cites": ["PMID:8151352"] },
+      { "aspect": "clinical", "es": "La estenosis del conducto se volvió más frecuente con la edad en la histología de autopsia de 232 personas (de 6 semanas de gestación a 92 años): faltó en los 60 fetos y estuvo en los 27 adultos de 65 años o más.", "cites": ["PMID:8151352"] },
+      { "aspect": "clinical", "es": "Los segmentos torácicos fueron los más afectados por esa estenosis.", "cites": ["PMID:8151352"] },
+      { "aspect": "clinical", "es": "Al microscopio, la estenosis mostraba un epitelio ependimario desorganizado, rosetas o microconductos ependimarios y gliosis intracanalicular.", "cites": ["PMID:8151352"] },
+      { "aspect": "clinical", "es": "De 12 tumores dermoides espinales rotos estudiados por resonancia, 10 se abrieron únicamente al conducto central; las gotas de lípidos liberadas eran hiperintensas en T1.", "cites": ["PMID:23240791"] }
+    ]
+  },
+  "UBERON:0003690": {
+    "sentences": [
+      { "aspect": "relations", "es": "Según una revisión radioanatómica, el encuentro de la columna lumbar, móvil, con el sacro, fusionado e inmóvil, predispone a la unión lumbosacra a una degeneración precoz.", "cites": ["PMID:11221507"] },
+      { "aspect": "clinical", "es": "Dieciséis de 373 sacros inuit de Alaska y Canadá presentaban espondilólisis de S1, que los autores atribuyeron a fracturas por estrés ocurridas cuando S1 aún no se había fusionado con S2.", "cites": ["PMID:8922182"] }
+    ]
+  },
+  "UBERON:0004617": {
+    "sentences": [
+      { "aspect": "relations", "es": "Solo en el 1,4 % de los casos, en la disección de 102 hemitórax de 51 cadáveres adultos, el músculo subcostal llegaba a fijarse en el cuerpo de L1.", "cites": ["PMID:26384842"] }
+    ]
+  },
+  "UBERON:0004618": {
+    "sentences": [
+      { "aspect": "clinical", "es": "Se habla de síndrome de médula anclada cuando, superado el período neonatal, el cono medular queda por debajo de esta vértebra.", "cites": ["PMID:2588801"] }
+    ]
+  },
+  "UBERON:0004619": { "sentences": [] },
+  "UBERON:0004620": { "sentences": [] },
+  "UBERON:0004621": {
+    "sentences": [
+      { "aspect": "clinical", "es": "Un año después de la radioterapia pélvica, la densidad mineral ósea de L5, situada dentro del campo irradiado, había disminuido en 46 pacientes con cáncer de cuello uterino: de 0,825 a 0,746 g/cm² en el grupo posmenopáusico y de 0,910 a 0,841 g/cm² en el premenopáusico.", "cites": ["PMID:24139516"] }
+    ]
+  },
+  "UBERON:0004626": { "sentences": [] },
+  "UBERON:0004627": { "sentences": [] },
+  "UBERON:0004629": { "sentences": [] },
+  "UBERON:0004632": { "sentences": [] },
+  "UBERON:0004633": { "sentences": [] },
+  "UBERON:0004634": { "sentences": [] },
+  "UBERON:0004635": { "sentences": [] },
+  "UBERON:0004636": { "sentences": [] },
+  "UBERON:0008544": {
+    "sentences": [
+      { "aspect": "innervation", "es": "La tinción de Sihler de diez piezas mostró que los nervios del esplenio del cuello lo recorrían en vertical, de la inserción al origen.", "cites": ["PMID:31894602"] },
+      { "aspect": "innervation", "es": "Si la longitud del músculo se expresa de 0 % a 100 %, las neuronas motoras entraban en él aproximadamente entre el 30 % y el 70 %.", "cites": ["PMID:31894602"] },
+      { "aspect": "clinical", "es": "Para guiar por ecografía una inyección en este músculo, un estudio en cadáveres y en un voluntario sano propuso como referencias, al parecer fiables, las apófisis espinosas de C4-C5 y el vientre del elevador de la escápula.", "cites": ["PMID:33459837"] },
+      { "aspect": "clinical", "es": "Un caso publicado describe una fascitis nodular originada en este músculo; aunque la lesión es benigna, puede invadir localmente el músculo vecino.", "cites": ["PMID:9206480"] }
+    ]
+  },
+  "UBERON:0010270": {
+    "sentences": [
+      { "aspect": "situation", "es": "El filum terminal tiene una porción intradural, el filum interno, y otra extradural, que es el filum terminal externo.", "cites": ["PMID:16370304", "PMID:40201577"] },
+      { "aspect": "situation", "es": "Según la disección de 38 cadáveres embalsamados, su unión con el saco dural se localizaba sobre todo en el tercio superior de S2 (39,3 %) y su inserción distal en la primera vértebra coccígea (67,8 %).", "cites": ["PMID:40201577"] },
+      { "aspect": "parts", "es": "En esos cadáveres medía en promedio 106,64 mm (± 12,21) y su forma solía ser aplanada (64,3 %).", "cites": ["PMID:40201577"] },
+      { "aspect": "parts", "es": "Buscando el origen de los raros ependimomas intrasacros, la histología de 15 cadáveres adultos no halló acúmulos ependimarios ni gliales en esta estructura, pero sí células musculares lisas además de tejido adiposo, nervioso, óseo y cartilaginoso.", "cites": ["PMID:16370304"] },
+      { "aspect": "relations", "es": "La tracción del filum externo en cinco cadáveres frescos apenas movió el interno (1,33 mm de media) y no desplazó en sentido craneal el cono medular ni la cola de caballo.", "cites": ["PMID:29797063"] },
+      { "aspect": "clinical", "es": "Por el hiato sacro, un endoscopio rígido permitió en cuatro cadáveres localizar y cortar esta estructura en el extremo distal del saco tecal, a nivel de S2.", "cites": ["PMID:18636050"] }
+    ]
+  },
+  "UBERON:8600066": {
+    "sentences": [
+      { "aspect": "situation", "es": "Los niveles torácicos bajos y lumbares altos se caracterizaban por una gran vena basivertebral nacida en el espacio epidural anterior, según cortes por criomicrotomía de 26 adultos.", "cites": ["PMID:8895998"] },
+      { "aspect": "function", "es": "En un modelo de elementos finitos de L4, la compresión uniforme redujo como máximo un 1,54 % la sección de la vena basivertebral, variación que, según los autores, podría desencadenar flujo retrógrado desde el sistema venoso epidural.", "cites": ["PMID:17192194"] },
+      { "aspect": "clinical", "es": "Además del plexo venoso presacro, la lesión de las venas basivertebrales sacras puede causar durante la proctectomía una hemorragia presacra grave y a veces mortal.", "cites": ["PMID:3896196"] },
+      { "aspect": "clinical", "es": "Cuando una fístula entre el líquido cefalorraquídeo y una vena drena centralmente hacia el plexo venoso vertebral interno, la vena basivertebral hiperdensa sería el signo de imagen que conviene buscar.", "cites": ["PMID:35106631"] },
+      { "aspect": "clinical", "es": "Medir la viscosidad del cemento antes de inyectarlo redujo la fuga hacia la vena basivertebral del 11,1 % al 6,6 % en 111 vértebras con fractura osteoporótica tratadas con vertebroplastia, frente a un grupo histórico.", "cites": ["PMID:22143046"] },
+      { "aspect": "clinical", "es": "Entre 12 pacientes pediátricos o jóvenes con sospecha de metástasis espinal, la vena basivertebral estaba obliterada en las 9 metástasis confirmadas y en ninguna de las 3 lesiones indolentes que las imitaban.", "cites": ["PMID:35110660"] }
+    ]
+  }
+}

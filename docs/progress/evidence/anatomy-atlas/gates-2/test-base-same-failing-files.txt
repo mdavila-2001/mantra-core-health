@@ -1,0 +1,26 @@
+origin/mockup 037e84659 — mismos 7 archivos que fallan en la rama
+❯ Building...
+ ❯  mantra-core-health  src/app/app.routes.spec.ts (62 tests | 1 failed) 7292ms
+     × cada dirección vieja redirige a una ruta que existe 21ms
+ ❯  mantra-core-health  src/app/shared/components/organisms/body-map/body-map.spec.ts (35 tests | 2 failed) 727ms
+     × al cambiar de vista dibuja la copia en memoria, sin volver a pedirla 20ms
+     × libera las copias en memoria al destruirse 15ms
+ ❯  mantra-core-health  src/app/features/messaging/messaging.spec.ts (10 tests | 1 failed) 413ms
+     × no borra la bandeja cuando un tic falla 50ms
+ ❯  mantra-core-health  src/app/core/mock/faker/faker.spec.ts (14 tests | 1 failed) 25ms
+       × cada ocupación y cada municipio de cada paciente existen 4ms
+ ❯  mantra-core-health  src/app/core/mock/fixtures/fichas-estandar.spec.ts (9 tests | 1 failed) 200ms
+     × son tantas como los JSON que siembra el backend 114ms
+ ❯  mantra-core-health  src/app/features/design-system-sample/design-system-sample.spec.ts (6 tests | 1 failed) 2705ms
+     × el selector de tema sigue expuesto: es la única UI del ThemeService 307ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ src/app/app.routes.spec.ts:253:42
+ ❯ src/app/features/design-system-sample/design-system-sample.spec.ts:112:47
+ ❯ src/app/features/messaging/messaging.spec.ts:306:21
+ ❯ src/app/core/mock/faker/faker.spec.ts:70:21
+ ❯ fichasDelBackend src/app/core/mock/fixtures/fichas-estandar.spec.ts:40:12
+ ❯ src/app/core/mock/fixtures/fichas-estandar.spec.ts:50:41
+ ❯ src/app/shared/components/organisms/body-map/body-map.spec.ts:511:40
+ ❯ src/app/shared/components/organisms/body-map/body-map.spec.ts:519:21
+ Test Files  6 failed | 1 passed (7)
+      Tests  7 failed | 133 passed (140)

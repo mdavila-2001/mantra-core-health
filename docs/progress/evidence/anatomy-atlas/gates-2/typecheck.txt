@@ -1,0 +1,8 @@
+commit 892b9500e — 2026-10-24T23:45:14Z
+✓ src/app/features/component-stock/component-index.generated.ts
+  636 componentes · 3 otros · 383 pantallas · 138 maquetas · 24 atomos · 49 moleculas · 39 organismos
+  207 con algo que mirar
+  relaciones: 2850 template-instantiates · 5 imports-available sin instanciar · 72 type-only · 237 dynamic-loads
+  nivel: 0 declarado · 636 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 636/636 · con escenario 3/636 · verificados visualmente 3/636 · bloqueados 88/636 · montó e interactuó: se miden en el banco (runtime)
+EXIT=0

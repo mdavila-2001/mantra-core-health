@@ -13,9 +13,9 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map, type Subscription } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink, Scroll } from '@angular/router';
+import { filter, map, type Subscription } from 'rxjs';
 
 import { AnatomyAtlasClient } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
 import type {
@@ -52,9 +52,11 @@ import {
   DEFAULT_LAYERS,
   displayName,
   groupRelations,
+  groupSentences,
   LAYER_LABELS,
   LAYER_ORDER,
   meshesOf,
+  missingAspectsLabel,
   normalizeSearch,
   ontologyUrl,
   partVisibleFor,
@@ -123,6 +125,7 @@ export class GlossaryAnatomyAtlas {
   protected readonly layerLabels = LAYER_LABELS;
   protected readonly displayName = displayName;
   protected readonly ontologyUrl = ontologyUrl;
+  protected readonly missingAspectsLabel = missingAspectsLabel;
   protected readonly modelUrls: Readonly<Record<AnatomyLayer, string>> = {
     skeleton: this.atlas.modelUrl('skeleton.glb'),
     muscles: this.atlas.modelUrl('muscles.glb'),
@@ -134,6 +137,8 @@ export class GlossaryAnatomyAtlas {
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
   protected readonly sex = computed<AnatomySex>(() => (this.query().get('sex') === 'female' ? 'female' : 'male'));
   protected readonly structureId = computed(() => this.query().get('structure'));
+  /** La entrada de la bibliografía a la que llevó una cita [n]; se resalta (`:target` no se entera de la navegación del router). */
+  protected readonly fragment = toSignal(this.route.fragment, { initialValue: this.route.snapshot.fragment });
   /** La malla tocada, para decir de qué lado es. */
   protected readonly meshId = computed(() => this.query().get('mesh'));
 
@@ -186,6 +191,12 @@ export class GlossaryAnatomyAtlas {
   protected readonly relationGroups = computed(() => {
     const ficha = this.structure();
     return ficha === null ? [] : groupRelations(ficha, this.withMesh(), this.inCatalog(), this.drawn());
+  });
+
+  /** Las frases de la descripción extendida, por aspecto y con sus citas numeradas. */
+  protected readonly sentenceGroups = computed(() => {
+    const descripcion = this.structure()?.extendedDescription;
+    return descripcion?.status === 'described' ? groupSentences(descripcion) : [];
   });
 
   /** Las láminas de Netter donde aparece la estructura, sin repetir y en orden. */
@@ -244,6 +255,36 @@ export class GlossaryAnatomyAtlas {
     effect(() => {
       const id = this.structureId();
       untracked(() => this.loadStructure(id));
+    });
+
+    // Una cita [n] lleva a su entrada de la bibliografía. El desplazamiento
+    // del router (`anchorScrolling`) la deja en el borde superior, debajo de
+    // la barra fija, y no le da el foco: se centra y se enfoca acá, después
+    // de que el router termine. El evento `Scroll` sale en cada toque, aunque
+    // el ancla ya estuviera en la URL (tocar dos veces la misma fuente)...
+    // Al volver con «Atrás» a la URL sin ancla, el foco regresa a la cita
+    // desde la que se saltó (si no, quedaba en una entrada fuera de la vista).
+    this.router.events
+      .pipe(
+        filter((e): e is Scroll => e instanceof Scroll),
+        takeUntilDestroyed(),
+      )
+      .subscribe((e) => {
+        const ancla = e.anchor ?? '';
+        if (ancla.startsWith('atlas3d-fuente-')) {
+          setTimeout(() => this.revealSource(ancla), 0);
+        } else if (this.citationOrigin !== null) {
+          const origen = this.citationOrigin;
+          this.citationOrigin = null;
+          setTimeout(() => origen.isConnected && origen.focus({ preventScroll: true }), 0);
+        }
+      });
+    // ...y esto cubre el enlace abierto con el ancla, que llega antes que la ficha.
+    effect(() => {
+      const ancla = this.fragment();
+      const ficha = this.structure();
+      if (ancla === null || ficha === null || !ancla.startsWith('atlas3d-fuente-')) return;
+      untracked(() => setTimeout(() => this.revealSource(ancla), 0));
     });
 
     // La definición del glosario sigue a la ficha abierta.
@@ -314,6 +355,20 @@ export class GlossaryAnatomyAtlas {
     if (panel !== undefined && panel.getBoundingClientRect().top < 0) {
       panel.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
+  }
+
+  /** La cita [n] desde la que se saltó a la bibliografía, para devolverle el foco al volver. */
+  private citationOrigin: HTMLElement | null = null;
+
+  protected rememberCitation(event: Event): void {
+    this.citationOrigin = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+  }
+
+  private revealSource(id: string): void {
+    const entrada = this.panel()?.nativeElement.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+    if (entrada === null || entrada === undefined) return;
+    entrada.scrollIntoView({ block: 'center' });
+    entrada.focus({ preventScroll: true });
   }
 
   private setQuery(params: Record<string, string | null>): void {

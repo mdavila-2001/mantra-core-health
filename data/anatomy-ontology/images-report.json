@@ -1,0 +1,1975 @@
+{
+ "wikidataQuery": "SELECT ?item ?fma ?img WHERE { ?item wdt:P1402 ?fma . ?item wdt:P18 ?img . }",
+ "structuresWithCandidates": 1369,
+ "filesQueried": 1215,
+ "structuresWithImages": 1027,
+ "imagesPublished": 1066,
+ "discarded": [
+  {
+   "id": "UBERON:0000002",
+   "file": "File:Scheme female reproductive system-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000029",
+   "file": "File:Lymphknoten (Schwein).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000029",
+   "file": "File:Normal Lymph Node.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000029",
+   "file": "File:Rabbitlymphnode40x5.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000030",
+   "file": "File:Oral mucosa.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000033",
+   "file": "File:Bald Eagle Head sq.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000043",
+   "file": "File:Achilo sausgyslė.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000045",
+   "file": "File:DRG Chicken e7.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0000062",
+   "file": "File:Equisetum braunii (strobilus), Portland, Oregon.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000124",
+   "file": "File:Esquema d'un nervi.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000165",
+   "file": "File:Mechelen St-Rombouts waterspuwers 33.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000178",
+   "file": "File:Blood Test (15575812743).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000211",
+   "file": "File:Joint.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000316",
+   "file": "File:Cervical mucus1.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000333",
+   "file": "File:Crypt of Lieberkuhn (NIH BioArt 564).svg",
+   "reason": "menciona a Netter o Elsevier"
+  },
+  {
+   "id": "UBERON:0000341",
+   "file": "File:Medical X-Ray imaging EJE04 nevit.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000351",
+   "file": "File:Nuchal ligament.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000358",
+   "file": "File:Inbound2890638149762117997.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000376",
+   "file": "File:Briefs.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000388",
+   "file": "File:Epiglottis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000392",
+   "file": "File:Longissimus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000420",
+   "file": "File:Myoepithelioma - very high mag.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000468",
+   "file": "File:The human body and health - an elementary text-book of essential anatomy, applied physiology and practical hygiene for schools (1908) (14586547287).jpg",
+   "reason": "licencia no admitida: No restrictions"
+  },
+  {
+   "id": "UBERON:0000479",
+   "file": "File:Peripheral nerve, cross section.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0000483",
+   "file": "File:Illu epithelium.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000569",
+   "file": "File:Ileocecal valve.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000711",
+   "file": "File:Musculus splenius capitis marked.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000925",
+   "file": "File:Gastrulation.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000949",
+   "file": "File:Endocrine English.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000951",
+   "file": "File:Rotatores.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000966",
+   "file": "File:Retina1.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000966",
+   "file": "File:SD-OCT Optic Disc Cross-Sections.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000981",
+   "file": "File:Thigh bone - Femur 1 -- Smart-Servier.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000982",
+   "file": "File:Joints 1 -- Smart-Servier.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000991",
+   "file": "File:Ovaries of Cyprinus carpio.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0000996",
+   "file": "File:Labia separated exposing vaginal opening.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001013",
+   "file": "File:Schweinebauch-1.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001017",
+   "file": "File:Central nervous system.svg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001037",
+   "file": "File:Borsten ausgewachsenes Mangalitza-Schwein.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001067",
+   "file": "File:Facet Joints.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001088",
+   "file": "File:Urintest beim Dalmatiner 34.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001089",
+   "file": "File:Dick Tärnström (cropped1).JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001090",
+   "file": "File:Joint Fluid.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001091",
+   "file": "File:Lower wisdom tooth.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001098",
+   "file": "File:Kbg.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001107",
+   "file": "File:Sternohyoid muscle.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001108",
+   "file": "File:Musculi colli omohyoideus.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001121",
+   "file": "File:Longus colli.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001125",
+   "file": "File:Serratus anterior muscle animation small.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001133",
+   "file": "File:Cardiac myocyte showing lipofuscin pigment.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001145",
+   "file": "File:Ovarschaf.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001175",
+   "file": "File:Illu liver gallbladder.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001182",
+   "file": "File:Superior mesenteric a.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001213",
+   "file": "File:Small intestine low mag.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001220",
+   "file": "File:Quadratuslumborum.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001221",
+   "file": "File:Transversus abdominis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001230",
+   "file": "File:Corpuscule-malpighi.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001250",
+   "file": "File:Red Pulp (NIH BioArt 574).svg",
+   "reason": "menciona a Netter o Elsevier"
+  },
+  {
+   "id": "UBERON:0001263",
+   "file": "File:Acinus (Pancreas) (NIH BioArt 568).svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001264",
+   "file": "File:Illu pancrease.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001284",
+   "file": "File:Illu kidney2.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001292",
+   "file": "File:Kidney nephron.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001295",
+   "file": "File:Illu cervix tr.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001300",
+   "file": "File:Male-kangaroo.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001305",
+   "file": "File:Ovaires de chat.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001311",
+   "file": "File:Internal iliac branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001312",
+   "file": "File:Internal iliac branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001314",
+   "file": "File:Internal iliac branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001315",
+   "file": "File:Internal iliac branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001317",
+   "file": "File:Internaliliacv.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001322",
+   "file": "File:Ischiadicus.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001326",
+   "file": "File:Levator ani.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001335",
+   "file": "File:Illu penis.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001338",
+   "file": "File:Urethral Gland.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001339",
+   "file": "File:Ischiocavernosus-female.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001339",
+   "file": "File:Ischiocavernosus-male.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001346",
+   "file": "File:Hymen en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001363",
+   "file": "File:Veine grande saphène (arcade dorsale).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001372",
+   "file": "File:Musculus psoas minor.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001394",
+   "file": "File:Axillary branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001395",
+   "file": "File:Axillary branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001396",
+   "file": "File:Axillary branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001397",
+   "file": "File:Axillary branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001401",
+   "file": "File:Longissimus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001407",
+   "file": "File:Semispinalis dorsi.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001408",
+   "file": "File:Semispinalis dorsi.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001423",
+   "file": "File:Galeazzi Fracture of Distal Radius.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001434",
+   "file": "File:Skeleton 3 -- Smart-Servier.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001456",
+   "file": "File:MonaLisa sfumato.jpeg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001461",
+   "file": "File:Coude fp.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001463",
+   "file": "File:Thumbup.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001477",
+   "file": "File:Infraspinatus muscle animation.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001478",
+   "file": "File:Teres major muscle animation2.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001479",
+   "file": "File:Sesamoid bones of the fingers.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001488",
+   "file": "File:Ankle1.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001504",
+   "file": "File:Lumbricales pedis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001520",
+   "file": "File:Pronator-teres.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001521",
+   "file": "File:Flexor-carpi-radialis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001524",
+   "file": "File:Extensor carpi radialis longus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001525",
+   "file": "File:ECR-brevis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001535",
+   "file": "File:Vertebral artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001538",
+   "file": "File:Fibular artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001540",
+   "file": "File:Fibular artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001542",
+   "file": "File:Illu lymph chain12.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001562",
+   "file": "File:Digastricus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001563",
+   "file": "File:Longus capitis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001573",
+   "file": "File:Styloglossus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001580",
+   "file": "File:Levator labii superioris.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001581",
+   "file": "File:Depressor labii inferioris.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001603",
+   "file": "File:Eye movements abductors LR.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001610",
+   "file": "File:Lingual artery.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001612",
+   "file": "File:Facial artery.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001613",
+   "file": "File:Occipital artery.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001616",
+   "file": "File:Maxillary artery.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001618",
+   "file": "File:Buccal artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001628",
+   "file": "File:Circle of Willis en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001630",
+   "file": "File:Skeletal muscle.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001635",
+   "file": "File:CerebellumArteries.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001636",
+   "file": "File:Circle of Willis en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001637",
+   "file": "File:Artery.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001641",
+   "file": "File:Transverse sinus-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001642",
+   "file": "File:Superior sagittal sinus-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001698",
+   "file": "File:Base of skull 12.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001702",
+   "file": "File:Eyelashes.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0001705",
+   "file": "File:Toes.jpg",
+   "reason": "licencia no admitida: Attribution"
+  },
+  {
+   "id": "UBERON:0001711",
+   "file": "File:Greater rhea eyelid.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001716",
+   "file": "File:06-06-06palataltori.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001718",
+   "file": "File:Nerbio trigeminoaren nukleoak.tif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001734",
+   "file": "File:Swollen Uvula.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001760",
+   "file": "File:Sinus frontalis in red.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001783",
+   "file": "File:Optic disc detail.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001821",
+   "file": "File:Hair follicle-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001825",
+   "file": "File:Senos paranasales - frontal.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001840",
+   "file": "File:Interior of the Left Labyrinth of the Ear in An academic physiology and hygiene (1903).jpg",
+   "reason": "licencia no admitida: No restrictions"
+  },
+  {
+   "id": "UBERON:0001844",
+   "file": "File:Cochlea-crosssection.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001847",
+   "file": "File:TattooedAttachedEarlobe.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001913",
+   "file": "File:Glass of Milk (33657535532).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001914",
+   "file": "File:Bovine colostrum and spray-dried colostrum powder.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001959",
+   "file": "File:White Pulp (NIH BioArt 575).svg",
+   "reason": "menciona a Netter o Elsevier"
+  },
+  {
+   "id": "UBERON:0001969",
+   "file": "File:FreshFrozenPlasma.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001980",
+   "file": "File:Artères précapillaires ou artérioles.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001982",
+   "file": "File:2101 Blood Flow Through the Heart.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001983",
+   "file": "File:Crypt of Lieberkuhn (NIH BioArt 564).svg",
+   "reason": "menciona a Netter o Elsevier"
+  },
+  {
+   "id": "UBERON:0001988",
+   "file": "File:Łajno końskie 400.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001993",
+   "file": "File:Epidermis, papillary dermis and reticular dermis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0001994",
+   "file": "File:Hypertrophic Zone of Epiphyseal Plate.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002012",
+   "file": "File:Alveoli diagram.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002032",
+   "file": "File:Breasts with large areolas.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002033",
+   "file": "File:Base of Pilosebaceous Unit 10x.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002038",
+   "file": "File:Substantia nigra.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002060",
+   "file": "File:Femoral-artery-grays-illustrations.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002073",
+   "file": "File:Hair follicle-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002075",
+   "file": "File:Cut rat 2.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002095",
+   "file": "File:Mesentery extending from the duodenojejunal flexure to the ileocecal junction. (with label).png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002107",
+   "file": "File:Leber Schaf.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002115",
+   "file": "File:Dogjejunum100x.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002116",
+   "file": "File:Illu small intestine.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002120",
+   "file": "File:Zebrafish pronephros.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002165",
+   "file": "File:Blausen 0470 HeartWall.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002167",
+   "file": "File:Illu quiz lung01.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002207",
+   "file": "File:Xiphoid process - close-up - animation.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002217",
+   "file": "File:Illu synovial joint.es.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002227",
+   "file": "File:Auditory system - Organ of Corti -- Smart-Servier.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002251",
+   "file": "File:Iliostalis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002252",
+   "file": "File:Musculus splenius capitis et cervicis marked.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002280",
+   "file": "File:Argyrosomus regius Otolith.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002280",
+   "file": "File:Gadus morhua Otolith.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002280",
+   "file": "File:Sebastes mentella-otolithes.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002297",
+   "file": "File:OhrenSchmalzBrocken.jpg",
+   "reason": "licencia no admitida: Attribution"
+  },
+  {
+   "id": "UBERON:0002297",
+   "file": "File:Earwax on swab.jpg",
+   "reason": "licencia no admitida: GFDL 1.2"
+  },
+  {
+   "id": "UBERON:0002297",
+   "file": "File:Ear Wax.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002297",
+   "file": "File:BouchonCerumen.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002306",
+   "file": "File:Face detail, Tibetan Sampho Tsewang Rigzin tortured by \"struggle session\" in Tibet during Communist China's Cultural Revolution (cropped).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002323",
+   "file": "File:Blastulation.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002335",
+   "file": "File:Renal corpuscle-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002348",
+   "file": "File:3D still showing the pericardium layer.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002349",
+   "file": "File:2004 Heart Wall.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002353",
+   "file": "File:Bundleofhis.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002363",
+   "file": "File:Meninges-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002368",
+   "file": "File:Illu endocrine system.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002369",
+   "file": "File:Adrenal glands.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002380",
+   "file": "File:Trapezius animation small2.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002381",
+   "file": "File:Pectoralis major.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002382",
+   "file": "File:Rectus abdominis.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002387",
+   "file": "File:Foot.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002394",
+   "file": "File:Laprascopy-Roentgen.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002404",
+   "file": "File:Transversus thoracis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002408",
+   "file": "File:2004 Heart Wall.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002411",
+   "file": "File:Clitoris 3 D - Helen O'Connell.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002412",
+   "file": "File:Vertebra 1 -- Smart-Servier.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002465",
+   "file": "File:Illu lymph capillary de.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002483",
+   "file": "File:Spongy bone - Trabecular bone - Normal trabecular bone Trabecular bone etc -- Smart-Servier.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002483",
+   "file": "File:Spongy bone - Trabecular bone 2 -- Smart-Servier.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002515",
+   "file": "File:607 Periosteum and Endosteum.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002516",
+   "file": "File:Tib fib growth plates.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002523",
+   "file": "File:Blausen 0055 ArteryWallStructure.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002740",
+   "file": "File:MRI posterior cingulate.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0002962",
+   "file": "File:Musculusadductorpollicis.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0002989",
+   "file": "File:Musculusanconeus2.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003100",
+   "file": "File:Nude woman along a river.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003101",
+   "file": "File:Salar de Uyuni tourist.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003234",
+   "file": "File:Extensor pollicis longus muscle.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003467",
+   "file": "File:Fabella with arrow.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003622",
+   "file": "File:Wijsvinger.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003623",
+   "file": "File:Middle finger.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003624",
+   "file": "File:Ringvinger.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003625",
+   "file": "File:Little finger.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003667",
+   "file": "File:Mandibular first molars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0003667",
+   "file": "File:Mandibular second molars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0003667",
+   "file": "File:Mandibular third molars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0003672",
+   "file": "File:Dentition.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003690",
+   "file": "File:Sacrum (PSF).png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003706",
+   "file": "File:Vocal Folds.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003709",
+   "file": "File:Circle of Willis en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003710",
+   "file": "File:Cystic medial degeneration - movat - intermed mag.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003712",
+   "file": "File:Cavernous sinus-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003718",
+   "file": "File:Muscle spindle model.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003719",
+   "file": "File:Pacinian corpuscle H&E.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003729",
+   "file": "File:Oral mucosa.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0003891",
+   "file": "File:Prostatehistology.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004014",
+   "file": "File:Малые половые губы.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004014",
+   "file": "File:BigLabiaps.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004085",
+   "file": "File:Vagin détaillée.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004339",
+   "file": "File:Calvaria Sangiran II (D).jpeg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004535",
+   "file": "File:Blutkreislauf.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0004590",
+   "file": "File:Ileocaecal sphincter.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004602",
+   "file": "File:Second rib animation2.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004612",
+   "file": "File:C3 lateral.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004613",
+   "file": "File:C4 lateral.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004614",
+   "file": "File:C5 lateral.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004646",
+   "file": "File:Infraorbital artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004681",
+   "file": "File:Vestibular balance system.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004726",
+   "file": "File:Kidney nephron.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0004754",
+   "file": "File:Foramen ovale.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0004760",
+   "file": "File:Anal gland abscess.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0005090",
+   "file": "File:Skeletal muscle.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0005299",
+   "file": "File:Clitoris - adhesion of the praepuce.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0005402",
+   "file": "File:Dog philtrum.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0005404",
+   "file": "File:Sutura frontonasalis 32W - CR seitlich - 001 - Annotation.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0005431",
+   "file": "File:Gray770-vessels.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0005456",
+   "file": "File:Base of skull 18.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0005461",
+   "file": "File:Levator scapulae muscle animation small.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0005467",
+   "file": "File:Platysma.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0005475",
+   "file": "File:Sigmoid sinus-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006499",
+   "file": "File:Interóseo dorsal tercero del pie.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006558",
+   "file": "File:Illu lymph capillary de.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006614",
+   "file": "File:Lumbar aponeurosis.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006644",
+   "file": "File:MRI of ruptured tunica albuginea.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006654",
+   "file": "File:Perineal body.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006688",
+   "file": "File:Caruncula sublingualis.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006690",
+   "file": "File:Clitoral body, internal anatomy.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006718",
+   "file": "File:Musculuspterygoideusmedialis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006764",
+   "file": "File:Circle of Willis en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006767",
+   "file": "File:Femur head.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006806",
+   "file": "File:Medial epicondyle of the humerus.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006807",
+   "file": "File:Lateral epicondyle of the humerus.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006915",
+   "file": "File:Epithelial Tissues Stratified Squamous Epithelium (40230838950).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0006915",
+   "file": "File:Stratified Squamos Epithelium.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0007116",
+   "file": "File:Deciduous teeth names.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0007146",
+   "file": "File:Gray770-vessels.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0007149",
+   "file": "File:Thyrocervical trunk.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0007239",
+   "file": "File:Blausen 0055 ArteryWallStructure.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0007602",
+   "file": "File:Stratified colunar epithelium.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0007603",
+   "file": "File:Stratified cuboidal epithelium.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008266",
+   "file": "File:Periodontium.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008322",
+   "file": "File:Clitoral body, internal anatomy.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008323",
+   "file": "File:Clitoral body, internal anatomy.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008330",
+   "file": "File:Scheidenvorhof.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008446",
+   "file": "File:Musculus flexor pollicis longus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008454",
+   "file": "File:Rectus capitis posterior major muscle animation small.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008455",
+   "file": "File:Rectus capitis posterior minor muscle animation small.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008464",
+   "file": "File:Abductor hallucis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008488",
+   "file": "File:Musculus cremaster.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008521",
+   "file": "File:Gluteus minimus muscle - animation01.gif",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008572",
+   "file": "File:Musculuscricoarytenoideusposterior.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008573",
+   "file": "File:Musculuscricoarytenoideuslateralis.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008574",
+   "file": "File:Musculusarytenoideus.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008575",
+   "file": "File:Musculusarytenoideus.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008576",
+   "file": "File:Musculusthyreoarytenoideus.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008583",
+   "file": "File:Musculustransversuslinguae.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008588",
+   "file": "File:Procerus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008589",
+   "file": "File:Musculusdepressorseptinasi.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008592",
+   "file": "File:Musculuslevatorlabiisuperiorisalaequenasi.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008593",
+   "file": "File:Sobo 1909 260 - Zygomaticus major muscle.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008593",
+   "file": "File:Zygomaticus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008595",
+   "file": "File:Levator anguli oris.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008597",
+   "file": "File:Depressor anguli oris.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008598",
+   "file": "File:Musculusrisorius.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008609",
+   "file": "File:Depressor anguli oris.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008712",
+   "file": "File:Stylohyoideus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008783",
+   "file": "File:Veine grande saphène (arcade dorsale).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008804",
+   "file": "File:Musculusstylopharyngeus.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0008805",
+   "file": "File:Periodontium.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0008878",
+   "file": "File:Myhand.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0009472",
+   "file": "File:Armpit by David Shankbone.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0009567",
+   "file": "File:Toes.jpg",
+   "reason": "licencia no admitida: Attribution"
+  },
+  {
+   "id": "UBERON:0009688",
+   "file": "File:CerebellumArteries.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0009689",
+   "file": "File:CerebellumArteries.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0009859",
+   "file": "File:607 Periosteum and Endosteum.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0010163",
+   "file": "File:Black eyebrow.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0010169",
+   "file": "File:1x1 MG 2796.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0010234",
+   "file": "File:Musculuspalatopharyngeus.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0010250",
+   "file": "File:Middle meningeal artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0010391",
+   "file": "File:The diagnosis and treatment of diseases of women (1907) (14598219697).jpg",
+   "reason": "licencia no admitida: No restrictions"
+  },
+  {
+   "id": "UBERON:0010707",
+   "file": "File:Animals of the past - an account of some of the creatures of the ancient world (1929) (18195389312).jpg",
+   "reason": "licencia no admitida: No restrictions"
+  },
+  {
+   "id": "UBERON:0010709",
+   "file": "File:Legs.jpg",
+   "reason": "licencia no admitida: Attribution"
+  },
+  {
+   "id": "UBERON:0010887",
+   "file": "File:Tragus piercing 2.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0010933",
+   "file": "File:Orbicularis oris.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0010937",
+   "file": "File:Salpingopharyngeus.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0010953",
+   "file": "File:Nasalis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011013",
+   "file": "File:Spinalis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011017",
+   "file": "File:Semispinalis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011022",
+   "file": "File:Musculus flexor hallucis brevis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011158",
+   "file": "File:A2613-Museum Geologi-Fosil Tengkorak.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011158",
+   "file": "File:Aardwolf Skull.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011220",
+   "file": "File:Processusmastoideusossistemporalis.PNG",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0011386",
+   "file": "File:Modiolus (face).PNG",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0011389",
+   "file": "File:Bulbospongiosus-Female.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011389",
+   "file": "File:Bulbospongiosus-Male.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011827",
+   "file": "File:Female nipple profile.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0011895",
+   "file": "File:Illu muscle structure.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011899",
+   "file": "File:Illu muscle structure.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0011900",
+   "file": "File:Illu muscle structure.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0012111",
+   "file": "File:ZahnTrema IMG 6306.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0012317",
+   "file": "File:Labia separated exposing vaginal opening.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0012324",
+   "file": "File:Thyrocervical trunk.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013068",
+   "file": "File:06-06-06palataltori.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013249",
+   "file": "File:Paroopheron-cat-numbered.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013403",
+   "file": "File:Cranium - asterion.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013406",
+   "file": "File:Bregma.PNG",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0013422",
+   "file": "File:Basilar process and palatine process.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013469",
+   "file": "File:Gray 129 - Os Occipital - Surface-externe.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0013492",
+   "file": "File:Prevertebral fascia.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013540",
+   "file": "File:Brodmann area 9 animation small.gif",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013648",
+   "file": "File:Masseteric artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013698",
+   "file": "File:Pubic hair male-female.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013766",
+   "file": "File:Epicanthic KR02.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0013769",
+   "file": "File:Illu female pelvis.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0014379",
+   "file": "File:Musculus adductor hallucis.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0014693",
+   "file": "File:Inferior alveolar artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0014694",
+   "file": "File:Posterior auricular.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0014735",
+   "file": "File:Piriform cortex of a mouse.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0014870",
+   "file": "File:Fissuraorbitalisinferior.PNG",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0015181",
+   "file": "File:The Periodontium.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0015469",
+   "file": "File:Illu lymph chain08.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0015880",
+   "file": "File:Illu lymph chain10.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0015881",
+   "file": "File:Illu reg lns.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0016408",
+   "file": "File:Corona of Glans Penis.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0016410",
+   "file": "File:Alex Baresi.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0016410",
+   "file": "File:Conor Dwyer after 200 free heat (3502581).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0016418",
+   "file": "File:Nasion.PNG",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0016452",
+   "file": "File:Maxillary first premolars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0016452",
+   "file": "File:Maxillary second premolars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0016453",
+   "file": "File:Mandibular second premolars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0016453",
+   "file": "File:Mandibular first premolars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0016490",
+   "file": "File:Biophysical science (1962) (20374669702).jpg",
+   "reason": "licencia no admitida: No restrictions"
+  },
+  {
+   "id": "UBERON:0016492",
+   "file": "File:Base of skull 14.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0016493",
+   "file": "File:Palmaris-longus-horizontal.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0017637",
+   "file": "File:Marginal sinus-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018161",
+   "file": "File:Stapedial Annular Ligament (also Stapediovestibular Joint).jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018377",
+   "file": "File:Зубы мудрости.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018377",
+   "file": "File:Weisheitszähne-1.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018397",
+   "file": "File:Posterior superior alveolar artery.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018413",
+   "file": "File:Canalisnervifacialis.PNG",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0018571",
+   "file": "File:Maxillary first premolar.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018572",
+   "file": "File:Maxillary second premolars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0018573",
+   "file": "File:Mandibular first premolars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0018574",
+   "file": "File:Mandibular second premolars01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0018601",
+   "file": "File:Mandibular central incisors01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0018602",
+   "file": "File:Mandibular lateral incisors01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0018603",
+   "file": "File:Maxillary central incisor.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018604",
+   "file": "File:Maxillary lateral incisor.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0018604",
+   "file": "File:Maxillary lateral incisors01-01-06.png",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0034680",
+   "file": "File:Adam's apple 13.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0034946",
+   "file": "File:Air-160492.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0035041",
+   "file": "File:Deep temporal arteries.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0035106",
+   "file": "File:Mscrotum.JPG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0035204",
+   "file": "File:Illu lymph chain01.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0035258",
+   "file": "File:Mons venus.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0035258",
+   "file": "File:Poolside anterior view of mons pubis.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0035273",
+   "file": "File:Axillary branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0035338",
+   "file": "File:Sphenoparietal sinus-en.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0035775",
+   "file": "File:Musculi coli base, my edits for tringles, labeled triangles, Submandib.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0036014",
+   "file": "File:Horizontal gluteal crease2.jpg",
+   "reason": "sin autor declarado"
+  },
+  {
+   "id": "UBERON:0036523",
+   "file": "File:Scheme female reproductive system-number-full-cropped.svg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0037461",
+   "file": "File:Lanugo.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0039288",
+   "file": "File:Mont de Venus.jpg",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:0039847",
+   "file": "File:Thyrocervical trunk.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:8600062",
+   "file": "File:Subclavius 1st part.png",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:8600078",
+   "file": "File:Ascending pharyngeal.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:8600106",
+   "file": "File:Axillary branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  },
+  {
+   "id": "UBERON:8600107",
+   "file": "File:Axillary branches.PNG",
+   "reason": "no consta que sea anatomía humana"
+  }
+ ],
+ "discardedByReason": {
+  "no consta que sea anatomía humana": 315,
+  "sin autor declarado": 63,
+  "menciona a Netter o Elsevier": 4,
+  "licencia no admitida": 10
+ }
+}

@@ -1,0 +1,21 @@
+corrida sobre el código del commit que agrega este archivo — 2026-10-25T01:53:27Z — contra ng serve recién arrancado (puerto 4200)
+
+Running 14 tests using 1 worker
+
+  ✓   1 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 375-claro (12.5s)
+  ✓   2 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 375-claro (11.1s)
+  ✓   3 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 768-claro (12.2s)
+  ✓   4 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 768-claro (11.1s)
+  ✓   5 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-claro (14.8s)
+  ✓   6 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-claro (15.0s)
+  ✓   7 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-oscuro (22.0s)
+  ✓   8 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-oscuro (22.9s)
+  ✓   9 [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y abre la del útero (12.1s)
+  ✓  10 [chromium] › playwright/atlas-anatomico-3d.spec.ts:177:5 › se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas (13.4s)
+  ✓  11 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 375-claro (10.5s)
+  ✓  12 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 768-claro (10.8s)
+  ✓  13 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 1440-claro (14.1s)
+  ✓  14 [chromium] › playwright/atlas-anatomico-literatura.spec.ts:57:7 › la ficha muestra descripción citada, imagen y TA2 — 1440-oscuro (16.7s)
+
+  14 passed (3.4m)
+EXIT=0
