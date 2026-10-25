@@ -167,17 +167,17 @@ export class PointerScene {
    * un teléfono se leería como un arrastre que nadie hizo— y se enciende. Un
    * único temporizador, reprogramado en cada toque, lo apaga después.
    */
-  private readonly onTouch = (evento: PointerEvent): void => {
-    if (evento.pointerType === 'mouse') {
+  private readonly onTouch = (event: PointerEvent): void => {
+    if (event.pointerType === 'mouse') {
       return;
     }
-    const caja = this.host.nativeElement.getBoundingClientRect();
-    if (caja.width === 0 || caja.height === 0) {
+    const box = this.host.nativeElement.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) {
       return;
     }
 
-    this.destino.x = acotar((evento.clientX - caja.left) / caja.width);
-    this.destino.y = acotar((evento.clientY - caja.top) / caja.height);
+    this.destino.x = acotar((event.clientX - box.left) / box.width);
+    this.destino.y = acotar((event.clientY - box.top) / box.height);
     this.destino.presencia = 1;
     this.actual.x = this.destino.x;
     this.actual.y = this.destino.y;
