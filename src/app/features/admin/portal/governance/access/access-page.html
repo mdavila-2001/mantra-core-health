@@ -1,0 +1,97 @@
+<app-page-header
+  title="Usuarios y roles"
+  subtitle="Quiénes operan la consola, con qué roles y dónde valen; qué permite cada rol. Asignar o revocar se hace desde la persona, siempre con confirmación."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="access-page" variant="outlined" padding="md" data-testid="portal-access">
+  <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+    <app-tab label="Usuarios">
+      <div class="access-page__section">
+        @if (notice(); as message) {
+          <app-alert tone="success" dismissible (dismissed)="notice.set(null)">{{ message }}</app-alert>
+        }
+        <p class="access-page__note">
+          Quienes tienen un rol de plataforma o un rol de ámbito global. Con un rol elegido, quienes lo tienen en
+          cualquier alcance.
+        </p>
+        <app-filter-bar
+          searchLabel="Buscar personas"
+          searchPlaceholder="Nombre visible"
+          wrap
+          [filters]="filterDefs()"
+          [searchLoading]="users.state().status === 'loading'"
+        />
+        <app-data-table
+          data-testid="portal-internal-users-table"
+          caption="Usuarios internos"
+          [state]="users.state()"
+          [columns]="columns()"
+          [trackBy]="byId"
+          [rowLabel]="rowName"
+          [cursor]="users.cursor()"
+          rowNavigable
+          stackedOnMobile
+          fitContainer
+          (rowActivated)="open($event)"
+          (cursorChanged)="users.move($event)"
+          (retry)="users.reload()"
+        />
+      </div>
+    </app-tab>
+
+    <!-- El contenido proyectado se instancia aunque la pestaña no se dibuje: sin el
+         @if, cada panel pediría sus datos al abrir la pantalla en otra pestaña. -->
+    <app-tab label="Permisos por rol">
+      @if (tabIndex() === 1) {
+        <div class="access-page__section">
+          <app-portal-role-permissions-panel [roleId]="values().role" (roleChanged)="selectRole($event)" />
+        </div>
+      }
+    </app-tab>
+
+    <app-tab label="Catálogo">
+      @if (tabIndex() === 2) {
+        <div class="access-page__section">
+          <app-portal-permission-catalog />
+        </div>
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<app-portal-user-access-drawer
+  [userId]="selectedUser()"
+  [userName]="selectedName()"
+  (closed)="close()"
+  (changed)="changed($event)"
+/>
+
+<ng-template #nameCell let-row>
+  <a
+    app-link
+    [routerLink]="[]"
+    [queryParams]="{ user: row.id }"
+    queryParamsHandling="merge"
+    data-testid="portal-internal-user-link"
+  >
+    {{ row.displayName }}
+  </a>
+</ng-template>
+
+<ng-template #rolesCell let-row>
+  @let codes = roleCodes(row);
+  @if (codes.length === 0) {
+    <span class="access-page__secondary">Sin roles activos</span>
+  } @else {
+    <span class="access-page__roles">
+      @for (code of codes; track code) {
+        <app-badge size="sm" variant="secondary">{{ code }}</app-badge>
+      }
+    </span>
+  }
+</ng-template>
+
+<ng-template #loginCell let-row>
+  <span class="access-page__secondary">{{ row.lastLoginAt ? when(row.lastLoginAt) : 'Nunca ingresó' }}</span>
+</ng-template>
