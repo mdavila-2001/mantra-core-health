@@ -48,4 +48,19 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   'POST /tenants/:tenantId/branches': BRANCH_SIMULATOR_EXTENSIONS,
   // P63 · motivo de la objeción del paciente en la disputa del reclamo (REQ-16-032).
   'POST /insurance-claims/:id/disputes': CLAIM_DISPUTE_SIMULATOR_EXTENSIONS,
+  // Centros médicos. A diferencia de las entradas de arriba, estas claves NO
+  // son funciones pendientes de backend: son campos que el contrato de la API
+  // agrega a DTO que ya existen, y que el contrato generado de esta rama
+  // todavía no trae (se regenera desde el OpenAPI en `dev` y `test`). Por eso
+  // la lista vive acá y el cliente las manda siempre.
+  // Catálogo por sede: el precio sale del ítem de catálogo.
+  'POST /practices/:practiceId/healthcare-services': ['serviceCatalogId'],
+  // Solicitud de afiliación por procedimiento, una por llamada.
+  'POST /practices/:practiceId/role-assignments/self-request': ['healthcareServiceId'],
+  // Quién ejecuta la orden: el modo, el médico (si la hace él) y la sede sugerida.
+  'POST /clinical/service-requests': [
+    'performerSelectionConceptId',
+    'performerPractitionerProfileId',
+    'suggestedPracticeSiteId',
+  ],
 };
