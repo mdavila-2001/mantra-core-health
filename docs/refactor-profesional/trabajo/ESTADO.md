@@ -14,12 +14,9 @@ lee lo mismo **sin importes**; la ficha monta el panel solo al abrir su pestaña
 `?seccion=recetas` sigue abriendo Recetas. **No se verificó** contra la API real (solo el simulador), ni con otros
 roles, ni en otros navegadores, ni el PDF descargado visto abierto (sus bloques se prueban por unidad).
 
-**Gates** (2026-10-25): `tsc -p tsconfig.app.json` 0 · `eslint --max-warnings=0` sobre lo tocado 0 · pruebas en
-grupos por carpeta (la suite entera junta aborta en el entorno por un fallo de esbuild): 11.776 pasan y 6 fallan
-igual sobre la base sin este cambio (`billing` maqueta/API real, `patient-list` ×2, `received-claims`,
-`pharmacy-inbox`, `design-system-sample`). `check-api-contract-drift` y `check-doc-coverage` ya no nombran este
-cambio; el resto de sus hallazgos ya estaba. `check-max-lines`: los archivos con techo que se tocaron
-(`medical-record.ts`, `patient-chart.ts`, `patient-chart.html`) no crecen.
+**Gates** (2026-10-25, sobre `test`): `tsc -p tsconfig.app.json` sin errores nuevos (44, todos en
+`component-index.generated.ts` y ya presentes en la base: 45) · `eslint --max-warnings=0` sobre lo tocado 0 · 198
+pruebas dirigidas de las 8 specs tocadas pasan. No se corrió la suite entera ni los `check-*.mjs`.
 
 ---
 
