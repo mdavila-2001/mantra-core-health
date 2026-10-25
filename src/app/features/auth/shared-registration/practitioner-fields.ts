@@ -111,6 +111,11 @@ export function practitionerFields(
         key: 'name',
         label: '',
         control: 'custom',
+        // Obligatorio como en el alta, que lo exige en su `FormControl` y lo
+        // marca en la plantilla («Primer nombre *»). Con rótulo vacío el motor
+        // no dibuja asterisco acá; lo declara para quien lee la definición: el
+        // editor del perfil marca y exige el nombre con este dato (CORR-08).
+        required: true,
         mensajeDeError: 'Ingrese su nombre.',
       },
       {
