@@ -32,6 +32,8 @@ import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, patientById, professionalBy
 import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
+import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
+import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
 
 /* ============================================================================
     Diagnóstico: órdenes e informes del circuito clínico, la cola de trabajo
@@ -941,22 +943,6 @@ function normalizeText(value: string): string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-/** Cursor opaco de la bandeja: la clave de la última fila devuelta. */
-function encodeInboxCursor(order: LabInboxOrderRecord): string {
-  return btoa(JSON.stringify({ requestedAt: order.requestedAt, id: order.id }));
-}
-
-function decodeInboxCursor(cursor: string): { requestedAt: string; id: string } | null {
-  try {
-    const parsed: unknown = JSON.parse(atob(cursor));
-    if (typeof parsed !== 'object' || parsed === null) return null;
-    const { requestedAt, id } = parsed as Record<string, unknown>;
-    return typeof requestedAt === 'string' && typeof id === 'string' ? { requestedAt, id } : null;
-  } catch {
-    return null;
-  }
-}
-
 export function registrarDiagnostico(router: MockRouter): void {
   // Cada centro publicado tiene agenda: desde Cotizaciones un análisis se
   // reserva como una cita, eligiendo un cupo del centro (25/09/2026).
@@ -1025,6 +1011,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
       reasonText: datos.reasonText ?? '',
       createdAt: ahora(),
+      ...pickPerformerFields(datos),
       ...(datos.previousDiagnosticReportId === undefined
         ? {}
         : { previousDiagnosticReportId: datos.previousDiagnosticReportId }),
@@ -1441,10 +1428,11 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-results/me/orders', (request) => {
     const id = pacienteDeSesion(request);
-    const items = orderList.filtrar((o) => o.patientProfileId === id).map((o, index) => {
+    const seeded = seededProcedureOrdersOf(id);
+    const items = [...orderList.filtrar((o) => o.patientProfileId === id), ...seeded].map((o, index) => {
       const informe = informes.filtrar((r) => r.serviceRequestId === o.id)[0];
       return {
-        ...(index === 3
+        ...(index === 3 || seeded.includes(o)
           ? { insuranceSettlement: null, insuranceSettlementAvailability: 'PENDING_PUBLICATION' }
           : patientSettlementFixture(o.id, (['APPROVED', 'PARTIALLY_APPROVED', 'DENIED'] as const)[index % 3]!, '100.00', displayOf(o.codeConceptId))),
         id: o.id,
@@ -1457,6 +1445,7 @@ export function registrarDiagnostico(router: MockRouter): void {
         preparationInstructions: preparacionDelEstudio(o.codeConceptId),
         hasReleasedResult: informe !== undefined && esVisibleParaPaciente(informe),
         reportId: informe !== undefined && esVisibleParaPaciente(informe) ? informe.id : undefined,
+        ...performerFieldsOfOrder(o),
       };
     });
     return { patientProfileId: id, items, limit: 50, truncated: false };

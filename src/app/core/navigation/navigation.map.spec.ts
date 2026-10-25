@@ -398,13 +398,15 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
-  it('las secciones reales son las del laboratorio y las diez de la farmacia, y nada más la usa', () => {
+  it('las secciones reales son las del laboratorio, las diez de la farmacia y la del centro médico, y nada más la usa', () => {
     const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
     // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
-    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales».
+    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
+    // «Configurar centro médico», sólo para una organización `HOSPITAL`.
     expect(flagged.map((s) => s.path)).toEqual([
+      'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
       'administration/pharmacy-categories',
@@ -423,9 +425,12 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {
-      expect(section.onlyForTenantTypes, section.path).toEqual(
-        section.path.includes('pharmacy') ? ['PHARMACY'] : ['DIAGNOSTIC_CENTER'],
-      );
+      const tipos = section.path.includes('pharmacy')
+        ? ['PHARMACY']
+        : section.path.includes('medical-center')
+          ? ['HOSPITAL']
+          : ['DIAGNOSTIC_CENTER'];
+      expect(section.onlyForTenantTypes, section.path).toEqual(tipos);
     }
   });
 

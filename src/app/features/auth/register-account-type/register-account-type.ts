@@ -89,6 +89,13 @@ const TIPOS: readonly TipoDeCuenta[] = [
     ruta: '/auth/register/pharmacy',
     testId: 'tipo-farmacia',
   },
+  {
+    icono: 'clinic',
+    titulo: 'Centro médico',
+    detalle: 'Clínicas y hospitales: publique sus procedimientos y afilie a sus médicos.',
+    ruta: '/auth/register/medical-center',
+    testId: 'account-type-medical-center',
+  },
 ];
 
 /**
