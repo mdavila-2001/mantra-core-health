@@ -281,6 +281,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
       'administration/insurance-campaigns',
       'administration/my-organization',
       'administration/medical-organization',
+      'administration/medical-center-setup',
       'administration/accounting',
       'billing',
     ],
