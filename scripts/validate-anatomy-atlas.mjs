@@ -40,7 +40,7 @@
  * Salida: `docs/progress/evidence/anatomy-atlas/validator-<fecha>.json` y `.md`.
  *
  * Uso (detrás de un proxy, Node necesita `NODE_USE_ENV_PROXY=1`):
- *   NODE_USE_ENV_PROXY=1 node scripts/validate-anatomy-atlas.mjs [--limit N] [--uberon-obo ruta] [--strict]
+ *   NODE_USE_ENV_PROXY=1 node scripts/validate-anatomy-atlas.mjs [--limit N] [--uberon-obo ruta] [--strict] [--groups doi,pmid,…]
  */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -50,7 +50,7 @@ const RAIZ = process.cwd();
 const CATALOGO = join(RAIZ, 'public', 'anatomy-atlas-3d', 'catalog');
 const DATOS = join(RAIZ, 'data', 'anatomy-ontology');
 const EVIDENCIA = join(RAIZ, 'docs', 'progress', 'evidence', 'anatomy-atlas');
-const CONCURRENCIA = 8;
+const CONCURRENCIA = Number(process.env['VALIDATOR_CONCURRENCY'] ?? 12);
 const ESPERA_MS = 20_000;
 const AGENTE = 'mantra-core-health-anatomy-validator/1.0 (open-source health platform; validation of citations)';
 
@@ -62,6 +62,13 @@ const valor = (bandera) => {
 const LIMITE = valor('--limit') === null ? Infinity : Number(valor('--limit'));
 const OBO = valor('--uberon-obo');
 const ESTRICTO = args.includes('--strict');
+/**
+ * `--groups doi,pmid,…`: sólo esos grupos. La corrida completa tarda más que
+ * el límite de un proceso en segundo plano; partida en grupos se corre en
+ * paralelo y cada parte deja su propio informe (con los grupos en el nombre).
+ */
+const GRUPOS = valor('--groups')?.split(',').filter(Boolean) ?? null;
+const corre = (grupo) => GRUPOS === null || GRUPOS.includes(grupo);
 /** Las referencias que UBERON declara para sus propias definiciones: informativas salvo con `--strict`. */
 const INFORMATIVOS = new Set(['wikipedia', 'isbn', 'url']);
 
@@ -359,17 +366,18 @@ async function main() {
   const inicio = new Date();
   const { citas, uberon, fma, imagenes, ta2, literatura, procedencia } = recolectar();
   const grupos = {};
-  grupos.doi = await enParalelo(tope(citas.doi), validarDoi);
-  grupos.pmid = await validarPmids(tope(citas.pmid));
-  grupos.wikipedia = await validarWikipedia(tope(citas.wikipedia));
-  grupos.isbn = await enParalelo(tope(citas.isbn), validarIsbn);
-  grupos.url = await enParalelo(tope(citas.url), validarUrl);
-  grupos.uberon = await enParalelo(tope(uberon), (id) => validarTermino('uberon', id));
-  grupos.fma = await enParalelo(tope(fma), (id) => validarTermino('fma', id));
-  grupos.imagenes = await validarImagenes(imagenes.slice(0, LIMITE));
-  grupos.miniaturas = await validarMiniaturas(imagenes.slice(0, LIMITE));
-  grupos.ta2 = await validarTa2(ta2.slice(0, LIMITE));
-  grupos.pmidDoi = validarParesPmidDoi(literatura.pmidDoi, grupos.pmid);
+  if (corre('doi')) grupos.doi = await enParalelo(tope(citas.doi), validarDoi);
+  // El par PMID ↔ DOI necesita lo que PubMed dice de cada PMID: van juntos.
+  if (corre('pmid') || corre('pmidDoi')) grupos.pmid = await validarPmids(tope(citas.pmid));
+  if (corre('wikipedia')) grupos.wikipedia = await validarWikipedia(tope(citas.wikipedia));
+  if (corre('isbn')) grupos.isbn = await enParalelo(tope(citas.isbn), validarIsbn);
+  if (corre('url')) grupos.url = await enParalelo(tope(citas.url), validarUrl);
+  if (corre('uberon')) grupos.uberon = await enParalelo(tope(uberon), (id) => validarTermino('uberon', id));
+  if (corre('fma')) grupos.fma = await enParalelo(tope(fma), (id) => validarTermino('fma', id));
+  if (corre('imagenes')) grupos.imagenes = await validarImagenes(imagenes.slice(0, LIMITE));
+  if (corre('miniaturas')) grupos.miniaturas = await validarMiniaturas(imagenes.slice(0, LIMITE));
+  if (corre('ta2')) grupos.ta2 = await validarTa2(ta2.slice(0, LIMITE));
+  if (corre('pmid') || corre('pmidDoi')) grupos.pmidDoi = validarParesPmidDoi(literatura.pmidDoi, grupos.pmid);
 
   const resumen = Object.fromEntries(
     Object.entries(grupos).map(([k, v]) => [k, { total: v.length, ok: v.filter((r) => r.ok).length, fallidas: v.filter((r) => !r.ok).length }]),
@@ -383,6 +391,7 @@ async function main() {
     finishedAt: new Date().toISOString(),
     limit: Number.isFinite(LIMITE) ? LIMITE : null,
     strict: ESTRICTO,
+    groups: GRUPOS ?? 'todos',
     blockingGroups: Object.keys(grupos).filter((k) => ESTRICTO || !INFORMATIVOS.has(k)),
     blockingFailures: bloqueantes.length,
     totalsInCatalog: {
@@ -406,7 +415,8 @@ async function main() {
   };
 
   mkdirSync(EVIDENCIA, { recursive: true });
-  const sello = inicio.toISOString().replace(/[:]/g, '-').replace(/\..*/, '') + (ESTRICTO ? '-strict' : '');
+  const sello =
+    inicio.toISOString().replace(/[:]/g, '-').replace(/\..*/, '') + (ESTRICTO ? '-strict' : '') + (GRUPOS ? `-${GRUPOS.join('+')}` : '');
   writeFileSync(join(EVIDENCIA, `validator-${sello}.json`), JSON.stringify(informe, null, 1) + '\n');
   const filas = Object.entries(resumen)
     .map(([k, v]) => `| ${k} | ${ESTRICTO || !INFORMATIVOS.has(k) ? 'sí' : 'no (de UBERON)'} | ${v.total} | ${v.ok} | ${v.fallidas} |`)
@@ -415,7 +425,7 @@ async function main() {
   for (const f of fallidas) motivos[`${f.tipo}: ${f.detail}`] = (motivos[`${f.tipo}: ${f.detail}`] ?? 0) + 1;
   const md = `# Validador del atlas anatómico 3D — ${inicio.toISOString()}
 
-Resultado: **${aprobado ? 'APROBADO' : 'FALLIDO'}** (${bloqueantes.length} irresolubles bloqueantes; ${fallidas.length} en total).${Number.isFinite(LIMITE) ? ` Corrida acotada a ${LIMITE} por grupo.` : ''}${ESTRICTO ? ' Modo `--strict`: todo bloquea.' : ''}
+Resultado: **${aprobado ? 'APROBADO' : 'FALLIDO'}** (${bloqueantes.length} irresolubles bloqueantes; ${fallidas.length} en total).${Number.isFinite(LIMITE) ? ` Corrida acotada a ${LIMITE} por grupo.` : ''}${ESTRICTO ? ' Modo `--strict`: todo bloquea.' : ''}${GRUPOS ? ` Grupos de esta parte: ${GRUPOS.join(', ')}.` : ''}
 
 | Grupo | Bloquea | Validadas | Resueltas | Irresolubles |
 |---|---|---|---|---|
