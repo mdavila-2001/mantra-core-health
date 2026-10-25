@@ -1,0 +1,72 @@
+<section class="request" aria-labelledby="request-title" data-testid="request-form">
+  <h3 id="request-title" class="request__title">Pedir afiliarme a un centro</h3>
+  <p class="request__note">
+    El centro tiene que aprobar su pedido, procedimiento por procedimiento. Hasta entonces queda pendiente del centro.
+  </p>
+
+  @if (error(); as message) {
+    <app-alert tone="error" data-testid="request-error">{{ message }}</app-alert>
+  }
+
+  <div class="request__selectors">
+    <app-form-field label="Centro" [required]="true">
+      <app-select
+        [options]="practiceOptions()"
+        [value]="practiceId()"
+        (valueChange)="practiceId.set($event)"
+        [searchable]="false"
+        placeholder="Elija el centro"
+        ariaLabel="Centro"
+        data-testid="request-practice"
+      />
+    </app-form-field>
+    <app-form-field label="Sede" [required]="true">
+      <app-select
+        [options]="siteOptions()"
+        [value]="siteId()"
+        (valueChange)="siteId.set($event)"
+        [searchable]="false"
+        [disabled]="practiceId() === null"
+        placeholder="Elija la sede"
+        ariaLabel="Sede"
+        data-testid="request-site"
+      />
+    </app-form-field>
+  </div>
+
+  @if (siteId() !== null) {
+    <fieldset class="request__procedures" data-testid="request-procedures">
+      <legend class="request__legend">Procedimientos que haría en esta sede</legend>
+      @if (proceduresLoading()) {
+        <p class="request__note">Cargando los procedimientos de la sede…</p>
+      } @else {
+        @for (procedure of procedures(); track procedure.id) {
+          <app-checkbox
+            [label]="procedure.serviceDisplay"
+            [checked]="isChecked(procedure.id)"
+            (checkedChange)="toggle(procedure.id, $event)"
+            [attr.data-testid]="'request-procedure-' + procedure.id"
+          />
+        } @empty {
+          <p class="request__note" data-testid="request-no-procedures">Esta sede todavía no publica procedimientos.</p>
+        }
+      }
+    </fieldset>
+  }
+
+  <div class="request__actions">
+    <button app-button type="button" variant="ghost" data-testid="request-cancel" (clicked)="cancelled.emit()">
+      Cancelar
+    </button>
+    <button
+      app-button
+      type="button"
+      [disabled]="!canSubmit()"
+      [isLoading]="saving()"
+      data-testid="request-submit"
+      (clicked)="submit()"
+    >
+      Pedir afiliación
+    </button>
+  </div>
+</section>
