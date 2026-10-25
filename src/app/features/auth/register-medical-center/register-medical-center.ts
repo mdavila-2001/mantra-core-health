@@ -18,12 +18,11 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { RegistrationBadge } from '../registro-compartido/registration-badge';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
 import { medicalCenterCodeFromName } from './medical-center-code';
 
 /** Dónde se leen el país y la jurisdicción: los mismos catálogos públicos del alta de laboratorio. */
@@ -80,9 +79,9 @@ export function signupErrorMessage(error: unknown): string {
  */
 @Component({
   selector: 'app-register-medical-center',
-  imports: [Alert, AnnounceOnAppear, AppButton, AuthSplit, Link, PaginatedForm, RegistrationBadge, RouterLink],
+  imports: [Alert, AnnounceOnAppear, AppButton, AuthSplit, Link, PaginatedForm, RouterLink],
   templateUrl: './register-medical-center.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-medical-center.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-medical-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterMedicalCenter {
@@ -109,7 +108,7 @@ export class RegisterMedicalCenter {
       nonNullable: true,
       validators: [Validators.required, Validators.email, Validators.maxLength(MAX_EMAIL)],
     }),
-    password: new FormControl('', { nonNullable: true, validators: [...validadoresDeContrasena] }),
+    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
   });
 
   protected readonly isSubmitting = signal(false);
@@ -126,7 +125,7 @@ export class RegisterMedicalCenter {
    * después de que la pantalla se arma.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'El centro',
         hint: 'Cómo se llama y qué figura jurídica tiene.',
@@ -180,7 +179,7 @@ export class RegisterMedicalCenter {
             required: true,
             autocomplete: 'new-password',
             testId: 'medical-center-signup-password',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
         ],
       },

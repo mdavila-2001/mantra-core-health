@@ -1,8 +1,7 @@
-<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" scene="calm">
+<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" [plainSurface]="true">
   <div class="registro">
     @if (registered()) {
       <div class="registro__header">
-        <app-registration-badge type="clinic" celebrate />
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
           ¡Bienvenido a AloVida! Su centro médico ya tiene cuenta
         </h1>
@@ -27,7 +26,6 @@
       </button>
     } @else {
       <div class="registro__header">
-        <app-registration-badge type="clinic" />
         <h1 class="registro__title">Registre su centro médico</h1>
         <p class="registro__subtitle">
           Cree la cuenta de su clínica u hospital. Después de que la plataforma la verifique, podrá abrir
