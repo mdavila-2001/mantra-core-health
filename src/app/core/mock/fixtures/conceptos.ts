@@ -46,7 +46,7 @@ const conjuntos = new Map<string, ConjuntoSimulado>();
 export const CODE_SYSTEM_VERSION_ID = uuid('code-system-version-alovida-1');
 export const CODE_SYSTEM_ID = uuid('code-system-alovida');
 
-function conjunto(internalCode: string, name: string, description: string): ConjuntoSimulado {
+export function conjunto(internalCode: string, name: string, description: string): ConjuntoSimulado {
   const c: ConjuntoSimulado = {
     id: uuid(`value-set-${internalCode}`),
     internalCode,
@@ -58,7 +58,7 @@ function conjunto(internalCode: string, name: string, description: string): Conj
   return c;
 }
 
-function definir(
+export function definir(
   valueSet: string,
   entradas: readonly (readonly [code: string, display: string, definition?: string])[],
   ordinalInicial = 1,

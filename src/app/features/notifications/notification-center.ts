@@ -36,6 +36,9 @@ import {
 /** Cuántas trae cada página. */
 const PAGE_SIZE = 25;
 
+/** Índice de la pestaña «Sin leer»: la única que consulta la API con `unread=true`. */
+const UNREAD_TAB = 1;
+
 /**
  * El centro de notificaciones — carril P1.
  *
@@ -84,12 +87,12 @@ export class NotificationCenter {
 
   /** Todas las pestañas conservan el cursor; sólo «Sin leer» usa el filtro API. */
   protected readonly pestana = signal(0);
-  protected readonly soloSinLeer = computed(() => this.pestana() === 1);
+  protected readonly soloSinLeer = computed(() => this.pestana() === UNREAD_TAB);
 
   protected readonly avisosFiltrados = computed(() => {
     const tab = this.pestana();
     return this.avisos().filter((aviso) => {
-      if (tab === 1) return aviso.unread;
+      if (tab === UNREAD_TAB) return aviso.unread;
       if (tab === 2)
         return aviso.category === 'CLINICAL' && aviso.destination?.type !== 'PRESCRIPTION';
       if (tab === 3) return aviso.category === 'MESSAGES';
@@ -137,11 +140,19 @@ export class NotificationCenter {
     return horaRelativa(aviso.availableAt, this.ahora());
   }
 
-  /** Cambia de pestaña: es el mismo filtro de antes, con otra forma. */
+  /**
+   * Cambia de pestaña: es el mismo filtro de antes, con otra forma.
+   *
+   * «Sin leer» es la única que pide otra consulta a la API (`unread=true`), así
+   * que entrar **o salir** de ella vuelve a cargar desde cero. Si sólo se
+   * recargara al entrar, al volver a «Todas» (o a una categoría) la lista
+   * seguiría siendo la de las sin leer y las leídas desaparecerían.
+   */
   protected elegirPestana(indice: number): void {
-    if (indice === this.pestana()) return;
+    const anterior = this.pestana();
+    if (indice === anterior) return;
     this.pestana.set(indice);
-    if (indice === 1) this.recargar();
+    if (indice === UNREAD_TAB || anterior === UNREAD_TAB) this.recargar();
   }
 
   protected readonly hayMas = computed(() => this.cursor() !== null);
