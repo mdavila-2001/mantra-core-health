@@ -20,8 +20,8 @@ import { esperarAplicacionLista } from './support/sesion';
 
 const EVIDENCIA = join('docs', 'frontend', 'evidence', 'cm-11-medical-center-registration');
 const VIEWPORTS = [
-  { nombre: 'escritorio', width: 1440, height: 900 },
-  { nombre: 'telefono', width: 390, height: 844 },
+  { label: 'desktop', width: 1440, height: 900 },
+  { label: 'phone', width: 390, height: 844 },
 ] as const;
 
 async function noHorizontalOverflow(page: Page): Promise<void> {
@@ -74,9 +74,9 @@ async function ingresar(page: Page): Promise<void> {
 
 test.beforeAll(() => mkdirSync(EVIDENCIA, { recursive: true }));
 
-for (const vista of VIEWPORTS) {
-  test.describe(`centro médico · ${vista.nombre}`, () => {
-    test.use({ viewport: { width: vista.width, height: vista.height } });
+for (const view of VIEWPORTS) {
+  test.describe(`centro médico · ${view.label}`, () => {
+    test.use({ viewport: { width: view.width, height: view.height } });
 
     test('la tarjeta «Centro médico» está en el selector de organizaciones', async ({ page }) => {
       await page.goto('/auth/register/organization-type', { waitUntil: 'domcontentloaded' });
@@ -85,7 +85,7 @@ for (const vista of VIEWPORTS) {
       await expect(tarjeta).toBeVisible();
       await expect(tarjeta).toHaveAttribute('href', '/auth/register/medical-center');
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-01-selector-de-organizacion`);
+      await foto(page, `${view.label}-01-organization-type-selector`);
     });
 
     test('el alta recorre sus dos páginas y termina pendiente de verificación', async ({ page }) => {
@@ -100,12 +100,12 @@ for (const vista of VIEWPORTS) {
         page.getByRole('heading', { level: 1, name: 'Registre su centro médico' }),
       ).toBeVisible();
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-02-alta-pagina-1-vacia`);
+      await foto(page, `${view.label}-02-signup-page-1-empty`);
 
       // Página 1 · el centro. Sin completar, «Siguiente» no avanza.
       await page.getByTestId('paginated-form-continuar').click();
       await expect(page.getByTestId('medical-center-signup-legal-name')).toBeVisible();
-      await foto(page, `${vista.nombre}-03-alta-pagina-1-con-errores`);
+      await foto(page, `${view.label}-03-signup-page-1-errors`);
 
       await escribir(page, 'medical-center-signup-legal-name', `Centro Médico Norte ${Date.now()}`);
       await page
@@ -114,7 +114,7 @@ for (const vista of VIEWPORTS) {
         .first()
         .selectOption({ index: 1 });
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-04-alta-pagina-1-completa`);
+      await foto(page, `${view.label}-04-signup-page-1-filled`);
       await page.getByTestId('paginated-form-continuar').click();
 
       // Página 2 · la cuenta.
@@ -122,7 +122,7 @@ for (const vista of VIEWPORTS) {
       await escribir(page, 'medical-center-signup-email', `marta${Date.now()}@centro-norte.test`);
       await escribir(page, 'medical-center-signup-password', 'S3cret-passw0rd');
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-05-alta-pagina-2-completa`);
+      await foto(page, `${view.label}-05-signup-page-2-filled`);
       await page.getByTestId('paginated-form-continuar').click();
 
       await expect(page.getByTestId('medical-center-signup-success')).toBeVisible();
@@ -130,7 +130,7 @@ for (const vista of VIEWPORTS) {
         'pendiente de verificación',
       );
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-06-alta-exito-pendiente`);
+      await foto(page, `${view.label}-06-signup-success-pending`);
       expect(errores.filter((e) => !/favicon|tile\.openstreetmap/i.test(e))).toEqual([]);
     });
 
@@ -142,10 +142,10 @@ for (const vista of VIEWPORTS) {
         page.getByRole('heading', { level: 1, name: 'Configurar centro médico' }),
       ).toBeVisible();
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-07-configuracion-pagina-1`, false);
+      await foto(page, `${view.label}-07-setup-page-1`, false);
 
-      const nombre = `Centro Médico ${vista.nombre} ${Date.now()}`;
-      await escribir(page, 'medical-center-setup-practice-name', nombre);
+      const centerName = `Centro Médico ${view.label} ${Date.now()}`;
+      await escribir(page, 'medical-center-setup-practice-name', centerName);
       await escribir(page, 'medical-center-setup-site-name', 'Sede Norte');
       await page.getByTestId('paginated-form-continuar').click();
 
@@ -156,7 +156,7 @@ for (const vista of VIEWPORTS) {
       await page.getByTestId('paginated-form-continuar').click();
       await expect(page.getByTestId('medical-center-site-location-pick')).toBeVisible();
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-08-configuracion-sin-punto`, false);
+      await foto(page, `${view.label}-08-setup-without-point`, false);
 
       await page.getByTestId('medical-center-site-location-pick').click();
       const mapa = page.getByTestId('medical-center-site-map');
@@ -165,13 +165,13 @@ for (const vista of VIEWPORTS) {
       await page.getByTestId('medical-center-site-location-confirm').click();
       await expect(page.getByTestId('medical-center-site-location-confirmed')).toBeVisible();
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-09-configuracion-con-punto`, false);
+      await foto(page, `${view.label}-09-setup-with-point`, false);
 
       await page.getByTestId('paginated-form-continuar').click();
       await expect(page.getByTestId('medical-center-setup-exito')).toBeVisible();
       await expect(page.getByTestId('medical-center-setup-site-id')).not.toBeEmpty();
       await noHorizontalOverflow(page);
-      await foto(page, `${vista.nombre}-10-configuracion-guardada`, false);
+      await foto(page, `${view.label}-10-setup-saved`, false);
     });
   });
 }

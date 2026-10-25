@@ -12,14 +12,14 @@ describe('medicalCenterCodeFromName', () => {
   });
 
   it('nunca pasa de 100 caracteres ni termina en guion', () => {
-    const codigo = medicalCenterCodeFromName('a'.repeat(60) + ' ' + 'b'.repeat(60));
-    expect(codigo.length).toBeLessThanOrEqual(100);
-    expect(codigo.endsWith('-')).toBe(false);
+    const code = medicalCenterCodeFromName('a'.repeat(60) + ' ' + 'b'.repeat(60));
+    expect(code.length).toBeLessThanOrEqual(100);
+    expect(code.endsWith('-')).toBe(false);
   });
 
-  it.each(['Centro Médico Norte', 'Ñandú & Hijos', '123', 'a'])('cumple el patrón de la API: %s', (nombre) => {
-    const codigo = medicalCenterCodeFromName(nombre);
-    expect(API_CODE_PATTERN.test(codigo)).toBe(true);
-    expect(codigo.length).toBeGreaterThanOrEqual(3);
+  it.each(['Centro Médico Norte', 'Ñandú & Hijos', '123', 'a'])('cumple el patrón de la API: %s', (name) => {
+    const code = medicalCenterCodeFromName(name);
+    expect(API_CODE_PATTERN.test(code)).toBe(true);
+    expect(code.length).toBeGreaterThanOrEqual(3);
   });
 });

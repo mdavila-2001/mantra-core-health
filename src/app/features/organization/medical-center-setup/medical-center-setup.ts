@@ -14,7 +14,6 @@ import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   UbicacionPicker,
   type Coordenadas,
-  type IdsDePrueba,
 } from '../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
 
 const MAX_NAME = 200;
@@ -94,7 +93,7 @@ export class MedicalCenterSetup {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly created = signal<CreatedOrganizationPractice | null>(null);
 
-  protected readonly pointIds: IdsDePrueba = {
+  protected readonly pointIds = {
     mapa: 'medical-center-site-map',
     confirmada: 'medical-center-site-location-confirmed',
     avisoGeocodificacion: 'medical-center-site-geocoding-notice',
