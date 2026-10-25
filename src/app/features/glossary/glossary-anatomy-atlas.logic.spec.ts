@@ -1,6 +1,7 @@
 import type { AnatomyIndexEntry, AnatomyPart, AnatomyStructure } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
 import {
   displayName,
+  drawnStructures,
   groupRelations,
   meshesOf,
   ontologyUrl,
@@ -9,6 +10,8 @@ import {
   relatedStructureIds,
   searchIndex,
   sideLabel,
+  structureIdsOf,
+  structuresWithMesh,
 } from './glossary-anatomy-atlas.logic';
 
 /** Una pieza mínima; sólo cambia lo que cada prueba necesita. */
@@ -103,5 +106,59 @@ describe('glossary-anatomy-atlas.logic', () => {
     expect(sideLabel('right')).toBe('lado derecho');
     expect(sideLabel('left')).toBe('lado izquierdo');
     expect(sideLabel(null)).toBeNull();
+  });
+
+  describe('estructuras compuestas (el pulmón no tiene malla, sus lóbulos sí)', () => {
+    const LOBULOS: readonly AnatomyPart[] = [
+      pieza('FMA7316', 'UBERON:0002170', { layer: 'organs', side: 'right' }),
+      pieza('FMA7317', 'UBERON:0002171', { layer: 'organs', side: 'right' }),
+      pieza('FMA7318', 'UBERON:0008952', { layer: 'organs', side: 'left' }),
+      pieza('FMA9999', 'UBERON:0000981'),
+    ];
+    const COMPUESTAS = {
+      'UBERON:0002048': ['UBERON:0002170', 'UBERON:0002171', 'UBERON:0008952'],
+      'UBERON:0002167': ['UBERON:0002170', 'UBERON:0002171'],
+    };
+
+    it('una compuesta resalta las mallas de sus partes', () => {
+      expect(meshesOf(LOBULOS, 'UBERON:0002167', 'male', COMPUESTAS)).toEqual(['FMA7316', 'FMA7317']);
+      expect(meshesOf(LOBULOS, 'UBERON:0002048', 'male', COMPUESTAS)).toEqual(['FMA7316', 'FMA7317', 'FMA7318']);
+    });
+
+    it('sin el archivo de compuestas, una compuesta no resalta nada (como antes)', () => {
+      expect(meshesOf(LOBULOS, 'UBERON:0002167', 'male')).toEqual([]);
+    });
+
+    it('una estructura de malla propia se resalta igual con o sin compuestas', () => {
+      expect(meshesOf(LOBULOS, 'UBERON:0000981', 'male', COMPUESTAS)).toEqual(['FMA9999']);
+      expect(structureIdsOf('UBERON:0000981', COMPUESTAS)).toEqual(['UBERON:0000981']);
+    });
+
+    it('las partes de una compuesta respetan la vista «Mujer»', () => {
+      const soloVaron = [pieza('FMA1', 'UBERON:0000001', { sex: 'male' })];
+      expect(meshesOf(soloVaron, 'UBERON:0000009', 'female', { 'UBERON:0000009': ['UBERON:0000001'] })).toEqual([]);
+    });
+
+    it('«tiene pieza» incluye a las compuestas', () => {
+      const con = structuresWithMesh(LOBULOS, COMPUESTAS);
+      expect(con.has('UBERON:0002048')).toBe(true);
+      expect(con.has('UBERON:0002170')).toBe(true);
+      expect(con.has('UBERON:0000007')).toBe(false);
+    });
+
+    it('una compuesta se dibuja si alguna parte suya está en una capa encendida', () => {
+      expect(drawnStructures(LOBULOS, new Set(['organs']), 'male', COMPUESTAS).has('UBERON:0002167')).toBe(true);
+      expect(drawnStructures(LOBULOS, new Set(['skeleton']), 'male', COMPUESTAS).has('UBERON:0002167')).toBe(false);
+    });
+
+    it('al relacionar con una compuesta se resaltan sus partes, no las de la propia estructura', () => {
+      const ficha: AnatomyStructure = {
+        ...FEMUR,
+        id: 'UBERON:0002167',
+        relations: [],
+        incoming: [{ type: 'part_of', name: 'tiene como parte', source: 'UBERON:0008952', labelEn: 'x', labelEs: null }],
+      };
+      expect(relatedMeshes(LOBULOS, ficha, 'male', COMPUESTAS)).toEqual(['FMA7318']);
+    });
   });
 });

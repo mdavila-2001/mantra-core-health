@@ -8,7 +8,7 @@ import { ContentDialog } from '../../shared/components/organisms/content-dialog/
 import {
   enlaceSeguro,
   fechaLegible,
-  fuentesDeLosDatos,
+  fuentesAgrupadas,
   imagenesVisibles,
   nombreDeFuente,
   seccionesPintables,
@@ -44,7 +44,7 @@ export class GlossaryArticleView {
   protected readonly hechos = computed<readonly Hecho[]>(() =>
     this.articulo().facts.map((dato) => ({ etiqueta: dato.label, valor: dato.value })),
   );
-  protected readonly fuentesDeDatos = computed(() => fuentesDeLosDatos(this.articulo().facts));
+  protected readonly fuentesDeDatos = computed(() => fuentesAgrupadas(this.articulo().facts));
   protected readonly referencias = computed(() =>
     this.articulo().references.filter((ref) => enlaceSeguro(ref.url) !== null),
   );
