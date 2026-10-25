@@ -1,0 +1,63 @@
+---
+slug: anemia-por-deficit-de-b12
+---
+
+## [definition] Introducción
+
+La anemia por déficit de vitamina B12 es una anemia causada por la falta de esta vitamina, que el organismo necesita para fabricar ADN y producir glóbulos rojos sanos. Cuando falta, la médula ósea produce células grandes e inmaduras (anemia megaloblástica, de glóbulos grandes) que no cumplen bien su función de transportar oxígeno. El código ICD-10-CM D51.9 la describe como «anemia por déficit de vitamina B12, no especificada», es decir, sin precisar la causa.
+
+Dos distinciones evitan confusiones. La anemia perniciosa es una causa concreta, autoinmune, de este déficit y no su sinónimo. Y «anemia megaloblástica» es un concepto más amplio, porque la falta de folato produce el mismo aspecto en la sangre; solo el déficit de B12 produce además daño neurológico. Además, el déficit puede dar síntomas neurológicos sin anemia, de modo que una hemoglobina normal no lo excluye.
+
+## [causes] Causas
+
+La causa más frecuente de déficit grave es la anemia perniciosa: el sistema inmunitario ataca las células del estómago que producen el factor intrínseco, una proteína imprescindible para absorber la B12 en el intestino. Otras causas son la gastritis atrófica, las cirugías del estómago o del intestino delgado (incluida la cirugía para bajar de peso), la enfermedad de Crohn, la enfermedad celíaca y la infección por tenia.
+
+También contribuyen algunos medicamentos, como la metformina, los antiácidos y los inhibidores de la bomba de protones, el consumo de alcohol y el abuso de óxido nitroso. La causa puramente dietética es menos común, pero puede darse en dietas veganas o muy restrictivas sin suplementos ni alimentos enriquecidos, en una alimentación deficiente de los bebés y en la desnutrición. El déficit es más frecuente en personas mayores.
+
+## [symptoms] Síntomas
+
+Muchas personas tienen pocos síntomas al principio. Los generales son cansancio, debilidad, palidez, falta de aire con el ejercicio, mareo y dificultad para concentrarse. También pueden aparecer lengua roja, lisa y dolorida (glositis), úlceras en la boca, pérdida de apetito y alteraciones del tránsito intestinal.
+
+Si el déficit se prolonga aparecen síntomas neurológicos y psiquiátricos: hormigueo en manos y pies, pérdida del equilibrio, problemas de memoria, confusión, cambios de ánimo, alteraciones visuales por afectación del nervio óptico y, en casos graves, psicosis.
+
+## [diagnosis] Diagnóstico en términos generales
+
+Parte de la historia clínica (dieta, cirugías, enfermedades digestivas y autoinmunes, medicamentos) y de la exploración neurológica. El hemograma suele mostrar glóbulos rojos grandes; el análisis de vitamina B12 sirve de cribado y, cuando el resultado es dudoso, el ácido metilmalónico y la homocisteína ayudan a confirmar el déficit. Si se sospecha anemia perniciosa se buscan anticuerpos contra el factor intrínseco y contra las células parietales del estómago, y en algunos casos se hace una endoscopia digestiva. La biopsia de médula ósea queda para los casos poco claros.
+
+## [treatment_overview] Tratamiento en términos generales
+
+Busca reponer la vitamina y tratar la causa. Si el déficit es dietético pueden bastar los suplementos orales. Cuando existe un problema de absorción, o el cuadro es grave o con síntomas neurológicos, suele preferirse la vía inyectable, a veces de por vida; en el mantenimiento a largo plazo puede valorarse la vía oral con dosis altas, y existe una presentación nasal. La pauta la fija el médico según la causa y la gravedad.
+
+Durante la recuperación conviene vigilar el hierro, porque la médula ósea, al recuperarse, puede revelar una carencia de hierro asociada.
+
+## [complications] Complicaciones y pronóstico
+
+La anemia suele responder bien al tratamiento. El daño neurológico es el principal riesgo: si el tratamiento se retrasa puede ser permanente, y su recuperación es más lenta que la de la anemia. La anemia perniciosa se asocia además con pólipos gástricos, mayor riesgo de cáncer gástrico y tumores carcinoides del estómago, y mayor riesgo de fracturas. También se han descrito infertilidad transitoria, problemas cardíacos y complicaciones del embarazo.
+
+## [when_to_seek_care] Cuándo consultar
+
+Conviene consultar ante cansancio persistente con hormigueos, problemas de equilibrio, olvidos o cambios de ánimo sin explicación, sobre todo con cirugía gástrica previa, dieta vegana sin suplementos o tratamiento prolongado con metformina o antiácidos.
+
+## [considerations] Qué dice la evidencia
+
+Un consenso de expertos con método Delphi (Obeid et al., 2024, PMID 38673453) y una revisión clínica (Langan y Goodbred, 2017, PMID 28925645) coinciden en que el diagnóstico debe partir de los síntomas, que la B12 sérica es útil como cribado y que el ácido metilmalónico y la homocisteína apoyan el diagnóstico. Coinciden también en que la vía inyectable es la primera opción en el déficit agudo o grave; la revisión de Langan y Goodbred describe una eficacia similar de dosis altas por vía oral en la anemia y los síntomas neurológicos, y el consenso las considera para el tratamiento prolongado. Una revisión del Cleveland Clinic Journal of Medicine (Socha et al., 2020) añade que solo el déficit de B12 produce daño neurológico y que este puede aparecer sin anemia.
+
+Es más discutido a quién cribar: el artículo de Langan y Goodbred no recomienda el cribado sistemático en adultos de riesgo medio, pero sí en grupos de riesgo. El consenso Delphi es una opinión estructurada de expertos, no un metaanálisis, y parte de los datos sobre complicaciones de la anemia perniciosa procede de páginas informativas.
+
+## [associated_conditions] Conceptos relacionados
+
+• Anemia perniciosa: causa autoinmune del déficit, por falta de factor intrínseco; no es sinónimo de este término.
+• Gastritis atrófica y cirugía gástrica: reducen la absorción de B12.
+• Enfermedad celíaca y enfermedad de Crohn: pueden impedir su absorción en el intestino.
+• Déficit de folato (ácido fólico): produce una anemia megaloblástica parecida, pero sin daño neurológico.
+• Polineuropatía periférica: puede ser una manifestación del déficit.
+• Anemia ferropénica: otra anemia nutricional, con glóbulos rojos pequeños.
+
+## [references]
+
+- Anemia por deficiencia de vitamina B12 (MedlinePlus en español) | https://medlineplus.gov/spanish/ency/article/000574.htm | MedlinePlus
+- Pernicious anemia (MedlinePlus) | https://medlineplus.gov/ency/article/000569.htm | MedlinePlus
+- Vitamin B12 or folate deficiency anaemia (NHS) | https://www.nhs.uk/conditions/vitamin-b12-or-folate-deficiency-anaemia/ | NHS
+- Socha et al., 2020. Revisión sobre anemia megaloblástica grave por déficit de folato y vitamina B12, con dos casos clínicos | https://www.ccjm.org/content/87/3/153 | Cleveland Clinic Journal of Medicine
+- Obeid et al., 2024. Diagnosis, Treatment and Long-Term Management of Vitamin B12 Deficiency in Adults: A Delphi Expert Consensus. PMID 38673453, DOI 10.3390/jcm13082176 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A38673453%20AND%20SRC%3AMED&format=json&resultType=core | Journal of Clinical Medicine (vía Europe PMC)
+- Langan y Goodbred, 2017. Vitamin B12 Deficiency: Recognition and Management. PMID 28925645 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A28925645%20AND%20SRC%3AMED&format=json&resultType=core | American Family Physician (vía Europe PMC)

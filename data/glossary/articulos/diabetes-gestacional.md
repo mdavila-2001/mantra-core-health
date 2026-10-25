@@ -1,0 +1,62 @@
+---
+slug: diabetes-gestacional
+---
+
+## [definition] Introducción
+
+La diabetes gestacional es una elevación de la glucosa en sangre que aparece por primera vez durante el embarazo en una mujer que no tenía diabetes antes. Sus valores superan lo normal pero, por definición, no alcanzan los que se exigen para diagnosticar diabetes fuera del embarazo. Suele detectarse en el cribado de la mitad de la gestación y, en la mayoría de los casos, la glucosa vuelve a la normalidad después del parto.
+
+Es importante distinguirla de la diabetes previa al embarazo. Si la glucosa ya está claramente alta al comienzo de la gestación, la causa puede ser una diabetes tipo 1 o tipo 2 que no se había diagnosticado, no una diabetes gestacional. El código O24.419 de la CIE-10-CM corresponde, según su denominación, a la diabetes mellitus gestacional con control no especificado, sin precisar con qué se está tratando.
+
+## [causes] Causas
+
+Durante el embarazo, las hormonas de la placenta y el aumento de peso hacen que las células respondan peor a la insulina, lo que se llama resistencia a la insulina. Si el páncreas no consigue producir la insulina adicional que hace falta, la glucosa sube. Algunas mujeres ya tenían cierta resistencia a la insulina antes de embarazarse, lo que aumenta la probabilidad. Los genes y el exceso de peso también influyen.
+
+## [risk_factors] Factores de riesgo
+
+• Diabetes gestacional en un embarazo anterior.
+• Haber tenido un bebé de peso muy alto al nacer.
+• Sobrepeso u obesidad y haber tenido una cirugía para bajar de peso.
+• Antecedentes familiares de diabetes (madre, padre o hermanos).
+• Síndrome de ovario poliquístico.
+• Edad materna avanzada.
+• Pertenecer a ciertos grupos étnicos con mayor frecuencia de diabetes tipo 2.
+
+## [diagnosis] Diagnóstico
+
+Se detecta mediante pruebas de laboratorio dentro del control prenatal. En general se realiza un cribado a mitad del embarazo con una prueba de sobrecarga de glucosa; si el resultado es alto, se confirma con una prueba de tolerancia oral a la glucosa, en la que se mide la glucosa en ayunas y después de tomar una bebida azucarada. A las mujeres con más riesgo se les puede ofrecer la prueba antes. Los puntos de corte y el esquema exacto dependen de la guía que siga cada servicio, por lo que deben consultarse en la fuente clínica local.
+
+## [treatment_overview] Tratamiento
+
+El primer paso es un plan de alimentación saludable y actividad física regular, junto con el control de la glucosa en casa con un medidor. El equipo de salud fija los objetivos de glucosa y vigila de cerca el embarazo y el parto. Si estas medidas no bastan, se añade tratamiento farmacológico: insulina u otros medicamentos orales, según la valoración del médico. No se recomienda intentar adelgazar durante la gestación, porque cierto aumento de peso es necesario; la cantidad adecuada la orienta el profesional.
+
+## [complications] Complicaciones
+
+Para el bebé, la glucosa materna elevada puede producir un tamaño mayor de lo habitual (macrosomía), lo que complica el parto y hace más probable la inducción o la cesárea; también se asocia con exceso de líquido amniótico, parto prematuro, glucosa baja e ictericia en el recién nacido y, de forma poco frecuente, muerte fetal. Para la madre aumenta el riesgo de preeclampsia. A largo plazo, la madre tiene más probabilidad de desarrollar diabetes tipo 2 y el hijo, de tener obesidad o diabetes tipo 2.
+
+## [prognosis] Pronóstico y seguimiento posterior
+
+La glucosa suele normalizarse tras el parto, pero se recomienda repetir una prueba de glucosa pocas semanas después y mantener controles periódicos, porque el riesgo de diabetes tipo 2 queda elevado. Quien ha tenido diabetes gestacional tiene más probabilidad de repetirla en embarazos posteriores, y conviene consultar antes de planificar un nuevo embarazo. Los hábitos saludables (peso, alimentación, ejercicio) reducen el riesgo a largo plazo.
+
+## [associated_conditions] Conceptos relacionados
+
+• Diabetes mellitus tipo 2: la diabetes gestacional es un factor de riesgo para desarrollarla y comparte la resistencia a la insulina.
+• Diabetes mellitus tipo 1 y diabetes mellitus tipo 2 previas: deben descartarse cuando la glucosa está alta desde el inicio del embarazo.
+• Preeclampsia: complicación del embarazo más frecuente en mujeres con diabetes gestacional.
+• Prueba de tolerancia a la glucosa y glucemia en ayunas: pruebas con las que se confirma el diagnóstico.
+
+## [considerations] Qué dice la evidencia
+
+Las asociaciones con los desenlaces del embarazo proceden de revisiones sistemáticas de estudios observacionales. Un metaanálisis de gran tamaño (Ye et al., 2022) halló que, tras ajustar por factores de confusión, la diabetes gestacional se asocia con más cesáreas, partos prematuros, macrosomía y recién nacidos grandes para su edad gestacional, mientras que para otros desenlaces, como la muerte fetal o neonatal, no se observaron diferencias claras. La relación con el riesgo posterior de diabetes tipo 2 es de las mejor establecidas: un metaanálisis (Vounzoulaki et al., 2020) mostró que las mujeres con este antecedente tienen un riesgo claramente mayor que las demás, con variación entre poblaciones.
+
+La revisión de Sweeting et al. (2022) propone considerar la diabetes gestacional como un factor de riesgo temprano de diabetes tipo 2 y de enfermedad cardiovascular, y señala que el sobrecrecimiento fetal puede comenzar antes del momento tradicional del diagnóstico. Este último punto sigue siendo objeto de debate, igual que los criterios diagnósticos, que varían entre organizaciones y modifican la frecuencia con que se hace el diagnóstico; por eso en este artículo no se dan cifras. Las pautas de manejo básicas (alimentación, actividad, control de glucosa y, si hace falta, fármacos) provienen de fuentes institucionales como NIDDK, CDC y NHS.
+
+## [references]
+
+- Gestational diabetes | https://www.niddk.nih.gov/health-information/diabetes/overview/what-is-diabetes/gestational | NIDDK, NIH
+- Gestational Diabetes | https://www.cdc.gov/diabetes/about/gestational-diabetes.html | CDC
+- Gestational diabetes | https://www.nhs.uk/conditions/gestational-diabetes/ | NHS
+- Diabetes | https://www.who.int/news-room/fact-sheets/detail/diabetes | OMS
+- Sweeting et al., 2022. A clinical update on gestational diabetes mellitus. PMID 35041752, DOI 10.1210/endrev/bnac003 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:35041752&format=json&resultType=core | Endocr Rev
+- Ye et al., 2022. Gestational diabetes mellitus and adverse pregnancy outcomes: systematic review and meta-analysis. PMID 35613728, DOI 10.1136/bmj-2021-067946 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:35613728&format=json&resultType=core | BMJ
+- Vounzoulaki et al., 2020. Progression to type 2 diabetes in women with a known history of gestational diabetes: systematic review and meta-analysis. PMID 32404325, DOI 10.1136/bmj.m1361 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:32404325&format=json&resultType=core | BMJ
