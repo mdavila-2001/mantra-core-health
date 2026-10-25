@@ -308,7 +308,7 @@ describe('GET /diagnostic-units/search', () => {
 describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
   const router = new MockRouter();
   const medica = buscarUsuario('medica')!;
-  const paciente = buscarUsuario('paciente')!;
+  const patient = buscarUsuario('paciente')!;
 
   registrarDiagnostico(router);
 
@@ -337,7 +337,7 @@ describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
   }
 
   const propias = () =>
-    call<{ items: readonly OrdenPropia[] }>('GET', '/diagnostic-results/me/orders', undefined, paciente).items;
+    call<{ items: readonly OrdenPropia[] }>('GET', '/diagnostic-results/me/orders', undefined, patient).items;
 
   it('devuelve las dos órdenes de procedimiento de la paciente con sus campos', () => {
     const endoscopia = propias().find((o) => o.id === uuid('order-proc-endoscopia-alta'));
