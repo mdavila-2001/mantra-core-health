@@ -110,7 +110,7 @@ import {
   SIGNATURE_IMAGE_FORMATS,
   SIGNATURE_IMAGE_MAX_BYTES,
 } from './image-status';
-import { TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
+import { DOCTOR_PROFILE_TABS, TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { WorkHistory } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
@@ -442,6 +442,9 @@ function correoDeTrabajoDe(perfil: OwnPractitionerProfile): string {
  * una tabla filtraría también la otra.
  */
 const CLAVE_BUSQUEDA_TITULO = 'qTitulos';
+
+/** La ficha de lectura del perfil propio, adonde vuelve el editor. */
+const MI_PERFIL_MEDICO = '/account/profile';
 
 /**
  * La clave de la búsqueda de la tabla de matrículas en la URL. Propia por lo
@@ -2101,14 +2104,64 @@ export class PractitionerProfileEdit {
       this.errorDelLogo.set('');
       this.firma.discard();
       this.sello.discard();
-      if (!(await this.router.navigate(['/account/profile']))) {
-        this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
-      }
+      await this.volverALaFicha(this.pestana());
     } catch {
       this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
     } finally {
       this.cancelandoEdicion.set(false);
     }
+  }
+
+  /**
+   * Vuelve a la ficha, abierta en la pestaña que se estaba editando.
+   *
+   * La ficha recibe el índice de la lista completa (`?pestana=`) y lo traduce
+   * por etiqueta: es el mismo camino del lápiz, de vuelta.
+   */
+  private async volverALaFicha(pestana: number): Promise<void> {
+    const indiceDeLaFicha = DOCTOR_PROFILE_TABS.indexOf(EDITOR_DOCTOR_TABS[pestana]);
+    try {
+      // La primera pestaña es la que abre la ficha sin pedir nada.
+      const navego =
+        indiceDeLaFicha > 0
+          ? await this.router.navigate([MI_PERFIL_MEDICO], {
+              queryParams: { pestana: indiceDeLaFicha },
+            })
+          : await this.router.navigate([MI_PERFIL_MEDICO]);
+      if (!navego) {
+        this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
+      }
+    } catch {
+      this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
+    }
+  }
+
+  /**
+   * Las pestañas del editor donde queda algo escrito y sin guardar después de
+   * un guardado: los campos de otra pestaña que no viajaron, los idiomas, y el
+   * logo, la firma o el sello si el guardado no fue desde «Datos personales».
+   *
+   * «Acepto pacientes nuevos» no cuenta: no lo escribe la persona, el editor lo
+   * corrige solo en el próximo guardado de «Datos personales».
+   */
+  private pestanasConCambiosSinGuardar(camposQueNoViajaron: readonly string[]): number[] {
+    const pestanas = new Set<number>();
+    for (const campo of camposQueNoViajaron) {
+      if (campo === 'acceptsNewPatients') continue;
+      const indice = Object.entries(CAMPOS_POR_PESTANA).find(([, campos]) =>
+        campos.includes(campo),
+      )?.[0];
+      if (indice !== undefined) pestanas.add(Number(indice));
+    }
+    if (
+      this.idiomasCambiaron() ||
+      this.logoPendiente() !== null ||
+      this.firma.change !== undefined ||
+      this.sello.change !== undefined
+    ) {
+      pestanas.add(TAB_EDITOR.personales);
+    }
+    return [...pestanas].sort((a, b) => a - b);
   }
 
   /**
@@ -2399,6 +2452,17 @@ export class PractitionerProfileEdit {
           this.perfil.set(ready(perfil));
           this.toasts.success('Su perfil quedó actualizado.', 'Perfil');
           avisarExtensionesSinGuardar(this.toasts, cambios);
+          // Guardar vuelve a lectura en la misma pestaña (CORR-08, §6), salvo
+          // que quede algo escrito en otra: salir ahí lo perdería sin avisar.
+          const sinGuardar = this.pestanasConCambiosSinGuardar(pendientesEnOtrasPestanas);
+          if (sinGuardar.length === 0) {
+            void this.volverALaFicha(pestana);
+            return;
+          }
+          this.toasts.info(
+            `Quedan cambios sin guardar en ${enumerar(sinGuardar.map((indice) => `«${EDITOR_DOCTOR_TABS[indice]}»`))}.`,
+            'Perfil',
+          );
         },
         error: (error: unknown) => {
           this.guardandoPresentacion.set(false);

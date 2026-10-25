@@ -630,6 +630,39 @@ describe('PractitionerProfileView', () => {
     });
   });
 
+  describe('entrar en una pestaña pedida (vuelta del editor, CORR-08)', () => {
+    function pestanaAbierta(host: HTMLElement): string | undefined {
+      return host
+        .querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+        ?.textContent?.trim();
+    }
+
+    it('abre la pestaña pedida y no la avisa como visita', () => {
+      const vistas: string[] = [];
+      const host = montar({ ...PERFIL, facturacion: FACTURA_VACIA }, true, false, (vista) => {
+        fixture.componentRef.setInput('pestanaInicial', 1);
+        vista.pestanaVisible.subscribe((pestana) => vistas.push(pestana));
+      });
+
+      expect(pestanaAbierta(host)).toBe('Contacto');
+      expect(vistas).toEqual([]);
+    });
+
+    it('traduce por etiqueta cuando la ficha no tiene «Facturación»', () => {
+      const host = montar({ ...PERFIL, facturacion: null }, true, false, () => {
+        fixture.componentRef.setInput('pestanaInicial', 5);
+      });
+
+      expect(pestanaAbierta(host)).toBe('Credenciales');
+    });
+
+    it('sin pestaña pedida abre la primera', () => {
+      const host = montar(PERFIL, true);
+
+      expect(pestanaAbierta(host)).toBe('Datos personales');
+    });
+  });
+
   it('un visitante no ve ninguna ayuda: le hablaba al dueño y a quien prueba', () => {
     // Un paciente en la ficha de la Guía leía «en desarrollo/pruebas se puede
     // usar todo el perfil sin esperar el trámite» (barrido del 18/08/2026).

@@ -3337,6 +3337,94 @@ describe('PractitionerProfileEdit', () => {
       expect(exige('mobilePhone')).toBe(true);
       expect(exige('motherLastName')).toBe(false);
     });
+
+    it('el nombre lleva la marca de obligatorio y vacío no se guarda, como en el alta', () => {
+      montarYCargar();
+      expect(interno<(clave: string) => boolean>('practitionerFieldRequired')('name')).toBe(true);
+      señal<number>('pestana').set(0);
+      señal<string>('nombre').set('  ');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su nombre.');
+    });
+  });
+
+  describe('guardar vuelve a lectura en la misma pestaña (CORR-08)', () => {
+    it('guardar «Contacto» vuelve a la ficha abierta en «Contacto»', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(1);
+      señal<string>('correoPersonal').set('ana.nueva@correo.bo');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ personalEmail: 'ana.nueva@correo.bo' });
+      req.flush({ ...PERFIL_BASE, personalEmail: 'ana.nueva@correo.bo' });
+      await Promise.resolve();
+
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile'], {
+        queryParams: { pestana: 1 },
+      });
+    });
+
+    it('guardar «Datos personales» vuelve a la ficha sin pedir pestaña', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(0);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush({ ...PERFIL_BASE, professionalTitle: 'Cardióloga intervencionista' });
+      await Promise.resolve();
+
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+    });
+
+    it('si quedó algo escrito en otra pestaña, se queda en edición y la nombra', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<string>('nit').set('5414404011');
+      señal<number>('pestana').set(0);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush({ ...PERFIL_BASE, professionalTitle: 'Cardióloga intervencionista' });
+      await Promise.resolve();
+
+      expect(navegar).not.toHaveBeenCalled();
+      expect(ultimoAviso()?.message).toBe('Quedan cambios sin guardar en «Facturación».');
+    });
+
+    it('un guardado rechazado no sale del editor', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('guardarPresentacion')();
+
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush({ message: 'No' }, { status: 422, statusText: 'Unprocessable Entity' });
+      await Promise.resolve();
+
+      expect(navegar).not.toHaveBeenCalled();
+    });
+
+    it('cancelar desde «Facturación» vuelve a la ficha en «Facturación»', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(2);
+      await interno<() => Promise<void>>('cancelarEdicion')();
+
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile'], {
+        queryParams: { pestana: 2 },
+      });
+    });
   });
 
   describe('cuando el servidor rechaza el guardado', () => {

@@ -62,6 +62,10 @@ describe('practitionerFields', () => {
       required: true,
       maxDate: 'today',
     });
+    expect(practitionerField('name', context)).toMatchObject({
+      required: true,
+      mensajeDeError: 'Ingrese su nombre.',
+    });
     expect(practitionerField('motherLastName', context)?.required).toBeFalsy();
     expect(practitionerField('campo-inexistente', context)).toBeUndefined();
   });

@@ -221,6 +221,88 @@ test('«Contacto» aplica las reglas del alta: correo personal con forma de corr
   await expect(campo(page, 'edicion-correo-personal')).toHaveValue('lucia.paredes@ejemplo.bo');
 });
 
+test('guardar vuelve a lectura en la misma pestaña, y cancelar también', async ({ page }) => {
+  const consola: string[] = [];
+  page.on('console', (m) => {
+    if (m.type() === 'error') consola.push(m.text());
+  });
+  await entrar(page, medica);
+  await abrirEditor(page, 1);
+
+  const correo = `lucia.${Date.now().toString(36)}@ejemplo.bo`;
+  await campo(page, 'edicion-correo-personal').fill(correo);
+  const enviados = await patchesDurante(page, async () => {
+    const respuesta = page.waitForResponse(
+      (r) => r.request().method() === 'PATCH' && PATCH_DEL_PERFIL.test(r.url()),
+    );
+    await guardar(page).click();
+    expect((await respuesta).status()).toBe(200);
+  });
+  expect(enviados.map((p) => p.postDataJSON())).toEqual([{ personalEmail: correo }]);
+
+  // Vuelve a la ficha (lectura), abierta en «Contacto», con el dato guardado.
+  await expect(page).toHaveURL(/\/account\/profile\?pestana=1$/);
+  await expect(page.getByTestId('edicion-pestanas')).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: 'Contacto' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel').getByText(correo)).toBeVisible();
+
+  // Persistencia: al recargar sigue en «Contacto» y el correo viene del servidor.
+  await page.reload();
+  await estable(page);
+  await expect(page.getByRole('tab', { name: 'Contacto' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel').getByText(correo)).toBeVisible();
+
+  mkdirSync(CAPTURAS, { recursive: true });
+  for (const { ancho, tema } of [
+    { ancho: 390, tema: 'light' },
+    { ancho: 1440, tema: 'light' },
+    { ancho: 390, tema: 'dark' },
+    { ancho: 1440, tema: 'dark' },
+  ] as const) {
+    await page.setViewportSize({ width: ancho, height: 900 });
+    await page.evaluate((modo) => {
+      localStorage.setItem('mantra-core-health.theme', modo);
+      document.documentElement.setAttribute('data-theme', modo);
+      document.documentElement.setAttribute('data-tema', modo === 'dark' ? 'oscuro' : 'claro');
+    }, tema);
+    // Recargar en el ancho y el tema de la celda: el cambio de ancho en
+    // caliente anima el menú lateral y la captura lo saca a medio camino.
+    // También vuelve a probar que la ficha abre en la pestaña de la URL.
+    await page.reload();
+    await estable(page);
+    await expect(page.getByRole('tab', { name: 'Contacto' })).toHaveAttribute('aria-selected', 'true');
+    // El menú lateral quieto: su caja no se mueve entre dos cuadros.
+    await page.waitForFunction(
+      () =>
+        new Promise<boolean>((resolve) => {
+          const nav = document.querySelector('app-side-nav');
+          const caja = (): string => JSON.stringify(nav?.getBoundingClientRect() ?? null);
+          const antes = caja();
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve(antes === caja())));
+        }),
+    );
+    const desborde = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(desborde, `scroll horizontal en ${ancho}px`).toBeLessThanOrEqual(0);
+    await page.screenshot({
+      path: join(CAPTURAS, `vuelta-a-contacto-${ancho}-${tema === 'dark' ? 'oscuro' : 'claro'}.png`),
+    });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  // Cancelar sin cambios en «Facturación» vuelve a «Facturación».
+  await abrirEditor(page, 2);
+  await page.getByRole('button', { name: 'Cancelar edición' }).click();
+  await expect(page).toHaveURL(/\/account\/profile\?pestana=2$/);
+  await expect(page.getByRole('tab', { name: 'Facturación' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+
+  expect(consola, consola.join('\n')).toEqual([]);
+});
+
 test('capturas del editor en tres anchos y en oscuro', async ({ page }) => {
   mkdirSync(CAPTURAS, { recursive: true });
   await entrar(page, medica);
