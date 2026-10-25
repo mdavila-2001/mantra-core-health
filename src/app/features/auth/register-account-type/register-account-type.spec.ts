@@ -29,7 +29,7 @@ describe('RegisterAccountType', () => {
       .map((el) => el.nativeElement as HTMLAnchorElement);
   }
 
-  it('ofrece las seis cuentas que tienen pantalla de alta, y ninguna más', () => {
+  it('ofrece las siete cuentas que tienen pantalla de alta, y ninguna más', () => {
     const titulos = tarjetas().map((card) =>
       card.querySelector('.tipos__card-title')!.textContent!.trim(),
     );
@@ -40,7 +40,8 @@ describe('RegisterAccountType', () => {
     // superficie que ve un paciente o un profesional se dice «médico».
     // «Farmacia» es la sexta, agregada con `RegisterPharmacy` (carril A,
     // 2026-09-29): es la primera cuenta nueva desde imagenología que sí sale
-    // a la red.
+    // a la red. «Centro médico» es la séptima (CM-11): sale a la red como
+    // `register-organization` con un tipo de salud que ya existe.
     expect(titulos).toEqual([
       'Paciente',
       'Médico',
@@ -48,6 +49,7 @@ describe('RegisterAccountType', () => {
       'Laboratorio',
       'Imagenología',
       'Farmacia',
+      'Centro médico',
     ]);
   });
 
@@ -61,6 +63,7 @@ describe('RegisterAccountType', () => {
       '/auth/register/laboratory',
       '/auth/register/imaging-center',
       '/auth/register/pharmacy',
+      '/auth/register/medical-center',
     ]);
   });
 
