@@ -29,6 +29,7 @@ import {
   borradorDePedido,
   cartLinesFromDraft,
   coberturaConSeguro,
+  etiquetaDeParciales,
   ordenarSedes,
   pendingImagingStudies,
   WhereToBuy,
@@ -258,6 +259,21 @@ describe('WhereToBuy', () => {
   /** Maqueta (`true`) o API real (`false`); se lee al crear la pantalla. */
   let sampleData: boolean;
 
+
+  /** P-19-4: la lista abre solo con las completas; esto suma las que tienen una parte. */
+  function verTodas(): void {
+    harness.routeNativeElement
+      ?.querySelector<HTMLButtonElement>(byTestId('compra-ver-incompletas'))
+      ?.click();
+    harness.detectChanges();
+  }
+
+  function verParciales(): void {
+    harness.routeNativeElement
+      ?.querySelector<HTMLButtonElement>(byTestId('imagen-ver-parciales'))
+      ?.click();
+    harness.detectChanges();
+  }
   beforeEach(() => {
     sampleData = true;
     // jsdom no trae geolocalización: se cuelga una espía para poder afirmar
@@ -427,6 +443,7 @@ describe('WhereToBuy', () => {
       offset: 0,
     });
     harness.detectChanges();
+    verParciales();
 
     const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
     expect(pestanas[1]?.getAttribute('aria-selected')).toBe('true');
@@ -434,10 +451,31 @@ describe('WhereToBuy', () => {
     expect(texto()).toContain('Centro de Imagen Sur');
     expect(texto()).toContain('Le falta: Ecografía abdominal');
     const comoLlegar = harness.routeNativeElement?.querySelector<HTMLAnchorElement>(
-      '[data-testid="imagen-lista"] a[href*="google.com/maps"]',
+      '[data-testid="imagen-lista"] a[href*="openstreetmap.org/directions"]',
     );
     expect(comoLlegar?.getAttribute('target')).toBe('_blank');
     expect(comoLlegar?.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('P-19-4: imagenología abre solo con los centros que tienen todos los estudios', async () => {
+    await montar('m-1', '?tab=imaging');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES_PROPIAS);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    http.expectOne((r) => r.url === '/diagnostic-units/search').flush({
+      items: [centro('u-2', 'Imagen Norte', false, ['c-eco'])],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    harness.detectChanges();
+
+    expect(texto()).not.toContain('Imagen Norte');
+    expect(texto()).toContain('Ningún centro tiene hoy todos los estudios que le pidieron.');
+    verParciales();
+    expect(texto()).toContain('Imagen Norte');
+    expect(texto()).toContain('Le falta: Ecografía abdominal');
   });
 
   it('deja la pestaña elegida en la URL', async () => {
@@ -512,6 +550,29 @@ describe('WhereToBuy', () => {
     expect(mas?.querySelectorAll('a[href^="/promotions/"]').length).toBeGreaterThan(0);
   });
 
+  it('P-19-4: abre solo con las sucursales que tienen todo y muestra las demás a pedido', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const lista = () => harness.routeNativeElement?.querySelectorAll('[data-testid="compra-sedes"] > li') ?? [];
+    const boton = () =>
+      harness.routeNativeElement?.querySelector<HTMLButtonElement>(byTestId('compra-ver-incompletas'));
+    expect(lista().length).toBe(1);
+    expect(lista()[0]?.textContent).toContain('Tiene todo');
+    expect(boton()?.textContent?.trim()).toBe('Ver la que tiene una parte');
+    expect(boton()?.getAttribute('aria-pressed')).toBe('false');
+
+    verTodas();
+    expect(lista().length).toBe(2);
+    expect(boton()?.textContent?.trim()).toBe('Mostrar solo las que tienen todo');
+    expect(boton()?.getAttribute('aria-pressed')).toBe('true');
+
+    verTodas();
+    expect(lista().length).toBe(1);
+  });
+
   it('recorre el contrato E2 entero y pinta completas primero, sin coordenadas', async () => {
     await montar();
     responderHastaProductos();
@@ -525,6 +586,7 @@ describe('WhereToBuy', () => {
     expect(consulta.request.params.has('lng')).toBe(false);
     consulta.flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     const sedes = harness.routeNativeElement?.querySelectorAll('.compra__sede') ?? [];
     expect(sedes).toHaveLength(2);
@@ -546,6 +608,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
     // El montaje de Leaflet es diferido: dos microtareas y otro render.
     await Promise.resolve();
     await Promise.resolve();
@@ -579,6 +642,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     expect(
       harness.routeNativeElement?.querySelector('[data-testid="compra-demo-aviso"]'),
@@ -641,6 +705,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     // La segunda tarjeta es la sede parcial: le falta la amoxicilina.
@@ -826,6 +891,7 @@ describe('WhereToBuy', () => {
     expect(consulta.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
     consulta.flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     expect(texto()).toContain('No todo se pudo consultar');
     expect(texto()).toContain('Ibuprofeno');
@@ -982,6 +1048,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_CON_NORTE);
     harness.detectChanges();
+    verTodas();
   }
 
   function consultar<T extends Element>(selector: string): T | null {
@@ -1618,5 +1685,12 @@ describe('pendingImagingStudies', () => {
     expect(pendingImagingStudies([orden('o-1', 'c-eco'), orden('o-2', 'c-glu')], labels)).toEqual([
       { conceptId: 'c-eco', name: 'Ecografía abdominal' },
     ]);
+  });
+});
+
+describe('etiquetaDeParciales', () => {
+  it('concuerda en singular y en plural', () => {
+    expect(etiquetaDeParciales(1, 'la', 'las')).toBe('Ver la que tiene una parte');
+    expect(etiquetaDeParciales(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
   });
 });
