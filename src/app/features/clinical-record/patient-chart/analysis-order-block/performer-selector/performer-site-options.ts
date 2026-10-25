@@ -4,7 +4,7 @@ import { catchError } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
 
 import { MedicalCentersClient } from '../../../../../core/data-access/medical-centers/medical-centers.client';
-import { PerformerAssignmentsClient } from '../../../../../core/data-access/performer-assignments/performer-assignments.client';
+import { PracticeSitesClient } from '../../../../../core/data-access/practice-sites/practice-sites.client';
 import { TerminologyClient } from '../../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../../core/view-state/view-state';
@@ -38,12 +38,11 @@ export interface PerformerSiteData {
  * sedes, porque una sede inventada sería una recomendación falsa al paciente.
  *
  * La búsqueda de centros sale de `MedicalCentersClient`; las vinculaciones del
- * médico, de `PerformerAssignmentsClient`, un cliente provisional hasta que
- * exista el de afiliaciones.
+ * médico, de `PracticeSitesClient`.
  */
 @Injectable({ providedIn: 'root' })
 export class PerformerSiteOptions {
-  private readonly assignments = inject(PerformerAssignmentsClient);
+  private readonly practiceSites = inject(PracticeSitesClient);
   private readonly medicalCenters = inject(MedicalCentersClient);
   private readonly terminology = inject(TerminologyClient);
 
@@ -57,7 +56,17 @@ export class PerformerSiteOptions {
   load(procedureConceptId: string): Observable<ViewState<PerformerSiteData>> {
     return forkJoin({
       concepts: this.readConcepts(),
-      assignments: this.assignments.readOwnAssignments(),
+      // Las vinculaciones antiguas, sin procedimiento, vienen sin `serviceConceptId` ni
+      // `statusCode`: quedan fuera de «Lo hago yo» sin tratamiento aparte.
+      assignments: this.practiceSites.listMyRoleAssignments().pipe(
+        map((rows) =>
+          rows.map((row) => ({
+            practiceSiteId: row.practiceSiteId ?? null,
+            serviceConceptId: row.serviceConceptId ?? null,
+            statusCode: row.statusCode ?? '',
+          })),
+        ),
+      ),
       // Sólo los centros completos (sin `includePartial`), en el orden que decide la API.
       centerSites: this.medicalCenters.search({ procedureConceptIds: [procedureConceptId], includePartial: false }).pipe(
         map((page) =>
