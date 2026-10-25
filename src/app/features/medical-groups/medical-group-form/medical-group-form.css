@@ -1,0 +1,76 @@
+/* ============================================================================
+    Crear grupo médico. Sólo distribución: los átomos y organismos ya traen su
+    pinta del sistema. Mobile-first: una columna, y dos desde 768 px.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.grupo {
+  display: grid;
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-6);
+}
+
+.grupo__bloque {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.grupo__bajada {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.grupo__elegido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.grupo__grilla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.grupo__equipo {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grupo__integrante {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.grupo__integrante-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.grupo__integrante-encabezado h3 {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+.grupo__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .grupo__grilla {
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  }
+}

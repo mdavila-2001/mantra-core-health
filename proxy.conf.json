@@ -108,6 +108,7 @@
       "/diagnostics/containers",
       "/diagnostics/reports",
       "/quotations",
+      "/medical-groups",
       "/prescription-favorites",
       "/insurance-carrier-catalog",
       "/insurance-marketplace",
