@@ -185,10 +185,12 @@ describe('MedicalCentersTab', () => {
 
     http.expectNone((r) => r.url.startsWith('/medical-centers'));
     expect(texto()).toContain('No tiene procedimientos pendientes');
-    const enlace = Array.from(host().querySelectorAll<HTMLAnchorElement>('a')).find((a) =>
+    const enlaces = Array.from(host().querySelectorAll<HTMLAnchorElement>('a')).filter((a) =>
       a.textContent?.includes('Ver mis órdenes'),
     );
-    expect(enlace?.getAttribute('href')).toBe('/my-account/diagnostic-orders');
+    // Una sola salida: la del estado vacío, sin un segundo enlace igual al pie.
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0]?.getAttribute('href')).toBe('/my-account/diagnostic-orders');
   });
 
   it('pinta las tarjetas en el orden recibido, sin reordenar', () => {

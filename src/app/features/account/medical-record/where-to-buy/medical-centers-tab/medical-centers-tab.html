@@ -94,6 +94,9 @@
         }
       }
     </app-view-state-host>
-    <a app-button variant="ghost" class="centros__volver" [routerLink]="myOrdersRoute">Ver mis órdenes</a>
+    @if (data()) {
+      <!-- Sin datos, la salida a «Mis órdenes» ya es la acción del estado vacío. -->
+      <a app-button variant="ghost" class="centros__volver" [routerLink]="myOrdersRoute">Ver mis órdenes</a>
+    }
   </section>
 </div>
