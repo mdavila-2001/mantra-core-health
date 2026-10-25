@@ -25,6 +25,7 @@
       "/admin/tenants",
       "/admin/catalog",
       "/admin/portal",
+      "/admin/portal",
       "/admin/analytics",
       "/admin/qa",
       "/admin/ops",
