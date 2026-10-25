@@ -137,6 +137,10 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'glossary',
   'my-services',
   'my-quotations',
+  // FT-21 · grupos médicos: la zona de Consultas son dos tarjetas (pedido del
+  // 19/09/2026) y nadie pidió una tercera. Se llega desde el encabezado de
+  // «Consultas médicas».
+  'schedule/medical-groups',
   'administration/pharmacy-orders',
   'administration/pharmacy-campaigns',
   'administration/pharmacy-catalog',

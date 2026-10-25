@@ -56,6 +56,9 @@ describe('NAV_SUBGROUPS', () => {
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
     // bloque la escondería detrás de un desplegable.
     'superadmin/observability',
+    // FT-21 · grupos médicos: una sola sección de su dominio, sin menú propio
+    // (`fueraDelMenuPara`), y se abre desde el encabezado de «Consultas médicas».
+    'schedule/medical-groups',
   ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {

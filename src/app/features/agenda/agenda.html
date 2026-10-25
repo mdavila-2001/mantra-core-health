@@ -58,6 +58,7 @@
       Visitas de laboratorio
     </a>
   }
+  @if (esQuienAtiende()) { <a app-button page-actions variant="ghost" routerLink="/schedule/medical-groups" data-testid="agenda-grupos-medicos">Grupos médicos</a> }
 </app-page-header>
 
 <div class="agenda">

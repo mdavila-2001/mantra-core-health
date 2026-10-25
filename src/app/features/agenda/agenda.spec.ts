@@ -570,6 +570,25 @@ describe('Agenda', () => {
     expect(raiz.querySelector('a[href="/lab-visits"]')).toBeNull();
   });
 
+  it('a quien atiende, el encabezado le ofrece «Grupos médicos» (FT-21): la zona de Consultas no crece', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+    await responderTodo();
+
+    const raiz = harness.fixture.nativeElement as HTMLElement;
+    const enlace = raiz.querySelector<HTMLAnchorElement>('[data-testid="agenda-grupos-medicos"]');
+    expect(enlace?.getAttribute('href')).toBe('/schedule/medical-groups');
+    expect(enlace?.textContent?.trim()).toBe('Grupos médicos');
+  });
+
+  it('quien sólo administra la agenda no ve «Grupos médicos»: la API lo cerraría', async () => {
+    await montar({ roles: ['SCHEDULING_ADMIN'] });
+    await responderRecursos([RECURSO_AJENO, RECURSO]);
+    await responderResto();
+
+    const raiz = harness.fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('[data-testid="agenda-grupos-medicos"]')).toBeNull();
+  });
+
   it('la solapa «Mis horarios» abre el horario sin cambiar la barra', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
     await responderTodo();

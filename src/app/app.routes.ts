@@ -23,6 +23,7 @@ import {
   rutasHeredadasConParametro,
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { MEDICAL_GROUPS } from './features/medical-groups/medical-groups.screens';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -63,20 +64,17 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
-  // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
-  // de publicación con sus reacciones.
-  //
-  // Sigue existiendo aunque el menú ya no la ofrezca (carril R2-1): quien tenga
-  // el enlace guardado llega igual. Borrarla es una decisión de producto que el
-  // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
+  // Diferida: el muro no es la primera pantalla de nadie y arrastra la tarjeta de
+  // publicación. Sigue existiendo aunque el menú ya no la ofrezca (carril R2-1):
+  // borrarla es una decisión de producto que el cliente no pidió — dijo «sacar
+  // del perfil de paciente», no «eliminar».
   feed: () => import('./features/feed/feed').then((m) => m.Feed),
-  // Carril P1 · el centro de notificaciones. Diferido: la campana del header ya
-  // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
-  // abre quien viene a revisar.
+  // Carril P1 · el centro de notificaciones. Diferido: la campana ya resuelve el
+  // 90 % de los casos y esta pantalla sólo la abre quien viene a revisar.
   'notification-center': () =>
     import('./features/notifications/notification-center').then((m) => m.NotificationCenter),
-  // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
-  // de nadie y arrastra el buscador del directorio.
+  // Carril P2 · la bandeja de mensajería. Diferida: arrastra el buscador del directorio.
+  'schedule/medical-groups': MEDICAL_GROUPS.list,
   messaging: () => import('./features/messaging/messaging').then((m) => m.Messaging),
   // El directorio de grupos (P7). Diferido como el muro: no es la primera
   // pantalla de nadie y arrastra la tarjeta de grupo con su alta.
@@ -403,6 +401,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  ...MEDICAL_GROUPS.screens,
   {
     // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
     // estado del flujo, cartera por antigüedad y cierre del período. Abría en

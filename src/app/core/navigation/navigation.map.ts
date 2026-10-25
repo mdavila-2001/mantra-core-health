@@ -456,6 +456,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M41 scheduling',
   },
   {
+    // FT-21 · grupos médicos: un equipo de profesionales alrededor de un
+    // servicio del catálogo, con fecha, lugar y pago acordado por cargo.
+    //
+    // **Sin renglón en el menú.** La lista del médico es cerrada (§4.H) y nadie
+    // pidió ampliarla: se llega por «Tus accesos». Los roles son los de
+    // `MedicalGroupsController` (`PRACTITIONER`, `CLINICIAN`) y el guard sólo
+    // evita la pantalla vacía: la autoridad es la API.
+    //
+    // Cuelga de `schedule/` y no se llama `medical-groups` porque ese es el
+    // prefijo de la API en el proxy (`scripts/check-route-prefixes.mjs`).
+    path: 'schedule/medical-groups',
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Grupos médicos',
+    group: 'Atención',
+    icon: 'people',
+    roles: ROLES_DE_QUIEN_ATIENDE,
+    availability: 'disponible',
+    summary: 'Arme un equipo para un servicio y responda las invitaciones de sus colegas.',
+    module: 'M66 medical_groups',
+  },
+  {
     path: 'medical-records',
     label: 'Archivo clínico',
     group: 'Atención',
