@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { MockRouter } from '../mock-router';
 import { buscarUsuario, TENANT_FARMACIA, TENANT_LABORATORIO } from '../mock-session';
 import {
-  registrarAltaDePracticaDeOrganizacion,
-  TENANT_PENDIENTE_DE_VERIFICACION,
+  registerOrganizationPracticeHandlers,
+  UNVERIFIED_TENANT_ID,
 } from './medical-center-onboarding.handlers';
 
 describe('handler del alta de práctica de una organización (CM-11)', () => {
   const router = new MockRouter();
-  registrarAltaDePracticaDeOrganizacion(router);
+  registerOrganizationPracticeHandlers(router);
 
   const farmacia = buscarUsuario('farmacia')!;
   const admin = buscarUsuario('admin')!;
@@ -71,7 +71,7 @@ describe('handler del alta de práctica de una organización (CM-11)', () => {
   });
 
   it('una organización sin verificar responde 422', () => {
-    const res = crear(TENANT_PENDIENTE_DE_VERIFICACION, cuerpoValido(), admin);
+    const res = crear(UNVERIFIED_TENANT_ID, cuerpoValido(), admin);
     expect(res.status).toBe(422);
     expect(res.body['code']).toBe('PRECONDITION_FAILED');
   });

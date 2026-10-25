@@ -1,25 +1,25 @@
-import { codigoDelCentroMedico } from './medical-center-code';
+import { medicalCenterCodeFromName } from './medical-center-code';
 
-const PATRON_DE_LA_API = /^[A-Za-z0-9._-]+$/;
+const API_CODE_PATTERN = /^[A-Za-z0-9._-]+$/;
 
-describe('codigoDelCentroMedico', () => {
+describe('medicalCenterCodeFromName', () => {
   it('quita diacríticos y separa con guiones', () => {
-    expect(codigoDelCentroMedico('Clínica Santa María S.R.L.')).toBe('CM-CLINICA-SANTA-MARIA-S-R-L');
+    expect(medicalCenterCodeFromName('Clínica Santa María S.R.L.')).toBe('CM-CLINICA-SANTA-MARIA-S-R-L');
   });
 
   it('un nombre sin caracteres válidos cae en CM-CENTRO', () => {
-    expect(codigoDelCentroMedico('¡¡¡')).toBe('CM-CENTRO');
+    expect(medicalCenterCodeFromName('¡¡¡')).toBe('CM-CENTRO');
   });
 
   it('nunca pasa de 100 caracteres ni termina en guion', () => {
-    const codigo = codigoDelCentroMedico('a'.repeat(60) + ' ' + 'b'.repeat(60));
-    expect(codigo.length).toBeLessThanOrEqual(100);
-    expect(codigo.endsWith('-')).toBe(false);
+    const code = medicalCenterCodeFromName('a'.repeat(60) + ' ' + 'b'.repeat(60));
+    expect(code.length).toBeLessThanOrEqual(100);
+    expect(code.endsWith('-')).toBe(false);
   });
 
-  it.each(['Centro Médico Norte', 'Ñandú & Hijos', '123', 'a'])('cumple el patrón de la API: %s', (nombre) => {
-    const codigo = codigoDelCentroMedico(nombre);
-    expect(PATRON_DE_LA_API.test(codigo)).toBe(true);
-    expect(codigo.length).toBeGreaterThanOrEqual(3);
+  it.each(['Centro Médico Norte', 'Ñandú & Hijos', '123', 'a'])('cumple el patrón de la API: %s', (name) => {
+    const code = medicalCenterCodeFromName(name);
+    expect(API_CODE_PATTERN.test(code)).toBe(true);
+    expect(code.length).toBeGreaterThanOrEqual(3);
   });
 });
