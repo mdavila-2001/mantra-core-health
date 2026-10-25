@@ -1462,10 +1462,12 @@ export class RegisterPatient {
           control: 'custom',
         },
         {
+          // Sin `label`, `hint` ni `description`: el motor envuelve cada campo
+          // `custom` en un `app-form-field` con esos textos, y la plantilla de este
+          // campo ya lleva el suyo (es el que cablea el selector por DI con su
+          // etiqueta y su ayuda). Declararlos aquí dibujaba título y ayuda dos veces.
           key: 'trustedAmbulanceService',
-          label: 'Servicio de ambulancia',
-          hint: 'Al elegir uno, se completan nombre y teléfono. Puede editarlos.',
-          description: 'El directorio muestra el alcance y la fuente de cada línea.',
+          label: '',
           control: 'custom',
           icono: 'hospital',
         },
