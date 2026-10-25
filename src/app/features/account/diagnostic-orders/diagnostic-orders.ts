@@ -254,7 +254,7 @@ export class DiagnosticOrders {
       requestedAt: item.createdAt,
       preparation: item.preparationInstructions ?? null,
       appointment: item.appointment ?? null,
-      bookable: categoria !== 'OTHER' && !item.hasReleasedResult && (item.appointment ?? null) === null,
+      bookable: (categoria === 'LAB' || categoria === 'IMAGING') && !item.hasReleasedResult && (item.appointment ?? null) === null,
     };
   }
 
