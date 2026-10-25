@@ -349,6 +349,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Diferida como el resto: no es la primera pantalla de nadie.
   'my-quotations': () =>
     import('./features/quotations/quotation-list/quotation-list').then((m) => m.QuotationList),
+  // FT-21. Grupos médicos: el equipo de un servicio, con cargo y pago por cargo.
+  'my-medical-groups': () =>
+    import('./features/medical-groups/medical-group-list/medical-group-list').then(
+      (m) => m.MedicalGroupList,
+    ),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   questionnaires: () =>
@@ -666,6 +671,27 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/quotations/quotation-form/quotation-form')
         .then((m) => m.QuotationForm)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-21. El alta y la consulta de un grupo médico. Cuelgan de «Grupos
+    // médicos», que es el listado que la sección declara; `new` va antes que
+    // `:id` para que el router no la lea como un id.
+    path: 'my-medical-groups/new',
+    title: `${APP_TITLE} - Crear grupo médico`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/medical-groups/medical-group-form/medical-group-form')
+        .then((m) => m.MedicalGroupForm)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'my-medical-groups/:id',
+    title: `${APP_TITLE} - Grupo médico`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/medical-groups/medical-group-detail/medical-group-detail')
+        .then((m) => m.MedicalGroupDetail)
         .catch(() => chunkFallido()),
   },
   {
@@ -1021,6 +1047,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El atlas anatómico 3D cuelga del glosario: miga, menú y roles son los
+    // suyos, y la ruta va antes de `glossary/:conceptId` para no confundirse
+    // con un término. three.js entra sólo con esta pantalla.
+    path: 'glossary/anatomy-atlas',
+    title: `${APP_TITLE} - Atlas anatómico 3D`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-anatomy-atlas')
+        .then((m) => m.GlossaryAnatomyAtlas)
         .catch(() => chunkFallido()),
   },
   {
@@ -1719,6 +1757,14 @@ export const routes: Routes = [
       // servicios: se llega desde ahí, que es donde uno mira su lista y se da
       // cuenta de que le falta un procedimiento.
       pantallaDeOperacion('administration/services-catalog', 'import', 'Importar del arancel', () =>
+        import('./features/admin/services-catalog/procedure-import/procedure-import').then(
+          (m) => m.ProcedureImport,
+        ),
+      ),
+      // Carril 22: el médico importa a su propia práctica desde «Mis servicios».
+      // Misma pantalla; la API deja dar de alta servicios a quien atiende en
+      // esa práctica (PRACTITIONER/CLINICIAN) y la lista evita duplicar códigos.
+      pantallaDeOperacion('my-services', 'import', 'Importar producto', () =>
         import('./features/admin/services-catalog/procedure-import/procedure-import').then(
           (m) => m.ProcedureImport,
         ),

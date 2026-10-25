@@ -1,0 +1,3330 @@
+[
+ {
+  "netterId": "ENT_0f464325302ab5",
+  "name": "Arteria(s) — glándula mamaria",
+  "queries": [
+   "mammary artery",
+   "artery of mammary gland",
+   "mammary gland artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«arteria de la glándula mamaria» no corresponde a una clase única sin precisar la arteria de origen"
+ },
+ {
+  "netterId": "ENT_1d1aed7f738bff",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_2801d902fbaf89",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_2d67f45a8ebefa",
+  "name": "Esófago — arterias",
+  "queries": [
+   "esophageal artery",
+   "oesophageal artery"
+  ],
+  "uberon": "UBERON:0035539",
+  "matchedText": "esophageal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2d8ade8e226bd9",
+  "name": "Arteria(s) — torácica — inferior",
+  "queries": [
+   "inferior thoracic artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«arteria torácica inferior» no tiene equivalente claro en UBERON"
+ },
+ {
+  "netterId": "ENT_3b4de2ca3081e2",
+  "name": "Arteria(s) — braquial",
+  "queries": [
+   "brachial artery"
+  ],
+  "uberon": "UBERON:0001398",
+  "matchedText": "brachial artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4497a2f448cc1d",
+  "name": "Arteria(s) — subclavia",
+  "queries": [
+   "subclavian artery"
+  ],
+  "uberon": "UBERON:0001533",
+  "matchedText": "subclavian artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4a32437165aff4",
+  "name": "Arteria(s) — fibras simpáticas rama esofágica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fibras simpáticas de rama esofágica: no es una arteria ni una clase única"
+ },
+ {
+  "netterId": "ENT_4c2b415d37743e",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_4d3db96ab59cc1",
+  "name": "Arteria(s) — bronquial",
+  "queries": [
+   "bronchial artery"
+  ],
+  "uberon": "UBERON:0002040",
+  "matchedText": "bronchial artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_53152bc9f4c3d2",
+  "name": "Arteria(s) — musculofrénica",
+  "queries": [
+   "musculophrenic artery"
+  ],
+  "uberon": "UBERON:0006632",
+  "matchedText": "musculophrenic artery",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_59455aa48d8545",
+  "name": "Arteria(s) — axilar",
+  "queries": [
+   "axillary artery"
+  ],
+  "uberon": "UBERON:0001394",
+  "matchedText": "axillary artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6115b01c5c7040",
+  "name": "Arteria(s) — torácica — interna",
+  "queries": [
+   "internal thoracic artery"
+  ],
+  "uberon": "UBERON:0002456",
+  "matchedText": "internal thoracic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7589d016403834",
+  "name": "Arteria(s) — carótida — izquierda",
+  "queries": [
+   "left common carotid artery",
+   "left carotid artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«carótida izquierda» ambigua (común, interna o externa); UBERON solo ofrece la clase «plus branches»"
+ },
+ {
+  "netterId": "ENT_75a745ebc6e3a0",
+  "name": "Arteria(s) — esofágica",
+  "queries": [
+   "esophageal artery"
+  ],
+  "uberon": "UBERON:0035539",
+  "matchedText": "esophageal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7c2c5cfa788381",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_8cb45274a2a99e",
+  "name": "Arteria(s) — esófago",
+  "queries": [
+   "esophageal artery"
+  ],
+  "uberon": "UBERON:0035539",
+  "matchedText": "esophageal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9bd1aaa0a34731",
+  "name": "Arteria(s) — rama esofágica",
+  "queries": [
+   "esophageal branch",
+   "esophageal branch of aorta"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "rama esofágica sin arteria de origen especificada; sin clase equivalente encontrada"
+ },
+ {
+  "netterId": "ENT_a10577b50b922f",
+  "name": "Arteria(s) — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_a4e4e5e695637e",
+  "name": "Arteria(s) — torácica — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«torácica derecha» ambigua (interna/lateral); sin clase única"
+ },
+ {
+  "netterId": "ENT_aa70026b2d5258",
+  "name": "Arteria(s) — epigástrica — superior",
+  "queries": [
+   "superior epigastric artery"
+  ],
+  "uberon": "UBERON:0007153",
+  "matchedText": "superior epigastric artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b3f9cdb140624b",
+  "name": "Arteria(s) — arterias perforantes",
+  "queries": [
+   "perforating branch of internal thoracic artery",
+   "perforating artery",
+   "perforating arteries"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "arterias perforantes sin arteria de origen especificada; sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_befb27d41891f2",
+  "name": "Tráquea — arterias",
+  "queries": [
+   "tracheal artery",
+   "tracheal branch of inferior thyroid artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "arterias de la tráquea: agrupación sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_c1ed7403fde820",
+  "name": "Arteria(s) — fibras simpáticas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fibras simpáticas: no es una arteria ni una clase única"
+ },
+ {
+  "netterId": "ENT_d0e164bb1e5291",
+  "name": "Arteria(s) — rama esofágica",
+  "queries": [
+   "esophageal branch",
+   "esophageal branch of aorta"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "rama esofágica sin arteria de origen especificada; sin clase equivalente encontrada"
+ },
+ {
+  "netterId": "ENT_df5609e5f7687c",
+  "name": "Arteria(s) — surcos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "subentrada de surcos sin estructura arterial identificable"
+ },
+ {
+  "netterId": "ENT_e368c8718b512b",
+  "name": "Ebner) — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto («Ebner)»)"
+ },
+ {
+  "netterId": "ENT_eb08cca9ad66cf",
+  "name": "Esófago — rama arterial recurrente",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "rama arterial recurrente esofágica sin clase equivalente encontrada"
+ },
+ {
+  "netterId": "ENT_02e9175f3b0198",
+  "name": "Articulación(es) — posterolateral derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "calificador posicional sin articulación identificable"
+ },
+ {
+  "netterId": "ENT_0f80cb3532d63b",
+  "name": "Articulación(es) — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista de sección transversal, no una estructura"
+ },
+ {
+  "netterId": "ENT_7c53b448082d40",
+  "name": "Articulación(es) — esternocostales",
+  "queries": [
+   "sternocostal joint"
+  ],
+  "uberon": "UBERON:0001998",
+  "matchedText": "sternocostal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_905b86e5815169",
+  "name": "Articulación(es) — visión — lateral izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista lateral izquierda, no una estructura"
+ },
+ {
+  "netterId": "ENT_98b969a0b7c553",
+  "name": "Articulación(es) — costoconaral",
+  "queries": [
+   "costochondral joint"
+  ],
+  "uberon": "UBERON:0002293",
+  "matchedText": "costochondral joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9ab27c794e3b39",
+  "name": "Articulación(es) — costovertebral",
+  "queries": [
+   "costovertebral joint"
+  ],
+  "uberon": "UBERON:0002292",
+  "matchedText": "costovertebral joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a25d0bd28b60a8",
+  "name": "Articulación(es) — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista de sección transversal, no una estructura"
+ },
+ {
+  "netterId": "ENT_d5166c759b3d6b",
+  "name": "Articulación(es) — manubrioesternal",
+  "queries": [
+   "manubriosternal joint"
+  ],
+  "uberon": "UBERON:0011966",
+  "matchedText": "manubriosternal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e029d8cb8ba70a",
+  "name": "Articulación(es) — intercondrales",
+  "queries": [
+   "interchondral joint"
+  ],
+  "uberon": "UBERON:0002002",
+  "matchedText": "interchondral joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_92d989c63ad5c4",
+  "name": "Costillas — cartílago costal",
+  "queries": [
+   "costal cartilage"
+  ],
+  "uberon": "UBERON:0002236",
+  "matchedText": "costal cartilage",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_33bae9fdbec38f",
+  "name": "Fosa — subescapular",
+  "queries": [
+   "subscapular fossa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fosa subescapular sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_37831e5769547a",
+  "name": "Espacio(s) — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_57e565b3d24918",
+  "name": "Fosa — oval",
+  "queries": [
+   "fossa ovalis",
+   "fossa ovalis of heart"
+  ],
+  "uberon": "UBERON:0003369",
+  "matchedText": "fossa ovalis",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_646b65c438ee4f",
+  "name": "Espacio(s) — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_77a83066aaecfa",
+  "name": "Fosa — limbo",
+  "queries": [
+   "limbus of fossa ovalis",
+   "limbus fossae ovalis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "limbo de la fosa oval sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_cd8c9f7ce8043c",
+  "name": "Fosa — piriforme",
+  "queries": [
+   "piriform recess",
+   "piriform fossa",
+   "piriform sinus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fosa/receso piriforme sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_136571dc3ef390",
+  "name": "Hernia — deslizamiento",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "condición clínica indexada"
+ },
+ {
+  "netterId": "ENT_0d23b6c3f09a63",
+  "name": "Conducto — orificio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_2f76764892e9d0",
+  "name": "Conducto — obliterado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "conducto obliterado: no especifica el conducto"
+ },
+ {
+  "netterId": "ENT_80e0c15fb0cea1",
+  "name": "Conducto — prenatal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "conducto prenatal: no especifica el conducto"
+ },
+ {
+  "netterId": "ENT_fe0fb871f4efb8",
+  "name": "Conducto — alveolar",
+  "queries": [
+   "alveolar duct",
+   "respiratory alveolar duct"
+  ],
+  "uberon": "UBERON:0002173",
+  "matchedText": "alveolar duct",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0892c2be52f6a3",
+  "name": "Areola",
+  "queries": [
+   "areola",
+   "areola mammae"
+  ],
+  "uberon": "UBERON:0002032",
+  "matchedText": "areola",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1f493d2e7b0b2c",
+  "name": "Valva semilunar, nodulillo",
+  "queries": [
+   "nodule of semilunar valve",
+   "nodulus valvulae semilunaris",
+   "nodule of aortic valve cusp"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nodulillo de valva semilunar sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_2c0b8869dddec6",
+  "name": "Tubos drenaje torácico, situación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "situación de tubos de drenaje: procedimiento, no estructura"
+ },
+ {
+  "netterId": "ENT_2d8927f2fdaa03",
+  "name": "Alvéolo",
+  "queries": [
+   "pulmonary alveolus",
+   "alveolus of lung",
+   "lung alveolus"
+  ],
+  "uberon": "UBERON:0002299",
+  "matchedText": "pulmonary alveolus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_304625381b3bfc",
+  "name": "Purkinje",
+  "queries": [
+   "Purkinje fiber",
+   "Purkinje fibre"
+  ],
+  "uberon": "UBERON:0002354",
+  "matchedText": "Purkinje fiber",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_335238d9e1f4d9",
+  "name": "Neumotórax, tubo drenaje",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tubo de drenaje en neumotórax: procedimiento clínico"
+ },
+ {
+  "netterId": "ENT_3ef73bf12378e4",
+  "name": "Hemotórax, tubo drenaje torácico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tubo de drenaje en hemotórax: procedimiento clínico"
+ },
+ {
+  "netterId": "ENT_4af421011bfc6c",
+  "name": "Atrio (aurícula)",
+  "queries": [
+   "cardiac atrium",
+   "atrium of heart"
+  ],
+  "uberon": "UBERON:0002081",
+  "matchedText": "cardiac atrium",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4e714ec9cf34b0",
+  "name": "Clavicula",
+  "queries": [
+   "clavicle",
+   "clavicle bone"
+  ],
+  "uberon": "UBERON:0001105",
+  "matchedText": "clavicle",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4f0a66f98d7c61",
+  "name": "Pezón",
+  "queries": [
+   "nipple"
+  ],
+  "uberon": "UBERON:0002030",
+  "matchedText": "nipple",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_507561388f555c",
+  "name": "Orofaringe",
+  "queries": [
+   "oropharynx"
+  ],
+  "uberon": "UBERON:0001729",
+  "matchedText": "oropharynx",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5a0054505eb6f2",
+  "name": "Bronquio",
+  "queries": [
+   "bronchus"
+  ],
+  "uberon": "UBERON:0002185",
+  "matchedText": "bronchus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_70a9ec1f9c7e95",
+  "name": "Manubrio",
+  "queries": [
+   "manubrium of sternum",
+   "manubrium sterni"
+  ],
+  "uberon": "UBERON:0002205",
+  "matchedText": "manubrium of sternum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8302ad9b7ef5bb",
+  "name": "Poros de Kohn",
+  "queries": [
+   "alveolar pore",
+   "pore of Kohn",
+   "pores of Kohn",
+   "interalveolar pore"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "poros de Kohn sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_87834ea906794f",
+  "name": "Ácino",
+  "queries": [
+   "pulmonary acinus",
+   "acinus of lung",
+   "lung acinus"
+  ],
+  "uberon": "UBERON:0008874",
+  "matchedText": "pulmonary acinus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8e313164a35ecd",
+  "name": "Árbol traqueobronquial, inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "inervación del árbol traqueobronquial: tema, no estructura única"
+ },
+ {
+  "netterId": "ENT_972fdfc8af8d8f",
+  "name": "Esternón",
+  "queries": [
+   "sternum"
+  ],
+  "uberon": "UBERON:0000975",
+  "matchedText": "sternum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9bf49358443a34",
+  "name": "Capilar subpleural",
+  "queries": [
+   "subpleural capillary"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "capilar subpleural sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_ad477471672d0d",
+  "name": "Lúnula",
+  "queries": [
+   "lunule of semilunar valve",
+   "lunula valvulae semilunaris"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "lúnula de valva semilunar sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c4fc02cecd3763",
+  "name": "Timo",
+  "queries": [
+   "thymus"
+  ],
+  "uberon": "UBERON:0002370",
+  "matchedText": "thymus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d1658aaee7dfa9",
+  "name": "Toracocentesis",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "toracocentesis: procedimiento"
+ },
+ {
+  "netterId": "ENT_d91353859c0033",
+  "name": "Escápula",
+  "queries": [
+   "scapula"
+  ],
+  "uberon": "UBERON:0006849",
+  "matchedText": "scapula",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dbf96ae822c042",
+  "name": "Costillas",
+  "queries": [
+   "rib"
+  ],
+  "uberon": "UBERON:0002228",
+  "matchedText": "rib",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f8e2c6377eed0c",
+  "name": "Pericardio",
+  "queries": [
+   "pericardium"
+  ],
+  "uberon": "UBERON:0002407",
+  "matchedText": "pericardium",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f9a4d757a92c82",
+  "name": "Tráquea",
+  "queries": [
+   "trachea"
+  ],
+  "uberon": "UBERON:0003126",
+  "matchedText": "trachea",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_024cb00b6ae9c7",
+  "name": "Abertura lateral (agujero de Luschka) — válvula",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto incoherente (agujero de Luschka en corazón); probable error de OCR"
+ },
+ {
+  "netterId": "ENT_8f5a94ca2951e4",
+  "name": "Abertura lateral (agujero de Luschka) — prenatal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto incoherente (agujero de Luschka en corazón); probable error de OCR"
+ },
+ {
+  "netterId": "ENT_d7c6842159076e",
+  "name": "Ganglio — ramos esofágico y nervio recurrente",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ganglio con ramos: agrupación sin clase única"
+ },
+ {
+  "netterId": "ENT_06170ccca6d92e",
+  "name": "Ebner) — tiroides",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto («Ebner)»)"
+ },
+ {
+  "netterId": "ENT_09655c2d626d93",
+  "name": "Grasa — glándula mamaria",
+  "queries": [
+   "mammary fat pad",
+   "fat of breast",
+   "fatty tissue of breast"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "grasa de la glándula mamaria sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_3000baa0227065",
+  "name": "Glándula(s) — areolar",
+  "queries": [
+   "areolar gland",
+   "areolar glands",
+   "gland of Montgomery"
+  ],
+  "uberon": "UBERON:0011827",
+  "matchedText": "areolar gland",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f6c9355aa411dd",
+  "name": "Atla — glándula mamaria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto («Atla»)"
+ },
+ {
+  "netterId": "ENT_ff1abf699d741a",
+  "name": "Tejido(s) — glándula mamaria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tejidos de la glándula mamaria: agrupación sin clase única"
+ },
+ {
+  "netterId": "ENT_00899a744e74a3",
+  "name": "Vértebra{s). V. también Atlas (C1); Axis — de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto / referencia cruzada de imagen de TC"
+ },
+ {
+  "netterId": "ENT_328f0071a07bfb",
+  "name": "Tronco — ganglio vertebral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada incoherente (tronco/ganglio vertebral tipado como hueso)"
+ },
+ {
+  "netterId": "ENT_4aca5a3f7f70e9",
+  "name": "Cuerpo(s) — cuarta vértebra torácica",
+  "queries": [
+   "body of fourth thoracic vertebra",
+   "vertebral body of fourth thoracic vertebra"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "cuerpo de la cuarta vértebra torácica sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_01f618ad195c0f",
+  "name": "Ligamento(s) — nódulo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«nódulo» de ligamento sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_0dc98bcbffe01e",
+  "name": "Ligamento(s) — arqueado — medio",
+  "queries": [
+   "median arcuate ligament"
+  ],
+  "uberon": "UBERON:0015215",
+  "matchedText": "median arcuate ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4da24039af46d4",
+  "name": "Ligamento(s) (cont.} — prenatal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamento prenatal: no especifica el ligamento"
+ },
+ {
+  "netterId": "ENT_71b9be44d3610f",
+  "name": "Ligamento(s) (cont.} — esternocostal",
+  "queries": [
+   "sternocostal ligament",
+   "radiate sternocostal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamento esternocostal sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_7a2d893232e91d",
+  "name": "Ligamento(s) — arqueado — lateral",
+  "queries": [
+   "lateral arcuate ligament"
+  ],
+  "uberon": "UBERON:0007162",
+  "matchedText": "lateral arcuate ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7bf97adc32b78f",
+  "name": "Ligamento(s) (cont.} — venoso",
+  "queries": [
+   "ligamentum venosum"
+  ],
+  "uberon": "UBERON:0006587",
+  "matchedText": "ligamentum venosum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_839953fa4b0f60",
+  "name": "Costillas — ligamento interarticular",
+  "queries": [
+   "intra-articular ligament of head of rib",
+   "intraarticular ligament of head of rib"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamento intraarticular de la cabeza de la costilla sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_83a504e75a1b09",
+  "name": "Ligamento(s) — arqueado — medial",
+  "queries": [
+   "medial arcuate ligament"
+  ],
+  "uberon": "UBERON:0007161",
+  "matchedText": "medial arcuate ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_972f0a98183846",
+  "name": "Ligamento(s) — costoclavicular",
+  "queries": [
+   "costoclavicular ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamento costoclavicular sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_99446c3fcfb3cd",
+  "name": "Ligamento(s) — prenatal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamento prenatal: no especifica el ligamento"
+ },
+ {
+  "netterId": "ENT_9c72a663163069",
+  "name": "Ligamento(s) — tráquea",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamentos de la tráquea: agrupación sin clase única"
+ },
+ {
+  "netterId": "ENT_9f473ddb4f0fc4",
+  "name": "Ligamento(s) — arterioso",
+  "queries": [
+   "ligamentum arteriosum"
+  ],
+  "uberon": "UBERON:0007642",
+  "matchedText": "ligamentum arteriosum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a7a210d9ecdf5c",
+  "name": "Ebner) — ligamentos suspensorios",
+  "queries": [
+   "suspensory ligament of breast",
+   "suspensory ligaments of breast",
+   "Cooper's ligament"
+  ],
+  "uberon": "UBERON:0012103",
+  "matchedText": "suspensory ligament of breast",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_bd336e76a5d7c3",
+  "name": "Ligamento(s) (cont.} — radiado",
+  "queries": [
+   "radiate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamento radiado ambiguo (de la cabeza de la costilla o esternocostal); sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_0252e6ecfa9dda",
+  "name": "Wolff) — linfático",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto («Wolff)»)"
+ },
+ {
+  "netterId": "ENT_0f95c8851f9276",
+  "name": "Nódulo(s) linfático(s) — braquiales",
+  "queries": [
+   "brachial lymph node",
+   "humeral lymph node",
+   "lateral axillary lymph node"
+  ],
+  "uberon": "UBERON:0002525",
+  "matchedText": "brachial lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1a040bf5503477",
+  "name": "Atlas de anatomía hun — nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_281500dfd0ddfa",
+  "name": "Nódulo(s) linfático(s) — pectorales",
+  "queries": [
+   "pectoral lymph node",
+   "anterior axillary lymph node"
+  ],
+  "uberon": "UBERON:0037501",
+  "matchedText": "pectoral lymph node",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6247258d37dada",
+  "name": "Nódulo(s) linfático(s) — subescapulares",
+  "queries": [
+   "subscapular lymph node",
+   "posterior axillary lymph node",
+   "subscapular axillary lymph node"
+  ],
+  "uberon": "UBERON:0037500",
+  "matchedText": "subscapular axillary lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6a3f7654b82f5d",
+  "name": "Nódulo(s) linfático(s) — izquierdos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_741bde9aab1d22",
+  "name": "Nódulo(s) linfático(s) — paraesternales",
+  "queries": [
+   "parasternal lymph node"
+  ],
+  "uberon": "UBERON:0035219",
+  "matchedText": "parasternal lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8b1e2b2517903a",
+  "name": "Atlas de anatomía hun — y nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_9068036f8d62e9",
+  "name": "Nódulo(s) linfático(s) — apicales",
+  "queries": [
+   "apical axillary lymph node",
+   "apical lymph node"
+  ],
+  "uberon": "UBERON:0037503",
+  "matchedText": "apical axillary lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_986b24455a230b",
+  "name": "Nódulo(s) linfático(s) — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_9c93f3dad993b2",
+  "name": "Nódulo(s) linfático(s) — subclavio",
+  "queries": [
+   "subclavian lymph node"
+  ],
+  "uberon": "UBERON:0038037",
+  "matchedText": "subclavian lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9e465ebe66ac1b",
+  "name": "Nódulo(s) linfático(s) — centrales",
+  "queries": [
+   "central axillary lymph node"
+  ],
+  "uberon": "UBERON:0037502",
+  "matchedText": "central axillary lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d41c1b24922a7c",
+  "name": "Nódulo(s) linfático(s) — traqueobronquiales",
+  "queries": [
+   "tracheobronchial lymph node"
+  ],
+  "uberon": "UBERON:0015472",
+  "matchedText": "tracheobronchial lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ebd24419c59dd2",
+  "name": "Nódulo(s) linfático(s) — derechos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_ecf1cf25653837",
+  "name": "Nódulo(s) linfático(s) — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_ee6f377160de9d",
+  "name": "Nódulo(s) linfático(s) — sinoatriales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«nódulos linfáticos sinoatriales» incoherente; probable confusión con el nodo sinoatrial"
+ },
+ {
+  "netterId": "ENT_f67647fc802c94",
+  "name": "Atlas de anatomía hun — linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_fc67124e653d82",
+  "name": "Ebner) — vasos y nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto; agrupación de vasos y nódulos"
+ },
+ {
+  "netterId": "ENT_1b20204731bef0",
+  "name": "Músculo(s) — anterior membrana intercostal — externo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada OCR ambigua (membrana intercostal anterior / músculo intercostal externo)"
+ },
+ {
+  "netterId": "ENT_1e3a9dfd582b52",
+  "name": "Músculo(s) — papilar — derecho",
+  "queries": [
+   "papillary muscle of right ventricle",
+   "right ventricle papillary muscle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«papilar derecho» no designa un músculo papilar concreto del ventrículo derecho"
+ },
+ {
+  "netterId": "ENT_29b3ac70a123da",
+  "name": "Músculo(s) — cabeza — corta, combinación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "cabeza corta, combinación: músculo no identificable"
+ },
+ {
+  "netterId": "ENT_2fc9172caa20fe",
+  "name": "Músculo(s) — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_35a031f4e8bac4",
+  "name": "Músculo(s) — pectinado",
+  "queries": [
+   "pectinate muscle",
+   "musculi pectinati"
+  ],
+  "uberon": "UBERON:0005980",
+  "matchedText": "pectinate muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3bfaf1bbe58f4d",
+  "name": "Músculo(s) — anterior membrana intercostal — externa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada OCR ambigua (membrana intercostal anterior / externa)"
+ },
+ {
+  "netterId": "ENT_3f399445746c52",
+  "name": "Músculo(s) — intercostobraquial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«intercostobraquial» es un nervio, no un músculo; entrada incoherente"
+ },
+ {
+  "netterId": "ENT_577b9d70adf09a",
+  "name": "Músculo(s) — anterior membrana intercostal — interno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada OCR ambigua (membrana intercostal anterior / músculo intercostal interno)"
+ },
+ {
+  "netterId": "ENT_63fffe6fa22b03",
+  "name": "Músculo(s) — septal",
+  "queries": [
+   "septal papillary muscle of right ventricle",
+   "septal papillary muscle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "músculo papilar septal sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_6a27b0a3fda9e3",
+  "name": "Músculo(s) — longitudinal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_6ce97bdc8d9bef",
+  "name": "Esófago — zona pobre músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "zona pobre en músculo del esófago: región sin clase equivalente"
+ },
+ {
+  "netterId": "ENT_6e5f62e3e85b7d",
+  "name": "Musculo(s) — vaina",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vaina muscular sin músculo identificable"
+ },
+ {
+  "netterId": "ENT_89c910795c5342",
+  "name": "Músculo(s) — esternal, inconstante",
+  "queries": [
+   "sternalis muscle",
+   "sternalis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "músculo esternal sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8c73fde9d5a048",
+  "name": "Músculo(s) — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_8d96d4572115ef",
+  "name": "Músculo(s) — porción cricofaringea",
+  "queries": [
+   "cricopharyngeal part of inferior pharyngeal constrictor",
+   "cricopharyngeus muscle",
+   "cricopharyngeal muscle"
+  ],
+  "uberon": "UBERON:0010928",
+  "matchedText": "cricopharyngeal part of inferior pharyngeal constrictor",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_961fe781ec6dad",
+  "name": "Músculo(s) — esofágico",
+  "queries": [
+   "muscle layer of esophagus",
+   "esophagus muscularis externa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«músculo esofágico» ambiguo (capa muscular, músculo broncoesofágico u otro)"
+ },
+ {
+  "netterId": "ENT_98d28c417c1152",
+  "name": "Músculo(s) — escaleno — anterior",
+  "queries": [
+   "anterior scalene muscle",
+   "scalenus anterior"
+  ],
+  "uberon": "UBERON:0008622",
+  "matchedText": "scalenus anterior",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_992d0276919f1e",
+  "name": "Músculo(s) — papilar — izquierdo",
+  "queries": [
+   "papillary muscle of left ventricle",
+   "left ventricle papillary muscle"
+  ],
+  "uberon": "UBERON:0004524",
+  "matchedText": "papillary muscle of left ventricle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9c9781b3a1da26",
+  "name": "Atlas de anatomía hum — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_9ea9e2b4147b44",
+  "name": "Músculo(s) — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_b2b26ed06a5066",
+  "name": "Músculo(s) — fascia cervical",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fascia cervical: no es un músculo; entrada ambigua"
+ },
+ {
+  "netterId": "ENT_bfd42e161a3a4a",
+  "name": "Músculo(s) — tendón cricoesofágico",
+  "queries": [
+   "cricoesophageal tendon",
+   "cricoesophageal tendon"
+  ],
+  "uberon": "UBERON:0011165",
+  "matchedText": "cricoesophageal tendon",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cac33dbd610372",
+  "name": "Músculo(s) — pectoral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«pectoral» ambiguo (mayor o menor)"
+ },
+ {
+  "netterId": "ENT_db4bc5795b8cf9",
+  "name": "Bronquio — músculo liso",
+  "queries": [
+   "bronchus smooth muscle",
+   "bronchial smooth muscle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "músculo liso bronquial sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f0add2e3374c57",
+  "name": "Músculo(s) — circular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_ffa976165a97d6",
+  "name": "Músculo(s) — papilar — posterior",
+  "queries": [
+   "posterior papillary muscle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "músculo papilar posterior sin especificar ventrículo; sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_06fde7465a4c08",
+  "name": "Nervio(s) — colinérgico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervios colinérgicos: categoría funcional, no estructura"
+ },
+ {
+  "netterId": "ENT_0bd04027ce0521",
+  "name": "Nervio(s) — aórtico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«nervio aórtico» sin clase equivalente encontrada"
+ },
+ {
+  "netterId": "ENT_0da524e5cce7e7",
+  "name": "Nervio(s) — anteriores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_1762397e5526ea",
+  "name": "Nervio(s) — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_179efb270a553f",
+  "name": "Reflejos aéreos, nervios inicio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "reflejos aéreos: fenómeno fisiológico, no estructura"
+ },
+ {
+  "netterId": "ENT_1864f44565dd79",
+  "name": "Nervio(s) — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_22668ffd3049b2",
+  "name": "Nervio(s) — toracoabdominal, ramo cutáneo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramo cutáneo de nervio toracoabdominal sin nivel especificado"
+ },
+ {
+  "netterId": "ENT_35d6832c7446c3",
+  "name": "Nervio(s) — largo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_364ebbfc111fc6",
+  "name": "Nervio(s) — ramo pericárdico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramo pericárdico sin nervio de origen especificado"
+ },
+ {
+  "netterId": "ENT_3e07801bdd26c2",
+  "name": "Nervio(s) — corazón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervios del corazón: agrupación"
+ },
+ {
+  "netterId": "ENT_4384eca72db479",
+  "name": "Nervio(s) — árbol traqueobronquial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervios del árbol traqueobronquial: agrupación"
+ },
+ {
+  "netterId": "ENT_4b411bca778c1e",
+  "name": "Nervio(s) — porciones abdominales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "porciones abdominales de nervios: agrupación"
+ },
+ {
+  "netterId": "ENT_4e6868275dfe81",
+  "name": "Nervio(s) — nariz y senos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervios de nariz y senos: agrupación"
+ },
+ {
+  "netterId": "ENT_58fc2059f41ba2",
+  "name": "Nervio(s) — fibras aferentes y eferentes",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fibras aferentes y eferentes: categoría funcional"
+ },
+ {
+  "netterId": "ENT_5aed2fbe0f7fd5",
+  "name": "Nervio(s) — octavo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«octavo» sin nervio identificable"
+ },
+ {
+  "netterId": "ENT_5bde2ea7ba655e",
+  "name": "Esófago — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervios del esófago: agrupación"
+ },
+ {
+  "netterId": "ENT_5f25a8d91c7004",
+  "name": "Nervio(s) — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_5f2d73d01995b8",
+  "name": "Nervio(s) — ganglio — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ganglio izquierdo sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_663cecf5697461",
+  "name": "Nervio(s) — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_735da51cff52c6",
+  "name": "Nervio(s) — ramo dorsal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramo dorsal sin nervio de origen especificado"
+ },
+ {
+  "netterId": "ENT_75c261d7000218",
+  "name": "Nervio(s) — primero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«primero» sin nervio identificable"
+ },
+ {
+  "netterId": "ENT_8b9904e732f4b9",
+  "name": "Nervio(s) — laterales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_9afdbfefabf03a",
+  "name": "Diafragma — nervios frénicos",
+  "queries": [
+   "phrenic nerve"
+  ],
+  "uberon": "UBERON:0001884",
+  "matchedText": "phrenic nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a716aa388f5f94",
+  "name": "Nervio(s) — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_ac2809016ab25c",
+  "name": "Tráquea — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervio de la tráquea: agrupación"
+ },
+ {
+  "netterId": "ENT_ba429b271cd5fb",
+  "name": "Corazón — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervios del corazón: agrupación"
+ },
+ {
+  "netterId": "ENT_bb118febf626c4",
+  "name": "Nervio(s) — cardíaco",
+  "queries": [
+   "cardiac nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«nervio cardíaco» ambiguo (cervical, torácico, superior, medio, inferior); sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_c399bdbd85b449",
+  "name": "Nervio(s) — plexo pulmonar",
+  "queries": [
+   "pulmonary plexus",
+   "pulmonary nerve plexus"
+  ],
+  "uberon": "UBERON:0002009",
+  "matchedText": "pulmonary plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cb0c2114752e1a",
+  "name": "Nervio(s) — vasos sanguíneos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "nervios de vasos sanguíneos: agrupación"
+ },
+ {
+  "netterId": "ENT_d79083b01c08cd",
+  "name": "Nervio(s) — ramos frenicoabdominales",
+  "queries": [
+   "phrenicoabdominal branch of phrenic nerve",
+   "phrenicoabdominal branches"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramos frenicoabdominales sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_e0866ace4492da",
+  "name": "Nervio(s) — esquema",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "esquema: ilustración, no estructura"
+ },
+ {
+  "netterId": "ENT_03bc882892ed08",
+  "name": "Estómago — circular",
+  "queries": [
+   "circular muscle layer of stomach",
+   "stomach circular muscle layer"
+  ],
+  "uberon": "UBERON:0008857",
+  "matchedText": "circular muscle layer of stomach",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0a47cfd091e254",
+  "name": "Atlas de anatomía hum — pulmonar — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_0a4a577904fb32",
+  "name": "Pulmones — borde — anterior",
+  "queries": [
+   "anterior border of lung"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "borde anterior del pulmón sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_10779227b365c2",
+  "name": "Atlas de anatomía hum — pulmonar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_12c07312d1e2fa",
+  "name": "Corazón — válvulas",
+  "queries": [
+   "heart valve",
+   "cardiac valve"
+  ],
+  "uberon": "UBERON:0000946",
+  "matchedText": "heart valve",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_13a77d86da049d",
+  "name": "Corazón — visión posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista posterior del corazón, no una estructura"
+ },
+ {
+  "netterId": "ENT_170701b28e9110",
+  "name": "Esófago — surco",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "surco esofágico (impresión en el pulmón) sin clase equivalente encontrada"
+ },
+ {
+  "netterId": "ENT_19a6d852cdf053",
+  "name": "Hígado — vías linfáticas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vías linfáticas del hígado: agrupación"
+ },
+ {
+  "netterId": "ENT_1f14dcbea63e9c",
+  "name": "Atlas de anatomía hun — pulmonar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_1fee5779167b42",
+  "name": "Esófago — visión — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista lateral, no una estructura"
+ },
+ {
+  "netterId": "ENT_23f4abee978d49",
+  "name": "Atlas de anatomia hun — esófago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_2535a9c559251e",
+  "name": "Esófago",
+  "queries": [
+   "esophagus",
+   "oesophagus"
+  ],
+  "uberon": "UBERON:0001043",
+  "matchedText": "esophagus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_25e244bf25ab36",
+  "name": "Corazón — jana — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto («jana»)"
+ },
+ {
+  "netterId": "ENT_287f9953517f14",
+  "name": "Estómago — oblicua",
+  "queries": [
+   "oblique muscle layer of stomach",
+   "oblique fibers of stomach"
+  ],
+  "uberon": "UBERON:0008862",
+  "matchedText": "oblique muscle layer of stomach",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2dc271bd6df3d5",
+  "name": "Fisura — pulmón izquierdo",
+  "queries": [
+   "fissure of left lung",
+   "oblique fissure of left lung"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fisura del pulmón izquierdo ambigua (oblicua u otra); sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_2ea06209b280bb",
+  "name": "Estómago — porciones cardíacas",
+  "queries": [
+   "cardia of stomach",
+   "cardiac part of stomach"
+  ],
+  "uberon": "UBERON:0001162",
+  "matchedText": "cardia of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3082c9c19ac89d",
+  "name": "Corazón — diástole",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "diástole: fase fisiológica, no estructura"
+ },
+ {
+  "netterId": "ENT_34451cb39d213a",
+  "name": "Esófago — longitudinal",
+  "queries": [
+   "longitudinal muscle layer of esophagus",
+   "esophagus longitudinal muscle layer"
+  ],
+  "uberon": "UBERON:0009961",
+  "matchedText": "longitudinal muscle layer of esophagus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3496116ad64941",
+  "name": "Corazón — jana — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto («jana»)"
+ },
+ {
+  "netterId": "ENT_3b45806d8bf641",
+  "name": "Esófago — visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista posterior, no una estructura"
+ },
+ {
+  "netterId": "ENT_3ca465742171bd",
+  "name": "Estómago — longitudinal",
+  "queries": [
+   "longitudinal muscle layer of stomach",
+   "stomach longitudinal muscle layer",
+   "stomach smooth muscle outer longitudinal layer"
+  ],
+  "uberon": "UBERON:0008863",
+  "matchedText": "stomach smooth muscle outer longitudinal layer",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3ef97f88dd3356",
+  "name": "Corazón — borde — izquierdo",
+  "queries": [
+   "left border of heart"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "borde izquierdo del corazón sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_4023d2b13c57a1",
+  "name": "Hígado — prenatal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "hígado prenatal: estado, no estructura distinta"
+ },
+ {
+  "netterId": "ENT_4280ae9f499f65",
+  "name": "Esófago — topografía y constricciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "topografía y constricciones: tema, no estructura única"
+ },
+ {
+  "netterId": "ENT_5535f1b144ed86",
+  "name": "Estómago — ramo posterior vago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramo posterior del vago en estómago sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_5578eed279637f",
+  "name": "Esófago — mucosa",
+  "queries": [
+   "esophagus mucosa",
+   "mucosa of esophagus"
+  ],
+  "uberon": "UBERON:0002469",
+  "matchedText": "esophagus mucosa",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_586b4c2b6ff06a",
+  "name": "Union — esofagogástrica",
+  "queries": [
+   "gastroesophageal junction",
+   "esophagogastric junction"
+  ],
+  "uberon": "UBERON:0007650",
+  "matchedText": "gastroesophageal junction",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5e18b3d4261308",
+  "name": "Corazón — visión anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista anterior, no una estructura"
+ },
+ {
+  "netterId": "ENT_61af2957b31b3b",
+  "name": "Tronco — pulmonar",
+  "queries": [
+   "pulmonary trunk"
+  ],
+  "uberon": "UBERON:0002333",
+  "matchedText": "pulmonary trunk",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_64f8937a8f4931",
+  "name": "Esófago — submucosa",
+  "queries": [
+   "submucosa of esophagus",
+   "esophagus submucosa"
+  ],
+  "uberon": "UBERON:0001972",
+  "matchedText": "submucosa of esophagus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6e8318b0826fe4",
+  "name": "Mediastino — área pulmón anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "área pulmonar anterior del mediastino: región sin clase equivalente"
+ },
+ {
+  "netterId": "ENT_717c9e891cd985",
+  "name": "Corazón — borde — inferior",
+  "queries": [
+   "inferior border of heart"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "borde inferior del corazón sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_73add568e37750",
+  "name": "Estómago — línea zig-zag",
+  "queries": [
+   "Z line",
+   "Z-line of esophagus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "línea zigzag (línea Z) sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_777c6f0b4e856d",
+  "name": "Corazón — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "inervación del corazón: tema, no estructura"
+ },
+ {
+  "netterId": "ENT_7aa580c97e8421",
+  "name": "Ventrículo — (corazón) — derecho",
+  "queries": [
+   "heart right ventricle",
+   "right ventricle of heart",
+   "right cardiac ventricle"
+  ],
+  "uberon": "UBERON:0002080",
+  "matchedText": "heart right ventricle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7ccee030dae006",
+  "name": "Pulmones — esófago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "relación pulmones-esófago, no estructura"
+ },
+ {
+  "netterId": "ENT_81bde7c94e69c0",
+  "name": "Esófago — circular",
+  "queries": [
+   "circular muscle layer of esophagus",
+   "esophagus circular muscle layer"
+  ],
+  "uberon": "UBERON:0009960",
+  "matchedText": "circular muscle layer of esophagus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8e4768785ae7b5",
+  "name": "Corazón — cara diafragmática",
+  "queries": [
+   "diaphragmatic surface of heart"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "cara diafragmática del corazón sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8e7bc0a37e09c2",
+  "name": "Esófago — cervical",
+  "queries": [
+   "cervical part of esophagus",
+   "cervical esophagus"
+  ],
+  "uberon": "UBERON:0035450",
+  "matchedText": "cervical part of esophagus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a10642ac5ba153",
+  "name": "Atlas de anatomía hun — surco esófago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_a39ce0e76bf12c",
+  "name": "Corazón — septo membranoso",
+  "queries": [
+   "membranous part of interventricular septum",
+   "membranous interventricular septum"
+  ],
+  "uberon": "UBERON:0004666",
+  "matchedText": "membranous part of interventricular septum",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a4087f16385d8c",
+  "name": "Esófago — musculatura",
+  "queries": [
+   "muscle layer of esophagus",
+   "esophagus muscularis externa",
+   "muscularis externa of esophagus"
+  ],
+  "uberon": "UBERON:0011878",
+  "matchedText": "muscle layer of esophagus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a7fd0d307ce775",
+  "name": "Corazón — sistole",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sístole: fase fisiológica, no estructura"
+ },
+ {
+  "netterId": "ENT_accc1b1f6ed55e",
+  "name": "Corazón — superficie",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "superficie del corazón: no especifica cuál"
+ },
+ {
+  "netterId": "ENT_af4e47e329a012",
+  "name": "Corazón — esquema",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "esquema: ilustración, no estructura"
+ },
+ {
+  "netterId": "ENT_af82e5f35c657b",
+  "name": "Estómago — ramo vago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramo vagal en estómago sin especificar"
+ },
+ {
+  "netterId": "ENT_b0fd8ee14cf6c6",
+  "name": "Atlas de anatomía hum — pulmonar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_b2abac7cbb0b3d",
+  "name": "Esófago — variaciones comunes",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "variaciones comunes: tema, no estructura"
+ },
+ {
+  "netterId": "ENT_b5924d2c330129",
+  "name": "Corazón — sistema conducción",
+  "queries": [
+   "conducting system of heart",
+   "cardiac conduction system"
+  ],
+  "uberon": "UBERON:0002350",
+  "matchedText": "conducting system of heart",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_bb1d0877493838",
+  "name": "Corazón — borde — derecho",
+  "queries": [
+   "right border of heart"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "borde derecho del corazón sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_bb3ea8074cd992",
+  "name": "Pulmones — tráquea",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "relación pulmones-tráquea, no estructura"
+ },
+ {
+  "netterId": "ENT_bc0660b73085fb",
+  "name": "Esófago — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista anterior, no una estructura"
+ },
+ {
+  "netterId": "ENT_cae95d2848f42f",
+  "name": "Esófago — in situ",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "esófago in situ: vista, no estructura distinta"
+ },
+ {
+  "netterId": "ENT_cca23694965ee0",
+  "name": "Estómago — musculatura",
+  "queries": [
+   "stomach muscularis externa",
+   "muscularis externa of stomach"
+  ],
+  "uberon": "UBERON:0008856",
+  "matchedText": "stomach muscularis externa",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d1c72923dfd564",
+  "name": "Atlas de anatomía hum — pulmonar — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (título del atlas)"
+ },
+ {
+  "netterId": "ENT_e1937342f18c1d",
+  "name": "Esófago — masa lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«masa lateral» del esófago incoherente"
+ },
+ {
+  "netterId": "ENT_e5a20c2efc670d",
+  "name": "Esófago — area desnuda cara ventral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "área desnuda de la cara ventral del esófago sin clase equivalente"
+ },
+ {
+  "netterId": "ENT_e9b4dd6cbee553",
+  "name": "Corazón — interventricular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«interventricular» ambiguo (tabique o surco)"
+ },
+ {
+  "netterId": "ENT_ea7c7440db99d8",
+  "name": "Nódulo(s) linfático(s) — pulmonares",
+  "queries": [
+   "pulmonary lymph node"
+  ],
+  "uberon": "UBERON:0035764",
+  "matchedText": "pulmonary lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f098ba8f2ed431",
+  "name": "Esófago — engrosamiento muscular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "engrosamiento muscular del esófago sin clase equivalente"
+ },
+ {
+  "netterId": "ENT_f8a9295aebc344",
+  "name": "Corazón — esqueleto fibroso",
+  "queries": [
+   "cardiac skeleton",
+   "fibrous skeleton of heart"
+  ],
+  "uberon": "UBERON:0004292",
+  "matchedText": "cardiac skeleton",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fb5ccf22d245d7",
+  "name": "Estómago — fundus",
+  "queries": [
+   "fundus of stomach"
+  ],
+  "uberon": "UBERON:0001160",
+  "matchedText": "fundus of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fcbffeb0cce3db",
+  "name": "Corazón — vértice",
+  "queries": [
+   "apex of heart",
+   "cardiac apex"
+  ],
+  "uberon": "UBERON:0002098",
+  "matchedText": "apex of heart",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fd32dddff798ac",
+  "name": "Corazón — in situ",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "corazón in situ: vista"
+ },
+ {
+  "netterId": "ENT_043cc9e6524a71",
+  "name": "Plexo — tronco vagal posterior",
+  "queries": [
+   "posterior vagal trunk"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tronco vagal posterior sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_0f442a2a746bb1",
+  "name": "Plexo — ramo vagal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramo vagal del plexo sin especificar"
+ },
+ {
+  "netterId": "ENT_31f9640045c6f3",
+  "name": "Plexo — cardíaco",
+  "queries": [
+   "cardiac plexus",
+   "cardiac nerve plexus"
+  ],
+  "uberon": "UBERON:0002008",
+  "matchedText": "cardiac plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_41308be06ee134",
+  "name": "Plexo — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_457fd3aaf81ca0",
+  "name": "Plexo — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_45a5cde6badb2a",
+  "name": "Plexo — porción posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_51ddaf7d87ea13",
+  "name": "Plexo — torácico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«plexo torácico» ambiguo"
+ },
+ {
+  "netterId": "ENT_7bef867a05ce5d",
+  "name": "Plexo — esofágico",
+  "queries": [
+   "esophageal plexus",
+   "esophageal nerve plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "plexo esofágico sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8f9958a0df97da",
+  "name": "Plexo — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_cbc9992207bce6",
+  "name": "Plexo — subpleural",
+  "queries": [
+   "subpleural plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "plexo subpleural sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f924823308f1ba",
+  "name": "Plexo — ramos simpáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ramos simpáticos del plexo: agrupación"
+ },
+ {
+  "netterId": "ENT_fe3478047545e4",
+  "name": "Tronco — plexo celiaco",
+  "queries": [
+   "celiac plexus",
+   "coeliac plexus",
+   "celiac nerve plexus"
+  ],
+  "uberon": "UBERON:0002010",
+  "matchedText": "celiac plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_16a4c6c036b74b",
+  "name": "Arco — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_1e578095dc2c36",
+  "name": "Atlas de anatomía hun — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_23895d36f7ed1c",
+  "name": "Ebner) — disección anterolateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_7029316b15ecd0",
+  "name": "Tórax — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_a4d1010dabf219",
+  "name": "Tomografía computarizada (TC) — tórax",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_bb94f5cfd42ddd",
+  "name": "Radiografía — tórax",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_e5e5df61c6ac7f",
+  "name": "Axila — disección",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_f0478f9d4b6b26",
+  "name": "Atrio (aurícula) — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_158f2892f0866d",
+  "name": "Ventrículo — pared posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "pared posterior de ventrículo sin especificar cuál"
+ },
+ {
+  "netterId": "ENT_74c78ec0094d80",
+  "name": "Ventrículo — abierto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ventrículo abierto: vista"
+ },
+ {
+  "netterId": "ENT_8a3dc80f6339ac",
+  "name": "Ventrículo — izquierdo",
+  "queries": [
+   "heart left ventricle",
+   "left ventricle of heart",
+   "left cardiac ventricle"
+  ],
+  "uberon": "UBERON:0002084",
+  "matchedText": "heart left ventricle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a44f1e7099bc95",
+  "name": "Médula — espinal",
+  "queries": [
+   "spinal cord"
+  ],
+  "uberon": "UBERON:0002240",
+  "matchedText": "spinal cord",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cdbad9a40ad95f",
+  "name": "Ventrículo — imágenes axiales de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "imágenes axiales de TC: procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_1e2b8adb2b5ab3",
+  "name": "Tendón — de Aquiles. V. Tendón calcáneo — dorsal ancho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (referencia cruzada mezclada)"
+ },
+ {
+  "netterId": "ENT_7abedf444e3426",
+  "name": "Tendón — de Aquiles. V. Tendón calcáneo — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto OCR corrupto (referencia cruzada mezclada)"
+ },
+ {
+  "netterId": "ENT_1d1632d80e9719",
+  "name": "Vasos — sanguíneos, inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "inervación de vasos sanguíneos: tema"
+ },
+ {
+  "netterId": "ENT_1e27fe23d05183",
+  "name": "Vasos — pericardiofrénicos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vasos pericardiofrénicos: agrupación de arteria y vena"
+ },
+ {
+  "netterId": "ENT_548f89d6318d89",
+  "name": "Vasos — interlobulares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vasos interlobulares: agrupación"
+ },
+ {
+  "netterId": "ENT_9f8701da74fc00",
+  "name": "Vasos — glándula mamaria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vasos de la glándula mamaria: agrupación"
+ },
+ {
+  "netterId": "ENT_d3e94482924732",
+  "name": "Vasos — tráquea",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vasos de la tráquea: agrupación"
+ },
+ {
+  "netterId": "ENT_f249905693efcd",
+  "name": "Vasos — pulmón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vasos del pulmón: agrupación"
+ },
+ {
+  "netterId": "ENT_f78711251d8787",
+  "name": "Vasos — vías drenaje",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vías de drenaje: agrupación"
+ },
+ {
+  "netterId": "ENT_0caa9a605f59ad",
+  "name": "Vena(s) — diafragmatica",
+  "queries": [
+   "diaphragmatic vein",
+   "inferior phrenic vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«vena diafragmática» ambigua (frénica superior o inferior)"
+ },
+ {
+  "netterId": "ENT_1871b50f63bc33",
+  "name": "Vena(s) — imágenes axiales de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "imágenes axiales de TC: procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_18e42cfa244b68",
+  "name": "Vena(s) — prenatal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vena prenatal sin especificar"
+ },
+ {
+  "netterId": "ENT_1b2dadcf48ce22",
+  "name": "Vena{s) — surco",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vena del surco sin especificar"
+ },
+ {
+  "netterId": "ENT_21b7be70bb9aea",
+  "name": "Vena{s) — arco",
+  "queries": [
+   "arch of azygos vein",
+   "azygos arch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "arco de la vena ácigos sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_2407ec49d0a95d",
+  "name": "Vena(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_246cfcaa34edd5",
+  "name": "Vena(s) — oblicua atrio izquierdo",
+  "queries": [
+   "oblique vein of left atrium"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vena oblicua del atrio izquierdo sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_3b3c1f0f9740a4",
+  "name": "Vena{s) — acigos",
+  "queries": [
+   "azygos vein"
+  ],
+  "uberon": "UBERON:0001594",
+  "matchedText": "azygos vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_81eb72d5038047",
+  "name": "Vena(s) — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ },
+ {
+  "netterId": "ENT_8476edc6e822c2",
+  "name": "Atrio (aurícula) — vena oblicua",
+  "queries": [
+   "oblique vein of left atrium"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vena oblicua del atrio izquierdo sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8a9237262c9854",
+  "name": "Vena(s) — bronquial — derecha",
+  "queries": [
+   "right bronchial vein"
+  ],
+  "uberon": "UBERON:8920015",
+  "matchedText": "right bronchial vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8b9929ebcba882",
+  "name": "Vena(s) — media",
+  "queries": [
+   "middle cardiac vein"
+  ],
+  "uberon": "UBERON:0009687",
+  "matchedText": "middle cardiac vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9f4655e23b09ce",
+  "name": "Vena(s) — musculofrénica",
+  "queries": [
+   "musculophrenic vein"
+  ],
+  "uberon": "UBERON:0006662",
+  "matchedText": "musculophrenic vein",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a00a05b0b8de66",
+  "name": "Vena(s) — menor",
+  "queries": [
+   "small cardiac vein"
+  ],
+  "uberon": "UBERON:0035374",
+  "matchedText": "small cardiac vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ae02a7c736dbfa",
+  "name": "Vena(s) — coronaria, variaciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "variaciones de venas coronarias: tema"
+ },
+ {
+  "netterId": "ENT_c077352e41b3dd",
+  "name": "Vena(s) — esternocostal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«vena esternocostal» sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_c11a6d26a86662",
+  "name": "Ventrículo — vena posterior",
+  "queries": [
+   "posterior vein of left ventricle",
+   "left ventricle posterior vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vena posterior del ventrículo izquierdo sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c6bd2a6910ba28",
+  "name": "Vena{s) — imagenes axiales de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "imágenes axiales de TC: procedimiento o imagen"
+ },
+ {
+  "netterId": "ENT_d422e7e1627a78",
+  "name": "Vena(s) — axilar",
+  "queries": [
+   "axillary vein"
+  ],
+  "uberon": "UBERON:0000985",
+  "matchedText": "axillary vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_da18f629532611",
+  "name": "Vena(s) — cardíaca — anterior",
+  "queries": [
+   "anterior cardiac vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "venas cardíacas anteriores sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_da1d1abc16b365",
+  "name": "Vena(s) — bronquial — izquierda",
+  "queries": [
+   "left bronchial vein"
+  ],
+  "uberon": "UBERON:8920014",
+  "matchedText": "left bronchial vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e02ad4bbc7b22f",
+  "name": "Vena(s) — magna",
+  "queries": [
+   "great cardiac vein"
+  ],
+  "uberon": "UBERON:0006958",
+  "matchedText": "great cardiac vein",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e6aecc5b93a38b",
+  "name": "Vena(s) — valvula",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«válvula» de vena sin especificar"
+ },
+ {
+  "netterId": "ENT_eb1186ab14caa9",
+  "name": "Vena(s) — orificio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«orificio» de vena sin especificar"
+ },
+ {
+  "netterId": "ENT_ebeea6ef0af58b",
+  "name": "Vena(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "fragmento del índice sin estructura identificable (solo calificador)"
+ }
+]

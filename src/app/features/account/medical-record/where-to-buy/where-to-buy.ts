@@ -9,7 +9,7 @@ import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.c
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { DiagnosticUnitsClient } from '../../../../core/data-access/diagnostic-units/diagnostic-units.client';
 import type { DiagnosticUnitCoverageItem } from '../../../../core/data-access/diagnostic-units/diagnostic-units.types';
-import { modalidadDeEstudio } from '../../../../core/data-access/diagnostic-units/modalidades';
+import { modalityOfStudy } from '../../../../core/data-access/diagnostic-units/modalities';
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type { PatientOrder } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
@@ -53,7 +53,6 @@ import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox'
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
 import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
@@ -71,6 +70,7 @@ import { PHARMACY_CART_ROUTE } from '../../pharmacy/pharmacy.routes';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
 import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
 import { coverageRoute, directionsUrl, type CoverageRoute } from './where-to-buy.route';
+import { MedicalCentersTab } from './medical-centers-tab/medical-centers-tab';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
@@ -78,9 +78,6 @@ const MY_STUDIES_ROUTE = '/my-account/diagnostic-orders';
 
 /** La guía de laboratorios y centros de diagnóstico, sin cercanía. */
 const LABORATORY_DIRECTORY_ROUTE = '/laboratory-directory';
-
-/** La guía de clínicas y hospitales. */
-const CLINICS_DIRECTORY_ROUTE = '/clinics-directory';
 
 /**
  * Las pestañas, en el orden de la plantilla, por su valor en `?tab=`. La
@@ -317,8 +314,8 @@ const PROMOCIONES_VISIBLES = 3;
     Badge,
     Checkbox,
     Alert,
-    EmptyState,
     Link,
+    MedicalCentersTab,
     PageHeader,
     RouterLink,
     SegmentedControl,
@@ -359,7 +356,6 @@ export class WhereToBuy {
    */
   protected readonly myStudiesRoute = MY_STUDIES_ROUTE;
   protected readonly laboratoryDirectoryRoute = LABORATORY_DIRECTORY_ROUTE;
-  protected readonly clinicsDirectoryRoute = CLINICS_DIRECTORY_ROUTE;
   protected readonly ciudades = CITIES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
   protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
@@ -368,6 +364,9 @@ export class WhereToBuy {
 
   protected readonly tabIndex = signal(
     tabIndexOf(this.route.snapshot.queryParamMap.get('tab')),
+  );
+  protected readonly medicalCentersActive = computed(
+    () => WHERE_TO_BUY_TABS[this.tabIndex()] === 'medical-centers',
   );
 
   /**
@@ -445,9 +444,38 @@ export class WhereToBuy {
     aprobadosPorElSeguroDeEjemplo(this.items().map((item) => item.conceptId)),
   );
 
+  /**
+   * Por defecto se muestran solo las sucursales que tienen todo (P-19-4). Las
+   * que tienen una parte se ven a pedido: sirven cuando ninguna tiene todo, y
+   * el recorrido sugerido las sigue considerando igual.
+   */
+  protected readonly showPartialPharmacies = signal(false);
+
+  /** «Completa» es contra lo que se mira: la receta entera o, con seguro, lo aprobado. */
+  private isComplete(sede: SedeVisible): boolean {
+    return this.conSeguro() ? sede.conSeguro.completa : sede.completa;
+  }
+
+  /** Cuántas sucursales quedan fuera de la vista por defecto. */
+  protected readonly partialPharmacyCount = computed(
+    () => (this.resultado()?.sedes ?? []).filter((sede) => !this.isComplete(sede)).length,
+  );
+
+  protected readonly partialPharmaciesLabel = computed(() =>
+    this.showPartialPharmacies()
+      ? 'Mostrar solo las que tienen todo'
+      : partialCountLabel(this.partialPharmacyCount(), 'la', 'las'),
+  );
+
+  /** Las sucursales que se ven: la lista y el mapa hablan de las mismas. */
+  private readonly visibleBranches = computed(() => {
+    const sedes = this.resultado()?.sedes ?? [];
+    return this.showPartialPharmacies() ? sedes : sedes.filter((sede) => this.isComplete(sede));
+  });
+
   /** La lista en el orden elegido. Una copia: la respuesta no se toca. */
   protected readonly sedesOrdenadas = computed(() =>
-    ordenarSedes(this.resultado()?.sedes ?? [], this.orden()),
+    ordenarSedes(this.visibleBranches(), this.orden()),
   );
 
   /**
@@ -475,7 +503,7 @@ export class WhereToBuy {
 
   /** Las sedes que el mapa puede ubicar: las que tienen coordenadas. */
   protected readonly sedesEnElMapa = computed(() =>
-    (this.resultado()?.sedes ?? []).filter(
+    this.visibleBranches().filter(
       (sede): sede is SedeVisible & { lat: number; lng: number } =>
         sede.lat !== null && sede.lng !== null,
     ),
@@ -524,7 +552,7 @@ export class WhereToBuy {
   });
 
   /** Los medicamentos de la receta, por su nombre, a partir de sus conceptos. */
-  protected nombresDe(conceptIds: readonly string[]): string {
+  protected namesOf(conceptIds: readonly string[]): string {
     return this.items()
       .filter((item) => conceptIds.includes(item.conceptId))
       .map((item) => item.medicamento)
@@ -532,6 +560,24 @@ export class WhereToBuy {
   }
 
   protected readonly imagingData = computed(() => dataOf(this.imaging()));
+
+  /** El mismo criterio que farmacias (P-19-4): por defecto, solo los que tienen todos. */
+  protected readonly showPartialCenters = signal(false);
+
+  protected readonly partialCenterCount = computed(
+    () => this.imagingData()?.centers.filter((center) => !center.complete).length ?? 0,
+  );
+
+  protected readonly visibleCenters = computed(() => {
+    const centers = this.imagingData()?.centers ?? [];
+    return this.showPartialCenters() ? centers : centers.filter((center) => center.complete);
+  });
+
+  protected readonly partialCentersLabel = computed(() =>
+    this.showPartialCenters()
+      ? 'Mostrar solo los que tienen todos'
+      : partialCountLabel(this.partialCenterCount(), 'el', 'los'),
+  );
 
   protected studyNames(studies: readonly PendingStudy[]): string {
     return studies.map((study) => study.name).join(', ');
@@ -1092,6 +1138,13 @@ function formatKm(km: number): string {
   return `${km.toFixed(1).replace('.', ',')} km`;
 }
 
+/** «Ver la que tiene una parte» o «Ver las 3 que tienen una parte», según cuántas sean. */
+export function partialCountLabel(cantidad: number, singular: string, plural: string): string {
+  return cantidad === 1
+    ? `Ver ${singular} que tiene una parte`
+    : `Ver ${plural} ${cantidad} que tienen una parte`;
+}
+
 /** El índice de la pestaña pedida en `?tab=`; desconocida o ausente, Farmacias. */
 export function tabIndexOf(tab: string | null): number {
   const index = (WHERE_TO_BUY_TABS as readonly string[]).indexOf(tab ?? '');
@@ -1122,7 +1175,7 @@ export function pendingImagingStudies(
     );
     // `LAB` también es una modalidad (la toma de muestras): sin categoría, un
     // análisis no es imagen.
-    const modality = modalidadDeEstudio(study.code);
+    const modality = modalityOfStudy(study.code);
     const imaging =
       category === 'IMAGING' || (category === 'OTHER' && modality !== null && modality !== 'LAB');
     if (imaging) {

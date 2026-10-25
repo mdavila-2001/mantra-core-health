@@ -1,0 +1,74 @@
+{
+  "consulta-1440-light": {
+    "izquierda": 40,
+    "derecha": 40,
+    "ancho": 93,
+    "tarjetas": 0
+  },
+  "alta-1440-light": {
+    "izquierda": 40,
+    "derecha": 40,
+    "ancho": 93,
+    "tarjetas": 0
+  },
+  "consulta-1440-dark": {
+    "izquierda": 40,
+    "derecha": 40,
+    "ancho": 93,
+    "tarjetas": 0
+  },
+  "alta-1440-dark": {
+    "izquierda": 40,
+    "derecha": 40,
+    "ancho": 93,
+    "tarjetas": 0
+  },
+  "consulta-768-light": {
+    "izquierda": 20,
+    "derecha": 20,
+    "ancho": 95,
+    "tarjetas": 0
+  },
+  "alta-768-light": {
+    "izquierda": 20,
+    "derecha": 20,
+    "ancho": 95,
+    "tarjetas": 0
+  },
+  "consulta-768-dark": {
+    "izquierda": 20,
+    "derecha": 20,
+    "ancho": 95,
+    "tarjetas": 0
+  },
+  "alta-768-dark": {
+    "izquierda": 20,
+    "derecha": 20,
+    "ancho": 95,
+    "tarjetas": 0
+  },
+  "consulta-390-light": {
+    "izquierda": 12,
+    "derecha": 12,
+    "ancho": 94,
+    "tarjetas": 0
+  },
+  "alta-390-light": {
+    "izquierda": 12,
+    "derecha": 12,
+    "ancho": 94,
+    "tarjetas": 0
+  },
+  "consulta-390-dark": {
+    "izquierda": 12,
+    "derecha": 12,
+    "ancho": 94,
+    "tarjetas": 0
+  },
+  "alta-390-dark": {
+    "izquierda": 12,
+    "derecha": 12,
+    "ancho": 94,
+    "tarjetas": 0
+  }
+}

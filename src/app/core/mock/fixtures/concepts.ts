@@ -46,7 +46,7 @@ const sets = new Map<string, SimulatedSet>();
 export const CODE_SYSTEM_VERSION_ID = uuid('code-system-version-alovida-1');
 export const CODE_SYSTEM_ID = uuid('code-system-alovida');
 
-function conjunto(internalCode: string, name: string, description: string): SimulatedSet {
+export function conjunto(internalCode: string, name: string, description: string): SimulatedSet {
   const c: SimulatedSet = {
     id: uuid(`value-set-${internalCode}`),
     internalCode,
@@ -58,7 +58,7 @@ function conjunto(internalCode: string, name: string, description: string): Simu
   return c;
 }
 
-function define(
+export function define(
   valueSet: string,
   entradas: readonly (readonly [code: string, display: string, definition?: string])[],
   ordinalInicial = 1,

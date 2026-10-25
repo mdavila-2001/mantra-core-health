@@ -42,7 +42,16 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { writeFailureMessage } from '../../write-message';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
-import { conceptosDe, duplicadoDe, mensajeDeAlta } from './analysis-order-block.helpers';
+import {
+  CATEGORY_LABELS,
+  DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
+  PRIORITY_LABELS,
+  conceptosDe,
+  duplicadoDe,
+  mensajeDeAlta,
+} from './analysis-order-block.helpers';
+import { createPerformerOrderState } from './performer-selector/performer-order-state';
+import { PerformerSelector } from './performer-selector/performer-selector';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
 
 export type { EstudioEnFicha } from './analysis-order-block.helpers';
@@ -71,36 +80,11 @@ export const TARGET_CATEGORIA = 'clinical.service_requests.category_concept_id';
 /** La prioridad. Opcional en el DTO: sin binding, se omite y ya. */
 export const TARGET_PRIORIDAD = 'clinical.service_requests.priority_concept_id';
 
-/**
- * Las categorías en castellano, por código estable.
- *
- * El catálogo trae su `display` en inglés técnico porque es terminología, no
- * copy de producto, y mapear por **código** —no por uuid— es lo que permite
- * traducir sin atarse a un identificador que un re-seed puede mover.
- */
-const ETIQUETAS_DE_CATEGORIA: Readonly<Record<string, string>> = {
-  SR_LAB: 'Laboratorio',
-  SR_IMAGING: 'Imagenología',
-};
-
-/** Las prioridades en castellano. Mismo criterio que {@link ETIQUETAS_DE_CATEGORIA}. */
-const ETIQUETAS_DE_PRIORIDAD: Readonly<Record<string, string>> = {
-  SR_ROUTINE: 'De rutina',
-};
-
 /** Lo que se muestra cuando un concepto no tiene etiqueta en el catálogo. */
 const SIN_DATO = '—';
 
 /** Tope de filas del histórico. Alcanza para la ficha; el detalle vive en su sección. */
 const TOPE = 25;
-
-/**
- * Antiduplicación de estudios (v4.2.17, T-26): la ventana que aplicó el
- * detector cuando el 422 de la carrera check→alta no la informa de vuelta.
- * Es el mismo default que fija `DuplicateStudyDetector` del lado del
- * servidor — sólo se usa acá para reconstruir el diálogo, nunca para decidir.
- */
-const DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS = 30;
 
 /**
  * **Laboratorio e imagenología** del expediente: pedir el estudio y ver qué
@@ -157,6 +141,7 @@ const DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS = 30;
     DuplicateStudyWarningDialog,
     FormActions,
     FormField,
+    PerformerSelector,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -199,8 +184,8 @@ export class AnalysisOrderBlock {
   protected readonly targetEstudio = TARGET_ESTUDIO;
   protected readonly targetCategoria = TARGET_CATEGORIA;
   protected readonly targetPrioridad = TARGET_PRIORIDAD;
-  protected readonly etiquetasDeCategoria = ETIQUETAS_DE_CATEGORIA;
-  protected readonly etiquetasDePrioridad = ETIQUETAS_DE_PRIORIDAD;
+  protected readonly etiquetasDeCategoria = CATEGORY_LABELS;
+  protected readonly etiquetasDePrioridad = PRIORITY_LABELS;
 
   /**
    * La organización bajo cuya custodia queda la orden.
@@ -226,6 +211,13 @@ export class AnalysisOrderBlock {
   protected readonly catalogoListo = signal<boolean | null>(null);
 
   protected readonly pidiendo = signal(false);
+
+  /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
+  protected readonly performer = createPerformerOrderState({
+    category: this.categoria,
+    study: this.estudio,
+    categoryTarget: TARGET_CATEGORIA,
+  });
 
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
@@ -335,7 +327,8 @@ export class AnalysisOrderBlock {
       this.estudio() !== null &&
       this.categoria() !== null &&
       !this.pidiendo() &&
-      !this.checkingDuplicate(),
+      !this.checkingDuplicate() &&
+      this.performer.canSubmit(),
   );
 
   /** El fallo de la escritura, en palabras. */
@@ -470,6 +463,11 @@ export class AnalysisOrderBlock {
     }
 
     const prioridad = this.prioridad();
+    // Una recomendación a medias (sin sede) no se manda: la API la rechazaría con 422.
+    const performerFields = this.performer.fields();
+    if (performerFields === null) {
+      return;
+    }
 
     this.pidiendo.set(true);
     this.registro.set(loading());
@@ -486,6 +484,7 @@ export class AnalysisOrderBlock {
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
+      ...performerFields,
       ...decision,
     };
 
@@ -576,6 +575,7 @@ export class AnalysisOrderBlock {
     this.estudio.set(null);
     this.categoria.set(null);
     this.prioridad.set(null);
+    this.performer.reset();
   }
 
   /**

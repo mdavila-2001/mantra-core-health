@@ -30,6 +30,7 @@ import {
   borradorDePedido,
   cartLinesFromDraft,
   coberturaConSeguro,
+  partialCountLabel,
   ordenarSedes,
   pendingImagingStudies,
   WhereToBuy,
@@ -266,6 +267,21 @@ describe('WhereToBuy', () => {
   /** Maqueta (`true`) o API real (`false`); se lee al crear la pantalla. */
   let sampleData: boolean;
 
+
+  /** P-19-4: la lista abre solo con las completas; esto suma las que tienen una parte. */
+  function verTodas(): void {
+    harness.routeNativeElement
+      ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-show-partial'))
+      ?.click();
+    harness.detectChanges();
+  }
+
+  function verParciales(): void {
+    harness.routeNativeElement
+      ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-imaging-show-partial'))
+      ?.click();
+    harness.detectChanges();
+  }
   beforeEach(() => {
     sampleData = true;
     // jsdom no trae geolocalización: se cuelga una espía para poder afirmar
@@ -382,7 +398,7 @@ describe('WhereToBuy', () => {
     ],
   };
 
-  const CONCEPTOS_DE_ORDENES = {
+  const ORDER_CONCEPTS = {
     items: [
       { conceptId: 'c-rx', code: 'STUDY-RX-TORAX', display: 'Radiografía de tórax', codeSystemVersionId: 'v1' },
       { conceptId: 'c-eco', code: 'STUDY-ECO-ABD', display: 'Ecografía abdominal', codeSystemVersionId: 'v1' },
@@ -420,7 +436,7 @@ describe('WhereToBuy', () => {
     responderHastaProductos();
     http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
     http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES_PROPIAS);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(ORDER_CONCEPTS);
     const busqueda = http.expectOne((r) => r.url === '/diagnostic-units/search');
     // El laboratorio no entra: la búsqueda es de imagenología.
     expect(busqueda.request.params.get('studyConceptIds')).toBe('c-rx,c-eco');
@@ -435,17 +451,39 @@ describe('WhereToBuy', () => {
       offset: 0,
     });
     harness.detectChanges();
+    verParciales();
 
     const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
     expect(pestanas[1]?.getAttribute('aria-selected')).toBe('true');
     expect(texto()).toContain('Estudios pendientes: Radiografía de tórax, Ecografía abdominal');
     expect(texto()).toContain('Centro de Imagen Sur');
     expect(texto()).toContain('Le falta: Ecografía abdominal');
-    const comoLlegar = harness.routeNativeElement?.querySelector<HTMLAnchorElement>(
-      '[data-testid="imagen-lista"] a[href*="google.com/maps"]',
+    const directionsLink = harness.routeNativeElement?.querySelector<HTMLAnchorElement>(
+      '[data-testid="where-to-buy-imaging-list"] a[href*="openstreetmap.org/directions"]',
     );
-    expect(comoLlegar?.getAttribute('target')).toBe('_blank');
-    expect(comoLlegar?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(directionsLink?.getAttribute('target')).toBe('_blank');
+    expect(directionsLink?.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('P-19-4: imagenología abre solo con los centros que tienen todos los estudios', async () => {
+    await montar('m-1', '?tab=imaging');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES_PROPIAS);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(ORDER_CONCEPTS);
+    http.expectOne((r) => r.url === '/diagnostic-units/search').flush({
+      items: [centro('u-2', 'Imagen Norte', false, ['c-eco'])],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    harness.detectChanges();
+
+    expect(texto()).not.toContain('Imagen Norte');
+    expect(texto()).toContain('Ningún centro tiene hoy todos los estudios que le pidieron.');
+    verParciales();
+    expect(texto()).toContain('Imagen Norte');
+    expect(texto()).toContain('Le falta: Ecografía abdominal');
   });
 
   it('deja la pestaña elegida en la URL', async () => {
@@ -463,6 +501,54 @@ describe('WhereToBuy', () => {
       [],
       expect.objectContaining({ queryParams: { tab: 'medical-centers' }, replaceUrl: true }),
     );
+    // Abrir Centros médicos es lo que dispara su consulta, y no antes.
+    http
+      .expectOne((r) => r.url === '/clinical/me/procedure-centers')
+      .flush({ procedures: [], centers: [], total: 0, limit: 20 });
+  });
+
+  it('carril 19: Centros médicos abre por la URL y busca los centros de mis procedimientos', async () => {
+    await montar('m-1', '?tab=medical-centers');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const consulta = http.expectOne((r) => r.url === '/clinical/me/procedure-centers');
+    // Lo que le pidieron no viaja en la URL: sólo el tope (y el origen, si lo hay).
+    expect(consulta.request.params.keys()).toEqual(['limit']);
+    consulta.flush({ procedures: [], centers: [], total: 0, limit: 20 });
+    harness.detectChanges();
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
+    expect(pestanas[2]?.getAttribute('aria-selected')).toBe('true');
+    expect(texto()).toContain('No tiene procedimientos pendientes.');
+    expect(texto()).not.toContain('Esta parte todavía no está');
+  });
+
+  /**
+   * Sin procedimientos pendientes, Centros médicos muestra el vacío honesto y la
+   * salida al directorio de clínicas tiene que verse (antes desaparecía porque
+   * la molécula no proyectaba el enlace).
+   */
+  it('en Centros médicos, sin procedimientos pendientes, lo dice y ofrece el directorio de clínicas', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
+    pestanas[2]?.click();
+    harness.detectChanges();
+    http
+      .expectOne((r) => r.url === '/clinical/me/procedure-centers')
+      .flush({ procedures: [], centers: [], total: 0, limit: 20 });
+    harness.detectChanges();
+
+    expect(texto()).toContain('No tiene procedimientos pendientes.');
+    expect(texto()).not.toContain('Esta parte todavía no está');
+    const enlaces = Array.from(harness.routeNativeElement?.querySelectorAll('a') ?? []);
+    expect(enlaces.some((a) => a.textContent?.trim() === 'Ver clínicas y hospitales')).toBe(true);
   });
 
   it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {
@@ -472,7 +558,7 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     expect(
-      harness.routeNativeElement?.querySelector('[data-testid="compra-recorrido-una"]')?.textContent,
+      harness.routeNativeElement?.querySelector('[data-testid="where-to-buy-route-single"]')?.textContent,
     ).toContain('Farmacia Andina · Sucursal Centro tiene todo lo que eligió');
   });
 
@@ -490,7 +576,7 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     const paradas = Array.from(
-      harness.routeNativeElement?.querySelectorAll('[data-testid="compra-paradas"] > li') ?? [],
+      harness.routeNativeElement?.querySelectorAll('[data-testid="where-to-buy-stops"] > li') ?? [],
     ).map((li) => li.textContent ?? '');
     expect(paradas).toHaveLength(2);
     // La más cercana primero; la que no publica distancia, al final.
@@ -520,6 +606,29 @@ describe('WhereToBuy', () => {
     expect(mas?.querySelectorAll('a[href^="/promotions/"]').length).toBeGreaterThan(0);
   });
 
+  it('P-19-4: abre solo con las sucursales que tienen todo y muestra las demás a pedido', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const lista = () => harness.routeNativeElement?.querySelectorAll('[data-testid="compra-sedes"] > li') ?? [];
+    const boton = () =>
+      harness.routeNativeElement?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-show-partial'));
+    expect(lista().length).toBe(1);
+    expect(lista()[0]?.textContent).toContain('Tiene todo');
+    expect(boton()?.textContent?.trim()).toBe('Ver la que tiene una parte');
+    expect(boton()?.getAttribute('aria-pressed')).toBe('false');
+
+    verTodas();
+    expect(lista().length).toBe(2);
+    expect(boton()?.textContent?.trim()).toBe('Mostrar solo las que tienen todo');
+    expect(boton()?.getAttribute('aria-pressed')).toBe('true');
+
+    verTodas();
+    expect(lista().length).toBe(1);
+  });
+
   it('recorre el contrato E2 entero y pinta completas primero, sin coordenadas', async () => {
     await montar();
     responderHastaProductos();
@@ -533,6 +642,7 @@ describe('WhereToBuy', () => {
     expect(consulta.request.params.has('lng')).toBe(false);
     consulta.flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     const sedes = harness.routeNativeElement?.querySelectorAll('.compra__sede') ?? [];
     expect(sedes).toHaveLength(2);
@@ -554,6 +664,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
     // El montaje de Leaflet es diferido: dos microtareas y otro render.
     await Promise.resolve();
     await Promise.resolve();
@@ -587,6 +698,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     expect(
       harness.routeNativeElement?.querySelector('[data-testid="compra-demo-aviso"]'),
@@ -649,6 +761,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     // La segunda tarjeta es la sede parcial: le falta la amoxicilina.
@@ -785,6 +898,91 @@ describe('WhereToBuy', () => {
     expect(texto()).toContain('Distancias medidas desde su ubicación actual');
   });
 
+  describe('location that cannot be read', () => {
+    function buttonByLabel(label: string): HTMLButtonElement | undefined {
+      return Array.from(
+        harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('button') ?? [],
+      ).find((button) => button.textContent?.trim() === label);
+    }
+
+    function shareLocation(): void {
+      harness.routeNativeElement
+        ?.querySelector<HTMLButtonElement>(byTestId('compra-compartir-ubicacion'))
+        ?.click();
+      harness.detectChanges();
+    }
+
+    async function mountWithAvailability(): Promise<void> {
+      await montar();
+      responderHastaProductos();
+      http
+        .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+        .flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+    }
+
+    /** Whatever the reason the location is missing, measuring from a city must still work. */
+    function expectCitiesStillUsable(): void {
+      const city = buttonByLabel('La Paz');
+      expect(city).toBeDefined();
+      expect(city?.disabled).toBe(false);
+
+      city?.click();
+      harness.detectChanges();
+
+      const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      expect(query.request.params.get('lat')).toBe('-16.4957');
+      expect(query.request.params.get('lng')).toBe('-68.1335');
+      query.flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+
+      expect(texto()).toContain('Distancias medidas desde La Paz');
+      expect(texto()).not.toContain('No pudimos leer su ubicación');
+    }
+
+    it('shows the notice and keeps the cities usable when the permission is denied', async () => {
+      await mountWithAvailability();
+      expect(texto()).not.toContain('No pudimos leer su ubicación');
+
+      getCurrentPosition.mockImplementation(
+        (_success: unknown, failure: (error: { code: number }) => void) =>
+          failure({ code: 1 }),
+      );
+      shareLocation();
+
+      expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+      expect(texto()).toContain('No pudimos leer su ubicación');
+      expect(
+        harness.routeNativeElement?.querySelector('[role="status"]')?.textContent,
+      ).toContain('No pudimos leer su ubicación');
+      // No position was obtained, so nothing re-queries availability.
+      http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+      expect(
+        harness.routeNativeElement
+          ?.querySelector<HTMLButtonElement>(byTestId('compra-compartir-ubicacion'))
+          ?.disabled,
+      ).toBe(false);
+
+      expectCitiesStillUsable();
+    });
+
+    it('shows the notice without throwing when the browser has no geolocation', async () => {
+      Object.defineProperty(window.navigator, 'geolocation', {
+        configurable: true,
+        value: undefined,
+      });
+      await mountWithAvailability();
+
+      expect(() => shareLocation()).not.toThrow();
+
+      expect(getCurrentPosition).not.toHaveBeenCalled();
+      expect(texto()).toContain('No pudimos leer su ubicación');
+      http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+
+      expectCitiesStillUsable();
+    });
+  });
+
   it('destildar un renglón lo saca de la consulta', async () => {
     await montar();
     responderHastaProductos();
@@ -834,6 +1032,7 @@ describe('WhereToBuy', () => {
     expect(consulta.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
     consulta.flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    verTodas();
 
     expect(texto()).toContain('No todo se pudo consultar');
     expect(texto()).toContain('Ibuprofeno');
@@ -990,6 +1189,7 @@ describe('WhereToBuy', () => {
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(DISPONIBILIDAD_CON_NORTE);
     harness.detectChanges();
+    verTodas();
   }
 
   function consultar<T extends Element>(selector: string): T | null {
@@ -1634,5 +1834,12 @@ describe('pendingImagingStudies con los códigos de la API', () => {
       { conceptId: 'c-rx', name: 'Chest X-ray' },
       { conceptId: 'c-eco', name: 'Abdominal ultrasound' },
     ]);
+  });
+});
+
+describe('partialCountLabel', () => {
+  it('concuerda en singular y en plural', () => {
+    expect(partialCountLabel(1, 'la', 'las')).toBe('Ver la que tiene una parte');
+    expect(partialCountLabel(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
   });
 });

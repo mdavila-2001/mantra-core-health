@@ -1,6 +1,6 @@
 import { FileDropTarget } from '../../../../../shared/forms/file-drop-target';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output, signal, viewChild, type TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal, viewChild, type OnInit, type TemplateRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { WorkHistory } from '../../work-history/work-history';
@@ -126,7 +126,7 @@ interface FilaCredencial {
   styleUrl: './practitioner-profile-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PractitionerProfileView {
+export class PractitionerProfileView implements OnInit {
   /** El perfil, ya resuelto por el contenedor. */
   readonly perfil = input.required<PerfilProfesionalVisible>();
 
@@ -292,6 +292,30 @@ export class PractitionerProfileView {
   readonly trayectoriaCambio = output<void>();
 
   protected readonly pestanaSeleccionada = signal<number>(PRIMERA_PESTANA);
+
+  /**
+   * La pestaña con la que se entra, como índice de {@link DOCTOR_PROFILE_TABS}.
+   *
+   * Es el camino de vuelta del editor (CORR-08): quien guarda o cancela en
+   * «Contacto» vuelve a leer «Contacto», no «Datos personales». Llega en el
+   * índice de la lista COMPLETA —el mismo que el editor usa para la ida— y se
+   * traduce por etiqueta, porque la ficha suprime «Facturación» cuando no la
+   * tiene y desde ahí los índices visibles se corren en uno.
+   *
+   * Se aplica una sola vez, al iniciar: después manda la persona.
+   */
+  readonly pestanaInicial = input<number | null>(null);
+
+  ngOnInit(): void {
+    const pedida = this.pestanaInicial();
+    if (pedida === null) {
+      return;
+    }
+    const indice = this.pestanasVisibles().indexOf(DOCTOR_PROFILE_TABS[pedida]);
+    if (indice >= 0) {
+      this.pestanaSeleccionada.set(indice);
+    }
+  }
 
   /**
    * Las pestañas de la ficha PROPIA, las mismas seis del alta de médico.

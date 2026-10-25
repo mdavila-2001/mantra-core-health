@@ -127,17 +127,24 @@ type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
   readonly submittedAt: string | null;
 };
 
-type WireReceivedClaimInvoice = Omit<ReceivedClaimInvoice, 'issuedAt' | 'annulledAt' | 'previous'> & {
+type WireReceivedClaimInvoice = Omit<
+  ReceivedClaimInvoice,
+  'issuedAt' | 'annulledAt' | 'previous'
+> & {
   readonly issuedAt: string;
   readonly annulledAt: string | null;
   readonly previous: readonly WireReceivedClaimInvoice[];
 };
 
-type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate' | 'decision' | 'invoice'> & {
+type WireReceivedClaim = Omit<
+  ReceivedClaim,
+  'submittedAt' | 'serviceDate' | 'decision' | 'invoice'
+> & {
   readonly submittedAt: string | null;
   /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
   readonly serviceDate: string | null;
-  readonly decision: (Omit<ReceivedClaimDecision, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  readonly decision:
+    (Omit<ReceivedClaimDecision, 'decidedAt'> & { readonly decidedAt: string }) | null;
   readonly invoice: WireReceivedClaimInvoice | null;
 };
 
@@ -145,7 +152,8 @@ type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision'> & {
   readonly submittedAt: string | null;
   /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
   readonly serviceDate: string | null;
-  readonly decision: (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  readonly decision:
+    (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
 };
 
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
@@ -235,12 +243,17 @@ export class InsuranceClient {
   }
 
   /**
-   * `GET /practitioners/:id/insurance-carriers` — las aseguradoras en cuya red
-   * atiende un profesional, con los planes de cada una.
+   * Las aseguradoras en cuya red atiende un profesional, con los planes de
+   * cada una.
    *
    * Es lo que el paciente mira en la ficha para saber si su seguro lo cubre.
    * Una lista vacía es «no hay convenios informados», no «no trabaja con
    * seguros»: la pantalla lo dice así.
+   *
+   * Se arma sobre `GET /practitioners/:id/insurance-networks`, que es la ruta
+   * que la API expone (una fila por membresía). La anterior,
+   * `/practitioners/:id/insurance-carriers`, nunca existió en la API: con ella
+   * la ficha respondía 404 y mostraba «No encontramos lo que busca».
    *
    * @param practitionerProfileId - El perfil profesional de la ficha.
    * @returns Las aseguradoras, ya ordenadas por nombre.
@@ -248,13 +261,9 @@ export class InsuranceClient {
   listPractitionerCarriers(
     practitionerProfileId: string,
   ): Observable<readonly PractitionerInsuranceCarrier[]> {
-    return this.http
-      .get<{ readonly items: readonly PractitionerInsuranceCarrier[] }>(
-        this.url(
-          `/practitioners/${encodeURIComponent(practitionerProfileId)}/insurance-carriers`,
-        ),
-      )
-      .pipe(map((body) => body.items));
+    return this.listNetworksOfPractitioner(practitionerProfileId).pipe(
+      map((page) => carriersFromNetworks(page.items)),
+    );
   }
 
   /** `GET /insurance-carriers/:id` — catálogo comercial y red. */
@@ -548,7 +557,13 @@ export class InsuranceClient {
         readonly items: readonly WireMyClaim[];
         readonly truncated: boolean;
       }>(this.url('/insurance/my-claims'))
-      .pipe(map((body) => ({ view: body.view, items: body.items.map(toMyClaim), truncated: body.truncated })));
+      .pipe(
+        map((body) => ({
+          view: body.view,
+          items: body.items.map(toMyClaim),
+          truncated: body.truncated,
+        })),
+      );
   }
 
   /**
@@ -559,7 +574,10 @@ export class InsuranceClient {
    *
    * @returns La solicitud como quedó, con su dictamen y su factura.
    */
-  decideReceivedClaim(claimId: string, body: ReceivedClaimDecisionInput): Observable<ReceivedClaim> {
+  decideReceivedClaim(
+    claimId: string,
+    body: ReceivedClaimDecisionInput,
+  ): Observable<ReceivedClaim> {
     return this.http
       .post<WireReceivedClaim>(
         this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/decision`),
@@ -578,7 +596,9 @@ export class InsuranceClient {
    * el error dice que la función no está disponible.
    */
   annulReceivedClaimInvoice(claimId: string, reason: string): Observable<ReceivedClaim> {
-    const url = this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`);
+    const url = this.url(
+      `/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`,
+    );
     return simulatorOnly('Anular la factura de una solicitud recibida', url, () =>
       this.http.post<WireReceivedClaim>(url, { reason }),
     ).pipe(map(toReceivedClaim));
@@ -728,10 +748,7 @@ export class InsuranceClient {
    * @param status - Estado destino.
    * @returns La campaña ya en su nuevo estado.
    */
-  updateCampaignStatus(
-    id: string,
-    status: CampaignTargetStatus,
-  ): Observable<InsuranceCampaign> {
+  updateCampaignStatus(id: string, status: CampaignTargetStatus): Observable<InsuranceCampaign> {
     return this.http
       .patch<WireCampaign>(this.url(`/insurance-campaigns/${encodeURIComponent(id)}/status`), {
         status,
@@ -771,7 +788,10 @@ function toReceivedClaim(body: WireReceivedClaim): ReceivedClaim {
     ...body,
     submittedAt: maybeDate(body.submittedAt) ?? null,
     serviceDate: maybeDateOnly(body.serviceDate) ?? null,
-    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    decision:
+      body.decision === null
+        ? null
+        : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
     invoice: body.invoice === null ? null : toReceivedClaimInvoice(body.invoice),
   };
 }
@@ -781,7 +801,10 @@ function toMyClaim(body: WireMyClaim): MyClaim {
     ...body,
     submittedAt: maybeDate(body.submittedAt) ?? null,
     serviceDate: maybeDateOnly(body.serviceDate) ?? null,
-    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    decision:
+      body.decision === null
+        ? null
+        : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
   };
 }
 
@@ -948,4 +971,36 @@ function toPatientCampaign(body: WirePatientCampaign): PatientCampaign {
     validFrom: civilDate(body.validFrom),
     validTo: civilDate(body.validTo),
   };
+}
+
+/**
+ * Agrupa las membresías por aseguradora, para la ficha del directorio.
+ *
+ * Una misma red puede llegar dos veces —por la práctica donde atiende y como
+ * membresía individual, o por dos prácticas—, y en la ficha es un solo plan:
+ * se deja una por nombre. Aseguradoras y planes, en orden alfabético.
+ */
+export function carriersFromNetworks(
+  memberships: readonly PractitionerInsuranceNetwork[],
+): readonly PractitionerInsuranceCarrier[] {
+  const byCarrier = new Map<string, { name: string; networks: Map<string, string> }>();
+  for (const membership of memberships) {
+    const carrier = byCarrier.get(membership.carrierId) ?? {
+      name: membership.carrierName,
+      networks: new Map<string, string>(),
+    };
+    if (!carrier.networks.has(membership.networkName)) {
+      carrier.networks.set(membership.networkName, membership.membershipId);
+    }
+    byCarrier.set(membership.carrierId, carrier);
+  }
+  return [...byCarrier.entries()]
+    .map(([carrierId, carrier]) => ({
+      carrierId,
+      carrierName: carrier.name,
+      networks: [...carrier.networks.entries()]
+        .map(([name, id]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    }))
+    .sort((a, b) => a.carrierName.localeCompare(b.carrierName, 'es'));
 }

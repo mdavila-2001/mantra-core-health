@@ -1,6 +1,7 @@
 import { buildBlocksPdf, campoDeBloque, listBlock, type PdfBlock } from '../pdf-export/pdf-export';
 import { bloquesDeHistoria, historyPdfOptions } from './clinical-pdf';
 import type { DocumentoDeHistoria } from './clinical-pdf.types';
+import { servicesBlocks, type HistoryService } from './history-received-services';
 
 /* ============================================================================
     Carril C6 · las dos secciones que le faltaban a «Descargar tu historia»:
@@ -60,6 +61,11 @@ export interface CareLinea {
 export interface HistoryNewSections {
   readonly diagnosticos: HistoryDiagnoses;
   readonly lineas: readonly CareLinea[];
+  /**
+   * Los servicios recibidos (intervenciones y vacunas). Opcional: quien no los
+   * trae no imprime la sección, en vez de imprimirla vacía y afirmar que no hubo.
+   */
+  readonly servicios?: readonly HistoryService[];
 }
 
 /**
@@ -94,6 +100,8 @@ export function historyWithEncountersBlocks(
     ...base.slice(diagnosticos, lineas),
     ...linesBlocks(nuevas.lineas),
     ...base.slice(lineas),
+    // Al final, como la pestaña: lo que se le hizo al paciente, después de lo que se habló y se pidió.
+    ...(nuevas.servicios === undefined ? [] : servicesBlocks(nuevas.servicios)),
   ];
 }
 

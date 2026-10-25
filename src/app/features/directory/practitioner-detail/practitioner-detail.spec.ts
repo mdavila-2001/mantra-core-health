@@ -183,24 +183,43 @@ describe('PractitionerDetail', () => {
     { code: 'FUTURE_STATUS', expectedSeal: 'unknown', approved: false, expired: false },
     { code: 'CRED_VERIFIED', expectedSeal: 'expired', approved: true, expired: true },
     { code: 'CRED_PENDING', expectedSeal: 'pending', approved: false, expired: false },
-  ])('decide la aprobación pública por catálogo y no por metadatos de revisión: $code', ({ code, expectedSeal, approved, expired }) => {
-    montar();
-    responder({
-      credentials: [{
-        id: 'reviewed-credential', credentialTypeConceptId: 'credential-degree', number: 'TEST-REVIEW',
-        issuingInstitutionText: 'Universidad de prueba', stateConceptId: 'st-verificado',
-        issueDate: '2020-01-01', expiryDate: expired ? '2001-01-01' : '2099-01-01',
-        verifiedAt: code === 'CRED_PENDING' ? null : '2020-01-15T00:00:00.000Z',
-        verificationSourceUri: code === 'CRED_PENDING' ? null : 'https://registro.test/revision',
-      }],
-    }, {
-      ...CONCEPTOS,
-      items: CONCEPTOS.items.map((concept) => concept.conceptId === 'st-verificado' ? { ...concept, code } : concept),
-    });
+  ])(
+    'decide la aprobación pública por catálogo y no por metadatos de revisión: $code',
+    ({ code, expectedSeal, approved, expired }) => {
+      montar();
+      responder(
+        {
+          credentials: [
+            {
+              id: 'reviewed-credential',
+              credentialTypeConceptId: 'credential-degree',
+              number: 'TEST-REVIEW',
+              issuingInstitutionText: 'Universidad de prueba',
+              stateConceptId: 'st-verificado',
+              issueDate: '2020-01-01',
+              expiryDate: expired ? '2001-01-01' : '2099-01-01',
+              verifiedAt: code === 'CRED_PENDING' ? null : '2020-01-15T00:00:00.000Z',
+              verificationSourceUri:
+                code === 'CRED_PENDING' ? null : 'https://registro.test/revision',
+            },
+          ],
+        },
+        {
+          ...CONCEPTOS,
+          items: CONCEPTOS.items.map((concept) =>
+            concept.conceptId === 'st-verificado' ? { ...concept, code } : concept,
+          ),
+        },
+      );
 
-    expect(visible().formacion[0]).toMatchObject({ approved, sello: expectedSeal, vencida: expired });
-    http.verify();
-  });
+      expect(visible().formacion[0]).toMatchObject({
+        approved,
+        sello: expectedSeal,
+        vencida: expired,
+      });
+      http.verify();
+    },
+  );
 
   it('con foto registrada baja la imagen y la pinta como data: URL', async () => {
     montar();
@@ -224,9 +243,15 @@ describe('PractitionerDetail', () => {
    * la ficha que abre un paciente desde la guía no puede mostrar una
    * trayectoria distinta a la que el profesional ve de sí mismo.
    */
-  it.each([['aprobado','approved'],['pendiente','pending'],['rechazado','rejected'],['desconocido','unknown']])('conserva el estado público %s sin confundirlo con vigencia', (statusKind,sello) => {
-    montar(); responder({affiliations:[{...PERFIL.affiliations[1],statusKind}]});
-    expect(visible().actividadActual[0]).toMatchObject({actual:true,sello});
+  it.each([
+    ['aprobado', 'approved'],
+    ['pendiente', 'pending'],
+    ['rechazado', 'rejected'],
+    ['desconocido', 'unknown'],
+  ])('conserva el estado público %s sin confundirlo con vigencia', (statusKind, sello) => {
+    montar();
+    responder({ affiliations: [{ ...PERFIL.affiliations[1], statusKind }] });
+    expect(visible().actividadActual[0]).toMatchObject({ actual: true, sello });
     http.verify();
   });
 
@@ -289,7 +314,10 @@ describe('PractitionerDetail', () => {
           useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) },
         },
         // Sin sesión la disponibilidad no pide cupos: la prueba es sobre seguros.
-        { provide: AuthService, useValue: { isAuthenticated: () => false, activeTenantId: () => null } },
+        {
+          provide: AuthService,
+          useValue: { isAuthenticated: () => false, activeTenantId: () => null },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -299,14 +327,18 @@ describe('PractitionerDetail', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    http.expectOne('/practitioners/per-9/insurance-carriers').flush({
+    http.expectOne('/practitioners/per-9/insurance-networks').flush({
       items: [
         {
+          membershipId: 'net-1',
           carrierId: 'car-1',
           carrierName: 'Alianza Seguros',
-          networks: [{ id: 'net-1', name: 'AFI GOLD' }],
+          networkName: 'AFI GOLD',
+          effectiveFrom: null,
+          effectiveTo: null,
         },
       ],
+      count: 1,
     });
     fixture.detectChanges();
     await fixture.whenStable();
@@ -314,7 +346,9 @@ describe('PractitionerDetail', () => {
     http.verify();
 
     const page = fixture.nativeElement as HTMLElement;
-    const insurers = page.querySelector('app-practitioner-profile-view [data-testid="practitioner-insurers"]');
+    const insurers = page.querySelector(
+      'app-practitioner-profile-view [data-testid="practitioner-insurers"]',
+    );
     expect(insurers?.textContent).toContain('Alianza Seguros');
     expect(insurers?.textContent).toContain('AFI GOLD');
 
@@ -323,8 +357,12 @@ describe('PractitionerDetail', () => {
     const activity = Array.from(page.querySelectorAll('h2')).find((h) =>
       h.textContent?.includes('Actividad en la plataforma'),
     )!;
-    expect(cover.compareDocumentPosition(insurers!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(insurers!.compareDocumentPosition(activity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      cover.compareDocumentPosition(insurers!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      insurers!.compareDocumentPosition(activity) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   /**
@@ -342,7 +380,10 @@ describe('PractitionerDetail', () => {
           provide: ActivatedRoute,
           useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) },
         },
-        { provide: AuthService, useValue: { isAuthenticated: () => false, activeTenantId: () => null } },
+        {
+          provide: AuthService,
+          useValue: { isAuthenticated: () => false, activeTenantId: () => null },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -351,7 +392,7 @@ describe('PractitionerDetail', () => {
     responder();
     fixture.detectChanges();
     await fixture.whenStable();
-    http.expectOne('/practitioners/per-9/insurance-carriers').flush({ items: [] });
+    http.expectOne('/practitioners/per-9/insurance-networks').flush({ items: [], count: 0 });
     fixture.detectChanges();
 
     const seccion = (fixture.nativeElement as HTMLElement).querySelector('#horarios')!;

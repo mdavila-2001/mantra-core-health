@@ -411,7 +411,10 @@ describe('PharmacyInbox with the tenant API list', () => {
     fixture.destroy();
   });
 
-  it('sin casa matriz marcada abre con la primera sede y lo dice', () => {
+  // Con varias sedes y ninguna matriz marcada la bandeja abre con **todas**
+  // (`siteByDefault`, 9f27b9d30): abrir con una sola sucursal escondería los
+  // pedidos de las demás. Ya no hay una sede «adivinada» que avisar.
+  it('sin casa matriz marcada y con varias sedes abre con todas, sin acotar a una sola', () => {
     const fixture = TestBed.createComponent(PharmacyInbox);
     fixture.detectChanges();
     http.expectOne('/pharmacy/pharmacies').flush({ items: [{ id: FARMACIA_DETALLE.id }], count: 1 });
@@ -420,11 +423,11 @@ describe('PharmacyInbox with the tenant API list', () => {
       .flush({ ...FARMACIA_DETALLE, sites: [{ ...SEDE_MATRIZ, isHeadOffice: false }, SEDE_NORTE] });
 
     const request = pedidosRequest();
-    expect(request.request.params.get('siteId')).toBe(SEDE_NORTE.id);
+    expect(request.request.params.has('siteId')).toBe(false);
     request.flush({ items: [], count: 0 });
     fixture.detectChanges();
 
-    expect(text(fixture)).toContain('Ninguna sede está marcada como casa matriz');
+    expect(text(fixture)).not.toContain('Ninguna sede está marcada como casa matriz');
     fixture.destroy();
   });
 
