@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
@@ -435,7 +435,8 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             tema,
             routeMeasurement,
             consoleState.count,
-            foto.replace(`${DESTINO}/`, ''),
+            // Relativa a la matriz y con `/`: en Windows `join` arma la ruta con `\`.
+            relative(DESTINO, foto).split(sep).join('/'),
             esperado,
           );
           filas.push(f.texto);
