@@ -28,6 +28,8 @@
       "/admin/ops",
       "/tenants",
       "/practices",
+      "/medical-centers/",
+      "/role-assignments/",
       "/accounting",
       "/health-context",
       "/geo",
