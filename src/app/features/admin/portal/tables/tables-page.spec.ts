@@ -67,7 +67,7 @@ describe('TablesPage y TableDetailPage', () => {
     expect(ficha.textContent).toContain('Borrador curado por dominio');
     expect(ficha.textContent).toContain('Sin fuente');
     expect(ficha.textContent).toContain('Sólo admite altas (append-only)');
-    const linaje = [...ficha.querySelectorAll('a')].find((a) => a.textContent?.includes('lineage'))!;
+    const linaje = [...ficha.querySelectorAll('a')].find((a) => a.textContent?.includes('linaje'))!;
     expect(linaje.getAttribute('href')).toBe('/superadmin/portal/lineage?tabla=scheduling.slots');
   });
 
