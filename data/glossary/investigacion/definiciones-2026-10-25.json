@@ -10,8 +10,8 @@
    "El sinónimo «aborto espontáneo» repite el propio nombre de la ficha.",
    "Resumen llano correcto pero limitado a «embarazo temprano»; la pérdida puede ocurrir hasta la semana 20."
   ],
-  "definition": "Pérdida espontánea de un embarazo antes de la semana 20 de gestación, casi siempre por alteraciones cromosómicas del embrión. Puede cursar con sangrado vaginal y dolor abdominal, o sin síntomas. Se evalúa con ecografía y hCG y puede manejarse de forma expectante, farmacológica o quirúrgica.",
-  "plainSummaryEs": "Pérdida de un embarazo antes de la semana 20; puede causar sangrado y dolor. La mayoría de las veces se debe a un problema del desarrollo y no a algo que la mujer hiciera.",
+  "definition": "Pérdida espontánea de un embarazo antes de la viabilidad fetal, que la mayoría de las fuentes sitúa antes de la semana 20 de gestación (algunas, antes de la 24). Casi siempre obedece a alteraciones cromosómicas del embrión. Puede cursar con sangrado y dolor abdominal, o sin síntomas, y se maneja de forma expectante, con medicamentos o con un procedimiento.",
+  "plainSummaryEs": "Pérdida de un embarazo antes de la semana 20 (algunas fuentes, 24); puede dar sangrado y dolor. Casi siempre se debe a un problema del desarrollo del embrión, no a algo que la mujer hiciera.",
   "esSynonyms": [
    "pérdida del embarazo",
    "aborto involuntario",
@@ -59,25 +59,18 @@
    }
   ],
   "incertidumbres": [
-   "El umbral de las 20 semanas lo usan MedlinePlus, NICHD y el Manual MSD; el NHS define el aborto espontáneo hasta las 24 semanas. Decidir qué umbral adopta el glosario.",
-   "No verifiqué en una fuente abierta la codificación CIE-10-CM de la amenaza de aborto ni de las formas incompletas o con complicación (otros códigos distintos de O03.9).",
-   "No pude abrir ACOG ni StatPearls (bloqueo anti-robot, pago); el contraste se hizo con MedlinePlus, NICHD, NHS y Manual MSD."
+   "Umbral de gestación: 20 semanas (MedlinePlus, NICHD, MSD) frente a 24 (NHS, Cochrane Ghosh 2021); The Lancet usa «antes de la viabilidad». El glosario debe decidir cuál adopta.",
+   "Solo pude leer los resúmenes (Europe PMC) de los siete artículos; los textos completos de pago (Lancet, ACOG, NICE/BMJ, Farren) no se revisaron, y el resumen de la guía NICE no tenía abstract. Las afirmaciones se limitan a lo que los resúmenes indican.",
+   "El resumen de Coomarasamy 2021 recomienda progesterona vaginal en sangrado con pérdida previa; no lo incluí y no lo contrasté con otras guías (puede haber discrepancia).",
+   "El metaanálisis en red Cochrane advierte de heterogeneidad por tipo de aborto; la superioridad de lo quirúrgico y lo médico sobre la espera no es definitiva.",
+   "Las causas cromosómicas y la clasificación clínica siguen apoyándose en MedlinePlus, MSD y NHS; no las contrasté con literatura primaria.",
+   "Sin verificar la codificación CIE-10-CM de formas distintas de O03.9; ACOG y StatPearls inaccesibles."
   ],
   "referencias": [
    {
     "titulo": "Aborto espontáneo (enciclopedia médica)",
     "url": "https://medlineplus.gov/spanish/ency/article/001488.htm",
     "fuente": "MedlinePlus"
-   },
-   {
-    "titulo": "Aborto espontáneo (tema de salud)",
-    "url": "https://medlineplus.gov/spanish/miscarriage.html",
-    "fuente": "MedlinePlus"
-   },
-   {
-    "titulo": "Pérdida del embarazo (antes de las 20 semanas)",
-    "url": "https://espanol.nichd.nih.gov/salud/temas/pregnancyloss",
-    "fuente": "NIH (NICHD)"
    },
    {
     "titulo": "Aborto espontáneo (Manual MSD, profesionales)",
@@ -88,9 +81,101 @@
     "titulo": "Miscarriage",
     "url": "https://www.nhs.uk/conditions/miscarriage/",
     "fuente": "NHS"
+   },
+   {
+    "titulo": "Quenby et al., 2021. Miscarriage matters: the epidemiological, physical, psychological, and economic costs of early pregnancy loss. PMID 33915094",
+    "url": "https://europepmc.org/article/MED/33915094",
+    "fuente": "The Lancet"
+   },
+   {
+    "titulo": "Coomarasamy et al., 2021. Sporadic miscarriage: evidence to provide effective care. PMID 33915095",
+    "url": "https://europepmc.org/article/MED/33915095",
+    "fuente": "The Lancet"
+   },
+   {
+    "titulo": "ACOG Committee on Practice Bulletins, 2018. ACOG Practice Bulletin No. 200: Early Pregnancy Loss. PMID 30157093",
+    "url": "https://europepmc.org/article/MED/30157093",
+    "fuente": "Obstetrics and Gynecology"
+   },
+   {
+    "titulo": "Webster et al., 2019. Ectopic pregnancy and miscarriage: diagnosis and initial management: summary of updated NICE guidance. PMID 31722871",
+    "url": "https://europepmc.org/article/MED/31722871",
+    "fuente": "BMJ"
+   },
+   {
+    "titulo": "Ghosh et al., 2021. Methods for managing miscarriage: a network meta-analysis. PMID 34061352",
+    "url": "https://europepmc.org/article/MED/34061352",
+    "fuente": "Cochrane Database of Systematic Reviews"
+   },
+   {
+    "titulo": "Magnus et al., 2019. Role of maternal age and pregnancy history in risk of miscarriage: prospective register based study. PMID 30894356",
+    "url": "https://europepmc.org/article/MED/30894356",
+    "fuente": "BMJ"
+   },
+   {
+    "titulo": "Farren et al., 2018. The psychological impact of early pregnancy loss. PMID 30204882",
+    "url": "https://europepmc.org/article/MED/30204882",
+    "fuente": "Human Reproduction Update"
    }
   ],
-  "lote": "AE-01"
+  "lote": "AE-01",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Añadida la sección «Qué dice la evidencia» (considerations), en dos párrafos.",
+    "Introducción: el límite de gestación se presenta como variable (20 semanas en MedlinePlus y MSD; 24 en NHS y Cochrane) y se añade el término «pérdida temprana del embarazo».",
+    "Factores de riesgo: se añaden edad paterna, extremos del IMC, trabajo nocturno, contaminación y plaguicidas (Quenby 2021) y el efecto de la edad y de las pérdidas previas (Magnus 2019); se aclara que son asociaciones.",
+    "Diagnóstico: se matiza la incertidumbre ecográfica (Coomarasamy 2021).",
+    "Tratamiento: se resume el metaanálisis en red Cochrane (Ghosh 2021) sin cifras.",
+    "Complicaciones: se concreta el impacto psicológico en mujeres y parejas (Farren 2018).",
+    "Pronóstico: se añade la asociación de la pérdida recurrente con riesgos posteriores (Quenby 2021).",
+    "Referencias: se retiran MedlinePlus (tema de salud) y NICHD para respetar el máximo de 10; se añaden 7 científicas."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Quenby et al., 2021. Miscarriage matters: the epidemiological, physical, psychological, and economic costs of early pregnancy loss. PMID 33915094",
+     "url": "https://europepmc.org/article/MED/33915094",
+     "fuente": "The Lancet",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden"
+    },
+    {
+     "titulo": "Coomarasamy et al., 2021. Sporadic miscarriage: evidence to provide effective care. PMID 33915095",
+     "url": "https://europepmc.org/article/MED/33915095",
+     "fuente": "The Lancet",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden"
+    },
+    {
+     "titulo": "ACOG Committee on Practice Bulletins, 2018. ACOG Practice Bulletin No. 200: Early Pregnancy Loss. PMID 30157093",
+     "url": "https://europepmc.org/article/MED/30157093",
+     "fuente": "Obstetrics and Gynecology",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden"
+    },
+    {
+     "titulo": "Webster et al., 2019. Ectopic pregnancy and miscarriage: diagnosis and initial management: summary of updated NICE guidance. PMID 31722871",
+     "url": "https://europepmc.org/article/MED/31722871",
+     "fuente": "BMJ",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden"
+    },
+    {
+     "titulo": "Ghosh et al., 2021. Methods for managing miscarriage: a network meta-analysis. PMID 34061352",
+     "url": "https://europepmc.org/article/MED/34061352",
+     "fuente": "Cochrane Database of Systematic Reviews",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden"
+    },
+    {
+     "titulo": "Magnus et al., 2019. Role of maternal age and pregnancy history in risk of miscarriage: prospective register based study. PMID 30894356",
+     "url": "https://europepmc.org/article/MED/30894356",
+     "fuente": "BMJ",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden"
+    },
+    {
+     "titulo": "Farren et al., 2018. The psychological impact of early pregnancy loss. PMID 30204882",
+     "url": "https://europepmc.org/article/MED/30204882",
+     "fuente": "Human Reproduction Update",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden"
+    }
+   ]
+  }
  },
  {
   "slug": "absceso-dental",
@@ -103,7 +188,7 @@
    "Sinónimos: «flemón» y «cara hinchada por una muela» no están respaldados como sinónimos (el segundo es un síntoma; el primero suele designar una celulitis difusa) y se retiran. «Muela con pus» es coloquial pero equivalente y se conserva.",
    "Faltan los nombres alternativos que recoge MedlinePlus: absceso dentoalveolar y odontogénico."
   ],
-  "definition": "Colección de pus en la punta de la raíz de un diente, por una infección bacteriana que llega a la pulpa a través de una caries profunda o de un traumatismo dental. Causa dolor pulsátil, hinchazón y a veces fiebre. Requiere drenaje y tratamiento del diente; los antibióticos solos no resuelven la causa.",
+  "definition": "Colección de pus en la punta de la raíz de un diente, por una infección bacteriana, habitualmente mixta, que llega a la pulpa a través de una caries profunda o de un traumatismo dental. Causa dolor pulsátil, hinchazón y a veces fiebre. Requiere drenaje y tratamiento del diente; los antibióticos solos no resuelven la causa.",
   "plainSummaryEs": "Infección con pus en la raíz de un diente, con dolor fuerte e hinchazón. Hay que ir al dentista: los antibióticos solos no bastan.",
   "esSynonyms": [
    "absceso periapical",
@@ -144,8 +229,10 @@
    }
   ],
   "incertidumbres": [
-   "Rol de los antibióticos: Merck y WikEM los reservan para afectación general o extensión; MedlinePlus los lista como parte del tratamiento. No se zanja aquí.",
-   "No pude abrir StatPearls (bloqueo anti-robot), NIDCR ni AAE; la distinción periapical/periodontal se apoya en WikEM, que es un recurso de medicina de urgencias.",
+   "Rol de los antibióticos: la guía ADA 2019 y Cochrane 2024 los reservan para afectación general o riesgo de progresión; MedlinePlus los lista dentro del tratamiento y Lou 2024 habla de antibióticos de amplio espectro como primera línea en infecciones diseminadas. La ADA se refiere a adultos inmunocompetentes con absceso localizado. No se zanja.",
+   "La certeza de los ensayos sobre antibióticos es baja o muy baja (tres ensayos, 134 participantes en Cochrane 2024).",
+   "Resúmenes de Neal y Schlieve 2022, Lou 2024 y Altaie 2021 leídos solo a nivel de abstract; el texto completo no se abrió.",
+   "La distinción periapical/periodontal se apoya en WikEM y fuentes divulgativas; StatPearls, NIDCR y AAE no se pudieron abrir.",
    "Verificar con un odontólogo si «flemón» debe volver como sinónimo coloquial."
   ],
   "referencias": [
@@ -168,9 +255,88 @@
     "titulo": "Dental abscess (en español)",
     "url": "https://wikem.org/wiki/Dental_abscess/es",
     "fuente": "WikEM"
+   },
+   {
+    "titulo": "Cope et al., 2024. Systemic antibiotics for symptomatic apical periodontitis and acute apical abscess in adults. PMID 38712714",
+    "url": "https://europepmc.org/article/MED/38712714",
+    "fuente": "Cochrane Database Syst Rev"
+   },
+   {
+    "titulo": "Lockhart et al., 2019. Evidence-based clinical practice guideline on antibiotic use for the urgent management of pulpal- and periapical-related dental pain and intraoral swelling (ADA). PMID 31668170",
+    "url": "https://europepmc.org/article/MED/31668170",
+    "fuente": "J Am Dent Assoc"
+   },
+   {
+    "titulo": "Tampi et al., 2019. Antibiotics for the urgent management of symptomatic irreversible pulpitis, symptomatic apical periodontitis, and localized acute apical abscess: systematic review and meta-analysis (ADA). PMID 31761029",
+    "url": "https://europepmc.org/article/MED/31761029",
+    "fuente": "J Am Dent Assoc"
+   },
+   {
+    "titulo": "Neal y Schlieve, 2022. Complications of Severe Odontogenic Infections: A Review. PMID 36552293",
+    "url": "https://europepmc.org/article/MED/36552293",
+    "fuente": "Biology (Basel)"
+   },
+   {
+    "titulo": "Lou et al., 2024. Odontogenic infections in the antibiotic era: approach to diagnosis, management, and prevention. PMID 37926767",
+    "url": "https://europepmc.org/article/MED/37926767",
+    "fuente": "Infection"
+   },
+   {
+    "titulo": "Altaie et al., 2021. Prevalence of unculturable bacteria in the periapical abscess: a systematic review and meta-analysis. PMID 34351963",
+    "url": "https://europepmc.org/article/MED/34351963",
+    "fuente": "PLoS One"
    }
   ],
-  "lote": "AE-01"
+  "lote": "AE-01",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Añadida la sección [considerations] «Qué dice la evidencia» (2 párrafos): Cochrane 2024 y guía ADA 2019 sostienen el manejo de antibióticos; microbiología y complicaciones descansan en revisiones y estudios observacionales.",
+    "Tratamiento: los antibióticos se matizan según la guía ADA 2019 y la revisión Cochrane 2024 (reservados para afectación general o riesgo de progresión; sin beneficio demostrado en el absceso localizado).",
+    "Causas: añadida la naturaleza polimicrobiana (anaerobios y estreptococos orales) y la presencia de bacterias no cultivables (Lou 2024; Altaie 2021).",
+    "Complicaciones: lista ampliada y precisada con Neal y Schlieve 2022 (mediastinitis necrosante, trombosis del seno cavernoso, fascitis necrosante); endocarditis y neumonía quedan marcadas como procedentes de fuentes divulgativas.",
+    "Definición: se añade «polimicrobiana» y se acota a absceso periapical; resumen llano y sinónimos sin cambios respecto a la propuesta previa.",
+    "Texto condensado a ~890 palabras para ajustarse al límite del contrato."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Cope et al., 2024. Systemic antibiotics for symptomatic apical periodontitis and acute apical abscess in adults. PMID 38712714 / DOI 10.1002/14651858.CD010136.pub4",
+     "url": "https://europepmc.org/article/MED/38712714",
+     "fuente": "Cochrane Database Syst Rev",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden con lo citado; resumen leído"
+    },
+    {
+     "titulo": "Lockhart et al., 2019. Evidence-based clinical practice guideline on antibiotic use for the urgent management of pulpal- and periapical-related dental pain and intraoral swelling (ADA). PMID 31668170 / DOI 10.1016/j.adaj.2019.08.020",
+     "url": "https://europepmc.org/article/MED/31668170",
+     "fuente": "J Am Dent Assoc",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden con lo citado; resumen leído"
+    },
+    {
+     "titulo": "Tampi et al., 2019. Antibiotics for the urgent management of symptomatic irreversible pulpitis, symptomatic apical periodontitis, and localized acute apical abscess: systematic review and meta-analysis (ADA). PMID 31761029 / DOI 10.1016/j.adaj.2019.09.011",
+     "url": "https://europepmc.org/article/MED/31761029",
+     "fuente": "J Am Dent Assoc",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden con lo citado; resumen leído"
+    },
+    {
+     "titulo": "Neal y Schlieve, 2022. Complications of Severe Odontogenic Infections: A Review. PMID 36552293 / DOI 10.3390/biology11121784",
+     "url": "https://europepmc.org/article/MED/36552293",
+     "fuente": "Biology (Basel)",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden con lo citado; resumen leído"
+    },
+    {
+     "titulo": "Lou et al., 2024. Odontogenic infections in the antibiotic era: approach to diagnosis, management, and prevention. PMID 37926767 / DOI 10.1007/s15010-023-02117-5",
+     "url": "https://europepmc.org/article/MED/37926767",
+     "fuente": "Infection",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden con lo citado; resumen leído"
+    },
+    {
+     "titulo": "Altaie et al., 2021. Prevalence of unculturable bacteria in the periapical abscess: a systematic review and meta-analysis. PMID 34351963 / DOI 10.1371/journal.pone.0255485",
+     "url": "https://europepmc.org/article/MED/34351963",
+     "fuente": "PLoS One",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores, revista y año coinciden con lo citado; resumen leído"
+    }
+   ]
+  }
  },
  {
   "slug": "accidente-cerebrovascular-isquemico",
@@ -183,7 +349,7 @@
    "Resumen llano: «ataque cerebral (ACV)» es genérico y no indica el mecanismo; «llegar al hospital» omite llamar a emergencias.",
    "«Pérdida visual» conviene precisarla como pérdida de visión en uno o ambos ojos; falta el dolor de cabeza súbito y el mareo o desequilibrio."
   ],
-  "definition": "Interrupción del flujo de sangre a una parte del cerebro por la obstrucción de una arteria, casi siempre por un coágulo, que produce un infarto cerebral. Provoca de forma brusca debilidad de un lado, alteración del habla o pérdida de visión. Es una urgencia: la imagen cerebral urgente distingue el tipo de ictus y orienta el tratamiento.",
+  "definition": "Infarto cerebral con síntomas: muerte de tejido del cerebro por la interrupción del flujo de sangre, casi siempre por la obstrucción de una arteria con un coágulo formado en el propio vaso o llegado desde el corazón u otra arteria. Provoca de forma brusca debilidad de un lado, alteración del habla o pérdida de visión. Es una urgencia: la imagen cerebral distingue el tipo de ictus y orienta el tratamiento.",
   "plainSummaryEs": "Una arteria se tapa y parte del cerebro se queda sin sangre. Es una emergencia: hay que llamar de inmediato a emergencias ante debilidad de un lado, habla alterada o pérdida de visión.",
   "esSynonyms": [
    "infarto cerebral",
@@ -256,15 +422,48 @@
    }
   ],
   "incertidumbres": [
-   "Si el glosario conserva «ACV», «ictus» o «derrame» como sinónimos de esta ficha (hoy no hay ficha del tipo hemorrágico en slugs-validos.json); decisión editorial.",
-   "La ventana de tiempo para los tratamientos de reperfusión no se cita (regla sin cifras) y varía según la fuente y el tratamiento.",
-   "No pude abrir NINDS ni AHA (acceso denegado); contrasté con MedlinePlus, CDC y OMS."
+   "La guía AHA/ASA 2026 ya tiene una corrección oficial (PMID 42507797) y un grupo de especialistas propuso otras correcciones (Albers et al., Stroke 2026, PMID 42535283, solo verificado por título): el revisor debe confirmar qué recomendaciones siguen vigentes antes de dar contenido terapéutico más específico.",
+   "Las ventanas de tiempo y los criterios de imagen para trombólisis y trombectomía varían según guía y siguen cambiando; no se citan (regla sin cifras).",
+   "El metaanálisis de trombólisis con inicio desconocido describe más hemorragias intracraneales sintomáticas y más muertes con alteplasa pese a menor discapacidad grave: balance discutido.",
+   "No pude abrir el texto completo de la guía AHA/ASA 2026 ni de la ESO sobre neumonía asociada al ictus; las afirmaciones se limitan a lo que dicen sus resúmenes. Las páginas europepmc.org devolvieron 403 al abrirlas con WebFetch y se verificaron por API.",
+   "Si el glosario conserva «ACV», «ictus» o «derrame» como sinónimos de esta ficha: decisión editorial (incluyen el tipo hemorrágico).",
+   "Síntomas, factores de riesgo, prevención y cuándo consultar descansan en fuentes divulgativas (MedlinePlus, CDC, OMS)."
   ],
   "referencias": [
    {
-    "titulo": "Accidente cerebrovascular",
-    "url": "https://medlineplus.gov/spanish/stroke.html",
-    "fuente": "MedlinePlus"
+    "titulo": "Sacco et al., 2013. An updated definition of stroke for the 21st century (AHA/ASA). PMID 23652265; DOI 10.1161/str.0b013e318296aeca",
+    "url": "https://europepmc.org/article/MED/23652265",
+    "fuente": "Stroke"
+   },
+   {
+    "titulo": "Prabhakaran et al., 2026. 2026 Guideline for the Early Management of Patients With Acute Ischemic Stroke (AHA/ASA). PMID 41582814; DOI 10.1161/str.0000000000000513",
+    "url": "https://europepmc.org/article/MED/41582814",
+    "fuente": "Stroke"
+   },
+   {
+    "titulo": "Goyal et al., 2016. Endovascular thrombectomy after large-vessel ischaemic stroke: meta-analysis of individual patient data from five randomised trials (HERMES). PMID 26898852; DOI 10.1016/s0140-6736(16)00163-x",
+    "url": "https://europepmc.org/article/MED/26898852",
+    "fuente": "The Lancet"
+   },
+   {
+    "titulo": "Thomalla et al., 2020. Intravenous alteplase for stroke with unknown time of onset guided by advanced imaging: systematic review and meta-analysis of individual patient data. PMID 33176180; DOI 10.1016/s0140-6736(20)32163-2",
+    "url": "https://europepmc.org/article/MED/33176180",
+    "fuente": "The Lancet"
+   },
+   {
+    "titulo": "Dawson et al., 2022. European Stroke Organisation (ESO) guideline on pharmacological interventions for long-term secondary prevention after ischaemic stroke or TIA. PMID 36082250; DOI 10.1177/23969873221100032",
+    "url": "https://europepmc.org/article/MED/36082250",
+    "fuente": "European Stroke Journal"
+   },
+   {
+    "titulo": "Langhorne y Ramachandra, 2020. Organised inpatient (stroke unit) care for stroke: network meta-analysis. PMID 32324916; DOI 10.1002/14651858.cd000197.pub4",
+    "url": "https://europepmc.org/article/MED/32324916",
+    "fuente": "Cochrane Database of Systematic Reviews"
+   },
+   {
+    "titulo": "GBD 2021 Stroke Risk Factor Collaborators, 2024. Global, regional, and national burden of stroke and its risk factors, 1990-2021. PMID 39304265; DOI 10.1016/s1474-4422(24)00369-7",
+    "url": "https://europepmc.org/article/MED/39304265",
+    "fuente": "The Lancet Neurology"
    },
    {
     "titulo": "Accidente cerebrovascular isquémico",
@@ -282,7 +481,65 @@
     "fuente": "OMS"
    }
   ],
-  "lote": "AE-01"
+  "lote": "AE-01",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Añadida la sección «Qué dice la evidencia» (2 párrafos) que faltaba.",
+    "Definición: se precisa que es muerte de tejido (infarto) y que el coágulo puede formarse en el vaso o venir del corazón u otra arteria (Sacco 2013; guía AHA/ASA 2026).",
+    "Introducción: se incorpora la definición de ictus basada en el tejido (ACV isquémico = infarto con síntomas; infarto silente aparte) según Sacco 2013.",
+    "Tratamiento: se retira que antiagregantes y anticoagulantes se usan solo cuando no caben otras opciones; se explica que forman parte de la prevención y que la anticoagulación cardioembólica va en guías específicas (Dawson 2022); se menciona la trombectomía y que la elección depende de hora, arteria e imagen (Goyal 2016; Thomalla 2020; AHA/ASA 2026).",
+    "Diagnóstico: la imagen también informa sobre tejido recuperable, útil cuando se desconoce la hora de inicio (Thomalla 2020).",
+    "Nueva sección de epidemiología con el análisis GBD 2021 (estancamiento de la reducción de incidencia desde 2015).",
+    "Mecanismos: se añade el ictus embólico de origen indeterminado (Dawson 2022). Complicaciones: se añaden los problemas de visión entre las secuelas.",
+    "Unidades de ictus: se mantiene lo de la OMS y se respalda con la revisión Cochrane 2020.",
+    "Referencias: 7 científicas nuevas con PMID/DOI más 3 divulgativas previas (se retira MedlinePlus general por redundancia)."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Sacco et al., 2013. An updated definition of stroke for the 21st century (AHA/ASA). PMID 23652265; DOI 10.1161/str.0b013e318296aeca",
+     "url": "https://europepmc.org/article/MED/23652265",
+     "fuente": "Stroke",
+     "verificada": "Crossref (DOI) y Europe PMC (PMID, título, autores, año, revista y resumen abiertos)"
+    },
+    {
+     "titulo": "Prabhakaran et al., 2026. 2026 Guideline for the Early Management of Patients With Acute Ischemic Stroke (AHA/ASA). PMID 41582814; DOI 10.1161/str.0000000000000513",
+     "url": "https://europepmc.org/article/MED/41582814",
+     "fuente": "Stroke",
+     "verificada": "Crossref y Europe PMC (resumen abierto); tiene erratum PMID 42507797 confirmado en Europe PMC"
+    },
+    {
+     "titulo": "Goyal et al., 2016. Endovascular thrombectomy after large-vessel ischaemic stroke: meta-analysis of individual patient data from five randomised trials (HERMES). PMID 26898852; DOI 10.1016/s0140-6736(16)00163-x",
+     "url": "https://europepmc.org/article/MED/26898852",
+     "fuente": "The Lancet",
+     "verificada": "Crossref (DOI) y Europe PMC (PMID, título, autores, año, revista y resumen abiertos)"
+    },
+    {
+     "titulo": "Thomalla et al., 2020. Intravenous alteplase for stroke with unknown time of onset guided by advanced imaging: systematic review and meta-analysis of individual patient data. PMID 33176180; DOI 10.1016/s0140-6736(20)32163-2",
+     "url": "https://europepmc.org/article/MED/33176180",
+     "fuente": "The Lancet",
+     "verificada": "Crossref (DOI) y Europe PMC (PMID, título, autores, año, revista y resumen abiertos)"
+    },
+    {
+     "titulo": "Dawson et al., 2022. European Stroke Organisation (ESO) guideline on pharmacological interventions for long-term secondary prevention after ischaemic stroke or TIA. PMID 36082250; DOI 10.1177/23969873221100032",
+     "url": "https://europepmc.org/article/MED/36082250",
+     "fuente": "European Stroke Journal",
+     "verificada": "Crossref (DOI) y Europe PMC (PMID, título, autores, año, revista y resumen abiertos)"
+    },
+    {
+     "titulo": "Langhorne y Ramachandra, 2020. Organised inpatient (stroke unit) care for stroke: network meta-analysis. PMID 32324916; DOI 10.1002/14651858.cd000197.pub4",
+     "url": "https://europepmc.org/article/MED/32324916",
+     "fuente": "Cochrane Database of Systematic Reviews",
+     "verificada": "Crossref (DOI) y Europe PMC (PMID, título, autores, año, revista y resumen abiertos)"
+    },
+    {
+     "titulo": "GBD 2021 Stroke Risk Factor Collaborators, 2024. Global, regional, and national burden of stroke and its risk factors, 1990-2021. PMID 39304265; DOI 10.1016/s1474-4422(24)00369-7",
+     "url": "https://europepmc.org/article/MED/39304265",
+     "fuente": "The Lancet Neurology",
+     "verificada": "Crossref (DOI) y Europe PMC (PMID, título, autores, año, revista y resumen abiertos)"
+    }
+   ]
+  }
  },
  {
   "slug": "accidente-isquemico-transitorio",
@@ -294,14 +551,13 @@
    "El resumen llano «pasa solo» puede transmitir falsa tranquilidad; la fuente insiste en que es una urgencia aunque los síntomas se resuelvan.",
    "El código G45.9 es AIT sin especificar; la definición no lo contradice."
   ],
-  "definition": "Episodio breve de déficit neurológico focal por una interrupción pasajera del riego sanguíneo del cerebro, que se resuelve por completo y no deja daño permanente. Es una señal de alarma de un accidente cerebrovascular posterior y requiere evaluación urgente aunque los síntomas hayan desaparecido.",
-  "plainSummaryEs": "Falta breve de riego en el cerebro con síntomas que desaparecen. Es un aviso de peligro: hay que acudir de urgencia aunque ya se sienta bien.",
+  "definition": "Episodio breve de disfunción neurológica focal, cerebral, medular o retiniana, causado por una isquemia pasajera, con resolución completa de los síntomas y sin infarto agudo. Es una señal de alarma de un accidente cerebrovascular posterior y requiere evaluación urgente aunque los síntomas hayan desaparecido.",
+  "plainSummaryEs": "Falta breve de riego en el cerebro (o el ojo) con síntomas que desaparecen. Es un aviso de peligro: hay que acudir de urgencia aunque ya no haya síntomas.",
   "esSynonyms": [
    "AIT",
    "ataque isquémico transitorio",
    "mini derrame",
-   "isquemia cerebral transitoria",
-   "amago de derrame"
+   "isquemia cerebral transitoria"
   ],
   "relationsAdd": [
    {
@@ -372,19 +628,16 @@
    }
   ],
   "incertidumbres": [
-   "Definición de AIT: la definición clásica por duración y la basada en ausencia de daño en el tejido conviven; no pude abrir la declaración de consenso de la AHA/ASA (acceso denegado) y las fuentes abiertas difieren en la duración máxima. Requiere revisión clínica.",
-   "Plazo de valoración especializada: el NHS fija uno en su guía; no se cita cifra por la regla del repositorio.",
-   "No pude abrir NINDS; contrasté con MedlinePlus, NHS, CDC y OMS."
+   "Definición por tiempo frente a por tejido: la declaración AHA/ASA 2009 propone la basada en tejido, pero las fuentes divulgativas usan el criterio temporal; el revisor debe confirmar cuál adopta el glosario.",
+   "La declaración AHA/ASA 2009 es anterior a evidencia posterior; no se pudo abrir su texto completo (403), solo su resumen vía Europe PMC/Crossref.",
+   "La guía AHA/ASA 2021 de prevención se verificó como registro, pero su contenido no se abrió (403) y no se usa para afirmaciones concretas.",
+   "Las estimaciones de riesgo de ACV tras un AIT varían mucho con el diseño del estudio y el entorno asistencial; no se citan cifras.",
+   "No se pudo abrir NINDS ni PubMed; contraste con MedlinePlus, NHS, CDC y OMS (abiertos en la fase previa)."
   ],
   "referencias": [
    {
     "titulo": "Ataque isquémico transitorio (AIT)",
     "url": "https://medlineplus.gov/spanish/transientischemicattack.html",
-    "fuente": "MedlinePlus"
-   },
-   {
-    "titulo": "Accidente cerebrovascular",
-    "url": "https://medlineplus.gov/spanish/stroke.html",
     "fuente": "MedlinePlus"
    },
    {
@@ -401,9 +654,91 @@
     "titulo": "Stroke (hoja informativa)",
     "url": "https://www.who.int/news-room/fact-sheets/detail/stroke",
     "fuente": "OMS"
+   },
+   {
+    "titulo": "Easton et al., 2009. Definition and evaluation of transient ischemic attack: a scientific statement from the AHA/ASA. PMID 19423857, DOI 10.1161/STROKEAHA.108.192218",
+    "url": "https://doi.org/10.1161/STROKEAHA.108.192218",
+    "fuente": "Stroke"
+   },
+   {
+    "titulo": "Kleindorfer et al., 2021. 2021 Guideline for the prevention of stroke in patients with stroke and transient ischemic attack. PMID 34024117, DOI 10.1161/STR.0000000000000375",
+    "url": "https://doi.org/10.1161/STR.0000000000000375",
+    "fuente": "Stroke"
+   },
+   {
+    "titulo": "Giles y Rothwell, 2007. Risk of stroke early after transient ischaemic attack: a systematic review and meta-analysis. PMID 17993293, DOI 10.1016/S1474-4422(07)70274-0",
+    "url": "https://doi.org/10.1016/S1474-4422(07)70274-0",
+    "fuente": "Lancet Neurology"
+   },
+   {
+    "titulo": "Wardlaw et al., 2015. ABCD2 score and secondary stroke prevention: meta-analysis and effect per 1,000 patients triaged. PMID 26136519, DOI 10.1212/WNL.0000000000001780",
+    "url": "https://doi.org/10.1212/WNL.0000000000001780",
+    "fuente": "Neurology"
+   },
+   {
+    "titulo": "Hao et al., 2018. Clopidogrel plus aspirin versus aspirin alone for acute minor ischaemic stroke or high risk transient ischaemic attack: systematic review and meta-analysis. PMID 30563866, DOI 10.1136/bmj.k5108",
+    "url": "https://doi.org/10.1136/bmj.k5108",
+    "fuente": "BMJ"
+   },
+   {
+    "titulo": "Khan et al., 2025. Long-term risk of stroke after transient ischemic attack or minor stroke: a systematic review and meta-analysis (PERSIST). PMID 40136306, DOI 10.1001/jama.2025.2033",
+    "url": "https://doi.org/10.1001/jama.2025.2033",
+    "fuente": "JAMA"
    }
   ],
-  "lote": "AE-01"
+  "lote": "AE-01",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Añadida la sección «Qué dice la evidencia» (2 párrafos) con tipos de estudio, consensos y puntos discutidos.",
+    "Definición: pasa a criterio basado en el tejido (sin infarto agudo) e incluye médula espinal y retina, según la declaración AHA/ASA 2009 (Easton et al.).",
+    "Nueva sección «Cómo se define»: contrasta el criterio temporal con el de tejido; sustituye el texto previo sobre fuentes divergentes.",
+    "Diagnóstico: se añaden la resonancia con difusión, el estudio vascular y cardíaco recomendados por la AHA/ASA y la limitación de la escala ABCD2 (Wardlaw 2015).",
+    "Tratamiento: se añade que la doble antiagregación se respalda solo en período corto en AIT de alto riesgo/ACV menor (Hao 2018), sin dosis ni plazos.",
+    "Pronóstico: se añade la variación del riesgo precoz según atención (Giles y Rothwell 2007) y el riesgo a largo plazo (PERSIST, JAMA 2025); se elimina la mención genérica a guías británicas.",
+    "Sinónimos: se elimina «amago de derrame» (no hallado en fuentes abiertas).",
+    "Resumen llano: se incluye el ojo y se mantiene el mensaje de urgencia.",
+    "Referencias: se retira MedlinePlus «Accidente cerebrovascular» para respetar el máximo de 10; se añaden 6 científicas."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Easton et al., 2009. Definition and evaluation of transient ischemic attack: a scientific statement from the AHA/ASA. PMID 19423857, DOI 10.1161/STROKEAHA.108.192218",
+     "url": "https://doi.org/10.1161/STROKEAHA.108.192218",
+     "fuente": "Stroke",
+     "verificada": "Europe PMC REST API (EXT_ID) y Crossref: PMID, DOI, título, autores y año coinciden; resumen abierto en Europe PMC/Crossref, texto completo bloqueado (403)"
+    },
+    {
+     "titulo": "Kleindorfer et al., 2021. 2021 Guideline for the prevention of stroke in patients with stroke and transient ischemic attack. PMID 34024117, DOI 10.1161/STR.0000000000000375",
+     "url": "https://doi.org/10.1161/STR.0000000000000375",
+     "fuente": "Stroke",
+     "verificada": "Europe PMC REST API (EXT_ID) y Crossref: PMID, DOI, título, autores y año coinciden ; texto completo no abierto (acceso 403), solo registro bibliográfico"
+    },
+    {
+     "titulo": "Giles y Rothwell, 2007. Risk of stroke early after transient ischaemic attack: a systematic review and meta-analysis. PMID 17993293, DOI 10.1016/S1474-4422(07)70274-0",
+     "url": "https://doi.org/10.1016/S1474-4422(07)70274-0",
+     "fuente": "Lancet Neurology",
+     "verificada": "Europe PMC REST API (EXT_ID) y Crossref: PMID, DOI, título, autores y año coinciden; resumen abierto en Europe PMC"
+    },
+    {
+     "titulo": "Wardlaw et al., 2015. ABCD2 score and secondary stroke prevention: meta-analysis and effect per 1,000 patients triaged. PMID 26136519, DOI 10.1212/WNL.0000000000001780",
+     "url": "https://doi.org/10.1212/WNL.0000000000001780",
+     "fuente": "Neurology",
+     "verificada": "Europe PMC REST API (EXT_ID) y Crossref: PMID, DOI, título, autores y año coinciden; resumen abierto en Europe PMC"
+    },
+    {
+     "titulo": "Hao et al., 2018. Clopidogrel plus aspirin versus aspirin alone for acute minor ischaemic stroke or high risk transient ischaemic attack: systematic review and meta-analysis. PMID 30563866, DOI 10.1136/bmj.k5108",
+     "url": "https://doi.org/10.1136/bmj.k5108",
+     "fuente": "BMJ",
+     "verificada": "Europe PMC REST API (EXT_ID) y Crossref: PMID, DOI, título, autores y año coinciden; resumen abierto en Europe PMC"
+    },
+    {
+     "titulo": "Khan et al., 2025. Long-term risk of stroke after transient ischemic attack or minor stroke: a systematic review and meta-analysis (PERSIST). PMID 40136306, DOI 10.1001/jama.2025.2033",
+     "url": "https://doi.org/10.1001/jama.2025.2033",
+     "fuente": "JAMA",
+     "verificada": "Europe PMC REST API (EXT_ID) y Crossref: PMID, DOI, título, autores y año coinciden; resumen abierto en Europe PMC"
+    }
+   ]
+  }
  },
  {
   "slug": "acido-folico",
@@ -416,7 +751,7 @@
    "Sinónimos: «fólico» es un fragmento, no un término; «folatos» es un plural poco usado. Se retiran y se añaden formas reales.",
    "Sin relaciones con vitamina B12 ni hemograma, que son las pruebas que se piden en conjunto."
   ],
-  "definition": "Medición del folato (vitamina B9) en suero o plasma, que refleja sobre todo la ingesta reciente. Se pide para estudiar anemias con glóbulos rojos grandes, problemas de nutrición o absorción y el aporte antes y durante el embarazo; suele interpretarse junto con la vitamina B12.",
+  "definition": "Medición del folato (vitamina B9) total en suero o plasma, que refleja sobre todo el estado reciente. Se pide para estudiar anemias con glóbulos rojos grandes, problemas de nutrición o absorción y el aporte antes y durante el embarazo; suele solicitarse junto con la vitamina B12 y se interpreta con ella.",
   "plainSummaryEs": "Mide una vitamina que el cuerpo necesita para formar glóbulos rojos y que es importante antes y durante el embarazo.",
   "esSynonyms": [
    "folato",
@@ -470,11 +805,43 @@
    }
   ],
   "incertidumbres": [
-   "MedlinePlus y Cigna difieren en las indicaciones de ayuno antes de la prueba; se redactó de forma general.",
-   "No pude abrir la hoja del NIH Office of Dietary Supplements (403) ni LOINC (403); el código se contrastó solo con el enDisplay de la fila.",
-   "La distinción entre folato (natural) y ácido fólico (forma sintética) no se pudo respaldar en una fuente abierta y no se incluye."
+   "Fuentes de laboratorio y divulgativas difieren en las indicaciones de ayuno; el texto se mantiene general.",
+   "La literatura revisada no establece un umbral único de folato sérico para prevenir defectos del tubo neural: el valor depende del método y del estado de B12 (Fothergill 2023; Rogers 2018).",
+   "El riesgo de enmascarar la deficiencia neurológica de B12 al dar folato es doctrina clásica, pero no se pudo respaldar con una fuente abierta en esta pasada y no se afirma con fuerza.",
+   "Las páginas de Europe PMC dieron 403 desde el sandbox; la verificación se hizo por API (resumen y metadatos), no leyendo los textos completos.",
+   "El código LOINC 2284-8 no se pudo contrastar en loinc.org (bloqueado); se contrastó solo con el enDisplay de la fila."
   ],
   "referencias": [
+   {
+    "titulo": "Sobczyńska-Malefora y Harrington, 2018. Laboratory assessment of folate (vitamin B9) status",
+    "url": "https://europepmc.org/article/MED/30228213",
+    "fuente": "J Clin Pathol"
+   },
+   {
+    "titulo": "Torrez et al., 2022. How I investigate acquired megaloblastic anemia",
+    "url": "https://europepmc.org/article/MED/34981651",
+    "fuente": "Int J Lab Hematol"
+   },
+   {
+    "titulo": "Socha et al., 2020. Severe megaloblastic anemia: vitamin deficiency and other causes",
+    "url": "https://europepmc.org/article/MED/32127439",
+    "fuente": "Cleve Clin J Med"
+   },
+   {
+    "titulo": "Rogers et al., 2018. Global folate status in women of reproductive age: a systematic review with emphasis on methodological issues",
+    "url": "https://europepmc.org/article/MED/30239016",
+    "fuente": "Ann N Y Acad Sci"
+   },
+   {
+    "titulo": "Fothergill et al., 2023. Estimating the serum folate concentration that corresponds to the RBC folate threshold for optimal NTD prevention: a biomarker survey in Southern India",
+    "url": "https://europepmc.org/article/MED/37137617",
+    "fuente": "Am J Clin Nutr"
+   },
+   {
+    "titulo": "USPSTF, 2023. Folic acid supplementation to prevent neural tube defects: reaffirmation recommendation statement",
+    "url": "https://europepmc.org/article/MED/37526713",
+    "fuente": "JAMA"
+   },
    {
     "titulo": "Prueba de folato (Folic acid test)",
     "url": "https://medlineplus.gov/ency/article/003686.htm",
@@ -484,11 +851,6 @@
     "titulo": "Anemia por deficiencia de folato (Folate-deficiency anemia)",
     "url": "https://medlineplus.gov/ency/article/000551.htm",
     "fuente": "MedlinePlus"
-   },
-   {
-    "titulo": "Prueba de folato",
-    "url": "https://www.cigna.com/es-us/knowledge-center/hw/pruebas-mdicas/prueba-de-folato-hw6522",
-    "fuente": "Cigna"
    },
    {
     "titulo": "Deficiência de folato",
@@ -501,7 +863,59 @@
     "fuente": "Clínica Universidad de Navarra"
    }
   ],
-  "lote": "AE-01"
+  "lote": "AE-01",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Definición y resumen reescritos: se aclara que la prueba mide folato total en suero/plasma y que «ácido fólico» en sentido estricto es la forma sintética (Sobczyńska-Malefora 2018); esto resuelve la incertidumbre previa sobre folato vs ácido fólico.",
+    "Se respalda con revisión (Sobczyńska-Malefora 2018) que el folato eritrocitario integra ~4 meses y el sérico el estado reciente; se mantiene la distinción.",
+    "Se añade que los métodos de laboratorio no son intercambiables y que los umbrales deben corresponder al método (Rogers 2018).",
+    "Se añade que un folato alto obliga a valorar la B12 y revisar suplementos (Sobczyńska-Malefora 2018).",
+    "Se añade que la anemia megaloblástica puede cursar con VCM normal o pancitopenia y que el tratamiento parcial dificulta el diagnóstico (Torrez 2022; Socha 2020).",
+    "Se añade que el folato sérico asociado al nivel eritrocitario óptimo para prevenir DTN depende de la B12 (Fothergill 2023), sin citar cifras.",
+    "Sección «Limitaciones y precauciones» sustituida por «## [considerations] Qué dice la evidencia» (2 párrafos). Se retira la afirmación de enmascaramiento neurológico por folato con B12 baja como texto propio (no respaldada por las revisiones abiertas; ver incertidumbres) y se sustituye por la mención de que la B12 debe estudiarse siempre en paralelo y que su falta puede dañar el sistema nervioso (Torrez 2022).",
+    "Se retiran afirmaciones sobre ayuno específico y la referencia de Cigna (no respaldaban un dato concreto); se dejan indicaciones generales.",
+    "Se añaden 6 referencias científicas con PMID/DOI y se conservan 4 divulgativas (MedlinePlus x2, Manual MSD, CUN)."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Sobczyńska-Malefora y Harrington, 2018. Laboratory assessment of folate (vitamin B9) status. PMID 30228213, DOI 10.1136/jclinpath-2018-205048",
+     "url": "https://europepmc.org/article/MED/30228213",
+     "fuente": "J Clin Pathol",
+     "verificada": "API de Europe PMC (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores y año coinciden; DOI contrastado con la API de Crossref. La página europepmc.org devolvió 403 desde el sandbox, por lo que solo se leyó el resumen vía API."
+    },
+    {
+     "titulo": "Torrez et al., 2022. How I investigate acquired megaloblastic anemia. PMID 34981651, DOI 10.1111/ijlh.13789",
+     "url": "https://europepmc.org/article/MED/34981651",
+     "fuente": "Int J Lab Hematol",
+     "verificada": "API de Europe PMC (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores y año coinciden; DOI contrastado con la API de Crossref. La página europepmc.org devolvió 403 desde el sandbox, por lo que solo se leyó el resumen vía API."
+    },
+    {
+     "titulo": "Socha et al., 2020. Severe megaloblastic anemia: vitamin deficiency and other causes. PMID 32127439, DOI 10.3949/ccjm.87a.19072",
+     "url": "https://europepmc.org/article/MED/32127439",
+     "fuente": "Cleve Clin J Med",
+     "verificada": "API de Europe PMC (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores y año coinciden; DOI contrastado con la API de Crossref. La página europepmc.org devolvió 403 desde el sandbox, por lo que solo se leyó el resumen vía API."
+    },
+    {
+     "titulo": "Rogers et al., 2018. Global folate status in women of reproductive age: a systematic review with emphasis on methodological issues. PMID 30239016, DOI 10.1111/nyas.13963",
+     "url": "https://europepmc.org/article/MED/30239016",
+     "fuente": "Ann N Y Acad Sci",
+     "verificada": "API de Europe PMC (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores y año coinciden; DOI contrastado con la API de Crossref. La página europepmc.org devolvió 403 desde el sandbox, por lo que solo se leyó el resumen vía API."
+    },
+    {
+     "titulo": "Fothergill et al., 2023. Estimating the serum folate concentration that corresponds to the RBC folate threshold for optimal NTD prevention: a biomarker survey in Southern India. PMID 37137617, DOI 10.1016/j.ajcnut.2023.01.016",
+     "url": "https://europepmc.org/article/MED/37137617",
+     "fuente": "Am J Clin Nutr",
+     "verificada": "API de Europe PMC (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores y año coinciden; DOI contrastado con la API de Crossref. La página europepmc.org devolvió 403 desde el sandbox, por lo que solo se leyó el resumen vía API."
+    },
+    {
+     "titulo": "USPSTF, 2023. Folic acid supplementation to prevent neural tube defects: reaffirmation recommendation statement. PMID 37526713, DOI 10.1001/jama.2023.12876",
+     "url": "https://europepmc.org/article/MED/37526713",
+     "fuente": "JAMA",
+     "verificada": "API de Europe PMC (EXT_ID, SRC:MED, resultType=core): PMID, DOI, título, autores y año coinciden; DOI contrastado con Crossref (grupo como autor, sin apellido). La página europepmc.org devolvió 403 desde el sandbox, por lo que solo se leyó el resumen vía API."
+    }
+   ]
+  }
  },
  {
   "slug": "acido-urico",
@@ -514,7 +928,7 @@
    "No menciona que un nivel bajo también puede tener significado.",
    "Sinónimos correctos pero escasos: faltan «urato sérico», «ácido úrico en sangre» y «ácido úrico sérico»."
   ],
-  "definition": "Medición del urato en suero o plasma, producto final del metabolismo de las purinas. Ayuda a estudiar la gota y los cálculos renales, a vigilar el tratamiento que reduce el ácido úrico y el riesgo durante la quimioterapia. Por sí sola no confirma la gota: se interpreta con la clínica y otras pruebas.",
+  "definition": "Medición del urato en suero o plasma, producto final del metabolismo de las purinas. Ayuda a estudiar la gota y los cálculos renales, a vigilar el tratamiento que reduce el ácido úrico y el riesgo durante la quimioterapia. Por sí sola no confirma ni descarta la gota: se interpreta con la clínica y otras pruebas.",
   "plainSummaryEs": "Mide en la sangre una sustancia de desecho que, cuando sobra, puede formar cristales y causar gota o cálculos en el riñón.",
   "esSynonyms": [
    "uricemia",
@@ -580,9 +994,10 @@
    }
   ],
   "incertidumbres": [
-   "Preparación: MedlinePlus pide ayuno de algunas horas y Cigna indica que normalmente no hace falta; se redactó de forma general.",
-   "No pude abrir la guía ACR de gota ni LOINC (acceso denegado); el papel del urato en el diagnóstico se apoya en MedlinePlus, NHS y un editorial de PubMed Central que no trata el diagnóstico en detalle.",
-   "No pude confirmar en una fuente abierta que el urato puede ser normal durante una crisis; no se afirma."
+   "Preparación: MedlinePlus pide ayuno de algunas horas y Cigna indica que normalmente no hace falta; se redactó de forma general y solo con fuentes divulgativas.",
+   "Papel causal de la hiperuricemia asintomática en enfermedad renal, hipertensión y cardiovascular: discutido (la aleatorización mendeliana no lo respalda en general; ensayos pequeños y dispares).",
+   "Mecanismo del urato normal en la crisis aguda: hay datos de mayor excreción urinaria e intestinal, pero no es concluyente.",
+   "Vigilancia durante quimioterapia: se apoya en un consenso de nueve expertos (Delphi), no en ensayos."
   ],
   "referencias": [
    {
@@ -596,22 +1011,116 @@
     "fuente": "MedlinePlus"
    },
    {
-    "titulo": "Gout",
-    "url": "https://www.nhs.uk/conditions/gout/",
-    "fuente": "NHS"
+    "titulo": "FitzGerald et al., 2020. 2020 American College of Rheumatology Guideline for the Management of Gout. PMID 32391934",
+    "url": "https://europepmc.org/article/MED/32391934",
+    "fuente": "Arthritis Care & Research",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
    },
    {
-    "titulo": "Análisis de ácido úrico en la sangre",
-    "url": "https://www.cigna.com/es-us/knowledge-center/hw/pruebas-mdicas/anlisis-de-cido-rico-en-la-sangre-aa12023",
-    "fuente": "Cigna"
+    "titulo": "Richette et al., 2017. 2016 updated EULAR evidence-based recommendations for the management of gout. PMID 27457514",
+    "url": "https://europepmc.org/article/MED/27457514",
+    "fuente": "Annals of the Rheumatic Diseases",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
    },
    {
-    "titulo": "Diagnosis and management of gout (editorial)",
-    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10809909/",
-    "fuente": "PubMed Central"
+    "titulo": "Schlesinger et al., 2009. Serum urate during acute gout. PMID 19369457",
+    "url": "https://europepmc.org/article/MED/19369457",
+    "fuente": "The Journal of Rheumatology",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+   },
+   {
+    "titulo": "Zhang et al., 2023. Changes of serum uric acid level during acute gout flare and related factors. PMID 36896178",
+    "url": "https://europepmc.org/article/MED/36896178",
+    "fuente": "Frontiers in Endocrinology",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+   },
+   {
+    "titulo": "Johnson et al., 2018. Hyperuricemia, acute and chronic kidney disease, hypertension, and cardiovascular disease: report of a scientific workshop organized by the National Kidney Foundation. PMID 29496260",
+    "url": "https://europepmc.org/article/MED/29496260",
+    "fuente": "American Journal of Kidney Diseases",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+   },
+   {
+    "titulo": "Joosten et al., 2020. Asymptomatic hyperuricaemia: a silent activator of the innate immune system. PMID 31822862",
+    "url": "https://europepmc.org/article/MED/31822862",
+    "fuente": "Nature Reviews Rheumatology",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+   },
+   {
+    "titulo": "Adomako y Moe, 2020. Uric acid and urate in urolithiasis: the innocent bystander, instigator, and perpetrator. PMID 33678311",
+    "url": "https://europepmc.org/article/MED/33678311",
+    "fuente": "Seminars in Nephrology",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+   },
+   {
+    "titulo": "Perissinotti et al., 2023. Expert consensus guidelines for the prophylaxis and management of tumor lysis syndrome in the United States: results of a modified Delphi panel. PMID 37579533",
+    "url": "https://europepmc.org/article/MED/37579533",
+    "fuente": "Cancer Treatment Reviews",
+    "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
    }
   ],
-  "lote": "AE-01"
+  "lote": "AE-01",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Añadida sección «Qué dice la evidencia» (guías ACR 2020 y EULAR 2016, ensayos, revisiones, consenso de expertos) y dicho qué es consenso y qué se discute.",
+    "Añadido que el urato puede ser normal o bajo durante una crisis aguda de gota (Schlesinger 2009; Zhang 2023); antes constaba como no confirmado.",
+    "Uso en gota reformulado: seguimiento del tratamiento reductor según guías ACR y EULAR, en lugar de «guías británicas» (NHS).",
+    "Matizado que la causalidad entre hiperuricemia y enfermedad renal/cardiovascular no está demostrada (taller NKF 2018, aleatorización mendeliana); añadida hiperuricemia asintomática.",
+    "Cálculos renales precisados (ácido úrico, cálculos de calcio e hiperuricosuria) y síndrome de lisis tumoral con respaldo de consenso 2023.",
+    "Retiradas Cigna y el editorial de PMC10809909 (poco informativos o divulgativos); se mantienen MedlinePlus x2."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "FitzGerald et al., 2020. 2020 American College of Rheumatology Guideline for the Management of Gout. PMID 32391934",
+     "url": "https://europepmc.org/article/MED/32391934",
+     "fuente": "Arthritis Care & Research",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    },
+    {
+     "titulo": "Richette et al., 2017. 2016 updated EULAR evidence-based recommendations for the management of gout. PMID 27457514",
+     "url": "https://europepmc.org/article/MED/27457514",
+     "fuente": "Annals of the Rheumatic Diseases",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    },
+    {
+     "titulo": "Schlesinger et al., 2009. Serum urate during acute gout. PMID 19369457",
+     "url": "https://europepmc.org/article/MED/19369457",
+     "fuente": "The Journal of Rheumatology",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    },
+    {
+     "titulo": "Zhang et al., 2023. Changes of serum uric acid level during acute gout flare and related factors. PMID 36896178",
+     "url": "https://europepmc.org/article/MED/36896178",
+     "fuente": "Frontiers in Endocrinology",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    },
+    {
+     "titulo": "Johnson et al., 2018. Hyperuricemia, acute and chronic kidney disease, hypertension, and cardiovascular disease: report of a scientific workshop organized by the National Kidney Foundation. PMID 29496260",
+     "url": "https://europepmc.org/article/MED/29496260",
+     "fuente": "American Journal of Kidney Diseases",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    },
+    {
+     "titulo": "Joosten et al., 2020. Asymptomatic hyperuricaemia: a silent activator of the innate immune system. PMID 31822862",
+     "url": "https://europepmc.org/article/MED/31822862",
+     "fuente": "Nature Reviews Rheumatology",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    },
+    {
+     "titulo": "Adomako y Moe, 2020. Uric acid and urate in urolithiasis: the innocent bystander, instigator, and perpetrator. PMID 33678311",
+     "url": "https://europepmc.org/article/MED/33678311",
+     "fuente": "Seminars in Nephrology",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    },
+    {
+     "titulo": "Perissinotti et al., 2023. Expert consensus guidelines for the prophylaxis and management of tumor lysis syndrome in the United States: results of a modified Delphi panel. PMID 37579533",
+     "url": "https://europepmc.org/article/MED/37579533",
+     "fuente": "Cancer Treatment Reviews",
+     "verificada": "Europe PMC REST (resultType=core, EXT_ID del PMID): título, autores, revista, año y DOI coinciden"
+    }
+   ]
+  }
  },
  {
   "slug": "acne",
@@ -7305,8 +7814,8 @@
    "Resumen llano: 'tos de perro' y 'ruido al inspirar' son comprensibles, pero no aclara que es una infección ni que hay señales de urgencia.",
    "Solo tiene una relación (pediatría); faltan laringitis aguda y bronquiolitis, que comparten agentes virales."
   ],
-  "definition": "Infección respiratoria aguda, casi siempre viral, que inflama la laringe y la tráquea en lactantes y niños pequeños y causa tos perruna, ronquera y, a veces, estridor al inspirar, con predominio nocturno. Suele ser leve; el estridor en reposo o la dificultad para respirar exigen atención urgente.",
-  "plainSummaryEs": "Infección de la garganta en niños pequeños que da una tos parecida a un ladrido y ruido al respirar, sobre todo de noche.",
+  "definition": "Infección respiratoria aguda, casi siempre viral, que inflama la laringe, la tráquea y la zona situada bajo las cuerdas vocales en lactantes y niños pequeños. Causa tos perruna, ronquera y, a veces, estridor (ruido agudo al inspirar). Suele ser leve y autolimitada; el estridor en reposo o la dificultad respiratoria exigen atención urgente.",
+  "plainSummaryEs": "Infección de la garganta en niños pequeños que causa tos parecida a un ladrido, voz ronca y ruido al respirar, sobre todo de noche. Casi siempre es leve, pero tiene señales de alarma.",
   "esSynonyms": [
    "crup",
    "laringotraqueítis aguda"
@@ -7344,17 +7853,48 @@
    }
   ],
   "incertidumbres": [
-   "No pude abrir el listado oficial ICD-10-CM (icd10data devolvió 403); no verifiqué las notas Excludes de J05.0 ni si el código abarca el crup espasmódico. Me baso en el enDisplay de la entrada.",
-   "El artículo de StatPearls sobre crup no se abrió (bloqueo anti-bot), por lo que no se incluyen detalles de fisiopatología ni signos radiológicos.",
-   "Las fuentes abiertas (MedlinePlus, NHS) no coinciden del todo en la causa bacteriana ni en el papel del vapor; el artículo lo recoge de forma general, sin zanjarlo.",
-   "Una revisión Cochrane advierte de certeza limitada en parte de los ensayos sobre corticoides.",
-   "Solo una fuente revisada por pares con DOI (Cochrane 2023); no pude abrir una segunda (CMAJ/StatPearls/PubMed bloqueados o sin búsqueda disponible). Incumple el mínimo de 2 de la Adenda v2."
+   "Certeza baja en varios desenlaces de los corticosteroides (Cochrane 2023): casi todos los ensayos con riesgo de sesgo alto o poco claro.",
+   "Uso de epinefrina, número de dosis antes del ingreso y tiempo de observación varían entre guías hospitalarias (Bergmann 2023); la revisión de epinefrina 2026 no demostró reducción significativa de la hospitalización.",
+   "Papel del vapor y peso de las causas bacterianas siguen discutidos entre fuentes divulgativas.",
+   "No se verificó el alcance exacto del código ICD-10-CM frente al crup espasmódico.",
+   "No se abrió una guía de práctica clínica formal; la mejor síntesis reciente es una revisión rápida (Cooke 2026) cuyo texto completo no se leyó, solo el resumen.",
+   "Crup recurrente: respaldo limitado a una serie de un solo centro (n=25)."
   ],
   "referencias": [
    {
     "titulo": "Aregbesola et al., 2023. Glucocorticoids for croup in children. Cochrane Database Syst Rev, CD001955.pub5. DOI 10.1002/14651858.CD001955.pub5",
-    "url": "https://www.cochrane.org/evidence/CD001955_glucocorticoids-treatment-croup-children",
+    "url": "https://doi.org/10.1002/14651858.CD001955.pub5",
     "fuente": "Cochrane Database of Systematic Reviews"
+   },
+   {
+    "titulo": "Cooke et al., 2026. Croup: Rapid Evidence Review. PMID 41839076",
+    "url": "https://europepmc.org/article/MED/41839076",
+    "fuente": "American Family Physician"
+   },
+   {
+    "titulo": "Wei et al., 2026. Nebulized epinephrine for croup in children: an updated systematic review. DOI 10.3389/fped.2026.1886410",
+    "url": "https://doi.org/10.3389/fped.2026.1886410",
+    "fuente": "Frontiers in Pediatrics"
+   },
+   {
+    "titulo": "Moraa et al., 2021. Heliox for croup in children. Cochrane Database Syst Rev, CD006822.pub6. DOI 10.1002/14651858.CD006822.pub6",
+    "url": "https://doi.org/10.1002/14651858.CD006822.pub6",
+    "fuente": "Cochrane Database of Systematic Reviews"
+   },
+   {
+    "titulo": "Bjornson et al., 2024. Duration, course and caregiver burden of croup in children: two observational cohorts. DOI 10.1136/bmjopen-2023-080102",
+    "url": "https://doi.org/10.1136/bmjopen-2023-080102",
+    "fuente": "BMJ Open"
+   },
+   {
+    "titulo": "Chen et al., 2025. Aerodigestive Approach in Evaluating Pediatric Patients With Recurrent Croup. PMID 39760135",
+    "url": "https://europepmc.org/article/MED/39760135",
+    "fuente": "Annals of Otology, Rhinology and Laryngology"
+   },
+   {
+    "titulo": "Bergmann et al., 2023. Variation in Organizational Clinical Practice Guidelines for Croup. DOI 10.1542/hpeds.2023-007221",
+    "url": "https://doi.org/10.1542/hpeds.2023-007221",
+    "fuente": "Hospital Pediatrics"
    },
    {
     "titulo": "Crup (enciclopedia médica)",
@@ -7372,7 +7912,63 @@
     "fuente": "NHS"
    }
   ],
-  "lote": "AE-12"
+  "lote": "AE-12",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Definición y texto: se precisa la región subglótica y que casi siempre es leve y autolimitado.",
+    "Diagnóstico: se añade el descarte de traqueítis bacteriana, abscesos, cuerpo extraño y epiglotitis (Cooke 2026).",
+    "Síntomas: se añade el curso natural y la carga para los cuidadores (Bjornson 2024) sin cifras diagnósticas.",
+    "Tratamiento: corticosteroides como primera línea; epinefrina nebulizada de efecto breve (Wei 2026, Cooke 2026); heliox con evidencia de baja certeza (Moraa 2021).",
+    "Cuándo consultar y relacionados: se añade el crup recurrente y su evaluación de causas anatómicas o digestivas (Chen 2025).",
+    "Qué dice la evidencia: reescrita con certeza baja de Cochrane 2023 y variación entre guías hospitalarias (Bergmann 2023).",
+    "Referencias: de 1 a 6 científicas con DOI/PMID; el enlace Cochrane pasa a doi.org; se mantienen MedlinePlus, CDC y NHS."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Aregbesola et al., 2023. Glucocorticoids for croup in children. Cochrane Database Syst Rev, CD001955.pub5. DOI 10.1002/14651858.CD001955.pub5",
+     "url": "https://doi.org/10.1002/14651858.CD001955.pub5",
+     "fuente": "Cochrane Database of Systematic Reviews",
+     "verificada": "Europe PMC (EXT_ID 36626194) y Crossref (DOI)"
+    },
+    {
+     "titulo": "Cooke et al., 2026. Croup: Rapid Evidence Review. PMID 41839076",
+     "url": "https://europepmc.org/article/MED/41839076",
+     "fuente": "American Family Physician",
+     "verificada": "Europe PMC (PMID 41839076; título, autores, año y resumen leídos; sin DOI)"
+    },
+    {
+     "titulo": "Wei et al., 2026. Nebulized epinephrine for croup in children: an updated systematic review. DOI 10.3389/fped.2026.1886410",
+     "url": "https://doi.org/10.3389/fped.2026.1886410",
+     "fuente": "Frontiers in Pediatrics",
+     "verificada": "Europe PMC (PMID 42719212) y Crossref (DOI)"
+    },
+    {
+     "titulo": "Moraa et al., 2021. Heliox for croup in children. Cochrane Database Syst Rev, CD006822.pub6. DOI 10.1002/14651858.CD006822.pub6",
+     "url": "https://doi.org/10.1002/14651858.CD006822.pub6",
+     "fuente": "Cochrane Database of Systematic Reviews",
+     "verificada": "Europe PMC (PMID 34397099) y Crossref (DOI)"
+    },
+    {
+     "titulo": "Bjornson et al., 2024. Duration, course and caregiver burden of croup in children: two observational cohorts. DOI 10.1136/bmjopen-2023-080102",
+     "url": "https://doi.org/10.1136/bmjopen-2023-080102",
+     "fuente": "BMJ Open",
+     "verificada": "Europe PMC (PMID 39719296) y Crossref (DOI)"
+    },
+    {
+     "titulo": "Chen et al., 2025. Aerodigestive Approach in Evaluating Pediatric Patients With Recurrent Croup. PMID 39760135",
+     "url": "https://europepmc.org/article/MED/39760135",
+     "fuente": "Annals of Otology, Rhinology and Laryngology",
+     "verificada": "Europe PMC (PMID 39760135; título, autores y resumen leídos)"
+    },
+    {
+     "titulo": "Bergmann et al., 2023. Variation in Organizational Clinical Practice Guidelines for Croup. DOI 10.1542/hpeds.2023-007221",
+     "url": "https://doi.org/10.1542/hpeds.2023-007221",
+     "fuente": "Hospital Pediatrics",
+     "verificada": "Europe PMC (PMID 37545472) y Crossref (DOI)"
+    }
+   ]
+  }
  },
  {
   "slug": "cultivo-de-garganta",
@@ -7385,11 +7981,12 @@
    "Sinónimo 'hisopado de garganta' es un regionalismo y nombra la toma de muestra, no la prueba; se retira.",
    "Resumen llano: 'hisopado' es regionalismo y no explica por qué se pide."
   ],
-  "definition": "Prueba de laboratorio en la que se hace crecer una muestra tomada de la garganta (faringe y amígdalas) para identificar las bacterias presentes, sobre todo el estreptococo del grupo A. Es la referencia para confirmar la faringitis estreptocócica y respalda a la prueba rápida cuando es negativa y la sospecha persiste, en especial en niños y adolescentes.",
+  "definition": "Prueba de laboratorio en la que se hace crecer una muestra tomada de la faringe y las amígdalas para identificar las bacterias presentes, sobre todo el estreptococo del grupo A. Confirma la faringitis estreptocócica, es el patrón con que se comparan otras pruebas y respalda a la prueba rápida cuando es negativa y la sospecha persiste.",
   "plainSummaryEs": "Una muestra de la garganta que se analiza en el laboratorio para saber si una bacteria, como el estreptococo, causa la infección.",
   "esSynonyms": [
    "exudado faríngeo",
    "cultivo faríngeo",
+   "cultivo de exudado faríngeo",
    "cultivo de garganta para estreptococo del grupo A"
   ],
   "relationsAdd": [
@@ -7429,16 +8026,42 @@
    }
   ],
   "incertidumbres": [
-   "No abrí la ficha oficial de LOINC 626-2 (loinc.org devolvió 403); la descripción del código se toma del enDisplay de la entrada.",
-   "Las guías difieren en si el cultivo de respaldo es necesario en adultos con prueba rápida negativa: la IDSA lo considera no rutinario y la CDC lo limita a niños; el artículo no fija edades.",
-   "No hay una página MedlinePlus en español abierta para esta prueba; se usó la versión en inglés.",
-   "Solo una guía con PMID (IDSA 2012); la Cochrane de pruebas rápidas y otras fuentes (Wiley) devolvieron 403 y se agotó el presupuesto de WebSearch. Incumple el mínimo de 2 de la Adenda v2."
+   "Las guías difieren en si el cultivo de respaldo tras una prueba rápida negativa es necesario en adultos y en entornos con baja incidencia de fiebre reumática (IDSA 2012, CDC, Lean 2014); el artículo no fija edades.",
+   "La guía IDSA 2025 sobre sistemas de puntuación tiene certeza muy baja y es solo la primera parte de la actualización; las recomendaciones sobre pruebas y tratamiento de la actualización pueden cambiar el papel del cultivo.",
+   "El cultivo es el patrón de referencia en los metaanálisis de pruebas rápidas, pero las pruebas moleculares mostraron exactitud alta frente a él y pueden desplazarlo donde existen; su papel futuro es incierto.",
+   "No se abrió la ficha oficial de LOINC 626-2 (loinc.org bloqueado); su alcance se toma del enDisplay.",
+   "Síntomas, complicaciones y contagio descansan en fuentes divulgativas (MedlinePlus en inglés, CDC)."
   ],
   "referencias": [
+   {
+    "titulo": "Linder et al., 2025. 2025 Clinical Practice Guideline Update by the IDSA on Group A Streptococcal Pharyngitis: Risk Assessment Using Clinical Scoring Systems in Children and Adults. PMID 41343363. DOI 10.1093/cid/ciaf668",
+    "url": "https://doi.org/10.1093/cid/ciaf668",
+    "fuente": "Clinical Infectious Diseases"
+   },
    {
     "titulo": "Shulman et al., 2012. Clinical Practice Guideline for the Diagnosis and Management of Group A Streptococcal Pharyngitis: 2012 Update by the IDSA. PMID 22965026",
     "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7108032",
     "fuente": "Clinical Infectious Diseases"
+   },
+   {
+    "titulo": "Lean et al., 2014. Rapid Diagnostic Tests for Group A Streptococcal Pharyngitis: A Meta-analysis. PMID 25201792. DOI 10.1542/peds.2014-1094",
+    "url": "https://doi.org/10.1542/peds.2014-1094",
+    "fuente": "Pediatrics"
+   },
+   {
+    "titulo": "Oliver et al., 2018. Group A Streptococcus pharyngitis and pharyngeal carriage: A meta-analysis. PMID 29554121. DOI 10.1371/journal.pntd.0006335",
+    "url": "https://doi.org/10.1371/journal.pntd.0006335",
+    "fuente": "PLOS Neglected Tropical Diseases"
+   },
+   {
+    "titulo": "Dubois et al., 2021. Diagnostic accuracy of rapid nucleic acid tests for group A streptococcal pharyngitis: systematic review and meta-analysis. PMID 33964409. DOI 10.1016/j.cmi.2021.04.021",
+    "url": "https://doi.org/10.1016/j.cmi.2021.04.021",
+    "fuente": "Clinical Microbiology and Infection"
+   },
+   {
+    "titulo": "Cohen et al., 2024. Group A Streptococcus pharyngitis in Children: New Perspectives on Rapid Diagnostic Testing and Antimicrobial Stewardship. PMID 38456797. DOI 10.1093/jpids/piae022",
+    "url": "https://doi.org/10.1093/jpids/piae022",
+    "fuente": "Journal of the Pediatric Infectious Diseases Society"
    },
    {
     "titulo": "Strep A Test",
@@ -7454,14 +8077,58 @@
     "titulo": "About Strep Throat",
     "url": "https://www.cdc.gov/group-a-strep/about/strep-throat.html",
     "fuente": "CDC"
-   },
-   {
-    "titulo": "IDSA Updates Guideline for Managing Group A Streptococcal Pharyngitis",
-    "url": "https://www.aafp.org/pubs/afp/issues/2013/0901/p338.html",
-    "fuente": "American Family Physician (AAFP)"
    }
   ],
-  "lote": "AE-12"
+  "lote": "AE-12",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Añadida la guía IDSA 2025 (Linder et al., PMID 41343363): sistemas de puntuación clínica para decidir a quién estudiar, excepciones de riesgo alto y exclusión de menores de 3 años.",
+    "Añadido el metaanálisis de Oliver 2018 (PMID 29554121) para matizar la lectura de un cultivo positivo según portación y contexto.",
+    "Añadidos Lean 2014 (PMID 25201792) y Dubois 2021 (PMID 33964409) y Cohen 2024 (PMID 38456797): el cultivo como patrón de referencia, el cultivo de respaldo discutido y las pruebas moleculares como alternativa.",
+    "Reescrita la sección de evidencia con las seis fuentes; retirada la frase de que no había revisión sistemática con PMID.",
+    "Definición: se precisa que el cultivo es el patrón con que se comparan otras pruebas; resumen llano y sinónimos sin cambios de fondo (se añade 'cultivo de exudado faríngeo').",
+    "Reubicado el cultivo de respaldo en adultos y entornos de baja incidencia como punto discutido (sección de evidencia e incertidumbres) en lugar de afirmarlo como regla."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Linder et al., 2025. 2025 Clinical Practice Guideline Update by the IDSA on Group A Streptococcal Pharyngitis: Risk Assessment Using Clinical Scoring Systems in Children and Adults. PMID 41343363",
+     "url": "https://doi.org/10.1093/cid/ciaf668",
+     "fuente": "Clinical Infectious Diseases",
+     "verificada": "Europe PMC REST (PMID 41343363) y página de la revista (academic.oup.com) abierta con WebFetch: título, autores y recomendaciones coinciden"
+    },
+    {
+     "titulo": "Shulman et al., 2012. Clinical Practice Guideline for the Diagnosis and Management of Group A Streptococcal Pharyngitis: 2012 Update by the IDSA. PMID 22965026",
+     "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7108032",
+     "fuente": "Clinical Infectious Diseases",
+     "verificada": "Europe PMC REST (PMID 22965026) y Crossref (DOI 10.1093/cid/cis629); página PMC abierta en la investigación previa"
+    },
+    {
+     "titulo": "Lean et al., 2014. Rapid Diagnostic Tests for Group A Streptococcal Pharyngitis: A Meta-analysis. PMID 25201792",
+     "url": "https://doi.org/10.1542/peds.2014-1094",
+     "fuente": "Pediatrics",
+     "verificada": "Europe PMC REST (core, por PMID) y Crossref (por DOI): título, autores, revista y año coinciden; resumen leído en Europe PMC"
+    },
+    {
+     "titulo": "Oliver et al., 2018. Group A Streptococcus pharyngitis and pharyngeal carriage: A meta-analysis. PMID 29554121",
+     "url": "https://doi.org/10.1371/journal.pntd.0006335",
+     "fuente": "PLOS Neglected Tropical Diseases",
+     "verificada": "Europe PMC REST y Crossref; resumen leído en journals.plos.org"
+    },
+    {
+     "titulo": "Dubois et al., 2021. Diagnostic accuracy of rapid nucleic acid tests for group A streptococcal pharyngitis: systematic review and meta-analysis. PMID 33964409",
+     "url": "https://doi.org/10.1016/j.cmi.2021.04.021",
+     "fuente": "Clinical Microbiology and Infection",
+     "verificada": "Europe PMC REST (core, por PMID) y Crossref (por DOI): título, autores, revista y año coinciden; resumen leído en Europe PMC"
+    },
+    {
+     "titulo": "Cohen et al., 2024. Group A Streptococcus pharyngitis in Children: New Perspectives on Rapid Diagnostic Testing and Antimicrobial Stewardship. PMID 38456797",
+     "url": "https://doi.org/10.1093/jpids/piae022",
+     "fuente": "Journal of the Pediatric Infectious Diseases Society",
+     "verificada": "Europe PMC REST (core, por PMID) y Crossref (por DOI): título, autores, revista y año coinciden; resumen leído en Europe PMC"
+    }
+   ]
+  }
  },
  {
   "slug": "deficit-de-vitamina-d",
@@ -7637,31 +8304,57 @@
    }
   ],
   "incertidumbres": [
-   "La OMS publicó en julio de 2025 una nueva guía de manejo clínico de arbovirosis; no pude abrir esa nota (404) y el contenido de los cambios (posible actualización de la clasificación de 2009) no está reflejado. El revisor humano debe comprobarlo.",
-   "La OPS indica que el diagnóstico es principalmente clínico y no recomienda pruebas rápidas para confirmar; la OMS describe las pruebas rápidas como de calidad variable. Hay una diferencia de énfasis.",
-   "Las recomendaciones de vacunación difieren entre fuentes (OMS, CDC, OPS) y entre países; el artículo no fija edades ni indicaciones.",
-   "No abrí el listado oficial ICD-10-CM; la afirmación de que la forma grave se codifica aparte se basa en conocimiento general y debe verificarse.",
-   "Por regla del repositorio no se escriben contraindicaciones; las fuentes señalan evitar ciertos antiinflamatorios y aspirina en el dengue, algo que el revisor debería valorar si desea incluirlo.",
-   "Ninguna fuente revisada por pares con DOI/PMID abierta (Nature Rev Dis Primers, Lancet y Wiley bloquearon o redirigieron y se agotó el presupuesto de WebSearch). Incumple el mínimo de 2 de la Adenda v2; se apoya solo en OMS, OPS, CDC y MedlinePlus."
+   "Guía OMS 2025 de manejo clínico de arbovirosis: solo se abrió la página de presentación; no se pudo leer si mantiene o modifica la clasificación de 2009. El revisor debe cotejar el texto completo.",
+   "Hay propuestas (Htun 2021) de refinar la clasificación de 2009 con infección secundaria, otras hemorragias, disnea y comorbilidades; no está resuelto su uso clínico.",
+   "OPS indica diagnóstico principalmente clínico y no recomienda pruebas rápidas para confirmar; OMS las describe como de calidad variable.",
+   "Las indicaciones de vacunación difieren entre OMS, OPS y países; el artículo no fija edades ni pautas.",
+   "Las fichas de la OMS y la OPS indican evitar ciertos antiinflamatorios y la aspirina; por la regla del repositorio sobre contraindicaciones no se escribió, y el revisor decide si incluirlo.",
+   "Los predictores de gravedad (Sangkaew 2021) proceden de estudios con riesgo de sesgo moderado a alto por confusión; Lancet 2024 y Wolbachia/TAK-003 se leyeron a nivel de resumen.",
+   "Código A90 es dengue clásico; que la forma grave se codifique aparte se basa en conocimiento general, no se abrió el listado oficial."
   ],
   "referencias": [
+   {
+    "titulo": "WHO guidelines for clinical management of arboviral diseases: dengue, chikungunya, Zika and yellow fever (OMS, 2025). PMID 40690567",
+    "url": "https://www.who.int/publications/i/item/9789240111110",
+    "fuente": "OMS (guía de práctica clínica)"
+   },
+   {
+    "titulo": "Paz-Bailey et al., 2024. Dengue. PMID 38280388, DOI 10.1016/S0140-6736(23)02576-X",
+    "url": "https://europepmc.org/article/MED/38280388",
+    "fuente": "The Lancet"
+   },
+   {
+    "titulo": "Sangkaew et al., 2021. Risk predictors of progression to severe disease during the febrile phase of dengue: a systematic review and meta-analysis. PMID 33640077, DOI 10.1016/S1473-3099(20)30601-0",
+    "url": "https://doi.org/10.1016/S1473-3099(20)30601-0",
+    "fuente": "The Lancet Infectious Diseases"
+   },
+   {
+    "titulo": "Htun et al., 2021. Clinical signs and symptoms associated with WHO severe dengue classification: a systematic review and meta-analysis. PMID 34036893, DOI 10.1080/22221751.2021.1935327",
+    "url": "https://doi.org/10.1080/22221751.2021.1935327",
+    "fuente": "Emerging Microbes and Infections"
+   },
+   {
+    "titulo": "Pillay et al., 2025. Evaluating the performance of common reference laboratory tests for acute dengue diagnosis: RT-PCR, NS1 ELISA and IgM ELISA. PMID 40209729, DOI 10.1016/j.lanmic.2025.101088",
+    "url": "https://doi.org/10.1016/j.lanmic.2025.101088",
+    "fuente": "The Lancet Microbe"
+   },
+   {
+    "titulo": "Utarini et al., 2021. Efficacy of Wolbachia-infected mosquito deployments for the control of dengue. PMID 34107180, DOI 10.1056/NEJMoa2030243",
+    "url": "https://doi.org/10.1056/NEJMoa2030243",
+    "fuente": "New England Journal of Medicine"
+   },
+   {
+    "titulo": "Flacco et al., 2024. Immunogenicity, safety and efficacy of the dengue vaccine TAK-003: a meta-analysis. PMID 39066408, DOI 10.3390/vaccines12070770",
+    "url": "https://doi.org/10.3390/vaccines12070770",
+    "fuente": "Vaccines"
+   },
    {
     "titulo": "Dengue and severe dengue",
     "url": "https://www.who.int/news-room/fact-sheets/detail/dengue-and-severe-dengue",
     "fuente": "OMS"
    },
    {
-    "titulo": "Dengue (MedlinePlus en español)",
-    "url": "https://medlineplus.gov/spanish/dengue.html",
-    "fuente": "MedlinePlus"
-   },
-   {
-    "titulo": "About Dengue",
-    "url": "https://www.cdc.gov/dengue/about/index.html",
-    "fuente": "CDC"
-   },
-   {
-    "titulo": "Dengue (OPS)",
+    "titulo": "Dengue",
     "url": "https://www.paho.org/es/temas/dengue",
     "fuente": "OPS"
    },
@@ -7671,7 +8364,63 @@
     "fuente": "CDC"
    }
   ],
-  "lote": "AE-12"
+  "lote": "AE-12",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Referencias científicas: de 0 a 7 con PMID/DOI verificadas en Europe PMC (guía OMS 2025, Lancet 2024, tres revisiones sistemáticas, un ensayo aleatorizado, un metaanálisis de vacuna).",
+    "Nueva sección de factores de riesgo de evolución grave (infección secundaria, comorbilidades, predictores de la fase febril) según Sangkaew 2021 y Htun 2021.",
+    "Diagnóstico: añadido el rendimiento comparado de NS1, material genético e IgM (Pillay 2025) y matizado que la OPS reserva el laboratorio a vigilancia y casos con signos de alarma o graves.",
+    "Prevención: añadidos Wolbachia (Utarini 2021) y el metaanálisis de TAK-003 (Flacco 2024), sin cifras ni edades.",
+    "Tratamiento y clasificación: reflejada la distinción grave/no grave de la guía OMS 2025; retirada del texto la mención de la guía como si fuera clasificación nueva.",
+    "Sección de evidencia reescrita con los tipos de estudio reales y la limitación de que de la guía 2025 solo se abrió la página de presentación.",
+    "Definición, resumen y sinónimos: sin cambio de fondo; definición matizada con la diferencia entre dengue clásico (código A90) y espectro completo."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "WHO guidelines for clinical management of arboviral diseases: dengue, chikungunya, Zika and yellow fever (OMS, 2025). PMID 40690567",
+     "url": "https://www.who.int/publications/i/item/9789240111110",
+     "fuente": "OMS (guía de práctica clínica)",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED): PMID, DOI, título, autores y año coinciden; página de presentación abierta en who.int (solo alcance, no el texto de las recomendaciones)"
+    },
+    {
+     "titulo": "Paz-Bailey et al., 2024. Dengue. PMID 38280388, DOI 10.1016/S0140-6736(23)02576-X",
+     "url": "https://europepmc.org/article/MED/38280388",
+     "fuente": "The Lancet",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED): PMID, DOI, título, autores y año coinciden (solo resumen)"
+    },
+    {
+     "titulo": "Sangkaew et al., 2021. Risk predictors of progression to severe disease during the febrile phase of dengue: a systematic review and meta-analysis. PMID 33640077, DOI 10.1016/S1473-3099(20)30601-0",
+     "url": "https://doi.org/10.1016/S1473-3099(20)30601-0",
+     "fuente": "The Lancet Infectious Diseases",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED): PMID, DOI, título, autores y año coinciden; DOI resuelve (HTTP 200)"
+    },
+    {
+     "titulo": "Htun et al., 2021. Clinical signs and symptoms associated with WHO severe dengue classification: a systematic review and meta-analysis. PMID 34036893, DOI 10.1080/22221751.2021.1935327",
+     "url": "https://doi.org/10.1080/22221751.2021.1935327",
+     "fuente": "Emerging Microbes and Infections",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED): PMID, DOI, título, autores y año coinciden"
+    },
+    {
+     "titulo": "Pillay et al., 2025. Evaluating the performance of common reference laboratory tests for acute dengue diagnosis: RT-PCR, NS1 ELISA and IgM ELISA. PMID 40209729, DOI 10.1016/j.lanmic.2025.101088",
+     "url": "https://doi.org/10.1016/j.lanmic.2025.101088",
+     "fuente": "The Lancet Microbe",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED): PMID, DOI, título, autores y año coinciden; DOI resuelve (HTTP 200)"
+    },
+    {
+     "titulo": "Utarini et al., 2021. Efficacy of Wolbachia-infected mosquito deployments for the control of dengue. PMID 34107180, DOI 10.1056/NEJMoa2030243",
+     "url": "https://doi.org/10.1056/NEJMoa2030243",
+     "fuente": "New England Journal of Medicine",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED): PMID, DOI, título, autores y año coinciden"
+    },
+    {
+     "titulo": "Flacco et al., 2024. Immunogenicity, safety and efficacy of the dengue vaccine TAK-003: a meta-analysis. PMID 39066408, DOI 10.3390/vaccines12070770",
+     "url": "https://doi.org/10.3390/vaccines12070770",
+     "fuente": "Vaccines",
+     "verificada": "Europe PMC REST API (EXT_ID, SRC:MED): PMID, DOI, título, autores y año coinciden"
+    }
+   ]
+  }
  },
  {
   "slug": "dengue-igg-igm",
@@ -7778,7 +8527,7 @@
    "Sinónimos: 'dmo' y 'densidad ósea' nombran la magnitud medida, no el estudio; 'dexa' debe escribirse 'DEXA' o 'DXA'.",
    "Resumen llano: 'cuán fuertes están los huesos' es literario ('cuán') y equipara densidad con fortaleza, cuando la densidad es solo uno de los factores del riesgo de fractura."
   ],
-  "definition": "Estudio de imagen, habitualmente por absorciometría de rayos X de doble energía (DXA), que mide la densidad mineral del hueso en la columna lumbar y la cadera, y a veces en otras zonas, con dosis muy baja de radiación. Sirve para diagnosticar masa ósea baja y osteoporosis, estimar el riesgo de fractura y comprobar la respuesta al tratamiento.",
+  "definition": "Estudio de imagen, habitualmente por absorciometría de rayos X de doble energía (DXA), que mide la densidad mineral del hueso en la columna lumbar y la cadera, y a veces en el antebrazo, con una dosis muy baja de radiación. Sirve para diagnosticar masa ósea baja y osteoporosis, completar la estimación del riesgo de fractura y seguir la respuesta al tratamiento.",
   "plainSummaryEs": "Estudio con rayos X de dosis muy baja que mide cuánto mineral tienen los huesos y ayuda a detectar osteoporosis.",
   "esSynonyms": [
    "densitometría",
@@ -7835,17 +8584,38 @@
    }
   ],
   "incertidumbres": [
-   "No pude abrir la ficha oficial de LOINC 24966-4 ni NIAMS (403/404); la descripción del código se toma del enDisplay de la entrada.",
-   "Las fuentes discrepan o no concretan el cribado en hombres: MedlinePlus indica que los expertos discrepan sobre la prueba rutinaria en ellos.",
-   "Los criterios de inicio de cribado y los intervalos de repetición varían entre sociedades; el artículo no los fija (sin edades ni plazos exactos).",
-   "La recomendación de suspender suplementos de calcio antes del estudio varía entre centros; se indica solo que conviene seguir las instrucciones locales.",
-   "Solo una referencia de sociedad científica con DOI (ISCD 2023, resumen ejecutivo; el DOI figura en la página abierta pero no abrí el artículo en sí). Las guías BHOF/Springer quedaron bloqueadas. Incumple el mínimo de 2 de la Adenda v2."
+   "No se pudo abrir la ficha oficial de LOINC 24966-4; la descripción del código se toma del enDisplay de la entrada.",
+   "Cribado en hombres: el USPSTF 2025 lo califica de evidencia insuficiente y MedlinePlus dice que los expertos discrepan; otras guías (p. ej. sociedades de osteoporosis) pueden recomendarlo, no se contrastaron.",
+   "El intervalo de repetición y la edad de inicio varían entre guías; el USPSTF señala evidencia limitada. El artículo no los fija.",
+   "La recomendación de suspender suplementos de calcio varía entre centros; solo se indica seguir las instrucciones locales.",
+   "Los textos de JAMA (USPSTF), ISCD 2023 y Fuggle 2019 se verificaron por resumen (API) y, en el caso del USPSTF, por su página oficial; el texto completo de Slart 2025 sí se abrió. ACOG, BHOF/Springer y Europe PMC web bloquean la lectura automática.",
+   "Se omiten cifras (índices T, intervalos, edades); el revisor médico debería decidir si alguna guía local debe citarse con sus puntos de corte."
   ],
   "referencias": [
    {
-    "titulo": "Shuhart et al., 2023. Executive Summary of the 2023 Adult Position Development Conference of the ISCD (DOI 10.1016/j.jocd.2023.101435); posiciones oficiales 2023",
-    "url": "https://iscd.org/official-positions-2023/",
-    "fuente": "Journal of Clinical Densitometry / ISCD"
+    "titulo": "Shuhart et al., 2024. Executive Summary of the 2023 Adult Position Development Conference of the ISCD: DXA Reporting, Follow-up BMD Testing and TBS. PMID 38007332; DOI 10.1016/j.jocd.2023.101435",
+    "url": "https://europepmc.org/article/MED/38007332",
+    "fuente": "Journal of Clinical Densitometry"
+   },
+   {
+    "titulo": "Slart et al., 2025. Updated practice guideline for dual-energy X-ray absorptiometry (DXA). PMID 39316095; DOI 10.1007/s00259-024-06912-6",
+    "url": "https://europepmc.org/article/MED/39316095",
+    "fuente": "European Journal of Nuclear Medicine and Molecular Imaging"
+   },
+   {
+    "titulo": "US Preventive Services Task Force (Nicholson et al.), 2025. Screening for Osteoporosis to Prevent Fractures: Recommendation Statement. PMID 39808425; DOI 10.1001/jama.2024.27154",
+    "url": "https://europepmc.org/article/MED/39808425",
+    "fuente": "JAMA"
+   },
+   {
+    "titulo": "Fuggle et al., 2019. Fracture prediction, imaging and screening in osteoporosis. PMID 31189982; DOI 10.1038/s41574-019-0220-8",
+    "url": "https://europepmc.org/article/MED/31189982",
+    "fuente": "Nature Reviews Endocrinology"
+   },
+   {
+    "titulo": "Black et al., 2020. Treatment-related changes in bone mineral density as a surrogate biomarker for fracture risk reduction: meta-regression analyses of individual patient data from multiple randomised controlled trials. PMID 32707115; DOI 10.1016/S2213-8587(20)30159-5",
+    "url": "https://europepmc.org/article/MED/32707115",
+    "fuente": "Lancet Diabetes & Endocrinology"
    },
    {
     "titulo": "Bone Density Scan",
@@ -7863,7 +8633,51 @@
     "fuente": "Bone Health and Osteoporosis Foundation"
    }
   ],
-  "lote": "AE-12"
+  "lote": "AE-12",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Referencias científicas verificadas: de 1 (ISCD, sin abrir el artículo) a 5 con PMID/DOI; nuevas: Slart 2025, USPSTF 2025, Fuggle 2019, Black 2020; la de Shuhart pasa a enlace Europe PMC y título completo.",
+    "Indicaciones: cribado más firme en mujeres mayores y posmenopáusicas más jóvenes con riesgo; en hombres, evidencia insuficiente según USPSTF 2025 (antes solo se decía que los expertos discrepan).",
+    "Sitios de medición, uso del valor más bajo, antebrazo, imagen vertebral lateral e índice trabecular óseo añadidos según la guía de Slart 2025.",
+    "Seguimiento: comparar densidades absolutas con el mismo aparato, no índices T; limitaciones ampliadas (artefactos que elevan falsamente la densidad, DXA bidimensional).",
+    "Añadido FRAX como concepto relacionado y matiz de que la densidad sola predice fracturas de forma moderada (USPSTF, Fuggle).",
+    "Sección Qué dice la evidencia reescrita con las nuevas fuentes; ya no dice que falte revisión sistemática.",
+    "Definición: 'completar la estimación del riesgo' y mención del antebrazo; resumen y sinónimos sin cambio de fondo."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Shuhart et al., 2024. Executive Summary of the 2023 Adult Position Development Conference of the ISCD: DXA Reporting, Follow-up BMD Testing and TBS. PMID 38007332; DOI 10.1016/j.jocd.2023.101435",
+     "url": "https://europepmc.org/article/MED/38007332",
+     "fuente": "Journal of Clinical Densitometry",
+     "verificada": "Europe PMC REST API (EXT_ID, título/autores/año/revista/DOI) y Crossref (DOI y título)"
+    },
+    {
+     "titulo": "Slart et al., 2025. Updated practice guideline for dual-energy X-ray absorptiometry (DXA). PMID 39316095; DOI 10.1007/s00259-024-06912-6",
+     "url": "https://europepmc.org/article/MED/39316095",
+     "fuente": "European Journal of Nuclear Medicine and Molecular Imaging",
+     "verificada": "Europe PMC REST API (EXT_ID, título/autores/año/revista/DOI) y Crossref (DOI y título); texto completo abierto en PMC11732917"
+    },
+    {
+     "titulo": "US Preventive Services Task Force (Nicholson et al.), 2025. Screening for Osteoporosis to Prevent Fractures: Recommendation Statement. PMID 39808425; DOI 10.1001/jama.2024.27154",
+     "url": "https://europepmc.org/article/MED/39808425",
+     "fuente": "JAMA",
+     "verificada": "Europe PMC REST API (EXT_ID, título/autores/año/revista/DOI) y Crossref (DOI y título); página de la recomendación en uspreventiveservicestaskforce.org abierta"
+    },
+    {
+     "titulo": "Fuggle et al., 2019. Fracture prediction, imaging and screening in osteoporosis. PMID 31189982; DOI 10.1038/s41574-019-0220-8",
+     "url": "https://europepmc.org/article/MED/31189982",
+     "fuente": "Nature Reviews Endocrinology",
+     "verificada": "Europe PMC REST API (EXT_ID, título/autores/año/revista/DOI) y Crossref (DOI y título)"
+    },
+    {
+     "titulo": "Black et al., 2020. Treatment-related changes in bone mineral density as a surrogate biomarker for fracture risk reduction: meta-regression analyses of individual patient data from multiple randomised controlled trials. PMID 32707115; DOI 10.1016/S2213-8587(20)30159-5",
+     "url": "https://europepmc.org/article/MED/32707115",
+     "fuente": "Lancet Diabetes & Endocrinology",
+     "verificada": "Europe PMC REST API (EXT_ID, título/autores/año/revista/DOI) y Crossref (DOI y título)"
+    }
+   ]
+  }
  },
  {
   "slug": "depresion",
@@ -13060,54 +13874,123 @@
    }
   ],
   "incertidumbres": [
-   "La referencia principal sobre indicaciones y limitaciones (AAFP) es de 2005; no se contrastó con una guía reciente sobre cribado ni sobre diagnóstico de infección urinaria solo con tira reactiva.",
-   "MedlinePlus en español y StatPearls no pudieron abrirse (404 y verificación anti-robots), y las páginas de LOINC.org y Mayo Clinic dieron 403; se usaron MedlinePlus en inglés, AAFP, NKF en español y LOINC vía Find-A-Code.",
-   "La página de LOINC no ofrece una definición textual; la descripción del panel se infiere de sus componentes (24357-6 macroscópico y 24365-9 microscópico) reportados por Find-A-Code.",
-   "El texto de la NKF en español es una página divulgativa sin fecha visible."
+   "No se identificaron ensayos que comparen el examen completo con no hacerlo; la evidencia es por componentes y por contexto clínico.",
+   "El cribado sin síntomas se apoya en una revisión de 2005 (AAFP) y en recomendaciones posteriores que se refieren a la bacteriuria asintomática (USPSTF 2019), no al examen completo en general.",
+   "Rendimiento de la tira según población (lactantes, embarazo, mayores) y cuándo sustituir la proteína de la tira por albúmina cuantificada: discutido; el texto no fija umbrales.",
+   "El resumen de KDIGO 2024 solo pudo verificarse por su resumen indexado (no se pudo abrir el texto completo): se cita únicamente como marco de evaluación de la enfermedad renal crónica.",
+   "Texto completo de EFLM 2023, Cavanaugh 2019, USPSTF 2019 y AUA 2020/2025 solo verificado vía resumen en Europe PMC; el revisor médico debería contrastar las frases atribuidas a cada guía.",
+   "La descripción del panel LOINC se infiere de sus componentes (Find-A-Code), no de una definición textual."
   ],
   "referencias": [
+   {
+    "titulo": "Kouri et al., 2024. The EFLM European Urinalysis Guideline 2023. PMID 38534005, DOI 10.1515/cclm-2024-0070",
+    "url": "https://europepmc.org/article/MED/38534005",
+    "fuente": "Clin Chem Lab Med"
+   },
+   {
+    "titulo": "Cavanaugh y Perazella, 2019. Urine Sediment Examination in the Diagnosis and Management of Kidney Disease: Core Curriculum 2019. PMID 30249419, DOI 10.1053/j.ajkd.2018.07.012",
+    "url": "https://europepmc.org/article/MED/30249419",
+    "fuente": "Am J Kidney Dis"
+   },
+   {
+    "titulo": "Coulthard, 2019. Using urine nitrite sticks to test for urinary tract infection in children aged < 2 years: a meta-analysis. PMID 30895368, DOI 10.1007/s00467-019-04226-6",
+    "url": "https://europepmc.org/article/MED/30895368",
+    "fuente": "Pediatr Nephrol"
+   },
+   {
+    "titulo": "Barocas et al., 2020. Microhematuria: AUA/SUFU Guideline. PMID 32698717, DOI 10.1097/ju.0000000000001297",
+    "url": "https://europepmc.org/article/MED/32698717",
+    "fuente": "J Urol"
+   },
+   {
+    "titulo": "Barocas et al., 2025. Updates to Microhematuria: AUA/SUFU Guideline (2025). PMID 40013563, DOI 10.1097/ju.0000000000004490",
+    "url": "https://europepmc.org/article/MED/40013563",
+    "fuente": "J Urol"
+   },
+   {
+    "titulo": "US Preventive Services Task Force, 2019. Screening for Asymptomatic Bacteriuria in Adults: Recommendation Statement. PMID 31550038, DOI 10.1001/jama.2019.13069",
+    "url": "https://europepmc.org/article/MED/31550038",
+    "fuente": "JAMA"
+   },
+   {
+    "titulo": "KDIGO CKD Work Group, 2024. KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. PMID 38490803, DOI 10.1016/j.kint.2023.10.018",
+    "url": "https://europepmc.org/article/MED/38490803",
+    "fuente": "Kidney Int"
+   },
    {
     "titulo": "Urinalysis (MedlinePlus Medical Encyclopedia)",
     "url": "https://medlineplus.gov/ency/article/003579.htm",
     "fuente": "MedlinePlus"
    },
    {
-    "titulo": "Urinalysis: A Comprehensive Review",
+    "titulo": "Urinalysis: A Comprehensive Review (2005)",
     "url": "https://www.aafp.org/afp/2005/0315/p1153",
     "fuente": "AAFP"
-   },
-   {
-    "titulo": "Análisis de orina (prueba de orina)",
-    "url": "https://www.kidney.org/es/temas-del-rinon/analisis-de-orina-prueba-de-orina",
-    "fuente": "National Kidney Foundation"
-   },
-   {
-    "titulo": "Protein in Urine: MedlinePlus Medical Test",
-    "url": "https://medlineplus.gov/lab-tests/protein-in-urine/",
-    "fuente": "MedlinePlus"
-   },
-   {
-    "titulo": "Nitrites in Urine: MedlinePlus Medical Test",
-    "url": "https://medlineplus.gov/lab-tests/nitrites-in-urine/",
-    "fuente": "MedlinePlus"
-   },
-   {
-    "titulo": "Blood in Urine: MedlinePlus Medical Test",
-    "url": "https://medlineplus.gov/lab-tests/blood-in-urine/",
-    "fuente": "MedlinePlus"
    },
    {
     "titulo": "Urinalysis complete panel - Urine 24356-8",
     "url": "https://www.findacode.com/loinc/24356-8--urinalysis-complete-pnl-ur.html",
     "fuente": "LOINC (Find-A-Code)"
-   },
-   {
-    "titulo": "Urinalysis (Provincial Laboratory Formulary)",
-    "url": "https://www.gov.nl.ca/labformulary/formulary/urinalysis/",
-    "fuente": "Newfoundland and Labrador Laboratory Formulary"
    }
   ],
-  "lote": "AE-21"
+  "lote": "AE-21",
+  "refuerzo": {
+   "fecha": "2026-10-25",
+   "cambios": [
+    "Se sustituye la dependencia de la revisión AAFP 2005 sobre cribado por la guía europea EFLM 2023 (solicitud según pregunta clínica) y la recomendación USPSTF 2019 sobre bacteriuria asintomática (se busca en el embarazo, no en adultos no gestantes); la frase AAFP 2005 se conserva como antecedente.",
+    "Se añade que la microhematuria se define por microscopía y no por la tira (guía AUA/SUFU 2020, actualización 2025).",
+    "Se añade la limitación de la tira de nitritos en lactantes y niños pequeños (metaanálisis de Coulthard 2019): positiva muy indicativa, negativa no descarta.",
+    "Se añade el valor del sedimento (Cavanaugh y Perazella 2019) y que la guía EFLM recomienda medir albúmina para detectar enfermedad renal en personas de riesgo.",
+    "Se añade la sección [considerations] Qué dice la evidencia (2 párrafos); las limitaciones pasan a [additional_information] y se integra el apartado de riesgos.",
+    "Se amplía la lista de causas de sangre y los usos (hígado, cálculos) y se añade el indicador de calidad de la recogida (EFLM).",
+    "Se retiran las referencias NKF, tres páginas MedlinePlus de pruebas concretas y la del formulario de Terranova para ajustarse a 10 referencias; se conservan MedlinePlus, AAFP y LOINC (Find-A-Code).",
+    "Definición, resumen llano y sinónimos: sin cambios de fondo, se repiten los actuales."
+   ],
+   "referenciasCientificas": [
+    {
+     "titulo": "Kouri et al., 2024. The EFLM European Urinalysis Guideline 2023. PMID 38534005, DOI 10.1515/cclm-2024-0070",
+     "url": "https://europepmc.org/article/MED/38534005",
+     "fuente": "Clin Chem Lab Med",
+     "verificada": "Europe PMC API (resultType=core): PMID, DOI, título, autores, año y resumen coinciden"
+    },
+    {
+     "titulo": "Cavanaugh y Perazella, 2019. Urine Sediment Examination in the Diagnosis and Management of Kidney Disease: Core Curriculum 2019. PMID 30249419, DOI 10.1053/j.ajkd.2018.07.012",
+     "url": "https://europepmc.org/article/MED/30249419",
+     "fuente": "Am J Kidney Dis",
+     "verificada": "Europe PMC API (resultType=core)"
+    },
+    {
+     "titulo": "Coulthard, 2019. Using urine nitrite sticks to test for urinary tract infection in children aged < 2 years: a meta-analysis. PMID 30895368, DOI 10.1007/s00467-019-04226-6",
+     "url": "https://europepmc.org/article/MED/30895368",
+     "fuente": "Pediatr Nephrol",
+     "verificada": "Europe PMC API (resultType=core)"
+    },
+    {
+     "titulo": "Barocas et al., 2020. Microhematuria: AUA/SUFU Guideline. PMID 32698717, DOI 10.1097/ju.0000000000001297",
+     "url": "https://europepmc.org/article/MED/32698717",
+     "fuente": "J Urol",
+     "verificada": "Europe PMC API (resultType=core)"
+    },
+    {
+     "titulo": "Barocas et al., 2025. Updates to Microhematuria: AUA/SUFU Guideline (2025). PMID 40013563, DOI 10.1097/ju.0000000000004490",
+     "url": "https://europepmc.org/article/MED/40013563",
+     "fuente": "J Urol",
+     "verificada": "Europe PMC API (resultType=core)"
+    },
+    {
+     "titulo": "US Preventive Services Task Force (Owens et al.), 2019. Screening for Asymptomatic Bacteriuria in Adults: Recommendation Statement. PMID 31550038, DOI 10.1001/jama.2019.13069",
+     "url": "https://europepmc.org/article/MED/31550038",
+     "fuente": "JAMA",
+     "verificada": "Europe PMC API (resultType=core)"
+    },
+    {
+     "titulo": "KDIGO CKD Work Group, 2024. KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. PMID 38490803, DOI 10.1016/j.kint.2023.10.018",
+     "url": "https://europepmc.org/article/MED/38490803",
+     "fuente": "Kidney Int",
+     "verificada": "Europe PMC API (resultType=core): metadatos coinciden; resumen vacío, texto completo no accesible; resumen ejecutivo PMID 38519239 revisado"
+    }
+   ]
+  }
  },
  {
   "slug": "factor-reumatoideo",

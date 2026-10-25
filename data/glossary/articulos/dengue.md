@@ -4,25 +4,25 @@ slug: dengue
 
 ## [definition] Introducción
 
-El dengue es una enfermedad viral causada por cuatro virus emparentados, los serotipos 1 a 4, que se transmite por la picadura de mosquitos del género Aedes, principalmente Aedes aegypti. No se contagia directamente de una persona a otra. Es frecuente en zonas tropicales y subtropicales, y una persona puede infectarse más de una vez.
+El dengue es una enfermedad viral causada por cuatro virus emparentados, los serotipos 1 a 4, que transmiten los mosquitos del género Aedes, sobre todo Aedes aegypti. No pasa directamente de una persona a otra. Es endémico en más de cien países. Una persona puede infectarse más de una vez, porque cada serotipo no protege de forma duradera frente a los demás.
 
-La mayoría de las infecciones son asintomáticas o leves. El cuadro típico es una fiebre alta de comienzo brusco con dolor de cabeza, dolor detrás de los ojos, dolores musculares y articulares, náuseas, vómitos y erupción cutánea. En una parte de los casos evoluciona a dengue grave, con fuga de plasma, hemorragias importantes o afectación de órganos.
+La mayoría de las infecciones cursan sin síntomas o con un cuadro leve. El cuadro típico es una fiebre alta de comienzo brusco con dolor de cabeza, dolor detrás de los ojos, dolores musculares y articulares, náuseas, vómitos y erupción. En una parte de los casos evoluciona a dengue grave, con fuga de plasma, hemorragias importantes o afectación de órganos.
 
 ## [classification] Clasificación
 
-La OPS describe la clasificación de la OMS de 2009, que distingue tres categorías: dengue sin signos de alarma, dengue con signos de alarma y dengue grave. Esta entrada se refiere al dengue como enfermedad en general, con su espectro desde el cuadro leve hasta el grave, y su código designa el dengue clásico.
+La OPS describe la clasificación de la OMS de 2009: dengue sin signos de alarma, con signos de alarma y dengue grave. Esta entrada trata la enfermedad en todo su espectro; su código designa el dengue clásico, y la forma grave suele codificarse aparte.
 
 ## [causes] Causas y transmisión
 
-El mosquito se vuelve infeccioso tras picar a una persona con el virus en la sangre y puede transmitirlo durante el resto de su vida. Las personas pueden contagiar al mosquito antes de tener síntomas, durante la enfermedad e incluso sin haber presentado síntomas. De forma poco frecuente se describe transmisión por transfusiones, trasplantes o de la madre al bebé durante el embarazo.
+El mosquito se infecta al picar a una persona con virus en la sangre, incluso sin síntomas, y lo transmite el resto de su vida. Es rara la transmisión por transfusiones, trasplantes o de la madre al bebé.
 
 ## [symptoms] Síntomas y evolución
 
-El curso clínico se describe en tres fases. En la fase febril predomina la fiebre, a veces con dos picos, junto con dolor de cabeza intenso, dolor retroocular, dolor muscular y articular y erupción; pueden aparecer sangrados leves en piel, nariz o encías. La fase crítica comienza cuando desciende la fiebre: muchas personas mejoran, pero en algunas se produce una fuga de plasma que puede derivar en shock en pocas horas. La fase de recuperación llega cuando el líquido se reabsorbe y la circulación se estabiliza; en ella puede aparecer picor y descamación de la erupción. El cansancio puede prolongarse durante semanas.
+El curso tiene tres fases. En la febril predominan la fiebre, el dolor de cabeza intenso, el dolor retroocular, el dolor muscular y articular y la erupción; pueden aparecer sangrados leves. La fase crítica comienza cuando desciende la fiebre y dura uno o dos días: muchas personas mejoran, pero en algunas una fuga de plasma puede derivar en shock en pocas horas. En la recuperación el líquido se reabsorbe; el cansancio puede durar semanas.
 
 ## [red_flags] Signos de alarma
 
-Los signos de alarma suelen presentarse hacia el final de la fase febril, cuando baja la fiebre, y anuncian un mayor riesgo de dengue grave:
+Aparecen hacia el final de la fase febril y anuncian mayor riesgo de dengue grave:
 
 • Dolor o sensibilidad abdominal intensos.
 • Vómitos persistentes.
@@ -31,37 +31,45 @@ Los signos de alarma suelen presentarse hacia el final de la fase febril, cuando
 • Letargo, inquietud o irritabilidad.
 • Aumento del tamaño del hígado.
 
-Ante cualquiera de ellos se necesita atención médica inmediata. El descenso de las plaquetas es un hallazgo de laboratorio frecuente en el dengue, pero la CDC no lo incluye por sí solo entre los signos de alarma; sirve al equipo médico para seguir la evolución.
+Cualquiera de ellos exige atención médica inmediata. La caída de plaquetas es un hallazgo de laboratorio frecuente, pero la CDC no la cuenta por sí sola como signo de alarma.
+
+## [risk_factors] Factores de riesgo de evolución grave
+
+Los metaanálisis coinciden en que la infección secundaria se asocia con más riesgo de forma grave que la primera. También se asocian con progresión grave la diabetes, la hipertensión, la enfermedad renal y la cardiovascular y, ya en la fase febril, los vómitos, el dolor abdominal, el sangrado de mucosas y la acumulación de líquido. Un metaanálisis propone sumar a la clasificación de 2009 la infección secundaria, otras hemorragias, la disnea y las comorbilidades.
 
 ## [diagnosis] Diagnóstico
 
-Al inicio los síntomas son inespecíficos, por lo que se requiere un alto grado de sospecha, sobre todo si hubo viaje o residencia en zonas con transmisión. Según la OPS, el diagnóstico es principalmente clínico, y la confirmación de laboratorio se usa sobre todo para la vigilancia epidemiológica y en casos graves o fallecidos. Las pruebas disponibles incluyen la detección del material genético del virus, la proteína NS1 y las pruebas de anticuerpos. Las pruebas directas son más útiles al principio de la enfermedad, y la OMS señala que las pruebas rápidas difieren en calidad. La OPS no las recomienda para confirmar.
+Al inicio los síntomas son inespecíficos; la sospecha aumenta tras viaje o residencia en zonas con transmisión. Según la OPS, el diagnóstico es principalmente clínico; el laboratorio se reserva sobre todo para vigilancia y casos graves, con signos de alarma o fallecidos. Las pruebas incluyen la detección del material genético del virus, la proteína NS1 y los anticuerpos. Una revisión sistemática de 2025 halló que la NS1 por ELISA rinde de forma comparable al material genético en los primeros días, mientras que la IgM por ELISA rinde peor al inicio. La OMS señala que las pruebas rápidas difieren en calidad y la OPS no las recomienda para confirmar.
 
 ## [treatment_overview] Enfoque del tratamiento
 
-No existe un medicamento específico contra el dengue. El manejo es de apoyo: reposo, líquidos para evitar la deshidratación y control del dolor y la fiebre con el fármaco que indique el profesional. El dengue grave suele requerir hospitalización con vigilancia estrecha.
+No existe un medicamento específico contra el dengue. El manejo es de apoyo: reposo, líquidos y control del dolor y la fiebre con el fármaco que indique el profesional, sin automedicación. La guía de la OMS de 2025 distingue la enfermedad no grave, que puede atenderse de forma ambulatoria vigilando los signos de alarma, de la grave, que suele requerir hospitalización con seguimiento estrecho.
 
 ## [prevention] Prevención
 
-La base es evitar las picaduras y controlar los criaderos del mosquito. Se recomienda usar ropa que cubra brazos y piernas, mosquiteros y repelentes autorizados, y proteger puertas y ventanas con mallas. Para reducir los criaderos se eliminan los recipientes con agua, se tapan los depósitos y se desechan los residuos en bolsas cerradas. El mosquito pica sobre todo al amanecer y al anochecer. Existen vacunas autorizadas en algunos países para grupos concretos, definidos por edad, antecedentes de infección y lugar de residencia; las recomendaciones varían según el país.
+La base es evitar las picaduras (ropa que cubra brazos y piernas, mosquiteros, repelentes autorizados, mallas) y controlar los criaderos eliminando o tapando los recipientes con agua. Un ensayo aleatorizado por conglomerados en Indonesia mostró que liberar mosquitos infectados con la bacteria Wolbachia redujo el dengue sintomático y las hospitalizaciones. Hay vacunas autorizadas en algunos países para grupos definidos por edad, antecedentes de infección y residencia; un metaanálisis de TAK-003 describe buena seguridad y una protección que depende de si la persona ya había tenido dengue.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Chikungunya: arbovirosis transmitida por los mismos mosquitos, con síntomas que pueden parecerse a los del dengue.
-• Dengue grave: forma con fuga de plasma, sangrado o daño de órganos, que exige atención urgente.
-• Serotipos del virus: una persona puede infectarse más de una vez, y una segunda infección conlleva mayor riesgo de forma grave.
+• Chikungunya: arbovirosis transmitida por los mismos mosquitos, con síntomas parecidos a los del dengue.
+• Dengue grave: forma con fuga de plasma, sangrado o daño de órganos.
 • Serología de dengue: pruebas de anticuerpos IgG e IgM.
 
 ## [considerations] Qué dice la evidencia
 
-Esta entrada descansa en fichas y materiales institucionales de la OMS, la OPS, la CDC y MedlinePlus. No se pudo abrir ninguna revisión ni guía de práctica clínica con DOI o PMID, así que el apoyo es de consenso de organismos de salud pública y no de estudios graduados.
+La entrada se apoya en una guía de la OMS (2025), una revisión de The Lancet (2024), metaanálisis sobre predictores de gravedad, signos clínicos, pruebas de laboratorio y la vacuna TAK-003, un ensayo aleatorizado sobre Wolbachia y fichas de la OMS, la OPS y la CDC. De la guía de 2025 solo se abrió la página de presentación, no el texto de las recomendaciones.
 
-Hay consenso en el cuadro clínico, las tres fases, los signos de alarma y la ausencia de tratamiento específico. Se discuten o no se resuelven aquí la vigencia de la clasificación de 2009 frente a la guía de manejo de 2025, el valor de las pruebas rápidas de laboratorio, que la OMS describe como de calidad variable y la OPS no recomienda para confirmar, y las indicaciones de vacunación, que varían entre organismos y países.
+Hay consenso en el cuadro clínico, las fases, los signos de alarma, la ausencia de tratamiento específico y el papel de la infección secundaria. Se discuten la vigencia de la clasificación de 2009 frente a la guía de 2025, la variación de las definiciones de signos de alarma entre estudios, la calidad de las pruebas rápidas y las indicaciones de vacunación. 
 
 ## [references]
 
+- WHO guidelines for clinical management of arboviral diseases: dengue, chikungunya, Zika and yellow fever (OMS, 2025; PMID 40690567) | https://www.who.int/publications/i/item/9789240111110 | OMS
+- Paz-Bailey et al., 2024. Dengue. PMID 38280388, DOI 10.1016/S0140-6736(23)02576-X | https://europepmc.org/article/MED/38280388 | The Lancet
+- Sangkaew et al., 2021. Risk predictors of progression to severe disease during the febrile phase of dengue. PMID 33640077, DOI 10.1016/S1473-3099(20)30601-0 | https://doi.org/10.1016/S1473-3099(20)30601-0 | The Lancet Infectious Diseases
+- Htun et al., 2021. Clinical signs and symptoms associated with WHO severe dengue classification. PMID 34036893, DOI 10.1080/22221751.2021.1935327 | https://doi.org/10.1080/22221751.2021.1935327 | Emerging Microbes and Infections
+- Pillay et al., 2025. Performance of reference laboratory tests for acute dengue diagnosis. PMID 40209729, DOI 10.1016/j.lanmic.2025.101088 | https://doi.org/10.1016/j.lanmic.2025.101088 | The Lancet Microbe
+- Utarini et al., 2021. Efficacy of Wolbachia-infected mosquito deployments for the control of dengue. PMID 34107180, DOI 10.1056/NEJMoa2030243 | https://doi.org/10.1056/NEJMoa2030243 | New England Journal of Medicine
+- Flacco et al., 2024. Immunogenicity, safety and efficacy of the dengue vaccine TAK-003: a meta-analysis. PMID 39066408, DOI 10.3390/vaccines12070770 | https://doi.org/10.3390/vaccines12070770 | Vaccines
 - Dengue and severe dengue | https://www.who.int/news-room/fact-sheets/detail/dengue-and-severe-dengue | OMS
-- Dengue | https://medlineplus.gov/spanish/dengue.html | MedlinePlus
-- About Dengue | https://www.cdc.gov/dengue/about/index.html | CDC
 - Dengue | https://www.paho.org/es/temas/dengue | OPS
 - Clinical Signs and Symptoms of Dengue | https://www.cdc.gov/dengue/hcp/clinical-signs/index.html | CDC

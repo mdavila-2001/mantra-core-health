@@ -4,66 +4,72 @@ slug: absceso-dental
 
 ## [definition] Introducción
 
-Un absceso dental es una bolsa de pus originada por una infección bacteriana en un diente o en los tejidos que lo rodean. La forma más frecuente es el absceso periapical, que se forma en la punta de la raíz cuando las bacterias llegan a la pulpa, es decir, al tejido blando del interior del diente, y desde allí se extienden al hueso y a los tejidos vecinos. La presión del pus es la responsable del dolor.
+Un absceso dental es una bolsa de pus originada por una infección bacteriana en un diente o en los tejidos que lo rodean. La forma más frecuente es el absceso periapical: las bacterias llegan a la pulpa (el tejido blando del interior del diente), alcanzan la punta de la raíz y se extienden al hueso vecino. La presión del pus causa el dolor.
 
-Conviene diferenciarlo del absceso periodontal, que se origina en las encías y en la bolsa que se forma alrededor del diente, y que aparece en un diente que todavía está vivo. Aunque se parecen en la presentación, el origen es distinto; en una urgencia, el manejo inicial de ambos es similar.
-
-El código asignado a esta ficha corresponde a un absceso periapical sin trayecto fistuloso. Es decir, no cubre los abscesos que han drenado a través de una fístula hacia la encía o la piel.
+Se diferencia del absceso periodontal, que nace en la encía y aparece en un diente aún vivo; el manejo inicial es parecido. El código de esta ficha corresponde al absceso periapical sin trayecto fistuloso, por lo que no cubre los que drenan por una fístula.
 
 ## [causes] Causas
 
-La causa más común es una caries profunda que alcanza la pulpa. También pueden provocarlo dientes fracturados, astillados o lesionados por un golpe. Otras fuentes añaden los dientes que no terminan de salir (impactados), la enfermedad de las encías y la radioterapia o quimioterapia en la zona.
+La causa más común es una caries profunda que alcanza la pulpa. También lo provocan dientes fracturados o golpeados y, según otras fuentes, dientes impactados, enfermedad de las encías y radioterapia o quimioterapia en la zona.
 
-Un detalle importante: cuando el absceso encuentra una vía de salida, la presión disminuye y el dolor puede aliviarse, pero la infección sigue activa y continúa dañando tejido. Que el dolor desaparezca no significa que el problema se haya resuelto.
+La infección suele ser polimicrobiana, con predominio de bacterias anaerobias (que viven sin oxígeno) y estreptococos orales; las infecciones mixtas tienden a ser más invasivas. Parte de estas bacterias no se cultiva en el laboratorio y su papel no está definido.
+
+Cuando el absceso encuentra una vía de salida, el dolor puede ceder, pero la infección sigue activa: que el dolor desaparezca no significa curación.
 
 ## [symptoms] Síntomas
 
 El síntoma principal es un dolor de muela intenso, continuo y pulsátil, que empeora al masticar o al tocar el diente. También pueden aparecer:
 
 • Sensibilidad al calor o al frío.
-• Encía enrojecida e hinchada sobre el diente, a veces con una especie de grano.
+• Encía enrojecida e hinchada, a veces con un grano.
 • Mal sabor y mal aliento.
 • Fiebre y malestar general.
 • Ganglios inflamados en el cuello.
-• Hinchazón de la cara o de la mandíbula, que es un signo de gravedad.
+• Hinchazón de la cara o la mandíbula, signo de gravedad.
 
 ## [diagnosis] Diagnóstico
 
-El diagnóstico es sobre todo clínico. El dentista examina la boca, busca el diente responsable (suele doler al golpearlo suavemente) y revisa si hay inflamación o salida de material espeso. Las radiografías dentales ayudan a identificar el diente afectado y la lesión alrededor de la raíz. Si se sospecha un absceso grande o profundo, puede recurrirse a una tomografía computarizada para ver hasta dónde se ha extendido.
+El diagnóstico es sobre todo clínico: el dentista busca el diente responsable (suele doler al golpearlo suavemente) y la inflamación o salida de material espeso. Las radiografías dentales muestran el diente afectado y la lesión de la raíz; si se sospecha un absceso grande o profundo, una tomografía computarizada indica hasta dónde se ha extendido.
 
 ## [treatment_overview] Tratamiento
 
-El objetivo es eliminar la infección, conservar el diente si es posible y evitar complicaciones. El eje del tratamiento es drenar el pus y eliminar la causa en el diente, lo que puede lograrse con un tratamiento de conducto o, si el diente no se puede salvar, con su extracción. En los casos con colecciones más grandes se realiza un drenaje quirúrgico.
+El eje del tratamiento es drenar el pus y eliminar la causa en el diente, con tratamiento de conducto o, si no se puede salvar, extracción. Las colecciones grandes requieren drenaje quirúrgico y los casos graves, hospitalización.
 
-Los antibióticos pueden ser un complemento, sobre todo cuando hay fiebre, afectación general o extensión de la infección a los tejidos blandos, pero por sí solos no resuelven el problema porque no eliminan la fuente de la infección. El manejo del dolor y la fiebre con analgésicos habituales y enjuagues tibios puede aliviar, sin sustituir la atención del dentista. Los casos graves pueden requerir hospitalización.
+Los antibióticos no sustituyen ese tratamiento local. Las guías actuales los reservan para la afectación general (fiebre, malestar) o el riesgo alto de progresión, y desaconsejan su uso rutinario en el absceso localizado: añaden poco beneficio y sus daños, como efectos adversos y resistencia bacteriana, pueden ser grandes.
 
 ## [complications] Complicaciones
 
-Sin tratamiento, la infección puede extenderse a la mandíbula, al cuello y a otros espacios profundos. Entre las complicaciones graves están la afectación de la vía aérea, la angina de Ludwig, la infección de la sangre, el absceso cerebral, la endocarditis y la neumonía. También puede perderse el diente. Por eso es importante el tratamiento temprano.
+Sin tratamiento, la infección puede extenderse por contigüidad o por la sangre. Se describen obstrucción de la vía aérea, angina de Ludwig, mediastinitis necrosante descendente (infección del espacio entre los pulmones), absceso de la órbita o del cerebro, trombosis del seno cavernoso, sepsis y fascitis necrosante; fuentes divulgativas añaden endocarditis y neumonía. También puede perderse el diente. Son poco frecuentes, pero graves.
 
 ## [red_flags] Señales de alarma
 
-Se necesita atención urgente, en un servicio de urgencias, si hay dificultad para respirar, hablar o tragar, hinchazón importante de la boca o de la cara, dificultad para abrir la boca, un ojo hinchado o dolorido, cambios en la visión o fiebre con malestar intenso.
+Se necesita atención urgente si hay dificultad para respirar, hablar o tragar, hinchazón importante de la boca o la cara, dificultad para abrir la boca, un ojo hinchado o dolorido, cambios en la visión o fiebre con malestar intenso.
 
 ## [prevention] Prevención
 
-Tratar las caries a tiempo es la medida más eficaz. Además, ayudan el cepillado con pasta con flúor, la limpieza entre los dientes, las revisiones dentales periódicas y no fumar. Los dientes fracturados deben ser valorados cuanto antes por un dentista.
+Tratar las caries a tiempo es la medida más eficaz. Ayudan también el cepillado con pasta con flúor, la limpieza interdental, las revisiones periódicas y no fumar.
 
 ## [prognosis] Pronóstico
 
-Con tratamiento oportuno la infección se cura en la mayoría de los casos y, a menudo, el diente puede conservarse. Sin tratamiento puede empeorar y poner en riesgo la vida.
+Con tratamiento oportuno la infección se cura en la mayoría de los casos y a menudo el diente se conserva. Sin tratamiento puede empeorar y poner en riesgo la vida.
 
 ## [when_to_seek_care] Cuándo consultar
 
-Debe acudirse al dentista ante un dolor de muela pulsátil que no cede o ante un grano en la encía. Si hay fiebre o hinchazón de la mandíbula, la consulta debe ser urgente. No se debe colocar aspirina directamente sobre el diente o la encía, porque irrita los tejidos y puede producir úlceras.
+Debe acudirse al dentista ante un dolor de muela pulsátil que no cede o un grano en la encía; con fiebre o hinchazón de la mandíbula, la consulta es urgente. No se debe colocar aspirina sobre el diente o la encía: irrita los tejidos y puede producir úlceras.
+
+## [considerations] Qué dice la evidencia
+
+Lo más sólido es la evidencia sobre antibióticos. Una revisión Cochrane actualizada en 2024 halló solo tres ensayos pequeños, sin diferencias en dolor ni hinchazón frente a placebo cuando se combinaba con tratamiento dental local; la certeza es baja o muy baja y no hay ensayos sin tratamiento dental. Una guía de la Asociación Dental Americana de 2019, apoyada en una revisión sistemática con metaanálisis y método GRADE, concluye igual: priorizar el tratamiento dental inmediato y reservar los antibióticos para la afectación general. Se refiere a adultos inmunocompetentes con absceso localizado, no a infecciones extendidas.
+
+Lo demás descansa en revisiones narrativas y estudios observacionales: la microbiología polimicrobiana y la lista de complicaciones graves. Hay consenso en que la base es tratar la causa dental y en que la extensión a cara, cuello u órbita es una urgencia. Se discute y está poco estudiado cuándo aporta un antibiótico en la infección extendida, cuál elegir y cómo pesa la resistencia; ahí predomina la opinión de expertos.
 
 ## [associated_conditions] Conceptos relacionados
 
 • Caries dental: causa más frecuente y principal punto de prevención.
 • Pulpitis: inflamación de la pulpa que suele preceder al absceso periapical.
 • Absceso periodontal: infección originada en la encía, entidad distinta aunque parecida.
-• Celulitis facial y angina de Ludwig: formas de extensión de la infección a los tejidos blandos del cuello y la cara.
-• Tratamiento de conducto: procedimiento que elimina la pulpa infectada para conservar el diente.
+• Celulitis facial y angina de Ludwig: extensión de la infección a cara y cuello.
+• Tratamiento de conducto: elimina la pulpa infectada para conservar el diente.
 • Fístula dental: vía por la que el pus drena hacia la encía en los abscesos crónicos.
 
 ## [references]
@@ -72,3 +78,9 @@ Debe acudirse al dentista ante un dolor de muela pulsátil que no cede o ante un
 - Dental abscess | https://www.nhs.uk/conditions/dental-abscess/ | NHS
 - Periapical Abscess (versión para el público) | https://www.merckmanuals.com/home/mouth-and-dental-disorders/tooth-disorders/periapical-abscess | Manual MSD
 - Dental abscess (en español) | https://wikem.org/wiki/Dental_abscess/es | WikEM
+- Cope et al., 2024. Systemic antibiotics for symptomatic apical periodontitis and acute apical abscess in adults. PMID 38712714 | https://europepmc.org/article/MED/38712714 | Cochrane Database Syst Rev
+- Lockhart et al., 2019. Evidence-based clinical practice guideline on antibiotic use for the urgent management of pulpal- and periapical-related dental pain and intraoral swelling (ADA). PMID 31668170 | https://europepmc.org/article/MED/31668170 | J Am Dent Assoc
+- Tampi et al., 2019. Antibiotics for the urgent management of symptomatic irreversible pulpitis, symptomatic apical periodontitis, and localized acute apical abscess: systematic review and meta-analysis (ADA). PMID 31761029 | https://europepmc.org/article/MED/31761029 | J Am Dent Assoc
+- Neal y Schlieve, 2022. Complications of Severe Odontogenic Infections: A Review. PMID 36552293 | https://europepmc.org/article/MED/36552293 | Biology (Basel)
+- Lou et al., 2024. Odontogenic infections in the antibiotic era: approach to diagnosis, management, and prevention. PMID 37926767 | https://europepmc.org/article/MED/37926767 | Infection
+- Altaie et al., 2021. Prevalence of unculturable bacteria in the periapical abscess: a systematic review and meta-analysis. PMID 34351963 | https://europepmc.org/article/MED/34351963 | PLoS One
