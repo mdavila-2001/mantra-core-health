@@ -51,6 +51,10 @@ describe('NAV_SUBGROUPS', () => {
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
     // bloque la escondería detrás de un desplegable.
     'superadmin/observability',
+    // «Ayuda psicológica» (cf137027d) es una sola pantalla del paciente y está
+    // fuera del menú para todo rol (`fueraDelMenuPara: [ANY_ROLE]`): se llega por
+    // enlace, no por la barra. Un bloque de uno no es un desplegable.
+    'psychological-help',
   ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {
